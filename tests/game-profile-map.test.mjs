@@ -1,3 +1,4 @@
+import { applyNodeRefill } from '../src/model/nodeRefill.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { contentBundle } from '../src/content/index.js';
@@ -55,9 +56,12 @@ function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
   assert.equal(map.shrineId, map.shrineIds[0]);
   const lanes = map.columns / b;
   assert.ok(Number.isInteger(lanes) && lanes >= 1);
-  const width = map.startIds.length;
-  assert.equal(width, map.columns, 'depth 1 is one shared node per column');
-  assert.equal(Object.keys(map.nodes).length, width + (count - 1 - rests.filter(f => f > 1).length) * map.columns + rests.filter(f => f > 1).length * b + b);
+  assert.deepEqual(map.startIds, ['n1_0'], 'depth 1 is a single start node');
+  assert.equal(map.nodes.n1_0.col, (map.columns - 1) / 2, 'the start node is centred');
+  const secondDepth = Object.values(map.nodes).filter(node => node.floor === 2);
+  assert.deepEqual([...map.nodes.n1_0.next].sort(), secondDepth.map(node => node.id).sort(), 'the start reaches the first node(s) of every branch');
+  assert.equal(new Set(secondDepth.map(node => node.branch)).size, b, 'every branch is reachable from the start');
+  assert.equal(Object.keys(map.nodes).length, 1 + (count - 1 - rests.filter(f => f > 1).length) * map.columns + rests.filter(f => f > 1).length * b + b);
   for (let k = 0; k < b; k++) {
     const own = Object.values(map.nodes).filter(node => node.branch === k);
     assert.equal(own.filter(node => node.type === 'shrine').map(node => node.floor).sort((x, y) => x - y).join(), rests.join(), `branch ${k} has its own rest at every rest floor`);
@@ -92,6 +96,11 @@ test('every seeded core map splits into distinct-boss branches, each with its ow
     }
   }
   assert.deepEqual([...seen].sort(), [1, 2, 3, 4], 'branch count varies from 1 up to the bosses available (4 at act 3)');
+  for (const tier of [1, 3]) {
+    const counts = new Set();
+    for (let seed = 1; seed <= 40; seed++) counts.add(buildActMap(reg, createRng(seed), run.seatOrder[tier - 1], tier).bossIds.length);
+    assert.ok(counts.size >= 3, `tier ${tier} rolls at least three distinct branch counts over 40 seeds (got ${[...counts]})`);
+  }
 });
 test('branch count never exceeds the distinct bosses of the act or maxBranches', () => {
   const capped = setup({ maxBranches: 2 });
@@ -167,7 +176,8 @@ test('Core authors fog and pins it over a stale viewer path setting (owner, 2026
 test('firstFloor forces depth 1 and is refused where it cannot hold (owner, 2026-10-18)', () => {
   const build = routes => { const { reg, run } = setup(routes); return buildActMap(reg, createRng(5), run.seatOrder[0], 1); };
   const open = build({});
-  assert.deepEqual(open.startIds, ['n1_0', 'n1_1', 'n1_2']);
+  assert.deepEqual(open.startIds, ['n1_0']);
+  assert.equal(open.nodes.n1_0.actualType, 'fight');
   assert.equal(open.nodes.n3_0.type, 'shrine', 'rests moved to depth 3 so depth 1 can be a fight');
   const restFirst = build({ firstFloor: null, requirePrebossRest: false, restFloors: [1, 6] });
   assert.deepEqual(restFirst.startIds, ['n1_0']);
@@ -237,4 +247,27 @@ test('a rest lights only its own branch\'s next rest, never a sibling branch\'s'
     }
   }
   assert.ok(checked > 10);
+});
+
+test('the start node refills HP and both flasks on entry unless startNodeRefills is false', () => {
+  const start = routes => { const { reg, run } = setup(routes); return { run, map: buildActMap(reg, createRng(11), run.seatOrder[0], 1) }; };
+  const on = start({});
+  assert.equal(on.map.nodes.n1_0.refill, true, 'default is on');
+  assert.ok(Object.values(on.map.nodes).filter(node => node.id !== 'n1_0').every(node => !node.refill), 'only the start refills');
+  const hurt = () => ({ maxHp: 80, hp: 12, flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 0, manaCurrent: 0 } });
+  const run = hurt();
+  assert.equal(applyNodeRefill(run, on.map.nodes.n1_0), true);
+  assert.deepEqual([run.hp, run.flaskCharges.hpCurrent, run.flaskCharges.manaCurrent], [80, 2, 1]);
+  const other = hurt();
+  assert.equal(applyNodeRefill(other, on.map.nodes[on.map.nodes.n1_0.next[0]]), false);
+  assert.equal(other.hp, 12);
+  const legacy = hurt();
+  const { refill, ...old } = on.map.nodes.n1_0;
+  assert.equal(applyNodeRefill(legacy, old), false, 'a saved graph without the flag does nothing new');
+  assert.equal(legacy.hp, 12);
+  const off = start({ startNodeRefills: false });
+  assert.ok(!('refill' in off.map.nodes.n1_0) || off.map.nodes.n1_0.refill !== true);
+  const spent = hurt();
+  assert.equal(applyNodeRefill(spent, off.map.nodes.n1_0), false);
+  assert.equal(spent.hp, 12);
 });
