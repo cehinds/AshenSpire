@@ -242,7 +242,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatOrder: run.seatOrder, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
@@ -307,6 +307,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     return nodeBox.left >= portBox.left + margin && nodeBox.right <= portBox.right - margin
       && nodeBox.top >= portBox.top + margin && nodeBox.bottom <= visibleBottom - margin;
   }
+  // WHAT THE REVEAL COVERS OF THE MAP PORT, in the port's own (local) px. The
+  // reveal grows upward from the tray's top edge, but the tray is not flush
+  // with the port: on a phone the tap-note strip (and any other row) sits
+  // between the map frame and the tray, so part of the reveal's height lies
+  // below the port and covers none of it. Handing the camera the reveal's
+  // full height aimed picks that much too high (31 px at 390x844, the
+  // Picking-a-node gate's selectionCentersVertically).
+  function trayInset(revealHeight) {
+    const portBox = board.scroll.getBoundingClientRect();
+    const scale = (board.scroll.offsetHeight ? portBox.height / board.scroll.offsetHeight : 1) || 1;
+    // Rects are device px, scrollHeight is local px (past --ui-zoom): scale it.
+    const coveredTop = tray.getBoundingClientRect().top - revealHeight * scale;
+    return Math.max(0, (portBox.bottom - coveredTop) / scale);
+  }
   function openTray() {
     if (tray.dataset.open === 'true') {
       // Already open (or closing): stay open, and recentre on the new pick
@@ -316,8 +330,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.inert = false;
       if (!nodeComfortablyVisible(trayReveal.scrollHeight)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: trayReveal.scrollHeight });
+        board.centerOnNode(selection.selectedId, { inset: trayInset(trayReveal.scrollHeight), glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset(trayReveal.scrollHeight) });
       return;
     }
     wait(trayTiming.openDelayMs, () => {
@@ -327,8 +341,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.style.height = `${height}px`;
       if (!nodeComfortablyVisible(height)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: height });
+        board.centerOnNode(selection.selectedId, { inset: trayInset(height), glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset(height) });
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
@@ -353,7 +367,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   backButton.addEventListener('click', () => clearSelection());
   enterButton.addEventListener('click', () => {
-    if (selection.selectedId && reachable.has(selection.selectedId)) leaving(onPick)(selection.selectedId);
+    if (selection.selectedId && reachable.has(selection.selectedId)) travelTo(selection.selectedId);
   });
   // A tap on the map away from the lit nodes closes the tray; a mouse drag
   // that pans the board is not a tap.
@@ -365,11 +379,22 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
     clearSelection();
   });
+  // Remember the ground under the node for the fight that follows: the combat
+  // backdrop matches it (city, bridge, forest...). Decorative; the adapter maps
+  // (legacy dungeon, co-op) have no painting and record nothing.
+  function travelTo(id) {
+    if (!mapAdapter) {
+      const settingId = board.terrainAt?.(id);
+      if (settingId) run.mapTerrain = { nodeId: id, settingId };
+      else delete run.mapTerrain;
+    }
+    leaving(onPick)(id);
+  }
   function selectNode(id, reading, pointerType = 'mouse') {
     lastPickPointerType = pointerType;
     if (reading) readings.set(id, reading);
     const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
-    if (next.enter) { leaving(onPick)(id); return; }
+    if (next.enter) { travelTo(id); return; }
     selection = next;
     renderSelection();
     if (selection.selectedId) openTray();

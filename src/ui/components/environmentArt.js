@@ -63,6 +63,6 @@ export function mapTerrainHtml({ world, width, height, points, fog }) {
       <mask id="${id}-reveal" maskUnits="userSpaceOnUse" x="${-MAP_TERRAIN_REVEAL_RADIUS}" y="${-MAP_TERRAIN_REVEAL_RADIUS}" width="${width + 2 * MAP_TERRAIN_REVEAL_RADIUS}" height="${height + 2 * MAP_TERRAIN_REVEAL_RADIUS}" style="mask-type:alpha">${circles}</mask>
     </defs>
     <g class="map-fog-ground"><rect class="terrain-paper" style="fill:url(#${id}-paper)" width="${width}" height="${height}"/></g>
-    <g class="map-detail-surface"${fog ? ` mask="url(#${id}-reveal)"` : ''}><image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice"/></g>
+    <g class="map-detail-surface"${fog ? ` mask="url(#${id}-reveal)"` : ''}><g class="map-painting"><image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice"/></g></g>
   </g>`;
 }

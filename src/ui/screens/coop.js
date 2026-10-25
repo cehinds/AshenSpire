@@ -1769,7 +1769,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       // warns by name for an older host, because a silent fallback is what let
       // this sit.
       act: {
-        seedString: snap.seedString, nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
+        seedString: snap.seedString, nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber, seatOrder: snap.seatOrder,
         // The map title is `ACT <tier> — <SEAT>` (SPEC §13.2). The board has
         // read `act.seatName` since seats landed; this screen never passed it,
         // so co-op's map plate said a bare "ACT II" while solo named the seat.

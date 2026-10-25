@@ -29,7 +29,8 @@ export function combatTargetIntentRow(entry) {
   const action = entry.action?.maneuver || 'ready';
   const playerIcon = ({ attack: 'attack', smash: 'smash', sweep: 'sweep', counter: 'counter', defend: 'defend', evade: 'evade' })[action] || 'prepare';
   const title = badge?.title || (['casting', 'prepared'].includes(action) ? t('combat.targetHud.prepare') : action === 'ready' ? t('combat.targetHud.ready') : action === 'defend' ? t('combat.targetHud.defend') : action[0].toUpperCase() + action.slice(1));
-  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }), node('span', 'target-hud-intent-name', title));
+  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }));
+  // Owner 2026-10-25: no stance/action name in the panel (it cost a wrapped row). The damage and multiplier stay; the title lives in the tooltip.
   row.dataset.intentVisibility = badge?.visibility || 'known';
   if (badge?.projectedDamage?.tone) row.dataset.damageTone = badge.projectedDamage.tone;
   row.tabIndex = 0;
@@ -65,7 +66,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const panels = new Map(), infoButtons = new Map();
   let drawnCells = null;
   const gestures = new AbortController();
-  let holdTimer = null, held = null, lastTap = null, inspectionPointer = null, readGesture = null, clickSeriesActivated = false;
+  let holdTimer = null, held = null, lastTap = null, inspectionPointer = null, readGesture = null, clickSeriesActivated = false, tapInspected = false, pressMoved = false;
   const cancelHold = () => { clearTimeout(holdTimer); held = null; };
   // A read owns its originating pointer's trailing click, however long the
   // finger stays down. A new press after release is a separate gesture.
@@ -78,6 +79,15 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const name = shell.querySelector('.target-hud-name');
     if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
     else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
+    // Owner 2026-10-25: out of targeting the whole panel is the inspection door.
+    // A button holds no interactive children, so the intent row leaves the tab
+    // order while the panel is one. Its name comes from its content (name, HP,
+    // intent), not an override that would hide them.
+    const panel = shell.querySelector('.target-hud-panel'), intent = shell.querySelector('.target-hud-intent');
+    const door = !active && canInspect();
+    if (door) { panel.setAttribute('role', 'button'); panel.tabIndex = 0; }
+    else { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
+    if (intent) { if (door) intent.removeAttribute('tabindex'); else intent.tabIndex = 0; }
   };
   function wireInspect(shell, id) {
     // The visible name/HP replaces the frame footer in this layout. While
@@ -85,11 +95,25 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     // tooltip listeners otherwise swallow the click before it reaches us.
     shell.addEventListener('click', event => {
       // Native detail joins the two presses of a double-click without a timer.
-      if (event.detail === 1) clickSeriesActivated = false;
+      if (event.detail === 1) { clickSeriesActivated = false; tapInspected = false; }
       if (inspectionClick(event)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       if (event.detail !== 0 && readGesture?.blocked) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+      // The rest of a series whose first tap inspected is never a target press.
+      if (event.detail > 1 && tapInspected) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       if (!onActivate || !eligible.includes(id)) {
         if (event.detail > 1 && clickSeriesActivated) lastTap = null;
+        // Not a target: one tap or click anywhere on the panel (name, HP, intent,
+        // statuses, padding) opens the inspection; the rest of a double-click
+        // series is swallowed so it cannot open it twice. Keys are handled by
+        // the keydown below and never click this div; a detail-0 click on the
+        // panel itself is an assistive-technology activation of the button.
+        if (event.detail === 0) {
+          if (event.target.classList?.contains('target-hud-panel') && canInspect()) { event.preventDefault(); event.stopImmediatePropagation(); inspect(id, event.target); }
+          return;
+        }
+        if (!canInspect() || pressMoved) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (event.detail === 1) { clickSeriesActivated = true; if (readGesture) readGesture.blocked = true; lastTap = null; tapInspected = true; inspect(id, shell); }
         return;
       }
       // The status tray and detailed intent keep their authored reading doors.
@@ -101,6 +125,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       lastTap = null; cancelHold(); hideTooltip(); onActivate(id);
     }, true);
     shell.addEventListener('keydown', event => {
+      if (event.target.classList?.contains('target-hud-panel') && ['Enter', ' '].includes(event.key)
+          && !(onActivate && eligible.includes(id)) && canInspect()) { event.preventDefault(); event.stopPropagation(); inspect(id, event.target); return; }
       if (!onActivate || !eligible.includes(id) || !event.target.closest('.target-hud-name')
           || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation(); event.target.click();
@@ -115,6 +141,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     shell.addEventListener('pointerdown', event => {
       if (!event.isPrimary || event.button !== 0) return;
       if (inspectionPointer?.released) inspectionPointer = null;
+      pressMoved = false;
       // Keep the state at press start: playback can finish before release.
       readGesture = { blocked: !canInspect() };
       if (readGesture.blocked) lastTap = null;
@@ -131,7 +158,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     });
   }
   const listen = (target, type, handler, capture = false) => target.addEventListener(type, handler, { signal: gestures.signal, capture });
-  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; } });
+  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; pressMoved = true; } });
   listen(document, 'pointerup', event => {
     if (inspectionPointer?.id === event.pointerId) inspectionPointer.released = true;
   }, true);

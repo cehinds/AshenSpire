@@ -1,6 +1,7 @@
 import { LAYERED_SCENES, INTRO_LAYERED_SCENES, LAYERED_TIME_FILTERS, LAYERED_WEATHER_FILTERS } from '../content/layeredEnvironments.js';
 import { locationPresentation } from '../content/generated/locationPresentation.js';
-import { combatEnvironment } from './environmentArt.js';
+import { combatEnvironment, mapTerrainSetting } from './environmentArt.js';
+import { hasProfile } from './locationPresentation.js';
 
 const nodeProfiles = new Map(locationPresentation.nodeProfiles.map(row => [row.nodeId, row.profileId]));
 const REGION_SETTINGS = {
@@ -31,7 +32,14 @@ export function layeredCombatScene(run = {}, environment) {
     const taggedSetting = Array.isArray(node?.tags) ? node.tags.find(tag => REGION_SETTINGS[regionId]?.[tag]) : null;
     const typeSetting = node?.type === 'boss' ? 'dungeon' : node?.type === 'merchant' ? 'city'
       : ['fight', 'elite', 'monster'].includes(node?.type) ? 'road' : null;
-    const setting = authoredSetting || node?.settingId || taggedSetting || typeSetting;
+    // The terrain under the node (map.js records it on travel) beats the node
+    // type. A region with a painted scene for it but no layered one (a bridge,
+    // a shore, a mine) answers with null so the atlas scene is drawn; one with
+    // neither keeps its road.
+    let terrain = mapTerrainSetting(run, nodeId, node);
+    if (terrain && !REGION_SETTINGS[regionId]?.[terrain]) terrain = hasProfile(regionId, terrain) ? 'atlas' : null;
+    if (terrain === 'atlas') return null;
+    const setting = authoredSetting || node?.settingId || taggedSetting || terrain || typeSetting;
     sceneId = REGION_SETTINGS[regionId]?.[setting];
   }
   let scene = LAYERED_SCENES[sceneId];
