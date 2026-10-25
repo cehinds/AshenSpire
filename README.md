@@ -1,17 +1,5 @@
 # AshenSpire
-<!-- feature-preview:start -->
-## Feature preview — visible map viewport
 
-Captured from PR #2324 source `95ce3f3885563806b7d39d21b5d118c00cc989e3`, official local LIGHT WEB build **0.7.1.1857 / a9dfccb269** on 2026-10-25. Native node selection opens the destination tray; mouse selections center in its visible map band, and comfortable touch selections stay under the finger with clear space above the tray. All four original views keep the node, map icons, destination text, and controls readable.
-
-[Private playable feature build — GitHub CI artifact download](https://github.com/cehinds/AshenSpire/actions/runs/40230248650/artifacts/12612871173). This is a matching-source CI artifact download, not a verified public Play deployment. The PNGs below come from the official local source reproduction, not downloaded CI artifact bytes; public publishing remains under repair.
-
-| Mobile 375×667, DPR3 | Desktop 1280×720 | Wide 1920×1080 | Tablet 1024×768 |
-| --- | --- | --- | --- |
-| ![Mobile selected map destination](docs/preview/features/map-visible-viewport/mobile.png) | ![Desktop selected map destination](docs/preview/features/map-visible-viewport/desktop.png) | ![Wide selected map destination](docs/preview/features/map-visible-viewport/wide.png) | ![Tablet selected map destination](docs/preview/features/map-visible-viewport/tablet.png) |
-
-[Capture identity and native camera checks](docs/preview/features/map-visible-viewport/capture.json). Existing two-axis input and camera-persistence gates pass all four cases. PNGs retain CSS pixel dimensions without stretching, with mobile renderer DPR3. No hardware or speed claim is made.
-<!-- feature-preview:end -->
 
 
 
