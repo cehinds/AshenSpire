@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadGameProfileCatalog } from './game-config.mjs';
-import { resolveGameAuthor, enemyPools, enemyItemBonuses, enemyLevel, characterSettings, resolveEnemyAttributes, characterRule,
+import { resolveGameAuthor, enemyAttributeTotal, enemyPools, enemyItemBonuses, enemyLevel, characterSettings, resolveEnemyAttributes, characterRule,
   displayName, resolveGearItem, enemyGearIds, enemyRelicIds, resolveCharacterDeck, deckCopyLimit } from '../engine/kernel/gameConfig.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,7 +31,7 @@ export function buildDerivedTables() {
       const [key, v] = m.replace('self.', '').split('=');
       if (ATTRS.includes(key)) sources[key].push({ source: id, name: relics.get(id).name, kind: 'relic', amount: Number(v) });
     }
-    const attributes = Object.fromEntries(ATTRS.map(k => [k, { own: own[k], bonuses: sources[k], total: Math.max(0, own[k] + (bonus[k] || 0)) }]));
+    const attributes = Object.fromEntries(ATTRS.map(k => [k, { own: own[k], bonuses: sources[k], total: enemyAttributeTotal(row, s, k, own[k], bonus) }]));
     const t = k => attributes[k].total;
     const hpTerms = { base: rule.pools.hp, constitution: t('constitution') * r.constitution, strength: t('strength') * r.strength,
       dexterity: t('dexterity') * r.dexterity, wisdom: t('wisdom') * r.wisdom, intelligence: t('intelligence') * r.intelligence, level: (level - 1) * r.perLevel };

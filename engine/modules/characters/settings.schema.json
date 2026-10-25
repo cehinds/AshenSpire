@@ -149,6 +149,18 @@
       ],
       "additionalProperties": false
     },
+    "attributeOffset": {
+      "type": "object",
+      "description": "Added to each enemy attribute after gear and relic bonuses, floored at 0. The tier budget check ignores it.",
+      "properties": {
+        "strength": { "type": "integer", "minimum": -20, "maximum": 20 },
+        "dexterity": { "type": "integer", "minimum": -20, "maximum": 20 },
+        "constitution": { "type": "integer", "minimum": -20, "maximum": 20 },
+        "wisdom": { "type": "integer", "minimum": -20, "maximum": 20 },
+        "intelligence": { "type": "integer", "minimum": -20, "maximum": 20 }
+      },
+      "additionalProperties": false
+    },
     "penaltyFloor": {
       "type": "object",
       "properties": {

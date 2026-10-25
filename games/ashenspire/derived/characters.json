@@ -522,12 +522,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -539,7 +539,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -562,22 +562,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 0
       },
-      "total": 48,
-      "formula": "10+20+15+3+0+0+0 = 48"
+      "total": 15,
+      "formula": "10+0+5+0+0+0+0 = 15"
     },
     "pools": {
-      "hp": 48,
+      "hp": 15,
       "sp": 1,
       "mp": 1,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -643,12 +643,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -660,7 +660,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -683,22 +683,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 0
       },
-      "total": 48,
-      "formula": "10+20+15+3+0+0+0 = 48"
+      "total": 15,
+      "formula": "10+0+5+0+0+0+0 = 15"
     },
     "pools": {
-      "hp": 48,
+      "hp": 15,
       "sp": 1,
       "mp": 1,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -759,12 +759,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -776,7 +776,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -799,22 +799,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 5
       },
-      "total": 53,
-      "formula": "10+20+15+3+0+0+5 = 53"
+      "total": 20,
+      "formula": "10+0+5+0+0+0+5 = 20"
     },
     "pools": {
-      "hp": 53,
+      "hp": 20,
       "sp": 1,
       "mp": 1,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -976,12 +976,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -1010,21 +1010,21 @@
       "terms": {
         "base": 10,
         "constitution": 0,
-        "strength": 15,
-        "dexterity": 3,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 6,
         "intelligence": 0,
         "level": 15
       },
-      "total": 49,
-      "formula": "10+0+15+3+6+0+15 = 49"
+      "total": 36,
+      "formula": "10+0+5+0+6+0+15 = 36"
     },
     "pools": {
-      "hp": 49,
+      "hp": 36,
       "sp": 3,
       "mp": 2,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 3
     },
     "gear": [
@@ -1106,7 +1106,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "dexterity": {
         "own": 2,
@@ -1118,12 +1118,12 @@
             "amount": 1
           }
         ],
-        "total": 3
+        "total": 1
       },
       "constitution": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "wisdom": {
         "own": 1,
@@ -1139,22 +1139,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
-        "strength": 35,
-        "dexterity": 9,
+        "constitution": 0,
+        "strength": 25,
+        "dexterity": 3,
         "wisdom": 2,
         "intelligence": 0,
         "level": 20
       },
-      "total": 86,
-      "formula": "10+10+35+9+2+0+20 = 86"
+      "total": 60,
+      "formula": "10+0+25+3+2+0+20 = 60"
     },
     "pools": {
-      "hp": 86,
+      "hp": 60,
       "sp": 3,
       "mp": 1,
-      "ar": 7,
-      "dr": 3,
+      "ar": 5,
+      "dr": 1,
       "hand": 4
     },
     "gear": [
@@ -1326,7 +1326,7 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 0,
@@ -1343,7 +1343,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 1,
@@ -1366,21 +1366,21 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
+        "constitution": 0,
+        "strength": 5,
         "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 5
       },
-      "total": 50,
-      "formula": "10+20+15+0+0+0+5 = 50"
+      "total": 20,
+      "formula": "10+0+5+0+0+0+5 = 20"
     },
     "pools": {
-      "hp": 50,
+      "hp": 20,
       "sp": 1,
       "mp": 1,
-      "ar": 3,
+      "ar": 1,
       "dr": 0,
       "hand": 2
     },
@@ -1440,12 +1440,12 @@
       "strength": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -1467,21 +1467,21 @@
       "terms": {
         "base": 10,
         "constitution": 0,
-        "strength": 5,
-        "dexterity": 3,
+        "strength": 0,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 5
       },
-      "total": 23,
-      "formula": "10+0+5+3+0+0+5 = 23"
+      "total": 15,
+      "formula": "10+0+0+0+0+0+5 = 15"
     },
     "pools": {
-      "hp": 23,
+      "hp": 15,
       "sp": 2,
       "mp": 1,
-      "ar": 1,
-      "dr": 1,
+      "ar": 0,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -1553,7 +1553,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -1565,7 +1565,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 1,
@@ -1577,7 +1577,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 2,
@@ -1600,22 +1600,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 35,
-        "dexterity": 6,
+        "constitution": 0,
+        "strength": 25,
+        "dexterity": 0,
         "wisdom": 6,
         "intelligence": 0,
         "level": 20
       },
-      "total": 97,
-      "formula": "10+20+35+6+6+0+20 = 97"
+      "total": 61,
+      "formula": "10+0+25+0+6+0+20 = 61"
     },
     "pools": {
-      "hp": 97,
+      "hp": 61,
       "sp": 3,
       "mp": 2,
-      "ar": 7,
-      "dr": 2,
+      "ar": 5,
+      "dr": 0,
       "hand": 4
     },
     "gear": [
@@ -1703,7 +1703,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -1715,7 +1715,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -1727,7 +1727,7 @@
             "amount": 1
           }
         ],
-        "total": 1
+        "total": 0
       },
       "wisdom": {
         "own": 2,
@@ -1750,22 +1750,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 10,
-        "strength": 35,
-        "dexterity": 6,
+        "constitution": 0,
+        "strength": 25,
+        "dexterity": 0,
         "wisdom": 6,
         "intelligence": 1,
         "level": 20
       },
-      "total": 88,
-      "formula": "10+10+35+6+6+1+20 = 88"
+      "total": 62,
+      "formula": "10+0+25+0+6+1+20 = 62"
     },
     "pools": {
-      "hp": 88,
+      "hp": 62,
       "sp": 3,
       "mp": 2,
-      "ar": 7,
-      "dr": 2,
+      "ar": 5,
+      "dr": 0,
       "hand": 5
     },
     "gear": [
@@ -1834,12 +1834,12 @@
       "strength": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -1861,21 +1861,21 @@
       "terms": {
         "base": 10,
         "constitution": 0,
-        "strength": 5,
-        "dexterity": 3,
+        "strength": 0,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 25
       },
-      "total": 43,
-      "formula": "10+0+5+3+0+0+25 = 43"
+      "total": 35,
+      "formula": "10+0+0+0+0+0+25 = 35"
     },
     "pools": {
-      "hp": 43,
+      "hp": 35,
       "sp": 2,
       "mp": 2,
-      "ar": 1,
-      "dr": 1,
+      "ar": 0,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -2041,12 +2041,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -2058,7 +2058,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -2081,22 +2081,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 25
       },
-      "total": 73,
-      "formula": "10+20+15+3+0+0+25 = 73"
+      "total": 40,
+      "formula": "10+0+5+0+0+0+25 = 40"
     },
     "pools": {
-      "hp": 73,
+      "hp": 40,
       "sp": 1,
       "mp": 2,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -2157,12 +2157,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -2174,7 +2174,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -2197,22 +2197,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 25
       },
-      "total": 73,
-      "formula": "10+20+15+3+0+0+25 = 73"
+      "total": 40,
+      "formula": "10+0+5+0+0+0+25 = 40"
     },
     "pools": {
-      "hp": 73,
+      "hp": 40,
       "sp": 1,
       "mp": 2,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -2273,12 +2273,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -2290,7 +2290,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -2313,22 +2313,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 30
       },
-      "total": 78,
-      "formula": "10+20+15+3+0+0+30 = 78"
+      "total": 45,
+      "formula": "10+0+5+0+0+0+30 = 45"
     },
     "pools": {
-      "hp": 78,
+      "hp": 45,
       "sp": 1,
       "mp": 2,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -2399,12 +2399,12 @@
             "amount": 2
           }
         ],
-        "total": 4
+        "total": 2
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 1,
@@ -2416,7 +2416,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -2432,22 +2432,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 20,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 10,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 45
       },
-      "total": 98,
-      "formula": "10+20+20+3+0+0+45 = 98"
+      "total": 65,
+      "formula": "10+0+10+0+0+0+45 = 65"
     },
     "pools": {
-      "hp": 98,
+      "hp": 65,
       "sp": 3,
       "mp": 2,
-      "ar": 4,
-      "dr": 1,
+      "ar": 2,
+      "dr": 0,
       "hand": 3
     },
     "gear": [
@@ -2534,12 +2534,12 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "dexterity": {
         "own": 2,
         "bonuses": [],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 1,
@@ -2563,7 +2563,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "wisdom": {
         "own": 1,
@@ -2586,22 +2586,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 70,
-        "strength": 35,
-        "dexterity": 6,
+        "constitution": 50,
+        "strength": 25,
+        "dexterity": 0,
         "wisdom": 4,
         "intelligence": 0,
         "level": 50
       },
-      "total": 175,
-      "formula": "10+70+35+6+4+0+50 = 175"
+      "total": 139,
+      "formula": "10+50+25+0+4+0+50 = 139"
     },
     "pools": {
-      "hp": 175,
+      "hp": 139,
       "sp": 5,
       "mp": 5,
-      "ar": 7,
-      "dr": 2,
+      "ar": 5,
+      "dr": 0,
       "hand": 4
     },
     "gear": [
@@ -2778,12 +2778,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -2795,7 +2795,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -2818,22 +2818,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 30
       },
-      "total": 78,
-      "formula": "10+20+15+3+0+0+30 = 78"
+      "total": 45,
+      "formula": "10+0+5+0+0+0+30 = 45"
     },
     "pools": {
-      "hp": 78,
+      "hp": 45,
       "sp": 1,
       "mp": 2,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -2911,7 +2911,7 @@
             "amount": 1
           }
         ],
-        "total": 6
+        "total": 4
       },
       "dexterity": {
         "own": 1,
@@ -2923,7 +2923,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -2935,7 +2935,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 2,
@@ -2958,22 +2958,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 30,
-        "dexterity": 6,
+        "constitution": 0,
+        "strength": 20,
+        "dexterity": 0,
         "wisdom": 6,
         "intelligence": 1,
         "level": 50
       },
-      "total": 123,
-      "formula": "10+20+30+6+6+1+50 = 123"
+      "total": 87,
+      "formula": "10+0+20+0+6+1+50 = 87"
     },
     "pools": {
-      "hp": 123,
+      "hp": 87,
       "sp": 4,
       "mp": 4,
-      "ar": 6,
-      "dr": 2,
+      "ar": 4,
+      "dr": 0,
       "hand": 5
     },
     "gear": [
@@ -3061,7 +3061,7 @@
             "amount": 1
           }
         ],
-        "total": 6
+        "total": 4
       },
       "dexterity": {
         "own": 1,
@@ -3073,7 +3073,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3085,7 +3085,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 2,
@@ -3108,22 +3108,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 30,
-        "dexterity": 6,
+        "constitution": 0,
+        "strength": 20,
+        "dexterity": 0,
         "wisdom": 6,
         "intelligence": 1,
         "level": 50
       },
-      "total": 123,
-      "formula": "10+20+30+6+6+1+50 = 123"
+      "total": 87,
+      "formula": "10+0+20+0+6+1+50 = 87"
     },
     "pools": {
-      "hp": 123,
+      "hp": 87,
       "sp": 4,
       "mp": 4,
-      "ar": 6,
-      "dr": 2,
+      "ar": 4,
+      "dr": 0,
       "hand": 5
     },
     "gear": [
@@ -3204,12 +3204,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3221,7 +3221,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -3244,22 +3244,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 60
       },
-      "total": 108,
-      "formula": "10+20+15+3+0+0+60 = 108"
+      "total": 75,
+      "formula": "10+0+5+0+0+0+60 = 75"
     },
     "pools": {
-      "hp": 108,
+      "hp": 75,
       "sp": 1,
       "mp": 3,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -3320,12 +3320,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3337,7 +3337,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -3360,22 +3360,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 60
       },
-      "total": 108,
-      "formula": "10+20+15+3+0+0+60 = 108"
+      "total": 75,
+      "formula": "10+0+5+0+0+0+60 = 75"
     },
     "pools": {
-      "hp": 108,
+      "hp": 75,
       "sp": 1,
       "mp": 3,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -3436,12 +3436,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3453,7 +3453,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -3476,22 +3476,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 65
       },
-      "total": 113,
-      "formula": "10+20+15+3+0+0+65 = 113"
+      "total": 80,
+      "formula": "10+0+5+0+0+0+65 = 80"
     },
     "pools": {
-      "hp": 113,
+      "hp": 80,
       "sp": 1,
       "mp": 3,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -3552,12 +3552,12 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3569,7 +3569,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 0,
@@ -3592,22 +3592,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 15,
-        "dexterity": 3,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 70
       },
-      "total": 118,
-      "formula": "10+20+15+3+0+0+70 = 118"
+      "total": 85,
+      "formula": "10+0+5+0+0+0+70 = 85"
     },
     "pools": {
-      "hp": 118,
+      "hp": 85,
       "sp": 1,
       "mp": 3,
-      "ar": 3,
-      "dr": 1,
+      "ar": 1,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -3679,12 +3679,12 @@
             "amount": 2
           }
         ],
-        "total": 6
+        "total": 4
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 1,
@@ -3708,7 +3708,7 @@
             "amount": 2
           }
         ],
-        "total": 5
+        "total": 3
       },
       "wisdom": {
         "own": 0,
@@ -3731,22 +3731,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 50,
-        "strength": 30,
-        "dexterity": 3,
+        "constitution": 30,
+        "strength": 20,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 85
       },
-      "total": 178,
-      "formula": "10+50+30+3+0+0+85 = 178"
+      "total": 145,
+      "formula": "10+30+20+0+0+0+85 = 145"
     },
     "pools": {
-      "hp": 178,
+      "hp": 145,
       "sp": 3,
-      "mp": 5,
-      "ar": 6,
-      "dr": 1,
+      "mp": 4,
+      "ar": 4,
+      "dr": 0,
       "hand": 3
     },
     "gear": [
@@ -3834,7 +3834,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -3846,7 +3846,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3858,7 +3858,7 @@
             "amount": 2
           }
         ],
-        "total": 2
+        "total": 0
       },
       "wisdom": {
         "own": 2,
@@ -3887,22 +3887,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 20,
-        "strength": 35,
-        "dexterity": 6,
+        "constitution": 0,
+        "strength": 25,
+        "dexterity": 0,
         "wisdom": 4,
         "intelligence": 1,
         "level": 90
       },
-      "total": 166,
-      "formula": "10+20+35+6+4+1+90 = 166"
+      "total": 130,
+      "formula": "10+0+25+0+4+1+90 = 130"
     },
     "pools": {
-      "hp": 166,
+      "hp": 130,
       "sp": 2,
       "mp": 5,
-      "ar": 7,
-      "dr": 2,
+      "ar": 5,
+      "dr": 0,
       "hand": 5
     },
     "gear": [
@@ -3971,12 +3971,12 @@
       "strength": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "dexterity": {
         "own": 1,
         "bonuses": [],
-        "total": 1
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -3998,21 +3998,21 @@
       "terms": {
         "base": 10,
         "constitution": 0,
-        "strength": 5,
-        "dexterity": 3,
+        "strength": 0,
+        "dexterity": 0,
         "wisdom": 0,
         "intelligence": 0,
         "level": 65
       },
-      "total": 83,
-      "formula": "10+0+5+3+0+0+65 = 83"
+      "total": 75,
+      "formula": "10+0+0+0+0+0+65 = 75"
     },
     "pools": {
-      "hp": 83,
+      "hp": 75,
       "sp": 3,
       "mp": 3,
-      "ar": 1,
-      "dr": 1,
+      "ar": 0,
+      "dr": 0,
       "hand": 2
     },
     "gear": [
@@ -4185,12 +4185,12 @@
             "amount": 1
           }
         ],
-        "total": 6
+        "total": 4
       },
       "dexterity": {
         "own": 2,
         "bonuses": [],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 1,
@@ -4220,7 +4220,7 @@
             "amount": 2
           }
         ],
-        "total": 8
+        "total": 6
       },
       "wisdom": {
         "own": 1,
@@ -4236,22 +4236,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 80,
-        "strength": 30,
-        "dexterity": 6,
+        "constitution": 60,
+        "strength": 20,
+        "dexterity": 0,
         "wisdom": 2,
         "intelligence": 0,
         "level": 90
       },
-      "total": 218,
-      "formula": "10+80+30+6+2+0+90 = 218"
+      "total": 182,
+      "formula": "10+60+20+0+2+0+90 = 182"
     },
     "pools": {
-      "hp": 218,
-      "sp": 6,
-      "mp": 6,
-      "ar": 6,
-      "dr": 2,
+      "hp": 182,
+      "sp": 5,
+      "mp": 5,
+      "ar": 4,
+      "dr": 0,
       "hand": 4
     },
     "gear": [
@@ -4339,7 +4339,7 @@
             "amount": 1
           }
         ],
-        "total": 6
+        "total": 4
       },
       "dexterity": {
         "own": 1,
@@ -4351,7 +4351,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 0,
@@ -4369,7 +4369,7 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "wisdom": {
         "own": 2,
@@ -4392,22 +4392,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 30,
-        "strength": 30,
-        "dexterity": 6,
+        "constitution": 10,
+        "strength": 20,
+        "dexterity": 0,
         "wisdom": 6,
         "intelligence": 1,
         "level": 90
       },
-      "total": 173,
-      "formula": "10+30+30+6+6+1+90 = 173"
+      "total": 137,
+      "formula": "10+10+20+0+6+1+90 = 137"
     },
     "pools": {
-      "hp": 173,
+      "hp": 137,
       "sp": 4,
       "mp": 5,
-      "ar": 6,
-      "dr": 2,
+      "ar": 4,
+      "dr": 0,
       "hand": 5
     },
     "gear": [
@@ -4495,7 +4495,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 5
       },
       "dexterity": {
         "own": 1,
@@ -4507,7 +4507,7 @@
             "amount": 1
           }
         ],
-        "total": 2
+        "total": 0
       },
       "constitution": {
         "own": 1,
@@ -4519,7 +4519,7 @@
             "amount": 2
           }
         ],
-        "total": 3
+        "total": 1
       },
       "wisdom": {
         "own": 2,
@@ -4548,22 +4548,22 @@
     "hp": {
       "terms": {
         "base": 10,
-        "constitution": 30,
-        "strength": 35,
-        "dexterity": 6,
+        "constitution": 10,
+        "strength": 25,
+        "dexterity": 0,
         "wisdom": 4,
         "intelligence": 0,
         "level": 90
       },
-      "total": 175,
-      "formula": "10+30+35+6+4+0+90 = 175"
+      "total": 139,
+      "formula": "10+10+25+0+4+0+90 = 139"
     },
     "pools": {
-      "hp": 175,
+      "hp": 139,
       "sp": 2,
       "mp": 5,
-      "ar": 7,
-      "dr": 2,
+      "ar": 5,
+      "dr": 0,
       "hand": 4
     },
     "gear": [

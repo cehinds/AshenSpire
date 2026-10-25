@@ -2432,6 +2432,7 @@
       "wisdom",
       "intelligence"
     ],
+    "spFloor": 3,
     "levelProfile": {
       "min": 18,
       "max": 19

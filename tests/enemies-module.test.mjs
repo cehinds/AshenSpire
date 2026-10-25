@@ -64,10 +64,11 @@ test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 per point + 5 per level,
   for (const e of enemies) {
     const level = Math.max(1, e.levelProfile?.min ?? 1);
     const p = enemyPools(e, settings);
-    const a = e.attributes;
+    // attributeOffset (owner, 2026-10-25) is added after own points, floored at 0; the tier rows here have no gear.
+    const a = Object.fromEntries(Object.entries(e.attributes).map(([id, n]) => [id, Math.max(0, n + (settings.attributeOffset?.[id] || 0))]));
     assert.equal(p.hp, 10 + 10 * a.constitution + 5 * a.strength + 3 * a.dexterity + 2 * a.wisdom + 1 * a.intelligence + 5 * (level - 1), e.id);
-    assert.equal(p.ar, e.attributes.strength, e.id);
-    assert.equal(p.dr, e.attributes.dexterity, e.id);
+    assert.equal(p.ar, a.strength, e.id);
+    assert.equal(p.dr, a.dexterity, e.id);
   }
   // Level feeds in: the same character is stronger at a higher level.
   const wisp = enemies.find(e => e.id === 'graveWisp');
@@ -293,4 +294,13 @@ test('variance outcomes stay unique and bounded even at the schema maximum', asy
   const outcomes = enemyAttributeOutcomes(boss, s);
   assert.equal(new Set(outcomes.map(o => JSON.stringify(o))).size, outcomes.length);
   assert.ok(outcomes.length < 5000, `${outcomes.length} spreads`);
+});
+
+test('attributeOffset lowers STR, CON and DEX by 2 after own points, floors at 0, and spares players', () => {
+  assert.deepEqual(settings.attributeOffset, { strength: -2, constitution: -2, dexterity: -2 });
+  const soldier = enemies.find(e => e.id === 'wanderingSoldier');
+  const flat = { ...soldier, resolvedAttributes: { strength: 3, dexterity: 1, constitution: 2, wisdom: 0, intelligence: 0 } };
+  assert.equal(enemyPools(flat, settings).ar, 1, 'STR 3 - 2');
+  assert.equal(enemyPools(flat, settings).dr, 0, 'DEX 1 - 2 floors at 0');
+  assert.equal(enemyPools({ ...flat, tier: null }, settings).ar, 3, 'a row without a tier (a player) is not offset');
 });
