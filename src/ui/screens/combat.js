@@ -117,7 +117,7 @@ import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEng
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
 import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
-import { dlog, registerConsoleSnapshot } from '../debuglog.js';
+import { dlog, registerConsoleSnapshot, openConsoleLog } from '../debuglog.js';
 import { mountCombatDebugButton } from '../components/combatDebugButton.js';
 import { modalOpen } from '../modalState.js';
 import { mountEquipment } from './equipment.js';
@@ -3659,6 +3659,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           inventory: () => openCombatArmoury('rack'),
           character: () => openCombatArmoury('grid'),
           ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
+          console: () => { openConsoleLog({ opener: menuBtn }); },
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
           ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
