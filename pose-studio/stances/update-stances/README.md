@@ -38,7 +38,7 @@ The core baseline families are guard break, Smash stance, Smash attack sequence,
 
 ## Smash loading stance — options 01–05
 
-![Reaver greatsword Smash loading concepts 01 through 05; full original sheet](greatsword-smash/sheet-a.png)
+![Reaver greatsword Smash loading concepts 01 through 05; full original sheet](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-smash/sheet-a.png)
 
 1. **Deep high-guard squat** — low compression with a planted base.
 2. **Long rear-loaded diagonal** — long stance with a rear-shoulder load.
@@ -48,7 +48,7 @@ The core baseline families are guard break, Smash stance, Smash attack sequence,
 
 ## Smash loading stance — options 06–10
 
-![Reaver greatsword Smash loading concepts 06 through 10; full original sheet](greatsword-smash/sheet-b.png)
+![Reaver greatsword Smash loading concepts 06 through 10; full original sheet](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-smash/sheet-b.png)
 
 6. **High unilateral weight shift** — poised step/stomp; stability as a held stance still needs review.
 7. **Broad lateral shoulder load** — wide stance and a lateral load.
@@ -60,7 +60,7 @@ All ten are selectable concept candidates. The source sheets establish readable 
 
 ## Guard break — options 01–05
 
-![Reaver greatsword guard-break concepts 01 through 05; full original sheet](guard-break/reaver-greatsword-guard-break-sheet-a.png)
+![Reaver greatsword guard-break concepts 01 through 05; full original sheet](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png)
 
 1. **Collapsed sword-point support** — revised from the overly formal original; now a selectable concept candidate.
 2. **Ground drag + thigh catch** — readable loss of balance with the blade dragging.
@@ -72,7 +72,7 @@ Options 01, 02, 03 and 05 remain available for comparison, with option 04 explic
 
 ## Guard break — options 06–10
 
-![Reaver greatsword guard-break concepts 06 through 10; full original sheet](guard-break/reaver-greatsword-guard-break-sheet-b.png)
+![Reaver greatsword guard-break concepts 06 through 10; full original sheet](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png)
 
 6. **Thigh-clutch / chest blow**.
 7. **Recoiled hanging blade**.
@@ -88,9 +88,9 @@ Sweep17, Counter15 and Evade20 keep their original IDs and use the approved repl
 
 ### Sweep follow-up — options 11–20
 
-![Sweep concepts11–15, intact board](greatsword-sweep/sheet-a.png)
+![Sweep concepts11–15, intact board](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png)
 
-![Sweep concepts16–20, intact board](greatsword-sweep/sheet-b.png)
+![Sweep concepts16–20, intact board](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png)
 
 | Option | Actual painting | Status |
 | --- | --- | --- |
@@ -106,16 +106,16 @@ Sweep17, Counter15 and Evade20 keep their original IDs and use the approved repl
 | SW20 | High-arc extended lunge | Concept candidate |
 
 
-![Sweep17 replacement: Two-hand high diagonal side coil](greatsword-sweep/sw17-replacement.png)
+![Sweep17 replacement: Two-hand high diagonal side coil](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-sweep/sw17-replacement.png)
 
 **SW17 — Two-hand high diagonal side coil.** Complete boots/blade and clear two-hand grip. SHA-256 `36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a`.
 
 
 ### Counter follow-up — options 11–20
 
-![Counter concepts 11–15, intact source board](greatsword-counter/sheet-a.png)
+![Counter concepts 11–15, intact source board](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-counter/sheet-a.png)
 
-![Counter concepts 16–20, intact source board](greatsword-counter/sheet-b.png)
+![Counter concepts 16–20, intact source board](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-counter/sheet-b.png)
 
 | Option | Actual painting | Status |
 | --- | --- | --- |
@@ -131,16 +131,16 @@ Sweep17, Counter15 and Evade20 keep their original IDs and use the approved repl
 | CT20 | Outside diagonal cut-ready cover | Concept candidate |
 
 
-![Counter15 replacement: Two-hand low hanging cover](greatsword-counter/ct15-replacement.png)
+![Counter15 replacement: Two-hand low hanging cover](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-counter/ct15-replacement.png)
 
 **CT15 — Two-hand low hanging cover.** Two separated gauntlets on the hilt, planted rear-left figure, low down-right blade cover. SHA-256 `7a332139be986d3642ec72a2f99b51cc075ed8f41e926ea050c7c4188aae66ea`.
 
 
 ### Evade follow-up — options 11–20
 
-![Evade concepts 11–15, intact source board](greatsword-evade/sheet-a.png)
+![Evade concepts 11–15, intact source board](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-evade/sheet-a.png)
 
-![Evade concepts 16–20, intact source board](greatsword-evade/sheet-b.png)
+![Evade concepts 16–20, intact source board](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-evade/sheet-b.png)
 
 | Option | Actual painting | Status |
 | --- | --- | --- |
@@ -158,7 +158,7 @@ Sweep17, Counter15 and Evade20 keep their original IDs and use the approved repl
 The superseded EV20 board figure is not a pronounced shoulder slip. Its fresh replacement is an upright two-hand recovery carry. EV12 is not clearly retreating backward. Concept approval does not assert that exact body scale/gutters were achieved or that these are ready runtime frames.
 
 
-![Evade20 replacement: Upright two-hand recovery carry](greatsword-evade/ev20-replacement.png)
+![Evade20 replacement: Upright two-hand recovery carry](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-evade/ev20-replacement.png)
 
 **EV20 — Upright two-hand recovery carry.** Two readable gauntlets separated by visible hilt leather. SHA-256 `0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243`.
 

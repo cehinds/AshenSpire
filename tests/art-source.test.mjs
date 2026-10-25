@@ -56,7 +56,7 @@ function fixture(cached = [], { trees = false } = {}) {
 }
 
 test('the trees the packs carry, and the pack whose cache holds each at the same path', () => {
-  assert.deepEqual(MOVING_TREES, { 'assets-mobile': 'light', 'assets/fonts': 'common', music: 'common', 'map-detail': 'common' });
+  assert.deepEqual(MOVING_TREES, { 'assets-mobile': 'light', 'assets/fonts': 'common', 'assets-display': 'common', music: 'common', 'map-detail': 'common' });
   assert.equal(HIGH_TREE, 'assets');
   assert.deepEqual(PACK_TREES, { ...MOVING_TREES, assets: 'high' });
   assert.equal(treeOf('music/manifest.json'), 'music');
@@ -209,16 +209,16 @@ test('source measurement preflight derives every owner declaration and rejects m
   const f = displayFixture();
   try {
     assert.equal(sourceDisplayArtInventory(f.root).length, SOURCE_DISPLAY_ART_OWNERS.length);
-    assert.deepEqual(assertSourceDisplayArt(f.root), { checked: SOURCE_DISPLAY_ART_OWNERS.length });
+    assert.deepEqual(assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}), { checked: SOURCE_DISPLAY_ART_OWNERS.length });
     // A new declaration is measured without changing any remembered file count.
     const row = f.catalogs[0], bytes = Buffer.from('new entry');
     row.value.hashes['added.webp'] = createHash('sha256').update(bytes).digest('hex');
     writeFileSync(join(f.root, row.owner), `export const ${row.name} = ${JSON.stringify(row.value)};\n`);
-    assert.throws(() => assertSourceDisplayArt(f.root), /missing\/unreadable.*added.webp/);
+    assert.throws(() => assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}), /missing\/unreadable.*added.webp/);
     writeFileSync(join(f.root, 'assets-display/alternative/added.webp'), bytes);
-    assert.equal(assertSourceDisplayArt(f.root).checked, SOURCE_DISPLAY_ART_OWNERS.length + 1);
+    assert.equal(assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}).checked, SOURCE_DISPLAY_ART_OWNERS.length + 1);
     writeFileSync(join(f.root, row.path), 'corrupt');
-    assert.throws(() => assertSourceDisplayArt(f.root), /hash mismatch/);
+    assert.throws(() => assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}), /hash mismatch/);
   } finally { f.cleanup(); }
 });
 
@@ -233,7 +233,7 @@ test('source measurement preflight fails closed on unrecognized, empty, conflict
     const f = displayFixture();
     try {
       const row = f.catalogs[0]; writeFileSync(join(f.root, row.owner), mutate(row, f));
-      assert.throws(() => assertSourceDisplayArt(f.root));
+      assert.throws(() => assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}));
     } finally { f.cleanup(); }
   }
 });

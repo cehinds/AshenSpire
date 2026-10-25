@@ -1,7 +1,8 @@
 // workbench/core/assets.mjs — the read-only listing of game art for the Asset Gallery.
 //
-// Two places hold art: the tracked trees (assets-mobile/, assets-display/, music/)
-// and the fetched release packs under .art-cache/<tag>/<pack>/ (tools/fetch-art.mjs).
+// The runtime gallery lists only declared art-manifest rows through the game's
+// verified art resolver. Explicit authoring mode previews AI-Art exports;
+// ASHEN_ART_SOURCE=trees is reserved for copied synthetic test sandboxes.
 // A pack's files sit at their game paths: .art-cache/<tag>/high/assets/x.webp is the
 // file the game serves at /assets/x.webp. This module lists those files with size
 // and, where a header says so, pixel dimensions; it never writes, and it resolves a
@@ -9,9 +10,13 @@
 import fs from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import { safePath, refusedPath } from '../lib/safe-path.mjs';
 import { shippable } from '../../tools/assetmime.mjs';
 import { usageNeedles, lineUses } from '../modules/assets/model.mjs';
+import { artPath, packSource, sourceMode } from '../../tools/art-source.mjs';
+import { readPin } from '../../tools/fetch-art.mjs';
+import { authoringRoot, authoringPath } from '../../tools/art-authoring.mjs';
 
 /** The tracked trees the gallery lists, relative to the project root. */
 export const TREE_ROOTS = Object.freeze(['assets-mobile', 'assets-display', 'music']);
@@ -66,10 +71,12 @@ export async function packDirOf(root, tag, id) {
 }
 
 /** Where each pack is cached, and whether it holds files: [{ id, dir, fetched }]. */
-export async function packsOf(root, pin) {
+export async function packsOf(root, pin, {env=process.env}={}) {
   return Promise.all(PACKS.map(async (id) => {
     const dir = pin ? await packDirOf(root, pin.tag, id) : null;
-    const fetched = dir ? existsSync(dir) && (await fs.readdir(dir).catch(() => [])).length > 0 : false;
+    let fetched=false;
+    if(sourceMode(env)==='trees')fetched=dir?existsSync(dir)&&(await fs.readdir(dir).catch(()=>[])).length>0:false;
+    else try{readPin(root);packSource(id,{root,env});fetched=true;}catch{/* unfetched or unverified */}
     return { id, zip: pin?.zips?.[id] || null, dir, fetched };
   }));
 }
@@ -145,10 +152,11 @@ async function walk(base, dir, out, limit) {
  * The art files the gallery lists: [{ path, bytes, from, w, h }]. `from` is 'tree' for a tracked
  * tree or the pack name for a cached one; a path both places hold is listed once, from the tree first.
  */
-export async function listArt(root, { limit = MAX_FILES } = {}) {
+export async function listArt(root, { limit = MAX_FILES, env=process.env } = {}) {
+  if(sourceMode(env)!=='trees')return listDeclaredArt(root,{limit,env});
   const real = realpathSync(root);
   const pin = await pinOf(real);
-  const packs = await packsOf(real, pin);
+  const packs = await packsOf(real, pin,{env});
   const sources = [
     ...TREE_ROOTS.map((d) => ({ from: 'tree', base: path.join(real, d), dir: path.join(real, d) })),
     ...packs.filter((p) => p.fetched).map((p) => ({ from: p.id, base: p.dir, dir: p.dir })),
@@ -186,7 +194,8 @@ export async function listArt(root, { limit = MAX_FILES } = {}) {
  * The absolute file behind a game path, or null. A tracked-tree path is read from its tree; any other
  * is read from the first fetched pack that holds it. Anything refused, linked or missing is null.
  */
-export async function resolveArt(root, gamePath) {
+export async function resolveArt(root, gamePath, {env=process.env}={}) {
+  if(sourceMode(env)!=='trees')return resolveDeclaredArt(root,gamePath,{env});
   if (refusedPath(gamePath) || !shippable(path.extname(gamePath).toLowerCase())) return null;
   const real = realpathSync(root);
   const top = gamePath.split('/')[0];
@@ -194,7 +203,7 @@ export async function resolveArt(root, gamePath) {
   // (its paths start with the tree's name), and each fetched pack's folder for the cache.
   const bases = [];
   if (TREE_ROOTS.includes(top)) bases.push(real);
-  for (const p of await packsOf(real, await pinOf(real))) if (p.fetched) bases.push(p.dir);
+  for (const p of await packsOf(real, await pinOf(real),{env})) if (p.fetched) bases.push(p.dir);
   for (const base of bases) {
     try {
       const file = await safePath(realpathSync(base), gamePath);
@@ -202,6 +211,72 @@ export async function resolveArt(root, gamePath) {
     } catch { /* not in this place: the next one */ }
   }
   return null;
+}
+
+async function declaredRows(root) {
+  try {
+    readPin(root);
+    const manifest=JSON.parse(await fs.readFile(path.join(root,'art-manifest.json'),'utf8'));
+    return Object.values(manifest.assets||{}).flatMap(entry=>PACKS.flatMap(pack=>entry[pack]?[{pack,...entry[pack]}]:[]));
+  }catch{return [];}
+}
+
+async function sourceFile(root,row,env) {
+  if(refusedPath(row.path)||!shippable(path.extname(row.path).toLowerCase()))return null;
+  try {
+    const authoring=authoringRoot({root,env,required:false});
+    if(authoring&&!/^(assets|assets-mobile|assets-display|music|map-detail)\//.test(row.path))return null;
+    const candidate=authoring?authoringPath(row.path,{root,assetRoot:authoring,env}):artPath(row.path,{root,env});
+    // No symbolic links, including beneath an explicitly selected source root.
+    const base=authoring||packSource(row.pack,{root,env}).dir||root;
+    const file=await safePath(realpathSync(base),path.relative(base,candidate).split(path.sep).join('/'));
+    if(!authoring&&packSource(row.pack,{root,env}).from==='trees'&&createHash('sha256').update(await fs.readFile(file)).digest('hex')!==row.sha256)return null;
+    return file;
+  }catch{return null;}
+}
+
+async function listDeclaredArt(root,{limit,env}) {
+  const real=realpathSync(root),pin=await pinOf(real),packs=await packsOf(real,pin,{env});
+  const seen=new Map();let truncated=false;
+  // In authoring mode, enumerate mutable exports including unpublished IDs.
+  // Executable editor code and retained metadata do not come from this tree.
+  const authoring=authoringRoot({root:real,env,required:false});
+  if(authoring){
+    for(const tree of ['assets','assets-mobile','assets-display','music']){
+      const dir=authoringPath(tree+'/',{root:real,assetRoot:authoring,env}),found=[];
+      await walk(dir,dir,found,limit);
+      for(const f of found){
+        const gamePath=tree+'/'+f.rel;
+        if(!shippable(path.extname(gamePath).toLowerCase()))continue;
+        if(seen.size>=limit){truncated=true;break;}
+        const file=await sourceFile(real,{path:gamePath},env);if(!file)continue;
+        const stat=await fs.stat(file);seen.set(gamePath,{path:gamePath,bytes:stat.size,from:'tree',file,ext:path.extname(file).toLowerCase(),stat});
+      }
+    }
+  }else{
+    for(const row of await declaredRows(real)){
+      if(seen.has(row.path))continue;
+      const file=await sourceFile(real,row,env);if(!file)continue;
+      let stat;try{stat=await fs.stat(file);}catch{continue;}
+      if(!stat.isFile()||stat.size!==row.bytes)continue;
+      if(seen.size>=limit){truncated=true;break;}
+      seen.set(row.path,{path:row.path,bytes:stat.size,from:packSource(row.pack,{root:real,env}).from==='trees'?'tree':row.pack,file,ext:path.extname(file).toLowerCase(),stat});
+    }
+  }
+  const files=await mapLimit([...seen.values()],HEADER_CONCURRENCY,async({path:p,bytes,from,file,ext,stat})=>{
+    const dims=await headerOf(file,ext,stat);return {path:p,bytes,from,...(dims?{w:dims.w,h:dims.h}:{})};
+  });
+  files.sort((a,b)=>a.path.localeCompare(b.path));
+  return {tag:pin?.tag||null,packs:packs.map(({id,zip,fetched})=>({id,zip,fetched})),files,truncated};
+}
+
+async function resolveDeclaredArt(root,gamePath,{env}) {
+  if(refusedPath(gamePath)||!shippable(path.extname(gamePath).toLowerCase()))return null;
+  const real=realpathSync(root),authoring=authoringRoot({root:real,env,required:false});
+  const row=authoring?{path:gamePath}:(await declaredRows(real)).find(row=>row.path===gamePath);
+  if(!row)return null;
+  const file=await sourceFile(real,row,env);if(!file)return null;
+  try{const stat=await fs.stat(file);return stat.isFile()&&(authoring||stat.size===row.bytes)?file:null;}catch{return null;}
 }
 
 /** The folders a usage search reads, and the text kinds it reads in them. */

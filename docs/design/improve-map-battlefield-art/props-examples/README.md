@@ -1,35 +1,35 @@
 # Individual map prop wireframes
 
-24 original technical wireframe placeholders, each supplied as a **512 × 512 transparent PNG** and an **editable SVG**. They reuse the vector diagrams from the [prop concept sheet](../04-map-prop-ideas.svg). These files support layout, registration and content discussions; painted production art and runtime registration remain separate work.
+24 original technical wireframe placeholders, each supplied as a **512 × 512 transparent PNG** and an **editable SVG**. They reuse the vector diagrams from the [prop concept sheet](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/04-map-prop-ideas.svg). These files support layout, registration and content discussions; painted production art and runtime registration remain separate work.
 
 [manifest.json](manifest.json) lists every file, stable ID, source icon ID, name, descriptive tags, category, ground anchor and suggested footprint. All entries explicitly set `placeholder: true`, `status: "wireframe-placeholder"` and `pngAssetId: null`. File paths are relative to the manifest. The draft [discovery example](../map-discovery.example.json) keeps its production asset references unfilled.
 
 | Stable ID | PNG | Editable SVG |
 | --- | --- | --- |
-| `bridge` | [PNG](bridge.png) | [SVG](bridge.svg) |
-| `path` | [PNG](path.png) | [SVG](path.svg) |
-| `tunnel` | [PNG](tunnel.png) | [SVG](tunnel.svg) |
-| `cave` | [PNG](cave.png) | [SVG](cave.svg) |
-| `ferry` | [PNG](ferry.png) | [SVG](ferry.svg) |
-| `ford` | [PNG](ford.png) | [SVG](ford.svg) |
-| `portal` | [PNG](portal.png) | [SVG](portal.svg) |
-| `boat` | [PNG](boat.png) | [SVG](boat.svg) |
-| `city` | [PNG](city.png) | [SVG](city.svg) |
-| `town` | [PNG](town.png) | [SVG](town.svg) |
-| `village` | [PNG](village.png) | [SVG](village.svg) |
-| `ruins` | [PNG](ruins.png) | [SVG](ruins.svg) |
-| `dungeon` | [PNG](dungeon.png) | [SVG](dungeon.svg) |
-| `treasure` | [PNG](treasure.png) | [SVG](treasure.svg) |
-| `enemy-camp` | [PNG](enemy-camp.png) | [SVG](enemy-camp.svg) |
-| `rest-camp` | [PNG](rest-camp.png) | [SVG](rest-camp.svg) |
-| `inn` | [PNG](inn.png) | [SVG](inn.svg) |
-| `trainer` | [PNG](trainer.png) | [SVG](trainer.svg) |
-| `merchant` | [PNG](merchant.png) | [SVG](merchant.svg) |
-| `shrine` | [PNG](shrine.png) | [SVG](shrine.svg) |
-| `watchtower` | [PNG](watchtower.png) | [SVG](watchtower.svg) |
-| `cartographer` | [PNG](cartographer.png) | [SVG](cartographer.svg) |
-| `mine` | [PNG](mine.png) | [SVG](mine.svg) |
-| `fishing` | [PNG](fishing.png) | [SVG](fishing.svg) |
+| `bridge` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/bridge.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/bridge.svg) |
+| `path` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/path.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/path.svg) |
+| `tunnel` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/tunnel.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/tunnel.svg) |
+| `cave` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/cave.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/cave.svg) |
+| `ferry` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/ferry.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/ferry.svg) |
+| `ford` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/ford.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/ford.svg) |
+| `portal` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/portal.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/portal.svg) |
+| `boat` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/boat.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/boat.svg) |
+| `city` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/city.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/city.svg) |
+| `town` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/town.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/town.svg) |
+| `village` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/village.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/village.svg) |
+| `ruins` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/ruins.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/ruins.svg) |
+| `dungeon` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/dungeon.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/dungeon.svg) |
+| `treasure` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/treasure.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/treasure.svg) |
+| `enemy-camp` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/enemy-camp.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/enemy-camp.svg) |
+| `rest-camp` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/rest-camp.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/rest-camp.svg) |
+| `inn` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/inn.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/inn.svg) |
+| `trainer` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/trainer.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/trainer.svg) |
+| `merchant` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/merchant.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/merchant.svg) |
+| `shrine` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/shrine.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/shrine.svg) |
+| `watchtower` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/watchtower.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/watchtower.svg) |
+| `cartographer` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/cartographer.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/cartographer.svg) |
+| `mine` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/mine.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/mine.svg) |
+| `fishing` | [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/fishing.png) | [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/props-examples/fishing.svg) |
 
 ## Placement metadata
 

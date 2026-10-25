@@ -1,6 +1,6 @@
 # Mineral component proposals
 
-Open [the gallery and placement editor](index.html), or download [the PNG/JSON/viewer bundle](minerals-png-json.zip).
+Open [the gallery and placement editor](index.html), or download [the PNG/JSON/viewer bundle](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/minerals/minerals-png-json.zip).
 
 Ten variations each: **A shard, B pebble, C stone, D crystal, E diamond**. This is a separate `minerals/` namespace; existing weapon A–Z codes are unchanged. `minerals/B37` means pebble object 3 with effect pair 7. Zero is a real variant. The 50 initial previews use matched digits (A00, A11 … E99); the editor allows all 500 combinations.
 

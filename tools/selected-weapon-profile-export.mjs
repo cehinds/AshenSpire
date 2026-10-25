@@ -1,18 +1,21 @@
+import {authoringRoot,authoringPath} from './art-authoring.mjs';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = fileURLToPath(new URL('../', import.meta.url));
+const artRoot=authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
+const file=rel=>rel.startsWith('src/')?resolve(root,rel):authoringPath(rel,{root,assetRoot:artRoot});
 const manifestPath = 'pose-studio/stances/update-stances/selections.json';
-const manifest = JSON.parse(readFileSync(root + manifestPath, 'utf8'));
+const manifest = JSON.parse(readFileSync(file(manifestPath), 'utf8'));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const sourceBytes = new Map();
 for (const sheet of manifest.sourceSheets) {
-  const bytes = readFileSync(root + sheet.path);
+  const bytes = readFileSync(file(sheet.path));
   if (sheet.sha256 && sha(bytes) !== sheet.sha256) throw new Error(`Source changed: ${sheet.path}`);
   sourceBytes.set(sheet.path, bytes);
 }
@@ -155,7 +158,7 @@ try {
     });
   }, { inputs, manifest });
 
-  const catalogPath = root + 'src/content/alternativeSelectedStances.js';
+  const catalogPath = file('src/content/alternativeSelectedStances.js');
   const match = readFileSync(catalogPath, 'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
   if (!match) throw new Error('Unable to parse alternativeSelectedStances.js');
   const catalog = JSON.parse(match[1]);
@@ -178,9 +181,9 @@ try {
     const fullBytes = Buffer.from(item.full, 'base64');
     const mobileBytes = Buffer.from(item.mobile, 'base64');
     const fullHash = sha(fullBytes), mobileHash = sha(mobileBytes);
-    mkdirSync(dirname(root + path), { recursive: true });
-    writeFileSync(root + path, fullBytes);
-    writeFileSync(root + lite, mobileBytes);
+    mkdirSync(dirname(file(path)), { recursive: true });
+    writeFileSync(file(path), fullBytes);
+    writeFileSync(file(lite), mobileBytes);
     const file = filename, mobileFile = `${manifest.id}-${choice.role}-mobile.webp`;
     catalog.hashes[file] = fullHash;
     catalog.hashes[mobileFile] = mobileHash;
@@ -202,7 +205,7 @@ try {
   writeFileSync(catalogPath, '// Owner-selected held poses and weapon-specific pose profiles, exported from unchanged comparison artwork.\n' +
     `export const alternativeSelectedStances = ${JSON.stringify(catalog)};\n`);
 
-  mkdirSync(root + 'pose-studio/stances/selected-projects', { recursive: true });
+  mkdirSync(file('pose-studio/stances/selected-projects'), { recursive: true });
   const rig = { schemaVersion: 1, id: `alternative.selected-stances.${manifest.id}`,
     name: 'Reaver · greatsword pilot selections', canvas: { width: 512, height: 512 },
     assets: {}, poses: {}, animations: {}, queues: {} };
@@ -219,7 +222,7 @@ try {
   }
   rig.queues.review = { id: 'review', name: 'Selected weapon profile',
     items: Object.keys(frames).map(role => ({ id: role, animationId: role, repeats: 1, pause: 600 })) };
-  writeFileSync(root + `pose-studio/stances/selected-projects/${manifest.id}.rig.json`, JSON.stringify(rig, null, 2) + '\n');
+  writeFileSync(file(`pose-studio/stances/selected-projects/${manifest.id}.rig.json`), JSON.stringify(rig, null, 2) + '\n');
   console.log(`Exported ${exported.length} selected ${manifest.weaponFamily} figures at common scale ${exported[0].scale}.`);
   for (const item of exported) console.log(`  ${item.choice.role}: excluded ${item.excludedStrong} disconnected alpha>32 pixels inside crop.`);
 } finally {

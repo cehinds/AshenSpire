@@ -12,7 +12,9 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / 'pose-studio/renewal'
+from art_authoring import authoring_root, art_path
+ART = authoring_root(ROOT)
+BASE = ART / 'pose-studio/renewal'
 OUT = BASE / 'cards'
 spec = importlib.util.spec_from_file_location('base_actions', ROOT / 'tools/alternative-base-actions-build.py')
 base = importlib.util.module_from_spec(spec)
@@ -163,7 +165,7 @@ def projects(actor, frames, seqs):
                 'rotation': 0, 'layer': 'front', 'travel': action.startswith('ranged'), 'muted': False}]
             for i in range(1, 7):
                 key = f'assets/combat-effects/{effect}{i}.webp'
-                project['assets'][key] = uri(ROOT/key.replace('assets/', 'assets-mobile/', 1))
+                project['assets'][key] = uri(art_path(ROOT, key.replace('assets/', 'assets-mobile/', 1), ART))
         write_json(folder/(action+'.pose.json'), project, True)
     rig['queues']['review'] = {'id': 'review', 'name': 'Card action review', 'items': [
         {'id': 'queue-'+a, 'animationId': a, 'repeats': 1, 'pause': 500} for a in ACTIONS]}
@@ -171,7 +173,7 @@ def projects(actor, frames, seqs):
 
 
 def build(diagnostic=False, only=None, export_only=False):
-    (ROOT/'assets-display/alternative').mkdir(parents=True, exist_ok=True)
+    art_path(ROOT, 'assets-display/alternative', ART).mkdir(parents=True, exist_ok=True)
     families, runtime, hashes = {}, {}, {}
     for actor, weapon in CLASSES.items():
         if export_only:
@@ -209,11 +211,11 @@ def build(diagnostic=False, only=None, export_only=False):
                 # Both runtime paths use the reviewed 256px export. Bounds and
                 # anchors remain in the shared 512px choreography canvas.
                 data = (BASE/frame['lite']).read_bytes()
-                (ROOT/'assets-display/alternative'/filename).write_bytes(data)
+                (art_path(ROOT, 'assets-display/alternative', ART)/filename).write_bytes(data)
                 hashes[filename] = hashlib.sha256(data).hexdigest()
                 exported[key] = 'assets-display/alternative/'+filename
             runtime[actor]['frames'][name] = exported
-        runtime[actor]['bytes'] = {tier: sum((ROOT / frame[key]).stat().st_size for frame in runtime[actor]['frames'].values())
+        runtime[actor]['bytes'] = {tier: sum(art_path(ROOT, frame[key], ART).stat().st_size for frame in runtime[actor]['frames'].values())
                                   for tier, key in [('webp', 'path'), ('lite', 'lite')]}
         print(actor, len(frames), 'poses', manifest['bytes'])
     write_json(OUT/'registry.json', {'schemaVersion': 1, 'selection': 'card-profile', 'equipmentIndependent': True,

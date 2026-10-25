@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "library": "classic",
-  "pinnedRelease": "hd-assets-v23",
-  "note": "Canonical packed IDs retain their existing byte home; this index groups them without duplication.",
+  "pinnedRelease": "ashenspire-hd-assets-v24",
+  "note": "Canonical packed IDs resolve through pinned release packs; this index groups them without duplication.",
   "assets": {
     "assets/animations/bow/herald-emberhabit/BOW-01.webp": {
       "source": "pinned-art-pack",

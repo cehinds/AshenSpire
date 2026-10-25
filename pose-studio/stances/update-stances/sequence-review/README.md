@@ -12,23 +12,23 @@ Each cell names its origin and returns to that exact origin. The grids add origi
 
 Guard / Parry / Resisted — primary interior **D → V → G → H → C → D**:
 
-![Shared defense from all six origins](renders/all-origins-guard.gif)
+![Shared defense from all six origins](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/all-origins-guard.gif)
 
 Attack — **origin → AT1 → AT2 → AT3 → AT4 → AT5 → AT6 → origin**:
 
-![Attack from all six origins](renders/all-origins-attack.gif)
+![Attack from all six origins](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/all-origins-attack.gif)
 
 Evade — **origin → EV1 → EV2 → EV3 → origin**:
 
-![Evade from all six origins](renders/all-origins-evade.gif)
+![Evade from all six origins](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/all-origins-evade.gif)
 
 Guard-tag Counter — **origin → D → V → G → H → C → D → S → AT1 → AT2 → AT3 → AT4 → AT5 → AT6 → origin**:
 
-![Guard-tag Counter from all six origins](renders/all-origins-counter-guard.gif)
+![Guard-tag Counter from all six origins](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/all-origins-counter-guard.gif)
 
 Evasion-tag Counter — **origin → EV1 → EV2 → EV3 → AT1 → AT2 → AT3 → AT4 → AT5 → AT6 → origin**:
 
-![Evasion-tag Counter from all six origins](renders/all-origins-counter-evasion.gif)
+![Evasion-tag Counter from all six origins](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/all-origins-counter-evasion.gif)
 
 Evasion-tag Counter plays one Evade sequence, then attacks without an intermediate stance return or additional S load. The six-source attack begins with AT1 (the same painting as S), which remains a distinct attack step. Every slot in this route holds one350ms review unit.
 
@@ -42,19 +42,19 @@ Guard, Parry and Resisted share one interior order; they are not separately conf
 | A · Earlier counter-start alternative | 1 C×3 → 2 V×3 → 3 D×2 → 4 H×2 → 5 G×1 → 6 C×3 |
 | B · High-parry-first alternative | 1 C×3 → 2 V×3 → 3 H×2 → 4 D×2 → 5 G×1 → 6 C×3 |
 
-![P defense](renders/p-guard.gif)
+![P defense](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/p-guard.gif)
 
-![P numbered storyboard](renders/p-guard-storyboard.png)
+![P numbered storyboard](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/p-guard-storyboard.png)
 
 The Guard-tag Counter extension preserves the chosen six-slot interior, then adds **S → AT1…AT6 → C**. The canonical Counter preview also starts in C.
 
-![P Counter extension](renders/p-counter.gif)
+![P Counter extension](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/p-counter.gif)
 
-[Counter storyboard](renders/p-counter-storyboard.png) · [A defense GIF](renders/a-guard.gif) · [A Counter GIF](renders/a-counter.gif) · [B defense GIF](renders/b-guard.gif) · [B Counter GIF](renders/b-counter.gif)
+[Counter storyboard](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/p-counter-storyboard.png) · [A defense GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/a-guard.gif) · [A Counter GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/a-counter.gif) · [B defense GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/b-guard.gif) · [B Counter GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/b-counter.gif)
 
-[Evasion-tag Counter GIF](renders/p-counter-evasion.gif) · [Evasion-tag Counter storyboard](renders/p-counter-evasion-storyboard.png)
+[Evasion-tag Counter GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/p-counter-evasion.gif) · [Evasion-tag Counter storyboard](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/p-counter-evasion-storyboard.png)
 
-[Standalone Attack GIF](renders/attack.gif) · [Standalone Smash GIF](renders/smash.gif) · [Standalone Evade GIF](renders/evade.gif)
+[Standalone Attack GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/attack.gif) · [Standalone Smash GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/smash.gif) · [Standalone Evade GIF](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/sequence-review/renders/evade.gif)
 
 ## Exact source choices
 

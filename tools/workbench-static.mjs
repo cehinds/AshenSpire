@@ -31,8 +31,11 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createWorkbench } from '../workbench/server.mjs';
+import { artDir } from './art-source.mjs';
+import { authoringRoot, compositeSourcePath } from './art-authoring.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ART_CHECKOUT = authoringRoot({root:REPO,required:false});
 const DESIGN_PREFIX = 'docs/design/';
 const UI_NAMES = ['index.html', 'app.mjs', 'workbench.css', 'shared', 'ui', 'modules', 'lib'];
 const UI_REWRITE = /(["'`(])\/(api|shared|ui|modules|lib|static|export|asset-file|app\.mjs|workbench\.css)\b/g;
@@ -130,7 +133,7 @@ async function treeBytes(dir) {
 // a path that contains another is removed whole. A root path ('/') is never a needle.
 function machinePathNeedles(stateDir) {
   const found = new Set();
-  for (const p of [REPO, stateDir, os.homedir()]) {
+  for (const p of [REPO, ART_CHECKOUT, stateDir, os.homedir()]) {
     if (!p || p === path.parse(p).root) continue;
     for (const form of [p, p.replace(/\\/g, '/')]) found.add(JSON.stringify(form).slice(1, -1));
   }
@@ -148,6 +151,10 @@ async function buildSnapshot(out, { base, previews }) {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wbs-'));
   const needles = machinePathNeedles(stateDir);
   let app = null;
+  // A published gallery always describes the pinned release, even when the
+  // caller has an unpublished authoring checkout selected in its terminal.
+  const priorAuthoring=process.env.ASHEN_ART_CHECKOUT;
+  delete process.env.ASHEN_ART_CHECKOUT;
   try {
     app = await createWorkbench({ root: REPO, port: 0, children: false, stateDir });
     const get = async (p) => {
@@ -188,6 +195,7 @@ async function buildSnapshot(out, { base, previews }) {
     return read;
   } finally {
     if (app) await app.close();
+    if(priorAuthoring!==undefined)process.env.ASHEN_ART_CHECKOUT=priorAuthoring;
     await fs.rm(stateDir, { recursive: true, force: true });
   }
 }
@@ -247,7 +255,7 @@ async function main() {
   }
   // Scoped authoring review: nested module and its feature-local draft sources.
   for (const dir of ['pose-studio/enemy-back-proposals', 'art/enemy-back-proposals', 'art/enemy-back-motion']) {
-    const source = path.join(REPO, dir);
+    const source = dir.startsWith('art/') ? compositeSourcePath(dir,{root:REPO,assetRoot:ART_CHECKOUT}) : path.join(REPO, dir);
     if (existsSync(source)) await copyTree(source, path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
     if (dir === 'pose-studio/enemy-back-proposals' && existsSync(path.join(game, dir, 'index.html'))) {
       const page = path.join(game, dir, 'index.html');
@@ -255,14 +263,27 @@ async function main() {
     }
   }
   if (art) {
-    const light = path.join(REPO, 'assets-mobile');
-    if (existsSync(light)) await copyTree(light, path.join(game, 'assets'));
+    let light;
+    try {light=artDir('assets-mobile',{root:REPO}).dir;}catch{light=null;}
+    if (light && existsSync(light)) await copyTree(light, path.join(game, 'assets'));
     else warnings.push('assets-mobile/ is missing: game/assets/ was not written');
     // The Asset Gallery loads its display art from ${base}asset-file/<repo path>. The light art is
     // not copied again: the gallery reads it from game/assets/ (ASHEN_ASSET_URL in static-api.mjs).
-    const display = path.join(REPO, 'assets-display');
-    if (existsSync(display)) await copyTree(display, path.join(out, 'asset-file', 'assets-display'));
-    else warnings.push('assets-display/ is missing: asset-file/assets-display/ was not written');
+    let display;
+    try {display=artDir('assets-display',{root:REPO}).dir;}catch{display=null;}
+    if (display && existsSync(display)) await copyTree(display, path.join(out, 'asset-file', 'assets-display'));
+    else warnings.push('pinned common assets-display/ is missing: fetch the common art pack before publishing the gallery');
+    // Only the retained metadata comes from the game tree. Do not copy stale
+    // local image originals over the verified common pack.
+    const metadata=path.join(REPO,'assets-display');
+    async function copyMetadata(dir){
+      for(const entry of await fs.readdir(dir,{withFileTypes:true})){
+        const source=path.join(dir,entry.name);
+        if(entry.isDirectory())await copyMetadata(source);
+        else if(entry.isFile()&&/\.(json|md)$/.test(entry.name))await copyTree(source,path.join(out,'asset-file','assets-display',path.relative(metadata,source)));
+      }
+    }
+    if(existsSync(metadata))await copyMetadata(metadata);
   }
 
   const bytes = await treeBytes(out);
