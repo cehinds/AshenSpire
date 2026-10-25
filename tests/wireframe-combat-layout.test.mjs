@@ -22,9 +22,9 @@ test('compact phones reserve a tool row and distinct smaller resting card slots'
   }
 });
 
-test('tall hosts receive the approved 6/53/27/14 bands', () => {
+test('tall hosts receive the approved 6/61/20/13 bands', () => {
   const bands = allocateCombatBands({ height: 2000 });
-  assert.ok(near(bands.hud, 120) && near(bands.battlefield, 1060) && near(bands.hand, 540) && near(bands.footer, 280));
+  assert.ok(near(bands.hud, 120) && near(bands.battlefield, 1220) && near(bands.hand, 400) && near(bands.footer, 260));
   assert.equal(bands.supported, true);
 });
 
@@ -32,7 +32,7 @@ test('hand and footer keep physical minimums; the battlefield absorbs them', () 
   for (const [height, zoom] of [[860, 1], [667, 1], [780, 1], [667, 1.5], [860, 0.67]]) {
     const local = height / zoom;
     const bands = allocateCombatBands({ height: local, zoom, rem: 16 / zoom });
-    assert.ok(bands.hand * zoom >= 208 - 1e-9, `hand at ${height}@${zoom}`);
+    assert.ok(bands.hand * zoom >= 184 - 1e-9, `hand at ${height}@${zoom}`);
     assert.ok(bands.footer * zoom >= 56 - 1e-9, `footer at ${height}@${zoom}`);
     assert.ok(near(bands.hud + bands.battlefield + bands.hand + bands.footer, local));
   }
@@ -43,7 +43,7 @@ test('compact landscape is reported, not silently squeezed', () => {
   // Without a width, the minimums leave too little battlefield for one readable actor.
   const bands = allocateCombatBands({ height: 390 });
   assert.equal(bands.supported, false);
-  assert.ok(bands.hand >= 208 && bands.footer >= 56);
+  assert.ok(bands.hand >= 184 && bands.footer >= 56);
 });
 
 test('compact landscape folds its footer into rails before reporting failure', () => {

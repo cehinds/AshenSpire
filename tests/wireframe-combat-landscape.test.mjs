@@ -48,8 +48,8 @@ test('844x390 matches the measured reference numbers', () => {
   const bands = plan(844, 390, 0.62);
   const z = 0.62;
   assert.ok(near(bands.hud * z, 23.4));
-  assert.ok(near(bands.battlefield * z, 158.6));
-  assert.ok(near(bands.hand * z, 208));
+  assert.ok(near(bands.battlefield * z, 179));
+  assert.ok(near(bands.hand * z, 187.6));
   assert.ok(near(bands.rails.diameter * z, 53.2) && near(bands.rails.pileWidth * z, 64));
 });
 

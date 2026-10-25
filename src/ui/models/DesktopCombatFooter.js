@@ -5,7 +5,7 @@ export function desktopFooterEnabled({ formFactor, appearance, layout }) {
   return ['desktop', 'widescreen'].includes(formFactor) && appearance === 'alternative' && layout === 'formation';
 }
 export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
-  const scale = Math.min(config.maximumScale, height * zoom / config.referenceHeightPx);
+  const scale = Math.max(config.minimumScale, Math.min(config.maximumScale, height * zoom / config.scaleHeightPx));
   const unit = scale / zoom;
   const bottom = height - config.bottomInsetPx * unit;
   const corner = config.cornerInsetPx * unit;

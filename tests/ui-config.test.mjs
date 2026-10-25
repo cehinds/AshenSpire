@@ -63,7 +63,7 @@ test('the W4 parent and combat scene carry the contract values', () => {
     sizing: { minimums: { footerPx: 56, targetPx: 44 }, compactBelowPx: 768 },
     layering: { plate: { bleedFraction: 0.02 } },
   });
-  assert.deepEqual(w4a.sizing.bands, { hud: 6, scene: 53, context: 27, footer: 14 });
+  assert.deepEqual(w4a.sizing.bands, { hud: 6, scene: 61, context: 20, footer: 13 });
   assert.equal(w4a.sizing.floorPercent, 80);
   assert.deepEqual(w4a.layering.layers.map((l) => [l.id, l.z, l.enabled]), [
     ['skyline', 1, true], ['floor', 2, true], ['actors', 3, true], ['targets', 4, true],

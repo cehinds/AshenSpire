@@ -3,12 +3,14 @@
     "meterRowRem": 0.85
   },
   "sizing": {
-    "bands": { "hud": 6, "scene": 53, "context": 27, "footer": 14 },
+    "bands": { "hud": 6, "scene": 61, "context": 20, "footer": 13 },
     "floorPercent": 80,
     "desktopHeader": { "heightPx": 56 },
     "desktopFooter": {
       "referenceHeightPx": 900,
-      "maximumScale": 1.08,
+      "scaleHeightPx": 1080,
+      "minimumScale": 0.78,
+      "maximumScale": 0.98,
       "cardWidthPx": 184,
       "cardHeightPx": 276,
       "cardStepPx": 180,
@@ -18,7 +20,7 @@
       "handBottomPx": 72,
       "backgroundTopPx": 700,
       "backgroundFadeHeightPx": 90,
-      "cornerInsetPx": 20,
+      "cornerInsetPx": 24,
       "cornerWidthPx": 201,
       "groupHeightPx": 108,
       "toolsBottomPx": 144,
@@ -50,7 +52,7 @@
       "cardSideGutterPx": 6
     },
     "hand": {
-      "minimumHeightPx": 208,
+      "minimumHeightPx": 184,
       "minWidthRem": 5,
       "maxWidthRem": 11.5,
       "minCapacity": 5,
