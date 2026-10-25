@@ -10,7 +10,7 @@ import { t } from '../strings.js';
 export function gameProfileRestModel(registries, run, visit) {
   const rules = gameContent(run, 'rests');
   const attempt = (service, payload = {}) => {
-    if (restServiceSpent(run, visit, service)) return { available: false, reason: t('gameProfile.rest.spent') };
+    if (restServiceSpent(run, visit, service)) return { available: false, reason: t('gameProfile.rest.spentShort') };
     try { return { available: true, reason: '', preview: previewGameProfileRest(registries, run, service, payload).run }; }
     catch (error) { return { available: false, reason: error.message }; }
   };

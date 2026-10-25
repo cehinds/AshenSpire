@@ -69,6 +69,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     eyebrow: '', title: t('rest.title'), status: t('rest.status.available', { available: availability.available, total: availability.total }),
     choices, consequences, foot: modalFooter({ primary: leave, size: 'fill', className: 'choice-foot' }),
   });
+  screen.classList.add('core-rest'); // scopes the compact Core rest CSS away from the full-game rest screen
   const invoke = action => {
     try { action(); }
     catch (error) { screen.inert = false; status.textContent = error.message; }

@@ -690,21 +690,21 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }
 
 /* Rest (Core): compact so the title, restore line, every open option and Continue fit a phone without scrolling.
-   One column at every width; the restore line sits above the options. Spent or unavailable options become one dim line. */
-.rest-door .choice-body-columns { grid-template-columns: minmax(0, 1fr); row-gap: .6rem; }
-.rest-door .rest-consequences { order: -1; gap: .2rem; }
-.rest-door .rest-consequences .as-flavor { margin: 0; }
-.rest-door .modal-head { padding-block: .6rem; }
-.rest-door .rest-choices .shrine-option-list { gap: .6rem; }
-.rest-door .rest-choices .shrine-option-list > .class-pick { height: auto; min-height: 0; padding: .7rem 1rem; gap: 1rem; }
-.rest-door .rest-choices .class-pick > .glyph { flex-basis: 2.4rem; font-size: 1.8rem; }
-.rest-door .rest-choices .class-pick h3 { font-size: 1.45rem; }
-.rest-door .rest-choices .class-pick p { font-size: 1.2rem; line-height: 1.3; -webkit-line-clamp: 1; }
-.rest-door .rest-choices .class-pick.rest-option-off { padding-block: .4rem; opacity: .5; }
-.rest-door .rest-choices .class-pick.rest-option-off > .glyph { display: none; }
-.rest-door .rest-choices .class-pick.rest-option-off > .cp-body { flex-direction: row; align-items: baseline; gap: .8rem; }
-.rest-door .rest-choices .class-pick.rest-option-off h3 { font-size: 1.2rem; flex: 0 0 auto; }
-.rest-door .rest-choices .class-pick.rest-option-off p { font-size: 1.1rem; }
-.rest-door .rest-choices .class-pick.rest-option-off p { display: block; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rest-door .rest-choices .class-pick.rest-option-off { display: flex; }
-.rest-door .rest-choices .class-pick.rest-option-off > .cp-body { flex: 1 1 auto; width: 100%; }
+   Scoped to the Core screen with a zero-specificity :where() hook, so the full-game rest screen is untouched. One column at every width; the restore line sits above the options. Spent or unavailable options become one dim line. */
+:where(.core-rest) .rest-door .choice-body-columns { grid-template-columns: minmax(0, 1fr); row-gap: .6rem; }
+:where(.core-rest) .rest-door .rest-consequences { order: -1; gap: .2rem; }
+:where(.core-rest) .rest-door .rest-consequences .as-flavor { margin: 0; }
+:where(.core-rest) .rest-door .modal-head { padding-block: .6rem; }
+:where(.core-rest) .rest-door .rest-choices .shrine-option-list { gap: .6rem; }
+:where(.core-rest) .rest-door .rest-choices .shrine-option-list > .class-pick { height: auto; min-height: 0; padding: .7rem 1rem; gap: 1rem; }
+:where(.core-rest) .rest-door .rest-choices .class-pick > .glyph { flex-basis: 2.4rem; font-size: 1.8rem; }
+:where(.core-rest) .rest-door .rest-choices .class-pick h3 { font-size: 1.45rem; }
+:where(.core-rest) .rest-door .rest-choices .class-pick p { font-size: 1.2rem; line-height: 1.3; -webkit-line-clamp: 1; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off { padding-block: .4rem; opacity: .5; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off > .glyph { display: none; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off > .cp-body { flex-direction: row; align-items: baseline; gap: .8rem; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off h3 { font-size: 1.2rem; flex: 0 0 auto; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off p { font-size: 1.1rem; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off p { display: block; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off { display: flex; }
+:where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off > .cp-body { flex: 1 1 auto; width: 100%; }
