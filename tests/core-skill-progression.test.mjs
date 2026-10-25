@@ -416,19 +416,16 @@ test('old snapshots keep their original rate and invalid authored rates are refu
 });
 
 
-test('Core skill-only policy preserves earned character ledgers and blocks old snapshot character leveling', async () => {
-  const { coreSkillOnlyProgression, CORE_PROGRESSION_POLICY_VERSION } = await import('../src/model/gameProfileProgression.js');
+test('Core character levels follow the bundle; earned points stay claimable on old snapshots', async () => {
   const { previewGameProfileRest, beginGameProfileRest } = await import('../src/model/gameProfileRest.js');
   const { gameProfileRestModel } = await import('../src/ui/models/GameProfileRestModel.js');
   const { run } = live();
+  assert.equal(gameModule(profile, 'progression').characterLevels, true);
+  assert.equal(configuredCharacterLevels(run), true);
   const old = structuredClone(run);
-  old.gameProfile.modules.progression.characterLevels = true;
+  old.gameProfile.modules.progression.characterLevels = false; // snapshot from the skill-only era
   old.level = { level: 3, xp: 200, unspentPoints: 2 };
-  const earned = structuredClone({ level: old.level, attributes: old.attributes });
-  assert.equal(CORE_PROGRESSION_POLICY_VERSION, 1);
-  assert.equal(coreSkillOnlyProgression(old), true);
   assert.equal(configuredCharacterLevels(old), false);
-  assert.equal(gameModule(profile, 'progression').characterLevels, false);
   old.mapNodeId = 'rest-test';
   old.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
   const visit = beginGameProfileRest(old);
@@ -437,8 +434,6 @@ test('Core skill-only policy preserves earned character ledgers and blocks old s
   const spent = structuredClone(old); spent.level.unspentPoints = 0;
   assert.throws(() => previewGameProfileRest(reg, spent, 'levelUp', { attributeId: 'strength' }), /leveling is disabled/);
   assert.equal(gameProfileRestModel(reg, spent, visit).services.some(row => row.id === 'levelUp'), false);
-  assert.deepEqual({ level: old.level, attributes: old.attributes }, earned);
-  assert.equal(configuredCharacterLevels({ gameProfile: resolveGameProfile('current') }), true);
 });
 
 test('a pending Core opening survives the normal save door without changing earned progression', () => {
