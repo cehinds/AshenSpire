@@ -70,6 +70,7 @@ import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
+import { gameModule } from '../model/gameProfile.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
@@ -335,7 +336,8 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
-    combat.core2ActionRulesVersion = CORE2_ACTION_RULES_VERSION;
+    // Stamp v2 only when the run's own profile carries the current rules; a run started on an older profile keeps v1.
+    combat.core2ActionRulesVersion = Math.min(CORE2_ACTION_RULES_VERSION, gameModule(combat, 'effects')?.core2ActionRulesVersion ?? 1);
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
   }
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
