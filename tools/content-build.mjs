@@ -61,6 +61,7 @@ import { catalogJSONExpression } from './catalog-json.mjs';
 import { dirname, resolve, join, basename, extname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { configSourceErrors } from './config-build.mjs';
 import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
@@ -1263,6 +1264,16 @@ if (SELFTEST) {
   }
   if (CHECK && r.orphans.length) {
     fail(`orphaned generated file(s) with no source: ${r.orphans.join(', ')} — delete them or restore their source`);
+  }
+  // ONE BUILD, CONSISTENT OUTPUT. The framework defaults resolve balance rows
+  // through the balance.js imported at the top of this file, i.e. through the
+  // generated modules as they stood BEFORE this pass wrote. When this pass
+  // changed anything, run once more in a fresh process (its module cache reads
+  // what was just written), so editing a balance*.json needs one build, not two.
+  // The child inherits the lock token, so it does not wait on its parent.
+  if (!CHECK && r.stale && !process.env.ASHEN_CONTENT_BUILD_REPASS) {
+    const again = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], { cwd: ROOT, stdio: 'inherit', env: { ...process.env, ASHEN_CONTENT_BUILD_REPASS: '1' } });
+    process.exit(again.status ?? 1);
   }
   console.log(CHECK ? 'content-build: generated files are current' : 'content-build: OK');
   console.log(`SFX_FAMILY_IDS [${SFX_FAMILY_IDS.join(', ')}] — sfx authority: ${sfxAuthority.literalIds + sfxAuthority.composedFamilies} caller id(s), ${Object.keys(SFX_RECIPES).length} recipe row(s), 0 defect(s)`);
