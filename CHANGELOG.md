@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-25
+
+- **Refused card inputs reach the Command log** ([#2286](https://github.com/cehinds/AshenSpire/pull/2286), `0.7.1.1831`). Tapping or completing a hold on a card you cannot afford now records the card, its costs and your available resources in Settings → Command log, including refusals that never reach the play action.
+
 ## 2026-10-24
 
 - **One guide for editing the game by hand** ([#2298](https://github.com/cehinds/AshenSpire/pull/2298), `0.7.1.1831`). `docs/MANUAL-EDITING.md` now opens with a "to change X, edit Y" table for every content file, the edit-build-check steps, JSON basics, what still lives in code, and the messages common mistakes produce. Nothing in play changes.
