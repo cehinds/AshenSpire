@@ -7,6 +7,7 @@ import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
 import { reserveStanceCards } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
+import { shopOfferPrice } from './shopOfferPrice.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -204,16 +205,35 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const categories=gameContent(run,'rewards').categories;
   const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
   const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
+  const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
+  // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
+  const table=module.priceTable??rules.priceTable;
+  if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
   return stock;
 }
+const PRICE_KIND={combatCards:'card',weaponArts:'weaponArt',relics:'relic',weapons:'armament',armor:'armour',potions:'flask'};
+function rollOfferPrice(registries,run,rng,table,option) {
+  const kind=PRICE_KIND[option.kind],row=table[kind];
+  if(!row)throw new Error(`No shop price for ${option.kind}`);
+  const def=option.kind==='combatCards'||option.kind==='weaponArts'?registries.cards.get(option.id)
+    :option.kind==='relics'?registries.relics.get(option.id)
+    :option.kind==='potions'?registries.flasks.get(option.id)
+    :option.kind==='weapons'?(registries.equipment.armaments||[]).find(item=>item.id===option.id)
+    :(registries.equipment.armour||[]).find(item=>item.id===option.id&&item.classId===run.class);
+  const range=Array.isArray(row)?row:row[def?.rarity]??row.common;
+  if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||range[0]<0||range[1]<range[0])throw new Error(`Invalid shop price range for ${option.kind}`);
+  return rng.int('shop',range[0],range[1]);
+}
+export { shopOfferPrice };
 export function purchaseGameProfileShopOffer(registries,run,shopId,index) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
   if(!stock||stock.source!=='shop')throw new Error('Missing configured shop');
-  if(!Number.isSafeInteger(stock.price)||stock.price<0)throw new Error('Invalid configured shop price');
-  if(run.cinders<stock.price)throw new Error('Insufficient cinders');
-  const draft=structuredClone(run);draft.cinders-=stock.price;
+  const price=shopOfferPrice(stock,index);
+  if(!Number.isSafeInteger(price)||price<0)throw new Error('Invalid configured shop price');
+  if(run.cinders<price)throw new Error('Insufficient cinders');
+  const draft=structuredClone(run);draft.cinders-=price;
   const receipt=claimGameProfileReward(registries,draft,offerId,index);
-  Object.assign(run,draft);return {...receipt,price:stock.price};
+  Object.assign(run,draft);return {...receipt,price};
 }
