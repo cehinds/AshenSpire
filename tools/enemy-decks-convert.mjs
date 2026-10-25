@@ -238,6 +238,8 @@ for (const enemy of roster) {
     card.effects = structuredClone(authoredCards.get(card.id).effects);
     row.cardHints[card.id].coreOffense = authoredHints[card.id].coreOffense;
   }
+  // A Core-only price (coreSp "card", owner 2026-10-25) is authored on the hint and kept.
+  for (const card of enemyCards) if (authoredHints[card.id]?.coreSp) row.cardHints[card.id].coreSp = authoredHints[card.id].coreSp;
   enemies.push(row);
   {
     const maxHp = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings)).hp;

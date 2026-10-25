@@ -493,7 +493,8 @@
         "huskBrute.club": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "club"
+          "legacyMove": "club",
+          "coreSp": "card"
         },
         "huskBrute.bellow": {
           "aiWeight": 25,
@@ -1574,7 +1575,8 @@
         "livingArmor.slam": {
           "aiWeight": 30,
           "costSource": "stance",
-          "legacyMove": "slam"
+          "legacyMove": "slam",
+          "coreSp": "card"
         },
         "livingArmor.fortify": {
           "aiWeight": 25,
@@ -1586,13 +1588,15 @@
           "aiWeight": 20,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "crush"
+          "legacyMove": "crush",
+          "coreSp": "card"
         },
         "livingArmor.rimeCrush": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "rimeCrush"
+          "legacyMove": "rimeCrush",
+          "coreSp": "card"
         },
         "livingArmor.advance": {
           "aiWeight": 0,
@@ -1945,7 +1949,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "scuttleRush"
+          "legacyMove": "scuttleRush",
+          "coreSp": "card"
         },
         "stitchCrab.advance": {
           "aiWeight": 0,
@@ -2438,7 +2443,8 @@
           "aiWeight": 50,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "smash"
+          "legacyMove": "smash",
+          "coreSp": "card"
         },
         "charredColossus.ashCloud": {
           "aiWeight": 25,

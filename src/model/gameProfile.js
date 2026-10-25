@@ -104,6 +104,14 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
         }
         moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], damage: hits[0].amount, hits: hits[0].hits ?? 1 };
       }
+      // Core-only price (owner, 2026-10-25): a hint with coreSp "card" prices its move at the Core card's staminaCost, so a
+      // single-hit attack is not left costing the stance-table 2 SP against a 1 SP pool. Legacy keeps the stance price.
+      if (metadata.coreSp === 'card' && moves[metadata.legacyMove]) {
+        if (!source || !Number.isSafeInteger(source.staminaCost) || source.staminaCost < 0) {
+          throw new GameConfigError(`$/content/enemies/${def.id}/cardHints/${id}/coreSp`, 'requires an owned card with a whole-number staminaCost');
+        }
+        moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], sp: source.staminaCost };
+      }
       if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
         rangeOverrides.set(JSON.stringify([def.id, metadata.legacyMove]), source.range);
       }

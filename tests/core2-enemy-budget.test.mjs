@@ -311,10 +311,6 @@ function damageMovePrices(id) {
     .map(([moveId, move]) => ({ moveId, sp: enemyMoveSp(move, { enemy, moveId, combat }) }));
   return { cap, moves };
 }
-// Single-hit 2 SP moves against a 1 SP native pool, unaffordable before the multi-hit price existed: the owner decides
-// these separately. The list is exact, so a new gap or a fix both fail here.
-const SINGLE_HIT_PRICE_GAPS = ['charredColossus', 'huskBrute', 'livingArmor', 'stitchCrab'];
-
 test('every Core enemy has at least one damage move it can afford (boss pools taken as min(pool, 3))', () => {
   assert.ok(BOSSES.has('ashheartDragon') && BOSSES.has('fellWarden'), 'the boss tier is read from the encounter pools');
   const without = [];
@@ -322,7 +318,7 @@ test('every Core enemy has at least one damage move it can afford (boss pools ta
     const { cap, moves } = damageMovePrices(id);
     if (moves.length && !moves.some(move => move.sp <= cap)) without.push(id);
   }
-  assert.deepEqual(without.sort(), SINGLE_HIT_PRICE_GAPS, 'only the named single-hit price gaps lack an affordable damage move');
+  assert.deepEqual(without, [], 'every Core enemy has an affordable damage move');
 });
 
 test('the trimmed multi-hit moves fit their enemy\'s pool (owner, 2026-10-25)', () => {
@@ -336,4 +332,16 @@ test('the trimmed multi-hit moves fit their enemy\'s pool (owner, 2026-10-25)', 
   const legacy = createRegistries(contentBundle);
   assert.equal(legacy.enemies.get('stitchedKing').moves.thousandHands.hits, 6);
   assert.equal(registries.enemies.get('stitchedKing').moves.thousandHands.hits, 3);
+});
+
+test('the single-hit attacks of the four 1 SP enemies cost the Core card\'s 1 SP (owner, 2026-10-25); legacy keeps its price', () => {
+  const moves = { charredColossus: ['smash'], huskBrute: ['club'], livingArmor: ['slam', 'crush', 'rimeCrush'], stitchCrab: ['scuttleRush'] };
+  const legacy = createRegistries(contentBundle);
+  for (const [id, ids] of Object.entries(moves)) {
+    const combat = fight(id), enemy = combat.enemies[0];
+    for (const moveId of ids) {
+      assert.equal(enemyMoveSp(registries.enemies.get(id).moves[moveId], { enemy, moveId, combat }), 1, `${id}.${moveId}`);
+      assert.equal(legacy.enemies.get(id).moves[moveId].sp, undefined, `${id}.${moveId} legacy keeps the stance price`);
+    }
+  }
 });
