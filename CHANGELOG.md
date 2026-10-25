@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
-- **Shorter rest screen** ([#2321](https://github.com/cehinds/AshenSpire/pull/2321), `0.7.1.1852`). Level Up comes first, options you can't use sink to one line at the bottom, and the extra text is gone, so nothing scrolls on a phone.
+- **Shorter rest screen** ([#2321](https://github.com/cehinds/AshenSpire/pull/2321), `0.7.1.1854`). Level Up comes first, options you can't use sink to one line at the bottom, and the extra text is gone, so nothing scrolls on a phone.
 
 - **Act maps branch toward different bosses** ([#2319](https://github.com/cehinds/AshenSpire/pull/2319), `0.7.1.1852`). Each act now splits into 1 to 4 paths (never more than 5), each with its own rests, elites and boss, and an act is nine floors long with rests on floors 3, 6 and 9.
 
