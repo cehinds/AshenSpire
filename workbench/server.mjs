@@ -144,7 +144,7 @@ export async function createWorkbench({ root = REPO, port = DEFAULT_PORT, childr
   const ownWrites = createOwnWrites();
   // close() aborts this first: a save waiting for a build lock stops waiting and answers 503 (core/files.mjs).
   const closeAbort = new AbortController();
-  const files = createFileService({ root, stateDir: projectDir, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => {
+  const files = createFileService({ root, stateDir: projectDir, env, keepBackups: () => settings.read().keepBackups, onSaved: (paths) => {
     // A docs/tag-model table is not a game build input: it reaches no build, only its own job (core/tag-model-run.mjs).
     const game = paths.filter((p) => !tagModelTable(p));
     if (game.length || !paths.length) onBatch(game);

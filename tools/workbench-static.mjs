@@ -20,6 +20,8 @@
 // /assets/ with the light twin, and the Asset Gallery reads it from there. The
 // Asset Gallery's display art (assets-display/) goes to DIR/asset-file/assets-display/,
 // where its asset-file/ URLs load it. The light art is copied once.
+// COMMON fonts go to DIR/game/assets/fonts/ for the mirrored styles' font URLs;
+// their complete copyright/OFL notice remains embedded in styles/kit.css.
 //
 // docs/design/ (large design rigs) is never read or copied. A missing optional
 // input (the static-api module, assets-mobile/) prints a warning and the build
@@ -91,6 +93,14 @@ async function copyTree(src, dst, { textRe = null, rewrite = null } = {}) {
     await fs.writeFile(dst, rewrite.after ? rewrite.after(text) : text);
   }
   else await fs.copyFile(src, dst);
+}
+
+// Font URLs in the mirrored styles resolve under game/assets/fonts. Fonts belong
+// to COMMON, not the LIGHT image tree. Always copy the pinned release, including
+// when a local authoring checkout or fixture-tree mode is selected elsewhere.
+export async function copyGameFonts(game, { root = REPO } = {}) {
+  const { dir } = artDir('assets/fonts', { root, env: { ASHEN_ART_SOURCE: 'cache' } });
+  await copyTree(dir, path.join(game, 'assets', 'fonts'));
 }
 
 // The root preview pages (names only) that go to game/ and the Library opens from there.
@@ -267,6 +277,7 @@ async function main() {
     try {light=artDir('assets-mobile',{root:REPO}).dir;}catch{light=null;}
     if (light && existsSync(light)) await copyTree(light, path.join(game, 'assets'));
     else warnings.push('assets-mobile/ is missing: game/assets/ was not written');
+    await copyGameFonts(game);
     // The Asset Gallery loads its display art from ${base}asset-file/<repo path>. The light art is
     // not copied again: the gallery reads it from game/assets/ (ASHEN_ASSET_URL in static-api.mjs).
     let display;
@@ -291,7 +302,9 @@ async function main() {
   console.log(`workbench-static: ${files} files in the snapshot, ${(bytes / 1048576).toFixed(1)} MB in ${out}`);
 }
 
-main().catch((err) => {
-  console.error(`workbench-static: ${err.message}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(`workbench-static: ${err.message}`);
+    process.exitCode = 1;
+  });
+}
