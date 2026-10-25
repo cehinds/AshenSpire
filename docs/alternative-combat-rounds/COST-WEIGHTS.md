@@ -215,6 +215,7 @@ player's piles).
 | `bow` | 0 | SP | The range weight prices a bow. |
 | `ranged` | 0 | SP | The range weight prices it. |
 | `flourish` | 0 | SP | An archetype chip. |
+| `finesse` | 0 | SP | A multi-hit card or move with it keeps its ordinary price instead of 1 SP per hit (owner, 2026-10-25). |
 | `guile` | 0 | SP | An archetype chip. |
 | `venom` | 0 | SP | The status it applies is priced instead. |
 | `blood` | 0 | SP | An archetype chip; its HP costs are drawbacks. |
