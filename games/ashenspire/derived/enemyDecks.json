@@ -180,7 +180,8 @@
         "hints": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "club"
+          "legacyMove": "club",
+          "coreSp": "card"
         }
       },
       {
@@ -323,6 +324,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "graveWisp.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],
@@ -590,14 +611,15 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "hits": 3
+            "amount": 4,
+            "hits": 2
           }
         ],
         "hints": {
           "aiWeight": 65,
           "costSource": "authored",
-          "legacyMove": "wingSparks"
+          "legacyMove": "wingSparks",
+          "coreOffense": "card"
         }
       },
       {
@@ -617,6 +639,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "lanternMoth.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],
@@ -815,6 +857,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "chainScavenger.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],
@@ -1244,6 +1306,26 @@
           "costSource": "authored",
           "legacyMove": "advance"
         }
+      },
+      {
+        "id": "courtSurgeon.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
       }
     ],
     "unlockCards": []
@@ -1418,7 +1500,8 @@
         "hints": {
           "aiWeight": 30,
           "costSource": "stance",
-          "legacyMove": "slam"
+          "legacyMove": "slam",
+          "coreSp": "card"
         }
       },
       {
@@ -1460,7 +1543,8 @@
           "aiWeight": 20,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "crush"
+          "legacyMove": "crush",
+          "coreSp": "card"
         }
       },
       {
@@ -1487,7 +1571,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "rimeCrush"
+          "legacyMove": "rimeCrush",
+          "coreSp": "card"
         }
       },
       {
@@ -1789,14 +1874,15 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 3,
-            "hits": 3
+            "amount": 4,
+            "hits": 2
           }
         ],
         "hints": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "shardVolley"
+          "legacyMove": "shardVolley",
+          "coreOffense": "card"
         }
       },
       {
@@ -1842,6 +1928,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "mirrorScribe.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],
@@ -1918,7 +2024,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "scuttleRush"
+          "legacyMove": "scuttleRush",
+          "coreSp": "card"
         }
       },
       {
@@ -2412,7 +2519,8 @@
           "aiWeight": 50,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "smash"
+          "legacyMove": "smash",
+          "coreSp": "card"
         }
       },
       {
@@ -2645,8 +2753,8 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 4,
-            "hits": 5
+            "amount": 10,
+            "hits": 2
           },
           {
             "op": "applyStatus",
@@ -2659,7 +2767,8 @@
           "aiWeight": 30,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "whirlwind"
+          "legacyMove": "whirlwind",
+          "coreOffense": "card"
         }
       },
       {
@@ -2706,6 +2815,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "blightedValkyrie.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],
@@ -2908,6 +3037,26 @@
           "costSource": "authored",
           "legacyMove": "advance"
         }
+      },
+      {
+        "id": "eclipseCantor.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
       }
     ],
     "unlockCards": []
@@ -3045,15 +3194,16 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 8,
-            "hits": 4
+            "amount": 11,
+            "hits": 3
           }
         ],
         "hints": {
           "aiWeight": 45,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "orbitalShards"
+          "legacyMove": "orbitalShards",
+          "coreOffense": "card"
         }
       },
       {
@@ -3203,6 +3353,26 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "ashheartDragon.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       }
     ],

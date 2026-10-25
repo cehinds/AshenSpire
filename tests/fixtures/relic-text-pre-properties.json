@@ -290,5 +290,9 @@
   "progression-ossuary-prayer-wheel": {
     "name": "Ossuary Prayer Wheel",
     "text": "Your first credited kill of an enemy with Crimson or Necrotic Blight buildup each combat restores 1 Mana."
+  },
+  "brimmingGourd": {
+    "name": "Brimming Gourd",
+    "text": "Picking it up refills your flasks."
   }
 }

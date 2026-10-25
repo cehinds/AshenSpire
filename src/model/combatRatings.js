@@ -568,6 +568,26 @@ export function ratingValue(ctx, entity, id) {
   return Math.max(0, value);
 }
 
+/**
+ * The rating view a `finesse` hit reads (owner, 2026-10-25): its Attack rating takes the attribute row's Dexterity-driven
+ * rating (DR) in place of the Strength-driven one (AR); weapon, armour, stance and status parts are unchanged. An entity
+ * with no attribute row (an enemy with authored ratings) is returned as it is.
+ */
+export function finesseRatingView(entity) {
+  const rows = Array.isArray(entity?.ratingSources) ? entity.ratingSources : [];
+  const shift = rows.filter(row => row.kind === 'attribute').reduce((sum, row) => sum + (Number(row.dr) || 0) - (Number(row.ar) || 0), 0);
+  if (!shift) return entity;
+  return { ...entity,
+    ratings: { ...entity.ratings, ar: (Number(entity.ratings?.ar) || 0) + shift },
+    ratingSources: rows.map(row => row.kind === 'attribute' ? { ...row, ar: Number(row.dr) || 0 } : row) };
+}
+
+/** Whether a hit's carrier (or its card) carries `tag`. */
+export function carrierHasTag(ctx, carrier, tag) {
+  const def = carrier?.cardId && ctx?.registries?.cards?.has?.(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
+  return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || [])].includes(tag);
+}
+
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
   if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
   let value = stanceRatingBonus(ctx, entity, id);

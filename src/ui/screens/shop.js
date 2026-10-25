@@ -35,6 +35,7 @@ import { renderEquipmentCard, renderEquipmentInspection } from '../components/eq
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { acquireFlask, flaskAcquisitionPlan } from '../../model/gracerefill.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
+import { shopOfferPrice } from '../../model/shopOfferPrice.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase, armourPurchasePlan, commitArmourPurchase,
   sigilPurchasePlan, commitSigilPurchase, innRestPlan,
@@ -138,12 +139,13 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onLea
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const def = card ? registries.cards.get(option.id) : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id) : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id) : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
     const flaskPlan = option.kind === 'potions' ? flaskAcquisitionPlan(registries, run, option.id) : null;
-    const available = !offer.taken.includes(index) && offer.claimed === null && run.cinders >= offer.price && (!flaskPlan || flaskPlan.ok);
+    const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
+    const available = !offer.taken.includes(index) && offer.claimed === null && run.cinders >= price && (!flaskPlan || flaskPlan.ok);
     const tile = el('div', { class: 'class-pick shop-offer' });
     const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, { level: 'glance' }) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
-    const action = { kind: 'buy', label: t('shop.action.buy', { cost: offer.price }), enabled: available };
-    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: def?.textTemplate || '', visual, price: t('shop.price', { cost: offer.price }), avail: { available, reason: offer.taken.includes(index) ? t('shop.avail.locked') : null, because: 'cinders' }, action });
-    if (available) arm(buy, 'shopBuy', { question: t('shop.configured.buy'), target: def?.name || option.id, message: t('shop.configured.buy.message', { cost: offer.price, cinders: run.cinders, left: run.cinders - offer.price }), confirmLabel: t('shop.buy.confirm'), policyAction: 'action.purchase', onConfirm: () => { try { onTake(index); } catch (error) { status.textContent = error.message; } } });
+    const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
+    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: def?.textTemplate || '', visual, price: t('shop.price', { cost: price }), avail: { available, reason: offer.taken.includes(index) ? t('shop.avail.locked') : null, because: 'cinders' }, action });
+    if (available) arm(buy, 'shopBuy', { question: t('shop.configured.buy'), target: def?.name || option.id, message: t('shop.configured.buy.message', { cost: price, cinders: run.cinders, left: run.cinders - price }), confirmLabel: t('shop.buy.confirm'), policyAction: 'action.purchase', onConfirm: () => { try { onTake(index); } catch (error) { status.textContent = error.message; } } });
     shelves.get(option.kind).append(tile);
   }
   showCategory(active); layout = wireShopLayout(root); wireCardShelf(offersBox);

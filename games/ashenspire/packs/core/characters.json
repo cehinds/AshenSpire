@@ -493,7 +493,8 @@
         "huskBrute.club": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "club"
+          "legacyMove": "club",
+          "coreSp": "card"
         },
         "huskBrute.bellow": {
           "aiWeight": 25,
@@ -540,7 +541,8 @@
       "graveWisp.curse",
       "graveWisp.curse",
       "graveWisp.drain",
-      "graveWisp.advance"
+      "graveWisp.advance",
+      "graveWisp.retreat"
     ],
     "defaultGear": [
       {
@@ -572,11 +574,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "graveWisp.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -778,7 +787,8 @@
         "fellWarden.twinDaggers": {
           "aiWeight": 35,
           "costSource": "authored",
-          "legacyMove": "twinDaggers"
+          "legacyMove": "twinDaggers",
+          "coreOffense": "card"
         },
         "fellWarden.advance": {
           "aiWeight": 0,
@@ -813,7 +823,8 @@
       "lanternMoth.lanternDust",
       "lanternMoth.wingSparks",
       "lanternMoth.wingSparks",
-      "lanternMoth.advance"
+      "lanternMoth.advance",
+      "lanternMoth.retreat"
     ],
     "defaultGear": [
       {
@@ -839,17 +850,25 @@
         "lanternMoth.wingSparks": {
           "aiWeight": 65,
           "costSource": "authored",
-          "legacyMove": "wingSparks"
+          "legacyMove": "wingSparks",
+          "coreOffense": "card"
         },
         "lanternMoth.advance": {
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "lanternMoth.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -947,7 +966,8 @@
       "chainScavenger.hookCast",
       "chainScavenger.chainSnare",
       "chainScavenger.draggingBlow",
-      "chainScavenger.advance"
+      "chainScavenger.advance",
+      "chainScavenger.retreat"
     ],
     "defaultGear": [
       {
@@ -991,11 +1011,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "chainScavenger.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -1316,7 +1343,8 @@
       "courtSurgeon.scalpel",
       "courtSurgeon.sedate",
       "courtSurgeon.stitch",
-      "courtSurgeon.advance"
+      "courtSurgeon.advance",
+      "courtSurgeon.retreat"
     ],
     "defaultGear": [
       {
@@ -1354,11 +1382,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "courtSurgeon.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -1540,7 +1575,8 @@
         "livingArmor.slam": {
           "aiWeight": 30,
           "costSource": "stance",
-          "legacyMove": "slam"
+          "legacyMove": "slam",
+          "coreSp": "card"
         },
         "livingArmor.fortify": {
           "aiWeight": 25,
@@ -1552,13 +1588,15 @@
           "aiWeight": 20,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "crush"
+          "legacyMove": "crush",
+          "coreSp": "card"
         },
         "livingArmor.rimeCrush": {
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "rimeCrush"
+          "legacyMove": "rimeCrush",
+          "coreSp": "card"
         },
         "livingArmor.advance": {
           "aiWeight": 0,
@@ -1761,7 +1799,8 @@
         "stitchedKing.thousandHands": {
           "aiWeight": 40,
           "costSource": "stance",
-          "legacyMove": "thousandHands"
+          "legacyMove": "thousandHands",
+          "coreOffense": "card"
         },
         "stitchedKing.advance": {
           "aiWeight": 0,
@@ -1796,7 +1835,8 @@
       "mirrorScribe.silverScript",
       "mirrorScribe.shardVolley",
       "mirrorScribe.polishedWard",
-      "mirrorScribe.advance"
+      "mirrorScribe.advance",
+      "mirrorScribe.retreat"
     ],
     "defaultGear": [
       {
@@ -1822,7 +1862,8 @@
         "mirrorScribe.shardVolley": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "shardVolley"
+          "legacyMove": "shardVolley",
+          "coreOffense": "card"
         },
         "mirrorScribe.polishedWard": {
           "aiWeight": 20,
@@ -1834,11 +1875,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "mirrorScribe.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -1901,7 +1949,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "scuttleRush"
+          "legacyMove": "scuttleRush",
+          "coreSp": "card"
         },
         "stitchCrab.advance": {
           "aiWeight": 0,
@@ -2019,7 +2068,8 @@
             }
           },
           "costSource": "stance",
-          "legacyMove": "shatteredCourt"
+          "legacyMove": "shatteredCourt",
+          "coreOffense": "card"
         },
         "glassRegent.advance": {
           "aiWeight": 0,
@@ -2393,7 +2443,8 @@
           "aiWeight": 50,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "smash"
+          "legacyMove": "smash",
+          "coreSp": "card"
         },
         "charredColossus.ashCloud": {
           "aiWeight": 25,
@@ -2432,6 +2483,7 @@
       "wisdom",
       "intelligence"
     ],
+    "spFloor": 3,
     "levelProfile": {
       "min": 18,
       "max": 19
@@ -2529,7 +2581,8 @@
       "blightedValkyrie.whirlwind",
       "blightedValkyrie.rotWings",
       "blightedValkyrie.rotWings",
-      "blightedValkyrie.advance"
+      "blightedValkyrie.advance",
+      "blightedValkyrie.retreat"
     ],
     "defaultGear": [
       {
@@ -2611,7 +2664,8 @@
           "aiWeight": 30,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "whirlwind"
+          "legacyMove": "whirlwind",
+          "coreOffense": "card"
         },
         "blightedValkyrie.rotWings": {
           "aiWeight": 20,
@@ -2622,17 +2676,25 @@
         "blightedValkyrie.scarletDance": {
           "aiWeight": 35,
           "costSource": "stance",
-          "legacyMove": "scarletDance"
+          "legacyMove": "scarletDance",
+          "coreOffense": "card"
         },
         "blightedValkyrie.advance": {
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "blightedValkyrie.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -2730,7 +2792,8 @@
       "eclipseCantor.darkHymn",
       "eclipseCantor.lunarRay",
       "eclipseCantor.fadingEcho",
-      "eclipseCantor.advance"
+      "eclipseCantor.advance",
+      "eclipseCantor.retreat"
     ],
     "defaultGear": [
       {
@@ -2768,11 +2831,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "eclipseCantor.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -2821,6 +2891,10 @@
       {
         "key": "relic1",
         "id": "enemy.relic.titanHeart"
+      },
+      {
+        "key": "relic2",
+        "id": "enemy.relic.emberBrand"
       }
     ],
     "presentation": {
@@ -2961,7 +3035,8 @@
           "aiWeight": 45,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "orbitalShards"
+          "legacyMove": "orbitalShards",
+          "coreOffense": "card"
         },
         "hollowAstronomer.totalEclipse": {
           "aiWeight": 35,
@@ -3018,7 +3093,8 @@
       "ashheartDragon.tailBastion",
       "ashheartDragon.heartRumble",
       "ashheartDragon.heartRumble",
-      "ashheartDragon.advance"
+      "ashheartDragon.advance",
+      "ashheartDragon.retreat"
     ],
     "defaultGear": [
       {
@@ -3103,17 +3179,25 @@
             }
           },
           "costSource": "stance",
-          "legacyMove": "ashBreath"
+          "legacyMove": "ashBreath",
+          "coreOffense": "card"
         },
         "ashheartDragon.advance": {
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "ashheartDragon.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   }
 ]

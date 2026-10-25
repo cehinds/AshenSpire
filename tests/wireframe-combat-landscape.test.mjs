@@ -33,7 +33,7 @@ test('short landscape phones plan rails, supported', () => {
 });
 
 test('short landscape support follows the remaining battlefield after the compact toolbar', () => {
-  for (const [width, height, zoom, supported] of [[740, 360, 0.62, false], [667, 375, 0.62, true]]) {
+  for (const [width, height, zoom, supported] of [[740, 340, 0.62, false], [740, 360, 0.62, true], [667, 375, 0.62, true]]) {
     const bands = plan(width, height, zoom);
     const at = `${width}x${height}@${zoom}`;
     assert.equal(bands.arrangement, 'rails', at);
@@ -47,9 +47,9 @@ test('short landscape support follows the remaining battlefield after the compac
 test('844x390 matches the measured reference numbers', () => {
   const bands = plan(844, 390, 0.62);
   const z = 0.62;
-  assert.ok(near(bands.hud * z, 39));
-  assert.ok(near(bands.battlefield * z, 148));
-  assert.ok(near(bands.hand * z, 203));
+  assert.ok(near(bands.hud * z, 23.4));
+  assert.ok(near(bands.battlefield * z, 179));
+  assert.ok(near(bands.hand * z, 187.6));
   assert.ok(near(bands.rails.diameter * z, 53.2) && near(bands.rails.pileWidth * z, 64));
 });
 

@@ -1,6 +1,6 @@
 import { stanceOf } from '../model/stanceRules.js';
-import { actorRangeKey, movedEngagementState } from '../model/combatEngagement.js';
-import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { actorRangeKey, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
+import { core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
 import { quoteRangeActions } from './combatEngagement.js';
@@ -24,7 +24,7 @@ import { startRound, stepRound, answerReaction, finishRound } from './combatRoun
 import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
 import { decayMomentum } from './combatRounds/resolver.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
-import { enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
+import { branchHitCount, multiHitFloorFor, enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
 import { SPEED_MODS_CSV } from '../content/combatRounds.js';
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.11).
 export const MOVE_SP = 1;
@@ -48,12 +48,19 @@ export function roundState(combat) {
 export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   const entity = enemy && combat?.combatExpansionVersion === 2 ? enemy : null;
   const price = enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId, ctx: combat });
-  return core2ActionPolicyEnabled(combat) && enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) ? Math.max(2, price) : price;
+  if (!core2ActionPolicyEnabled(combat)) return price;
+  // Owner rule (2026-10-25): a multi-hit move costs at least its multi-hit floor (model/actionCosts.js
+  // multiHitFloorFor: 1 SP per hit, less an offset for a finesse or Mana move). The authored price is never lowered
+  // and there is no cap; an enemy short of SP simply cannot use the move.
+  // A fight saved under rules version 1 keeps its original pricing exactly: a flat minimum of 2 SP for a multi-hit move.
+  if (!core2MultiHitRulesEnabled(combat)) return enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) ? Math.max(2, price) : price;
+  return Math.max(price, enemyMoveHitFloor(move, { enemy, moveId, combat }));
 }
 export const enemyMoveSp = moveSp;
 
 // Count HP-damage contacts per target, before damage components split into
 // physical/magical lanes. An area attack hitting each defender once is one hit.
+// Rules version 1 predicate, kept identical in behavior: any one defender taking more than one contact.
 export function enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) {
   const expanded = expandedEnemyMove(enemy, move, moveId, combat);
   const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
@@ -73,6 +80,37 @@ export function enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) {
     }
   }
   return false;
+}
+// A move's multi-hit SP floor: multiHitFloorFor over its hit count, with the Mana and finesse offsets.
+export function enemyMoveHitFloor(move, { enemy, moveId, combat }) {
+  const expanded = expandedEnemyMove(enemy, move, moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
+  return multiHitFloorFor(enemyMoveHitCount(move, { enemy, moveId, combat }), {
+    mana: Number(expanded.mp) > 0 || Number(expanded.manaCost) > 0,
+    finesse: [...(carrier.tags || []), ...(expanded.tags || [])].includes('finesse'),
+  });
+}
+// The most HP-damage contacts any one defender takes from the move, per guarded branch (a counter is never multi-hit).
+export function enemyMoveHitCount(move, { enemy, moveId, combat }) {
+  const expanded = expandedEnemyMove(enemy, move, moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
+  if (carrier.combatProfile.maneuver === 'counter') return 0;
+  const effects = [...(expanded.damage != null ? [{ op: 'damage', target: 'player', amount: expanded.damage, hits: expanded.hits ?? 1 }] : []), ...(expanded.effects || [])];
+  const detached = { ...combat, rng: createRng(combat.rng.seed, combat.rng.getCounters()) };
+  const actionOf = effect => ({ source: enemy, owner: enemy, target: combat.player, card: carrier, effect });
+  // Guarded effects are separate branches, the same rule as a player card (model/actionCosts.js branchHitCount).
+  // Each contact resolves its own targets, so a random-target volley spreads as it would in play.
+  return branchHitCount(effects, {
+    hitsOf: () => 1,
+    targetsOf: (effect) => {
+      const action = actionOf(effect);
+      const formulas = Actions.formulaCtxFor(combat, action, action.target);
+      const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas))) * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
+      const keys = [];
+      for (let i = 0; i < hits; i++) for (const target of Actions.resolveTargets(detached, action, effect.target)) keys.push(target.id);
+      return keys;
+    },
+  });
 }
 
 // A forecast only: range quotes use detached streams and do not move or charge
@@ -158,12 +196,16 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
   return queue;
 }
 
-// Only authored movement persists between actions. An attack's implicit Advance
-// is temporary to that action and must still be quoted on every later attack.
+// Authored movement and a paid implicit Advance both persist (SPEC range rule): once an
+// attack has closed the distance, later attacks against that target quote no Advance until
+// something grows the distance again. The quote is taken before the move's own movement
+// effects, matching execution (the Advance is accepted when the move's actions are).
 function projectEnemyMovement(pricing, enemy, moveId) {
   if (!pricing.rangeState?.policy.enabled) return;
   const move = expandedEnemyMove(enemy, pricing.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, pricing);
-  if (move.delay || !move.effects?.some(effect => effect.op === 'moveEngagement')) return;
+  if (move.delay) return;
+  if (core2MultiHitRulesEnabled(pricing)) pricing.rangeState = advancedEngagementState(pricing.rangeState, enemyMoveQuote(move, { enemy, moveId, combat: pricing }).rangeQuote);
+  if (!move.effects?.some(effect => effect.op === 'moveEngagement')) return;
   const preview = previewEnemyAction(pricing, enemy, moveId);
   for (const effect of preview?.actionEffects || []) {
     if (effect.op !== 'moveEngagement' || effect.if && effect.conditionMet !== true || effect.oncePerTurn) continue;

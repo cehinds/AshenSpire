@@ -67,3 +67,7 @@ one-item catalog offers only what exists. The stock is saved once per visit and
 uses the `shop` RNG stream, independently of combat reward weights. Purchase
 claims and their cinder debit remain one atomic transaction. Profiles without
 `itemsPerCategory` retain the older total-options policy.
+
+## Per-offer prices
+
+`priceTable` (owner, 2026-10-24; Core keeps it in `packs/core/shops.json`, a module setting of the same name overrides it) prices each new offer on its own. Keys are the offer kind: `card`, `relic`, `armament` (weapons), `armour`, `weaponArt`, `flask`. A value is a `[min, max]` range, or an object of ranges keyed by the item's rarity (a rarity with no key uses `common`). Each offer's price is rolled once when the stock is built, on the `shop` stream, and saved as `options[n].price`. Stock saved before this setting carries only the single `price`, which it keeps charging.

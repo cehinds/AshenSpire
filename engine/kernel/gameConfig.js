@@ -410,11 +410,18 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
   }
   return bonus;
 }
+// Authored `attributeOffset` (owner, 2026-10-25): added to each enemy attribute AFTER gear and relic bonuses, floored at 0.
+// Validation keeps checking the own points against the tier budget before the offset.
+// Players have no tier and are never offset.
+export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
+  const offset = row?.tier ? settings.attributeOffset?.[id] || 0 : 0;
+  return Math.max(0, (own || 0) + (bonus?.[id] || 0) + offset);
+}
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = characterRule(row, settings), round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
   const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
   const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
-  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(0, (own[id] || 0) + (bonus?.[id] || 0))]));
+  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, enemyAttributeTotal(row, settings, id, own[id], bonus)]));
   const pools = {};
   for (const [stat, rule] of Object.entries(settings.statRules)) {
     let value = base[stat] ?? 0;
@@ -424,6 +431,8 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
     const mod = ENEMY_POOL_MODS.includes(stat) ? bonus?.[stat] || 0 : 0, floor = settings.penaltyFloor?.[stat] ?? 0;
     pools[stat] = mod < 0 ? Math.max(value + mod, Math.min(value, floor)) : value + mod;
   }
+  // Authored `spFloor` (owner, 2026-10-25): an enemy whose attribute offset would leave it unable to pay its costliest card keeps that much SP.
+  if (Number.isSafeInteger(row.spFloor) && row.spFloor > 0) pools.sp = Math.max(pools.sp, row.spFloor);
   return pools;
 }
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's

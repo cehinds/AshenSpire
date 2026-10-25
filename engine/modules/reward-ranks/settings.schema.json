@@ -62,6 +62,21 @@
         "excludePools"
       ],
       "additionalProperties": false
+    },
+    "ownedCopyWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Weight multiplier per copy of a card the character already owns (deck plus sideboard); 1 disables the penalty."
+    },
+    "tagWeights": {
+      "type": "object",
+      "description": "Card-pick weight by tag; a card takes the product of its matching tag weights, else `default` (1 when absent).",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1000
+      }
     }
   },
   "required": [

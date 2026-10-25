@@ -1421,6 +1421,7 @@ relic,,starstoneShard,classification.relic
 relic,,cutpursesCoin,classification.relic
 relic,,goldFigurine,classification.relic
 relic,,goldenSprout,classification.relic
+relic,,brimmingGourd,classification.relic
 relic,,whetstoneFragment,classification.relic
 relic,,kindlingCharm,classification.relic
 relic,,cinderPouch,classification.relic
@@ -1898,6 +1899,7 @@ card,,rend,blade
 card,,goreslash,blade
 card,,cleavingBlow,blade
 card,,twinbladeFlurry,blade
+card,,twinbladeFlurry,finesse
 card,,impale,blade
 card,,flameToBlade,blade
 card,,executioner,blade

@@ -118,7 +118,9 @@
 //   1  an orphan (or a stale allowlist row)
 //   2  a floor fired — this run judged nothing it can vouch for
 
-import { pathToFileURL } from 'node:url';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRegistries } from '../src/model/registries.js';
 import { relicInRewardPool } from '../src/model/schemas.js';
 import { eligibleWeaponArts } from '../src/model/armamentTrading.js';
@@ -130,6 +132,26 @@ import { eventChoiceRequirementProblems } from '../src/model/quests.js';
 
 // Declared-intentional orphans: { kind: 'cards'|'relics'|'events'|'encounters'|'enemies', id, why }.
 export const ALLOWED_UNREACHABLE = [];
+
+// R-profile: a game pack's reward eligibility (games/*/packs/*/rewards.json `eligibility.relics`) names extra relic
+// pools and a positive weight per relic id; a relic so weighted is dropped by that profile's reward rolls (Brimming
+// Gourd, `core2`, 2026-10-25). Returns Map(relicId → pack) of the weighted relics.
+function profileWeightedRelics() {
+  const out = new Map();
+  const root = join(fileURLToPath(import.meta.url), '..', '..', 'games');
+  if (!existsSync(root)) return out;
+  for (const game of readdirSync(root, { withFileTypes: true })) {
+    const packs = join(root, game.name, 'packs');
+    if (!game.isDirectory() || !existsSync(packs)) continue;
+    for (const pack of readdirSync(packs, { withFileTypes: true })) {
+      const file = join(packs, pack.name, 'rewards.json');
+      if (!pack.isDirectory() || !existsSync(file)) continue;
+      const relics = JSON.parse(readFileSync(file, 'utf8'))?.eligibility?.relics;
+      for (const [id, weight] of Object.entries(relics?.weights || {})) if (weight > 0) out.set(id, { pack: pack.name, pools: relics.pools || [] });
+    }
+  }
+  return out;
+}
 
 const KINDS = ['cards', 'relics', 'events', 'encounters', 'enemies'];
 const CARD_OPS = new Set(['addCard', 'addCardToDeck', 'addBurden', 'moveCards']);
@@ -359,6 +381,7 @@ export function contentReach(bundle, opts = {}) {
   }
 
   // Relics that do not depend on the fixpoint.
+  const profileRelics = opts.profileRelics || profileWeightedRelics();
   const anyFight = pop.encounters.some((e) => witness.encounters.has(e.id));
   const relicDoors = [
     cap.elite && pop.encounters.some((e) => e.pool === 'elite' && witness.encounters.has(e.id)) && 'elite drop',
@@ -368,6 +391,8 @@ export function contentReach(bundle, opts = {}) {
   for (const r of pop.relics) {
     if (relicInRewardPool(r) && DROP_RARITIES.includes(r.rarity) && relicDoors.length) note('relics', r.id, `R-drop ${relicDoors.join(' / ')}`);
     if (relicInRewardPool(r) && r.rarity === 'boss' && bossFight) note('relics', r.id, 'R-boss boss reward');
+    const profile = profileRelics.get(r.id);
+    if (profile && profile.pools.includes(r.pool) && DROP_RARITIES.includes(r.rarity) && relicDoors.length) note('relics', r.id, `R-profile ${profile.pack} reward weight`);
   }
 
   function creditOp(op, where) {

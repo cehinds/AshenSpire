@@ -40,7 +40,7 @@
   "accuracy": {
     "evasionVersion": 2,
     "baseAC": 1,
-    "evadeStackBase": 1,
+    "evadeStackBase": 3,
     "evadeStackDex": 0,
     "precisionBase": 1,
     "evasionBase": 1,

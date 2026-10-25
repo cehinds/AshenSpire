@@ -50,7 +50,10 @@ export function combatIntentPresentation(intent = {}) {
     : family === 'attacking' ? [part('attack', damage)]
     : [part(family === 'buffing' ? 'buff' : 'cast', family === 'buffing' ? null : damage)];
   if (damageRead) for (const part of parts) if (part.value === damage) part.summary = damageRead.summary;
-  return { visibility: 'known', title: capitalize(family), stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
+  // A movement move (an Advance or a Retreat) reads as what it does, not as a generic buff.
+  const movement = family === 'buffing' ? (intent.actionEffects || []).find(effect => effect?.op === 'moveEngagement') : null;
+  const title = movement ? t(movement.bands > 0 ? 'combat.intent.retreating' : 'combat.intent.advancing') : capitalize(family);
+  return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);

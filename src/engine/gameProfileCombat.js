@@ -1,6 +1,7 @@
 import { applyStatus } from './statuses.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
-import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
+import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
+import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
@@ -12,6 +13,13 @@ import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js'
 import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 
+// A pierce hit skips Block entirely: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
+// Precision is a hit-roll status in Core, so it is not a pierce tag here.
+export function isPierceHit(profile, carrier) {
+  const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
+  return tags.includes('pierce') || tags.includes('damage:piercing')
+    || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
+}
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
@@ -75,10 +83,13 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
   const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
-  const ar = modern ? sourceRatingValue(ctx, source, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
+  // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).
+  const finesse = modern && ratingId === 'ar' && core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
+  const rated = finesse ? finesseRatingView(source) : source;
+  const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;
-  const applicable = (source?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
+  const applicable = (rated?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
   const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {
@@ -127,16 +138,20 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0;
   if (modern) {
-    blocked = Math.min(Math.max(0,target?.block || 0),physical);
-    barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magical);
-    transition('block','Block',physical,physical-blocked,'mitigation');
-    transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
+    // Owner: Block soaks the whole hit (physical first, then magic) unless the hit pierces; the magic Block leaves meets Barrier, then Ward.
+    const blockPool = isPierceHit(profile,carrier) ? 0 : Math.max(0,target?.block || 0);
+    const physicalBlocked = Math.min(blockPool,physical), magicBlocked = Math.min(blockPool-physicalBlocked,magical);
+    blocked = physicalBlocked+magicBlocked;
+    const magicAfterBlock = magical-magicBlocked;
+    barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);
+    transition('block','Block',physical+magical,physical+magical-blocked,'mitigation');
+    transition('barrier','Barrier',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
     // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-    const poiseIn = physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0);
+    const poiseIn = physical-physicalBlocked+(poiseMeetsMagic ? magicAfterBlock-barrierMitigated : 0);
     // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
     const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,target,'physical',poiseIn);
-    const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
+    const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magicAfterBlock-barrierMitigated);
     // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
     poiseDrain=smashRule && !evaded ? Math.min(Math.max(0,target?.persistentPoise?.value || 0),Math.floor(smashRule.poiseFraction*incoming)) : 0;
     poiseMitigated=poise.reduced;wardMitigated=ward.reduced;

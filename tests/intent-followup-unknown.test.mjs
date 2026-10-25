@@ -17,7 +17,7 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
 
 const POOL_STATS = { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 };
-const soldier = (patch = {}) => createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, attributes: POOL_STATS, ...patch(e) } : e)) });
+const soldier = (patch = {}) => createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, attributes: POOL_STATS, equipmentSp: 0, ...patch(e) } : e)) });
 const registries = soldier(() => ({}));
 const READ = true, MISS = false;
 

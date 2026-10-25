@@ -79,13 +79,18 @@ test('ward off: Poise cuts a magic hit x0.75 and spends Poise', () => {
   assert.equal(target.persistentPoise.value, 18, 'spent the 2 prevented');
 });
 
-test('ward off: Barrier still soaks magic first, Block never does', () => {
+test('ward off: Block soaks magic first (owner, 2026-10-25), then Barrier', () => {
   const { combat, target } = fixture(false);
   target.block = 50; target.barrier = 4;
   hit(combat, target, 8, MAGIC);
-  assert.equal(target.barrier, 0);
-  assert.equal(target.block, 50, 'Block untouched by magic');
-  assert.equal(target.hp, 97, '4 left x 0.75 = 3');
+  assert.equal(target.barrier, 4, 'Block soaked the whole hit');
+  assert.equal(target.block, 42, 'Block soaks magic');
+  assert.equal(target.hp, 100);
+  const bare = fixture(false);
+  bare.target.block = 0; bare.target.barrier = 4;
+  hit(bare.combat, bare.target, 8, MAGIC);
+  assert.equal(bare.target.barrier, 0, 'Barrier soaks magic when no Block remains');
+  assert.equal(bare.target.hp, 97, '4 left x 0.75 = 3');
 });
 
 const SPLIT = { cardId: undefined, tags: ['camp:spell', 'maneuver:casting', 'damage:arcane'], skipRatingBonus: true,
