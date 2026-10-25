@@ -307,6 +307,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     return nodeBox.left >= portBox.left + margin && nodeBox.right <= portBox.right - margin
       && nodeBox.top >= portBox.top + margin && nodeBox.bottom <= visibleBottom - margin;
   }
+  // WHAT THE REVEAL COVERS OF THE MAP PORT, in the port's own (local) px. The
+  // reveal grows upward from the tray's top edge, but the tray is not flush
+  // with the port: on a phone the tap-note strip (and any other row) sits
+  // between the map frame and the tray, so part of the reveal's height lies
+  // below the port and covers none of it. Handing the camera the reveal's
+  // full height aimed picks that much too high (31 px at 390x844, the
+  // Picking-a-node gate's selectionCentersVertically).
+  function trayInset(revealHeight) {
+    const portBox = board.scroll.getBoundingClientRect();
+    const scale = (board.scroll.offsetHeight ? portBox.height / board.scroll.offsetHeight : 1) || 1;
+    // Rects are device px, scrollHeight is local px (past --ui-zoom): scale it.
+    const coveredTop = tray.getBoundingClientRect().top - revealHeight * scale;
+    return Math.max(0, (portBox.bottom - coveredTop) / scale);
+  }
   function openTray() {
     if (tray.dataset.open === 'true') {
       // Already open (or closing): stay open, and recentre on the new pick
@@ -316,8 +330,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.inert = false;
       if (!nodeComfortablyVisible(trayReveal.scrollHeight)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: trayReveal.scrollHeight });
+        board.centerOnNode(selection.selectedId, { inset: trayInset(trayReveal.scrollHeight), glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset(trayReveal.scrollHeight) });
       return;
     }
     wait(trayTiming.openDelayMs, () => {
@@ -327,8 +341,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.style.height = `${height}px`;
       if (!nodeComfortablyVisible(height)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: height });
+        board.centerOnNode(selection.selectedId, { inset: trayInset(height), glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset(height) });
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
