@@ -3,7 +3,7 @@
 // The stance-bonus retune approves this same edge: saved Smash tuning stays intact.
 // A later runtime must independently approve this edge instead of inheriting it.
 const PREVIOUS_RUNTIME = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
-const FIXED_EVASION_RUNTIME = 'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2';
+const FIXED_EVASION_RUNTIME = 'sha256:28eee6726d3faf89bd10234adcfb0029d7dacb3ed424f91aef1493070819daf0';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && profile?.lock?.runtimeHash === PREVIOUS_RUNTIME
