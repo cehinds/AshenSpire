@@ -415,8 +415,8 @@ test('combatFeel: the tables deep-equal their authored JSON, stay frozen to the 
   for (const table of [m.SHAKE_STEPS, m.SHAKE_STEPS_HP]) assert.ok(Object.isFrozen(table) && table.every(Object.isFrozen));
   assert.ok(Object.isFrozen(m.HIT_STOP));
   // These were one constant each in the old module, so they cannot be allowed to drift.
-  assert.equal(m.SHAKE_STEPS.find((step) => step.px === 7).minShare, m.BIG_HIT_SHARE);
-  assert.equal(m.SHAKE_STEPS.find((step) => step.px === 10).minShare, m.HUGE_HIT_SHARE);
+  assert.equal(m.SHAKE_STEPS[2].minShare, m.BIG_HIT_SHARE, 'shakeSteps[2].minShare must equal bigHitShare');
+  assert.equal(m.SHAKE_STEPS[3].minShare, m.HUGE_HIT_SHARE, 'shakeSteps[3].minShare must equal hugeHitShare');
   assert.equal(m.HIT_STOP.hugeShare, m.HUGE_HIT_SHARE);
 });
 

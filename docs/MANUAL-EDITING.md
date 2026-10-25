@@ -141,8 +141,8 @@ Paths are inside `content/source/` unless they start with `src/`.
 | How much enemy intent you see | `combatIntent.json` | |
 | Counter and smash multipliers, damage and tag riders | `combatMatchups.json`, `combatExpansionMatchups.json` | |
 | Survey quest lore | `surveyQuestLore.json` | |
-| Custom Climb modifiers: names, text, ascension order | `customMods.json` | Which rules they switch on stays in `src/content/customMods.js`. |
-| Seats (the region strongholds) | `seats.json` | |
+| Custom Climb modifiers: names, text, ascension order | `customMods.json` | Their sizes ("+30% HP") are in `balanceCustomMods.json`; change both so the text stays true. What each one does is code. |
+| Seats (each region and its content) | `seats.json` | Changing a seat's `baseTier` changes enemy scaling. |
 | Screen shake and hit-stop on big hits | `combatFeel.json` | Some numbers are written twice; the notes say which must match. |
 | Music beds, scales and which region plays what | `music.json` | |
 | Sound-effect recipes, families and hit tiers | `sfxRecipes.json`, `sfxFamilyIds.json`, `sfxHitTiers.json` | A recipe written as a name (`"hit": "hit_medium"`) reuses that recipe. |
