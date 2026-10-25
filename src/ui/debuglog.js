@@ -260,4 +260,17 @@ export function openDebugLog() {
 }
 
 /** The console door shares the registered chrome without closing the leaf import graph. */
-export function openConsoleLog(options = {}) { return chrome?.consoleDoor?.(options) || null; }
+// A screen may register one snapshot reader; opening the console first records
+// its line, so a stuck turn comes with the input state at that moment. The
+// reader returns a string (or null once its screen is gone). A snapshot error
+// can never block opening the console.
+let consoleSnapshot = null;
+export function registerConsoleSnapshot(fn) { consoleSnapshot = typeof fn === 'function' ? fn : null; }
+
+export function openConsoleLog(options = {}) {
+  try {
+    const line = consoleSnapshot && consoleSnapshot();
+    if (line) dlog('snapshot', line);
+  } catch (e) { /* diagnostics only */ }
+  return chrome?.consoleDoor?.(options) || null;
+}
