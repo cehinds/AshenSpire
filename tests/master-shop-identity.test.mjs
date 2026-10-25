@@ -23,8 +23,6 @@ const capturedCardIds = new Set(capturedCards.cards.map(card => card.id));
 const capturedBooks = new Set(Object.values(FIXTURE.marketAllOut).flatMap((stock) => (stock.skillBooks || []).map((book) => book.id)));
 const capturedContent = { ...contentBundle, cards: capturedCards.cards,
   classes: contentBundle.classes.map(row => ({ ...row, cardPool: row.cardPool.filter(id => capturedCardIds.has(id)) })),
-  // The Core flask relic (2026-10-24) post-dates the capture; this oracle replays the relic shelf without it.
-  relics: contentBundle.relics.filter(row => row.id !== 'brimmingGourd'),
   consumables: contentBundle.consumables.filter((row) => row.kind !== 'skillBook' || capturedBooks.has(row.id)) };
 const allOut = (kind) => Object.fromEntries(contentBundle.shops[kind].offerings.map((row) => [`gameConfig.shops.${kind}.${row.id}.chance`, 100]));
 const REG = {

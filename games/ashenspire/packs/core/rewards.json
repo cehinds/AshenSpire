@@ -185,6 +185,9 @@
       ]
     },
     "relics": {
+      "pools": [
+        "core2"
+      ],
       "weights": {
         "brimmingGourd": 20
       }
