@@ -74,6 +74,14 @@
     "flavor": "A sapling waits inside, patient as grief."
   },
   {
+    "id": "brimmingGourd",
+    "name": "Brimming Gourd",
+    "rarity": "common",
+    "icon": "regen",
+    "textTemplate": "Picking it up refills your flasks.",
+    "flavor": "Hollowed, dried, and somehow never empty."
+  },
+  {
     "id": "whetstoneFragment",
     "name": "Whetstone Fragment",
     "rarity": "common",
