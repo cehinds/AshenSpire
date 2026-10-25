@@ -69,3 +69,11 @@ test('a retreat moves the engagement out one band and the player pays Advance ag
   for (let k = 0; combat.pendingReaction && k < 50; k++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
   assert.equal(combat.rangeState.engagements[key], before + 1, 'the retreat moved the pair out one band (the player must Advance again)');
 });
+
+test('the intent presentation names a retreat and an advance instead of a generic buff', async () => {
+  const { combatIntentPresentation } = await import('../src/ui/models/CombatIntentModel.js');
+  const base = { kind: 'buff', moveId: 'retreat', revealed: true, hidden: false, profile: { camp: 'physical', maneuver: 'preparing' }, combatProfile: { camp: 'physical' } };
+  assert.equal(combatIntentPresentation({ ...base, actionEffects: [{ op: 'moveEngagement', target: 'enemy', bands: 1 }] }).title, 'Retreating');
+  assert.equal(combatIntentPresentation({ ...base, moveId: 'advance', actionEffects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }] }).title, 'Advancing');
+  assert.equal(combatIntentPresentation({ ...base, moveId: 'warcry', actionEffects: [{ op: 'applyStatus', target: 'self' }] }).title, 'Buffing');
+});
