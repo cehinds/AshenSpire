@@ -20,8 +20,10 @@ export function mountCombatDebugButton(combatEl, { readSettings = () => ({}) } =
   const sync = () => {
     const on = readSettings()?.debugMode === true;
     if (on && !node) {
-      node = el('button', { type: 'button', class: 'combat-debug-console', 'data-combat-debug': 'console', text: t('debugChrome.console') });
+      node = el('button', { type: 'button', class: 'combat-debug-console', 'data-combat-debug': 'console', 'data-combat-read-only': '', text: t('debugChrome.console') });
       node.addEventListener('click', open);
+      // data-combat-read-only keeps fx.js's capture-phase skip handlers from treating this
+      // tap as an animation skip, so opening the console does not change the state it records.
       // Keep the combat screen's own handlers (selection clearing) off this tap.
       for (const type of ['pointerdown', 'pointerup']) node.addEventListener(type, event => event.stopPropagation());
       combatEl.append(node);

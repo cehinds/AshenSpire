@@ -96,3 +96,12 @@ test('a stale combat releasing its snapshot reader does not clear its successor'
   openConsoleLog();
   assert.ok(!consoleRecorder.getEntries().slice(before).some(e => JSON.stringify(e).includes('[snapshot]')));
 });
+
+test('the in-combat Console button is marked read-only so playback skip handlers ignore its tap', () => withDom((dom) => {
+  const host = dom.document.createElement("div");
+  dom.document.body.appendChild(host);
+  const btn = mountCombatDebugButton(host, { readSettings: () => ({ debugMode: true }) });
+  btn.sync();
+  assert.ok(btn.node && btn.node.hasAttribute('data-combat-read-only'));
+  btn.release();
+}));
