@@ -327,3 +327,11 @@ test('stats tables: the action-cost constants keep the freeze depth they had', (
   assert.ok(Object.isFrozen(actionCostsModule.COST_TAGS), 'COST_TAGS is frozen');
   assert.equal(Object.isFrozen(actionCostsModule.COST_TAGS['camp:spell']), false, 'COST_TAGS rows were never frozen');
 });
+
+// Plan row 9b, batch A: data-only modules moved from JS to content/source JSON.
+import { sigils } from '../src/content/sigils.js';
+test('sigils: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/sigils.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(sigils, authored);
+});

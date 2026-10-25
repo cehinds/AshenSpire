@@ -372,6 +372,15 @@ File header (was the comment block at the top of src/content/shops.js): the thre
 - **master shelves and services (SPEC §14.5)** — the stocked shelves (`skillBooks`, `weaponArts`, `armaments`) are each filtered to the visiting master's tracks and rolled on `shopOffers` after the offering roll. The services (`training`, `respec`, `lesson`, `appraisal`, `redistribute`) each stay laid out once rolled and are judged live. Training and appraisal can always act: every master teaches three or four tracks.
 - **masters (SPEC §14.5)** — not a kind and no Settings row: who a master visit can be. A visit picks one on the `shop` stream, in written order. Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an armour track, which has no item type, nor a `class:` track, whose respec would strand the class tree's picks), and speaks as a speakers.csv row.
 
+## Sigils (content/source/sigils.json)
+
+File header (was the comment block at the top of src/content/sigils.js): sigils, the brief's "runes" (SPEC §14.3). `sigils.json` is the single array export `sigils`; each row is `{ id, name, rarity, cost, blurb }`.
+
+- **Why "sigil".** Renamed from "rune" because that word is this spec's pre-scrub name for the currency (cinders).
+- **What it does is not written here** (Codex on #1376; coordinator ruling). A sigil's effect is a property rule, as a relic's and a companion's are: its `family = sigil` row in content/source/tagging.csv names a leaf under the `sigil` branch of `property` in nodes.csv, whose rule lives in nodeEffects.json with its numbers bound to balance.sigils.*. stampTags derives `propertyTags`. Its numbers are Settings rows, so a blurb names none (the rule's own words are nodeTerms.csv's). A sigil set into a slot of an EQUIPPED armament mounts as a `sigil` carrier (engine/properties.js, SPEC §14.4). One carried in `run.sigils`, or slotted in a piece that is not worn, mounts nowhere. validateContent refuses a row that writes `triggers` or `modifiers`, and one with no property tag.
+- **Prices.** `cost` is the sigil's own price; the market charges `gameConfig.shops.market.sigils.pricePct` percent of it (content/source/shops.json), so the owner tunes what the shelf asks in Settings without editing a row. The blacksmith sells no sigils; it cuts slots and sets them (§14.4).
+- **Legendary sigils** are SPEC §15.4's: `{ id, name, rarity: 'legendary', blurb }`, with no cost, never shop stock, and never slotted. One works while it is ATTUNED in the Armoury's Sigils panel (model/sigils.js attuneSigil), up to `balance.sigils.attuneMax` at a time, and a fight or a treasure room can drop one (balance.sigils.dropChancePct, shipped off). Each derives exactly one property tag, and each rule is an on/if combination no relic uses.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
