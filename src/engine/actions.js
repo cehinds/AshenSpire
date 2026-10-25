@@ -605,6 +605,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   const residual = hits.map(() => 0);
   const magicBlocked = hits.map(() => 0);
   const magicToWard = magicTyped.slice();
+  const physicalBypassed = hits.map(() => 0), bypassSpent = hits.map(() => 0);
   let blockLeft = Math.max(0, target.block || 0);
   let bypassLeft = receipt.guardBypass || 0;
   hits.forEach((hit, index) => {
@@ -612,6 +613,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const bypass = Math.min(pool + magicTyped[index], bypassLeft);
     bypassLeft -= bypass;
     const physicalBypass = Math.min(pool, bypass);
+    physicalBypassed[index] = physicalBypass; bypassSpent[index] = bypass;
     const blocked = Math.min(blockLeft, Math.max(0, pool - physicalBypass));
     blockLeft -= blocked;
     residual[index] = pool - blocked;
@@ -702,6 +704,9 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.physicalAmounts = physicalTyped;
   receipt.blockableAmounts = blockable;
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
+  // The live apply spends the bypass exactly as planned: per contact, its physical share and its whole share.
+  receipt.physicalBypassAmounts = physicalBypassed;
+  receipt.guardBypassAmounts = bypassSpent;
 }
 
 /**
@@ -781,8 +786,12 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // Block soaks the physical part first, then the magic part the plan assigned it (owner, 2026-10-25); a pierce bypass spends none of it.
   const pool = 'block';
   const blockable = tactical.blockableAmounts?.[contactIndex] ?? (spell ? 0 : amount);
-  const bypass = Math.min(blockable, tactical.guardBypassRemaining || 0);
-  tactical.guardBypassRemaining -= bypass;
+  // The plan spent the bypass over the whole hit, physical then magic, in contact order; the live apply follows it, so
+  // a bypass the plan gave to one contact's magic is not carried to the next contact's physical part.
+  const plannedBypass = tactical.physicalBypassAmounts?.[contactIndex];
+  const bypass = plannedBypass === undefined ? Math.min(blockable, tactical.guardBypassRemaining || 0) : Math.min(blockable, plannedBypass);
+  tactical.guardBypassRemaining -= plannedBypass === undefined ? bypass
+    : Math.min(tactical.guardBypassRemaining || 0, tactical.guardBypassAmounts?.[contactIndex] ?? bypass);
   const blockBefore = target[pool] || 0;
   const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, blockable - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
