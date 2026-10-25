@@ -1,15 +1,5 @@
 # AshenSpire
-<!-- feature-preview:start -->
-## Feature preview — shared AshenSpire art host
 
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/ArtHostMigrationReview/latest/)
-
-Art downloads and Windows version discovery now use AI-Art's AshenSpire releases, preserving archive names, checksums and older pins. The captures show the verified local LIGHT pack (`0.7.1.1840`, `d4414521b9`): one normal Defend on phone and settled fixtures elsewhere. Root accepted each image; earlier phone/desktop harness failures remain recorded. [Capture identity and scope](docs/preview/features/art-host-migration/capture-record.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile: native Defend leaves SP2 and Block14](docs/preview/features/art-host-migration/mobile.png) | ![Desktop: settled combat with loaded art and costs](docs/preview/features/art-host-migration/desktop.png) | ![Wide: settled two-enemy combat and hand](docs/preview/features/art-host-migration/wide.png) | ![Tablet: settled combat with readable costs and controls](docs/preview/features/art-host-migration/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
