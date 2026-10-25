@@ -40,6 +40,9 @@ export function renderQuickMenu(model, { onActivate }) {
       attrs: {
         role: rowModel.accessibility.role,
         dataset: { act: item.act, member: item.act, ...(item.tab ? { tab: item.tab } : {}) },
+        // This entry only opens the diagnostic viewer. Its pointerdown must not
+        // trip fx.js's capture-phase animation skip while a combat is playing.
+        'data-combat-read-only': item.act === 'console' ? '' : null,
         'aria-checked': item.control === 'switch' ? String(!!item.checked) : null,
       },
     });

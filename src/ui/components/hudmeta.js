@@ -119,7 +119,11 @@ export function quickAccessPanelHtml(model) {
   return `<section class="hud-control-grid as-cluster stack" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions as-cluster">
       ${part(model, UI.armouryControl, (armoury) => button(armoury))}
-      ${part(model, UI.quickMenuControl, (menu) => button(menu, { 'data-action-hint': 'menu' }))}
+      ${part(model, UI.quickMenuControl, (menu) => button(menu, {
+        'data-action-hint': 'menu',
+        // Opening the launcher is read-only; it must not skip a live combat beat.
+        'data-combat-read-only': '',
+      }))}
     </div>
   </section>`;
 }
