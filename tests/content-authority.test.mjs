@@ -403,3 +403,19 @@ test('seats: SEATS and CAUSEWAY_REGION_ID deep-equal the authored JSON; the arra
   assert.equal(CAUSEWAY_REGION_ID, authored.causewayRegionId);
   assert.ok(Object.isFrozen(SEATS) && SEATS.every((row) => !Object.isFrozen(row)));
 });
+
+import * as combatFeelModule from '../src/content/combatFeel.js';
+test('combatFeel: the tables deep-equal their authored JSON, stay frozen to the row, and keep the numbers that must agree', () => {
+  const a = JSON.parse(readFileSync(resolve(ROOT, 'content/source/combatFeel.json'), 'utf8'));
+  const m = combatFeelModule;
+  assert.deepStrictEqual(m.SHAKE_STEPS, a.shakeSteps);
+  assert.deepStrictEqual(m.SHAKE_STEPS_HP, a.shakeStepsHp);
+  assert.deepStrictEqual(m.HIT_STOP, a.hitStop);
+  assert.deepStrictEqual([m.BIG_HIT_SHARE, m.HUGE_HIT_SHARE, m.SHAKE_MAX_PX, m.SHAKE_FLOOR_PX], [a.bigHitShare, a.hugeHitShare, a.shakeMaxPx, a.shakeFloorPx]);
+  for (const table of [m.SHAKE_STEPS, m.SHAKE_STEPS_HP]) assert.ok(Object.isFrozen(table) && table.every(Object.isFrozen));
+  assert.ok(Object.isFrozen(m.HIT_STOP));
+  // These were one constant each in the old module, so they cannot be allowed to drift.
+  assert.equal(m.SHAKE_STEPS.find((step) => step.px === 7).minShare, m.BIG_HIT_SHARE);
+  assert.equal(m.SHAKE_STEPS.find((step) => step.px === 10).minShare, m.HUGE_HIT_SHARE);
+  assert.equal(m.HIT_STOP.hugeShare, m.HUGE_HIT_SHARE);
+});

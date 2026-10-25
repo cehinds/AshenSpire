@@ -584,6 +584,17 @@ File header (was the comment block at the top of src/content/seats.js): THE SEAT
 - **`seats[].regionId`** — a foreign key into content/environments.js. The check stays in src/content/seats.js, at module load, so a mistyped region fails the boot rather than painting the wrong sky (Law 1 clause 5).
 - **`causewayRegionId`** — the scenery of the final tier's boss node, the causeway to the Ashen Spire (SPEC §13.2, LORE §1): a region that is no seat's, painted where the last climb ends whichever seat holds it. Data, so the model never spells it. Checked against the environment regions the same way.
 
+## Combat feel (content/source/combatFeel.json)
+
+File header (was the comment block at the top of src/content/combatFeel.js): how hard a hit feels, as data (SPEC §7.4, D51). The key-to-export map: `bigHitShare` → `BIG_HIT_SHARE`, `hugeHitShare` → `HUGE_HIT_SHARE`, `shakeMaxPx` → `SHAKE_MAX_PX`, `shakeFloorPx` → `SHAKE_FLOOR_PX`, `shakeSteps` → `SHAKE_STEPS`, `shakeStepsHp` → `SHAKE_STEPS_HP`, `hitStop` → `HIT_STOP`. src/content/combatFeel.js freezes the three tables (arrays and rows) and keeps `shakePxFor`, `hitStopMsFor` and `combatFeelIssues`.
+
+- **`shakeSteps`** — every hit that costs its target HP shakes the screen, scaled by the SHARE of the target's max HP it cost after Block (owner, 2026-10-18, Fix A). A hit takes the largest step whose `minShare` it reaches; a hit under the first step shakes `shakeFloorPx`, so every hit that costs HP still shakes. Never over `shakeMaxPx` (10 px, from 35% of max HP).
+- **`shakeStepsHp`** — the 2026-10-05 rule (1-4 px by absolute HP, 1/6/10/15); a hit whose target's max HP is unknown falls back to it.
+- **`hitStop`** — a hit that costs `hugeShare` of the target's max HP or more holds the attacker's impact frame and the target's recoil for `hugeMs`, with no HP floor; a hit that costs at least `minHp` holds them for `ms` before the swing recovers. The huge share is judged first. The damage number, sound and haptic fire at impact; only the two figures pause. `ms` 0 turns it off. Instant speed and Reduced motion never reach it: they play the fast path, which has no swing to hold (ui/fx.js animateEvents).
+- **`bigHitShare`, `hugeHitShare`** — also size the damage number (ui/fx.js dmgClass: pct20, pct35) and fire the bigHit haptic. A hit this share of the target's max HP is a big hit (pct20, and the bigHit haptic); this share is a huge hit (pct35, and the long hit-stop).
+- **Numbers that must agree.** The third `shakeSteps` row's `minShare` was written as `BIG_HIT_SHARE`, the fourth's and `hitStop.hugeShare` as `HUGE_HIT_SHARE`. JSON cannot reference a value, so each is now written out twice; tests/content-authority.test.mjs fails if they drift apart.
+- The Screen shake setting and Reduced motion drop the shake (ui/fx.js shake).
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
