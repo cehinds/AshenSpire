@@ -18,7 +18,14 @@ These are generated art proposals. Overlay alignment is approximate and editable
 
 ## Reproduction
 
-`sources.json` records the generated source sheets, references, source hashes, effect prompts and the base-art brief (the original base prompt is not archived here). The 15 original RGBA sheets are in `sources/`. `python export.py` uses ImageMagick to extract a fixed 5×2 grid, normalize all cells to 400×400 and regenerate the manifest and browser data. This is technical extraction; the object, crack and glow artwork was generated with OpenAI ImageGen.
+The authoritative self-contained reproduction package, including `export.py`, `sources.json`, `isolation-crops.json` and the 15 original RGBA sheets, lives in [AI-Art, branch ashenspire](https://github.com/cehinds/AI-Art/tree/ashenspire/docs/design/new-card-art/minerals). Run from that **AI-Art checkout**, not this retained Game viewer folder:
+
+```sh
+cd docs/design/new-card-art/minerals
+python export.py
+```
+
+The exporter uses ImageMagick to extract a fixed 5×2 grid, normalize all cells to 400×400 and regenerate `png/`, `manifest.json` and `data.js` beside itself in AI-Art. Review and commit those source/export changes there; it does not write Game runtime catalogs. `sources.json` records source hashes, effect prompts and the base-art brief (the original base prompt is not archived here). This is technical extraction; the object, crack and glow artwork was generated with OpenAI ImageGen.
 
 `isolation-crops.json` records additional crop rectangles that remove small neighboring atlas fragments while retaining the main sprite's original canvas position.
 

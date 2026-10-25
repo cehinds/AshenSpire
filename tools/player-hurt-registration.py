@@ -5,7 +5,12 @@ DERIVED: writes src/content/playerHurtFrames.js. Never hand-edit that module;
 rerun this script after the HURT art or a ready card frame changes.
 
 Usage (from the repository root):
-    python3 -I tools/player-hurt-registration.py [--cache .art-cache/hd-assets-v19]
+    ASHEN_ART_CHECKOUT=/path/to/AI-Art python3 -I tools/player-hurt-registration.py [--cache .art-cache/<tag>]
+    # --asset-root /path/to/AI-Art is the equivalent explicit option.
+
+Ready frames come from AI-Art/common/assets-display through the shared Python
+art resolver. --cache retains its existing meaning: the high/light HURT inputs.
+The generated metadata stays in this Game checkout, not the art checkout.
 
 For each class it reads the high-tier HURT image (512x512) and the class's
 `ready` card frame (256x256, taken from src/content/alternativeCardAnimations.js),
@@ -21,6 +26,7 @@ Light-tier HURT files share the same normalised geometry, so one placement
 serves both tiers.
 """
 import json
+import importlib.util
 import os
 import re
 import sys
@@ -31,6 +37,17 @@ ALPHA_THRESHOLD = 128
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OUT = os.path.join(ROOT, 'src', 'content', 'playerHurtFrames.js')
 CATALOG = os.path.join(ROOT, 'src', 'content', 'alternativeCardAnimations.js')
+
+# File-based import also supports the documented `python -I` invocation, whose
+# isolated module search path does not include this tools directory.
+_ART_SPEC = importlib.util.spec_from_file_location('ashenspire_art_authoring', os.path.join(ROOT, 'tools', 'art_authoring.py'))
+_ART = importlib.util.module_from_spec(_ART_SPEC)
+_ART_SPEC.loader.exec_module(_ART)
+
+
+def ready_source(relative, *, game_root=None, asset_root=None):
+    """Resolve reviewed ready artwork in the explicit AI-Art authoring checkout."""
+    return _ART.art_path(game_root or ROOT, relative, asset_root)
 
 # First candidate that exists in BOTH tiers wins (checked, not assumed).
 HURT_CANDIDATES = {
@@ -94,7 +111,7 @@ def main(argv):
             raise SystemExit('no HURT art for ' + cls + ' in both tiers')
         hurt_file = os.path.join(cache, 'high', 'assets', file)
         hurt_box, hurt_size = alpha_box(hurt_file)
-        ready_file = os.path.join(ROOT, ready[cls])
+        ready_file = os.fspath(ready_source(ready[cls]))
         ready_box, ready_size = alpha_box(ready_file)
         p = placement(ready_box, ready_size, hurt_box, hurt_size)
         print(f"{cls}: file=assets/{file} scale={p['scale']:.4f} dx={p['dx']:.2f} dy={p['dy']:.2f} "
