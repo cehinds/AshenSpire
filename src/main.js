@@ -2919,7 +2919,9 @@ function enterNode(nodeId) {
   if (firstVisit) run.path.push(nodeId);
   run.floor = node.floor;
   const refillHealMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
-  if (firstVisit && applyNodeRefill(run, node, { healMult: refillHealMult })) persist(); // the branched map's start node refills HP and flasks
+  // The destination owns its checkpoint: combat saves the refill together with
+  // its encounter receipt, and a failed autosave must not prevent entry.
+  if (firstVisit) applyNodeRefill(run, node, { healMult: refillHealMult });
 
   let kind = node.type;
   if (kind === 'event') {
