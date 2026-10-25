@@ -3142,7 +3142,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   run.combatEntered = { ...(serviceEvent ? serviceEventCombatEntry(nodeId, encounterId) : { nodeId, encounterId }), ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
-  if (!resuming) persist();
+  if (!resuming) persistOrWarn(); // a full store must not block the next fight
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
