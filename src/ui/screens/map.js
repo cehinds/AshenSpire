@@ -291,6 +291,21 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // resets the framing only when the tray moved it.
   const COMFORT_MARGIN_PX = 24;
   let trayCentred = false;
+  // The reveal is anchored to the tray, not necessarily the scrollport: flow
+  // notes can sit between their bottom edges. Rects are physical CSS pixels;
+  // the board's inset and client geometry remain local pixels under UI zoom.
+  function trayViewport(revealHeight) {
+    const port = board.scroll, portBox = port.getBoundingClientRect();
+    const measuredScale = port.offsetHeight > 0 ? portBox.height / port.offsetHeight : 1;
+    const scaleY = Number.isFinite(measuredScale) && measuredScale > 0 ? measuredScale : 1;
+    const height = Number.isFinite(revealHeight) ? Math.max(0, revealHeight) : 0;
+    const trayTop = tray.getBoundingClientRect().top;
+    const gap = Math.max(0, trayTop - portBox.bottom);
+    const inset = Math.max(0, height - gap / scaleY);
+    const visibleBottom = Math.max(portBox.top, Math.min(portBox.top + port.clientHeight * scaleY, trayTop - height * scaleY));
+    return { portBox, inset, visibleBottom };
+  }
+  const trayInset = () => trayViewport(trayReveal.scrollHeight).inset;
   function nodeComfortablyVisible(revealHeight) {
     // Touch only: a finger that just tapped the node is about to tap it again.
     // Use that activation's pointer, not the device's primary-pointer media
@@ -300,26 +315,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
     if (!nodeEl) return false;
     const nodeBox = nodeEl.getBoundingClientRect();
-    const portBox = board.scroll.getBoundingClientRect();
-    const coveredTop = tray.getBoundingClientRect().top - revealHeight;
-    const visibleBottom = Math.min(portBox.bottom, coveredTop);
+    const { portBox, visibleBottom } = trayViewport(revealHeight);
     const margin = COMFORT_MARGIN_PX;
     return nodeBox.left >= portBox.left + margin && nodeBox.right <= portBox.right - margin
       && nodeBox.top >= portBox.top + margin && nodeBox.bottom <= visibleBottom - margin;
-  }
-  // WHAT THE REVEAL COVERS OF THE MAP PORT, in the port's own (local) px. The
-  // reveal grows upward from the tray's top edge, but the tray is not flush
-  // with the port: on a phone the tap-note strip (and any other row) sits
-  // between the map frame and the tray, so part of the reveal's height lies
-  // below the port and covers none of it. Handing the camera the reveal's
-  // full height aimed picks that much too high (31 px at 390x844, the
-  // Picking-a-node gate's selectionCentersVertically).
-  function trayInset(revealHeight) {
-    const portBox = board.scroll.getBoundingClientRect();
-    const scale = (board.scroll.offsetHeight ? portBox.height / board.scroll.offsetHeight : 1) || 1;
-    // Rects are device px, scrollHeight is local px (past --ui-zoom): scale it.
-    const coveredTop = tray.getBoundingClientRect().top - revealHeight * scale;
-    return Math.max(0, (portBox.bottom - coveredTop) / scale);
   }
   function openTray() {
     if (tray.dataset.open === 'true') {
@@ -330,8 +329,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.inert = false;
       if (!nodeComfortablyVisible(trayReveal.scrollHeight)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: trayInset(trayReveal.scrollHeight), glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: trayInset(trayReveal.scrollHeight) });
+        board.centerOnNode(selection.selectedId, { inset: trayInset, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset });
       return;
     }
     wait(trayTiming.openDelayMs, () => {
@@ -341,8 +340,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.style.height = `${height}px`;
       if (!nodeComfortablyVisible(height)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: trayInset(height), glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: trayInset(height) });
+        board.centerOnNode(selection.selectedId, { inset: trayInset, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset });
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
