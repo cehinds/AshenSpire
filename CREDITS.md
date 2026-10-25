@@ -604,6 +604,12 @@ The 512px and 1024px WebPs under `assets/cards/` and their light twins share
 this provenance. No third-party artwork was downloaded and no third-party
 license is claimed.
 
+## Runtime display export relocation (2026-10-25)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets-display/` — runtime display exports | Byte-preserved exported artwork in [AI-Art's immutable AshenSpire snapshot](https://github.com/cehinds/AI-Art/tree/59663d814b62ab96cb5309b4e0720cd871782ee1/common/assets-display); source and export hashes are retained in the library/runtime catalogs and the [preserved original game credits](https://github.com/cehinds/AI-Art/blob/e71ff1f23d95da84deede90907f2f28f7aedb55a/provenance/AshenSpire/CREDITS.md). | Reused/derived artwork retains the authorship, source and rights notices recorded here and in the linked provenance. No new licence is granted or inferred by relocation; unresolved provenance or rights gaps remain open. |
+
 ## Alternative combat collection (2026-10-06)
 
 The 59 idle actor appearances and 69 scenery masters in

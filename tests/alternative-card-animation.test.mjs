@@ -1,3 +1,4 @@
+import { artPath } from '../tools/art-source.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -13,7 +14,7 @@ import { validate } from '../pose-studio/model.mjs';
 import { webpDimensions } from '../tools/mobileart-policy.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const json=path=>JSON.parse(readFileSync(resolve(root,path)));
+const json=path=>JSON.parse(readFileSync(artPath(path,{root})));
 const card=(maneuver,camp='physical')=>({id:'test',cardTags:['camp:'+camp,'maneuver:'+maneuver]});
 
 test('card identity preserves class defaults regardless of equipped weapons',()=>{
@@ -84,7 +85,7 @@ test('every runtime frame ships in both tiers with matching recorded hashes and 
   assert.deepEqual(frame.anchor,[256,464]);
   assert.ok(frame.bounds.every(n=>n>0&&n<512));
   for(const path of [frame.path,frame.lite]){
-   const bytes=readFileSync(resolve(root,path));
+   const bytes=readFileSync(artPath(path,{root}));
    const {width,height}=webpDimensions(bytes);
    assert.deepEqual([width,height],frame.rasterSize);
    assert.ok(Math.max(width,height)<=256);
