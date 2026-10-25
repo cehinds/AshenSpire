@@ -1,5 +1,5 @@
 import { stanceOf } from '../model/stanceRules.js';
-import { actorRangeKey, movedEngagementState } from '../model/combatEngagement.js';
+import { actorRangeKey, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
 import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
@@ -158,12 +158,16 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
   return queue;
 }
 
-// Only authored movement persists between actions. An attack's implicit Advance
-// is temporary to that action and must still be quoted on every later attack.
+// Authored movement and a paid implicit Advance both persist (SPEC range rule): once an
+// attack has closed the distance, later attacks against that target quote no Advance until
+// something grows the distance again. The quote is taken before the move's own movement
+// effects, matching execution (the Advance is accepted when the move's actions are).
 function projectEnemyMovement(pricing, enemy, moveId) {
   if (!pricing.rangeState?.policy.enabled) return;
   const move = expandedEnemyMove(enemy, pricing.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, pricing);
-  if (move.delay || !move.effects?.some(effect => effect.op === 'moveEngagement')) return;
+  if (move.delay) return;
+  pricing.rangeState = advancedEngagementState(pricing.rangeState, enemyMoveQuote(move, { enemy, moveId, combat: pricing }).rangeQuote);
+  if (!move.effects?.some(effect => effect.op === 'moveEngagement')) return;
   const preview = previewEnemyAction(pricing, enemy, moveId);
   for (const effect of preview?.actionEffects || []) {
     if (effect.op !== 'moveEngagement' || effect.if && effect.conditionMet !== true || effect.oncePerTurn) continue;
