@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **One guide for editing the game by hand** ([#2298](https://github.com/cehinds/AshenSpire/pull/2298), `0.7.1.1829`). `docs/MANUAL-EDITING.md` now opens with a "to change X, edit Y" table for every content file, the edit-build-check steps, JSON basics, what still lives in code, and the messages common mistakes produce. Nothing in play changes.
+- **One guide for editing the game by hand** ([#2298](https://github.com/cehinds/AshenSpire/pull/2298), `0.7.1.1831`). `docs/MANUAL-EDITING.md` now opens with a "to change X, edit Y" table for every content file, the edit-build-check steps, JSON basics, what still lives in code, and the messages common mistakes produce. Nothing in play changes.
 - **Balance numbers are now editable data files** ([#2296](https://github.com/cehinds/AshenSpire/pull/2296), `0.7.1.1829`). The tuning numbers that used to fill one 2,700-line code file are split by topic into `content/source/balance*.json`, with each Settings explanation beside its number. Nothing in play changes.
 - **Progression tables are now editable data files** ([#2295](https://github.com/cehinds/AshenSpire/pull/2295), `0.7.1.1827`). Card families, card lore, gear requirements, relics, feats, unlocks, lesson recipes and grade rules live in `content/source/`. The rules that build cards and feats from them stay in code. Nothing in play changes.
 - **Attributes, derived stats and action costs are now editable data files** ([#2293](https://github.com/cehinds/AshenSpire/pull/2293), `0.7.1.1825`). Character attributes, creation modes, derived-stat rules and action-cost tunables live in `content/source/`. Nothing in play changes.
