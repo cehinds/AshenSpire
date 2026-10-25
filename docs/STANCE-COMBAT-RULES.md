@@ -17,7 +17,7 @@ Ratings are active only while their stance is active. They never accumulate from
 | Physical Defense | +3 DR | 3 Block |
 | Magical Defense | +3 Ward rating | 3 protection, split as below |
 | Counter | Both its applicable offensive and defensive rating bonuses | Applicable offensive and defensive entry grants |
-| Evade | Applicable defensive rating (+3 DR physically, +3 Ward rating magically) | Applicable defensive protection grant plus 1 Evade stack |
+| Evade | Applicable defensive rating (+3 DR physically, +3 Ward rating magically) | Applicable defensive protection grant plus 3 Evade stacks (owner, 2026-10-25) |
 
 A non-melee offensive magical card enters **Spell**, and adds 1 stack to **each status its existing authored effect successfully applies**. This strengthens the spell's existing effect and works on a target that did not already carry that status; it never invents an additional status effect or rewards a resisted/failed application. Melee magic follows its authored maneuver instead. Defensive magic remains **Defense**, never Spell.
 
@@ -37,7 +37,7 @@ Sweep has -1 Precision and gains +1 Precision for each additional enemy targeted
 
 ## Evade and hit resolution
 
-An Evade stack adds +3 Evade rating. Evade entry grants one such stack: there is no additional active +3 Evade-rating bonus. Evade is defensive and also receives the applicable active +3 DR or +3 Ward rating and its entry protection (3 Block physically, or the 3-point Block:Barrier split magically). Leaving Evade removes its active defensive rating but does not erase its Evade stacks. Avoidance is capped at 95%, and **any rolled natural 20 hits**, including either die in advantage/disadvantage mode. Exact hit previews enumerate all 20 single-die outcomes or all 400 ordered two-die outcomes with that override, rather than approximating the percentage.
+An Evade stack adds +3 Evade rating. Evade entry grants three such stacks (`stanceRules.evadeStacks = 3`, owner 2026-10-25, matching the Evade card's grant; it was one): there is no additional active +3 Evade-rating bonus. Evade is defensive and also receives the applicable active +3 DR or +3 Ward rating and its entry protection (3 Block physically, or the 3-point Block:Barrier split magically). Leaving Evade removes its active defensive rating but does not erase its Evade stacks. Avoidance is capped at 95%, and **any rolled natural 20 hits**, including either die in advantage/disadvantage mode. Exact hit previews enumerate all 20 single-die outcomes or all 400 ordered two-die outcomes with that override, rather than approximating the percentage.
 
 A missed eligible attack consumes 1 Evade stack. An out-of-range attack consumes none. A spell with an explicit **Target** bypass consumes none and bypasses Evade; having a target selector alone is not this bypass. Evade stacks decay by 1 per round through the existing round boundary, once per actor.
 

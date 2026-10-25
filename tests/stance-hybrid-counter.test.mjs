@@ -17,7 +17,7 @@ for (const id of ['quickstep', 'dodgeRoll', 'evasiveGuard']) {
   const carrier = carrierFor(id), entity = { id, alive: true, statuses: {} };
   assert.equal(carrier.combatProfile.maneuver, 'counter', id + ' uses its real expanded Counter definition');
   assert.ok(carrier.combatProfile.evade, id + ' carries authored Evade');
-  assert.deepEqual(stanceEntryBonuses(carrier), { precision: 1, evade: 1, block: 3, barrier: 0 }, id);
+  assert.deepEqual(stanceEntryBonuses(carrier), { precision: 1, evade: 3, block: 3, barrier: 0 }, id);
   ctx.queue = [];
   setCombatStance(ctx, entity, carrier);
   assert.equal(entity.combatStance.maneuver, 'evade');
@@ -49,7 +49,7 @@ const magic = { combatProfile: { camp: 'spell', maneuver: 'counter', school: 'fr
 const mage = { id: 'mage', alive: true, statuses: {} };
 ctx.queue = [];
 setCombatStance(ctx, mage, magic);
-assert.deepEqual(stanceEntryBonuses(magic), { precision: 1, evade: 1, block: 2, barrier: 1 });
+assert.deepEqual(stanceEntryBonuses(magic), { precision: 1, evade: 3, block: 2, barrier: 1 });
 assert.equal(stanceRatingBonus(ctx, mage, 'pr'), 1);
 assert.equal(stanceRatingBonus(ctx, mage, 'ar'), 0);
 assert.equal(stanceRatingBonus(ctx, mage, 'ward'), 3);

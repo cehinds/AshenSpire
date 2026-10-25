@@ -11,6 +11,8 @@ import { beginTacticalAction, setCombatStance } from '../src/engine/combatMatchu
 import { attackHitPreview, resolveAttackHit } from '../src/engine/stanceHit.js';
 import { createRng } from '../src/engine/rng.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { stanceRules } from '../src/content/stanceRules.js';
+const ENTRY = stanceRules.evadeStacks;
 
 const registries = createRegistries(contentBundle);
 function playCrawlingShot(prone) {
@@ -36,7 +38,7 @@ function playCrawlingShot(prone) {
 
 test('Crawling Shot grants its conditional Advantage for one shared eligible avoidance check', () => {
   const { ctx, actor, enemy, carrier, incoming } = playCrawlingShot(true);
-  assert.equal(actor.statuses.evade.stacks, 1);
+  assert.equal(actor.statuses.evade.stacks, ENTRY, 'Evade entry grants stanceRules.evadeStacks (3, owner 2026-10-25)');
   assert.deepEqual(actor.nextEvadeMode, { advantage: true, disadvantage: false, whileStatus: 'prone' });
   const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot });
@@ -48,7 +50,7 @@ test('Crawling Shot grants its conditional Advantage for one shared eligible avo
   assert.deepEqual(receipt.counterAttack.dice, [19, 1]);
   assert.equal(receipt.avoided, true);
   assert.equal(draws, 2, 'three contacts share one advantaged defender decision');
-  assert.equal(actor.statuses.evade?.stacks || 0, 0, 'the eligible miss consumes one stack');
+  assert.equal(actor.statuses.evade?.stacks || 0, ENTRY - 1, 'the eligible miss consumes one stack');
   assert.equal(actor.nextEvadeMode, undefined);
   ctx.rng.int = () => { draws++; return 19; };
   assert.equal(resolveAttackHit(ctx, enemy, actor, incoming).mode, 'normal');
@@ -80,7 +82,7 @@ test('conditional Advantage waits through range, Target, disabled Evasion and a 
   assert.deepEqual(actor.nextEvadeMode, pending, 'a missing condition does not consume the prepared eligible check');
   actor.statuses.prone = { stacks: 1 };
   assert.equal(attackHitPreview(ctx, enemy, actor, incoming).mode, 'disadvantage');
-  assert.equal(actor.statuses.evade.stacks, 1, 'none of the ineligible actions consumes the stack');
+  assert.equal(actor.statuses.evade.stacks, ENTRY, 'none of the ineligible actions consumes the stack');
 });
 
 test('Clear Head waits through ordinary attacks until an actual Evade is available', () => {
