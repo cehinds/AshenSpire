@@ -617,6 +617,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // offset and node coordinates remain untouched.
   const titleEl = svgEl.querySelector('.map-act-title');
   const inkBox = framingBox(nodes.filter((n) => isDrawn(n.id)), height) || { x0: 0, y0: 0, x1: width, y1: height };
+  // The whole act's bounds, discovered or not: the painting is framed against
+  // these so a fog reveal that widens inkBox never re-frames (rescales) art and
+  // terrain zones under nodes already on screen. The camera keeps inkBox.
+  const actBox = framingBox(nodes, height) || inkBox;
   // The content box last APPLIED to the element, in SVG units. Read by the
   // camera and by `report`, so the three cannot disagree about where zero is.
   let content = { x0: 0, y0: 0, w: width, h: height };
@@ -742,10 +746,18 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // the viewport centred on it; otherwise every aimX +- w/2 from the ink's
     // columns, so an end-column node never shows bare paper), not this frame's viewBox: a pan moves
     // x0 and must only translate the painting. Re-solved when the act, board
-    // size or zoom changes (the key), never per glide frame. A tray's inset is
-    // temporary camera padding under the tray, not ground: framing against it
-    // would rescale the painting (and move terrain zones) on every open/close.
-    const frameBox = paintingGround({ ink: inkBox, w, y0, h: h - insetBottom / zoom, aim: freePan ? null : { min: inkBox.x0, max: inkBox.x1 } });
+    // size or zoom changes (the key), never per glide frame. The ground is the
+    // whole act (actBox), not what fog has revealed, and leaves out a tray's
+    // inset (temporary camera padding under the tray): either would rescale
+    // the painting, and move terrain zones, under nodes already on screen.
+    const actPadX = freePan && scroll.clientWidth > 0 ? viewportW / 2 : 0;
+    const frameBox = paintingGround({
+      ink: actBox,
+      w: freePan ? (actBox.x1 - actBox.x0) + 2 * actPadX : viewportW,
+      y0: actBox.y0 - padY,
+      h: (actBox.y1 - actBox.y0) + 2 * padY,
+      aim: freePan ? null : { min: actBox.x0, max: actBox.x1 },
+    });
     const frameKey = paintingFrameKey(frameBox);
     if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
     else if (frameCache.key !== frameKey) {

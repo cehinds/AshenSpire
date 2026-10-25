@@ -103,9 +103,12 @@ test('an open tray: a re-fit solves the frame, then keeps the selected node fram
   assert.deepEqual(c.calls, ['current', 'node:f3c2:188']);
 });
 
-test('a tray inset never re-frames the map painting', async () => {
+test('neither a tray inset nor a fog reveal re-frames the map painting', async () => {
   const { readFile } = await import('node:fs/promises');
   const src = await readFile(new URL('../src/ui/components/mapboard.js', import.meta.url), 'utf8');
-  const call = src.match(/const frameBox = paintingGround\(\{[^\n]*\}\);/)?.[0] || '';
-  assert.match(call, /h: h - insetBottom \/ zoom/, 'the painting is framed against the ground without the tray padding');
+  const call = src.match(/const frameBox = paintingGround\(\{[\s\S]*?\}\);/)?.[0] || '';
+  assert.ok(call, 'frameBox call found');
+  assert.doesNotMatch(call, /insetBottom/, 'the painting is framed against the ground without the tray padding');
+  assert.match(call, /ink: actBox/, 'the painting is framed against the whole act, not the fog-revealed ink');
+  assert.doesNotMatch(call, /inkBox/, 'fog reveals never re-frame the painting');
 });
