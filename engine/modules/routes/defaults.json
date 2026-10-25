@@ -11,5 +11,6 @@
   "branchColumns": 3,
   "minimumThreatFloor": 3,
   "mapMode": "fog",
-  "firstFloor": null
+  "firstFloor": null,
+  "startNodeRefills": true
 }
