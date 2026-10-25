@@ -97,7 +97,13 @@ test('Core projects only owned paid mobility and range metadata without repricin
   for (const original of contentBundle.enemies) {
     const source = profile.content.enemies.find(row => row.id === original.id);
     const projected = bundle.enemies.find(row => row.id === original.id);
-    for (const [id, move] of Object.entries(original.moves)) assert.deepEqual(projected.moves[id], move, `${original.id}.${id}: offense unchanged`);
+    // The one offense change is a named Core-only trim (coreOffense "card", owner 2026-10-25): hits and per-hit damage
+    // come from the Core card; every other field is the shared move's.
+    const trims = Object.fromEntries(Object.entries(source.cardHints || {}).filter(([, hint]) => hint.coreOffense === 'card').map(([cardId, hint]) => {
+      const hit = profile.content.enemyCards.find(row => row.id === cardId).effects.find(effect => effect.op === 'damage');
+      return [hint.legacyMove, { damage: hit.amount, hits: hit.hits }];
+    }));
+    for (const [id, move] of Object.entries(original.moves)) assert.deepEqual(projected.moves[id], trims[id] ? { ...move, ...trims[id] } : move, `${original.id}.${id}: offense unchanged except a named Core trim`);
     for (const field of ['startingRange', 'rangeClosingMove', 'rangeRoutePolicy']) assert.equal(projected[field], source[field], `${original.id}/${field}`);
     const cardId = source.defaultDeck.find(id => source.cardHints?.[id]?.legacyMove === source.rangeClosingMove);
     const card = profile.content.enemyCards.find(row => row.id === cardId);
@@ -112,6 +118,9 @@ test('Core projects only owned paid mobility and range metadata without repricin
   const { combat, enemy } = live('straightSword', 'chainScavenger');
   assert.equal(combat.rangeState.engagements[pair(enemy)], 1, 'authored chain starting range reaches the real fight');
   assert.equal(JSON.stringify(contentBundle.enemies), before, 'projection does not mutate shared Legacy/Current enemy content');
+  const trimmed = profile.content.enemies.flatMap(row => Object.values(row.cardHints || {}).filter(hint => hint.coreOffense).map(hint => `${row.id}.${hint.legacyMove}`)).sort();
+  assert.deepEqual(trimmed, ['ashheartDragon.ashBreath', 'blightedValkyrie.scarletDance', 'blightedValkyrie.whirlwind', 'fellWarden.twinDaggers', 'glassRegent.shatteredCourt',
+    'hollowAstronomer.orbitalShards', 'lanternMoth.wingSparks', 'mirrorScribe.shardVolley', 'stitchedKing.thousandHands'], 'the Core offense trims are exactly the named ones');
   const current = applyGameProfileToContent(contentBundle, 'current');
   assert.deepEqual(current.enemies, contentBundle.enemies);
 });
