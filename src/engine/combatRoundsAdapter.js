@@ -24,7 +24,7 @@ import { startRound, stepRound, answerReaction, finishRound } from './combatRoun
 import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
 import { decayMomentum } from './combatRounds/resolver.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
-import { enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
+import { branchHitCount, enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
 import { SPEED_MODS_CSV } from '../content/combatRounds.js';
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.11).
 export const MOVE_SP = 1;
@@ -68,19 +68,21 @@ export function enemyMoveHitCount(move, { enemy, moveId, combat }) {
   if (Number(expanded.mp) > 0 || Number(expanded.manaCost) > 0) return 0;
   if ([...(carrier.tags || []), ...(expanded.tags || [])].includes('finesse')) return 0;
   const effects = [...(expanded.damage != null ? [{ op: 'damage', target: 'player', amount: expanded.damage, hits: expanded.hits ?? 1 }] : []), ...(expanded.effects || [])];
-  const counts = new Map();
   const detached = { ...combat, rng: createRng(combat.rng.seed, combat.rng.getCounters()) };
-  for (const effect of effects) {
-    if (effect.op !== 'damage') continue;
-    const action = { source: enemy, owner: enemy, target: combat.player, card: carrier, effect };
-    const formulas = Actions.formulaCtxFor(combat, action, action.target);
-    const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas))) * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
-    for (let i = 0; i < hits; i++) for (const target of Actions.resolveTargets(detached, action, effect.target)) {
-      const key = target.id;
-      counts.set(key, (counts.get(key) || 0) + 1);
-    }
-  }
-  return Math.max(0, ...counts.values());
+  const actionOf = effect => ({ source: enemy, owner: enemy, target: combat.player, card: carrier, effect });
+  // Guarded effects are separate branches, the same rule as a player card (model/actionCosts.js branchHitCount).
+  // Each contact resolves its own targets, so a random-target volley spreads as it would in play.
+  return branchHitCount(effects, {
+    hitsOf: () => 1,
+    targetsOf: (effect) => {
+      const action = actionOf(effect);
+      const formulas = Actions.formulaCtxFor(combat, action, action.target);
+      const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas))) * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
+      const keys = [];
+      for (let i = 0; i < hits; i++) for (const target of Actions.resolveTargets(detached, action, effect.target)) keys.push(target.id);
+      return keys;
+    },
+  });
 }
 
 // A forecast only: range quotes use detached streams and do not move or charge

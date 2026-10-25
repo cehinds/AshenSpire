@@ -915,8 +915,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 10. Stances -------------------------------------------------------------
   test('10. stance exclusivity; Gorefire per-hit Bleed; Bulwark on-Skill block', () => {
-    // Twinblade Flurry has three hits, so it costs 3 SP (1 SP per hit, owner 2026-10-25): the pool is sized for it.
-    const c = makeCombat({ stamina: 6, deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
+    const c = makeCombat({ stamina: 4, deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
     playFromHand(c, 'enterGorefire');
     eq(c.player.stanceId, 'gorefire', 'entered gorefire');
     eq(c.player.hp, 76, 'entering Gorefire cost 2 HP (ignores block)');

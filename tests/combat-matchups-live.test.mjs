@@ -398,7 +398,7 @@ test('multi-effect, multi-hit AoE Piercing shares per-target budget and resets n
     } : card),
   });
   for (const foundation of [false, true]) for (const coopMode of COOP_MODES) {
-    const inputs = player('rimeThrust'); inputs.drawPerTurn = 2; inputs.energyMax = 14; // six contacts cost 6 SP each (1 SP per hit)
+    const inputs = player('rimeThrust'); inputs.drawPerTurn = 2;
     inputs.deck.push({ instanceId: 'card2', cardId: 'rimeThrust' });
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier', 'wanderingSoldier'],
       ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };

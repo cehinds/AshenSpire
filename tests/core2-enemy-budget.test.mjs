@@ -282,6 +282,10 @@ test('a multi-hit move costs 1 SP per hit; mana and finesse moves keep their ord
   assert.equal(enemyMoveSp({ ...hits(3), mp: 1 }, options), 1, 'a mana move keeps its price');
   assert.equal(enemyMoveSp({ ...hits(3), tags: [...(hits(3).tags || []), 'finesse'] }, options), 1, 'a finesse move keeps its price');
   assert.equal(enemyMoveSp({ ...hits(3), sp: 6 }, options), enemyMoveSp({ ...hits(1), sp: 6 }, options), 'an authored price above the hit count is never lowered');
+  const staggered = { p: 'hasStatus', of: 'target', status: 'staggered' };
+  const branches = effects => ({ ...hits(1), effects });
+  assert.equal(enemyMoveSp(branches([{ op: 'damage', target: 'player', amount: 10, if: { p: 'not', pred: staggered } }, { op: 'damage', target: 'player', amount: 25, if: staggered }]), options), 1, 'an either/or pair is one hit');
+  assert.equal(enemyMoveSp(branches([{ op: 'damage', target: 'player', amount: 1, hits: 3 }, { op: 'damage', target: 'player', amount: 1, hits: 3, if: staggered }]), options), 3, 'a guarded bonus volley is its own branch, not added');
 });
 
 test('an enemy that cannot afford a multi-hit move never picks it', () => {

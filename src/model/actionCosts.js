@@ -110,20 +110,37 @@ export function actionStance({ kind = 'other', tags = [] } = {}) {
 const count = (value) => (Number.isFinite(value) ? value : 1);
 
 /**
+ * The most contacts any one target takes, counted per branch (review, 2026-10-25): damage effects are grouped by their
+ * `if` guard, and the largest group wins. A guarded effect is its own branch and never adds to another, so an
+ * either/or pair (Executioner's 10 or 25) is 1 hit and a conditional bonus volley prices as its own branch, not on top
+ * of the base volley. `hitsOf(effect)` is the effect's contact count; `targetsOf(effect)` the keys it lands on.
+ */
+export function branchHitCount(effects, { hitsOf = (e) => count(e.hits) * count(e.repeat), targetsOf = (e) => [e.target] } = {}) {
+  const branches = new Map();
+  for (const e of Array.isArray(effects) ? effects : []) {
+    if (e?.op !== 'damage') continue;
+    const branch = e.if === undefined || e.if === null ? '' : JSON.stringify(e.if);
+    if (!branches.has(branch)) branches.set(branch, new Map());
+    const perTarget = branches.get(branch);
+    const hits = hitsOf(e);
+    for (const key of targetsOf(e)) perTarget.set(key, (perTarget.get(key) || 0) + hits);
+  }
+  let most = 0;
+  for (const perTarget of branches.values()) most = Math.max(most, ...perTarget.values());
+  return most;
+}
+
+/**
  * The multi-hit price floor (owner, 2026-10-25): a card whose damage hits one target more than once costs at least 1 SP
  * per hit, unless it costs mana or carries the `finesse` tag. No cap and no discount. Returns the floor (0 when it does
- * not apply). `mana` is the card's Mana price when the caller knows it; else its authored `manaCost` is read.
+ * not apply). Core 2 only: the engine applies it to the paid price (combat.js baseCardPriceReceipt) and never to the
+ * derived cost, so the legacy and co-op prices are unchanged and a higher price never scales the card's damage. `mana` is the card's Mana price when the caller knows it; else its authored `manaCost` is read.
  */
 export function multiHitSpFloor(def, { mana = def?.manaCost ?? def?.resourceCosts?.mp ?? def?.costs?.mp ?? 0 } = {}) {
   if (mana > 0) return 0;
   const tags = [...(Array.isArray(def?.tags) ? def.tags : []), ...(Array.isArray(def?.cardTags) ? def.cardTags : []), ...(Array.isArray(def?.authoredTags) ? def.authoredTags : [])];
   if (tags.includes('finesse')) return 0;
-  const perTarget = new Map();
-  for (const e of Array.isArray(def?.effects) ? def.effects : []) {
-    if (e?.op !== 'damage') continue;
-    perTarget.set(e.target, (perTarget.get(e.target) || 0) + count(e.hits) * count(e.repeat));
-  }
-  const hits = Math.max(0, ...perTarget.values());
+  const hits = branchHitCount(def?.effects);
   return hits > 1 ? hits : 0;
 }
 
@@ -203,8 +220,6 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG, upgradeDel
   // such as Ruinous Blow would otherwise cost more with Exhaust than without it).
   const floor = rank === 0 ? Math.max(0, ...allTags.map((t) => config.maneuverFloors[t] ?? 0)) - Math.max(0, upgradeDelta) : 0;
   if (sp < floor) sp = floor;
-  // The multi-hit floor: 1 SP per hit unless the card costs mana or has finesse (applies to rank 0 and above alike).
-  if (!magic) { const hitFloor = multiHitSpFloor(def, { mana: mp }); if (sp < hitFloor) sp = hitFloor; }
   // Both 0: the larger side pays 1 (SP on a tie). A Mana-restoring card pays Stamina: it buys Mana with Stamina, so a
   // player with no Mana can always cast it.
   if (sp === 0 && mp === 0) {
