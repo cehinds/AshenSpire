@@ -2841,6 +2841,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         else { focusTargeting(); showTooltipFor(el, '<p>Choose a highlighted enemy to play this card.</p>'); }
       }
     };
+    const logUnaffordable = (input) => {
+      const reason = unplayableReason(inst);
+      logIgnored(`card ${input} ${inst.instanceId}`, `unaffordable${reason ? `: ${reason}` : ''}; cost energy=${pv.costIsX ? 'X' : pv.cost}, mana=${pv.manaCost}, stamina=${pv.staminaCost || 0}; available energy=${combat.player.energy}, mana=${combat.player.mana}, stamina=${combat.player.stamina}`);
+      return reason;
+    };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
@@ -2854,8 +2859,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) {
         if (rangeSelectable) { select(); return; }
+        const reason = logUnaffordable('tap');
         const reasons = [];
-        const reason = unplayableReason(inst);
         if (reason) reasons.push(reason);
         if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough stamina.');
         if (combat.player.mana < pv.manaCost) reasons.push('Not enough mana.');
@@ -2893,7 +2898,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (busy || (!affordable && !rangeSelectable) || dragging) return;
+        if (busy || dragging) return;
+        if (!affordable && !rangeSelectable) { logUnaffordable('confirm'); return; }
         // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
         // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
         // information and Upcast controls and, for a card that asks for one

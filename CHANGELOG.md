@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-25
+
+- **Refused card inputs reach the Command log** ([#2286](https://github.com/cehinds/AshenSpire/pull/2286), `0.7.1.1833`). Tapping or completing a hold on a card you cannot afford now records the card, its costs and your available resources in Settings → Command log, including refusals that never reach the play action.
+
 ## 2026-10-24
 
 - **Sigils, feats, matchups, survey lore and the act map shape are now editable data files** ([#2299](https://github.com/cehinds/AshenSpire/pull/2299), `0.7.1.1833`). They live in `content/source/` like the rest of the game content. Nothing in play changes.
