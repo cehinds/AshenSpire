@@ -272,7 +272,7 @@ JSON: review its diff before compiling if you run one deliberately.
 
 | Change | Edit here | Verify |
 | --- | --- | --- |
-| A base card's costs, effects, text or icon | `content/source/cards/*.json`; Rogue and co-op additions currently remain in `src/content/cards/rogue.js` / `coop.js` | Compile authored content; Fast core tests |
+| A base card's costs, effects, text or icon | `content/source/cards/*.json`; co-op additions currently remain in `src/content/cards/coop.js` | Compile authored content; Fast core tests |
 | Shared progression ability grades and riders | `src/content/progression/cardFamilies.js`, `cards.js`, `lessons.js`, `cardRecipeText.js` | `node --test tests/progression-card-content.test.mjs` |
 | Enemy definitions | `content/source/act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json`; shared expansion owners in `src/content/enemyExpansion.js` | Compile authored content; Fast core tests |
 | Weapons, starting kits, mounted cards | `content/source/weapons.csv`, `startingKits.csv`, `weaponCardPackages.json`; shared progression gear in `src/content/progression/gear.js` | Compile authored content; Fast core tests |
