@@ -7,9 +7,8 @@ const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.u
 const start = source.indexOf('  function wireCardInput(');
 const end = source.indexOf('\n  }', start);
 assert.ok(start >= 0 && end > start);
-// Run the native wiring and its onTap callback. Expose the legacy local
-// confirm callback as well without replacing any input or refusal decisions.
-const wire = source.slice(start, end + 4).replace('return armHold(el, {', 'this.confirm = confirm; return armHold(el, {');
+// Run native wiring and callbacks returned to the shared armHold control.
+const wire = source.slice(start, end + 4);
 
 function harness({ affordable = false, range = false, queued = false, blocked = null,
   energy = 0, mana = 1, stamina = 2, cost = 3, manaCost = 4, staminaCost = 5, costIsX = false,
@@ -32,13 +31,14 @@ function harness({ affordable = false, range = false, queued = false, blocked = 
     isRoundQueued: () => queued, unqueueCard: () => calls.push('unqueue'),
     busy, selected: null, selfArm: null, selectedFlask: 'old-flask',
     armSelf: id => calls.push(`arm:${id}`), syncCardSelection: () => calls.push('sync'),
+    focusTargeting: () => calls.push('focus'),
     meta: { settings: { oneTapPlay } }, readSettings: () => ({ oneTapPlay }),
     playCard: (...args) => calls.push(['play', ...args]), $: () => null,
   };
   // Keep the context containing the actual callbacks and mutable selection.
   const scope = { ...context, el, inst, pv };
   runInNewContext(`${wire}\nthis.handlers = wireCardInput(el, inst, pv, affordable);`, Object.assign(scope, { affordable }));
-  return { logs, tips, calls, scope, tap: scope.handlers.onTap, confirm: scope.confirm };
+  return { logs, tips, calls, scope, tap: scope.handlers.onTap, confirm: scope.handlers.onConfirm };
 }
 
 for (const input of ['tap', 'confirm']) {
@@ -64,7 +64,7 @@ for (const input of ['tap', 'confirm']) {
     const h = harness({ range: true, needsTarget: true });
     h[input]();
     assert.equal(h.scope.selected, 'native-c1');
-    assert.deepEqual(h.calls, ['sync']);
+    assert.deepEqual(h.calls, input === 'confirm' ? ['sync', 'focus'] : ['sync']);
     assert.deepEqual(h.logs, []);
   });
 
@@ -76,6 +76,23 @@ for (const input of ['tap', 'confirm']) {
     assert.deepEqual(h.tips, []);
   });
 }
+
+for (const needsTarget of [false, true]) {
+  test(`native completed hold selects without playing with one-tap enabled, needsTarget=${needsTarget}`, () => {
+    const h = harness({ affordable: true, oneTapPlay: true, needsTarget });
+    h.confirm();
+    assert.deepEqual(h.calls, needsTarget ? ['sync', 'focus'] : ['arm:native-c1']);
+    assert.deepEqual(h.logs, []);
+  });
+}
+
+test('native busy completed hold keeps its silent guard before affordability', () => {
+  const h = harness({ busy: true });
+  h.confirm();
+  assert.deepEqual(h.logs, []);
+  assert.deepEqual(h.calls, []);
+  assert.deepEqual(h.tips, []);
+});
 
 test('native affordable tap preserves selection followed by play without a refusal', () => {
   const h = harness({ affordable: true, needsTarget: true });

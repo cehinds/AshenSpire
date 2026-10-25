@@ -2849,7 +2849,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
-      if (!affordable) { if (rangeSelectable) select(); else logUnaffordable('confirm'); return; }
+      if (!affordable) { if (rangeSelectable) select(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       play();
     };
@@ -2898,7 +2898,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (busy || (!affordable && !rangeSelectable) || dragging) return;
+        if (busy || dragging) return;
+        if (!affordable && !rangeSelectable) { logUnaffordable('confirm'); return; }
         // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
         // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
         // information and Upcast controls and, for a card that asks for one
