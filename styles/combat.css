@@ -2073,9 +2073,9 @@ body.reduce-motion .target-hud-detail { transition: none; }
 
 /* Debug mode's Console button (combatDebugButton.js): fixed, above every combat layer, tiny. */
 .combat-debug-console {
-  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 99px); right: 8px; z-index: 950;
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 99px); right: 8px; z-index: var(--layer-tooltip);
   min-height: 28px; padding: 3px 9px; font: inherit; font-size: 12px; line-height: 1;
-  border: 1px solid var(--line, rgba(255, 255, 255, .35)); border-radius: 6px;
-  background: rgba(20, 16, 14, .85); color: var(--text, #f0e8dc);
+  border: 1px solid var(--line-soft); border-radius: 6px;
+  background: var(--bg-raise); color: var(--parchment);
   touch-action: manipulation; pointer-events: auto;
 }
