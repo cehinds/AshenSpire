@@ -147,7 +147,7 @@ test('formatJson changes only the edited line and keeps a changed object in its 
   const out = M.formatJson(next, { original: text });
   const a = text.split('\n'), b = out.split('\n');
   assert.equal(a.length, b.length);
-  assert.deepEqual(b.filter((l, i) => l !== a[i]), ['    "bands": { "hud": 12, "scene": 47, "context": 27, "footer": 14 },']);
+  assert.deepEqual(b.filter((l, i) => l !== a[i]), ['    "bands": { "hud": 8, "scene": 59, "context": 20, "footer": 13 },']);
   // A many-line object that changes stays many-line; a one-line one stays one-line.
   const map = readFileSync(resolve(ROOT, 'content/config/ui/scenes/w4b-map.json'), 'utf8');
   const edited = M.formatJson(M.setPath(JSON.parse(map), 'behavior.tray.slideMs', 260), { original: map });
@@ -162,47 +162,47 @@ test('regionsFor draws the combat plan the game draws: physical minimums, the ha
   const configs = { 'ui/components/card.json': card };
   const regs = M.regionsFor(wf, w4a, { width: 1280, height: 800 }, { parent: w4, tokens, layoutMode: 'wide', zoom: 1.07, rootFontPx: 10, configs });
   const bands = regs.filter((r) => r.band);
-  // Authored combat bands reserve 10% HUD, 27% hand and 14% footer; none needs the physical minimum here.
-  assert.deepEqual(bands.map((r) => [r.band, M.round(r.h, 6)]), [['hud', 80], ['scene', 392], ['context', 216], ['footer', 112]]);
+  // Authored combat bands reserve 6% HUD, 20% hand and 13% footer; the HUD and hand are raised to their physical minimums here.
+  assert.deepEqual(bands.map((r) => [r.band, M.round(r.h, 6)]), [['hud', 48], ['scene', 464], ['context', 184], ['footer', 104]]);
   assert.equal(bands[0].edit.kind, 'bandEdge');
   assert.equal(bands[3].edit, null);
   assert.doesNotMatch(bands[3].note || '', /raised/);
   const floor = regs.find((r) => r.id === 'floor');
-  assert.equal(M.round(floor.y, 6), M.round(80 + bands[1].h * 0.8, 6));
+  assert.equal(M.round(floor.y, 6), M.round(48 + bands[1].h * 0.8, 6));
   const hand = regs.find((r) => r.id === 'hand');
   assert.equal(M.round(hand.w, 6), M.round(75 * 10 * 1.07, 6), 'wide hand width is wideWidthRem × rootFontPx × zoom');
   const narrow = M.regionsFor(wf, w4a, { width: 390, height: 844 }, { parent: w4, tokens, layoutMode: 'narrow', zoom: 0.9, rootFontPx: 10, configs }).find((r) => r.id === 'hand');
   assert.equal(narrow.w, 22 * 10 * 0.9);
-  // 844x390 at zoom 0.62: the stacked plan leaves 87 px of field under the 114 px one readable combatant needs,
+  // 844x360 at zoom 0.62 (844x390 now fits the stacked plan with the slimmer 2026-10-25 bands): the stacked plan leaves little field under the 114 px one readable combatant needs,
   // so the footer folds into rails, the hand keeps its 208 px physical minimum and the field takes the rest.
   // combatPlan reads "$name" through the resolver regionsFor hands it; here the tokens stand in.
   const resolve = (v) => (typeof v === 'string' && v.startsWith('$') ? tokens[v.slice(1)] : v);
-  const plan = M.combatPlan(w4a, w4, { width: 844, height: 390, zoom: 0.62, rem: 6.2, cardRatio: 5 / 7, resolve });
+  const plan = M.combatPlan(w4a, w4, { width: 844, height: 360, zoom: 0.62, rem: 6.2, cardRatio: 5 / 7, resolve });
   assert.equal(plan.arrangement, 'rails');
-  assert.deepEqual([plan.hud, plan.hand, plan.footer, plan.battlefield], [39, 208, 0, 390 - 39 - 208]);
+  assert.deepEqual([plan.hud, plan.hand, plan.footer, plan.battlefield].map((n) => M.round(n, 6)), [21.6, 184, 0, M.round(360 - 21.6 - 184, 6)]);
   assert.equal(plan.supported, true);
-  const short = M.regionsFor(wf, w4a, { width: 844, height: 390 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10, configs });
+  const short = M.regionsFor(wf, w4a, { width: 844, height: 360 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10, configs });
   assert.equal(short.find((r) => r.band === 'footer'), undefined, 'no footer band under rails');
-  // Drawn with the allocator's floored rem (16 px, not 6.2): the battlefield keeps its 148 px floor and the hand gives up 5 px, as the game does.
-  assert.equal(short.find((r) => r.band === 'context').h, 203);
-  assert.equal(short.find((r) => r.band === 'scene').h, 148);
+  // Drawn with the allocator's floored rem (16 px, not 6.2): the hand keeps its 184 px minimum and the battlefield takes the rest, as the game does.
+  assert.equal(short.find((r) => r.band === 'context').h, 184);
+  assert.equal(M.round(short.find((r) => r.band === 'scene').h, 6), M.round(360 - 21.6 - 184, 6));
   assert.ok(short.some((r) => r.id === 'rail.left') && short.some((r) => r.id === 'rail.right'));
   assert.match(short.find((r) => r.band === 'scene').note, /rails/);
   // regionsFor measures combat with the rem floored at 16 physical px, as the
   // live allocator does (Math.max(16 / zoom, rootFontPx) local px): at 780x360
-  // (zoom 0.62, root rem 6.2 px) the battlefield keeps its 148 px floor where
-  // the unfloored rem would leave 116 px.
+  // (zoom 0.62, root rem 6.2 px) the floored rem is what is drawn. After the 2026-10-25 slimmer bands the 148 px battlefield floor no longer binds here (154.4 px), so this pins the drawn numbers
+  // and the combatRem floor itself.
   assert.equal(M.combatRem(6.2), 16); assert.equal(M.combatRem(17), 17);
   const floored = M.combatPlan(w4a, w4, { width: 780, height: 360, zoom: 0.62, rem: M.combatRem(6.2), resolve });
-  assert.deepEqual([floored.battlefield, floored.hand], [148, 176]);
+  assert.deepEqual([M.round(floored.battlefield, 6), floored.hand], [154.4, 184]);
   const drawn = M.regionsFor(wf, w4a, { width: 780, height: 360 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10, configs });
-  assert.equal(drawn.find((r) => r.band === 'scene').h, 148);
-  assert.equal(drawn.find((r) => r.band === 'context').h, 176);
+  assert.equal(M.round(drawn.find((r) => r.band === 'scene').h, 6), 154.4);
+  assert.equal(drawn.find((r) => r.band === 'context').h, 184);
   // A draft that is not an object (raw JSON `null`) draws nothing rather than throwing.
   assert.doesNotThrow(() => M.combatPlan(null, w4, { width: 780, height: 360, resolve }));
   assert.doesNotThrow(() => M.regionsFor(wf, null, { width: 780, height: 360 }, { parent: w4, tokens, configs }));
   // With rails switched off in behavior, the stacked plan stands and is reported unsupported.
-  const noRails = M.combatPlan({ ...w4a, behavior: { ...w4a.behavior, shortHostRails: false } }, w4, { width: 844, height: 390, zoom: 0.62, rem: 6.2, resolve });
+  const noRails = M.combatPlan({ ...w4a, behavior: { ...w4a.behavior, shortHostRails: false } }, w4, { width: 844, height: 360, zoom: 0.62, rem: 6.2, resolve });
   assert.deepEqual([noRails.arrangement, noRails.supported], ['stacked', false]);
 });
 
@@ -226,9 +226,9 @@ test('applyRegionDrag moves a band edge by the snapped percent and edits path va
   const regs = M.regionsFor(wf, w4a, vp, { parent: w4, tokens });
   const hud = regs.find((r) => r.band === 'hud');
   const next = M.applyRegionDrag(w4a, hud, 40, vp, { grid: { bandStepPercent: 1 }, regions: regs });
-  assert.deepEqual(next.sizing.bands, { hud: 15, scene: 44, context: 27, footer: 14 });
+  assert.deepEqual(next.sizing.bands, { hud: 11, scene: 56, context: 20, footer: 13 });
   const floor = regs.find((r) => r.id === 'floor');
-  assert.equal(M.applyRegionDrag(w4a, floor, 44, vp, { grid: { bandStepPercent: 1 }, regions: regs }).sizing.floorPercent, 91);
+  assert.equal(M.applyRegionDrag(w4a, floor, 44, vp, { grid: { bandStepPercent: 1 }, regions: regs }).sizing.floorPercent, 89);
   // A $ref is never dragged over.
   const map = readConfig('ui/scenes/w4b-map.json');
   const mapWf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4b');
