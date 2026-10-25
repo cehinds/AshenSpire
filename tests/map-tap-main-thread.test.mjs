@@ -25,8 +25,11 @@ test('map.js flushes a queued save before each path that hands control away', ()
   assert.match(mapSrc, /function releaseMapScreen\(\) \{\s*flushPendingSave\(\);/);
   assert.match(mapSrc, /onQuit: leaving\(onQuit\)/);
   assert.match(mapSrc, /onQuitWithoutSave: leaving\(onQuitWithoutSave\)/);
-  assert.match(mapSrc, /if \(next\.enter\) \{ leaving\(onPick\)\(id\); return; \}/);
-  assert.match(mapSrc, /leaving\(onPick\)\(selection\.selectedId\)/);
+  // Travel goes through travelTo, which records the painted terrain and then
+  // hands control away through the same save-flushing leaving(onPick).
+  assert.match(mapSrc, /if \(next\.enter\) \{ travelTo\(id\); return; \}/);
+  assert.match(mapSrc, /function travelTo\(id\) \{[\s\S]*?leaving\(onPick\)\(id\);\s*\}/);
+  assert.match(mapSrc, /travelTo\(selection\.selectedId\)/);
   assert.match(mapSrc, /pagehide', flushPendingSave/);
 });
 

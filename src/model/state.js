@@ -844,6 +844,9 @@ export const RUN_SHAPE = [
   // rather than Settings because the ladder and pan are live choices for this
   // climb; Settings only supplies the default when this field is absent.
   { key: 'mapView', type: 'object', optional: true, nullable: true },
+  // The painted ground under the node the player last travelled to (map.js),
+  // so the fight there shows it. Decorative; absent on older saves.
+  { key: 'mapTerrain', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
 
@@ -1173,6 +1176,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
     }
+  }
+  if (run.mapTerrain !== undefined && run.mapTerrain !== null && typeOk(run.mapTerrain, 'object')) {
+    const t = run.mapTerrain;
+    if (typeof t.nodeId !== 'string' || !t.nodeId) problems.push('mapTerrain.nodeId must be a non-empty string');
+    if (typeof t.settingId !== 'string' || !t.settingId) problems.push('mapTerrain.settingId must be a non-empty string');
   }
   if (run.mapView !== undefined && run.mapView !== null && typeOk(run.mapView, 'object')) {
     const v = run.mapView;

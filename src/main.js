@@ -66,6 +66,7 @@ import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, smithingRewardId, smithingRewardPays } from './model/smithing.js';
+import { applyNodeRefill } from './model/nodeRefill.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
 import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
@@ -2915,8 +2916,13 @@ function enterNode(nodeId) {
   // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
   clearRestRevisitOnTravel(run, nodeId);
   run.mapNodeId = nodeId;
-  if (!run.path.includes(nodeId)) run.path.push(nodeId);
+  const firstVisit = !run.path.includes(nodeId);
+  if (firstVisit) run.path.push(nodeId);
   run.floor = node.floor;
+  const refillHealMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  // The destination owns its checkpoint: combat saves the refill together with
+  // its encounter receipt, and a failed autosave must not prevent entry.
+  if (firstVisit) applyNodeRefill(run, node, { healMult: refillHealMult });
 
   let kind = node.type;
   if (kind === 'event') {

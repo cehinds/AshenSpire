@@ -54,8 +54,12 @@ try {
     if (await statuses.count()) {
       await statuses.first().hover(); await page.waitForTimeout(600);
       assert.equal(await panel.isVisible(), true, 'sprite-to-status corridor retains detail');
+      // Owner 2026-10-25: a tap anywhere on an unarmed panel, statuses included, inspects.
       await statuses.first().click();
-      assert.ok(await page.locator('.as-tip').count(), 'shared status tooltip answers a click');
+      const inspector = page.locator('.combatant-inspector-body');
+      await inspector.waitFor({ state: 'visible' });
+      await page.keyboard.press('Escape');
+      await inspector.waitFor({ state: 'detached' });
       assert.equal(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length), played);
     }
     await page.mouse.move(4, 4); await page.waitForTimeout(700);

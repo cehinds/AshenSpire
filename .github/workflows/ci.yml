@@ -340,6 +340,11 @@ jobs:
             !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         shell: bash
         run: |
@@ -493,6 +498,11 @@ jobs:
             !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         shell: bash
         run: |
