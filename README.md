@@ -1,5 +1,15 @@
 # AshenSpire
+<!-- feature-preview:start -->
+## Feature preview — Console without skipping combat playback
 
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/ConsoleMenuReadOnlyReview/latest/)
+
+Read-only Menu and Console entries keep diagnostic taps from requesting animation skips. These four captures show native settled Menu → Console navigation with Export visible; active playback is covered by the unit regression. Captured local build: `0.7.1.1842 / 5fa99a7c45`; the verified Review uses the current integration base. [Capture identity and scope](docs/preview/features/console-menu-read-only/capture-record.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile Console and Export after native taps](docs/preview/features/console-menu-read-only/mobile.png) | ![Desktop Console and Export after native clicks](docs/preview/features/console-menu-read-only/desktop.png) | ![Wide Console with handled notice retained](docs/preview/features/console-menu-read-only/wide.png) | ![Tablet Console and Export after native taps](docs/preview/features/console-menu-read-only/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
