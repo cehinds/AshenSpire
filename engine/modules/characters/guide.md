@@ -23,6 +23,7 @@ Base rule = the sum of every tag's `tagRules` entry (pools HP/SP/MP and hand); t
   (CON ≤ 1), with seeded `variance` for tags that allow it (`character.enemy`)
 - stats: `statRules` (HP = 10 + CON×10 + STR×5 + DEX×3 + WIS×2 + INT×1 + 5/level; SP/MP from the
   player's derived-stat rows; AR = STR, DR = DEX, hand + INT), plus gear and relic points
+- `attributeOffset` (optional) is added to each enemy attribute after gear and relic bonuses and floored at 0; the tier budget check ignores it
 - penalties floor at `penaltyFloor` (SP never below 1)
 
 Class tags (`class.reaver`…) carry each class's base HP, calibrated so legacy max HP is unchanged

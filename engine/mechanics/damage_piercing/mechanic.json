@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/actions.js",
-    "symbol": "runOpcode"
+    "file": "src/engine/gameProfileCombat.js",
+    "symbol": "isPierceHit"
   }
 }

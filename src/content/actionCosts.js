@@ -28,6 +28,7 @@ export const STATUS_STACK_CAP = source.STATUS_STACK_CAP;
 export const RESTORE_STAMINA_OPS = freeze(source.RESTORE_STAMINA_OPS);
 export const RESTORE_MANA_OPS = freeze(source.RESTORE_MANA_OPS);
 export const MANEUVER_SP_FLOORS = freeze(source.MANEUVER_SP_FLOORS);
+export const MULTI_HIT_SP_FLOOR = freeze(source.MULTI_HIT_SP_FLOOR);
 export const SWEEP_UNSCALED_OPS = freeze(source.SWEEP_UNSCALED_OPS);
 export const SCALED_EFFECT_OPS = freeze(source.SCALED_EFFECT_OPS);
 export const TWO_COST_EFFECT_MULTIPLIER = COST_BUDGET.twoCostMultiplier;

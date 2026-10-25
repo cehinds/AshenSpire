@@ -63,3 +63,57 @@
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .alternative-card-fade {
   background-image: linear-gradient(to bottom, transparent, #211d16 calc(60px / var(--ui-zoom,1)), #211d16) !important;
 }
+
+/* Wide combat header (desktop, widescreen, tablet, landscape phone: combatLayout.js
+   writes data-header-row='single' from the host's physical width): ONE short row instead of a 100px stack
+   (owner, 2026-10-25: the top and bottom chrome squeeze the battlefield).
+   HP bar and relics share the left half, the turn ribbon sits in the middle
+   (combatLayout.js publishes --desktop-header-left-width so the bar stops short
+   of it), and Cinders plus the quick controls sit at the right on the same
+   line. Portrait phones keep a stacked header, trimmed below. Specificity
+   matches shared-run-hud.css, which loads after this file, plus the row gate. */
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] {
+  padding-block: calc(4px / var(--ui-zoom,1));
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
+  padding-top: 0; row-gap: 0; align-items: center;
+  grid-template-columns: minmax(0,1fr) auto auto;
+  grid-template-areas: 'meters purse actions';
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] :is(.hud-vitals-panel,.hud-bottom) {
+  max-width: var(--desktop-header-left-width, 100%);
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-bottom {
+  margin-top: calc(22px / var(--ui-zoom,1));
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-info-row.hud-cinders-strip {
+  grid-area: purse; align-self: center; margin: 0; translate: none;
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-control-grid {
+  align-self: center; translate: none;
+}
+:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'][data-header-row='single'] > .combat-hud.shared-hud > .turn-ribbon {
+  top: 50%; transform: translate(-50%, -50%);
+}
+
+/* Portrait phone header (data-header-row='stacked'): the turn ribbon keeps its
+   own 20px line above, and HP, relics, Cinders and the quick controls share one
+   44px row below it (was a 100px stack with Cinders under the buttons). The
+   controls stay 44px tap targets. */
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='stacked'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] {
+  padding-block: calc(4px / var(--ui-zoom,1));
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='stacked'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
+  padding-top: calc(18px / var(--ui-zoom,1)); row-gap: 0; align-items: center;
+  grid-template-columns: minmax(0,1fr) auto auto;
+  grid-template-areas: 'meters purse actions';
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='stacked'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-bottom {
+  margin-top: calc(22px / var(--ui-zoom,1));
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='stacked'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-info-row.hud-cinders-strip {
+  grid-area: purse; align-self: center; margin: 0; translate: none;
+}
+.combat[data-layout='formation'][data-desktop-header='true'][data-header-row='stacked'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-control-grid {
+  align-self: center; translate: none;
+}

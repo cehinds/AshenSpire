@@ -2121,6 +2121,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     // tagContentProblems above — one rule, one message, for all of them.
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.rangeClosingMove !== undefined && (!moveIds.has(enemy.rangeClosingMove) || !enemy.moves[enemy.rangeClosingMove].effects?.some(effect => effect.op === 'moveEngagement'))) err(`${path}.rangeClosingMove`, 'must name an owned movement move');
+    if (enemy.rangeRetreatMove !== undefined && (!moveIds.has(enemy.rangeRetreatMove) || !enemy.moves[enemy.rangeRetreatMove].effects?.some(effect => effect.op === 'moveEngagement' && effect.bands === 1))) err(`${path}.rangeRetreatMove`, 'must name an owned retreat (bands 1) movement move');
     for (const id of Object.keys(enemy.moveSources || {})) if (!moveIds.has(id)) err(`${path}.moveSources.${id}`, 'must name an owned move');
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);

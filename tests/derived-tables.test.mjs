@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
 import { buildDerivedTables } from '../tools/derived-tables.mjs';
 
 const tables = buildDerivedTables();
+// Enemy attributes carry the authored attributeOffset after gear and relics (owner, 2026-10-25); players do not.
+const offset = { strength: -2, constitution: -2, dexterity: -2 };
 const read = file => readFileSync(new URL(`../games/ashenspire/derived/${file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 test('derived tables are current (run node tools/derived-tables.mjs)', () => {
@@ -13,7 +15,7 @@ test('derived tables are current (run node tools/derived-tables.mjs)', () => {
 
 test('every attribute total = own + listed bonus sources, and HP terms add up', () => {
   for (const c of tables['characters.json']) {
-    for (const [k, a] of Object.entries(c.attributes)) assert.equal(a.total, Math.max(0, a.own + a.bonuses.reduce((s, b) => s + b.amount, 0)), `${c.id}.${k}`);
+    for (const [k, a] of Object.entries(c.attributes)) assert.equal(a.total, Math.max(0, a.own + a.bonuses.reduce((s, b) => s + b.amount, 0) + (c.tier ? offset[k] || 0 : 0)), `${c.id}.${k}`);
     assert.equal(Object.values(c.hp.terms).reduce((s, v) => s + v, 0), c.hp.total, c.id);
   }
 });

@@ -13,8 +13,8 @@ import { live, registries, baseRegistries, profile } from './helpers/fixcore-com
 
 test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   const ctx = live(), enemy = ctx.enemies[0];
-  // The contact fixture needs the two SP its repeated-hit move now costs.
-  Object.assign(enemy, { maxStamina: 2, stamina: 2 });
+  // The contact fixture needs the three SP its repeated-hit move now costs.
+  Object.assign(enemy, { maxStamina: 3, stamina: 3 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' };
   enemy.plannedMoves = [];
   primeAccuracyRolls(ctx, { count: 3 });
@@ -81,7 +81,7 @@ test('real Counter preview, affordability and own-turn payment use authored SP',
 
 test('an actual enemy-turn matching Counter remains affordable and pays the discounted price', () => {
   const ctx = live();
-  Object.assign(ctx.enemies[0], { maxStamina: 2, stamina: 2 });
+  Object.assign(ctx.enemies[0], { maxStamina: 3, stamina: 3 });
   ctx.enemies[0].intent = { ...ctx.enemies[0].intent, moveId: 'slash' };
   ctx.enemies[0].plannedMoves = [];
   ctx.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter' }];

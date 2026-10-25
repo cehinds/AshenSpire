@@ -18,7 +18,7 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 
 function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', attributes: { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 }, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
+    ? { ...enemy, firstMove: 'slash', attributes: { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 }, equipmentSp: 0, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
       tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,

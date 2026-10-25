@@ -113,3 +113,23 @@ test('Clear Head waits through ordinary attacks until an actual Evade is availab
   assert.equal(actor.nextEvadeMode, undefined);
   assert.equal(actor.statuses.evade?.stacks || 0, 0);
 });
+
+// Core 2 (owner, 2026-10-25): Evade entry grants the Evade card's three stacks. The non-Core expanded path above keeps
+// the global stanceRules.evadeStacks of 1; a resumed fight keeps its snapshotted rule, which is what its card face reads.
+test('Core Evade entry grants 3 stacks from Core rules, a resumed fight keeps its snapshot value, non-Core stays 1', async () => {
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { stanceEntryBonuses } = await import('../src/model/stanceRules.js');
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const coreRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries: coreRegistries, classId: 'reaver', seed: 511 });
+  const core = createRunCombat({ registries: coreRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const evade = { combatProfile: { camp: 'physical', maneuver: 'evade', range: 'melee' } };
+  assert.equal(stanceEntryBonuses(evade, core).evade, 3);
+  const resumed = { ...core, fixCoreRules: { ...core.fixCoreRules, accuracy: { ...core.fixCoreRules.accuracy, evadeStackBase: 1 } } };
+  assert.equal(stanceEntryBonuses(evade, resumed).evade, 1, 'a resumed 0ca59 fight keeps its snapshotted grant');
+  const legacy = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'rogue', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, deck: [] } });
+  assert.equal(stanceEntryBonuses(evade, legacy).evade, 1, 'non-Core expanded combat keeps one stack');
+});

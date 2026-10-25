@@ -99,10 +99,10 @@ test('selected card hit odds match configured stance entry and Evade grants actu
  combat.player.energy=10;combat.player.stamina=10;
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
- assert.equal(combat.player.statuses.evade?.stacks,1);
+ assert.equal(combat.player.statuses.evade?.stacks,3);
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade-second',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade-second'});
- assert.equal(combat.player.statuses.evade.stacks,2);
+ assert.equal(combat.player.statuses.evade.stacks,6);
 });
 test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
  const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
@@ -157,9 +157,9 @@ test('a combat saved before the opposed-roll ruling restores onto the new accura
 test('a card-scoped accuracy override changes the Evade stacks that card gains',async()=>{
  const {formulaCtxFor}=await import('../src/engine/actions.js');
  const {combat}=live();const dexterity=combat.player.attributes.dexterity;
- const card={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:3,evadeStackDex:2}}]};
- assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1);
- assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,3+2*dexterity);
+ const card={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:5,evadeStackDex:2}}]};
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,3);
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,5+2*dexterity);
 });
 test('unversioned shipped Evade gains migrate purely on restore; custom and versioned gains survive',async()=>{
  const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
@@ -279,8 +279,8 @@ test('fractional offense reaches final rounding without a fabricated status modi
 test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
  const {staticCardTokens,playingCardModel}=await import('../src/model/playingCard.js');
  const def=reg.cards.get('core.evade');
- assert.equal(staticCardTokens(def).evade,'1');
- assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1');
+ assert.equal(staticCardTokens(def).evade,'3');
+ assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'3');
 });
 test('the off-combat Evade phrase follows the configured gain, card overrides included',async()=>{
  const {staticCardTokens}=await import('../src/model/playingCard.js');

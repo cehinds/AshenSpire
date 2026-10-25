@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes, characterRule, characterSettings } from '../engine/kernel/gameConfig.js';
-import { authorEnemyRange, enemyAdvanceCard } from './lib/core-range-content.mjs';
+import { authorEnemyRange, enemyAdvanceCard, enemyRetreatCard } from './lib/core-range-content.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
@@ -230,7 +230,16 @@ for (const enemy of roster) {
   const startingRange = authoredEnemies.get(row.id)?.startingRange;
   Object.assign(row, authorEnemyRange({ ...row, ...(startingRange ? { startingRange } : {}) }, gear));
   enemyCards.push(enemyAdvanceCard(enemy.id));
+  if (row.rangeRetreatMove) enemyCards.push(enemyRetreatCard(enemy.id));
   for (const card of enemyCards) if (authoredCards.get(card.id)?.range) card.range = authoredCards.get(card.id).range;
+  // A Core-only offense trim (coreOffense "card", owner 2026-10-25) keeps its authored card effects and its hint.
+  const authoredHints = authoredEnemies.get(row.id)?.cardHints || {};
+  for (const card of enemyCards) if (authoredHints[card.id]?.coreOffense) {
+    card.effects = structuredClone(authoredCards.get(card.id).effects);
+    row.cardHints[card.id].coreOffense = authoredHints[card.id].coreOffense;
+  }
+  // A Core-only price (coreSp "card", owner 2026-10-25) is authored on the hint and kept.
+  for (const card of enemyCards) if (authoredHints[card.id]?.coreSp) row.cardHints[card.id].coreSp = authoredHints[card.id].coreSp;
   enemies.push(row);
   {
     const maxHp = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings)).hp;

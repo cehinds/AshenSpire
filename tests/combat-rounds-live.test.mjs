@@ -326,6 +326,9 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   // public forecasts on the actor-start/move-start events. Remove only those
   // two new fields at those event boundaries; every old field and ordering
   // must still match the existing golden. The full new log repeats above.
+  // Re-recorded for the 2026-10-25 enemy stat offset (-2 STR/CON/DEX): a key-by-key comparison with origin/dev 1bb9b1925 shows
+  // exactly 11 differences across the three logs, all an enemy hit's `accuracy` lowered by 4 (13 -> 9, 14 -> 10, 15 -> 11);
+  // every outcome, play order and other field matches.
   // #2260 adds only previousTotal to statusApplied for actual-gain feedback.
   // Pin those 18 receipts before removing that single additive field; keep
   // every prior gameplay byte, end state and full-log replay check intact.
@@ -352,7 +355,7 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   assert.equal(previousTotals.length, 18, 'the scripted fights carry exactly 18 status before-total receipts');
   assert.deepEqual(previousTotals, [0, 0, 0, 1, 2, 2, 0, 0, 1, 1, 2, 0, 0, 1, 2, 0, 0, 0]);
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
-    { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
+    { sha256: 'be9793f5c2a4140c461f9d218d7334555ad276b67f71cb4c96111bdaf8ca85b0', length: 414756 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

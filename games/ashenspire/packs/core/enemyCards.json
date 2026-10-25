@@ -514,8 +514,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 4
+        "amount": 4,
+        "hits": 3
       }
     ],
     "tags": [
@@ -570,8 +570,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 3
+        "amount": 4,
+        "hits": 2
       }
     ],
     "tags": [
@@ -1684,8 +1684,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 6
+        "amount": 6,
+        "hits": 3
       }
     ],
     "tags": [
@@ -1740,8 +1740,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 3
+        "amount": 4,
+        "hits": 2
       }
     ],
     "tags": [
@@ -1977,8 +1977,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7,
-        "hits": 5
+        "amount": 12,
+        "hits": 3
       }
     ],
     "tags": [
@@ -2548,8 +2548,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
-        "hits": 5
+        "amount": 10,
+        "hits": 2
       },
       {
         "op": "applyStatus",
@@ -2616,8 +2616,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
-        "hits": 5
+        "amount": 12,
+        "hits": 2
       }
     ],
     "tags": [
@@ -2935,8 +2935,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8,
-        "hits": 4
+        "amount": 11,
+        "hits": 3
       }
     ],
     "tags": [
@@ -3110,8 +3110,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9,
-        "hits": 4
+        "amount": 18,
+        "hits": 2
       }
     ],
     "tags": [
@@ -3224,6 +3224,31 @@
     "textTemplate": "Close one band."
   },
   {
+    "id": "graveWisp.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
+  },
+  {
     "id": "wyrmAspirant.advance",
     "name": "Advance",
     "class": "colorless",
@@ -3299,6 +3324,31 @@
     "textTemplate": "Close one band."
   },
   {
+    "id": "lanternMoth.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
+  },
+  {
     "id": "briarHermit.advance",
     "name": "Advance",
     "class": "colorless",
@@ -3347,6 +3397,31 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "chainScavenger.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   },
   {
     "id": "bellKeeper.advance",
@@ -3447,6 +3522,31 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "courtSurgeon.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   },
   {
     "id": "stitchedHound.advance",
@@ -3597,6 +3697,31 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "mirrorScribe.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   },
   {
     "id": "stitchCrab.advance",
@@ -3824,6 +3949,31 @@
     "textTemplate": "Close one band."
   },
   {
+    "id": "blightedValkyrie.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
+  },
+  {
     "id": "cinderMantis.advance",
     "name": "Advance",
     "class": "colorless",
@@ -3872,6 +4022,31 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "eclipseCantor.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   },
   {
     "id": "furnaceSaint.advance",
@@ -3947,5 +4122,30 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "ashheartDragon.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "motion",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Fall back one band."
   }
 ]

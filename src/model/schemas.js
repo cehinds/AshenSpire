@@ -459,7 +459,9 @@ export const SIGIL_RARITIES = Object.freeze(['common', 'uncommon', 'rare', 'lege
 // and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
 // a quest-pool relic that no event choice grants, because it would then be
 // unreachable content.
-export const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+// `core2` (owner 2026-10-25) is a relic only the Core 2 reward policy draws: rewards.json eligibility.relics.pools
+// names it, so legacy and Core 1 never see it.
+export const RELIC_POOLS = Object.freeze(['reward', 'quest', 'core2']);
 export function relicInRewardPool(relic) {
   return (relic.pool || 'reward') === 'reward';
 }
@@ -656,6 +658,8 @@ const enemyMoveSchema = obj({
   // Required on a rolled move; absent on a reaction move, which is never rolled
   // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
   weight: opt(num),
+  // A retreat move's weight, applied only while the fight is closer than the enemy's starting range (combat.js weightedMovePick).
+  retreatWeight: opt(num),
   reaction: opt(obj({
     on: arr(en('playerAction', 'playerReaction')),
     minIncoming: opt(int),
@@ -1065,6 +1069,7 @@ export const SCHEMAS = Object.freeze({
     firstMove: opt(str), // checked against own moves in validate.js
     startingRange: opt(en('melee', 'reach', 'ranged')),
     rangeClosingMove: opt(str),
+    rangeRetreatMove: opt(str),
     rangeRoutePolicy: opt(en('advance')),
     moveSources: opt(mapOf(obj({ cardId: str }))),
     phases: opt(arr(enemyPhaseSchema)),

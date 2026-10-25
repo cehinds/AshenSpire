@@ -21,8 +21,8 @@ function stamp(combat, startingRange = 'ranged') {
   const actors = [...players, ...combat.enemies.map(enemy => [enemy, `enemy:${enemy.id}`])];
   for (const [entity, key] of actors) {
     entity.rangeActorKey = key;
-    // Two SP for the repeated-hit fixture plus its two-band Advance.
-    if (entity.kind === 'enemy') Object.assign(entity, { maxStamina: 4, stamina: 4 });
+    // Three SP for the repeated-hit fixture plus its two-band Advance.
+    if (entity.kind === 'enemy') Object.assign(entity, { maxStamina: 5, stamina: 5 });
   }
   combat.rangeState = createRangeState(RANGE_POLICY_DEFAULTS, actors.map(([, key]) => ({ key, startingRange })));
   return combat;
@@ -118,6 +118,7 @@ test('a paused reaction preserves a paid mixed-source quote after persistent mov
   const group = combat.queue.find(action => action.meta?.expansionGroup)?.meta.expansionGroup;
   clearRangeContactIds(group);
   const sourceKey = combat.enemies[0].rangeActorKey, targetKey = combat.player.rangeActorKey;
+  combat.rangeState.engagements[rangePairKey(sourceKey, targetKey)] = 2;
   const plan = rangeActionPlan(combat.rangeState, sourceKey, [
     { contactId: 'bow', targetKey, coverage: 'ranged', weapon: true, sourceWeaponId: 'fixture-bow' },
     { contactId: 'dagger', targetKey, coverage: 'melee', weapon: true, sourceWeaponId: 'fixture-dagger' },
@@ -213,7 +214,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   combat.player.block = 100;
   combat.piles.hand.push({ instanceId: 'resume-counter', cardId: 'core.counter', upgraded: false });
-  Object.assign(combat.enemies[0], { maxStamina: 4, stamina: 4 });
+  Object.assign(combat.enemies[0], { maxStamina: 5, stamina: 5 });
   combat.enemies[0].intent = { ...combat.enemies[0].intent, moveId: 'slash' };
   combat.enemies[0].plannedMoves = [];
   const pair = rangePairKey(combat.player.rangeActorKey, combat.enemies[0].rangeActorKey);
@@ -221,10 +222,10 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   primeAccuracyRolls(combat, { count: 3 });
   dispatch(combat, { type: 'endTurn' });
   assert.ok(combat.pendingReaction);
-  assert.equal(combat.enemies[0].stamina, 0, 'multi-hit minimum 2 SP and two-band Advance have already been paid');
+  assert.equal(combat.enemies[0].stamina, 0, 'the three-hit price (3 SP) and two-band Advance have already been paid');
   const plan = combat.queue[0].meta.expansionGroup.carrier.rangePlan;
   assert.equal(plan.advanceSp, 2);
-  assert.equal(plan.paid.stamina, 4);
+  assert.equal(plan.paid.stamina, 5);
   assert.equal(plan.targets.length, 3);
   commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
   const saves = createSaveManager(createMemoryStorage());
@@ -253,7 +254,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   assert.equal(restored.pauses, 3);
   assert.equal(restored.hits.length, 3);
   assert.equal(restored.enemySp, 0, 'resuming later hits cannot charge another approach');
-  assert.equal(restored.pair, 2, 'temporary Advance never moves the persistent pair');
+  assert.equal(restored.pair, 0, 'a paid Advance persists in the committed pair');
 });
 
 test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {

@@ -11,7 +11,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
   if (!registries?.statuses?.has) return [];
   def = withChargedEffects(def, preview);
   const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules,
-    gameProfile: rules?.gameProfile ?? registries?.gameProfile };
+    gameProfile: rules?.gameProfile ?? registries?.gameProfile, fixCoreRules: rules?.fixCoreRules };
   const core = fixCoreEnabled(ctx), facts = new Map();
   const protection = { block: { name: 'Block' }, barrier: { name: 'Barrier' } };
   const definition = status => registries.statuses.has(status) ? registries.statuses.get(status) : protection[status];

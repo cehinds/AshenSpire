@@ -31,7 +31,8 @@
     "effects": {
       "version": "1.0.0",
       "settings": {
-        "fixCoreVersion": 1
+        "fixCoreVersion": 1,
+        "core2ActionRulesVersion": 2
       }
     },
     "statuses": {

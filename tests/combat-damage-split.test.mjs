@@ -149,17 +149,17 @@ test('a spell-camp card with slashing damage hits Block and then Poise, and neve
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
-test('a physical-camp card whose damage type shares 1 hits Barrier and Ward, not Block', () => {
+test('a physical-camp card whose damage type shares 1 is all magic: Block soaks it first, then Barrier and Ward', () => {
   const slashAsMagic = { tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
   const r = strike(slashAsMagic, 5, { ward: 3, block: 3, barrier: 2, damageTypeShares: { slashing: 1 } });
   const [d] = r.damage;
   assert.equal(d.magicAmount, 5, 'all magic');
   assert.equal(d.physicalAmount, 0);
-  assert.equal(d.blocked, 0, 'Block does not soak a magic part');
-  assert.equal(r.enemy.block, 3, 'Block untouched');
-  assert.equal(r.enemy.barrier, 0, 'Barrier soaks 2 first');
-  assert.equal(d.wardAbsorbed, 2, 'Ward then soaks 2 of the remaining 3: a pure hit lets at least 1 through Ward');
-  assert.equal(r.hpLost(r.hpBefore), 1, 'that 1 reaches HP');
+  assert.equal(d.blocked, 3, 'Block soaks the magic part (owner, 2026-10-25)');
+  assert.equal(r.enemy.block, 0, 'Block is spent');
+  assert.equal(r.enemy.barrier, 0, 'Barrier soaks the 2 Block left');
+  assert.equal(d.wardAbsorbed ?? 0, 0, 'nothing is left for Ward');
+  assert.equal(r.committed, 0, 'no HP lost');
   assert.equal(r.preview, r.committed);
 });
 
@@ -326,8 +326,8 @@ test('a 10-damage melee fire spell with a slashing tag is all fire: the magic sc
   const d = hitOf(r);
   assert.equal(d.magicAmount, 10, 'a magic-only school spell is all magic, whatever physical tag it carries');
   assert.equal(d.physicalAmount, 0);
-  assert.equal(d.blocked, 0, 'Block takes no part of it');
-  assert.equal(r.enemy.block, 3, 'Block is untouched');
+  assert.equal(d.blocked, 3, 'Block soaks the magic first (owner, 2026-10-25)');
+  assert.equal(r.enemy.block, 0, 'Block is spent');
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
@@ -381,14 +381,14 @@ test('briarCast with Block 2, Ward 3, Poise 5 takes no Ward and no Ward rating i
 
 // The mirror: a fully magic hit meets Ward and Barrier only. Block and Poise, and their rating
 // impact, never see it, even on a physical-looking carrier whose magic share is 1.
-test('a fully magic hit on a physical-looking carrier skips Block and Poise and fills the Ward meter', () => {
+test('a fully magic hit on a physical-looking carrier meets Block, skips Poise and fills the Ward meter', () => {
   const magicOnly = { tags: ['camp:physical', 'damage:slashing'], magicShare: 1, skipRatingBonus: true,
     combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
   const r = strike(magicOnly, 5, { ward: 10, block: 3, poise: 5, damageTypeShares: {} });
   const d = hitOf(r);
   assert.equal(d.magicAmount, 5);
   assert.equal(d.physicalAmount, 0);
-  assert.equal(r.enemy.block, 3, 'Block is untouched');
+  assert.equal(r.enemy.block, 0, 'Block soaks 3 of the magic');
   assert.equal(r.enemy.persistentPoise.value, 5, 'Poise is untouched');
   assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'poise').length, 0, 'no Poise rating impact');
   assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward').length, 1, 'the Ward meter takes the impact');
@@ -445,12 +445,12 @@ test('a mixed-component hit of 8 is 4 magic (2 decay, 2 fire) and 4 slashing; a 
   assert.equal(r.preview, r.committed, 'preview equals commit');
 });
 
-test('a mixed-component hit meets Ward with its magic part and Block with its physical part', () => {
+test('a mixed-component hit meets Block with both parts before Ward sees the magic', () => {
   const r = strike(mixed, 8, { ward: 3, block: 10 });
   const d = hitOf(r);
-  assert.equal(d.wardAbsorbed, 3, 'Ward takes from the 4 magic');
-  assert.equal(r.committed, 1, 'Block soaks the 4 slashing; 1 magic gets past Ward');
-  assert.equal(r.enemy.block, 6, 'Block soaked only the physical 4');
+  assert.equal(d.wardAbsorbed ?? 0, 0, 'Block soaked the magic first: Ward takes nothing');
+  assert.equal(r.committed, 0, 'Block soaks the 4 slashing and the 4 magic');
+  assert.equal(r.enemy.block, 2, 'Block soaked all 8');
   assert.equal(r.preview, r.committed, 'preview equals commit');
 });
 
@@ -585,4 +585,32 @@ test('the card face takes no Poise or Ward rating cut: 5 slash into Poise 5 and 
   const { combat, enemy } = fixture({ ward: 3, poise: 5, damageTypeShares: {} });
   assert.equal(computeAttackDamage(combat, combat.player, enemy, 5, slash.tags, slash, { matchups: false }), 5, 'physical face');
   assert.equal(computeAttackDamage(combat, combat.player, enemy, 5, fireBolt.tags, fireBolt, { matchups: false }), 5, 'magic face');
+});
+
+test('a pure magic spell meets Block, then HP (owner, 2026-10-25)', () => {
+  const magic = { tags: ['camp:spell', 'school:fire', 'damage:fire'], skipRatingBonus: true,
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  const r = strike(magic, 6, { ward: 0, block: 4 });
+  assert.equal(hitOf(r).blocked, 4, 'Block soaks the magic');
+  assert.equal(r.committed, 2);
+  assert.equal(r.preview, r.committed);
+});
+
+// The event adds soaked magic Block back into `amount`, so amount - blocked is the HP the hit really took
+// (the log, the hit float and the co-op replay all read it that way).
+test('damageDealt amount minus blocked equals the HP lost, magic Block included', () => {
+  const cases = [
+    ['pure magic 10 vs Block 4', fireBolt, 10, { ward: 0, block: 4 }, 6],
+    ['pure magic 10 vs Block 4, Ward 3', fireBolt, 10, { ward: 3, block: 4 }, null],
+    ['physical plus magic', mixed, 10, { ward: 0, block: 4 }, null],
+    ['physical plus magic vs Block 20', mixed, 10, { ward: 0, block: 20 }, 0],
+    ['physical 10 vs Block 4', slash, 10, { ward: 0, block: 4 }, 6],
+  ];
+  for (const [name, carrier, amount, setup, expected] of cases) {
+    const r = strike(carrier, amount, setup);
+    const lost = r.hpBefore - r.enemy.hp;
+    const hit = r.damage.reduce((sum, e) => sum + e.amount - e.blocked, 0);
+    assert.equal(hit, lost, `${name}: amount - blocked matches the HP lost`);
+    if (expected !== null) assert.equal(lost, expected, `${name}: HP lost`);
+  }
 });
