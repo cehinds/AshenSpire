@@ -185,7 +185,8 @@
         "firstFloor": "firstFloor",
         "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest",
-        "maxBranches": "maxBranches"
+        "maxBranches": "maxBranches",
+        "startNodeRefills": "startNodeRefills"
       }
     },
     {
