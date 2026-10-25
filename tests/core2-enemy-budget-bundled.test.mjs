@@ -21,7 +21,7 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fight(id) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: `bundled-policy1-${id}` });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [id] });
-  assert.equal(combat.core2ActionRulesVersion, 1, 'exercise the new policy, not Current or an old active fight');
+  assert.equal(combat.core2ActionRulesVersion, 2, 'exercise the new policy, not Current or an old active fight');
   return combat;
 }
 function settle(combat) {

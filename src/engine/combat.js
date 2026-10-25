@@ -1,5 +1,5 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
-import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -1584,7 +1584,7 @@ function baseCardPriceReceipt(combat, def, claimed = null) {
   if (configuredCombat(combat)) {
     const paid = profileCardCosts(combat, def);
     // Multi-hit floor (owner, 2026-10-25): a fixed Core cost is read here, so the floor applies here too.
-    const hitFloor = core2ActionPolicyEnabled(combat) ? multiHitSpFloor(def, { mana: paid.mana }) : 0;
+    const hitFloor = core2MultiHitRulesEnabled(combat) ? multiHitSpFloor(def, { mana: paid.mana }) : 0;
     if (hitFloor > paid.stamina) { paid.energy = hitFloor; paid.stamina = hitFloor; }
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
   }

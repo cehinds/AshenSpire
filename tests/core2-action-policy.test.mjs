@@ -7,7 +7,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { core2ActionPolicyEnabled } from '../src/model/core2ActionPolicy.js';
+import { core2ActionPolicyEnabled, CORE2_ACTION_RULES_VERSION } from '../src/model/core2ActionPolicy.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -19,7 +19,8 @@ function fight(reg = registries) {
 
 test('new Core fights freeze action policy and round-trip it without changing their plan', () => {
   const combat = fight();
-  assert.equal(combat.core2ActionRulesVersion, 1);
+  assert.equal(combat.core2ActionRulesVersion, CORE2_ACTION_RULES_VERSION);
+  assert.equal(CORE2_ACTION_RULES_VERSION, 2);
   assert.equal(core2ActionPolicyEnabled(combat), true);
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(511), snapshot: saved });
@@ -41,7 +42,7 @@ test('Current fights stay outside the Core policy and invalid saved versions are
   assert.equal(Object.hasOwn(combat, 'core2ActionRulesVersion'), false);
   assert.equal(core2ActionPolicyEnabled(combat), false);
   const saved = serializeCombatSnapshot(fight());
-  saved.core2ActionRulesVersion = 2;
+  saved.core2ActionRulesVersion = 3;
   assert.ok(combatSnapshotProblems(saved).some(message => message.includes('core2ActionRulesVersion')));
 });
 

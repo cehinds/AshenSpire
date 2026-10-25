@@ -1,6 +1,6 @@
 import { stanceOf } from '../model/stanceRules.js';
 import { actorRangeKey, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
-import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
 import { quoteRangeActions } from './combatEngagement.js';
@@ -52,6 +52,7 @@ export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   // Owner rule (2026-10-25): a multi-hit move costs at least its multi-hit floor (model/actionCosts.js
   // multiHitFloorFor: 1 SP per hit, less an offset for a finesse or Mana move). The authored price is never lowered
   // and there is no cap; an enemy short of SP simply cannot use the move.
+  if (!core2MultiHitRulesEnabled(combat)) return price;
   return Math.max(price, enemyMoveHitFloor(move, { enemy, moveId, combat }));
 }
 export const enemyMoveSp = moveSp;
@@ -182,7 +183,7 @@ function projectEnemyMovement(pricing, enemy, moveId) {
   if (!pricing.rangeState?.policy.enabled) return;
   const move = expandedEnemyMove(enemy, pricing.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, pricing);
   if (move.delay) return;
-  pricing.rangeState = advancedEngagementState(pricing.rangeState, enemyMoveQuote(move, { enemy, moveId, combat: pricing }).rangeQuote);
+  if (core2MultiHitRulesEnabled(pricing)) pricing.rangeState = advancedEngagementState(pricing.rangeState, enemyMoveQuote(move, { enemy, moveId, combat: pricing }).rangeQuote);
   if (!move.effects?.some(effect => effect.op === 'moveEngagement')) return;
   const preview = previewEnemyAction(pricing, enemy, moveId);
   for (const effect of preview?.actionEffects || []) {
