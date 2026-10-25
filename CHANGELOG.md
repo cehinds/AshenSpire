@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
-- **Refused card inputs reach the Command log** ([#2286](https://github.com/cehinds/AshenSpire/pull/2286), `0.7.1.1837`). Tapping or completing a hold on a card you cannot afford now records the card, its costs and your available resources in Settings → Command log, including refusals that never reach the play action.
+- **Refused card inputs reach the Command log** ([#2286](https://github.com/cehinds/AshenSpire/pull/2286), `0.7.1.1839`). Tapping or completing a hold on a card you cannot afford now records the card, its costs and your available resources in Settings → Command log, including refusals that never reach the play action.
 
 ## 2026-10-24
 
