@@ -104,9 +104,14 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
         if (event.detail > 1 && clickSeriesActivated) lastTap = null;
         // Not a target: one tap or click anywhere on the panel (name, HP, intent,
         // statuses, padding) opens the inspection; the rest of a double-click
-        // series is swallowed so it cannot open it twice. Keyboard activation
-        // (detail 0) is handled by the keydown below.
-        if (event.detail === 0 || !canInspect() || pressMoved) return;
+        // series is swallowed so it cannot open it twice. Keys are handled by
+        // the keydown below and never click this div; a detail-0 click on the
+        // panel itself is an assistive-technology activation of the button.
+        if (event.detail === 0) {
+          if (event.target.classList?.contains('target-hud-panel') && canInspect()) { event.preventDefault(); event.stopImmediatePropagation(); inspect(id, event.target); }
+          return;
+        }
+        if (!canInspect() || pressMoved) return;
         event.preventDefault(); event.stopImmediatePropagation();
         if (event.detail === 1) { clickSeriesActivated = true; if (readGesture) readGesture.blocked = true; lastTap = null; tapInspected = true; inspect(id, shell); }
         return;

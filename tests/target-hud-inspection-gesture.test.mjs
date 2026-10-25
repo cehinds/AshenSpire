@@ -43,7 +43,7 @@ function fixture({ armed = true } = {}) {
   api.wireInspect(shell, 'e1');
   const event = (id, extras = {}) => ({ pointerId: id, pointerType: 'touch', isPrimary: true, button: 0, clientX: 10, clientY: 10, target: name, detail: 1,
     preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.immediate = true; }, stopPropagation() {}, ...extras });
-  function click(id, detail = 1) { const ev = event(id, { detail }); shell.fire('click', ev); return ev; }
+  function click(id, detail = 1, at = name) { const ev = event(id, { detail, target: at }); shell.fire('click', ev); return ev; }
   return { plays, reads, timers, api,
     resourceDown(id = 1) { shell.fire('pointerdown', event(id), true); },
     capturedUp(id = 1) { document.fire('pointerup', event(id), true); },
@@ -88,6 +88,16 @@ test('a single tap anywhere on a non-target panel inspects once; an armed target
   assert.equal(f.reads.length, 1); assert.deepEqual(f.plays, []);
   f.advance(1000); f.down(2); f.up(2); const ev = f.click(2); assert.equal(f.reads.length, 2); assert.equal(ev.immediate, true);
   f.arm(); f.down(3); f.up(3); f.click(3); assert.equal(f.reads.length, 2); assert.deepEqual(f.plays, ['e1']);
+});
+
+test('an assistive-technology click (detail 0) on the unarmed panel button inspects once', () => {
+  const f = fixture({ armed: false });
+  const panel = { classList: { contains: c => c === 'target-hud-panel' }, closest: () => null, matches: () => true };
+  const ev = f.click(null, 0, panel);
+  assert.equal(f.reads.length, 1); assert.equal(ev.immediate, true);
+  f.click(null, 0); assert.equal(f.reads.length, 1, 'a detail-0 click on a child is not the button activation');
+  f.ready(false); f.click(null, 0, panel); assert.equal(f.reads.length, 1);
+  f.ready(true); f.arm(); f.click(null, 0, panel); assert.equal(f.reads.length, 1, 'armed, the panel still confirms rather than inspects');
 });
 
 test('a press that drags past the slop is not a tap', () => {
