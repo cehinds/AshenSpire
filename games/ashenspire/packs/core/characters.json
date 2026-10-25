@@ -540,7 +540,8 @@
       "graveWisp.curse",
       "graveWisp.curse",
       "graveWisp.drain",
-      "graveWisp.advance"
+      "graveWisp.advance",
+      "graveWisp.retreat"
     ],
     "defaultGear": [
       {
@@ -572,11 +573,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "graveWisp.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -813,7 +821,8 @@
       "lanternMoth.lanternDust",
       "lanternMoth.wingSparks",
       "lanternMoth.wingSparks",
-      "lanternMoth.advance"
+      "lanternMoth.advance",
+      "lanternMoth.retreat"
     ],
     "defaultGear": [
       {
@@ -845,11 +854,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "lanternMoth.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -947,7 +963,8 @@
       "chainScavenger.hookCast",
       "chainScavenger.chainSnare",
       "chainScavenger.draggingBlow",
-      "chainScavenger.advance"
+      "chainScavenger.advance",
+      "chainScavenger.retreat"
     ],
     "defaultGear": [
       {
@@ -991,11 +1008,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "chainScavenger.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -1316,7 +1340,8 @@
       "courtSurgeon.scalpel",
       "courtSurgeon.sedate",
       "courtSurgeon.stitch",
-      "courtSurgeon.advance"
+      "courtSurgeon.advance",
+      "courtSurgeon.retreat"
     ],
     "defaultGear": [
       {
@@ -1354,11 +1379,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "courtSurgeon.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -1796,7 +1828,8 @@
       "mirrorScribe.silverScript",
       "mirrorScribe.shardVolley",
       "mirrorScribe.polishedWard",
-      "mirrorScribe.advance"
+      "mirrorScribe.advance",
+      "mirrorScribe.retreat"
     ],
     "defaultGear": [
       {
@@ -1834,11 +1867,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "mirrorScribe.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -2529,7 +2569,8 @@
       "blightedValkyrie.whirlwind",
       "blightedValkyrie.rotWings",
       "blightedValkyrie.rotWings",
-      "blightedValkyrie.advance"
+      "blightedValkyrie.advance",
+      "blightedValkyrie.retreat"
     ],
     "defaultGear": [
       {
@@ -2628,11 +2669,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "blightedValkyrie.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -2730,7 +2778,8 @@
       "eclipseCantor.darkHymn",
       "eclipseCantor.lunarRay",
       "eclipseCantor.fadingEcho",
-      "eclipseCantor.advance"
+      "eclipseCantor.advance",
+      "eclipseCantor.retreat"
     ],
     "defaultGear": [
       {
@@ -2768,11 +2817,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "eclipseCantor.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   },
   {
@@ -3018,7 +3074,8 @@
       "ashheartDragon.tailBastion",
       "ashheartDragon.heartRumble",
       "ashheartDragon.heartRumble",
-      "ashheartDragon.advance"
+      "ashheartDragon.advance",
+      "ashheartDragon.retreat"
     ],
     "defaultGear": [
       {
@@ -3109,11 +3166,18 @@
           "aiWeight": 0,
           "costSource": "authored",
           "legacyMove": "advance"
+        },
+        "ashheartDragon.retreat": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
         }
       },
       "startingRange": "reach",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "rangeRetreatMove": "retreat"
     }
   }
 ]
