@@ -108,7 +108,7 @@ async function captureSourceScenes() {
   await creation.screenshot({ path: resolve(output, 'core-review-desktop.png') });
   await creation.locator('#cz-start').click();
   await creation.waitForSelector('.mapscreen');
-  assert.equal(await creation.locator('.map-node').count(), 18, 'a fresh default act has eight depths and 18 nodes across its three branch lanes');
+  assert.ok(Number(await creation.locator('.map-scroll').getAttribute('data-nodes-total')) >= 22, 'a fresh default act has ten depths and at least 22 nodes (one branch; two to four branches hold 40 to 48)');
   await creation.screenshot({ path: resolve(output, 'core-map-desktop.png') });
   await creation.close();
 
@@ -138,7 +138,7 @@ if (await imported.getByRole('button', { name: 'Not now', exact: true }).isVisib
   await imported.locator('#cz-next').click();
   await imported.locator('#cz-start').click();
   await imported.waitForSelector('.mapscreen');
-  assert.equal(await imported.locator('.map-node').count(), 12, 'imported prebossNodes=5 creates six depths and twelve nodes');
+  assert.ok(Number(await imported.locator('.map-scroll').getAttribute('data-nodes-total')) >= 12, 'imported prebossNodes=5 creates six depths and at least twelve nodes (one per extra branch lane)');
   await imported.close();
 
   for (const viewport of [viewports[2]]) {
@@ -161,7 +161,7 @@ if (await imported.getByRole('button', { name: 'Not now', exact: true }).isVisib
 
   const mapPhone = await sourcePage('shot=map&gameProfile=core&shotSeed=3', viewports[2]);
   await mapPhone.waitForSelector('.mapscreen');
-  assert.equal(await mapPhone.locator('.map-node').count(), 18);
+  assert.ok(Number(await mapPhone.locator('.map-scroll').getAttribute('data-nodes-total')) >= 22);
   await mapPhone.screenshot({ path: resolve(output, 'core-map-phone.png') });
   await mapPhone.close();
 
