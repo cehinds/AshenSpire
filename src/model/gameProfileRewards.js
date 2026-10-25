@@ -7,7 +7,6 @@ import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
 import { reserveStanceCards } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
-import { relicInRewardPool } from '../model/schemas.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 
 // Group members are authored references because the legacy catalog's item tags
@@ -49,7 +48,7 @@ function pools(registries, run) {
   const carried = new Set([...run.loadout.storage,...Object.values(run.loadout.sets).flat()]);
   return {
     weapons: equipment ? (registries.equipment.armaments||[]).filter(row=>weapons.has(row.id)&&!carried.has(row.id)).map(row=>row.id) : [],
-    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(relicInRewardPool(row)||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
+    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
