@@ -17,6 +17,9 @@
     },
     {
       "settingId": "shore"
+    },
+    {
+      "settingId": "bridge"
     }
   ],
   "times": [
@@ -149,6 +152,16 @@
       "profileId": "drowned-coast/shore",
       "regionId": "drowned-coast",
       "settingId": "shore"
+    },
+    {
+      "profileId": "ashen-crown/bridge",
+      "regionId": "ashen-crown",
+      "settingId": "bridge"
+    },
+    {
+      "profileId": "drowned-coast/bridge",
+      "regionId": "drowned-coast",
+      "settingId": "bridge"
     }
   ],
   "nodeProfiles": [
@@ -1184,6 +1197,16 @@
     {
       "profileId": "drowned-coast/shore",
       "sceneId": "drowned-coast-4",
+      "weight": 1
+    },
+    {
+      "profileId": "ashen-crown/bridge",
+      "sceneId": "ashen-crown-1",
+      "weight": 1
+    },
+    {
+      "profileId": "drowned-coast/bridge",
+      "sceneId": "drowned-coast-2",
       "weight": 1
     }
   ],

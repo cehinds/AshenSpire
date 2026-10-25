@@ -208,7 +208,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
 
 
 /**
- * Branched act map (owner, 2026-10-25). Depth 1 is a shared opening row of T = b * L nodes, one per column. From depth 2 each
+ * Branched act map (owner, 2026-10-25). Depth 1 is ONE start node (n1_0, centred) that reaches every branch's first lane(s); it refills HP and flasks when routes.startNodeRefills is not false. From depth 2 each
  * branch k is its own subgraph of L lanes: one rest node per rest floor, at least one elite at or past minimumThreatFloor, and
  * its own boss `boss_k`. Edges after depth 1 never leave a branch, so a branch's rests are never on another branch's route.
  *
@@ -259,10 +259,10 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   };
   for (let floor = 1; floor <= count; floor++) {
     const layer = [];
-    // Depth 1 is shared by every branch: a row of T nodes, or one node when it is authored as a rest depth.
+    // Depth 1 is the single start node shared by every branch, centred over the board.
     if (floor === 1) {
-      if (restSet.has(1)) layer.push(makeNode('n1_0', 1, (total - 1) / 2, null, true, 0));
-      else for (let lane = 0; lane < total; lane++) layer.push(makeNode(`n1_${lane}`, 1, lane, null, false, lane));
+      layer.push(makeNode('n1_0', 1, (total - 1) / 2, null, restSet.has(1), 0));
+      if (rules.startNodeRefills !== false) nodes.n1_0.refill = true;
     }
     else for (let k = 0; k < branchCount; k++) {
       if (restSet.has(floor)) layer.push(makeNode(`n${floor}_${k * lanes}`, floor, k * lanes + (lanes - 1) / 2, k, true, k * lanes));
@@ -281,7 +281,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
       const from = nodes[id];
       from.next = layers[depth + 1].filter((target) => {
         const to = nodes[target];
-        if (depth === 0) return from.actualType === 'rest' || (to.actualType === 'rest' || to.type === 'boss' ? Math.floor(from.col / lanes) === to.branch : Math.abs(from.col - to.col) <= 1); // the shared opening reaches every branch
+        if (depth === 0) return true; // the single start node reaches the first node(s) of every branch
         if (from.branch !== to.branch) return false;
         const single = from.actualType === 'rest' || to.type === 'boss' || to.actualType === 'rest';
         return single || Math.abs(from.col - to.col) <= 1;

@@ -92,6 +92,10 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // Original class/map symbols (2026-10-24): repoint only fourteen uiContent
 // map-icon string leaves (seven NODE_TYPES, boss lookup, six legend entries)
 // to historic-* IDs. No whole-fixture recapture or other value change.
+// World-painting biomes and terrain (2026-10-25, #2323): the environments.js
+// entry gains `biomes` and `terrain` on each of the three MEGA_MAPS paintings
+// (biome framing and battle terrain zones). Only those 12 leaves change; no
+// whole-fixture recapture.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

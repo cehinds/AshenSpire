@@ -1,4 +1,4 @@
-import { resolveLocationPresentation, presentationScene } from './locationPresentation.js';
+import { resolveLocationPresentation, presentationScene, profileIdFor } from './locationPresentation.js';
 import { ENVIRONMENTS, MEGA_MAPS } from '../content/environments.js';
 import { SEATS, CAUSEWAY_REGION_ID } from '../content/seats.js';
 import { seatAtTier, tierOf } from './seats.js';
@@ -37,15 +37,31 @@ function causewayRegion(run, node) {
   return ENVIRONMENTS.find((region) => region.id === CAUSEWAY_REGION_ID) || null;
 }
 
+// The terrain the player travelled onto (run.mapTerrain, recorded by the map
+// screen from the painting under the node) outranks the node-type rule. A boss
+// keeps its dungeon unless the ground is a city or a bridge. Null when the run
+// has none for this node (old saves, no framed painting).
+export function mapTerrainSetting(run, nodeId, node) {
+  const terrain = nodeId && run.mapTerrain?.nodeId === nodeId ? run.mapTerrain.settingId : null;
+  if (!terrain) return null;
+  return node?.type === 'boss' && terrain !== 'city' && terrain !== 'bridge' ? null : terrain;
+}
+
+function combatSetting(run, nodeId, node) {
+  const terrain = mapTerrainSetting(run, nodeId, node);
+  if (terrain) return terrain;
+  return node?.type === 'boss' ? 'dungeon' : node?.type === 'merchant' ? 'city' : 'road';
+}
+
 export function combatEnvironment(run = {}) {
   const nodeId = run.journey?.currentNodeId || run.mapNodeId;
   const node = run.mapGraph?.nodes?.[nodeId];
   const region = (run.environmentRegionId && ENVIRONMENTS.find(r => r.id === run.environmentRegionId))
     || (!run.journey && causewayRegion(run, node))
     || regionForRun(run);
-  const setting = node?.type === 'boss' ? 'dungeon' : node?.type === 'merchant' ? 'city' : 'road';
+  const setting = combatSetting(run, nodeId, node);
   const selection = resolveLocationPresentation({ nodeId, seedString:run.seedString,
-    profileId:node ? `${region.id}/${setting}` : undefined,
+    profileId:node ? profileIdFor(region.id, setting) : undefined,
     timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
     savedSceneId:run.locationPresentation?.nodeId === nodeId ? run.locationPresentation?.sceneId : undefined });
   const selected = presentationScene(selection);
@@ -53,6 +69,12 @@ export function combatEnvironment(run = {}) {
   const floor = Math.max(0, Math.trunc(Number(run.floor) || 0));
   const index = (hash(`${run.seedString ?? ''}:scenery`) + floor) % region.scenes.length;
   return { region, scene: region.scenes[index] };
+}
+
+// The region an act's route board belongs to: its seat's region. Null for a run
+// without a seat order, which keeps the plain painting (no biome framing).
+export function actRegionId(act = {}) {
+  return seatRegion(act)?.id ?? null;
 }
 
 // One coherent world per seed, including across act changes and reloads.

@@ -41,3 +41,10 @@ test('concealed intents cannot leak a supplied private total through either comp
     assert.equal(node.querySelector('.intent-action-value').textContent, '?');
   }
 }));
+
+test('the combatant mini HUD hides the scoped total line; the target panel keeps it', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat-target-responsive.css', import.meta.url), 'utf8');
+  assert.match(css, /\.combat \.combatant \.intent \.intent-damage-scope \{ display:none; \}/);
+  assert.doesNotMatch(css, /target-hud-intent[^{]*intent-damage-scope[^{]*\{ display:none/);
+});
