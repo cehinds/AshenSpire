@@ -19,5 +19,10 @@
     "excludePools": [
       "special"
     ]
+  },
+  "ownedCopyWeight": 0.35,
+  "tagWeights": {
+    "maneuver:casting": 1,
+    "default": 2
   }
 }
