@@ -14,7 +14,7 @@
     },
     "rollable": true,
     "noSameTypeAdjacent": false,
-    "source": "src/content/mapconfig.js:82"
+    "source": "content/source/mapActShape.json:10"
   },
   "rewards": {
     "cinders": "normal",
