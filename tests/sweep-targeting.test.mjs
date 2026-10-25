@@ -54,9 +54,9 @@ test('core Sweep hits every living foe without aiming and pays its single SP onc
 for(const expanded of [false,true])for(const cardId of ['hewingArc','whirlingGuard','cleavingBlow','sweepingBlow','progression-ashen-cleaver'])test(`current ${cardId} is automatic area damage (${expanded ? 'expanded' : 'foundation'})`,()=>verifySweep('current',cardId,{expanded}));
 for(const abilityRank of [0,1,2,3,4,5])test(`Crimson Cleave grade ${abilityRank} keeps Sweep area targeting`,()=>verifySweep('current','crimsonCleave',{abilityRank,expanded:true}));
 test('co-op Sweep uses the same untargeted area plan and pays once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>verifySweep('current','whirlingGuard',{coop:true,expanded:true}));
-test('corrected Sweep definitions preserve their previous resolved prices and leave utility/single-target cards alone',()=>{
+test('corrected Sweep definitions keep their resolved prices (a three-hit Whirling Guard pays 1 SP per hit, 2026-10-25) and leave utility/single-target cards alone',()=>{
  const r=createRegistries(contentBundle);
- for(const [id,upgraded,cost] of [['hewingArc',false,2],['hewingArc',true,3],['whirlingGuard',false,2],['whirlingGuard',true,2]])assert.equal(resolveCard(r,{cardId:id,upgraded}).cost,cost);
+ for(const [id,upgraded,cost] of [['hewingArc',false,2],['hewingArc',true,3],['whirlingGuard',false,3],['whirlingGuard',true,3]])assert.equal(resolveCard(r,{cardId:id,upgraded}).cost,cost);
  assert.deepEqual([0,1,2,3,4,5].map(abilityRank=>resolveCard(r,{cardId:'crimsonCleave',abilityRank}).cost),[2,2,3,3,3,4]);
  const utility=r.cards.get('base.auto-sweep');assert.ok(utility.effects.every(e=>e.target!=='allEnemies'));assert.equal(cardNeedsEnemyTarget(utility),false);
  for(const cardId of ['core.strike','core.smash']){const {combat}=fixture('core',cardId);assert.equal(previewCard(combat,'sweep-test').needsTarget,true);}

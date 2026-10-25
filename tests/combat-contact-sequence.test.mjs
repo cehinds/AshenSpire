@@ -36,7 +36,10 @@ function live(damage = 5, effects = undefined) {
   } } };
   const run = createRunState({ registries: selected, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.enemies[0].maxStamina, 2, 'the repeated-hit move has its legal two-SP budget');
+  assert.equal(combat.enemies[0].maxStamina, 2, 'the native pool is two SP');
+  // A three-contact move costs 1 SP per hit (owner, 2026-10-25): fund the fixture's slash.
+  Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3, plannedMoves: [] });
+  combat.enemies[0].intent = { ...combat.enemies[0].intent, moveId: 'slash' };
   assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], basePrecisionBonus: 1000, persistentPoise: { value: 0, max: 0 } });
