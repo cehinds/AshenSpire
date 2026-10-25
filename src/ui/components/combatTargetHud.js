@@ -80,9 +80,14 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
     else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
     // Owner 2026-10-25: out of targeting the whole panel is the inspection door.
-    const panel = shell.querySelector('.target-hud-panel');
-    if (active || !canInspect()) { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
-    else { panel.setAttribute('role', 'button'); panel.tabIndex = 0; panel.setAttribute('aria-label', shell.getAttribute('aria-label')); }
+    // A button holds no interactive children, so the intent row leaves the tab
+    // order while the panel is one. Its name comes from its content (name, HP,
+    // intent), not an override that would hide them.
+    const panel = shell.querySelector('.target-hud-panel'), intent = shell.querySelector('.target-hud-intent');
+    const door = !active && canInspect();
+    if (door) { panel.setAttribute('role', 'button'); panel.tabIndex = 0; }
+    else { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
+    if (intent) { if (door) intent.removeAttribute('tabindex'); else intent.tabIndex = 0; }
   };
   function wireInspect(shell, id) {
     // The visible name/HP replaces the frame footer in this layout. While
