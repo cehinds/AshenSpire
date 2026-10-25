@@ -106,6 +106,21 @@ test('a painting with no anchor for the region falls back to the plain cover fit
   assert.equal(paintingFrame({ anchor: MEGA_MAPS[0].biomes['hollow-weald'], aspect: 2 / 3, box, start: null }), null);
 });
 
+test('no-free-pan ground covers every viewBox centring can reach (hollow-weald, 435 ink, 360 viewport)', () => {
+  const ink = { x0: 0, y0: 0, x1: 435, y1: 1000 }, w = 360, y0 = -200, h = 1400;
+  const anchor = MEGA_MAPS[0].biomes['hollow-weald'], start = { x: 217, y: 1000 };
+  const frame = paintingFrame({ anchor, aspect: 2 / 3, box: paintingGround({ ink, w, y0, h, aim: { min: ink.x0, max: ink.x1 } }), start });
+  assert.ok(frame);
+  for (const aimX of [20, 217, 415]) {
+    const left = aimX - w / 2, right = aimX + w / 2;
+    assert.ok(frame.ox <= left + 1e-6, `left edge ${aimX}`);
+    assert.ok(frame.ox + frame.cw >= right - 1e-6, `right edge ${aimX}`);
+  }
+  // the ink-only ground (the old behaviour) leaves a gap at the left node
+  const old = paintingFrame({ anchor, aspect: 2 / 3, box: paintingGround({ ink, w, y0, h }), start });
+  assert.ok(old.ox > 20 - w / 2);
+});
+
 test('panning does not re-frame the painting: the ground and so the frame ignore the pan offset', () => {
   const ink = { x0: 0, y0: 0, x1: 435, y1: 1000 }, w = 360, y0 = -200, h = 1400;
   const anchor = MEGA_MAPS[1].biomes['cinder-reach'], start = { x: 217, y: 1000 };

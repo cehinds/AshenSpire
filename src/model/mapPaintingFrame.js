@@ -49,11 +49,21 @@ export function paintingFrame({ anchor, aspect, box, start }) {
 }
 
 /**
- * paintingGround({ ink, w, y0, h }) -> {x0,y0,w,h}: the ground the camera can ever
- * show (the act's ink, or the viewport width `w` centred on it if wider). It does
- * not depend on the pan offset, so framing against it makes a pan a pure translate.
+ * paintingGround({ ink, w, y0, h, aim }) -> {x0,y0,w,h}: the ground the camera can
+ * ever show. It does not depend on the pan offset, so framing against it makes a
+ * pan a pure translate.
+ *  - no `aim` (two-axis pan): the act's ink, or the viewport width `w` centred on
+ *    it if wider.
+ *  - `aim` {min,max} (no free pan): the viewBox is `aimX +- w/2` and centring can
+ *    put aimX anywhere in [min,max], so the ground is the union of every such
+ *    viewBox with the ink. Without this the frame stops at the ink and a node in
+ *    an end column leaves bare paper beside the painting.
  */
-export function paintingGround({ ink, w, y0, h }) {
+export function paintingGround({ ink, w, y0, h, aim }) {
+  if (aim) {
+    const x0 = Math.min(ink.x0, aim.min - w / 2);
+    return { x0, y0, w: Math.max(ink.x1, aim.max + w / 2) - x0, h };
+  }
   const mid = (ink.x0 + ink.x1) / 2;
   const x0 = Math.min(ink.x0, mid - w / 2);
   return { x0, y0, w: Math.max(ink.x1, mid + w / 2) - x0, h };

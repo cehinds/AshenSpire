@@ -737,11 +737,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plates land. The terrain shares this viewport-wide ground too: fitting
     // the painting to a one-column route graph leaves a narrow strip of art.
     // Its SVG image uses a uniform cover fit, so architecture never stretches.
-    // Framed against the ground the camera can ever show (the ink, or the
-    // viewport centred on it if wider), not this frame's viewBox: a pan moves
+    // Framed against the ground the camera can ever show (free pan: the ink or
+    // the viewport centred on it; otherwise every aimX +- w/2 from the ink's
+    // columns, so an end-column node never shows bare paper), not this frame's viewBox: a pan moves
     // x0 and must only translate the painting. Re-solved when the act, board
     // size or zoom changes (the key), never per glide frame.
-    const frameBox = paintingGround({ ink: inkBox, w, y0, h });
+    const frameBox = paintingGround({ ink: inkBox, w, y0, h, aim: freePan ? null : { min: inkBox.x0, max: inkBox.x1 } });
     const frameKey = [frameBox.x0, frameBox.y0, frameBox.w, frameBox.h].map(v => Math.round(v * 100)).join('|');
     if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
     else if (frameCache.key !== frameKey) {
