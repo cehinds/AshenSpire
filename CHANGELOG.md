@@ -38,6 +38,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
+- **Console in the ≡ Menu** ([#2304](https://github.com/cehinds/AshenSpire/pull/2304), `0.7.1.1839`). The quick menu now has a Console row, so the error and tap log opens from the map, a fight or any menu screen, without turning on Debug mode.
 - **Debug mode with a Console you can open mid-combat** ([#2301](https://github.com/cehinds/AshenSpire/pull/2301), `0.7.1.1837`). In Settings → Advanced → Debug mode (off by default), a Console button appears in combat and in the combat log. It shows errors, every ignored tap with its reason, and a snapshot of the turn, so a stuck attack can be copied or exported.
 - **Custom Climb modifiers, seats, combat feel, music and sound recipes are now editable data files** ([#2300](https://github.com/cehinds/AshenSpire/pull/2300), `0.7.1.1835`). Their tables live in `content/source/`; only the rules that read them stay in code. Nothing in play changes.
 - **Sigils, feats, matchups, survey lore and the act map shape are now editable data files** ([#2299](https://github.com/cehinds/AshenSpire/pull/2299), `0.7.1.1833`). They live in `content/source/` like the rest of the game content. Nothing in play changes.
