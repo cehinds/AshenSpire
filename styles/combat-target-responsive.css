@@ -124,3 +124,24 @@
 :root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
 }
+
+/* Owner 2026-10-25: every HP bar over a combatant or in a target panel is 70% of its cell's width, centred.
+   The meter (which carries the poise ring) is narrowed, not just its track; an empty full-width line break
+   keeps the badges on their own row below it. */
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row {
+  justify-content:flex-start;
+}
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row::after {
+  content:''; order:-1; flex:0 0 100%; height:0;
+}
+/* The break is a second flex line, so the panel's row gap moves onto the badges. */
+:root .combat .target-hud-detail .target-hud-meters .combat-health-row { row-gap:0; }
+:root .combat .target-hud-detail .target-hud-meters .combat-health-badge { margin-top:.3em; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-meter {
+  flex:0 0 70%!important; width:70%!important; margin-inline:auto!important;
+}
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+  right:15%!important;
+}
