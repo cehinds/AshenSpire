@@ -31,7 +31,7 @@ function settle(combat) {
   }
 }
 
-test('bundled policy1 enemy reaction pays base at commit (the player's Advance persisted) and survives restore without double payment', () => {
+test('bundled policy1 enemy reaction pays base at commit (after the player Advance persisted) and survives restore without double payment', () => {
   const combat = fight('gildedKnight'), enemy = combat.enemies[0];
   combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
   const quote = enemyMoveQuote(registries.enemies.get(enemy.enemyId).moves.gildedGuard, { enemy, moveId: 'gildedGuard', combat });
