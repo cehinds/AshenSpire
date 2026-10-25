@@ -372,6 +372,199 @@ File header (was the comment block at the top of src/content/shops.js): the thre
 - **master shelves and services (SPEC §14.5)** — the stocked shelves (`skillBooks`, `weaponArts`, `armaments`) are each filtered to the visiting master's tracks and rolled on `shopOffers` after the offering roll. The services (`training`, `respec`, `lesson`, `appraisal`, `redistribute`) each stay laid out once rolled and are judged live. Training and appraisal can always act: every master teaches three or four tracks.
 - **masters (SPEC §14.5)** — not a kind and no Settings row: who a master visit can be. A visit picks one on the `shop` stream, in written order. Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an armour track, which has no item type, nor a `class:` track, whose respec would strand the class tree's picks), and speaks as a speakers.csv row.
 
+## Sigils (content/source/sigils.json)
+
+File header (was the comment block at the top of src/content/sigils.js): sigils, the brief's "runes" (SPEC §14.3). `sigils.json` is the single array export `sigils`; each row is `{ id, name, rarity, cost, blurb }`.
+
+- **Why "sigil".** Renamed from "rune" because that word is this spec's pre-scrub name for the currency (cinders).
+- **What it does is not written here** (Codex on #1376; coordinator ruling). A sigil's effect is a property rule, as a relic's and a companion's are: its `family = sigil` row in content/source/tagging.csv names a leaf under the `sigil` branch of `property` in nodes.csv, whose rule lives in nodeEffects.json with its numbers bound to balance.sigils.*. stampTags derives `propertyTags`. Its numbers are Settings rows, so a blurb names none (the rule's own words are nodeTerms.csv's). A sigil set into a slot of an EQUIPPED armament mounts as a `sigil` carrier (engine/properties.js, SPEC §14.4). One carried in `run.sigils`, or slotted in a piece that is not worn, mounts nowhere. validateContent refuses a row that writes `triggers` or `modifiers`, and one with no property tag.
+- **Prices.** `cost` is the sigil's own price; the market charges `gameConfig.shops.market.sigils.pricePct` percent of it (content/source/shops.json), so the owner tunes what the shelf asks in Settings without editing a row. The blacksmith sells no sigils; it cuts slots and sets them (§14.4).
+- **Legendary sigils** are SPEC §15.4's: `{ id, name, rarity: 'legendary', blurb }`, with no cost, never shop stock, and never slotted. One works while it is ATTUNED in the Armoury's Sigils panel (model/sigils.js attuneSigil), up to `balance.sigils.attuneMax` at a time, and a fight or a treasure room can drop one (balance.sigils.dropChancePct, shipped off). Each derives exactly one property tag, and each rule is an on/if combination no relic uses.
+
+## Feats (content/source/feats.json)
+
+File header (was the comment above src/content/feats.js): permanent, repeatable character-level choices. Values are intentionally small because a long run may select the same feat more than once. `feats.json` is the array export `feats`; src/content/feats.js freezes the array (the rows stay unfrozen, as before).
+
+## Class skill feats (content/source/classSkillFeats.json)
+
+File header (was the comment above src/content/classSkillFeats.js): SPEC §13.4q class feats. The profile/run integration selects these only for mastery-scoped runs; older runs retain the existing skill-feat catalogue. `classSkillFeats.json` is the array export `classSkillFeats`; src/content/classSkillFeats.js freezes the array (the rows stay unfrozen). The `crit` and `passive` shapes are the ones described under "Skill feats".
+
+## Skill feats (content/source/skillFeats.json)
+
+File header (was the comment block above src/content/skillFeats.js): the feats a skill track's every-2nd level offers (SPEC §13.4o, "every 2nd level: a feat tied to the skill"). Each is taken once. Only the owner's own examples are authored here; the rest of the table is content phase C. `skillFeats.json` is the array export `skillFeats`; src/content/skillFeats.js freezes the array (the rows stay unfrozen).
+
+- **`crit`** — Blade-tagged attacks may crit (owner, 2026-10-04): chance base + Σ weight·attribute / divisor, capped; a crit multiplies the hit. Chances from several sources add before the cap.
+- **`passive`** — a tag on the character that changes every card meeting its tags (SPEC §13.4o "Passive tag effects"): `block` adds to the card's first unconditional Block, shown on the card's face.
+
+## Survey quest lore (content/source/surveyQuestLore.json)
+
+File header (was the comment above src/content/surveyQuestLore.js): player-facing survey writing. Keep prose outside the atlas topology tables: their historical revision includes text, and changing it would reroute seeds and refuse existing journeys. IDs, objectives and rewards stay in the atlas. `surveyQuestLore.json` is the object export `surveyQuestLore`, keyed by survey id, each entry `{ title, description, report }`; src/content/surveyQuestLore.js freezes the table and each entry, as before.
+
+## Combat matchups (combatIntent.json, combatMatchups.json, combatExpansionMatchups.json)
+
+File header (was the comment above src/content/combatMatchups.js): shared tactical numbers and tag riders; balance exposes these same objects. The three JSON files are the three exports of src/content/combatMatchups.js, unchanged in shape; every `[NOTE]` block is the string key `"$note"` in the JSON (see the Shops notes).
+
+- **combatMatchups.json (version 1)** — the table the original tagged-card contract priced. Immutable history: saves priced under it keep it.
+- **combatExpansionMatchups.json** — new runs carry this table separately; the version-1 table is the immutable history for saves which were priced under the original tagged-card contract. It carries no `$note` blocks.
+- **`tagRiders`** (both tables) — technique riders (owner decision 11, 2026-10-12): keyed by a carrier's authored card tag, resolved with the damage rider once per action and target. A guard bypass takes the larger of this and the damage type's. In the expansion table they are the version-1 rows with status pressure for gauges.
+
+## Map config (mapActShape.json, mapShapeLimits.json, legacyActBosses.json)
+
+The map-generation knobs of src/content/mapconfig.js (SPEC §6). `mapActShape.json` is the shared act shape (it was the module-private `ACT_SHAPE`); src/content/mapconfig.js spreads it into `mapConfigs` for acts 1 to 3 (distinct objects, so acts can diverge later). `mapShapeLimits.json` is `MAP_SHAPE_LIMITS` (frozen in the module) and `legacyActBosses.json` is `LEGACY_ACT_BOSSES` (frozen in the module). The comments below were the module's; they are quoted as they were, so a few lines say "above" for what is now `mapActShape.json`.
+
+### File header
+
+    src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)
+    Consumed by engine/mapgen.js through model/floorplan.js; authored as data
+    (SPEC §3.8, Law 1).
+
+    EVERY FLOOR IS AN ANCHOR, NOT AN INDEX. Constantine: "make this configurable
+    by data driven tooling." An absolute floor number is not configurable — it is
+    a constant whose MEANING moves when `floors` changes while the constant does
+    not, which is SOP 2's drift clause applied to data. The four anchor kinds are
+    a closed set and live in `model/floorplan.js`:
+
+        { at: 'first' }                 floor 1
+        { at: 'last' }                  the last ROLLABLE floor (floors - 1)
+        { at: 'floor',    index: 9 }    absolute; an error if outside 1..floors-1
+        { at: 'fraction', of: 0.64 }    64% of the way up the rollable band
+
+    `node tools/mapplan.mjs` prints what each one resolves to at any act length.
+    Turn a knob, read the number: that is the whole feature.
+
+    WHAT CHANGED AND WHY, so the next reader does not restore the old numbers:
+
+      `9: 'treasure'`  ->  { at: 'fraction', of: 0.64 }
+          Absolute 9 is a cliff. Below 10 floors the rank simply does not exist
+          and the act ships with NO treasure — 4.0 nodes per act to 0.0, 24 of 24
+          seeds, in silence. 0.64 x 14 rounds to 9, so the 15-floor act is
+          unchanged, and a 10-floor act gets its treasure at floor 6.
+
+      `15: 'shrine'`   ->  DELETED, because it never fired.
+          The generator types the top floor as the lone Shrine and puts the Boss
+          above it BEFORE any rule runs, so floor 15 was never rollable. Deleting
+          it changes 0 of 24 seeds at 10, 12 and 15 floors (Freja, measured). It
+          is not a rule we are dropping; it is a rule that was never a rule, and
+          the schema now rejects it — an anchor outside 1..floors-1 is an error,
+          which is exactly the check that would have caught it.
+
+      `noEliteOrShrineBefore: 6`  ->  { at: 'fraction', of: 0.43 }
+          6 gates 36% of a 15-floor act and 56% of a 10-floor one. Same number,
+          different game. The fraction keeps the SHAPE: 36% at 15 floors, 36% at
+          12, 33% at 10.
+
+      `noShrineOn: 14`  ->  { at: 'last' }
+          14 always meant "the last floor a rule can reach". Now it says so.
+
+      `minReachableElites` -> `minElites` (and the same for merchants).
+          The old name promised reachability; mapgen counts the whole graph. It
+          never measured what it claimed. The count is unchanged and honestly
+          named; the reachability number is MEASURED AND PRINTED by
+          tools/mapplan.mjs on every run — deliberately not restated here,
+          because a sample restated in prose drifts (Bjorn caught three homes
+          carrying three different samples within a day).
+
+### mapActShape.json: entries
+
+    ONE MAP ENTRANCE — Constantine, 2026-08-08, verbatim and unqualified.
+
+    `entries` and `pathCount` are two knobs and this line is why they had to be.
+    The act is entered from ONE column; six walkers still climb it, so the
+    routes behind that door are unchanged in number. Measured literally, "one
+    path" would have been a corridor — 13 nodes and zero choices in a whole act
+    (Viki, 300 seeds) — which is not what he described.
+
+    WHAT IT COSTS AND WHAT IT BUYS, both measured at 300 seeds before it shipped:
+      entrance row      5.92 columns wide  ->  1
+      nodes per act     46.26              ->  35.88   (22% smaller)
+      next step hidden  9 of 12 seeds      ->  0 of 12 at 390x844 (tools/mapfit.mjs)
+    The act is smaller. That is the trade he chose and it is the whole reason
+    the shrinkage is stated here rather than discovered later.
+
+    EVERY SEED IN THE GAME IS A DIFFERENT MAP NOW. That is not a side effect of
+    this line, it IS this line: the walkers' first roll moved, so every graph
+    downstream of it moved. No save is invalidated (graphs are stored per run),
+    but a seed screenshotted before today no longer reproduces.
+
+### mapActShape.json: unknownWeights
+
+    What a `?` node resolves to. HERE, beside the geometry it belongs to, and
+    no longer in `balance.unknownNode` — a flat global could not differ per act
+    while the map it describes is per act, and nothing said so (Freja).
+
+### mapActShape.json: floorRules
+
+    TWO GATES WHERE THERE WAS ONE, and the split is what E13 needed. The old
+    `noEliteOrShrineBefore` opened rests and Elites on the SAME floor, so the
+    earliest rest could never be below the earliest Elite. Constantine asked
+    for a rest "so eletes, maybe shop, and definitely before a boss".
+
+    THE ELITE GATE DOES NOT MOVE. 0.43 is the number that shipped, so Elites
+    land exactly where they landed before this change; only the rest opens
+    earlier. That is the smaller of the two edits available and it is
+    deliberate — retuning where Elites appear is a separate decision from
+    promising a rest below them.
+
+      0.27 x 11 -> floor 3      rests open here
+      0.43 x 11 -> floor 5      Elites open here, unchanged
+      => floors 3 and 4 are where the promised rest can land
+
+    E13's other half, and the generator keeps it the way it keeps `minElites`
+    — by barring the roll and then force-placing, never by hoping. Measured
+    on the canonical seed stream before it shipped: 124 of 180 maps carried
+    an Elite with no Shrine on any earlier floor. `node tools/mapplan.mjs`
+    prints the number now, including the per-path reachability this rule
+    does NOT promise.
+
+    WHAT IT COSTS, and it is not free: the shortest act these rules can
+    describe moved from 4 floors to 7 (`minViableFloors`, and the run-shape
+    test pins the number). A 6-floor act resolves `noShrineBefore` onto floor
+    1, which the fixed Monster already claims, so no floor is left to hold
+    the promised rest and the resolver refuses rather than force-placing over
+    another rule. That narrows Constantine's short-run slider, which is a
+    real trade against "I only have the patience for 30 min runs".
+    The other end of it, if he wants the range back: `noEliteBefore` at
+    { fraction: 0.5 } takes the shortest act to 6 and moves Elites one floor
+    later on the shipped act (5 -> 6). 0.43 is kept here because it is the
+    number that shipped, so Elites land exactly where they always did.
+
+### mapShapeLimits.json
+
+    THE DEBUG RUN SHAPE — Constantine, 2026-08-08, verbatim:
+
+      "need to do a full run, but I only have the patience for 30 min runs.
+       perhaps add an advanced debug feature to limit the amount of max columns,
+       rows, and or columns with percent chance of certain nodes being more
+       likely"
+
+    Three knobs, and the entry below is the ONLY thing this feature adds to
+    content. Everything else about it is DERIVED (Law 0 clause 1):
+
+      floors cap    max = whatever THIS act authors above; min = the shortest act
+                    this act's own floorRules can describe, found by ASKING
+                    resolveFloorPlan (model/floorplan.js `minViableFloors`). Edit
+                    the anchors above and the slider's low end moves on its own.
+      columns cap   max = authored; min = the one number below, because "a
+                    corridor is not a map" is a design call and not arithmetic.
+      type weights  ONE SLIDER PER KEY OF `typeWeights` ABOVE. The Custom Climb
+                    screen reads that object and builds its controls from it, so
+                    adding a node type to the act adds a knob with zero UI edits.
+                    That is this feature's Law 0 falsifier and it is testable.
+
+    A CAP, not a setting: the effective value is min(authored, cap), so a cap
+    above the authored number does nothing — and the readout SAYS SO rather than
+    letting it look like it did something (Law 0 clause 5).
+
+- **minColumns**:
+    Two columns is the floor because ONE column is a corridor: every walker
+    lands on the same node, the act has zero choices, and the shape is
+    identical every seed (Viki measured exactly this at pathCount 1 — 13 nodes,
+    no decisions, 300 seeds). A short run is the ask; a run with no map is not.
+- **maxWeight**:
+    The largest weight a knob may set. Weights are RELATIVE — the odds a type
+    is rolled are its weight over the total — so this number is a slider end,
+    not a percentage. The screen prints the derived share beside each one.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

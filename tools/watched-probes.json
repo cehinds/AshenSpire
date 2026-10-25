@@ -980,9 +980,9 @@
   {
    "id": "G10",
    "by": "Bjorn",
-   "read": "src/content/mapconfig.js (entries: 1)",
+   "read": "content/source/mapActShape.json (entries: 1)",
    "anchors": [
-    "entries: 1"
+    "\"entries\": 1,"
    ],
    "screen": "the act map, floor 1",
    "reach": [
