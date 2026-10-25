@@ -22,6 +22,8 @@ import { randomBytes } from 'node:crypto';
 import { processAlive } from './process-tree.mjs';
 
 export const LOCK_NAME = '.build-lock';
+const WINDOWS_PERMISSION_RETRY = Symbol('windows lock permission retry');
+const PERMISSION_RETRY_MS = 1000;
 // A lock file another process has created but not written yet reads as empty;
 // it is only treated as abandoned once it is this old.
 const UNWRITTEN_MS = 10 * 1000;
@@ -50,9 +52,9 @@ export function procStartOf(pid) {
   } catch { return null; }
 }
 
-function readLock(file) {
+function readLock(file, io = fs) {
   let text; let stat;
-  try { text = fs.readFileSync(file, 'utf8'); stat = fs.statSync(file); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+  try { text = io.readFileSync(file, 'utf8'); stat = io.statSync(file); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
   let info = null;
   try { info = JSON.parse(text); } catch { /* being written, or torn */ }
   return { text, info, mtimeMs: stat.mtimeMs };
@@ -111,15 +113,26 @@ function breakStale(file, seen) {
  * Take the lock now, or report who holds it.
  * @returns {Function | {heldBy: {pid, holder, startedAt}}} a release function, or the holder.
  */
-export function tryAcquire(root, holder) {
+export function tryAcquire(root, holder, { filesystem = fs, platform = process.platform } = {}) {
   const file = lockPath(root);
   const token = randomBytes(8).toString('hex');
   const info = { pid: process.pid, holder: String(holder || 'A build'), startedAt: Date.now(), token, procStart: procStartOf(process.pid) };
+  let permissionError;
   for (let attempt = 0; attempt < 5; attempt++) {
     let fd;
-    try { fd = fs.openSync(file, 'wx'); } catch (e) {
-      if (e.code !== 'EEXIST') throw e;
-      const lock = readLock(file);
+    try { fd = filesystem.openSync(file, 'wx'); } catch (e) {
+      // Windows can report delete-pending exclusive-create contention as EPERM.
+      // Recheck the real lock; never treat an access failure as an acquired lock.
+      const windowsPermission = platform === 'win32' && e.code === 'EPERM';
+      if (e.code !== 'EEXIST' && !windowsPermission) throw e;
+      let lock;
+      try { lock = readLock(file, filesystem); } catch (readError) {
+        if (platform !== 'win32' || readError.code !== 'EPERM') throw readError;
+        permissionError ??= windowsPermission ? e : readError;
+        permissionError[WINDOWS_PERMISSION_RETRY] = true;
+        continue;
+      }
+      if (windowsPermission) { permissionError ??= e; permissionError[WINDOWS_PERMISSION_RETRY] = true; }
       if (!lock) continue; // released between open and read
       if (isStale(lock, Date.now())) { breakStale(file, lock); continue; }
       const held = lock.info || {};
@@ -135,6 +148,7 @@ export function tryAcquire(root, holder) {
       }
     }, { token });
   }
+  if (permissionError) throw permissionError; // bounded retries exhausted: preserve the access error
   const lock = readLock(file);
   return { heldBy: { pid: lock?.info?.pid ?? null, holder: lock?.info?.holder || 'Another build', startedAt: lock?.info?.startedAt ?? null } };
 }
@@ -158,11 +172,20 @@ function pause(ms, signal) {
  * Wait for the lock (polling), then hold it; rejects with `heldBy` after timeoutMs.
  * An aborted `signal` rejects at once with its reason and never takes the lock.
  */
-export async function acquire(root, holder, { timeoutMs = 10 * 60 * 1000, pollMs = 250, signal } = {}) {
+export async function acquire(root, holder, { timeoutMs = 10 * 60 * 1000, pollMs = 250, signal, filesystem = fs, platform = process.platform } = {}) {
+  let permissionDeadline, permissionFailure;
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     if (signal?.aborted) throw abortError(signal);
-    const got = tryAcquire(root, holder);
+    let got;
+    try { got = tryAcquire(root, holder, { filesystem, platform }); } catch (error) {
+      if (!error[WINDOWS_PERMISSION_RETRY]) throw error;
+      permissionFailure ??= error;
+      permissionDeadline ??= Math.min(deadline, Date.now() + PERMISSION_RETRY_MS);
+      if (Date.now() >= permissionDeadline) throw permissionFailure;
+      await pause(Math.max(1, Math.min(pollMs, permissionDeadline - Date.now())), signal);
+      continue;
+    }
     if (typeof got === 'function') return got;
     if (Date.now() >= deadline) throw Object.assign(Error(`${got.heldBy.holder} is running; try again when it finishes`), { status: 409, heldBy: got.heldBy });
     await pause(Math.max(1, Math.min(pollMs, deadline - Date.now())), signal);
@@ -196,13 +219,20 @@ export const CLI_WAIT_MS = 5 * 60 * 1000;
  * it spawns run under it. On timeout it exits 1 naming the holder.
  * @returns {Function} release (a no-op under a parent's hold).
  */
-export async function holdForCli(root, holder, { env = process.env, timeoutMs = Number(env.ASHEN_BUILD_LOCK_WAIT_MS) || CLI_WAIT_MS, pollMs = 250, log = (line) => console.error(line), exit = (code) => process.exit(code) } = {}) {
+export async function holdForCli(root, holder, { env = process.env, timeoutMs = Number(env.ASHEN_BUILD_LOCK_WAIT_MS) || CLI_WAIT_MS, pollMs = 250, filesystem = fs, platform = process.platform, log = (line) => console.error(line), exit = (code) => process.exit(code) } = {}) {
   if (heldByParent(root, env)) return () => {};
-  let release = tryAcquire(root, holder);
+  let release;
+  try { release = tryAcquire(root, holder, { filesystem, platform }); } catch (error) {
+    if (!error[WINDOWS_PERMISSION_RETRY]) throw error;
+    try { release = await acquire(root, holder, { timeoutMs, pollMs, filesystem, platform }); } catch (retryError) {
+      if (retryError[WINDOWS_PERMISSION_RETRY]) throw error;
+      throw retryError;
+    }
+  }
   if (typeof release !== 'function') {
     const { heldBy } = release;
     log(`${holder}: waiting for ${heldBy.holder}${heldBy.pid ? ` (pid ${heldBy.pid})` : ''} to finish writing the generated files…`);
-    try { release = await acquire(root, holder, { timeoutMs, pollMs }); } catch (e) {
+    try { release = await acquire(root, holder, { timeoutMs, pollMs, filesystem, platform }); } catch (e) {
       log(`${holder}: gave up after ${Math.round(timeoutMs / 1000)} s — ${e.message}. If no build is running, delete ${lockPath(root)}.`);
       exit(1);
       throw e;

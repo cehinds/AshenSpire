@@ -5,12 +5,19 @@ import { dispatch } from '../src/engine/combat.js';
 import { captureEnemyIntent } from '../src/engine/enemyIntentReceipt.js';
 import { combatIntentPresentation } from '../src/ui/models/CombatIntentModel.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, enemyMoveDamage } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
+import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
 function fixture() {
   const combat = live(), enemy = combat.enemies[0];
+  // The shared contact fixture selects Slash; its raw receipt must carry the
+  // same complete authored identity rather than the native one-SP guard head.
+  const move = expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
+  enemy.intent = { ...enemy.intent, moveId: 'slash', kind: move.intent,
+    combatProfile: enemyMoveCarrier(enemy, move, 'slash', combat).combatProfile,
+    damage: enemyMoveDamage(enemy, move), hits: move.hits };
   enemy.ratings.ar = 8; enemy.basePrecisionBonus = 1000;
   combat.player.block = 3; combat.player.persistentPoise = { value: 8, max: 8 };
   combat.piles.hand = [0, 1, 2].map(n => ({ cardId: 'core.counter', instanceId: `counter${n}` }));

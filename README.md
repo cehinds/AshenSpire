@@ -8,6 +8,9 @@
 
 
 
+
+
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
@@ -22,19 +25,19 @@ Choose **Test** for the latest promoted game. Badges show the full **published**
 build number and link to its history. Play and HTML follow that channel's latest build.
 
 <!-- readme-sync:channels -->
-**Test** — promoted · [Play Test](https://cehinds.github.io/AshenSpire/test/latest/) · [HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html)
+**Test** — promoted · [Play Test](https://cehinds.github.io/AshenSpire/test/latest/) · [HTML (offline, desktop, ~140 MB)](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html)
 
 [![Test build](https://cehinds.github.io/AshenSpire/test/latest/build.svg)](https://cehinds.github.io/AshenSpire/test/)
 
-Dev — integration · [Play Dev](https://cehinds.github.io/AshenSpire/dev/latest/) · [HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html)
+Dev — integration · [Play Dev](https://cehinds.github.io/AshenSpire/dev/latest/) · [HTML (offline, desktop, ~140 MB)](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html)
 
 [![Dev build](https://cehinds.github.io/AshenSpire/dev/latest/build.svg)](https://cehinds.github.io/AshenSpire/dev/)
 
-Release — candidate · [Play Release](https://cehinds.github.io/AshenSpire/release/latest/) · [HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html)
+Release — candidate · [Play Release](https://cehinds.github.io/AshenSpire/release/latest/) · [HTML (offline, desktop, ~140 MB)](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html)
 
 [![Release build](https://cehinds.github.io/AshenSpire/release/latest/build.svg)](https://cehinds.github.io/AshenSpire/release/)
 
-Main — earlier stable · [Play Main](https://cehinds.github.io/AshenSpire/main/latest/) · [HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html)
+Main — earlier stable · [Play Main](https://cehinds.github.io/AshenSpire/main/latest/) · [HTML (offline, desktop, ~140 MB)](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html)
 
 [![Main build](https://cehinds.github.io/AshenSpire/main/latest/build.svg)](https://cehinds.github.io/AshenSpire/main/)
 <!-- /readme-sync:channels -->
@@ -56,20 +59,28 @@ for a red `deploy` job. Publication can lag source changes. For ZIPs, open a suc
 
 ## Screenshots
 
-Latest published Release candidate **0.7.1.1517**, captured 2026-10-15 UTC.
-[Play this exact build](https://cehinds.github.io/AshenSpire/release/1517/) · [Capture details](docs/preview/releases/0.7.1.1517/README.md).
+Latest published Release candidate **0.7.1.1784**, captured 2026-10-24 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/1784/) · [Capture details](docs/preview/releases/0.7.1.1784/README.md).
+Captures use the byte-identical local Release and its native showcase states.
 Dev/Test can contain newer features. Select an image to view its full size.
 
 | Create a character | Explore a route |
 | --- | --- |
-| ![Release 0.7.1.1517 character creation with four classes](docs/preview/releases/0.7.1.1517/creation.png) | ![Release 0.7.1.1517 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1517/map.png) |
+| ![Release 0.7.1.1784 creation with two class choices, one locked](docs/preview/releases/0.7.1.1784/creation.png) | ![Release 0.7.1.1784 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1784/map.png) |
 | **Fight with cards** | **Visit shops and improve equipment** |
-| ![Release 0.7.1.1517 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1517/combat.png) | ![Release 0.7.1.1517 merchant relics, equipment categories and services](docs/preview/releases/0.7.1.1517/shop.png) |
+| ![Release 0.7.1.1784 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1784/combat.png) | ![Release 0.7.1.1784 configured shop offers, costs and services](docs/preview/releases/0.7.1.1784/shop.png) |
+
+<details>
+<summary>Title screen</summary>
+
+![Release 0.7.1.1784 title after native Enter](docs/preview/releases/0.7.1.1784/title.png)
+
+</details>
 
 <details>
 <summary>Phone combat — 390 × 844</summary>
 
-![Release 0.7.1.1517 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1517/combat-phone.png)
+![Release 0.7.1.1784 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1784/combat-phone.png)
 
 </details>
 
@@ -89,7 +100,7 @@ Checked items are implemented; build channels and older saves can differ.
 ## Guides
 
 [Getting started and project links](docs/PROJECT-GUIDE.md) · [Contributing](CONTRIBUTING.md)
-· [Game rules](SPEC.md) · [Development](DEVELOPER.md) · [Credits](CREDITS.md).
+· [Game rules](SPEC.md) · [Development](DEVELOPER.md) · [Editing game content](docs/MANUAL-EDITING.md) · [Credits](CREDITS.md).
 
 Draft environment art: [251 sources across eleven batches](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/README.md), including [28 close-location scenes](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json) and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
 

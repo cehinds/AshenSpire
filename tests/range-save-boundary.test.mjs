@@ -21,7 +21,8 @@ function stamp(combat, startingRange = 'ranged') {
   const actors = [...players, ...combat.enemies.map(enemy => [enemy, `enemy:${enemy.id}`])];
   for (const [entity, key] of actors) {
     entity.rangeActorKey = key;
-    if (entity.kind === 'enemy') Object.assign(entity, { maxStamina: 3, stamina: 3 });
+    // Two SP for the repeated-hit fixture plus its two-band Advance.
+    if (entity.kind === 'enemy') Object.assign(entity, { maxStamina: 4, stamina: 4 });
   }
   combat.rangeState = createRangeState(RANGE_POLICY_DEFAULTS, actors.map(([, key]) => ({ key, startingRange })));
   return combat;
@@ -212,16 +213,18 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   combat.player.block = 100;
   combat.piles.hand.push({ instanceId: 'resume-counter', cardId: 'core.counter', upgraded: false });
-  Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3 });
+  Object.assign(combat.enemies[0], { maxStamina: 4, stamina: 4 });
+  combat.enemies[0].intent = { ...combat.enemies[0].intent, moveId: 'slash' };
+  combat.enemies[0].plannedMoves = [];
   const pair = rangePairKey(combat.player.rangeActorKey, combat.enemies[0].rangeActorKey);
   combat.rangeState.engagements[pair] = 2;
   primeAccuracyRolls(combat, { count: 3 });
   dispatch(combat, { type: 'endTurn' });
   assert.ok(combat.pendingReaction);
-  assert.equal(combat.enemies[0].stamina, 0, 'base 1 SP and two-band Advance have already been paid');
+  assert.equal(combat.enemies[0].stamina, 0, 'multi-hit minimum 2 SP and two-band Advance have already been paid');
   const plan = combat.queue[0].meta.expansionGroup.carrier.rangePlan;
   assert.equal(plan.advanceSp, 2);
-  assert.equal(plan.paid.stamina, 3);
+  assert.equal(plan.paid.stamina, 4);
   assert.equal(plan.targets.length, 3);
   commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
   const saves = createSaveManager(createMemoryStorage());

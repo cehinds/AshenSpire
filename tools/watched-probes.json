@@ -980,9 +980,9 @@
   {
    "id": "G10",
    "by": "Bjorn",
-   "read": "src/content/mapconfig.js (entries: 1)",
+   "read": "content/source/mapActShape.json (entries: 1)",
    "anchors": [
-    "entries: 1"
+    "\"entries\": 1,"
    ],
    "screen": "the act map, floor 1",
    "reach": [
@@ -1190,7 +1190,7 @@
   {
    "id": "A7",
    "by": "Bjorn",
-   "read": "src/content/balance.js (persistence: 'both'; the note at is why there is no second settings word), (basicTag: 'basic') · src/ui/screens/equipment.js picker chips",
+   "read": "content/source/balanceEquipment.json (persistence: 'both'; the note at is why there is no second settings word), (basicTag: 'basic') · src/ui/screens/equipment.js picker chips",
    "anchors": [
     "basicTag",
     "persistence"
@@ -1245,7 +1245,7 @@
   {
    "id": "A8",
    "by": "Bjorn",
-   "read": "src/content/balance.js (swapCostKind 'energy', swapCost 2) · src/ui/screens/settings.js (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
+   "read": "content/source/balanceEquipment.json (swapCostKind 'energy', swapCost 2) · src/ui/screens/settings.js (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
    "anchors": [
     "swapCostKind",
     "swapCostRules"
@@ -1652,7 +1652,7 @@
   {
    "id": "K1",
    "by": "Bjorn",
-   "read": "src/content/balance.js (handLayout 'paging') · src/ui/screens/combat.js (overlap arm reads documentElement.dataset.handLayout) · src/ui/components/holdconfirm.js (.card-inspect ghost, hold ~400 ms) · styles/combat.css (narrow: .hand overflow-x auto, no overlap in a scroller — the finger CAN drag it; the axisfit standing set measures the same 194-200 px)",
+   "read": "content/source/balanceUi.json (handLayout 'paging') · src/ui/screens/combat.js (overlap arm reads documentElement.dataset.handLayout) · src/ui/components/holdconfirm.js (.card-inspect ghost, hold ~400 ms) · styles/combat.css (narrow: .hand overflow-x auto, no overlap in a scroller — the finger CAN drag it; the axisfit standing set measures the same 194-200 px)",
    "anchors": [
     "handLayout",
     "card-inspect"
@@ -1754,7 +1754,7 @@
   {
    "id": "K6",
    "by": "Codex, HUD menu migration",
-   "read": "src/ui/screens/combat.js (potionEntries) · src/ui/components/combatActionRow.js (combatPotionRows, CHARGE_FLASK_KINDS, potion menu data-charges) · src/content/balance.js (flaskCapacity 3)",
+   "read": "src/ui/screens/combat.js (potionEntries) · src/ui/components/combatActionRow.js (combatPotionRows, CHARGE_FLASK_KINDS, potion menu data-charges) · content/source/balanceCore.json (flaskCapacity 3)",
    "anchors": [
     "function potionEntries()",
     "CHARGE_FLASK_KINDS"
@@ -1797,7 +1797,7 @@
   {
    "id": "K7",
    "by": "Bjorn",
-   "read": "src/ui/screens/rest.js (#flask-reallocate — 'Fixed capacity N', and since E10 one .flask-increment-row per CHARGE KIND with a .flask-step pair, NOT the old [data-hp] split buttons) · src/model/gracerefill.js (flaskChargePlan/moveFlaskCharge, the one home for what the panel may offer) · src/model/flaskgrowth.js (flaskGrowthTable, one truth function) · src/content/balance.js (flaskGrowth rows)",
+   "read": "src/ui/screens/rest.js (#flask-reallocate — 'Fixed capacity N', and since E10 one .flask-increment-row per CHARGE KIND with a .flask-step pair, NOT the old [data-hp] split buttons) · src/model/gracerefill.js (flaskChargePlan/moveFlaskCharge, the one home for what the panel may offer) · src/model/flaskgrowth.js (flaskGrowthTable, one truth function) · content/source/balanceCore.json (flaskGrowth rows)",
    "anchors": [
     "flask-increment-row",
     "flaskGrowthTable"
@@ -1841,7 +1841,7 @@
   {
    "id": "K8",
    "by": "Bjorn",
-   "read": "src/content/balance.js (handLayout 'paging'; handLayoutModes ['paging','overlap'] — the closed set) · src/ui/screens/combat.js (the DOM reads documentElement.dataset.handLayout)",
+   "read": "content/source/balanceUi.json (handLayout 'paging'; handLayoutModes ['paging','overlap'] — the closed set) · src/ui/screens/combat.js (the DOM reads documentElement.dataset.handLayout)",
    "anchors": [
     "handLayoutModes"
    ],
@@ -1919,10 +1919,10 @@
   {
    "id": "F1",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (owner 2026-10-06: hp `base: 51, constitution: 1, perLevel: 2`, one HP per CON point) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
+   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · content/source/derivedStatRules.json (owner 2026-10-06: hp `\"base\": 51, \"constitution\": 1, \"perLevel\": 2`, one HP per CON point) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
    "anchors": [
     "cz-derived",
-    "base: 51, constitution: 1, perLevel: 2"
+    "\"base\": 51, \"constitution\": 1, \"perLevel\": 2"
    ],
    "screen": "customize › CHARACTER — the HP-from-Vigour derivation beside the primary stat stack",
    "why-drive": "His 'vigour shoudl be 1 hp point per' overrules the mock's flat +8 (D17). The projection prints base, tiers and total, so per-point vs per-tier is decidable from the screen's own arithmetic: per point, total − base = VIG.",

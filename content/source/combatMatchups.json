@@ -1,0 +1,142 @@
+{
+  "counter": {
+    "incomingMultiplier": 0.5,
+    "retaliationMultiplier": 1.5,
+    "retaliationFlat": 5,
+    "poiseMultiplier": 1.5,
+    "guard": 4,
+    "ward": 2,
+    "defaultDamage": 6,
+    "meleeBypassDamageTypes": [
+      "force",
+      "piercing"
+    ],
+    "meleeIncomingManeuvers": [
+      "attack",
+      "smash"
+    ],
+    "$note": {
+      "incomingMultiplier": "Multiplier applied to the next qualifying attack against a prepared Counter.",
+      "retaliationMultiplier": "Multiplier applied to listed Counter damage when the incoming attack is fully blocked.",
+      "retaliationFlat": "Flat damage added to a successful Counter retaliation after its listed damage multiplier.",
+      "poiseMultiplier": "Multiplier applied to explicitly listed Counter Poise damage on successful retaliation.",
+      "guard": "Ordinary Guard granted by a Counter card that has no printed Block effect.",
+      "ward": "Additional Ward granted when a Counter card or enemy move is prepared.",
+      "defaultDamage": "Listed retaliation damage for a Counter with no authored damage amount."
+    }
+  },
+  "smash": {
+    "guardedMultiplier": 1.5,
+    "guardBreakPoiseBonus": 3,
+    "$note": {
+      "guardedMultiplier": "Damage multiplier for Smash against a target holding ordinary Guard.",
+      "guardBreakPoiseBonus": "Additional Poise damage when Smash actually removes the last ordinary Guard."
+    }
+  },
+  "attack": {
+    "preparedPoiseMultiplier": 1.5,
+    "$note": {
+      "preparedPoiseMultiplier": "Poise damage multiplier for physical Attack against a prepared Smash or spell."
+    }
+  },
+  "damageRiders": {
+    "blunt": {
+      "poise": 2
+    },
+    "piercing": {
+      "guardBypass": 2
+    },
+    "slashing": {
+      "status": "bleed",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "cold": {
+      "status": "frost",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "fire": {
+      "status": "burn",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "lightning": {
+      "status": "weak",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "force": {
+      "wardDrain": 2
+    },
+    "necrotic": {
+      "status": "crimsonBlight",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "holy": {
+      "cleanse": 1,
+      "requiresHpLoss": true
+    },
+    "poison": {
+      "status": "venom",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "psychic": {
+      "status": "confused",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "earth": {
+      "status": "slowed",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "$note": {
+      "blunt.poise": "Additional Poise damage from the first blunt hit against each target in an action.",
+      "piercing.guardBypass": "Ordinary Guard bypassed by the first piercing hit against each target in an action.",
+      "slashing.stacks": "Bleed stacks applied by a slashing hit once per action and target.",
+      "cold.stacks": "Frost stacks applied by a cold hit once per action and target.",
+      "fire.stacks": "Burn stacks applied by a fire hit once per action and target.",
+      "lightning.stacks": "Weak stacks applied by a lightning hit once per action and target.",
+      "force.wardDrain": "Ward removed by a force hit once per action and target.",
+      "necrotic.stacks": "Crimson Blight stacks applied by a necrotic hit once per action and target.",
+      "holy.cleanse": "Harmful status stacks cleansed from the holy attacker once per action and target.",
+      "poison.stacks": "Venom stacks applied by a poison hit once per action and target.",
+      "psychic.stacks": "Confused stacks applied by a psychic hit once per action and target.",
+      "earth.stacks": "Slowed stacks applied by an earth hit once per action and target.",
+      "{type}.requiresHpLoss": "Requires actual HP loss before {type} damage applies its status or cleanse rider."
+    }
+  },
+  "damageAliases": {
+    "frost": "cold",
+    "arcane": "force",
+    "sacred": "holy",
+    "decay": "necrotic",
+    "pierce": "piercing",
+    "bludgeoning": "blunt"
+  },
+  "tagRiders": {
+    "precision": {
+      "guardBypass": 4
+    },
+    "gorefire": {
+      "status": "burn",
+      "stacks": 1,
+      "requiresHpLoss": true
+    },
+    "$note": {
+      "precision.guardBypass": "Ordinary Guard a Precision-tagged attack bypasses once per action and target; the larger of this and a Piercing bypass applies, never the sum.",
+      "gorefire.stacks": "Burn stacks a Gorefire-tagged attack applies once per action and target after HP loss, unless the card prints Burn.",
+      "{tag}.requiresHpLoss": "Requires actual HP loss before the {tag} rider applies its status."
+    }
+  },
+  "cleanseStatuses": [
+    "weak",
+    "frail",
+    "vulnerable",
+    "crimsonBlight",
+    "burn"
+  ]
+}

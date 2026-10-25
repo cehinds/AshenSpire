@@ -156,7 +156,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       el('div', {}, [
         el('h2', { id: 'deck-editor-title', class: 'deck-editor-title', text: t('deckEditor.readingDesk') }),
       ]),
-      el('span', { class: 'deck-editor-class', text: registries.classes.get(run.class)?.name || run.class }),
+      el('span', { class: 'deck-editor-class',
+        text: `${registries.classes.get(run.class)?.name || run.class}${model.adept ? ` · ${model.adept.label}` : ''}`,
+        title: model.adept ? `Unlimited pristine copies of collected ${model.adept.kind} cards.` : null }),
       counter,
       curve,
     ]);

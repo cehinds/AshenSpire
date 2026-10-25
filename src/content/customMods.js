@@ -1,57 +1,23 @@
-// src/content/customMods.js — Custom Climb modifiers (data only).
+// src/content/customMods.js — Custom Climb modifiers. The label/description
+// tables are authored in content/source/customMods.json (the three groups, the
+// Ascension ladder and how main.js reads them are in content/source/CONTENT-NOTES.md,
+// "Custom Climb modifiers"); content-build compiles it to
+// src/content/generated/customMods.js. Edit the JSON; this file keeps the
+// functions and the endless constants.
 //
 // Tuning magnitudes live in balance.js (balance.endless / balance.customMods);
 // the endless constants below re-export from there so there is one source.
-//
-// A tailored take on Slay the Spire 2's custom mode. Three groups:
-//   • DIFFICULTY — harder rules; the Ascension ladder just enables the first N
-//     of these in ASCENSION_ORDER, so "Ascension 4" == the four hardest-first
-//     rules, and every rule is also individually toggleable.
-//   • CHAOS — flavourful run-warping toggles, independent of difficulty.
-//   • DECK_MODES — how your starting deck is built.
-// The orchestrator (main.js) reads run.custom.mods[id] at the relevant hook;
-// nothing here is engine-specific.
 
 import { balance } from './balance.js';
+import { customMods } from './generated/customMods.js';
 
-export const DIFFICULTY_MODS = [
-  { id: 'toughElites', label: 'Tough Elites', desc: 'Elites and bosses have +30% HP.' },
-  { id: 'lessHealing', label: 'Scarce Embers', desc: 'Shrine rest and between-act healing are halved.' },
-  { id: 'deadlyEnemies', label: 'Deadly Foes', desc: 'Every enemy begins combat with +1 Strength.' },
-  { id: 'cursedStart', label: 'Cursed Start', desc: 'Begin the run with a Guilt curse shuffled into your deck.' },
-  { id: 'expensiveShops', label: 'Greedy Merchants', desc: 'Shop prices are 50% higher.' },
-  { id: 'bigBosses', label: 'Dread Bosses', desc: 'Act bosses have +50% HP.' },
-];
-
-export const CHAOS_MODS = [
-  { id: 'allElite', label: 'Elite Gauntlet', desc: 'Every monster node is an Elite fight.' },
-  { id: 'hoarder', label: 'Hoarder', desc: 'Start with +250 cinders — but every shop price doubles.' },
-  { id: 'chaosRewards', label: 'Chaos Rewards', desc: 'Card rewards ignore rarity: rares everywhere.' },
-  { id: 'glassCannon', label: 'Glass Cannon', desc: 'You deal +25% damage, but take +25% damage.' },
-  { id: 'endless', label: 'Endless Spire', desc: 'After Act 3 the spire loops — each cycle, foes gain HP and Strength. Only death ends the climb.' },
-];
-
-export const DECK_MODES = [
-  { id: 'standard', label: 'Standard', desc: "Your class's normal starting deck." },
-  { id: 'sealed', label: 'Sealed', desc: 'A random starting deck drawn from your class pool.' },
-  { id: 'draft', label: 'Draft', desc: 'Draft your starting deck card by card.' },
-];
+export const DIFFICULTY_MODS = customMods.difficultyMods;
+export const CHAOS_MODS = customMods.chaosMods;
+export const DECK_MODES = customMods.deckModes;
 
 // Ascension enables the first N difficulty rules (hardest impact first).
-export const ASCENSION_ORDER = [
-  'toughElites',
-  'deadlyEnemies',
-  'lessHealing',
-  'bigBosses',
-  'cursedStart',
-  'expensiveShops',
-];
+export const ASCENSION_ORDER = customMods.ascensionOrder;
 export const MAX_ASCENSION = ASCENSION_ORDER.length;
-
-// (`ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood here with no reader in
-// src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted
-// rather than documented: nothing re-typed it, so there is nothing to collapse
-// into, and the day a screen needs both groups it can spell the spread itself.)
 
 // True when a run carries any non-default rule (so it is flagged + excluded
 // from win-rate telemetry).

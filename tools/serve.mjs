@@ -52,6 +52,7 @@ import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
+import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -335,9 +336,10 @@ function startWatch(root, emit) {
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
  * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false, host, watch = false } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false, host, watch = false, assetRoot } = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
+  const artCheckout = authoringRoot({ root: rootResolved, assetRoot, required: false });
   const notedMissing = new Set(); // one note per missing pack, not one per request
   let lanLayer = null; // attached after listen (needs the final port)
   const devClients = new Set(); // --watch: open /__dev/events responses
@@ -345,6 +347,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
     try {
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      if (urlPath.includes('\\')) { res.writeHead(403); res.end('Forbidden'); return; }
       // --watch only: the live-reload stream (events are sent by startWatch below).
       if (watch && urlPath === DEV_EVENTS_PATH) {
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Content-Type-Options': 'nosniff' });
@@ -403,15 +406,18 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '');
+      const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '').split(sep).join('/');
       let filePath = rel ? join(rootResolved, rel) : rootResolved;
       if (!resolve(filePath).startsWith(rootResolved)) {
         res.writeHead(403);
         res.end('Forbidden');
         return;
       }
-      const tree = checkout ? packTreeOf(rel) : null;
-      if (tree && !(editorWrite && existsSync(filePath))) {
+      const authoring = rel && artCheckout && isAuthoringFile(rel);
+      if (authoring) filePath = compositeSourcePath(rel, { root: rootResolved, assetRoot: artCheckout });
+      const retainedDisplayMetadata = /^assets-display\/.*\.(?:json|md)$/i.test(rel) || /^music\/score\/.*\.m?js$/i.test(rel);
+      const tree = checkout && !retainedDisplayMetadata ? packTreeOf(rel) : null;
+      if (tree && !authoring) {
         try {
           filePath = artPath(rel, { root: rootResolved });
         } catch (err) {
@@ -566,6 +572,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   serve({
     port: Number(flag('--port', 8080)),
     root: flag('--root', ROOT_DIR),
+    assetRoot: flag('--asset-root', undefined),
     open: !args.includes('--no-open'),
     lan: !args.includes('--no-lan'),
     editorWrite: args.includes('--editor-write'),

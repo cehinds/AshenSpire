@@ -25,7 +25,7 @@
 
 ## 2. Suggested PNG library
 
-![24 map prop silhouette ideas](04-map-prop-ideas.png)
+![24 map prop silhouette ideas](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/04-map-prop-ideas.png)
 
 **Travel and crossings**
 
@@ -83,7 +83,7 @@ Use small, named discovery sections containing connected tiles; a section need n
 
 ## 5. Map items as rewards
 
-![Region fragments, route charts and treasure sketches](05-map-reveal-ideas.png)
+![Region fragments, route charts and treasure sketches](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/05-map-reveal-ideas.png)
 
 **A. Region fragment — “Show me what is nearby.”**
 

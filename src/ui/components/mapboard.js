@@ -376,7 +376,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     <div class="map-frame">
     <!-- data-pan-axis reports the Advanced preference applied by the board.
          It is written after mount beside the other camera evidence fields. -->
-    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}"${freePan ? ' data-scroll-axis="x" data-scroll-axis-why="Two-axis map dragging is enabled by the player in Advanced settings."' : ''}>
+    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}"${act.authoredMap ? '' : ' data-terrain="generated"'}${freePan ? ' data-scroll-axis="x" data-scroll-axis-why="Two-axis map dragging is enabled by the player in Advanced settings."' : ''}>
       <div class="map-canvas">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
           ${groundSvg}

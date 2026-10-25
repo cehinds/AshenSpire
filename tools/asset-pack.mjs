@@ -74,7 +74,7 @@ import { fileURLToPath } from 'node:url';
 import { MIME } from './assetmime.mjs';
 import { MANIFEST_PATH, canonicalBytes, commonSources, isCommonEntry } from './art-manifest.mjs';
 import { verifiedPackDir } from './fetch-art.mjs';
-import { packSource } from './art-source.mjs';
+import { packSource, artPath, addDisplayRecord } from './art-source.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const PACKS = Object.freeze(['light', 'high', 'common']);
@@ -130,8 +130,8 @@ const FONTS_FN = '__ashenFonts';
  * `source` is 'trees' (this repository), 'cache' (the fetched release) or
  * 'auto' (each pack's verified cache, else its tree: tools/art-source.mjs).
  */
-export function withAlternativeArt(manifest, root = ROOT) {
-  manifest = withCardCutouts(manifest, root);
+export function withAlternativeArt(manifest, root = ROOT, opts = {}) {
+  manifest = withCardCutouts(manifest, root, opts);
   const catalogFile = resolve(root, 'src/ui/alternativeArtCatalog.js');
   if (!existsSync(catalogFile)) return manifest;
   const match = readFileSync(catalogFile, 'utf8').match(/^export const alternativeArtCatalog = (.+);\r?$/m);
@@ -175,10 +175,9 @@ export function withAlternativeArt(manifest, root = ROOT) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
     const id = catalog.filePaths[file] || `assets-display/alternative/${file}`;
     if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(id) || !id.endsWith('/' + file)) throw new Error(`Invalid display art path: ${id}`);
-    const bytes = readFileSync(resolve(root, id));
+    const bytes = readFileSync(artPath(id, { ...opts, root }));
     if (sha256(bytes) !== expected) throw new Error(`Alternative art changed: ${file}; regenerate its catalog`);
-    if (assets[id]) throw new Error(`Alternative art ID collides with a pinned pack: ${id}`);
-    assets[id] = { common: { path:id, sha256:expected, bytes:bytes.length } };
+    addDisplayRecord(assets, id, { path:id, sha256:expected, bytes:bytes.length });
   }
   return { ...manifest, assets };
 }
@@ -188,7 +187,8 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
   if (!SOURCES.includes(from)) return { packs: {}, fonts: null, problems: [`unknown source ${JSON.stringify(from)} (one of ${SOURCES.join(', ')})`] };
   const manifestFile = resolve(root, MANIFEST_PATH);
   if (!existsSync(manifestFile)) return { packs: {}, fonts: null, problems: [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`] };
-  const manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root),root);
+  const opts = { env: { ...process.env, ...(from === 'auto' ? {} : { ASHEN_ART_SOURCE: from }) } };
+  const manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root, opts),root,opts);
   if (manifest.schema !== 2) problems.push(`${MANIFEST_PATH} is schema ${manifest.schema}; the pack format needs schema 2 (node tools/art-manifest.mjs --write)`);
   let sources = null;
   const treeSources = () => (sources = sources || new Map(commonSources(root).map((c) => [c.id, c.source])));
@@ -203,7 +203,7 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
     if (from === 'cache') {
       try { cacheDir = resolve(verifiedPackDir(pack, { root })); } catch (e) { problems.push(e.message); continue; }
     } else if (from === 'auto') {
-      try { cacheDir = packSource(pack, { root }).dir; } catch (e) { problems.push(e.message); continue; }
+      try { cacheDir = packSource(pack, { root, env: opts.env }).dir; } catch (e) { problems.push(e.message); continue; }
     }
     for (const id of Object.keys(manifest.assets || {}).sort(byteOrder)) {
       const entry = manifest.assets[id];
@@ -214,12 +214,10 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
       const mime = mimeOf(id);
       if (!mime) { problems.push(`${id}: no mime for ${extname(id) || 'a file without an extension'} — the pack cannot carry it`); continue; }
       let source;
-      if (id.startsWith('assets-display/')) {
-        source = resolve(root, rec.path);
-      } else if (cacheDir) {
+      if (cacheDir) {
         source = resolve(cacheDir, rec.path);
         if (!source.startsWith(cacheDir + sep)) { problems.push(`${id}: its ${pack} path ${rec.path} escapes the cache`); continue; }
-      } else source = common ? treeSources().get(id) : resolve(root, rec.path);
+      } else source = id.startsWith('assets-display/') ? resolve(root, rec.path) : common ? treeSources().get(id) : resolve(root, rec.path);
       if (!source || !existsSync(source)) { problems.push(`${id}: the ${pack} source ${cacheDir ? `${posix(relative(root, source))} (the fetched ${pack} pack)` : common ? '(see commonSources)' : rec.path} is missing`); continue; }
       const buf = canonicalBytes(source);
       const sha = sha256(buf);

@@ -81,17 +81,16 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
   assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
 });
 
-test('the Core deck editor offers no unowned basics (owner ruling 2026-10-19) and rejects the legacy attack mint before mutation', async () => {
-  const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
+test('the Core deck editor mints collected trained basics and rejects uncollected or legacy attack mints before mutation', async () => {
+  const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
   const { run } = fixture();
   const draft = createGameProfileRestDraft(run);
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  // Collection = cards the run owns; no unowned basic is offered.
-  assert.deepEqual(editor.collection.filter(tile => tile.unlimited), []);
-  assert.equal(editor.collection.some(tile => String(tile.key).startsWith('basic:')), false);
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend', 'core.counter']);
+  assert.ok(editor.collection.filter(tile => tile.unlimited).every(tile => run.collectedCardIds.includes(tile.cardId)));
   assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
   assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
@@ -99,9 +98,9 @@ test('the Core deck editor offers no unowned basics (owner ruling 2026-10-19) an
   const removed = draft.deck.find(card => card.cardId === 'core.counter');
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
-  assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), true);
-  assert.equal(session.add(`card:${deckVariantKey(removed)}`).ok, true);
-  assert.equal(draft.deck.at(-1).instanceId, removed.instanceId);
+  assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), false, 'a pristine trained basic is backed by sticky collection knowledge');
+  assert.equal(session.add('basic:core.counter').ok, true);
+  assert.equal(draft.deck.at(-1).cardId, removed.cardId);
   assert.equal(session.confirm().ok, true);
   assert.throws(() => commitGameProfileRest(registries, run, 'strategize', { draft }), /Unknown rest service/, 'D10: deck editing is not a rest service');
 });

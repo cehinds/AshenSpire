@@ -120,7 +120,7 @@
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
-      "digest": "aa1b69cfbda16d47"
+      "digest": "46d35ca02c37a95e"
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
@@ -128,7 +128,7 @@
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
-      "digest": "c2b5eee659ef2aeb"
+      "digest": "c623c7dfccf25f64"
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
@@ -300,7 +300,7 @@
     },
     "tools/slot-load-door.mjs": {
       "count": 9,
-      "digest": "25b8ff56b0445600"
+      "digest": "af96a8243f60cb0d"
     },
     "tools/startup-gate.mjs": {
       "count": 28,
@@ -344,7 +344,7 @@
     },
     "tools/uprightgate.mjs": {
       "count": 14,
-      "digest": "283880e7bfda1aa5"
+      "digest": "9adb6b057eb6f540"
     },
     "tools/zoomplace.mjs": {
       "count": 1,

@@ -286,3 +286,29 @@ test('options render as uniform tiles with the card name, effect line and direct
     opened.restore();
   }
 });
+
+test('focus waits for the next frame, then lands on the first option', async () => {
+  const savedRaf = globalThis.requestAnimationFrame;
+  const frames = [];
+  globalThis.requestAnimationFrame = fn => { frames.push(fn); return frames.length; };
+  const opened = await openWith({});
+  try {
+    const tile = opened.shell.body.querySelector('[data-reaction-option]');
+    assert.notEqual(opened.document.activeElement, tile, 'opening forces no layout: focus is not set in the opening frame');
+    assert.equal(frames.length, 1, 'one frame callback places focus');
+    frames.forEach(fn => fn());
+    assert.equal(opened.document.activeElement, tile, 'the default control takes focus once painted');
+  } finally {
+    if (savedRaf === undefined) delete globalThis.requestAnimationFrame; else globalThis.requestAnimationFrame = savedRaf;
+    opened.restore();
+  }
+});
+
+test('without a frame scheduler focus lands on the first option at once', async () => {
+  const opened = await openWith({});
+  try {
+    assert.equal(opened.document.activeElement, opened.shell.body.querySelector('[data-reaction-option]'));
+  } finally {
+    opened.restore();
+  }
+});

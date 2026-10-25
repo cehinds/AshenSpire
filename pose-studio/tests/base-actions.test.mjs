@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {webpDimensions} from '../../tools/mobileart-policy.mjs';
 import {defaultFamily, durationFor, sampleSequence} from '../renewal/model.mjs';
 import {ANIM_SPEEDS} from '../../src/ui/fx.js';
 import {validate} from '../model.mjs';
@@ -53,9 +55,13 @@ test('all portable actions are self-contained and remain unbound to gameplay',()
   const entry=defaultFamily(registry,actor),family=read(entry.manifest),rig=read(entry.rig);
   assert.deepEqual(Object.keys(rig.animations),registry.actions);
   assert.equal(Object.keys(rig.poses).length,12);
-  for(const frame of Object.values(family.frames)){
-   assert.ok(readFileSync(new URL(frame.path,root)).length>0);
-   assert.ok(readFileSync(new URL(frame.lite,root)).length>0);
+  for(const [id,frame] of Object.entries(family.frames)){
+   const uri=rig.assets[id].src;
+   assert.ok(uri.startsWith('data:image/webp;base64,'));
+   const bytes=Buffer.from(uri.slice('data:image/webp;base64,'.length),'base64');
+   assert.ok(bytes.length>0);
+   assert.deepEqual([webpDimensions(bytes).width,webpDimensions(bytes).height],[512,512]);
+   // This portable evidence embeds HIGH; actual HIGH/LITE source integrity lives in AI-Art.
    assert.deepEqual(frame.anchor,[256,464]);
    assert.ok(frame.bounds.every(x=>x>0&&x<512));
   }
@@ -66,6 +72,13 @@ test('all portable actions are self-contained and remain unbound to gameplay',()
    assert.equal(project.actor,actor);
    assert.equal(project.poses.length,5);
    assert.ok(project.poses.every(p=>project.assets['pose:'+p]?.startsWith('data:image/webp;base64,')));
+   for(const pose of project.poses){
+    const embedded=Buffer.from(project.assets['pose:'+pose].split(',')[1],'base64');
+    const rigBytes=Buffer.from(rig.assets[pose].src.split(',')[1],'base64');
+    assert.deepEqual([webpDimensions(embedded).width,webpDimensions(embedded).height],[512,512]);
+    assert.equal(embedded.length,rigBytes.length);
+    assert.equal(createHash('sha256').update(embedded).digest('hex'),createHash('sha256').update(rigBytes).digest('hex'));
+   }
   }
  }
 });

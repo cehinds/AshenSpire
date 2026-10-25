@@ -4,6 +4,7 @@ import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
 import { validateGameProfileSnapshot, gameModule } from '../model/gameProfile.js';
+import { markVerifiedProfile } from '../model/verifiedProfiles.js';
 import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // src/engine/combatSnapshot.js — CombatSnapshotService.
 //
@@ -49,6 +50,8 @@ function carryRelicGateKeys(entries) {
   });
 }
 
+const snapshotProfilesValidated = new WeakSet();
+
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
@@ -59,6 +62,7 @@ export function serializeCombatSnapshot(combat) {
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.core2ActionRulesVersion !== undefined ? { core2ActionRulesVersion: combat.core2ActionRulesVersion } : {}),
     ...(combat.fixCoreRules ? {fixCoreRules:validateFixCoreRules(combat.fixCoreRules)} : {}),
     ...(combat.rangeState !== undefined ? { rangeState: combat.rangeState } : {}),
     ...(combat.formationPolicy ? { formationPolicy: combat.formationPolicy } : {}),
@@ -147,7 +151,16 @@ export function serializeCombatSnapshot(combat) {
     // SPEC §15.4: the attuned legendaries, which a restore mounts again.
     attunedSigils: Array.isArray(combat.attunedSigils) ? combat.attunedSigils : [],
   });
+  // The snapshot carries a structuredClone of the fight's game profile, which
+  // is an immutable per-run snapshot. Re-hashing an identical copy on every save
+  // cost ~100 ms at 4x CPU, so once a profile object has passed validation in a
+  // snapshot, later clones of that same object inherit it (the runtime-hash
+  // check in validateVerifiedProfile still applies). First save validates for real.
+  const source = combat.gameProfile;
+  const trusted = !!snapshot.gameProfile && snapshotProfilesValidated.has(source);
+  if (trusted) markVerifiedProfile(snapshot.gameProfile);
   assertCombatSnapshot(snapshot);
+  if (snapshot.gameProfile && source && typeof source === 'object') snapshotProfilesValidated.add(source);
   return snapshot;
 }
 
@@ -184,6 +197,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
+    ...(saved.core2ActionRulesVersion !== undefined ? { core2ActionRulesVersion: saved.core2ActionRulesVersion } : {}),
     ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,

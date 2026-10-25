@@ -10,13 +10,24 @@ import { layoutMetrics } from '../layoutMetrics.js';
 
 // Absolute caption rows are part of the header's occupied layout band. Move
 // the field/grid with that band rather than squeezing figures at fixed feet.
-export function combatHudBandHeight(header, allocated, zoom = 1) {
+export function combatHudBandHeight(header, allocated, zoom = 1, memo = null) {
   if (!header) return allocated;
+  // The cheap key (no layout read): when the header's size inputs and the text of
+  // its caption rows are unchanged, so is the band, and the rects are not read.
+  const infoRows = [...header.querySelectorAll('.hud-info-row')];
+  let key = null;
+  if (memo) {
+    key = [memo.width, memo.height, zoom, memo.fontSize, allocated, infoRows.length,
+      infoRows.map(row => (row.hidden ? 'h' : 'v') + row.textContent.length + row.className).join(',')].join('|');
+    if (memo.key === key) return memo.value;
+  }
   const top = header.getBoundingClientRect().top;
-  const rows = [...header.querySelectorAll('.hud-info-row')].filter(row => !row.hidden
+  const rows = infoRows.filter(row => !row.hidden
     && row.getBoundingClientRect().height > 0 && !['hidden', 'collapse'].includes(getComputedStyle(row).visibility));
   const bottom = Math.max(top, ...rows.map(row => row.getBoundingClientRect().bottom));
-  return Math.max(allocated, (bottom - top + (rows.length ? 4 : 0)) / zoom);
+  const value = Math.max(allocated, (bottom - top + (rows.length ? 4 : 0)) / zoom);
+  if (memo) { memo.key = key; memo.value = value; }
+  return value;
 }
 
 // Horizontal padding of a band host, in its local px. kit.css pads the hand
@@ -73,18 +84,38 @@ export function wireCombatLayout(combatEl) {
   let formFactorObserver = null;
   let headerObserver = null;
   const desktopHeader = wireDesktopCombatHeader(combatEl);
+  const bandMemo = { key: null, value: 0, width: 0, height: 0, fontSize: '' };
 
   function apply() {
     frame = 0;
     if (!combatEl.isConnected) { release(); return; }
-    const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
+    // Every box this pass needs is read here, before the first write: a read after
+    // the custom-property writes below forces a style and layout flush (one 149 ms
+    // recalc on a phone profile at the footer host's clientWidth).
+    const clientWidth = combatEl.clientWidth, clientHeight = combatEl.clientHeight;
+    const zoom = combatEl.getBoundingClientRect().width / clientWidth || 1;
+    const host = row ? row.parentElement || combatEl : null;
+    const hostWidth = host ? host.clientWidth - inlinePadding(host) : 0;
     const rem = Math.max(16 / zoom, parseFloat(layoutMetrics().fontSize) || 16);
     // The plan gets the width between the safe-area insets, so the rails and
     // the hand they wrap stay clear of a notch.
-    const width = combatEl.clientWidth - inlinePadding(handArea);
+    const width = clientWidth - inlinePadding(handArea);
     // The HUD form factor main.js writes to <html> (widescreen | mobile | tablet
     // | desktop). The plan reads it; it is mirrored on the combat root for CSS.
     const formFactor = document.documentElement.dataset.formFactor || null;
+    const fontSize = layoutMetrics().fontSize;
+    const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
+    const allocatedBands = allocateCombatBands({ width, height: clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
+    // Mobile gives the original controls a shallow dock; the freed height
+    // returns to the battlefield rather than an opaque hand backing.
+    const footer = formFactor === 'mobile' ? Math.max(76 / zoom, Math.min(84 / zoom, clientHeight * .095)) : allocatedBands.footer;
+    const bands = { ...allocatedBands, footer, battlefield: allocatedBands.battlefield + allocatedBands.footer - footer };
+    // The band reads the header's boxes, so it is read before this pass's first
+    // custom-property write (it was the 273 ms forced recalc in End Turn); the
+    // result is cached on the size key while those inputs hold.
+    bandMemo.width = clientWidth; bandMemo.height = clientHeight; bandMemo.fontSize = fontSize;
+    const hudBand = combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo);
+    combatEl.dataset.compactCombat = String(compact);
     combatEl.dataset.formFactor = formFactor || '';
     const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
     combatEl.dataset.desktopFooter = String(split);
@@ -94,7 +125,7 @@ export function wireCombatLayout(combatEl) {
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
     }
     if (split && row && handArea) {
-      const plan = desktopFooterLayout({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom });
+      const plan = desktopFooterLayout({ width: clientWidth, height: clientHeight, zoom });
       const areaTop = (handArea.getBoundingClientRect().top - combatEl.getBoundingClientRect().top) / zoom;
       for (const [name, value] of Object.entries({ 'area-top': areaTop, 'hand-top': plan.handTop - areaTop, 'hand-height': plan.handHeight, 'background-top': plan.backgroundTop - areaTop, 'background-fade-height': plan.backgroundFadeHeight, 'tools-top': plan.toolsTop, 'corner-inset': plan.corner, 'end-art-width': plan.endArtWidth, 'end-art-height': plan.endArtHeight })) combatEl.style.setProperty('--desktop-' + name, value + 'px');
       const selectors = { sp: '.energy-orb', draw: '.draw', end: '.end-turn', discard: '.spent', potions: '.combat-potions' };
@@ -103,17 +134,10 @@ export function wireCombatLayout(combatEl) {
         if (control) for (const [key, value] of Object.entries(box)) control.style.setProperty('--desktop-' + key, value + 'px');
       }
     }
-    const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
-    combatEl.dataset.compactCombat = String(compact);
-    const allocatedBands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
-    // Mobile gives the original controls a shallow dock; the freed height
-    // returns to the battlefield rather than an opaque hand backing.
-    const footer = formFactor === 'mobile' ? Math.max(76 / zoom, Math.min(84 / zoom, combatEl.clientHeight * .095)) : allocatedBands.footer;
-    const bands = { ...allocatedBands, footer, battlefield: allocatedBands.battlefield + allocatedBands.footer - footer };
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.
-    combatEl.style.setProperty('--w4-band-hud', combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom) + 'px');
+    combatEl.style.setProperty('--w4-band-hud', hudBand + 'px');
     combatEl.style.setProperty('--w4-band-context', bands.hand + 'px');
     combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
@@ -145,8 +169,7 @@ export function wireCombatLayout(combatEl) {
     row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom, formFactor) + 'px');
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
-    const host = row.parentElement || combatEl;
-    const packedFooter = bands.rails || packCombatFooter({ width: host.clientWidth - inlinePadding(host), height: bands.footer, zoom, rem });
+    const packedFooter = bands.rails || packCombatFooter({ width: hostWidth, height: bands.footer, zoom, rem });
     row.style.setProperty('--footer-gap', packedFooter.gap + 'px');
     row.style.setProperty('--footer-circle', packedFooter.diameter + 'px');
     row.style.setProperty('--footer-pile-width', packedFooter.pileWidth + 'px');

@@ -347,8 +347,18 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   return shell;
 }
 
+// Hosts can expose a visible Inspect action without simulating the face's
+// Information button. The renderer owns the reading; opening it owns no choice.
+const boundInspections = new WeakMap();
+export function openBoundCardInspection(card, opener = card) {
+  const open = boundInspections.get(card);
+  if (!card?.isConnected || !open) return false;
+  return open(opener);
+}
+
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
 export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
+  boundInspections.set(card, open);
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
@@ -399,6 +409,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // selection, showing an information button on a card nobody chose.
   const douse = () => {
     card.classList.remove('inspection-selected', 'inspection-info-visible', 'selected');
+    // Keep combat.css's `.hand[data-has-selection]` (the old `.hand:has(.selected)`) true to the DOM.
+    const hand = card.closest('.hand');
+    if (hand && hand.getAttribute('data-has-selection') === 'true' && !hand.querySelector('.selected')) hand.setAttribute('data-has-selection', 'false');
     card.setAttribute('aria-pressed', 'false');
     card.removeAttribute('aria-current');
     card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
@@ -481,6 +494,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.classList.add('inspection-selected');
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
+    // The old node's pending reveal cannot paint after it is detached. The
+    // selected replacement owns its own delay, without a new selection event.
+    revealInfo();
   }
   card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });

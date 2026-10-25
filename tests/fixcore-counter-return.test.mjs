@@ -5,11 +5,12 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, enemyMoveDamage } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { counterReturn, counterBeats } from '../src/engine/counterRule.js';
+import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
@@ -169,6 +170,13 @@ test('Counter played while already in Counter stance still returns 6 in the work
 
 test('multi-hit preview sums the hits one by one (sequential receipts) and equals the live return', () => {
   const { combat, enemy } = live('blightHound');
+  // Select and fund the two-contact payload this receipt test exercises.
+  Object.assign(enemy, { maxStamina: 2, stamina: 2 });
+  const move = expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves.lunge, 'lunge', combat);
+  enemy.intent = { ...enemy.intent, moveId: 'lunge', kind: move.intent,
+    combatProfile: enemyMoveCarrier(enemy, move, 'lunge', combat).combatProfile,
+    damage: enemyMoveDamage(enemy, move), hits: move.hits };
+  enemy.plannedMoves = [];
   Object.assign(enemy, { ratings: {}, persistentPoise: { value: 0, max: 0 } });
   Object.assign(combat.player, { block: 999, persistentPoise: { value: 20, max: 20 } });
   const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');

@@ -86,6 +86,12 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 // icon/delay string leaves for approved named vector IDs and the readable
 // delayed suffix. Export shapes, key order, freezing and all other probe
 // values remain unchanged; this does not recapture unrelated module drift.
+// Quick menu Console row (2026-10-25): the uiContent baseline adds the console
+// row to MENU (map/combat/overlay), MENU_ACTS and the three menuRows probes.
+// Nothing else in that entry changes.
+// Original class/map symbols (2026-10-24): repoint only fourteen uiContent
+// map-icon string leaves (seven NODE_TYPES, boss lookup, six legend entries)
+// to historic-* IDs. No whole-fixture recapture or other value change.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {

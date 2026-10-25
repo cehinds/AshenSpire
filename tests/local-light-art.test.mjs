@@ -1,3 +1,4 @@
+import {packSource} from '../tools/art-source.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -6,10 +7,11 @@ import { fileURLToPath } from 'node:url';
 import { join, relative } from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const lightRoot = join(root, 'assets-mobile');
+const source=packSource('light',{root});
+const lightRoot = join(source.dir, 'assets-mobile');
 const manifest = JSON.parse(readFileSync(join(root, 'art-manifest.json'), 'utf8'));
 
-test('tracked light art exactly matches the pinned manifest', () => {
+test('verified cached light art exactly matches the pinned manifest', () => {
   const expected = new Map(Object.values(manifest.assets)
     .filter(row => row.light)
     .map(row => [row.light.path, row.light]));
@@ -18,7 +20,7 @@ test('tracked light art exactly matches the pinned manifest', () => {
     .map(entry => join(entry.parentPath, entry.name));
   assert.equal(files.length, expected.size, 'all and only manifest light files are present');
   for (const file of files) {
-    const path = relative(root, file).replaceAll('\\', '/');
+    const path = relative(source.dir, file).replaceAll('\\', '/');
     const row = expected.get(path);
     assert.ok(row, `${path} is in the manifest`);
     const bytes = readFileSync(file);

@@ -19,6 +19,22 @@ For offline solo play, open the light-art HTML download, or select
 [Distribution](../dist/README.md) · [Windows installation](../desktop/windows/README.md)
 · [Build versions](versioning.md) · [Build/check commands](../DEVELOPER.md)
 
+## Console output on phones
+
+Enable **Settings → Combat → Console button in combat log**, then open
+**Combat log → Console** during a fight. The log contains the full combat
+history; **Full detail** changes its formatting. Console shows the latest 300
+game console messages and uncaught errors captured since boot, including messages
+recorded before you enabled the button. Reloading clears this diagnostic memory.
+Browser-generated network and DevTools-only messages may be unavailable.
+
+Use **Copy** or **Export** to include the output in a bug report. Export shares a
+plain text file on supported phones and otherwise requests a download. If copying
+is blocked, the text is selected for touch-and-hold or keyboard copying. That
+selection pauses live updates until you reopen Console. Exports include the build,
+browser/device, viewport and time. No saved game or profile is attached, and
+nothing is sent automatically; review the captured messages before sharing.
+
 ## Rules and roadmap
 
 [Game specification](../SPEC.md) · [Combat/equipment rules](COMBAT-EQUIPMENT-RULES.md)

@@ -2,37 +2,37 @@
   "components": {
     "nodeTypes": {
       "monster": {
-        "icon": "attack",
+        "icon": "historic-crossed-swords",
         "name": "Monster",
         "blurb": "A fight — cinders and a card reward."
       },
       "fight": {
-        "icon": "attack",
+        "icon": "historic-crossed-swords",
         "name": "Monster",
         "blurb": "A fight — cinders and a card reward."
       },
       "elite": {
-        "icon": "madness",
+        "icon": "historic-skull",
         "name": "Elite",
         "blurb": "A hard fight. Drops a relic."
       },
       "boss": {
-        "icon": "boss",
+        "icon": "historic-eye",
         "name": "Boss",
         "blurb": "The act boss."
       },
       "shrine": {
-        "icon": "burn",
+        "icon": "historic-hot-springs",
         "name": "Shrine of Emberlight",
         "blurb": "Rest (heal), smith an owned armament, or mend an ally."
       },
       "merchant": {
-        "icon": "compare",
+        "icon": "historic-scales",
         "name": "Merchant",
         "blurb": "Cards, relics, flasks, card removal."
       },
       "treasure": {
-        "icon": "block",
+        "icon": "historic-chest",
         "name": "Treasure",
         "blurb": "A relic, free."
       },
@@ -182,6 +182,13 @@
         "tip": "Turn music on or off without changing its volume, sound effects, or global mute."
       },
       {
+        "act": "console",
+        "icon": "historic-eye",
+        "label": "Console",
+        "band": "comfort",
+        "tip": "Read the session's errors and tap traces, with Copy and Export."
+      },
+      {
         "act": "inventory",
         "icon": "inventory",
         "label": "Inventory",
@@ -315,6 +322,7 @@
       "tab",
       "fullscreen",
       "music",
+      "console",
       "inventory",
       "character",
       "load",

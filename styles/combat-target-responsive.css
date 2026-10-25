@@ -31,7 +31,7 @@
   height:calc(37px / var(--ui-zoom,1))!important; min-height:calc(37px / var(--ui-zoom,1))!important; max-height:calc(37px / var(--ui-zoom,1))!important; flex:0 0 calc(37px / var(--ui-zoom,1)); margin:0!important; padding:0!important;
   background:transparent!important; border:0!important; box-shadow:none!important; color:#ffe7ab;
 }
-:root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
+:root .combat[data-target-hud='true'] .intent > :not(.intent-compact):not(.cr-followups) { display:none!important; }
 :root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
 :root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
 /* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
@@ -118,3 +118,8 @@
 :root .combat .target-hud-intent { flex-wrap:wrap; }
 :root .combat .intent-damage-read { min-width:0; max-width:100%; display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
 :root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; text-align:center; }
+
+/* Lite: one drop-shadow instead of three on the matchup-highlighted sprite. */
+:root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
+}

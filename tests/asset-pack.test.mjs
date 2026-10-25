@@ -116,12 +116,12 @@ test('branch artwork uses the verified common store and refuses stale source has
   const sprite = webp(400, 600, 7);
   const catalog = { hashes: { 'reaver-default.webp': sha(sprite) } };
   withPacks(({ root, out, manifest }) => {
-    const combined = withAlternativeArt(manifest, root);
+    const combined = withAlternativeArt(manifest, root, {env:{ASHEN_ART_SOURCE:'trees'}});
     assert.deepEqual(verifyPacks(out, { manifest: combined }), []);
     const common = JSON.parse(readFileSync(join(out, 'packs', packFile(out, /^common-.*\.json$/)), 'utf8'));
     assert.deepEqual(common['assets-display/alternative/reaver-default.webp'], [sha(sprite), sprite.length, 'image/webp']);
     writeFileSync(join(root, 'assets-display/alternative/reaver-default.webp'), webp(400, 600, 8));
-    assert.throws(() => withAlternativeArt(manifest, root), /Alternative art changed/);
+    assert.throws(() => withAlternativeArt(manifest, root, {env:{ASHEN_ART_SOURCE:'trees'}}), /Alternative art changed/);
     assert.throws(() => writePacks({ root, out, source:'trees' }), /Alternative art changed/);
   }, { ...FILES, 'assets-display/alternative/reaver-default.webp':sprite,
     'src/ui/alternativeArtCatalog.js':`export const alternativeArtCatalog = ${JSON.stringify(catalog)};\n` });

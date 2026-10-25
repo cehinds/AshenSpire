@@ -118,12 +118,17 @@ test('a stagger that lands mid-turn ends the row', () => {
 });
 
 test('a move refused for SP is not shown', () => {
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+    characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  } });
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const c = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const planned = c.enemies[0].plannedMoves.length;
   assert.ok(planned >= 1);
+  // The quote fits at planning time; an intervening loss leaves only the head
+  // affordable and exercises refusal of the already-forecast follow-up.
+  c.enemies[0].pendingStaminaLoss = 1;
   const rows = rowsAfterPhase(c, regs);
   assert.equal(c.followTrace[c.enemies[0].id][0].outcome, 'refused');
   assert.equal(rows[0].symbols.length, planned, 'the planned move shows until its own event, refused or not');
@@ -188,13 +193,16 @@ test('the row stays visible while a player reaction is pending, and the resumed 
 });
 
 test('a reload during a reaction window: the follow-up stays "?" until its own enemyMoveStarted', () => {
-  // Core 2, seed 511, maxStamina 3: the window opens on the move BEFORE its enemyMoveStarted, with one move planned.
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  // Two SP before planning fits the head and one follow-up. The reaction opens
+  // before the head's enemyMoveStarted, leaving the follow-up concealed.
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+    characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  } });
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const c = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const e = c.enemies[0];
-  e.maxStamina = 3;
+  assert.equal(e.maxStamina, 2);
   dispatch(c, { type: 'endTurn' });
   assert.ok(c.pendingReaction && !c.eventLog.some((ev) => ev.type === 'enemyMoveStarted'), 'the window opened before any move started');
   const left = e.plannedMoves.length;

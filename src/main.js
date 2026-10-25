@@ -93,7 +93,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnap
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey, isStorageFullError } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
 import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
@@ -201,26 +201,32 @@ void DEBUG_CHROME_READY;
 const app = document.getElementById('app');
 
 // ---- content validation at boot (SPEC §3.14) — loud, on-screen -------------
-const validation = validateContent(contentBundle);
-if (!validation.ok) {
+// BOOT VALIDATES THE CONTENT IT PLAYS, ONCE, behind the boot splash: the first
+// rebuildRegistries below checks the configured content (class mastery
+// included) before the startup gate. The raw bundle is not validated a second
+// time here; it is what the configured content is projected from, and CI's
+// validateContent runs check it whole. Deferring the check to idle time moved a
+// second of script onto the gate and title, where players (and the startup-gate
+// probe) tap.
+function reportContentValidationFailure(errors) {
   // The header said 34 and the list showed 12 and nothing said the list was cut
   // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
   // that shape: fix twelve, reload, get a fresh twelve, and never learn how
   // deep the hole goes or that the console has the rest. Same family as the
   // silent no-op — a number promising more than the screen shows. The
   // truncation is fine; hiding it was not.
-  const shown = validation.errors.slice(0, 12);
-  const hidden = validation.errors.length - shown.length;
+  const shown = errors.slice(0, 12);
+  const hidden = errors.length - shown.length;
   // Wording unchanged; the ELEMENT is no longer built here. failureBanner() is
   // the one home for "the game says something is structurally wrong", and this
   // banner now carries the Command log door the uncaught-error one does.
   failureBanner(
     'boot:content',
-    `CONTENT VALIDATION FAILED (${validation.errors.length} errors)`,
+    `CONTENT VALIDATION FAILED (${errors.length} errors)`,
     shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
-      (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '')
+      (hidden > 0 ? `\n · …and ${hidden} more — all ${errors.length} are in the browser console.` : '')
   );
-  console.error('Content validation errors:', validation.errors);
+  console.error('Content validation errors:', errors);
 }
 
 // ---- navigable surfaces: declared, and handled (#78) -----------------------
@@ -260,8 +266,28 @@ const cachedContentValidation = createContentValidationCache((gameProfile, confi
   return { result, structuralProblems };
 });
 
+// The last VALID build (before any per-run mastery overlay). The same profile and
+// the same settings build the same registries, so a repeat rebuild (the title
+// screen rebuilds on every arrival) returns it. The key is the WHOLE settings
+// object, not just the keys known to shape content, so no setting that matters
+// can be missed; an unserialisable one simply never hits.
+let lastRegistryBuild = null;
+function registryBuildKey(configuration) {
+  try { return JSON.stringify(configuration ?? {}); } catch { return null; }
+}
+function sameRegistryProfile(a, b) {
+  return a === b || (typeof a?.hash === 'string' && a.hash === b?.hash);
+}
+
 function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
+  const buildKey = registryBuildKey(configuration);
+  if (buildKey !== null && lastRegistryBuild && lastRegistryBuild.key === buildKey && sameRegistryProfile(lastRegistryBuild.profile, gameProfile)) {
+    registries = isConfiguredRun(gameProfile) ? lastRegistryBuild.registries : registriesForClassMastery(lastRegistryBuild.registries, masteryRun);
+    configureTooltipGlossary(registries);
+    setClassGlyphs(registries.classes.all());
+    return registries;
+  }
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
   const { result, structuralProblems } = cachedContentValidation(gameProfile, configuration, configured);
@@ -270,12 +296,20 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
     console.warn('[advanced-config]', message, result.errors, structuralProblems);
     if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
-    if (isConfiguredRun(gameProfile)) throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
+    if (isConfiguredRun(gameProfile)) {
+      if (result.errors.length) reportContentValidationFailure(result.errors);
+      throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
+    }
+    // The fallback is the authored bundle itself: if that is what failed (no
+    // user settings to blame), say so as loudly as boot always has.
+    const authoredCheck = validateContent(contentBundle);
+    if (!authoredCheck.ok) reportContentValidationFailure(authoredCheck.errors);
     registries = createRegistries(contentBundle);
   } else {
     registries = createRegistries(configured);
   }
   registries = bindGameProfileRegistries(registries, gameProfile);
+  lastRegistryBuild = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
   if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
@@ -435,7 +469,9 @@ if (!settingsChoicePending) {
   seedPromotedDefaults(activeMeta, activeSettings);
 }
 let settingsChoiceChecked = !!shotState;
-rebuildRegistries(activeSettings);
+// Build (and validate) the profile a new game will play, the one showTitle
+// rebuilds with: a saved newGameProfile must not cost a second validation there.
+rebuildRegistries(activeSettings, null, selectedGameProfile);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 // Haptics have their own seam (ui/haptics.js), played by the call sites that
@@ -828,6 +864,13 @@ if (typeof window !== 'undefined') {
   setTimeout(reflexAutoScale, 300);
 }
 
+// A resize fires many times a second; most of the card-size properties come out
+// the same each time, and rewriting an unchanged custom property still dirties
+// style for the whole page. Write only what differs.
+function setRootPropertyIfChanged(name, value) {
+  const style = document.documentElement.style;
+  if (style.getPropertyValue(name) !== String(value)) style.setProperty(name, value);
+}
 // CARD SIZE IS TUNABLE WHILE YOU LOOK AT A CARD. The authored table in
 // content/config/ui/components/card.json is the default and the only thing
 // that ships; Settings > Advanced > Card size lays an override over it, and
@@ -839,7 +882,7 @@ if (typeof window !== 'undefined') {
 function applyCardSizeSettings(settings) {
   const { levels, refused } = cardLevelsWithOverrides(settings);
   for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
-    document.documentElement.style.setProperty(name, value);
+    setRootPropertyIfChanged(name, value);
   }
   // A RESTING CARD IS SIZED FOR THE VIEWPORT IT IS RESTING IN. `glance` is the
   // browsing size and `glance.variants.mobile` is that size on a phone; the
@@ -848,12 +891,12 @@ function applyCardSizeSettings(settings) {
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
   const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
-  document.documentElement.style.setProperty('--card-w-glance', `${resting}px`);
+  setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
   // just chosen rather than left at the authored one.
   for (const [name, value] of Object.entries(cardShelfCssProperties(undefined, resting))) {
-    document.documentElement.style.setProperty(name, value);
+    setRootPropertyIfChanged(name, value);
   }
   // The door's threshold reads `--card-w-inspect`, which has just moved. Its
   // observer only sees the layout's own box change, and the modal layout is
@@ -1050,7 +1093,11 @@ applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the
 // viewport changes — a phone rotated into landscape crosses the compact
 // breakpoint, and a desktop window dragged narrow crosses it too.
-window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
+let cardSizeResizeTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(cardSizeResizeTimer);
+  cardSizeResizeTimer = setTimeout(() => applyCardSizeSettings(activeSettings), 150);
+});
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -1108,6 +1155,59 @@ function persist() {
   stampSkillBonuses(registries, run);
   saves.saveRun(run, rng, activeSlot);
   sendLanStatus();
+}
+
+// ---- A FAILED AUTOSAVE NEVER UNDOES A LEGAL MOVE (browser storage full) -------
+// Combat v2 saves the accepted candidate BEFORE the engine adopts it, and a save
+// that threw refused the move: with localStorage full ("exceeded the quota")
+// every attack and End Turn was silently dropped. The run in memory is
+// authoritative, so a combat checkpoint that cannot land is reported and the
+// move stands. (Explicit Save still reports failure: saveNow below.)
+const SAVE_WARNING_REPEAT_MS = 30000;
+const SAVE_WARNING_SHOWN_MS = 9000;
+let lastSaveWarningAt = -Infinity;
+function reportAutosaveFailure(error, now = Date.now()) {
+  const full = isStorageFullError(error);
+  dlog('save', full ? 'autosave refused: browser storage is full' : 'autosave failed', error && error.message);
+  console.warn('[save] autosave failed; play continues:', error && error.message);
+  if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
+  lastSaveWarningAt = now;
+  const body = full
+    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues; delete an old save slot from the title screen to free space.'
+    : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
+  const key = full ? 'save:storage-full' : 'save:failed';
+  const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
+  // failureBanner hands back an existing banner when the stack is full: only
+  // auto-remove the one that is ours, never an unrelated failure.
+  if (banner && banner.dataset?.failureKey === key) {
+    // Float over the top edge for its few seconds: left in the page flow it
+    // pushes the fight down and the End Turn button off a phone screen.
+    if (banner.style) Object.assign(banner.style, { position: 'fixed', top: '0', left: '0', right: '0', margin: '0', zIndex: '1000', backgroundColor: '#17110a' });
+    if (typeof setTimeout === 'function') setTimeout(() => banner.remove?.(), SAVE_WARNING_SHOWN_MS);
+  }
+  return true;
+}
+
+// persist() that reports a failed autosave instead of throwing: for the victory
+// path, where a full store must never strand the reward screen.
+function persistOrWarn() {
+  try { persist(); return true; } catch (error) { reportAutosaveFailure(error); return false; }
+}
+// The same, for doors that read a `false` return as "the save was refused" and
+// roll the claim back (reward screens, victory receipts): returns nothing, so a
+// full store never undoes a claim or a skip.
+function persistContinuing() { persistOrWarn(); }
+
+// The combat checkpoint's save door (commitExpansionCandidate's saveCandidate):
+// a throw becomes a reported, non-durable commit, never a refused action.
+function saveCombatCandidate(next, committedRng) {
+  try {
+    saves.saveRun(next, committedRng, activeSlot);
+    return { ok: true };
+  } catch (error) {
+    reportAutosaveFailure(error);
+    return { ok: true, durable: false };
+  }
 }
 
 // The run the way its save slot names it (W2e's target line, W1r's, W2d's).
@@ -1436,7 +1536,7 @@ function advanceAct() {
     run.hp = run.maxHp;
   }
   run.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
-  persist();
+  persistOrWarn(); // reached from a boss reward: a full store must not strand the climb
   showMap();
 }
 
@@ -2187,6 +2287,7 @@ function showCombatDeckEditor(combat, nodeId, encounterId) {
       try {
         commitDeckEditDraft(registries, owner, draft, settings);
         commitCombatSnapshot({ run: owner, combat, nodeId, encounterId });
+        supersedePendingEntryCheckpoint();
         persist();
         showSettingsNotice('Deck saved. Changes apply next encounter; current combat piles stay unchanged.');
       } catch (error) {
@@ -2652,6 +2753,8 @@ function syncWorldPosition() {
 }
 
 function enterWorldNode(nodeId) {
+  // A fight is being entered (startFight's one-frame yield): no second travel.
+  if (fightEntryPending) return;
   travelJourney(run.journey, nodeId);
   delete run.journey.inspectNodeId;
   syncWorldPosition();
@@ -2803,6 +2906,8 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
+  // A fight is being entered (startFight's one-frame yield): no second travel.
+  if (fightEntryPending) return;
   // Re-entering the node the player stands on is not travel, so no travel sound.
   if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
@@ -2983,7 +3088,26 @@ function openLegacyEntrance(encounterId, nodeId) {
   beginDungeon(run, def, nodeId); persist(); showMap(); return true;
 }
 
+// The Enter tap paints before the fight is built: building and mounting the
+// battlefield is one long synchronous task, so the tap yields a frame first
+// (aria-busy marks the wait) and a second tap in that gap is ignored. Capture
+// states stay synchronous.
+let fightEntryPending = false;
 function startFight(pool, nodeId) {
+  if (fightEntryPending) return;
+  if (shotState || typeof requestAnimationFrame !== 'function') return startFightNow(pool, nodeId);
+  const owner = run;
+  fightEntryPending = true;
+  app.setAttribute('aria-busy', 'true');
+  requestAnimationFrame(() => setTimeout(() => {
+    fightEntryPending = false;
+    app.removeAttribute('aria-busy');
+    if (run !== owner) return;
+    startFightNow(pool, nodeId);
+  }, 0));
+}
+
+function startFightNow(pool, nodeId) {
   if (run.journey) {
     const enc = journeyEncounter(run.journey, nodeId, registries);
     if (openLegacyEntrance(enc.id, nodeId)) return;
@@ -3018,7 +3142,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   run.combatEntered = { ...(serviceEvent ? serviceEventCombatEntry(nodeId, encounterId) : { nodeId, encounterId }), ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
-  if (!resuming) persist();
+  if (!resuming) persistOrWarn(); // a full store must not block the next fight
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
@@ -3051,7 +3175,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
-        saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+        saveCandidate: saveCombatCandidate });
       if (committed.ok && (committed.durable !== false || committed.knowledge) && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
         const learningRun = run, learningSlot = activeSlot;
         saves.bankEnemyKnowledge(learningRun).then(result => {
@@ -3060,18 +3184,35 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
           // are checkpointed without reopening the encounter or rolling reads.
           // No rng: the saved counters stay those of the combat checkpoint,
           // which ordinary unsaved actions never move (SPEC §3.12).
-          if (run === learningRun) saves.saveRun(learningRun, null, learningSlot);
+          if (run === learningRun) { try { saves.saveRun(learningRun, null, learningSlot); } catch (error) { reportAutosaveFailure(error); } }
           if (!result.ok) showSettingsNotice(`Enemy learning remains pending: ${result.reason}`, 'profile');
         }).catch(error => showSettingsNotice(`Enemy learning remains pending: ${error.message}`, 'profile'));
       }
       return committed;
     };
     if (!savedSnapshot) {
-      durable(combat);
-      rng.restoreCounters(entryRng.getCounters());
-      combat.rng = rng;
+      // The entry checkpoint serializes and validates the whole fight (~430 ms
+      // at 4x CPU). It is queued until after the battlefield has painted, and
+      // is flushed before the first action commits, on page hide, and within
+      // 500 ms regardless, so it is always on disk before the player can act
+      // (SPEC §3.12: abandoning restarts from it). Captures and a fight that
+      // already ended save at once.
+      if (shotState || combat.result || typeof requestAnimationFrame !== 'function') {
+        durable(combat);
+        rng.restoreCounters(entryRng.getCounters());
+        combat.rng = rng;
+      } else {
+        // Same counters the synchronous path stamps: entryRng, frozen here.
+        const checkpointRng = createRng(rng.seed, entryRng.getCounters());
+        rng.restoreCounters(entryRng.getCounters());
+        combat.rng = rng;
+        pendingEntryCheckpoint = { run, combat, durable, checkpointRng, nodeId, encounterId, timer: 0 };
+      }
     }
-    combat.beforeCombatCommit = durable;
+    combat.beforeCombatCommit = candidate => {
+      flushPendingEntryCheckpoint();
+      return durable(candidate);
+    };
     if (combat.result) return onCombatEnd(combat.result, combat, enc);
   }
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
@@ -3186,10 +3327,12 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     quickControls: quickMenuControls,
     onSave: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
+      supersedePendingEntryCheckpoint();
       return saveNow();
     },
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
+      supersedePendingEntryCheckpoint();
       persist();
       showCollapsedTitle();
     },
@@ -3211,7 +3354,49 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
       }
     );
   }
+  schedulePendingEntryCheckpoint();
 }
+
+// THE QUEUED ENTRY CHECKPOINT (see enterCombat). One at a time; it belongs to
+// the run and fight that queued it and drops itself if either is gone.
+let pendingEntryCheckpoint = null;
+function flushPendingEntryCheckpoint() {
+  const pending = pendingEntryCheckpoint;
+  if (!pending) return false;
+  pendingEntryCheckpoint = null;
+  clearTimeout(pending.timer);
+  const entered = run?.combatEntered;
+  if (run !== pending.run || pending.combat.result || !entered || entered.snapshot
+    || entered.nodeId !== pending.nodeId || entered.encounterId !== pending.encounterId) return false;
+  const liveRng = pending.combat.rng;
+  pending.combat.rng = pending.checkpointRng;
+  try { pending.durable(pending.combat); }
+  catch (error) {
+    // Keep it queued: with no entry snapshot on disk, the first action's save
+    // would otherwise become the checkpoint. The next commit retries it first.
+    if (!pendingEntryCheckpoint) pendingEntryCheckpoint = pending;
+    throw error;
+  } finally { pending.combat.rng = liveRng; }
+  return true;
+}
+function flushPendingEntryCheckpointSafely() {
+  try { flushPendingEntryCheckpoint(); }
+  catch (error) { showSettingsNotice(error.message || 'The combat could not be saved.'); }
+}
+function schedulePendingEntryCheckpoint() {
+  const pending = pendingEntryCheckpoint;
+  if (!pending) return;
+  pending.timer = setTimeout(() => { if (pendingEntryCheckpoint === pending) flushPendingEntryCheckpointSafely(); }, 500);
+  requestAnimationFrame(() => setTimeout(() => { if (pendingEntryCheckpoint === pending) flushPendingEntryCheckpointSafely(); }, 0));
+}
+// An explicit save or quit writes the exact current snapshot, which replaces
+// the queued entry one.
+function supersedePendingEntryCheckpoint() {
+  if (pendingEntryCheckpoint) clearTimeout(pendingEntryCheckpoint.timer);
+  pendingEntryCheckpoint = null;
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingEntryCheckpointSafely(); });
+window.addEventListener('pagehide', flushPendingEntryCheckpointSafely);
 
 /**
  * THE FIGHT'S TITLE, ONE HOME: the spoils door is headed with it and the
@@ -3229,7 +3414,7 @@ async function onCombatEnd(result, combat, enc) {
     const learning = await saves.bankEnemyKnowledge(learningRun);
     if (!owned()) return;
     if (!learning.ok) showSettingsNotice(`Enemy learning remains pending: ${learning.reason}`, 'profile');
-    persist();
+    persistOrWarn(); // a full store must not strand the victory
   }
   // Keep the exact terminal replay receipt through every asynchronous bank
   // and animation. Ordinary XP, room completion and the reward/finish receipt
@@ -3258,6 +3443,7 @@ async function onCombatEnd(result, combat, enc) {
   // takes it now, win or loss, and climbs whatever the XP buys.
   const configuredProgression = isConfiguredRun(run);
   const skillProgression = configuredSkillProgression(run);
+  const skillStateBefore = skillProgression ? { classMasteryState: structuredClone(run.classMasteryState) } : null;
   const trackReceipt = configuredProgression && !skillProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
     const kind = skillKindOf(registries, skillId);
@@ -3273,6 +3459,7 @@ async function onCombatEnd(result, combat, enc) {
   // the door's pool: a won fight, more for a boss; a lost one nothing.
   const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') }));
   const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
+    run, beforeState: skillStateBefore,
     usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
   }) : [];
   // Character XP is paid now; the level and its stat points wait for the blue
@@ -3610,7 +3797,7 @@ function beginPendingReward(rewards, { source, after }) {
   run.pendingReward = pendingRewardCheckpoint(available, { source, after });
   if (Object.keys(deferred).length) run.deferredProgression = deferred;
   else delete run.deferredProgression;
-  persist();
+  persistOrWarn();
   return mountPendingReward();
 }
 
@@ -3684,7 +3871,7 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
     }}),
     onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
-    onPersist: persist,
+    onPersist: persistContinuing,
     onDone: () => {
       const after = checkpoint.after;
       const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
@@ -3692,14 +3879,14 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       else delete run.deferredProgression;
       delete run.pendingReward;
       if (returnTo) {
-        persist();
+        persistOrWarn();
         app.querySelector('.reward-veil')?.remove();
         return returnTo();
       }
       rewardDoneCount++;
       if (after === 'advanceAct') advanceAct();
       else {
-        persist();
+        persistOrWarn();
         showMap();
       }
     },
@@ -3898,11 +4085,11 @@ function showRest(openPanel = null, locationId = null) {
 
 function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
-  if (noticeOnly && !progression.length && !victoryReceipt) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
+  if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
   run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}) };
-  persist(); return showGameProfileReward();
+  persistOrWarn(); return showGameProfileReward();
 }
 
 function showGameProfileReward() {
@@ -3910,22 +4097,22 @@ function showGameProfileReward() {
   if (pending.victoryReceipt) return mountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
     onDone: () => {
-      acknowledgeVictoryReceipt(pending, persist);
+      acknowledgeVictoryReceipt(pending, persistContinuing);
       showGameProfileReward();
     },
   });
-  if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, onContinue: () => {
+  if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, registries, run, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
-    persist();
+    persistOrWarn();
     showGameProfileReward();
   } });
   if (pending.noticeOnly) {
     delete run.gameProfilePendingReward;
-    persist();
+    persistOrWarn();
     return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'defeat' ? showFinishedRun(false) : pending.after === 'advanceAct' ? advanceAct() : showMap();
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
-  const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
+  const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
   mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.

@@ -242,3 +242,17 @@
 :root .card-sigil-band[data-mirror='attack'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-blue-trim); }
 :root .card-sigil-band[data-mirror='sweep'] .card-mirror-icon, :root .card-sigil-band[data-mirror='defend'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-black-trim); }
 :root .card-sigil-band[data-mirror='smash'] .card-mirror-icon, :root .card-sigil-band[data-mirror='counter'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-red-trim); }
+
+/* Lite: collapse the 4-8 stacked drop-shadow passes per glyph. Solid marks already carry a real stroke, so they drop the
+   filter; outline marks keep one soft outline pass. */
+:root[data-performance='lite'] :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg)[data-solid='true'],
+:root[data-performance='lite'] .card-sigil-band .card-action-icon svg[fill='currentColor'],
+:root[data-performance='lite'] .card-tag-symbol[data-tag-id] svg[fill='currentColor'],
+:root[data-performance='lite'] .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg[fill='currentColor'] {
+  filter: none;
+}
+:root[data-performance='lite'] .intent-icon.intent-icon[data-intent]:not([data-solid='true']),
+:root[data-performance='lite'] .card-sigil-band .card-action-icon svg[fill='none'],
+:root[data-performance='lite'] .card-tag-symbol[data-tag-id] svg[fill='none'] {
+  filter: drop-shadow(0 0 1px var(--combat-symbol-outline));
+}

@@ -14,7 +14,7 @@ Validation: Chromium renders at 1440×900 and 1920×1080; all five cards and the
 
 The owner rejected all A–G proposals because the footer was redesigned. Those files are archived proposals, not active candidates.
 
-**Current proposal:** [revised-original.html](revised-original.html), [PNG](revised-original.png), [SVG](revised-original.svg). The original header and footer control arrangement are retained. Existing Combat log and Reaction controls retain their recognizable button/toggle presentation and sides, with fixed screen-relative positions on a slim line above the hand, independent of the hand width.
+**Current proposal:** [revised-original.html](revised-original.html), [PNG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/battlefield-options-2026-10-16/revised-original.png), [SVG](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/battlefield-options-2026-10-16/revised-original.svg). The original header and footer control arrangement are retained. Existing Combat log and Reaction controls retain their recognizable button/toggle presentation and sides, with fixed screen-relative positions on a slim line above the hand, independent of the hand width.
 
 The footer keeps its existing stone HUD group, enlarged in place, ordered resource orb, draw pile, End Turn, discard pile, potions. The hand remains centered directly above it, with unused hand-space removed. Card frames retain the original 2:3 width-to-height proportion (147×220.5). All lower HUD background uses the same color. Turn banner remains at the upper center of the field; health remains top left, shield/menu top right.
 

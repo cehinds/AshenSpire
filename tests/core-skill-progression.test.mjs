@@ -9,7 +9,9 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
-import { awardSkillXp, xpToNext } from '../src/model/skills.js';
+import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
+import { resolveCard } from '../src/model/registries.js';
+import { openRunClassMastery, registriesForClassMastery, recordClassMasteryXp } from '../src/model/classMasteryRun.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
@@ -223,6 +225,97 @@ test('Legacy/Current keep existing XP reward queues; disabled configured progres
   assert.deepEqual(disabled.skillXp, {});
 });
 
+test('Core crossing receipts show actual informational levels, persist details and resume old receipts safely', () => {
+  const { run } = live();
+  run.skills['item:blade'] = { level: 4, xp: 0, pendingDrafts: 0 };
+  const award = awardSkillXp(reg, run, 'item:blade', xpToNext(reg, 'weapon', 4), { queueRewards: false });
+  const rows = skillLevelNotices(reg, [award], { run, usedArmaments: ['greatsword'] });
+  assert.deepEqual(rows[0].effects, { version: 1, changes: [], nextMilestone: null, maxLevel: 10 });
+  assert.ok(run.deck.every(inst => skillBonusFor(reg, run, inst) === 0), 'Core starter cards do not acquire the legacy school flat');
+  const classAward = awardSkillXp(reg, run, 'class:reaver', xpToNext(reg, 'class', 0), { queueRewards: false });
+  assert.deepEqual(skillLevelNotices(reg, [classAward], { run })[0].effects.changes, [], 'unowned mastery gates cannot become Core unlocks');
+  run.gameProfilePendingReward = { offerId: 'effects', source: 'combat', after: 'map', levelOffers: 0, progression: rows };
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, createRng(run.seed));
+  const loaded = saves.loadRun(reg);
+  assert.ok(loaded, saves.runStatus().reason);
+  assert.deepEqual(loaded.gameProfilePendingReward.progression, rows);
+  const paid = structuredClone(loaded.skills);
+  withModalDom(() => {
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    const oldRows = rows.map(({ effects, ...row }) => row);
+    mountGameProfileLevelUp(app, { rows: oldRows, registries: reg, run: loaded, onContinue() {} });
+    assert.equal(app.querySelector('.reward-skill-effects li').textContent, 'No stat bonus or unlock at this level.');
+    const meter = app.querySelector('[role="progressbar"]');
+    assert.equal(meter.getAttribute('aria-valuenow'), '5');
+    assert.equal(meter.getAttribute('aria-valuemax'), '10');
+  });
+  assert.deepEqual(loaded.skills, paid, 'rendering an old receipt never pays or queues progression');
+});
+
+test('school milestones report resolved old/new card numbers, multilevel gains and the next real benefit', () => {
+  const source = createRegistries(contentBundle);
+  const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
+  run.skills['item:blade'] = { level: 3, xp: 0, pendingDrafts: 0 };
+  const noGain = awardSkillXp(source, run, 'item:blade', xpToNext(source, 'weapon', 3), { queueRewards: false });
+  const next = skillLevelNotices(source, [noGain], { run })[0].effects;
+  assert.deepEqual(next.changes, []);
+  assert.equal(next.nextMilestone.level, 5);
+  assert.ok(next.nextMilestone.labels.includes('Gorefire Slash · Damage 9 → 10'));
+  const card = run.deck.find(inst => inst.cardId === 'gorefireSlash');
+  const oldFace = resolveCard(source, { ...card, skillBonus: skillBonusFor(source, run, card) });
+  const award = awardSkillXp(source, run, 'item:blade', xpToNext(source, 'weapon', 4), { queueRewards: false });
+  const notice = skillLevelNotices(source, [award], { run })[0];
+  const newFace = resolveCard(source, { ...card, skillBonus: skillBonusFor(source, run, card) });
+  assert.ok(notice.effects.changes.some(change => change.label === 'Gorefire Slash · Damage'
+    && change.before === oldFace.effects[0].amount && change.after === newFace.effects[0].amount));
+  assert.equal(notice.effects.nextMilestone.level, 10);
+  run.skills['item:blade'] = { level: 4, xp: 0, pendingDrafts: 0 };
+  const cost = [4, 5, 6, 7, 8, 9].reduce((sum, level) => sum + xpToNext(source, 'weapon', level), 0);
+  const multi = awardSkillXp(source, run, 'item:blade', cost, { queueRewards: false });
+  const effects = skillLevelNotices(source, [multi], { run })[0].effects;
+  assert.equal(multi.after, 10);
+  assert.ok(effects.changes.some(change => change.label === 'Gorefire Slash · Damage' && change.before === 9 && change.after === 11));
+  assert.equal(effects.nextMilestone, null, 'the level cap cannot promise a further bonus');
+});
+
+test('mastery summaries report only newly available authored unlocks and preserve veteran unlocks', () => {
+  const source = createRegistries(contentBundle);
+  const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
+  openRunClassMastery(source, run, {}, { receiptId: 'effect-test' });
+  const scoped = registriesForClassMastery(source, run);
+  const beforeState = { classMasteryState: structuredClone(run.classMasteryState) };
+  const cost = xpToNext(scoped, 'class', 0);
+  recordClassMasteryXp(run, 'reaver', cost);
+  const award = awardSkillXp(scoped, run, 'class:reaver', cost, { queueRewards: false });
+  const changes = skillLevelNotices(scoped, [award], { run, beforeState })[0].effects.changes;
+  assert.ok(changes.length > 0);
+  assert.ok(changes.every(change => change.kind === 'unlock' && change.before === 'Locked' && change.after === 'Available'));
+  const veteran = { classMasteryState: structuredClone(run.classMasteryState) };
+  assert.deepEqual(skillLevelNotices(scoped, [award], { run, beforeState: veteran })[0].effects.changes, [], 'already unlocked rows are not newly awarded');
+});
+
+test('shared schools count simultaneous gains once and skip rounded multihit non-benefits', () => {
+  const source = createRegistries(contentBundle);
+  const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
+  run.deck = [{ cardId: 'twinPrick', instanceId: 'two-hits' }];
+  run.sideboard = [];
+  run.skills['item:blade'] = { level: 4 };
+  run.skills.dualWield = { level: 5 };
+  const waiting = skillLevelNotices(source, [{ skillId: 'item:blade', before: 3, after: 4, levelUps: 1 }], { run })[0].effects;
+  assert.equal(waiting.nextMilestone.level, 10, 'level 5 is absorbed by existing per-hit rounding');
+  run.skills['item:blade'].level = 5;
+  const rounded = skillLevelNotices(source, [{ skillId: 'item:blade', before: 4, after: 5, levelUps: 1 }], { run })[0].effects;
+  assert.deepEqual(rounded.changes, [], 'a larger stamped flat is not itself a card-number benefit');
+  run.deck = [{ cardId: 'gorefireSlash', instanceId: 'one-hit' }];
+  const both = skillLevelNotices(source, [
+    { skillId: 'item:blade', before: 4, after: 5, levelUps: 1 },
+    { skillId: 'dualWield', before: 4, after: 5, levelUps: 1 },
+  ], { run });
+  assert.deepEqual(both.map(row => row.effects.changes.map(change => [change.before, change.after])), [[[9, 10]], [[10, 11]]]);
+});
+
 test('actual main defeat settlement persists earned weapon notice, resumes once, then finishes the loss', async () => {
   const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
@@ -239,6 +332,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
     const persist = () => saves.saveRun(run, rng);
+    const persistOrWarn = () => { persist(); return true; }, persistContinuing = () => { persistOrWarn(); };
     const audio = { stopMusic() {} }, sfx = { play() {} }, sendLanStatus = () => {};
     const rollLevelChoices = () => [], showFinishedRun = victory => screens.push(victory);
     const showMap = () => { throw Error('Defeat cannot return to map'); };
@@ -254,6 +348,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   await main.settle();
   assert.equal(run.skills['item:blade'].level, 1);
   assert.equal(run.skills['class:reaver']?.level || 0, 0, 'loss does not invent class XP');
+  assert.deepEqual(run.gameProfilePendingReward.progression[0].effects.changes, [], 'the real settlement persists the actual lack of a stat gain');
   assert.deepEqual(screens, [], 'the earned notice precedes the finished loss');
   assert.equal(notices.length, 1);
   assert.equal(run.gameProfilePendingReward.after, 'defeat');
@@ -431,6 +526,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
     const persist = () => saves.saveRun(run, rng);
+    const persistOrWarn = () => { persist(); return true; }, persistContinuing = () => { persistOrWarn(); };
     const audio = {}, sfx = { play() {} }, sendLanStatus = () => {};
     const rollLevelChoices = () => [], victoryTitle = () => 'VICTORY', victoryBeat = async () => {};
     const applyAfterCombatRecovery = () => {}, featStacks = () => 0, victoryCompletesJourneyNode = () => false;

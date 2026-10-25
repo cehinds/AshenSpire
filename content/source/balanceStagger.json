@@ -1,0 +1,10 @@
+{
+  "player": {
+    "actionLoss": 1,
+    "statuses": { "vulnerable": 2, "weak": 2 },
+    "$note": {
+      "actionLoss": "Actions taken off the player's NEXT turn when their Poise meter fills. Only while combat ratings are off; with ratings on, Poise action loss sets this.",
+      "statuses.{status}": "Stacks of {statusName} the player takes when their own Poise meter fills. Only while combat ratings are off; with ratings on, a break costs actions and applies no status."
+    }
+  }
+}

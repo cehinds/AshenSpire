@@ -484,6 +484,16 @@
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
 .reduced-motion .fx-callout { animation: callout-fade var(--fx-callout-ms, 900ms) ease-out forwards; }
+/* Beneficial status gains are combat readouts. Keep them legible and still
+   for their queued lifetime when motion is reduced, including the OS setting. */
+.reduced-motion .fx-callout[data-callout-kind^='buff:'] {
+  animation: none !important; opacity: 1; transform: none; filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-callout[data-callout-kind^='buff:'] {
+    animation: none !important; opacity: 1; transform: none; filter: none;
+  }
+}
 @keyframes callout-rise {
   0% { opacity: 0; transform: translateY(8px) scale(0.85); }
   14% { opacity: 1; transform: translateY(0) scale(1.06); }
@@ -1046,6 +1056,8 @@
 /* Finite feedback uses opacity/light, preserving the hand fan and hit boxes. */
 .hand .card.card-drawn { animation: card-arrive 240ms ease-out; }
 @keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
+@keyframes card-arrive-lite { from { opacity: 0.35; } to { opacity: 1; } }
+:root[data-performance='lite'] .hand .card.card-drawn { animation-name: card-arrive-lite; }
 .combat .pile.spent.pile-received { animation: pile-receive 320ms ease-out; }
 @keyframes pile-receive { 35% { box-shadow: inset 0 0 16px var(--gold); } }
 .combat .pile.spent[data-card-outcome="exhaust"] { border-bottom-color: var(--ember); }
@@ -1109,7 +1121,10 @@
 :root .combat:not(.coop) .combatant-card { width: max-content; }
 :root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
 
-/* Normal encounters fit the viewport. Only four or more enemies may scroll. */
+/* Normal encounters fit the viewport. Only four or more enemies may scroll.
+   `data-wide-enemy-row` (set in combat.js renderEnemies) replaces the old
+   `.field:has(.enemy-row > .combatant:nth-child(4))`; it is repeated three times
+   because that :has() argument carried three classes of specificity. */
 @container game-viewport (max-width:640px) {
   /* The shared fitter still owns the row. Art may cross adjacent cells a
      little; scale only the figures so meters, labels and intent stay readable. */
@@ -1118,10 +1133,10 @@
   :root .combat:not(.coop) .combatant .meters { width:80px; }
   :root .combat:not(.coop) .combatant .sprite { width:80px; min-width:0; }
   :root .combat:not(.coop) .combatant .sprite > :first-child { flex-shrink:0; }
-  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; overflow-clip-margin:4px; }
-  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row { flex:0 0 auto; min-width:max-content; }
-  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
+  :root .combat:not(.coop) .field:not([data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true']) { overflow-x:clip; overflow-clip-margin:4px; }
+  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row { flex:0 0 auto; min-width:max-content; }
+  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
 /* A hand card has one portrait profile; viewport changes never resize one axis
@@ -1180,12 +1195,12 @@
 
 /* Painted frames own their alpha-shaped glow; do not add the generic gold or
    white cast halo around their parent (which also contains HUD elements). */
-.sprite.act-move[data-action-motion="cast"]:has(.painted-stage),
-.sprite.act-move[data-action-motion="brace"]:has(.painted-stage) { animation-name: none; }
+.sprite.act-move[data-action-motion="cast"][data-painted-stage],
+.sprite.act-move[data-action-motion="brace"][data-painted-stage] { animation-name: none; }
 
 /* Selection reveals the same card without rebuilding or relocating the fan. */
 :root .combat:not(.coop) .hand .card.selected { transform: var(--card-fan-transform) !important; z-index: 100 !important; }
-:root .combat:not(.coop) .hand:has(.selected) .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
+:root .combat:not(.coop) .hand[data-has-selection='true'] .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
 .combat .hand .card.drag-source { opacity: .2; }
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }
@@ -1330,10 +1345,10 @@
    fine hover pointer. Keeping the tray itself in the selector lets the pointer
    cross into a mini and use it. */
 @media (hover: hover) and (pointer: fine) {
-  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray {
+  :root .combat[data-layout='formation'] .combat-action-row > :is(.combat-potions:hover + .combat-potion-tray, .combat-potion-tray:hover) {
     visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms);
   }
-  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > :where(.potion-mini, .status-overflow) {
+  :root .combat[data-layout='formation'] .combat-action-row > :is(.combat-potions:hover + .combat-potion-tray, .combat-potion-tray:hover) > :where(.potion-mini, .status-overflow) {
     opacity: 1; transform: none;
     transition-delay: calc(var(--potion-reveal-delay, 500ms) + var(--potion-stagger, 0ms));
   }
@@ -1733,7 +1748,7 @@
 :root .combat[data-composition='option-c'] > .hand-area :is(.hand,.hand-page,.card,.combat-action-row) { pointer-events: auto; }
 /* The raised HUD can reveal an HP tooltip where the next coach step moves.
    Keep tutorial exits above those reading surfaces. */
-:root:has(.combat[data-composition='option-c']) .tut-veil { z-index: 1100; }
+:root .combat[data-composition='option-c'] ~ .tut-veil { z-index: 1100; }
 
 /* The player's complete widget grows upward in every formation layout. */
 :root .combat[data-layout='formation'] .combatant.player .combatant-leading {
@@ -1951,7 +1966,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   padding: 0 !important; margin: 0; border: 0 !important; background: transparent !important; box-shadow: none !important;
   font-size: calc(16px / var(--ui-zoom,1)); color: #ffe7ab;
 }
-:root .combat[data-target-hud='true'] .combatant .intent > :not(.intent-compact) { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant .intent > :not(.intent-compact):not(.cr-followups) { display: none !important; }
 :root .combat[data-target-hud='true'] .combatant .intent .intent-compact { display: inline-flex !important; align-items: center; gap: calc(5px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .combatant-leading .intent-icon { width: calc(28px / var(--ui-zoom,1)); height: calc(28px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row { margin: 0; padding-bottom: calc(13px / var(--ui-zoom,1)); --health-row-h: calc(7px / var(--ui-zoom,1)); }
@@ -2055,3 +2070,12 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option .co-part[data-dir='up'] .co-arrow { color: var(--green); }
 .card-option .co-part[data-dir='down'] .co-arrow { color: var(--ember); }
 .card-option .co-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Debug mode's Console button (combatDebugButton.js): fixed, above every combat layer, tiny. */
+.combat-debug-console {
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 99px); right: 8px; z-index: var(--layer-tooltip);
+  min-height: 28px; padding: 3px 9px; font: inherit; font-size: 12px; line-height: 1;
+  border: 1px solid var(--line-soft); border-radius: 6px;
+  background: var(--bg-raise); color: var(--parchment);
+  touch-action: manipulation; pointer-events: auto;
+}

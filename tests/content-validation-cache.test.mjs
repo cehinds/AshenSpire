@@ -67,3 +67,16 @@ test('non-JSON configuration values cannot collide with a valid cached input', (
   read(profile, {}); read(profile, { amount: undefined });
   assert.equal(calls.length, 5);
 });
+
+test('a frozen profile with a digest is identified by its digest, an unfrozen one by value', () => {
+  const { read, calls } = fixture();
+  const frozen = hash => Object.freeze({ id: 'core', hash, lock: Object.freeze({ runtime: 'a' }) });
+  read(frozen('sha256:1'), {});
+  read(frozen('sha256:1'), {});
+  assert.equal(calls.length, 1);
+  read(frozen('sha256:2'), {});
+  assert.equal(calls.length, 2);
+  const open = { id: 'core', hash: 'sha256:1', lock: { runtime: 'a' } };
+  read(open, {}); open.lock.runtime = 'b'; read(open, {});
+  assert.equal(calls.length, 4);
+});

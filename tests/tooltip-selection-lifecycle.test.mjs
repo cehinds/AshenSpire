@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { registerModal } from '../src/ui/modalManager.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
 // Exercise the real tooltip handlers with deterministic clocks. This fixture
@@ -151,4 +152,25 @@ test('two-tap explanation survives hide and selecting another owner resets selec
   fire(detail, 'click'); clearControlSelection();
   fire(info, 'gpfocus'); hideTooltip();
   assert.equal(selected(info), false, 'explicit clearing resets the origin too');
+});
+
+
+test('a detached explicit owner cannot consume the first Escape from an inspection modal', () => {
+  const info = control();
+  fire(info, 'click');
+  assert.equal(selected(info), true);
+  // Opening the reading hides tooltips before the previous screen replaces
+  // its selected control. No observer remains to clear that detached owner.
+  hideTooltip(); info.remove();
+  const modal = document.createElement('section');
+  modal.setAttribute('aria-modal', 'true'); document.body.appendChild(modal);
+  let dismissed = 0;
+  const release = registerModal('Inspection', modal, { dismiss() { dismissed++; modal.remove(); release(); } });
+  try {
+    escape();
+    assert.equal(dismissed, 1, 'the first Escape reaches the top inspection');
+    assert.equal(modal.isConnected, false);
+    assert.equal(selected(info), false, 'the stale explicit selection is cleared');
+    assert.equal(document.getElementById('tooltip')?.dataset.open ?? 'false', 'false');
+  } finally { release(); modal.remove(); }
 });

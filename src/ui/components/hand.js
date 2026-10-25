@@ -111,6 +111,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let previousCards = new Set();
   let handEls = []; // the rendered cards, in hand order (filled by render)
   let fanMeasurement = null;
+  let fanApplied = false; // a fan plan has been applied to the cards now in the strip
   let handFan = []; // each card's shipped fan transform, same index
   const renderedCards = new Map();
   let presentationOrder = [];
@@ -128,16 +129,25 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // already holds is not written again (each write dirties style, and the next
   // measure then forces a layout).
   const setVar = (target, name, value) => { if (target.style.getPropertyValue(name) !== value) target.style.setProperty(name, value); };
-  function applyHandLayout() {
+  // The hand strip's own box facts. Reading them forces a layout when card DOM
+  // was just written, so a render reads them BEFORE it touches the strip and
+  // hands them to applyHandLayout (nothing about the strip's box depends on the
+  // cards: they are absolutely placed by the plan).
+  const readStripBox = () => {
+    const rect = handEl.getBoundingClientRect();
+    return { rect, clientWidth: handEl.clientWidth, clientHeight: handEl.clientHeight, fontSize: layoutMetrics().fontSize };
+  };
+  function applyHandLayout(box = null) {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
       if (!handEl.isConnected) return;
       if (!cards.length) { publishGeometry('empty'); return; }
       // Scoped physical touch targets must apply on the very first measure.
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
-      const rect = handEl.getBoundingClientRect();
-      const zoom = rect.width / handEl.clientWidth || 1;
-      const fontSize = layoutMetrics().fontSize;
+      const measured = box || readStripBox();
+      const rect = measured.rect, clientWidth = measured.clientWidth, clientHeight = measured.clientHeight;
+      const zoom = rect.width / clientWidth || 1;
+      const fontSize = measured.fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
       // The HUD form factor main.js writes to <html>. Read the live root first: the
@@ -145,7 +155,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       // Log and reactions are below the resting fan on every form factor.
       const toolsHeight = 0;
-      setVar(handEl, '--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
+      setVar(handEl, '--hand-controls-max-width', `${Math.max(0, clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
       // selection must never resize the fan underneath that pointer.
@@ -156,12 +166,12 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         if (!controls) return;
         controlled.push(index);
         controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
-          { zoom, width: Math.max(0, handEl.clientWidth - 2 / zoom), cache: upcastMeasurements }));
+          { zoom, width: Math.max(0, clientWidth - 2 / zoom), cache: upcastMeasurements }));
       });
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
-      const input = { width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
+      const input = { width: clientWidth, height: clientHeight - toolsHeight,
         count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, formFactor };
       const plan = responsiveHandLayout(input, layoutHand(input));
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
@@ -170,7 +180,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       setVar(handEl, '--hand-rest-left', plan.restLeft + 'px');
       setVar(handEl, '--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
       setVar(handEl, '--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
-      const geometryKey = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
+      const geometryKey = handGeometryKey({ width: clientWidth, height: clientHeight, zoom, fontSize, left: rect.left });
       if (handEl.dataset.handGeometry !== geometryKey) handEl.dataset.handGeometry = geometryKey;
       setVar(handEl, '--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
@@ -267,21 +277,73 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   };
   if (typeof ResizeObserver !== 'undefined' && (fitFan || handLayoutWord() === 'overlap')) {
     const alive = () => document.body.contains(handEl);
-    ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
+    // A render lays the fan out itself, and observing the cards it just made
+    // delivers their first size at once. That first size, and a delivery that
+    // repeats a size already seen, is not a change: only a real one re-fits.
+    const seenSizes = new WeakMap();
+    ro = new ResizeObserver(entries => {
+      if (!alive()) { ro.disconnect(); return; }
+      let moved = false;
+      for (const entry of entries) {
+        const box = entry.contentRect;
+        const prior = seenSizes.get(entry.target);
+        seenSizes.set(entry.target, [box.width, box.height]);
+        if (!prior ? entry.target === handEl : prior[0] !== box.width || prior[1] !== box.height) moved = true;
+      }
+      if (moved) scheduleHandLayout();
+    });
     mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
     // data-form-factor re-lays the hand too (the tool row reserve differs by form factor).
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout', 'data-form-factor'] });
     ro.observe(handEl);
   }
 
-  function render({ cards = [], emptyHtml = null }) {
+  // The shipped fan angle of slot i of n (the legacy transform fan; the fitted
+  // hand overwrites it in applyHandLayout).
+  function slotTransform(i, n) {
+    const spread = Math.min(6, n) * 1.2;
+    const mid = (n - 1) / 2;
+    return `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+  }
+  // A kept card that moved: its positional key badge (1-9, then Q), fan angle and stacking.
+  function syncSlot(record, i, n) {
+    const el = record.el;
+    record.slot = i + '/' + n;
+    const badge = el.querySelector(':scope > .key-hint');
+    if (i < 10) {
+      const text = i < 9 ? String(i + 1) : 'Q';
+      if (badge && badge.textContent === text) { /* already right */ }
+      else { badge?.remove(); el.appendChild(keycap(text, { class: 'float key-hint' })); }
+    } else badge?.remove();
+    el.style.transform = slotTransform(i, n);
+    el.style.setProperty('--card-fan-transform', el.style.transform);
+    el.style.zIndex = i;
+  }
+
+  function render(args) {
+    renderCards(args);
+    // `data-has-selection` stands in for `.hand:has(.selected)` in combat.css.
+    const on = String(!!handEl.querySelector('.selected'));
+    if (handEl.getAttribute('data-has-selection') !== on) handEl.setAttribute('data-has-selection', on);
+  }
+  function renderCards({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
     const entries = new Map(cards.map(entry => [entry.inst.instanceId, entry]));
     cards = presentationOrder.map(id => entries.get(id));
+    const n0 = handEls.length;
+    // The strip's box, read while layout is still clean (before any card is
+    // written): the layout pass at the end of this render then needs no read
+    // and so forces no layout. Only once the strip is set up (first render
+    // writes the wireframe attribute the box depends on) and attached.
+    const preBox = fitFan && fanApplied && handEl.isConnected && handEl.dataset.wireframeHand === 'true' ? readStripBox() : null;
     const wanted = new Set(cards.map(entry => entry.inst.instanceId));
+    // Whether this pass changed anything the fan plan reads: a card made or
+    // dropped, or the order. A pure selection change keeps every element, so the
+    // plan (and its forced layout) is the one already applied.
+    let reshaped = !fanApplied || emptyHtml != null || n0 !== cards.length;
     for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
-      record.release?.(); record.el.remove(); renderedCards.delete(id);
+      record.release?.(); record.el.remove(); renderedCards.delete(id); reshaped = true;
     }
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
@@ -306,22 +368,35 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const id = entry.inst.instanceId;
       // Solo action callbacks resolve current combat state by instance ID. A
       // preview/affordability change invalidates both the face and its inputs.
+      // The slot (index, count) is NOT in it: a card that only changes place
+      // (a neighbour was played) keeps its element and takes its new key badge
+      // and fan angle in place (syncSlot below).
       // The signature carries the ACTION STATE too. A card whose play becomes
       // refused mid-turn — the energy spent, the target gone — keeps its face
       // otherwise, and with it a door that still says the act is available.
       // `commands` is deliberately absent: those are closures that resolve the
       // live combat by instance id when pressed, so a kept one is never stale,
       // and JSON.stringify would drop them anyway.
-      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, n, entry.surface, entry.availability]);
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability]);
       let record = renderedCards.get(id);
-      if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
+      // A face rebuilt in place (its preview or affordability moved, same slot,
+      // same count) keeps the fan plan already applied to its predecessor.
+      let predecessor = null;
+      if (record && record.signature !== signature) {
+        predecessor = fitFan && fanApplied && n0 === cards.length && handEl.children[i] === record.el ? record : null;
+        if (predecessor) predecessor.controls = predecessor.el.querySelector('.card-upcast-controls');
+        if (predecessor) predecessor.controlsHtml = predecessor.controls ? predecessor.controls.outerHTML : '';
+        record.release?.(); record.el.remove(); renderedCards.delete(id); record = null;
+      }
       if (record) {
         record.el.classList.toggle('selected', !!entry.selected);
         setHandFaceBudget(record.el, !!entry.selected);
         record.el.classList.toggle('is-stacked', !!entry.stacked);
-        if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
+        if (handEl.children[i] !== record.el) { handEl.insertBefore(record.el, handEl.children[i] || null); reshaped = true; }
+        if (record.slot !== i + '/' + n) { syncSlot(record, i, n); reshaped = true; }
         return;
       }
+      if (!predecessor) reshaped = true;
       // THE SURFACE HAS TO REACH THE DOOR, AND FOR ONE RELEASE IT DID NOT.
       // #1000 replaced the inspect door's inherited verb with a triple the
       // surface supplies: `surface` names the place, `availability` says
@@ -335,7 +410,6 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
-      const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
       // sits on the strip's own baseline and nothing is pushed below it.
@@ -364,8 +438,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
       // against the same 12 and the phone's scroller starts clipping the card it
       // is meant to feature. A number that is only right for today's hand size.
-      const mid = (n - 1) / 2;
-      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+      el.style.transform = slotTransform(i, n);
       el.style.setProperty('--card-fan-transform', el.style.transform);
       el.style.zIndex = i;
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
@@ -405,8 +478,25 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // every hand card as well.
       if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      renderedCards.set(id, { el, signature, release: typeof releaseInput === 'function' ? releaseInput : null });
+      renderedCards.set(id, { el, signature, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
       handEl.insertBefore(el, handEl.children[i] || null);
+      if (predecessor) {
+        // Same controls (so the same reserved height): take over the placement
+        // the plan wrote on the old element instead of re-fitting the fan.
+        const controls = el.querySelector('.card-upcast-controls');
+        const sameControls = (controls ? controls.outerHTML : '') === predecessor.controlsHtml;
+        if (!sameControls) reshaped = true;
+        else {
+          const lane = predecessor.el.querySelector(':scope > .hand-hit-lane');
+          for (const prop of Array.from(predecessor.el.style)) {
+            if (prop.startsWith('--hand-') || prop === '--card-fan-transform') el.style.setProperty(prop, predecessor.el.style.getPropertyValue(prop));
+          }
+          el.style.marginLeft = predecessor.el.style.marginLeft;
+          el.style.transform = predecessor.el.style.transform;
+          if (lane) el.appendChild(lane);
+          if (controls && predecessor.controls && upcastMeasurements.has(predecessor.controls)) upcastMeasurements.set(controls, upcastMeasurements.get(predecessor.controls));
+        }
+      }
     });
     // The overlap arm: record what this render made, then reconcile. Inert —
     // including the observer re-point — unless the layout word is 'overlap';
@@ -416,7 +506,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // Re-observing an unchanged card requests a fresh initial size delivery,
     // which used to schedule another fan and battlefield fit after every render.
     observeCards();
-    applyHandLayout();
+    if (reshaped) { applyHandLayout(preBox); fanApplied = true; }
   }
 
   function teardown() {

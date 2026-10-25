@@ -1,16 +1,18 @@
 // Compose existing preview assets and labels; no new character artwork or tween frames.
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
-import { launchBrowser, serveDir } from '../../../../tools/browser.mjs';
+import { launchBrowser } from '../../../../tools/browser.mjs';
+import {reviewPaths,serveReview} from './render-paths.mjs';
 const require = createRequire(import.meta.url);
 let chromium;
 try { ({chromium}=require('playwright')); } catch { ({chromium}=require('/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')); }
-const folder=dirname(fileURLToPath(import.meta.url));
-const output=resolve(folder,'renders');await mkdir(output,{recursive:true});
-const server=await serveDir(folder);
+const assetOption=process.argv.indexOf('--asset-root');
+if(assetOption>=0&&!process.argv[assetOption+1])throw new Error('--asset-root requires an AI-Art checkout directory');
+const paths=reviewPaths({assetRoot:assetOption>=0?process.argv[assetOption+1]:undefined});
+const {folder,output}=paths;await mkdir(output,{recursive:true});
+const server=await serveReview(paths);
 const launcher=await launchBrowser({prefix:'seq-review-',args:['--no-sandbox','--disable-dev-shm-usage','--remote-debugging-port=0'],browser:process.env.CHROME});
 const browser=await chromium.connectOverCDP(launcher.wsUrl);
 const context=await browser.newContext({viewport:{width:1160,height:1100}});
@@ -62,6 +64,6 @@ try {
   }
   if(errors.length)throw Error(errors.join('\n'));
   await writeFile(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
-  const result=spawnSync(process.env.PYTHON??'python',['render-portable.py'],{cwd:folder,stdio:'inherit'});if(result.status!==0)throw Error('Portable renderer failed');
+  const result=spawnSync(process.env.PYTHON??'python',['render-portable.py','--renders-root',output],{cwd:folder,stdio:'inherit'});if(result.status!==0)throw Error('Portable renderer failed');
   console.log(`Rendered ${manifest.outputs.length} labeled animations and storyboards.`);
 }finally{await context.close();await browser.close();await launcher.close();await server.close();}

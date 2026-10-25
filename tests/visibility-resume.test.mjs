@@ -302,6 +302,53 @@ test('a mounted layered overlay preserves the fight through resume and art-sourc
   }
 });
 
+test('mounted alternative scenery survives the page cycle and quality refresh without moving the fight, then releases its listener', async () => {
+  const { wireAlternativeBackdrop } = await import('../src/ui/alternativeArt.js');
+  const { alternativeArtCatalog } = await import('../src/ui/alternativeArtCatalog.js');
+  const { applyArtTier, resetArtTier } = await import('../src/ui/artTier.js');
+  const { ART_SOURCE_EVENT, ART_QUALITY_KEY, ART_LIGHT, ART_HIGH } = await import('../src/ui/highResArt.js');
+  const { run, combat } = midCombat();
+  const before = { run: snapshot(run), combat: snapshot(combat) };
+  const globals = Object.fromEntries(['matchMedia', 'MutationObserver'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  const wasRoot = doc.documentElement;
+  const art = alternativeArtCatalog.sceneLayers['hollow-weald-far'];
+  let href = art.path, writes = 0, disconnected = false;
+  const image = { dataset: { layer: 'hollow-weald-far' }, getAttribute: () => href,
+    setAttribute: (key, value) => { assert.equal(key, 'href'); href = value; writes++; } };
+  const layer = { firstElementChild: image, dataset: { depth: '1' }, style: {} };
+  const view = Object.assign(new EventTarget(), { querySelectorAll: () => [layer],
+    querySelector: () => ({ dataset: { device: 'desktop' } }) });
+  doc.documentElement = { dataset: { layout: 'wide', formFactor: 'desktop' }, getAttribute: () => 'wide' };
+  globalThis.matchMedia = () => new EventTarget();
+  globalThis.MutationObserver = class { observe() {} disconnect() { disconnected = true; } };
+  let release;
+  try {
+    release = wireAlternativeBackdrop(view);
+    backgroundAndResume();
+    assert.equal(writes, 0, 'the lifecycle cycle does not itself change image sources');
+    await applyArtTier({ [ART_QUALITY_KEY]: ART_LIGHT }, { pin: {}, inlineMap: {} });
+    assert.equal(href, art.mobilePath, 'the production quality event repoints only the mounted image');
+    assert.equal(writes, 1);
+    backgroundAndResume();
+    doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
+    assert.equal(writes, 1, 'resume and unchanged sources do not repaint');
+    assert.equal(layer.firstElementChild, image, 'the mounted scene identity remains intact');
+    assert.deepStrictEqual(snapshot(run), before.run);
+    assert.deepStrictEqual(snapshot(combat), before.combat);
+    release(); release = null;
+    assert.ok(disconnected);
+    await applyArtTier({ [ART_QUALITY_KEY]: ART_HIGH }, { pin: {}, inlineMap: {} });
+    assert.equal(href, art.mobilePath);
+    assert.equal(writes, 1, 'a disposed scene cannot respond to a later source event');
+  } finally {
+    release?.(); resetArtTier();
+    if (wasRoot === undefined) delete doc.documentElement; else doc.documentElement = wasRoot;
+    for (const [key, descriptor] of Object.entries(globals)) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor); else delete globalThis[key];
+    }
+  }
+});
+
 // A HOLD THE BLUR CANCELLED OPENS NOTHING (#1298 post-merge review). End
 // Turn is armed by beatArmer as a review-on-tap hold (`tapOnEarlyRelease`,
 // `onTap` = the confirmation review). A key released EARLY is a tap and opens
@@ -384,7 +431,8 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 // `.onblur`), a computed event name or a computed key must be
 // [entry, why it cannot move run/combat state].
 const KNOWN = {
-  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot', '.__rewardStateForShot', '.__restStateForShot'],
+  'src/ui/alternativeArt.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), sent by an art-source or display-quality change, not the page lifecycle: updates only existing decorative scene image hrefs through alternativeArtUrl(); reads no run/combat state and dispatches no gameplay action; scene teardown removes this listener and disconnects its observer; covered by the mounted alternative-scene cycle above"]],
+  'src/main.js': ["'resize'", "'load'", "'resize'", ["'visibilitychange'", "flushes the queued combat entry checkpoint (main.js flushPendingEntryCheckpointSafely): writes the entry snapshot that enterCombat would otherwise have written synchronously, with the frozen entry RNG counters, and only while that run and fight are still current and have no entry snapshot; it changes no run/combat state and dispatches no gameplay action (tests/pending-entry-checkpoint.test.mjs)"], ["'pagehide'", "flushes the queued combat entry checkpoint (main.js flushPendingEntryCheckpointSafely): writes the entry snapshot that enterCombat would otherwise have written synchronously, with the frozen entry RNG counters, and only while that run and fight are still current and have no entry snapshot; it changes no run/combat state and dispatches no gameplay action (tests/pending-entry-checkpoint.test.mjs)"], '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot', '.__rewardStateForShot', '.__restStateForShot'],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],

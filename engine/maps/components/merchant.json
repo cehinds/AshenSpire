@@ -8,7 +8,7 @@
   "placement": {
     "minPerAct": 1,
     "noSameTypeAdjacent": true,
-    "source": "src/content/mapconfig.js:122; src/engine/mapgen.js:178"
+    "source": "content/source/mapActShape.json:18; src/engine/mapgen.js:178"
   },
   "rewards": {},
   "assets": [

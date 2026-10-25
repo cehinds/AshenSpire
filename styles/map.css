@@ -53,16 +53,16 @@
    opaque plates and hit targets over both light parchment and dark terrain. */
 .map-terrain .map-fog-ground .terrain-paper { fill: #c4af85; }
 .map-terrain .terrain-detail { opacity: 0.9; }
-.mapscreen .map-scroll:has(.map-terrain) { background: #c4af85; }
-.mapscreen svg:has(.map-terrain) .map-act-title {
+.mapscreen .map-scroll[data-terrain='generated'] { background: #c4af85; }
+.mapscreen svg > .map-terrain ~ .map-act-title {
   fill: #392613; stroke: #d8c49a; stroke-width: 2; paint-order: stroke;
 }
-.mapscreen svg:has(.map-terrain) .map-edge {
+.mapscreen svg > .map-terrain ~ .map-edge {
   stroke: #775125; stroke-opacity: 1; filter: drop-shadow(0 1px 1px #e2c994);
 }
-.mapscreen svg:has(.map-terrain) .map-edge.traveled { stroke: #b27c1f; }
-.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane { stroke: #dec46e; }
-.mapscreen.map-fog .map-frame:has(.map-terrain) .map-vignette {
+.mapscreen svg > .map-terrain ~ .map-edge.traveled { stroke: #b27c1f; }
+.mapscreen svg > .map-terrain ~ .map-edge.shrine-lane { stroke: #dec46e; }
+.mapscreen.map-fog .map-scroll[data-terrain='generated'] ~ .map-vignette {
   background: radial-gradient(ellipse at center, transparent 65%, rgba(45, 30, 13, 0.2));
 }
 
@@ -363,6 +363,8 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
    tone — which is precisely what my first draft did, photographed: the map read
    as flat concrete. */
 .map-fog-ground image { opacity: 1; mix-blend-mode: soft-light; }
+/* Lite: no blend pass over the map; the plate reads as a plain, faint texture instead. */
+:root[data-performance='lite'] .map-fog-ground image { mix-blend-mode: normal; opacity: 0.12; }
 /* Three acts, three washes. Deliberately close to each other and to the panel
    colour — the ground is meant to read as "nothing legible here", not as a
    feature competing with the nodes drawn on top of it. */
@@ -503,10 +505,10 @@ dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1
 .atlas-node-label,.atlas-local-point small { pointer-events:none; }
 
 /* Local maps keep controls and information outside the gesture viewport. */
-dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:min(1080px,calc((calc(100 * var(--view-vw, 1vw)) - 24px) / var(--ui-zoom,1))); height:min(860px,calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1))); max-height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); overflow:hidden; }
-.atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { flex:none; }
-.atlas-dialog:has(.atlas-local-port) .atlas-location-body { flex:1; min-height:0; }
-.atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { display:flex; flex-direction:column; gap:8px; min-height:0; }
+dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:min(1080px,calc((calc(100 * var(--view-vw, 1vw)) - 24px) / var(--ui-zoom,1))); height:min(860px,calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1))); max-height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); overflow:hidden; }
+.atlas-dialog[data-local-map='true'] .atlas-dialog-head,.atlas-dialog[data-local-map='true'] .atlas-dialog-foot { flex:none; }
+.atlas-dialog[data-local-map='true'] .atlas-location-body { flex:1; min-height:0; }
+.atlas-dialog[data-local-map='true'] .atlas-local-wrap { display:flex; flex-direction:column; gap:8px; min-height:0; }
 .atlas-local-tools,.atlas-local-zoom-tools,.atlas-local-pan-tools { display:flex; align-items:center; gap:5px; }
 .atlas-local-tools { justify-content:space-between; flex-wrap:wrap; }
 .atlas-local-tools .as-btn { min-width:max(36px,var(--tap-floor)); min-height:max(36px,var(--tap-floor)); padding:6px 10px; }
@@ -525,21 +527,21 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .atlas-local-point:hover,.atlas-local-point:focus-visible { z-index:4; }
 .atlas-local-picker-label { display:flex; align-items:center; gap:12px; font-size:13px; }
 .atlas-local-picker-label select { flex:1; min-width:0; min-height:max(44px,var(--tap-floor)); color:#f3dfb7; border:1px solid #947548; background:#211b14; padding:8px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-location-detail { overflow:auto; overscroll-behavior:contain; padding:22px; }
+.atlas-dialog[data-local-map='true'] .atlas-location-detail { overflow:auto; overscroll-behavior:contain; padding:22px; }
 .atlas-service-benefits h4 { margin:22px 0 10px; color:#f1d18b; }
 .atlas-service-benefits .atlas-service-benefit,.atlas-service-benefit { color:#f2dfb6; font-size:16px; }
 .atlas-service-benefits ul { padding-left:20px; font-size:14px; line-height:1.6; }
 .atlas-service-benefits li+li { margin-top:9px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-location-detail:has(.atlas-detail-scroll) { display:flex; flex-direction:column; overflow:hidden; }
+.atlas-dialog[data-local-map='true'] .atlas-location-detail:has(.atlas-detail-scroll) { display:flex; flex-direction:column; overflow:hidden; }
 .atlas-detail-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
 .atlas-detail-actions { flex:none; padding-top:8px; }
 .atlas-detail-actions .as-btn { margin-top:0; background:#302514; }
 @container game-viewport (max-width:700px) {
-  dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(100 * var(--view-vh, 1dvh)) - 16px) / var(--ui-zoom,1)); }
-  .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr); }
-  .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:10px 12px; }
-  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:8px; gap:5px; }
-  .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { padding:12px 18px; border-top:1px solid #655034; }
+  dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { height:calc((calc(100 * var(--view-vh, 1dvh)) - 16px) / var(--ui-zoom,1)); }
+  .atlas-dialog[data-local-map='true'] .atlas-location-body { grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr); }
+  .atlas-dialog[data-local-map='true'] .atlas-dialog-head,.atlas-dialog[data-local-map='true'] .atlas-dialog-foot { padding:10px 12px; }
+  .atlas-dialog[data-local-map='true'] .atlas-local-wrap { padding:8px; gap:5px; }
+  .atlas-dialog[data-local-map='true'] .atlas-location-detail { padding:12px 18px; border-top:1px solid #655034; }
   .atlas-local-help { font-size:max(10px,calc(11px / var(--ui-zoom,1))); }
   .atlas-local-tools { gap:3px; }
   .atlas-local-tools .as-btn { padding:4px; }
@@ -547,8 +549,8 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
   .atlas-local-zoom-tools output { min-width:38px; }
 }
 @container game-viewport (max-height:500px) and (min-width:701px) {
-  .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:6px 12px; }
-  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:6px; gap:3px; }
+  .atlas-dialog[data-local-map='true'] .atlas-dialog-head,.atlas-dialog[data-local-map='true'] .atlas-dialog-foot { padding:6px 12px; }
+  .atlas-dialog[data-local-map='true'] .atlas-local-wrap { padding:6px; gap:3px; }
   .atlas-local-help { display:none; }
   .atlas-local-port { min-height:80px; }
 }
@@ -582,44 +584,44 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .mapscreen .map-route-outline, .world-atlas-screen .atlas-roads .map-route-outline {
   stroke:#29251a; stroke-width:var(--map-route-outline-width,6px); stroke-linecap:round; stroke-dasharray:none; fill:none; opacity:.95;
 }
-.mapscreen svg:has(.map-terrain) .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
+.mapscreen svg > .map-terrain ~ .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
   stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round;
 }
-.mapscreen svg:has(.map-terrain) .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
-.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
-.mapscreen .map-scroll:has(.map-terrain), .atlas-scrollport, .atlas-world { background:#8b7d61; }
+.mapscreen svg > .map-terrain ~ .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
+.mapscreen svg > .map-terrain ~ .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
+.mapscreen .map-scroll[data-terrain='generated'], .atlas-scrollport, .atlas-world { background:#8b7d61; }
 .map-terrain .terrain-detail { opacity:1; }
 
 /* Tall local-location shell: the same map and action layout for every city. */
-dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); max-height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); }
-.atlas-dialog:has(.atlas-local-port) .atlas-location-body { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:minmax(320px, 2fr) minmax(150px,1fr); overflow:auto; overscroll-behavior:contain; }
-.atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1 / -1; min-height:280px; padding:12px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-local-port { min-height:220px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-width:0; min-height:150px; padding:16px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-local-tools { align-self:start; padding:16px 12px; flex-direction:column; }
-.atlas-dialog:has(.atlas-local-port) .atlas-local-help { order:2; }
-.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
+dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); max-height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); }
+.atlas-dialog[data-local-map='true'] .atlas-location-body { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:minmax(320px, 2fr) minmax(150px,1fr); overflow:auto; overscroll-behavior:contain; }
+.atlas-dialog[data-local-map='true'] .atlas-local-wrap { grid-column:1 / -1; min-height:280px; padding:12px; }
+.atlas-dialog[data-local-map='true'] .atlas-local-port { min-height:220px; }
+.atlas-dialog[data-local-map='true'] .atlas-location-detail { min-width:0; min-height:150px; padding:16px; }
+.atlas-dialog[data-local-map='true'] .atlas-local-tools { align-self:start; padding:16px 12px; flex-direction:column; }
+.atlas-dialog[data-local-map='true'] .atlas-local-help { order:2; }
+.atlas-dialog[data-local-map='true'] .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
 .atlas-dialog[data-local-map='true'] .atlas-dialog-foot > span { display:none; }
-.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
+.atlas-dialog[data-local-map='true'] .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
 .atlas-dialog[data-local-map='true'] .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
 @container game-viewport (max-width:700px) {
- .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,1.5fr) auto minmax(160px,1fr); }
- .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; min-height:300px; }
- .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-row:2; flex-direction:row; padding:6px 10px; }
- .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-height:160px; }
+ .atlas-dialog[data-local-map='true'] .atlas-location-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,1.5fr) auto minmax(160px,1fr); }
+ .atlas-dialog[data-local-map='true'] .atlas-local-wrap { grid-column:1; min-height:300px; }
+ .atlas-dialog[data-local-map='true'] .atlas-local-tools { grid-row:2; flex-direction:row; padding:6px 10px; }
+ .atlas-dialog[data-local-map='true'] .atlas-location-detail { min-height:160px; }
 }
 @container game-viewport (max-height:500px) and (min-width:701px) {
- .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:minmax(220px,1fr) auto; }
- .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; grid-row:1 / 3; min-height:280px; }
- .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { grid-column:2; grid-row:1; }
- .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-column:2; grid-row:2; padding:6px; flex-direction:row; }
+ .atlas-dialog[data-local-map='true'] .atlas-location-body { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:minmax(220px,1fr) auto; }
+ .atlas-dialog[data-local-map='true'] .atlas-local-wrap { grid-column:1; grid-row:1 / 3; min-height:280px; }
+ .atlas-dialog[data-local-map='true'] .atlas-location-detail { grid-column:2; grid-row:1; }
+ .atlas-dialog[data-local-map='true'] .atlas-local-tools { grid-column:2; grid-row:2; padding:6px; flex-direction:row; }
 }
 
 .atlas-dialog[data-local-map='true'] .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
 .atlas-detail-scroll { scrollbar-gutter:stable; scrollbar-color:#947548 #211b14; }
 
 /* A spatial direction pad followed by one minus / Fit / plus row. */
-.atlas-dialog:has(.atlas-local-port) .atlas-local-tools { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; padding:8px 12px; }
+.atlas-dialog[data-local-map='true'] .atlas-local-tools { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; padding:8px 12px; }
 .atlas-local-tools .atlas-local-pan-tools, .atlas-local-tools .atlas-local-zoom-tools { display:grid; grid-template-columns:repeat(3,max(40px,var(--tap-floor))); gap:4px; }
 .atlas-local-pan-tools [data-local-pan="up"] { grid-area:1 / 2; }
 .atlas-local-pan-tools [data-local-pan="left"] { grid-area:2 / 1; }
@@ -628,7 +630,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(
 .atlas-local-tools .as-btn { width:100%; min-width:0; padding:4px; }
 .atlas-local-pan-tools output { grid-area:2 / 2; align-self:center; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
 @container game-viewport (max-height:500px) and (min-width:701px) {
- .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { flex-direction:row; align-items:center; justify-content:space-evenly; flex-wrap:wrap; }
+ .atlas-dialog[data-local-map='true'] .atlas-local-tools { flex-direction:row; align-items:center; justify-content:space-evenly; flex-wrap:wrap; }
 }
 
 /* Ordinary road/encounter inspection uses scene art, never an enlarged map tile. */

@@ -1,0 +1,20 @@
+{
+  "reason": "Console viewer copy introduced or shared by PR #2284; retain the copy and semantic-key checks after origin/dev advances.",
+  "ids": [
+    "common.copy",
+    "common.export",
+    "settings.row.combatLogConsole",
+    "debugChrome.console",
+    "debugChrome.consoleOutput",
+    "debugChrome.consoleExportTitle",
+    "debugChrome.consoleManualCopy",
+    "debugChrome.consoleShared",
+    "debugChrome.consoleDownloaded",
+    "debugChrome.consoleExportCancelled",
+    "debugChrome.consoleExportUnavailable",
+    "debugChrome.consoleExportTime",
+    "debugChrome.consoleRetention",
+    "debugChrome.consoleExportBoundary",
+    "debugChrome.consoleExportPrivacy"
+  ]
+}

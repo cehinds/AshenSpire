@@ -192,6 +192,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
+  'tools/css-strip.mjs',
   // THE REST OF THE BUNDLER'S IMPORT GRAPH (docs/EXTERNAL-ASSETS-PLAN.md step
   // 12): every tools/ module tools/bundle.mjs reaches decides which bytes a
   // build carries, so a change to any of them is a new build.
@@ -316,6 +317,11 @@ const CONTRACT_COLUMN_SITES = Object.freeze([
     file: 'asset-data/classes/successor-packet.manifest.json',
     key: 'source_export_recipe_and_tool_version',
     why: 'art runbook §3 twelve-column manifest contract; the value is the column\'s prose answer, not a build version',
+  },
+  {
+    file: 'src/content/generated/balanceProgression.js',
+    key: 'version',
+    why: 'the "$note" sentence for balanceProgression.version (the saved progression contract number, content/source/balanceProgression.json); the Settings note is prose, not a build version',
   },
 ]);
 

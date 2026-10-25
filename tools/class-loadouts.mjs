@@ -27,11 +27,12 @@ if (process.argv.includes('--selftest')) {
     plants: [
       {
         name: 'the authored role copies stop summing to the starting deck size',
-        file: 'src/content/balance.js',
-        // The object spans lines since its note moved in beside it (#1243);
-        // the numbers still sit on one line, and this still breaks the sum.
-        find: 'roleCopies: {\n      attack: 4, guard: 4, technique: 1, signature: 1, ability: 1,',
-        replace: 'roleCopies: {\n      attack: 5, guard: 4, technique: 1, signature: 1, ability: 1,',
+        file: 'content/source/balanceEquipment.json',
+        // The numbers are authored in content/source/balanceEquipment.json (one
+        // per line); the build recompiles them into the generated module.
+        find: '"roleCopies": {\n    "attack": 4,',
+        replace: '"roleCopies": {\n    "attack": 5,',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /FAIL default roleCopies are 4\/4\/1\/1/,
       },
       {

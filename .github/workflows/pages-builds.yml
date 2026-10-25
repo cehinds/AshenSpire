@@ -231,6 +231,7 @@ jobs:
       # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
       comment_targets: ${{ steps.feature_previews.outputs.comment_targets }}
       preview_targets: ${{ steps.feature_previews.outputs.preview_targets }}
+      primary_targets: ${{ steps.primary_targets.outputs.targets }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -487,6 +488,11 @@ jobs:
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
           node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
+      - name: Capture the exact primary channel pages this assembly will deploy
+        id: primary_targets
+        run: |
+          targets=$(node tools/check-feature-pages.mjs --capture-primary _site)
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
       # THE WORKBENCH IS PUBLISHED AS A STATIC SITE, BUILT FROM THIS RUN'S CHECKOUT.
       #
       # It lives at /workbench/ beside the game builds. On the workflow_run publish
@@ -495,18 +501,20 @@ jobs:
       # (workbench/static/static-api.mjs) and keeps edits in the visitor's browser;
       # nothing on the page writes to the repository.
       #
-      # The art it copies (assets-mobile/ and assets-display/) is tracked in git and
-      # already in this checkout, so nothing is fetched here: a fetch only filled an
-      # unused cache and could stall the job past its timeout.
-      #
+      # The gallery snapshot and static copy read this checkout's verified cache.
+      # Main's build and historical rebuilds fetch into their own worktrees, so
+      # hydrate this checkout's pinned LIGHT + COMMON before either reader runs.
+      - name: Fetch pinned light/common art for the publishing checkout
+        uses: ./.github/actions/fetch-art
+        with:
+          packs: light,common
       # It builds into $RUNNER_TEMP and is moved into _site only after the tool exits
-      # 0, so a failed build publishes nothing. timeout-minutes bounds a stall.
-      #
-      # The step may fail without stopping the site: continue-on-error keeps a
-      # Workbench failure to a warning in this run, and the game site still publishes.
+      # 0. Both hydration and static assembly are required: a missing Workbench
+      # must stop publication. timeout-minutes bounds a stalled static build.
       - name: "Build the published Workbench at /workbench/ (from this checkout)"
-        continue-on-error: true
         timeout-minutes: 10
+        env:
+          ASHEN_ART_SOURCE: cache
         run: |
           set -euo pipefail
           node tools/workbench-static.mjs --out "$RUNNER_TEMP/workbench" --base /AshenSpire/workbench/
@@ -730,10 +738,11 @@ jobs:
           persist-credentials: false
           sparse-checkout: tools/check-feature-pages.mjs
           sparse-checkout-cone-mode: false
-      - name: Verify public feature preview delivery
+      - name: Verify public primary channels and feature preview delivery
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
           PREVIEW_TARGETS: ${{ needs.assemble.outputs.preview_targets }}
+          PRIMARY_TARGETS: ${{ needs.assemble.outputs.primary_targets }}
         run: node tools/check-feature-pages.mjs
       # The publication's own receipt, so the run that published says so rather
       # than leaving the assemble job's summary as the last word on it.

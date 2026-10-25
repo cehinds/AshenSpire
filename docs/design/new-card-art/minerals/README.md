@@ -1,6 +1,6 @@
 # Mineral component proposals
 
-Open [the gallery and placement editor](index.html), or download [the PNG/JSON/viewer bundle](minerals-png-json.zip).
+Open [the gallery and placement editor](index.html), or download [the PNG/JSON/viewer bundle](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/minerals/minerals-png-json.zip).
 
 Ten variations each: **A shard, B pebble, C stone, D crystal, E diamond**. This is a separate `minerals/` namespace; existing weapon A–Z codes are unchanged. `minerals/B37` means pebble object 3 with effect pair 7. Zero is a real variant. The 50 initial previews use matched digits (A00, A11 … E99); the editor allows all 500 combinations.
 
@@ -18,7 +18,14 @@ These are generated art proposals. Overlay alignment is approximate and editable
 
 ## Reproduction
 
-`sources.json` records the generated source sheets, references, source hashes, effect prompts and the base-art brief (the original base prompt is not archived here). The 15 original RGBA sheets are in `sources/`. `python export.py` uses ImageMagick to extract a fixed 5×2 grid, normalize all cells to 400×400 and regenerate the manifest and browser data. This is technical extraction; the object, crack and glow artwork was generated with OpenAI ImageGen.
+The authoritative self-contained reproduction package, including `export.py`, `sources.json`, `isolation-crops.json` and the 15 original RGBA sheets, lives in [AI-Art, branch ashenspire](https://github.com/cehinds/AI-Art/tree/ashenspire/docs/design/new-card-art/minerals). Run from that **AI-Art checkout**, not this retained Game viewer folder:
+
+```sh
+cd docs/design/new-card-art/minerals
+python export.py
+```
+
+The exporter uses ImageMagick to extract a fixed 5×2 grid, normalize all cells to 400×400 and regenerate `png/`, `manifest.json` and `data.js` beside itself in AI-Art. Review and commit those source/export changes there; it does not write Game runtime catalogs. `sources.json` records source hashes, effect prompts and the base-art brief (the original base prompt is not archived here). This is technical extraction; the object, crack and glow artwork was generated with OpenAI ImageGen.
 
 `isolation-crops.json` records additional crop rectangles that remove small neighboring atlas fragments while retaining the main sprite's original canvas position.
 

@@ -693,6 +693,9 @@ function wireTitles() {
   }, true);
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
+    // hideTooltip preserves deliberate selection but releases its observer.
+    // A replaced owner has nothing left to dismiss above the current surface.
+    if (selectedControl && !selectedControl.isConnected) clearControlSelection();
     if (state[1].open) { hide(1); ev.stopImmediatePropagation(); }
     else if (state[0].open || (selectedControl && selectionOrigin === 'explicit')) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
     // A pending hover/focus has shown nothing to dismiss. Cancel it without

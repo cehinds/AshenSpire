@@ -293,7 +293,7 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   return JSON.stringify(log);
 }
 
-test('with round preview off, seeded fight receipts preserve the golden apart from public enemy forecasts', () => {
+test('with round preview off, seeded fight receipts preserve the golden apart from approved event metadata', () => {
   const logs = [1, 2, 3].map((s) => scriptedLog(s));
   const all = logs.join('\n');
   assert.deepEqual(logs.map(log => JSON.parse(log).at(-1)), [
@@ -326,11 +326,20 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   // public forecasts on the actor-start/move-start events. Remove only those
   // two new fields at those event boundaries; every old field and ordering
   // must still match the existing golden. The full new log repeats above.
+  // #2260 adds only previousTotal to statusApplied for actual-gain feedback.
+  // Pin those 18 receipts before removing that single additive field; keep
+  // every prior gameplay byte, end state and full-log replay check intact.
+  const previousTotals = [];
   const legacy = logs.map(text => {
     const log = JSON.parse(text);
     for (const entry of log) {
       const events = entry[0] === 'play' ? entry[2] : entry[0] === 'end' ? entry[1] : [];
       for (const event of events) {
+        if (event.type === 'statusApplied') {
+          assert.ok(Number.isInteger(event.previousTotal) && event.previousTotal >= 0);
+          previousTotals.push(event.previousTotal);
+          delete event.previousTotal;
+        } else assert.equal(Object.hasOwn(event, 'previousTotal'), false, 'before-total metadata belongs only to statusApplied');
         if (event.type === 'enemyActorTurnStarted') delete event.intentPreview;
         if (event.type === 'enemyMoveStarted') {
           delete event.intentPreview;
@@ -340,6 +349,8 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
     }
     return JSON.stringify(log);
   }).join('\n');
+  assert.equal(previousTotals.length, 18, 'the scripted fights carry exactly 18 status before-total receipts');
+  assert.deepEqual(previousTotals, [0, 0, 0, 1, 2, 2, 0, 0, 1, 1, 2, 0, 0, 1, 2, 0, 0, 0]);
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
     { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
 });
@@ -899,6 +910,6 @@ test('scopes the delayed Poise multiplier to payload completion, not reaction at
     'completion-generated guard-break and trait pressure carry the multiplier');
   assert.match(expansionSource, /finally \{\s+if \(roundPoiseMultiplier\) ctx\.enqueue = previousEnqueue;/,
     'the completion-only enqueue wrapper is always restored');
-  assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier \}\)/, 'the delayed move passes its saved scope to its payload');
+  assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier, spPayment \}\)/, 'the delayed move passes its saved scope and payment receipt to its payload');
   assert.doesNotMatch(source, /cursor\.roundPoiseMultiplier/, 'the whole reaction drain is never globally scoped');
 });

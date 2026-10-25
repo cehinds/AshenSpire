@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/art-intake.mjs — which files in a pull request belong to the art
-// repository (cehinds/AshenSpire-art), and where each one goes there.
+// repository (cehinds/AI-Art, ashenspire branch), and where each one goes there.
 //
 //   node tools/art-intake.mjs --list --base <sha> --head <sha>
 //       one repository path per line, for every file ADDED or MODIFIED in
@@ -25,17 +25,18 @@
 // token is used only by the git push and gh steps that follow.
 //
 
-// WHICH FILES (owner, 2026-10-11). The art repository holds what
+// WHICH FILES (owner, 2026-10-25; light/display relocation supersedes 2026-10-11). The art repository holds what
 // art-manifest.json's own roots name (tools/art-manifest.mjs, commonSources
 // and the high tier): the high tier under assets/ (fonts and sound effects
 // included), the score's renders music/manifest.json and music/**/*.mp3, the
-// map detail tiles under map-detail/, and the authoring tree art/. NEVER
-// migrated: assets-mobile/ (the light tier stays tracked here) and the score's
-// source music/score/ (the step-13 note keeps it here).
+// map detail tiles under map-detail/, display images, the light tier and art/.
+// Display JSON/Markdown catalogs and score source music/score/ stay game-owned.
 //
 // WHERE THEY GO (the art repository's layout, its README's table):
 //   assets/fonts/…         common/assets/fonts/…
 //   assets/…               hd/assets/…
+//   assets-mobile/…        light/assets/…
+//   assets-display/<image> common/assets-display/<image>
 //   music/manifest.json,   common/music/…
 //     music/**/*.mp3
 //   map-detail/…           common/map-detail/…
@@ -46,14 +47,17 @@
 
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MIME } from './assetmime.mjs';
 
-export const ART_REPO = 'cehinds/AshenSpire-art';
+export const ART_REPO = 'cehinds/AI-Art';
 
 /** A repository path → where the art repository keeps it, or null when it is not an art file. */
 export function destinationFor(rel) {
   const p = rel.replace(/^\.\//, '');
+  if (p.startsWith('assets-mobile/')) return `light/assets/${p.slice('assets-mobile/'.length)}`;
+  if (p.startsWith('assets-display/') && MIME[extname(p).toLowerCase()]?.startsWith('image/')) return `common/${p}`;
   if (p.startsWith('assets/fonts/')) return `common/${p}`;
   if (p.startsWith('assets/')) return `hd/${p}`;
   if (p.startsWith('map-detail/')) return `common/${p}`;
@@ -64,12 +68,11 @@ export function destinationFor(rel) {
 
 /**
  * classify(rel) → { verdict, dest }. verdict is 'migrate' (an art-repository
- * file, with its dest), 'stays' (an art file this checkout keeps: the light
- * tier, the score's source and notes), or 'ignored' (not art).
+ * file, with its dest), 'stays' (display catalogs or score source/notes), or 'ignored' (not art).
  */
 export function classify(rel) {
   const p = String(rel).replace(/^\.\//, '');
-  if (p.startsWith('assets-mobile/')) return { verdict: 'stays', dest: null };
+  if (/^assets-display\/.*\.(?:json|md)$/i.test(p)) return { verdict: 'stays', dest: null };
   if (p.startsWith('music/') && !destinationFor(p)) return { verdict: 'stays', dest: null };
   const dest = destinationFor(p);
   if (dest) return { verdict: 'migrate', dest };
@@ -170,7 +173,9 @@ export function selftest() {
   check('high tier file migrates to hd/', classify('assets/bg/town.webp'), { verdict: 'migrate', dest: 'hd/assets/bg/town.webp' });
   check('font migrates to common/', classify('assets/fonts/Inter.woff2'), { verdict: 'migrate', dest: 'common/assets/fonts/Inter.woff2' });
   check('sound effect rides the high tier', classify('assets/sfx/click.ogg'), { verdict: 'migrate', dest: 'hd/assets/sfx/click.ogg' });
-  check('light tier stays', classify('assets-mobile/bg/town.webp'), { verdict: 'stays', dest: null });
+  check('light tier migrates', classify('assets-mobile/bg/town.webp'), { verdict: 'migrate', dest: 'light/assets/bg/town.webp' });
+  check('display image migrates', classify('assets-display/shared/a.png'), { verdict: 'migrate', dest: 'common/assets-display/shared/a.png' });
+  check('display catalog stays', classify('assets-display/layered/manifest.json'), { verdict: 'stays', dest: null });
   check('score source stays', classify('music/score/theme.mjs'), { verdict: 'stays', dest: null });
   check('music manifest migrates', classify('music/manifest.json'), { verdict: 'migrate', dest: 'common/music/manifest.json' });
   check('music render migrates', classify('music/town/theme.mp3'), { verdict: 'migrate', dest: 'common/music/town/theme.mp3' });
@@ -183,9 +188,9 @@ export function selftest() {
   check('diff parser keeps A and M only', parseNameStatus(diff), [
     { status: 'M', path: 'assets/bg/a.webp' }, { status: 'A', path: 'src/x.js' }, { status: 'A', path: 'music/town.mp3' },
   ]);
-  check('intake sorts migrations and names the kept light files', intake([
+  check('intake sorts high, light and common migrations', intake([
     { status: 'A', path: 'music/town.mp3' }, { status: 'M', path: 'assets-mobile/a.webp' }, { status: 'A', path: 'assets/a.webp' },
-  ]), { migrate: [{ path: 'assets/a.webp', dest: 'hd/assets/a.webp' }, { path: 'music/town.mp3', dest: 'common/music/town.mp3' }], stays: ['assets-mobile/a.webp'] });
+  ]), { migrate: [{ path: 'assets-mobile/a.webp', dest: 'light/assets/a.webp' }, { path: 'assets/a.webp', dest: 'hd/assets/a.webp' }, { path: 'music/town.mp3', dest: 'common/music/town.mp3' }], stays: [] });
   check('a ref starting with a dash is refused', (() => { try { checkRef('--output=/tmp/x'); return 'accepted'; } catch (e) { return e.exit; } })(), 2);
   for (const bad of ['hd/../x', 'art/.git/config', 'common//x', 'art/./x']) {
     check(`a destination ${bad} is refused`, (() => { try { checkDest(bad); return 'accepted'; } catch (e) { return e.exit; } })(), 2);

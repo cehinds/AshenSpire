@@ -403,10 +403,15 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 
 /* ---------- screen transitions (every mount fades in) ---------- */
 #app > * { animation: screenIn 240ms ease-out; }
+/* A fight is being entered (one frame): taps elsewhere wait (main.js startFight). */
+#app[aria-busy="true"] { pointer-events: none; }
 @keyframes screenIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
+/* Lite: fade only; a transform animation on a whole screen promotes it to a layer. */
+@keyframes screenInLite { from { opacity: 0; } to { opacity: 1; } }
+:root[data-performance='lite'] #app > * { animation-name: screenInLite; }
 
 /* Accessibility: honor reduced-motion for ALL animation (GDD §6).
    TRANSITIONS ARE OFF, NOT SHORT. The usual snippet sets

@@ -26,7 +26,10 @@ test('approved PNGs are packaged byte-for-byte and generated JSON agrees with ru
     assert.equal(asset.bytes.toString('hex', 0, 8), '89504e470d0a1a0a');
     assert.equal(manifest.assets[asset.id].common.sha256, asset.sha256);
   }
-  assert.throws(() => withCardCutouts(manifest, root), /collides/);
+  assert.deepEqual(withCardCutouts(manifest, root), manifest);
+  const collision = structuredClone(manifest);
+  collision.assets[assets[0].id].common.bytes++;
+  assert.throws(() => withCardCutouts(collision, root), /collides/);
 });
 test('one physical model per action, scythe for Sweep and independent sword/shield for Counter', () => {
   for (const [maneuver, id] of [['attack','O.object.0'],['smash','O.object.1'],['sweep','L.object.4'],['defend','O.object.4'],['counter','O.object.4']]) {

@@ -2,6 +2,7 @@
 // animation/stance changes must never resize the formation during a turn.
 import { stageFor } from '../services/PoseAnimator.js';
 import { projectBodyBounds } from '../models/CombatBodyModel.js';
+import { measure, invalidateMeasures } from '../frameMeasure.js';
 const boundsCache = new Map();
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
@@ -119,6 +120,14 @@ export function combatSpriteGeometry(sprite, refresh) {
     footOffset: paintedEnemy ? 0 : boxHeight - ((boxHeight - img.naturalHeight * scale) / 2 + ground * scale) };
 }
 
+// Painted canvases' boxes, remembered for the rest of the current task so the
+// 30-50 reads a play makes (body, art, hit badge, overhead, HUD) are one layout
+// read apiece per canvas instead of one each (the cache itself is frameMeasure's,
+// shared with fx.js). Any caller that writes geometry (a sprite's zoom, margin or
+// position) calls invalidateSpriteRects() around the write.
+export function invalidateSpriteRects() { invalidateMeasures(); }
+export const cachedCanvasRect = (canvas) => measure(canvas);
+
 // Current pose ink, in physical screen pixels. Formation fitting continues to
 // use the stable idle envelope; only the overhead widget follows pose/lunge.
 export function currentSpriteArtBounds(sprite, refresh = () => {}) {
@@ -126,7 +135,7 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
   if (painted) {
     const bounds = imageBounds(painted.image, refresh);
     if (bounds) {
-      const rect = painted.canvas.getBoundingClientRect();
+      const rect = cachedCanvasRect(painted.canvas);
       const sx = rect.width / painted.canvas.width, sy = rect.height / painted.canvas.height;
       return { top: rect.top + (painted.top + bounds.y0 * painted.height / painted.image.naturalHeight) * sy,
         bottom: rect.top + (painted.top + (bounds.y1 + 1) * painted.height / painted.image.naturalHeight) * sy,
@@ -168,7 +177,7 @@ export function currentSpriteBodyBounds(sprite, refresh = () => {}) {
   const authored = stage?.currentBody;
   if (authored) return authored;
   const current = stage?.currentArt;
-  if (current?.body) return projectBodyBounds(current.body, current.canvas.getBoundingClientRect(), current.canvas.width, current.canvas.height);
+  if (current?.body) return projectBodyBounds(current.body, cachedCanvasRect(current.canvas), current.canvas.width, current.canvas.height);
   const bounds = currentSpriteArtBounds(sprite, refresh);
   return { ...bounds, headY: bounds.top, feetY: bounds.bottom,
     bodyHeight: bounds.bottom - bounds.top, source: 'unregistered' };

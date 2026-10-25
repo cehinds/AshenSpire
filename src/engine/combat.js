@@ -1,4 +1,5 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
+import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
@@ -333,6 +334,7 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
+    combat.core2ActionRulesVersion = CORE2_ACTION_RULES_VERSION;
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
   }
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
@@ -739,6 +741,7 @@ function enemyOwnerTurnStart(combat, enemy) {
   if (fixCoreEnabled(combat)) {
     // A Poise break (Staggered stance) took SP from this turn's pool; it is owed once.
     enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0));
+    if (core2ActionPolicyEnabled(combat)) enemy.stamina = enemy.fixCoreStaminaRemaining;
     enemy.pendingStaminaLoss = 0;
   }
   beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
@@ -799,8 +802,9 @@ function enemyPhase(combat) {
         // Rounds mode: a charge whose hit roll missed resolves as that miss, applying nothing.
         const missed = enemy.pendingMove.missed === true;
         const roundPoiseMultiplier = enemy.pendingMove.roundPoiseMultiplier;
+        const spPayment = enemy.pendingMove.spPayment;
         enemy.pendingMove = null;
-        if (!missed) executeMovePayload(combat, enemy, move, moveId, { roundPoiseMultiplier });
+        if (!missed) executeMovePayload(combat, enemy, move, moveId, { roundPoiseMultiplier, spPayment });
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (!preview && enemy.intent && enemy.intent.moveId) {
@@ -875,6 +879,12 @@ function enemyPhase(combat) {
 // Commit turn of a delayed move: telegraph stays, do the whileCharging part now, resolve the real
 // payload on a later enemy turn.
 function startDelayedMove(combat, enemy, move, moveId) {
+  let spPayment;
+  if (core2ActionPolicyEnabled(combat)) {
+    const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat });
+    if (!Rounds.commitEnemySp(combat, enemy, moveId, quote.totalSp)) return 'refused';
+    spPayment = { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp };
+  }
   const wc = (move.delay && move.delay.whileCharging) || {};
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   if (wc.block != null) {
@@ -896,6 +906,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
   enemy.pendingMove = {
     moveId,
     resolveOnTurn: combat.turn + (move.delay.turns != null ? move.delay.turns : 1),
+    ...(spPayment ? { spPayment } : {}),
   };
   if (enemy.intent?.moveId === moveId) enemy.intent = { ...enemy.intent, pending: true };
 }
@@ -906,22 +917,31 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
-function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
-  const spCost=Rounds.enemyMoveSp(move,{enemy,moveId,combat});
+function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier, spPayment } = {}) {
+  const prepaid = core2ActionPolicyEnabled(combat) && spPayment;
+  const spCost=prepaid ? spPayment.sp : Rounds.enemyMoveSp(move,{enemy,moveId,combat});
   move = expandedEnemyMove(enemy, move, moveId, combat);
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
   const rangeQuote = quoteRangeActions(combat, enemy, actions, { route: 'advance', preview: true });
   const totalSp = spCost + (rangeQuote?.advanceSp || 0);
   if (fixCoreEnabled(combat)) {
-    const available=enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
-    if(totalSp>available && rangeQuote?.advanceSp > 0) {
+    const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
+    const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
+    if(!prepaid && required>available && rangeQuote?.advanceSp > 0) {
       const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
-      if (closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId, { roundEntry, roundPoiseMultiplier });
+      const closingEligible = !core2ActionPolicyEnabled(combat) || (!closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId)));
+      if (closingEligible && closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId, { roundEntry, roundPoiseMultiplier });
     }
-    if(totalSp>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:totalSp,available,resource:'sp'});return 'refused';}
-    enemy.fixCoreStaminaRemaining=available-spCost;
+    if(required>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required,available,resource:'sp'});return 'refused';}
+    enemy.fixCoreStaminaRemaining=available-(prepaid ? required : spCost);
     enemy.stamina=enemy.fixCoreStaminaRemaining;
+    if (prepaid && combat.rangeState) {
+      // The charge already paid its accepted price. Retain that payment when
+      // it lands; only a newly required Advance surcharge is charged above.
+      carrier.rangePlan = quoteRangeActions(combat, enemy, actions, { route: 'advance' });
+      carrier.rangePlan.paid = { energy: spPayment.totalSp + required, stamina: spPayment.totalSp + required, mana: 0 };
+    }
   }
   if (!allowBurdenMove(combat,enemy,spCost,move)) return 'blocked';
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
@@ -1002,7 +1022,7 @@ function rollIntents(combat, isFirstTurn = false) {
   // stream; slot 0 becomes the intent, so the intent box and the visibility rolls read as before.
   const queues = combat.combatRounds ? Rounds.buildEnemyQueues(combat, {
     isFirstTurn,
-    pick: (enemy, def, maxSp) => weightedMovePick(combat, enemy, def, maxSp),
+    pick: (enemy, def, maxSp, pricing = combat) => weightedMovePick(pricing, enemy, def, maxSp),
     held: (enemy) => Boolean(enemy.pendingMove) || enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn'),
   }) : null;
   // Normal combat (SPEC §4.6, owner 2026-10-12): every enemy plans its pool of SP with the same weighted pick. The head
@@ -1023,7 +1043,7 @@ function rollIntents(combat, isFirstTurn = false) {
     // Rounds mode: the queue's slot 0, already recorded in movesHistory. Normal combat: the head of the plan, whose picks
     // were recorded when planned (SPEC §4.11 multi-action preview; the pool plays all of it).
     const moveId = queues ? (queues[enemy.id]?.[0]?.moveId ?? null)
-      : Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp) => weightedMovePick(combat, e, d, maxSp) });
+      : Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp, pricing = combat) => weightedMovePick(pricing, e, d, maxSp) });
     if (moveId == null) {
       enemy.intent = { kind: 'unknown', moveId: null };
       continue;
@@ -1059,9 +1079,27 @@ function presentIntent(combat, enemy, def, moveId) {
 // Reaction moves (docs/combat-card-traits-contract.md, "Enemy reactions") are never rolled: they are dropped before any
 // weighting, maxConsecutive or pattern indexing.
 function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
+  const policy = core2ActionPolicyEnabled(combat);
+  const closingId = def.rangeClosingMove, closing = def.moves[closingId];
+  const canClose = policy && !closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId))
+    && closing?.effects?.some(effect => effect.op === 'moveEngagement')
+    && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
+  const replacements = new Map();
   const entries = Object.entries(def.moves).filter(
-    ([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id))
-      && Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp
+    ([id, mv]) => {
+      if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
+      if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
+      const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
+      if (quote.totalSp <= maxSp) return true;
+      // Preserve the authored attack choice when only its approach is too
+      // expensive. Commit its owned, affordable closing move in the forecast,
+      // rather than filtering the attack before AI weighting can choose it.
+      if (canClose && quote.sp <= maxSp && quote.advanceSp > 0) {
+        replacements.set(id, closingId);
+        return true;
+      }
+      return false;
+    }
   );
   if (entries.length === 0) return null;
 
@@ -1078,13 +1116,14 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const pool = eligible.length > 0 ? eligible : entries;
 
   const total = pool.reduce((acc, [, mv]) => acc + mv.weight, 0);
-  if (total <= 0) return pool[0][0];
+  if (total <= 0) return replacements.get(pool[0][0]) ?? pool[0][0];
   let r = combat.rng.float('enemyAI') * total;
   for (const [id, mv] of pool) {
     r -= mv.weight;
-    if (r < 0) return id;
+    if (r < 0) return replacements.get(id) ?? id;
   }
-  return pool[pool.length - 1][0];
+  const last = pool[pool.length - 1][0];
+  return replacements.get(last) ?? last;
 }
 
 function buildIntent(move, moveId, enemy = null, combat = null) {

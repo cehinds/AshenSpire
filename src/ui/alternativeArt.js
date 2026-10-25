@@ -6,12 +6,22 @@ import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 import { classicAppearance } from './displayAppearance.js';
 import { reducedMotionRequested } from './motion.js';
+import { displaySceneryTier } from './artTier.js';
+import { ART_SOURCE_EVENT } from './highResArt.js';
+import { isWideFormFactor } from './models/FormFactorModel.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
 /* ALTERNATIVE_ART_END */
 export const alternativeArtUrl = path => alternativeArtMap[path] || assetUrl(path);
 const phoneArt = () => typeof document !== 'undefined' && document.documentElement.dataset.layout === 'narrow';
+
+// Scenery detail changes the image source, never its authored canvas or framing.
+function sceneArtPath(art, narrow = phoneArt()) {
+  const factor = globalThis.document?.documentElement?.dataset.formFactor;
+  const desktop = !narrow && (!factor || isWideFormFactor(factor));
+  return art[desktop && displaySceneryTier() === 'high' ? 'path' : 'mobilePath'];
+}
 
 // Dedicated canonical appearances win over legacy painted-rig aliases. Shared
 // armor keeps the package's explicit visual-class mapping until dedicated art lands.
@@ -96,7 +106,7 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   const device = scene.devices[mobile ? 'phone' : 'desktop'];
   return `<div class="backdrop alternative-backdrop" data-region="${scene.region}" data-scene="${sceneId}" aria-hidden="true">
     <svg class="alternative-scene" viewBox="0 0 ${device.width} ${device.height}" focusable="false">
-      ${combatSceneLayers(device).map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(alternativeArtCatalog.sceneLayers[layer.id][mobile ? 'mobilePath' : 'path'])}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
+      ${combatSceneLayers(device).map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], mobile))}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
     </svg></div>${alternativeCardFadeHtml()}`;
 }
 
@@ -162,7 +172,7 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     group.dataset.depth = String(layer.depth);
     image.dataset.layer = layer.id;
     for (const prop of ['x', 'y', 'width', 'height']) image.setAttribute(prop, layer[prop]);
-    const href = alternativeArtUrl(narrow ? art.mobilePath : art.path);
+    const href = alternativeArtUrl(sceneArtPath(art, narrow));
     if (image.getAttribute('href') !== href) image.setAttribute('href', href);
     group.style.visibility = ['far', 'landmark'].includes(art.kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : '';
   });
@@ -190,6 +200,17 @@ export function wireAlternativeBackdrop(combat) {
     }
   };
   const reset = () => layers.forEach(layer => { if (layer.style.transform) layer.style.transform = ''; });
+  const refreshSources = () => {
+    const narrow = combat.querySelector('.alternative-backdrop')?.dataset.device === 'phone' || phoneArt();
+    for (const layer of layers) {
+      const image = layer.firstElementChild;
+      const art = alternativeArtCatalog.sceneLayers[image?.dataset.layer];
+      if (!art) continue;
+      const href = alternativeArtUrl(sceneArtPath(art, narrow));
+      if (image.getAttribute('href') !== href) image.setAttribute('href', href);
+    }
+  };
+  document.addEventListener?.(ART_SOURCE_EVENT, refreshSources);
   combat.addEventListener('pointermove', move);
   combat.addEventListener('pointerleave', reset);
   reduced.addEventListener('change', reset);
@@ -198,5 +219,5 @@ export function wireAlternativeBackdrop(combat) {
   const setting = typeof MutationObserver === 'function'
     ? new MutationObserver(() => { if (reducedMotionRequested()) reset(); }) : null;
   setting?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  return () => { combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); setting?.disconnect(); };
+  return () => { document.removeEventListener?.(ART_SOURCE_EVENT, refreshSources); combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); setting?.disconnect(); };
 }

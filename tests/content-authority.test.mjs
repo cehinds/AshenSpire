@@ -20,11 +20,21 @@ import { starseerCards } from '../src/content/cards/starseer.js';
 import { armamentCards } from '../src/content/cards/armaments.js';
 import { colorlessCards } from '../src/content/cards/colorless.js';
 import { corruptedCards } from '../src/content/cards/corrupted.js';
+import { rogueCards } from '../src/content/cards/rogue.js';
 import { act1Enemies } from '../src/content/enemies/act1.js';
 import { act2Enemies } from '../src/content/enemies/act2.js';
 import { act3Enemies } from '../src/content/enemies/act3.js';
 import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
 import { contentBundle } from '../src/content/index.js';
+import { combatExpansionLore } from '../src/content/combatExpansionLore.js';
+import { combatExpansionEquipment } from '../src/content/combatExpansionEquipment.js';
+import { combatExpansionCardOverlay, combatExpansionSpellProfiles, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
+import { combatExpansionCardTables } from '../src/content/generated/combatExpansionCardTables.js';
+import { combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
+import { combatExpansionMartialTables } from '../src/content/generated/combatExpansionMartialTables.js';
+import { attributes, creationModes, attributeRules } from '../src/content/attributes.js';
+import { derivedStatRules } from '../src/content/derivedStats.js';
+import * as actionCostsModule from '../src/content/actionCosts.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -118,8 +128,8 @@ test('events: src/content/events.js is a shim with no event literal', () => {
   }
 });
 
-// Cards: six class/armament pools are JSON under content/source/cards, named for the
-// export they compile to. rogue.js and coop.js hold builder functions and stay JS.
+// Cards: seven class/armament pools are JSON under content/source/cards, named for the
+// export they compile to. coop.js holds builder functions and stays JS.
 // None of the old pools was frozen, and none is now.
 const CARD_POOLS = {
   herald: ['heraldCards', heraldCards],
@@ -128,6 +138,7 @@ const CARD_POOLS = {
   armaments: ['armamentCards', armamentCards],
   colorless: ['colorlessCards', colorlessCards],
   corrupted: ['corruptedCards', corruptedCards],
+  rogue: ['rogueCards', rogueCards],
 };
 
 for (const [file, [exportName, exported]] of Object.entries(CARD_POOLS)) {
@@ -154,8 +165,8 @@ test('cards: the pools keep the freeze depth they had (unfrozen, top level and r
   }
 });
 
-test('cards: the shim for a builder pool (rogue, coop) still authors its cards in JS', () => {
-  for (const file of ['rogue', 'coop']) {
+test('cards: the shim for a builder pool (coop) still authors its cards in JS', () => {
+  for (const file of ['coop']) {
     const text = readFileSync(resolve(ROOT, `src/content/cards/${file}.js`), 'utf8');
     assert.ok(!/generated\/cards\//.test(text), `${file}.js holds builder functions and stays JS`);
   }
@@ -199,7 +210,254 @@ test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty J
   assert.deepStrictEqual(LOCKED_CLASSES, []);
 });
 
+// Combat expansion tables: top-level tables whose file name is the export name.
+// The combatExpansion*.js module re-exports each one; any logic in the module stays JS.
+const EXPANSION_TABLES = {
+  combatExpansionLore: [combatExpansionLore, 'combatExpansionLore'],
+  combatExpansionEquipment: [combatExpansionEquipment, 'combatExpansionEquipment'],
+  combatExpansionMartialOverlay: [combatExpansionMartialOverlay, 'combatExpansionMartial'],
+  combatExpansionMartialTables: [combatExpansionMartialTables, 'combatExpansionMartial'],
+  combatExpansionCardOverlay: [combatExpansionCardOverlay, 'combatExpansionCards'],
+  combatExpansionSpellProfiles: [combatExpansionSpellProfiles, 'combatExpansionCards'],
+  combatExpansionCardTables: [combatExpansionCardTables, 'combatExpansionCards'],
+};
+
+for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
+  test(`expansion tables: ${name} deep-equals content/source/${name}.json`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+    assert.ok(authored && typeof authored === 'object' && Object.keys(authored).length > 0, `${name}.json is non-empty`);
+    assert.deepStrictEqual(exported, authored);
+  });
+
+  test(`expansion tables: ${moduleName}.js imports ${name} from generated/ and authors no row`, () => {
+    const text = readFileSync(resolve(ROOT, `src/content/${moduleName}.js`), 'utf8');
+    assert.match(text, new RegExp(`from '\\./generated/${name}\\.js'`));
+  });
+}
+
+// The expansion's colorless counters and cantrips are a card pool: JSON under
+// content/source/cards, re-exported by combatExpansionCards.js (which keeps the projection).
+test('expansion cards: combatExpansionNewCards deep-equals content/source/cards/combatExpansionNewCards.json', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/cards/combatExpansionNewCards.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0, 'combatExpansionNewCards.json is a non-empty array');
+  assert.deepStrictEqual(combatExpansionNewCards, authored);
+  assert.equal(new Set(authored.map((card) => card.id)).size, authored.length, 'card ids are unique');
+  assert.ok(authored.every((card) => card.minCombatExpansionVersion === 2), 'every row is a version 2 card');
+  assert.equal(Object.isFrozen(combatExpansionNewCards), false);
+  const text = readFileSync(resolve(ROOT, 'src/content/combatExpansionCards.js'), 'utf8');
+  assert.match(text, /from '\.\/generated\/cards\/combatExpansionNewCards\.js'/);
+  assert.ok(!/^const (counter|cantrip) = \(/m.test(text), 'the counter and cantrip row builders are gone: edit the JSON rows');
+});
+
+// Progression: the constant tables are authored in content/source/progression*.json.
+// Each module still derives from other content in JS (lessons, cards, feat
+// descriptions, item-gate unlock rows), so only the data-only modules must be shims.
+const PROGRESSION_SOURCES = {
+  cardFamilies: [['progressionCardFamilies', 'cardFamilies']],
+  cardLore: [['progressionCardLore', 'progressionCardLore']],
+  gear: [['progressionGearRequirements', 'progressionGearRequirements']],
+  relics: [['progressionRelics', 'progressionRelics'], ['progressionRelicUnlocks', 'progressionRelicUnlocks']],
+};
+for (const [file, sources] of Object.entries(PROGRESSION_SOURCES)) {
+  test(`progression: ${file}.js re-exports its JSON source and authors no row`, async () => {
+    const mod = await import(`../src/content/progression/${file}.js`);
+    const text = readFileSync(resolve(ROOT, `src/content/progression/${file}.js`), 'utf8');
+    for (const [source, exportName] of sources) {
+      const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${source}.json`), 'utf8'));
+      assert.deepStrictEqual(JSON.parse(JSON.stringify(mod[exportName])), authored, `${exportName} deep-equals ${source}.json`);
+      assert.match(text, new RegExp(`from '\\.\\./generated/${source}\\.js'`));
+    }
+    assert.ok(!/\{\s*(id|classId)\s*:/.test(text) && !/^\s*["']?(name|id|classId|ref)["']?\s*:/m.test(text), `${file}.js authors a row — edit content/source/ instead`);
+  });
+}
+
+test('progression: feats, unlocks, lessons and cards keep their derivations in JS over generated rows', async () => {
+  const read = (f) => readFileSync(resolve(ROOT, `src/content/progression/${f}.js`), 'utf8');
+  assert.match(read('feats'), /getFeatDescription/);
+  assert.match(read('feats'), /generated\/progressionFeatRows\.js/);
+  assert.match(read('unlocks'), /ARMAMENTS/);
+  assert.match(read('unlocks'), /generated\/progressionUnlockRows\.js/);
+  assert.match(read('lessons'), /generated\/progressionLessonRecipes\.js/);
+  assert.match(read('cards'), /generated\/progressionGradeRules\.js/);
+  const { progressionFeats, progressionFeatUnlocks } = await import('../src/content/progression/feats.js');
+  assert.ok(Object.isFrozen(progressionFeats) && Object.isFrozen(progressionFeatUnlocks));
+  assert.ok(progressionFeats.every((feat) => typeof feat.description === 'string' && feat.description.length > 0));
+});
+
 test('the generated modules are current (content-build --check exits 0)', () => {
   const r = spawnSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(r.status, 0, `content-build --check:\n${r.stdout}\n${r.stderr}`);
+});
+
+// Stats tables (cleanup plan step 5): attributes, creation modes, attribute presets, derived-stat rules and the
+// action-cost tunables are JSON under content/source; the old modules are shims. equipment.js is the exception: it holds
+// normalisers and lookups over generated CSV tables (no data of its own), so it stays JS.
+const STATS_TABLES = { attributes, creationModes, attributeRules, derivedStatRules };
+for (const [name, exported] of Object.entries(STATS_TABLES)) {
+  test(`stats tables: ${name} deep-equals content/source/${name}.json`, () => {
+    assert.deepStrictEqual(exported, readJson(name));
+  });
+}
+
+test('stats tables: actionCosts.json holds one key per data export, and each export deep-equals it', () => {
+  const authored = readJson('actionCosts');
+  for (const [key, value] of Object.entries(authored)) assert.deepStrictEqual(actionCostsModule[key], value, key);
+  const derived = new Set(['TWO_COST_EFFECT_MULTIPLIER']);
+  assert.deepStrictEqual(Object.keys(actionCostsModule).filter((key) => !derived.has(key)).sort(), Object.keys(authored).sort());
+  assert.equal(actionCostsModule.TWO_COST_EFFECT_MULTIPLIER, authored.COST_BUDGET.twoCostMultiplier);
+});
+
+test('stats tables: the shims import the generated modules and author no data', () => {
+  for (const [file, generated] of [['attributes', ['attributes', 'creationModes', 'attributeRules']], ['derivedStats', ['derivedStatRules']], ['actionCosts', ['actionCosts']]]) {
+    const text = readFileSync(resolve(ROOT, `src/content/${file}.js`), 'utf8');
+    for (const name of generated) assert.match(text, new RegExp(`from './generated/${name}\\.js'`), `${file}.js imports generated/${name}.js`);
+    assert.ok(!/^\s*(id|label|base|weight)\s*:/m.test(text), `${file}.js authors a data row — edit content/source instead`);
+  }
+});
+
+test('stats tables: equipment.js still stays JS (normalisers over generated tables, no rows of its own)', () => {
+  const text = readFileSync(resolve(ROOT, 'src/content/equipment.js'), 'utf8');
+  assert.match(text, /from '\.\/generated\/weapons\.js'/);
+  assert.ok(!/^\s*\{\s*id\s*:/m.test(text), 'equipment.js authors a row — edit the CSV under content/source instead');
+});
+
+test('stats tables: the action-cost constants keep the freeze depth they had', () => {
+  const isDeep = (v) => !v || typeof v !== 'object' || (Object.isFrozen(v) && Object.values(v).every(isDeep));
+  for (const key of ['COST_BUDGET', 'KEYWORD_TAGS', 'RANGE_TAGS', 'ENEMY_SP_BANDS', 'ACTION_COST_TABLE']) assert.ok(isDeep(actionCostsModule[key]), `${key} is deeply frozen`);
+  assert.ok(Object.isFrozen(actionCostsModule.COST_TAGS), 'COST_TAGS is frozen');
+  assert.equal(Object.isFrozen(actionCostsModule.COST_TAGS['camp:spell']), false, 'COST_TAGS rows were never frozen');
+});
+
+// Plan row 9b, batch A: data-only modules moved from JS to content/source JSON.
+import { sigils } from '../src/content/sigils.js';
+test('sigils: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/sigils.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(sigils, authored);
+});
+
+import { feats } from '../src/content/feats.js';
+test('feats: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/feats.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(feats, authored);
+});
+
+import { classSkillFeats } from '../src/content/classSkillFeats.js';
+test('classSkillFeats: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/classSkillFeats.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(classSkillFeats, authored);
+});
+
+import { skillFeats } from '../src/content/skillFeats.js';
+test('skillFeats: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/skillFeats.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(skillFeats, authored);
+});
+
+import { surveyQuestLore } from '../src/content/surveyQuestLore.js';
+test('surveyQuestLore: the export deep-equals the authored JSON and stays frozen at both depths', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/surveyQuestLore.json'), 'utf8'));
+  assert.deepStrictEqual(surveyQuestLore, authored);
+  assert.ok(Object.isFrozen(surveyQuestLore));
+  for (const entry of Object.values(surveyQuestLore)) assert.ok(Object.isFrozen(entry));
+});
+
+import { withNotes } from '../src/content/noteKeys.js';
+import { combatIntent, combatMatchups, combatExpansionMatchups } from '../src/content/combatMatchups.js';
+for (const [name, exported] of Object.entries({ combatIntent, combatMatchups, combatExpansionMatchups })) {
+  test(`${name}: the export deep-equals the authored JSON (with its NOTE blocks)`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+    assert.deepStrictEqual(exported, withNotes(authored));
+  });
+}
+
+import { mapConfigs, MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../src/content/mapconfig.js';
+test('mapconfig: the three tables deep-equal their authored JSON and keep their frozen state', () => {
+  const read = (name) => JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+  assert.deepStrictEqual(MAP_SHAPE_LIMITS, read('mapShapeLimits'));
+  assert.deepStrictEqual(LEGACY_ACT_BOSSES, read('legacyActBosses'));
+  assert.deepStrictEqual(mapConfigs, { 1: read('mapActShape'), 2: read('mapActShape'), 3: read('mapActShape') });
+  assert.ok(Object.isFrozen(MAP_SHAPE_LIMITS) && Object.isFrozen(LEGACY_ACT_BOSSES));
+  assert.ok(!Object.isFrozen(mapConfigs) && mapConfigs[1] !== mapConfigs[2]);
+});
+
+// Plan row 9b, batch B: the next five modules.
+import { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION } from '../src/content/customMods.js';
+test('customMods: the four tables deep-equal their authored JSON; MAX_ASCENSION stays computed', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/customMods.json'), 'utf8'));
+  assert.deepStrictEqual(DIFFICULTY_MODS, authored.difficultyMods);
+  assert.deepStrictEqual(CHAOS_MODS, authored.chaosMods);
+  assert.deepStrictEqual(DECK_MODES, authored.deckModes);
+  assert.deepStrictEqual(ASCENSION_ORDER, authored.ascensionOrder);
+  assert.equal(MAX_ASCENSION, authored.ascensionOrder.length);
+  assert.ok([DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER].every((t) => !Object.isFrozen(t)), 'these tables were never frozen');
+});
+
+import { SEATS, CAUSEWAY_REGION_ID } from '../src/content/seats.js';
+test('seats: SEATS and CAUSEWAY_REGION_ID deep-equal the authored JSON; the array is frozen, its rows are not', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/seats.json'), 'utf8'));
+  assert.deepStrictEqual(SEATS, authored.seats);
+  assert.equal(CAUSEWAY_REGION_ID, authored.causewayRegionId);
+  assert.ok(Object.isFrozen(SEATS) && SEATS.every((row) => !Object.isFrozen(row)));
+});
+
+import * as combatFeelModule from '../src/content/combatFeel.js';
+test('combatFeel: the tables deep-equal their authored JSON, stay frozen to the row, and keep the numbers that must agree', () => {
+  const a = JSON.parse(readFileSync(resolve(ROOT, 'content/source/combatFeel.json'), 'utf8'));
+  const m = combatFeelModule;
+  assert.deepStrictEqual(m.SHAKE_STEPS, a.shakeSteps);
+  assert.deepStrictEqual(m.SHAKE_STEPS_HP, a.shakeStepsHp);
+  assert.deepStrictEqual(m.HIT_STOP, a.hitStop);
+  assert.deepStrictEqual([m.BIG_HIT_SHARE, m.HUGE_HIT_SHARE, m.SHAKE_MAX_PX, m.SHAKE_FLOOR_PX], [a.bigHitShare, a.hugeHitShare, a.shakeMaxPx, a.shakeFloorPx]);
+  for (const table of [m.SHAKE_STEPS, m.SHAKE_STEPS_HP]) assert.ok(Object.isFrozen(table) && table.every(Object.isFrozen));
+  assert.ok(Object.isFrozen(m.HIT_STOP));
+  // These were one constant each in the old module, so they cannot be allowed to drift.
+  assert.equal(m.SHAKE_STEPS[2].minShare, m.BIG_HIT_SHARE, 'shakeSteps[2].minShare must equal bigHitShare');
+  assert.equal(m.SHAKE_STEPS[3].minShare, m.HUGE_HIT_SHARE, 'shakeSteps[3].minShare must equal hugeHitShare');
+  assert.equal(m.HIT_STOP.hugeShare, m.HUGE_HIT_SHARE);
+});
+
+import * as musicModule from '../src/content/music.js';
+import { MUSIC_SILENCE_WORD } from '../src/model/schemas.js';
+test('music: the tables deep-equal their authored JSON; quiet leads BEDS and the region beds share the map bed', () => {
+  const a = JSON.parse(readFileSync(resolve(ROOT, 'content/source/music.json'), 'utf8'));
+  const m = musicModule;
+  assert.equal(m.SHIPPED_MUSIC_FOLDER, a.shippedMusicFolder);
+  assert.deepStrictEqual(m.SCALES, a.scales);
+  assert.deepStrictEqual(m.MAP_REGIONS, a.mapRegions);
+  assert.equal(Object.keys(m.BEDS)[0], 'quiet');
+  assert.equal(m.BEDS.quiet, MUSIC_SILENCE_WORD);
+  assert.ok(!('quiet' in a.beds), 'the silence word has one home (MUSIC_SILENCE_WORD), not the JSON');
+  for (const [name, bed] of Object.entries(a.beds)) assert.deepStrictEqual(m.BEDS[name], bed);
+  assert.deepStrictEqual(Object.keys(m.BEDS), ['quiet', ...Object.keys(a.beds), ...a.mapRegions.map((id) => `map-${id}`)]);
+  for (const id of a.mapRegions) {
+    assert.equal(m.BEDS[`map-${id}`], m.BEDS.map);
+    assert.equal(m.MUSIC_TRACK_FALLBACK[`map-${id}`], 'map');
+  }
+});
+
+import * as sfxModule from '../src/content/sfx.js';
+test('sfx: the recipe, family and tier tables deep-equal their authored JSON; aliases share one frozen row', () => {
+  const read = (name) => JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+  const rows = read('sfxRecipes');
+  const m = sfxModule;
+  assert.deepStrictEqual(Object.keys(m.SFX_RECIPES), Object.keys(rows), 'recipe ids keep their written order');
+  for (const [id, row] of Object.entries(rows)) {
+    if (typeof row === 'string') assert.equal(m.SFX_RECIPES[id], m.SFX_RECIPES[row], `${id} aliases ${row}`);
+    else assert.deepStrictEqual(m.SFX_RECIPES[id], row, id);
+  }
+  const aliased = new Set(Object.values(rows).filter((row) => typeof row === 'string'));
+  assert.deepStrictEqual([...aliased].sort(), ['hit_medium', 'holdCommit']);
+  for (const [id, recipe] of Object.entries(m.SFX_RECIPES)) {
+    const shared = aliased.has(id) || typeof rows[id] === 'string';
+    assert.equal(Object.isFrozen(recipe), shared, `${id}: only a row that is shared through an alias is frozen`);
+    assert.ok(recipe.every((layer) => !Object.isFrozen(layer)), `${id}: layers were never frozen`);
+  }
+  assert.ok(!Object.isFrozen(m.SFX_RECIPES));
+  assert.deepStrictEqual(m.SFX_FAMILY_IDS, read('sfxFamilyIds'));
+  assert.deepStrictEqual(m.SFX_HIT_TIERS, read('sfxHitTiers'));
+  assert.ok(Object.isFrozen(m.SFX_FAMILY_IDS) && Object.isFrozen(m.SFX_HIT_TIERS) && m.SFX_HIT_TIERS.every(Object.isFrozen));
 });

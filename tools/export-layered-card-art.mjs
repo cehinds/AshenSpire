@@ -1,16 +1,19 @@
 #!/usr/bin/env node
+import {authoringRoot,authoringPath} from './art-authoring.mjs';
 // Select already-approved cutouts; do not repaint, flatten, or recolor them.
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const artRoot=authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
+const artFile=rel=>authoringPath(rel,{root,assetRoot:artRoot});
 // The proposal viewer owns the geometry. Load its standalone script as data;
 // tools must not add a static module dependency on an authoring HTML tree.
 const math = {};
 runInNewContext(readFileSync(resolve(root, 'docs/design/new-card-art/layer-math.js'), 'utf8'), math);
-const read = p => JSON.parse(readFileSync(resolve(root, p), 'utf8'));
+const read = p => JSON.parse(readFileSync(p.startsWith('asset-data/')?resolve(root,p):artFile(p), 'utf8'));
 const selection = read('asset-data/card-art/layered-selection.json');
 const source = read(selection.sourceManifest);
 if (source.revision !== selection.sourceRevision) throw Error('Review the new proposal revision before exporting');
@@ -22,7 +25,7 @@ for (const code of codes) {
   const layers = original.layers.filter(l => l.visible).map(layer => {
     const a = source.assets[layer.assetId];
     const path = `assets-display/card-cutouts/${a.id}.png`;
-    const src = resolve(root, dirname(selection.sourceManifest), a.src);
+    const src = artFile(posix.join(posix.dirname(selection.sourceManifest),a.src));
     const bytes = readFileSync(src);
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw Error(`Source hash mismatch: ${a.id}`);
     assets[a.id] = {id:a.id, path, sha256:a.sha256, bytes:bytes.length, width:a.width, height:a.height,
@@ -44,8 +47,8 @@ for (const [file, text] of Object.entries(outputs)) {
   else {mkdirSync(resolve(root,dirname(file)),{recursive:true});writeFileSync(resolve(root,file),text);}
 }
 for (const a of Object.values(assets)) {
-  const dest = resolve(root,a.path);
+  const dest = artFile(a.path);
   if (check) {if (!existsSync(dest) || createHash('sha256').update(readFileSync(dest)).digest('hex') !== a.sha256) throw Error(`Missing/stale cutout: ${a.path}`);}
-  else {mkdirSync(dirname(dest),{recursive:true});copyFileSync(resolve(root,a.references.source),dest);}
+  else {mkdirSync(dirname(dest),{recursive:true});copyFileSync(artFile(posix.normalize(a.references.source)),dest);}
 }
 console.log(`${check?'Verified':'Exported'} ${Object.keys(compositions).length} compositions / ${Object.keys(assets).length} unchanged PNG components`);
