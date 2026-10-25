@@ -2841,10 +2841,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         else { focusTargeting(); showTooltipFor(el, '<p>Choose a highlighted enemy to play this card.</p>'); }
       }
     };
+    const logUnaffordable = (input) => {
+      const reason = unplayableReason(inst);
+      logIgnored(`card ${input} ${inst.instanceId}`, `unaffordable${reason ? `: ${reason}` : ''}; cost energy=${pv.costIsX ? 0 : pv.cost}, mana=${pv.manaCost}, stamina=${pv.staminaCost || 0}; available energy=${combat.player.energy}, mana=${combat.player.mana}, stamina=${combat.player.stamina}`);
+    };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
-      if (!affordable) { if (rangeSelectable) select(); return; }
+      if (!affordable) { if (rangeSelectable) select(); else logUnaffordable('confirm'); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       play();
     };
@@ -2854,6 +2858,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) {
         if (rangeSelectable) { select(); return; }
+        logUnaffordable('tap');
         const reasons = [];
         const reason = unplayableReason(inst);
         if (reason) reasons.push(reason);
