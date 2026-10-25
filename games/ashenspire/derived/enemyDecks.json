@@ -180,7 +180,8 @@
         "hints": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "club"
+          "legacyMove": "club",
+          "coreSp": "card"
         }
       },
       {
@@ -1499,7 +1500,8 @@
         "hints": {
           "aiWeight": 30,
           "costSource": "stance",
-          "legacyMove": "slam"
+          "legacyMove": "slam",
+          "coreSp": "card"
         }
       },
       {
@@ -1541,7 +1543,8 @@
           "aiWeight": 20,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "crush"
+          "legacyMove": "crush",
+          "coreSp": "card"
         }
       },
       {
@@ -1568,7 +1571,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "rimeCrush"
+          "legacyMove": "rimeCrush",
+          "coreSp": "card"
         }
       },
       {
@@ -2020,7 +2024,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "scuttleRush"
+          "legacyMove": "scuttleRush",
+          "coreSp": "card"
         }
       },
       {
@@ -2514,7 +2519,8 @@
           "aiWeight": 50,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "smash"
+          "legacyMove": "smash",
+          "coreSp": "card"
         }
       },
       {
