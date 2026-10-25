@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:ee64844ca9feea9d9dbeb798dee734e7bbe4a29650401b0413fcc4d550ab6658",
+      "hash": "sha256:4c8f7ab6fe1439f491459282dc541d6f3567ea9db2347fd8a69952c575db501e",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -502,7 +502,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:c90470cfd650dfbafe28c6d0188aa7370d122403ffb7bcfc87546c166bf7b70a"
+          "hash": "sha256:d53733585136152baec2117176438c8ae7338914f6d9d9307ef63e4cd4b1c675"
         },
         {
           "path": "engine/modules/stagger/defaults.json",
@@ -676,7 +676,7 @@
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:e9f852c8757b832942930976f79b7e01ef7c38417247729cb94dc31bb236a25b"
+          "hash": "sha256:ead260df719842115a2e3b0985ada5d500d27615fc1bf7d1720961b48085b707"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -706,7 +706,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:7fcd2729d8a2b3e979c86cbd8fe31b01950ec15b15efb30eac17d6484f4a8ec2"
+          "hash": "sha256:1e29a41e300b8bfe5941f69adf7f0a07e4c005bb300a3e3dad79f7ee13b33070"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2"
     },
     "core": {
-      "hash": "sha256:ee64844ca9feea9d9dbeb798dee734e7bbe4a29650401b0413fcc4d550ab6658",
+      "hash": "sha256:4c8f7ab6fe1439f491459282dc541d6f3567ea9db2347fd8a69952c575db501e",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1226,7 +1226,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:c90470cfd650dfbafe28c6d0188aa7370d122403ffb7bcfc87546c166bf7b70a"
+          "hash": "sha256:d53733585136152baec2117176438c8ae7338914f6d9d9307ef63e4cd4b1c675"
         },
         {
           "path": "engine/modules/stagger/defaults.json",
@@ -1400,7 +1400,7 @@
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:e9f852c8757b832942930976f79b7e01ef7c38417247729cb94dc31bb236a25b"
+          "hash": "sha256:ead260df719842115a2e3b0985ada5d500d27615fc1bf7d1720961b48085b707"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
@@ -1430,7 +1430,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:7fcd2729d8a2b3e979c86cbd8fe31b01950ec15b15efb30eac17d6484f4a8ec2"
+          "hash": "sha256:1e29a41e300b8bfe5941f69adf7f0a07e4c005bb300a3e3dad79f7ee13b33070"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -1450,7 +1450,7 @@
       "runtimeHash": "sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2"
     },
     "current": {
-      "hash": "sha256:52ec4988da4f871bbdcdf3a804e4cf2e349cda3b6d969bcfd47bdbae51e22438",
+      "hash": "sha256:149116ae29c4e07a5d1831bbe1a869464bda1fce7bc1683a39c6fb64862bc0db",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1932,7 +1932,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:c90470cfd650dfbafe28c6d0188aa7370d122403ffb7bcfc87546c166bf7b70a"
+          "hash": "sha256:d53733585136152baec2117176438c8ae7338914f6d9d9307ef63e4cd4b1c675"
         },
         {
           "path": "engine/modules/stances/defaults.json",
