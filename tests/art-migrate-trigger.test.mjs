@@ -11,6 +11,32 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const art = readFileSync(join(ROOT, '.github/workflows/art-migrate.yml'), 'utf8');
 const pages = readFileSync(join(ROOT, '.github/workflows/pages-builds.yml'), 'utf8');
 
+test('shared art intake targets ashenspire and pin discovery excludes other projects', () => {
+  assert.match(art, /ART_REPO: cehinds\/AI-Art/);
+  assert.match(art, /repository: cehinds\/AI-Art[\s\S]*?ref: ashenspire/);
+  assert.match(art, /git -C "\$GITHUB_WORKSPACE\/art-repo" diff --name-only origin\/ashenspire HEAD/);
+  for (const verb of ['create', 'edit']) {
+    assert.match(art, new RegExp(`gh pr ${verb}[^\\n]+--base ashenspire`));
+  }
+  assert.ok(art.includes("grep -E '^ashenspire-hd-assets-v[1-9][0-9]*$'"));
+  assert.doesNotMatch(art, /grep -E '\^hd-assets-v/);
+  assert.ok(art.includes('high: `hd-assets-v${n}.zip.sha256`'));
+});
+
+test('Windows art PR validation only runs the offline chooser tests with read permission', () => {
+  const workflow = readFileSync(join(ROOT, '.github/workflows/windows-art-options.yml'), 'utf8');
+  assert.match(workflow, /\n  pull_request:\n/);
+  assert.match(workflow, /permissions:\n  contents: read\n/);
+  assert.match(workflow, /runs-on: windows-latest/);
+  assert.match(workflow, /shell: powershell/);
+  assert.doesNotMatch(workflow, /pull_request_target|workflow_dispatch|secrets\.|contents: write|pull-requests: write/);
+  assert.deepEqual([...workflow.matchAll(/^\s+run: (.+)$/gm)].map(match => match[1]), ['./tests/windows-art-options.ps1']);
+  assert.deepEqual([...workflow.matchAll(/^\s+- uses: (.+)$/gm)].map(match => match[1]), ['actions/checkout@v5']);
+  for (const file of ['tests/windows-art-options.ps1', 'desktop/windows/art-releases.ps1', 'desktop/windows/art-options.ps1']) {
+    assert.ok(workflow.includes(`            /${file}\n`), `exact sparse text dependency ${file}`);
+  }
+});
+
 // The text of one top-level job (its block runs from `  <name>:` to the next job key).
 function jobBlock(text, name) {
   const lines = text.split('\n');
@@ -114,7 +140,7 @@ test('pages: a malformed artifact is skipped before it can become a comment targ
 
 test('the art PR body lists every file on the intake branch, not only this run\'s', () => {
   const block = jobBlock(art, 'intake');
-  assert.match(block, /git -C "\$GITHUB_WORKSPACE\/art-repo" diff --name-only origin\/main HEAD/);
+  assert.match(block, /git -C "\$GITHUB_WORKSPACE\/art-repo" diff --name-only origin\/ashenspire HEAD/);
 });
 
 test('no list in art-migrate is cut by an early-closing pipe (SIGPIPE under pipefail)', () => {

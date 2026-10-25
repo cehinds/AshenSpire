@@ -2,7 +2,11 @@
 // Pure functions only (no git, no network): fast enough for every PR into dev.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { checkDest, classify, destinationFor, intake, parseNameStatus, selftest } from '../tools/art-intake.mjs';
+import { ART_REPO, checkDest, classify, destinationFor, intake, parseNameStatus, selftest } from '../tools/art-intake.mjs';
+
+test('intake reports the project-scoped shared art host', () => {
+  assert.equal(ART_REPO, 'cehinds/AI-Art');
+});
 
 test('a high-tier file migrates to the art repository hd/ tree', () => {
   assert.deepEqual(classify('assets/bg/town.webp'), { verdict: 'migrate', dest: 'hd/assets/bg/town.webp' });
