@@ -177,6 +177,17 @@
       "cardIds": [
         "core.reaverSpecial"
       ]
+    },
+    "potions": {
+      "excludeKinds": [
+        "hp",
+        "mana"
+      ]
+    },
+    "relics": {
+      "weights": {
+        "brimmingGourd": 20
+      }
     }
   },
   "rewardGroups": [

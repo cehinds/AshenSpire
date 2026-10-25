@@ -2,7 +2,8 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
-import { acquireFlask } from './gracerefill.js';
+import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
+import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
 import { reserveStanceCards } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
@@ -77,10 +78,22 @@ function weightedCardPick(run,rule,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
   return ids.at(-1);
 }
+// Authored relic weights (rewards.json eligibility.relics.weights, default 1) make a chosen relic a likely pick.
+function weightedRelicPick(weights,rng,stream,ids) {
+  const list=ids.map(id=>Number.isFinite(weights?.[id])&&weights[id]>=0?weights[id]:1),total=list.reduce((sum,weight)=>sum+weight,0);
+  if(!weights||ids.length<2||!(total>0)||list.every(weight=>weight===list[0]))return rng.pick(stream,ids);
+  let roll=rng.float(stream)*total;
+  for(const [index,id] of ids.entries()){roll-=list[index];if(roll<0)return id;}
+  return ids.at(-1);
+}
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
+  // Owner 2026-10-24: eligibility.potions.excludeKinds keeps the charge flasks (hp, mana) out of NEW Core offers; a relic grows
+  // them instead. Claiming still accepts them, so an offer saved before this change stays claimable.
+  const excludedFlasks=gameContent(run,'rewards')?.eligibility?.potions?.excludeKinds||[];
+  if(excludedFlasks.length)available.potions=available.potions.filter(id=>!excludedFlasks.includes(flaskKindOf(registries.flasks.get(id))));
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
@@ -107,7 +120,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'?weightedCardPick(run,rule,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'?weightedCardPick(run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
@@ -141,6 +154,9 @@ export function claimGameProfileReward(registries,run,offerId,index) {
     registries.relics.get(option.id);
     if(draft.relics.includes(option.id))throw new Error('Reward relic already owned');
     draft.relics.push(option.id);
+    // Bind flask growth now (a Core pickup used to wait for a reload); a relic that grows a flask also refills them.
+    syncFlaskGrowth(registries,draft);
+    if(flaskGrowthTable(registries.balance).some(row=>row?.source==='relic'&&row.id===option.id))refillFlaskCharges(draft.flaskCharges);
   } else if(option.kind==='potions') {
     const acquisition=acquireFlask(registries,draft,option.id);
     if(!acquisition.ok)throw new Error(acquisition.reason);
