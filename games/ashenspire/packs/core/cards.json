@@ -95,7 +95,7 @@
     "id": "core.smash",
     "name": "Smash",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
