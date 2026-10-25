@@ -72,7 +72,7 @@ import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
-import { ownRestoreFunds } from '../model/actionCosts.js';
+import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
@@ -1583,6 +1583,9 @@ function resolvedCardPriceReceipt(combat,def,claimed=null) {
 function baseCardPriceReceipt(combat, def, claimed = null) {
   if (configuredCombat(combat)) {
     const paid = profileCardCosts(combat, def);
+    // Multi-hit floor (owner, 2026-10-25): a fixed Core cost is read here, so the floor applies here too.
+    const hitFloor = core2ActionPolicyEnabled(combat) ? multiHitSpFloor(def, { mana: paid.mana }) : 0;
+    if (hitFloor > paid.stamina) { paid.energy = hitFloor; paid.stamina = hitFloor; }
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
   }
   const weightClass = playerWeightClass(combat).weightClass;

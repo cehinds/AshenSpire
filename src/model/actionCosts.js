@@ -110,6 +110,24 @@ export function actionStance({ kind = 'other', tags = [] } = {}) {
 const count = (value) => (Number.isFinite(value) ? value : 1);
 
 /**
+ * The multi-hit price floor (owner, 2026-10-25): a card whose damage hits one target more than once costs at least 1 SP
+ * per hit, unless it costs mana or carries the `finesse` tag. No cap and no discount. Returns the floor (0 when it does
+ * not apply). `mana` is the card's Mana price when the caller knows it; else its authored `manaCost` is read.
+ */
+export function multiHitSpFloor(def, { mana = def?.manaCost ?? def?.resourceCosts?.mp ?? def?.costs?.mp ?? 0 } = {}) {
+  if (mana > 0) return 0;
+  const tags = [...(Array.isArray(def?.tags) ? def.tags : []), ...(Array.isArray(def?.cardTags) ? def.cardTags : []), ...(Array.isArray(def?.authoredTags) ? def.authoredTags : [])];
+  if (tags.includes('finesse')) return 0;
+  const perTarget = new Map();
+  for (const e of Array.isArray(def?.effects) ? def.effects : []) {
+    if (e?.op !== 'damage') continue;
+    perTarget.set(e.target, (perTarget.get(e.target) || 0) + count(e.hits) * count(e.repeat));
+  }
+  const hits = Math.max(0, ...perTarget.values());
+  return hits > 1 ? hits : 0;
+}
+
+/**
  * The cost receipt of a player card (owner, 2026-10-12; SPEC §4.3a):
  *   S_sp = damageWeight × physical damage + rankWeight × rank + Σ SP-side tag weights + range weight
  *          + castingEffort (cast tags) + SP-side statuses + drawbacks (negative)
@@ -185,6 +203,8 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG, upgradeDel
   // such as Ruinous Blow would otherwise cost more with Exhaust than without it).
   const floor = rank === 0 ? Math.max(0, ...allTags.map((t) => config.maneuverFloors[t] ?? 0)) - Math.max(0, upgradeDelta) : 0;
   if (sp < floor) sp = floor;
+  // The multi-hit floor: 1 SP per hit unless the card costs mana or has finesse (applies to rank 0 and above alike).
+  if (!magic) { const hitFloor = multiHitSpFloor(def, { mana: mp }); if (sp < hitFloor) sp = hitFloor; }
   // Both 0: the larger side pays 1 (SP on a tie). A Mana-restoring card pays Stamina: it buys Mana with Stamina, so a
   // player with no Mana can always cast it.
   if (sp === 0 && mp === 0) {
