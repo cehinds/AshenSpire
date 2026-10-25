@@ -155,6 +155,13 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   // (a rest floor is a single shared node, not a lane per type).
   if (firstFloor !== null && (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
   const hideUnknown = gameModule(registries, 'routes').hideUnknownNodes;
+  // maxBranches (owner, 2026-10-25): present means the act splits into 1..min(maxBranches, distinct bosses) branches after a shared
+  // opening depth. Absent keeps the single-trunk map below, draw for draw, so older profiles and seeds roll the same maps.
+  if (rules.maxBranches != null) {
+    return buildBranchedActMap(registries, rng, seat, tier, {
+      rules, count, columns, minimumThreatFloor, restFloors, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history,
+    });
+  }
   const nodes = {}, layers = [], seenEvents = [];
   for (let floor = 1; floor <= count; floor++) {
     const rest = restFloors.includes(floor);
@@ -197,6 +204,93 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
     }
   }
   return { nodes, startIds: layers[0], shrineId: restFloors.length ? `n${Math.max(...restFloors)}_0` : null, bossId: 'boss', bossIds: ['boss'], floors: count + 1, columns, gameProfileHash: registries.gameProfile.hash };
+}
+
+
+/**
+ * Branched act map (owner, 2026-10-25). Depth 1 is a shared opening row of T = b * L nodes, one per column. From depth 2 each
+ * branch k is its own subgraph of L lanes: one rest node per rest floor, at least one elite at or past minimumThreatFloor, and
+ * its own boss `boss_k`. Edges after depth 1 never leave a branch, so a branch's rests are never on another branch's route.
+ *
+ * b = rng.int('map', 1, min(maxBranches, distinct bosses)); the bosses are the first b of a seeded shuffle, so they are distinct.
+ * L = clamp(floor(2 * branchColumns / b), 1, branchColumns): 3 lanes for b 1-2, 2 for b 3, 1 for b 4-5. That caps the board at
+ * 2 * branchColumns columns (6 today), the widest the 390 px map frames with free pan, while a lone branch keeps the old width.
+ */
+function buildBranchedActMap(registries, rng, seat, tier, ctx) {
+  const { rules, count, columns, minimumThreatFloor, restFloors, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history } = ctx;
+  const maxBranches = rules.maxBranches;
+  if (!Number.isInteger(maxBranches) || maxBranches < 1 || maxBranches > 5) throw new Error('Invalid configured maxBranches');
+  const pool = registries.encounters.all().filter(enc => enc.pool === 'boss' && encounterFitsSeat(enc, { seat, tier, finalTier: rules.acts }));
+  if (!pool.length) throw new Error(`Configured route has no boss for ${seat}/${tier}`);
+  const branchCount = rng.int('map', 1, Math.min(maxBranches, pool.length));
+  const bosses = rng.shuffle('map', pool).slice(0, branchCount);
+  const lanes = Math.max(1, Math.min(columns, Math.floor(2 * columns / branchCount)));
+  const total = branchCount * lanes;
+  const restSet = new Set(restFloors);
+  // One guaranteed elite slot per branch, drawn before any node so it cannot depend on how the lanes roll.
+  const eliteFloors = [];
+  for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) if (!restSet.has(floor) && alternatives.includes('elite')) eliteFloors.push(floor);
+  const guaranteed = new Set();
+  if (eliteFloors.length) for (let k = 0; k < branchCount; k++) guaranteed.add(`${rng.pick('map', eliteFloors)}:${k * lanes + rng.int('map', 0, lanes - 1)}`);
+  const nodes = {}, layers = [], seenEvents = [];
+  const makeNode = (id, floor, col, branch, rest, lane) => {
+    const choices = alternatives.filter(type => type !== 'elite' || floor >= minimumThreatFloor);
+    if (!rest && !choices.length) throw new Error(`Configured route has no permitted node types at depth ${floor}`);
+    const forced = !rest && floor === 1 && firstFloor !== null;
+    let actual;
+    if (rest) actual = 'rest';
+    else if (forced) actual = firstFloor;
+    else if (guaranteed.has(`${floor}:${lane}`)) actual = 'elite';
+    else {
+      actual = rng.pick('map', choices);
+      if (shopShare != null && alternatives.includes('shop') && actual !== 'elite') {
+        const plain = alternatives.filter(type => type !== 'elite' && type !== 'shop');
+        actual = rng.chance('map', shopShare * 100) || !plain.length ? 'shop' : rng.pick('map', plain);
+      }
+    }
+    const type = hideUnknown && hidden.has(actual) && !forced ? 'event' : displayTypes[actual];
+    const node = { id, floor, col, branch, type, actualType: actual, next: [] };
+    if (type === 'event') {
+      node.resolved = actual === 'event' ? resolveUnknownNode({ ...registries, mapConfig: () => ({ unknownWeights: { event: 1 } }) }, rng, { seenEvents, tier, history }) : { kind: actual === 'shop' ? 'merchant' : actual };
+      if (node.resolved.kind === 'event') seenEvents.push(node.resolved.eventId);
+    }
+    nodes[id] = node;
+    return id;
+  };
+  for (let floor = 1; floor <= count; floor++) {
+    const layer = [];
+    // Depth 1 is shared by every branch: a row of T nodes, or one node when it is authored as a rest depth.
+    if (floor === 1) {
+      if (restSet.has(1)) layer.push(makeNode('n1_0', 1, (total - 1) / 2, null, true, 0));
+      else for (let lane = 0; lane < total; lane++) layer.push(makeNode(`n1_${lane}`, 1, lane, null, false, lane));
+    }
+    else for (let k = 0; k < branchCount; k++) {
+      if (restSet.has(floor)) layer.push(makeNode(`n${floor}_${k * lanes}`, floor, k * lanes + (lanes - 1) / 2, k, true, k * lanes));
+      else for (let j = 0; j < lanes; j++) layer.push(makeNode(`n${floor}_${k * lanes + j}`, floor, k * lanes + j, k, false, k * lanes + j));
+    }
+    layers.push(layer);
+  }
+  const bossIds = bosses.map((boss, k) => {
+    const id = `boss_${k}`;
+    nodes[id] = { id, floor: count + 1, col: k * lanes + (lanes - 1) / 2, branch: k, type: 'boss', actualType: 'boss', next: [], encounterId: boss.id, label: bossDestinationLabel(registries, boss.id) };
+    return id;
+  });
+  layers.push(bossIds);
+  for (let depth = 0; depth < layers.length - 1; depth++) {
+    for (const id of layers[depth]) {
+      const from = nodes[id];
+      from.next = layers[depth + 1].filter((target) => {
+        const to = nodes[target];
+        if (depth === 0) return from.actualType === 'rest' || (to.actualType === 'rest' ? Math.floor(from.col / lanes) === to.branch : Math.abs(from.col - to.col) <= 1); // the shared opening reaches every branch
+        if (from.branch !== to.branch) return false;
+        const single = from.actualType === 'rest' || to.type === 'boss' || to.actualType === 'rest';
+        return single || Math.abs(from.col - to.col) <= 1;
+      });
+    }
+  }
+  const shrineIds = restSet.has(count) ? Array.from({ length: branchCount }, (_, k) => `n${count}_${k * lanes}`) : [];
+  const branches = bosses.map((boss, k) => ({ index: k, bossId: bossIds[k], encounterId: boss.id, firstCol: k * lanes, lanes, restIds: layers.flat().filter(id => nodes[id].branch === k && nodes[id].actualType === 'rest') }));
+  return { nodes, startIds: layers[0], shrineId: shrineIds[0] ?? null, shrineIds, bossId: bossIds[0], bossIds, branches, floors: count + 1, columns: total, gameProfileHash: registries.gameProfile.hash };
 }
 
 

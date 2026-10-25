@@ -183,7 +183,8 @@
         "mapMode": "mapMode",
         "firstFloor": "firstFloor",
         "shopShare": "shopShare",
-        "requirePrebossRest": "requirePrebossRest"
+        "requirePrebossRest": "requirePrebossRest",
+        "maxBranches": "maxBranches"
       }
     },
     {
