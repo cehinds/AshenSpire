@@ -385,6 +385,10 @@ File header (was the comment block at the top of src/content/sigils.js): sigils,
 
 File header (was the comment above src/content/feats.js): permanent, repeatable character-level choices. Values are intentionally small because a long run may select the same feat more than once. `feats.json` is the array export `feats`; src/content/feats.js freezes the array (the rows stay unfrozen, as before).
 
+## Class skill feats (content/source/classSkillFeats.json)
+
+File header (was the comment above src/content/classSkillFeats.js): SPEC §13.4q class feats. The profile/run integration selects these only for mastery-scoped runs; older runs retain the existing skill-feat catalogue. `classSkillFeats.json` is the array export `classSkillFeats`; src/content/classSkillFeats.js freezes the array (the rows stay unfrozen). The `crit` and `passive` shapes are the ones described under "Skill feats".
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

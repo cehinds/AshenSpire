@@ -342,3 +342,10 @@ test('feats: the export deep-equals the authored JSON array', () => {
   assert.ok(Array.isArray(authored) && authored.length > 0);
   assert.deepStrictEqual(feats, authored);
 });
+
+import { classSkillFeats } from '../src/content/classSkillFeats.js';
+test('classSkillFeats: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/classSkillFeats.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(classSkillFeats, authored);
+});
