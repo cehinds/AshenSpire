@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {artPath} from '../tools/art-source.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -6,7 +7,9 @@ import {alternativeSelectedStances as catalog} from '../src/content/alternativeS
 import {withAlternativeArt} from '../tools/asset-pack.mjs';
 import {webpDimensions} from '../tools/mobileart-policy.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-test('all twelve runtime stances preserve the owner-selected sources and packaged Full/Lite identities',()=>{
+// Original source bytes/PNG dimensions/recipe reproducibility are checked in AI-Art's source-contract CI.
+// Game owns these selection links, verified runtime bytes and native geometry.
+test('all twelve runtime stances preserve the selection links and packaged Full/Lite identities',()=>{
  const choices=JSON.parse(readFileSync(new URL('../'+catalog.selections,import.meta.url))).choices;
  const packed=withAlternativeArt({assets:{}});
  let count=0;
@@ -15,9 +18,8 @@ test('all twelve runtime stances preserve the owner-selected sources and package
   const selectedSweep=choice.role==='sweep'&&profile.selectedSweep;
   assert.equal(frame.sourceOption,selectedSweep?'SW09':choice.sourceOption);
   assert.equal(frame.source.sha256,choice.source.sha256);
-  assert.equal(hash(readFileSync(new URL('../pose-studio/stances/options-20261008/'+frame.source.path,import.meta.url))),frame.source.sha256);
   for(const [path,expected]of [[frame.path,frame.sha256],[frame.lite,frame.liteSha256]]){
-   const bytes=readFileSync(new URL('../'+path,import.meta.url));
+   const bytes=readFileSync(artPath(path));
    assert.equal(hash(bytes),expected);
    const {width,height}=webpDimensions(bytes);
    assert.deepEqual([width,height],frame.rasterSize);
@@ -44,11 +46,8 @@ test('the approved Reaver greatsword profile ships the exact preview art and pre
   const frame=profile.frames[choice.role];
   const selectedSweep=choice.role==='sweep'&&profile.selectedSweep;
   assert.equal(frame.sourceOption,selectedSweep?'SW09':choice.sourceOption);
-  const source=readFileSync(new URL('../'+frame.source.path,import.meta.url));
-  assert.equal(hash(source),frame.source.sha256);
-  assert.deepEqual(imageSize(source),[frame.source.width,frame.source.height],'actual source dimensions must not be hardcoded landscape');
   for(const [path,expectedHash,size]of [[frame.path,frame.sha256,frame.rasterSize],[frame.lite,frame.liteSha256,frame.mobileRasterSize]]){
-   const bytes=readFileSync(new URL('../'+path,import.meta.url));
+   const bytes=readFileSync(artPath(path));
    assert.equal(hash(bytes),expectedHash);assert.deepEqual(imageSize(bytes),size);
    assert.equal(packed.assets[path].common.sha256,expectedHash);
   }
@@ -78,16 +77,11 @@ test('the approved Reaver greatsword profile ships the exact preview art and pre
 });
 
 
-test('preview sources remain reproducible after held Counter replaces its historical runtime asset',()=>{
+test('preview source records retain their historical identity after held Counter replaces its runtime asset',()=>{
  const spec=JSON.parse(readFileSync(new URL('../pose-studio/stances/update-stances/sequence-review/sources.json',import.meta.url)));
- for(const source of spec.sources){
-  const bytes=readFileSync(new URL('../'+source.source,import.meta.url));
-  assert.equal(hash(bytes),source.sha256,'preview input '+source.id+' must remain available at its recorded hash');
- }
  const attack3=spec.sources.find(source=>source.id==='AT3');
  const currentCounter=catalog.weaponProfiles['reaver-greatsword-pilot'].frames.counter;
  assert.notEqual(attack3.source,currentCounter.path);
  assert.notEqual(attack3.sha256,currentCounter.sha256);
  assert.equal(attack3.sha256,catalog.weaponProfiles['reaver-greatsword-pilot'].frames['attack-3'].sha256);
- assert.equal(hash(readFileSync(new URL('../'+attack3.originalSheetRecipe.path,import.meta.url))),attack3.originalSheetRecipe.sha256);
 });

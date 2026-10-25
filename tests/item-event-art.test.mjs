@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { artRecord } from '../tools/art-source.mjs';
+import { artRecord, artPath } from '../tools/art-source.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { questChains } from '../src/content/events.js';
 import { eventArtAsset } from '../src/content/eventArt.js';
@@ -14,14 +14,14 @@ function shipped(path) {
   const record = artRecord(path);
   assert.ok(record?.high, `${path} high release`);
   assert.ok(record?.light, `${path} light release`);
-  assert.ok(existsSync(new URL('../' + path.replace('assets/', 'assets-mobile/'), import.meta.url)), `${path} mobile`);
+  assert.ok(existsSync(artPath(record.light.path)), `${path} mobile`);
 }
 
-test('every flask has a high release record and local light illustration', () => {
+test('every flask has a high release record and verified light illustration', () => {
   for (const flask of contentBundle.flasks) shipped(flask.artAsset);
 });
 
-test('every one-off event has a high release record and local light vignette', () => {
+test('every one-off event has a high release record and verified light vignette', () => {
   const steps = new Set(Object.values(questChains).flatMap(chain => chain.steps));
   const oneOffs = contentBundle.events.filter(event => !steps.has(event.id));
   assert.equal(oneOffs.length, 20);

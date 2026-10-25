@@ -15,7 +15,7 @@ This package is a design proposal, five illustrated design sheets, an editable r
 ## Map props and discovery extension
 
 - [PNG prop suggestions and discovery rules](MAP-PROPS-AND-DISCOVERY.md): 24 icon ideas, sparse placement, section-entry discoveries, and map rewards.
-- [Icon concept sheet](04-map-prop-ideas.png) and [map-reward diagram](05-map-reveal-ideas.png).
+- [Icon concept sheet](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/04-map-prop-ideas.png) and [map-reward diagram](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/05-map-reveal-ideas.png).
 - [Editable discovery companion](map-discovery.example.json): prop instances, connected sections, reveal items and reward-source examples. This is a separate draft, not an extension already supported by the world schema.
 
 ## Visual directions
@@ -32,7 +32,7 @@ Use A with grid lines and tile labels both off by default. Add independent small
 
 ### 1. Hex world and location inspector
 
-![Map without grid lines or tile labels, branching roads, jungle transition and layered rest preview](01-hex-map.png)
+![Map without grid lines or tile labels, branching roads, jungle transition and layered rest preview](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/01-hex-map.png)
 
 Pointy-top hexes use offset rows and optional labels A1, B1 ... Z1, AA1. A1 is northwest. Store zero-based column/row for easy editing; derive axial q/r and display addresses. No duplicate editable address field is needed. Keep permanent location IDs unchanged. A map ID scopes addresses, so world A1 and a dungeon A1 are distinct. Locations may span several cells; a town gate, central plaza, and surrounding road can have separate visual tags while belonging to one settlement.
 
@@ -42,7 +42,7 @@ Grounds clip to hex footprints and use compatible border masks/blends. Tall prop
 
 ### 2. Oversized combat stage
 
-![Oversized art canvas, visible camera window, and three registered layers](02-layer-composition.png)
+![Oversized art canvas, visible camera window, and three registered layers](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/02-layer-composition.png)
 
 Preserve the requested **front-to-back art order: ground → props → skybox**. Render back-to-front: skybox first, props second, ground last. Ground must be transparent above its intended floor silhouette; otherwise it hides the props and sky. Place rear props so their bases meet that silhouette. Draw actor shadows and actors above these background planes, with HUD above actors. Props placed within the playable floor require an optional foreground-prop slot or depth sorting; a single rear-prop plane cannot handle every overlap.
 
@@ -54,7 +54,7 @@ Calculate export requirements from **visible CSS pixels × capped device pixel r
 
 ### 3. Reusable combinations
 
-![Same ruin ground and prop geometry with clear, misty and night atmosphere](03-art-combinations.png)
+![Same ruin ground and prop geometry with clear, misty and night atmosphere](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/improve-map-battlefield-art/03-art-combinations.png)
 
 Use compatible lighting variants or a coherent scene-wide lighting treatment. A night sky alone must not leave the ground and buildings brightly sunlit. Mist and smoke may need a transparent atmosphere plane in front of the scenery; they should not be baked exclusively into the sky. The drawing only illustrates reuse, not finished materials or lighting.
 

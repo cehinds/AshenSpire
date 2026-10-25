@@ -1,5 +1,6 @@
 // Asset catalog (engine/contracts/asset-catalog.schema.json) derived from art-manifest.json.
 import test from 'node:test';
+import {packSource} from '../tools/art-source.mjs';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -40,16 +41,16 @@ test('every manifest entry is in the catalog with all its tiers', () => {
   for (const entry of Object.values(manifest.assets)) for (const [tier, rec] of Object.entries(entry)) assert.ok(byPath.has(`${tier}:${rec.path}`), `${tier}:${rec.path}`);
 });
 
-test('every referenced file exists for the tiers present in the repo', () => {
-  const light = existsSync(join(ROOT, 'assets-mobile'));
-  const high = existsSync(join(ROOT, 'assets'));
-  assert.ok(light, 'the light tier ships in the repository');
-  const absent = [];
-  for (const [id, a] of Object.entries(catalog.assets)) {
-    if (light && a.files.light && !existsSync(join(ROOT, a.files.light))) absent.push(`${id} light ${a.files.light}`);
-    if (high && a.files.high && !existsSync(join(ROOT, a.files.high))) absent.push(`${id} high ${a.files.high}`);
+test('every referenced file exists in required verified light/common packs and any available high pack', () => {
+  for(const pack of ['light','common']) assert.equal(packSource(pack,{root:ROOT}).from,'cache');
+  let high=false;
+  try { high=packSource('high',{root:ROOT}).from==='cache'; } catch(error) {
+    assert.match(error.message,/fetch-art|not fetched|not verified|missing|fetch/i);
   }
-  assert.deepEqual(absent.slice(0, 10), []);
+  for (const [id,a] of Object.entries(catalog.assets)) for(const [tier,file] of Object.entries(a.files)) {
+    if(tier==='high'&&!high)continue; // Full HIGH byte coverage is the official pack CI's scope.
+    assert.ok(existsSync(join(packSource(tier,{root:ROOT}).dir,file)),`${id} ${tier} ${file}`);
+  }
 });
 
 test('placeholder is true exactly when no tier has a file', () => {

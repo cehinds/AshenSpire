@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {artPath, addDisplayRecord} from './art-source.mjs';
 export const layeredManifest='assets-display/layered/manifest.json';
 // One verified export set feeds both portable data URIs and web pack objects.
-export function readLayeredArt(root){
+export function readLayeredArt(root,opts={}){
  const file=path.resolve(root,layeredManifest);
  const catalogFile=path.resolve(root,'src/content/layeredEnvironments.js');
  if(!fs.existsSync(file)){if(fs.existsSync(catalogFile))throw Error('Layered art manifest missing for runtime catalog');return [];}
@@ -19,17 +20,16 @@ export function readLayeredArt(root){
  }
  return Object.entries(data.assets).map(([id,record])=>{
   if(!/^assets-display\/layered\/[a-zA-Z0-9-]+\.webp$/.test(id))throw Error('Invalid layered art path '+id);
-  const bytes=fs.readFileSync(path.resolve(root,id)),sha256=createHash('sha256').update(bytes).digest('hex');
+  const bytes=fs.readFileSync(artPath(id,{...opts,root})),sha256=createHash('sha256').update(bytes).digest('hex');
   if(sha256!==record.sha256||bytes.length!==record.bytes)throw Error('Layered art hash mismatch '+id);
   if(![record.width,record.height].every(n=>Number.isInteger(n)&&n>0))throw Error('Invalid layered art dimensions '+id);
   return {id,bytes,sha256,record};
  });
 }
-export function withLayeredArt(manifest,root){
+export function withLayeredArt(manifest,root,opts={}){
  const assets={...manifest.assets};
- for(const {id,bytes,sha256}of readLayeredArt(root)){
-  if(assets[id])throw Error('Layered art ID collides with a pinned pack '+id);
-  assets[id]={common:{path:id,bytes:bytes.length,sha256}};
+ for(const {id,bytes,sha256}of readLayeredArt(root,opts)){
+  addDisplayRecord(assets,id,{path:id,bytes:bytes.length,sha256});
  }
  return {...manifest,count:Object.keys(assets).length,assets};
 }

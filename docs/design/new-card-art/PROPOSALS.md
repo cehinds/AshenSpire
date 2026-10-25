@@ -16,12 +16,12 @@ Generated sheets demonstrate a visual family; they are not pixel-identical produ
 
 ## Boards
 
-- [Shared object masters](proposals/masters.png) — ten base objects.
-- [Card types](proposals/card-types.png) — all ten requested types, plus Evade and a scythe Sweep alternative.
-- [Elements](proposals/elements.png) — the same sword under ten treatments.
-- [Techniques](proposals/techniques.png) — eight families, two alternatives each.
-- [Conditions](proposals/conditions.png) — eighteen families, two alternatives each.
-- [Buffs and hand effects](proposals/buffs-hand.png) — fifteen families, two alternatives each; corrected Cleansed flame.
+- [Shared object masters](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/proposals/masters.png) — ten base objects.
+- [Card types](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/proposals/card-types.png) — all ten requested types, plus Evade and a scythe Sweep alternative.
+- [Elements](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/proposals/elements.png) — the same sword under ten treatments.
+- [Techniques](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/proposals/techniques.png) — eight families, two alternatives each.
+- [Conditions](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/proposals/conditions.png) — eighteen families, two alternatives each.
+- [Buffs and hand effects](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/new-card-art/proposals/buffs-hand.png) — fifteen families, two alternatives each; corrected Cleansed flame.
 
 ## Suggested names
 

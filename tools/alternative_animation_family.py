@@ -8,7 +8,9 @@ import runpy
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / 'pose-studio/renewal'
+from art_authoring import authoring_root, art_path
+ART = authoring_root(ROOT)
+BASE = ART / 'pose-studio/renewal'
 
 
 def build_family(actor, loadout, label, sheets, *, notes, effect='slash',
@@ -68,7 +70,7 @@ def build_family(actor, loadout, label, sheets, *, notes, effect='slash',
             project['assets'] = {k: v for k, v in project['assets'].items() if not k.startswith('assets/combat-effects/')}
             for i in range(1, 7):
                 path = f'assets/combat-effects/{effect}{i}.webp'
-                project['assets'][path] = uri(ROOT / path.replace('assets/', 'assets-mobile/', 1))
+                project['assets'][path] = uri(art_path(ROOT, path.replace('assets/', 'assets-mobile/', 1), ART))
         (out / f'{action}.pose.json').write_text(json.dumps(project, separators=(',', ':')))
     normalization = {'sheets': sheets, 'gutters': gutters} if gutters else sheets
     (out / 'source/normalization.json').write_text(json.dumps(normalization, indent=2) + '\n')

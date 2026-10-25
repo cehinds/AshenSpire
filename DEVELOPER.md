@@ -10,6 +10,9 @@ How to run, test, and add content. The architecture contract lives in
 For how work is branched, reviewed, and merged, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+For separate game/art checkouts, composite editor previews, exports and the
+release/pin workflow in full Visual Studio, see [Art authoring](docs/ART-AUTHORING.md).
+
 ## Open and navigate in Visual Studio
 
 Open the repository root with **File → Open → Folder**. Install Visual Studio's
@@ -192,7 +195,7 @@ browser test harness).
 | `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`); the same run also publishes the Workbench as a static site at `/workbench/` (built from this checkout, `continue-on-error` so it never stops the game site) | — | yes (push to `dev`) | yes | yes |
 | `pages-builds.yml` → deploy to GitHub Pages (push to `dev` or `release`, or the owner's dispatch with `PUBLISH` for any branch the environment admits; `release` needs the owner's one-time `github-pages` deployment-branch addition, see the workflow header) | — | yes (push to `dev`) | — | — |
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
-| `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AshenSpire-art`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
+| `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AI-Art` on branch `ashenspire`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → pin bump: pushes `bot/art-pin-<tag>` and opens its pull request into `dev` with `ART_REPO_WRITE_TOKEN`, so CI runs on it (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
 | `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
 | `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
@@ -254,9 +257,9 @@ says `light`. The full-art single file (~255 MB) and the separate mobile file
 are retired, and `bundle.mjs --mobile` is refused by name. **The art is not in
 this repository** (docs/EXTERNAL-ASSETS-PLAN.md step 13): `assets/`,
 `assets-mobile/`, the fonts, the score's MP3s, `map-detail/` and `art/` live in
-`cehinds/AshenSpire-art`, which generates the light twins and packs the release
+`cehinds/AI-Art` on branch `ashenspire`, which generates the light twins and packs the release
 (see *The art release* below); an art change is a PR there, then a PR here that
-bumps the pin. `art-manifest.json` lists every asset id (its runtime `assets/…`
+bumps the pin and matching canonical manifest atomically. Display images now live in the common pack; the eight display JSON/Markdown catalogs remain game data. `art-manifest.json` lists every asset id (its runtime `assets/…`
 path) with the file each tier ships — `light` (`assets-mobile/…` in the light
 zip) and `high` (`assets/…` in the high zip), each with bytes, sha256 and pixel
 size; the placeholder tier has no file. `node tools/art-manifest.mjs --write`
@@ -336,11 +339,11 @@ Leave it published for weeks, then set it back in a later PR. Publish it from
 not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
 
 **The art release** (docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md step
-11). `art-release.json` (schema 2) pins one release of `cehinds/AshenSpire-art`:
-its tag (today `hd-assets-v2`) and three zips with their sha256s — `high`
-(`hd-assets-v2.zip`, the full art), `light` (`light-assets-v2.zip`, the
-`assets-mobile/` twins) and `common` (`common-assets-v2.zip`: the fonts,
-`licenses/OFL.txt`, the music and the map tiles). `node tools/fetch-art.mjs`
+11). `art-release.json` (schema 2) pins one release of `cehinds/AI-Art` on branch `ashenspire`:
+its tag (currently `ashenspire-hd-assets-v24`) and three zips with their sha256s — `high`
+(`hd-assets-v24.zip`, the full art), `light` (`light-assets-v24.zip`, the
+`assets-mobile/` twins) and `common` (`common-assets-v24.zip`: the fonts,
+`licenses/OFL.txt`, the music, the map tiles and `assets-display/` images). `node tools/fetch-art.mjs`
 fetches all three (`--pack high|light|common`, a comma list, or `all`), refuses
 a zip unless its sha256 is the pinned one and every file matches its record in
 `art-manifest.json`, and unpacks each into `.art-cache/<tag>/<pack>/`

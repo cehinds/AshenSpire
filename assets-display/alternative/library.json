@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "library": "alternative",
-  "pinnedRelease": "hd-assets-v23",
-  "note": "Display-specific exports stored beside this index.",
+  "pinnedRelease": "ashenspire-hd-assets-v24",
+  "note": "Display-specific exports resolve through the verified common art pack.",
   "assets": {
     "assets-display/alternative/ashheartDragon-mobile.webp": {
       "source": "reviewed-export",

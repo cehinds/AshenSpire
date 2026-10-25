@@ -5,16 +5,35 @@ import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
-const toolDir=path.dirname(fileURLToPath(import.meta.url));
+import {authoringRoot,authoringPath,isAuthoringFile} from '../art-authoring.mjs';
+const TOOL_DIR=path.dirname(fileURLToPath(import.meta.url));
 const {projectPath,assetSource}=createRequire(import.meta.url)('./project.js');
 const MIME={'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.woff':'font/woff','.woff2':'font/woff2','.ttf':'font/ttf','.otf':'font/otf'};
 async function embedFile(file,root){const real=await fs.realpath(file),allowed=await fs.realpath(root);if(!real.startsWith(allowed+path.sep))throw Error('Embedded file escapes its asset directory');const mime=MIME[path.extname(real).toLowerCase()];if(!mime)throw Error('Unsupported embedded file: '+file);return `data:${mime};base64,${(await fs.readFile(real)).toString('base64')}`;}
-export async function bundleProject({scenePath,outPath,id}){
- const input=await fs.realpath(path.isAbsolute(scenePath)?scenePath:path.join(toolDir,projectPath(scenePath)));
+// Shared physical owner for project data. Absolute custom inputs outside the
+// known Game/Art tool roots retain the existing standalone-input behavior.
+export async function projectReader({toolDir=TOOL_DIR,assetRoot,env=process.env}={}){
+ const root=path.resolve(toolDir,'../..'),checkout=authoringRoot({root,assetRoot,env,required:false});
+ const art=checkout?await fs.realpath(checkout):null;
+ const bases=[path.resolve(toolDir),await fs.realpath(toolDir),...(art?[path.join(art,'tools/hud-component-studio')]:[])];
+ return file=>{
+  const absolute=path.resolve(toolDir,file);
+  if(art)for(const base of bases){
+   const relative=path.relative(base,absolute);
+   if(!relative||relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative))continue;
+   const logical='tools/hud-component-studio/'+relative.split(path.sep).join('/');
+   if(isAuthoringFile(logical))return authoringPath(logical,{root,assetRoot:art,env});
+  }
+  return absolute;
+ };
+}
+export async function bundleProject({scenePath,outPath,id,toolDir=TOOL_DIR,assetRoot,env=process.env}){
+ const read=await projectReader({toolDir,assetRoot,env});
+ const input=await fs.realpath(read(path.isAbsolute(scenePath)?scenePath:projectPath(scenePath)));
  const source=await fs.readFile(input,'utf8'),scene=JSON.parse(source),sceneDir=path.dirname(input);
  if(scene.version!==1||!scene.assets||!Array.isArray(scene.nodes)||!Array.isArray(scene.states))throw Error('Expected a v1 component studio scene');
  const projectRoot=path.join(toolDir,'projects'),relative=path.relative(projectRoot,input);let canonical;if(!relative.startsWith('..'+path.sep)&&!path.isAbsolute(relative))canonical=relative.split(path.sep).join('/');else{const normalized=input.split(path.sep).join('/'),marker='/projects/';const index=normalized.lastIndexOf(marker);canonical=index>=0?normalized.slice(index+marker.length):normalized;}const identity=id||`${path.basename(sceneDir).slice(0,40)}-${createHash('sha256').update(canonical).digest('hex').slice(0,16)}`;if(!/^[a-zA-Z0-9_-]{1,100}$/.test(identity))throw Error('Project id must contain letters, numbers, underscores or hyphens');
- for(const asset of Object.values(scene.assets)){assetSource(asset.src,'projects/bundle/scene.json');if(/^data:image\/(?:png|jpeg|webp|gif);base64,/.test(asset.src))continue;if(!/^assets\//.test(asset.src)||!/^\.(png|jpg|jpeg|webp|gif)$/i.test(path.extname(asset.src)))throw Error('Project assets must be raster images');asset.src=await embedFile(path.join(sceneDir,asset.src),path.join(sceneDir,'assets'));}
+ for(const asset of Object.values(scene.assets)){assetSource(asset.src,'projects/bundle/scene.json');if(/^data:image\/(?:png|jpeg|webp|gif);base64,/.test(asset.src))continue;if(!/^assets\//.test(asset.src)||!/^\.(png|jpg|jpeg|webp|gif)$/i.test(path.extname(asset.src)))throw Error('Project assets must be raster images');asset.src=await embedFile(read(path.join(sceneDir,asset.src)),read(path.join(sceneDir,'assets')));}
  // References are review aids. Excluding them keeps the handoff small and hides its Reference control.
  if(scene.metadata)delete scene.metadata.references;
  let css=await fs.readFile(path.join(toolDir,'studio.css'),'utf8');

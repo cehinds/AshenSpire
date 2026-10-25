@@ -80,7 +80,7 @@ then explain how to start each tool.
   folded away. A root `*-preview.html` that is not registered yet still shows,
   marked *Unregistered*.
 - **External tools** — entries with `source: "art-checkout"` (pages in a
-  cehinds/AshenSpire-art checkout) and `source: "editor-repo"` (the separate
+  cehinds/AI-Art checkout on branch `ashenspire`) and `source: "editor-repo"` (the separate
   AshenedSpire-Editor app). Set their paths, and the editor app's dev URL, in
   **Settings** (saved in `workbench/.state/settings.json`; defaults from
   `ASHEN_ART_CHECKOUT` and `ASHEN_EDITOR_CHECKOUT`). Art pages are served

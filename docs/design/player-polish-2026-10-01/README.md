@@ -14,18 +14,18 @@ Desktop can reveal context and comparison together. Mobile should recompose arou
 
 | Board | Player surfaces |
 | --- | --- |
-| [01 · Arrival & Identity](01-arrival-and-identity.png) | Title, save slots & resume; Character creation |
-| [02 · Story & Consequence](02-story-and-choices.png) | Opening sequence; Events & dialogue |
-| [03 · World & Routes](03-world-and-routes.png) | World Journey; Classic Climb map |
-| [04 · Places & Encounters](04-cities-and-dungeons.png) | Crownfall services & quests; Legacy dungeon exploration |
-| [05 · Combat & Threats](05-combat-and-threats.png) | Tactical combat; Boss & status inspection |
-| [06 · Armoury & Carry](06-armoury-and-inventory.png) | Character & equipment; Inventory & comparison |
-| [07 · Deck & Relics](07-cards-and-relics.png) | Deck & card inspection; Relics & flasks |
-| [08 · Trade & Forge](08-merchant-and-forge.png) | Merchant; Smith services |
-| [09 · Rest & Spoils](09-rest-and-rewards.png) | Rest site; Post-combat rewards |
-| [10 · Growth & Discovery](10-growth-and-discovery.png) | Class progression; Compendium |
-| [11 · Company & Legacy](11-company-and-history.png) | Forsaken Together co-op; Run results & history |
-| [12 · Preferences & Run Setup](12-preferences-and-run-setup.png) | Settings, controls & profile; Custom run & draft |
+| [01 · Arrival & Identity](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/01-arrival-and-identity.png) | Title, save slots & resume; Character creation |
+| [02 · Story & Consequence](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/02-story-and-choices.png) | Opening sequence; Events & dialogue |
+| [03 · World & Routes](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/03-world-and-routes.png) | World Journey; Classic Climb map |
+| [04 · Places & Encounters](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/04-cities-and-dungeons.png) | Crownfall services & quests; Legacy dungeon exploration |
+| [05 · Combat & Threats](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/05-combat-and-threats.png) | Tactical combat; Boss & status inspection |
+| [06 · Armoury & Carry](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/06-armoury-and-inventory.png) | Character & equipment; Inventory & comparison |
+| [07 · Deck & Relics](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/07-cards-and-relics.png) | Deck & card inspection; Relics & flasks |
+| [08 · Trade & Forge](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/08-merchant-and-forge.png) | Merchant; Smith services |
+| [09 · Rest & Spoils](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/09-rest-and-rewards.png) | Rest site; Post-combat rewards |
+| [10 · Growth & Discovery](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/10-growth-and-discovery.png) | Class progression; Compendium |
+| [11 · Company & Legacy](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/11-company-and-history.png) | Forsaken Together co-op; Run results & history |
+| [12 · Preferences & Run Setup](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/player-polish-2026-10-01/12-preferences-and-run-setup.png) | Settings, controls & profile; Custom run & draft |
 
 Additional surfaces are represented within these families: save-slot receipts in Arrival, quest-board entry and Road Warden conversation in Places/Story, status help and targeting in Combat, prepared sets and swap receipts in Armoury, card ownership in Deck, selling/removal in Trade, upgrade selection in Rest, readiness/reconnection and route votes in Company, and accessibility/rebind/profile/archive/changelog navigation in Preferences. About/credits and profile confirmation dialogs would inherit the shared menu and folio presentation; they do not have separate artwork. Developer-only editors and combat test tools are outside the player-art scope.
 

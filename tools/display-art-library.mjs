@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFil
 import { basename, dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { artPath, sourceMode } from './art-source.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const base = resolve(root, 'assets-display');
@@ -34,6 +35,7 @@ function workspacePath(path) {
   return full;
 }
 if (organize) {
+  if (sourceMode() !== 'trees') throw new Error('Organizing mutable display files requires explicit ASHEN_ART_SOURCE=trees');
   for (const name of ['classic', 'alternative', 'shared']) mkdirSync(resolve(base, name), { recursive: true });
   const old = workspacePath('assets-alternative');
   // Verify resolved source and destination before moving any directory contents.
@@ -72,7 +74,7 @@ const exports = {};
 for (const catalog of catalogs) for (const [file, expected] of Object.entries(catalog.value.hashes)) {
   const id = catalog.value.filePaths?.[file] || paths[file];
   if (id !== paths[file]) throw new Error(`Export in wrong display library: ${id}`);
-  const bytes = readFileSync(workspacePath(id));
+  const bytes = readFileSync(artPath(id, { root }));
   if (createHash('sha256').update(bytes).digest('hex') !== expected) throw new Error(`Changed export: ${id}`);
   if (exports[id]) throw new Error(`Duplicate export: ${id}`);
   exports[id] = { sha256: expected, bytes: bytes.length };
@@ -82,6 +84,9 @@ const release = JSON.parse(readFileSync(resolve(root, 'art-release.json'), 'utf8
 const classic = {}, shared = {};
 const classicId = /^assets\/(?:sprites\/|painted-outfits\/|animations\/|poses\/|enemy-poses\/|enemy-states\/|bg\/|equipment\/(?:reaver|rogue|starseer|herald)[_-])|^assets\/environments\/(?:legacy\/|[^/]+-combat\.webp$)/;
 for (const [id, record] of Object.entries(pinned.assets).sort(([a], [b]) => a.localeCompare(b))) {
+  // Display-library membership remains owned by the reviewed catalogs below.
+  // Pinning their bytes must not duplicate exports or expose component pieces.
+  if (id.startsWith('assets-display/')) continue;
   (classicId.test(id) ? classic : shared)[id] = { source: 'pinned-art-pack', tiers: record };
 }
 const alternative = {};
@@ -91,8 +96,8 @@ for (const [id, record] of Object.entries(exports).sort(([a], [b]) => a.localeCo
 const outputs = { classic, alternative, shared };
 for (const [name, assets] of Object.entries(outputs)) {
   const content = JSON.stringify({ schema: 1, library: name, pinnedRelease: release.tag,
-    note: name === 'alternative' ? 'Display-specific exports stored beside this index.' :
-      'Canonical packed IDs retain their existing byte home; this index groups them without duplication.', assets }, null, 2) + '\n';
+    note: name === 'alternative' ? 'Display-specific exports resolve through the verified common art pack.' :
+      'Canonical packed IDs resolve through pinned release packs; this index groups them without duplication.', assets }, null, 2) + '\n';
   const file = resolve(base, name, 'library.json');
   if (write) { mkdirSync(resolve(base, name), { recursive: true }); writeFileSync(file, content); }
   else if (!existsSync(file) || readFileSync(file, 'utf8') !== content) throw new Error(`Stale display library: ${name}; run node tools/display-art-library.mjs --write`);

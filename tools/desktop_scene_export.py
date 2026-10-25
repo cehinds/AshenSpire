@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+from art_authoring import authoring_root, art_path
 
 
 def digest(path):
@@ -16,16 +17,16 @@ def digest(path):
 
 def phone_snapshot(root, catalog):
     paths = {path for name, path in catalog['filePaths'].items() if name.endswith('-mobile.webp')}
-    paths.update(str(path.relative_to(root)) for folder in ['alternative', 'shared']
-                 for path in (root / 'assets-display' / folder).rglob('*-mobile.webp'))
-    return {path: digest(root / path) for path in sorted(paths)}
+    paths.update(path.relative_to(authoring_root(root) / 'common').as_posix() for folder in ['alternative', 'shared']
+                 for path in art_path(root, 'assets-display/' + folder).rglob('*-mobile.webp'))
+    return {path: digest(art_path(root, path)) for path in sorted(paths)}
 
 
 def main(root):
     from PIL import Image
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--desktop-scenes-only', action='store_true', required=True)
-    parser.add_argument('--source-root', type=Path, default=root / 'docs/design/combat-depth-2026-10-05')
+    parser.add_argument('--source-root', type=Path, default=authoring_root(root) / 'docs/design/combat-depth-2026-10-05')
     args = parser.parse_args()
     source_root = args.source_root.resolve()
     catalog_path = root / 'src/ui/alternativeArtCatalog.js'
@@ -54,16 +55,16 @@ def main(root):
             size = list(image.size)
         if size != provenance['size']:
             raise ValueError(f'Source dimensions changed: {id}')
-        target = root / art['path']
-        if target.resolve().parent != (root / 'assets-display/alternative').resolve() or not target.is_file():
+        target = art_path(root, art['path'])
+        if target.resolve().parent != art_path(root, 'assets-display/alternative').resolve() or not target.is_file():
             raise ValueError(f'Desktop scene output is not an existing display ID: {id}')
         if digest(target) != catalog['hashes'][target.name]:
             raise ValueError(f'Desktop export changed outside its catalog: {id}')
-        with Image.open(root / art['mobilePath']) as phone:
+        with Image.open(art_path(root, art['mobilePath'])) as phone:
             mobile_size = list(phone.size)
         if mobile_size != art.get('mobileSize', art['size']):
             raise ValueError(f'Phone dimensions differ from catalog: {id}')
-        if digest(root / art['mobilePath']) != catalog['hashes'][Path(art['mobilePath']).name]:
+        if digest(art_path(root, art['mobilePath'])) != catalog['hashes'][Path(art['mobilePath']).name]:
             raise ValueError(f'Phone export changed outside its catalog: {id}')
         jobs.append((id, source, target, mobile_size))
         requests.append({'path': 'environments/scene-' + id + '.webp', 'width': size[0], 'height': size[1]})
@@ -78,7 +79,7 @@ def main(root):
                 if list(image.size) != [plan['width'], plan['height']]:
                     image = image.resize((plan['width'], plan['height']), Image.Resampling.LANCZOS)
                 image.save(staged, format='WEBP', quality=plan['quality'], alpha_quality=plan['alphaQuality'], method=6)
-            records.append({'id': id, 'path': str(target.relative_to(root)), 'sourceSha256': digest(source),
+            records.append({'id': id, 'path': target.relative_to(authoring_root(root) / 'common').as_posix(), 'sourceSha256': digest(source),
                 'beforeBytes': target.stat().st_size, 'afterBytes': staged.stat().st_size,
                 'size': [plan['width'], plan['height']], 'mobileSize': mobile_size, 'sha256': digest(staged)})
         added = sum(row['afterBytes'] - row['beforeBytes'] for row in records)
@@ -87,7 +88,7 @@ def main(root):
         if phone_snapshot(root, catalog) != phones:
             raise ValueError('Phone exports changed during desktop staging')
         for row in records:
-            shutil.copyfile(Path(directory) / Path(row['path']).name, root / row['path'])
+            shutil.copyfile(Path(directory) / Path(row['path']).name, art_path(root, row['path']))
             art = catalog['sceneLayers'][row['id']]
             art['size'], art['mobileSize'] = row['size'], row['mobileSize']
             catalog['hashes'][Path(row['path']).name] = row['sha256']

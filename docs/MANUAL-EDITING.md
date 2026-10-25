@@ -232,6 +232,11 @@ and `npm test`, or the test command in DEVELOPER.md.
 
 ## Part 2 — Editing AshenSpire without an agent
 
+Artwork lives in [AI-Art, on branch `ashenspire`](https://github.com/cehinds/AI-Art/tree/ashenspire).
+Follow [Art authoring in full Visual Studio](ART-AUTHORING.md) for separate
+game/art checkouts, source editor previews, export and release/pin steps.
+Game rules, editors, tests and generated runtime catalogs remain here.
+
 Open the repository folder in Visual Studio (**File → Open → Folder**).
 No solution conversion is needed. Install Node 22.14 or newer. Right-click
 `package.json` for the **AshenSpire** tasks defined in `tasks.vs.json`.

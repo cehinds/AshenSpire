@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" fill="none" role="img" aria-labelledby="turn-orb-title"><title id="turn-orb-title">Unnumbered turn/action orb</title><defs>
-      <linearGradient id="turn-orb-metal" x1="0" y1="0" x2="0.6" y2="1"><stop stop-color="#514535"/><stop offset=".18" stop-color="#dcc18a"/><stop offset=".38" stop-color="#a88c53"/><stop offset=".64" stop-color="#554837"/><stop offset=".82" stop-color="#bd9c59"/><stop offset="1" stop-color="#534536"/></linearGradient>
-      <linearGradient id="turn-orb-soot" x2="0" y2="1"><stop stop-color="#242019"/><stop offset=".45" stop-color="#15130f"/><stop offset="1" stop-color="#0c0c0a"/></linearGradient>
-      <radialGradient id="turn-orb-light"><stop stop-color="#d6b667" stop-opacity=".26"/><stop offset="1" stop-color="#d6b667" stop-opacity="0"/></radialGradient>
-    </defs><circle cx="40" cy="40" r="36" fill="url(#turn-orb-soot)" stroke="url(#turn-orb-metal)" stroke-width="2"/><circle cx="40" cy="40" r="31" stroke="#e3c068" stroke-opacity=".4"/><path d="M40 1v6M40 73v6M1 40h6M73 40h6" stroke="#dec28b"/></svg>

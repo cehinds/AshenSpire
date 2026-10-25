@@ -4,7 +4,7 @@ Docs-only selection review. **A is recommended as the closest literal match to t
 
 [Open the interactive gallery](index.html). Each SVG/HTML is self-contained apart from its neighboring image; all PNGs are full 1440×900 viewport captures. Labels and comparison notes outside the viewport are review annotations, not proposed game UI.
 
-![All seven desktop options](overview.png)
+![All seven desktop options](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/overview.png)
 
 ## Shared layout
 
@@ -28,43 +28,43 @@ Corner groups end near y890. Combat log/Reaction occupy the fixed y750–779 lin
 
 Closest to the markup: large centered hand, fixed corner pairs, strong center action.
 
-![Option A: Literal split · recommended](option-a.png)
+![Option A: Literal split · recommended](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-a.png)
 
 ## B — More exposed card faces
 
 Slightly smaller cards with only 10px overlap; more of every face stays visible.
 
-![Option B: More exposed card faces](option-b.png)
+![Option B: More exposed card faces](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-b.png)
 
 ## C — Larger flat hand
 
 Larger faces and 32px overlap; a wider End Turn keeps the same bottom center.
 
-![Option C: Larger flat hand](option-c.png)
+![Option C: Larger flat hand](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-c.png)
 
 ## D — Gentle fan
 
 A small fan softens the hand; the first card still clears the player’s feet.
 
-![Option D: Gentle fan](option-d.png)
+![Option D: Gentle fan](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-d.png)
 
 ## E — Wider centered hand
 
 The hand spreads a little farther across the center; corner groups remain fixed.
 
-![Option E: Wider centered hand](option-e.png)
+![Option E: Wider centered hand](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-e.png)
 
 ## F — Compact span · larger action
 
 More card overlap gives the largest End Turn a clear center emphasis.
 
-![Option F: Compact span · larger action](option-f.png)
+![Option F: Compact span · larger action](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-f.png)
 
 ## G — Largest faces · shallow fan
 
 212px faces with a shallow fan; a shorter End Turn keeps room below the hand.
 
-![Option G: Largest faces · shallow fan](option-g.png)
+![Option G: Largest faces · shallow fan](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/design/desktop-footer-options-2026-10-16/option-g.png)
 
 ## Approval boundary
 

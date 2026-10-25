@@ -37,18 +37,18 @@ function fixture(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'layer-art-')
 test('changed export bytes fail before packing',t=>{
  const dir=fixture(t),id='assets-display/layered/rug.webp',bytes=Buffer.from('original');fs.writeFileSync(path.join(dir,id),bytes);
  fs.writeFileSync(path.join(dir,'assets-display/layered/manifest.json'),JSON.stringify({schema:1,assets:{[id]:{sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length,width:10,height:10}}}));
- fs.writeFileSync(path.join(dir,id),'changed!');assert.throws(()=>readLayeredArt(dir),/hash mismatch/);
+ fs.writeFileSync(path.join(dir,id),'changed!');assert.throws(()=>readLayeredArt(dir,{env:{ASHEN_ART_SOURCE:'trees'}}),/hash mismatch/);
 });
 test('manifest paths cannot escape the reviewed export directory',t=>{
- const dir=fixture(t);fs.writeFileSync(path.join(dir,'assets-display/layered/manifest.json'),JSON.stringify({schema:1,assets:{'assets-display/layered/../../private.webp':{}}}));assert.throws(()=>readLayeredArt(dir),/Invalid layered art path/);
+ const dir=fixture(t);fs.writeFileSync(path.join(dir,'assets-display/layered/manifest.json'),JSON.stringify({schema:1,assets:{'assets-display/layered/../../private.webp':{}}}));assert.throws(()=>readLayeredArt(dir,{env:{ASHEN_ART_SOURCE:'trees'}}),/Invalid layered art path/);
 });
 test('branch export IDs cannot replace pinned artwork',()=>{
  const [entry]=readLayeredArt(root);assert.throws(()=>withLayeredArt({assets:{[entry.id]:{common:{}}}},root),/collides/);
 });
 
 test('a runtime catalog without its manifest cannot produce an artless build',t=>{
- const dir=fixture(t);fs.mkdirSync(path.join(dir,'src/content'),{recursive:true});fs.writeFileSync(path.join(dir,'src/content/layeredEnvironments.js'),'export const LAYERED_SCENES = {};\n');assert.throws(()=>readLayeredArt(dir),/manifest missing/);
+ const dir=fixture(t);fs.mkdirSync(path.join(dir,'src/content'),{recursive:true});fs.writeFileSync(path.join(dir,'src/content/layeredEnvironments.js'),'export const LAYERED_SCENES = {};\n');assert.throws(()=>readLayeredArt(dir,{env:{ASHEN_ART_SOURCE:'trees'}}),/manifest missing/);
 });
 test('runtime recipes cannot reference exports omitted from the shipping manifest',t=>{
- const dir=fixture(t);fs.mkdirSync(path.join(dir,'src/content'),{recursive:true});fs.writeFileSync(path.join(dir,'src/content/layeredEnvironments.js'),'export const LAYERED_SCENES = {"room":{"layers":[{"asset":"assets-display/layered/missing.webp"}]}};\n');fs.writeFileSync(path.join(dir,'assets-display/layered/manifest.json'),JSON.stringify({schema:1,assets:{}}));assert.throws(()=>readLayeredArt(dir),/Unpacked layered art reference/);
+ const dir=fixture(t);fs.mkdirSync(path.join(dir,'src/content'),{recursive:true});fs.writeFileSync(path.join(dir,'src/content/layeredEnvironments.js'),'export const LAYERED_SCENES = {"room":{"layers":[{"asset":"assets-display/layered/missing.webp"}]}};\n');fs.writeFileSync(path.join(dir,'assets-display/layered/manifest.json'),JSON.stringify({schema:1,assets:{}}));assert.throws(()=>readLayeredArt(dir,{env:{ASHEN_ART_SOURCE:'trees'}}),/Unpacked layered art reference/);
 });

@@ -14,7 +14,7 @@
 // The artifact lane checks the selected standalone file, never an assumed
 // output. Selftest plants the source seams and that selected artifact.
 
-import { copyPackTrees, SANDBOX_ENV } from './art-source.mjs';
+import { copyPackTrees, copyDisplayArt, SANDBOX_ENV } from './art-source.mjs';
 import {
   cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -369,11 +369,12 @@ function copyBundleInputs(to) {
   // they come from the fetched packs (or, in a sandbox of a sandbox, its own
   // copies: copyPackTrees, tools/art-source.mjs), and every child this tool
   // runs in a copy reads them with ASHEN_ART_SOURCE=trees (SANDBOX_ENV).
-  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'tools']) {
+  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'engine', 'content', 'asset-data', 'styles', 'tools']) {
     const from = resolve(ROOT, name);
     if (existsSync(from)) cpSync(from, resolve(to, name), { recursive: true });
   }
   copyPackTrees(to, ['assets-mobile', 'assets/fonts'], { root: ROOT });
+  copyDisplayArt(to, { root: ROOT });
 }
 
 function forceCrLfTree(path) {
