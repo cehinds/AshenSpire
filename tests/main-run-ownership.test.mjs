@@ -94,6 +94,7 @@ function combatOutcomeFixture() {
     const saves = { bankEnemyKnowledge: () => bank.promise };
     const app = { querySelector: () => ({}) }, registries = { balance: { ui: { victoryBeat: { ms: 0 } } } };
     const persist = () => checkpoints.push(run.seed), showSettingsNotice = () => {}, victoryTitle = () => 'VICTORY';
+    const persistOrWarn = () => { persist(); return true; };
     const victoryBeat = () => { beats++; return beat.promise; };
     const runCombatEnd = () => { settlements++; throw new Error('Unexpected stale combat settlement'); };
     ${body('async function onCombatEnd(', '\n/**\n * The spoils')}

@@ -9,7 +9,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY } from '../src/engine/save.js';
+import { createSaveManager, isStorageFullError, runKey } from '../src/engine/save.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -53,7 +53,7 @@ test('isStorageFullError knows the quota shapes', () => {
   assert.equal(isStorageFullError(null), false);
 });
 
-test('a full store with nothing reclaimable still throws and keeps savedAt honest', () => {
+test('a full store still throws and keeps savedAt honest', () => {
   const store = limitedStorage();
   const save = createSaveManager(store);
   const { run, rng } = freshRun();
@@ -62,30 +62,6 @@ test('a full store with nothing reclaimable still throws and keeps savedAt hones
   store.setItem = () => { throw quotaError(); };
   assert.throws(() => save.saveRun(run, rng, 1), error => isStorageFullError(error));
   assert.equal(run.savedAt, stamped, 'a lost write does not claim a save');
-});
-
-test('quota retry frees salvage index bytes and a stale backup, once, then writes', () => {
-  const { run, rng } = freshRun();
-  const probe = limitedStorage();
-  createSaveManager(probe).saveRun(run, rng, 1);
-  const runSize = probe.map.get(runKey(1)).length + runKey(1).length;
-  const store = limitedStorage();
-  const save = createSaveManager(store);
-  save.loadMeta(); save.saveMeta(save.loadMeta());
-  const salvageKey = `${RUN_ARCHIVE_KEY}_salvage_123`;
-  store.map.set(salvageKey, 'x'.repeat(5000));
-  store.map.set(META_BACKUP_KEY, JSON.stringify({ stale: true }) + ' '.repeat(2000));
-  store.map.set(`${RUN_ARCHIVE_KEY}_profile_keep`, 'a salvaged PROFILE the player owns');
-  store.map.set(runKey(2), 'another slot the player owns');
-  // Room for the run only if the ~7000 reclaimable characters are freed first.
-  store.budget = store.used() + runSize - 3000;
-  save.saveRun(run, rng, 1);
-  assert.ok(store.map.has(runKey(1)), 'the run landed after the retry');
-  assert.equal(store.map.has(salvageKey), false, 'the index salvage was reclaimed');
-  assert.equal(store.map.has(META_BACKUP_KEY), false, 'the stale backup was reclaimed');
-  assert.ok(store.map.has(`${RUN_ARCHIVE_KEY}_profile_keep`), 'a salvaged profile is never touched');
-  assert.equal(store.map.get(runKey(2)), 'another slot the player owns', 'other save slots are never touched');
-  assert.ok(store.map.has(META_KEY), 'the primary profile is untouched');
 });
 
 test('a save slot is never deleted to make room', () => {
@@ -111,7 +87,7 @@ function door({ saveRun }) {
   const context = {
     saves: { saveRun }, activeSlot: 1, isStorageFullError, Date,
     dlog: (...args) => logs.push(args), console: { warn: (...a) => warns.push(a) },
-    failureBanner: (key, title, body) => { const el = { key, title, body, remove() { this.removed = true; } }; banners.push(el); return el; },
+    failureBanner: (key, title, body) => { const el = { key, title, body, dataset: { failureKey: key }, remove() { this.removed = true; } }; banners.push(el); return el; },
     setTimeout: () => 0,
   };
   runInNewContext(`${doorSource}\nthis.saveCombatCandidate = saveCombatCandidate; this.reportAutosaveFailure = reportAutosaveFailure;`, context);
@@ -127,7 +103,7 @@ test('a refused combat checkpoint is reported once per window and never refuses 
   assert.equal(h.banners.length, 1, 'the player-facing warning is throttled');
   assert.match(h.banners[0].body, /browser storage is full/);
   assert.match(h.banners[0].body, /Your game continues/);
-  assert.match(h.banners[0].body, /save slots/);
+  assert.match(h.banners[0].body, /delete an old save slot/);
   assert.equal(h.context.reportAutosaveFailure(quotaError(), Date.now() + 31000), true, 'warns again after the window');
 });
 
@@ -155,6 +131,37 @@ test('with a full store, a real card play and End Turn still apply and warn', ()
   assert.equal(h.banners.length, 1, 'one warning for the session window');
   assert.ok(h.logs.some(l => l[0] === 'save'));
   assert.equal(store.map.has(runKey(1)), false, 'nothing was written');
+});
+
+test('a full victory with a quota-throwing store still reaches the reward screen', () => {
+  const { run, rng } = freshRun(11);
+  const store = limitedStorage({ budget: 10 }); // nothing fits
+  const save = createSaveManager(store);
+  const h = door({ saveRun: (next, r) => save.saveRun(next, r, 1) });
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: 'n1_4', encounterId: 'patrol', saveCandidate: h.context.saveCombatCandidate });
+  combat.enemies[0].hp = 1;
+  for (const card of [...combat.piles.hand]) {
+    if (combat.phase === 'ended') break;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
+  }
+  assert.equal(combat.result, 'victory', 'the winning action applied despite the full store');
+  // The reward transition and the persist helpers, sliced from the shipped source.
+  const mounted = [];
+  const context = {
+    ...h.context, run, rng, mounted,
+    persist: () => save.saveRun(run, rng, 1),
+    configuredRewardOffer: rewards => rewards, mergeProgressionRewards: (_d, rewards) => rewards,
+    partitionProgressionRewards: rewards => ({ available: rewards, deferred: {} }),
+    pendingRewardCheckpoint: rewards => ({ rewards }),
+    mountPendingReward: () => { mounted.push('reward'); return 'mounted'; },
+  };
+  runInNewContext(`${doorSource}\n${sliceBlock('function beginPendingReward', '// SPEC §15.4: a legendary sigil drop')}\nthis.beginPendingReward = beginPendingReward; this.persistOrWarn = persistOrWarn; this.persistContinuing = persistContinuing;`, context);
+  assert.equal(context.beginPendingReward({ title: 'VICTORY' }, { source: 'normal', after: 'map' }), 'mounted');
+  assert.deepEqual(mounted, ['reward'], 'the reward screen mounted');
+  assert.ok(h.banners.length >= 1, 'the player was told that the save failed');
+  assert.equal(context.persistContinuing(), undefined, 'reward doors read a return of false as a refusal; this never returns it');
+  assert.equal(context.persistOrWarn(), false);
 });
 
 test('an old-format save (no savedAt stamp) still loads, and a refused re-save leaves the slot readable', () => {
