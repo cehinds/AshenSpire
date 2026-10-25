@@ -55,6 +55,12 @@ export function combatEnvironment(run = {}) {
   return { region, scene: region.scenes[index] };
 }
 
+// The region an act's route board belongs to: its seat's region. Null for a run
+// without a seat order, which keeps the plain painting (no biome framing).
+export function actRegionId(act = {}) {
+  return seatRegion(act)?.id ?? null;
+}
+
 // One coherent world per seed, including across act changes and reloads.
 export function worldMapForRun({ seedString = '' } = {}) {
   return MEGA_MAPS[hash(`${seedString}:world`) % MEGA_MAPS.length];
