@@ -49,7 +49,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Whether a card deals fire, frost and so on | `cardExposure.csv` | One row per card that carries a damage school. |
 | Mana rules for spell cards | `cardManaPolicy.json` | Which cards must cost Mana. |
 | A class's HP, starting relic, flasks, card pool | `classes.json` | Four classes: reaver, starseer, rogue, herald. In Core the pack sets HP, deck and special card. |
-| What a class starts with | `startingKits.csv` | One free baseline kit per class. Core uses the pack's `starterDeck.json` and `characters.json`. |
+| A class's starting weapon and shield | `startingKits.csv` | One free baseline kit per class. Core uses the pack's `starterDeck.json` and `characters.json`. |
 | Keyword tooltips (Exhaust, Retain...) | `keywords.json` | Five rows. Names and tooltip text only. |
 | What a status does (Bleed, Burn...) | `statuses.json` | 56 rows. Stack mode, decay, tooltip. Expansion statuses are code; base-card statuses in Core are in the base-cards pack. |
 | Stances | `stances.json` | Three rows. |
@@ -93,7 +93,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Character creation screen, keepsakes | `characterCreation.json`, `creationModes.json` | Modes: starting points, minimum, maximum. |
 | What each stat turns into (HP, Actions, Draw...) | `derivedStatRules.json` | |
 | Action costs of cards and drawbacks | `actionCosts.json` | The cost table and its budget. |
-| Poise, ward and counter rules | `fixCoreMechanics.json` | |
+| Core combat rules: Poise, ward, counters, accuracy, perception, range, stances, statuses | `fixCoreMechanics.json` | |
 
 #### Progression
 
@@ -103,7 +103,8 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Lessons (how abilities are learned) | `progressionLessonRecipes.json` | |
 | Feats and what unlocks them | `progressionFeatRows.json`, `progressionFeatUnlocks.json` | Feat descriptions are computed. See "What is still code". |
 | Progression relics | `progressionRelics.json`, `progressionRelicUnlocks.json` | |
-| What a class unlocks at each level | `progressionUnlockRows.json`, `unlocks.csv` | |
+| What a class unlocks at each level | `progressionUnlockRows.json`, `classMastery.csv` | |
+| Outfits, characters and slots earned across runs | `unlocks.csv` | Gated by wins, bosses beaten and runs. |
 | Gear needed at each level | `progressionGearRequirements.json` | |
 | Grade budget for abilities | `progressionGradeRules.json` | The maths using it is code. |
 | Class mastery levels and rewards | `classMastery.csv`, `balanceClassMastery.json` | |
@@ -120,11 +121,12 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Shop stock sizes, prices, selling | `balanceShop.json` | |
 | Rest sites: how much HP a camp or shrine heals | `balanceRest.json` | Core's rest services are the pack's `rests.json`. |
 | XP from wins and kills | `balanceXp.json` | |
-| Character level-up points and level cap | `balanceLevelUp.json`, `balanceLevels.json` | |
+| Character XP needed per level | `balanceCore.json` (`level.xp`) | |
+| Level-up points and level cap | `balanceLevelUp.json` (`maxLevels`) | `balanceLevels.json` holds the starting level and enemy scaling. |
 | Skills: drafts, ranks, feat rhythm | `balanceSkill.json`, `balanceProgression.json` | |
 | Feat and progression-relic numbers | `balanceProgressionFeats.json`, `balanceProgressionRelics.json` | |
 | Relic powers (Forsaken Medallion and the rest) | `balancePowers.json` | |
-| Sigils: strength, drop chance | `balanceSigils.json` | |
+| Sigils: strength, drop chance | `balanceSigils.json` | Sigil names, rarity, cost and text are still code: `src/content/sigils.js`. |
 | Equipment: swapping, mounts, rarity bonuses | `balanceEquipment.json`, `balanceCustomMods.json` | Custom Climb options are in the second. |
 | Smithing stones and services | `balanceSmithing.json` | |
 | Poise and stagger | `balancePoise.json`, `balanceStagger.json` | |
@@ -133,8 +135,8 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Boss and seat strength by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | |
 | Endless Spire scaling | `balanceEndless.json` | HP and Strength added each loop. |
 | Co-op, gauntlet test | `balanceCoop.json`, `balanceGauntlet.json` | Co-op is off in the current player flow. |
-| Map size limits | `balanceAtlas.json` | |
-| Interface sizes, HUD, tooltips, accents | `balanceUi.json` | |
+| Towns per act | `balanceAtlas.json` | The act map's shape (floors, columns, paths, room-type odds) is still code: `src/content/mapconfig.js`. |
+| Interface sizes, HUD, tooltips, accents, audio, card motifs, hand layout, hold timings | `balanceUi.json` | |
 
 #### Combat expansion tables
 
@@ -191,6 +193,11 @@ A few things are computed, so they cannot be a plain table. Ask a developer to c
 | Equipment lookups | Normalises the CSV tables into lookups. | `src/content/equipment.js` |
 | Co-op-only cards | Still written in a code file (co-op is off in the current player flow). | `src/content/cards/coop.js` |
 | Art, pose and landmark tables | Generated by the art tools. | `src/content/poseSprites.js`, `src/content/mapArt.generated.js` |
+| Sigils (names, rarity, cost, text) | Not moved yet. | `src/content/sigils.js` |
+| Act map shape (floors, columns, paths, room odds) | Not moved yet. | `src/content/mapconfig.js` |
+| Custom Climb modifier labels and text | Not moved yet. | `src/content/customMods.js` |
+| Character-level and skill feats | Not moved yet. | `src/content/feats.js`, `src/content/classSkillFeats.js`, `src/content/skillFeats.js` |
+| Intent hiding, seats, survey lore, combat feel, music, sound effects | Not moved yet. | `src/content/combatMatchups.js`, `seats.js`, `surveyQuestLore.js`, `combatFeel.js`, `music.js`, `sfx.js` |
 
 ### Common mistakes and what you will see
 
