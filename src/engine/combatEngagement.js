@@ -155,7 +155,10 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
     }
   }
   // Core 2 rules version 2: a paid Advance persists; an older fight keeps it temporary to the action.
-  if (!carrier.rangePlan && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) ctx.rangeState = advancedEngagementState(ctx.rangeState, plan);
+  // Committing the movement is separate from charging it: a plan prepaid at preparation (a charged enemy attack) has no
+  // root yet and commits here, once, at resolution; an accepted plan carries its rootId and is never committed again.
+  const unpaidPlan = !carrier.rangePlan, prepaidPlanPending = !!carrier.rangePlan && !carrier.rangePlan.rootId;
+  if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) ctx.rangeState = advancedEngagementState(ctx.rangeState, plan);
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
   if (lineage) carrier.rangeLineagePlan={...lineage,rootId};

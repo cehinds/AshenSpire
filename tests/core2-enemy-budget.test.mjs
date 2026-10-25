@@ -345,3 +345,34 @@ test('the single-hit attacks of the four 1 SP enemies cost the Core card\'s 1 SP
     }
   }
 });
+
+// A charged attack's Advance is paid at preparation and committed once, at resolution (rules version 2 only).
+const chargedAdvance = version => {
+  const combat = fight('bellKeeper'), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  if (version === 1) combat.core2ActionRulesVersion = 1;
+  const pair = Object.keys(combat.rangeState.engagements)[0];
+  combat.rangeState.engagements[pair] = 2;
+  const first = enemyMoveQuote(def.moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat });
+  dispatch(combat, { type: 'endTurn' });
+  const paid = { ...enemy.pendingMove.spPayment }, afterPrep = combat.rangeState.engagements[pair];
+  dispatch(combat, { type: 'endTurn' });
+  settle(combat);
+  return { combat, enemy, def, pair, first, paid, afterPrep, band: combat.rangeState.engagements[pair] };
+};
+
+test('a charged attack pays its Advance once and commits the closed band at resolution', () => {
+  const { combat, enemy, def, first, paid, afterPrep, band } = chargedAdvance(2);
+  assert.ok(first.advanceSp > 0);
+  assert.deepEqual(paid, { sp: first.sp, advanceSp: first.advanceSp, totalSp: first.totalSp });
+  assert.equal(afterPrep, 2, 'preparation pays but moves nothing');
+  assert.ok(band < 2, 'the resolved attack leaves the pair closer');
+  assert.equal(enemy.stamina, enemy.maxStamina, 'charged once at preparation, never again');
+  assert.equal(enemyMoveQuote(def.moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat }).advanceSp, 0, 'the next attack quotes no Advance');
+});
+
+test('a charged attack in a v1 fight keeps its Advance temporary', () => {
+  const { enemy, band, paid, first } = chargedAdvance(1);
+  assert.equal(paid.advanceSp, first.advanceSp);
+  assert.equal(band, 2, 'a v1 Advance is not committed');
+  assert.equal(enemy.stamina, enemy.maxStamina);
+});
