@@ -34,7 +34,7 @@ export function mountMapDetail(port, surface, source) {
     const w = source.width * scale, h = source.height * scale;
     return { width: w, height: h, x: (width - w) / 2, y: (height - h) / 2 };
   };
-  const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); base.parentNode.append(tiles); // beside the base image, inside any framing transform it carries
+  const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); (base.parentNode || surface).append(tiles); // beside the base image, inside any framing transform it carries
   const cache = new Map(), failed = new Set(), pending = new Set();
   const loading = new Set(); // the Image of each tile in flight, dropped on dispose
   let generation = 0; // bumped when the art source changes
