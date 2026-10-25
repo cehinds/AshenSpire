@@ -5,7 +5,7 @@
   "sizing": {
     "bands": { "hud": 6, "scene": 61, "context": 20, "footer": 13 },
     "floorPercent": 80,
-    "desktopHeader": { "heightPx": 56, "stackedHeightPx": 76, "singleRowMinWidthPx": 640 },
+    "desktopHeader": { "heightPx": 56, "stackedHeightPx": 76, "singleRowMinWidthPx": 640, "coopHeightPx": 40 },
     "desktopFooter": {
       "referenceHeightPx": 900,
       "scaleHeightPx": 1080,
