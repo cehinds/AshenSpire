@@ -160,6 +160,7 @@ export function failureBanner(key, title, body) {
   const built = (chrome ? chrome.banner : bareBanner)({ title, body, onOpen: () => openDebugLog() });
   // A failure before the first screen mounts must not sit under the static boot splash.
   document.getElementById?.('boot-splash')?.remove();
+  if (built.el.dataset) built.el.dataset.failureKey = key; // lets a caller tell its own banner from an overflow stand-in
   document.body.prepend(built.el);
   banners.set(key, { el: built.el, head: built.head, open: built.open, makeMore: built.more, more: null, n: 1 });
   return built.el;
