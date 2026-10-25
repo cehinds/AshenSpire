@@ -192,9 +192,9 @@ test('a fight saved under Core 2 rules version 1 keeps v1 pricing and a temporar
   assert.equal(restored.core2ActionRulesVersion, 1, 'the saved version is kept, not upgraded');
   assert.equal(core2ActionPolicyEnabled(restored), true, 'v1 keeps the v1 Core 2 policy');
   assert.equal(core2MultiHitRulesEnabled(restored), false);
-  // v1 pricing: the fixture's three-hit slash keeps its v1 price (no 1 SP per hit).
+  // v1 pricing: the fixture's three-hit slash keeps its v1 price, a flat 2 SP minimum (no 1 SP per hit).
   const enemy = restored.enemies[0], move = registries.enemies.get(enemy.enemyId).moves.slash;
-  assert.equal(enemyMoveSp(move, { enemy, moveId: 'slash', combat: restored }), enemyMoveSp(move, { enemy, moveId: 'slash', combat: { ...restored, core2ActionRulesVersion: undefined } }));
+  assert.equal(enemyMoveSp(move, { enemy, moveId: 'slash', combat: restored }), Math.max(2, enemyMoveSp(move, { enemy, moveId: 'slash', combat: { ...restored, core2ActionRulesVersion: undefined } })));
   assert.ok(enemyMoveSp(move, { enemy, moveId: 'slash', combat: { ...restored, core2ActionRulesVersion: 2 } }) >= 3, 'v2 prices the same move per hit');
   // v1 Advance: paid, but temporary to the action.
   const key = rangePairKey('player:player','enemy:e1');
