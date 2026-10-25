@@ -65,6 +65,13 @@ export function resolveLocationPresentation({ nodeId, seedString = '', profileId
     musicCandidates:data.musicProfiles.filter(row=>row.profileId===profileId).map(row=>({musicId:row.musicId,weight:row.weight})) };
 }
 
+// The region's profile for a setting; a region that lacks one (no bridge, no
+// mine) answers with its road profile, so the fight keeps the region's look.
+export function profileIdFor(regionId, settingId) {
+  const wanted = `${regionId}/${settingId}`;
+  return profiles.has(wanted) ? wanted : `${regionId}/road`;
+}
+
 export function presentationScene(selection) { return selection ? art.get(selection.sceneId) : null; }
 
 const problems = presentationProblems();

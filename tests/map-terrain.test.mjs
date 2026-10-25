@@ -64,3 +64,45 @@ test('every authored terrain zone is well formed and names a known setting', () 
     }
   }
 });
+
+import { combatEnvironment } from '../src/model/environmentArt.js';
+
+const fight = (type, region, mapTerrain, extra = {}) => combatEnvironment({
+  seedString: 'TERRAIN', actNumber: 1, floor: 3, environmentRegionId: region,
+  mapNodeId: 'n1', mapGraph: { nodes: { n1: { id: 'n1', type } } }, ...(mapTerrain ? { mapTerrain } : {}), ...extra,
+}).scene.id;
+
+test('combat takes the terrain the player travelled onto', () => {
+  assert.equal(fight('combat', 'ashen-crown'), 'ashen-crown-1');
+  assert.equal(fight('combat', 'ashen-crown', { nodeId: 'n1', settingId: 'city' }).replace(/-[23]$/, '-city'), 'ashen-crown-city');
+  assert.equal(fight('combat', 'ashen-crown', { nodeId: 'n1', settingId: 'bridge' }), 'ashen-crown-1');
+  assert.equal(fight('combat', 'drowned-coast', { nodeId: 'n1', settingId: 'bridge' }), 'drowned-coast-2');
+  assert.equal(fight('combat', 'cinder-reach', { nodeId: 'n1', settingId: 'mine' }), 'cinder-reach-4');
+  assert.equal(fight('combat', 'pale-marches', { nodeId: 'n1', settingId: 'shore' }), 'pale-marches-4');
+  assert.ok(['hollow-weald-1', 'hollow-weald-3', 'hollow-weald-4'].includes(fight('combat', 'hollow-weald', { nodeId: 'n1', settingId: 'forest' })));
+});
+
+test('a region without a profile for the terrain keeps its road', () => {
+  assert.equal(fight('combat', 'hollow-weald', { nodeId: 'n1', settingId: 'bridge' }), 'hollow-weald-1');
+  assert.equal(fight('combat', 'cinder-reach', { nodeId: 'n1', settingId: 'forest' }), 'cinder-reach-1');
+});
+
+test('terrain for another node, or none, changes nothing', () => {
+  const plain = fight('combat', 'drowned-coast');
+  assert.equal(fight('combat', 'drowned-coast', { nodeId: 'other', settingId: 'bridge' }), plain);
+  assert.equal(fight('merchant', 'drowned-coast'), fight('merchant', 'drowned-coast', { nodeId: 'other', settingId: 'shore' }));
+});
+
+test('a boss keeps its dungeon unless the ground is a city or a bridge', () => {
+  const dungeon = fight('boss', 'drowned-coast');
+  assert.equal(fight('boss', 'drowned-coast', { nodeId: 'n1', settingId: 'forest' }), dungeon);
+  assert.equal(fight('boss', 'drowned-coast', { nodeId: 'n1', settingId: 'shore' }), dungeon);
+  assert.equal(fight('boss', 'drowned-coast', { nodeId: 'n1', settingId: 'bridge' }), 'drowned-coast-2');
+  assert.notEqual(fight('boss', 'pale-marches', { nodeId: 'n1', settingId: 'city' }), undefined);
+});
+
+test('the terrain choice is decorative and consumes no RNG', () => {
+  const run = { seedString: 'S', actNumber: 1, floor: 1, environmentRegionId: 'ashen-crown', mapNodeId: 'n1',
+    mapGraph: { nodes: { n1: { id: 'n1', type: 'combat' } } }, mapTerrain: { nodeId: 'n1', settingId: 'city' } };
+  assert.deepEqual(combatEnvironment(run), combatEnvironment(JSON.parse(JSON.stringify(run))));
+});

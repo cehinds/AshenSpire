@@ -1,4 +1,4 @@
-import { resolveLocationPresentation, presentationScene } from './locationPresentation.js';
+import { resolveLocationPresentation, presentationScene, profileIdFor } from './locationPresentation.js';
 import { ENVIRONMENTS, MEGA_MAPS } from '../content/environments.js';
 import { SEATS, CAUSEWAY_REGION_ID } from '../content/seats.js';
 import { seatAtTier, tierOf } from './seats.js';
@@ -37,15 +37,26 @@ function causewayRegion(run, node) {
   return ENVIRONMENTS.find((region) => region.id === CAUSEWAY_REGION_ID) || null;
 }
 
+// The terrain the player travelled onto (run.mapTerrain, recorded by the map
+// screen from the painting under the node) outranks the node-type rule. A boss
+// keeps its dungeon unless the ground is a city or a bridge. Old saves and
+// runs with no framed painting carry none and keep the node-type rule.
+function combatSetting(run, nodeId, node) {
+  const terrain = nodeId && run.mapTerrain?.nodeId === nodeId ? run.mapTerrain.settingId : null;
+  if (node?.type === 'boss') return terrain === 'city' || terrain === 'bridge' ? terrain : 'dungeon';
+  if (terrain) return terrain;
+  return node?.type === 'merchant' ? 'city' : 'road';
+}
+
 export function combatEnvironment(run = {}) {
   const nodeId = run.journey?.currentNodeId || run.mapNodeId;
   const node = run.mapGraph?.nodes?.[nodeId];
   const region = (run.environmentRegionId && ENVIRONMENTS.find(r => r.id === run.environmentRegionId))
     || (!run.journey && causewayRegion(run, node))
     || regionForRun(run);
-  const setting = node?.type === 'boss' ? 'dungeon' : node?.type === 'merchant' ? 'city' : 'road';
+  const setting = combatSetting(run, nodeId, node);
   const selection = resolveLocationPresentation({ nodeId, seedString:run.seedString,
-    profileId:node ? `${region.id}/${setting}` : undefined,
+    profileId:node ? profileIdFor(region.id, setting) : undefined,
     timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
     savedSceneId:run.locationPresentation?.nodeId === nodeId ? run.locationPresentation?.sceneId : undefined });
   const selected = presentationScene(selection);
