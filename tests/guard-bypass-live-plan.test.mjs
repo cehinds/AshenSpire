@@ -52,3 +52,22 @@ test('live Block spends a guard bypass over magic and physical as the plan does'
   assert.deepEqual(lost, planned, 'each contact loses the HP the plan forecast');
   assert.equal(enemy.block, 20 - 4 - 5, 'Block soaked contact 1\'s 4 unbypassed magic and contact 2\'s 5');
 });
+
+test('with a guard bypass, each hit event reports amount - blocked as the HP that contact lost', () => {
+  const { combat, enemy } = fixture(20);
+  const receipt = Matchups.beginTacticalAction(combat, combat.player, enemy, carrier, contacts);
+  receipt.guardBypass = 4;
+  prepareExpandedDefense(combat, enemy, receipt, carrier);
+  const events = [], emit = combat.emit;
+  combat.emit = (type, payload) => { events.push({ type, ...payload }); return emit(type, payload); };
+  const lost = receipt.amounts.map((amount, index) => {
+    const before = enemy.hp;
+    applyAttackDamage(combat, combat.player, enemy, amount, carrier.tags, { ...carrier, expansionContact: { receipt, index } });
+    return before - enemy.hp;
+  });
+  const hits = events.filter(e => e.type === 'damageDealt');
+  assert.equal(hits.length, 2);
+  assert.deepEqual(lost, [4, 0]);
+  assert.deepEqual(hits.map(e => e.amount - e.blocked), lost);
+  assert.equal(hits[0].blocked, 4, 'the 4 unbypassed magic is Block-soaked');
+});

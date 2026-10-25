@@ -595,3 +595,22 @@ test('a pure magic spell meets Block, then HP (owner, 2026-10-25)', () => {
   assert.equal(r.committed, 2);
   assert.equal(r.preview, r.committed);
 });
+
+// The event adds soaked magic Block back into `amount`, so amount - blocked is the HP the hit really took
+// (the log, the hit float and the co-op replay all read it that way).
+test('damageDealt amount minus blocked equals the HP lost, magic Block included', () => {
+  const cases = [
+    ['pure magic 10 vs Block 4', fireBolt, 10, { ward: 0, block: 4 }, 6],
+    ['pure magic 10 vs Block 4, Ward 3', fireBolt, 10, { ward: 3, block: 4 }, null],
+    ['physical plus magic', mixed, 10, { ward: 0, block: 4 }, null],
+    ['physical plus magic vs Block 20', mixed, 10, { ward: 0, block: 20 }, 0],
+    ['physical 10 vs Block 4', slash, 10, { ward: 0, block: 4 }, 6],
+  ];
+  for (const [name, carrier, amount, setup, expected] of cases) {
+    const r = strike(carrier, amount, setup);
+    const lost = r.hpBefore - r.enemy.hp;
+    const hit = r.damage.reduce((sum, e) => sum + e.amount - e.blocked, 0);
+    assert.equal(hit, lost, `${name}: amount - blocked matches the HP lost`);
+    if (expected !== null) assert.equal(lost, expected, `${name}: HP lost`);
+  }
+});

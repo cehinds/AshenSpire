@@ -826,7 +826,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   amount -= poiseAbsorbed;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked: blocked + magicBlocked, wardResisted: resisted });
-  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked: blocked + magicBlocked, wardResisted: ward,
+  // `amount` already excludes the magic Block soaked, so the event adds it back: amount - blocked is the HP actually lost.
+  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: amount + magicBlocked, blocked: blocked + magicBlocked, wardResisted: ward,
     ...(fixCoreEnabled(ctx) ? { damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
       incoming: raw, physical: blockable, magical: tactical.magicAmounts?.[contactIndex] || 0,
       blocked: blocked + magicBlocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
