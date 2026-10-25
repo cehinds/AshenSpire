@@ -861,7 +861,9 @@
       "tag": "maneuver:casting",
       "family": "maneuver",
       "portability": "legacy",
-      "modules": []
+      "modules": [
+        "reward-ranks"
+      ]
     },
     {
       "id": "maneuver_counter",
@@ -869,7 +871,8 @@
       "family": "maneuver",
       "portability": "legacy",
       "modules": [
-        "deck-training"
+        "deck-training",
+        "reward-ranks"
       ]
     },
     {
@@ -894,7 +897,8 @@
       "family": "maneuver",
       "portability": "legacy",
       "modules": [
-        "deck-training"
+        "deck-training",
+        "reward-ranks"
       ]
     },
     {
@@ -903,7 +907,8 @@
       "family": "maneuver",
       "portability": "legacy",
       "modules": [
-        "deck-training"
+        "deck-training",
+        "reward-ranks"
       ]
     },
     {
