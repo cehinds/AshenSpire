@@ -93,7 +93,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnap
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey, isStorageFullError } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
 import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
@@ -1157,6 +1157,59 @@ function persist() {
   sendLanStatus();
 }
 
+// ---- A FAILED AUTOSAVE NEVER UNDOES A LEGAL MOVE (browser storage full) -------
+// Combat v2 saves the accepted candidate BEFORE the engine adopts it, and a save
+// that threw refused the move: with localStorage full ("exceeded the quota")
+// every attack and End Turn was silently dropped. The run in memory is
+// authoritative, so a combat checkpoint that cannot land is reported and the
+// move stands. (Explicit Save still reports failure: saveNow below.)
+const SAVE_WARNING_REPEAT_MS = 30000;
+const SAVE_WARNING_SHOWN_MS = 9000;
+let lastSaveWarningAt = -Infinity;
+function reportAutosaveFailure(error, now = Date.now()) {
+  const full = isStorageFullError(error);
+  dlog('save', full ? 'autosave refused: browser storage is full' : 'autosave failed', error && error.message);
+  console.warn('[save] autosave failed; play continues:', error && error.message);
+  if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
+  lastSaveWarningAt = now;
+  const body = full
+    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues; delete an old save slot from the title screen to free space.'
+    : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
+  const key = full ? 'save:storage-full' : 'save:failed';
+  const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
+  // failureBanner hands back an existing banner when the stack is full: only
+  // auto-remove the one that is ours, never an unrelated failure.
+  if (banner && banner.dataset?.failureKey === key) {
+    // Float over the top edge for its few seconds: left in the page flow it
+    // pushes the fight down and the End Turn button off a phone screen.
+    if (banner.style) Object.assign(banner.style, { position: 'fixed', top: '0', left: '0', right: '0', margin: '0', zIndex: '1000', backgroundColor: '#17110a' });
+    if (typeof setTimeout === 'function') setTimeout(() => banner.remove?.(), SAVE_WARNING_SHOWN_MS);
+  }
+  return true;
+}
+
+// persist() that reports a failed autosave instead of throwing: for the victory
+// path, where a full store must never strand the reward screen.
+function persistOrWarn() {
+  try { persist(); return true; } catch (error) { reportAutosaveFailure(error); return false; }
+}
+// The same, for doors that read a `false` return as "the save was refused" and
+// roll the claim back (reward screens, victory receipts): returns nothing, so a
+// full store never undoes a claim or a skip.
+function persistContinuing() { persistOrWarn(); }
+
+// The combat checkpoint's save door (commitExpansionCandidate's saveCandidate):
+// a throw becomes a reported, non-durable commit, never a refused action.
+function saveCombatCandidate(next, committedRng) {
+  try {
+    saves.saveRun(next, committedRng, activeSlot);
+    return { ok: true };
+  } catch (error) {
+    reportAutosaveFailure(error);
+    return { ok: true, durable: false };
+  }
+}
+
 // The run the way its save slot names it (W2e's target line, W1r's, W2d's).
 function runIdentityParts() {
   return {
@@ -1483,7 +1536,7 @@ function advanceAct() {
     run.hp = run.maxHp;
   }
   run.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
-  persist();
+  persistOrWarn(); // reached from a boss reward: a full store must not strand the climb
   showMap();
 }
 
@@ -3089,7 +3142,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   run.combatEntered = { ...(serviceEvent ? serviceEventCombatEntry(nodeId, encounterId) : { nodeId, encounterId }), ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
-  if (!resuming) persist();
+  if (!resuming) persistOrWarn(); // a full store must not block the next fight
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
@@ -3122,7 +3175,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
-        saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+        saveCandidate: saveCombatCandidate });
       if (committed.ok && (committed.durable !== false || committed.knowledge) && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
         const learningRun = run, learningSlot = activeSlot;
         saves.bankEnemyKnowledge(learningRun).then(result => {
@@ -3131,7 +3184,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
           // are checkpointed without reopening the encounter or rolling reads.
           // No rng: the saved counters stay those of the combat checkpoint,
           // which ordinary unsaved actions never move (SPEC §3.12).
-          if (run === learningRun) saves.saveRun(learningRun, null, learningSlot);
+          if (run === learningRun) { try { saves.saveRun(learningRun, null, learningSlot); } catch (error) { reportAutosaveFailure(error); } }
           if (!result.ok) showSettingsNotice(`Enemy learning remains pending: ${result.reason}`, 'profile');
         }).catch(error => showSettingsNotice(`Enemy learning remains pending: ${error.message}`, 'profile'));
       }
@@ -3361,7 +3414,7 @@ async function onCombatEnd(result, combat, enc) {
     const learning = await saves.bankEnemyKnowledge(learningRun);
     if (!owned()) return;
     if (!learning.ok) showSettingsNotice(`Enemy learning remains pending: ${learning.reason}`, 'profile');
-    persist();
+    persistOrWarn(); // a full store must not strand the victory
   }
   // Keep the exact terminal replay receipt through every asynchronous bank
   // and animation. Ordinary XP, room completion and the reward/finish receipt
@@ -3744,7 +3797,7 @@ function beginPendingReward(rewards, { source, after }) {
   run.pendingReward = pendingRewardCheckpoint(available, { source, after });
   if (Object.keys(deferred).length) run.deferredProgression = deferred;
   else delete run.deferredProgression;
-  persist();
+  persistOrWarn();
   return mountPendingReward();
 }
 
@@ -3818,7 +3871,7 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
     }}),
     onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
-    onPersist: persist,
+    onPersist: persistContinuing,
     onDone: () => {
       const after = checkpoint.after;
       const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
@@ -3826,14 +3879,14 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       else delete run.deferredProgression;
       delete run.pendingReward;
       if (returnTo) {
-        persist();
+        persistOrWarn();
         app.querySelector('.reward-veil')?.remove();
         return returnTo();
       }
       rewardDoneCount++;
       if (after === 'advanceAct') advanceAct();
       else {
-        persist();
+        persistOrWarn();
         showMap();
       }
     },
@@ -4032,11 +4085,11 @@ function showRest(openPanel = null, locationId = null) {
 
 function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
-  if (noticeOnly && !progression.length && !victoryReceipt) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
+  if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
   run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}) };
-  persist(); return showGameProfileReward();
+  persistOrWarn(); return showGameProfileReward();
 }
 
 function showGameProfileReward() {
@@ -4044,22 +4097,22 @@ function showGameProfileReward() {
   if (pending.victoryReceipt) return mountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
     onDone: () => {
-      acknowledgeVictoryReceipt(pending, persist);
+      acknowledgeVictoryReceipt(pending, persistContinuing);
       showGameProfileReward();
     },
   });
   if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, registries, run, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
-    persist();
+    persistOrWarn();
     showGameProfileReward();
   } });
   if (pending.noticeOnly) {
     delete run.gameProfilePendingReward;
-    persist();
+    persistOrWarn();
     return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'defeat' ? showFinishedRun(false) : pending.after === 'advanceAct' ? advanceAct() : showMap();
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
-  const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
+  const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
   mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.

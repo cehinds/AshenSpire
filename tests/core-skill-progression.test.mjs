@@ -332,6 +332,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
     const persist = () => saves.saveRun(run, rng);
+    const persistOrWarn = () => { persist(); return true; }, persistContinuing = () => { persistOrWarn(); };
     const audio = { stopMusic() {} }, sfx = { play() {} }, sendLanStatus = () => {};
     const rollLevelChoices = () => [], showFinishedRun = victory => screens.push(victory);
     const showMap = () => { throw Error('Defeat cannot return to map'); };
@@ -525,6 +526,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
     const persist = () => saves.saveRun(run, rng);
+    const persistOrWarn = () => { persist(); return true; }, persistContinuing = () => { persistOrWarn(); };
     const audio = {}, sfx = { play() {} }, sendLanStatus = () => {};
     const rollLevelChoices = () => [], victoryTitle = () => 'VICTORY', victoryBeat = async () => {};
     const applyAfterCombatRecovery = () => {}, featStacks = () => 0, victoryCompletesJourneyNode = () => false;

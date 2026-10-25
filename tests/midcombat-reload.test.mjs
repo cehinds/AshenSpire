@@ -345,7 +345,7 @@ test('M2 parity: main.js still orders entry persist, snapshot guard and reload r
   const enter = functionBody(main, 'enterCombat');
   assert.match(enter, /storedSnapshot && !storedSnapshot\.result \? storedSnapshot : null/,
     'enterCombat still discards a snapshot that already carries a result');
-  const persistAt = enter.indexOf('if (!resuming) persist();');
+  const persistAt = enter.indexOf('if (!resuming) persistOrWarn();');
   assert.ok(persistAt >= 0, 'enterCombat still persists the entry receipt when not resuming');
   const buildAt = Math.min(...['createRunCombat(', 'restoreCombatSnapshot('].map((needle) => {
     const at = enter.indexOf(needle);
