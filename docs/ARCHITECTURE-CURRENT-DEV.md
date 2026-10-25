@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `af75b74b16f4f891314df2301512a7b820976cd5`
+- Source commit: `9bf6ca4929c36dadd16992086f7e6068f2cad82e`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -27,8 +27,8 @@
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 128 |
 | DOM components and observer adapters | `src/ui/components/` | 145 |
-| Code-side content adapters | `src/content/` | 230 |
-| Authoritative JSON/CSV content | `content/source/` | 88 |
+| Code-side content adapters | `src/content/` | 263 |
+| Authoritative JSON/CSV content | `content/source/` | 121 |
 | Transport | `src/net/` | 1 |
 | Tests | `tests/` | 990 |
 | Architecture/tooling | `tools/` | 1864 |
@@ -39,7 +39,7 @@
 - Shared presentation projection: `src/ui/viewModels/RunHudViewModel.js`.
 - Immutable presentation records: `src/ui/models/ComponentModel.js` and `BehaviorModel.js`.
 - Headless simulation boundary: `src/engine/` imports model/content, not UI/screens.
-- Authoritative content inputs: 61 JSON file(s) and 25 CSV file(s) under `content/source/`.
+- Authoritative content inputs: 94 JSON file(s) and 25 CSV file(s) under `content/source/`.
 
 ## Automated boundary checks
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **20889**.
-Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 5, `.css` 78, `.csv` 59, `.gif` 90, `.gitattributes` 5, `.gitignore` 6, `.html` 95, `.jpg` 389, `.js` 1018, `.json` 3020, `.md` 661, `.mjs` 1647, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 3680, `.ps1` 12, `.py` 90, `.sh` 5, `.sql` 1, `.svg` 780, `.txt` 152, `.webp` 9008, `.woff2` 11, `.yml` 37, `.zip` 15, `(none)` 2.
+Tracked files: **20955**.
+Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 5, `.css` 78, `.csv` 59, `.gif` 90, `.gitattributes` 5, `.gitignore` 6, `.html` 95, `.jpg` 389, `.js` 1051, `.json` 3053, `.md` 661, `.mjs` 1647, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 3680, `.ps1` 12, `.py` 90, `.sh` 5, `.sql` 1, `.svg` 780, `.txt` 152, `.webp` 9008, `.woff2` 11, `.yml` 37, `.zip` 15, `(none)` 2.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
