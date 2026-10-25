@@ -5,7 +5,8 @@ import { manifestIds } from '../tools/art-source.mjs';
 // exactly those), not when a tree in this checkout happens to hold the file.
 const SHIPPED = manifestIds();
 import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
-import { regionForRun, combatEnvironment, worldMapForRun } from '../src/model/environmentArt.js';
+import { paintingFrame } from '../src/model/mapPaintingFrame.js';
+import { regionForRun, combatEnvironment, worldMapForRun, actRegionId } from '../src/model/environmentArt.js';
 import { mapTerrainHtml } from '../src/ui/components/environmentArt.js';
 import { mapKnowledge } from '../src/model/map/mapknowledge.js';
 
@@ -61,11 +62,45 @@ test('terrain reveal follows discovery and survives save/load without disclosing
 });
 
 
-test('mega map stays fixed across acts, routes and reloads, with all layouts reachable', () => {
+test('mega map painting is seed-stable; only its biome framing follows the act', () => {
   const run = Object.freeze({ seedString: 'WORLD', actNumber: 1, floor: 0 });
   const world = worldMapForRun(run);
   assert.equal(worldMapForRun({ ...run, actNumber: 5, floor: 12, path: ['a', 'b'] }), world);
+  assert.equal(worldMapForRun({ ...run, seatOrder: ['reach', 'weald', 'marches'] }), world);
   assert.equal(worldMapForRun(JSON.parse(JSON.stringify(run))), world);
   assert.equal(new Set(Array.from({ length: 100 }, (_, i) => worldMapForRun({ seedString: String(i) }).id)).size, MEGA_MAPS.length);
   for (const w of MEGA_MAPS) assert.ok(SHIPPED.has(w.map), w.map);
+});
+
+test('the act region follows its seat, and a run without seats has none', () => {
+  const order = ['weald', 'marches', 'reach'];
+  assert.deepEqual([1, 2, 3].map((actNumber) => actRegionId({ seatOrder: order, actNumber })),
+    ['hollow-weald', 'pale-marches', 'cinder-reach']);
+  assert.equal(actRegionId({ seedString: 'x', actNumber: 1 }), null);
+});
+
+test('every painting anchors every seat region, and the framed start lands inside its biome', () => {
+  const regions = ['hollow-weald', 'pale-marches', 'cinder-reach', 'ashen-crown'];
+  const boards = [[435, 1136], [360, 790], [1100, 1136], [1440, 900]];
+  for (const world of MEGA_MAPS) for (const region of regions) {
+    const anchor = world.biomes?.[region];
+    assert.ok(anchor, `${world.id} has no ${region} anchor`);
+    const { x, y, w, h } = anchor.rect;
+    assert.ok(x >= 0 && y >= 0 && x + w <= 1 && y + h <= 1 && w > 0 && h > 0, `${world.id}/${region} rect`);
+    for (const [bw, bh] of boards) {
+      const frame = paintingFrame({ anchor, aspect: 2 / 3, box: { x0: 0, y0: 0, w: bw, h: bh }, start: { x: bw / 2, y: bh - 10 } });
+      assert.ok(frame, `${world.id}/${region} ${bw}x${bh}: no frame`);
+      // the start in the painting's own (unmirrored) coordinates
+      const u = anchor.flipX ? 1 - frame.u : frame.u, v = anchor.flipY ? 1 - frame.v : frame.v;
+      assert.ok(u >= x && u <= x + w && v >= y && v <= y + h, `${world.id}/${region} ${bw}x${bh}: start (${u.toFixed(2)},${v.toFixed(2)}) outside rect`);
+      // the painting still covers the whole ground
+      assert.ok(frame.ox <= 1e-6 && frame.oy <= 1e-6 && frame.ox + frame.cw >= bw - 1e-6 && frame.oy + frame.ch >= bh - 1e-6, 'cover');
+    }
+  }
+});
+
+test('a painting with no anchor for the region falls back to the plain cover fit', () => {
+  const box = { x0: 0, y0: 0, w: 435, h: 1136 };
+  assert.equal(paintingFrame({ anchor: undefined, aspect: 2 / 3, box, start: { x: 200, y: 1100 } }), null);
+  assert.equal(paintingFrame({ anchor: MEGA_MAPS[0].biomes['hollow-weald'], aspect: 2 / 3, box, start: null }), null);
 });
