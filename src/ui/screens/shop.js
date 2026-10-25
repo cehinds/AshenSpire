@@ -453,7 +453,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const desc = offer.taken ? t('shop.quest.taken') : t('shop.quest.desc');
       const tile = shopItem(t('shop.quest.name', { name }), desc, offer.price, avail);
       addOffer('questEvent', {
-        ref: 'questEvent:event#0', tile, name, desc, price: t('shop.price', { cost: price }), avail,
+        ref: 'questEvent:event#0', tile, name, desc, price: t('shop.price', { cost: offer.price }), avail,
         action: { kind: 'quest', label: t('shop.action.quest', { cost: offer.price }), enabled: !!plan.ok, run: () => enterQuestEvent(questEventPlan(registries, run)) },
       });
       questRow.appendChild(tile);
