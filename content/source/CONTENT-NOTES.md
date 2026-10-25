@@ -389,6 +389,13 @@ File header (was the comment above src/content/feats.js): permanent, repeatable 
 
 File header (was the comment above src/content/classSkillFeats.js): SPEC §13.4q class feats. The profile/run integration selects these only for mastery-scoped runs; older runs retain the existing skill-feat catalogue. `classSkillFeats.json` is the array export `classSkillFeats`; src/content/classSkillFeats.js freezes the array (the rows stay unfrozen). The `crit` and `passive` shapes are the ones described under "Skill feats".
 
+## Skill feats (content/source/skillFeats.json)
+
+File header (was the comment block above src/content/skillFeats.js): the feats a skill track's every-2nd level offers (SPEC §13.4o, "every 2nd level: a feat tied to the skill"). Each is taken once. Only the owner's own examples are authored here; the rest of the table is content phase C. `skillFeats.json` is the array export `skillFeats`; src/content/skillFeats.js freezes the array (the rows stay unfrozen).
+
+- **`crit`** — Blade-tagged attacks may crit (owner, 2026-10-04): chance base + Σ weight·attribute / divisor, capped; a crit multiplies the hit. Chances from several sources add before the cap.
+- **`passive`** — a tag on the character that changes every card meeting its tags (SPEC §13.4o "Passive tag effects"): `block` adds to the card's first unconditional Block, shown on the card's face.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
