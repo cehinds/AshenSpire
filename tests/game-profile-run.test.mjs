@@ -40,12 +40,14 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has seven branching preboss depths, three mandatory rests on depths 3, 5 and 7, and replay stability',()=>{
+test('seeded route has nine preboss depths, a rest per branch on depths 3, 6 and 9, distinct branch bosses, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
-  assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,3);
-  assert.equal(map.nodes.boss.floor,8);assert.notEqual(map.nodes.boss.encounterId,prior);prior=map.nodes.boss.encounterId;
+  const b=map.bossIds.length;assert.ok(b>=1&&b<=5);assert.equal(map.floors,10);
+  assert.deepEqual(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor).sort(),Array.from({length:b},()=>[3,6,9]).flat().sort());
+  const bosses=map.bossIds.map(id=>map.nodes[id]);assert.ok(bosses.every(n=>n.floor===10));assert.equal(new Set(bosses.map(n=>n.encounterId)).size,b);
+  assert.notEqual(map.nodes[map.bossId].encounterId,prior);prior=map.nodes[map.bossId].encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.
   for(const n of Object.values(map.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
@@ -133,7 +135,7 @@ test('profile completion ledger persists independently from bounded history and 
 test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
  const run=fresh();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- run.mapNodeId='n7_0';beginGameProfileRest(run,'1:n7_0');commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ run.mapNodeId='n6_0';beginGameProfileRest(run,'1:n6_0');commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxStamina,initial+1);
  const smith=fresh();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
