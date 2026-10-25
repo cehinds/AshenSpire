@@ -487,7 +487,7 @@ for (const target of ['src/content/generated/statuses.js', 'src/content/balance.
 // It is invisible without help because src/ is ESM and therefore already
 // strict; the transform strips the import/export that made it so.
 const STRICT_ONLY = [
-  ['octal literal', /^  energy: 3,$/m, '  energy: 010,', /[Oo]ctal/],
+  ['octal literal', /^  energy: balanceCore\.energy,$/m, '  energy: 010,', /[Oo]ctal/],
   ['duplicate parameter names', /^export const balance = \{$/m,
     'export function __dup(a, a) { return a; }\nexport const balance = {', /[Dd]uplicate parameter/],
   ['with statement', /^export const balance = \{$/m,
@@ -795,7 +795,7 @@ const RETYPE_RUNTIME_OPEN = ['const RUNTIME_OPEN = `(function () {\\n  ${STRICT_
   patchTool(dir, ...RETYPE_RUNTIME_OPEN);
   patchTool(dir, 'if (!runtimeIsStrict) {', 'if (false) {');
   const p = resolve(dir, 'src/content/balance.js');
-  writeFileSync(p, readFileSync(p, 'utf8').replace(/^  energy: 3,$/m, '  energy: 010,'), 'utf8');
+  writeFileSync(p, readFileSync(p, 'utf8').replace(/^  energy: balanceCore\.energy,$/m, '  energy: 010,'), 'utf8');
   const r = build(dir);
   check('5j: the GATE is still strict — a strict-only fault reds even with the probe off',
     r.status === 1 && /[Oo]ctal/.test(r.out), `exit ${r.status}: ${r.out.slice(0, 200)}`);

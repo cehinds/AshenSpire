@@ -538,7 +538,7 @@ export function receipt() {
     startupGateModel: read('src/ui/models/StartupGateModels.js'),
     title: read('src/ui/screens/title.js'),
     saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
-    balance: read('src/content/balance.js'),
+    balance: read('content/source/balanceUi.json'),
     main: read('src/main.js'),
     runHud: read('src/ui/components/runHud.js'),
     shop: read('src/ui/screens/shop.js'),
@@ -731,8 +731,8 @@ export function findings(r) {
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
     bad.push('C18 startup/title compositions lost a stable subcomponent, immutable gate model, or shared build stamp');
   }
-  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*3,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
-      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*cardSizePx:\s*40,[\s\S]*glyphSizePx:\s*28,[\s\S]*stateDotPx:\s*6,[\s\S]*activeTintPct:\s*14,[\s\S]*showCardBackground:\s*true,[\s\S]*showLabels:\s*false,[\s\S]*\}/.test(r.balance)
+  if (!/"hudPresentation":\s*\{[\s\S]*"componentBackgroundOpacityPct":\s*0,[\s\S]*"metadataFontPx":\s*11,[\s\S]*"beltItemGapPx":\s*2,[\s\S]*"portraitScale":\s*0\.58,[\s\S]*"primaryRowGapPx":\s*4,[\s\S]*"controlGapPx":\s*0,[\s\S]*"resourceRowGapPx":\s*3,[\s\S]*"panelPadPx":\s*0,[\s\S]*"mobilePanelPadPx":\s*0,[\s\S]*"mobileControlGapPx":\s*1,[\s\S]*"mobileOuterPadPx":\s*4,[\s\S]*"mobileRowGapPx":\s*3,[\s\S]*"cindersMaxWidthPct":\s*30,[\s\S]*"metadataMaxWidthPct":\s*30,[\s\S]*"metadataShowTotals":\s*false[\s\S]*\}/.test(r.balance)
+      || !/"hudQuickSettings":\s*\{[\s\S]*"places":\s*\["title", "map", "combat"\],[\s\S]*"edgeGapPx":\s*4,[\s\S]*"stackGapPx":\s*0,[\s\S]*"cardSizePx":\s*40,[\s\S]*"glyphSizePx":\s*28,[\s\S]*"stateDotPx":\s*6,[\s\S]*"activeTintPct":\s*14,[\s\S]*"showCardBackground":\s*true,[\s\S]*"showLabels":\s*false[\s\S]*\}/.test(r.balance)
       || !/\.resbars\[data-surface="main"\]\s*\{[^}]*gap:\s*calc\(var\(--hud-resource-row-gap-px\)\s*\/\s*var\(--ui-zoom, 1\)\);/.test(r.kit)
       || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
@@ -1047,7 +1047,7 @@ function selftest() {
     ['measure full-board tools before the authored hand', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/(    renderHand\([^;]*\);)([\s\S]*?)    combatTools\.flushGeometry\(\);/, (_all, hand, between) => '    combatTools.flushGeometry();\n' + hand + between) })],
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
-    ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
+    ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('"componentBackgroundOpacityPct": 0', '"componentBackgroundOpacityPct": 25') })],
     ['drop meters from a scoped HUD grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
     ['hang the rail from a @media nested in its base rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @media (width < 1px) { position: absolute; }') })],
     ['hang the rail from declarations straight in a nested @scope', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @scope { position: absolute; }') })],

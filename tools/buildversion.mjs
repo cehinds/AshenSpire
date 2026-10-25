@@ -318,6 +318,11 @@ const CONTRACT_COLUMN_SITES = Object.freeze([
     key: 'source_export_recipe_and_tool_version',
     why: 'art runbook §3 twelve-column manifest contract; the value is the column\'s prose answer, not a build version',
   },
+  {
+    file: 'src/content/generated/balanceProgression.js',
+    key: 'version',
+    why: 'the "$note" sentence for balanceProgression.version (the saved progression contract number, content/source/balanceProgression.json); the Settings note is prose, not a build version',
+  },
 ]);
 
 /** True when a captured value is a SENTENCE with no version-shaped number. */

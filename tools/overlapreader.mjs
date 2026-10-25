@@ -62,7 +62,7 @@
 // REMOVAL: deleted the day the refusal leaves validateContent, or the day
 // either row (handLayoutModes, inspectHold) leaves balance.ui.
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
@@ -82,40 +82,51 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const W = 390, H = 844, DPR = 2;
 
-// The two content rows, as balance.js spells them today. Exact strings, not
+// The two content rows, as content/source/balanceUi.json spells them today. Exact strings, not
 // regexes wide enough to "find" something else — and each mutation asserts it
 // matched exactly once or the whole run refuses (exit 2): an empty mutation is
 // a wrong-place empty, and it means the opposite of clean (SOP 2's ⚙ clause).
-const ROW_MS = 'inspectHold: {\n      ms: 400,\n    },';
-const ROW_MS_OFF = 'inspectHold: {\n      ms: 0,\n    },';
-const ROW_MODES = "handLayoutModes: ['paging', 'overlap'],";
-const ROW_MODES_PAGING = "handLayoutModes: ['paging'],";
+const ROW_MS = '"inspectHold": { "ms": 400 },';
+const ROW_MS_OFF = '"inspectHold": { "ms": 0 },';
+const ROW_MODES = '"handLayoutModes": ["paging", "overlap"],';
+const ROW_MODES_PAGING = '"handLayoutModes": ["paging"],';
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'overlapreader-'));
-  for (const d of ['src', 'styles']) {
+  // content/ and tools/ ride along so the build can recompile the edited row.
+  for (const d of ['src', 'styles', 'content', 'tools', 'engine', 'games']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
   // assets/: the fetched high pack and the fonts (the tree left at docs/EXTERNAL-ASSETS-PLAN.md step 13).
   copySourceArt(dir);
   cpSync(resolve(ROOT, 'index.html'), resolve(dir, 'index.html'));
+  for (const f of ['art-manifest.json', 'art-release.json', 'package.json']) {
+    if (existsSync(resolve(ROOT, f))) cpSync(resolve(ROOT, f), resolve(dir, f));
+  }
   return dir;
 }
 
-// Apply [from, to] replacements to the copy's balance.js; refuse loudly if any
-// pattern is not present exactly once.
+// Apply [from, to] replacements to the copy's content/source/balanceUi.json,
+// then recompile it (tools/content-build.mjs) so the game reads the edited row
+// through the generated module; refuse loudly if any pattern is not present
+// exactly once.
 function mutate(dir, edits) {
-  const p = resolve(dir, 'src/content/balance.js');
+  const p = resolve(dir, 'content/source/balanceUi.json');
   let src = readFileSync(p, 'utf8');
   for (const [from, to, what] of edits) {
     const first = src.indexOf(from);
     if (first < 0 || src.indexOf(from, first + 1) >= 0) {
-      console.error(`overlapreader: fixture found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home for ${what} — the row moved; update ROW_* to where balance.js keeps it now`);
+      console.error(`overlapreader: fixture found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home for ${what} — the row moved; update ROW_* to where balanceUi.json keeps it now`);
       process.exit(2);
     }
     src = src.slice(0, first) + to + src.slice(first + from.length);
   }
   writeFileSync(p, src, 'utf8');
+  const built = spawnSync(process.execPath, ['tools/content-build.mjs'], { cwd: dir, encoding: 'utf8' });
+  if (built.status !== 0) {
+    console.error(`overlapreader: content-build failed in the copy (exit ${built.status}): ${`${built.stdout || ''}${built.stderr || ''}`.trim().split('\n').slice(-3).join(' | ')}`);
+    process.exit(2);
+  }
 }
 
 function connectCdp(wsUrl) {
@@ -157,7 +168,7 @@ const CASES = [
 async function main() {
   if (!browserPath) { console.error('overlapreader: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
   console.log(`overlapreader — root ${ROOT}`);
-  console.log('  door, for every case below: known-bad enters as a CONTENT ROW (src/content/balance.js in a');
+  console.log('  door, for every case below: known-bad enters as a CONTENT ROW (content/source/balanceUi.json in a');
   console.log('  disposable copy of this tree), then a REAL BOOT judges it — served over http, headless');
   console.log('  Chromium, index.html -> src/main.js -> validateContent(contentBundle) -> failureBanner:');
   console.log('  every stage a player\'s boot performs. Nothing is handed to validateContent() directly.');

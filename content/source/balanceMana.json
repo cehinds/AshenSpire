@@ -1,0 +1,8 @@
+{
+  "minActionCost": 1,
+  "minStaminaCost": 0,
+  "$note": {
+    "minActionCost": "The least turn Stamina a card that costs Mana must also cost.",
+    "minStaminaCost": "Retired additive Stamina floor; keep zero."
+  }
+}

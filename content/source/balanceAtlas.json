@@ -1,0 +1,6 @@
+{
+  "townsPerActMax": 1,
+  "$note": {
+    "townsPerActMax": "The most towns — start and city nodes — a generated act may hold. A route over it is rejected and rolled again, so attrition between towns is the run's tension."
+  }
+}
