@@ -381,6 +381,10 @@ File header (was the comment block at the top of src/content/sigils.js): sigils,
 - **Prices.** `cost` is the sigil's own price; the market charges `gameConfig.shops.market.sigils.pricePct` percent of it (content/source/shops.json), so the owner tunes what the shelf asks in Settings without editing a row. The blacksmith sells no sigils; it cuts slots and sets them (§14.4).
 - **Legendary sigils** are SPEC §15.4's: `{ id, name, rarity: 'legendary', blurb }`, with no cost, never shop stock, and never slotted. One works while it is ATTUNED in the Armoury's Sigils panel (model/sigils.js attuneSigil), up to `balance.sigils.attuneMax` at a time, and a fight or a treasure room can drop one (balance.sigils.dropChancePct, shipped off). Each derives exactly one property tag, and each rule is an on/if combination no relic uses.
 
+## Feats (content/source/feats.json)
+
+File header (was the comment above src/content/feats.js): permanent, repeatable character-level choices. Values are intentionally small because a long run may select the same feat more than once. `feats.json` is the array export `feats`; src/content/feats.js freezes the array (the rows stay unfrozen, as before).
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

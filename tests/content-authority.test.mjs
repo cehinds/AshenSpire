@@ -335,3 +335,10 @@ test('sigils: the export deep-equals the authored JSON array', () => {
   assert.ok(Array.isArray(authored) && authored.length > 0);
   assert.deepStrictEqual(sigils, authored);
 });
+
+import { feats } from '../src/content/feats.js';
+test('feats: the export deep-equals the authored JSON array', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/feats.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0);
+  assert.deepStrictEqual(feats, authored);
+});
