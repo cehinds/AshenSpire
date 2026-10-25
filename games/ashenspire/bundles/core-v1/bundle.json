@@ -965,7 +965,13 @@
           "enabled": false
         },
         "ownedCopyWeight": 1,
-        "tagWeights": {}
+        "tagWeights": {
+          "maneuver:casting": 1,
+          "maneuver:smash": 1,
+          "maneuver:counter": 1,
+          "maneuver:sweep": 1,
+          "default": 1
+        }
       }
     }
   },
