@@ -42,7 +42,6 @@
 :root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
-:root .combat[data-target-hud='true'] .target-hud-intent-name { flex:none; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
   width:100%!important; min-width:0!important; margin:0!important; gap:0!important;
 }
@@ -118,8 +117,31 @@
 :root .combat .target-hud-intent { flex-wrap:wrap; }
 :root .combat .intent-damage-read { min-width:0; max-width:100%; display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
 :root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; text-align:center; }
+/* Owner 2026-10-25: the mini HUD over a combatant keeps the damage and multiplier only; the total line under it was redundant. The target panel and inspector keep it. */
+:root .combat .combatant .intent .intent-damage-scope { display:none; }
 
 /* Lite: one drop-shadow instead of three on the matchup-highlighted sprite. */
 :root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
+}
+
+/* Owner 2026-10-25: every HP bar over a combatant or in a target panel is 70% of its cell's width, centred.
+   The meter (which carries the poise ring) is narrowed, not just its track; an empty full-width line break
+   keeps the badges on their own row below it. */
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row {
+  justify-content:flex-start;
+}
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row::after {
+  content:''; order:-1; flex:0 0 100%; height:0;
+}
+/* The break is a second flex line, so the panel's row gap moves onto the badges. */
+:root .combat .target-hud-detail .target-hud-meters .combat-health-row { row-gap:0; }
+:root .combat .target-hud-detail .target-hud-meters .combat-health-badge { margin-top:.3em; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-meter {
+  flex:0 0 70%!important; width:70%!important; margin-inline:auto!important;
+}
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+  right:15%!important;
 }

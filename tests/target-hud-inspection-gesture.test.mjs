@@ -78,9 +78,26 @@ test('legacy click events without a pointer ID retain release protection but all
 
 test('the same double-tap cannot open inspection again through a trailing dblclick', () => {
   const f = fixture({ armed: false }); f.down(1); f.up(1); f.click(1);
-  f.advance(100); f.down(2); f.up(2); f.click(2); f.dblclick();
-  assert.equal(f.reads.length, 1);
+  f.advance(100); f.down(2); f.up(2); f.click(2, 2); f.dblclick();
+  assert.equal(f.reads.length, 1, 'the first tap inspected; the second press of the series and its dblclick are swallowed');
   f.arm(); f.down(3); f.up(3); f.click(3); assert.deepEqual(f.plays, ['e1']);
+});
+
+test('a single tap anywhere on a non-target panel inspects once; an armed target tap still confirms', () => {
+  const f = fixture({ armed: false }); f.down(); f.up(); f.click(1);
+  assert.equal(f.reads.length, 1); assert.deepEqual(f.plays, []);
+  f.advance(1000); f.down(2); f.up(2); const ev = f.click(2); assert.equal(f.reads.length, 2); assert.equal(ev.immediate, true);
+  f.arm(); f.down(3); f.up(3); f.click(3); assert.equal(f.reads.length, 2); assert.deepEqual(f.plays, ['e1']);
+});
+
+test('a press that drags past the slop is not a tap', () => {
+  const f = fixture({ armed: false }); f.down(); f.move(); f.up(); f.click(1);
+  assert.deepEqual(f.reads, []);
+});
+
+test('a tap is not an inspection while the inspector cannot open', () => {
+  const f = fixture({ armed: false }); f.ready(false); f.down(); f.up(); f.click(1);
+  assert.deepEqual(f.reads, []);
 });
 
 test('keyboard detail-zero activation is never swallowed by pointer suppression', () => {
@@ -116,7 +133,7 @@ test('a target press begun during playback cannot inspect or activate after unlo
 });
 
 test('busy-start hold and double-tap stay rejected while a fresh ready inspection works', () => {
-  const f = fixture({ armed: false }); f.down(); f.up(); f.click(1);
+  const f = fixture({ armed: false });
   f.ready(false); f.down(2); f.advance(900); f.ready(true); f.hold(); f.up(2); f.click(2); f.dblclick();
   assert.equal(f.reads.length, 0);
   f.down(3); f.hold(); assert.equal(f.reads.length, 1);
@@ -143,4 +160,60 @@ test('an independently eligible target keeps precedence within an accepted click
   const f = fixture(); f.down(1); f.up(1); f.click(1, 1);
   f.down(2); f.up(2); f.click(2, 2); f.dblclick();
   assert.deepEqual(f.plays, ['e1', 'e1']); assert.equal(f.reads.length, 0);
+});
+
+test('Enter on a focused target HUD panel is left to the panel; the cursor card is not pressed', async () => {
+  const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  withKitDom(({ document, Event }, _window, listeners) => {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const previousStyle = globalThis.getComputedStyle;
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { getGamepads: () => [] } });
+    globalThis.getComputedStyle = () => ({ visibility: 'visible', display: 'block' });
+    try {
+      const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
+      const cursorCard = document.createElement('button'); cursorCard.className = 'card'; app.append(cursorCard);
+      let cardClicks = 0; cursorCard.addEventListener('click', () => { cardClicks += 1; });
+      focusElement(cursorCard);
+      initInput();
+      const panel = document.createElement('div'); panel.className = 'target-hud-panel';
+      panel.setAttribute('role', 'button'); panel.tabIndex = 0;
+      const name = document.createElement('span'); name.className = 'target-hud-name'; panel.append(name);
+      app.append(panel); panel.focus();
+      for (const target of [panel, name]) {
+        const enter = new Event('keydown', { key: 'Enter', target, bubbles: true });
+        for (const handler of listeners.get('keydown').slice(0, 2)) handler(enter);
+        assert.equal(enter.defaultPrevented, false, 'global confirm leaves Enter to the panel');
+      }
+      for (const handler of listeners.get('keyup') || []) handler(new Event('keyup', { key: 'Enter', target: panel, bubbles: true }));
+      assert.equal(cardClicks, 0, 'the cursor card is never pressed by Enter on the panel');
+      clearFocus();
+    } finally {
+      if (descriptor) Object.defineProperty(globalThis, 'navigator', descriptor); else delete globalThis.navigator;
+      if (previousStyle === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = previousStyle;
+    }
+  });
+});
+
+test('an inspection-door panel holds no focusable intent row and keeps its content as its name', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  withKitDom(({ document }) => {
+    const shell = document.createElement('section'); shell.className = 'target-hud-detail';
+    shell.setAttribute('aria-label', 'Hound details');
+    const panel = document.createElement('div'); panel.className = 'target-hud-panel';
+    const name = document.createElement('div'); name.className = 'target-hud-name';
+    const intent = document.createElement('div'); intent.className = 'target-hud-intent'; intent.tabIndex = 0;
+    panel.append(name, intent); shell.append(panel); document.body.append(shell);
+    const scope = { document: target(), window: target(), gestures: new AbortController(), eligible: [], onActivate: () => {}, canInspect: () => true, entries: new Map(), hideTooltip() {}, setTimeout, clearTimeout, performance };
+    const { syncActivation } = runInNewContext(`${source.slice(begin, end)}\n({ syncActivation });`, scope);
+    syncActivation(shell, 'e1');
+    assert.equal(panel.getAttribute('role'), 'button');
+    assert.equal(panel.getAttribute('tabindex'), '0');
+    assert.equal(intent.hasAttribute('tabindex'), false, 'no interactive descendant inside a role=button panel');
+    assert.equal(panel.hasAttribute('aria-label'), false, 'the name, HP and intent text name the button');
+    scope.eligible = ['e1']; syncActivation(shell, 'e1');
+    assert.equal(panel.hasAttribute('role'), false); assert.equal(panel.hasAttribute('tabindex'), false);
+    assert.equal(intent.getAttribute('tabindex'), '0', 'an armed panel keeps the intent row reachable for its tooltip');
+    assert.equal(name.getAttribute('role'), 'button');
+  });
 });
