@@ -585,7 +585,7 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
     const path = catalog.filePaths[file] || `assets-display/alternative/${file}`;
     if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(path) || !path.endsWith('/' + file)) fail(`Invalid display art path: ${path}`);
-    const bytes = readFileSync(resolve(ROOT, path));
+    const bytes = readFileSync(artPath(path));
     if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
       fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
     }

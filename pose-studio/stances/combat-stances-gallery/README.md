@@ -19,9 +19,9 @@ Reproduce with `tools/combat-stances-gallery.mjs`: provide QA_BUILD_URL, QA_EXPE
 
 ## Reaver
 
-![Native in-engine held layers](reaver/held-contact-sheet.webp)
+![Native in-engine held layers](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/held-contact-sheet.webp)
 
-![Smash phase review](reaver/clips/smash/review.gif)
+![Smash phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/smash/review.gif)
 
 <details>
 <summary>Reaver — in-game stance screenshots</summary>
@@ -30,50 +30,50 @@ These full combat UI screenshots are staged pose reviews, not paid card outcomes
 
 ### Ready
 
-![Reaver Ready — staged in-game combat screenshot](reaver/ready-combat.jpg)
+![Reaver Ready — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/ready-combat.jpg)
 
 ### Offensive
 
-![Reaver Offensive — staged in-game combat screenshot](reaver/offensive-combat.jpg)
+![Reaver Offensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/offensive-combat.jpg)
 
 ### Defensive
 
-![Reaver Defensive — staged in-game combat screenshot](reaver/defensive-combat.jpg)
+![Reaver Defensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/defensive-combat.jpg)
 
 ### Casting
 
-![Reaver Casting — staged in-game combat screenshot](reaver/casting-combat.jpg)
+![Reaver Casting — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/casting-combat.jpg)
 
 ### Counter
 
 Existing source art: lower raster detail / style variation
 
-![Reaver Counter — staged in-game combat screenshot](reaver/counter-combat.jpg)
+![Reaver Counter — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/counter-combat.jpg)
 
 ### Sweep
 
 Existing source art: lower raster detail / style variation
 
-![Reaver Sweep — staged in-game combat screenshot](reaver/sweep-combat.jpg)
+![Reaver Sweep — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/sweep-combat.jpg)
 
 ### Smash
 
 Current starter kit depicted
 
-![Reaver Smash — staged in-game combat screenshot](reaver/smash-combat.jpg)
+![Reaver Smash — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/smash-combat.jpg)
 
 ### Evade
 
-![Reaver Evade — staged in-game combat screenshot](reaver/evade-combat.jpg)
+![Reaver Evade — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/evade-combat.jpg)
 
 </details>
 
 
 ## Rogue
 
-![Native in-engine held layers](rogue/held-contact-sheet.webp)
+![Native in-engine held layers](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/held-contact-sheet.webp)
 
-![Smash phase review](rogue/clips/smash/review.gif)
+![Smash phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/smash/review.gif)
 
 <details>
 <summary>Rogue — in-game stance screenshots</summary>
@@ -84,52 +84,52 @@ These full combat UI screenshots are staged pose reviews, not paid card outcomes
 
 Legacy weapon depiction: paired daggers; buckler absent
 
-![Rogue Ready — staged in-game combat screenshot](rogue/ready-combat.jpg)
+![Rogue Ready — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/ready-combat.jpg)
 
 ### Offensive
 
 Legacy weapon depiction: paired daggers; buckler absent
 
-![Rogue Offensive — staged in-game combat screenshot](rogue/offensive-combat.jpg)
+![Rogue Offensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/offensive-combat.jpg)
 
 ### Defensive
 
 Legacy weapon depiction: paired daggers; buckler absent
 
-![Rogue Defensive — staged in-game combat screenshot](rogue/defensive-combat.jpg)
+![Rogue Defensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/defensive-combat.jpg)
 
 ### Casting
 
 Legacy weapon depiction: paired daggers; buckler absent
 
-![Rogue Casting — staged in-game combat screenshot](rogue/casting-combat.jpg)
+![Rogue Casting — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/casting-combat.jpg)
 
 ### Counter
 
 Legacy weapon depiction: paired daggers; buckler absent
 
-![Rogue Counter — staged in-game combat screenshot](rogue/counter-combat.jpg)
+![Rogue Counter — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/counter-combat.jpg)
 
 ### Sweep
 
 Legacy weapon depiction: paired daggers; buckler absent
 
-![Rogue Sweep — staged in-game combat screenshot](rogue/sweep-combat.jpg)
+![Rogue Sweep — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/sweep-combat.jpg)
 
 ### Smash
 
 Current starter kit depicted
 
-![Rogue Smash — staged in-game combat screenshot](rogue/smash-combat.jpg)
+![Rogue Smash — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/smash-combat.jpg)
 
 </details>
 
 
 ## Starseer
 
-![Native in-engine held layers](starseer/held-contact-sheet.webp)
+![Native in-engine held layers](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/held-contact-sheet.webp)
 
-![Smash phase review](starseer/clips/smash/review.gif)
+![Smash phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/smash/review.gif)
 
 <details>
 <summary>Starseer — in-game stance screenshots</summary>
@@ -138,48 +138,48 @@ These full combat UI screenshots are staged pose reviews, not paid card outcomes
 
 ### Ready
 
-![Starseer Ready — staged in-game combat screenshot](starseer/ready-combat.jpg)
+![Starseer Ready — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/ready-combat.jpg)
 
 ### Offensive
 
-![Starseer Offensive — staged in-game combat screenshot](starseer/offensive-combat.jpg)
+![Starseer Offensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/offensive-combat.jpg)
 
 ### Defensive
 
-![Starseer Defensive — staged in-game combat screenshot](starseer/defensive-combat.jpg)
+![Starseer Defensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/defensive-combat.jpg)
 
 ### Casting
 
 Legacy weapon depiction: staff and book
 
-![Starseer Casting — staged in-game combat screenshot](starseer/casting-combat.jpg)
+![Starseer Casting — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/casting-combat.jpg)
 
 ### Counter
 
 Existing source art: lower raster detail / style variation
 
-![Starseer Counter — staged in-game combat screenshot](starseer/counter-combat.jpg)
+![Starseer Counter — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/counter-combat.jpg)
 
 ### Sweep
 
 Existing source art: lower raster detail / style variation
 
-![Starseer Sweep — staged in-game combat screenshot](starseer/sweep-combat.jpg)
+![Starseer Sweep — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/sweep-combat.jpg)
 
 ### Smash
 
 Current starter kit depicted
 
-![Starseer Smash — staged in-game combat screenshot](starseer/smash-combat.jpg)
+![Starseer Smash — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/smash-combat.jpg)
 
 </details>
 
 
 ## Herald
 
-![Native in-engine held layers](herald/held-contact-sheet.webp)
+![Native in-engine held layers](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/held-contact-sheet.webp)
 
-![Smash phase review](herald/clips/smash/review.gif)
+![Smash phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/smash/review.gif)
 
 <details>
 <summary>Herald — in-game stance screenshots</summary>
@@ -190,43 +190,43 @@ These full combat UI screenshots are staged pose reviews, not paid card outcomes
 
 Legacy weapon depiction: unarmed/book; bone sceptre absent
 
-![Herald Ready — staged in-game combat screenshot](herald/ready-combat.jpg)
+![Herald Ready — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/ready-combat.jpg)
 
 ### Offensive
 
 Legacy weapon depiction: unarmed/book; bone sceptre absent
 
-![Herald Offensive — staged in-game combat screenshot](herald/offensive-combat.jpg)
+![Herald Offensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/offensive-combat.jpg)
 
 ### Defensive
 
 Legacy weapon depiction: unarmed/book; bone sceptre absent
 
-![Herald Defensive — staged in-game combat screenshot](herald/defensive-combat.jpg)
+![Herald Defensive — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/defensive-combat.jpg)
 
 ### Casting
 
 Legacy weapon depiction: unarmed/book; bone sceptre absent
 
-![Herald Casting — staged in-game combat screenshot](herald/casting-combat.jpg)
+![Herald Casting — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/casting-combat.jpg)
 
 ### Counter
 
 Legacy weapon depiction: unarmed/book; bone sceptre absent
 
-![Herald Counter — staged in-game combat screenshot](herald/counter-combat.jpg)
+![Herald Counter — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/counter-combat.jpg)
 
 ### Sweep
 
 Legacy weapon depiction: unarmed/book; bone sceptre absent
 
-![Herald Sweep — staged in-game combat screenshot](herald/sweep-combat.jpg)
+![Herald Sweep — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/sweep-combat.jpg)
 
 ### Smash
 
 Current starter kit depicted
 
-![Herald Smash — staged in-game combat screenshot](herald/smash-combat.jpg)
+![Herald Smash — staged in-game combat screenshot](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/smash-combat.jpg)
 
 </details>
 
@@ -248,9 +248,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `attack`, `weapon:attack:greatsword`.
 
-![Reaver Attack — native in-engine phase review](reaver/clips/attack/review.webp)
+![Reaver Attack — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/attack/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/attack/metadata.json) · [Live Normal stage sampling](reaver/clips/attack/normal.webp)
+[Frame order, weights and cadence](reaver/clips/attack/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/attack/normal.webp)
 
 ### Smash
 
@@ -260,9 +260,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `smash`.
 
-![Reaver Smash — native in-engine phase review](reaver/clips/smash/review.webp)
+![Reaver Smash — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/smash/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/smash/metadata.json) · [Live Normal stage sampling](reaver/clips/smash/normal.webp)
+[Frame order, weights and cadence](reaver/clips/smash/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/smash/normal.webp)
 
 ### Sweep
 
@@ -272,9 +272,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `sweep`.
 
-![Reaver Sweep — native in-engine phase review](reaver/clips/sweep/review.webp)
+![Reaver Sweep — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/sweep/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/sweep/metadata.json) · [Live Normal stage sampling](reaver/clips/sweep/normal.webp)
+[Frame order, weights and cadence](reaver/clips/sweep/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/sweep/normal.webp)
 
 ### Counter
 
@@ -284,9 +284,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counter`.
 
-![Reaver Counter — native in-engine phase review](reaver/clips/counter/review.webp)
+![Reaver Counter — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counter/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/counter/metadata.json) · [Live Normal stage sampling](reaver/clips/counter/normal.webp)
+[Frame order, weights and cadence](reaver/clips/counter/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counter/normal.webp)
 
 ### Defend
 
@@ -296,9 +296,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `defend`.
 
-![Reaver Defend — native in-engine phase review](reaver/clips/defend/review.webp)
+![Reaver Defend — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/defend/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/defend/metadata.json) · [Live Normal stage sampling](reaver/clips/defend/normal.webp)
+[Frame order, weights and cadence](reaver/clips/defend/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/defend/normal.webp)
 
 ### Magic
 
@@ -308,9 +308,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `spell`.
 
-![Reaver Magic — native in-engine phase review](reaver/clips/spell/review.webp)
+![Reaver Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/spell/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/spell/metadata.json) · [Live Normal stage sampling](reaver/clips/spell/normal.webp)
+[Frame order, weights and cadence](reaver/clips/spell/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/spell/normal.webp)
 
 ### Ranged
 
@@ -320,9 +320,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `ranged`.
 
-![Reaver Ranged — native in-engine phase review](reaver/clips/ranged/review.webp)
+![Reaver Ranged — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/ranged/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/ranged/metadata.json) · [Live Normal stage sampling](reaver/clips/ranged/normal.webp)
+[Frame order, weights and cadence](reaver/clips/ranged/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/ranged/normal.webp)
 
 ### Ranged Magic
 
@@ -332,9 +332,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `rangedMagic`.
 
-![Reaver Ranged Magic — native in-engine phase review](reaver/clips/rangedMagic/review.webp)
+![Reaver Ranged Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/rangedMagic/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](reaver/clips/rangedMagic/normal.webp)
+[Frame order, weights and cadence](reaver/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/rangedMagic/normal.webp)
 
 ### Counter Preparation
 
@@ -344,9 +344,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counterPrepare`.
 
-![Reaver Counter Preparation — native in-engine phase review](reaver/clips/counterPrepare/review.webp)
+![Reaver Counter Preparation — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counterPrepare/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](reaver/clips/counterPrepare/normal.webp)
+[Frame order, weights and cadence](reaver/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counterPrepare/normal.webp)
 
 ### Sword Shield Attack Reference
 
@@ -356,9 +356,9 @@ Compatible family grip: straightSword or katana + shield. Registered weapon-fami
 
 Aliases: `weapon:attack:sword-shield`, `weapon:spell:sword-shield`, `weapon:ranged:sword-shield`, `weapon:rangedMagic:sword-shield`.
 
-![Reaver Sword Shield Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-sword-shield/review.webp)
+![Reaver Sword Shield Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-sword-shield/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-sword-shield/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-sword-shield/normal.webp)
 
 ### Bow Attack Reference
 
@@ -368,9 +368,9 @@ Compatible family grip: shortbow. Registered weapon-family reference; canonical 
 
 Aliases: `weapon:attack:bow`, `weapon:spell:bow`, `weapon:ranged:bow`, `weapon:rangedMagic:bow`.
 
-![Reaver Bow Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-bow/review.webp)
+![Reaver Bow Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-bow/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-bow/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-bow/normal.webp)
 
 ### Staff Casting Attack Reference
 
@@ -380,9 +380,9 @@ Compatible family grip: staff or sceptre. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:staff-casting`, `weapon:spell:staff-casting`, `weapon:ranged:staff-casting`, `weapon:rangedMagic:staff-casting`.
 
-![Reaver Staff Casting Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-staff-casting/review.webp)
+![Reaver Staff Casting Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-staff-casting/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-staff-casting/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-staff-casting/normal.webp)
 
 ### Energy Blade Attack Reference
 
@@ -392,9 +392,9 @@ Compatible family grip: spell blade-tag choreography. Registered weapon-family r
 
 Aliases: `weapon:attack:energy-blade`, `weapon:spell:energy-blade`, `weapon:ranged:energy-blade`, `weapon:rangedMagic:energy-blade`.
 
-![Reaver Energy Blade Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-energy-blade/review.webp)
+![Reaver Energy Blade Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-energy-blade/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-energy-blade/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-energy-blade/normal.webp)
 
 ### Dual Daggers Attack Reference
 
@@ -404,9 +404,9 @@ Compatible family grip: dagger + parryDagger. Registered weapon-family reference
 
 Aliases: `weapon:attack:dual-daggers`, `weapon:spell:dual-daggers`, `weapon:ranged:dual-daggers`, `weapon:rangedMagic:dual-daggers`.
 
-![Reaver Dual Daggers Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-dual-daggers/review.webp)
+![Reaver Dual Daggers Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-dual-daggers/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-dual-daggers/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-dual-daggers/normal.webp)
 
 ### Single Dagger Attack Reference
 
@@ -416,9 +416,9 @@ Compatible family grip: dagger alone. Registered weapon-family reference; canoni
 
 Aliases: `weapon:attack:single-dagger`, `weapon:spell:single-dagger`, `weapon:ranged:single-dagger`, `weapon:rangedMagic:single-dagger`.
 
-![Reaver Single Dagger Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-single-dagger/review.webp)
+![Reaver Single Dagger Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-single-dagger/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-single-dagger/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-single-dagger/normal.webp)
 
 ### Single Sword Attack Reference
 
@@ -428,9 +428,9 @@ Compatible family grip: straightSword or katana alone. Registered weapon-family 
 
 Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:ranged:single-sword`, `weapon:rangedMagic:single-sword`.
 
-![Reaver Single Sword Attack Reference — native in-engine phase review](reaver/clips/weapon-attack-single-sword/review.webp)
+![Reaver Single Sword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-single-sword/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](reaver/clips/weapon-attack-single-sword/normal.webp)
+[Frame order, weights and cadence](reaver/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/weapon-attack-single-sword/normal.webp)
 
 ### Guard Counter
 
@@ -440,9 +440,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counter-guard`.
 
-![Reaver Guard Counter — native in-engine phase review](reaver/clips/counter-guard/review.webp)
+![Reaver Guard Counter — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counter-guard/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/counter-guard/metadata.json) · [Live Normal stage sampling](reaver/clips/counter-guard/normal.webp)
+[Frame order, weights and cadence](reaver/clips/counter-guard/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counter-guard/normal.webp)
 
 ### Evasion Counter
 
@@ -452,15 +452,15 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counter-evade`.
 
-![Reaver Evasion Counter — native in-engine phase review](reaver/clips/counter-evade/review.webp)
+![Reaver Evasion Counter — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counter-evade/review.webp)
 
-[Frame order, weights and cadence](reaver/clips/counter-evade/metadata.json) · [Live Normal stage sampling](reaver/clips/counter-evade/normal.webp)
+[Frame order, weights and cadence](reaver/clips/counter-evade/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/counter-evade/normal.webp)
 
 ### Evade Reaction
 
 `reaction:evade` · Held start/return: evade · Normal cadence: 97.5 ms.
 
-![Reaver Evade Reaction — native in-engine phase review](reaver/clips/reaction-evade/review.webp)
+![Reaver Evade Reaction — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/reaction-evade/review.webp)
 
 [Frame order, weights and cadence](reaver/clips/reaction-evade/metadata.json)
 
@@ -468,7 +468,7 @@ Aliases: `counter-evade`.
 
 `reaction:guard-break` · Held start/return: defensive · Normal cadence: 180.0 ms.
 
-![Reaver Guard Break — native in-engine phase review](reaver/clips/reaction-guard-break/review.webp)
+![Reaver Guard Break — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/reaction-guard-break/review.webp)
 
 [Frame order, weights and cadence](reaver/clips/reaction-guard-break/metadata.json)
 
@@ -476,7 +476,7 @@ Aliases: `counter-evade`.
 
 `reaction:fully-defended` · Held start/return: defensive · Normal cadence: 422.5 ms.
 
-![Reaver Guarded Reaction D → V → G → H → C → D — native in-engine phase review](reaver/clips/reaction-fully-defended/review.webp)
+![Reaver Guarded Reaction D → V → G → H → C → D — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/reaction-fully-defended/review.webp)
 
 [Frame order, weights and cadence](reaver/clips/reaction-fully-defended/metadata.json)
 
@@ -484,7 +484,7 @@ Aliases: `counter-evade`.
 
 `reaction:defend` · Held start/return: defensive · Normal cadence: 180.0 ms.
 
-![Reaver Defend Reaction — native in-engine phase review](reaver/clips/reaction-defend/review.webp)
+![Reaver Defend Reaction — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/reaction-defend/review.webp)
 
 [Frame order, weights and cadence](reaver/clips/reaction-defend/metadata.json)
 
@@ -494,7 +494,7 @@ Aliases: `counter-evade`.
 
 Aliases: `hit`, `hurt`.
 
-![Reaver General Hurt / Recoil — native in-engine phase review](reaver/clips/reaction-hurt/review.webp)
+![Reaver General Hurt / Recoil — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/reaver/clips/reaction-hurt/review.webp)
 
 [Frame order, weights and cadence](reaver/clips/reaction-hurt/metadata.json)
 
@@ -513,9 +513,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `attack`.
 
-![Rogue Attack — native in-engine phase review](rogue/clips/attack/review.webp)
+![Rogue Attack — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/attack/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/attack/metadata.json) · [Live Normal stage sampling](rogue/clips/attack/normal.webp)
+[Frame order, weights and cadence](rogue/clips/attack/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/attack/normal.webp)
 
 ### Smash
 
@@ -525,9 +525,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `smash`.
 
-![Rogue Smash — native in-engine phase review](rogue/clips/smash/review.webp)
+![Rogue Smash — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/smash/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/smash/metadata.json) · [Live Normal stage sampling](rogue/clips/smash/normal.webp)
+[Frame order, weights and cadence](rogue/clips/smash/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/smash/normal.webp)
 
 ### Sweep
 
@@ -537,9 +537,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `sweep`.
 
-![Rogue Sweep — native in-engine phase review](rogue/clips/sweep/review.webp)
+![Rogue Sweep — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/sweep/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/sweep/metadata.json) · [Live Normal stage sampling](rogue/clips/sweep/normal.webp)
+[Frame order, weights and cadence](rogue/clips/sweep/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/sweep/normal.webp)
 
 ### Counter
 
@@ -549,9 +549,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counter`.
 
-![Rogue Counter — native in-engine phase review](rogue/clips/counter/review.webp)
+![Rogue Counter — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/counter/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/counter/metadata.json) · [Live Normal stage sampling](rogue/clips/counter/normal.webp)
+[Frame order, weights and cadence](rogue/clips/counter/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/counter/normal.webp)
 
 ### Defend
 
@@ -561,9 +561,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `defend`.
 
-![Rogue Defend — native in-engine phase review](rogue/clips/defend/review.webp)
+![Rogue Defend — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/defend/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/defend/metadata.json) · [Live Normal stage sampling](rogue/clips/defend/normal.webp)
+[Frame order, weights and cadence](rogue/clips/defend/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/defend/normal.webp)
 
 ### Magic
 
@@ -573,9 +573,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `spell`.
 
-![Rogue Magic — native in-engine phase review](rogue/clips/spell/review.webp)
+![Rogue Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/spell/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/spell/metadata.json) · [Live Normal stage sampling](rogue/clips/spell/normal.webp)
+[Frame order, weights and cadence](rogue/clips/spell/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/spell/normal.webp)
 
 ### Ranged
 
@@ -585,9 +585,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `ranged`.
 
-![Rogue Ranged — native in-engine phase review](rogue/clips/ranged/review.webp)
+![Rogue Ranged — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/ranged/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/ranged/metadata.json) · [Live Normal stage sampling](rogue/clips/ranged/normal.webp)
+[Frame order, weights and cadence](rogue/clips/ranged/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/ranged/normal.webp)
 
 ### Ranged Magic
 
@@ -597,9 +597,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `rangedMagic`.
 
-![Rogue Ranged Magic — native in-engine phase review](rogue/clips/rangedMagic/review.webp)
+![Rogue Ranged Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/rangedMagic/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](rogue/clips/rangedMagic/normal.webp)
+[Frame order, weights and cadence](rogue/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/rangedMagic/normal.webp)
 
 ### Counter Preparation
 
@@ -609,9 +609,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counterPrepare`.
 
-![Rogue Counter Preparation — native in-engine phase review](rogue/clips/counterPrepare/review.webp)
+![Rogue Counter Preparation — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/counterPrepare/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](rogue/clips/counterPrepare/normal.webp)
+[Frame order, weights and cadence](rogue/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/counterPrepare/normal.webp)
 
 ### Greatsword Attack Reference
 
@@ -621,9 +621,9 @@ Compatible family grip: greatsword alone. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:greatsword`, `weapon:spell:greatsword`, `weapon:ranged:greatsword`, `weapon:rangedMagic:greatsword`.
 
-![Rogue Greatsword Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-greatsword/review.webp)
+![Rogue Greatsword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-greatsword/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-greatsword/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-greatsword/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-greatsword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-greatsword/normal.webp)
 
 ### Sword Shield Attack Reference
 
@@ -633,9 +633,9 @@ Compatible family grip: straightSword or katana + shield. Registered weapon-fami
 
 Aliases: `weapon:attack:sword-shield`, `weapon:spell:sword-shield`, `weapon:ranged:sword-shield`, `weapon:rangedMagic:sword-shield`.
 
-![Rogue Sword Shield Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-sword-shield/review.webp)
+![Rogue Sword Shield Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-sword-shield/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-sword-shield/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-sword-shield/normal.webp)
 
 ### Bow Attack Reference
 
@@ -645,9 +645,9 @@ Compatible family grip: shortbow. Registered weapon-family reference; canonical 
 
 Aliases: `weapon:attack:bow`, `weapon:spell:bow`, `weapon:ranged:bow`, `weapon:rangedMagic:bow`.
 
-![Rogue Bow Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-bow/review.webp)
+![Rogue Bow Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-bow/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-bow/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-bow/normal.webp)
 
 ### Staff Casting Attack Reference
 
@@ -657,9 +657,9 @@ Compatible family grip: staff or sceptre. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:staff-casting`, `weapon:spell:staff-casting`, `weapon:ranged:staff-casting`, `weapon:rangedMagic:staff-casting`.
 
-![Rogue Staff Casting Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-staff-casting/review.webp)
+![Rogue Staff Casting Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-staff-casting/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-staff-casting/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-staff-casting/normal.webp)
 
 ### Energy Blade Attack Reference
 
@@ -669,9 +669,9 @@ Compatible family grip: spell blade-tag choreography. Registered weapon-family r
 
 Aliases: `weapon:attack:energy-blade`, `weapon:spell:energy-blade`, `weapon:ranged:energy-blade`, `weapon:rangedMagic:energy-blade`.
 
-![Rogue Energy Blade Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-energy-blade/review.webp)
+![Rogue Energy Blade Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-energy-blade/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-energy-blade/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-energy-blade/normal.webp)
 
 ### Dual Daggers Attack Reference
 
@@ -681,9 +681,9 @@ Compatible family grip: dagger + parryDagger. Registered weapon-family reference
 
 Aliases: `weapon:attack:dual-daggers`, `weapon:spell:dual-daggers`, `weapon:ranged:dual-daggers`, `weapon:rangedMagic:dual-daggers`.
 
-![Rogue Dual Daggers Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-dual-daggers/review.webp)
+![Rogue Dual Daggers Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-dual-daggers/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-dual-daggers/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-dual-daggers/normal.webp)
 
 ### Single Dagger Attack Reference
 
@@ -693,9 +693,9 @@ Compatible family grip: dagger alone. Registered weapon-family reference; canoni
 
 Aliases: `weapon:attack:single-dagger`, `weapon:spell:single-dagger`, `weapon:ranged:single-dagger`, `weapon:rangedMagic:single-dagger`.
 
-![Rogue Single Dagger Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-single-dagger/review.webp)
+![Rogue Single Dagger Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-single-dagger/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-single-dagger/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-single-dagger/normal.webp)
 
 ### Single Sword Attack Reference
 
@@ -705,9 +705,9 @@ Compatible family grip: straightSword or katana alone. Registered weapon-family 
 
 Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:ranged:single-sword`, `weapon:rangedMagic:single-sword`.
 
-![Rogue Single Sword Attack Reference — native in-engine phase review](rogue/clips/weapon-attack-single-sword/review.webp)
+![Rogue Single Sword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-single-sword/review.webp)
 
-[Frame order, weights and cadence](rogue/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](rogue/clips/weapon-attack-single-sword/normal.webp)
+[Frame order, weights and cadence](rogue/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/weapon-attack-single-sword/normal.webp)
 
 ### General Hurt / Recoil
 
@@ -715,7 +715,7 @@ Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:rang
 
 Aliases: `hit`, `hurt`.
 
-![Rogue General Hurt / Recoil — native in-engine phase review](rogue/clips/reaction-hurt/review.webp)
+![Rogue General Hurt / Recoil — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/rogue/clips/reaction-hurt/review.webp)
 
 [Frame order, weights and cadence](rogue/clips/reaction-hurt/metadata.json)
 
@@ -734,9 +734,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `attack`.
 
-![Starseer Attack — native in-engine phase review](starseer/clips/attack/review.webp)
+![Starseer Attack — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/attack/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/attack/metadata.json) · [Live Normal stage sampling](starseer/clips/attack/normal.webp)
+[Frame order, weights and cadence](starseer/clips/attack/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/attack/normal.webp)
 
 ### Smash
 
@@ -746,9 +746,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `smash`.
 
-![Starseer Smash — native in-engine phase review](starseer/clips/smash/review.webp)
+![Starseer Smash — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/smash/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/smash/metadata.json) · [Live Normal stage sampling](starseer/clips/smash/normal.webp)
+[Frame order, weights and cadence](starseer/clips/smash/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/smash/normal.webp)
 
 ### Sweep
 
@@ -758,9 +758,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `sweep`.
 
-![Starseer Sweep — native in-engine phase review](starseer/clips/sweep/review.webp)
+![Starseer Sweep — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/sweep/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/sweep/metadata.json) · [Live Normal stage sampling](starseer/clips/sweep/normal.webp)
+[Frame order, weights and cadence](starseer/clips/sweep/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/sweep/normal.webp)
 
 ### Counter
 
@@ -770,9 +770,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counter`.
 
-![Starseer Counter — native in-engine phase review](starseer/clips/counter/review.webp)
+![Starseer Counter — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/counter/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/counter/metadata.json) · [Live Normal stage sampling](starseer/clips/counter/normal.webp)
+[Frame order, weights and cadence](starseer/clips/counter/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/counter/normal.webp)
 
 ### Defend
 
@@ -782,9 +782,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `defend`.
 
-![Starseer Defend — native in-engine phase review](starseer/clips/defend/review.webp)
+![Starseer Defend — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/defend/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/defend/metadata.json) · [Live Normal stage sampling](starseer/clips/defend/normal.webp)
+[Frame order, weights and cadence](starseer/clips/defend/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/defend/normal.webp)
 
 ### Magic
 
@@ -794,9 +794,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `spell`.
 
-![Starseer Magic — native in-engine phase review](starseer/clips/spell/review.webp)
+![Starseer Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/spell/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/spell/metadata.json) · [Live Normal stage sampling](starseer/clips/spell/normal.webp)
+[Frame order, weights and cadence](starseer/clips/spell/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/spell/normal.webp)
 
 ### Ranged
 
@@ -808,9 +808,9 @@ Aliases: `ranged`.
 
 Shared phase art with: `rangedMagic`.
 
-![Starseer Ranged — native in-engine phase review](starseer/clips/ranged/review.webp)
+![Starseer Ranged — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/ranged/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/ranged/metadata.json) · [Live Normal stage sampling](starseer/clips/ranged/normal.webp)
+[Frame order, weights and cadence](starseer/clips/ranged/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/ranged/normal.webp)
 
 ### Ranged Magic
 
@@ -822,9 +822,9 @@ Aliases: `rangedMagic`.
 
 Shared phase art with: `ranged`.
 
-![Starseer Ranged Magic — native in-engine phase review](starseer/clips/rangedMagic/review.webp)
+![Starseer Ranged Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/rangedMagic/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](starseer/clips/rangedMagic/normal.webp)
+[Frame order, weights and cadence](starseer/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/rangedMagic/normal.webp)
 
 ### Counter Preparation
 
@@ -834,9 +834,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counterPrepare`.
 
-![Starseer Counter Preparation — native in-engine phase review](starseer/clips/counterPrepare/review.webp)
+![Starseer Counter Preparation — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/counterPrepare/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](starseer/clips/counterPrepare/normal.webp)
+[Frame order, weights and cadence](starseer/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/counterPrepare/normal.webp)
 
 ### Greatsword Attack Reference
 
@@ -846,9 +846,9 @@ Compatible family grip: greatsword alone. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:greatsword`, `weapon:spell:greatsword`, `weapon:ranged:greatsword`, `weapon:rangedMagic:greatsword`.
 
-![Starseer Greatsword Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-greatsword/review.webp)
+![Starseer Greatsword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-greatsword/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-greatsword/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-greatsword/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-greatsword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-greatsword/normal.webp)
 
 ### Sword Shield Attack Reference
 
@@ -858,9 +858,9 @@ Compatible family grip: straightSword or katana + shield. Registered weapon-fami
 
 Aliases: `weapon:attack:sword-shield`, `weapon:spell:sword-shield`, `weapon:ranged:sword-shield`, `weapon:rangedMagic:sword-shield`.
 
-![Starseer Sword Shield Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-sword-shield/review.webp)
+![Starseer Sword Shield Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-sword-shield/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-sword-shield/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-sword-shield/normal.webp)
 
 ### Bow Attack Reference
 
@@ -870,9 +870,9 @@ Compatible family grip: shortbow. Registered weapon-family reference; canonical 
 
 Aliases: `weapon:attack:bow`, `weapon:spell:bow`, `weapon:ranged:bow`, `weapon:rangedMagic:bow`.
 
-![Starseer Bow Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-bow/review.webp)
+![Starseer Bow Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-bow/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-bow/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-bow/normal.webp)
 
 ### Staff Casting Attack Reference
 
@@ -882,9 +882,9 @@ Compatible family grip: staff or sceptre. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:staff-casting`, `weapon:spell:staff-casting`, `weapon:ranged:staff-casting`, `weapon:rangedMagic:staff-casting`.
 
-![Starseer Staff Casting Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-staff-casting/review.webp)
+![Starseer Staff Casting Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-staff-casting/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-staff-casting/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-staff-casting/normal.webp)
 
 ### Energy Blade Attack Reference
 
@@ -894,9 +894,9 @@ Compatible family grip: spell blade-tag choreography. Registered weapon-family r
 
 Aliases: `weapon:attack:energy-blade`, `weapon:spell:energy-blade`, `weapon:ranged:energy-blade`, `weapon:rangedMagic:energy-blade`.
 
-![Starseer Energy Blade Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-energy-blade/review.webp)
+![Starseer Energy Blade Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-energy-blade/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-energy-blade/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-energy-blade/normal.webp)
 
 ### Dual Daggers Attack Reference
 
@@ -906,9 +906,9 @@ Compatible family grip: dagger + parryDagger. Registered weapon-family reference
 
 Aliases: `weapon:attack:dual-daggers`, `weapon:spell:dual-daggers`, `weapon:ranged:dual-daggers`, `weapon:rangedMagic:dual-daggers`.
 
-![Starseer Dual Daggers Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-dual-daggers/review.webp)
+![Starseer Dual Daggers Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-dual-daggers/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-dual-daggers/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-dual-daggers/normal.webp)
 
 ### Single Dagger Attack Reference
 
@@ -918,9 +918,9 @@ Compatible family grip: dagger alone. Registered weapon-family reference; canoni
 
 Aliases: `weapon:attack:single-dagger`, `weapon:spell:single-dagger`, `weapon:ranged:single-dagger`, `weapon:rangedMagic:single-dagger`.
 
-![Starseer Single Dagger Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-single-dagger/review.webp)
+![Starseer Single Dagger Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-single-dagger/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-single-dagger/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-single-dagger/normal.webp)
 
 ### Single Sword Attack Reference
 
@@ -930,9 +930,9 @@ Compatible family grip: straightSword or katana alone. Registered weapon-family 
 
 Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:ranged:single-sword`, `weapon:rangedMagic:single-sword`.
 
-![Starseer Single Sword Attack Reference — native in-engine phase review](starseer/clips/weapon-attack-single-sword/review.webp)
+![Starseer Single Sword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-single-sword/review.webp)
 
-[Frame order, weights and cadence](starseer/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](starseer/clips/weapon-attack-single-sword/normal.webp)
+[Frame order, weights and cadence](starseer/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/weapon-attack-single-sword/normal.webp)
 
 ### General Hurt / Recoil
 
@@ -940,7 +940,7 @@ Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:rang
 
 Aliases: `hit`, `hurt`.
 
-![Starseer General Hurt / Recoil — native in-engine phase review](starseer/clips/reaction-hurt/review.webp)
+![Starseer General Hurt / Recoil — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/starseer/clips/reaction-hurt/review.webp)
 
 [Frame order, weights and cadence](starseer/clips/reaction-hurt/metadata.json)
 
@@ -959,9 +959,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `attack`.
 
-![Herald Attack — native in-engine phase review](herald/clips/attack/review.webp)
+![Herald Attack — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/attack/review.webp)
 
-[Frame order, weights and cadence](herald/clips/attack/metadata.json) · [Live Normal stage sampling](herald/clips/attack/normal.webp)
+[Frame order, weights and cadence](herald/clips/attack/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/attack/normal.webp)
 
 ### Smash
 
@@ -971,9 +971,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `smash`.
 
-![Herald Smash — native in-engine phase review](herald/clips/smash/review.webp)
+![Herald Smash — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/smash/review.webp)
 
-[Frame order, weights and cadence](herald/clips/smash/metadata.json) · [Live Normal stage sampling](herald/clips/smash/normal.webp)
+[Frame order, weights and cadence](herald/clips/smash/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/smash/normal.webp)
 
 ### Sweep
 
@@ -983,9 +983,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `sweep`.
 
-![Herald Sweep — native in-engine phase review](herald/clips/sweep/review.webp)
+![Herald Sweep — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/sweep/review.webp)
 
-[Frame order, weights and cadence](herald/clips/sweep/metadata.json) · [Live Normal stage sampling](herald/clips/sweep/normal.webp)
+[Frame order, weights and cadence](herald/clips/sweep/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/sweep/normal.webp)
 
 ### Counter
 
@@ -995,9 +995,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counter`.
 
-![Herald Counter — native in-engine phase review](herald/clips/counter/review.webp)
+![Herald Counter — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/counter/review.webp)
 
-[Frame order, weights and cadence](herald/clips/counter/metadata.json) · [Live Normal stage sampling](herald/clips/counter/normal.webp)
+[Frame order, weights and cadence](herald/clips/counter/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/counter/normal.webp)
 
 ### Defend
 
@@ -1007,9 +1007,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `defend`.
 
-![Herald Defend — native in-engine phase review](herald/clips/defend/review.webp)
+![Herald Defend — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/defend/review.webp)
 
-[Frame order, weights and cadence](herald/clips/defend/metadata.json) · [Live Normal stage sampling](herald/clips/defend/normal.webp)
+[Frame order, weights and cadence](herald/clips/defend/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/defend/normal.webp)
 
 ### Magic
 
@@ -1019,9 +1019,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `spell`.
 
-![Herald Magic — native in-engine phase review](herald/clips/spell/review.webp)
+![Herald Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/spell/review.webp)
 
-[Frame order, weights and cadence](herald/clips/spell/metadata.json) · [Live Normal stage sampling](herald/clips/spell/normal.webp)
+[Frame order, weights and cadence](herald/clips/spell/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/spell/normal.webp)
 
 ### Ranged
 
@@ -1033,9 +1033,9 @@ Aliases: `ranged`.
 
 Shared phase art with: `rangedMagic`.
 
-![Herald Ranged — native in-engine phase review](herald/clips/ranged/review.webp)
+![Herald Ranged — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/ranged/review.webp)
 
-[Frame order, weights and cadence](herald/clips/ranged/metadata.json) · [Live Normal stage sampling](herald/clips/ranged/normal.webp)
+[Frame order, weights and cadence](herald/clips/ranged/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/ranged/normal.webp)
 
 ### Ranged Magic
 
@@ -1047,9 +1047,9 @@ Aliases: `rangedMagic`.
 
 Shared phase art with: `ranged`.
 
-![Herald Ranged Magic — native in-engine phase review](herald/clips/rangedMagic/review.webp)
+![Herald Ranged Magic — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/rangedMagic/review.webp)
 
-[Frame order, weights and cadence](herald/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](herald/clips/rangedMagic/normal.webp)
+[Frame order, weights and cadence](herald/clips/rangedMagic/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/rangedMagic/normal.webp)
 
 ### Counter Preparation
 
@@ -1059,9 +1059,9 @@ Compatible family grip: canonical starter fixture. Registered canonical starter 
 
 Aliases: `counterPrepare`.
 
-![Herald Counter Preparation — native in-engine phase review](herald/clips/counterPrepare/review.webp)
+![Herald Counter Preparation — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/counterPrepare/review.webp)
 
-[Frame order, weights and cadence](herald/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](herald/clips/counterPrepare/normal.webp)
+[Frame order, weights and cadence](herald/clips/counterPrepare/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/counterPrepare/normal.webp)
 
 ### Greatsword Attack Reference
 
@@ -1071,9 +1071,9 @@ Compatible family grip: greatsword alone. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:greatsword`, `weapon:spell:greatsword`, `weapon:ranged:greatsword`, `weapon:rangedMagic:greatsword`.
 
-![Herald Greatsword Attack Reference — native in-engine phase review](herald/clips/weapon-attack-greatsword/review.webp)
+![Herald Greatsword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-greatsword/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-greatsword/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-greatsword/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-greatsword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-greatsword/normal.webp)
 
 ### Sword Shield Attack Reference
 
@@ -1083,9 +1083,9 @@ Compatible family grip: straightSword or katana + shield. Registered weapon-fami
 
 Aliases: `weapon:attack:sword-shield`, `weapon:spell:sword-shield`, `weapon:ranged:sword-shield`, `weapon:rangedMagic:sword-shield`.
 
-![Herald Sword Shield Attack Reference — native in-engine phase review](herald/clips/weapon-attack-sword-shield/review.webp)
+![Herald Sword Shield Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-sword-shield/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-sword-shield/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-sword-shield/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-sword-shield/normal.webp)
 
 ### Bow Attack Reference
 
@@ -1095,9 +1095,9 @@ Compatible family grip: shortbow. Registered weapon-family reference; canonical 
 
 Aliases: `weapon:attack:bow`, `weapon:spell:bow`, `weapon:ranged:bow`, `weapon:rangedMagic:bow`.
 
-![Herald Bow Attack Reference — native in-engine phase review](herald/clips/weapon-attack-bow/review.webp)
+![Herald Bow Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-bow/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-bow/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-bow/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-bow/normal.webp)
 
 ### Staff Casting Attack Reference
 
@@ -1107,9 +1107,9 @@ Compatible family grip: staff or sceptre. Registered weapon-family reference; ca
 
 Aliases: `weapon:attack:staff-casting`, `weapon:spell:staff-casting`, `weapon:ranged:staff-casting`, `weapon:rangedMagic:staff-casting`.
 
-![Herald Staff Casting Attack Reference — native in-engine phase review](herald/clips/weapon-attack-staff-casting/review.webp)
+![Herald Staff Casting Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-staff-casting/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-staff-casting/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-staff-casting/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-staff-casting/normal.webp)
 
 ### Energy Blade Attack Reference
 
@@ -1119,9 +1119,9 @@ Compatible family grip: spell blade-tag choreography. Registered weapon-family r
 
 Aliases: `weapon:attack:energy-blade`, `weapon:spell:energy-blade`, `weapon:ranged:energy-blade`, `weapon:rangedMagic:energy-blade`.
 
-![Herald Energy Blade Attack Reference — native in-engine phase review](herald/clips/weapon-attack-energy-blade/review.webp)
+![Herald Energy Blade Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-energy-blade/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-energy-blade/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-energy-blade/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-energy-blade/normal.webp)
 
 ### Dual Daggers Attack Reference
 
@@ -1131,9 +1131,9 @@ Compatible family grip: dagger + parryDagger. Registered weapon-family reference
 
 Aliases: `weapon:attack:dual-daggers`, `weapon:spell:dual-daggers`, `weapon:ranged:dual-daggers`, `weapon:rangedMagic:dual-daggers`.
 
-![Herald Dual Daggers Attack Reference — native in-engine phase review](herald/clips/weapon-attack-dual-daggers/review.webp)
+![Herald Dual Daggers Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-dual-daggers/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-dual-daggers/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-dual-daggers/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-dual-daggers/normal.webp)
 
 ### Single Dagger Attack Reference
 
@@ -1143,9 +1143,9 @@ Compatible family grip: dagger alone. Registered weapon-family reference; canoni
 
 Aliases: `weapon:attack:single-dagger`, `weapon:spell:single-dagger`, `weapon:ranged:single-dagger`, `weapon:rangedMagic:single-dagger`.
 
-![Herald Single Dagger Attack Reference — native in-engine phase review](herald/clips/weapon-attack-single-dagger/review.webp)
+![Herald Single Dagger Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-single-dagger/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-single-dagger/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-single-dagger/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-single-dagger/normal.webp)
 
 ### Single Sword Attack Reference
 
@@ -1155,9 +1155,9 @@ Compatible family grip: straightSword or katana alone. Registered weapon-family 
 
 Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:ranged:single-sword`, `weapon:rangedMagic:single-sword`.
 
-![Herald Single Sword Attack Reference — native in-engine phase review](herald/clips/weapon-attack-single-sword/review.webp)
+![Herald Single Sword Attack Reference — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-single-sword/review.webp)
 
-[Frame order, weights and cadence](herald/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](herald/clips/weapon-attack-single-sword/normal.webp)
+[Frame order, weights and cadence](herald/clips/weapon-attack-single-sword/metadata.json) · [Live Normal stage sampling](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/weapon-attack-single-sword/normal.webp)
 
 ### General Hurt / Recoil
 
@@ -1165,7 +1165,7 @@ Aliases: `weapon:attack:single-sword`, `weapon:spell:single-sword`, `weapon:rang
 
 Aliases: `hit`, `hurt`.
 
-![Herald General Hurt / Recoil — native in-engine phase review](herald/clips/reaction-hurt/review.webp)
+![Herald General Hurt / Recoil — native in-engine phase review](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/combat-stances-gallery/herald/clips/reaction-hurt/review.webp)
 
 [Frame order, weights and cadence](herald/clips/reaction-hurt/metadata.json)
 

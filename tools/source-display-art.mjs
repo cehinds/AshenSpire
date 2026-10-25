@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { artPath } from './art-source.mjs';
 
 export const SOURCE_DISPLAY_ART_OWNERS = Object.freeze([
   ['src/ui/alternativeArtCatalog.js', 'alternativeArtCatalog'],
@@ -34,12 +35,13 @@ export function sourceDisplayArtInventory(root) {
   return inventory;
 }
 
-export function assertSourceDisplayArt(root) {
+export function assertSourceDisplayArt(root, { env = process.env } = {}) {
+  if (env.ASHEN_ART_CHECKOUT) throw new Error('Clear ASHEN_ART_CHECKOUT before measuring pinned source display art; authoring previews may contain unpublished images.');
   const inventory = sourceDisplayArtInventory(root);
   for (const entry of inventory) {
     let bytes;
-    try { bytes = readFileSync(resolve(root, entry.path)); }
-    catch { throw new Error(`Source display art is missing/unreadable: ${entry.path}; materialize assets-display before measuring`); }
+    try { bytes = readFileSync(artPath(entry.path, { root, env })); }
+    catch { throw new Error(`Source display art is missing/unreadable: ${entry.path}; fetch the pinned common art pack before measuring`); }
     if (createHash('sha256').update(bytes).digest('hex') !== entry.sha256) throw new Error(`Source display art hash mismatch: ${entry.path}`);
   }
   return { checked: inventory.length };

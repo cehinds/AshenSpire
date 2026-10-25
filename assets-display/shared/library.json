@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "library": "shared",
-  "pinnedRelease": "hd-assets-v23",
-  "note": "Canonical packed IDs retain their existing byte home; this index groups them without duplication.",
+  "pinnedRelease": "ashenspire-hd-assets-v24",
+  "note": "Canonical packed IDs resolve through pinned release packs; this index groups them without duplication.",
   "assets": {
     "assets/card-components/0949257201425783d7c8.webp": {
       "source": "pinned-art-pack",

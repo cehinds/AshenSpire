@@ -1,3 +1,5 @@
+import {artPath} from './art-source.mjs';
+import {authoringRoot,authoringPath} from './art-authoring.mjs';
 // Register the selected SM03 production exports; generation remains on the art side.
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -7,14 +9,16 @@ const provenancePath='pose-studio/stances/update-stances/selected-smash-sm03/pro
 const root=fileURLToPath(new URL('../',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 
-export function registerSelectedSmash(catalog,{root:directory=root}={}) {
-  if(!existsSync(resolve(directory,provenancePath)))return catalog;
-  const production=JSON.parse(readFileSync(resolve(directory,provenancePath)));
+export function registerSelectedSmash(catalog,{root:directory=root,assetRoot,env=process.env}={}) {
+  const authoring=authoringRoot({root:directory,assetRoot,env,required:false});
+  const file=rel=>authoring?authoringPath(rel,{root:directory,assetRoot:authoring,env}):rel===provenancePath?resolve(directory,rel):artPath(rel,{root:directory,env});
+  if(!existsSync(file(provenancePath)))return catalog;
+  const production=JSON.parse(readFileSync(file(provenancePath)));
   const profile=catalog.weaponProfiles['reaver-greatsword-pilot'];
   const expected=['smash-takeoff','smash-airborne','smash-impact'];
   if(JSON.stringify(production.frames.map(frame=>frame.key))!==JSON.stringify(expected))throw new Error('SM03 production must contain exactly three ordered action frames');
   for(const frame of production.frames) {
-    for(const tier of [frame.full,frame.mobile])if(hash(readFileSync(resolve(directory,tier.path)))!==tier.sha256)throw new Error('SM03 production asset changed: '+tier.path);
+    for(const tier of [frame.full,frame.mobile])if(hash(readFileSync(file(tier.path)))!==tier.sha256)throw new Error('SM03 production asset changed: '+tier.path);
     const registered={path:frame.full.path,lite:frame.mobile.path,size:frame.logicalDrawSize,
       rasterSize:frame.full.dimensions,mobileRasterSize:frame.mobile.dimensions,
       bounds:frame.sourceAlphaBounds,drawOffset:frame.drawOffset,stageBounds:frame.stageAlphaBounds,stageAnchor:[384,464],
@@ -36,7 +40,8 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const path=resolve(root,'src/content/alternativeSelectedStances.js'),before=readFileSync(path,'utf8');
   const match=before.match(/^export const alternativeSelectedStances = (.+);\r?$/m);
   if(!match)throw new Error('Missing selected stances catalog');
-  const catalog=JSON.parse(match[1]);registerSelectedSmash(catalog);
+  authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
+  const catalog=JSON.parse(match[1]);registerSelectedSmash(catalog,{assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
   const after='// Owner-selected held poses and weapon-specific pose profiles, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n';
   if(process.argv.includes('--check')) {
     if(before!==after)throw new Error('Selected SM03 registration drifted; run node tools/selected-smash-registration.mjs');

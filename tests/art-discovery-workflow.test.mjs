@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {artPath} from '../tools/art-source.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -38,10 +39,10 @@ for (const [workflow, job] of [['tests', 'discovered'], ['ci', 'test-discovered'
 }
 
 // The published source PR owns authoring; the game must retain each shipped export.
-test('the authoring sources are not tracked here; the runtime exports are', () => {
+test('the game retains runtime declarations and reads verified external exports', () => {
   assert.equal(existsSync(new URL('../art/map-battlefield-drafts', import.meta.url)), false);
   const manifest = JSON.parse(readFileSync(new URL('../assets-display/layered/manifest.json', import.meta.url), 'utf8'));
   const ids = Object.keys(manifest.assets);
   assert.equal(ids.length, 95);
-  for (const id of ids) assert.equal(existsSync(new URL(`../${id}`, import.meta.url)), true, id);
+  for (const id of ids) assert.equal(existsSync(artPath(id)), true, id);
 });

@@ -4,7 +4,7 @@ Independent visual inspection of the repaired greatsword smash concept sheet and
 
 ## Greatsword smash, repaired A
 
-Source inspected: [`pose-studio/stances/update-stances/greatsword-smash/sheet-a.png`](../../../pose-studio/stances/update-stances/greatsword-smash/sheet-a.png), 1536×1024 RGBA, five concepts on a full comparison sheet. The character identity, crimson cape, plate rendering and rear three-quarter camera generally match the intended Reaver reference. The repair gives option 2 a clearer two-hand grip than the initial A sheet.
+Source inspected: [`pose-studio/stances/update-stances/greatsword-smash/sheet-a.png`](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-smash/sheet-a.png), 1536×1024 RGBA, five concepts on a full comparison sheet. The character identity, crimson cape, plate rendering and rear three-quarter camera generally match the intended Reaver reference. The repair gives option 2 a clearer two-hand grip than the initial A sheet.
 
 - Top-right option 3 still reads like a rear/shoulder hold: the grip sits close to the back and the blade is carried laterally, which makes the intended forward attack direction awkward. Reorient the grip into a readable forward-ready space.
 - The top-left pose is a vertical overhead readiness pose, and bottom-middle is another raised-sword pose. Clarify which image is the dedicated held smash stance and which belong to the separate smash action sequence. The hold should read as a stable load-ready silhouette distinct from anticipation/contact/recovery.
@@ -13,7 +13,7 @@ The review image `/workspace/scratch/smash-alpha-browser.png` shows the sheet co
 
 ## Greatsword smash, sheet B
 
-Source inspected: [`pose-studio/stances/update-stances/greatsword-smash/sheet-b.png`](../../../pose-studio/stances/update-stances/greatsword-smash/sheet-b.png), 1536×1024 RGBA, options 6–10. The body/outfit and camera remain consistent with the Reaver identity. These are all raised or waist-level weapon loads, rather than impact frames; the choice sheet should label them as held concepts if that is their intended role.
+Source inspected: [`pose-studio/stances/update-stances/greatsword-smash/sheet-b.png`](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-smash/sheet-b.png), 1536×1024 RGBA, options 6–10. The body/outfit and camera remain consistent with the Reaver identity. These are all raised or waist-level weapon loads, rather than impact frames; the choice sheet should label them as held concepts if that is their intended role.
 
 - Option 6 has the raised-toe/high-shift balance, but the blade points up-left across the sheet, while the brief calls for an up-right direction. The prompt/README records this mismatch. It also has a forward-step/stomp quality, so it may not work as a static held pose.
 - Option 7 gives a broad lateral shoulder load, option 8 a compact chest-high load, and option 9 a heel-raised waist rotation. They provide distinct silhouettes, though grips and body torque should be judged at the gallery scale.
@@ -23,7 +23,7 @@ This is a full comparison sheet, not a set of assumed 512 px runtime crops. I ma
 
 ## Guard-break, targeted A revision
 
-Source inspected: [`pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png`](../../../pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png), 1536×1024 RGBA. This canonical A now contains the targeted revision. Option 1 improves on the first A pass: the forward, lopsided collapse and lowered hands read less formal/prayerlike. Options 2, 3 and 5 remain useful exploration for a broken guard, each with a distinct low body/weapon arrangement.
+Source inspected: [`pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png`](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png), 1536×1024 RGBA. This canonical A now contains the targeted revision. Option 1 improves on the first A pass: the forward, lopsided collapse and lowered hands read less formal/prayerlike. Options 2, 3 and 5 remain useful exploration for a broken guard, each with a distinct low body/weapon arrangement.
 
 - Option 4 remains flagged for revision. Its extended blade still reads short relative to the Reaver, and it touches/overlaps option A5's rear boot near source coordinate `(630,880)`, merging neighboring silhouettes in the comparison sheet. The pose also does not make a two-handed greatsword grip apparent. Keep the long blade length, clear the boot, and make the weapon's weight and handling legible.
 
@@ -31,7 +31,7 @@ The earlier image `/workspace/generated_images/exec-ea6d5449-65d9-492a-9998-443d
 
 ### Guard-break, B exploration
 
-Source inspected: [`pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png`](../../../pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png), 1536×1024 RGBA, options B06–B10. This is exploratory concept art. B06 shows a dropped knee and lowered sword but leaves the torso relatively upright. B07 has a knee grounded, slumped torso and sword point on the ground; its broken state is clearest on first read. B08 has an upright torso and shoulder-carried sword and reads more exhausted/resting than broken. B09 has a lowered weapon hand and low blade with a slumped upper body; B10 is deeply folded with one knee down and a long greatsword low beside the figure. B10 has the strongest greatsword length. The artist/root consider B06–B10 distinct enough for concept comparison with the B08 caveat; these are still not selected poses.
+Source inspected: [`pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png`](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png), 1536×1024 RGBA, options B06–B10. This is exploratory concept art. B06 shows a dropped knee and lowered sword but leaves the torso relatively upright. B07 has a knee grounded, slumped torso and sword point on the ground; its broken state is clearest on first read. B08 has an upright torso and shoulder-carried sword and reads more exhausted/resting than broken. B09 has a lowered weapon hand and low blade with a slumped upper body; B10 is deeply folded with one knee down and a long greatsword low beside the figure. B10 has the strongest greatsword length. The artist/root consider B06–B10 distinct enough for concept comparison with the B08 caveat; these are still not selected poses.
 
 ## Follow-up review checklist
 

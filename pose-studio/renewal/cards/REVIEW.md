@@ -3,7 +3,7 @@
 Scope: class-default card animations in alternative/dev. Equipment combinations,
 three stance families and new hurt/down drawings remain separate work.
 
-![Reaver two-handed smash in the live atelier](preview-review.png)
+![Reaver two-handed smash in the live atelier](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/renewal/cards/preview-review.png)
 
 All 90 exported poses were inspected in four contact sheets. Reaver retains the
 continuous full cape; Rogue uses twin daggers and a left-held bow; Starseer has

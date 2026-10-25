@@ -1,6 +1,6 @@
 // workbench/core/files.mjs — the one safe file service every Workbench module uses.
 //
-// Reads, lists, diffs, saves and restores repo files the same way:
+// Reads, lists, diffs, saves and restores Game or explicit authoring files the same way:
 //   * an allowlist (allowedKind) decides which paths may be touched at all;
 //   * every save validates the whole change set first (JSON, CSV, JS syntax,
 //     duplicate ids, and the content/config compiler), then checks each file's
@@ -18,6 +18,7 @@
 // (editor/tables.mjs). The content/config compiler is tools/config-build.mjs
 // compileEntries, the same one UI Studio uses. Path rules are workbench/lib/safe-path.mjs.
 import fs from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -31,6 +32,7 @@ import { acquire } from '../../tools/lib/build-lock.mjs';
 import { lineDiff } from '../lib/line-diff.mjs';
 import { tagModelTable, tagModelSavable, tagModelSummary, checkTagModelSave, checkTagModelText } from './tag-model.mjs';
 import { LAYOUT_FILE, layoutProblems } from '../modules/layout/card-layers-model.mjs';
+import { authoringRoot, compositeSourcePath, isAuthoringFile } from '../../tools/art-authoring.mjs';
 
 export const MAX_TEXT = 4 * 1024 * 1024;
 export const MAX_CHANGES = 100;
@@ -56,6 +58,9 @@ const PROFILE_ENTRY = /^games\/ashenspire\/(?:game\.json|presets\/[\w.-]+\.json)
 const JSON_FILES = new Set([LAYOUT_FILE]);
 const TEXT_TREE = /^(?:pose-studio\/stances|workbench\/workspace|ui-studio\/workspace)\/(?:[\w.-]+\/)*[\w.-]+$/;
 const TEXT_EXT = /\.(json|csv|js|mjs|css|html|md|txt|svg)$/i;
+// Only these existing editable trees intersect authoring ownership. This does
+// not grant access to other AI-Art trees or widen allowedKind/readableKind.
+const AUTHORING_FILE_TREES = ['pose-studio/renewal', 'pose-studio/stances', 'docs/design'];
 // The trees a build reads: a save under any of them holds the build lock.
 const BUILD_INPUT = /^(?:(?:content|src|styles|games)\/|engine\/modules\/[\w.-]+\/defaults\.json$)/;
 
@@ -109,9 +114,11 @@ async function checkJs(rel, text) {
 }
 
 /**
- * createFileService({ root, stateDir, keepBackups, onSaved, lockWaitMs, fileFault })
+ * createFileService({ root, stateDir, env, keepBackups, onSaved, lockWaitMs, fileFault })
  * root must be a realpath. stateDir receives backups/. onSaved(paths) runs after
  * a successful save or restore (the server sends the live-reload batch).
+ * env may name ASHEN_ART_CHECKOUT. Art backups bind to that canonical root;
+ * legacy and Game-only backups remain Game-owned without a location binding.
  * onWritten(abs, stat) runs after each file is renamed into place (saves and rollbacks),
  * with the stat the file was left with: the server uses it to drop the watcher's echo.
  * fileFault(rel) is a test seam: it may await or throw before a file is renamed into place.
@@ -122,13 +129,20 @@ async function checkJs(rel, text) {
 const execFileP = promisify(execFile);
 const GAME_CFG_INPUT = /^(games\/ashenspire\/|engine\/modules\/[\w.-]+\/defaults\.json$)/;
 
-export function createFileService({ root, stateDir, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null, signal = undefined, tagModelLock = null }) {
+export function createFileService({ root, stateDir, env = process.env, keepBackups = () => 50, onSaved = () => {}, onWritten = () => {}, lockWaitMs = 10 * 60 * 1000, fileFault = null, pruneFault = null, signal = undefined, tagModelLock = null }) {
   let tail = Promise.resolve();
   const serialize = (task) => { const run = tail.then(task, task); tail = run.catch(() => {}); return run; };
   const backupsDir = path.join(stateDir, 'backups');
+  const checkout = authoringRoot({ root, env, required: false });
+  const artRoot = checkout ? realpathSync(checkout) : null;
+  const artRootHash = artRoot ? hash(Buffer.from(artRoot)) : null;
+  const external = rel => Boolean(artRoot && isAuthoringFile(rel));
+  const ownerHash = rel => external(rel) ? artRootHash : null;
 
   async function absFor(rel, creating = false) {
-    return safePath(root, rel, { creating });
+    const owner = external(rel) ? artRoot : root;
+    const target = compositeSourcePath(rel, { root, assetRoot: artRoot, env });
+    return safePath(owner, path.relative(owner, target).split(path.sep).join('/'), { creating });
   }
 
   function requireKind(rel) {
@@ -151,23 +165,34 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     if (rel && refusedPath(rel)) throw fail(403, 'Refused path');
     const wanted = exts ? new Set(String(exts).split(',').map((e) => e.trim().toLowerCase()).filter(Boolean).map((e) => (e.startsWith('.') ? e : `.${e}`))) : null;
     let start;
-    try { start = rel ? await absFor(rel) : root; } catch { return { dir: rel, files: [], truncated: false }; }
+    try { start = rel ? await safePath(root, rel) : root; } catch { start = null; }
     const out = [];
     let seen = 0, truncated = false;
-    async function visit(relDir, absDir) {
+    async function visit(relDir, absDir, authoring = false) {
       const entries = await fs.readdir(absDir, { withFileTypes: true }).catch(() => []);
       for (const entry of entries.sort((x, y) => (x.name < y.name ? -1 : 1))) {
         if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.isSymbolicLink()) continue;
         if (++seen > MAX_WALK) { truncated = true; return; }
         const child = relDir ? `${relDir}/${entry.name}` : entry.name;
-        if (entry.isDirectory()) await visit(child, path.join(absDir, entry.name));
-        else if (readableKind(child) && (!wanted || wanted.has(path.extname(child).toLowerCase()))) {
+        if (entry.isDirectory()) await visit(child, path.join(absDir, entry.name), authoring);
+        else if (readableKind(child) && external(child) === authoring && (!wanted || wanted.has(path.extname(child).toLowerCase()))) {
           if (out.length >= MAX_LIST) { truncated = true; return; }
           out.push(child);
         }
       }
     }
-    await visit(rel, start);
+    if (start) await visit(rel, start);
+    if (artRoot && !truncated) {
+      for (const tree of AUTHORING_FILE_TREES) {
+        const scope = !rel || tree.startsWith(rel + '/') ? tree : rel === tree || rel.startsWith(tree + '/') ? rel : null;
+        if (!scope) continue;
+        let directory;
+        try { directory = await safePath(artRoot, scope); } catch { continue; }
+        await visit(scope, directory, true);
+        if (truncated) break;
+      }
+      out.sort();
+    }
     return { dir: rel, files: out, truncated };
   }
 
@@ -370,7 +395,8 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
         const files = [];
         for (const [i, f] of prepared.entries()) {
           if (f.old !== null) await fs.writeFile(path.join(dir, `${i}.bak`), f.old);
-          files.push({ index: i, path: f.path, oldHash: f.old === null ? null : hash(f.old), savedHash: hash(f.bytes) });
+          const authoringRootHash = ownerHash(f.path);
+          files.push({ index: i, path: f.path, oldHash: f.old === null ? null : hash(f.old), savedHash: hash(f.bytes), ...(authoringRootHash ? { authoringRootHash } : {}) });
         }
         await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify({ at: new Date().toISOString(), files }, null, 2));
 
@@ -423,6 +449,13 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
     const want = Array.isArray(paths) ? new Set(paths) : null;
     const skipped = [];
     const changes = [];
+    // Validate every selected owner and path before commitLocked can write any
+    // member of a mixed set. Legacy/no-fingerprint entries belong to Game.
+    for (const e of manifest.files) {
+      if ((want && !want.has(e.path)) || !allowedKind(e.path)) continue;
+      if ((e.authoringRootHash ?? null) !== ownerHash(e.path)) throw fail(409, `Backup owner changed: ${e.path}`);
+      await absFor(e.path, true);
+    }
     for (const e of manifest.files) {
       if (want && !want.has(e.path)) continue;
       if (e.oldHash === null) { skipped.push({ path: e.path, reason: 'created by that save; there is no earlier version' }); continue; }

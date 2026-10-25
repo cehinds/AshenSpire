@@ -13,7 +13,7 @@
 // Run:  node tools/bundle.test.mjs
 // Exit 0 = every case behaved. Exit 1 = at least one did not, and it says which.
 
-import { copyPackTrees, SANDBOX_ENV } from './art-source.mjs';
+import { copyPackTrees, copyDisplayArt, SANDBOX_ENV } from './art-source.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -43,14 +43,14 @@ const check = (name, ok, detail) => {
 // can edit its own copy (the EOL cases do) and never the cache.
 function sandbox({ pack = false } = {}) {
   const dir = mkdtempSync(resolve(tmpdir(), 'ashen-bundle-'));
-  // Branch-owned artwork is authored under the selected checkout, outside
-  // the shared packs (artPath resolves non-pack paths against that root).
-  // Portable variant builds read these bytes and validate their catalog hashes.
+  // Display images come from the verified common pack; only their catalogs
+  // remain in the selected game checkout.
   // Root engine modules are runtime dependencies of the game profile and UI.
-  for (const d of ['src', 'engine', 'styles', 'tools', 'content', 'assets-display', ...(pack ? ['asset-data'] : [])]) {
+  for (const d of ['src', 'engine', 'styles', 'tools', 'content', 'asset-data']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
   copyPackTrees(dir, ['assets-mobile', 'assets/fonts', ...(pack ? ['music', 'map-detail'] : [])]);
+  copyDisplayArt(dir, { root: ROOT });
   // buildordinal.json became authored build input after this sandbox was first
   // written. Omitting it makes every real-bundler fixture refuse before it can
   // reach the property the fixture is meant to exercise.

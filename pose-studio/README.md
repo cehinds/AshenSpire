@@ -1,5 +1,10 @@
 # Pose & Effects Studio
 
+Source artwork and portable projects live in `cehinds/AI-Art` on branch `ashenspire`.
+[Full Visual Studio setup and export/pin workflow](../docs/ART-AUTHORING.md)
+explains the separate game code and mutable art checkouts. Run the composite
+server from this game checkout with `ASHEN_ART_CHECKOUT` or `--asset-root`.
+
 Run `node pose-studio/server.mjs`, then open http://127.0.0.1:4318/pose-studio/index.html. On Windows, double-click **Start Pose Studio.cmd** for a separate application window. Node 22+ is required; this is a locally served standalone application, not a native installer.
 
 ## Authoring
