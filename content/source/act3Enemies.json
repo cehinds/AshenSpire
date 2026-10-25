@@ -1,10 +1,11 @@
 [
   {
     "id": "ashRevenant",
+    "equipmentSp": 1,
     "attributes": {
-      "strength": 7,
-      "dexterity": 4,
-      "constitution": 3,
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 1,
       "wisdom": 2,
       "intelligence": 2
     },
@@ -51,9 +52,9 @@
   {
     "id": "emberStarvedPilgrim",
     "attributes": {
-      "strength": 6,
-      "dexterity": 3,
-      "constitution": 3,
+      "strength": 4,
+      "dexterity": 1,
+      "constitution": 1,
       "wisdom": 2,
       "intelligence": 2
     },
@@ -105,10 +106,11 @@
   },
   {
     "id": "valkyrieShade",
+    "equipmentSp": 1,
     "attributes": {
-      "strength": 7,
-      "dexterity": 4,
-      "constitution": 3,
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 1,
       "wisdom": 2,
       "intelligence": 2
     },
@@ -150,10 +152,11 @@
   },
   {
     "id": "charredColossus",
+    "equipmentSp": 1,
     "attributes": {
-      "strength": 7,
-      "dexterity": 4,
-      "constitution": 3,
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 1,
       "wisdom": 2,
       "intelligence": 2
     },
@@ -206,10 +209,11 @@
   },
   {
     "id": "wyrmLord",
+    "equipmentSp": 2,
     "attributes": {
-      "strength": 9,
-      "dexterity": 4,
-      "constitution": 4,
+      "strength": 7,
+      "dexterity": 2,
+      "constitution": 2,
       "wisdom": 3,
       "intelligence": 3
     },
@@ -278,10 +282,11 @@
   },
   {
     "id": "blightedValkyrie",
+    "equipmentSp": 1,
     "attributes": {
-      "strength": 8,
-      "dexterity": 6,
-      "constitution": 4,
+      "strength": 6,
+      "dexterity": 4,
+      "constitution": 2,
       "wisdom": 7,
       "intelligence": 5
     },
@@ -393,10 +398,11 @@
   },
   {
     "id": "cinderMantis",
+    "equipmentSp": 1,
     "attributes": {
-      "strength": 7,
-      "dexterity": 4,
-      "constitution": 3,
+      "strength": 5,
+      "dexterity": 2,
+      "constitution": 1,
       "wisdom": 2,
       "intelligence": 2
     },
@@ -444,9 +450,9 @@
   {
     "id": "eclipseCantor",
     "attributes": {
-      "strength": 3,
-      "dexterity": 3,
-      "constitution": 3,
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
       "wisdom": 5,
       "intelligence": 4
     },
@@ -499,10 +505,11 @@
   },
   {
     "id": "furnaceSaint",
+    "equipmentSp": 2,
     "attributes": {
-      "strength": 9,
-      "dexterity": 4,
-      "constitution": 4,
+      "strength": 7,
+      "dexterity": 2,
+      "constitution": 2,
       "wisdom": 3,
       "intelligence": 3
     },
@@ -563,10 +570,11 @@
   },
   {
     "id": "hollowAstronomer",
+    "equipmentSp": 1,
     "attributes": {
-      "strength": 6,
-      "dexterity": 4,
-      "constitution": 3,
+      "strength": 4,
+      "dexterity": 2,
+      "constitution": 1,
       "wisdom": 5,
       "intelligence": 5
     },
@@ -646,10 +654,11 @@
   },
   {
     "id": "ashheartDragon",
+    "equipmentSp": 2,
     "attributes": {
-      "strength": 10,
-      "dexterity": 4,
-      "constitution": 4,
+      "strength": 8,
+      "dexterity": 2,
+      "constitution": 2,
       "wisdom": 5,
       "intelligence": 3
     },
