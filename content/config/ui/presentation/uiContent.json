@@ -182,6 +182,13 @@
         "tip": "Turn music on or off without changing its volume, sound effects, or global mute."
       },
       {
+        "act": "console",
+        "icon": "historic-eye",
+        "label": "Console",
+        "band": "comfort",
+        "tip": "Read the session's errors and tap traces, with Copy and Export."
+      },
+      {
         "act": "inventory",
         "icon": "inventory",
         "label": "Inventory",
@@ -315,6 +322,7 @@
       "tab",
       "fullscreen",
       "music",
+      "console",
       "inventory",
       "character",
       "load",
