@@ -226,9 +226,14 @@ test('a completed hold on a queued card takes it back before the affordable and 
   const confirm = hold.slice(hold.indexOf('onConfirm: () => {'));
   const queued = confirm.indexOf('isRoundQueued(inst.instanceId)');
   assert.ok(queued >= 0, 'the hold-confirm path checks for a queued card');
-  const guard = confirm.indexOf('if (busy || (!affordable && !rangeSelectable) || dragging)');
-  assert.ok(guard >= 0, 'the hold retains the busy, route affordability and dragging guard');
-  assert.ok(queued < guard, 'before the affordable and dragging guard');
+  const lockGuard = confirm.indexOf('if (busy || dragging) return;');
+  const affordabilityGuard = confirm.indexOf('if (!affordable && !rangeSelectable)');
+  assert.ok(lockGuard >= 0, 'busy or dragging still prevents hold selection');
+  assert.ok(affordabilityGuard >= 0, 'an unaffordable card still needs a selectable range route');
+  assert.ok(queued < lockGuard && queued < affordabilityGuard, 'take-back precedes both guards');
+  assert.ok(lockGuard < affordabilityGuard, 'busy or dragging returns before an affordability refusal');
+  assert.match(confirm.slice(affordabilityGuard), /^if \(!affordable && !rangeSelectable\) \{ logUnaffordable\('confirm'\); return; \}/,
+    'a refused hold logs and returns before selecting');
   assert.match(confirm.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
 });
 

@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-25
+
+- **Refused card inputs reach the Command log** ([#2286](https://github.com/cehinds/AshenSpire/pull/2286), `0.7.1.1837`). Tapping or completing a hold on a card you cannot afford now records the card, its costs and your available resources in Settings → Command log, including refusals that never reach the play action.
+
 ## 2026-10-24
 
 - **Debug mode with a Console you can open mid-combat** ([#2301](https://github.com/cehinds/AshenSpire/pull/2301), `0.7.1.1837`). In Settings → Advanced → Debug mode (off by default), a Console button appears in combat and in the combat log. It shows errors, every ignored tap with its reason, and a snapshot of the turn, so a stuck attack can be copied or exported.
