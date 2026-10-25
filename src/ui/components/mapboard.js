@@ -1,7 +1,7 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/map/mapview.js';
 import { actRegionId } from '../../model/environmentArt.js';
-import { paintingFrame } from '../../model/mapPaintingFrame.js';
+import { paintingFrame, paintingGround } from '../../model/mapPaintingFrame.js';
 import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
@@ -708,6 +708,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       requestAnimationFrame(() => { sizedThisFrame = false; });
     }
   }
+  let frameCache = { key: '', frame: null };
   function apply() {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
@@ -736,9 +737,17 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plates land. The terrain shares this viewport-wide ground too: fitting
     // the painting to a one-column route graph leaves a narrow strip of art.
     // Its SVG image uses a uniform cover fit, so architecture never stretches.
-    const frame = paintingAnchor && paintingArt && paintingStart
-      ? paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: { x0, y0, w, h }, start: paintingStart })
-      : null;
+    // Framed against the ground the camera can ever show (the ink, or the
+    // viewport centred on it if wider), not this frame's viewBox: a pan moves
+    // x0 and must only translate the painting. Re-solved when the act, board
+    // size or zoom changes (the key), never per glide frame.
+    const frameBox = paintingGround({ ink: inkBox, w, y0, h });
+    const frameKey = [frameBox.x0, frameBox.y0, frameBox.w, frameBox.h].map(v => Math.round(v * 100)).join('|');
+    if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
+    else if (frameCache.key !== frameKey) {
+      frameCache = { key: frameKey, frame: paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: frameBox, start: paintingStart }) };
+    }
+    const frame = frameCache.frame;
     const painting = svgEl.querySelector('.map-painting');
     if (painting) {
       if (frame) painting.setAttribute('transform', frame.transform); else painting.removeAttribute('transform');

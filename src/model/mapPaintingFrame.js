@@ -47,3 +47,14 @@ export function paintingFrame({ anchor, aspect, box, start }) {
   }
   return null;
 }
+
+/**
+ * paintingGround({ ink, w, y0, h }) -> {x0,y0,w,h}: the ground the camera can ever
+ * show (the act's ink, or the viewport width `w` centred on it if wider). It does
+ * not depend on the pan offset, so framing against it makes a pan a pure translate.
+ */
+export function paintingGround({ ink, w, y0, h }) {
+  const mid = (ink.x0 + ink.x1) / 2;
+  const x0 = Math.min(ink.x0, mid - w / 2);
+  return { x0, y0, w: Math.max(ink.x1, mid + w / 2) - x0, h };
+}

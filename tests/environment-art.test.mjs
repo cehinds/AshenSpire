@@ -5,7 +5,8 @@ import { manifestIds } from '../tools/art-source.mjs';
 // exactly those), not when a tree in this checkout happens to hold the file.
 const SHIPPED = manifestIds();
 import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
-import { paintingFrame } from '../src/model/mapPaintingFrame.js';
+import { readFileSync } from 'node:fs';
+import { paintingFrame, paintingGround } from '../src/model/mapPaintingFrame.js';
 import { regionForRun, combatEnvironment, worldMapForRun, actRegionId } from '../src/model/environmentArt.js';
 import { mapTerrainHtml } from '../src/ui/components/environmentArt.js';
 import { mapKnowledge } from '../src/model/map/mapknowledge.js';
@@ -103,4 +104,19 @@ test('a painting with no anchor for the region falls back to the plain cover fit
   const box = { x0: 0, y0: 0, w: 435, h: 1136 };
   assert.equal(paintingFrame({ anchor: undefined, aspect: 2 / 3, box, start: { x: 200, y: 1100 } }), null);
   assert.equal(paintingFrame({ anchor: MEGA_MAPS[0].biomes['hollow-weald'], aspect: 2 / 3, box, start: null }), null);
+});
+
+test('panning does not re-frame the painting: the ground and so the frame ignore the pan offset', () => {
+  const ink = { x0: 0, y0: 0, x1: 435, y1: 1000 }, w = 360, y0 = -200, h = 1400;
+  const anchor = MEGA_MAPS[1].biomes['cinder-reach'], start = { x: 217, y: 1000 };
+  // the viewBox x0 at two pan offsets is irrelevant: only ink, w, y0, h enter
+  const frames = [0, 75].map(() => paintingFrame({ anchor, aspect: 2 / 3, box: paintingGround({ ink, w, y0, h }), start }));
+  assert.equal(frames[0].scale, frames[1].scale);
+  assert.equal(frames[0].transform, frames[1].transform);
+  assert.deepEqual(paintingGround({ ink, w, y0, h }), paintingGround({ ink, w, y0, h }));
+});
+
+test('solo and co-op hand the act its seatOrder (the biome framing wiring)', () => {
+  assert.match(readFileSync(new URL('../src/ui/screens/map.js', import.meta.url), 'utf8'), /act: \{[^\n]*seatOrder: run\.seatOrder/);
+  assert.match(readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8'), /seatOrder: snap\.seatOrder/);
 });
