@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
+- **Level up at rest spots again** ([#2317](https://github.com/cehinds/AshenSpire/pull/2317), `0.7.1.1848`). Fights now pay character XP, so once you have a point the rest spot's Level Up option is there to spend it.
 
 - **Portable art checks follow the same physical folders on Windows and macOS** ([#2314](https://github.com/cehinds/AshenSpire/pull/2314), `0.7.1.1847`). Canonicalize temporary roots and full Python image paths in the art relocation fixtures, and let Workbench wait briefly through Windows build-lock release races while preserving live ownership, cancellation, deadlines and persistent access errors.
 - **Art files live in the shared AshenSpire art repository** ([#2309](https://github.com/cehinds/AshenSpire/pull/2309), `0.7.1.1846`). Display images load from the verified AI-Art release while their game catalogs keep the same IDs and gallery membership. Art editors and exporters use an explicit AI-Art checkout on the AshenSpire branch, keeping editable artwork separate from game code and immutable runtime downloads.

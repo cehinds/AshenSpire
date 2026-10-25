@@ -22,11 +22,12 @@ function fixture() {
   return { run, visit };
 }
 
-test('configured Rest uses exact non-mutating previews and hides unearned character leveling', () => {
+test('configured Rest uses exact non-mutating previews and offers Level Up only as unavailable without points', () => {
   const { run, visit } = fixture();
   const before = structuredClone(run);
   const model = gameProfileRestModel(registries, run, visit);
-  assert.deepEqual(model.services.map(row => row.id), ['smith']);
+  assert.deepEqual(model.services.map(row => row.id), ['smith', 'levelUp']);
+  assert.equal(model.services.find(row => row.id === 'levelUp').available, false, 'no points earned yet');
   const preview = model.services.find(row => row.id === 'smith').preview;
   assert.equal(preview.hp, preview.maxHp);
   assert.equal(preview.flaskCharges.hpCurrent, preview.flaskCharges.hp);
