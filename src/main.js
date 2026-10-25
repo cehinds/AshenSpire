@@ -93,7 +93,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnap
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey, isStorageFullError } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
 import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
@@ -1155,6 +1155,41 @@ function persist() {
   stampSkillBonuses(registries, run);
   saves.saveRun(run, rng, activeSlot);
   sendLanStatus();
+}
+
+// ---- A FAILED AUTOSAVE NEVER UNDOES A LEGAL MOVE (browser storage full) -------
+// Combat v2 saves the accepted candidate BEFORE the engine adopts it, and a save
+// that threw refused the move: with localStorage full ("exceeded the quota")
+// every attack and End Turn was silently dropped. The run in memory is
+// authoritative, so a combat checkpoint that cannot land is reported and the
+// move stands. (Explicit Save still reports failure: saveNow below.)
+const SAVE_WARNING_REPEAT_MS = 30000;
+const SAVE_WARNING_SHOWN_MS = 9000;
+let lastSaveWarningAt = -Infinity;
+function reportAutosaveFailure(error, now = Date.now()) {
+  const full = isStorageFullError(error);
+  dlog('save', full ? 'autosave refused: browser storage is full' : 'autosave failed', error && error.message);
+  console.warn('[save] autosave failed; play continues:', error && error.message);
+  if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
+  lastSaveWarningAt = now;
+  const body = full
+    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues; free space from the title screen\u2019s save slots.'
+    : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
+  const banner = failureBanner(full ? 'save:storage-full' : 'save:failed', 'COULDN\u2019T SAVE', body);
+  if (banner && typeof setTimeout === 'function') setTimeout(() => banner.remove?.(), SAVE_WARNING_SHOWN_MS);
+  return true;
+}
+
+// The combat checkpoint's save door (commitExpansionCandidate's saveCandidate):
+// a throw becomes a reported, non-durable commit, never a refused action.
+function saveCombatCandidate(next, committedRng) {
+  try {
+    saves.saveRun(next, committedRng, activeSlot);
+    return { ok: true };
+  } catch (error) {
+    reportAutosaveFailure(error);
+    return { ok: true, durable: false };
+  }
 }
 
 // The run the way its save slot names it (W2e's target line, W1r's, W2d's).
@@ -3122,7 +3157,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
-        saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+        saveCandidate: saveCombatCandidate });
       if (committed.ok && (committed.durable !== false || committed.knowledge) && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
         const learningRun = run, learningSlot = activeSlot;
         saves.bankEnemyKnowledge(learningRun).then(result => {
@@ -3131,7 +3166,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
           // are checkpointed without reopening the encounter or rolling reads.
           // No rng: the saved counters stay those of the combat checkpoint,
           // which ordinary unsaved actions never move (SPEC §3.12).
-          if (run === learningRun) saves.saveRun(learningRun, null, learningSlot);
+          if (run === learningRun) { try { saves.saveRun(learningRun, null, learningSlot); } catch (error) { reportAutosaveFailure(error); } }
           if (!result.ok) showSettingsNotice(`Enemy learning remains pending: ${result.reason}`, 'profile');
         }).catch(error => showSettingsNotice(`Enemy learning remains pending: ${error.message}`, 'profile'));
       }
@@ -3361,7 +3396,7 @@ async function onCombatEnd(result, combat, enc) {
     const learning = await saves.bankEnemyKnowledge(learningRun);
     if (!owned()) return;
     if (!learning.ok) showSettingsNotice(`Enemy learning remains pending: ${learning.reason}`, 'profile');
-    persist();
+    try { persist(); } catch (error) { reportAutosaveFailure(error); } // a full store must not strand the victory
   }
   // Keep the exact terminal replay receipt through every asynchronous bank
   // and animation. Ordinary XP, room completion and the reward/finish receipt

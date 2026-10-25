@@ -531,8 +531,8 @@ async function selftest() {
         // this build healing its own output rather than a different save error.
         name: "the shipped writer drops a field, so this build's own saves need healing (premise-death)",
         file: 'src/engine/save.js',
-        find: '      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }',
-        replace: '      try { const _p = JSON.parse(serializeRun(run)); delete _p.loadout; storage.setItem(runKey(slot), JSON.stringify(_p)); } catch (error) { run.savedAt = previous; throw error; }',
+        find: '        const json = serializeRun(run);',
+        replace: '        const json = (() => { const _p = JSON.parse(serializeRun(run)); delete _p.loadout; return JSON.stringify(_p); })();',
         expectRed: /THE PREMISE HAS DIED/,
       },
     ],
