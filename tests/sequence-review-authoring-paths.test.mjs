@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, mkdir, writeFile, readFile, rm, symlink} from 'node:fs/promises';
-import {existsSync} from 'node:fs';
+import {existsSync,realpathSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -9,7 +9,8 @@ import {fileURLToPath} from 'node:url';
 import {reviewPaths,serveReview,reviewRelative} from '../pose-studio/stances/update-stances/sequence-review/render-paths.mjs';
 
 async function fixture(t) {
-  const temporary=await mkdtemp(path.join(os.tmpdir(),'sequence-path-fixture-'));
+  // Use the same canonical root spelling as the guarded source resolvers.
+  const temporary=realpathSync.native(await mkdtemp(path.join(os.tmpdir(),'sequence-path-fixture-')));
   t.after(()=>rm(temporary,{recursive:true,force:true}));
   const game=path.join(temporary,'game'),art=path.join(temporary,'art checkout');
   const put=async(root,relative,bytes)=>{const full=path.join(root,relative);await mkdir(path.dirname(full),{recursive:true});await writeFile(full,bytes);};
@@ -82,7 +83,7 @@ test('stdlib portable-render preflight rejects every escaping manifest field bef
 import json, pathlib, runpy, sys
 module=runpy.run_path(sys.argv[1])
 safe, preflight, main=module['safe_render_path'], module['preflight'], module['main']
-root, linked=map(pathlib.Path,sys.argv[2:4])
+root, linked=(pathlib.Path(value).resolve() for value in sys.argv[2:4])
 assert safe(root,'valid-frame.png')==root/'valid-frame.png'
 assert safe(root,'nested/frame.png')==root/'nested/frame.png'
 valid={'frames':['valid-frame.png'],'gif':'valid.gif','gifAliases':['alias.gif'],'storyboard':'board.png'}
