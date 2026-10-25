@@ -12,7 +12,7 @@
     ],
     "noCross": true,
     "entries": 1,
-    "source": "src/engine/mapgen.js:123; src/content/mapconfig.js:74"
+    "source": "src/engine/mapgen.js:123; content/source/mapActShape.json:5"
   },
   "assets": [
     "route-line"

@@ -19,7 +19,7 @@
       "shrine": 12,
       "treasure": 8
     },
-    "source": "src/content/mapconfig.js:79; src/engine/mapgen.js:214"
+    "source": "content/source/mapActShape.json:7; src/engine/mapgen.js:214"
   },
   "rewards": {},
   "assets": [

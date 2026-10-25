@@ -18,7 +18,7 @@
       "count": 1
     },
     "noSameTypeAdjacent": true,
-    "source": "src/content/mapconfig.js:99,101; src/engine/mapgen.js:162,219,220"
+    "source": "content/source/mapActShape.json:13,101; src/engine/mapgen.js:162,219,220"
   },
   "rewards": {
     "heal": true,

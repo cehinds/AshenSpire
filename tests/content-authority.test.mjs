@@ -373,3 +373,13 @@ for (const [name, exported] of Object.entries({ combatIntent, combatMatchups, co
     assert.deepStrictEqual(exported, withNotes(authored));
   });
 }
+
+import { mapConfigs, MAP_SHAPE_LIMITS, LEGACY_ACT_BOSSES } from '../src/content/mapconfig.js';
+test('mapconfig: the three tables deep-equal their authored JSON and keep their frozen state', () => {
+  const read = (name) => JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+  assert.deepStrictEqual(MAP_SHAPE_LIMITS, read('mapShapeLimits'));
+  assert.deepStrictEqual(LEGACY_ACT_BOSSES, read('legacyActBosses'));
+  assert.deepStrictEqual(mapConfigs, { 1: read('mapActShape'), 2: read('mapActShape'), 3: read('mapActShape') });
+  assert.ok(Object.isFrozen(MAP_SHAPE_LIMITS) && Object.isFrozen(LEGACY_ACT_BOSSES));
+  assert.ok(!Object.isFrozen(mapConfigs) && mapConfigs[1] !== mapConfigs[2]);
+});

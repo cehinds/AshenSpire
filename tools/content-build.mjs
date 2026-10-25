@@ -1154,18 +1154,18 @@ async function mutate() {
     // M1 — the dropped comma (Marina's parse edge): dies UPSTREAM of every
     // validator, and must still name the file.
     try {
-      await import(copyContent('m1', [['mapconfig.js', 'floors: 12,', 'floors: 12']]));
-      report(false, 'M1', 'dropped comma in mapconfig.js', 'import succeeded — a syntax error loaded clean');
+      await import(copyContent('m1', [['generated/mapActShape.js', '"floors":12,', '"floors":12']]));
+      report(false, 'M1', 'dropped comma in generated/mapActShape.js', 'import succeeded — a syntax error loaded clean');
     } catch (e) {
       const where = `${e.message}\n${e.stack || ''}`;
-      report(where.includes('mapconfig.js'), 'M1', 'dropped comma in mapconfig.js — SyntaxError must name the file', (e.message || '').split('\n')[0] + (where.includes('mapconfig.js') ? ' (file named)' : ' (FILE NOT NAMED)'));
+      report(where.includes('mapActShape.js'), 'M1', 'dropped comma in generated/mapActShape.js — SyntaxError must name the file', (e.message || '').split('\n')[0] + (where.includes('mapActShape.js') ? ' (file named)' : ' (FILE NOT NAMED)'));
     }
     // M2 — the original #43 defect, reinstated in today's vocabulary:
     // floors moved down while a fixed anchor stays absolute.
     {
       const { contentBundle: mb } = await import(copyContent('m2', [
-        ['mapconfig.js', 'floors: 12,', 'floors: 8,'],
-        ['mapconfig.js', "{ at: 'fraction', of: 0.64, type: 'treasure' }", "{ at: 'floor', index: 9, type: 'treasure' }"],
+        ['generated/mapActShape.js', '"floors":12,', '"floors":8,'],
+        ['generated/mapActShape.js', '{"at":"fraction","of":0.64,"type":"treasure"}', '{"at":"floor","index":9,"type":"treasure"}'],
       ]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes('floorRules.fixed') && m.includes('outside'));
