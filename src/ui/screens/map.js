@@ -242,7 +242,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatOrder: run.seatOrder, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
@@ -366,7 +366,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   backButton.addEventListener('click', () => clearSelection());
   enterButton.addEventListener('click', () => {
-    if (selection.selectedId && reachable.has(selection.selectedId)) leaving(onPick)(selection.selectedId);
+    if (selection.selectedId && reachable.has(selection.selectedId)) travelTo(selection.selectedId);
   });
   // A tap on the map away from the lit nodes closes the tray; a mouse drag
   // that pans the board is not a tap.
@@ -378,11 +378,22 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
     clearSelection();
   });
+  // Remember the ground under the node for the fight that follows: the combat
+  // backdrop matches it (city, bridge, forest...). Decorative; the adapter maps
+  // (legacy dungeon, co-op) have no painting and record nothing.
+  function travelTo(id) {
+    if (!mapAdapter) {
+      const settingId = board.terrainAt?.(id);
+      if (settingId) run.mapTerrain = { nodeId: id, settingId };
+      else delete run.mapTerrain;
+    }
+    leaving(onPick)(id);
+  }
   function selectNode(id, reading, pointerType = 'mouse') {
     lastPickPointerType = pointerType;
     if (reading) readings.set(id, reading);
     const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
-    if (next.enter) { leaving(onPick)(id); return; }
+    if (next.enter) { travelTo(id); return; }
     selection = next;
     renderSelection();
     if (selection.selectedId) openTray();

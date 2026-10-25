@@ -6642,7 +6642,9 @@
             "__keys": [
               "id",
               "name",
-              "map"
+              "map",
+              "biomes",
+              "terrain"
             ],
             "frozen": true,
             "values": {
@@ -6654,6 +6656,410 @@
               },
               "map": {
                 "__string": "assets/environments/the-fractured-realm-world.webp"
+              },
+              "biomes": {
+                "__keys": [
+                  "hollow-weald",
+                  "pale-marches",
+                  "cinder-reach",
+                  "ashen-crown"
+                ],
+                "frozen": true,
+                "values": {
+                  "hollow-weald": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.06"
+                          },
+                          "y": {
+                            "__number": "0.6"
+                          },
+                          "w": {
+                            "__number": "0.32"
+                          },
+                          "h": {
+                            "__number": "0.32"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": false
+                      }
+                    }
+                  },
+                  "pale-marches": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.05"
+                          },
+                          "y": {
+                            "__number": "0"
+                          },
+                          "w": {
+                            "__number": "0.5"
+                          },
+                          "h": {
+                            "__number": "0.15"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "cinder-reach": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.62"
+                          },
+                          "y": {
+                            "__number": "0"
+                          },
+                          "w": {
+                            "__number": "0.38"
+                          },
+                          "h": {
+                            "__number": "0.4"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "ashen-crown": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.4"
+                          },
+                          "y": {
+                            "__number": "0.28"
+                          },
+                          "w": {
+                            "__number": "0.2"
+                          },
+                          "h": {
+                            "__number": "0.24"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": false
+                      }
+                    }
+                  }
+                }
+              },
+              "terrain": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.38"
+                          },
+                          {
+                            "__number": "0.28"
+                          },
+                          {
+                            "__number": "0.25"
+                          },
+                          {
+                            "__number": "0.15"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "city"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.66"
+                          },
+                          {
+                            "__number": "0.6"
+                          },
+                          {
+                            "__number": "0.22"
+                          },
+                          {
+                            "__number": "0.06"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "bridge"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.6"
+                          },
+                          {
+                            "__number": "0.7"
+                          },
+                          {
+                            "__number": "0.14"
+                          },
+                          {
+                            "__number": "0.05"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "bridge"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.66"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.34"
+                          },
+                          {
+                            "__number": "0.5"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "mine"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.88"
+                          },
+                          {
+                            "__number": "1"
+                          },
+                          {
+                            "__number": "0.12"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.5"
+                          },
+                          {
+                            "__number": "0.55"
+                          },
+                          {
+                            "__number": "0.5"
+                          },
+                          {
+                            "__number": "0.45"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.75"
+                          },
+                          {
+                            "__number": "0.1"
+                          },
+                          {
+                            "__number": "0.25"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.2"
+                          },
+                          {
+                            "__number": "0.5"
+                          },
+                          {
+                            "__number": "0.68"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "forest"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
               }
             }
           },
@@ -6661,7 +7067,9 @@
             "__keys": [
               "id",
               "name",
-              "map"
+              "map",
+              "biomes",
+              "terrain"
             ],
             "frozen": true,
             "values": {
@@ -6673,6 +7081,352 @@
               },
               "map": {
                 "__string": "assets/environments/the-shattered-gulf-world.webp"
+              },
+              "biomes": {
+                "__keys": [
+                  "hollow-weald",
+                  "pale-marches",
+                  "cinder-reach",
+                  "ashen-crown"
+                ],
+                "frozen": true,
+                "values": {
+                  "hollow-weald": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.7"
+                          },
+                          "y": {
+                            "__number": "0.15"
+                          },
+                          "w": {
+                            "__number": "0.3"
+                          },
+                          "h": {
+                            "__number": "0.3"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "pale-marches": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.4"
+                          },
+                          "y": {
+                            "__number": "0"
+                          },
+                          "w": {
+                            "__number": "0.55"
+                          },
+                          "h": {
+                            "__number": "0.12"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "cinder-reach": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.02"
+                          },
+                          "y": {
+                            "__number": "0.5"
+                          },
+                          "w": {
+                            "__number": "0.28"
+                          },
+                          "h": {
+                            "__number": "0.35"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": false
+                      }
+                    }
+                  },
+                  "ashen-crown": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.35"
+                          },
+                          "y": {
+                            "__number": "0.35"
+                          },
+                          "w": {
+                            "__number": "0.3"
+                          },
+                          "h": {
+                            "__number": "0.3"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": false
+                      }
+                    }
+                  }
+                }
+              },
+              "terrain": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.5"
+                          },
+                          {
+                            "__number": "0.69"
+                          },
+                          {
+                            "__number": "0.18"
+                          },
+                          {
+                            "__number": "0.05"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "bridge"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.35"
+                          },
+                          {
+                            "__number": "0.3"
+                          },
+                          {
+                            "__number": "0.45"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "mine"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.33"
+                          },
+                          {
+                            "__number": "0.25"
+                          },
+                          {
+                            "__number": "0.3"
+                          },
+                          {
+                            "__number": "0.45"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.3"
+                          },
+                          {
+                            "__number": "0.74"
+                          },
+                          {
+                            "__number": "0.7"
+                          },
+                          {
+                            "__number": "0.26"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.8"
+                          },
+                          {
+                            "__number": "0.3"
+                          },
+                          {
+                            "__number": "0.2"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.6"
+                          },
+                          {
+                            "__number": "0.15"
+                          },
+                          {
+                            "__number": "0.4"
+                          },
+                          {
+                            "__number": "0.55"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "forest"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
               }
             }
           },
@@ -6680,7 +7434,9 @@
             "__keys": [
               "id",
               "name",
-              "map"
+              "map",
+              "biomes",
+              "terrain"
             ],
             "frozen": true,
             "values": {
@@ -6692,6 +7448,352 @@
               },
               "map": {
                 "__string": "assets/environments/the-fivefold-frontier-world.webp"
+              },
+              "biomes": {
+                "__keys": [
+                  "hollow-weald",
+                  "pale-marches",
+                  "cinder-reach",
+                  "ashen-crown"
+                ],
+                "frozen": true,
+                "values": {
+                  "hollow-weald": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0"
+                          },
+                          "y": {
+                            "__number": "0.3"
+                          },
+                          "w": {
+                            "__number": "0.3"
+                          },
+                          "h": {
+                            "__number": "0.4"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "pale-marches": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.65"
+                          },
+                          "y": {
+                            "__number": "0"
+                          },
+                          "w": {
+                            "__number": "0.35"
+                          },
+                          "h": {
+                            "__number": "0.25"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "cinder-reach": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0"
+                          },
+                          "y": {
+                            "__number": "0"
+                          },
+                          "w": {
+                            "__number": "0.3"
+                          },
+                          "h": {
+                            "__number": "0.2"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": true
+                      }
+                    }
+                  },
+                  "ashen-crown": {
+                    "__keys": [
+                      "rect",
+                      "flipX",
+                      "flipY"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__keys": [
+                          "x",
+                          "y",
+                          "w",
+                          "h"
+                        ],
+                        "frozen": true,
+                        "values": {
+                          "x": {
+                            "__number": "0.35"
+                          },
+                          "y": {
+                            "__number": "0.28"
+                          },
+                          "w": {
+                            "__number": "0.3"
+                          },
+                          "h": {
+                            "__number": "0.3"
+                          }
+                        }
+                      },
+                      "flipX": {
+                        "__boolean": false
+                      },
+                      "flipY": {
+                        "__boolean": false
+                      }
+                    }
+                  }
+                }
+              },
+              "terrain": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.36"
+                          },
+                          {
+                            "__number": "0.28"
+                          },
+                          {
+                            "__number": "0.25"
+                          },
+                          {
+                            "__number": "0.18"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "city"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.35"
+                          },
+                          {
+                            "__number": "0.22"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "mine"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.88"
+                          },
+                          {
+                            "__number": "1"
+                          },
+                          {
+                            "__number": "0.12"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.55"
+                          },
+                          {
+                            "__number": "0.62"
+                          },
+                          {
+                            "__number": "0.45"
+                          },
+                          {
+                            "__number": "0.38"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0.9"
+                          },
+                          {
+                            "__number": "0.38"
+                          },
+                          {
+                            "__number": "0.1"
+                          },
+                          {
+                            "__number": "0.25"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "shore"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "rect",
+                      "settingId"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "rect": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0.3"
+                          },
+                          {
+                            "__number": "0.45"
+                          },
+                          {
+                            "__number": "0.58"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "settingId": {
+                        "__string": "forest"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
               }
             }
           }

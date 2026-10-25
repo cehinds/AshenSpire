@@ -1,5 +1,8 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/map/mapview.js';
+import { actRegionId } from '../../model/environmentArt.js';
+import { paintingFrame, paintingGround, paintingFrameKey, terrainSettingAt } from '../../model/mapPaintingFrame.js';
+import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 import { builtInFor } from '../highResArt.js';
@@ -366,6 +369,14 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
   const world = act.authoredMap || worldMapForRun(act);
+  // The painting is framed so the act's start sits on its region's biome (mapPaintingFrame.js).
+  const paintingAnchor = act.authoredMap ? null : world.biomes?.[actRegionId(act)] || null;
+  const paintingArt = MAP_ART[world.map]?.levels.at(-1);
+  let paintingFrameNow = null; // the frame last applied; terrainAt reads the painting under a node through it
+  const startNodes = (act.startIds || []).map(id => byId[id]).filter(Boolean);
+  const paintingStart = startNodes.length
+    ? { x: startNodes.reduce((t, n) => t + px(n), 0) / startNodes.length, y: startNodes.reduce((t, n) => t + py(n), 0) / startNodes.length }
+    : null;
   const groundSvg = act.authoredMap ? authoredMapTerrainHtml({ art: act.authoredMap, fog, visited: nodes.filter(n => traveled.has(n.id) || n.id === current).map(n => mapPoint(n, height)) }) : mapTerrainHtml({
     world, width, height, fog,
     points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: px(n), y: py(n) })),
@@ -608,6 +619,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // offset and node coordinates remain untouched.
   const titleEl = svgEl.querySelector('.map-act-title');
   const inkBox = framingBox(nodes.filter((n) => isDrawn(n.id)), height) || { x0: 0, y0: 0, x1: width, y1: height };
+  // The whole act's bounds, discovered or not: the painting is framed against
+  // these so a fog reveal that widens inkBox never re-frames (rescales) art and
+  // terrain zones under nodes already on screen. The camera keeps inkBox.
+  const actBox = framingBox(nodes, height) || inkBox;
   // The content box last APPLIED to the element, in SVG units. Read by the
   // camera and by `report`, so the three cannot disagree about where zero is.
   let content = { x0: 0, y0: 0, w: width, h: height };
@@ -701,6 +716,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       requestAnimationFrame(() => { sizedThisFrame = false; });
     }
   }
+  let frameCache = { key: '', frame: null };
   function apply() {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
@@ -729,7 +745,42 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plates land. The terrain shares this viewport-wide ground too: fitting
     // the painting to a one-column route graph leaves a narrow strip of art.
     // Its SVG image uses a uniform cover fit, so architecture never stretches.
+    // Framed against the ground the camera can ever show (free pan: the ink or
+    // the viewport centred on it; otherwise every aimX +- w/2 from the ink's
+    // columns, so an end-column node never shows bare paper), not this frame's viewBox: a pan moves
+    // x0 and must only translate the painting. Re-solved when the act, board
+    // size or zoom changes (the key), never per glide frame. The ground is the
+    // whole act (actBox), not what fog has revealed, and leaves out a tray's
+    // inset (temporary camera padding under the tray): either would rescale
+    // the painting, and move terrain zones, under nodes already on screen.
+    const actPadX = freePan && scroll.clientWidth > 0 ? viewportW / 2 : 0;
+    const frameBox = paintingGround({
+      ink: actBox,
+      w: freePan ? (actBox.x1 - actBox.x0) + 2 * actPadX : viewportW,
+      y0: actBox.y0 - padY,
+      h: (actBox.y1 - actBox.y0) + 2 * padY,
+      aim: freePan ? null : { min: actBox.x0, max: actBox.x1 },
+    });
+    const frameKey = paintingFrameKey(frameBox);
+    if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
+    else if (frameCache.key !== frameKey) {
+      frameCache = { key: frameKey, frame: paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: frameBox, start: paintingStart }) };
+    }
+    const frame = frameCache.frame;
+    paintingFrameNow = frame;
+    const painting = svgEl.querySelector('.map-painting');
+    if (painting) {
+      if (frame) painting.setAttribute('transform', frame.transform); else painting.removeAttribute('transform');
+      painting.dataset.flipX = frame?.flipX ? '1' : '0';
+      painting.dataset.flipY = frame?.flipY ? '1' : '0';
+      painting.dataset.framed = frame ? 'biome' : 'cover';
+    }
     for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image, .map-terrain .terrain-detail')) {
+      if (frame && el.classList.contains('terrain-detail')) {
+        el.setAttribute('x', '0'); el.setAttribute('y', '0');
+        el.setAttribute('width', String(frame.cw)); el.setAttribute('height', String(frame.ch));
+        continue;
+      }
       el.setAttribute('x', String(x0));
       el.setAttribute('y', String(y0));
       el.setAttribute('width', String(w));
@@ -1473,6 +1524,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
     recenter, resetFraming, centerOnNode, holdLook, releaseLook, stepZoom, teardown,
     readingOf: (id) => drawnReadings.get(id) || null,
+    // The setting (city, bridge, forest...) of the painting under a node, or null
+    // when the board has no framed painting or no zone there.
+    terrainAt: (id) => {
+      const n = byId[id];
+      return n && paintingFrameNow && !act.authoredMap ? terrainSettingAt(world, paintingFrameNow, { x: px(n), y: py(n) }) : null;
+    },
     get zoom() { return zoom; },
   };
 }
