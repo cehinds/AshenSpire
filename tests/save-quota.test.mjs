@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createRng } from '../src/engine/rng.js';
 import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY } from '../src/engine/save.js';
 
@@ -90,4 +95,64 @@ test('a save slot is never deleted to make room', () => {
   const save = createSaveManager(store);
   assert.throws(() => save.saveRun(run, rng, 1), error => isStorageFullError(error));
   assert.equal(store.map.get(runKey(2)), 'slot two');
+});
+
+// ---- main.js: the combat checkpoint door, sliced from the shipped source -------
+const mainSource = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+function sliceBlock(startMarker, endMarker) {
+  const start = mainSource.indexOf(startMarker), end = mainSource.indexOf(endMarker, start);
+  assert.ok(start >= 0 && end > start, startMarker);
+  return mainSource.slice(start, end);
+}
+const doorSource = sliceBlock('const SAVE_WARNING_REPEAT_MS', '// The run the way its save slot names it');
+
+function door({ saveRun }) {
+  const logs = [], banners = [], warns = [];
+  const context = {
+    saves: { saveRun }, activeSlot: 1, isStorageFullError, Date,
+    dlog: (...args) => logs.push(args), console: { warn: (...a) => warns.push(a) },
+    failureBanner: (key, title, body) => { const el = { key, title, body, remove() { this.removed = true; } }; banners.push(el); return el; },
+    setTimeout: () => 0,
+  };
+  runInNewContext(`${doorSource}\nthis.saveCombatCandidate = saveCombatCandidate; this.reportAutosaveFailure = reportAutosaveFailure;`, context);
+  return { context, logs, banners, warns };
+}
+
+test('a refused combat checkpoint is reported once per window and never refuses the move', () => {
+  const h = door({ saveRun: () => { throw quotaError(); } });
+  assert.deepEqual({ ...h.context.saveCombatCandidate({}, null) }, { ok: true, durable: false });
+  h.context.saveCombatCandidate({}, null);
+  assert.equal(h.logs.length, 2, 'every failure reaches the Command log');
+  assert.equal(h.logs[0][0], 'save');
+  assert.equal(h.banners.length, 1, 'the player-facing warning is throttled');
+  assert.match(h.banners[0].body, /browser storage is full/);
+  assert.match(h.banners[0].body, /Your game continues/);
+  assert.match(h.banners[0].body, /save slots/);
+  assert.equal(h.context.reportAutosaveFailure(quotaError(), Date.now() + 31000), true, 'warns again after the window');
+});
+
+test('a non-quota save error is also non-blocking', () => {
+  const h = door({ saveRun: () => { throw new Error('SecurityError: denied'); } });
+  assert.equal(h.context.saveCombatCandidate({}, null).ok, true);
+  assert.equal(h.banners[0].key, 'save:failed');
+  assert.match(h.banners[0].body, /Your game continues/);
+});
+
+test('with a full store, a real card play and End Turn still apply and warn', () => {
+  const { run, rng } = freshRun(11);
+  run.deck.unshift({ instanceId: 'save-native', cardId: 'blightedTransmute', upgraded: false });
+  const store = limitedStorage({ budget: 10 }); // nothing fits
+  const save = createSaveManager(store);
+  const h = door({ saveRun: (next, r) => save.saveRun(next, r, 1) });
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: 'n1_4', encounterId: 'patrol', saveCandidate: h.context.saveCombatCandidate });
+  const energyBefore = combat.player.energy;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'save-native' });
+  assert.ok(combat.player.energy < energyBefore || combat.piles.exhaust.some(c => c.instanceId === 'save-native') || combat.piles.discard.some(c => c.instanceId === 'save-native'), 'the card was played');
+  assert.equal(combat.phase, 'player');
+  dispatch(combat, { type: 'endTurn', discardIds: [] });
+  assert.equal(combat.phase, 'enemy', 'End Turn applied: the enemy phase began');
+  assert.equal(h.banners.length, 1, 'one warning for the session window');
+  assert.ok(h.logs.some(l => l[0] === 'save'));
+  assert.equal(store.map.has(runKey(1)), false, 'nothing was written');
 });
