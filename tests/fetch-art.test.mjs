@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
 import { createServer } from 'node:http';
-import { download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { artVersionForTag, zipNameFor, download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 import { buildManifest, canonicalBytes, checkManifest, commonSources, releaseDocsFromCache, releaseDocsFromZips, releaseManifest, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
 
@@ -61,13 +61,41 @@ test('the shared zip writer produces the vector cehinds/AshenSpire-art pins', ()
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('legacy and AshenSpire-scoped release tags retain the same archive basenames', () => {
+  for (const tag of ['hd-assets-v23', 'ashenspire-hd-assets-v23']) {
+    assert.equal(artVersionForTag(tag), '23');
+    assert.deepEqual(['high', 'light', 'common'].map(pack => zipNameFor(pack, tag)),
+      ['hd-assets-v23.zip', 'light-assets-v23.zip', 'common-assets-v23.zip']);
+  }
+  for (const tag of ['hd-assets-v0', 'hd-assets-v01', 'ashenspire-hd-assets-v0', 'other-hd-assets-v23', '../hd-assets-v23', 'ashenspire-hd-assets-v23/..']) {
+    assert.throws(() => artVersionForTag(tag), /tag must be/);
+  }
+});
+
+test('both tag families validate schema-1 and schema-2 pins without renaming zip assets', () => {
+  const root = tmp();
+  try {
+    for (const [repo, tag] of [['cehinds/AshenSpire-art', 'hd-assets-v23'], ['cehinds/AI-Art', 'ashenspire-hd-assets-v23']]) {
+      const base = { repo, tag, zip: 'hd-assets-v23.zip', sha256: 'a'.repeat(64) };
+      writeFileSync(join(root, PIN_PATH), JSON.stringify(base));
+      assert.equal(readPin(root).packs.high.zip, 'hd-assets-v23.zip');
+      const packs = Object.fromEntries(['high', 'light', 'common'].map(pack => [pack, { zip: zipNameFor(pack, tag), sha256: base.sha256 }]));
+      writeFileSync(join(root, PIN_PATH), JSON.stringify({ ...base, schema: 2, packs }));
+      assert.deepEqual(readPin(root).packs, packs);
+      writeFileSync(join(root, PIN_PATH), JSON.stringify({ ...base, zip: `ashenspire-${base.zip}` }));
+      assert.throws(() => readPin(root), /zip must be/);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('the committed pin is schema 2: one tag, three packs, the top level equal to the high pack', () => {
   const raw = JSON.parse(readFileSync(new URL(`../${PIN_PATH}`, import.meta.url), 'utf8'));
-  assert.equal(raw.repo, 'cehinds/AshenSpire-art');
+  assert.equal(raw.repo, 'cehinds/AI-Art');
+  assert.match(raw.tag, /^ashenspire-hd-assets-v[1-9]\d*$/);
   assert.equal(raw.schema, 2);
   const pin = readPin();
   assert.deepEqual(Object.keys(pin.packs).sort(), ['common', 'high', 'light']);
-  const n = pin.tag.replace('hd-assets-v', '');
+  const n = artVersionForTag(pin.tag);
   assert.equal(pin.packs.high.zip, `hd-assets-v${n}.zip`);
   assert.equal(pin.packs.light.zip, `light-assets-v${n}.zip`);
   assert.equal(pin.packs.common.zip, `common-assets-v${n}.zip`);

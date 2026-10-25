@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/art-intake.mjs — which files in a pull request belong to the art
-// repository (cehinds/AshenSpire-art), and where each one goes there.
+// repository (cehinds/AI-Art, ashenspire branch), and where each one goes there.
 //
 //   node tools/art-intake.mjs --list --base <sha> --head <sha>
 //       one repository path per line, for every file ADDED or MODIFIED in
@@ -49,7 +49,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const ART_REPO = 'cehinds/AshenSpire-art';
+export const ART_REPO = 'cehinds/AI-Art';
 
 /** A repository path → where the art repository keeps it, or null when it is not an art file. */
 export function destinationFor(rel) {
