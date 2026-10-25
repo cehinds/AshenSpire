@@ -1,0 +1,101 @@
+{
+  "feature": "Refused native card input logging (#2286)",
+  "captureSourceCommit": "fa39efc04736ae7d3c07e7c13f04907201abd2f8",
+  "captureSourceTree": "703d1a9774218e92b1f61cb7ed538a6bffb2c748",
+  "build": {
+    "version": "0.7.1.1834",
+    "digest": "7acad68715",
+    "edition": "light pack",
+    "localHtmlSHA256": "4b73ac9b155a788ecf05a24e202d41a5ca0b456744984dd6581bd819b2a40483",
+    "localArtifact": "/tmp/ashenspire-refused-fa39-attempt2-1792892621389795967/pack/AshenSpire.html",
+    "officialArtifactChecks": 314
+  },
+  "playableUrl": "https://cehinds.github.io/AshenSpire/branches/fix/RefusedCardLoggingReview/latest/",
+  "publicSourceCommit": "71f1d6e0ca1c006f15852e600ff305dd05d1842c",
+  "publicSourceTree": "703d1a9774218e92b1f61cb7ed538a6bffb2c748",
+  "sourceRelationship": "Root verified public source 71f1 has the same full Git tree as capture source fa39. This does not claim the current integrated branch head has that whole tree.",
+  "publicationEvidence": {
+    "featureBuildRun": "40152138710",
+    "featureBuildJob": "121045697151",
+    "publisherRun": "40151859578",
+    "actualHttpJob": "121050195891",
+    "actualHttpVerifiedAt": "2026-10-25T02:19:26Z",
+    "featureChecksPassed": 29
+  },
+  "integrationReview": {
+    "headBeforeEvidenceDocs": "8033464aac2176884063cd253d2bb18467a29dae",
+    "devBase": "ddfd37716b114adbecacdeb27c8fa39aca7bec87",
+    "nativeWireSHA256": "69e2c566abc2f42ce5c835f78f81e52d7132c3e3f47d849fed4ff32004796259",
+    "nativeInputAndRegressionRelationship": "The complete native wireCardInput function and both refusal/rounds regression files remain byte-identical to fa39. Later Dev integrations include separate Console diagnostics and content data extraction changes. 49 focused tests pass on this integrated head."
+  },
+  "flow": "Default Core SHOWCASE fight, Reaver, two living enemies. Real pointer/touch input plays two pinned Defend instances and one pinned Strike. Current Strike quote is 9 damage; the native result leaves both foes alive and may add Precision 3. At zero SP, tap remaining non-target Defend gp7; then native Menu \u2192 Settings \u2192 Search settings \u2192 Command log \u2192 Open.",
+  "oracle": "Expected refusal text was frozen before the tap from current preview cost badges and the current fixed Core Defend source. Core pricing aliases energy and stamina to the same priced SP. Live pools were read before tapping. Expected cost energy=1, mana=0, stamina=1; available energy=0, mana=1, stamina=0.",
+  "stateScope": "Complete serializable own combat/run fields, excluding immutable registry catalogs; shared object markers retained, native RNG getCounters read separately. Includes stance, attributes, statuses, resources, foes/coordinates, queues, piles, events and run state. Top-level combat native function references and RNG references separately remained unchanged. Refusal leaves timeline counters open=3, finished=3, watchdog=0 unchanged.",
+  "visualChecks": "Command log, not Console viewer. Modal/veil animations finished, computed opacity=1 and existing opaque modal/log backgrounds checked before originals. All 15 fonts loaded; cost bindings nonempty and fit. No hardware or latency/performance claim.",
+  "healthLimits": "Mobile and tablet passed their prospective gates. Desktop and wide raw overall health results remain failed on aborted transient combat-effect frame requests. Their native behavior and settled visual evidence were independently accepted by root. Later passive src/removal evidence supports transient frame cancellation; this does not retroactively rescore either failed report or establish internal network causality. No overall four-context QA PASS is claimed.",
+  "networkNotices": "Optional SFX sample probes holdTick.ogg, cardPlay.ogg, block.ogg, relic.ogg and hit_medium.ogg returned 404; audio.js and sfx.js document immediate procedural synth fallback. Exact aborted media/frame requests and observer timing remain in the raw reports. Tablet had no aborted image requests and zero settled broken visible images; no page errors.",
+  "priorFailures": "Earlier phone attempts, valid range-selection evidence, the mistaken energy=0 oracle failure, and all original desktop/wide health failures remain preserved outside the repository without rewriting or rescoring.",
+  "readmeLinkVerification": {
+    "packagedRoutes": "Completed Pages assembly job 121045529620/run 40151859578 validated all four primary badge/history/download routes (90 checks). Current README contains no named alternative play links. Actual primary-page HTTP proof is job 121050195891.",
+    "boundary": "Separate direct HTTP reads of badge SVGs/downloads were unavailable because executor/tool access was blocked; no direct badge/download HTTP success is claimed. Existing links are preserved.",
+    "releaseGallery": "Release build 0.7.1.1784 remains unchanged; root verified actual Release HTTP in job 121050195891. Existing Release gallery is preserved."
+  },
+  "captures": [
+    {
+      "view": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "input": "touch",
+      "file": "mobile.png",
+      "sha256": "31f97ac2e9a31dc8a9da47b73cf2158bd9e14b71348dfc81504cae48901bffa1",
+      "capturedAt": "2026-10-25T02:18:47.011519+00:00",
+      "original": "/tmp/refused-card-2286-four-view-1792894637939301479/mobile-command-log.png",
+      "rawHealthResult": "PASS",
+      "acceptedScope": "Native refusal behavior, unchanged declared state/counters/functions, and settled visual readability; accepted by root after viewing this original"
+    },
+    {
+      "view": "desktop",
+      "viewport": {
+        "width": 1200,
+        "height": 730
+      },
+      "input": "mouse click",
+      "file": "desktop.png",
+      "sha256": "fb360dd40ecdbe71dbbddc616bc1a49c26588ef1f8cb7326cdc4808027ca4e25",
+      "capturedAt": "2026-10-25T02:19:39.525527+00:00",
+      "original": "/tmp/refused-card-2286-four-view-1792894637939301479/desktop-command-log.png",
+      "rawHealthResult": "RAW_HEALTH_FAIL",
+      "acceptedScope": "Native refusal behavior, unchanged declared state/counters/functions, and settled visual readability; accepted by root after viewing this original"
+    },
+    {
+      "view": "wide",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "input": "mouse click",
+      "file": "wide.png",
+      "sha256": "d33582c267146aa2311c72dbe8faebcd212c65ee4bd763c28e7831bd27a7ebf5",
+      "capturedAt": "2026-10-25T02:27:46.778587+00:00",
+      "original": "/tmp/refused-card-2286-wide-tablet-1792895222368314131/wide-command-log.png",
+      "rawHealthResult": "RAW_HEALTH_FAIL",
+      "acceptedScope": "Native refusal behavior, unchanged declared state/counters/functions, and settled visual readability; accepted by root after viewing this original"
+    },
+    {
+      "view": "tablet",
+      "viewport": {
+        "width": 820,
+        "height": 1180
+      },
+      "input": "touch",
+      "file": "tablet.png",
+      "sha256": "022089d628608fbf7c29a9cc63a1daff85e083fe55dd1c465daba7454cbc1417",
+      "capturedAt": "2026-10-25T02:30:00.377429+00:00",
+      "original": "/tmp/refused-card-2286-tablet-final-1792895371690983764/tablet-command-log.png",
+      "rawHealthResult": "PASS",
+      "acceptedScope": "Native refusal behavior, unchanged declared state/counters/functions, and settled visual readability; accepted by root after viewing this original"
+    }
+  ]
+}

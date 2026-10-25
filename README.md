@@ -1,5 +1,19 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Refused card input logging
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/RefusedCardLoggingReview/latest/)
+
+An unaffordable native card tap records its instance, costs and available resources in Settings → Command log. These original captures show the settled Command log after a real refusal at four sizes. [Capture record](docs/preview/features/refused-card-logging/capture-record.json).
+
+Mobile and tablet passed their prospective checks. Desktop and wide retain failed asset-health gates from transient effect-frame cancellations; their native behavior and readable visuals were reviewed separately. This is not an overall four-context QA pass or a performance measurement. Captures identify source `fa39efc0`, build `0.7.1.1834` / `7acad68715`; the linked Review source has the same Git tree. Later Dev integrations are recorded separately.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: native refused Defend entry in Command log](docs/preview/features/refused-card-logging/mobile.png) | ![Desktop: settled Command log with refused card costs](docs/preview/features/refused-card-logging/desktop.png) | ![Wide: refused card instance and available pools in Command log](docs/preview/features/refused-card-logging/wide.png) | ![Tablet: native touch refusal recorded in Command log](docs/preview/features/refused-card-logging/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
