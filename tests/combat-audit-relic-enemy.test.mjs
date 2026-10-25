@@ -11,7 +11,7 @@ for (const mode of ['native', 'bundled']) {
     assert.match(report.sourceRevision, /^[0-9a-f]{40}$/);
     assert.equal(report.loader, mode);
     assert.deepEqual(report.counts, {
-      relics: 73, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
+      relics: 74, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
       relicConditionalFalseControls: 33, relicGatedBranches: report.counts.relicGatedBranches,
       relicGatedBranchesCovered: report.counts.relicGatedBranches,
       relicPassives: 27, relicPassiveDeclarations: 31, relicPassiveEffects: 19, relicPassiveNoOpDeclarations: 12,
@@ -29,7 +29,7 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.relics.conditionalBranches, 33);
     assert.equal(report.relics.conditionalNegativeControls, 33);
     assert.equal(report.relics.gatedBranchesCovered, report.relics.gatedBranches);
-    assert.equal(report.relics.relicCoverage.length, 73);
+    assert.equal(report.relics.relicCoverage.length, 74);
     assert.equal(report.relics.passiveIds, 27);
     assert.equal(report.relics.passiveMissing.length, 0);
     assert.equal(report.relics.passiveEffects, 19);
