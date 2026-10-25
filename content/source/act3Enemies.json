@@ -282,7 +282,7 @@
   },
   {
     "id": "blightedValkyrie",
-    "equipmentSp": 1,
+    "equipmentSp": 0,
     "attributes": {
       "strength": 6,
       "dexterity": 4,
@@ -570,7 +570,7 @@
   },
   {
     "id": "hollowAstronomer",
-    "equipmentSp": 1,
+    "equipmentSp": 0,
     "attributes": {
       "strength": 4,
       "dexterity": 2,
@@ -654,7 +654,7 @@
   },
   {
     "id": "ashheartDragon",
-    "equipmentSp": 2,
+    "equipmentSp": 1,
     "attributes": {
       "strength": 8,
       "dexterity": 2,

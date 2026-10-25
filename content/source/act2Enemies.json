@@ -543,7 +543,7 @@
   },
   {
     "id": "glassRegent",
-    "equipmentSp": 1,
+    "equipmentSp": 0,
     "attributes": {
       "strength": 4,
       "dexterity": 2,

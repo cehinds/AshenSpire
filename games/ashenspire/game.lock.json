@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:ca3428754a3ebceb4c4d31318eb0d0e02ca46689d5e44928d0b7854b51c875c7",
+      "hash": "sha256:681d50248de6ee5f9f7e6b3d74cb786543b5784b39f55cc405c4d05407385b94",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -640,7 +640,7 @@
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:c6587f8edf54b7a548687bda79f0801eb331db31be2448407054a2d599fc272f"
+          "hash": "sha256:98d454852e2d597b809f753da0619fd8c93b1bac306d96ae654b9aa42cbe5ba1"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -658,7 +658,7 @@
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:15bc7dbf01f9fb64d7b25119cae43e1aec64e0c9c5dbcc748660fe1ffb26d0e2"
+          "hash": "sha256:ff443c7190ccc27d73c1cca59ac9dab6c8dd20271fe1748726f555584e522e28"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:28eee6726d3faf89bd10234adcfb0029d7dacb3ed424f91aef1493070819daf0"
     },
     "core": {
-      "hash": "sha256:ca3428754a3ebceb4c4d31318eb0d0e02ca46689d5e44928d0b7854b51c875c7",
+      "hash": "sha256:681d50248de6ee5f9f7e6b3d74cb786543b5784b39f55cc405c4d05407385b94",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1364,7 +1364,7 @@
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:c6587f8edf54b7a548687bda79f0801eb331db31be2448407054a2d599fc272f"
+          "hash": "sha256:98d454852e2d597b809f753da0619fd8c93b1bac306d96ae654b9aa42cbe5ba1"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -1382,7 +1382,7 @@
           "path": "games/ashenspire/packs/core/enemyRelics.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:15bc7dbf01f9fb64d7b25119cae43e1aec64e0c9c5dbcc748660fe1ffb26d0e2"
+          "hash": "sha256:ff443c7190ccc27d73c1cca59ac9dab6c8dd20271fe1748726f555584e522e28"
         },
         {
           "path": "games/ashenspire/packs/core/gear.json",

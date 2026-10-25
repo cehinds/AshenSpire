@@ -2598,7 +2598,7 @@
     },
     "pools": {
       "hp": 139,
-      "sp": 5,
+      "sp": 3,
       "mp": 5,
       "ar": 5,
       "dr": 0,
@@ -2970,7 +2970,7 @@
     },
     "pools": {
       "hp": 87,
-      "sp": 4,
+      "sp": 3,
       "mp": 4,
       "ar": 4,
       "dr": 0,
@@ -3120,7 +3120,7 @@
     },
     "pools": {
       "hp": 87,
-      "sp": 4,
+      "sp": 3,
       "mp": 4,
       "ar": 4,
       "dr": 0,
@@ -4248,7 +4248,7 @@
     },
     "pools": {
       "hp": 182,
-      "sp": 5,
+      "sp": 3,
       "mp": 5,
       "ar": 4,
       "dr": 0,
@@ -4276,6 +4276,11 @@
         "key": "relic1",
         "id": "enemy.relic.titanHeart",
         "name": "Titan_Heart"
+      },
+      {
+        "key": "relic2",
+        "id": "enemy.relic.emberBrand",
+        "name": "Ember_Brand"
       }
     ],
     "deck": {
@@ -4404,7 +4409,7 @@
     },
     "pools": {
       "hp": 137,
-      "sp": 4,
+      "sp": 3,
       "mp": 5,
       "ar": 4,
       "dr": 0,
