@@ -52,14 +52,35 @@ export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   // Owner rule (2026-10-25): a multi-hit move costs at least its multi-hit floor (model/actionCosts.js
   // multiHitFloorFor: 1 SP per hit, less an offset for a finesse or Mana move). The authored price is never lowered
   // and there is no cap; an enemy short of SP simply cannot use the move.
-  if (!core2MultiHitRulesEnabled(combat)) return price;
+  // A fight saved under rules version 1 keeps its original pricing exactly: a flat minimum of 2 SP for a multi-hit move.
+  if (!core2MultiHitRulesEnabled(combat)) return enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) ? Math.max(2, price) : price;
   return Math.max(price, enemyMoveHitFloor(move, { enemy, moveId, combat }));
 }
 export const enemyMoveSp = moveSp;
 
 // Count HP-damage contacts per target, before damage components split into
 // physical/magical lanes. An area attack hitting each defender once is one hit.
-export const enemyMoveHasMultipleHits = (move, options) => enemyMoveHitCount(move, options) > 1;
+// Rules version 1 predicate, kept identical in behavior: any one defender taking more than one contact.
+export function enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) {
+  const expanded = expandedEnemyMove(enemy, move, moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
+  if (carrier.combatProfile.maneuver === 'counter') return false;
+  const effects = [...(expanded.damage != null ? [{ op: 'damage', target: 'player', amount: expanded.damage, hits: expanded.hits ?? 1 }] : []), ...(expanded.effects || [])];
+  const counts = new Map();
+  const detached = { ...combat, rng: createRng(combat.rng.seed, combat.rng.getCounters()) };
+  for (const effect of effects) {
+    if (effect.op !== 'damage') continue;
+    const action = { source: enemy, owner: enemy, target: combat.player, card: carrier, effect };
+    const formulas = Actions.formulaCtxFor(combat, action, action.target);
+    const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas))) * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
+    for (let i = 0; i < hits; i++) for (const target of Actions.resolveTargets(detached, action, effect.target)) {
+      const key = target.id;
+      counts.set(key, (counts.get(key) || 0) + 1);
+      if (counts.get(key) > 1) return true;
+    }
+  }
+  return false;
+}
 // A move's multi-hit SP floor: multiHitFloorFor over its hit count, with the Mana and finesse offsets.
 export function enemyMoveHitFloor(move, { enemy, moveId, combat }) {
   const expanded = expandedEnemyMove(enemy, move, moveId, combat);

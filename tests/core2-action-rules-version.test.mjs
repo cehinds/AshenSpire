@@ -8,7 +8,9 @@ import { resolveGameProfile, validateGameProfileSnapshot, applyGameProfileToCont
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { enemyMoveSp } from '../src/engine/combatRoundsAdapter.js';
+import { enemyMoveSp, enemyMoveHitCount, MOVE_SP } from '../src/engine/combatRoundsAdapter.js';
+import { enemyMoveSpOf } from '../src/model/actionCosts.js';
+import { moveKind } from '../src/engine/combatRounds/stance.js';
 
 // A run saved on dev before the 2026-10-25 combat retune (runtime 73ef24...) keeps its own profile, enemy content
 // and action rules: every fight it starts is stamped v1, not the current v2.
@@ -40,10 +42,28 @@ test('a dev-era profile keeps v1 pricing and every enemy can afford a damage mov
     const moves = damageMoves(registries, id);
     if (moves.length && !moves.some(([moveId, move]) => enemyMoveSp(move, { enemy, moveId, combat }) <= enemy.maxStamina)) stranded.push(id);
   }
-  // Dev already shipped these single-hit gaps (fixed for current Core separately); the retune must add none.
-  assert.deepEqual(stranded.sort(), ['charredColossus', 'huskBrute', 'livingArmor'], 'a dev-era run strands only what dev itself stranded');
+  // Dev already shipped these gaps (stitchCrab: 1 SP pool, every damage move costs 2 under the flat multi-hit minimum) (fixed for current Core separately); the retune must add none.
+  assert.deepEqual(stranded.sort(), ['charredColossus', 'huskBrute', 'livingArmor', 'stitchCrab'], 'a dev-era run strands only what dev itself stranded');
   for (const id of ['lanternMoth', 'mirrorScribe', 'ashheartDragon']) assert.ok(!stranded.includes(id), id);
   // The reviewer's examples: the v2 floor would strand these, v1 pricing does not.
   const combat = fightOf(setup, 'ashheartDragon'), enemy = combat.enemies[0], breath = registries.enemies.get('ashheartDragon').moves.ashBreath;
   assert.ok(enemyMoveSp(breath, { enemy, moveId: 'ashBreath', combat }) <= enemy.maxStamina);
+});
+
+test('a v1 fight prices multi-hit moves as before the retune: a flat 2 SP minimum, no per-hit floor', () => {
+  const setup = open(dev), { registries } = setup;
+  let multi = 0;
+  for (const id of registries.enemies.ids()) {
+    const combat = fightOf(setup, id), enemy = combat.enemies[0];
+    for (const [moveId, move] of Object.entries(registries.enemies.get(id).moves)) {
+      const sp = enemyMoveSp(move, { enemy, moveId, combat });
+      const base = enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity: enemy, enemyId: id, moveId, ctx: combat });
+      const hits = enemyMoveHitCount(move, { enemy, moveId, combat });
+      if (hits > 1) { multi++; assert.equal(sp, Math.max(2, base), `${id}.${moveId} (${hits} hits)`); }
+      else assert.equal(sp, base, `${id}.${moveId}`);
+    }
+  }
+  assert.ok(multi > 0);
+  const combat = fightOf(setup, 'fellWarden');
+  assert.equal(enemyMoveSp(registries.enemies.get('fellWarden').moves.hammerToss, { enemy: combat.enemies[0], moveId: 'hammerToss', combat }), 2);
 });
