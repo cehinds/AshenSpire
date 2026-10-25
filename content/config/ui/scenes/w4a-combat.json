@@ -9,7 +9,7 @@
     "desktopFooter": {
       "referenceHeightPx": 900,
       "scaleHeightPx": 1080,
-      "minimumScale": 0.78,
+      "minimumScale": 0.8,
       "maximumScale": 0.98,
       "cardWidthPx": 184,
       "cardHeightPx": 276,
