@@ -1,6 +1,6 @@
 // Bounded, session-only console capture. Leaf: only the leaf strings table is imported.
 import { t, tFull } from './strings.js';
-export const CONSOLE_MAX_ENTRIES = 300;
+export const CONSOLE_MAX_ENTRIES = 1000;
 export const CONSOLE_MAX_TEXT = 8192;
 const LEVELS = ['log', 'info', 'warn', 'error', 'debug'];
 

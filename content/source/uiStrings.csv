@@ -1066,6 +1066,7 @@ settings.row.colorblindSafe,,Colorblind-friendly,Shift danger/heal/blight/frost 
 settings.row.reduceFlashes,,Reduce flashes,Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.,
 settings.row.readableHeadings,,Readable headings,Use the plain UI font for titles instead of the decorative serif.,
 settings.row.commandLog,,Command log,The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.,
+settings.row.debugMode,,Debug mode,"Shows a Console button during combat and in the combat log, with errors and every ignored tap, so a stuck turn can be copied or exported.",
 settings.row.shopSell,,Merchant buys back,"The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.",
 settings.row.holdConfirm,,Hold to confirm,"Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.",
 settings.row.rewardCollect,,Reward collection,"Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.",
