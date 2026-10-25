@@ -103,7 +103,9 @@ test('Core projects only owned paid mobility and range metadata without repricin
       const hit = profile.content.enemyCards.find(row => row.id === cardId).effects.find(effect => effect.op === 'damage');
       return [hint.legacyMove, { damage: hit.amount, hits: hit.hits }];
     }));
-    for (const [id, move] of Object.entries(original.moves)) assert.deepEqual(projected.moves[id], trims[id] ? { ...move, ...trims[id] } : move, `${original.id}.${id}: offense unchanged except a named Core trim`);
+    // coreSp "card" (owner, 2026-10-25) is the same kind of named Core-only change: the move costs the Core card's staminaCost.
+    const prices = Object.fromEntries(Object.entries(source.cardHints || {}).filter(([, hint]) => hint.coreSp === 'card').map(([cardId, hint]) => [hint.legacyMove, { sp: profile.content.enemyCards.find(row => row.id === cardId).staminaCost }]));
+    for (const [id, move] of Object.entries(original.moves)) assert.deepEqual(projected.moves[id], { ...move, ...(trims[id] || {}), ...(prices[id] || {}) }, `${original.id}.${id}: offense unchanged except a named Core trim or price`);
     for (const field of ['startingRange', 'rangeClosingMove', 'rangeRoutePolicy']) assert.equal(projected[field], source[field], `${original.id}/${field}`);
     const cardId = source.defaultDeck.find(id => source.cardHints?.[id]?.legacyMove === source.rangeClosingMove);
     const card = profile.content.enemyCards.find(row => row.id === cardId);
