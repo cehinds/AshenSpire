@@ -320,17 +320,35 @@
       {
         "id": "the-fractured-realm",
         "name": "The Fractured Realm",
-        "map": "assets/environments/the-fractured-realm-world.webp"
+        "map": "assets/environments/the-fractured-realm-world.webp",
+        "biomes": {
+          "hollow-weald": { "rect": { "x": 0.06, "y": 0.6, "w": 0.32, "h": 0.32 }, "flipX": false, "flipY": false },
+          "pale-marches": { "rect": { "x": 0.05, "y": 0.0, "w": 0.5, "h": 0.15 }, "flipX": false, "flipY": true },
+          "cinder-reach": { "rect": { "x": 0.62, "y": 0.0, "w": 0.38, "h": 0.4 }, "flipX": false, "flipY": true },
+          "ashen-crown": { "rect": { "x": 0.4, "y": 0.28, "w": 0.2, "h": 0.24 }, "flipX": false, "flipY": false }
+        }
       },
       {
         "id": "the-shattered-gulf",
         "name": "The Shattered Gulf",
-        "map": "assets/environments/the-shattered-gulf-world.webp"
+        "map": "assets/environments/the-shattered-gulf-world.webp",
+        "biomes": {
+          "hollow-weald": { "rect": { "x": 0.7, "y": 0.15, "w": 0.3, "h": 0.3 }, "flipX": false, "flipY": true },
+          "pale-marches": { "rect": { "x": 0.4, "y": 0.0, "w": 0.55, "h": 0.12 }, "flipX": false, "flipY": true },
+          "cinder-reach": { "rect": { "x": 0.02, "y": 0.5, "w": 0.28, "h": 0.35 }, "flipX": false, "flipY": false },
+          "ashen-crown": { "rect": { "x": 0.35, "y": 0.35, "w": 0.3, "h": 0.3 }, "flipX": false, "flipY": false }
+        }
       },
       {
         "id": "the-fivefold-frontier",
         "name": "The Fivefold Frontier",
-        "map": "assets/environments/the-fivefold-frontier-world.webp"
+        "map": "assets/environments/the-fivefold-frontier-world.webp",
+        "biomes": {
+          "hollow-weald": { "rect": { "x": 0.0, "y": 0.3, "w": 0.3, "h": 0.4 }, "flipX": false, "flipY": true },
+          "pale-marches": { "rect": { "x": 0.65, "y": 0.0, "w": 0.35, "h": 0.25 }, "flipX": false, "flipY": true },
+          "cinder-reach": { "rect": { "x": 0.0, "y": 0.0, "w": 0.3, "h": 0.2 }, "flipX": false, "flipY": true },
+          "ashen-crown": { "rect": { "x": 0.35, "y": 0.28, "w": 0.3, "h": 0.3 }, "flipX": false, "flipY": false }
+        }
       }
     ]
   },

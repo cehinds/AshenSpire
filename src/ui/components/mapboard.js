@@ -1,5 +1,8 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/map/mapview.js';
+import { actRegionId } from '../../model/environmentArt.js';
+import { paintingFrame, paintingGround, paintingFrameKey } from '../../model/mapPaintingFrame.js';
+import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 import { builtInFor } from '../highResArt.js';
@@ -364,6 +367,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
   const world = act.authoredMap || worldMapForRun(act);
+  // The painting is framed so the act's start sits on its region's biome (mapPaintingFrame.js).
+  const paintingAnchor = act.authoredMap ? null : world.biomes?.[actRegionId(act)] || null;
+  const paintingArt = MAP_ART[world.map]?.levels.at(-1);
+  const startNodes = (act.startIds || []).map(id => byId[id]).filter(Boolean);
+  const paintingStart = startNodes.length
+    ? { x: startNodes.reduce((t, n) => t + px(n), 0) / startNodes.length, y: startNodes.reduce((t, n) => t + py(n), 0) / startNodes.length }
+    : null;
   const groundSvg = act.authoredMap ? authoredMapTerrainHtml({ art: act.authoredMap, fog, visited: nodes.filter(n => traveled.has(n.id) || n.id === current).map(n => mapPoint(n, height)) }) : mapTerrainHtml({
     world, width, height, fog,
     points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: px(n), y: py(n) })),
@@ -698,6 +708,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       requestAnimationFrame(() => { sizedThisFrame = false; });
     }
   }
+  let frameCache = { key: '', frame: null };
   function apply() {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
@@ -726,7 +737,31 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plates land. The terrain shares this viewport-wide ground too: fitting
     // the painting to a one-column route graph leaves a narrow strip of art.
     // Its SVG image uses a uniform cover fit, so architecture never stretches.
+    // Framed against the ground the camera can ever show (free pan: the ink or
+    // the viewport centred on it; otherwise every aimX +- w/2 from the ink's
+    // columns, so an end-column node never shows bare paper), not this frame's viewBox: a pan moves
+    // x0 and must only translate the painting. Re-solved when the act, board
+    // size or zoom changes (the key), never per glide frame.
+    const frameBox = paintingGround({ ink: inkBox, w, y0, h, aim: freePan ? null : { min: inkBox.x0, max: inkBox.x1 } });
+    const frameKey = paintingFrameKey(frameBox);
+    if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
+    else if (frameCache.key !== frameKey) {
+      frameCache = { key: frameKey, frame: paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: frameBox, start: paintingStart }) };
+    }
+    const frame = frameCache.frame;
+    const painting = svgEl.querySelector('.map-painting');
+    if (painting) {
+      if (frame) painting.setAttribute('transform', frame.transform); else painting.removeAttribute('transform');
+      painting.dataset.flipX = frame?.flipX ? '1' : '0';
+      painting.dataset.flipY = frame?.flipY ? '1' : '0';
+      painting.dataset.framed = frame ? 'biome' : 'cover';
+    }
     for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image, .map-terrain .terrain-detail')) {
+      if (frame && el.classList.contains('terrain-detail')) {
+        el.setAttribute('x', '0'); el.setAttribute('y', '0');
+        el.setAttribute('width', String(frame.cw)); el.setAttribute('height', String(frame.ch));
+        continue;
+      }
       el.setAttribute('x', String(x0));
       el.setAttribute('y', String(y0));
       el.setAttribute('width', String(w));
