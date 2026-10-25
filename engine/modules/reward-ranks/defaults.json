@@ -20,12 +20,12 @@
       "special"
     ]
   },
-  "ownedCopyWeight": 0.35,
+  "ownedCopyWeight": 0.2,
   "tagWeights": {
     "maneuver:casting": 1,
-    "maneuver:smash": 5,
-    "maneuver:counter": 5,
-    "maneuver:sweep": 5,
+    "maneuver:smash": 10,
+    "maneuver:counter": 10,
+    "maneuver:sweep": 10,
     "default": 3
   }
 }
