@@ -1935,7 +1935,6 @@
 .target-hud-meters .combat-health-badge { font-size: .8em; }
 .target-hud-intent { display: flex; align-items: center; gap: .45em; margin-top: .45em; min-height: 1.65em; }
 .target-hud-intent .intent-icon { width: 1.65em; height: 1.65em; flex: none; }
-.target-hud-intent-name { flex: 1; }
 .target-hud-damage { color: #f17e73; font-variant-numeric: tabular-nums; }
 .target-hud-intent[data-damage-tone='green'] .target-hud-damage { color: #8ad498; }
 .target-hud-statuses.statuses { display: flex !important; justify-content: flex-end; gap: .35em; margin: .4em 0 0; padding: 0; width: 100%; min-height: 0; overflow: visible; }

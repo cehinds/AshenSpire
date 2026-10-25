@@ -42,7 +42,6 @@
 :root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
-:root .combat[data-target-hud='true'] .target-hud-intent-name { flex:none; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
   width:100%!important; min-width:0!important; margin:0!important; gap:0!important;
 }

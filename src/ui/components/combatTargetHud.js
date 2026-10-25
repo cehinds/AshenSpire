@@ -29,7 +29,8 @@ export function combatTargetIntentRow(entry) {
   const action = entry.action?.maneuver || 'ready';
   const playerIcon = ({ attack: 'attack', smash: 'smash', sweep: 'sweep', counter: 'counter', defend: 'defend', evade: 'evade' })[action] || 'prepare';
   const title = badge?.title || (['casting', 'prepared'].includes(action) ? t('combat.targetHud.prepare') : action === 'ready' ? t('combat.targetHud.ready') : action === 'defend' ? t('combat.targetHud.defend') : action[0].toUpperCase() + action.slice(1));
-  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }), node('span', 'target-hud-intent-name', title));
+  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }));
+  // Owner 2026-10-25: no stance/action name in the panel (it cost a wrapped row). The damage and multiplier stay; the title lives in the tooltip.
   row.dataset.intentVisibility = badge?.visibility || 'known';
   if (badge?.projectedDamage?.tone) row.dataset.damageTone = badge.projectedDamage.tone;
   row.tabIndex = 0;
