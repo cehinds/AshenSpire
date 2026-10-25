@@ -1,6 +1,7 @@
 import { applyStatus } from './statuses.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
-import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
+import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
+import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
@@ -75,10 +76,13 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
   const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
-  const ar = modern ? sourceRatingValue(ctx, source, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
+  // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).
+  const finesse = modern && ratingId === 'ar' && core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
+  const rated = finesse ? finesseRatingView(source) : source;
+  const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;
-  const applicable = (source?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
+  const applicable = (rated?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
   const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {

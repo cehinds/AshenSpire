@@ -330,8 +330,8 @@ test('Core 2 prices multi-hit cards per hit; legacy keeps its price and no profi
   const damageOf = (def) => def.effects.filter((e) => e.op === 'damage').map((e) => e.amount);
   // [card, legacy SP, legacy MP, Core 2 paid SP]: Executioner's 10/25 is one hit; Thousand Cuts' prepared volley is
   // its own branch (6, not 12); Twinblade Flurry costs Mana, so its three hits floor at max(3 - 2, 1) = 1 and its
-  // derived 2 SP stands.
-  for (const [id, legacySp, legacyMp, core2Sp] of [['executioner', 2, 0, 2], ['thousandCutsRogue', 2, 0, 6], ['twinbladeFlurry', 2, 1, 2]]) {
+  // derived 2 SP stands. Whirling Guard's three area hits cost 3 SP in Core 2 (owner, 2026-10-25).
+  for (const [id, legacySp, legacyMp, core2Sp] of [['executioner', 2, 0, 2], ['thousandCutsRogue', 2, 0, 6], ['twinbladeFlurry', 2, 1, 2], ['whirlingGuard', 2, 0, 3]]) {
     const old = resolveCard(legacy, { cardId: id });
     assert.deepEqual([old.cost, old.manaCost || 0], [legacySp, legacyMp], `${id}: legacy price unchanged`);
     const combat = live();
