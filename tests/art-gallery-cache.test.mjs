@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync,realpathSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
@@ -8,7 +8,8 @@ import {markerFor,readPin} from '../tools/fetch-art.mjs';
 import {listArt,resolveArt} from '../workbench/core/assets.mjs';
 const env={ASHEN_ART_SOURCE:'cache'};
 function fixture(){
- const root=mkdtempSync(join(tmpdir(),'ashen-gallery-'));
+ // Gallery resolution returns canonical paths, including platform temp aliases.
+ const root=realpathSync.native(mkdtempSync(join(tmpdir(),'ashen-gallery-')));
  const put=(p,b)=>{mkdirSync(join(root,p,'..'),{recursive:true});writeFileSync(join(root,p),b);};
  const pin={schema:2,repo:'cehinds/AI-Art',tag:'ashenspire-hd-assets-v24',zip:'hd-assets-v24.zip',sha256:'1'.repeat(64),packs:Object.fromEntries(['high','light','common'].map((p,i)=>[p,{zip:`${p==='high'?'hd':p}-assets-v24.zip`,sha256:String(i+1).repeat(64)}]))};
  const id='music/theme.ogg',bytes=Buffer.from('synthetic music'),row={path:id,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
