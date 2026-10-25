@@ -160,15 +160,16 @@ test('a native ranged enemy reaction pays base and Advance before its stacked ev
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
   assert.ok(observed.length > 0);
   for (const state of observed) {
-    assert.equal(state.stamina, before - quote.totalSp, 'the full quote is paid before the stacked event');
+    // The player's Strike already paid and committed its Advance, so the reaction owes base SP only.
+    assert.equal(state.stamina, before - quote.sp, 'the base quote is paid before the stacked event');
     assert.equal(state.remaining, state.stamina);
-    assert.deepEqual(state.payment, { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp });
+    assert.deepEqual(state.payment, { sp: quote.sp, advanceSp: 0, totalSp: quote.sp });
   }
   assert.ok(combat.pendingReaction);
   const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(511, combat.rng.getCounters()), snapshot });
   settle(combat); settle(restored);
-  assert.equal(combat.enemies[0].stamina, before - quote.totalSp);
+  assert.equal(combat.enemies[0].stamina, before - quote.sp);
   assert.equal(restored.enemies[0].stamina, combat.enemies[0].stamina);
   assert.deepEqual(restored.enemies[0].performedMoves, combat.enemies[0].performedMoves);
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
@@ -227,14 +228,14 @@ for (const replay of [false, true]) test(`native Core planning projects persiste
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
 });
 
-test('an attack approach remains temporary and is paid again by the next planned attack', () => {
+test('an attack approach persists: the next planned attack is not charged an Advance', () => {
   const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
   combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
   enemy.maxStamina = 4;
   enemy.movesHistory = [];
   delete enemy.combatStance;
   const queue = buildEnemyQueue(enemy, def, { combat, pick: () => 'caneStrike' });
-  assert.deepEqual(queue, [{ moveId: 'caneStrike', sp: 2 }, { moveId: 'caneStrike', sp: 2 }]);
+  assert.deepEqual(queue, [{ moveId: 'caneStrike', sp: 2 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
 });
 
 
