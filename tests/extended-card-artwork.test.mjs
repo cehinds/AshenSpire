@@ -87,7 +87,7 @@ test('release adoption preserves high records and adopts only complete canonical
  const staging={schema:1,encoder:{pillow:'test'},policy:POLICY,assets:structuredClone(assets)};
  const first=Object.keys(assets)[0];staging.assets[first].light.sha256='c'.repeat(64);
  writeFileSync(stagingPath,JSON.stringify(staging));
- writeFileSync(resolve(f.dir,'art-release.json'),JSON.stringify({schema:2,repo:'cehinds/AshenSpire-art',tag:'hd-assets-v13',packs:{light:{zip:'light-assets-v13.zip',sha256:'d'.repeat(64)}}}));
+ writeFileSync(resolve(f.dir,'art-release.json'),JSON.stringify({schema:2,repo:'cehinds/AshenSpire-art',tag:'hd-assets-v13',zip:'hd-assets-v13.zip',sha256:'d'.repeat(64),packs:Object.fromEntries(['high','light','common'].map((pack,i)=>[pack,{zip:`${['hd','light','common'][i]}-assets-v13.zip`,sha256:'d'.repeat(64)}]))}));
  const publish=()=>writeFileSync(releasePath,JSON.stringify({schema:2,assets}));publish();
  assert.throws(()=>checkPublishedArtwork({root:f.dir,inventory}),/Pinned mobile metadata differs/);
  const before=readFileSync(stagingPath,'utf8');
@@ -108,4 +108,24 @@ test('release adoption preserves high records and adopts only complete canonical
  assert.equal(checkPublishedArtwork({root:f.dir,inventory}).subjects,subjects.length);
  assets[first].light.sha256='f'.repeat(64);publish();
  assert.throws(()=>checkPublishedArtwork({root:f.dir,inventory}),/Pinned mobile metadata differs/);
+});
+
+test('shared-host adoption reads the committed pin and preserves historical encoder origin',t=>{
+ const f=fixture(t),assets={};
+ for(const subject of subjects)for(const width of [512,1024]){const id=`assets/cards/extended/${subject.kind}-${subject.id}-${width}.webp`;assets[id]={high:{path:id,bytes:2000,sha256:'a'.repeat(64),width,height:width*1.5},light:{path:id.replace('assets/','assets-mobile/'),bytes:500,sha256:'b'.repeat(64),width:480,height:720}};}
+ const pin=JSON.parse(readFileSync(resolve(root,'art-release.json')));assert.equal(pin.repo,'cehinds/AI-Art');assert.match(pin.tag,/^ashenspire-hd-assets-v[1-9]\d*$/);
+ const stagingPath=resolve(f.dir,'asset-data/card-art/extended-manifest.json'),manifestPath=resolve(f.dir,'art-manifest.json'),pinPath=resolve(f.dir,'art-release.json');
+ mkdirSync(dirname(stagingPath),{recursive:true});
+ const encoderOrigin='cehinds/AshenSpire-art/tools/mobile-art.mjs';
+ writeFileSync(stagingPath,JSON.stringify({schema:1,policy:POLICY,assets,lightProvenance:{source:encoderOrigin}}));
+ writeFileSync(manifestPath,JSON.stringify({schema:2,assets}));writeFileSync(pinPath,JSON.stringify(pin));
+ const manifestBefore=readFileSync(manifestPath);
+ assert.equal(adoptPublishedArtwork({root:f.dir,inventory}).adopted,true);
+ const adopted=JSON.parse(readFileSync(stagingPath));assert.equal(adopted.lightProvenance.source,encoderOrigin,'mirroring hosting does not change the original encoder');
+ assert.equal(adopted.lightProvenance.release.repo,pin.repo);assert.equal(adopted.lightProvenance.release.tag,pin.tag);assert.deepEqual(adopted.lightProvenance.release.pack,pin.packs.light);
+ assert.deepEqual(readFileSync(manifestPath),manifestBefore,'canonical manifest bytes stay untouched');
+ const before=readFileSync(stagingPath);
+ for(const bad of [{repo:'cehinds/Other-Art'},{tag:'hd-assets-v23'},{tag:'../escape'},{zip:'ashenspire-hd-assets-v23.zip'}]){
+  writeFileSync(pinPath,JSON.stringify({...pin,...bad}));assert.throws(()=>adoptPublishedArtwork({root:f.dir,inventory}));assert.deepEqual(readFileSync(stagingPath),before,'invalid release identity must not write adoption metadata');
+ }
 });
