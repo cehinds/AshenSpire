@@ -565,6 +565,17 @@ The map-generation knobs of src/content/mapconfig.js (SPEC §6). `mapActShape.js
     is rolled are its weight over the total — so this number is a slider end,
     not a percentage. The screen prints the derived share beside each one.
 
+## Custom Climb modifiers (content/source/customMods.json)
+
+File header (was the comment block at the top of src/content/customMods.js): a tailored take on Slay the Spire 2's custom mode. `customMods.json` holds four keys, which src/content/customMods.js re-exports as `DIFFICULTY_MODS`, `CHAOS_MODS`, `DECK_MODES` and `ASCENSION_ORDER`; each mod row is `{ id, label, desc }`. Tuning magnitudes live in `balanceCustomMods.json` and `balanceEndless.json`, not here.
+
+- **`difficultyMods`** — harder rules. The Ascension ladder just enables the first N of `ascensionOrder`, so "Ascension 4" is the four hardest-first rules, and every rule is also individually toggleable.
+- **`chaosMods`** — flavourful run-warping toggles, independent of difficulty.
+- **`deckModes`** — how your starting deck is built.
+- **`ascensionOrder`** — Ascension enables the first N difficulty rules (hardest impact first). `MAX_ASCENSION` is its length, computed in JS.
+- The orchestrator (main.js) reads `run.custom.mods[id]` at the relevant hook; nothing here is engine-specific.
+- **Deleted union.** `ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood in the module with no reader in src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted rather than documented: nothing re-typed it, so there is nothing to collapse into, and the day a screen needs both groups it can spell the spread itself.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

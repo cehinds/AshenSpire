@@ -383,3 +383,15 @@ test('mapconfig: the three tables deep-equal their authored JSON and keep their 
   assert.ok(Object.isFrozen(MAP_SHAPE_LIMITS) && Object.isFrozen(LEGACY_ACT_BOSSES));
   assert.ok(!Object.isFrozen(mapConfigs) && mapConfigs[1] !== mapConfigs[2]);
 });
+
+// Plan row 9b, batch B: the next five modules.
+import { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION } from '../src/content/customMods.js';
+test('customMods: the four tables deep-equal their authored JSON; MAX_ASCENSION stays computed', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/customMods.json'), 'utf8'));
+  assert.deepStrictEqual(DIFFICULTY_MODS, authored.difficultyMods);
+  assert.deepStrictEqual(CHAOS_MODS, authored.chaosMods);
+  assert.deepStrictEqual(DECK_MODES, authored.deckModes);
+  assert.deepStrictEqual(ASCENSION_ORDER, authored.ascensionOrder);
+  assert.equal(MAX_ASCENSION, authored.ascensionOrder.length);
+  assert.ok([DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER].every((t) => !Object.isFrozen(t)), 'these tables were never frozen');
+});
