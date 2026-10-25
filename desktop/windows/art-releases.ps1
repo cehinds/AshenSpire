@@ -1,6 +1,16 @@
 # Public art release discovery and verified standalone downloads (PowerShell 5.1).
 # Dot-sourced by art-options.ps1 and its offline tests. Never executes downloaded code.
-$script:ArtRepo = 'cehinds/AshenSpire-art'
+$script:ArtRepo = 'cehinds/AI-Art'
+function Get-ArtArchiveName([string]$Tag) {
+  if ($Tag -cnotmatch '^(?:ashenspire-)?hd-assets-v([1-9][0-9]*)$') { throw 'Invalid art release.' }
+  return "hd-assets-v$($Matches[1]).zip"
+}
+function Test-InstallerArtPin($Pin) {
+  $known = ($Pin.repo -ceq 'cehinds/AI-Art' -and $Pin.tag -cmatch '^ashenspire-hd-assets-v[1-9][0-9]*$') -or
+           ($Pin.repo -ceq 'cehinds/AshenSpire-art' -and $Pin.tag -cmatch '^hd-assets-v[1-9][0-9]*$')
+  if (-not $known) { return $false }
+  return $Pin.packs.high.zip -ceq (Get-ArtArchiveName $Pin.tag) -and $Pin.packs.high.sha256 -match '^[a-fA-F0-9]{64}$'
+}
 function Get-ArtJson([string]$Path) {
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
   $req = [Net.HttpWebRequest]::Create("https://api.github.com/repos/$script:ArtRepo/$Path")
@@ -22,13 +32,14 @@ function Get-ArtPages([string]$Path) {
   throw 'The art catalog is too large. Visit the art repository for more versions.'
 }
 function Get-ArtCatalog {
-  $branches = @(Get-ArtPages 'branches' | ForEach-Object { $_.name })
+  $branches = @(Get-ArtPages 'branches' | Where-Object { $_.name -ceq 'ashenspire' } | ForEach-Object { $_.name })
   $releases = @(Get-ArtPages 'releases' | Where-Object {
-    -not $_.draft -and -not $_.prerelease -and $_.tag_name -match '^hd-assets-v[0-9]+$'
+    -not $_.draft -and -not $_.prerelease -and $_.tag_name -cmatch '^ashenspire-hd-assets-v[1-9][0-9]*$'
   } | ForEach-Object {
     $tag = $_.tag_name
-    $zip = @($_.assets | Where-Object { $_.name -ceq "$tag.zip" })
-    $sum = @($_.assets | Where-Object { $_.name -ceq "$tag.zip.sha256" })
+    $archive = Get-ArtArchiveName $tag
+    $zip = @($_.assets | Where-Object { $_.name -ceq $archive })
+    $sum = @($_.assets | Where-Object { $_.name -ceq "$archive.sha256" })
     if ($zip.Count -eq 1 -and $sum.Count -eq 1) {
       [pscustomobject]@{ Tag = $tag; Url = $zip[0].browser_download_url; ChecksumUrl = $sum[0].browser_download_url; Bytes = $zip[0].size; Published = $_.published_at }
     }
@@ -36,14 +47,14 @@ function Get-ArtCatalog {
   return [pscustomobject]@{ Branches = $branches; Releases = $releases }
 }
 function Test-ArtBranch([string]$Branch, [string]$Tag) {
-  if ($Tag -notmatch '^hd-assets-v[0-9]+$' -or -not $Branch -or $Branch.Contains('..')) { throw 'Invalid branch or release.' }
+  if ($Tag -cnotmatch '^ashenspire-hd-assets-v[1-9][0-9]*$' -or $Branch -cne 'ashenspire') { throw 'Invalid branch or release.' }
   $comparison = Get-ArtJson ('compare/' + [Uri]::EscapeDataString($Tag) + '...' + [Uri]::EscapeDataString($Branch))
   # A release can be selected on a branch only if that branch contains its commit.
   return $comparison.status -in @('ahead', 'identical')
 }
-function Save-ArtFile([string]$Url, [string]$Path, [scriptblock]$Progress) {
+function Save-ArtFile([string]$Url, [string]$Path, [scriptblock]$Progress, [string]$Repository = $script:ArtRepo) {
   $uri = [Uri]$Url
-  if ($uri.Scheme -ne 'https' -or $uri.Host -ne 'github.com' -or -not $uri.AbsolutePath.StartsWith("/$script:ArtRepo/releases/download/", [StringComparison]::Ordinal)) {
+  if ($Repository -cnotin @('cehinds/AI-Art', 'cehinds/AshenSpire-art') -or $uri.Scheme -ne 'https' -or $uri.Host -ne 'github.com' -or -not $uri.AbsolutePath.StartsWith("/$Repository/releases/download/", [StringComparison]::Ordinal)) {
     throw 'The download must come from the AshenSpire art repository.'
   }
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -62,21 +73,30 @@ function Save-ArtFile([string]$Url, [string]$Path, [scriptblock]$Progress) {
   } finally { $res.Dispose() }
 }
 function Save-ArtRelease($Release, [string]$Destination, [string]$ExpectedSha = '', [scriptblock]$Progress) {
-  if ($Release.Tag -notmatch '^hd-assets-v[0-9]+$') { throw 'Invalid art release.' }
+  $archive = Get-ArtArchiveName $Release.Tag
+  $repository = $script:ArtRepo
+  # Existing installers retain their exact legacy pin and hash; discovery never
+  # falls back to the old repository or offers its branches as new choices.
+  if ($Release.PinnedRepository) {
+    if ($Release.PinnedRepository -cne 'cehinds/AshenSpire-art' -or $Release.Tag -cnotmatch '^hd-assets-v[1-9][0-9]*$' -or -not $ExpectedSha) { throw 'Invalid legacy installer art pin.' }
+    $repository = $Release.PinnedRepository
+  } elseif ($Release.Tag -cnotmatch '^ashenspire-hd-assets-v[1-9][0-9]*$') { throw 'Invalid art release.' }
+  $url = "https://github.com/$repository/releases/download/$($Release.Tag)/$archive"
+  if ($Release.Url -cne $url -or (-not $ExpectedSha -and $Release.ChecksumUrl -cne "$url.sha256")) { throw 'The art release names an unexpected archive URL.' }
   $dest = [IO.Path]::GetFullPath($Destination)
   $part = "$dest.$([Guid]::NewGuid().ToString('N')).part"
   $sumFile = "$part.sha256"
   $backup = "$part.previous"
   try {
     if (-not $ExpectedSha) {
-      Save-ArtFile $Release.ChecksumUrl $sumFile $Progress
+      Save-ArtFile $Release.ChecksumUrl $sumFile $Progress $repository
       $line = [IO.File]::ReadAllText($sumFile).Trim()
       if ($line -notmatch '^([a-fA-F0-9]{64})(?:\s+\*?([^\r\n]+))?$') { throw 'The art checksum file is invalid.' }
       $ExpectedSha = $Matches[1].ToLowerInvariant()
-      if ($Matches[2] -and $Matches[2] -cne "$($Release.Tag).zip") { throw 'The checksum names a different art archive.' }
+      if ($Matches[2] -and $Matches[2] -cne $archive) { throw 'The checksum names a different art archive.' }
     }
     if ($ExpectedSha -notmatch '^[a-fA-F0-9]{64}$') { throw 'Invalid art checksum.' }
-    Save-ArtFile $Release.Url $part $Progress
+    Save-ArtFile $Release.Url $part $Progress $repository
     $sha = [Security.Cryptography.SHA256]::Create(); $stream = [IO.File]::OpenRead($part)
     try { $actual = ([BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '').ToLowerInvariant() } finally { $stream.Dispose(); $sha.Dispose() }
     if ($actual -ne $ExpectedSha.ToLowerInvariant()) { throw 'The downloaded art failed its SHA-256 check. Your existing file has been kept.' }

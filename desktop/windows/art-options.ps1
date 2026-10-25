@@ -10,8 +10,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $pin = Get-Content -LiteralPath $Config -Raw | ConvertFrom-Json
-if ($pin.repo -ne 'cehinds/AshenSpire-art' -or $pin.tag -notmatch '^hd-assets-v[0-9]+$') { throw 'Invalid installer art configuration.' }
 . (Join-Path $PSScriptRoot 'art-releases.ps1')
+if (-not (Test-InstallerArtPin $pin)) { throw 'Invalid installer art configuration.' }
 . (Join-Path $PSScriptRoot 'game-releases.ps1')
 $game = [pscustomobject]@{ Version = 'Bundled game'; Branch = 'test' }
 if ($GameConfig) {
@@ -59,7 +59,7 @@ $null = Label 'Published art version' 326 380 290 20
 $branch = New-Object Windows.Forms.ComboBox; $branch.DropDownStyle = 'DropDownList'; $branch.SetBounds(24, 404, 290, 28)
 $version = New-Object Windows.Forms.ComboBox; $version.DropDownStyle = 'DropDownList'; $version.SetBounds(326, 404, 290, 28)
 $form.Controls.AddRange(@($branch, $version))
-$null = $branch.Items.Add('main'); $branch.SelectedIndex = 0
+$null = $branch.Items.Add('ashenspire'); $branch.SelectedIndex = 0
 $null = $version.Items.Add($pin.tag); $version.SelectedIndex = 0
 $status = Label 'The matching game art is available even when the online catalog is offline.' 24 439 592 39
 $install = Button 'Use this high-quality art for installation' 484
@@ -95,7 +95,8 @@ $script:downloading = $false; $script:cancelDownload = $false
 $form.add_FormClosing({
   if ($script:downloading) { $script:cancelDownload = $true; $_.Cancel = $true }
 })
-$script:pinnedRelease = [pscustomobject]@{ Tag = $pin.tag; Url = "https://github.com/$($pin.repo)/releases/download/$($pin.tag)/$($pin.packs.high.zip)"; ChecksumUrl = ''; Bytes = 0 }
+$legacyPinnedRepository = if ($pin.repo -ceq 'cehinds/AshenSpire-art') { $pin.repo } else { $null }
+$script:pinnedRelease = [pscustomobject]@{ Tag = $pin.tag; Url = "https://github.com/$($pin.repo)/releases/download/$($pin.tag)/$($pin.packs.high.zip)"; ChecksumUrl = ''; Bytes = 0; PinnedRepository = $legacyPinnedRepository }
 function SelectedRelease {
   $tag = [string]$version.SelectedItem
   if ($tag -eq $pin.tag) { return $script:pinnedRelease }
@@ -115,9 +116,11 @@ function UpdateSelection {
   try {
     if ($release) {
       Busy $true 'Checking that this art release is included in the selected branch...'
-      # The pinned offline fallback is main, where the public art releases originate.
-      $valid = if (-not $script:catalog) { [string]$branch.SelectedItem -eq 'main' -and $release.Tag -eq $pin.tag }
-               else { Test-ArtBranch ([string]$branch.SelectedItem) $release.Tag }
+      # The installer already pins its compatible release, including legacy
+      # configurations whose old tag is absent from the shared-host catalog.
+      $valid = if ($release.Tag -eq $pin.tag) { [string]$branch.SelectedItem -ceq 'ashenspire' }
+               elseif ($script:catalog) { Test-ArtBranch ([string]$branch.SelectedItem) $release.Tag }
+               else { $false }
     }
     Busy $false ''
     $install.Enabled = $valid -and $release.Tag -eq $pin.tag
@@ -142,12 +145,12 @@ $refresh.add_Click({
     $branch.Items.Clear(); foreach ($item in $next.Branches) { $null = $branch.Items.Add($item) }
     $version.Items.Clear(); foreach ($item in $next.Releases) { $null = $version.Items.Add($item.Tag) }
     if (-not $version.Items.Contains($pin.tag)) { $null = $version.Items.Add($pin.tag) }
-    $branch.SelectedItem = if ($branch.Items.Contains($oldBranch)) { $oldBranch } else { 'main' }
+    $branch.SelectedItem = if ($branch.Items.Contains($oldBranch)) { $oldBranch } else { 'ashenspire' }
     $version.SelectedItem = $oldVersion
     $latest.Text = "Latest published art: $($next.Releases[0].Tag) ($($next.Releases[0].Published))"
   } catch {
     Busy $false ("Catalog unavailable; matching art remains available. " + $_.Exception.Message)
-    $install.Enabled = ([string]$version.SelectedItem -eq $pin.tag -and [string]$branch.SelectedItem -eq 'main')
+    $install.Enabled = ([string]$version.SelectedItem -eq $pin.tag -and [string]$branch.SelectedItem -eq 'ashenspire')
     $download.Enabled = $install.Enabled
     return
   } finally { $script:updating = $false }
@@ -163,7 +166,7 @@ $download.add_Click({
   $release = SelectedRelease
   if (-not $download.Enabled -or -not $release) { return }
   $dialog = New-Object Windows.Forms.SaveFileDialog
-  $dialog.Filter = 'Art archive (*.zip)|*.zip'; $dialog.FileName = "$($release.Tag).zip"; $dialog.OverwritePrompt = $true
+  $dialog.Filter = 'Art archive (*.zip)|*.zip'; $dialog.FileName = Get-ArtArchiveName $release.Tag; $dialog.OverwritePrompt = $true
   try {
     if ($dialog.ShowDialog($form) -ne 'OK') { return }
     Busy $true 'Downloading and checking the art archive. This can take a few minutes...'
