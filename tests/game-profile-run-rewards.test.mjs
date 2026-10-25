@@ -35,8 +35,10 @@ test('shop stock persists and failed purchases do not debit or grant',()=>{
  const counters=createRng(71);const beforeCounters=counters.getCounters();
  assert.deepEqual(gameProfileShopStock(reg,structuredClone(run),counters,{shopId:'act1'}),stock);assert.deepEqual(counters.getCounters(),beforeCounters);
  run.cinders=0;const before=JSON.stringify(run);assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0),/Insufficient/);assert.equal(JSON.stringify(run),before);
- run.cinders=100;purchaseGameProfileShopOffer(reg,run,'act1',0);assert.equal(run.cinders,90);
- assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0),/claimed/);assert.equal(run.cinders,90);
+ // Each Core offer carries its own price (rolled once, saved with the stock); the flat price stays as the old-save fallback.
+ assert.ok(stock.options.every(row=>Number.isSafeInteger(row.price)&&row.price>10));
+ run.cinders=100000;purchaseGameProfileShopOffer(reg,run,'act1',0);assert.equal(run.cinders,100000-stock.options[0].price);
+ assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0),/claimed/);assert.equal(run.cinders,100000-stock.options[0].price);
 });
 
 test('owned basic cards are never offered; most card offers are rank 1+ (owner 2026-10-17)',()=>{

@@ -37,7 +37,7 @@ test('owned cards are weighted down, non-casting maneuvers up, and the pick is d
   assert.equal(combat.ownedCopyWeight, 0.2);
   assert.equal(cardPickWeight(combat, { tags: ['maneuver:casting'] }, 0), 1);
   assert.equal(cardPickWeight(combat, { tags: ['maneuver:attack'] }, 0), 3);
-  assert.equal(cardPickWeight(combat, { tags: ['maneuver:smash'] }, 2), 10 * 0.2 * 0.2);
+  assert.ok(Math.abs(cardPickWeight(combat, { tags: ['maneuver:smash'] }, 2) - 10 * 0.2 * 0.2) < 1e-12);
   assert.equal(cardPickWeight({}, { tags: ['x'] }, 3), 1);
   const a = sample(weighted, 30), b = sample(weighted, 30);
   assert.deepEqual(a, b);
