@@ -117,7 +117,9 @@ import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEng
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
 import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
-import { dlog } from '../debuglog.js';
+import { dlog, registerConsoleSnapshot } from '../debuglog.js';
+import { mountCombatDebugButton } from '../components/combatDebugButton.js';
+import { modalOpen } from '../modalState.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
@@ -314,6 +316,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render();
     },
   });
+  // Debug mode: a Console button that lives outside the combat input pipeline.
+  const debugButton = mountCombatDebugButton(combatEl, { readSettings });
   // Menu > Settings can change Auto combat behind this screen; repaint the footer switch when the overlay closes.
   const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) renderCombatTools(); else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
   window.addEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
@@ -576,6 +580,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return { busy, busyForMs, enemyPlayback, pendingReaction: combat.pendingReaction?.id || null, reactionModalOpen: !!reactionShell,
       pendingDiscard: hasCardChoice(combat), phase: combat.phase, result: combat.result };
   };
+  // One line of combat input state, recorded when the console is opened from
+  // combat. Reads existing state only; a failure is swallowed by openConsoleLog.
+  const releaseConsoleSnapshot = registerConsoleSnapshot(() => {
+    if (!combatEl.isConnected) return null;
+    const p = combat.player || {};
+    let card = 'none';
+    if (selected != null) {
+      const inst = combat.piles.hand.find(c => c.instanceId === selected);
+      let cost = '?';
+      try { const pv = previewCard(combat, selected, undefined, upcastRanksByCard.get(selected)); cost = `${pv.costIsX ? 'X' : pv.cost}E/${pv.staminaCost || 0}SP/${pv.manaCost || 0}MP`; } catch (e) { /* cost unknown */ }
+      card = `${selected}${inst ? '' : ' (not in hand)'} cost ${cost}`;
+    }
+    return `combat input: phase=${combat.phase} result=${combat.result || 'none'} busy=${busy} enemyPlayback=${enemyPlayback} `
+      + `dragging=${combatEl.classList.contains('drag-targeting')} selected=${card} selectedFlask=${selectedFlask ?? 'none'} selfArm=${selfArm ?? 'none'} `
+      + `energy=${p.energy}/${p.energyMax} stamina=${p.stamina} mana=${p.mana} pickTarget=${selected != null || selectedFlask != null} `
+      + `pendingReaction=${combat.pendingReaction?.id || 'none'} reactionModal=${!!reactionShell} cardChoice=${hasCardChoice(combat)} modalOpen=${!!modalOpen()}`;
+  });
   // One extra line once the lock has held for more than 3 s.
   const logIgnored = (what, why) => {
     dlog('ignored', what, why);
@@ -1614,6 +1635,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderCombatTools() {
+    debugButton.sync();
     combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion >= 1,
       enabled: combat.player.reactionsEnabled !== false,
       disabled: busy || combat.phase !== 'player' || hasCardChoice(combat) || !!combat.pendingReaction,
@@ -3813,6 +3835,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         combatLayout.release();
         closeCombatFullLog(combatToolsState);
         combatTools.release();
+        debugButton.release();
+        releaseConsoleSnapshot();
         reactionNote.clear();
         aimObserver?.disconnect();
         releaseSelectionWatch();
