@@ -156,3 +156,29 @@ test('with a full store, a real card play and End Turn still apply and warn', ()
   assert.ok(h.logs.some(l => l[0] === 'save'));
   assert.equal(store.map.has(runKey(1)), false, 'nothing was written');
 });
+
+test('an old-format save (no savedAt stamp) still loads, and a refused re-save leaves the slot readable', () => {
+  const { run, rng } = freshRun(13);
+  const store = limitedStorage();
+  const save = createSaveManager(store);
+  save.saveRun(run, rng, 1);
+  const old = JSON.parse(store.map.get(runKey(1)));
+  delete old.savedAt; // saves from before the slot stamp carry none
+  store.map.set(runKey(1), JSON.stringify(old));
+  const loaded = save.loadRun(registries, 1);
+  assert.ok(loaded, 'the old-format run loads');
+  assert.equal(loaded.seed, run.seed);
+  const before = store.map.get(runKey(1));
+  store.budget = store.used(); // now full
+  assert.throws(() => save.saveRun(loaded, rng, 1), error => isStorageFullError(error));
+  assert.equal(store.map.get(runKey(1)), before, 'the previous bytes survive a refused write');
+  assert.ok(save.loadRun(registries, 1), 'and still load');
+});
+
+test('size budget: a mid-run save with a 45-card deck stays far below a localStorage quota', () => {
+  const { run, rng } = freshRun(5);
+  [...registries.cards.ids()].slice(0, 45).forEach((cardId, i) => run.deck.push({ instanceId: `big${i}`, cardId, upgraded: i % 2 === 0 }));
+  const store = limitedStorage();
+  createSaveManager(store).saveRun(run, rng, 1);
+  assert.ok(store.map.get(runKey(1)).length < 100000, `run blob is ${store.map.get(runKey(1)).length} chars`);
+});
