@@ -2,8 +2,30 @@
 
 Two parts, one page:
 
-1. [Changing game content (`content/source/`)](#changing-game-content-contentsource): the "to change X, edit Y" table, the five-step workflow, JSON basics, what stays code and the common mistakes. Start here.
-2. [Visual Studio, game packs and recipes](#part-2--editing-ashenspire-without-an-agent): the Core game-pack files, interface layout and timing, named icons.
+1. [Changing game content (`content/source/`)](#changing-game-content-contentsource): the shared content every game reads, as a "to change X, edit Y" table, with the five-step workflow, JSON basics, what stays code and the common mistakes.
+2. [Visual Studio, game packs and recipes](#part-2--editing-ashenspire-without-an-agent): the Core game pack, interface layout and timing, named icons.
+
+**Read this first: which file wins.** The default player game is **Core**. Core
+installs its own pack, `games/ashenspire/packs/core/`, on top of the shared
+content, and for the things below the pack's file wins. Edit those in the pack
+([Core: edit the active game pack first](#core-edit-the-active-game-pack-first)),
+then run `node tools/game-config.mjs build` and `node tools/game-config.mjs check`.
+
+| In Core, this comes from the pack | Pack file |
+| --- | --- |
+| The cards in a Core deck (ids starting `core.`, such as `core.strike` and the class specials) | `cards.json`, costs in `resourceVariants.json`, pools in `cardPools.json` |
+| A class's starting attributes, deck, equipment, special card and description | `characters.json` (and `starterDeck.json`) |
+| How attributes turn into HP, draw and the rest in Core | `stats.json` |
+| Enemy attributes, decks, behavior, boss phases and starting Poise | `characters.json` |
+| Enemy attacks and per-hit damage | `enemyCards.json` |
+| Base reward cards and their statuses | `games/ashenspire/packs/base-cards/cards.json`, `statuses.json` |
+| Map routes, rest services, shop offers, victory reward offers, class unlocks | `routes.json`, `rests.json`, `shops.json`, `rewards.json`, `classUnlocks.json` |
+| Minimum stats to equip gear | none: Core switches equipment requirements off |
+
+The rest (encounters, events, relics, items and equipment, progression,
+balance numbers, interface text and the other tables in Part 1) comes from the
+shared content in Part 1, in Core too. If an edit in Part 1 does not show up in
+Core, check the table above and Part 2 for a pack file that owns it.
 
 ## Changing game content (`content/source/`)
 
@@ -26,17 +48,17 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Which cards a weapon gives | `weaponCardPackages.json`, `basicCardProfiles.csv`, `cardEquipmentExceptions.csv` | Basic strike/guard cards follow the weapon's profile. |
 | Whether a card deals fire, frost and so on | `cardExposure.csv` | One row per card that carries a damage school. |
 | Mana rules for spell cards | `cardManaPolicy.json` | Which cards must cost Mana. |
-| A class's HP, starting relic, flasks, card pool | `classes.json` | Four classes: reaver, starseer, rogue, herald. |
-| What a class starts with | `startingKits.csv` | One free baseline kit per class. |
+| A class's HP, starting relic, flasks, card pool | `classes.json` | Four classes: reaver, starseer, rogue, herald. In Core the pack sets HP, deck and special card. |
+| What a class starts with | `startingKits.csv` | One free baseline kit per class. Core uses the pack's `starterDeck.json` and `characters.json`. |
 | Keyword tooltips (Exhaust, Retain...) | `keywords.json` | Five rows. Names and tooltip text only. |
-| What a status does (Bleed, Burn...) | `statuses.json` | 56 rows. Stack mode, decay, tooltip. Expansion statuses are code. |
+| What a status does (Bleed, Burn...) | `statuses.json` | 56 rows. Stack mode, decay, tooltip. Expansion statuses are code; base-card statuses in Core are in the base-cards pack. |
 | Stances | `stances.json` | Three rows. |
 
 #### Enemies, encounters, events
 
 | To change... | Edit this file | Notes |
 | --- | --- | --- |
-| An enemy's HP, attributes, moves | `act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json` | One file per act, eleven enemies each. |
+| An enemy's HP, attributes, moves | `act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json` | One file per act, eleven enemies each. Core's enemy decks, attacks and Poise are in the pack. |
 | Which enemies appear together, per region | `wealdEncounters.json`, `marchesEncounters.json`, `reachEncounters.json` | One row per fight: enemies, weight, pool, floor band. |
 | Boss tougher or easier by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | See the balance table below. |
 | Event text and choices | `events.json` | Choice ids go in `eventChoiceIds.json`, same length as the choices. |
@@ -49,7 +71,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 
 | To change... | Edit this file | Notes |
 | --- | --- | --- |
-| What shops sell and how often | `shops.json` | Prices and stock sizes are in `balanceShop.json`. |
+| What shops sell and how often | `shops.json` | Prices and stock sizes are in `balanceShop.json`. Core's shop offers are the pack's `shops.json`. |
 | Consumable books and tokens | `consumableBooks.json`, `consumableTokens.json` | Class skill books are also made from `classes.json`. |
 | Flasks (potions) | `flasks.json` | Seven rows. |
 | Relics | `relics.json` | The relic's combat effect is a separate rule: a row in `nodes.csv`, `nodeEffects.json` and `tagging.csv` that shares the relic's id. |
@@ -58,7 +80,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Armour sets | `outfits.csv` | |
 | Slots, modifiers, what a card modifier rewrites | `equipSlots.csv`, `equipMods.csv`, `equipTargets.csv` | The words a modifier may use. |
 | Cards a piece carries | `equipmentGrants.csv` | |
-| Minimum stats to equip | `equipmentRequirements.csv` | |
+| Minimum stats to equip | `equipmentRequirements.csv` | Core switches these off. |
 | Smithing upgrades per tier | `itemUpgradeChanges.csv` | One row is one number change. |
 | The Armoury screen layout | `armouryUi.json` | |
 
@@ -94,9 +116,9 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Start of a run: draw, flasks, starting Cinders, deck size | `balanceCore.json` | Some rows say they are unused; the `$note` says so. |
 | Costs a card pays when it names a resource | `balanceCosts.json`, `balanceMana.json` | Stamina, Mana and Actions floors. |
 | Minimum deck size | `balanceDeck.json` | Rises with character level. |
-| Rewards after fights: card choices, Cinders, rarity odds, flask drops | `balanceRewards.json` | |
+| Rewards after fights: card choices, Cinders, rarity odds, flask drops | `balanceRewards.json` | Core's reward offers are the pack's `rewards.json`. |
 | Shop stock sizes, prices, selling | `balanceShop.json` | |
-| Rest sites: how much HP a camp or shrine heals | `balanceRest.json` | |
+| Rest sites: how much HP a camp or shrine heals | `balanceRest.json` | Core's rest services are the pack's `rests.json`. |
 | XP from wins and kills | `balanceXp.json` | |
 | Character level-up points and level cap | `balanceLevelUp.json`, `balanceLevels.json` | |
 | Skills: drafts, ranks, feat rhythm | `balanceSkill.json`, `balanceProgression.json` | |
