@@ -1,5 +1,8 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/map/mapview.js';
+import { actRegionId } from '../../model/environmentArt.js';
+import { paintingFrame } from '../../model/mapPaintingFrame.js';
+import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 import { builtInFor } from '../highResArt.js';
@@ -364,6 +367,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
   const world = act.authoredMap || worldMapForRun(act);
+  // The painting is framed so the act's start sits on its region's biome (mapPaintingFrame.js).
+  const paintingAnchor = act.authoredMap ? null : world.biomes?.[actRegionId(act)] || null;
+  const paintingArt = MAP_ART[world.map]?.levels.at(-1);
+  const startNodes = (act.startIds || []).map(id => byId[id]).filter(Boolean);
+  const paintingStart = startNodes.length
+    ? { x: startNodes.reduce((t, n) => t + px(n), 0) / startNodes.length, y: startNodes.reduce((t, n) => t + py(n), 0) / startNodes.length }
+    : null;
   const groundSvg = act.authoredMap ? authoredMapTerrainHtml({ art: act.authoredMap, fog, visited: nodes.filter(n => traveled.has(n.id) || n.id === current).map(n => mapPoint(n, height)) }) : mapTerrainHtml({
     world, width, height, fog,
     points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: px(n), y: py(n) })),
@@ -726,7 +736,22 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plates land. The terrain shares this viewport-wide ground too: fitting
     // the painting to a one-column route graph leaves a narrow strip of art.
     // Its SVG image uses a uniform cover fit, so architecture never stretches.
+    const frame = paintingAnchor && paintingArt && paintingStart
+      ? paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: { x0, y0, w, h }, start: paintingStart })
+      : null;
+    const painting = svgEl.querySelector('.map-painting');
+    if (painting) {
+      if (frame) painting.setAttribute('transform', frame.transform); else painting.removeAttribute('transform');
+      painting.dataset.flipX = frame?.flipX ? '1' : '0';
+      painting.dataset.flipY = frame?.flipY ? '1' : '0';
+      painting.dataset.framed = frame ? 'biome' : 'cover';
+    }
     for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image, .map-terrain .terrain-detail')) {
+      if (frame && el.classList.contains('terrain-detail')) {
+        el.setAttribute('x', '0'); el.setAttribute('y', '0');
+        el.setAttribute('width', String(frame.cw)); el.setAttribute('height', String(frame.ch));
+        continue;
+      }
       el.setAttribute('x', String(x0));
       el.setAttribute('y', String(y0));
       el.setAttribute('width', String(w));

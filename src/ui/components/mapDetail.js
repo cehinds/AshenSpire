@@ -34,7 +34,7 @@ export function mountMapDetail(port, surface, source) {
     const w = source.width * scale, h = source.height * scale;
     return { width: w, height: h, x: (width - w) / 2, y: (height - h) / 2 };
   };
-  const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); surface.append(tiles);
+  const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); base.parentNode.append(tiles); // beside the base image, inside any framing transform it carries
   const cache = new Map(), failed = new Set(), pending = new Set();
   const loading = new Set(); // the Image of each tile in flight, dropped on dispose
   let generation = 0; // bumped when the art source changes
@@ -138,7 +138,14 @@ export function mountMapDetail(port, surface, source) {
       for (const pattern of svg.querySelectorAll('.map-paper-pattern')) if (pattern.getAttribute('patternTransform') !== scale) pattern.setAttribute('patternTransform', scale);
     }
     level = detailLevel(art.levels,rect.width,rect.height,devicePixelRatio,level);
-    desired = visibleTiles(level,{x0:(view.left-rect.left)/rect.width,y0:(view.top-rect.top)/rect.height,x1:(view.right-rect.left)/rect.width,y1:(view.bottom-rect.top)/rect.height});
+    // A mirrored painting (biome framing, mapPaintingFrame.js) is addressed in
+    // the tiles' own, unmirrored coordinates.
+    const mirror = base.parentNode?.dataset || {};
+    let fx0 = (view.left-rect.left)/rect.width, fx1 = (view.right-rect.left)/rect.width;
+    let fy0 = (view.top-rect.top)/rect.height, fy1 = (view.bottom-rect.top)/rect.height;
+    if (mirror.flipX === '1') [fx0, fx1] = [1 - fx1, 1 - fx0];
+    if (mirror.flipY === '1') [fy0, fy1] = [1 - fy1, 1 - fy0];
+    desired = visibleTiles(level,{x0:fx0,y0:fy0,x1:fx1,y1:fy1});
     setData('detailRequested', String(level.edge));
     // Only the small visible set is requested, even at Fit. `cache` only
     // records which tiles have loaded (policy.cacheTiles bounds it); the

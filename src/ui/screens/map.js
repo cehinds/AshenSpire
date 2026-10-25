@@ -242,7 +242,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatOrder: run.seatOrder, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
