@@ -95,6 +95,15 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
     }
     for (const [id, metadata] of Object.entries(row.cardHints || {})) {
       const source = cards.get(id);
+      // Core-only offense (owner, 2026-10-25): a hint with coreOffense "card" takes its move's hit count and per-hit
+      // damage from the Core card, so a multi-hit move trimmed to fit the enemy's SP pool stays in Core content only.
+      if (metadata.coreOffense === 'card' && moves[metadata.legacyMove]) {
+        const hits = (source?.effects || []).filter(effect => effect.op === 'damage');
+        if (hits.length !== 1 || !Number.isSafeInteger(hits[0].amount) || !Number.isSafeInteger(hits[0].hits ?? 1) || moves[metadata.legacyMove].damage === undefined) {
+          throw new GameConfigError(`$/content/enemies/${def.id}/cardHints/${id}/coreOffense`, 'requires one whole-number damage effect on the card and a move with authored damage');
+        }
+        moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], damage: hits[0].amount, hits: hits[0].hits ?? 1 };
+      }
       if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
         rangeOverrides.set(JSON.stringify([def.id, metadata.legacyMove]), source.range);
       }

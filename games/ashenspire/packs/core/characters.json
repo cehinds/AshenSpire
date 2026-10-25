@@ -786,7 +786,8 @@
         "fellWarden.twinDaggers": {
           "aiWeight": 35,
           "costSource": "authored",
-          "legacyMove": "twinDaggers"
+          "legacyMove": "twinDaggers",
+          "coreOffense": "card"
         },
         "fellWarden.advance": {
           "aiWeight": 0,
@@ -848,7 +849,8 @@
         "lanternMoth.wingSparks": {
           "aiWeight": 65,
           "costSource": "authored",
-          "legacyMove": "wingSparks"
+          "legacyMove": "wingSparks",
+          "coreOffense": "card"
         },
         "lanternMoth.advance": {
           "aiWeight": 0,
@@ -1793,7 +1795,8 @@
         "stitchedKing.thousandHands": {
           "aiWeight": 40,
           "costSource": "stance",
-          "legacyMove": "thousandHands"
+          "legacyMove": "thousandHands",
+          "coreOffense": "card"
         },
         "stitchedKing.advance": {
           "aiWeight": 0,
@@ -1855,7 +1858,8 @@
         "mirrorScribe.shardVolley": {
           "aiWeight": 50,
           "costSource": "stance",
-          "legacyMove": "shardVolley"
+          "legacyMove": "shardVolley",
+          "coreOffense": "card"
         },
         "mirrorScribe.polishedWard": {
           "aiWeight": 20,
@@ -2059,7 +2063,8 @@
             }
           },
           "costSource": "stance",
-          "legacyMove": "shatteredCourt"
+          "legacyMove": "shatteredCourt",
+          "coreOffense": "card"
         },
         "glassRegent.advance": {
           "aiWeight": 0,
@@ -2652,7 +2657,8 @@
           "aiWeight": 30,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "whirlwind"
+          "legacyMove": "whirlwind",
+          "coreOffense": "card"
         },
         "blightedValkyrie.rotWings": {
           "aiWeight": 20,
@@ -2663,7 +2669,8 @@
         "blightedValkyrie.scarletDance": {
           "aiWeight": 35,
           "costSource": "stance",
-          "legacyMove": "scarletDance"
+          "legacyMove": "scarletDance",
+          "coreOffense": "card"
         },
         "blightedValkyrie.advance": {
           "aiWeight": 0,
@@ -3017,7 +3024,8 @@
           "aiWeight": 45,
           "maxConsecutive": 2,
           "costSource": "stance",
-          "legacyMove": "orbitalShards"
+          "legacyMove": "orbitalShards",
+          "coreOffense": "card"
         },
         "hollowAstronomer.totalEclipse": {
           "aiWeight": 35,
@@ -3160,7 +3168,8 @@
             }
           },
           "costSource": "stance",
-          "legacyMove": "ashBreath"
+          "legacyMove": "ashBreath",
+          "coreOffense": "card"
         },
         "ashheartDragon.advance": {
           "aiWeight": 0,

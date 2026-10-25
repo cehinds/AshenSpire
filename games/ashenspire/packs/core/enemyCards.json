@@ -514,8 +514,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 4
+        "amount": 4,
+        "hits": 3
       }
     ],
     "tags": [
@@ -570,8 +570,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 3
+        "amount": 4,
+        "hits": 2
       }
     ],
     "tags": [
@@ -1684,8 +1684,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 6
+        "amount": 6,
+        "hits": 3
       }
     ],
     "tags": [
@@ -1740,8 +1740,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3,
-        "hits": 3
+        "amount": 4,
+        "hits": 2
       }
     ],
     "tags": [
@@ -1977,8 +1977,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7,
-        "hits": 5
+        "amount": 12,
+        "hits": 3
       }
     ],
     "tags": [
@@ -2548,8 +2548,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
-        "hits": 5
+        "amount": 10,
+        "hits": 2
       },
       {
         "op": "applyStatus",
@@ -2616,8 +2616,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5,
-        "hits": 5
+        "amount": 12,
+        "hits": 2
       }
     ],
     "tags": [
@@ -2935,8 +2935,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8,
-        "hits": 4
+        "amount": 11,
+        "hits": 3
       }
     ],
     "tags": [
@@ -3110,8 +3110,8 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9,
-        "hits": 4
+        "amount": 18,
+        "hits": 2
       }
     ],
     "tags": [

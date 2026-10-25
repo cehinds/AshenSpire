@@ -232,6 +232,12 @@ for (const enemy of roster) {
   enemyCards.push(enemyAdvanceCard(enemy.id));
   if (row.rangeRetreatMove) enemyCards.push(enemyRetreatCard(enemy.id));
   for (const card of enemyCards) if (authoredCards.get(card.id)?.range) card.range = authoredCards.get(card.id).range;
+  // A Core-only offense trim (coreOffense "card", owner 2026-10-25) keeps its authored card effects and its hint.
+  const authoredHints = authoredEnemies.get(row.id)?.cardHints || {};
+  for (const card of enemyCards) if (authoredHints[card.id]?.coreOffense) {
+    card.effects = structuredClone(authoredCards.get(card.id).effects);
+    row.cardHints[card.id].coreOffense = authoredHints[card.id].coreOffense;
+  }
   enemies.push(row);
   {
     const maxHp = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings)).hp;

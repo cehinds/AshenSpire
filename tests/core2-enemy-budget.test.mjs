@@ -298,3 +298,42 @@ test('an enemy that cannot afford a multi-hit move never picks it', () => {
   for (let i = 0; i < 20; i++) for (const row of buildEnemyQueue(enemy, crowded, { combat, pick: (e, d, maxSp, pricing) => Object.keys(d.moves).find(id => id === 'tripleCut' && enemyMoveQuote(d.moves[id], { enemy: e, moveId: id, combat: pricing }).totalSp <= maxSp) ?? 'caneStrike' })) picked.add(row.moveId);
   assert.ok(!picked.has('tripleCut'), 'a 3 SP move is not queued from a 2 SP pool');
 });
+
+// Boss tier from the encounter pools, as tools/enemy-decks-convert.mjs reads it.
+const BOSSES = new Set(Object.values(await import('../src/content/encounters/weald.js')).concat(Object.values(await import('../src/content/encounters/marches.js')), Object.values(await import('../src/content/encounters/reach.js')))
+  .filter(Array.isArray).flat().filter(row => row?.pool === 'boss').flatMap(row => row.enemies || []));
+// Boss pools count at most 3 SP (the combat-damage branch caps bosses at 3).
+const spCap = (id, pool) => BOSSES.has(id) ? Math.min(pool, 3) : pool;
+function damageMovePrices(id) {
+  const combat = fight(id), enemy = combat.enemies[0], def = registries.enemies.get(id);
+  const cap = spCap(id, enemy.maxStamina);
+  const moves = Object.entries(def.moves).filter(([, move]) => move.damage != null || (move.effects || []).some(effect => effect.op === 'damage'))
+    .map(([moveId, move]) => ({ moveId, sp: enemyMoveSp(move, { enemy, moveId, combat }) }));
+  return { cap, moves };
+}
+// Single-hit 2 SP moves against a 1 SP native pool, unaffordable before the multi-hit price existed: the owner decides
+// these separately. The list is exact, so a new gap or a fix both fail here.
+const SINGLE_HIT_PRICE_GAPS = ['charredColossus', 'huskBrute', 'livingArmor', 'stitchCrab'];
+
+test('every Core enemy has at least one damage move it can afford (boss pools taken as min(pool, 3))', () => {
+  assert.ok(BOSSES.has('ashheartDragon') && BOSSES.has('fellWarden'), 'the boss tier is read from the encounter pools');
+  const without = [];
+  for (const id of registries.enemies.ids()) {
+    const { cap, moves } = damageMovePrices(id);
+    if (moves.length && !moves.some(move => move.sp <= cap)) without.push(id);
+  }
+  assert.deepEqual(without.sort(), SINGLE_HIT_PRICE_GAPS, 'only the named single-hit price gaps lack an affordable damage move');
+});
+
+test('the trimmed multi-hit moves fit their enemy\'s pool (owner, 2026-10-25)', () => {
+  const trimmed = { lanternMoth: ['wingSparks'], mirrorScribe: ['shardVolley'], blightedValkyrie: ['whirlwind', 'scarletDance'], fellWarden: ['twinDaggers'],
+    hollowAstronomer: ['orbitalShards'], stitchedKing: ['thousandHands'], glassRegent: ['shatteredCourt'], ashheartDragon: ['ashBreath'] };
+  for (const [id, moveIds] of Object.entries(trimmed)) {
+    const { cap, moves } = damageMovePrices(id);
+    for (const moveId of moveIds) assert.ok(moves.find(move => move.moveId === moveId).sp <= cap, `${id}.${moveId} fits ${cap} SP`);
+  }
+  // The trim is Core content only: the shared (legacy) move keeps its hits.
+  const legacy = createRegistries(contentBundle);
+  assert.equal(legacy.enemies.get('stitchedKing').moves.thousandHands.hits, 6);
+  assert.equal(registries.enemies.get('stitchedKing').moves.thousandHands.hits, 3);
+});
