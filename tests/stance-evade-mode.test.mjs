@@ -11,8 +11,6 @@ import { beginTacticalAction, setCombatStance } from '../src/engine/combatMatchu
 import { attackHitPreview, resolveAttackHit } from '../src/engine/stanceHit.js';
 import { createRng } from '../src/engine/rng.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { stanceRules } from '../src/content/stanceRules.js';
-const ENTRY = stanceRules.evadeStacks;
 
 const registries = createRegistries(contentBundle);
 function playCrawlingShot(prone) {
@@ -38,7 +36,7 @@ function playCrawlingShot(prone) {
 
 test('Crawling Shot grants its conditional Advantage for one shared eligible avoidance check', () => {
   const { ctx, actor, enemy, carrier, incoming } = playCrawlingShot(true);
-  assert.equal(actor.statuses.evade.stacks, ENTRY, 'Evade entry grants stanceRules.evadeStacks (3, owner 2026-10-25)');
+  assert.equal(actor.statuses.evade.stacks, 1);
   assert.deepEqual(actor.nextEvadeMode, { advantage: true, disadvantage: false, whileStatus: 'prone' });
   const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot });
@@ -50,7 +48,7 @@ test('Crawling Shot grants its conditional Advantage for one shared eligible avo
   assert.deepEqual(receipt.counterAttack.dice, [19, 1]);
   assert.equal(receipt.avoided, true);
   assert.equal(draws, 2, 'three contacts share one advantaged defender decision');
-  assert.equal(actor.statuses.evade?.stacks || 0, ENTRY - 1, 'the eligible miss consumes one stack');
+  assert.equal(actor.statuses.evade?.stacks || 0, 0, 'the eligible miss consumes one stack');
   assert.equal(actor.nextEvadeMode, undefined);
   ctx.rng.int = () => { draws++; return 19; };
   assert.equal(resolveAttackHit(ctx, enemy, actor, incoming).mode, 'normal');
@@ -82,7 +80,7 @@ test('conditional Advantage waits through range, Target, disabled Evasion and a 
   assert.deepEqual(actor.nextEvadeMode, pending, 'a missing condition does not consume the prepared eligible check');
   actor.statuses.prone = { stacks: 1 };
   assert.equal(attackHitPreview(ctx, enemy, actor, incoming).mode, 'disadvantage');
-  assert.equal(actor.statuses.evade.stacks, ENTRY, 'none of the ineligible actions consumes the stack');
+  assert.equal(actor.statuses.evade.stacks, 1, 'none of the ineligible actions consumes the stack');
 });
 
 test('Clear Head waits through ordinary attacks until an actual Evade is available', () => {
@@ -114,4 +112,24 @@ test('Clear Head waits through ordinary attacks until an actual Evade is availab
   assert.equal(draws, 2, 'the whole incoming action shares one advantaged decision');
   assert.equal(actor.nextEvadeMode, undefined);
   assert.equal(actor.statuses.evade?.stacks || 0, 0);
+});
+
+// Core 2 (owner, 2026-10-25): Evade entry grants the Evade card's three stacks. The non-Core expanded path above keeps
+// the global stanceRules.evadeStacks of 1; a resumed fight keeps its snapshotted rule, which is what its card face reads.
+test('Core Evade entry grants 3 stacks from Core rules, a resumed fight keeps its snapshot value, non-Core stays 1', async () => {
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { stanceEntryBonuses } = await import('../src/model/stanceRules.js');
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const coreRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries: coreRegistries, classId: 'reaver', seed: 511 });
+  const core = createRunCombat({ registries: coreRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const evade = { combatProfile: { camp: 'physical', maneuver: 'evade', range: 'melee' } };
+  assert.equal(stanceEntryBonuses(evade, core).evade, 3);
+  const resumed = { ...core, fixCoreRules: { ...core.fixCoreRules, accuracy: { ...core.fixCoreRules.accuracy, evadeStackBase: 1 } } };
+  assert.equal(stanceEntryBonuses(evade, resumed).evade, 1, 'a resumed 0ca59 fight keeps its snapshotted grant');
+  const legacy = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'rogue', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, deck: [] } });
+  assert.equal(stanceEntryBonuses(evade, legacy).evade, 1, 'non-Core expanded combat keeps one stack');
 });
