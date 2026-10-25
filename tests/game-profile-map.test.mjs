@@ -8,7 +8,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
-import { mapKnowledge, resolveMapMode, HIDDEN, KNOWN } from '../src/model/map/mapknowledge.js';
+import { mapKnowledge, resolveMapMode, nearestShrine, litNodes, HIDDEN, KNOWN } from '../src/model/map/mapknowledge.js';
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
@@ -208,4 +208,21 @@ test('authored threat threshold controls generation, validates boss depth, and c
   assert.equal(resolveMapMode({ settings: { mapMode: 'path' } }, { gameProfile: resolveGameProfile('current') }), 'path');
   const authored = setup({ mapMode: 'path' });
   assert.equal(resolveMapMode({}, authored.run), 'path');
+});
+
+test('a rest lights only its own branch\'s next rest, never a sibling branch\'s', () => {
+  const { reg, run } = setup();
+  let checked = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
+    if (map.bossIds.length < 2) continue;
+    for (const rest of Object.values(map.nodes).filter(node => node.type === 'shrine' && node.floor === 3)) {
+      const found = nearestShrine({ graph: map, from: rest.id });
+      assert.equal(map.nodes[found.id].branch, rest.branch);
+      const lit = litNodes({ graph: map, run: { path: [rest.id], mapNodeId: rest.id } });
+      for (const id of lit) if (map.nodes[id].type === 'shrine' && id !== rest.id) assert.equal(map.nodes[id].branch, rest.branch, `${id} lit from ${rest.id}`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 10);
 });
