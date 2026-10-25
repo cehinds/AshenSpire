@@ -256,10 +256,11 @@ const profileQuery = new URLSearchParams(location.search);
 const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
 let registryGameProfile = selectedGameProfile;
-let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
+// The first rebuild below owns construction after saved profile/settings and
+// promoted defaults have settled. It also installs that registry's vocabulary
+// and class glyphs; an earlier provisional build has no screen to serve.
+let registries;
 let xpCombat = null;
-configureTooltipGlossary(registries);
-setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
   const result = validateContent(configured);
