@@ -106,3 +106,12 @@ test('the terrain choice is decorative and consumes no RNG', () => {
     mapGraph: { nodes: { n1: { id: 'n1', type: 'combat' } } }, mapTerrain: { nodeId: 'n1', settingId: 'city' } };
   assert.deepEqual(combatEnvironment(run), combatEnvironment(JSON.parse(JSON.stringify(run))));
 });
+
+import { validateRunShape } from '../src/model/state.js';
+
+test('the run schema accepts a well-formed mapTerrain and rejects a malformed one', () => {
+  const about = (mapTerrain) => [validateRunShape({ mapTerrain })].flat().filter((p) => /mapTerrain/.test(String(p)));
+  assert.deepEqual(about({ nodeId: 'a', settingId: 'city' }), []);
+  assert.deepEqual(about(undefined), []);
+  assert.ok(about({ nodeId: '', settingId: 5 }).length > 0);
+});
