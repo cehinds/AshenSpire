@@ -39,13 +39,18 @@ function causewayRegion(run, node) {
 
 // The terrain the player travelled onto (run.mapTerrain, recorded by the map
 // screen from the painting under the node) outranks the node-type rule. A boss
-// keeps its dungeon unless the ground is a city or a bridge. Old saves and
-// runs with no framed painting carry none and keep the node-type rule.
-function combatSetting(run, nodeId, node) {
+// keeps its dungeon unless the ground is a city or a bridge. Null when the run
+// has none for this node (old saves, no framed painting).
+export function mapTerrainSetting(run, nodeId, node) {
   const terrain = nodeId && run.mapTerrain?.nodeId === nodeId ? run.mapTerrain.settingId : null;
-  if (node?.type === 'boss') return terrain === 'city' || terrain === 'bridge' ? terrain : 'dungeon';
+  if (!terrain) return null;
+  return node?.type === 'boss' && terrain !== 'city' && terrain !== 'bridge' ? null : terrain;
+}
+
+function combatSetting(run, nodeId, node) {
+  const terrain = mapTerrainSetting(run, nodeId, node);
   if (terrain) return terrain;
-  return node?.type === 'merchant' ? 'city' : 'road';
+  return node?.type === 'boss' ? 'dungeon' : node?.type === 'merchant' ? 'city' : 'road';
 }
 
 export function combatEnvironment(run = {}) {

@@ -115,3 +115,27 @@ test('the run schema accepts a well-formed mapTerrain and rejects a malformed on
   assert.deepEqual(about(undefined), []);
   assert.ok(about({ nodeId: '', settingId: 5 }).length > 0);
 });
+
+import { layeredCombatScene } from '../src/model/layeredEnvironments.js';
+
+const layered = (type, region, mapTerrain) => {
+  const run = { seedString: 'TERRAIN', actNumber: 1, floor: 3, environmentRegionId: region,
+    mapNodeId: 'n1', mapGraph: { nodes: { n1: { id: 'n1', type } } }, ...(mapTerrain ? { mapTerrain } : {}) };
+  return layeredCombatScene(run, combatEnvironment(run))?.id ?? null;
+};
+
+test('the live layered backdrop follows the terrain too', () => {
+  assert.equal(layered('combat', 'ashen-crown'), null);            // type "combat" has no layered road (unchanged)
+  assert.equal(layered('fight', 'ashen-crown'), 'open-road');
+  assert.equal(layered('fight', 'ashen-crown', { nodeId: 'n1', settingId: 'city' }), 'city-street');
+  assert.equal(layered('fight', 'hollow-weald', { nodeId: 'n1', settingId: 'city' }), 'village-lane');
+  assert.equal(layered('fight', 'hollow-weald', { nodeId: 'n1', settingId: 'forest' }), 'forest-path');
+  // A bridge, shore or mine the region has painted but not layered is the atlas scene.
+  assert.equal(layered('fight', 'ashen-crown', { nodeId: 'n1', settingId: 'bridge' }), null);
+  assert.equal(layered('fight', 'drowned-coast', { nodeId: 'n1', settingId: 'bridge' }), null);
+  assert.equal(layered('fight', 'cinder-reach', { nodeId: 'n1', settingId: 'mine' }), null);
+  // A region with neither keeps its road.
+  assert.equal(layered('fight', 'hollow-weald', { nodeId: 'n1', settingId: 'bridge' }), 'forest-path');
+  // Terrain for another node changes nothing.
+  assert.equal(layered('fight', 'ashen-crown', { nodeId: 'other', settingId: 'city' }), 'open-road');
+});
