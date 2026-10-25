@@ -9,7 +9,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY } from '../src/engine/save.js';
+import { createSaveManager, isStorageFullError, runKey } from '../src/engine/save.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -53,7 +53,7 @@ test('isStorageFullError knows the quota shapes', () => {
   assert.equal(isStorageFullError(null), false);
 });
 
-test('a full store with nothing reclaimable still throws and keeps savedAt honest', () => {
+test('a full store still throws and keeps savedAt honest', () => {
   const store = limitedStorage();
   const save = createSaveManager(store);
   const { run, rng } = freshRun();
@@ -62,30 +62,6 @@ test('a full store with nothing reclaimable still throws and keeps savedAt hones
   store.setItem = () => { throw quotaError(); };
   assert.throws(() => save.saveRun(run, rng, 1), error => isStorageFullError(error));
   assert.equal(run.savedAt, stamped, 'a lost write does not claim a save');
-});
-
-test('quota retry frees salvage index bytes and a stale backup, once, then writes', () => {
-  const { run, rng } = freshRun();
-  const probe = limitedStorage();
-  createSaveManager(probe).saveRun(run, rng, 1);
-  const runSize = probe.map.get(runKey(1)).length + runKey(1).length;
-  const store = limitedStorage();
-  const save = createSaveManager(store);
-  save.loadMeta(); save.saveMeta(save.loadMeta());
-  const salvageKey = `${RUN_ARCHIVE_KEY}_salvage_123`;
-  store.map.set(salvageKey, 'x'.repeat(5000));
-  store.map.set(META_BACKUP_KEY, JSON.stringify({ stale: true }) + ' '.repeat(2000));
-  store.map.set(`${RUN_ARCHIVE_KEY}_profile_keep`, 'a salvaged PROFILE the player owns');
-  store.map.set(runKey(2), 'another slot the player owns');
-  // Room for the run only if the ~7000 reclaimable characters are freed first.
-  store.budget = store.used() + runSize - 3000;
-  save.saveRun(run, rng, 1);
-  assert.ok(store.map.has(runKey(1)), 'the run landed after the retry');
-  assert.equal(store.map.has(salvageKey), false, 'the index salvage was reclaimed');
-  assert.equal(store.map.has(META_BACKUP_KEY), false, 'the stale backup was reclaimed');
-  assert.ok(store.map.has(`${RUN_ARCHIVE_KEY}_profile_keep`), 'a salvaged profile is never touched');
-  assert.equal(store.map.get(runKey(2)), 'another slot the player owns', 'other save slots are never touched');
-  assert.ok(store.map.has(META_KEY), 'the primary profile is untouched');
 });
 
 test('a save slot is never deleted to make room', () => {
@@ -111,7 +87,7 @@ function door({ saveRun }) {
   const context = {
     saves: { saveRun }, activeSlot: 1, isStorageFullError, Date,
     dlog: (...args) => logs.push(args), console: { warn: (...a) => warns.push(a) },
-    failureBanner: (key, title, body) => { const el = { key, title, body, remove() { this.removed = true; } }; banners.push(el); return el; },
+    failureBanner: (key, title, body) => { const el = { key, title, body, dataset: { failureKey: key }, remove() { this.removed = true; } }; banners.push(el); return el; },
     setTimeout: () => 0,
   };
   runInNewContext(`${doorSource}\nthis.saveCombatCandidate = saveCombatCandidate; this.reportAutosaveFailure = reportAutosaveFailure;`, context);
@@ -127,7 +103,7 @@ test('a refused combat checkpoint is reported once per window and never refuses 
   assert.equal(h.banners.length, 1, 'the player-facing warning is throttled');
   assert.match(h.banners[0].body, /browser storage is full/);
   assert.match(h.banners[0].body, /Your game continues/);
-  assert.match(h.banners[0].body, /save slots/);
+  assert.match(h.banners[0].body, /delete an old save slot/);
   assert.equal(h.context.reportAutosaveFailure(quotaError(), Date.now() + 31000), true, 'warns again after the window');
 });
 

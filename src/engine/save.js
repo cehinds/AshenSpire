@@ -621,38 +621,6 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     return { created: true, ok: true };
   }
 
-  // ---- RECLAIMABLE SPACE (quota retry) --------------------------------------
-  // What the game itself left behind and can drop without losing player data:
-  //  · `sote_run_archived_salvage_*`: the raw bytes of an archive INDEX that
-  //    could not be parsed (readArchiveIndex), kept only for a human to read;
-  //  · a stale profile backup: the mirror of a primary that no longer matches
-  //    it, only while the primary itself still parses (saveMeta rewrites it).
-  // Save slots, archived runs and salvaged PROFILES are never touched here.
-  // Returns the characters freed.
-  function freeReclaimableSpace() {
-    if (readOnlyProfile) return 0;
-    let freed = 0;
-    if (typeof storage.key === 'function' && Number.isInteger(storage.length)) {
-      const doomed = [];
-      for (let i = 0; i < storage.length; i++) {
-        const name = storage.key(i);
-        if (typeof name === 'string' && name.startsWith(`${RUN_ARCHIVE_KEY}_salvage_`)) doomed.push(name);
-      }
-      for (const name of doomed) {
-        freed += String(storage.getItem(name) ?? '').length;
-        storage.removeItem(name);
-      }
-    }
-    const backup = storage.getItem(META_BACKUP_KEY);
-    const primary = storage.getItem(META_KEY);
-    if (backup != null && primary != null && backup !== primary) {
-      let primaryReadable = false;
-      try { JSON.parse(primary); primaryReadable = true; } catch { /* keep the backup: it may be the only good copy */ }
-      if (primaryReadable) { freed += backup.length; storage.removeItem(META_BACKUP_KEY); }
-    }
-    return freed;
-  }
-
   return {
     /**
      * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
@@ -668,18 +636,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       // write lands, so a full store cannot leave a run claiming a save it lost.
       const previous = run.savedAt;
       run.savedAt = new Date().toISOString();
-      try {
-        const json = serializeRun(run);
-        try {
-          storage.setItem(runKey(slot), json);
-        } catch (error) {
-          // A full store gets ONE retry after the game's own reclaimable bytes
-          // are freed. Never a save slot or an archived run: those are the
-          // player's, and the warning points them to the slots instead.
-          if (!isStorageFullError(error) || freeReclaimableSpace() <= 0) throw error;
-          storage.setItem(runKey(slot), json);
-        }
-      } catch (error) { run.savedAt = previous; throw error; }
+      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }
     },
 
     /**
