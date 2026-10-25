@@ -64,8 +64,8 @@ with tempfile.TemporaryDirectory(prefix='hurt-path-fixture-') as temporary:
             return (10,10,100,200),(256,256)
         module.alpha_box=alpha_box
         module.main(['--cache',str(cache)])
-        assert opened[::2]==expected_hurt
-        assert opened[1::2]==expected_ready
+        assert [pathlib.Path(p).resolve() for p in opened[::2]]==[pathlib.Path(p).resolve() for p in expected_hurt], {'actual':opened[::2],'expected':expected_hurt}
+        assert [pathlib.Path(p).resolve() for p in opened[1::2]]==[pathlib.Path(p).resolve() for p in expected_ready], {'actual':opened[1::2],'expected':expected_ready}
         output=pathlib.Path(module.OUT).read_text()
         assert 'export const playerHurtFrames' in output and all(actor in output for actor in ready)
         assert not (art/'src/content/playerHurtFrames.js').exists()
