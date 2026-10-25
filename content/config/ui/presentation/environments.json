@@ -326,7 +326,17 @@
           "pale-marches": { "rect": { "x": 0.05, "y": 0.0, "w": 0.5, "h": 0.15 }, "flipX": false, "flipY": true },
           "cinder-reach": { "rect": { "x": 0.62, "y": 0.0, "w": 0.38, "h": 0.4 }, "flipX": false, "flipY": true },
           "ashen-crown": { "rect": { "x": 0.4, "y": 0.28, "w": 0.2, "h": 0.24 }, "flipX": false, "flipY": false }
-        }
+        },
+        "terrain": [
+          { "rect": [0.38, 0.28, 0.25, 0.15], "settingId": "city" },
+          { "rect": [0.66, 0.6, 0.22, 0.06], "settingId": "bridge" },
+          { "rect": [0.6, 0.7, 0.14, 0.05], "settingId": "bridge" },
+          { "rect": [0.66, 0.0, 0.34, 0.5], "settingId": "mine" },
+          { "rect": [0.0, 0.88, 1.0, 0.12], "settingId": "shore" },
+          { "rect": [0.5, 0.55, 0.5, 0.45], "settingId": "shore" },
+          { "rect": [0.0, 0.75, 0.1, 0.25], "settingId": "shore" },
+          { "rect": [0.0, 0.2, 0.5, 0.68], "settingId": "forest" }
+        ]
       },
       {
         "id": "the-shattered-gulf",
@@ -337,7 +347,15 @@
           "pale-marches": { "rect": { "x": 0.4, "y": 0.0, "w": 0.55, "h": 0.12 }, "flipX": false, "flipY": true },
           "cinder-reach": { "rect": { "x": 0.02, "y": 0.5, "w": 0.28, "h": 0.35 }, "flipX": false, "flipY": false },
           "ashen-crown": { "rect": { "x": 0.35, "y": 0.35, "w": 0.3, "h": 0.3 }, "flipX": false, "flipY": false }
-        }
+        },
+        "terrain": [
+          { "rect": [0.5, 0.69, 0.18, 0.05], "settingId": "bridge" },
+          { "rect": [0.0, 0.35, 0.3, 0.45], "settingId": "mine" },
+          { "rect": [0.33, 0.25, 0.3, 0.45], "settingId": "shore" },
+          { "rect": [0.3, 0.74, 0.7, 0.26], "settingId": "shore" },
+          { "rect": [0.0, 0.8, 0.3, 0.2], "settingId": "shore" },
+          { "rect": [0.6, 0.15, 0.4, 0.55], "settingId": "forest" }
+        ]
       },
       {
         "id": "the-fivefold-frontier",
@@ -348,7 +366,15 @@
           "pale-marches": { "rect": { "x": 0.65, "y": 0.0, "w": 0.35, "h": 0.25 }, "flipX": false, "flipY": true },
           "cinder-reach": { "rect": { "x": 0.0, "y": 0.0, "w": 0.3, "h": 0.2 }, "flipX": false, "flipY": true },
           "ashen-crown": { "rect": { "x": 0.35, "y": 0.28, "w": 0.3, "h": 0.3 }, "flipX": false, "flipY": false }
-        }
+        },
+        "terrain": [
+          { "rect": [0.36, 0.28, 0.25, 0.18], "settingId": "city" },
+          { "rect": [0.0, 0.0, 0.35, 0.22], "settingId": "mine" },
+          { "rect": [0.0, 0.88, 1.0, 0.12], "settingId": "shore" },
+          { "rect": [0.55, 0.62, 0.45, 0.38], "settingId": "shore" },
+          { "rect": [0.9, 0.38, 0.1, 0.25], "settingId": "shore" },
+          { "rect": [0.0, 0.3, 0.45, 0.58], "settingId": "forest" }
+        ]
       }
     ]
   },
