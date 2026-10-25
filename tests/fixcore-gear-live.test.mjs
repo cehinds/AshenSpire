@@ -46,9 +46,8 @@ test('equipped resolved values reach live pools/ratings once and survive restore
 });
 test('previously earned Core attribute entitlement remains claimable and changes live AR', () => {
   const run=fresh(), old=gameProfileRatingReceipt(reg,run).totals.ar;
-  assert.equal(profile.modules.progression.characterLevels,false, 'fresh Core no longer queues character attributes');
-  // Grandfather a point earned before skill-only Core progression. New XP
-  // policy must not erase an already earned entitlement or its stat gain.
+  assert.equal(profile.modules.progression.characterLevels,true, 'Core earns character levels');
+  // A point already earned stays claimable and changes live AR.
   run.level.level=2; run.level.unspentPoints=1;
   withGameProfileService(run,'levelUp',()=>applyLevelUp(reg,run,'strength'));
   assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,old+1);
