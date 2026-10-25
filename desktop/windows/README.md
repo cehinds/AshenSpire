@@ -48,10 +48,16 @@ whose version and branch are shown above the selectors.
 
 The chooser shows the current installed art, the release required by this game,
 and the latest published art version after checking GitHub. Branch and version
-selectors use the public `cehinds/AshenSpire-art` catalog; a release is offered
-for download only when the selected branch contains its commit. Branches with
-unpublished work do not have a new packaged version until an art release is
-published. **Refresh branches and art versions** updates the catalog.
+selectors use the public `cehinds/AI-Art` catalog, restricted to its `ashenspire`
+branch and `ashenspire-hd-assets-v<N>` releases. Other projects and the shared
+repository main branch are not offered. A discovered release is offered for
+download only when `ashenspire` contains its commit. Unpublished work has no
+new packaged version until an art release is published. **Refresh branches and art versions** updates the catalog.
+
+Release tags are project-scoped, but archive basenames remain `hd-assets-v<N>.zip`
+(and the matching light/common basenames). Older installer configurations keep
+their exact `cehinds/AshenSpire-art` pin, archive URL and checksum; discovery does
+not fall back to the old host or list its branches.
 
 **Use this high-quality art for installation** selects the matching game pack.
 Other versions can be saved with **Download this art separately**, which opens
