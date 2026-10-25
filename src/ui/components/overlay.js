@@ -13,6 +13,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction, lockEquipmentRows } from './quicknav.js';
+import { openConsoleLog } from '../debuglog.js';
 import { statProjection } from '../../model/statProjection.js';
 import { characterLevelOf } from '../../model/state.js';
 import { closeFlaskActionMenu } from './flask.js';
@@ -258,6 +259,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         tab: (id) => selectTab(id),
         ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
         ...(onLoad ? { load: () => { const loaded = onLoad({ returnFocusElement: anchor }); if (loaded) closeOverlay(); return loaded; } } : {}),
+        console: () => { openConsoleLog({ opener: anchor }); },
         ...(onSave ? { save: saveAction(onSave) } : {}),
         ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
         ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),

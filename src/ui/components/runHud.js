@@ -22,6 +22,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { actionHint } from '../input.js';
 import { MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from './quicknav.js';
+import { openConsoleLog } from '../debuglog.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
@@ -265,6 +266,7 @@ export function wireRunHud(app, {
           tab: (id) => onMenu(id),
           ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
           ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
+          console: () => { openConsoleLog({ opener: menuBtn }); },
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
           ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
