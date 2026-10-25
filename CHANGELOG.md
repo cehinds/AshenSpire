@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
-- **Art downloads use the shared AshenSpire art branch** ([#2303](https://github.com/cehinds/AshenSpire/pull/2303), `0.7.1.1839`). The game and Windows art chooser now use the verified v23 packs hosted in AI-Art's AshenSpire branch. Art intake and version lists stay scoped to this game, archive names and checksums are preserved, and older installer pins remain readable. Build stamping retains full commit/tree history while fetching older file contents only when needed. Local checks and artwork adoption recognize the new pin while preserving original encoder provenance.
-
+- **Art downloads use the shared AshenSpire art branch** ([#2303](https://github.com/cehinds/AshenSpire/pull/2303), `0.7.1.1841`). The game and Windows art chooser now use the verified v23 packs hosted in AI-Art's AshenSpire branch. Art intake and version lists stay scoped to this game, archive names and checksums are preserved, and older installer pins remain readable. Build stamping retains full commit/tree history while fetching older file contents only when needed. Local checks and artwork adoption recognize the new pin while preserving original encoder provenance.
+- **Console in the ≡ Menu** ([#2304](https://github.com/cehinds/AshenSpire/pull/2304), `0.7.1.1841`). The quick menu now has a Console row, so the error and tap log opens from the map, a fight or any menu screen, without turning on Debug mode.
 - **Refused card inputs reach the Command log** ([#2286](https://github.com/cehinds/AshenSpire/pull/2286), `0.7.1.1839`). Tapping or completing a hold on a card you cannot afford now records the card, its costs and your available resources in Settings → Command log, including refusals that never reach the play action.
 
 ## 2026-10-24
