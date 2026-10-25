@@ -119,7 +119,8 @@
 //   2  a floor fired — this run judged nothing it can vouch for
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRegistries } from '../src/model/registries.js';
 import { relicInRewardPool } from '../src/model/schemas.js';
 import { eligibleWeaponArts } from '../src/model/armamentTrading.js';
@@ -137,13 +138,13 @@ export const ALLOWED_UNREACHABLE = [];
 // Gourd, `core2`, 2026-10-25). Returns Map(relicId → pack) of the weighted relics.
 function profileWeightedRelics() {
   const out = new Map();
-  const root = new URL('../games/', import.meta.url);
+  const root = join(fileURLToPath(import.meta.url), '..', '..', 'games');
   if (!existsSync(root)) return out;
   for (const game of readdirSync(root, { withFileTypes: true })) {
-    const packs = new URL(`${game.name}/packs/`, root);
+    const packs = join(root, game.name, 'packs');
     if (!game.isDirectory() || !existsSync(packs)) continue;
     for (const pack of readdirSync(packs, { withFileTypes: true })) {
-      const file = new URL(`${pack.name}/rewards.json`, packs);
+      const file = join(packs, pack.name, 'rewards.json');
       if (!pack.isDirectory() || !existsSync(file)) continue;
       const relics = JSON.parse(readFileSync(file, 'utf8'))?.eligibility?.relics;
       for (const [id, weight] of Object.entries(relics?.weights || {})) if (weight > 0) out.set(id, { pack: pack.name, pools: relics.pools || [] });
