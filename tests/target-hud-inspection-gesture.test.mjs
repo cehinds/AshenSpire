@@ -161,3 +161,36 @@ test('an independently eligible target keeps precedence within an accepted click
   f.down(2); f.up(2); f.click(2, 2); f.dblclick();
   assert.deepEqual(f.plays, ['e1', 'e1']); assert.equal(f.reads.length, 0);
 });
+
+test('Enter on a focused target HUD panel is left to the panel; the cursor card is not pressed', async () => {
+  const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  withKitDom(({ document, Event }, _window, listeners) => {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const previousStyle = globalThis.getComputedStyle;
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { getGamepads: () => [] } });
+    globalThis.getComputedStyle = () => ({ visibility: 'visible', display: 'block' });
+    try {
+      const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
+      const cursorCard = document.createElement('button'); cursorCard.className = 'card'; app.append(cursorCard);
+      let cardClicks = 0; cursorCard.addEventListener('click', () => { cardClicks += 1; });
+      focusElement(cursorCard);
+      initInput();
+      const panel = document.createElement('div'); panel.className = 'target-hud-panel';
+      panel.setAttribute('role', 'button'); panel.tabIndex = 0;
+      const name = document.createElement('span'); name.className = 'target-hud-name'; panel.append(name);
+      app.append(panel); panel.focus();
+      for (const target of [panel, name]) {
+        const enter = new Event('keydown', { key: 'Enter', target, bubbles: true });
+        for (const handler of listeners.get('keydown').slice(0, 2)) handler(enter);
+        assert.equal(enter.defaultPrevented, false, 'global confirm leaves Enter to the panel');
+      }
+      for (const handler of listeners.get('keyup') || []) handler(new Event('keyup', { key: 'Enter', target: panel, bubbles: true }));
+      assert.equal(cardClicks, 0, 'the cursor card is never pressed by Enter on the panel');
+      clearFocus();
+    } finally {
+      if (descriptor) Object.defineProperty(globalThis, 'navigator', descriptor); else delete globalThis.navigator;
+      if (previousStyle === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = previousStyle;
+    }
+  });
+});
