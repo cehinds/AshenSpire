@@ -1,0 +1,93 @@
+{
+  "PR": 2322,
+  "capturedSource": "86a1417b30726de1b59b2f3704f1d20728c26410",
+  "capturedAtUTC": "2026-10-25T20:21:52.552Z",
+  "build": {
+    "_": "DERIVED \u2014 written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1857,
+    "digest": "04fdb60963",
+    "built": "2026-10-25"
+  },
+  "HTML": {
+    "path": "AshenSpire.html",
+    "bytes": 14775463,
+    "sha256": "1700008cc7fb0aaa2f15896f0044938e2d581480ad843451b68c9ddd2274a3c2"
+  },
+  "sourceFiles": 1104,
+  "localOfficialReproduction": true,
+  "downloadedCIArtifactBytes": false,
+  "sharedAssets": "all8334 original nonHTML byte-identical to immutable canonicalM pack",
+  "deploySidecar": "supported ../../map-official1852-build-1792955185672117846/pack/ base",
+  "nativeFlow": "fresh ordinary boot \u2192 trusted startup gate activation \u2192 title \u2192 NewGame \u2192 slot1 \u2192 review \u2192 classes",
+  "fonts": 15,
+  "glyphsAndLocksAsserted": true,
+  "viewports": [
+    {
+      "name": "mobile",
+      "width": 375,
+      "height": 667,
+      "DPR": 3,
+      "touch": true
+    },
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 720,
+      "DPR": 1,
+      "touch": false
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "DPR": 1,
+      "touch": false
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768,
+      "DPR": 1,
+      "touch": true
+    }
+  ],
+  "screenshotEncoding": "original lossless PNG, CSS pixel scale; rendererDPR3 on375x667, DPR1 others; no stretch",
+  "rawReportSHA256": "f2970115ef08c09dc5968aa500d3b395ba7bd3401286ae09b482747ed11e7488",
+  "rawReportLocal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/D-output/REPORT.json",
+  "cleanup": {
+    "browserPIDAbsent": true,
+    "profileAbsent": true,
+    "serverClosed": true,
+    "integrityClosed": true
+  },
+  "knownExpectedHTTP": "optional LAN discovery /api/lan/info404, one associated console error per fresh context; no unexplained errors",
+  "performanceClaim": false,
+  "publicPlay": "Not verified: publisher repair pending; these are local official-source reproduction captures, not hosted Play evidence",
+  "files": [
+    {
+      "path": "docs/preview/features/startup-registry-once/mobile.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/D-output/mobile-classes.png",
+      "bytes": 117221,
+      "sha256": "f382554f4aec5395120dc81e5e44c438d05653b15d98174465ba370a283d633e"
+    },
+    {
+      "path": "docs/preview/features/startup-registry-once/desktop.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/D-output/desktop-classes.png",
+      "bytes": 291119,
+      "sha256": "83e6dcf66593b6070a0cfabb045689084274cb0a97ab237d7f5318f3704e7ca4"
+    },
+    {
+      "path": "docs/preview/features/startup-registry-once/wide.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/D-output/wide-classes.png",
+      "bytes": 523220,
+      "sha256": "ee24bf4fd00713e12d72f575685d2d9eebd07e15ab85e50f7132d54f65fa7d16"
+    },
+    {
+      "path": "docs/preview/features/startup-registry-once/tablet.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/D-output/tablet-classes.png",
+      "bytes": 203471,
+      "sha256": "6f31086784c5e1b2846144472940ce9ab8e8e77661724eae6f6e66f997789a09"
+    }
+  ]
+}
