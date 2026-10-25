@@ -272,7 +272,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   }
   const bossIds = bosses.map((boss, k) => {
     const id = `boss_${k}`;
-    nodes[id] = { id, floor: count + 1, col: k * lanes + (lanes - 1) / 2, branch: k, type: 'boss', actualType: 'boss', next: [], encounterId: boss.id, label: bossDestinationLabel(registries, boss.id) };
+    nodes[id] = { id, floor: count + 1, col: k * lanes + (lanes - 1) / 2, branch: k, type: 'boss', actualType: 'boss', next: [], encounterId: boss.id, label: bossDestinationLabel(registries, boss.id), destinationLabel: bossDestinationLabel(registries, boss.id) }; // named now, so each branch shows its boss before any reload
     return id;
   });
   layers.push(bossIds);
@@ -281,7 +281,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
       const from = nodes[id];
       from.next = layers[depth + 1].filter((target) => {
         const to = nodes[target];
-        if (depth === 0) return from.actualType === 'rest' || (to.actualType === 'rest' ? Math.floor(from.col / lanes) === to.branch : Math.abs(from.col - to.col) <= 1); // the shared opening reaches every branch
+        if (depth === 0) return from.actualType === 'rest' || (to.actualType === 'rest' || to.type === 'boss' ? Math.floor(from.col / lanes) === to.branch : Math.abs(from.col - to.col) <= 1); // the shared opening reaches every branch
         if (from.branch !== to.branch) return false;
         const single = from.actualType === 'rest' || to.type === 'boss' || to.actualType === 'rest';
         return single || Math.abs(from.col - to.col) <= 1;

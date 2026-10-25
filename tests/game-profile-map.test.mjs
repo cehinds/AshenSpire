@@ -118,6 +118,18 @@ test('branch width, length, rest placement and exposed node types follow JSON se
   verifyPaths(noRestMap, []);
   assert.equal(noRestMap.shrineId, null);
 });
+test('a one-depth branched route links every entrance to its branch boss', () => {
+  const named = setup();
+  const fresh = buildActMap(named.reg, createRng(4), named.run.seatOrder[0], 1);
+  assert.ok(fresh.bossIds.every(id => fresh.nodes[id].destinationLabel), 'branch bosses are named on a fresh map');
+  for (const maxBranches of [1, 2]) {
+    const { reg, run } = setup({ prebossNodes: 1, restsPerAct: 0, restFloors: [], requirePrebossRest: false, minimumThreatFloor: 2, branchColumns: 5, maxBranches });
+    for (let seed = 1; seed <= 20; seed++) {
+      const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
+      for (const id of map.startIds) assert.ok(map.nodes[id].next.length && map.nodes[id].next.every(next => map.bossIds.includes(next)), `${id} reaches a boss (seed ${seed})`);
+    }
+  }
+});
 test('branched map choices survive a run round trip without regeneration', () => {
   const { reg, run } = setup();
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
