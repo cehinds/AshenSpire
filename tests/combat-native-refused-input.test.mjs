@@ -68,8 +68,8 @@ for (const input of ['tap', 'confirm']) {
     assert.deepEqual(h.logs, []);
   });
 
-  test(`native ${input} takes a queued card back before affordability`, () => {
-    const h = harness({ queued: true });
+  test(`native ${input} takes a queued card back before busy and affordability guards`, () => {
+    const h = harness({ queued: true, busy: true });
     h[input]();
     assert.deepEqual(h.calls, ['unqueue']);
     assert.deepEqual(h.logs, []);
