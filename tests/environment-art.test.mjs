@@ -6,7 +6,7 @@ import { manifestIds } from '../tools/art-source.mjs';
 const SHIPPED = manifestIds();
 import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
 import { readFileSync } from 'node:fs';
-import { paintingFrame, paintingGround } from '../src/model/mapPaintingFrame.js';
+import { paintingFrame, paintingGround, paintingFrameKey } from '../src/model/mapPaintingFrame.js';
 import { regionForRun, combatEnvironment, worldMapForRun, actRegionId } from '../src/model/environmentArt.js';
 import { mapTerrainHtml } from '../src/ui/components/environmentArt.js';
 import { mapKnowledge } from '../src/model/map/mapknowledge.js';
@@ -121,14 +121,26 @@ test('no-free-pan ground covers every viewBox centring can reach (hollow-weald, 
   assert.ok(old.ox > 20 - w / 2);
 });
 
-test('panning does not re-frame the painting: the ground and so the frame ignore the pan offset', () => {
+test('panning does not re-frame the painting: the cache key and frame ignore the pan offset', () => {
   const ink = { x0: 0, y0: 0, x1: 435, y1: 1000 }, w = 360, y0 = -200, h = 1400;
   const anchor = MEGA_MAPS[1].biomes['cinder-reach'], start = { x: 217, y: 1000 };
-  // the viewBox x0 at two pan offsets is irrelevant: only ink, w, y0, h enter
-  const frames = [0, 75].map(() => paintingFrame({ anchor, aspect: 2 / 3, box: paintingGround({ ink, w, y0, h }), start }));
-  assert.equal(frames[0].scale, frames[1].scale);
-  assert.equal(frames[0].transform, frames[1].transform);
-  assert.deepEqual(paintingGround({ ink, w, y0, h }), paintingGround({ ink, w, y0, h }));
+  // mirror apply(): the viewBox x0 is aimX - w/2 and moves with every pan; the ground it frames against must not
+  const keyAt = (aimX, freePan) => {
+    const viewX0 = aimX - w / 2; // what a pan changes; never passed to the ground
+    const box = paintingGround({ ink, w, y0, h, aim: freePan ? null : { min: ink.x0, max: ink.x1 } });
+    assert.ok(Number.isFinite(viewX0));
+    return { key: paintingFrameKey(box), frame: paintingFrame({ anchor, aspect: 2 / 3, box, start }) };
+  };
+  for (const freePan of [false, true]) {
+    const runs = [20, 100, 217, 330, 415].map(a => keyAt(a, freePan));
+    for (const r of runs.slice(1)) {
+      assert.equal(r.key, runs[0].key);
+      assert.equal(r.frame.transform, runs[0].frame.transform);
+    }
+  }
+  // and the key does change when the ground does (a different viewport width)
+  const wider = paintingFrameKey(paintingGround({ ink, w: 500, y0, h, aim: { min: ink.x0, max: ink.x1 } }));
+  assert.notEqual(wider, keyAt(217, false).key);
 });
 
 test('solo and co-op hand the act its seatOrder (the biome framing wiring)', () => {

@@ -1,7 +1,7 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/map/mapview.js';
 import { actRegionId } from '../../model/environmentArt.js';
-import { paintingFrame, paintingGround } from '../../model/mapPaintingFrame.js';
+import { paintingFrame, paintingGround, paintingFrameKey } from '../../model/mapPaintingFrame.js';
 import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
@@ -743,7 +743,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // x0 and must only translate the painting. Re-solved when the act, board
     // size or zoom changes (the key), never per glide frame.
     const frameBox = paintingGround({ ink: inkBox, w, y0, h, aim: freePan ? null : { min: inkBox.x0, max: inkBox.x1 } });
-    const frameKey = [frameBox.x0, frameBox.y0, frameBox.w, frameBox.h].map(v => Math.round(v * 100)).join('|');
+    const frameKey = paintingFrameKey(frameBox);
     if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
     else if (frameCache.key !== frameKey) {
       frameCache = { key: frameKey, frame: paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: frameBox, start: paintingStart }) };

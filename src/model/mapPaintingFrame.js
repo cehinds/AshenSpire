@@ -68,3 +68,8 @@ export function paintingGround({ ink, w, y0, h, aim }) {
   const x0 = Math.min(ink.x0, mid - w / 2);
   return { x0, y0, w: Math.max(ink.x1, mid + w / 2) - x0, h };
 }
+
+/** The cache key for a solved frame: changes only when the ground does (a pan never changes it). */
+export function paintingFrameKey(box) {
+  return [box.x0, box.y0, box.w, box.h].map(v => Math.round(v * 100)).join('|');
+}
