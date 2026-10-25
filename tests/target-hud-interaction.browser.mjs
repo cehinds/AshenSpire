@@ -67,11 +67,21 @@ try {
       await page.keyboard.press('Escape');
       await inspector.waitFor({ state: 'detached' });
     }
+    // The game cursor may sit on a hand card while the panel has DOM focus;
+    // Enter belongs to the panel and must not also press that card.
+    const handState = () => page.evaluate(() => ({
+      selected: [...document.querySelectorAll('.hand .card.selected, .hand .card.is-selected, .hand .card.armed')].length,
+      candidates: document.querySelectorAll('.combatant.target-hud-candidate').length,
+      played: window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length,
+    }));
+    await page.evaluate(() => { document.querySelector('.gp-focus')?.classList.remove('gp-focus'); document.querySelector('.hand .card')?.classList.add('gp-focus'); });
+    const beforeEnter = await handState();
     await panel.locator('.target-hud-panel').focus();
     await page.keyboard.press('Enter');
     await inspector.waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
     await inspector.waitFor({ state: 'detached' });
+    assert.deepEqual(await handState(), beforeEnter, 'Enter on the panel leaves the cursor card unpressed');
     if (width === 390) {
       await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=3&shotEnemyCount=3&shotHand=5`, { waitUntil: 'networkidle' });
       const strike = page.locator('.hand .card[data-card-id="core.strike"]').first();
