@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
-- **Harder-hitting Core 2 combat, smarter rewards and a roomier battlefield** ([#2327](https://github.com/cehinds/AshenSpire/pull/2327), `0.7.1.1858`). Block now soaks magic (piercing hits skip it), Evade gives 3 stacks, enemies are a little weaker, bosses act at most three times a turn, and multi-hit moves cost stamina per hit (finesse and spell multi-hits cost less); card rewards favour your stance cards and rarely repeat what you own, every hand item can drop, the new Brimming Gourd grows and refills your flasks, and each shop item has its own, lower price; the combat header and footer are slimmer so the fight gets more room.
+- **Harder-hitting Core 2 combat, smarter rewards and a roomier battlefield** ([#2327](https://github.com/cehinds/AshenSpire/pull/2327), `0.7.1.1860`). Block now soaks magic (piercing hits skip it), Evade gives 3 stacks, enemies are a little weaker, bosses act at most three times a turn, and multi-hit moves cost stamina per hit (finesse and spell multi-hits cost less); card rewards favour your stance cards and rarely repeat what you own, every hand item can drop, the new Brimming Gourd grows and refills your flasks, and each shop item has its own, lower price; the combat header and footer are slimmer so the fight gets more room.
 
 - **Startup, map framing and inactive auras** ([#2322](https://github.com/cehinds/AshenSpire/pull/2322), `0.7.1.1858`). The game builds your selected rules once during loading. Map selection and refits share the visible area above the footer, while empty auras stay still and Lite mode or phones keep visible aura cues without the breathing animation.
 
