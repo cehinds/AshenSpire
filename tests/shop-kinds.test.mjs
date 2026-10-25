@@ -296,7 +296,8 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
   // Freeze colorless candidates too, since shops draw those outside cardPool.
   const capturedCards = JSON.parse(readFileSync(new URL('./fixtures/shop-card-catalog-pre-master.json', import.meta.url), 'utf8')).cards;
   const capturedIds = new Set(capturedCards.map(card => card.id));
-  const CAPTURE_REG = createRegistries({ ...legacyContentBundle, cards: capturedCards,
+  // The Core flask relic (2026-10-24) post-dates the capture; the replay shelf is drawn without it.
+  const CAPTURE_REG = createRegistries({ ...legacyContentBundle, cards: capturedCards, relics: legacyContentBundle.relics.filter((row) => row.id !== 'brimmingGourd'),
     classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => capturedIds.has(id) && !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {
     const before = fixture.shelves[n];
