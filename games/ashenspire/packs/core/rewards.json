@@ -16,7 +16,14 @@
         "item:blade"
       ],
       "members": [
-        "straightSword"
+        "straightSword",
+        "katana",
+        "twinblade",
+        "battleaxe",
+        "cinderAxe",
+        "frostSpear",
+        "halberd",
+        "warhammer"
       ]
     },
     "shields": {
@@ -29,7 +36,9 @@
         "kiteShield",
         "towerShield",
         "roundShield",
-        "spikedShield"
+        "spikedShield",
+        "lantern",
+        "torch"
       ]
     },
     "scepters": {
@@ -39,7 +48,14 @@
       ],
       "members": [
         "boneSceptre",
-        "emberlightSceptre"
+        "emberlightSceptre",
+        "ashStaff",
+        "starstoneStaff",
+        "goldboughBranch",
+        "blightRod",
+        "gorefireBrand",
+        "wyrmhornStaff",
+        "duskChime"
       ]
     },
     "bows": {
