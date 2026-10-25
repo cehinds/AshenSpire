@@ -2843,7 +2843,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const logUnaffordable = (input) => {
       const reason = unplayableReason(inst);
-      logIgnored(`card ${input} ${inst.instanceId}`, `unaffordable${reason ? `: ${reason}` : ''}; cost energy=${pv.costIsX ? 0 : pv.cost}, mana=${pv.manaCost}, stamina=${pv.staminaCost || 0}; available energy=${combat.player.energy}, mana=${combat.player.mana}, stamina=${combat.player.stamina}`);
+      logIgnored(`card ${input} ${inst.instanceId}`, `unaffordable${reason ? `: ${reason}` : ''}; cost energy=${pv.costIsX ? 'X' : pv.cost}, mana=${pv.manaCost}, stamina=${pv.staminaCost || 0}; available energy=${combat.player.energy}, mana=${combat.player.mana}, stamina=${combat.player.stamina}`);
+      return reason;
     };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
@@ -2858,9 +2859,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) {
         if (rangeSelectable) { select(); return; }
-        logUnaffordable('tap');
+        const reason = logUnaffordable('tap');
         const reasons = [];
-        const reason = unplayableReason(inst);
         if (reason) reasons.push(reason);
         if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough stamina.');
         if (combat.player.mana < pv.manaCost) reasons.push('Not enough mana.');

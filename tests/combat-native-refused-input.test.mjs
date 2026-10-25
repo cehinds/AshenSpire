@@ -52,11 +52,12 @@ for (const input of ['tap', 'confirm']) {
     assert.equal(h.tips.length, input === 'tap' ? 1 : 0);
   });
 
-  test(`native ${input} includes an unplayable reason and zero minimum for X cost`, () => {
-    const h = harness({ blocked: 'This card cannot be played.', costIsX: true });
+  test(`native ${input} includes an unplayable reason and identifies X cost with its available pool`, () => {
+    const h = harness({ blocked: 'This card cannot be played.', costIsX: true, energy: 7 });
     h[input]();
     assert.equal(h.logs.length, 1);
-    assert.match(h.logs[0].why, /unaffordable: This card cannot be played\.; cost energy=0/);
+    assert.match(h.logs[0].why, /unaffordable: This card cannot be played\.; cost energy=X/);
+    assert.match(h.logs[0].why, /available energy=7/);
   });
 
   test(`native ${input} still selects a valid range route without refusal`, () => {
