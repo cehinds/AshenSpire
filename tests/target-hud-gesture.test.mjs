@@ -77,9 +77,9 @@ test('unrelated keys, ineligible names and reading surfaces do not clear a held 
 test('double-touch inspection still consumes its release click, then permits a fresh target press', () => {
   const f = fixture(); f.scope.eligible = [];
   f.tap(); f.advance(100); f.emit('e1', 'pointerdown'); f.emit('e1', 'pointerup');
-  assert.deepEqual(f.inspections, ['e1']);
+  assert.deepEqual(f.inspections, ['e1'], 'the first tap inspects; the second press of the series adds nothing');
   f.scope.eligible = ['e1', 'e2'];
-  f.emit('e1', 'click'); assert.deepEqual(f.plays, [], 'a changing target plan cannot turn the inspection release into a play');
+  f.emit('e1', 'click', { detail: 2 }); assert.deepEqual(f.plays, [], 'a changing target plan cannot turn the inspection release into a play');
   f.tap('e2'); assert.deepEqual(f.plays, ['e2']);
 });
 

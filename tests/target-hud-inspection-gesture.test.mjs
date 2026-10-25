@@ -78,9 +78,26 @@ test('legacy click events without a pointer ID retain release protection but all
 
 test('the same double-tap cannot open inspection again through a trailing dblclick', () => {
   const f = fixture({ armed: false }); f.down(1); f.up(1); f.click(1);
-  f.advance(100); f.down(2); f.up(2); f.click(2); f.dblclick();
-  assert.equal(f.reads.length, 1);
+  f.advance(100); f.down(2); f.up(2); f.click(2, 2); f.dblclick();
+  assert.equal(f.reads.length, 1, 'the first tap inspected; the second press of the series and its dblclick are swallowed');
   f.arm(); f.down(3); f.up(3); f.click(3); assert.deepEqual(f.plays, ['e1']);
+});
+
+test('a single tap anywhere on a non-target panel inspects once; an armed target tap still confirms', () => {
+  const f = fixture({ armed: false }); f.down(); f.up(); f.click(1);
+  assert.equal(f.reads.length, 1); assert.deepEqual(f.plays, []);
+  f.advance(1000); f.down(2); f.up(2); const ev = f.click(2); assert.equal(f.reads.length, 2); assert.equal(ev.immediate, true);
+  f.arm(); f.down(3); f.up(3); f.click(3); assert.equal(f.reads.length, 2); assert.deepEqual(f.plays, ['e1']);
+});
+
+test('a press that drags past the slop is not a tap', () => {
+  const f = fixture({ armed: false }); f.down(); f.move(); f.up(); f.click(1);
+  assert.deepEqual(f.reads, []);
+});
+
+test('a tap is not an inspection while the inspector cannot open', () => {
+  const f = fixture({ armed: false }); f.ready(false); f.down(); f.up(); f.click(1);
+  assert.deepEqual(f.reads, []);
 });
 
 test('keyboard detail-zero activation is never swallowed by pointer suppression', () => {
@@ -116,7 +133,7 @@ test('a target press begun during playback cannot inspect or activate after unlo
 });
 
 test('busy-start hold and double-tap stay rejected while a fresh ready inspection works', () => {
-  const f = fixture({ armed: false }); f.down(); f.up(); f.click(1);
+  const f = fixture({ armed: false });
   f.ready(false); f.down(2); f.advance(900); f.ready(true); f.hold(); f.up(2); f.click(2); f.dblclick();
   assert.equal(f.reads.length, 0);
   f.down(3); f.hold(); assert.equal(f.reads.length, 1);

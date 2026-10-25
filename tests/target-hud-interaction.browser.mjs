@@ -54,8 +54,24 @@ try {
     await inspector.waitFor({ state: 'detached' });
     await page.waitForTimeout(750);
     await panel.locator('.as-meter[data-res="hp"]').click();
-    await page.locator('#tooltip[data-open="true"]').waitFor({ state: 'visible' });
-    assert.equal(await inspector.count(), 0, 'an individual resource tap explains without inspecting');
+    await inspector.waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    await inspector.waitFor({ state: 'detached' });
+    // Owner 2026-10-25: one tap anywhere on a selected panel (padding, intent, statuses) inspects.
+    for (const part of ['.target-hud-intent', '.target-hud-statuses .status-icon']) {
+      const target = panel.locator(part).first();
+      if (!(await target.count())) continue;
+      await page.waitForTimeout(450);
+      await target.click();
+      await inspector.waitFor({ state: 'visible' });
+      await page.keyboard.press('Escape');
+      await inspector.waitFor({ state: 'detached' });
+    }
+    await panel.locator('.target-hud-panel').focus();
+    await page.keyboard.press('Enter');
+    await inspector.waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    await inspector.waitFor({ state: 'detached' });
     if (width === 390) {
       await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=3&shotEnemyCount=3&shotHand=5`, { waitUntil: 'networkidle' });
       const strike = page.locator('.hand .card[data-card-id="core.strike"]').first();
