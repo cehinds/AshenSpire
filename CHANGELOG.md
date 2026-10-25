@@ -34,9 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
-- **Startup, map framing and inactive auras** ([#2322](https://github.com/cehinds/AshenSpire/pull/2322), `0.7.1.1856`). The game builds your selected rules once during loading. Map selection and refits share the visible area above the footer, while empty auras stay still and Lite mode or phones keep visible aura cues without the breathing animation.
+- **Startup, map framing and inactive auras** ([#2322](https://github.com/cehinds/AshenSpire/pull/2322), `0.7.1.1858`). The game builds your selected rules once during loading. Map selection and refits share the visible area above the footer, while empty auras stay still and Lite mode or phones keep visible aura cues without the breathing animation.
 
-- **Map selections keep the visible viewport** ([#2324](https://github.com/cehinds/AshenSpire/pull/2324), `0.7.1.1856`). Touch selection and camera refits use the same visible map above the footer, and the camera catches initial note-driven height changes. Restored manual and saved views keep their framing.
+- **Map selections keep the visible viewport** ([#2324](https://github.com/cehinds/AshenSpire/pull/2324), `0.7.1.1858`). Touch selection and camera refits use the same visible map above the footer, and the camera catches initial note-driven height changes. Restored manual and saved views keep their framing.
 
 - **Maps start at one node, framed on your biome, and fights show the ground you walked onto** ([#2323](https://github.com/cehinds/AshenSpire/pull/2323), `0.7.1.1856`). Each act opens on a single start node that leads to every path and restores your health and flasks; the world painting is framed so the act begins on its own biome; a fight on a bridge, city, forest, shore or lava field shows that scenery; tapping a target's info panel opens its inspection, with slimmer health bars; and picking a map node on a phone now centres it properly.
 
