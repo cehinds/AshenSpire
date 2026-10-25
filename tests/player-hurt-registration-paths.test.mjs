@@ -17,7 +17,8 @@ spec=importlib.util.spec_from_file_location('hurt_paths_fixture',sys.argv[1])
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 scenario=sys.argv[2]
 with tempfile.TemporaryDirectory(prefix='hurt-path-fixture-') as temporary:
-    base=pathlib.Path(temporary);game=base/'game';art=base/'art checkout';cache=base/'explicit HURT cache'
+    # Match the resolver's canonical spelling (macOS /var alias, Windows 8.3).
+    base=pathlib.Path(temporary).resolve();game=base/'game';art=base/'art checkout';cache=base/'explicit HURT cache'
     game.mkdir();art.mkdir();cache.mkdir()
     relative='assets-display/alternative/card-reaver-ready.webp'
     loose=game/relative;loose.parent.mkdir(parents=True);loose.write_text('wrong loose game bytes')

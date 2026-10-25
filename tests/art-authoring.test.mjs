@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync,symlinkSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync,symlinkSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -11,7 +11,8 @@ import {serve} from '../tools/serve.mjs';
 import {assertSourceDisplayArt} from '../tools/source-display-art.mjs';
 
 function fixture(){
- const dir=mkdtempSync(join(tmpdir(),'ashen-authoring-')),root=join(dir,'game'),assetRoot=join(dir,'AI-Art');
+ // Keep Python/Node parity about the same physical owners, not temp aliases.
+ const dir=realpathSync.native(mkdtempSync(join(tmpdir(),'ashen-authoring-'))),root=join(dir,'game'),assetRoot=join(dir,'AI-Art');
  mkdirSync(root);mkdirSync(assetRoot);
  const put=(base,path,text)=>{const target=join(base,path);mkdirSync(resolve(target,'..'),{recursive:true});writeFileSync(target,text);};
  return {dir,root,assetRoot,put,close:()=>rmSync(dir,{recursive:true,force:true})};
