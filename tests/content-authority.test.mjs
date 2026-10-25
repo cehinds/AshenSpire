@@ -419,3 +419,22 @@ test('combatFeel: the tables deep-equal their authored JSON, stay frozen to the 
   assert.equal(m.SHAKE_STEPS.find((step) => step.px === 10).minShare, m.HUGE_HIT_SHARE);
   assert.equal(m.HIT_STOP.hugeShare, m.HUGE_HIT_SHARE);
 });
+
+import * as musicModule from '../src/content/music.js';
+import { MUSIC_SILENCE_WORD } from '../src/model/schemas.js';
+test('music: the tables deep-equal their authored JSON; quiet leads BEDS and the region beds share the map bed', () => {
+  const a = JSON.parse(readFileSync(resolve(ROOT, 'content/source/music.json'), 'utf8'));
+  const m = musicModule;
+  assert.equal(m.SHIPPED_MUSIC_FOLDER, a.shippedMusicFolder);
+  assert.deepStrictEqual(m.SCALES, a.scales);
+  assert.deepStrictEqual(m.MAP_REGIONS, a.mapRegions);
+  assert.equal(Object.keys(m.BEDS)[0], 'quiet');
+  assert.equal(m.BEDS.quiet, MUSIC_SILENCE_WORD);
+  assert.ok(!('quiet' in a.beds), 'the silence word has one home (MUSIC_SILENCE_WORD), not the JSON');
+  for (const [name, bed] of Object.entries(a.beds)) assert.deepStrictEqual(m.BEDS[name], bed);
+  assert.deepStrictEqual(Object.keys(m.BEDS), ['quiet', ...Object.keys(a.beds), ...a.mapRegions.map((id) => `map-${id}`)]);
+  for (const id of a.mapRegions) {
+    assert.equal(m.BEDS[`map-${id}`], m.BEDS.map);
+    assert.equal(m.MUSIC_TRACK_FALLBACK[`map-${id}`], 'map');
+  }
+});
