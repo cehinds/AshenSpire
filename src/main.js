@@ -1179,8 +1179,11 @@ function reportAutosaveFailure(error, now = Date.now()) {
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
   // failureBanner hands back an existing banner when the stack is full: only
   // auto-remove the one that is ours, never an unrelated failure.
-  if (banner && banner.dataset?.failureKey === key && typeof setTimeout === 'function') {
-    setTimeout(() => banner.remove?.(), SAVE_WARNING_SHOWN_MS);
+  if (banner && banner.dataset?.failureKey === key) {
+    // Float over the top edge for its few seconds: left in the page flow it
+    // pushes the fight down and the End Turn button off a phone screen.
+    if (banner.style) Object.assign(banner.style, { position: 'fixed', top: '0', left: '0', right: '0', margin: '0', zIndex: '1000', backgroundColor: '#17110a' });
+    if (typeof setTimeout === 'function') setTimeout(() => banner.remove?.(), SAVE_WARNING_SHOWN_MS);
   }
   return true;
 }
