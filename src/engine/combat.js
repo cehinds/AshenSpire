@@ -1,6 +1,7 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
+import { actorRangeKey, engagementBand, rangeBand } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
@@ -1085,8 +1086,13 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
     && closing?.effects?.some(effect => effect.op === 'moveEngagement')
     && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
   const replacements = new Map();
+  // A retreat (a move with its own retreatWeight) is offered only while the fight is closer than the enemy
+  // prefers; maxConsecutive keeps it from repeating back to back, so the player is not chased out of reach forever.
+  const wantsDistance = policy && combat.rangeState?.policy.enabled && def.startingRange !== undefined
+    && engagementBand(combat.rangeState, actorRangeKey(combat, enemy), actorRangeKey(combat, combat.player)) < rangeBand(def.startingRange);
   const entries = Object.entries(def.moves).filter(
     ([id, mv]) => {
+      if (mv.retreatWeight != null && !wantsDistance) return false;
       if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
       if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
       const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
@@ -1115,11 +1121,12 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   });
   const pool = eligible.length > 0 ? eligible : entries;
 
-  const total = pool.reduce((acc, [, mv]) => acc + mv.weight, 0);
+  const weightOf = mv => mv.retreatWeight ?? mv.weight;
+  const total = pool.reduce((acc, [, mv]) => acc + weightOf(mv), 0);
   if (total <= 0) return replacements.get(pool[0][0]) ?? pool[0][0];
   let r = combat.rng.float('enemyAI') * total;
   for (const [id, mv] of pool) {
-    r -= mv.weight;
+    r -= weightOf(mv);
     if (r < 0) return replacements.get(id) ?? id;
   }
   const last = pool[pool.length - 1][0];
