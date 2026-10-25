@@ -436,6 +436,29 @@ test('Core character levels follow the bundle; earned points stay claimable on o
   assert.equal(gameProfileRestModel(reg, spent, visit).services.some(row => row.id === 'levelUp'), false);
 });
 
+test('a Core fight pays character XP, levels, and the rest offers and commits Level Up', async () => {
+  const { beginGameProfileRest, commitGameProfileRest } = await import('../src/model/gameProfileRest.js');
+  const { gameProfileRestModel } = await import('../src/ui/models/GameProfileRestModel.js');
+  const { run } = live();
+  const xp = combatXpReceipt(reg, { victory: true, pool: 'normal', kills: 1, characterMultiplier: 1 }).total;
+  assert.ok(xp > 0, 'a won Core fight pays character XP');
+  // Same call main.js makes once configuredCharacterLevels(run) is true.
+  assert.equal(configuredCharacterLevels(run), true);
+  const award = awardLevelXp(reg, run, 100000, {
+    pointsPerLevel: gameModule(run, 'progression').attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
+  assert.ok(award.levelUps > 0, 'enough XP levels the character');
+  assert.ok(run.level.unspentPoints > 0, 'the level queues attribute points');
+  run.mapNodeId = 'rest-test';
+  run.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
+  const visit = beginGameProfileRest(run);
+  const row = gameProfileRestModel(reg, run, visit).services.find(r => r.id === 'levelUp');
+  assert.ok(row && row.available, 'Level Up is offered at the rest');
+  const points = run.level.unspentPoints, strength = run.attributes.strength;
+  commitGameProfileRest(reg, run, 'levelUp', { attributeId: 'strength' });
+  assert.equal(run.level.unspentPoints, points - 1);
+  assert.equal(run.attributes.strength, strength + 1);
+});
+
 test('a pending Core opening survives the normal save door without changing earned progression', () => {
   const { run } = live();
   run.prologue = { version: 2, status: 'pending', scene: 0 };
