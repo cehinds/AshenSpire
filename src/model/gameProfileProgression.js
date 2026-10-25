@@ -111,16 +111,12 @@ export function configuredSkillXpMultiplier(subject, kind = 'weapon') {
   return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
 }
 
-// Core progression policy v1: preserve earned character ledgers and attributes,
-// but stop future character XP, including old saves. Existing earned points
-// and already queued character rewards remain claimable.
-export const CORE_PROGRESSION_POLICY_VERSION = 1;
-export function coreSkillOnlyProgression(subject) {
-  return subject?.gameProfile?.foundation?.mode === 'configured'
-    && subject.gameProfile.author?.core === 'ashen.core@2.0.0';
-}
+// Core earns character XP and levels like any configured profile: the bundle's
+// progression.characterLevels setting decides. Old saves that carried
+// characterLevels:false keep their unspent points claimable (the rest service
+// checks both), and a Core profile that switches levels off is honoured.
 export function configuredCharacterLevels(subject) {
-  return !coreSkillOnlyProgression(subject) && gameModule(subject, 'progression')?.characterLevels === true;
+  return gameModule(subject, 'progression')?.characterLevels === true;
 }
 
 // A receipt acknowledges already-paid XP. A failed save keeps it resumable;
