@@ -7,7 +7,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { guardHitFloatParts } from '../src/ui/fx.js';
+import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
@@ -121,6 +121,7 @@ test('the pierced part is not double-counted by Poise: what Block leaves of the 
 test('the Pierced float and the log line show the pierced amount and what Poise took', () => {
   const { hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8 });
   assert.equal(guardHitFloatParts(hits[0]).pierced.text, 'Pierced 3');
+  assert.equal(outcomeKindForEvent(hits[0]), null, 'a fully absorbed pierced hit keeps its floats instead of a lone BLOCKED word');
   const line = JSON.stringify(combatLogEntries([hits[0]], { registries: baseRegistries }));
   assert.match(line, /Pierced 3 \(Poise took 3\)/);
 });

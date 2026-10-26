@@ -1830,6 +1830,7 @@ export function outcomeKindForEvent(e = {}) {
   if (e.immune && !(Number(e.amount) > 0)) return 'immune';
   const parts = guardHitFloatParts(e);
   if (parts.residual > 0) return null; // HP damage: the per-layer floats show it
+  if (parts.pierced) return null; // a pierced hit keeps its floats (Pierced N beside Block and Poise), not a lone BLOCKED word
   if (parts.blocked > 0) return 'blocked';
   // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
   // keeps its BREAK callout and its number, as it did before.
