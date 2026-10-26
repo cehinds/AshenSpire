@@ -1016,9 +1016,10 @@ function switchHtml({ label, on, attrs = '' }) {
  */
 export function developerSwitchHtml(state = debugSwitch()) {
   if (state.hidden) return '';
+  const label = 'Developer tools';
   return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
-    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
-    + `<span class="r-trail">${switchHtml({ label: 'Developer tools', on: state.on, attrs: ' data-developer-switch' })}</span></div>`;
+    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">${label}</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
+    + `<span class="r-trail">${switchHtml({ label, on: state.on, attrs: ' data-developer-switch' })}</span></div>`;
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
@@ -2531,14 +2532,15 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|combatPacingPreset|animSpeed)/.test(key) ? 'Auto combat & pacing' : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(row);
   }
   // Auto combat and pacing is what a player reaches for first in Combat (owner, 2026-10-26).
-  if (category === 'Combat' && groups.has('Auto combat & pacing')) return new Map([['Auto combat & pacing', groups.get('Auto combat & pacing')], ...groups]);
+  const first = t('settings.topic.autoCombat');
+  if (category === 'Combat' && groups.has(first)) return new Map([[first, groups.get(first)], ...groups]);
   return groups;
 }
 
