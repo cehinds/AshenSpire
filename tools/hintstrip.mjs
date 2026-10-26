@@ -259,6 +259,17 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 (?:1200x730|390x844)/,
       },
       {
+        // The desktop twin of the plant above: the row is bottom-anchored at a negative offset in
+        // its parent there, so shifting it down empties nothing. Clipping the parent away does,
+        // and the DESKTOP cell must say so by name (the phone cells are red too).
+        name: 'the hand-area clips its whole footer away at desktop as well as phone',
+        edits: [{
+          file: 'styles/kit.css',
+          append: "\n:root .combat[data-layout='formation'] > .hand-area { overflow: clip !important; clip-path: inset(0 0 100% 0) !important; }\n",
+        }],
+        expectRed: /BAD\s+H3 1200x730 Text S .*ZERO controls/,
+      },
+      {
         // THE LABEL IS CUT OFF INSIDE ITS OWN BOX: a width cap with
         // overflow:hidden keeps .et-key's box inside END TURN while most of
         // "Backspace" is gone — the clipping H4 exists to catch, said of the
