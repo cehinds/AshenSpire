@@ -803,7 +803,7 @@ function presentationRows() {
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
       presentationKey: 'showFormationGrid', def: true,
       label: 'Show battlefield grid',
-      note: 'Show thin translucent formation lines behind combatants. This does not enable movement or placement.',
+      note: 'Show faint formation lines behind combatants.',
     },
     ...PRESENTATION_ROWS.map((row) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'number',
