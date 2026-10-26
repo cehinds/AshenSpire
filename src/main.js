@@ -1156,6 +1156,7 @@ function persist() {
   // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
   stampSkillBonuses(registries, run);
   saves.saveRun(run, rng, activeSlot);
+  runUnsaved = false;
   sendLanStatus();
 }
 
@@ -1168,14 +1169,18 @@ function persist() {
 const SAVE_WARNING_REPEAT_MS = 30000;
 const SAVE_WARNING_SHOWN_MS = 9000;
 let lastSaveWarningAt = -Infinity;
+// True from a refused save until the next one lands: the slot is BEHIND the run on screen, so a
+// reload would resume the older save. The page asks before it is closed or reloaded meanwhile.
+let runUnsaved = false;
 function reportAutosaveFailure(error, now = Date.now()) {
+  runUnsaved = true;
   const full = isStorageFullError(error);
   dlog('save', full ? 'autosave refused: browser storage is full' : 'autosave failed', error && error.message);
   console.warn('[save] autosave failed; play continues:', error && error.message);
   if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
   lastSaveWarningAt = now;
   const body = full
-    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues; delete an old save slot from the title screen to free space.'
+    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
     : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
   const key = full ? 'save:storage-full' : 'save:failed';
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
@@ -1205,6 +1210,7 @@ function persistContinuing() { persistOrWarn(); }
 function saveCombatCandidate(next, committedRng) {
   try {
     saves.saveRun(next, committedRng, activeSlot);
+    runUnsaved = false;
     return { ok: true };
   } catch (error) {
     reportAutosaveFailure(error);
@@ -3404,6 +3410,9 @@ function supersedePendingEntryCheckpoint() {
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingEntryCheckpointSafely(); });
 window.addEventListener('pagehide', flushPendingEntryCheckpointSafely);
+// A refused save leaves the slot behind the run on screen (reportAutosaveFailure): ask before the
+// page is closed or reloaded, rather than silently resuming the older state later.
+window.addEventListener('beforeunload', (event) => { if (runUnsaved) { event.preventDefault(); event.returnValue = ''; } });
 
 /**
  * THE FIGHT'S TITLE, ONE HOME: the spoils door is headed with it and the

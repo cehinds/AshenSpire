@@ -106,6 +106,7 @@ test('a refused combat checkpoint is reported once per window and never refuses 
   assert.match(h.banners[0].body, /browser storage is full/);
   assert.match(h.banners[0].body, /Your game continues/);
   assert.match(h.banners[0].body, /delete an old save slot/);
+  assert.match(h.banners[0].body, /returns you to your last saved point/, 'the player is told what a reload does');
   assert.equal(h.context.reportAutosaveFailure(quotaError(), Date.now() + 31000), true, 'warns again after the window');
 });
 
