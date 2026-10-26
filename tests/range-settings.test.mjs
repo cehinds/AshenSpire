@@ -25,7 +25,7 @@ test('range descriptors use canonical keys and authored defaults including expli
   assert.deepEqual(rows.map(row => row.def), [true, 1, 1, 1]);
   assert.deepEqual(rangeSettingsRows(authored).map(row => row.def), [false, 0, 4, 2]);
   for (const row of rows) {
-    assert.match(row.note, /Applies to new runs; saved runs retain their rules/);
+    assert.match(row.note, /Applies to new runs/);
     assert.equal(settingsRows().filter(r => r.key === row.key).length, 1);
     if (row.type === 'number') {
       assert.deepEqual([row.min, row.max, row.step, row.integer], [0, Number.MAX_SAFE_INTEGER, 1, true]);

@@ -1610,6 +1610,9 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    field it was won on (or the map, or a bare backdrop after a reload). Rows
    are OptionCards; the foot carries the hold copy and Continue on the ladder. */
 .reward-backdrop { min-height: 100%; }
+/* ONE LAYOUT AT EVERY WIDTH (owner, 2026-10-26): the phone's single column,
+   capped at a phone-like width and centred, so desktop reads the same. */
+.modal.reward-door[data-size]:has(.reward-claim-layout) { --modal-rung-width: calc(480px / var(--ui-zoom, 1)); width: var(--modal-rung-width); max-width: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door[data-victory-compact='true'] > .modal-head { justify-content: center; }
 .reward-door[data-victory-compact='true'] > .modal-head .modal-head-id { align-items: center; text-align: center; }
@@ -1633,9 +1636,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* A reward's intrinsic title width must not expand into the XP column. */
 .reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
 .reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
-/* W1t: reward choices beside their claim status; stacked on narrow hosts. */
-.reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(2 * var(--view-vw, 1vw)); align-items: start; }
-:root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); }
+/* W1t: reward choices above their claim status, one column at every width. */
+.reward-door .reward-claim-layout { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); align-items: start; }
 .reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
 .reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
 .reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
@@ -1688,7 +1690,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
 .reward-door .rp-layered-bar .rp-under { background: #62c686; z-index: 1; }
 .reward-door .rp-layered-bar .rp-over { background: #d7b64b; z-index: 2; }
-.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
+.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; justify-content: safe flex-end; max-width: calc(100% - 1.1rem); color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
 .reward-door .rp-layered-bar.rp-bar-ready .rp-under, .reward-door .rp-layered-bar.rp-bar-ready .rp-over { background: #6ab8f5; }
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
 .reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
@@ -1735,14 +1737,14 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
 .reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
-:root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
-:root[data-layout='narrow'] .reward-door .reward-progress-row {
+.reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
+.reward-door .reward-progress-row {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
-:root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
+.reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
+.reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
+.reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
 /* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
@@ -6143,12 +6145,12 @@ button[data-button-size] {
   grid-template-areas: 'name level bar next' 'gain gain gain gain';
   gap: 0 .6rem;
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] {
+.reward-door .reward-progress-row[data-kind='character'] {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
   font-size: 1rem;
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+.reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
   grid-template-areas: 'name level' 'bar next' 'gain gain';
 }
 /* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */

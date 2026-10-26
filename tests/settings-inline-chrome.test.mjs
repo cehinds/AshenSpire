@@ -72,7 +72,7 @@ test('the parser reads the shapes this file is written in', () => {
 });
 
 test('the settings chrome is styled for both doors, not the modal alone', () => {
-  const chrome = selectors.filter((one) => /\.set-(header-tools|search-toggle|options|subtabs|tabs\b)/.test(one));
+  const chrome = selectors.filter((one) => /\.set-(subtabs|tabs\b)/.test(one));
   assert.ok(chrome.length >= 8, 'ui.css styles the settings chrome');
   // `.modal-head` is the one part the overlay genuinely does not have, so a
   // rule about the head is allowed to name the modal alone; the inline bar
@@ -88,15 +88,17 @@ test('the one scrollport and the notice band hang off the shared host', () => {
   assert.ok(ui.includes('[data-settings-host] .set-panel { min-height: 0;'), 'the pane is the one scrollport');
 });
 
-test('the inline tools ride one bar instead of stacking', () => {
-  assert.ok(selectors.includes('[data-settings-host] > .set-inline-bar'), 'the bar has a rule');
-  assert.ok(ui.includes('[data-settings-host] > .set-inline-bar > .set-header-tools { margin-left: auto; }'),
-    'the icon pair sits at the far end of that one row');
-  assert.ok(settingsSource.includes("inlineBar.className = 'set-inline-bar'"), 'renderSettings builds the bar');
-  assert.ok(settingsSource.includes('inlineBar.append(offline)') && settingsSource.includes('inlineBar.append(headerTools)'),
-    'the download button and the toolbar are siblings in it');
-  assert.ok(!/container\.prepend\((offline|headerTools)\)/.test(settingsSource),
-    'neither is prepended loose any more');
+test('the top action row is gone: no search, Changed, Reset to defaults, options menu or tip', () => {
+  // Owner, 2026-10-26: the descriptions are the content; the row above them and
+  // the first-open tip went. Download & saves moved to a Display row.
+  for (const gone of ['set-inline-bar', 'set-header-tools', 'set-options', 'set-search-toggle', 'set-changed-toggle', 'set-tip']) {
+    assert.ok(!ui.includes(gone), `ui.css no longer styles .${gone}`);
+  }
+  for (const gone of ['data-advanced-search', 'data-search-toggle', 'data-changed-toggle', 'data-reset-config', 'data-tip-dismiss', 'settingsHeaderTools']) {
+    assert.ok(!settingsSource.includes(gone), `settings.js no longer builds ${gone}`);
+  }
+  assert.ok(settingsSource.includes("key: 'downloadSaves'") && settingsSource.includes('data-btn="downloadSaves"'),
+    'Download & saves is still reachable, as a Display row');
 });
 
 test('both doors are handed the Download & saves opener', () => {
