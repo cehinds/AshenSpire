@@ -7,7 +7,7 @@ import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.j
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
+import { chooseReaction, chooseCardPlay, AUTOMATION_DEFAULTS, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
@@ -1519,8 +1519,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
   }
 
-  // Auto-combat (D12) answers this seat's reaction prompts only. It never plays a card or ends
-  // a turn. Every input is what this seat can see: its own intent read, its last stance, and
+  // Auto-combat answers this seat's reaction prompts (D12, 2026-10-18) and, by the owner's override of
+  // 2026-10-26, also plays its cards and ends its turn (autoPlayStep). Every input is what this seat can see: its own intent read, its last stance, and
   // its own manual picks; another seat's prompt is never answered here.
   const ownSeat = () => combat.playerKey || 'player';
   const reactionKind = option => {
@@ -1557,6 +1557,63 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // undefined = automation not eligible; null = chose to decline.
     return picked ? pending.options.find(option => option.id === picked.id) : null;
   }
+  // Auto battle (owner, 2026-10-26, overriding D12): with auto combat on, the player's own turn is played too. One
+  // step per call: pick a card with chooseCardPlay (seat-visible info only), play it through playCard, the same
+  // function a click reaches, or end the turn through commitEndTurn, the same function the End Turn control reaches.
+  // Cards that would open a prompt (a choice card) are left to the player, so the loop never starts a modal.
+  let autoPlays = 0;
+  let autoPlayReadyAt = 0;
+  let autoPlayTurn = null;
+  function autoPlayStep() {
+    const policy = resolveCombatAutomation(readSettings());
+    if (!policy.enabled || busy || enemyPlayback || combat.result || combat.phase !== 'player' || combat.pendingReaction || reactionShell
+      || expansionChoiceShell || hasCardChoice(combat) || veilIsOpen() || selected || selfArm || selectedFlask != null
+      || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return false;
+    const turnKey = `${combat.turn}`;
+    if (autoPlayTurn !== turnKey) { autoPlayTurn = turnKey; autoPlays = 0; }
+    const livingIds = combat.enemies.filter(enemy => enemy.alive).map(enemy => enemy.id);
+    const hand = [];
+    const byId = new Map();
+    for (const inst of combat.piles.hand) {
+      let entry = { id: inst.instanceId, playable: false };
+      try {
+        const ranks = upcastRanksByCard.get(inst.instanceId);
+        const pv = previewCard(combat, inst.instanceId, undefined, ranks);
+        const def = resolveCombatCard(combat, inst, { upcastRanks: ranks });
+        const plan = cardTargets(inst.instanceId);
+        const friendly = friendlyTargetPlan({ ...def, combatPreview: pv }, combat.player.id, [{ ...combat.player, connected: true }]);
+        const playable = !isUnplayable(inst) && !cardChoicePlan(combat, inst.instanceId)
+          && (!pv.needsTarget || livingIds.length > 0) && !(friendly.active && !friendly.legalIds.length)
+          && !isRoundQueued(inst.instanceId);
+        entry = { id: inst.instanceId, kind: combatProfileFor(def)?.maneuver ?? kindForCard(def)?.maneuver ?? null, offense: pv.needsTarget === true,
+          cost: pv.costIsX ? 0 : pv.cost, manaCost: pv.manaCost, staminaCost: pv.staminaCost || 0, playable };
+        byId.set(inst.instanceId, { needsTarget: pv.needsTarget, plan, rank: ranks ?? def.upcast?.baseTier ?? 0 });
+      } catch { /* a card the preview cannot resolve is not playable */ }
+      hand.push(entry);
+    }
+    const seat = ownSeat();
+    let intent = null;
+    try {
+      const enemy = combat.enemies.find(row => row.alive);
+      if (enemy && !(configuredArt && !gameModule(run, 'intent'))) intent = projectCombatIntent(combat, enemy.id);
+    } catch { intent = null; }
+    const picked = autoPlays >= AUTOMATION_DEFAULTS.maxActionsPerTurn ? null
+      : chooseCardPlay({ preference: policy.preference, energy: combat.player.energy, mana: combat.player.mana, stamina: combat.player.stamina,
+        matchups: gameModule(run, 'stances')?.matchups, seats: { [seat]: { intent } } }, seat, hand);
+    if (!picked) { autoPlays = 0; commitEndTurn(); return true; }
+    const info = byId.get(picked.id);
+    // The same default target a click uses: the last enemy aimed at while it is still a legal living target,
+    // else the first legal living enemy.
+    let targetId = null;
+    if (info.needsTarget) {
+      const legal = info.plan.legalIds.filter(id => getEntity(combat, id)?.alive);
+      targetId = (lastTargetId && legal.includes(lastTargetId) ? lastTargetId : legal[0]) ?? null;
+      if (!targetId) { autoPlays = 0; commitEndTurn(); return true; }
+    }
+    autoPlays += 1;
+    playCard(picked.id, targetId, null, info.rank);
+    return true;
+  }
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
     const policy = resolveCombatAutomation(readSettings());
@@ -1573,6 +1630,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         && autoArmedReaction !== reactionShell) { autoArmedReaction = reactionShell; scheduleAutoCombat(); return; }
       const option = autoReactionChoice();
       if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
+      else if (!pending && policy.enabled) {
+        // Player turn: one action per tick, each after a full automation gap (the same scaled pause as a reaction).
+        const idle = !busy && !enemyPlayback && combat.phase === 'player';
+        if (!idle) autoPlayReadyAt = 0;
+        else if (!autoPlayReadyAt) autoPlayReadyAt = performance.now() + actionPacing({ reduced: reducedMotionRequested() }).gapMs;
+        else if (performance.now() >= autoPlayReadyAt && autoPlayStep()) autoPlayReadyAt = 0;
+      }
       scheduleAutoCombat();
     // One wait per answer: a fresh offer arms on a short tick, then the timeline's own gap (scaled by the
     // animation pace, the auto speed and Reduced motion, so 0 on Instant) passes once before the answer.

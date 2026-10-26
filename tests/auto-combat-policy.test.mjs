@@ -43,8 +43,16 @@ test('chooseCardPlay is deterministic and does not mutate its input', () => {
   for (let i = 0; i < 5; i++) assert.equal(policy.chooseCardPlay(state, 'player', hand), first);
   assert.equal(JSON.stringify([state, hand]), before);
 });
-test('the screen keeps the reaction chooser free of card plays (until the play loop lands)', () => {
+test('auto-combat plays cards and ends turns through the manual paths (owner 2026-10-26, overriding D12)', () => {
   assert.equal(policy.chooseAutoCombatAction, undefined);
+  const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const reaction = screen.slice(screen.indexOf('function autoReactionChoice'), screen.indexOf('function autoPlayStep'));
+  assert.ok(reaction.includes('chooseReaction'));
+  for (const call of ['playCard(', 'commitEndTurn(', "type: 'playCard'", "type: 'endTurn'"]) assert.ok(!reaction.includes(call), `reaction chooser: ${call}`);
+  const play = screen.slice(screen.indexOf('function autoPlayStep'), screen.indexOf('function scheduleAutoCombat'));
+  assert.ok(play.includes('chooseCardPlay') && play.includes('playCard(') && play.includes('commitEndTurn('));
+  assert.ok(!play.includes("type: 'playCard'") && !play.includes("type: 'endTurn'"), 'no direct dispatch: the manual paths only');
+  assert.ok(play.includes('maxActionsPerTurn'));
 });
 test('automation settings participate in durable profile export and reset rows', () => {
   const rows = settingsRows();
@@ -58,7 +66,7 @@ test('the unused combat preference row is hidden but its key survives', () => {
   assert.ok(row && row.retired === true);
   assert.equal(resolveCombatAutomation({ combatPreference: 'defense' }).preference, 'defense');
 });
-test('the auto combat setting says it answers reactions only', () => {
+test('the auto combat setting says it also plays cards and ends the turn', () => {
   const note = settingsRows().find(row => row.key === 'autoCombat').note;
-  assert.match(note, /reaction/i); assert.doesNotMatch(note, /Play legal/);
+  assert.match(note, /reaction/i); assert.match(note, /plays your cards/i); assert.doesNotMatch(note, /never plays/i);
 });
