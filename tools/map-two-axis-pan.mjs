@@ -253,12 +253,13 @@ try {
   const setting = await evaluate(`(() => {
     const control = document.querySelector('[data-key="mapFreePan"]');
     const row = control && control.closest('.set-row');
-    const before = control && control.getAttribute('aria-checked');
+    const state = () => control.type === 'checkbox' ? String(control.checked) : control.getAttribute('aria-checked');
+    const before = control && state();
     control && control.click();
-    const after = control && control.getAttribute('aria-checked');
+    const after = control && state();
     control && control.click();
     row && row.scrollIntoView({ block:'center' });
-    return { present:!!control, before, after, restored:control && control.getAttribute('aria-checked'), text:row && row.textContent.trim() };
+    return { present:!!control, before, after, restored:control && state(), text:row && row.textContent.trim() };
   })()`);
   const settingsChecks = {
     settingPresent: setting.present,
