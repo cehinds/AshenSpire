@@ -1899,7 +1899,7 @@ async function pipedOutputPlant() {
 const SERVER_CLOSE_DEADLINE_MS = 2000;
 
 async function serverClosePlant() {
-  const { mkdtempSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
+  const { mkdtempSync, mkdirSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { spawnSync } = await import('node:child_process');
 
@@ -1911,6 +1911,10 @@ async function serverClosePlant() {
       recursive: true,
       filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.png$/.test(src),
     });
+    // tools/buildversion.mjs (reached through serve.mjs) decodes the packed
+    // catalog with this one dependency-free module, so the copy carries it.
+    mkdirSync(join(dir, 'src', 'model'), { recursive: true });
+    cpSync(join(ROOT, 'src', 'model', 'catalogJson.js'), join(dir, 'src', 'model', 'catalogJson.js'));
     const tool = join(dir, 'tools', 'displayfirst.mjs');
     const real = readFileSync(tool, 'utf8');
     const canonicalReal = real.replace(/\r\n/g, '\n');
