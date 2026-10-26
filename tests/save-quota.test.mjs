@@ -448,3 +448,44 @@ test('an archive export carries the run\'s profile inline, not a reference', () 
   assert.equal(exported.gameProfileRef, undefined);
   assert.equal(exported.gameProfile.hash, run.gameProfile.hash);
 });
+
+// ---- reclaim is compare-and-swap: it never writes back bytes another tab has since replaced -----
+test('tab A\'s reclaim does not overwrite a newer save tab B wrote to another slot', () => {
+  const store = limitedStorage();
+  const tabA = createSaveManager(store), tabB = createSaveManager(store);
+  store.map.set(runKey(2), inlineSave(81));
+  store.budget = store.used() + 665000; // slot 1's ref save will not fit: A reclaims
+  const { run: runA, rng } = coreRun(80);
+  const { run: runB } = coreRun(81);
+  runB.hp = 64;
+  const realGet = store.getItem;
+  let raced = false;
+  store.getItem = (k) => {
+    const v = realGet(k);
+    // right after A reads slot 2 to compact it, B saves slot 2 (newer, HP 64)
+    if (k === runKey(2) && !raced && v && !v.includes('"hp":64')) { raced = true; store.budget += 1000000; tabB.saveRun(runB, rng, 2); store.budget -= 1000000; }
+    return v;
+  };
+  tabA.saveRun(runA, rng, 1);
+  assert.ok(raced, 'the interleaving happened');
+  assert.equal(JSON.parse(realGet(runKey(2)) ).hp, 64, "B's newer save survived A's reclaim");
+});
+
+test('the archive index is re-read, not overwritten with a stale copy', () => {
+  const store = limitedStorage();
+  const tabA = createSaveManager(store);
+  const entry = (id) => ({ id, kind: 'run', slot: 2, reason: 'test', at: new Date().toISOString(), save: inlineSave(91) });
+  store.map.set(RUN_ARCHIVE_KEY, JSON.stringify({ v: 1, entries: [entry('run-a')] }));
+  store.budget = store.used() + 665000;
+  const { run, rng } = coreRun(90);
+  const realGet = store.getItem;
+  let raced = false;
+  store.getItem = (k) => {
+    const v = realGet(k);
+    if (k === RUN_ARCHIVE_KEY && !raced) { raced = true; const idx = JSON.parse(v); idx.entries.push({ id: 'run-new', kind: 'run', slot: 3, reason: 'newer', at: new Date().toISOString(), save: '{"x":1}' }); store.map.set(RUN_ARCHIVE_KEY, JSON.stringify(idx)); }
+    return v;
+  };
+  tabA.saveRun(run, rng, 1);
+  const ids = JSON.parse(realGet(RUN_ARCHIVE_KEY)).entries.map(e => e.id);
+  assert.ok(ids.includes('run-new'), 'the entry another tab added is still there');
+});

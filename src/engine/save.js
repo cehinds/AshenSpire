@@ -772,33 +772,52 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   // reference FIRST (that frees its ~650 KB), the copy is written and verified
   // from the live run's full profile at once, and if the copy still cannot land
   // the entry is put back to its exact original bytes. Returns true when the copy exists.
+  // Every rewrite below is a compare-and-swap: another tab may have saved the same key since this one
+  // read it, and writing the older bytes back would undo that save. So a key is written only while it
+  // still holds, byte for byte, what the new bytes were made from; otherwise it is skipped.
+  function swapKey(key, from, to) {
+    if (storage.getItem(key) !== from) return false;
+    storage.setItem(key, to);
+    return true;
+  }
+  // Swap one archived run's `save` inside the index, re-reading the index fresh each time.
+  function swapArchiveSave(id, from, to) {
+    for (let tries = 0; tries < 3; tries++) {
+      const raw = storage.getItem(RUN_ARCHIVE_KEY);
+      let index = null;
+      try { index = raw ? JSON.parse(raw) : null; } catch { return false; }
+      const entry = index && Array.isArray(index.entries) ? index.entries.find((e) => e && e.id === id && e.kind === 'run') : null;
+      if (!entry || entry.save !== from) return false;
+      entry.save = to;
+      if (swapKey(RUN_ARCHIVE_KEY, raw, JSON.stringify(index))) return true;
+    }
+    return false;
+  }
   function bootstrapSharedProfile(profile, exceptSlot) {
     if (!profile || typeof profile.hash !== 'string') return false;
     if (readSharedProfile(profile.hash)) return true;
     const sameProfile = (json) => { try { return JSON.parse(json).gameProfile?.hash === profile.hash; } catch { return false; } };
-    const attempt = (original, next, put) => {
-      try { put(next); } catch { return false; }
+    const attempt = (original, next, swap) => {
+      try { if (!swap(original, next)) return false; } catch { return false; }
       try { ensureSharedProfile(profile); return true; } catch { /* roll back below */ }
-      try { put(original); } catch { /* the original fit before, so this cannot be refused; nothing more to do */ }
+      // Back to the exact original bytes, but only if the key still holds OUR converted bytes.
+      try { swap(next, original); } catch { /* the original fit before, so this cannot be refused */ }
       return false;
     };
     for (let slot = 1; slot <= SLOTS; slot++) {
       if (slot === exceptSlot) continue;
       const original = storage.getItem(runKey(slot));
       const next = original && sameProfile(original) ? recompactedRunJson(original, { writeCopy: false }) : null;
-      if (next && attempt(original, next, (v) => storage.setItem(runKey(slot), v))) return true;
+      if (next && attempt(original, next, (from, to) => swapKey(runKey(slot), from, to))) return true;
     }
-    const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
     let index = null;
-    try { index = rawIndex ? JSON.parse(rawIndex) : null; } catch { /* not ours to touch */ }
+    try { const rawIndex = storage.getItem(RUN_ARCHIVE_KEY); index = rawIndex ? JSON.parse(rawIndex) : null; } catch { /* not ours to touch */ }
     if (index && Array.isArray(index.entries)) {
       for (const entry of index.entries) {
         if (!(entry && entry.kind === 'run' && typeof entry.save === 'string' && sameProfile(entry.save))) continue;
         const original = entry.save;
         const next = recompactedRunJson(original, { writeCopy: false });
-        if (!next) continue;
-        const put = (v) => { entry.save = v; storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index)); };
-        if (attempt(original, next, put)) return true;
+        if (next && attempt(original, next, (from, to) => swapArchiveSave(entry.id, from, to))) return true;
       }
     }
     return false;
@@ -814,23 +833,26 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       const json = storage.getItem(runKey(slot));
       const next = json && recompactedRunJson(json);
       if (!next) continue;
-      try { storage.setItem(runKey(slot), next); freed += json.length - next.length; } catch { /* a smaller value was refused: leave the original */ }
+      try { if (swapKey(runKey(slot), json, next)) freed += json.length - next.length; } catch { /* a smaller value was refused: leave the original */ }
     }
-    const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
-    if (rawIndex) {
+    // The archive index: compact against a FRESH read and write only if it is unchanged since; a
+    // concurrent change means re-reading and re-applying, never writing the stale index.
+    for (let tries = 0; tries < 3; tries++) {
+      const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
+      if (!rawIndex) break;
       let index = null;
-      try { index = JSON.parse(rawIndex); } catch { /* an unreadable index is readArchiveIndex's to salvage, not ours to touch */ }
-      if (index && Array.isArray(index.entries)) {
-        let changed = false;
-        for (const entry of index.entries) {
-          const next = entry && entry.kind === 'run' && typeof entry.save === 'string' ? recompactedRunJson(entry.save) : null;
-          if (next) { entry.save = next; changed = true; }
-        }
-        if (changed) {
-          const out = JSON.stringify(index);
-          try { storage.setItem(RUN_ARCHIVE_KEY, out); freed += rawIndex.length - out.length; } catch { /* leave the index as it was */ }
-        }
+      try { index = JSON.parse(rawIndex); } catch { break; /* an unreadable index is readArchiveIndex's to salvage, not ours to touch */ }
+      if (!index || !Array.isArray(index.entries)) break;
+      let changed = false;
+      for (const entry of index.entries) {
+        const next = entry && entry.kind === 'run' && typeof entry.save === 'string' ? recompactedRunJson(entry.save) : null;
+        if (next) { entry.save = next; changed = true; }
       }
+      if (!changed) break;
+      const out = JSON.stringify(index);
+      try {
+        if (swapKey(RUN_ARCHIVE_KEY, rawIndex, out)) { freed += rawIndex.length - out.length; break; }
+      } catch { break; /* leave the index as it was */ }
     }
     return freed;
   }
