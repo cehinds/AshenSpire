@@ -3,14 +3,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
-import { combatTargetIntentRow } from '../src/ui/components/combatTargetHud.js';
 
 const multi = { kind: 'attack', moveId: 'flurry', damage: 5, hits: 3,
   hitDamages: [5, 5, 5], totalDamage: 15, projectedDamage: { basis: 'hp', label: '0–15' } };
 
 function surfaces(intent) {
   const overhead = combatantIntent(intent, () => '');
-  return [overhead.querySelector('.intent-compact'), combatTargetIntentRow({ role: 'enemy', intent })];
+  return [overhead.querySelector('.intent-compact')];
 }
 
 test('compact overhead and target HUD carry their own scoped total beside the per-hit value', () => withKitDom(({ document }) => {

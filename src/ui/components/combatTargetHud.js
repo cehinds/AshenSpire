@@ -2,9 +2,8 @@ import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
 import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
-import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
-import { combatantInfo, intentParts } from './combatantOverhead.js';
+import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -22,21 +21,6 @@ function corridor(a, b, x, y, radius) {
   return Math.hypot(x - ax - t * dx, y - ay - t * dy) <= radius;
 }
 function node(tag, className, text) { const n = document.createElement(tag); n.className = className; if (text != null) n.textContent = text; return n; }
-
-export function combatTargetIntentRow(entry) {
-  const row = node('div', 'target-hud-intent');
-  const badge = entry.intent ? combatIntentPresentation(entry.intent) : null;
-  const action = entry.action?.maneuver || 'ready';
-  const playerIcon = ({ attack: 'attack', smash: 'smash', sweep: 'sweep', counter: 'counter', defend: 'defend', evade: 'evade' })[action] || 'prepare';
-  const title = badge?.title || (['casting', 'prepared'].includes(action) ? t('combat.targetHud.prepare') : action === 'ready' ? t('combat.targetHud.ready') : action === 'defend' ? t('combat.targetHud.defend') : action[0].toUpperCase() + action.slice(1));
-  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }));
-  // Owner 2026-10-25: no stance/action name in the panel (it cost a wrapped row). The damage and multiplier stay; the title lives in the tooltip.
-  row.dataset.intentVisibility = badge?.visibility || 'known';
-  if (badge?.projectedDamage?.tone) row.dataset.damageTone = badge.projectedDamage.tone;
-  row.tabIndex = 0;
-  attachTooltip(row, () => `<div class="tt-title">${esc(title)}</div>${badge && badge.visibility !== 'known' ? t('combat.targetHud.unknown') : esc(entry.intent?.projectedDamage ? t('combat.targetHud.damageScope') : entry.intent?.label || title)}`);
-  return row;
-}
 
 function panelFor(entry) {
   const shell = node('section', 'target-hud-detail');
