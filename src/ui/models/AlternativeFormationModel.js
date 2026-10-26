@@ -7,7 +7,9 @@ export function validatePerspectiveGrid(grid) {
   const ids = ['enemy-back','enemy-front','extra-combatants','player'];
   if (!Array.isArray(grid.bands) || grid.bands.length !== ids.length
     || grid.bands.some((band, i) => band.id !== ids[i] || band.index !== i
-      || ![band.anchor?.x, band.anchor?.y].every(n => Number.isFinite(n) && n > 0 && n < 1)
+      || !(Number.isFinite(band.anchor?.x) && band.anchor.x > 0 && band.anchor.x < 1)
+      // Feet may stand on the cell's bottom edge (y = 1): that is where the owner wants them.
+      || !(Number.isFinite(band.anchor?.y) && band.anchor.y > 0 && band.anchor.y <= 1)
       || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
   for (const key of ['wide','narrow','short', ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];

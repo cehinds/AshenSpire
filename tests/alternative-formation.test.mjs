@@ -20,7 +20,7 @@ test('the perspective grid is one sheared grid: equal parallelograms on diagonal
     const skew = formation.cells[0].box.skew;
     assert(skew > 0, 'the grid leans');
     for (const cell of formation.cells) {
-      const anchor = { x: .5, y: cell.side === 'player' ? .4 : .24 };
+      const anchor = { x: .5, y: 1 };
       assert(Math.abs(cell.ground - cell.box.top - anchor.y * cell.box.height) < 1e-6);
       const centre = cell.box.left + cell.box.width / 2 + skew * (cell.box.top + cell.box.height / 2 - cell.ground);
       assert(Math.abs(cell.x - centre - (anchor.x - .5) * cell.box.width) < 1e-6);
@@ -30,7 +30,7 @@ test('the perspective grid is one sheared grid: equal parallelograms on diagonal
     assert(Math.max(...front.map(c => c.box.top + c.box.height)) <= Math.min(...players.map(c => c.box.top)) + 1e-6,
       'the party rank does not overlap the enemy ranks');
     for (const cell of formation.cells) {
-      assert(cell.ground > cell.box.top && cell.ground < cell.box.top + cell.box.height, 'the foot anchor is inside its cell');
+      assert(cell.ground > cell.box.top && cell.ground <= cell.box.top + cell.box.height + 1e-6, 'the foot anchor is inside its cell, on its bottom edge at most');
       assert(perspectiveCellContains(cell.box, cell.x, cell.ground), 'the foot anchor is inside its parallelogram');
       assert(cell.box.top + cell.box.height <= height + 1e-6);
       for (const y of [cell.box.top, cell.box.top + cell.box.height]) {
