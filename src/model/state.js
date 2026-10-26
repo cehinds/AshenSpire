@@ -1850,8 +1850,8 @@ export function migrateRunSchema(run) {
   return run;
 }
 
-export function deserializeRun(json) {
-  return migrateRunSchema(expandStoredRun(JSON.parse(json)));
+export function deserializeRun(json, lookup = null) {
+  return migrateRunSchema(expandStoredRun(JSON.parse(json), lookup));
 }
 
 // ---------------------------------------------------------------------------

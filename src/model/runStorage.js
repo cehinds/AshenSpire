@@ -13,6 +13,12 @@
 //   expandStoredRun(o) → the object a run save means (mutates and returns `o`)
 //
 // Both are lossless: expandStoredRun(compactRun(run)) deep-equals run.
+//
+// A reference is only as durable as the catalog behind it, and a content edit
+// changes the profile's hash (the runtime hash, which gates saves, stays). So
+// the save manager also keeps ONE shared copy per hash under
+// `sote_profile_<hash>` (engine/save.js), and a reference resolves from the
+// catalog first and from that copy second. `lookup(hash)` is that second door.
 import { resolveGameProfile } from './gameProfile.js';
 
 const SNAPSHOT_HOLDERS = ['combatEntered', 'combatPendingOutcome'];
@@ -52,23 +58,28 @@ export function compactRun(run) {
  * catalog for a reference, else the inline one), or undefined. Throws, naming
  * the profile, when a reference cannot be resolved by THIS build.
  */
-export function storedGameProfile(parsed) {
+export function storedGameProfile(parsed, lookup = null) {
   if (!parsed || typeof parsed !== 'object') return undefined;
   if (parsed.gameProfile) return parsed.gameProfile;
   const ref = parsed.gameProfileRef;
   if (!ref) return undefined;
   let profile = null;
-  try { profile = resolveGameProfile(ref.id); } catch { /* reported below */ }
+  try { profile = resolveGameProfile(ref.id); } catch { /* the shared copy is next */ }
+  if ((!profile || profile.hash !== ref.hash) && typeof lookup === 'function') {
+    let shared = null;
+    try { shared = lookup(ref.hash); } catch { /* reported below */ }
+    profile = shared && shared.hash === ref.hash ? shared : null;
+  }
   if (!profile || profile.hash !== ref.hash) {
-    throw new Error(`Pinned game profile '${ref.id}' (${String(ref.hash).slice(0, 19)}) is not part of this build`);
+    throw new Error(`Pinned game profile '${ref.id}' (${String(ref.hash).slice(0, 19)}) is neither in this build nor kept on this device`);
   }
   return profile;
 }
 
-export function expandStoredRun(parsed) {
+export function expandStoredRun(parsed, lookup = null) {
   if (!parsed || typeof parsed !== 'object') return parsed;
   if (parsed.gameProfileRef) {
-    parsed.gameProfile = structuredClone(storedGameProfile(parsed));
+    parsed.gameProfile = structuredClone(storedGameProfile(parsed, lookup));
     delete parsed.gameProfileRef;
   }
   for (const key of SNAPSHOT_HOLDERS) {

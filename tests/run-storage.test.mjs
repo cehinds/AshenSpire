@@ -9,7 +9,7 @@ import { createRunState, serializeRun, deserializeRun, RUN_SCHEMA_VERSION } from
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage, inlineRunJson, RUN_KEY, runKey, profileCopyKey, PROFILE_COPY_PREFIX } from '../src/engine/save.js';
 
 const profile = resolveGameProfile('core');
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -78,7 +78,7 @@ test('a run pinned by a profile this build does not hold keeps its own full snap
   assert.equal(stored.gameProfileRef, undefined);
 });
 
-test('a reference this build cannot resolve is a profile mismatch that keeps the bytes', () => {
+test('a reference with no catalog entry and no shared copy is a profile mismatch that keeps the bytes', () => {
   const { run, combat } = coreRun(516);
   const storage = createMemoryStorage();
   const saves = createSaveManager(storage);
@@ -89,6 +89,86 @@ test('a reference this build cannot resolve is a profile mismatch that keeps the
   storage.setItem(RUN_KEY, bytes);
   assert.equal(saves.loadRun(core), null);
   assert.equal(saves.runStatus().state, 'profile-mismatch');
-  assert.match(saves.runStatus().reason, /not part of this build/);
+  assert.match(saves.runStatus().reason, /neither in this build nor kept on this device/);
   assert.equal(storage.getItem(RUN_KEY), bytes, 'nothing archived or removed');
+});
+
+test('saving keeps ONE shared copy of the profile, written before the slot names it', () => {
+  const { run, combat } = coreRun(517);
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  saves.saveRun(run, combat.rng, 1);
+  saves.saveRun(run, combat.rng, 2);
+  const copies = Array.from({ length: storage.length }, (_, i) => storage.key(i)).filter(k => k.startsWith(PROFILE_COPY_PREFIX));
+  assert.deepEqual(copies, [profileCopyKey(run.gameProfile.hash)]);
+  assert.equal(JSON.parse(storage.getItem(copies[0])).hash, run.gameProfile.hash);
+  assert.ok(storage.getItem(RUN_KEY).length < 250000 && storage.getItem(runKey(2)).length < 250000);
+});
+
+// BUILD N -> BUILD N+1. A content edit changes the profile's hash while the runtime hash (which gates
+// saves) stays, so the catalog's profile for the id is no longer the one the run pinned. 'ashen.core@1.0.0'
+// is a real second profile with the same id 'core' and another hash: the run pins it, the catalog says
+// 'core' is something else, and the run must still resume from the shared copy with its own rules.
+test('a run pinned to a profile the catalog no longer holds resumes from the shared copy', () => {
+  const old = resolveGameProfile('ashen.core@1.0.0');
+  assert.equal(old.id, profile.id);
+  assert.notEqual(old.hash, profile.hash);
+  const oldRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, old)), old);
+  const run = createRunState({ registries: oldRegistries, seed: 520, classId: 'reaver' });
+  // The bytes build N wrote: a reference to its own hash, plus its shared copy.
+  const storage = createMemoryStorage();
+  const stored = JSON.parse(JSON.stringify(run));
+  delete stored.gameProfile;
+  stored.gameProfileRef = { id: old.id, hash: old.hash };
+  stored.schemaVersion = RUN_SCHEMA_VERSION;
+  storage.setItem(RUN_KEY, JSON.stringify(stored));
+  storage.setItem(profileCopyKey(old.hash), JSON.stringify(old));
+  const saves = createSaveManager(storage);
+  assert.equal(saves.peekRunGameProfile().hash, old.hash);
+  const loaded = saves.loadRun(oldRegistries);
+  assert.ok(loaded, saves.runStatus().reason);
+  assert.equal(loaded.gameProfile.hash, old.hash, 'pinned rules, not the catalog\'s');
+  assert.deepEqual(JSON.parse(JSON.stringify(loaded.gameProfile)), JSON.parse(JSON.stringify(old)));
+  // Without the copy the same bytes are refused and kept, never guessed.
+  storage.removeItem(profileCopyKey(old.hash));
+  assert.equal(saves.loadRun(oldRegistries), null);
+  assert.equal(saves.runStatus().state, 'profile-mismatch');
+});
+
+test('shared copies are collected only when no slot or archived run names them', () => {
+  const { run, combat } = coreRun(518);
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  saves.saveRun(run, combat.rng, 1);
+  saves.saveRun(run, combat.rng, 2);
+  storage.setItem('sote_unrelated', 'keep me');
+  storage.setItem(profileCopyKey('sha256:orphan'), '{"hash":"sha256:orphan"}');
+  const key = profileCopyKey(run.gameProfile.hash);
+  saves.clearRun(1);
+  assert.ok(storage.getItem(key), 'slot 2 still names it');
+  assert.equal(storage.getItem(profileCopyKey('sha256:orphan')), null, 'an unreferenced copy is collected');
+  assert.equal(storage.getItem('sote_unrelated'), 'keep me', 'keys the game does not own are never touched');
+  saves.clearRun(2);
+  assert.equal(storage.getItem(key), null, 'last reference gone: collected');
+});
+
+test('an archived run keeps its profile copy alive', () => {
+  const { run, combat } = coreRun(519);
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  saves.saveRun(run, combat.rng, 1);
+  storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(storage.getItem(RUN_KEY)), seatOrder: ['no-such-seat'] })); // refused: loadRun archives it
+  assert.equal(saves.loadRun(core), null);
+  assert.equal(storage.getItem(RUN_KEY), null, 'the slot was archived');
+  assert.ok(storage.getItem(profileCopyKey(run.gameProfile.hash)), 'the archive entry still names it');
+});
+
+test('anything that leaves the device carries the profile inline', () => {
+  const { run, combat } = coreRun(521);
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(run, combat.rng);
+  const out = JSON.parse(inlineRunJson(storage.getItem(RUN_KEY), storage));
+  assert.equal(out.gameProfileRef, undefined);
+  assert.equal(out.gameProfile.hash, run.gameProfile.hash);
+  assert.equal(out.combatEntered.snapshot.gameProfile.hash, run.gameProfile.hash);
 });

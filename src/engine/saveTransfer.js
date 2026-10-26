@@ -1,4 +1,4 @@
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, RUN_KEY, SLOTS } from './save.js';
+import { createSaveManager, createMemoryStorage, inlineRunJson, META_KEY, META_BACKUP_KEY, RUN_KEY, SLOTS } from './save.js';
 import { offlinePlay } from '../content/offlinePlay.js';
 
 const BACKUP_KEY = 'sote_transfer_backup_v1';
@@ -7,7 +7,7 @@ const keys = [META_KEY, ...Array.from({ length: SLOTS }, (_, i) => i ? `${RUN_KE
 /** Transfer only the profile and run slots; validation never touches live storage. */
 export function createSaveTransfer(storage, registries) {
   const snapshot = () => ({ format: offlinePlay.saveFormat, version: offlinePlay.saveVersion,
-    entries: Object.fromEntries(keys.map(key => [key, storage.getItem(key)])) });
+    entries: Object.fromEntries(keys.map(key => [key, key === META_KEY ? storage.getItem(key) : inlineRunJson(storage.getItem(key), storage)])) });
   const encode = data => JSON.stringify(data, null, 2);
   const validate = text => {
     if (typeof text !== 'string' || new TextEncoder().encode(text).length > offlinePlay.maxSaveBytes) throw new Error('Save file is too large.');

@@ -243,7 +243,7 @@ test('a full store is packed smaller, losslessly, and the save then lands', () =
   store.map.set(runKey(2), old2);
   store.map.set(runKey(3), old3);
   store.map.set(RUN_ARCHIVE_KEY, JSON.stringify({ v: 1, entries: [{ id: 'run-s2-1', kind: 'run', slot: 2, reason: 'test', at: new Date().toISOString(), save: inlineSave(23) }] }));
-  store.budget = store.used() + 20000; // a fresh slot-1 save (~30 KB) does not fit
+  store.budget = store.used() + 665000; // room for the shared profile copy (~655 KB), not for the ~30 KB slot-1 save after it
   const save = createSaveManager(store);
   const { run, rng } = coreRun(24);
   const archivedBefore = JSON.parse(store.map.get(RUN_ARCHIVE_KEY)).entries[0].save;
