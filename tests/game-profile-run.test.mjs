@@ -96,7 +96,7 @@ test('profile peek validates integrity and wrong registry refuses without changi
  const run=fresh(),storage=createMemoryStorage(),save=createSaveManager(storage);save.saveRun(run,null);
  assert.equal(save.peekRunGameProfile().hash,profile.hash);
  const original=storage.getItem(runKey());assert.equal(save.loadRun(createRegistries(contentBundle)),null);assert.equal(storage.getItem(runKey()),original);
- const tampered=JSON.parse(original);tampered.gameProfile.hash='sha256:wrong';storage.setItem(runKey(),JSON.stringify(tampered));
+ const tampered=JSON.parse(original);assert.ok(tampered.gameProfileRef&&!tampered.gameProfile,'a catalog profile is stored as a reference');delete tampered.gameProfileRef;tampered.gameProfile={...structuredClone(profile),hash:'sha256:wrong'};storage.setItem(runKey(),JSON.stringify(tampered));
  assert.throws(()=>save.peekRunGameProfile(),/digest/);const bytes=storage.getItem(runKey());assert.equal(save.loadRun(reg),null);assert.equal(storage.getItem(runKey()),bytes);
 });
 

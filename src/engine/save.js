@@ -30,6 +30,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
+import { storedGameProfile, compactRun, expandStoredRun } from '../model/runStorage.js';
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
@@ -80,6 +81,36 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
+// The shared copy of a pinned game profile (see model/runStorage.js): one per
+// distinct hash, written once, read by every slot, archived run and snapshot
+// whose `gameProfileRef` names that hash. The game creates and deletes only
+// keys with this exact prefix, and deletes one only when no stored run names it.
+export const PROFILE_COPY_PREFIX = 'sote_profile_';
+export const profileCopyKey = (hash) => `${PROFILE_COPY_PREFIX}${hash}`;
+// When a copy was written (ms since epoch), under its own prefix so it is not itself a copy. Another tab's
+// collection spares a copy written inside PROFILE_COPY_GRACE_MS: its slot may not have landed yet.
+export const PROFILE_STAMP_PREFIX = 'sote_profilestamp_';
+export const PROFILE_COPY_GRACE_MS = 60000;
+// Schemas a stored run may be repacked from: each reads with no migration step
+// beyond the stamp, so moving the stamp loses nothing. A future schema joins
+// ONLY after its migration from these is proven a no-op and a test says so.
+const REPACKABLE_SCHEMAS = new Set([25, 26]);
+
+/**
+ * inlineRunJson(json, storage) → the run save with its profile reference
+ * expanded to the profile itself, for anything that leaves this device (export,
+ * transfer). A save with no reference, or one that cannot be expanded, comes back as it was.
+ */
+export function inlineRunJson(json, storage) {
+  if (typeof json !== 'string' || !json.includes('gameProfileRef')) return json;
+  const lookup = (hash) => {
+    const raw = storage.getItem(profileCopyKey(hash));
+    if (!raw) return null;
+    try { const copy = JSON.parse(raw); return copy && copy.hash === hash ? copy : null; } catch { return null; }
+  };
+  try { return JSON.stringify(expandStoredRun(JSON.parse(json), lookup)); } catch { return json; }
+}
+
 export function runKey(slot = 1) {
   return slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`;
 }
@@ -431,6 +462,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     const id = makeArchiveId('run', slot);
     writeArchiveEntry({ id, kind: 'run', slot, reason, at: new Date().toISOString(), save: json });
     storage.removeItem(runKey(slot));
+    collectProfileCopies();
     return id;
   }
 
@@ -621,6 +653,164 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     return { created: true, ok: true };
   }
 
+  // ---- THE SHARED PROFILE COPIES (sote_profile_<hash>) ---------------------
+  const verifiedCopies = new Set();
+  function readSharedProfile(hash) {
+    const raw = storage.getItem(profileCopyKey(hash));
+    if (!raw) return null;
+    try {
+      const copy = JSON.parse(raw);
+      if (copy && copy.hash === hash) { verifiedCopies.add(hash); return copy; }
+    } catch { /* unreadable: not a copy */ }
+    return null;
+  }
+  const hasVerifiedCopy = (hash) => (verifiedCopies.has(hash) && storage.getItem(profileCopyKey(hash)) !== null) || readSharedProfile(hash) !== null;
+  // Write the copy once and prove it reads back; a failed write throws (quota)
+  // BEFORE any slot is allowed to point at it.
+  function ensureSharedProfile(profile) {
+    const hash = profile && profile.hash;
+    if (typeof hash !== 'string') throw new Error('Cannot keep a profile with no hash');
+    const key = profileCopyKey(hash);
+    if (verifiedCopies.has(hash) && storage.getItem(key) !== null) return false;
+    if (readSharedProfile(hash)) { verifiedCopies.add(hash); return false; }
+    const json = JSON.stringify(profile);
+    storage.setItem(key, json);
+    if (storage.getItem(key) !== json) throw new Error('The shared game profile copy did not read back');
+    try { storage.setItem(`${PROFILE_STAMP_PREFIX}${hash}`, String(Date.now())); } catch { /* no stamp: the post-write re-check covers it */ }
+    verifiedCopies.add(hash);
+    return true;
+  }
+  // Delete only `sote_profile_*` keys that no stored run names. References are
+  // found by pattern in every run slot, the archive (index and salvage) and the
+  // transfer recovery copy, so an unreadable one still protects its profile.
+  const REF_PATTERN = /gameProfileRef\\*"\s*:\s*\{[^}]*?hash\\*"\s*:\s*\\*"([^"\\]+)/g;
+  function collectProfileCopies() {
+    // Not guarded by readOnlyProfile: that flag protects the PROFILE (meta) keys, and this touches
+    // only run copies the game created, so the browser's run-writing manager must run it.
+    if (typeof storage.key !== 'function' || !Number.isInteger(storage.length)) return 0;
+    const names = [];
+    for (let i = 0; i < storage.length; i++) { const name = storage.key(i); if (typeof name === 'string') names.push(name); }
+    const referenced = new Set();
+    for (const name of names) {
+      if (!(name.startsWith(RUN_KEY) || name.startsWith(RUN_ARCHIVE_KEY) || name === 'sote_transfer_backup_v1')) continue;
+      const raw = storage.getItem(name);
+      if (typeof raw === 'string') for (const m of raw.matchAll(REF_PATTERN)) referenced.add(m[1]);
+    }
+    let removed = 0;
+    const now = Date.now();
+    for (const name of names) {
+      if (name.startsWith(PROFILE_STAMP_PREFIX)) {
+        // a stamp whose copy is gone is just litter
+        if (storage.getItem(profileCopyKey(name.slice(PROFILE_STAMP_PREFIX.length))) === null) storage.removeItem(name);
+        continue;
+      }
+      if (!name.startsWith(PROFILE_COPY_PREFIX)) continue;
+      const hash = name.slice(PROFILE_COPY_PREFIX.length);
+      if (referenced.has(hash)) continue;
+      const stamp = Number(storage.getItem(`${PROFILE_STAMP_PREFIX}${hash}`));
+      if (Number.isFinite(stamp) && stamp > 0 && Math.abs(now - stamp) < PROFILE_COPY_GRACE_MS) continue; // just written, maybe by another tab
+      storage.removeItem(name); storage.removeItem(`${PROFILE_STAMP_PREFIX}${hash}`); verifiedCopies.delete(hash); removed++;
+    }
+    return removed;
+  }
+  const refHashOf = (raw) => { REF_PATTERN.lastIndex = 0; const m = typeof raw === 'string' ? REF_PATTERN.exec(raw) : null; REF_PATTERN.lastIndex = 0; return m ? m[1] : null; };
+
+  // ---- RECLAIMING SPACE: LOSSLESS RECOMPACTION ONLY ------------------------
+  // A full store gets the bytes the game itself wasted back, and nothing else:
+  // every save slot and every archived run written in the older, bigger form
+  // (the pinned game profile inline, repeated per saved fight) is rewritten in
+  // the stored form model/runStorage.js defines. Nothing is deleted, no slot,
+  // archive, profile or backup is dropped (an earlier attempt that removed a
+  // stale profile backup was withdrawn as unsafe), and each rewrite is proven
+  // lossless first: expanding it must give back exactly the save it replaces.
+  const canonical = (value) => JSON.stringify(value, (key, v) => (v && typeof v === 'object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v));
+  function recompactedRunJson(json, { writeCopy = true } = {}) {
+    let parsed;
+    try { parsed = JSON.parse(json); } catch { return null; }
+    // Only a save this build reads without migrating: the stamp moves to the
+    // current schema, and nothing older has its migrations skipped by it.
+    if (!parsed || typeof parsed !== 'object' || !REPACKABLE_SCHEMAS.has(parsed.schemaVersion)) return null;
+    const packed = compactRun(parsed);
+    if (packed === parsed) return null;
+    const next = JSON.stringify({ ...packed, schemaVersion: RUN_SCHEMA_VERSION });
+    if (next.length >= json.length) return null;
+    try {
+      // The reference may point only at a copy that is written and verified.
+      if (writeCopy) ensureSharedProfile(parsed.gameProfile);
+      if (canonical({ ...expandStoredRun(JSON.parse(next), readSharedProfile), schemaVersion: parsed.schemaVersion }) !== canonical(parsed)) return null;
+    } catch { return null; }
+    return next;
+  }
+  // The first save after an update on a store that is ALREADY full: the shared
+  // copy (~650 KB) cannot be written because the room is held by older saves
+  // that carry the very same profile inline. So one of those is converted to a
+  // reference FIRST (that frees its ~650 KB), the copy is written and verified
+  // from the live run's full profile at once, and if the copy still cannot land
+  // the entry is put back to its exact original bytes. Returns true when the copy exists.
+  function bootstrapSharedProfile(profile, exceptSlot) {
+    if (!profile || typeof profile.hash !== 'string') return false;
+    if (readSharedProfile(profile.hash)) return true;
+    const sameProfile = (json) => { try { return JSON.parse(json).gameProfile?.hash === profile.hash; } catch { return false; } };
+    const attempt = (original, next, put) => {
+      try { put(next); } catch { return false; }
+      try { ensureSharedProfile(profile); return true; } catch { /* roll back below */ }
+      try { put(original); } catch { /* the original fit before, so this cannot be refused; nothing more to do */ }
+      return false;
+    };
+    for (let slot = 1; slot <= SLOTS; slot++) {
+      if (slot === exceptSlot) continue;
+      const original = storage.getItem(runKey(slot));
+      const next = original && sameProfile(original) ? recompactedRunJson(original, { writeCopy: false }) : null;
+      if (next && attempt(original, next, (v) => storage.setItem(runKey(slot), v))) return true;
+    }
+    const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
+    let index = null;
+    try { index = rawIndex ? JSON.parse(rawIndex) : null; } catch { /* not ours to touch */ }
+    if (index && Array.isArray(index.entries)) {
+      for (const entry of index.entries) {
+        if (!(entry && entry.kind === 'run' && typeof entry.save === 'string' && sameProfile(entry.save))) continue;
+        const original = entry.save;
+        const next = recompactedRunJson(original, { writeCopy: false });
+        if (!next) continue;
+        const put = (v) => { entry.save = v; storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index)); };
+        if (attempt(original, next, put)) return true;
+      }
+    }
+    return false;
+  }
+  // Returns the characters freed.
+  function reclaimStoredSpace(exceptSlot = null, liveProfile = null) {
+    // Run slots and archived RUNS only (never a profile key), so it is not guarded by readOnlyProfile.
+    let freed = 0;
+    freed += collectProfileCopies() ? 1 : 0; // orphaned copies need no copy of their own
+    if (liveProfile) bootstrapSharedProfile(liveProfile, exceptSlot);
+    for (let slot = 1; slot <= SLOTS; slot++) {
+      if (slot === exceptSlot) continue; // about to be overwritten with the newest bytes
+      const json = storage.getItem(runKey(slot));
+      const next = json && recompactedRunJson(json);
+      if (!next) continue;
+      try { storage.setItem(runKey(slot), next); freed += json.length - next.length; } catch { /* a smaller value was refused: leave the original */ }
+    }
+    const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
+    if (rawIndex) {
+      let index = null;
+      try { index = JSON.parse(rawIndex); } catch { /* an unreadable index is readArchiveIndex's to salvage, not ours to touch */ }
+      if (index && Array.isArray(index.entries)) {
+        let changed = false;
+        for (const entry of index.entries) {
+          const next = entry && entry.kind === 'run' && typeof entry.save === 'string' ? recompactedRunJson(entry.save) : null;
+          if (next) { entry.save = next; changed = true; }
+        }
+        if (changed) {
+          const out = JSON.stringify(index);
+          try { storage.setItem(RUN_ARCHIVE_KEY, out); freed += rawIndex.length - out.length; } catch { /* leave the index as it was */ }
+        }
+      }
+    }
+    return freed;
+  }
+
   return {
     /**
      * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
@@ -636,7 +826,40 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       // write lands, so a full store cannot leave a run claiming a save it lost.
       const previous = run.savedAt;
       run.savedAt = new Date().toISOString();
-      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }
+      try {
+        const json = serializeRun(run, { hasCopy: hasVerifiedCopy });
+        // Exactly the bytes this build's predecessor wrote: the profile inline.
+        const inlineJson = () => serializeRun(run, { inline: true });
+        const needsCopy = json.includes('"gameProfileRef":{') && run.gameProfile;
+        const before = refHashOf(storage.getItem(runKey(slot)));
+        const write = () => {
+          // The shared copy lands first: a slot never names a profile that is not kept.
+          const wrote = needsCopy ? ensureSharedProfile(run.gameProfile) : false;
+          storage.setItem(runKey(slot), json);
+          // Another tab's collection may have run between the copy and the slot: the slot now names a
+          // copy that is gone, so put it back (from the live profile) before anything can depend on it.
+          if (needsCopy && storage.getItem(profileCopyKey(run.gameProfile.hash)) === null) { verifiedCopies.delete(run.gameProfile.hash); ensureSharedProfile(run.gameProfile); }
+          if (wrote || before !== (needsCopy ? run.gameProfile.hash : null)) collectProfileCopies();
+        };
+        try {
+          write();
+        } catch (error) {
+          // A full store gets ONE retry after the game's own bytes are packed
+          // smaller (lossless; see reclaimStoredSpace). If that frees nothing,
+          // or the retry is still refused, the error reaches the caller, which
+          // tells the player: the run in memory is ahead of the slot.
+          if (!isStorageFullError(error)) throw error;
+          // Never refuse a save the old code would have taken: reclaim, retry,
+          // and as the last resort store the slot inline as before.
+          reclaimStoredSpace(slot, needsCopy ? run.gameProfile : null);
+          try {
+            write();
+          } catch (retryError) {
+            if (!isStorageFullError(retryError) || !needsCopy) throw retryError;
+            try { storage.setItem(runKey(slot), inlineJson()); collectProfileCopies(); } catch { throw error; }
+          }
+        }
+      } catch (error) { run.savedAt = previous; throw error; }
     },
 
     /**
@@ -650,7 +873,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     peekRunGameProfile(slot = 1) {
       const json = storage.getItem(runKey(slot));
       if (!json) return null;
-      const snapshot = JSON.parse(json).gameProfile;
+      const snapshot = storedGameProfile(JSON.parse(json), readSharedProfile);
       return snapshot ? validateResolvedGameProfile(snapshot) : null;
     },
 
@@ -663,8 +886,12 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       // Profile mismatch is recoverable: preserve the original bytes instead
       // of archiving a slot against the wrong content registry.
       let pinned = null;
-      try { pinned = JSON.parse(json).gameProfile; } catch { /* Legacy malformed JSON follows the existing archive path below. */ }
+      let parsedForProfile = null;
+      try { parsedForProfile = JSON.parse(json); } catch { /* Legacy malformed JSON follows the existing archive path below. */ }
       try {
+        // A reference (`gameProfileRef`) resolves from THIS build's catalog; one
+        // it cannot resolve is a profile mismatch, kept in the slot like any other.
+        if (parsedForProfile) pinned = storedGameProfile(parsedForProfile, readSharedProfile);
         if (pinned) {
           validateResolvedGameProfile(pinned);
           if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
@@ -684,7 +911,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       }
       let run;
       try {
-        run = deserializeRun(json);
+        run = deserializeRun(json, readSharedProfile);
         // SPEC §13.4: a save from before seats climbs the order it was already
         // climbing — the default — and nothing else about it moves, no draw.
         // A save that HAS an order must name every seat once, or it is a
@@ -1085,6 +1312,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
 
     clearRun(slot = 1) {
       storage.removeItem(runKey(slot));
+      collectProfileCopies();
     },
 
     /**
@@ -1398,5 +1626,7 @@ export function createMemoryStorage() {
     getItem: (k) => (map.has(k) ? map.get(k) : null),
     setItem: (k, v) => map.set(k, String(v)),
     removeItem: (k) => map.delete(k),
+    key: (i) => [...map.keys()][i] ?? null,
+    get length() { return map.size; },
   };
 }
