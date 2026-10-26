@@ -639,3 +639,36 @@ dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { height:calc((calc(
 .atlas-dialog[data-local-map="false"] [data-atlas-travel] { margin-left:auto; }
 .atlas-dialog [data-atlas-travel][data-forward="true"]:enabled { background:color-mix(in srgb,var(--green) 22%,var(--panel)); border-color:var(--green); color:var(--parchment); font-weight:600; }
 .atlas-dialog [data-atlas-travel][data-forward="true"]:enabled:hover { background:color-mix(in srgb,var(--green) 34%,var(--panel)); }
+
+/* ---- COMPACT MAP CHROME (owner, 2026-10-26) ---------------------------------
+   "The top and bottom are much smaller. They are way too large." Map screen
+   only: the HUD band is one thin row (vitals bar, relics, Cinders, actions)
+   with the act track directly beneath it, and the Deck / Equipment / Stats /
+   Menu row is a thin strip whose left end carries the zoom controls, so the
+   map gets the height. Scoped to `.mapscreen`; combat's chrome is not touched. */
+.mapscreen { --map-strip-h: 2.8rem; --map-potions-size: 5.2rem; }
+:root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] { padding-block: .2rem; padding-inline: 1.2rem; }
+:root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
+  padding-top: 0; row-gap: 0; column-gap: .9rem; align-items: center; min-height: 0;
+  grid-template-columns: minmax(6rem, 1fr) auto auto auto;
+  grid-template-areas: 'meters rail purse actions';
+}
+:root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-bottom { grid-area: rail; margin: 0; width: auto; align-self: center; }
+:root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-vitals-panel { align-self: center; }
+:root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-info-row.hud-cinders-strip { grid-area: purse; align-self: center; margin: 0; translate: none; }
+:root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-control-grid { align-self: center; translate: none; }
+:root .mapscreen > .act-route-strip { min-height: 0; padding-block: .1rem; padding-inline: 1.2rem; gap: .6rem; }
+:root .mapscreen > .act-route-strip .map-orientation-progress { min-height: 0; }
+:root .mapscreen > .act-route-strip .map-orientation-rail { min-height: 0; }
+:root .mapscreen > .act-route-strip .map-route-node { width: .9rem; height: .9rem; }
+@media (min-width: 761px) {
+  :root:not([data-layout='narrow']) .mapscreen .map-tray-row { min-height: var(--map-strip-h); padding-block: .2rem; }
+  :root:not([data-layout='narrow']) .mapscreen .map-tray-row .hint { min-height: 0; height: calc(var(--map-strip-h) - .5rem); padding-block: 0; }
+  :root:not([data-layout='narrow']) .mapscreen .map-tray-row .hint kbd { transform: scale(.8); }
+  /* The zoom controls ride the left end of the strip, in the tray's own row. */
+  :root:not([data-layout='narrow']) .map-frame > .map-zoom {
+    bottom: calc(-1 * var(--map-strip-h)); left: 1rem; height: var(--map-strip-h);
+    align-items: center; gap: .4rem; z-index: 31;
+  }
+  :root:not([data-layout='narrow']) .map-frame > .map-zoom .zbtn { width: 2.2rem; height: 2.2rem; min-width: 0; min-height: 0; }
+}
