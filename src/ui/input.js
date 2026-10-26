@@ -980,8 +980,8 @@ function onKeydown(ev) {
   const typing = isTypingTarget(ev.target);
   const cur = current();
   // A checkbox switch is a button in every way that matters here: Enter toggles it (Space already does, natively)
-  // and the arrows keep driving the game cursor.
-  if (isSwitchInput(ev.target) && ev.key === CONFIRM_KEY && !ev.repeat) { ev.preventDefault(); ev.target.click(); return; }
+  // and the arrows keep driving the game cursor. Once the cursor has moved off the switch, Enter follows the cursor.
+  if (isSwitchInput(ev.target) && ev.key === CONFIRM_KEY && !ev.repeat && (!cur || cur === ev.target)) { ev.preventDefault(); ev.target.click(); return; }
 
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
     engaged = true;

@@ -24,3 +24,10 @@ test('Enter on a focused switch clicks it before the game cursor sees the key', 
   assert.ok(at > 0 && src.slice(at, at + 160).includes('ev.target.click()'));
   assert.ok(at < src.indexOf('if (!typing && ev.key === CONFIRM_KEY)'));
 });
+
+test('after the cursor moves off a focused switch, Enter follows the cursor, not the stale DOM focus', () => {
+  const src = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  const at = src.indexOf('isSwitchInput(ev.target) && ev.key === CONFIRM_KEY');
+  assert.ok(src.slice(at, at + 160).includes('(!cur || cur === ev.target)'));
+  assert.ok(src.indexOf('const cur = current();') < at, 'the cursor is read before the switch shortcut');
+});
