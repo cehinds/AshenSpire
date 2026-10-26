@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
-- **Roomier combat with smaller cards** ([#2341](https://github.com/cehinds/AshenSpire/pull/2341), `0.7.1.1874`). The battle grid is bigger with every fighter standing on the bottom of their cell, HP badges and numbers sit flush with the ends of the bar, desktop and widescreen cards are smaller, the target panel shows only name, HP and stats, and a sideways phone keeps the back row clear of your party.
+- **Roomier combat with smaller cards** ([#2341](https://github.com/cehinds/AshenSpire/pull/2341), `0.7.1.1876`). The battle grid is bigger with every fighter standing on the bottom of their cell, HP badges and numbers sit flush with the ends of the bar, desktop and widescreen cards are smaller, the target panel shows only name, HP and stats, and a sideways phone keeps the back row clear of your party.
 
 - **The map keeps your place on phones** ([#2339](https://github.com/cehinds/AshenSpire/pull/2339), `0.7.1.1874`). Coming back to the map on a phone returns to where you had scrolled instead of snapping back to the centre after the slimmer map bars settle.
 
