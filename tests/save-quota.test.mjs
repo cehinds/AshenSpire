@@ -11,7 +11,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
+import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY, profileCopyKey, PROFILE_COPY_PREFIX } from '../src/engine/save.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -276,4 +276,50 @@ test('packing never touches an older schema, an unknown profile, or a corrupt sl
   assert.equal(store.map.get(RUN_ARCHIVE_KEY), '{not json');
   assert.equal(store.map.has(runKey(1)), false);
   assert.equal(run.savedAt, undefined, 'the run does not claim a save it lost');
+});
+
+// ---- the first save after an update, on a store that is ALREADY full ---------------------------
+test('a near-full store of older inline saves: the first save lands via a bootstrap, nothing lost', () => {
+  const store = limitedStorage();
+  const old2 = inlineSave(41), old3 = inlineSave(41);
+  const archived = inlineSave(41);
+  store.map.set(runKey(2), old2);
+  store.map.set(runKey(3), old3);
+  store.map.set(RUN_ARCHIVE_KEY, JSON.stringify({ v: 1, entries: [{ id: 'run-s2-1', kind: 'run', slot: 2, reason: 'test', at: new Date().toISOString(), save: archived }] }));
+  store.budget = store.used() + 100000; // no room for the ~655 KB shared copy, room for a ~30 KB slot
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(41);
+  save.saveRun(run, rng, 1);
+  assert.ok(store.map.has(runKey(1)), 'the save landed');
+  assert.ok(store.map.has(profileCopyKey(run.gameProfile.hash)), 'the shared copy was written');
+  for (const slot of [1, 2, 3]) assert.ok(save.loadRun(coreRegistries, slot), `slot ${slot} loads: ${save.runStatus().reason}`);
+  assert.equal(JSON.parse(store.map.get(RUN_ARCHIVE_KEY)).entries.length, 1, 'the archive keeps its run');
+});
+
+test('if the shared copy cannot be written, a converted entry is rolled back byte for byte and the slot is saved inline', () => {
+  const store = limitedStorage();
+  const old2 = inlineSave(42);
+  store.map.set(runKey(2), old2);
+  store.budget = store.used() + 800000;
+  const realSet = store.setItem;
+  store.setItem = (k, v) => { if (k.startsWith(PROFILE_COPY_PREFIX)) throw quotaError(); return realSet(k, v); };
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(42);
+  save.saveRun(run, rng, 1);
+  assert.equal(store.map.get(runKey(2)), old2, 'the other slot is back to its exact original bytes');
+  assert.ok(JSON.parse(store.map.get(runKey(1))).gameProfile, 'slot 1 was stored inline, as before this change');
+  assert.equal([...store.map.keys()].some(k => k.startsWith(PROFILE_COPY_PREFIX)), false);
+  assert.ok(save.loadRun(coreRegistries, 1), save.runStatus().reason);
+  assert.ok(save.loadRun(coreRegistries, 2), save.runStatus().reason);
+});
+
+test('a full store reclaims orphaned profile copies first', () => {
+  const store = limitedStorage();
+  store.map.set(profileCopyKey('sha256:orphan'), 'x'.repeat(700000));
+  store.budget = store.used() + 600000; // the copy fits only once the orphan is gone
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(43);
+  save.saveRun(run, rng, 1);
+  assert.equal(store.map.has(profileCopyKey('sha256:orphan')), false);
+  assert.ok(store.map.has(profileCopyKey(run.gameProfile.hash)));
 });

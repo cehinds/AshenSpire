@@ -705,7 +705,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   // lossless first: expanding it must give back exactly the save it replaces.
   const canonical = (value) => JSON.stringify(value, (key, v) => (v && typeof v === 'object' && !Array.isArray(v)
     ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v));
-  function recompactedRunJson(json) {
+  function recompactedRunJson(json, { writeCopy = true } = {}) {
     let parsed;
     try { parsed = JSON.parse(json); } catch { return null; }
     // Only a save this build reads without migrating: the stamp moves to the
@@ -717,15 +717,54 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     if (next.length >= json.length) return null;
     try {
       // The reference may point only at a copy that is written and verified.
-      ensureSharedProfile(parsed.gameProfile);
+      if (writeCopy) ensureSharedProfile(parsed.gameProfile);
       if (canonical({ ...expandStoredRun(JSON.parse(next), readSharedProfile), schemaVersion: parsed.schemaVersion }) !== canonical(parsed)) return null;
     } catch { return null; }
     return next;
   }
+  // The first save after an update on a store that is ALREADY full: the shared
+  // copy (~650 KB) cannot be written because the room is held by older saves
+  // that carry the very same profile inline. So one of those is converted to a
+  // reference FIRST (that frees its ~650 KB), the copy is written and verified
+  // from the live run's full profile at once, and if the copy still cannot land
+  // the entry is put back to its exact original bytes. Returns true when the copy exists.
+  function bootstrapSharedProfile(profile, exceptSlot) {
+    if (!profile || typeof profile.hash !== 'string') return false;
+    if (readSharedProfile(profile.hash)) return true;
+    const sameProfile = (json) => { try { return JSON.parse(json).gameProfile?.hash === profile.hash; } catch { return false; } };
+    const attempt = (original, next, put) => {
+      try { put(next); } catch { return false; }
+      try { ensureSharedProfile(profile); return true; } catch { /* roll back below */ }
+      try { put(original); } catch { /* the original fit before, so this cannot be refused; nothing more to do */ }
+      return false;
+    };
+    for (let slot = 1; slot <= SLOTS; slot++) {
+      if (slot === exceptSlot) continue;
+      const original = storage.getItem(runKey(slot));
+      const next = original && sameProfile(original) ? recompactedRunJson(original, { writeCopy: false }) : null;
+      if (next && attempt(original, next, (v) => storage.setItem(runKey(slot), v))) return true;
+    }
+    const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
+    let index = null;
+    try { index = rawIndex ? JSON.parse(rawIndex) : null; } catch { /* not ours to touch */ }
+    if (index && Array.isArray(index.entries)) {
+      for (const entry of index.entries) {
+        if (!(entry && entry.kind === 'run' && typeof entry.save === 'string' && sameProfile(entry.save))) continue;
+        const original = entry.save;
+        const next = recompactedRunJson(original, { writeCopy: false });
+        if (!next) continue;
+        const put = (v) => { entry.save = v; storage.setItem(RUN_ARCHIVE_KEY, JSON.stringify(index)); };
+        if (attempt(original, next, put)) return true;
+      }
+    }
+    return false;
+  }
   // Returns the characters freed.
-  function reclaimStoredSpace(exceptSlot = null) {
+  function reclaimStoredSpace(exceptSlot = null, liveProfile = null) {
     if (readOnlyProfile) return 0;
     let freed = 0;
+    freed += collectProfileCopies() ? 1 : 0; // orphaned copies need no copy of their own
+    if (liveProfile) bootstrapSharedProfile(liveProfile, exceptSlot);
     for (let slot = 1; slot <= SLOTS; slot++) {
       if (slot === exceptSlot) continue; // about to be overwritten with the newest bytes
       const json = storage.getItem(runKey(slot));
@@ -769,6 +808,8 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       run.savedAt = new Date().toISOString();
       try {
         const json = serializeRun(run);
+        // Exactly the bytes this build's predecessor wrote: the profile inline.
+        const inlineJson = () => serializeRun(run, { inline: true });
         const needsCopy = json.includes('"gameProfileRef":{') && run.gameProfile;
         const before = refHashOf(storage.getItem(runKey(slot)));
         const write = () => {
@@ -784,8 +825,16 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           // smaller (lossless; see reclaimStoredSpace). If that frees nothing,
           // or the retry is still refused, the error reaches the caller, which
           // tells the player: the run in memory is ahead of the slot.
-          if (!isStorageFullError(error) || reclaimStoredSpace(slot) <= 0) throw error;
-          write();
+          if (!isStorageFullError(error)) throw error;
+          // Never refuse a save the old code would have taken: reclaim, retry,
+          // and as the last resort store the slot inline as before.
+          reclaimStoredSpace(slot, needsCopy ? run.gameProfile : null);
+          try {
+            write();
+          } catch (retryError) {
+            if (!isStorageFullError(retryError) || !needsCopy) throw retryError;
+            try { storage.setItem(runKey(slot), inlineJson()); collectProfileCopies(); } catch { throw error; }
+          }
         }
       } catch (error) { run.savedAt = previous; throw error; }
     },
