@@ -9,7 +9,7 @@ import { createRunState, serializeRun, deserializeRun, RUN_SCHEMA_VERSION } from
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, createMemoryStorage, inlineRunJson, RUN_KEY, runKey, profileCopyKey, PROFILE_COPY_PREFIX } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage, inlineRunJson, RUN_KEY, runKey, profileCopyKey, PROFILE_COPY_PREFIX, PROFILE_STAMP_PREFIX } from '../src/engine/save.js';
 
 const profile = resolveGameProfile('core');
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -148,6 +148,9 @@ test('shared copies are collected only when no slot or archived run names them',
   assert.ok(storage.getItem(key), 'slot 2 still names it');
   assert.equal(storage.getItem(profileCopyKey('sha256:orphan')), null, 'an unreferenced copy is collected');
   assert.equal(storage.getItem('sote_unrelated'), 'keep me', 'keys the game does not own are never touched');
+  saves.clearRun(2);
+  assert.ok(storage.getItem(key), 'unreferenced but just written: spared for the grace period');
+  storage.removeItem(`${PROFILE_STAMP_PREFIX}${run.gameProfile.hash}`); // the grace has passed
   saves.clearRun(2);
   assert.equal(storage.getItem(key), null, 'last reference gone: collected');
 });

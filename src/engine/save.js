@@ -87,6 +87,10 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 // keys with this exact prefix, and deletes one only when no stored run names it.
 export const PROFILE_COPY_PREFIX = 'sote_profile_';
 export const profileCopyKey = (hash) => `${PROFILE_COPY_PREFIX}${hash}`;
+// When a copy was written (ms since epoch), under its own prefix so it is not itself a copy. Another tab's
+// collection spares a copy written inside PROFILE_COPY_GRACE_MS: its slot may not have landed yet.
+export const PROFILE_STAMP_PREFIX = 'sote_profilestamp_';
+export const PROFILE_COPY_GRACE_MS = 60000;
 // Schemas a stored run may be repacked from: each reads with no migration step
 // beyond the stamp, so moving the stamp loses nothing. A future schema joins
 // ONLY after its migration from these is proven a no-op and a test says so.
@@ -672,6 +676,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     const json = JSON.stringify(profile);
     storage.setItem(key, json);
     if (storage.getItem(key) !== json) throw new Error('The shared game profile copy did not read back');
+    try { storage.setItem(`${PROFILE_STAMP_PREFIX}${hash}`, String(Date.now())); } catch { /* no stamp: the post-write re-check covers it */ }
     verifiedCopies.add(hash);
     return true;
   }
@@ -692,11 +697,19 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       if (typeof raw === 'string') for (const m of raw.matchAll(REF_PATTERN)) referenced.add(m[1]);
     }
     let removed = 0;
+    const now = Date.now();
     for (const name of names) {
+      if (name.startsWith(PROFILE_STAMP_PREFIX)) {
+        // a stamp whose copy is gone is just litter
+        if (storage.getItem(profileCopyKey(name.slice(PROFILE_STAMP_PREFIX.length))) === null) storage.removeItem(name);
+        continue;
+      }
       if (!name.startsWith(PROFILE_COPY_PREFIX)) continue;
       const hash = name.slice(PROFILE_COPY_PREFIX.length);
       if (referenced.has(hash)) continue;
-      storage.removeItem(name); verifiedCopies.delete(hash); removed++;
+      const stamp = Number(storage.getItem(`${PROFILE_STAMP_PREFIX}${hash}`));
+      if (Number.isFinite(stamp) && stamp > 0 && Math.abs(now - stamp) < PROFILE_COPY_GRACE_MS) continue; // just written, maybe by another tab
+      storage.removeItem(name); storage.removeItem(`${PROFILE_STAMP_PREFIX}${hash}`); verifiedCopies.delete(hash); removed++;
     }
     return removed;
   }
@@ -823,6 +836,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           // The shared copy lands first: a slot never names a profile that is not kept.
           const wrote = needsCopy ? ensureSharedProfile(run.gameProfile) : false;
           storage.setItem(runKey(slot), json);
+          // Another tab's collection may have run between the copy and the slot: the slot now names a
+          // copy that is gone, so put it back (from the live profile) before anything can depend on it.
+          if (needsCopy && storage.getItem(profileCopyKey(run.gameProfile.hash)) === null) { verifiedCopies.delete(run.gameProfile.hash); ensureSharedProfile(run.gameProfile); }
           if (wrote || before !== (needsCopy ? run.gameProfile.hash : null)) collectProfileCopies();
         };
         try {

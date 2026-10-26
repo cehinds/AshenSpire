@@ -12,7 +12,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY, profileCopyKey, PROFILE_COPY_PREFIX } from '../src/engine/save.js';
+import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY, profileCopyKey, PROFILE_COPY_PREFIX, PROFILE_STAMP_PREFIX } from '../src/engine/save.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -335,6 +335,8 @@ test('the browser manager collects shared copies and reclaims on a full store', 
   assert.equal(store.map.has(profileCopyKey('sha256:orphan')), false, 'the orphan is collected on a save that writes a copy');
   assert.ok(store.map.has(profileCopyKey(run.gameProfile.hash)));
   browser.clearRun(1);
+  store.map.delete(`${PROFILE_STAMP_PREFIX}${run.gameProfile.hash}`); // the grace has passed
+  browser.clearRun(1);
   assert.equal([...store.map.keys()].some(k => k.startsWith(PROFILE_COPY_PREFIX)), false, 'cleared: the copy goes too');
   // full store of older inline saves: the bootstrap runs through the same manager
   store.map.set(runKey(2), inlineSave(52));
@@ -363,4 +365,37 @@ test('a run resumed from its shared copy after a content update re-saves as a re
   const after = JSON.parse(store.map.get(runKey(1)));
   assert.ok(after.gameProfileRef && !after.gameProfile, 'still a reference');
   assert.ok(save.loadRun(oldRegistries), 'and it loads');
+});
+
+// ---- two tabs: another tab's collection between this tab's copy write and its slot write ----------
+function racing(expireGrace) {
+  const store = limitedStorage();
+  const tabA = createSaveManager(store);
+  const tabB = createSaveManager(store);
+  const { run, rng } = coreRun(61);
+  const hash = run.gameProfile.hash;
+  const realSet = store.setItem;
+  let raced = false;
+  store.setItem = (k, v) => {
+    if (k === runKey(1) && !raced) {
+      raced = true;
+      if (expireGrace) store.map.delete(`${PROFILE_STAMP_PREFIX}${hash}`); // as if the copy were older than the grace
+      tabA.clearRun(3); // tab A collects now: slot 1 does not name the copy yet
+    }
+    return realSet(k, v);
+  };
+  tabB.saveRun(run, rng, 1);
+  return { store, tabB, hash };
+}
+
+test('another tab\'s collection cannot take a copy that was just written (grace)', () => {
+  const { store, tabB, hash } = racing(false);
+  assert.ok(store.map.has(profileCopyKey(hash)));
+  assert.ok(tabB.loadRun(coreRegistries, 1), tabB.runStatus().reason);
+});
+
+test('and if the grace has passed, the writing tab puts the copy back after its slot lands', () => {
+  const { store, tabB, hash } = racing(true);
+  assert.ok(store.map.has(profileCopyKey(hash)), 'restored after the slot write');
+  assert.ok(tabB.loadRun(coreRegistries, 1), tabB.runStatus().reason);
 });
