@@ -48,11 +48,16 @@ try {
     await page.keyboard.press('Escape');
     // Escape closes the reading tooltip without changing the armed card.
     assert.deepEqual(await state(), before);
-    await tap(panel.locator('.target-hud-intent'));
-    assert.deepEqual(await state(), before, 'a detailed intent tap reads rather than committing the selected card');
-    await tooltip.waitFor({ state: 'visible' });
-    assert.ok((await tooltip.innerText()).trim(), 'the authored detailed intent tooltip is displayed');
+    // The panel is name, HP and stats only (owner 2026-10-26): its intent strip is gone and the
+    // badge over the figure is a target door, so the armed reading surface that remains besides the
+    // statuses is the Info door.
+    const inspector = page.locator('.combatant-inspector-body');
+    await tap(page.locator('.combat > .target-hud-inspect-info[data-eid="e1"]'));
+    assert.deepEqual(await state(), before, 'an armed Info tap reads rather than committing the selected card');
+    await inspector.waitFor({ state: 'visible' });
+    assert.ok((await inspector.innerText()).trim(), 'the combatant inspector shows its reading');
     await page.keyboard.press('Escape');
+    await inspector.waitFor({ state: 'detached' });
     assert.deepEqual(await state(), before);
     await tap(panel.locator('.target-hud-name'));
     await page.waitForFunction(n => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length === n + 1, before.plays);
@@ -62,7 +67,7 @@ try {
     await tap(panel.locator('.target-hud-meters .as-meter[data-res="hp"]'));
     await page.waitForFunction(n => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length === n + 1, second.plays);
     assert.deepEqual(errors, []);
-    console.log(`PASS ${width}x${height}: armed status/intent explain without committing; name/HP each commit once`);
+    console.log(`PASS ${width}x${height}: armed status/Info explain without committing; name/HP each commit once`);
     await page.close();
   }
 } finally { await browser.close(); server.server.close(); }

@@ -3,17 +3,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
-import { combatTargetIntentRow } from '../src/ui/components/combatTargetHud.js';
 
 const multi = { kind: 'attack', moveId: 'flurry', damage: 5, hits: 3,
   hitDamages: [5, 5, 5], totalDamage: 15, projectedDamage: { basis: 'hp', label: '0–15' } };
 
 function surfaces(intent) {
   const overhead = combatantIntent(intent, () => '');
-  return [overhead.querySelector('.intent-compact'), combatTargetIntentRow({ role: 'enemy', intent })];
+  return [overhead.querySelector('.intent-compact')];
 }
 
-test('compact overhead and target HUD carry their own scoped total beside the per-hit value', () => withKitDom(({ document }) => {
+test('the compact overhead intent carries its own scoped total beside the per-hit value', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   for (const node of surfaces(multi)) {
     assert.equal(node.querySelector('.intent-action-value').textContent, '5×3');
@@ -24,7 +23,7 @@ test('compact overhead and target HUD carry their own scoped total beside the pe
   }
 }));
 
-test('current-contact scope survives both compact consumers instead of claiming a full attack total', () => withKitDom(({ document }) => {
+test('current-contact scope survives in the compact overhead intent instead of claiming a full attack total', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   const contact = { ...multi, damage: 9, hits: 1, hitDamages: [9], totalDamage: 9, projectedDamage: null,
     damageBasis: 'hp', damageScope: 'contact', contactIndex: 1, contactCount: 3 };
@@ -34,7 +33,7 @@ test('current-contact scope survives both compact consumers instead of claiming 
   }
 }));
 
-test('concealed intents cannot leak a supplied private total through either compact consumer', () => withKitDom(({ document }) => {
+test('a concealed intent cannot leak a supplied private total through the compact overhead intent', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   for (const node of surfaces({ ...multi, hidden: true, knowledgeRead: 'unknown' })) {
     assert.equal(node.querySelector('.intent-damage-scope'), null);
@@ -42,9 +41,11 @@ test('concealed intents cannot leak a supplied private total through either comp
   }
 }));
 
-test('the combatant mini HUD hides the scoped total line; the target panel keeps it', async () => {
+test('the combatant mini HUD hides the scoped total line, and no target-HUD intent row remains in the styles', async () => {
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../styles/combat-target-responsive.css', import.meta.url), 'utf8');
   assert.match(css, /\.combat \.combatant \.intent \.intent-damage-scope \{ display:none; \}/);
-  assert.doesNotMatch(css, /target-hud-intent[^{]*intent-damage-scope[^{]*\{ display:none/);
+  const sheets = [readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8'), css,
+    readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8'), readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8')];
+  for (const sheet of sheets) assert.doesNotMatch(sheet, /target-hud-intent/, "the target panel's intent row was removed (2026-10-26)");
 });

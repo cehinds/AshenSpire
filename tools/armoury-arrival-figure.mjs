@@ -118,9 +118,14 @@ try {
   const until = async expression => { for (let i = 0; i < 300; i++) { if (await ev(expression)) return; await wait(100); } throw new Error(`Timeout: ${expression}`); };
   for (const [width, height] of [[1440, 860], [390, 844], [320, 740]]) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 500 }, sessionId);
-    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=combat&shotSeed=ART1` }, sessionId);
-    await until('!!document.querySelector("#combat-armoury")');
-    await ev('document.querySelector("#combat-armoury").click()');
+    // Equipment edits are locked in combat (armouryRules.editingLocked: the Core
+    // profile edits between fights), so #combat-armoury opens nothing there. The
+    // Armoury is opened the way a player opens it between fights: the R shortcut
+    // on the map.
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=map&shotSeed=ART1` }, sessionId);
+    await until('!!document.querySelector(".map-node")');
+    await wait(900);
+    await ev('window.dispatchEvent(new KeyboardEvent("keydown", { key: "r", bubbles: true }))');
     await until('!!document.querySelector(".armoury")');
     gate(await ev('document.querySelector(".armoury").dataset.page === "rack"'), `${width}: Equipment is the default tab`);
     for (const tab of ['grid', 'rack', 'hybrid', 'cards']) {
