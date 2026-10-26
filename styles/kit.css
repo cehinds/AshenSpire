@@ -1612,7 +1612,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-backdrop { min-height: 100%; }
 /* ONE LAYOUT AT EVERY WIDTH (owner, 2026-10-26): the phone's single column,
    capped at a phone-like width and centred, so desktop reads the same. */
-.modal.reward-door[data-size] { --modal-rung-width: calc(480px / var(--ui-zoom, 1)); width: var(--modal-rung-width); max-width: 100%; }
+.modal.reward-door[data-size]:has(.reward-claim-layout) { --modal-rung-width: calc(480px / var(--ui-zoom, 1)); width: var(--modal-rung-width); max-width: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door[data-victory-compact='true'] > .modal-head { justify-content: center; }
 .reward-door[data-victory-compact='true'] > .modal-head .modal-head-id { align-items: center; text-align: center; }
