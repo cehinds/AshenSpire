@@ -667,12 +667,20 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   const hasVerifiedCopy = (hash) => (verifiedCopies.has(hash) && storage.getItem(profileCopyKey(hash)) !== null) || readSharedProfile(hash) !== null;
   // Write the copy once and prove it reads back; a failed write throws (quota)
   // BEFORE any slot is allowed to point at it.
+  function touchProfileStamp(hash) {
+    const stampKey = `${PROFILE_STAMP_PREFIX}${hash}`;
+    const last = Number(storage.getItem(stampKey));
+    if (Number.isFinite(last) && last > 0 && Date.now() - last < PROFILE_COPY_GRACE_MS / 6) return; // fresh enough
+    try { storage.setItem(stampKey, String(Date.now())); } catch { /* the post-write re-check covers it */ }
+  }
   function ensureSharedProfile(profile) {
     const hash = profile && profile.hash;
     if (typeof hash !== 'string') throw new Error('Cannot keep a profile with no hash');
     const key = profileCopyKey(hash);
-    if (verifiedCopies.has(hash) && storage.getItem(key) !== null) return false;
-    if (readSharedProfile(hash)) { verifiedCopies.add(hash); return false; }
+    // Reusing a copy refreshes its stamp, so a copy a slot is about to name is always inside the
+    // grace another tab's collection honours.
+    if (verifiedCopies.has(hash) && storage.getItem(key) !== null) { touchProfileStamp(hash); return false; }
+    if (readSharedProfile(hash)) { verifiedCopies.add(hash); touchProfileStamp(hash); return false; }
     const json = JSON.stringify(profile);
     storage.setItem(key, json);
     if (storage.getItem(key) !== json) throw new Error('The shared game profile copy did not read back');
@@ -684,20 +692,35 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   // found by pattern in every run slot, the archive (index and salvage) and the
   // transfer recovery copy, so an unreadable one still protects its profile.
   const REF_PATTERN = /gameProfileRef\\*"\s*:\s*\{[^}]*?hash\\*"\s*:\s*\\*"([^"\\]+)/g;
-  function collectProfileCopies() {
-    // Not guarded by readOnlyProfile: that flag protects the PROFILE (meta) keys, and this touches
-    // only run copies the game created, so the browser's run-writing manager must run it.
-    if (typeof storage.key !== 'function' || !Number.isInteger(storage.length)) return 0;
+  const storageNames = () => {
     const names = [];
     for (let i = 0; i < storage.length; i++) { const name = storage.key(i); if (typeof name === 'string') names.push(name); }
+    return names;
+  };
+  const canEnumerate = () => typeof storage.key === 'function' && Number.isInteger(storage.length);
+  function referencedProfileHashes() {
     const referenced = new Set();
-    for (const name of names) {
+    for (const name of storageNames()) {
       if (!(name.startsWith(RUN_KEY) || name.startsWith(RUN_ARCHIVE_KEY) || name === 'sote_transfer_backup_v1')) continue;
       const raw = storage.getItem(name);
       if (typeof raw === 'string') for (const m of raw.matchAll(REF_PATTERN)) referenced.add(m[1]);
     }
+    return referenced;
+  }
+  const stampFresh = (hash) => {
+    const stamp = Number(storage.getItem(`${PROFILE_STAMP_PREFIX}${hash}`));
+    return Number.isFinite(stamp) && stamp > 0 && Math.abs(Date.now() - stamp) < PROFILE_COPY_GRACE_MS;
+  };
+  function dropProfileCopy(hash) {
+    storage.removeItem(profileCopyKey(hash)); storage.removeItem(`${PROFILE_STAMP_PREFIX}${hash}`); verifiedCopies.delete(hash);
+  }
+  function collectProfileCopies() {
+    // Not guarded by readOnlyProfile: that flag protects the PROFILE (meta) keys, and this touches
+    // only run copies the game created, so the browser's run-writing manager must run it.
+    if (!canEnumerate()) return 0;
+    const names = storageNames();
+    const referenced = referencedProfileHashes();
     let removed = 0;
-    const now = Date.now();
     for (const name of names) {
       if (name.startsWith(PROFILE_STAMP_PREFIX)) {
         // a stamp whose copy is gone is just litter
@@ -706,10 +729,11 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       }
       if (!name.startsWith(PROFILE_COPY_PREFIX)) continue;
       const hash = name.slice(PROFILE_COPY_PREFIX.length);
-      if (referenced.has(hash)) continue;
-      const stamp = Number(storage.getItem(`${PROFILE_STAMP_PREFIX}${hash}`));
-      if (Number.isFinite(stamp) && stamp > 0 && Math.abs(now - stamp) < PROFILE_COPY_GRACE_MS) continue; // just written, maybe by another tab
-      storage.removeItem(name); storage.removeItem(`${PROFILE_STAMP_PREFIX}${hash}`); verifiedCopies.delete(hash); removed++;
+      if (referenced.has(hash) || stampFresh(hash)) continue; // named, or just written/reused (maybe by another tab)
+      // The scan above is already old: another tab may have reused this copy and written its slot
+      // since. Look again, right before deleting, and delete only if it is still unreferenced and expired.
+      if (referencedProfileHashes().has(hash) || stampFresh(hash)) continue;
+      dropProfileCopy(hash); removed++;
     }
     return removed;
   }
@@ -832,9 +856,11 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         const inlineJson = () => serializeRun(run, { inline: true });
         const needsCopy = json.includes('"gameProfileRef":{') && run.gameProfile;
         const before = refHashOf(storage.getItem(runKey(slot)));
+        let createdCopy = null;
         const write = () => {
           // The shared copy lands first: a slot never names a profile that is not kept.
           const wrote = needsCopy ? ensureSharedProfile(run.gameProfile) : false;
+          if (wrote) createdCopy = run.gameProfile.hash;
           storage.setItem(runKey(slot), json);
           // Another tab's collection may have run between the copy and the slot: the slot now names a
           // copy that is gone, so put it back (from the live profile) before anything can depend on it.
@@ -856,6 +882,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
             write();
           } catch (retryError) {
             if (!isStorageFullError(retryError) || !needsCopy) throw retryError;
+            // The copy THIS attempt wrote is unreferenced and inside its grace: it would take the room the
+            // inline save (which the old code accepted) needs. Give it back first.
+            if (createdCopy && canEnumerate() && !referencedProfileHashes().has(createdCopy)) dropProfileCopy(createdCopy);
             try { storage.setItem(runKey(slot), inlineJson()); collectProfileCopies(); } catch { throw error; }
           }
         }
@@ -1539,7 +1568,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     exportArchive(id) {
       const entry = this.getArchive(id);
       if (!entry) return null;
-      return JSON.stringify({ exportedAt: new Date().toISOString(), game: 'Ashen Spire', archive: entry }, null, 2);
+      // A run archived or repacked as a profile REFERENCE must leave the device with the profile inline.
+      const out = entry.kind === 'run' && typeof entry.save === 'string' ? { ...entry, save: inlineRunJson(entry.save, storage) } : entry;
+      return JSON.stringify({ exportedAt: new Date().toISOString(), game: 'Ashen Spire', archive: out }, null, 2);
     },
 
     /**

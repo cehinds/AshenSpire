@@ -399,3 +399,52 @@ test('and if the grace has passed, the writing tab puts the copy back after its 
   assert.ok(store.map.has(profileCopyKey(hash)), 'restored after the slot write');
   assert.ok(tabB.loadRun(coreRegistries, 1), tabB.runStatus().reason);
 });
+
+// ---- review round: stale collection, copy blocking the inline fallback, archive export ---------
+test('a collector with a stale view cannot delete a copy another tab just reused and named', () => {
+  const store = limitedStorage();
+  const tabA = createSaveManager(store), tabB = createSaveManager(store);
+  const { run, rng } = coreRun(71);
+  const hash = run.gameProfile.hash;
+  store.map.set(profileCopyKey(hash), JSON.stringify(run.gameProfile));
+  store.map.set(`${PROFILE_STAMP_PREFIX}${hash}`, '1'); // expired: nothing names it yet
+  const realGet = store.getItem;
+  let raced = false;
+  store.getItem = (k) => {
+    const stale = realGet(k);
+    if (k === `${PROFILE_STAMP_PREFIX}${hash}` && !raced) { raced = true; tabB.saveRun(run, rng, 1); } // B reuses the copy and writes its slot
+    return stale; // A keeps the expired reading it took before B ran
+  };
+  tabA.clearRun(3);
+  assert.ok(raced, 'the interleaving happened');
+  assert.ok(realGet(profileCopyKey(hash)), 'the copy survived');
+  assert.ok(tabB.loadRun(coreRegistries, 1), tabB.runStatus().reason);
+});
+
+test('a copy this attempt wrote does not block the inline fallback a full store would have accepted', () => {
+  const store = limitedStorage();
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(72);
+  const inlineLength = JSON.stringify({ ...JSON.parse(JSON.stringify(run)) }).length;
+  store.budget = store.used() + inlineLength + 20000; // fits the old inline save, not copy + inline
+  const realSet = store.setItem;
+  store.setItem = (k, v) => { if (k === runKey(1) && String(v).includes('"gameProfileRef"')) throw quotaError(); return realSet(k, v); };
+  save.saveRun(run, rng, 1);
+  assert.ok(JSON.parse(store.map.get(runKey(1))).gameProfile, 'saved inline, as the old code would have');
+  assert.equal([...store.map.keys()].some(k => k.startsWith(PROFILE_COPY_PREFIX) || k.startsWith(PROFILE_STAMP_PREFIX)), false, 'the unreferenced copy was given back');
+  assert.ok(save.loadRun(coreRegistries, 1), save.runStatus().reason);
+});
+
+test('an archive export carries the run\'s profile inline, not a reference', () => {
+  const store = limitedStorage();
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(73);
+  save.saveRun(run, rng, 1);
+  const refSave = store.map.get(runKey(1));
+  assert.ok(refSave.includes('gameProfileRef'));
+  store.map.set(RUN_ARCHIVE_KEY, JSON.stringify({ v: 1, entries: [{ id: 'run-s1-1', kind: 'run', slot: 1, reason: 'test', at: new Date().toISOString(), save: refSave }] }));
+  const out = JSON.parse(save.exportArchive('run-s1-1'));
+  const exported = JSON.parse(out.archive.save);
+  assert.equal(exported.gameProfileRef, undefined);
+  assert.equal(exported.gameProfile.hash, run.gameProfile.hash);
+});
