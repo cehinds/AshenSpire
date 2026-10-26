@@ -1236,8 +1236,8 @@ function selftestPlants() {
       // different control the first visible row while the table stays intact.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));',
-      replace: '    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : [...rows].reverse().map(row => settingsRowHtml(settings, row));',
+      find: '      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));',
+      replace: '      const rowHtml = custom ? [] : [...topicRows].reverse().map(row => settingsRowHtml(settings, row));',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
