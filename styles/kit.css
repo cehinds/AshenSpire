@@ -3569,6 +3569,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-shell-body > *, .armoury .armoury-trays { flex: 0 0 auto; }
 .armoury-card-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(230px / var(--ui-zoom, 1)))); justify-content: center; align-items: start; gap: calc(20px / var(--ui-zoom, 1)); padding: calc(14px / var(--ui-zoom, 1)) 0; }
 .armoury-card-gallery > .card { --card-w: 100%; width: 100%; height: auto; aspect-ratio: var(--card-ratio); min-height: 0; max-height: none; transform: none; margin: 0; box-sizing: border-box; --card-art-h: 5rem; --card-name-h: 3.5rem; }
+/* A short phone (320x740): the title row, the lead and a 230px card are taller than the pane, so the first
+   card hung under Back. A 200px track keeps the 2:3 card whole above the fold; the text keeps its 15px floor. */
+@media (max-height: 760px) {
+  .armoury-card-gallery { grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(200px / var(--ui-zoom, 1)))); }
+}
 .armoury-card-gallery .cname { font-size: max(1.6rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.2; white-space: normal; }
 .armoury-card-gallery .ctext { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.35; }
 .armoury-card-gallery .cost { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
