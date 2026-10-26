@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
-- **Piercing attacks no longer ignore Block** ([#2334](https://github.com/cehinds/AshenSpire/pull/2334), `0.7.1.1866`). In Core a piercing hit now spends Block like any other hit, but up to a fifth of the damage Block caught slips through to Poise first and then HP, shown as a "Pierced N" float and log line; a piercing attack never does less damage than the same attack without pierce.
+- **Piercing attacks no longer ignore Block** ([#2334](https://github.com/cehinds/AshenSpire/pull/2334), `0.7.1.1868`). In Core a piercing hit now spends Block like any other hit, but up to a fifth of the damage Block caught slips through to Poise first and then HP, shown as a "Pierced N" float and log line; a piercing attack never does less damage than the same attack without pierce.
 
 - **Preview checks read the new settings switches** ([#2332](https://github.com/cehinds/AshenSpire/pull/2332), `0.7.1.1866`). The map-dragging, flask and formation-grid probes now read the on/off state of the new toggle switches, so the dev preview gate measures them again; nothing in play changes.
 
