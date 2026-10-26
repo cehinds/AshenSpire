@@ -1264,7 +1264,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
      rest of the width and wraps, never its one-line length (was 1,395px). */
   [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > :is(.as-toggle, .as-switch)) > .as-labelstack { flex: 1 1 0; min-width: 0; }
   [data-settings-host] .set-panel .choice-group { flex-wrap: wrap; }
-  :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 4.6rem; width: 4.6rem; }
+  :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 6.4rem; width: 6.4rem; padding-inline: .15rem; }
   :root [data-settings-host] .set-row-dropdown { grid-template-columns: 1fr; }
 }
 /* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — above General ›
