@@ -253,7 +253,10 @@ if (process.argv.includes('--selftest')) {
           file: 'styles/kit.css',
           append: ":root .combat[data-layout='formation'] > .hand-area { overflow: hidden !important; } :root .combat[data-layout='formation'] > .hand-area > .combat-action-row { position: absolute !important; top: 100% !important; left: 0 !important; right: 0 !important; }",
         }],
-        expectRed: /BAD\s+H3 1200x730/,
+        // The desktop row is bottom-anchored with its own bottom/height rules, so this
+        // shift no longer empties it there; the phone cell (the row is a grid child of
+        // .hand-area) loses every control, which is the vanished-row defect itself.
+        expectRed: /BAD\s+H3 (?:1200x730|390x844)/,
       },
       {
         // THE LABEL IS CUT OFF INSIDE ITS OWN BOX: a width cap with
