@@ -646,7 +646,7 @@ dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { height:calc((calc(
    with the act track directly beneath it, and the Deck / Equipment / Stats /
    Menu row is a thin strip whose left end carries the zoom controls, so the
    map gets the height. Scoped to `.mapscreen`; combat's chrome is not touched. */
-.mapscreen { --map-strip-h: 2.8rem; --map-potions-size: 5.2rem; }
+.mapscreen { --map-strip-h: calc(var(--tap-floor, 44px) + .8rem); --map-potions-size: max(5.2rem, calc(var(--tap-floor, 44px) + 1rem)); }
 :root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] { padding-block: .2rem; padding-inline: 1.2rem; }
 :root .mapscreen > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
   padding-top: 0; row-gap: 0; column-gap: .9rem; align-items: center; min-height: 0;
@@ -662,13 +662,20 @@ dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { height:calc((calc(
 :root .mapscreen > .act-route-strip .map-orientation-rail { min-height: 0; }
 :root .mapscreen > .act-route-strip .map-route-node { width: .9rem; height: .9rem; }
 @media (min-width: 761px) {
-  :root:not([data-layout='narrow']) .mapscreen .map-tray-row { min-height: var(--map-strip-h); padding-block: .2rem; }
-  :root:not([data-layout='narrow']) .mapscreen .map-tray-row .hint { min-height: 0; height: calc(var(--map-strip-h) - .5rem); padding-block: 0; }
+  :root:not([data-layout='narrow']) .mapscreen .map-tray-row { box-sizing: border-box; height: var(--map-strip-h); min-height: var(--map-strip-h); padding-block: .2rem; }
+  :root:not([data-layout='narrow']) .mapscreen .map-tray-row .hint { min-height: var(--tap-floor, 44px); height: var(--tap-floor, 44px); padding-block: 0; }
   :root:not([data-layout='narrow']) .mapscreen .map-tray-row .hint kbd { transform: scale(.8); }
+  /* The tap-size and clipped-choice notes float over the map's foot instead of
+     taking a row between the map and the strip, so the zoom controls (which
+     hang off the map's bottom edge) always sit inside the strip. */
+  :root:not([data-layout='narrow']) .mapscreen { position: relative; }
+  :root:not([data-layout='narrow']) .mapscreen > :is(.map-tapnote, .map-clipnote) {
+    position: absolute; left: 0; right: 0; bottom: var(--map-strip-h); z-index: 5; margin: 0; pointer-events: none;
+  }
   /* The zoom controls ride the left end of the strip, in the tray's own row. */
   :root:not([data-layout='narrow']) .map-frame > .map-zoom {
     bottom: calc(-1 * var(--map-strip-h)); left: 1rem; height: var(--map-strip-h);
     align-items: center; gap: .4rem; z-index: 31;
   }
-  :root:not([data-layout='narrow']) .map-frame > .map-zoom .zbtn { width: 2.2rem; height: 2.2rem; min-width: 0; min-height: 0; }
+  :root:not([data-layout='narrow']) .map-frame > .map-zoom .zbtn { width: var(--tap-floor, 44px); height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); min-height: var(--tap-floor, 44px); }
 }
