@@ -12,7 +12,7 @@ function surfaces(intent) {
   return [overhead.querySelector('.intent-compact')];
 }
 
-test('compact overhead and target HUD carry their own scoped total beside the per-hit value', () => withKitDom(({ document }) => {
+test('the compact overhead intent carries its own scoped total beside the per-hit value', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   for (const node of surfaces(multi)) {
     assert.equal(node.querySelector('.intent-action-value').textContent, '5×3');
@@ -23,7 +23,7 @@ test('compact overhead and target HUD carry their own scoped total beside the pe
   }
 }));
 
-test('current-contact scope survives both compact consumers instead of claiming a full attack total', () => withKitDom(({ document }) => {
+test('current-contact scope survives in the compact overhead intent instead of claiming a full attack total', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   const contact = { ...multi, damage: 9, hits: 1, hitDamages: [9], totalDamage: 9, projectedDamage: null,
     damageBasis: 'hp', damageScope: 'contact', contactIndex: 1, contactCount: 3 };
@@ -33,7 +33,7 @@ test('current-contact scope survives both compact consumers instead of claiming 
   }
 }));
 
-test('concealed intents cannot leak a supplied private total through either compact consumer', () => withKitDom(({ document }) => {
+test('a concealed intent cannot leak a supplied private total through the compact overhead intent', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   for (const node of surfaces({ ...multi, hidden: true, knowledgeRead: 'unknown' })) {
     assert.equal(node.querySelector('.intent-damage-scope'), null);
@@ -41,9 +41,11 @@ test('concealed intents cannot leak a supplied private total through either comp
   }
 }));
 
-test('the combatant mini HUD hides the scoped total line; the target panel keeps it', async () => {
-  const { readFileSync } = await import('node:fs');
-  const css = readFileSync(new URL('../styles/combat-target-responsive.css', import.meta.url), 'utf8');
+test('the combatant mini HUD hides the scoped total line, and no target-HUD intent row remains in the styles', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const dir = new URL('../styles/', import.meta.url);
+  const css = readFileSync(new URL('combat-target-responsive.css', dir), 'utf8');
   assert.match(css, /\.combat \.combatant \.intent \.intent-damage-scope \{ display:none; \}/);
-  assert.doesNotMatch(css, /target-hud-intent[^{]*intent-damage-scope[^{]*\{ display:none/);
+  for (const file of readdirSync(dir).filter(name => name.endsWith('.css')))
+    assert.doesNotMatch(readFileSync(new URL(file, dir), 'utf8'), /target-hud-intent/, `${file}: the target panel's intent row was removed (2026-10-26)`);
 });
