@@ -100,7 +100,7 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
-  assert.equal(profile.lock.runtimeHash, 'sha256:2d76f2baf4fae3e676b06003c74c1fb30843067f48dec7fe021457dca05ccae6');
+  assert.equal(profile.lock.runtimeHash, 'sha256:325247ed975d7b18ab5a977e3efb8483e5e8c654a0a9d11c9b7a53bedd87e603');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -118,4 +118,11 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
   assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 15);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
+});
+
+test('a run saved before the 2026-10-26 pierce rule (runtime 2d76f2...) keeps its own runtime', () => {
+  const profile = resolveGameProfile('core');
+  const saved = priorRuntimeEnvelope();
+  saved.lock.runtimeHash = 'sha256:2d76f2baf4fae3e676b06003c74c1fb30843067f48dec7fe021457dca05ccae6';
+  assert.equal(coreEvasionCompatibleRuntime(saved, profile.lock.runtimeHash), saved.lock.runtimeHash);
 });
