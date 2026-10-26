@@ -1563,6 +1563,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Cards that would open a prompt (a choice card) are left to the player, so the loop never starts a modal.
   let autoPlays = 0;
   let autoPlayReadyAt = 0;
+  let autoRejected = new Set(); // cards the engine or the screen refused this turn: never re-picked
+  let autoEndTried = null; // the turn, hand size and energy at auto's last End Turn attempt; a cancelled discard prompt is not reopened
   let autoPlayTurn = null;
   function autoPlayStep() {
     const policy = resolveCombatAutomation(readSettings());
@@ -1570,7 +1572,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       || expansionChoiceShell || hasCardChoice(combat) || veilIsOpen() || selected || selfArm || selectedFlask != null
       || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return false;
     const turnKey = `${combat.turn}`;
-    if (autoPlayTurn !== turnKey) { autoPlayTurn = turnKey; autoPlays = 0; }
+    if (autoPlayTurn !== turnKey) { autoPlayTurn = turnKey; autoPlays = 0; autoRejected = new Set(); autoEndTried = null; }
     const livingIds = combat.enemies.filter(enemy => enemy.alive).map(enemy => enemy.id);
     const hand = [];
     const byId = new Map();
@@ -1584,7 +1586,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const friendly = friendlyTargetPlan({ ...def, combatPreview: pv }, combat.player.id, [{ ...combat.player, connected: true }]);
         const playable = !isUnplayable(inst) && !cardChoicePlan(combat, inst.instanceId)
           && (!pv.needsTarget || livingIds.length > 0) && !(friendly.active && !friendly.legalIds.length)
-          && !isRoundQueued(inst.instanceId);
+          && !isRoundQueued(inst.instanceId) && !autoRejected.has(inst.instanceId)
+          // An X-cost card with nothing to spend would play for X = 0.
+          && !(pv.costIsX && combat.player.energy <= 0);
         entry = { id: inst.instanceId, kind: combatProfileFor(def)?.maneuver ?? kindForCard(def)?.maneuver ?? null, offense: pv.needsTarget === true,
           cost: pv.costIsX ? 0 : pv.cost, manaCost: pv.manaCost, staminaCost: pv.staminaCost || 0, playable };
         byId.set(inst.instanceId, { needsTarget: pv.needsTarget, plan, rank: ranks ?? def.upcast?.baseTier ?? 0 });
@@ -1600,7 +1604,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const picked = autoPlays >= AUTOMATION_DEFAULTS.maxActionsPerTurn ? null
       : chooseCardPlay({ preference: policy.preference, energy: combat.player.energy, mana: combat.player.mana, stamina: combat.player.stamina,
         matchups: gameModule(run, 'stances')?.matchups, seats: { [seat]: { intent } } }, seat, hand);
-    if (!picked) { autoPlays = 0; commitEndTurn(); return true; }
+    const endTurn = () => {
+      autoPlays = 0;
+      // Once per turn until the hand changes: a cancelled discard prompt must not reopen every gap.
+      // Playing or drawing a card changes the signature, so the player acting by hand re-enables it.
+      const signature = `${turnKey}:${combat.piles.hand.length}:${combat.player.energy}`;
+      if (autoEndTried === signature) return false;
+      autoEndTried = signature; commitEndTurn(); return true;
+    };
+    if (!picked) return endTurn();
     const info = byId.get(picked.id);
     // The same default target a click uses: the last enemy aimed at while it is still a legal living target,
     // else the first legal living enemy.
@@ -1608,10 +1620,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (info.needsTarget) {
       const legal = info.plan.legalIds.filter(id => getEntity(combat, id)?.alive);
       targetId = (lastTargetId && legal.includes(lastTargetId) ? lastTargetId : legal[0]) ?? null;
-      if (!targetId) { autoPlays = 0; commitEndTurn(); return true; }
+      if (!targetId) return endTurn();
     }
     autoPlays += 1;
     playCard(picked.id, targetId, null, info.rank);
+    // A play that started sets busy; anything else was refused, and the same card is not tried again this turn.
+    if (!busy) autoRejected.add(picked.id);
     return true;
   }
   function scheduleAutoCombat() {

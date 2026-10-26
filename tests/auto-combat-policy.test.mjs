@@ -53,6 +53,7 @@ test('auto-combat plays cards and ends turns through the manual paths (owner 202
   assert.ok(play.includes('chooseCardPlay') && play.includes('playCard(') && play.includes('commitEndTurn('));
   assert.ok(!play.includes("type: 'playCard'") && !play.includes("type: 'endTurn'"), 'no direct dispatch: the manual paths only');
   assert.ok(play.includes('maxActionsPerTurn'));
+  for (const guard of ['autoRejected', 'autoEndTried', 'pv.costIsX && combat.player.energy <= 0']) assert.ok(play.includes(guard), `stall guard: ${guard}`);
 });
 test('automation settings participate in durable profile export and reset rows', () => {
   const rows = settingsRows();
