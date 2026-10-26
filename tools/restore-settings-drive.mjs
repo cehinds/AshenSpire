@@ -117,9 +117,9 @@ async function door(name, openProfile) {
   await ev(`document.querySelector('#settings')?.click()`); await sleep(300);
   const audioTab = await ev(`(()=>{const t=[...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Audio'); if(t)t.click(); return !!t;})()`);
   await sleep(150);
-  const musicChecked = audioTab && await ev(`document.querySelector('.toggle[data-key="musicEnabled"]')?.getAttribute('aria-checked')`);
+  const musicChecked = audioTab && await ev(`document.querySelector('.toggle[data-key="musicEnabled"]')?.checked`);
   check(`${name}: restored Music preference is stored and reflected by Settings`,
-    after.storedMusic === false && musicChecked === 'false', `stored=${after.storedMusic} aria=${musicChecked}`);
+    after.storedMusic === false && musicChecked === false, `stored=${after.storedMusic} aria=${musicChecked}`);
 }
 
 await door('DOOR 1 (title Profile)', async () => {

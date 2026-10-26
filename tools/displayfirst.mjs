@@ -1137,17 +1137,16 @@ function refuseUnsupportedPlatform() {
 function selftestPlants() {
   const settingsEol = readFileSync(join(ROOT, 'src/ui/screens/settings.js'), 'utf8').includes('\r\n') ? '\r\n' : '\n';
   // The kit rewrite (#605) renamed this control (`toggle` -> `as-toggle
-  // toggle`), gave it an explicit type, and collapsed it from three lines onto
+  // toggle`); the options cleanup (owner, 2026-10-26) then made it a real
+  // checkbox switch drawn by `switchHtml`, so the plant now matches that one expression. It was collapsed from three lines onto
   // one — so the old three-line join matched nothing and this plant reported
   // PLANT SITE DRIFTED. Still assembled from parts rather than written whole,
   // for the same reason as before: a contiguous copy in this file would give
   // the self-referential plant below a second match to find.
   const fsButton = [
-    '<button type="button" class="as-toggle togg',
-    'le ${on ? \'on\' : \'\'}" data-key="${r.key}"',
-    ' aria-label="${esc(r.label)}"${r.type === \'action\' ? ` data-action="1"',
-    ' aria-describedby="set-${r.key}-status"` : \'\'}',
-    ' role="switch" aria-checked="${on}"><span class="knob"></span></button>',
+    '${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"',
+    '${r.type === \'action\' ? ` data-action="1"',
+    ' aria-describedby="set-${r.key}-status"` : \'\'}` })}',
   ].join('');
   // Split the production line so the self-referential plant below does not
   // copy its own find bytes into this file. That leaves exactly one match: the

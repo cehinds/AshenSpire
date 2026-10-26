@@ -28,9 +28,9 @@ try {
   await page.locator('[data-general-topic]').selectOption('Range');
   const toggle = page.locator('[data-key="rangeMechanics"]');
   await toggle.waitFor({ state: 'visible', timeout: 15000 });
-  assert.equal(await toggle.getAttribute('aria-checked'), 'true');
+  assert.equal(await toggle.isChecked(), true);
   await toggle.click();
-  assert.equal(await toggle.getAttribute('aria-checked'), 'false');
+  assert.equal(await toggle.isChecked(), false);
   const keys = ['rangeAdvanceSpPerBand', 'rangeReachPrecisionBonus', 'rangeThrowPrecisionPenalty'];
   for (const key of keys) {
     const input = page.locator(`input[type="number"][data-key="${key}"]`);
@@ -44,12 +44,12 @@ try {
   await search.fill('');
   await group.selectOption('Display'); await group.selectOption('Combat');
   await page.locator('[data-general-topic]').selectOption('Range');
-  assert.equal(await page.locator('[data-key="rangeMechanics"]').getAttribute('aria-checked'), 'false');
+  assert.equal(await page.locator('[data-key="rangeMechanics"]').isChecked(), false);
   const after = await page.evaluate(() => ({ profile: window.__combatRunForShot.gameProfile?.hash, range: window.__combat.rangeState ?? null, runPolicy: window.__combatRunForShot.rangePolicy ?? null }));
   assert.deepEqual(after, before, 'changing next-run controls never mutates the active Current fight/run');
   const prefs = await page.evaluate(() => Object.fromEntries(['rangeMechanics', 'rangeAdvanceSpPerBand', 'rangeReachPrecisionBonus', 'rangeThrowPrecisionPenalty'].map(key => {
     const node = document.querySelector(`[data-key="${key}"]`);
-    return [key, key === 'rangeMechanics' ? node.getAttribute('aria-checked') === 'true' : Number(node.value)];
+    return [key, key === 'rangeMechanics' ? node.checked : Number(node.value)];
   })));
   const policy = await page.evaluate(async settings => {
     const [{ contentBundle }, { createRegistries }, { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries }, { createRunState }] = await Promise.all([

@@ -998,6 +998,17 @@ export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'T
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
 /**
+ * switchHtml({ label, on, key, attrs }) → a boolean setting as a real checkbox with role="switch" (owner,
+ * 2026-10-26). The input is the control: native keyboard (Space), the browser's own checked state and a
+ * visible focus ring on its track; the label text is read from the row, not from an aria-label copy.
+ * `attrs` is already-escaped extra attributes (data-key, data-action, aria-describedby, disabled).
+ */
+function switchHtml({ label, on, attrs = '' }) {
+  return `<label class="as-switch"><input type="checkbox" role="switch" class="as-switch-input toggle"${on ? ' checked' : ''}${attrs}>`
+    + `<span class="as-switch-track" aria-hidden="true"><span class="knob"></span></span><span class="sr-only">${esc(stripTags(label))}</span></label>`;
+}
+
+/**
  * developerSwitchHtml() → the Developer tools switch drawn above every
  * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
  * at all on the 1.0 release builds, where the tools stay off (owner,
@@ -1007,7 +1018,7 @@ export function developerSwitchHtml(state = debugSwitch()) {
   if (state.hidden) return '';
   return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
     + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
-    + `<span class="r-trail"><button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button></span></div>`;
+    + `<span class="r-trail">${switchHtml({ label: 'Developer tools', on: state.on, attrs: ' data-developer-switch' })}</span></div>`;
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
@@ -1927,13 +1938,13 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <span class="ls-hint set-note">${note}</span>
         <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.</span>
       </span>
-      <span class="r-trail"><button type="button" class="as-toggle toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true"><span class="knob"></span></button></span>
+      <span class="r-trail">${switchHtml({ label: r.label, on: false, attrs: ` data-key="${r.key}" data-action="1" aria-describedby="set-${r.key}-status" disabled` })}</span>
     </div>`;
   }
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `${rowOpen()}
       ${stack()}
-      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
+      <span class="r-trail">${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''}` })}</span>
     </div>`;
 }
 
@@ -2994,8 +3005,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (!btn) return;
     const capability = fullscreenCapability();
     const on = isFullscreen();
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-checked', String(on));
+    btn.checked = on;
     btn.disabled = !capability.supported;
     btn.setAttribute('aria-disabled', String(!capability.supported));
     const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
@@ -3654,8 +3664,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-developer-switch]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const on = setDebugEnabled(btn.getAttribute('aria-checked') !== 'true');
+    btn.addEventListener('change', () => {
+      const on = setDebugEnabled(btn.checked);
       showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
       repaintPanel({ keepScroll: true });
     });
@@ -4005,17 +4015,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('change', async () => {
       if (btn.dataset.action) {
+        // The browser flips the box first; fullscreen is the truth, so the box is set back from it.
+        btn.checked = !btn.checked;
         const result = await toggleFullscreen();
         syncFullscreen(result.ok || result.reason === 'unsupported'
           ? ''
           : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
         return;
       }
-      const now = !btn.classList.contains('on');
-      btn.classList.toggle('on', now);
-      btn.setAttribute('aria-checked', String(now));
+      const now = btn.checked;
       const row = ROWS.find((candidate) => candidate.key === btn.dataset.key);
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
