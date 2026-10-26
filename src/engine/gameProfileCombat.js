@@ -10,15 +10,22 @@ import { rememberCombatStance, defensiveCombatStance } from './concurrentStances
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
+import { combatMatchups } from '../content/combatMatchups.js';
 import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 
-// A pierce hit skips Block entirely: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
-// Precision is a hit-roll status in Core, so it is not a pierce tag here.
+// A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
+// It lets only the Piercing guard-bypass amount (damageRiders.piercing.guardBypass) past Block, as on the expanded and legacy paths
+// (owner, 2026-10-26); Block soaks the rest. Precision is a hit-roll status in Core, so it is not a pierce tag here.
 export function isPierceHit(profile, carrier) {
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
+}
+/** The Piercing guard bypass one action may spend per target (read from the matchup data, as combatMatchups.js does). */
+export function pierceGuardBypass(ctx) {
+  const rules = ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
+  return Math.max(0, Number(rules?.damageRiders?.piercing?.guardBypass) || 0);
 }
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
@@ -136,11 +143,16 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const incoming = amount;
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
-  let barrierMitigated = 0;
+  let barrierMitigated = 0, pierceBypassed = 0;
   if (modern) {
-    // Owner: Block soaks the whole hit (physical first, then magic) unless the hit pierces; the magic Block leaves meets Barrier, then Ward.
-    const blockPool = isPierceHit(profile,carrier) ? 0 : Math.max(0,target?.block || 0);
-    const physicalBlocked = Math.min(blockPool,physical), magicBlocked = Math.min(blockPool-physicalBlocked,magical);
+    // Owner: Block soaks the whole hit (physical first, then magic) except the Piercing bypass a pierce hit lets past; the magic Block leaves meets Barrier, then Ward.
+    // Per action and target the bypass is spent over the contacts in order (the plan's guardBypass semantics); a reaction carries none.
+    const tacticalReceipt = carrier?.expansionContact?.receipt;
+    const bypassLeft = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.max(0,tacticalReceipt?.corePierceLeft ?? pierceGuardBypass(ctx)) : 0;
+    pierceBypassed = Math.min(physical+magical,bypassLeft);
+    const physicalBypass = Math.min(physical,pierceBypassed);
+    const physicalBlocked = Math.min(Math.max(0,target?.block || 0),physical-physicalBypass);
+    const magicBlocked = Math.min(Math.max(0,target?.block || 0)-physicalBlocked,magical-(pierceBypassed-physicalBypass));
     blocked = physicalBlocked+magicBlocked;
     const magicAfterBlock = magical-magicBlocked;
     barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);
@@ -170,7 +182,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       poiseMitigated += amount - mitigated; amount = mitigated;
     }
   }
-  return { raw, wardMitigated, barrierMitigated,
+  return { raw, pierceBypassed, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
