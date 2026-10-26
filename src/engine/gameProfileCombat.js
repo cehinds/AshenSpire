@@ -147,7 +147,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (modern) {
     // Owner: Block soaks the whole hit (physical first, then magic) except the Piercing bypass a pierce hit lets past; the magic Block leaves meets Barrier, then Ward.
     // Per action and target the bypass is spent over the contacts in order (the plan's guardBypass semantics); a reaction carries none.
-    const tacticalReceipt = carrier?.expansionContact?.receipt;
+    const tacticalReceipt = carrier?.pierceBudget || carrier?.expansionContact?.receipt;
     const bypassLeft = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.max(0,tacticalReceipt?.corePierceLeft ?? pierceGuardBypass(ctx)) : 0;
     pierceBypassed = Math.min(physical+magical,bypassLeft);
     const physicalBypass = Math.min(physical,pierceBypassed);
