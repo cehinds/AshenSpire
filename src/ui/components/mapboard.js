@@ -3,7 +3,7 @@ import { mapPoint } from '../../model/map/mapview.js';
 import { actRegionId } from '../../model/environmentArt.js';
 import { paintingFrame, paintingGround, paintingFrameKey, terrainSettingAt } from '../../model/mapPaintingFrame.js';
 import { MAP_ART } from '../../content/mapArt.generated.js';
-import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
+import { MAP_PRESENTATION } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 import { builtInFor } from '../highResArt.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
@@ -1016,7 +1016,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       // the decision box, so the zoom that fits it fits the decision as well.
       const zDecision = fitZoom(framingBox(fs, height), scroll.clientWidth, scroll.clientHeight);
       const zContext = fitZoom(framingBox(contextNodes(), height), scroll.clientWidth, scroll.clientHeight);
-      const z = clampZoom(Math.min(zDecision, zContext, MAP_CLOSE_NODE_SCALE));
+      const z = clampZoom(Math.min(zDecision, zContext, MAP_PRESENTATION.boardOpenZoomMax));
       if (Math.abs(z - zoom) > 0.0005) zoom = z;
     }
     const box = framingBox(fs, height);
