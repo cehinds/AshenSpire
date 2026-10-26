@@ -172,7 +172,7 @@ const SURFACES = [
   { name: 'combat', shot: 'combat', ready: `!!document.querySelector('.combat .hand .card')` },
   { name: 'customize', shot: 'customize', ready: `!!document.querySelector('.cz-portrait')` },
   { name: 'compendium', shot: 'compendium', ready: `!!document.querySelector('.cp-cell')` },
-  { name: 'rest', shot: 'rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'rest', shot: 'rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt, #smith-opt, #level-opt')` },
   { name: 'smith', shot: 'smith', ready: `!!document.querySelector('.smith-candidate-region')` },
   { name: 'shop', shot: 'shop', ready: `!!document.querySelector('#leave-shop')` },
   { name: 'death', shot: 'death', ready: `!!document.querySelector('#app button')` },
