@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
-- **The whole-run browser check plays its first fight again** ([#2343](https://github.com/cehinds/AshenSpire/pull/2343), `0.7.1.1876`). After fighters moved to the bottom of their cells, the automated full-run check tapped the empty middle of each fighter's box and never played a card; it now taps the figure, as a player does. No change to the game.
+- **The whole-run browser check plays its first fight again** ([#2343](https://github.com/cehinds/AshenSpire/pull/2343), `0.7.1.1878`). After fighters moved to the bottom of their cells, the automated full-run check tapped the empty middle of each fighter's box and never played a card; it now taps the figure, as a player does. No change to the game.
 
 - **Roomier combat with smaller cards** ([#2341](https://github.com/cehinds/AshenSpire/pull/2341), `0.7.1.1876`). The battle grid is bigger with every fighter standing on the bottom of their cell, HP badges and numbers sit flush with the ends of the bar, desktop and widescreen cards are smaller, the target panel shows only name, HP and stats, and a sideways phone keeps the back row clear of your party.
 
