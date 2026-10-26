@@ -35,11 +35,13 @@ function catalogHash(id) {
   return catalogHashById.get(id);
 }
 
-export function compactRun(run) {
+export function compactRun(run, hasCopy = null) {
   const profile = run && run.gameProfile;
   if (!profile || typeof profile !== 'object' || typeof profile.hash !== 'string') return run;
   const out = { ...run };
-  if (catalogHash(profile.id) === profile.hash) {
+  // A reference is kept when the catalog holds the profile OR a verified shared copy does
+  // (a run resumed after a content update): re-inlining it would be a ~650 KB write.
+  if (catalogHash(profile.id) === profile.hash || (typeof hasCopy === 'function' && hasCopy(profile.hash))) {
     delete out.gameProfile;
     out.gameProfileRef = { id: profile.id, hash: profile.hash };
   }

@@ -1666,11 +1666,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   return problems;
 }
 
-export function serializeRun(run, { inline = false } = {}) {
+export function serializeRun(run, { inline = false, hasCopy = null } = {}) {
   // What is written is what the legacy fields say NOW — a writer between two
   // saves touches `relics` or the loadout, never `zones` (syncZones's contract).
   syncZones(run);
-  return JSON.stringify(inline ? run : compactRun(run));
+  return JSON.stringify(inline ? run : compactRun(run, hasCopy));
 }
 
 export function initializeRunFlaskCharges(run, registries) {

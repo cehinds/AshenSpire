@@ -5,6 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { runCombatEnd } from '../src/engine/runCombat.js';
+import { createBrowserSaveManager } from '../src/engine/browserSave.js';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -322,4 +323,44 @@ test('a full store reclaims orphaned profile copies first', () => {
   save.saveRun(run, rng, 1);
   assert.equal(store.map.has(profileCopyKey('sha256:orphan')), false);
   assert.ok(store.map.has(profileCopyKey(run.gameProfile.hash)));
+});
+
+// ---- the manager the BROWSER uses (browserSave.js) is built from a readOnlyProfile reader ---------
+test('the browser manager collects shared copies and reclaims on a full store', () => {
+  const store = limitedStorage();
+  const browser = createBrowserSaveManager(store);
+  const { run, rng } = coreRun(51);
+  store.map.set(profileCopyKey('sha256:orphan'), '{"hash":"sha256:orphan"}');
+  browser.saveRun(run, rng, 1);
+  assert.equal(store.map.has(profileCopyKey('sha256:orphan')), false, 'the orphan is collected on a save that writes a copy');
+  assert.ok(store.map.has(profileCopyKey(run.gameProfile.hash)));
+  browser.clearRun(1);
+  assert.equal([...store.map.keys()].some(k => k.startsWith(PROFILE_COPY_PREFIX)), false, 'cleared: the copy goes too');
+  // full store of older inline saves: the bootstrap runs through the same manager
+  store.map.set(runKey(2), inlineSave(52));
+  store.budget = store.used() + 100000;
+  browser.saveRun(run, rng, 1);
+  assert.ok(store.map.has(runKey(1)) && store.map.has(profileCopyKey(run.gameProfile.hash)));
+  assert.ok(JSON.parse(store.map.get(runKey(2))).gameProfileRef, 'the older slot was repacked');
+});
+
+test('a run resumed from its shared copy after a content update re-saves as a reference', () => {
+  const old = resolveGameProfile('ashen.core@1.0.0');
+  const oldRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, old)), old);
+  const run = createRunState({ registries: oldRegistries, seed: 53, classId: 'reaver' });
+  const stored = JSON.parse(JSON.stringify(run));
+  delete stored.gameProfile;
+  stored.gameProfileRef = { id: old.id, hash: old.hash };
+  stored.schemaVersion = RUN_SCHEMA_VERSION;
+  const store = limitedStorage();
+  store.map.set(runKey(1), JSON.stringify(stored));
+  store.map.set(profileCopyKey(old.hash), JSON.stringify(old));
+  store.budget = store.used() + 200000; // far less than the ~655 KB an inline write would need
+  const save = createSaveManager(store);
+  const loaded = save.loadRun(oldRegistries);
+  assert.ok(loaded, save.runStatus().reason);
+  save.saveRun(loaded, createRng(53), 1);
+  const after = JSON.parse(store.map.get(runKey(1)));
+  assert.ok(after.gameProfileRef && !after.gameProfile, 'still a reference');
+  assert.ok(save.loadRun(oldRegistries), 'and it loads');
 });

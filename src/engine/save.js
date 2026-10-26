@@ -654,8 +654,13 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   function readSharedProfile(hash) {
     const raw = storage.getItem(profileCopyKey(hash));
     if (!raw) return null;
-    try { const copy = JSON.parse(raw); return copy && copy.hash === hash ? copy : null; } catch { return null; }
+    try {
+      const copy = JSON.parse(raw);
+      if (copy && copy.hash === hash) { verifiedCopies.add(hash); return copy; }
+    } catch { /* unreadable: not a copy */ }
+    return null;
   }
+  const hasVerifiedCopy = (hash) => (verifiedCopies.has(hash) && storage.getItem(profileCopyKey(hash)) !== null) || readSharedProfile(hash) !== null;
   // Write the copy once and prove it reads back; a failed write throws (quota)
   // BEFORE any slot is allowed to point at it.
   function ensureSharedProfile(profile) {
@@ -675,7 +680,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   // transfer recovery copy, so an unreadable one still protects its profile.
   const REF_PATTERN = /gameProfileRef\\*"\s*:\s*\{[^}]*?hash\\*"\s*:\s*\\*"([^"\\]+)/g;
   function collectProfileCopies() {
-    if (readOnlyProfile || typeof storage.key !== 'function' || !Number.isInteger(storage.length)) return 0;
+    // Not guarded by readOnlyProfile: that flag protects the PROFILE (meta) keys, and this touches
+    // only run copies the game created, so the browser's run-writing manager must run it.
+    if (typeof storage.key !== 'function' || !Number.isInteger(storage.length)) return 0;
     const names = [];
     for (let i = 0; i < storage.length; i++) { const name = storage.key(i); if (typeof name === 'string') names.push(name); }
     const referenced = new Set();
@@ -761,7 +768,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   }
   // Returns the characters freed.
   function reclaimStoredSpace(exceptSlot = null, liveProfile = null) {
-    if (readOnlyProfile) return 0;
+    // Run slots and archived RUNS only (never a profile key), so it is not guarded by readOnlyProfile.
     let freed = 0;
     freed += collectProfileCopies() ? 1 : 0; // orphaned copies need no copy of their own
     if (liveProfile) bootstrapSharedProfile(liveProfile, exceptSlot);
@@ -807,7 +814,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       const previous = run.savedAt;
       run.savedAt = new Date().toISOString();
       try {
-        const json = serializeRun(run);
+        const json = serializeRun(run, { hasCopy: hasVerifiedCopy });
         // Exactly the bytes this build's predecessor wrote: the profile inline.
         const inlineJson = () => serializeRun(run, { inline: true });
         const needsCopy = json.includes('"gameProfileRef":{') && run.gameProfile;
