@@ -11,6 +11,7 @@ function clock() {
     advance(ms) { const end = now + ms; for (;;) { const next = [...timers.entries()].sort((a,b) => a[1].at - b[1].at || a[0] - b[0])[0]; if (!next || next[1].at > end) break; now = next[1].at; timers.delete(next[0]); next[1].fn(); } now = end; },
     get pending() { return timers.size; }, get callbacks() { return [...timers.values()].map(timer => timer.fn); } };
 }
+const timerOptions = c => ({ setTimer: c.setTimer, clearTimer: c.clearTimer, now: () => c.now });
 function run(multiplier = 1) {
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: multiplier });
   const c = clock(), trace = [], timing = actionPacing();
@@ -20,7 +21,7 @@ function run(multiplier = 1) {
     maxSpriteMs: speed => speed.lungeMs,
     onWatchdog: () => trace.push(['watchdog', '', c.now]),
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   return { c, trace, handle };
 }
 test('ordered actions and counters finish every stage before the next actor begins', () => {
@@ -61,7 +62,7 @@ for (const advance of [0, 600]) test(`watchdog expiration ${advance ? 'after' : 
     onSprite: () => ({ impactMs: 1000, totalMs: 2000, cancel() {} }),
     onWatchdog: () => { assert.equal(handle.finished, true); trace.push('watchdog'); handle.skip(); },
     onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
-  }, { wordMs: 500 }, c);
+  }, { wordMs: 500 }, timerOptions(c));
   c.advance(advance);
   const lateCallbacks = c.callbacks;
   handle.pauseForSkip();
@@ -78,7 +79,7 @@ test('a failing watchdog hook reports its error and still flushes and completes 
   const handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }], {
     onWatchdog: () => { trace.push('watchdog'); throw Error('diagnostic failed'); },
     onError: error => trace.push(error.message), onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
-  }, { wordMs: 500 }, c);
+  }, { wordMs: 500 }, timerOptions(c));
   handle.pauseForSkip(); c.advance(100000);
   assert.deepEqual(trace, ['watchdog', 'diagnostic failed', 'flush', 'done']);
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);
@@ -96,7 +97,7 @@ test('watchdog extends to the real authored handle when its estimate is too shor
     maxSpriteMs: () => 1,
     onSprite: () => ({ impactMs: 5000, totalMs: 10000, cancel() {} }),
     onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(6000); assert.deepEqual(trace, [], 'the underestimated watchdog cannot finish a live clip');
   c.advance(10000); assert.deepEqual(trace, ['done']); assert.equal(c.pending, 0);
 });
@@ -144,7 +145,7 @@ test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hi
     maxSpriteMs: speed => speed.lungeMs,
     onStage: (stage, b) => trace.push([stage, b.actorId, c.now]),
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(300000); setCombatPacing();
   assert.ok(!trace.some(row => row[0] === 'flush'), 'the watchdog never forced a flush');
   assert.equal(trace.at(-1)[0], 'done'); assert.equal(c.pending, 0);
@@ -162,7 +163,7 @@ function enemyTurn(settings) {
     onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
     maxSpriteMs: speed => speed.lungeMs,
     onFlush: () => trace.push('flush'), onDone: () => trace.push(['done', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(10 * 60 * 1000); setCombatPacing();
   return trace;
 }
@@ -188,7 +189,7 @@ test('zero pauses preserve complete ordered actions and counters without watchdo
     onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
     maxSpriteMs: speed => speed.lungeMs,
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(2000);
   const stages = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
   assert.deepEqual(trace.slice(0, 9).map(row => row[0]), stages);

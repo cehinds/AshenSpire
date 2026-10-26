@@ -140,6 +140,13 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   return {
     impactMs: timing.impactMs,
     totalMs: timing.totalMs,
+    // Frames advance one timer callback at a time, so a late callback does not
+    // consume the authored frames that have not played yet.
+    remainingMs() {
+      if (cancelled || frameIndex >= REAVER_ATTACK_SEQUENCE.length) return 0;
+      return Math.max(0, due - Date.now())
+        + (REAVER_ATTACK_SEQUENCE.length - frameIndex - 1) * timing.frameMs;
+    },
     // Hit-stop (SPEC §7.4): stay on the current frame for `ms` more.
     hold(ms) {
       if (cancelled || !(ms > 0) || frameIndex >= REAVER_ATTACK_SEQUENCE.length - 1) return;

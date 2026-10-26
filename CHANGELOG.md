@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-26
+
+- **Combat recovers after delayed animation callbacks** ([#2329](https://github.com/cehinds/AshenSpire/pull/2329), `0.7.1.1862`). A long browser pause no longer starts another overdue animation or keeps the hand and End Turn locked; authored long reactions and contact holds still finish normally.
+
 ## 2026-10-25
 
 - **Harder-hitting Core 2 combat, smarter rewards and a roomier battlefield** ([#2327](https://github.com/cehinds/AshenSpire/pull/2327), `0.7.1.1860`). Block now soaks magic (piercing hits skip it), Evade gives 3 stacks, enemies are a little weaker, bosses act at most three times a turn, and multi-hit moves cost stamina per hit (finesse and spell multi-hits cost less); card rewards favour your stance cards and rarely repeat what you own, every hand item can drop, the new Brimming Gourd grows and refills your flasks, and each shop item has its own, lower price; the combat header and footer are slimmer so the fight gets more room.
@@ -2231,3 +2235,4 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **The verified current build lives at the repository root** ([#186](https://github.com/cehinds/AshenSpire/pull/186), `0.4.0.0788`). `AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.
 
 - **A reversible architecture map** ([#180](https://github.com/cehinds/AshenSpire/pull/180), `0.4.0.0777`). Docs only.
+
