@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
+- **Leaner Settings, a phone-width Victory screen and a roomier map** ([#2336](https://github.com/cehinds/AshenSpire/pull/2336), `0.7.1.1868`). Settings drops its top button row and tip (Download & saves is now a Display row) and every description is one short sentence; the Victory screen is a single centred column on desktop too, with progress numbers that no longer clip; the map's top and bottom bars are thin strips with the zoom buttons tucked into the footer, and the map opens further out with sharper detail on high-density screens.
+
 - **Piercing attacks no longer ignore Block** ([#2334](https://github.com/cehinds/AshenSpire/pull/2334), `0.7.1.1868`). In Core a piercing hit now spends Block like any other hit, but up to a fifth of the damage Block caught slips through to Poise first and then HP, shown as a "Pierced N" float and log line; a piercing attack never does less damage than the same attack without pierce.
 
 - **Preview checks read the new settings switches** ([#2332](https://github.com/cehinds/AshenSpire/pull/2332), `0.7.1.1866`). The map-dragging, flask and formation-grid probes now read the on/off state of the new toggle switches, so the dev preview gate measures them again; nothing in play changes.
