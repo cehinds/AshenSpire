@@ -625,6 +625,10 @@ const ROWS = [
   // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
   // to miss. Both doors ask first through confirmResetAll. Last in Interface on
   // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
+  // The only door to Download & saves from Settings now the top action row is
+  // gone (owner, 2026-10-26); it opens the same panel the row used to.
+  { cat: 'Display', key: 'downloadSaves', type: 'button', btn: offlinePlay.title, label: t('settings.row.downloadSaves'),
+    note: tFull('settings.row.downloadSaves') },
   { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
     note: tFull('settings.row.resetAllSettings') },
 
@@ -3672,6 +3676,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
       repaintPanel({ keepScroll: true });
     });
+  });
+
+  container.querySelectorAll('[data-btn="downloadSaves"]').forEach((btn) => {
+    btn.addEventListener('click', () => onOffline?.());
   });
 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {

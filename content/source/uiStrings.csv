@@ -974,6 +974,7 @@ book.refuse.knownClass,,This class is already learned.,,
 book.read.class,,Learn this class card now. Equip or remove it later in your inventory; its progress is kept.,,
 # ---- Settings: each row's label (short) and its note (full); each Advanced section's name (short) and tip (full)
 settings.row.fullscreen,,Fullscreen,Fill the screen when this browser supports app-controlled fullscreen.,
+settings.row.downloadSaves,,Download & saves,"Export or import your saves, or get an offline copy of the game.",
 settings.row.resetAllSettings,,Reset all settings,"Put every setting back to its default. Asks first, and the change can be undone for a few seconds.",
 settings.resetAll.title,,Reset all settings?,"Every setting, in every section, goes back to its default. Saves and progress are not touched.",
 settings.resetAll.confirm,,Reset all,,
