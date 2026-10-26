@@ -60,7 +60,9 @@ try {
     console.log(`Reward containment checked at ${width}px`);
     if (!process.env.UI_FIX_BASELINE) {
       for (const row of layout.rows) assert.ok(row.left >= layout.menu.left - 1 && row.right <= layout.menu.right + 1, `reward row stays inside ${width}px column`);
-      if (!phone) assert.ok(layout.rows.every(row => row.right < layout.side.left), 'reward choices do not cover progression');
+      // One column at every width (owner, 2026-10-26): progression sits BELOW the choices, never beside them.
+      assert.ok(layout.rows.every(row => row.bottom <= layout.side.top + 1), 'reward choices do not cover progression');
+      assert.ok(layout.menu.width <= 520, `the reward column is phone-width, not ${layout.menu.width}px`);
     }
     let map = null;
     if (phone) {
