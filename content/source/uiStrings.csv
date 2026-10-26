@@ -990,7 +990,7 @@ settings.row.animSpeed,,Combat pacing,"Auto picks Fast with Lite rendering, Norm
 settings.row.performanceMode,,Rendering quality,Auto uses lighter effects on touch devices. Lite trims decoration.,
 settings.row.titleCityHold,,Lit city pause,Pause on the lit city before fading to the menu.,
 settings.row.mapZoom,,Map zoom,Fit shows your node and its neighbours. A percentage fixes the zoom.,
-settings.row.mapMode,,Map reveal,,
+settings.row.mapMode,,Map reveal,FOG draws only places you have seen or can reach. PATH draws the whole act.,
 settings.row.shrineMultiUse,,Multi-use Shrines,"Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.",
 settings.row.creationAutoAdvance,,Auto-advance character creation,"After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.",
 settings.row.useRestorativeFlasksOutsideCombat,,Use flasks outside combat,Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.,

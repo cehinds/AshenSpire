@@ -453,7 +453,7 @@ const ROWS = [
   // steps for a night).
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: t('settings.row.mapMode'),
-    note: 'FOG draws only places you have seen or can reach. PATH draws the whole act.' },
+    note: tFull('settings.row.mapMode') },
   // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
   // nearest shrine should have a glowing effect. (make this toggleable in the
   // settings)". He scoped the switch himself in the same sentence that asked
