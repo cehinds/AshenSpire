@@ -357,10 +357,12 @@ if (process.argv.includes('--selftest')) {
         // pulled up over the count with a negative margin, an opaque
         // background and z-index: 1, which makes it a stacking context that
         // paints in z-order above the count's in-flow text (Codex, #550).
-        name: "the DRAW artwork, a flex item given z-index: 1, paints an opaque block over its compact count",
+        // The pile labels carry z-index: 1 themselves (styles/kit.css), so the plant
+        // lifts the art to 2: above the label, which is the defect.
+        name: "the DRAW artwork, a flex item given z-index: 2, paints an opaque block over its compact count",
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw > .footer-art-face { z-index: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
+          append: "\n.combat-action-row > .pile.draw > .footer-art-face { z-index: 2; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
