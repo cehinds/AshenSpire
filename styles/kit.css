@@ -5140,6 +5140,9 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
+/* The pile and potion labels sit above their art too: a dropped face (--art-drop) overlaps its label's box with
+   blank strip, and the label is the text a player reads, so it paints over the face, never under it. */
+.combat-action-row[data-footer-art] :is(.pile,.combat-potions) > .footer-compact-label { position: relative; z-index: 1; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
