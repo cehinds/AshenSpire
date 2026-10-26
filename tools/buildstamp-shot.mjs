@@ -76,6 +76,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 import { stampText } from './buildversion.mjs';
+import { inflateSync } from 'node:zlib';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
@@ -94,6 +95,49 @@ const SHAPES = [
 const FREEZE_ID = '__buildstamp_freeze';
 const HIDE_ID = '__buildstamp_hide';
 const SELECTOR = '[data-role="build-version"]';
+
+// WHAT COUNTS AS INK. Two captures of the same box, glyphs shown and glyphs
+// transparent, must differ by pixels a person can see. Byte-equal PNGs was the
+// first rule, and it passes glyphs painted in their own background colour: the
+// browser's text antialiasing leaves a handful of pixels one level off (12,11,7
+// against 13,11,8) that no eye can tell from the ground. A pixel is ink when a
+// channel moves by INK_LEVELS (of 255) or more, and a stamp needs INK_PIXELS of
+// them; real glyphs on this ground move by well over a hundred levels.
+const INK_LEVELS = 24;
+const INK_PIXELS = 8;
+function pngPixels(b64) {
+  const buf = Buffer.from(b64, 'base64');
+  let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
+  while (p < buf.length) {
+    const len = buf.readUInt32BE(p), type = buf.toString('ascii', p + 4, p + 8), d = buf.subarray(p + 8, p + 8 + len);
+    if (type === 'IHDR') { w = d.readUInt32BE(0); h = d.readUInt32BE(4); bd = d[8]; ct = d[9]; if (d[12] !== 0) throw new Error('interlaced png'); }
+    else if (type === 'IDAT') idat.push(d); else if (type === 'IEND') break;
+    p += 12 + len;
+  }
+  if (bd !== 8 || !(ct === 6 || ct === 2)) throw new Error(`png bit depth ${bd} colour type ${ct}: only 8-bit RGB(A) is read`);
+  const bpp = ct === 6 ? 4 : 3, stride = w * bpp, raw = inflateSync(Buffer.concat(idat)), out = Buffer.alloc(h * stride);
+  for (let y = 0; y < h; y++) {
+    const ft = raw[y * (stride + 1)], src = y * (stride + 1) + 1, dst = y * stride;
+    for (let x = 0; x < stride; x++) {
+      const a = x >= bpp ? out[dst + x - bpp] : 0, b = y > 0 ? out[dst - stride + x] : 0, c = x >= bpp && y > 0 ? out[dst - stride + x - bpp] : 0;
+      let v = raw[src + x];
+      if (ft === 1) v += a; else if (ft === 2) v += b; else if (ft === 3) v += (a + b) >> 1;
+      else if (ft === 4) { const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? b : c; }
+      out[dst + x] = v & 255;
+    }
+  }
+  return { w, h, bpp, px: out };
+}
+export function inkPixels(shownB64, hiddenB64) {
+  const A = pngPixels(shownB64), B = pngPixels(hiddenB64);
+  if (A.w !== B.w || A.h !== B.h) return Infinity;
+  let n = 0;
+  for (let i = 0; i < A.w * A.h; i++) {
+    const o = i * A.bpp;
+    if (Math.max(Math.abs(A.px[o] - B.px[o]), Math.abs(A.px[o + 1] - B.px[o + 1]), Math.abs(A.px[o + 2] - B.px[o + 2])) >= INK_LEVELS) n++;
+  }
+  return n;
+}
 
 export async function run({ root = REPO_ROOT, out = resolve(REPO_ROOT, 'tools/results'), quiet = false } = {}) {
   const say = (...a) => { if (!quiet) console.log(...a); };
@@ -250,7 +294,7 @@ export async function run({ root = REPO_ROOT, out = resolve(REPO_ROOT, 'tools/re
           return true; })()`);
         const hidden = await c.send('Page.captureScreenshot', { format: 'png', clip });
         await ev(`(() => { const s = document.getElementById('${HIDE_ID}'); if (s) s.remove(); return true; })()`);
-        ink = shown.data !== hidden.data;
+        ink = inkPixels(shown.data, hidden.data) >= INK_PIXELS;
         if (!ink) {
           problems.push('ITS BOX IS THERE AND ITS LETTERS ARE NOT — taking the glyphs away changed '
             + 'nothing inside its own box, so the element is in the DOM and the version is not on the screen');
