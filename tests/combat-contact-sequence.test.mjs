@@ -126,6 +126,8 @@ test('three live 5-damage contacts lose 15 HP and paint three -5 readouts', t =>
   const events = ctx.eventLog.slice(before);
   assert.equal(ctx.player.hp, 85);
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom(dom => {
     const layer = dom.document.createElement('div'), floats = [];
     const append = layer.appendChild.bind(layer);
