@@ -1012,7 +1012,20 @@ const TEXT_RESTORE = `(() => {
 const FREEZE = `(() => { const st = document.createElement('style'); st.id = 'hintstrip-freeze';
   st.textContent = '*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }'; document.head.appendChild(st); return 1; })()`;
 const THAW = `(() => { const st = document.getElementById('hintstrip-freeze'); if (st) st.remove(); return 1; })()`;
+// THE ROW'S ARTWORK IS DECODED BEFORE ANY CAPTURE. The stamina orb (and every
+// plate) is an SVG <image> that decodes on first paint; a capture that lands
+// before it shows the control without its ring, so "paint in situ" reads a
+// fraction of "paint uncovered" and a slow machine reports a control painted
+// over that no player sees. Decode every href the row draws, then let two
+// frames and a beat pass; this waits for art, it never relaxes a threshold.
+const ART_READY = `(async () => { const row = document.querySelector('.combat-action-row'); if (!row) return 0;
+  const urls = [...new Set([...row.querySelectorAll('image')].map((i) => i.getAttribute('href')).filter(Boolean))];
+  await Promise.all(urls.map((u) => { const im = new Image(); im.src = u; return im.decode().catch(() => {}); }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise((r) => setTimeout(r, 250));
+  return urls.length; })()`;
 async function paintOf(ev, shot) {
+  await ev(ART_READY);
   await ev(FREEZE);
   try { return await paintOfFrozen(ev, shot); } finally { await ev(THAW).catch(() => {}); }
 }
