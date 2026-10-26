@@ -82,8 +82,9 @@
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "skew": 0.45,
-        "top": 0.52,
+        "hudWidthFraction": 0.55,
+        "skew": 1.6,
+        "top": 0.48,
         "rowHeight": 0.115
       },
       "bands": [

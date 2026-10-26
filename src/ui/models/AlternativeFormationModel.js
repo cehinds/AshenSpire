@@ -65,6 +65,9 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const lane = enemy ? cell.row : lanes - 1 - cell.row;
     const top = height * profile.top + band.index * rowHeight;
     const ground = top + band.anchor.y * rowHeight;
+    // A short strip has no room for a lane-wide bar: it would lie across the neighbouring
+    // lane's body. The profile may narrow the HUD to a fraction of the lane, kept centred.
+    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2;
     const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
     return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
@@ -72,8 +75,8 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       x: laneLeft + band.anchor.x * laneWidth + shear(ground), ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx,
-      miniHudWidth: laneWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
+      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
+      miniHudWidth: hudWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
   // Display the full four-band lattice even when Core forbids extra-row
