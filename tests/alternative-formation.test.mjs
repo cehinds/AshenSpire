@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { alternativeFormation, fitAlternativeSprites, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
   presentation: { perspectiveGrid: true, formationPreset: 'straight' },
@@ -207,5 +208,20 @@ test('every form factor fits the entire artwork envelope within its own cell', (
     }
     const back = formation.slots.filter(slot => slot.formationRole === 'enemy-back');
     assert.equal(new Set(back.map(slot => slot.miniHudTop)).size, 1, 'back-row HP geometry is level');
+  }
+});
+
+test('the short profile narrows each HUD to 0.55 of its lane, centred; every other profile keeps the whole lane', () => {
+  const inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHudInsetPx;
+  assert.equal(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.short.hudWidthFraction, 0.55);
+  for (const [width, height, narrow, fraction] of [[844, 240, false, 0.55], [1600, 620, false, 1], [390, 420, true, 1]]) {
+    const formation = alternativeFormation(plan(3), width, height, narrow);
+    for (const cell of formation.cells) {
+      const lane = cell.box.width;
+      assert.ok(Math.abs(cell.miniHudWidth - (lane * fraction - 2 * inset)) < 1e-6, `${width}x${height}: HUD width is ${fraction} of the lane`);
+      const slack = (lane - lane * fraction) / 2;
+      const flush = cell.box.left + cell.box.skew * cell.box.height / 2 + inset;
+      assert.ok(Math.abs(cell.miniHudLeft - (flush + slack)) < 1e-6, `${width}x${height}: the narrowed HUD stays centred in its lane`);
+    }
   }
 });
