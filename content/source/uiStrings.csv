@@ -1711,6 +1711,8 @@ settings.row.autoCombatSpeed,,Auto combat speed ×,"Speed while auto combat is o
 settings.row.combatStepPause,,Pause between steps (ms),"The pause between each step of an action: the action, its animation, hit or miss, the target reaction, the final result, then the reset. 0 to 2000 ms (0 turns pauses off), default 500 ms, before the speed multiplier. Does not change combat results.",
 combat.deckEdit.deferred,,,Changes apply next encounter; current combat piles stay unchanged.,
 combat.receipt.poiseAbsorbed,,Poise absorbed {n},,
+combat.receipt.pierced,,Pierced {n},,
+combat.receipt.piercedPoise,,Pierced {n} (Poise took {poise}),,
 combat.receipt.poiseDamage,,Poise damage {n},,
 card.smash.coreClause,,,"Against {stances}: {mult} damage, plus {block} of their Block; {poise} of it breaks Poise.",
 tag.smash.coreHelp,,,"Heavy strike. Against {stances}: {mult} damage, plus {block} of their Block; {poise} of it breaks Poise. Fast Attack and Counter answer it.",
