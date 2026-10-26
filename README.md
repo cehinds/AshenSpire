@@ -1,17 +1,5 @@
 # AshenSpire
-<!-- feature-preview:start -->
-## Feature preview — Combat timeline recovery
 
-[Download the verified CI feature build](https://github.com/cehinds/AshenSpire/actions/runs/40252515865/artifacts/12621138483) (GitHub sign-in required). Hosted Play is not yet verified.
-
-Combat now recovers when a delayed animation callback reaches its absolute deadline. These four original captures show the settled combat fixture on the official local candidate **0.7.1.1862 / c8f6f42daa**, with the same reviewed scheduler code. The linked CI build is **0.7.1.1861 / d9ab90dcda** and includes the PR receipt/projection. Native recovery is verified separately; still images do not demonstrate a stall or claim a performance improvement.
-
-| Phone | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Phone combat fixture](docs/preview/features/combat-timeline-recovery/mobile.png) | ![Desktop combat fixture](docs/preview/features/combat-timeline-recovery/desktop.png) | ![Wide combat fixture](docs/preview/features/combat-timeline-recovery/wide.png) | ![Tablet combat fixture](docs/preview/features/combat-timeline-recovery/tablet.png) |
-
-[Capture identity and validation scope](docs/preview/features/combat-timeline-recovery/capture.json). Original phone and native comparison-wrapper failures remain recorded; accepted visual and persisted-state evidence has narrower scope. The pre-existing wide HOLD hint touches the bottom edge.
-<!-- feature-preview:end -->
 
 
 
