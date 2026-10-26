@@ -344,7 +344,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       } else plain.push({ frame, sprite, leading });
     }
-    separateRackedIntents(racked, zoom);
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     for (const { frame, body, placement } of racked) {
@@ -362,13 +361,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
     }
-    if (!plain.length) return;
+    if (!plain.length) { separateRackedIntents(racked, zoom); return; }
     const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
     const placements = plain.map(({ frame, sprite, leading }) => {
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
+    separateRackedIntents(racked, zoom);
   }
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
