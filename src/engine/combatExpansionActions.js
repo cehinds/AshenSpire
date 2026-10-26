@@ -195,7 +195,6 @@ function completeContact(ctx, action, group) {
     combined.connected ||= receipt.connected;
     combined.statusAccepted += receipt.statusAccepted || 0;
     combined.amount += receipt.amount || 0;
-    if (receipt.corePierceLeft !== undefined) root.corePierceLeft = receipt.corePierceLeft;
     root.interactions ||= row.interactions;
   }
   // A return and its bounded response finish before the next incoming contact.
@@ -252,9 +251,6 @@ export function beginExpandedAction(ctx, group, source) {
       containsFire: row.contacts.some(contact => contact.amount > 0 && (contact.school === 'fire' || contact.damageType === 'fire')),
       containsBlunt: row.contacts.some(contact => contact.amount > 0 && contact.damageType === 'blunt'),
       containsReveal: row.contacts.some(contact => contact.amount > 0 && (contact.maneuver === 'sweep' || ['sacred', 'holy'].includes(contact.damageType))) };
-    // Core's per-hit rows start with the Piercing bypass the action's earlier hits left on the root row (once per action and target).
-    const rootLeft = group.contactSequence?.rootTargets?.[Object.keys(group.targets).find(key => group.targets[key] === row)]?.corePierceLeft;
-    if (rootLeft !== undefined) row.receipt.corePierceLeft = rootLeft;
     Control.beforeStatusAction(ctx, target, row.interactions, { connected: row.receipt.connected });
     Actions.prepareExpandedDefense(ctx, target, row.receipt, group.carrier);
   }

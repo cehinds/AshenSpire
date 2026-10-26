@@ -58,8 +58,7 @@ export function captureEnemyIntent(ctx, enemy, action = null) {
       state.defender.block = (state.defender.block || 0) + Counter.counterBlockGrant(state.previewCtx, state.defender, extra);
     }
   }
-  const left = contact ? group?.targets?.[action.meta?.expansionContacts?.[0]?.[0]?.key]?.receipt?.corePierceLeft : undefined;
-  const values = Damage.previewDamageHits(ctx, enemy, ctx.player, base, carrier.tags, left === undefined ? carrier : { ...carrier, pierceBudget: { corePierceLeft: left } }, hits, state);
+  const values = Damage.previewDamageHits(ctx, enemy, ctx.player, base, carrier.tags, carrier, hits, state);
   // Executed damage events already retain the full source receipt; forecasts
   // keep only the compact public quantities needed by presentation.
   for (const key of ['damage', 'hits', 'hitDamages', 'totalDamage', 'hpLoss', 'hpLossBounds', 'hitChance', 'uncertain'])

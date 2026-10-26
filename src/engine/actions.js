@@ -10,7 +10,7 @@ import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
-import { configuredCombat, configuredModule, profileDamageReceipt, pierceGuardBypass } from './gameProfileCombat.js';
+import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -385,7 +385,6 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     // The Counter return reads the damage before Block and Poise took anything (SPEC §17).
     (tactical.incomings ||= [])[index] = receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount;
     Matchups.recordTacticalContact(tactical, { hpLoss: receipt.hpLoss, blocked: receipt.blocked });
-    if (receipt.pierceBypassed > 0) tactical.corePierceLeft = Math.max(0, (tactical.corePierceLeft ?? pierceGuardBypass(ctx)) - receipt.pierceBypassed);
     if (receipt.evaded) tactical.avoided = true;
   }
   const before = target.block || 0;

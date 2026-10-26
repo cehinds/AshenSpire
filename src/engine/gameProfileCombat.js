@@ -3,29 +3,23 @@ import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
-import { combatMatchups } from '../content/combatMatchups.js';
 import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
-// It lets only the Piercing guard-bypass amount (damageRiders.piercing.guardBypass) past Block, as on the expanded and legacy paths
-// (owner, 2026-10-26); Block soaks the rest. Precision is a hit-roll status in Core, so it is not a pierce tag here.
+// It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
+// about floor(.2 * damage)"), per hit, after stance and Smash bonuses and before Block; Block soaks the rest. Precision is a hit-roll status in Core, so it is not a pierce tag here.
 export function isPierceHit(profile, carrier) {
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
-}
-/** The Piercing guard bypass one action may spend per target (read from the matchup data, as combatMatchups.js does). */
-export function pierceGuardBypass(ctx) {
-  const rules = ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
-  return Math.max(0, Number(rules?.damageRiders?.piercing?.guardBypass) || 0);
 }
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
@@ -146,9 +140,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   let barrierMitigated = 0, pierceBypassed = 0;
   if (modern) {
     // Owner: Block soaks the whole hit (physical first, then magic) except the Piercing bypass a pierce hit lets past; the magic Block leaves meets Barrier, then Ward.
-    // Per action and target the bypass is spent over the contacts in order (the plan's guardBypass semantics); a reaction carries none.
-    const tacticalReceipt = carrier?.pierceBudget || carrier?.expansionContact?.receipt;
-    const bypassLeft = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.max(0,tacticalReceipt?.corePierceLeft ?? pierceGuardBypass(ctx)) : 0;
+    // A pierce hit lets a fraction of its own damage past Block, per hit, physical part first; a reaction carries none.
+    const bypassLeft = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
     pierceBypassed = Math.min(physical+magical,bypassLeft);
     const physicalBypass = Math.min(physical,pierceBypassed);
     const physicalBlocked = Math.min(Math.max(0,target?.block || 0),physical-physicalBypass);

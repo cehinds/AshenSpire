@@ -86,11 +86,8 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
   if (ProfileCombat.configuredCombat(ctx)) {
     const receipts = [];
-    // The Piercing bypass is once per action and target: the hits of this forecast share one budget (seeded by an earlier hit's leftover).
-    const pierceBudget = { corePierceLeft: carrier?.pierceBudget?.corePierceLeft ?? carrier?.expansionContact?.receipt?.corePierceLeft };
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, source, defender, base, { ...carrier, pierceBudget });
-      if (receipt.pierceBypassed > 0) pierceBudget.corePierceLeft = Math.max(0, (pierceBudget.corePierceLeft ?? ProfileCombat.pierceGuardBypass(previewCtx)) - receipt.pierceBypassed);
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, source, defender, base, carrier);
       receipts.push(receipt);
       if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
     }
