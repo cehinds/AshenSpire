@@ -57,12 +57,14 @@ try {
     await inspector.waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');
     await inspector.waitFor({ state: 'detached' });
-    // Owner 2026-10-25: one tap anywhere on a selected panel (padding, intent, statuses) inspects.
-    for (const part of ['.target-hud-intent', '.target-hud-statuses .status-icon']) {
-      const target = panel.locator(part).first();
-      if (!(await target.count())) continue;
+    // Owner 2026-10-25: one tap anywhere on a selected panel (padding, statuses) inspects. The panel
+    // holds name, HP and stats only now (2026-10-26), so its padding is the part that is always there.
+    assert.equal(await panel.locator('.target-hud-intent').count(), 0, 'the panel no longer carries an intent strip');
+    for (const [label, press] of [['padding', () => panel.locator('.target-hud-panel').click({ position: { x: 3, y: 3 } })],
+      ['status icon', () => panel.locator('.target-hud-statuses .status-icon').first().click()]]) {
+      if (label === 'status icon' && !(await panel.locator('.target-hud-statuses .status-icon').count())) continue; // the player carries no status in this fixture
       await page.waitForTimeout(450);
-      await target.click();
+      await press();
       await inspector.waitFor({ state: 'visible' });
       await page.keyboard.press('Escape');
       await inspector.waitFor({ state: 'detached' });
@@ -107,4 +109,4 @@ try {
     await page.close();
   }
   console.log('Native target HUD: info, double-click, hold/cancel, double-tap, and resource tooltip pass at mobile/tablet sizes.');
-} finally { await browser.close(); await server?.close(); }
+} finally { await browser.close(); server?.server.close(); }

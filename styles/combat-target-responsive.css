@@ -38,10 +38,12 @@
    with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
    Solo (target HUD) and co-op share one size so neither role drifts. */
 :root .combat { --intent-value-size: calc(22px / var(--ui-zoom,1)); }
+/* Owner (2026-10-26): desktop and widescreen read smaller than the phone. */
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat { --intent-value-size: calc(18px / var(--ui-zoom,1)); }
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-target-hud='true'] :is(.intent-action,.intent-followup) .intent-icon { width:calc(20px / var(--ui-zoom,1)); height:calc(20px / var(--ui-zoom,1)); }
 :root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
 :root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
-:root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
   width:100%!important; min-width:0!important; margin:0!important; gap:0!important;
 }
@@ -74,6 +76,8 @@
 }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
+/* battlefieldStage.js slides an intent sideways (overheadIntentSeparation.js) when a neighbour's stands on it. */
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { left:var(--combat-intent-shift,auto)!important; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
 :root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#8ad498; }
@@ -100,7 +104,6 @@
 :root .combat[data-target-hud='true'] .target-hud-detail[data-targeting='true'][data-crowded='true'] .target-hud-panel {
   min-height:calc(44px / var(--ui-zoom,1)); cursor:pointer;
 }
-:root .combat[data-target-hud='true'] .target-hud-detail[data-targeting='true'][data-crowded='true'] .target-hud-intent { display:none; }
 
 /* Remaining queued actions after an actor has acted: "?" per unread one (owner 2026-10-18). Same size step as
    the amount's neighbours; the icon form (a passed read) matches the maneuver icon's row. */
@@ -114,7 +117,6 @@
 /* The same scoped total remains visible in compact overheads and target HUDs.
    Narrow hosts wrap action groups and the title instead of clipping the total. */
 :root .combat .intent-actions { min-width:0; max-width:100%; flex-wrap:wrap; row-gap:calc(3px / var(--ui-zoom,1)); }
-:root .combat .target-hud-intent { flex-wrap:wrap; }
 :root .combat .intent-damage-read { min-width:0; max-width:100%; display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
 :root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; text-align:center; }
 /* Owner 2026-10-25: the mini HUD over a combatant keeps the damage and multiplier only; the total line under it was redundant. The target panel and inspector keep it. */
@@ -138,10 +140,11 @@
 :root .combat .target-hud-detail .target-hud-meters .combat-health-row { row-gap:0; }
 :root .combat .target-hud-detail .target-hud-meters .combat-health-badge { margin-top:.3em; }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-meter {
-  flex:0 0 70%!important; width:70%!important; margin-inline:auto!important;
+  /* Owner (2026-10-26): the bar spans its row, so the badges below it start at the bar's left edge and the value ends at its right edge. */
+  flex:0 0 100%!important; width:100%!important; margin-inline:0!important;
 }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
 :root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
-  right:15%!important;
+  right:0!important;
 }

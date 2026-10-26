@@ -25,11 +25,11 @@ function fixture() {
     name.className = 'target-hud-name'; hp.className = 'target-hud-meters';
     // DOM click() is a non-pointer activation (detail 0), unlike touch clicks.
     name.click = () => name.dispatchEvent(new dom.Event('click', { bubbles: true, cancelable: true, detail: 0 }));
-    const status = document.createElement('span'), intent = document.createElement('span');
-    status.className = 'target-hud-statuses'; intent.className = 'target-hud-intent';
-    status.setAttribute('data-tip-attached', ''); intent.setAttribute('data-tip-attached', '');
-    shell.append(name, hp, status, intent); document.body.append(shell); wire(shell, id);
-    return [id, { shell, name, hp, status, intent }];
+    const status = document.createElement('span');
+    status.className = 'target-hud-statuses';
+    status.setAttribute('data-tip-attached', '');
+    shell.append(name, hp, status); document.body.append(shell); wire(shell, id);
+    return [id, { shell, name, hp, status }];
   }));
   function emit(id, type, fields = {}, part = 'name') {
     const event = new dom.Event(type, { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'touch',
@@ -83,11 +83,11 @@ test('double-touch inspection still consumes its release click, then permits a f
   f.tap('e2'); assert.deepEqual(f.plays, ['e2']);
 });
 
-test('status/intent reading remains separate from name and HP activation', () => {
+test('status reading remains separate from name and HP activation', () => {
   const f = fixture(); let readings = 0;
-  for (const part of ['status', 'intent']) f.targets.get('e2')[part].addEventListener('gpfocus', () => readings++);
-  f.hold(); f.tap('e2', 'status'); f.tap('e2', 'intent');
-  assert.equal(readings, 2); assert.deepEqual(f.plays, []);
+  f.targets.get('e2').status.addEventListener('gpfocus', () => readings++);
+  f.hold(); f.tap('e2', 'status');
+  assert.equal(readings, 1); assert.deepEqual(f.plays, []);
   f.tap('e2', 'hp'); assert.deepEqual(f.plays, ['e2']);
   f.emit('e2', 'dblclick'); assert.deepEqual(f.inspections, ['e1'], 'target confirmation does not become double-click inspection');
 });

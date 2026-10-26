@@ -7,7 +7,9 @@ export function validatePerspectiveGrid(grid) {
   const ids = ['enemy-back','enemy-front','extra-combatants','player'];
   if (!Array.isArray(grid.bands) || grid.bands.length !== ids.length
     || grid.bands.some((band, i) => band.id !== ids[i] || band.index !== i
-      || ![band.anchor?.x, band.anchor?.y].every(n => Number.isFinite(n) && n > 0 && n < 1)
+      || !(Number.isFinite(band.anchor?.x) && band.anchor.x > 0 && band.anchor.x < 1)
+      // Feet may stand on the cell's bottom edge (y = 1): that is where the owner wants them.
+      || !(Number.isFinite(band.anchor?.y) && band.anchor.y > 0 && band.anchor.y <= 1)
       || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
   for (const key of ['wide','narrow','short', ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
@@ -17,6 +19,7 @@ export function validatePerspectiveGrid(grid) {
   }
   if (!Number.isFinite(grid.footprintInsetPx) || grid.footprintInsetPx < 0) throw new Error('Invalid perspective footprint clearance');
   if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0) || !(grid.enemyMiniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
+  if (!(grid.desktopMiniHudScale > 0) || !(grid.desktopEnemyMiniHudScale > 0)) throw new Error('Invalid perspective desktop HUD scale');
   return grid;
 }
 validatePerspectiveGrid(GRID);
@@ -62,6 +65,9 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const lane = enemy ? cell.row : lanes - 1 - cell.row;
     const top = height * profile.top + band.index * rowHeight;
     const ground = top + band.anchor.y * rowHeight;
+    // A short strip has no room for a lane-wide bar: it would lie across the neighbouring
+    // lane's body. The profile may narrow the HUD to a fraction of the lane, kept centred.
+    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2;
     const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
     return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
@@ -69,8 +75,8 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       x: laneLeft + band.anchor.x * laneWidth + shear(ground), ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx,
-      miniHudWidth: laneWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
+      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
+      miniHudWidth: hudWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
   // Display the full four-band lattice even when Core forbids extra-row

@@ -105,7 +105,7 @@ const SHAPES = [
 const STATES = [
   { name: 'event', q: 'event', ready: `!!document.querySelector('#choices button')` },
   { name: 'shop', q: 'shop', ready: `!!document.querySelector('#leave-shop')` },
-  { name: 'rest', q: 'rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'rest', q: 'rest', ready: `!!document.querySelector('#rest-opt, #smith-opt')` },
   { name: 'smith', q: 'smith', ready: `!!document.querySelector('.smith-candidate-region')` },
   { name: 'map', q: 'map', ready: `!!document.querySelector('.map-node') && document.querySelector('.map-scroll').dataset.framing` },
   { name: 'combat', q: 'combat', ready: `!!document.querySelector('.combat .hand .card')`, extraShapes: [{ w: 390, h: 650, tag: 'safari', mobile: true }] },

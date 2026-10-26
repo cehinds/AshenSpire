@@ -25,7 +25,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const combat = { querySelector: () => null };
     const field = { querySelectorAll: () => [frame], closest: () => combat };
     const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-      uiZoom: () => zoom, field, schedule() {}, targetBodyHudPlacement,
+      uiZoom: () => zoom, field, schedule() {}, targetBodyHudPlacement, separateRackedIntents() {},
       uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
       currentSpriteBodyBounds: () => body, invalidateSpriteRects() {}, placeHitBadges() {}, readHitBadges: () => null,
     });
@@ -98,7 +98,7 @@ test('every target body is measured before inherited HUD coordinates are written
   frames.push({ querySelector: () => null });
   const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
     uiZoom: () => 1.25, field: { querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
-    schedule() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement,
+    schedule() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {},
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),
   });

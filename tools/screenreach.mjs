@@ -105,10 +105,12 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'Shrine cards lose the shared body wrapper and split into narrow sibling columns',
-        file: 'src/ui/screens/rest.js',
-        find: '<div class="cp-body">',
-        replace: '<div>',
-        all: true,
+        // Both shrines: the Core one (gameProfileRest.js) is what ?shot=rest mounts;
+        // rest.js is the full-game one, whose flask panel the check below keys on.
+        edits: [
+          { file: 'src/ui/screens/rest.js', find: '<div class="cp-body">', replace: '<div>', all: true },
+          { file: 'src/ui/components/gameProfileRest.js', find: "el('div', { class: 'cp-body' }, [", replace: "el('div', {}, [", all: true },
+        ],
         expectRed: /Shrine choice cards missing their shared \.cp-body composition/,
       },
       {
@@ -139,7 +141,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'enemy intent cannot be pressed anywhere in its badge',
         file: 'styles/combat.css',
-        append: '.combatant-leading .intent { pointer-events: none !important; }',
+        // Intents sit in .combatant-leading or, in the target HUD, in its overhead rack.
+        append: '.combatant-leading .intent, .target-hud-overhead-meters > .intent { pointer-events: none !important; }',
         expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
       {
@@ -155,8 +158,9 @@ if (process.argv.includes('--selftest')) {
         // is not required) instead. Same mechanism: a whole-frame z-index
         // lets a neighbouring fighter's overhead control paint over this intent.
         // Matched under combat-overlap only, with the covered element still
-        // required to be `.intent`.
-        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.enemy-expansion-bob|\.enemy-expansion-placeholder|\.alternative-silhouette \[authored-neighbour\]|\.intent)/,
+        // required to be `.intent`. The hit can also be the glyph (an unclassed
+        // `svg`) inside that neighbouring intent badge: still its own overhead control.
+        expectRed: /390x650 combat-overlap: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+[^;\r\n]*(?:\.enemy-pose-stage|\.enemy-expansion-bob|\.enemy-expansion-placeholder|\.alternative-silhouette \[authored-neighbour\]|\.intent|\bsvg\b)/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
@@ -461,7 +465,7 @@ const SCREENS = [
   // control apiece (Rest holds, the Smith confirms, the brazier confirms), and
   // a confirm panel that pushes a CANCEL button off a 360 px screen is exactly
   // the class this sweep exists to catch.
-  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt')` },
+  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt, #smith-opt, #level-opt')` },
   // THE SMITH is a modal over the Shrine, and until 2026-09-11 it had no state
   // of its own — the review that photographed every room got the title screen
   // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
@@ -584,6 +588,11 @@ const PROBE = `(() => {
     // short phones. It is still usable if a finger-sized patch of that button
     // wins the hit test. A wholly blocked badge remains a failure.
     if (c.matches('.combatant-leading .overhead-control') && exposedPatch(c, 24)) continue;
+    // A damage number on a hand card is covered by its card's .hand-hit-lane ON
+    // PURPOSE and stays reachable: damageReceipt.js routes a click or hover on
+    // the lane to the number under the pointer (damageNumberUnderLane). Accept
+    // exactly that route: the number's own card lane, nothing else.
+    if (c.matches('[data-damage-receipt]') && hit?.matches('.hand-hit-lane') && hit.parentElement?.contains(c)) continue;
     // A fan intentionally covers card centers. Require an exposed 24px square
     // on the actual card, and only permit another hand card to cover its center.
     if (c.matches('.hand .card') && hit?.closest('.hand .card')) {
@@ -687,7 +696,7 @@ const PROBE = `(() => {
   // viewport overflow, but the flask name, stepper and Level-up buttons were
   // squeezed into unusable ribbons. Assert the component boundary, not a magic
   // width that happens to fit today's copy.
-  if (document.querySelector('#flask-reallocate')) {
+  if (document.querySelector('#flask-reallocate, #shrine-leave')) {
     // Descendant, not child: since W1s the option list stands in the choice
     // body's first slot, not directly under the screen.
     const bare = [...document.querySelectorAll('.screen .class-row > .class-pick')]

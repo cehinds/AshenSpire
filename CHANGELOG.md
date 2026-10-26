@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
+- **Roomier combat with smaller cards** ([#2341](https://github.com/cehinds/AshenSpire/pull/2341), `0.7.1.1876`). The battle grid is bigger with every fighter standing on the bottom of their cell, HP badges and numbers sit flush with the ends of the bar, desktop and widescreen cards are smaller, the target panel shows only name, HP and stats, and a sideways phone keeps the back row clear of your party.
+
 - **The map keeps your place on phones** ([#2339](https://github.com/cehinds/AshenSpire/pull/2339), `0.7.1.1874`). Coming back to the map on a phone returns to where you had scrolled instead of snapping back to the centre after the slimmer map bars settle.
 
 - **Saving no longer fills browser storage** ([#2338](https://github.com/cehinds/AshenSpire/pull/2338), `0.7.1.1872`). A Core run save was carrying the whole rulebook (0.7–1.5 MB) until a full store refused the victory save and a reload went back to before the fight; the rules are now kept once on the device and each save is about 30–190 KB, a full store is tidied and retried before any warning, and older saves and runs from earlier builds still load.

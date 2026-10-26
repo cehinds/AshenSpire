@@ -50,7 +50,7 @@ test('actual durable setup adds an authored Counter before reload when the start
   const saved = fresh();
   saved.deck = saved.deck.filter(card => combatProfileFor(projectGameCard(saved, card)).maneuver !== 'counter');
   const setup = block("      saved.flasks = [{ flaskId: 'blightCoating' }];", '      localStorage.setItem(key, JSON.stringify(saved));');
-  runInNewContext(`(() => {${setup}})()`, { saved, projectGameCard, combatProfileFor, hasImmediateHostileDamage });
+  runInNewContext(`(() => {${setup}})()`, { saved, view: saved, projectGameCard, combatProfileFor, hasImmediateHostileDamage });
   const combat = createRunCombat({ registries, run: saved, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const card = selfCounter(combat, saved.deck);
   assert.equal(saved.deck[1].instanceId, card.instanceId, 'ordered opening draw includes the Counter');
