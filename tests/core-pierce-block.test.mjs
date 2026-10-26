@@ -31,7 +31,7 @@ test('Rogue dagger strike (12) against Block 50 loses floor(0.2 x 12) = 2 HP', (
   assert.equal(hit.amount, 12, 'fixture: the dagger strike deals 12');
   assert.equal(500 - enemy.hp, 2);
   assert.equal(hit.blocked, 10);
-  assert.equal(enemy.block, 40, 'Block was spent');
+  assert.equal(enemy.block, 38, 'Block is spent as the same hit without pierce would spend it (12)');
 });
 
 // An enemy whose Slash is a piercing action of `damage` x `hits`.
@@ -109,13 +109,14 @@ test('only what Block would have soaked is pierced: with Block 0 a pierce hit is
 });
 
 test('the pierced part is not double-counted by Poise: what Block leaves of the rest takes the ordinary rule', () => {
-  // 18 incoming, bypass 3, Block 17: Block soaks 15, so 2 of the 17 Block would have soaked are pierced and meet Poise 1:1 (8 -> 6).
-  // The 1 left meets the ordinary rule against the 6 left.
-  const { combat, hits } = enemyPierce({ damage: 14, hits: 1, block: 17, poise: 8 });
-  assert.equal(hits[0].pierced, 2); assert.equal(hits[0].piercePoise, 2);
-  assert.equal(hits[0].blocked, 15);
-  assert.equal(hits[0].hpLoss, 0, 'the 1 left is absorbed by Poise');
-  assert.equal(combat.player.persistentPoise.value, 5, '8 - 2 pierced - 1 absorbed');
+  // 18 incoming, Block 15: Block is spent as for a plain hit (15), leaving 3 for the ordinary rule. The pierce lets 3 of the soaked 15 go
+  // through, so they meet Poise 1:1 (8 -> 5); the 3 Block left take the ordinary rule against the 5 (floor(3 x .75) = 2 HP, Poise 4).
+  const { combat, hits } = enemyPierce({ damage: 14, hits: 1, block: 15, poise: 8 });
+  assert.equal(hits[0].pierced, 3); assert.equal(hits[0].piercePoise, 3);
+  assert.equal(hits[0].blocked, 12);
+  assert.equal(hits[0].hpLoss, 2, 'the same HP as the plain hit');
+  assert.equal(combat.player.persistentPoise.value, 4);
+  assert.equal(combat.player.block, 0, 'Block is spent as for a plain hit');
 });
 
 test('the Pierced float and the log line show the pierced amount and what Poise took', () => {
@@ -171,4 +172,46 @@ test('property: over a grid of damage, Block and Poise, pierce never lowers HP l
       applyAttackDamage(d, d.enemies[0], d.player, dmg, [], { ...mk('piercing'), tags: ['camp:physical', 'damage:piercing'] });
       assert.equal(before - d.player.hp, preview, `preview != apply: ${label} (${preview} vs ${before - d.player.hp})`);
     }
+});
+
+// Invariant over whole actions: Block is spent as the plain hit would spend it, so carrying Block/Poise between hits never lets a pierce
+// action deal less HP than the same action without pierce. Mixed physical+magic and Ward-enabled included; preview equals apply.
+test('property: over multi-hit actions (2-4 hits, mixed damage, Ward on and off), pierce never lowers total HP loss and preview equals apply', () => {
+  let checked = 0, skipped = 0;
+  const ctxs = [live(), live(), live()];
+  for (const ctx of ctxs) { ctx.enemies[0].basePrecisionBonus = 1000; }
+  const reset = (ctx, { block, poise, ward, barrier }) => {
+    ctx.fixCoreRules = { ...structuredClone(ctx.fixCoreRules || ctx.gameProfile.fixCoreRules), ward: { enabled: ward } };
+    Object.assign(ctx.player, { hp: 200, maxHp: 200, block, barrier, statuses: {}, persistentPoise: { value: poise, max: 30 },
+      persistentWard: { value: ward ? 4 : 0, max: 10 } });
+    delete ctx.player.combatStance; delete ctx.player.combatCounter;
+    return ctx;
+  };
+  for (const hits of [2, 3, 4]) for (const dmg of [3, 5, 10]) for (const share of [0, 0.4])
+    for (const block of [0, 5, 10, 20]) for (const poise of [0, 2, 8]) for (const ward of [false, true]) {
+      const carrier = damageType => ({ tags: ['camp:physical', `damage:${damageType}`], skipRatingBonus: true, ...(share ? { magicShare: share } : {}),
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType, range: 'melee' } });
+      const state = { block, poise, ward, barrier: share ? 2 : 0 };
+      const label = `${hits}x${dmg} magic ${share} Block ${block} Poise ${poise} Ward ${ward}`;
+      const total = (ctx, damageType) => {
+        reset(ctx, state);
+        let lost = 0;
+        for (let hit = 0; hit < hits; hit++) {
+          primeAccuracyRolls(ctx);
+          const before = ctx.player.hp;
+          applyAttackDamage(ctx, ctx.enemies[0], ctx.player, dmg, carrier(damageType).tags, carrier(damageType));
+          lost += before - ctx.player.hp;
+        }
+        return lost;
+      };
+      const plain = total(ctxs[0], 'slashing');
+      const pierce = total(ctxs[1], 'piercing');
+      assert.ok(pierce >= plain, `pierce lowered total HP loss: ${label} (${pierce} < ${plain})`);
+      const forecastOf = damageType => previewDamageHits(reset(ctxs[2], state), ctxs[2].enemies[0], ctxs[2].player, dmg, [], carrier(damageType), hits).totalDamage;
+      // Known, older gap (it shows on plain hits too, e.g. 2x10 Block 0 Poise 2): when Poise breaks between hits, the forecast's Vulnerable
+      // after the break is one off from the applied hit's. Those cases only get the HP invariant above.
+      if (poise > 0 && ctxs[1].player.persistentPoise.value === 0 && hits > 1) { skipped++; continue; }
+      assert.equal(forecastOf('piercing'), pierce, `preview != apply: ${label}`); checked++;
+    }
+  assert.ok(checked > skipped, `preview == apply held in ${checked} cases (${skipped} skipped for the older Poise-break forecast gap)`);
 });

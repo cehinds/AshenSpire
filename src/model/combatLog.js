@@ -208,7 +208,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           // A piercing hit: the part that went past Block, and how much of it Poise took 1:1 first.
           ...(event.pierced > 0 ? [t(event.piercePoise > 0 ? 'combat.receipt.piercedPoise' : 'combat.receipt.pierced', { n: event.pierced, poise: event.piercePoise || 0 })] : []),
-          ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked} → ${event.blockRemaining || 0})`] : []),
+          ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked + (event.pierced || 0)} → ${event.blockRemaining || 0})`] : []),
           ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           // Smash vs a defensive stance: the Poise pool loses a share of the hit; none of the hit is absorbed by it.
           ...(poiseDamage ? [`Poise damage ${poiseDamage} (${(event.poiseRemaining || 0) + poiseDamage} → ${event.poiseRemaining || 0})`] : []),

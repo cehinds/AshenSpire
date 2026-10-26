@@ -44,7 +44,8 @@ test('a pierce hit lets floor(0.2 x its damage) past Block',()=>{
   const r=hit(carrier,50);
   assert.equal(r.hpLoss,2,'floor(.2 * 10)');
   assert.equal(r.blocked,8);
-  assert.equal(hit(carrier,1).blocked,1,'a small Block is still soaked');
+  assert.equal(hit(carrier,1).blockRemaining,0,'Block is spent as the same hit without pierce would spend it');
+  assert.equal(hit(carrier,1).hpLoss,10,'a Block of 1 is all pierced, so the whole hit reaches HP');
   assert.ok(isPierceHit(carrier.combatProfile,carrier));
  }
  assert.ok(!isPierceHit(physical.combatProfile,physical));

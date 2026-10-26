@@ -137,19 +137,21 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const incoming = amount;
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
-  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0;
+  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, blockSpent = null;
   if (modern) {
-    // Owner: Block soaks the whole hit (physical first, then magic) except the Piercing bypass a pierce hit lets past; the magic Block leaves meets Barrier, then Ward.
-    // A pierce hit lets a fraction of its own damage past Block, per hit, physical part first; a reaction carries none.
-    const bypassLeft = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
-    const bypassAmount = Math.min(physical+magical,bypassLeft);
-    const physicalBypass = Math.min(physical,bypassAmount);
+    // Owner: Block soaks the whole hit (physical first, then magic); the magic Block leaves meets Barrier, then Ward.
+    // Block is spent exactly as the same hit without pierce would spend it (so the invariant holds over a whole action). A pierce hit then
+    // lets up to floor(fraction x its damage) of what Block soaked go through instead (owner, 2026-10-26); a reaction carries none.
     const blockPool = Math.max(0,target?.block || 0);
-    const physicalBlocked = Math.min(blockPool,physical-physicalBypass);
-    const magicBlocked = Math.min(blockPool-physicalBlocked,magical-(bypassAmount-physicalBypass));
+    const plainPhysicalBlocked = Math.min(blockPool,physical);
+    const plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
+    blockSpent = plainPhysicalBlocked+plainMagicBlocked;
+    const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
+    pierceBypassed = Math.min(bypassAmount,blockSpent);
+    const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
+    const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
+    const magicBlocked = plainMagicBlocked-(pierceBypassed-piercedPhysicalPart);
     blocked = physicalBlocked+magicBlocked;
-    // Only what Block would otherwise have soaked counts as pierced (owner, 2026-10-26); with no Block there is nothing to pierce.
-    pierceBypassed = bypassAmount > 0 ? Math.max(0,Math.min(blockPool,physical+magical)-blocked) : 0;
     const magicAfterBlock = magical-magicBlocked;
     barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);
     transition('block','Block',physical+magical,physical+magical-blocked,'mitigation');
@@ -160,7 +162,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     // The remainder Block left then meets the ordinary Poise rule against what the pierce left of the pool, so Poise never counts the pierce twice.
     const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
     // A Smash against a defensive stance has no absorption, so its pierced part gets none either.
-    const piercePhysical = smashRule ? 0 : Math.min(pierceBypassed,physical-physicalBlocked);
+    const piercePhysical = smashRule ? 0 : piercedPhysicalPart;
     piercePoise = Math.min(piercePhysical,poisePool);
     const pierceToHp = piercePhysical-piercePoise;
     const afterPierce = piercePoise > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:poisePool-piercePoise}} : target;
@@ -190,7 +192,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
-    blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
+    blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
     ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
