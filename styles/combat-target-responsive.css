@@ -140,10 +140,11 @@
 :root .combat .target-hud-detail .target-hud-meters .combat-health-row { row-gap:0; }
 :root .combat .target-hud-detail .target-hud-meters .combat-health-badge { margin-top:.3em; }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-meter {
-  flex:0 0 70%!important; width:70%!important; margin-inline:auto!important;
+  /* Owner (2026-10-26): the bar spans its row, so the badges below it start at the bar's left edge and the value ends at its right edge. */
+  flex:0 0 100%!important; width:100%!important; margin-inline:0!important;
 }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
 :root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
-  right:15%!important;
+  right:0!important;
 }
