@@ -2531,12 +2531,14 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|combatPacingPreset|animSpeed)/.test(key) ? 'Auto combat & pacing' : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(row);
   }
+  // Auto combat and pacing is what a player reaches for first in Combat (owner, 2026-10-26).
+  if (category === 'Combat' && groups.has('Auto combat & pacing')) return new Map([['Auto combat & pacing', groups.get('Auto combat & pacing')], ...groups]);
   return groups;
 }
 
@@ -2735,20 +2737,23 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
     const topics = generalGroups(selected, profile, nextProfile);
-    const storedTopic = settings[`settingsGeneralTopic.${selected}`];
-    const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
-    const rows = topics.get(topic);
+    // Every topic is a titled section of one scrolling pane (owner, 2026-10-26), not a dropdown that hides the rest.
     const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
-    const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
-    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));
-    // On a phone the expanded preview can fill the visible pane. Keep the
-    // first Display control ahead of it so Fullscreen is reachable on entry.
-    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : firstFullscreen
-      ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
-      : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
+    const custom = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected);
+    const firstFullscreen = selected === 'Display' && [...topics.values()][0]?.[0]?.key === 'fullscreen';
+    const sections = [...topics.entries()].map(([label, topicRows], index) => {
+      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));
+      // On a phone the expanded preview can fill the visible pane. Keep the
+      // first Display control ahead of it so Fullscreen is reachable on entry.
+      const list = firstFullscreen && index === 0 ? `${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}` : rowHtml.join('');
+      const id = `set-topic-${selected}-${index}`.replace(/[^A-Za-z0-9_-]/g, '-');
+      return topics.size > 1
+        ? `<section class="set-topic" aria-labelledby="${id}" data-section-topic="${esc(label)}"><h4 class="set-subsection-heading" id="${id}">${esc(label)}</h4><div class="set-card-list">${list}</div></section>`
+        : `<div class="set-card-list">${list}</div>`;
+    }).join('');
+    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : `${firstFullscreen ? '' : preview}${sections}`;
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option value="${esc(group)}"${group === selected ? ' selected' : ''}>${esc(categoryLabel(group))}</option>`).join('')}</select>` : '')
-      + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
       + `</div>${body}`;
   }
   const h = categoryHandler(cat);
@@ -3167,12 +3172,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     onChange({ settingsGeneralCategory: event.target.value });
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
-  container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
-    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
-    settings[key] = event.target.value;
-    onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
-  });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
     if (!picker) return;
@@ -3222,6 +3221,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // capacity, or a search) draws no heading over nothing.
   const syncSubsectionHeadings = () => {
     container.querySelectorAll('.set-subsection-heading').forEach((heading) => {
+      // A General topic's heading titles its own section (the rows sit in a sibling list), so it always shows.
+      if (heading.closest('.set-topic')) return;
       let node = heading.nextElementSibling;
       let visible = false;
       while (node && !node.classList.contains('set-subsection-heading')) {
@@ -3390,8 +3391,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile(), nextProfile: nextProfile() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          const topics = generalGroups(section, activeProfile(), nextProfile());
-          return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
+          // Every topic of the section is on screen now, so Reset this group covers them all.
+          return [...generalGroups(section, activeProfile(), nextProfile()).values()].flat();
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
       const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()

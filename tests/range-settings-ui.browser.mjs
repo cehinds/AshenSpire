@@ -25,7 +25,6 @@ try {
   await group.selectOption('Game rules');
   await page.locator('.game-profile-selector select').selectOption('core');
   await group.selectOption('Combat');
-  await page.locator('[data-general-topic]').selectOption('Range');
   const toggle = page.locator('[data-key="rangeMechanics"]');
   await toggle.waitFor({ state: 'visible', timeout: 15000 });
   assert.equal(await toggle.isChecked(), true);
@@ -43,7 +42,6 @@ try {
   for (const key of keys) assert.equal(await page.locator(`input[type="number"][data-key="${key}"]`).inputValue(), '0');
   await search.fill('');
   await group.selectOption('Display'); await group.selectOption('Combat');
-  await page.locator('[data-general-topic]').selectOption('Range');
   assert.equal(await page.locator('[data-key="rangeMechanics"]').isChecked(), false);
   const after = await page.evaluate(() => ({ profile: window.__combatRunForShot.gameProfile?.hash, range: window.__combat.rangeState ?? null, runPolicy: window.__combatRunForShot.rangePolicy ?? null }));
   assert.deepEqual(after, before, 'changing next-run controls never mutates the active Current fight/run');
