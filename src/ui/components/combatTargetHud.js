@@ -48,7 +48,8 @@ function panelFor(entry) {
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
-  panel.append(meters, combatTargetIntentRow(entry));
+  // Owner (2026-10-26): the panel is name, HP bar and stats row only; the intent reads above the figure.
+  panel.append(meters);
   const statuses = entry.createStatuses();
   statuses.classList.add('target-hud-statuses');
   statuses.hidden = !statuses.querySelector('.status-icon');
