@@ -354,7 +354,7 @@ test('a balance row nothing reads says so in its description', () => {
   // one whose note must say so. `graceRefillAtRunStart` is the one inert row
   // still on screen, named because nothing marks it.
   const hidden = advancedConfigRows(contentBundle)
-    .filter((row) => row.generatedBalance && row.retired).map((row) => row.searchPath);
+    .filter((row) => row.generatedBalance && row.retired && row.inert).map((row) => row.searchPath);
   const inert = [...hidden, 'graceRefillAtRunStart'];
   // 18, not 20: ruleset 6 (#1253) deleted `levelUp.tierSizeMin/Max` outright
   // with the tier dial, so those two are no longer rows to hide.

@@ -378,7 +378,7 @@ const ROWS = [
   { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
     min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, label: t('settings.row.combatSpeed'),
     note: tFull('settings.row.combatSpeed') },
-  { cat: 'Combat', key: 'combatPreference', retired: true, type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+  { cat: 'Combat', key: 'combatPreference', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
     choices: ['offense', 'defense'], label: t('settings.row.combatPreference'), note: tFull('settings.row.combatPreference') },
   { cat: 'Combat', key: 'autoCombatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
     min: AUTOMATION_DEFAULTS.autoSpeedMinimum, max: AUTOMATION_DEFAULTS.autoSpeedMaximum, step: 0.25, label: t('settings.row.autoCombatSpeed'),
@@ -998,6 +998,17 @@ export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'T
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
 /**
+ * switchHtml({ label, on, key, attrs }) → a boolean setting as a real checkbox with role="switch" (owner,
+ * 2026-10-26). The input is the control: native keyboard (Space), the browser's own checked state and a
+ * visible focus ring on its track; the label text is read from the row, not from an aria-label copy.
+ * `attrs` is already-escaped extra attributes (data-key, data-action, aria-describedby, disabled).
+ */
+function switchHtml({ label, on, attrs = '' }) {
+  return `<label class="as-switch"><input type="checkbox" role="switch" class="as-switch-input toggle"${on ? ' checked' : ''}${attrs}>`
+    + `<span class="as-switch-track" aria-hidden="true"><span class="knob"></span></span><span class="sr-only">${esc(stripTags(label))}</span></label>`;
+}
+
+/**
  * developerSwitchHtml() → the Developer tools switch drawn above every
  * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
  * at all on the 1.0 release builds, where the tools stay off (owner,
@@ -1005,9 +1016,10 @@ const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount'
  */
 export function developerSwitchHtml(state = debugSwitch()) {
   if (state.hidden) return '';
+  const label = 'Developer tools';
   return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
-    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
-    + `<span class="r-trail"><button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button></span></div>`;
+    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">${label}</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
+    + `<span class="r-trail">${switchHtml({ label, on: state.on, attrs: ' data-developer-switch' })}</span></div>`;
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
@@ -1927,13 +1939,13 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <span class="ls-hint set-note">${note}</span>
         <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.</span>
       </span>
-      <span class="r-trail"><button type="button" class="as-toggle toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true"><span class="knob"></span></button></span>
+      <span class="r-trail">${switchHtml({ label: r.label, on: false, attrs: ` data-key="${r.key}" data-action="1" aria-describedby="set-${r.key}-status" disabled` })}</span>
     </div>`;
   }
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `${rowOpen()}
       ${stack()}
-      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
+      <span class="r-trail">${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''}` })}</span>
     </div>`;
 }
 
@@ -2520,12 +2532,15 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(row);
   }
+  // Auto combat and pacing is what a player reaches for first in Combat (owner, 2026-10-26).
+  const first = t('settings.topic.autoCombat');
+  if (category === 'Combat' && groups.has(first)) return new Map([[first, groups.get(first)], ...groups]);
   return groups;
 }
 
@@ -2724,20 +2739,23 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
     const topics = generalGroups(selected, profile, nextProfile);
-    const storedTopic = settings[`settingsGeneralTopic.${selected}`];
-    const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
-    const rows = topics.get(topic);
+    // Every topic is a titled section of one scrolling pane (owner, 2026-10-26), not a dropdown that hides the rest.
     const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
-    const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
-    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));
-    // On a phone the expanded preview can fill the visible pane. Keep the
-    // first Display control ahead of it so Fullscreen is reachable on entry.
-    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : firstFullscreen
-      ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
-      : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
+    const custom = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected);
+    const firstFullscreen = selected === 'Display' && [...topics.values()][0]?.[0]?.key === 'fullscreen';
+    const sections = [...topics.entries()].map(([label, topicRows], index) => {
+      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));
+      // On a phone the expanded preview can fill the visible pane. Keep the
+      // first Display control ahead of it so Fullscreen is reachable on entry.
+      const list = firstFullscreen && index === 0 ? `${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}` : rowHtml.join('');
+      const id = `set-topic-${selected}-${index}`.replace(/[^A-Za-z0-9_-]/g, '-');
+      return topics.size > 1
+        ? `<section class="set-topic" aria-labelledby="${id}" data-section-topic="${esc(label)}"><h4 class="set-subsection-heading" id="${id}">${esc(label)}</h4><div class="set-card-list">${list}</div></section>`
+        : `<div class="set-card-list">${list}</div>`;
+    }).join('');
+    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : `${firstFullscreen ? '' : preview}${sections}`;
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option value="${esc(group)}"${group === selected ? ' selected' : ''}>${esc(categoryLabel(group))}</option>`).join('')}</select>` : '')
-      + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
       + `</div>${body}`;
   }
   const h = categoryHandler(cat);
@@ -2994,8 +3012,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (!btn) return;
     const capability = fullscreenCapability();
     const on = isFullscreen();
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-checked', String(on));
+    btn.checked = on;
     btn.disabled = !capability.supported;
     btn.setAttribute('aria-disabled', String(!capability.supported));
     const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
@@ -3157,12 +3174,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     onChange({ settingsGeneralCategory: event.target.value });
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
-  container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
-    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
-    settings[key] = event.target.value;
-    onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
-  });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
     if (!picker) return;
@@ -3212,6 +3223,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // capacity, or a search) draws no heading over nothing.
   const syncSubsectionHeadings = () => {
     container.querySelectorAll('.set-subsection-heading').forEach((heading) => {
+      // A General topic's heading titles its own section (the rows sit in a sibling list), so it always shows.
+      if (heading.closest('.set-topic')) return;
       let node = heading.nextElementSibling;
       let visible = false;
       while (node && !node.classList.contains('set-subsection-heading')) {
@@ -3380,8 +3393,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile(), nextProfile: nextProfile() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          const topics = generalGroups(section, activeProfile(), nextProfile());
-          return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
+          // Every topic of the section is on screen now, so Reset this group covers them all.
+          return [...generalGroups(section, activeProfile(), nextProfile()).values()].flat();
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
       const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()
@@ -3654,8 +3667,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-developer-switch]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const on = setDebugEnabled(btn.getAttribute('aria-checked') !== 'true');
+    btn.addEventListener('change', () => {
+      const on = setDebugEnabled(btn.checked);
       showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
       repaintPanel({ keepScroll: true });
     });
@@ -4005,17 +4018,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('change', async () => {
       if (btn.dataset.action) {
+        // The browser flips the box first; fullscreen is the truth, so the box is set back from it.
+        btn.checked = !btn.checked;
         const result = await toggleFullscreen();
         syncFullscreen(result.ok || result.reason === 'unsupported'
           ? ''
           : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
         return;
       }
-      const now = !btn.classList.contains('on');
-      btn.classList.toggle('on', now);
-      btn.setAttribute('aria-checked', String(now));
+      const now = btn.checked;
       const row = ROWS.find((candidate) => candidate.key === btn.dataset.key);
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;

@@ -7353,11 +7353,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
       'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
-    eq([...combatTopics.keys()].join(','), 'Animation & effects,Combat log,Range,Armaments',
+    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Range,Armaments',
       'Combat names its topics for what a player came looking for');
+    eq(combatTopics.get('Auto combat & pacing').map((r) => r.key).join(','),
+      'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed',
+      'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
-      'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
+      'askToUpcastAfterTarget,useSprites,performanceMode,screenShake,showPlayedCard,manaRing',
+      'every quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
       'console access and log identity colors share the Combat log topic');

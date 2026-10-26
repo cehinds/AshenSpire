@@ -10,6 +10,8 @@ import { actionPacing, getBeatOrder } from '../src/ui/animationPace.js';
 import { figureAnimationsEnabled } from '../src/model/gameAnimationPolicy.js';
 import { reaverAttackTiming } from '../src/ui/reaverAttack.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 // Execute the shipped screen handler with instrumented presentation services.
 // This exercises its real disabled handle rather than supplying a test handle.
