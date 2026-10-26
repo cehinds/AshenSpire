@@ -634,6 +634,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // nothing has been aimed at yet.
   let aimX = restored ? restored.aimX : (inkBox.x0 + inkBox.x1) / 2;
   let restorePending = !!restored;
+  let restoreWrite = null; // where the restore put the camera; null once a refit moved it
   let viewCommitTimer = null;
   let pendingViewCommit = null;
   // THE VIEWPORT THE CAMERA WAS LAST SOLVED AGAINST — the promise a `fit`
@@ -1464,8 +1465,29 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       // A restored camera's persisted viewport is deliberately not the baseline.
       initial: viewportBeforeReport,
       read: () => ({ width: scroll.clientWidth, height: scroll.clientHeight }),
-      onChange: () => {
+      onChange: (now) => {
         if (!scroll.isConnected) return;
+        // A restore can land one layout step before the viewport it was saved
+        // under (report() brings in a note that shrinks the scrollport; the
+        // compact chrome of #2336 made that step visible on phones). When the
+        // box has now become the saved shape and the player has not moved the
+        // camera since the restore wrote it, finish the restore at that shape
+        // rather than re-fitting over the player's pan.
+        if (restoreWrite && restored
+          && Math.abs(now.width - restored.viewportWidth) <= 1
+          && Math.abs(now.height - restored.viewportHeight) <= 1
+          && Math.abs(scroll.scrollTop - restoreWrite.top) <= 1.5
+          && Math.abs(scroll.scrollLeft - restoreWrite.left) <= 1.5) {
+          restoreWrite = null;
+          sizeSvg();
+          scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
+          scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+          const fs = framingNodes();
+          report(fs.length ? framingBox(fs, height) : null, fs.length);
+          emitViewState(false);
+          return;
+        }
+        restoreWrite = null;
         refit();
         emitViewState(false);
       },
@@ -1484,6 +1506,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
         sizeSvg();
         scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
         scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+        restoreWrite = { left: scroll.scrollLeft, top: scroll.scrollTop };
         if (titleEl) titleEl.setAttribute('x', String(aimX));
         const fs = framingNodes();
         const box = fs.length ? framingBox(fs, height) : null;

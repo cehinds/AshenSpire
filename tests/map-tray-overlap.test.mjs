@@ -79,7 +79,7 @@ const startWatchSource=section(component,'  function startRefitWatch(', '  funct
 function watchFixture({beforeReport={width:433,height:768},actual={width:433,height:733}}={}){
  const shape={...actual},timers=new Map(),observers=[],fits=[];let id=0;
  class RO{constructor(callback){this.callback=callback;this.live=true;observers.push(this)}observe(){}disconnect(){this.live=false}}
- const context={solvedViewport:{width:1440,height:900},viewportBeforeReport:{...beforeReport},stopRefitWatch:null,scroll:{isConnected:true,get clientWidth(){return shape.width},get clientHeight(){return shape.height}},
+ const context={solvedViewport:{width:1440,height:900},viewportBeforeReport:{...beforeReport},stopRefitWatch:null,restoreWrite:null,restored:null,scroll:{isConnected:true,get clientWidth(){return shape.width},get clientHeight(){return shape.height}},
   ResizeObserver:RO,setTimeout:(fn)=>{timers.set(++id,fn);return id},clearTimeout:key=>timers.delete(key),
   refit:()=>{context.solvedViewport={...shape};fits.push({...shape})},emitViewState:()=>{}};
  const api=runInNewContext(watchSource+startWatchSource+'\n({startRefitWatch,stop:()=>stopRefitWatch?.()})',context);
@@ -105,12 +105,12 @@ test('default observer callers still seed from their current box without an extr
 
 const reportSource=section(component,'  function report(box, count)', '  // WHAT A MAP NODE');
 const recenterSource=section(component,'  function recenter(onSettled)', '  function teardown(');
-function restoredMount({framing='manual',noteShrinks=false}={}){
+function restoredMount({framing='manual',noteShrinks=false,vw=1440,vh=900}={}){
  const shape={width:433,height:noteShrinks?768:733},fits=[],timers=new Map(),observers=[];let id=0;
  class RO{constructor(callback){this.callback=callback;this.live=true;observers.push(this)}observe(){}disconnect(){this.live=false}}
  const scroll={dataset:{},isConnected:true,scrollLeft:0,scrollTop:0,scrollWidth:2000,scrollHeight:3000,get clientWidth(){return shape.width},get clientHeight(){return shape.height}};
- const context={scroll,solvedViewport:{width:1440,height:900},viewportBeforeReport:null,framing,stopRefitWatch:null,restorePending:true,
-  restored:{scrollLeft:75,scrollTop:150,viewportWidth:1440,viewportHeight:900},sizeSvg:()=>{},applyZoom:()=>{},titleEl:null,aimX:0,
+ const context={scroll,solvedViewport:{width:1440,height:900},viewportBeforeReport:null,framing,stopRefitWatch:null,restoreWrite:null,restorePending:true,
+  restored:{scrollLeft:75,scrollTop:150,viewportWidth:vw,viewportHeight:vh},sizeSvg:()=>{},applyZoom:()=>{},titleEl:null,aimX:0,
   framingNodes:()=>[{}],framingBox:()=>({x0:75,y0:150,x1:175,y1:250,w:100,h:100}),height:2000,content:{x0:0,y0:0},zoom:1,
   clipNote:null,warnedClipped:false,console:{warn:()=>{}},columns:7,ZOOM_MIN:.3,
   run:{mapNodeId:null},map:{nodes:{}},reportEntrance:()=>{},entranceFrame:()=>null,
@@ -131,4 +131,12 @@ for(const framing of ['manual','saved'])test(`actual ${framing} restoration acro
 test('actual restore report-induced768→733 shrink still triggers one initial fit',()=>{
  const f=restoredMount({noteShrinks:true});f.api.recenter();f.notify();f.flush();
  assert.deepEqual(f.fits,[{width:433,height:733}]);f.notify();f.flush();assert.equal(f.fits.length,1);
+});
+
+test('a restore that lands before the saved viewport settles finishes there, not as a refit (#2336 phones)',()=>{
+ // Saved at 433x733; restored while the scrollport was still 433x768; the note
+ // then shrinks it to the saved shape. The pan is re-applied, never re-fitted.
+ const f=restoredMount({noteShrinks:true,vw:433,vh:733});f.api.recenter();f.notify();f.flush();
+ assert.equal(f.fits.length,0,'viewport now equals the saved shape: no refit over the pan');
+ assert.equal(f.scroll.scrollLeft,75);assert.equal(f.scroll.scrollTop,150);
 });
