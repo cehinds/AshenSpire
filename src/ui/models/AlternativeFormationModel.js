@@ -19,6 +19,7 @@ export function validatePerspectiveGrid(grid) {
   }
   if (!Number.isFinite(grid.footprintInsetPx) || grid.footprintInsetPx < 0) throw new Error('Invalid perspective footprint clearance');
   if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0) || !(grid.enemyMiniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
+  if (!(grid.desktopMiniHudScale > 0) || !(grid.desktopEnemyMiniHudScale > 0)) throw new Error('Invalid perspective desktop HUD scale');
   return grid;
 }
 validatePerspectiveGrid(GRID);

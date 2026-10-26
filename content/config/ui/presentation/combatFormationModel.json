@@ -152,6 +152,8 @@
         }
       },
       "enemyMiniHudScale": 1.5,
+      "desktopMiniHudScale": 1.3,
+      "desktopEnemyMiniHudScale": 1.1,
       "spaciousEnemyClassHeightFraction": 0.717,
       "profiles": {
         "mobile": {

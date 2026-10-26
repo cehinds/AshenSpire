@@ -653,7 +653,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       width: Math.round(measuredField.width * 64) / 64,
       height: Math.round(measuredField.height * 64) / 64 };
     const zoom = fieldRect.width / field.offsetWidth || 1;
-    combat.style.setProperty('--combat-mini-hud-scale', String(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHudScale));
+    // Owner (2026-10-26): on desktop and widescreen the HUD reads smaller; phones keep their scale.
+    const hudGrid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const hudWide = isWideFormFactor(document.documentElement.dataset.formFactor);
+    combat.style.setProperty('--combat-mini-hud-scale', String(hudWide ? hudGrid.desktopMiniHudScale : hudGrid.miniHudScale));
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
@@ -708,7 +711,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
-      uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.enemyMiniHudScale,
+      hudWide ? hudGrid.desktopEnemyMiniHudScale : hudGrid.enemyMiniHudScale,
       Math.max(1, Math.min((fieldRect.width - 24) / plan.rows,
         ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12)) / 104))));
     // Geometry uses local offset dimensions, which already exclude CSS zoom.
