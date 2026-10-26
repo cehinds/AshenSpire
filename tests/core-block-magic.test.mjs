@@ -7,7 +7,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt,isPierceHit } from '../src/engine/gameProfileCombat.js';
-// Owner, 2026-10-25: Block soaks the whole hit, magic included, unless the hit pierces.
+// Owner, 2026-10-25: Block soaks the whole hit, magic included, except floor(0.2 x damage) of a pierce hit (owner, 2026-10-26).
 const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function liveCore() {
@@ -39,10 +39,13 @@ test('magic Block leaves meets Barrier next',()=>{
  assert.equal(r.blocked,4);
  assert.equal(r.barrierMitigated,3);
 });
-test('a pierce hit skips Block entirely',()=>{
+test('a pierce hit lets floor(0.2 x its damage) past Block',()=>{
  for (const carrier of [pierce,{...physical,tags:['pierce']},{...physical,authoredTags:['damage:piercing']}]) {
-  const r=hit(carrier,4);
-  assert.equal(r.blocked,0);
+  const r=hit(carrier,50);
+  assert.equal(r.hpLoss,2,'floor(.2 * 10)');
+  assert.equal(r.blocked,8);
+  assert.equal(hit(carrier,1).blockRemaining,0,'Block is spent as the same hit without pierce would spend it');
+  assert.equal(hit(carrier,1).hpLoss,10,'a Block of 1 is all pierced, so the whole hit reaches HP');
   assert.ok(isPierceHit(carrier.combatProfile,carrier));
  }
  assert.ok(!isPierceHit(physical.combatProfile,physical));

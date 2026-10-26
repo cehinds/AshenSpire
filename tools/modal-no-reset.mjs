@@ -234,7 +234,7 @@ try {
         && (el.tagName !== 'SELECT' || el.options.length > 1); });
     if (!control) return null;
     const label = control.getAttribute('data-key') || control.getAttribute('aria-label') || control.tagName;
-    const before = control.tagName === 'SELECT' ? control.value : (control.getAttribute('aria-pressed') ?? control.getAttribute('aria-checked'));
+    const before = control.tagName === 'SELECT' ? control.value : (control.type === 'checkbox' ? String(control.checked) : (control.getAttribute('aria-pressed') ?? control.getAttribute('aria-checked')));
     if (control.tagName === 'SELECT') {
       control.selectedIndex = control.selectedIndex === 0 ? 1 : 0;
       control.dispatchEvent(new Event('change', { bubbles: true }));

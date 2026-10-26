@@ -25,7 +25,7 @@ test('range descriptors use canonical keys and authored defaults including expli
   assert.deepEqual(rows.map(row => row.def), [true, 1, 1, 1]);
   assert.deepEqual(rangeSettingsRows(authored).map(row => row.def), [false, 0, 4, 2]);
   for (const row of rows) {
-    assert.match(row.note, /Applies to new runs; saved runs retain their rules/);
+    assert.match(row.note, /Applies to new runs/);
     assert.equal(settingsRows().filter(r => r.key === row.key).length, 1);
     if (row.type === 'number') {
       assert.deepEqual([row.min, row.max, row.step, row.integer], [0, Number.MAX_SAFE_INTEGER, 1, true]);
@@ -45,8 +45,8 @@ test('Range is one visible Core-only Combat topic with honest on/off and zero co
     assert.equal(settingsRowAvailable(row, current), false);
   }
   const toggle = rows[0];
-  assert.match(settingsRowHtml({}, toggle), /aria-checked="true"/);
-  assert.match(settingsRowHtml({ rangeMechanics: false }, toggle), /aria-checked="false"/);
+  assert.match(settingsRowHtml({}, toggle), /type="checkbox" role="switch"[^>]* checked/);
+  assert.doesNotMatch(settingsRowHtml({ rangeMechanics: false }, toggle), / checked/);
   for (const row of rows.slice(1)) assert.match(settingsRowHtml({ [row.key]: 0 }, row), /class="set-num"[^>]*value="0"[^>]*min="0"/);
 });
 
@@ -87,7 +87,7 @@ test('an imported Core author supplies unset controls and the next real run snap
   delete profile.hash;
   profile.hash = gameDigest(profile);
   const settings = { newGameProfile: JSON.stringify(profile) };
-  assert.match(settingsRowHtml(settings, rows[0]), /aria-checked="false"/);
+  assert.doesNotMatch(settingsRowHtml(settings, rows[0]), / checked/);
   assert.deepEqual(rows.slice(1).map(row => resolveNumberRow(settings, row)), [0, 4, 2]);
   assert.equal(rowModified({ ...settings, rangeReachPrecisionBonus: 4 }, rows[2], {}), false);
   assert.equal(rowModified({ ...settings, rangeReachPrecisionBonus: 0 }, rows[2], {}), true);

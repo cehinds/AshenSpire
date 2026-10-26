@@ -32,6 +32,18 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-26
+
+- **Leaner Settings, a phone-width Victory screen and a roomier map** ([#2336](https://github.com/cehinds/AshenSpire/pull/2336), `0.7.1.1870`). Settings drops its top button row and tip (Download & saves is now a Display row) and every description is one short sentence; the Victory screen is a single centred column on desktop too, with progress numbers that no longer clip; the map's top and bottom bars are thin strips with the zoom buttons tucked into the footer, and the map opens further out with sharper detail on high-density screens.
+
+- **Piercing attacks no longer ignore Block** ([#2334](https://github.com/cehinds/AshenSpire/pull/2334), `0.7.1.1868`). In Core a piercing hit now spends Block like any other hit, but up to a fifth of the damage Block caught slips through to Poise first and then HP, shown as a "Pierced N" float and log line; a piercing attack never does less damage than the same attack without pierce.
+
+- **Preview checks read the new settings switches** ([#2332](https://github.com/cehinds/AshenSpire/pull/2332), `0.7.1.1866`). The map-dragging, flask and formation-grid probes now read the on/off state of the new toggle switches, so the dev preview gate measures them again; nothing in play changes.
+
+- **Auto battle plays your cards, faster combat and cleaner settings** ([#2331](https://github.com/cehinds/AshenSpire/pull/2331), `0.7.1.1864`). Auto combat now plays your cards and ends your turn, following your offense or defense preference, and stops the moment you take over; combat runs at ×1.25 speed by default (still adjustable); Settings uses real toggle switches, shows each topic as a titled section, and hides debug-only co-op and gauntlet tuning rows.
+
+- **Combat recovers after delayed animation callbacks** ([#2329](https://github.com/cehinds/AshenSpire/pull/2329), `0.7.1.1862`). A long browser pause no longer starts another overdue animation or keeps the hand and End Turn locked; authored long reactions and contact holds still finish normally.
+
 ## 2026-10-25
 
 - **Harder-hitting Core 2 combat, smarter rewards and a roomier battlefield** ([#2327](https://github.com/cehinds/AshenSpire/pull/2327), `0.7.1.1860`). Block now soaks magic (piercing hits skip it), Evade gives 3 stacks, enemies are a little weaker, bosses act at most three times a turn, and multi-hit moves cost stamina per hit (finesse and spell multi-hits cost less); card rewards favour your stance cards and rarely repeat what you own, every hand item can drop, the new Brimming Gourd grows and refills your flasks, and each shop item has its own, lower price; the combat header and footer are slimmer so the fight gets more room.
@@ -2231,3 +2243,4 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **The verified current build lives at the repository root** ([#186](https://github.com/cehinds/AshenSpire/pull/186), `0.4.0.0788`). `AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.
 
 - **A reversible architecture map** ([#180](https://github.com/cehinds/AshenSpire/pull/180), `0.4.0.0777`). Docs only.
+

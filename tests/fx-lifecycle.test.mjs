@@ -27,6 +27,8 @@ test('ordered FX counts real watchdog expiry while normal, cancel and skip finis
     if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow;
   }
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
   try {
     withKitDom((dom) => {
@@ -81,6 +83,8 @@ for (const exit of ['hidden', 'blur']) {
     assert.ok(!combat.result, 'the real fight remains in progress');
     const before = snapshot({ run, combat, receipts });
     t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
+    // The scheduler's monotonic clock must advance with these mocked timers.
+    t.mock.method(globalThis.performance, 'now', () => Date.now());
     setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
     withKitDom((dom, _win, listeners) => {
       const page = new EventTarget(), documentListeners = new Set();

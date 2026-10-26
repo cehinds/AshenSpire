@@ -456,6 +456,7 @@ function balanceGroup(path) {
 // File` abort the file on an unknown key, which is the defect #1238 fixed for
 // the preset cells. `retired` is the same flag a hidden creation mode's pool
 // row carries, and settings.js filters on it.
+const OFF_SCREEN_BALANCE_PATH = /^(coop|gauntlet)\./;
 const RETIRED_BALANCE_PATHS = new Set([
   'energy',
   'draw',
@@ -636,6 +637,9 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       // `inert` as well as `retired`: nothing reads it, so a stored value is
       // never applied — see `configuredContentBundle`.
       ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true, inert: true } : {}),
+      // Owner, 2026-10-26: the co-op and headless-gauntlet tuning rows left the screen with the co-op content.
+      // `retired` alone: the key stays importable and a stored value still applies; only the row is gone.
+      ...(OFF_SCREEN_BALANCE_PATH.test(joined) ? { retired: true } : {}),
     });
     return rows;
   }
@@ -799,7 +803,7 @@ function presentationRows() {
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
       presentationKey: 'showFormationGrid', def: true,
       label: 'Show battlefield grid',
-      note: 'Show thin translucent formation lines behind combatants. This does not enable movement or placement.',
+      note: 'Show faint formation lines behind combatants.',
     },
     ...PRESENTATION_ROWS.map((row) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'number',

@@ -77,8 +77,8 @@ if (process.argv.includes('--selftest')) {
         // Since #1489 the row's words are content/source/uiStrings.csv's
         // settings.row.textSize (its `full` form), not a literal in settings.js.
         file: 'content/source/uiStrings.csv',
-        find: "settings.row.textSize,,Text size,Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.,",
-        replace: "settings.row.textSize,,Text size,Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.,",
+        find: "settings.row.textSize,,Text size,Scales interface text. Auto follows the browser. Stacks with UI size.,",
+        replace: "settings.row.textSize,,Text size,Scale interface text without resizing controls or artwork. Stacks with UI size.,",
         expectRed: /text size setting overclaims non-text stability/,
       },
       {
@@ -119,8 +119,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the shipped Settings copy restores the broad non-text promise',
         file: 'AshenSpire.html',
-        find: '"full":"Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size."',
-        replace: '"full":"Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size."',
+        find: '"full":"Scales interface text. Auto follows the browser. Stacks with UI size."',
+        replace: '"full":"Scale interface text without resizing controls or artwork. Stacks with UI size."',
         expectRed: /text size setting overclaims non-text stability/,
       },
     ],
@@ -356,7 +356,7 @@ async function main() {
     // at the music-parity step before reaching this gate. It pins the CURRENT
     // shipped copy now, with the same shape as before: the exact honest note,
     // and a refusal of the overclaiming promise however the rest is worded.
-    const honestTextSizeNote = "Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.";
+    const honestTextSizeNote = "Scales interface text. Auto follows the browser. Stacks with UI size.";
     if (!settings.includes(honestTextSizeNote)
       || /Scale interface text without resizing controls or artwork/.test(settings)) {
       failures.push('text size setting overclaims non-text stability: state only what the setting does, and never promise untouched controls or artwork');

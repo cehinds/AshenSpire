@@ -3661,7 +3661,8 @@
           "levelHysteresis",
           "atlasZoomMax",
           "routeWidth",
-          "routeOutlineWidth"
+          "routeOutlineWidth",
+          "boardOpenZoomMax"
         ],
         "frozen": true,
         "values": {
@@ -3686,7 +3687,7 @@
             "frozen": false
           },
           "pixelRatioCap": {
-            "__number": "1.5"
+            "__number": "2"
           },
           "concurrentLoads": {
             "__number": "3"
@@ -3705,6 +3706,9 @@
           },
           "routeOutlineWidth": {
             "__number": "6"
+          },
+          "boardOpenZoomMax": {
+            "__number": "1.25"
           }
         }
       }

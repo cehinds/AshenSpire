@@ -24,6 +24,8 @@ test('stanceState reads each stage contract', () => {
 function swingAt(t, stage) {
   setCombatPacing();
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   let swing = null, settled = 0, settledAt = null, completed = 0;
   withKitDom((dom) => {
     const anchor = dom.document.createElement('div');
@@ -63,3 +65,4 @@ test('an expansion stage with only settle/play settles before the ordered waits'
   assert.equal(settled, 1, 'settle() is still called');
   assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs, 'no additional lead for an unknown stage');
 });
+

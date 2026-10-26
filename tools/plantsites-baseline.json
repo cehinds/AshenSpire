@@ -1,5 +1,5 @@
 {
-  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
+  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction \u2014 regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
       "tool": "tools/armoury-picked-up.mjs",
@@ -156,7 +156,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "767a56fe0b0c5908"
+      "digest": "063406fbfc09d1eb"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -283,8 +283,8 @@
       "digest": "258e4d2c96542f9e"
     },
     "tools/screenreach.mjs": {
-      "count": 9,
-      "digest": "d076767703d3bbd1"
+      "count": 10,
+      "digest": "3318769333c0b08f"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
@@ -328,7 +328,7 @@
     },
     "tools/text-geometry.mjs": {
       "count": 9,
-      "digest": "cb3dcaf5aa7bcb36"
+      "digest": "a7e98194cadbd438"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,

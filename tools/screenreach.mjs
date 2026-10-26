@@ -193,8 +193,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the fullscreen switch loses its accessible name',
         file: 'src/ui/screens/settings.js',
-        find: 'data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === \'action\' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
-        replace: 'data-key="${r.key}"${r.type === \'action\' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        find: '<span class="sr-only">${esc(stripTags(label))}</span></label>',
+        replace: '<span class="sr-only"></span></label>',
         expectRed: /fullscreen switch lacks an accessible name or description/,
       },
       {
@@ -270,7 +270,7 @@ const SETTINGS_CYCLE = `(async () => {
   await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
   const described = fullscreen?.getAttribute('aria-describedby');
-  window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
+  window.__fullscreenA11y = !!((fullscreen?.getAttribute('aria-label') || fullscreen?.labels?.[0]?.textContent?.trim())
     && described && document.getElementById(described));
   document.dispatchEvent(new Event('fullscreenchange'));
   document.dispatchEvent(new Event('fullscreenerror'));
