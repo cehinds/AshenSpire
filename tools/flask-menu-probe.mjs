@@ -464,10 +464,11 @@ const TOGGLE_SETTING = (opener) => `(async () => {
   input.dispatchEvent(new Event('input', { bubbles: true }));
   const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
   if (!toggle) return 'the "Use flasks outside combat" row did not appear';
-  if (toggle.getAttribute('aria-checked') !== 'false') return 'the toggle did not start off';
+  if ((toggle.type === 'checkbox' ? String(toggle.checked) : toggle.getAttribute('aria-checked')) !== 'false') return 'the toggle did not start off';
   toggle.click();
   await __fm.sleep(300);
-  const on = document.querySelector('[data-key="${SETTING}"]')?.getAttribute('aria-checked');
+  const onEl = document.querySelector('[data-key="${SETTING}"]');
+  const on = onEl && (onEl.type === 'checkbox' ? String(onEl.checked) : onEl.getAttribute('aria-checked'));
   document.querySelector('.modal-close[aria-label="Close menu"]')?.click();
   await __fm.sleep(400);
   return on === 'true' ? '' : 'the toggle did not turn on';

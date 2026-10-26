@@ -270,7 +270,7 @@ async function main() {
     if (live.layer !== '370' || live.color !== '#00ff88' || live.gridLayer !== '2000') throw new Error('live settings: ' + JSON.stringify(live));
     const afterOffset = await evaluate("Number(document.querySelector('[data-cell=\"A1\"]').dataset.anchorY)");
     if (Math.abs(afterOffset - beforeOffset + 15) > 1) throw new Error('Back column offset did not move actual anchor');
-    await evaluate(`(() => { const toggle = document.querySelector('[data-key="gameConfig.presentation.showFormationGrid"]'); if (toggle?.getAttribute('aria-checked') !== 'true') toggle?.click(); document.querySelector('#ov-close').click(); })()`);
+    await evaluate(`(() => { const toggle = document.querySelector('[data-key="gameConfig.presentation.showFormationGrid"]'); if (toggle && (toggle.type === 'checkbox' ? !toggle.checked : toggle.getAttribute('aria-checked') !== 'true')) toggle.click(); document.querySelector('#ov-close').click(); })()`);
     await until("!document.querySelector('#ov-close') && getComputedStyle(document.querySelector('.formation-grid')).display === 'grid'", 'customized battle');
     await capture('customized-formation');
     console.log('PASS live settings — actual slots, row scale, offsets, layers, colors, all six shapes');

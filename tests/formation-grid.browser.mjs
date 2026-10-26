@@ -37,7 +37,8 @@ async function capture(page, file) {
   captures.push({ file, sourceDigest });
 }
 async function isOn(control) {
-  return (await control.getAttribute("aria-checked")) === "true";
+  // A settings switch is a checkbox (role=switch); the combat tools are buttons with aria-checked.
+  return (await control.getAttribute("aria-checked")) === "true" || await control.evaluate((node) => node instanceof HTMLInputElement && node.checked);
 }
 async function settle(page) {
   await page.evaluate(() => document.fonts.ready);

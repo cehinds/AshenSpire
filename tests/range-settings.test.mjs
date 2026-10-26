@@ -45,8 +45,8 @@ test('Range is one visible Core-only Combat topic with honest on/off and zero co
     assert.equal(settingsRowAvailable(row, current), false);
   }
   const toggle = rows[0];
-  assert.match(settingsRowHtml({}, toggle), /aria-checked="true"/);
-  assert.match(settingsRowHtml({ rangeMechanics: false }, toggle), /aria-checked="false"/);
+  assert.match(settingsRowHtml({}, toggle), /type="checkbox" role="switch"[^>]* checked/);
+  assert.doesNotMatch(settingsRowHtml({ rangeMechanics: false }, toggle), / checked/);
   for (const row of rows.slice(1)) assert.match(settingsRowHtml({ [row.key]: 0 }, row), /class="set-num"[^>]*value="0"[^>]*min="0"/);
 });
 
@@ -87,7 +87,7 @@ test('an imported Core author supplies unset controls and the next real run snap
   delete profile.hash;
   profile.hash = gameDigest(profile);
   const settings = { newGameProfile: JSON.stringify(profile) };
-  assert.match(settingsRowHtml(settings, rows[0]), /aria-checked="false"/);
+  assert.doesNotMatch(settingsRowHtml(settings, rows[0]), / checked/);
   assert.deepEqual(rows.slice(1).map(row => resolveNumberRow(settings, row)), [0, 4, 2]);
   assert.equal(rowModified({ ...settings, rangeReachPrecisionBonus: 4 }, rows[2], {}), false);
   assert.equal(rowModified({ ...settings, rangeReachPrecisionBonus: 0 }, rows[2], {}), true);

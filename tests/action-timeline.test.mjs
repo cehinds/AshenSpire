@@ -121,22 +121,22 @@ test('auto-combat runs at its own multiplier, default ×1.5, and manual play kee
 });
 
 test('D11: the default gap is 0.5 s at every stage boundary and the active speed scales it', () => {
-  setAnimSpeed('normal'); setCombatPacing();
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
   const gaps = t => [t.wordMs, t.afterSpriteMs, t.resultMs, t.reactionMs, t.damageMs, t.resetMs];
   const normal = actionPacing();
   assert.equal(normal.gapMs, 500); assert.equal(normal.intentMs, 0);
   assert.deepEqual(gaps(normal), [500, 500, 500, 500, 500, 500]);
   setCombatPacing({ combatSpeed: 2 }); assert.deepEqual(gaps(actionPacing()), Array(6).fill(250));
-  setCombatPacing({ autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
-  setCombatPacing({ combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
-  setCombatPacing({ combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
-  setCombatPacing({ combatStepPause: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
-  setCombatPacing({ combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 10, 'short pauses remain configurable');
+  setCombatPacing({ combatSpeed: 1, autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 10, 'short pauses remain configurable');
   setCombatPacing();
 });
 
 test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hit beat never trip it', () => {
-  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 2000 });
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: 2000 });
   const c = clock(), trace = [], timing = actionPacing();
   const beat = { actorId: 'player', kind: 'attack', events: [{ type: 'damageDealt' }, { type: 'damageDealt' }, { type: 'damageDealt' }] };
   runActionTimeline([beat, { ...beat, actorId: 'enemy' }], {
@@ -157,7 +157,7 @@ test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hi
 // One enemy turn of three enemies, as the combat screen runs it. A watchdog
 // flush here would mean the budget is shorter than the real gaps.
 function enemyTurn(settings) {
-  setAnimSpeed('normal'); setCombatPacing(settings);
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, ...settings });
   const c = clock(), trace = [], timing = actionPacing();
   runActionTimeline(['e1', 'e2', 'e3'].map(actorId => ({ actorId, kind: 'attack' })), {
     onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
@@ -182,7 +182,7 @@ test('D11: three enemies finish by themselves at every pause and speed, with no 
 
 
 test('zero pauses preserve complete ordered actions and counters without watchdog cleanup', () => {
-  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 0 });
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: 0 });
   const c = clock(), trace = [], timing = actionPacing();
   const handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }, { actorId: 'enemy', kind: 'counter' }], {
     onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),

@@ -10,6 +10,8 @@ import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { sfx } from '../src/ui/sfx.js';
 import { haptic } from '../src/ui/haptics.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const IMPACT = 100, TOTAL = 300;
 

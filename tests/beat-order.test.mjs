@@ -15,6 +15,8 @@ import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 // D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
 const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 1000, REACTION = 500, GAP = 500;

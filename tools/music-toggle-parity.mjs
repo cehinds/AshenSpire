@@ -183,7 +183,7 @@ const switchHtml = settingsRowHtml({ musicEnabled: true }, {
   cat: 'Audio', key: 'musicEnabled', def: true, resolve: resolveMusicEnabled,
   label: 'Music', note: musicEnabledCondition,
 });
-check(/role="switch"/.test(switchHtml) && /aria-checked="true"/.test(switchHtml), 'Settings exposes a named Music switch with live ARIA state');
+check(/role="switch"/.test(switchHtml) && /\schecked[\s>]/.test(switchHtml) && /type="checkbox"/.test(switchHtml), 'Settings exposes a named Music switch (a checkbox with role=switch) with live checked state');
 
 const quick = source('src/ui/components/quicknav.js');
 const renderer = source('src/ui/components/menuComponents.js');
