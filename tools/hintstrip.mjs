@@ -1321,6 +1321,22 @@ async function main() {
       while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); }
       throw new Error('timeout ' + w + ': ' + JSON.stringify(await ev(`({ready:document.readyState,text:document.body.innerText.slice(0,900)})`))); };
 
+    // THE SCENE HAS TO STOP MOVING before the row is read: a fixed 700 ms was
+    // enough on an idle runner and not on a busy one, and the row (still sliding
+    // into place) then read as "not wholly inside the viewport". Wait until the
+    // row's and the hand's boxes are the same on four reads in a row, 150 ms
+    // apart; never longer than 12 s, and a scene that never settles is read as it stands.
+    const settled = async () => {
+      const read = () => ev(`(() => { const box = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map((v) => Math.round(v * 10)); };
+        return JSON.stringify([box('.combat-action-row'), box('.hand'), box('.combat-tools')]); })()`).catch(() => '');
+      let last = null, same = 0;
+      for (const t0 = Date.now(); Date.now() - t0 < 12000;) {
+        const now = await read();
+        same = now && now === last ? same + 1 : 0; last = now;
+        if (same >= 3) return;
+        await wait(150);
+      }
+    };
     console.log(`\n  ${vp.tag}`);
     for (const text of TEXTS) {
       // Text size THROUGH THE GAME'S OWN DOOR: ?shotSettings is what the shot
@@ -1329,6 +1345,7 @@ async function main() {
       await cdp.send('Page.navigate', { url: q }, S);
       await until(`!!document.querySelector('.combat')`, `combat ${vp.tag} ${text}`);
       await wait(700);
+      await settled();
       const r = await ev(READ(FAN_LIFT_PROP));
       r.paint = await paintOf(ev, shot);
       reached++;
@@ -1350,6 +1367,7 @@ async function main() {
     await cdp.send('Page.navigate', { url: wq }, S);
     await until(`!!document.querySelector('.combat')`, `combat wide-label ${vp.tag}`);
     await wait(700);
+    await settled();
     const rw = await ev(READ(FAN_LIFT_PROP));
     rw.paint = await paintOf(ev, shot);
     reached++;
