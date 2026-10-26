@@ -30,7 +30,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { storedGameProfile } from '../model/runStorage.js';
+import { storedGameProfile, compactRun, expandStoredRun } from '../model/runStorage.js';
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
@@ -622,6 +622,61 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     return { created: true, ok: true };
   }
 
+  // ---- RECLAIMING SPACE: LOSSLESS RECOMPACTION ONLY ------------------------
+  // A full store gets the bytes the game itself wasted back, and nothing else:
+  // every save slot and every archived run written in the older, bigger form
+  // (the pinned game profile inline, repeated per saved fight) is rewritten in
+  // the stored form model/runStorage.js defines. Nothing is deleted, no slot,
+  // archive, profile or backup is dropped (an earlier attempt that removed a
+  // stale profile backup was withdrawn as unsafe), and each rewrite is proven
+  // lossless first: expanding it must give back exactly the save it replaces.
+  const canonical = (value) => JSON.stringify(value, (key, v) => (v && typeof v === 'object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v));
+  function recompactedRunJson(json) {
+    let parsed;
+    try { parsed = JSON.parse(json); } catch { return null; }
+    // Only a save this build reads without migrating: the stamp moves to the
+    // current schema, and nothing older has its migrations skipped by it.
+    if (!parsed || typeof parsed !== 'object' || (parsed.schemaVersion !== RUN_SCHEMA_VERSION && parsed.schemaVersion !== RUN_SCHEMA_VERSION - 1)) return null;
+    const packed = compactRun(parsed);
+    if (packed === parsed) return null;
+    const next = JSON.stringify({ ...packed, schemaVersion: RUN_SCHEMA_VERSION });
+    if (next.length >= json.length) return null;
+    try {
+      if (canonical({ ...expandStoredRun(JSON.parse(next)), schemaVersion: parsed.schemaVersion }) !== canonical(parsed)) return null;
+    } catch { return null; }
+    return next;
+  }
+  // Returns the characters freed.
+  function reclaimStoredSpace(exceptSlot = null) {
+    if (readOnlyProfile) return 0;
+    let freed = 0;
+    for (let slot = 1; slot <= SLOTS; slot++) {
+      if (slot === exceptSlot) continue; // about to be overwritten with the newest bytes
+      const json = storage.getItem(runKey(slot));
+      const next = json && recompactedRunJson(json);
+      if (!next) continue;
+      try { storage.setItem(runKey(slot), next); freed += json.length - next.length; } catch { /* a smaller value was refused: leave the original */ }
+    }
+    const rawIndex = storage.getItem(RUN_ARCHIVE_KEY);
+    if (rawIndex) {
+      let index = null;
+      try { index = JSON.parse(rawIndex); } catch { /* an unreadable index is readArchiveIndex's to salvage, not ours to touch */ }
+      if (index && Array.isArray(index.entries)) {
+        let changed = false;
+        for (const entry of index.entries) {
+          const next = entry && entry.kind === 'run' && typeof entry.save === 'string' ? recompactedRunJson(entry.save) : null;
+          if (next) { entry.save = next; changed = true; }
+        }
+        if (changed) {
+          const out = JSON.stringify(index);
+          try { storage.setItem(RUN_ARCHIVE_KEY, out); freed += rawIndex.length - out.length; } catch { /* leave the index as it was */ }
+        }
+      }
+    }
+    return freed;
+  }
+
   return {
     /**
      * ensureProfile() → { created, ok, reason? }. Creates the durable profile if
@@ -637,7 +692,19 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       // write lands, so a full store cannot leave a run claiming a save it lost.
       const previous = run.savedAt;
       run.savedAt = new Date().toISOString();
-      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }
+      try {
+        const json = serializeRun(run);
+        try {
+          storage.setItem(runKey(slot), json);
+        } catch (error) {
+          // A full store gets ONE retry after the game's own bytes are packed
+          // smaller (lossless; see reclaimStoredSpace). If that frees nothing,
+          // or the retry is still refused, the error reaches the caller, which
+          // tells the player: the run in memory is ahead of the slot.
+          if (!isStorageFullError(error) || reclaimStoredSpace(slot) <= 0) throw error;
+          storage.setItem(runKey(slot), json);
+        }
+      } catch (error) { run.savedAt = previous; throw error; }
     },
 
     /**

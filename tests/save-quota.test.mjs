@@ -2,14 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { runCombatEnd } from '../src/engine/runCombat.js';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, isStorageFullError, runKey } from '../src/engine/save.js';
+import { createSaveManager, isStorageFullError, runKey, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -188,4 +190,89 @@ test('size budget: a mid-run save with a 45-card deck stays far below a localSto
   const store = limitedStorage();
   createSaveManager(store).saveRun(run, rng, 1);
   assert.ok(store.map.get(runKey(1)).length < 100000, `run blob is ${store.map.get(runKey(1)).length} chars`);
+});
+
+// ---- Core: the pinned game profile is a reference, so a long run stays small --------------
+const coreProfile = resolveGameProfile('core');
+const coreRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, coreProfile)), coreProfile);
+const coreRun = (seed = 7) => ({ run: createRunState({ registries: coreRegistries, seed, classId: 'reaver' }), rng: createRng(seed) });
+
+test('size budget: a 60-fight Core run stays under 1 MB at rest and mid-fight, and does not grow fight over fight', () => {
+  const { run, rng } = coreRun(7);
+  const store = limitedStorage();
+  const save = createSaveManager(store);
+  const sizes = [];
+  let peak = 0;
+  for (let fight = 1; fight <= 60; fight++) {
+    run.hp = run.maxHp; // a rest between fights: the budget is about bytes, not survival
+    const combat = createRunCombat({ registries: coreRegistries, run, rng, enemyIds: ['wanderingSoldier', 'wanderingSoldier'], settings: {} });
+    combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: `n${fight}`, encounterId: `e${fight}`,
+      saveCandidate: (next, committedRng) => { save.saveRun(next, committedRng, 1); return { ok: true }; } });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    for (let turn = 0; turn < 8 && !combat.result; turn++) {
+      if (turn >= 2) combat.enemies.forEach(e => { e.hp = 1; });
+      for (const card of [...combat.piles.hand]) {
+        if (combat.result) break;
+        try { dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies.find(e => e.alive)?.id }); } catch { /* unplayable this turn */ }
+      }
+      peak = Math.max(peak, store.map.get(runKey(1)).length);
+      if (!combat.result && combat.phase === 'player') dispatch(combat, { type: 'endTurn', discardIds: [] });
+    }
+    runCombatEnd(run, combat);
+    run.combatEntered = null;
+    delete run.combatPendingOutcome;
+    save.saveRun(run, rng, 1);
+    sizes.push(store.map.get(runKey(1)).length);
+  }
+  assert.ok(Math.max(...sizes) < 100000, `a Core run at rest is at most ${Math.max(...sizes)} chars`);
+  assert.ok(peak < 1000000, `a Core run mid-fight peaked at ${peak} chars`);
+  assert.ok(sizes[59] - sizes[0] < 2000, `the run does not grow with the fights it has won (${sizes[0]} -> ${sizes[59]})`);
+  assert.ok(store.used() < 1000000, 'the whole origin (run + profile + backup) stays far from a 5 MB quota');
+});
+
+// A Core run in the PRE-reference stored form: the profile inline (schema 25), as every older build wrote it.
+function inlineSave(seed, stamp = RUN_SCHEMA_VERSION - 1) {
+  const { run } = coreRun(seed);
+  return JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: stamp });
+}
+
+test('a full store is packed smaller, losslessly, and the save then lands', () => {
+  const store = limitedStorage();
+  const old2 = inlineSave(21), old3 = inlineSave(22);
+  store.map.set(runKey(2), old2);
+  store.map.set(runKey(3), old3);
+  store.map.set(RUN_ARCHIVE_KEY, JSON.stringify({ v: 1, entries: [{ id: 'run-s2-1', kind: 'run', slot: 2, reason: 'test', at: new Date().toISOString(), save: inlineSave(23) }] }));
+  store.budget = store.used() + 20000; // a fresh slot-1 save (~30 KB) does not fit
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(24);
+  const archivedBefore = JSON.parse(store.map.get(RUN_ARCHIVE_KEY)).entries[0].save;
+  save.saveRun(run, rng, 1);
+  assert.ok(store.map.has(runKey(1)), 'the new save landed after packing');
+  assert.ok(store.map.get(runKey(2)).length < old2.length / 5 && store.map.get(runKey(3)).length < old3.length / 5, 'the other slots were packed');
+  const archived = JSON.parse(store.map.get(RUN_ARCHIVE_KEY));
+  assert.equal(archived.entries.length, 1, 'no archived run was dropped');
+  assert.ok(archived.entries[0].save.length < archivedBefore.length / 5);
+  for (const slot of [2, 3]) {
+    const loaded = save.loadRun(coreRegistries, slot);
+    assert.ok(loaded, save.runStatus().reason);
+    assert.equal(loaded.gameProfile.hash, coreProfile.hash, `slot ${slot} still pins the same profile`);
+  }
+});
+
+test('packing never touches an older schema, an unknown profile, or a corrupt slot, and a still-full store says so', () => {
+  const store = limitedStorage();
+  const older = inlineSave(31, RUN_SCHEMA_VERSION - 3);
+  const foreign = JSON.stringify({ ...JSON.parse(inlineSave(32)), gameProfile: { ...coreProfile, hash: 'sha256:' + 'a'.repeat(64) } });
+  store.map.set(runKey(2), older);
+  store.map.set(runKey(3), foreign);
+  store.map.set(RUN_ARCHIVE_KEY, '{not json');
+  store.budget = store.used() + 10;
+  const save = createSaveManager(store);
+  const { run, rng } = coreRun(33);
+  assert.throws(() => save.saveRun(run, rng, 1), error => isStorageFullError(error), 'nothing to pack: the player is told, not silently resumed');
+  assert.equal(store.map.get(runKey(2)), older);
+  assert.equal(store.map.get(runKey(3)), foreign);
+  assert.equal(store.map.get(RUN_ARCHIVE_KEY), '{not json');
+  assert.equal(store.map.has(runKey(1)), false);
+  assert.equal(run.savedAt, undefined, 'the run does not claim a save it lost');
 });
