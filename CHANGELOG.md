@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
-- **Saving no longer fills browser storage** ([#2338](https://github.com/cehinds/AshenSpire/pull/2338), `0.7.1.1870`). A Core run save was carrying the whole rulebook (0.7–1.5 MB) until a full store refused the victory save and a reload went back to before the fight; the rules are now kept once on the device and each save is about 30–190 KB, a full store is tidied and retried before any warning, and older saves and runs from earlier builds still load.
+- **Saving no longer fills browser storage** ([#2338](https://github.com/cehinds/AshenSpire/pull/2338), `0.7.1.1872`). A Core run save was carrying the whole rulebook (0.7–1.5 MB) until a full store refused the victory save and a reload went back to before the fight; the rules are now kept once on the device and each save is about 30–190 KB, a full store is tidied and retried before any warning, and older saves and runs from earlier builds still load.
 
 - **Leaner Settings, a phone-width Victory screen and a roomier map** ([#2336](https://github.com/cehinds/AshenSpire/pull/2336), `0.7.1.1870`). Settings drops its top button row and tip (Download & saves is now a Display row) and every description is one short sentence; the Victory screen is a single centred column on desktop too, with progress numbers that no longer clip; the map's top and bottom bars are thin strips with the zoom buttons tucked into the footer, and the map opens further out with sharper detail on high-density screens.
 
