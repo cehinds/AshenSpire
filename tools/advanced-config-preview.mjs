@@ -139,16 +139,15 @@ async function main() {
       }, sessionId);
       const shotSettings = encodeURIComponent(JSON.stringify({ settingsAdvancedCategory: shape.group }));
       await cdp.send('Page.navigate', { url: `${previewURL}?shot=settings&shotSettings=${shotSettings}` }, sessionId);
-      await until("!!document.querySelector('.settings-modal [data-advanced-search]')", 'advanced settings');
+      await until("!!document.querySelector('.settings-modal .set-panel')", 'advanced settings');
       await wait(250);
       if (shape.search) {
+        // The search box is gone (owner, 2026-10-26): bring the matching row into view instead.
         await evaluate(`(() => {
-          const input = document.querySelector('[data-advanced-search]');
-          input.value = ${JSON.stringify(shape.search)};
-          input.dispatchEvent(new Event('input', { bubbles: true }));
+          const needle = ${JSON.stringify(shape.search)}.toLowerCase();
+          const row = [...document.querySelectorAll('.settings-modal .set-row')].find(r => r.textContent.toLowerCase().includes(needle));
+          row?.scrollIntoView({ block: 'center' });
         })()`);
-        // The results list is drawn after the input settles, not synchronously.
-        await until("!!document.querySelector('.settings-modal [data-search-results]')", 'search results');
       }
       if (shape.group === 'Export') {
         await evaluate(`(() => {
@@ -178,12 +177,10 @@ async function main() {
         const modal = document.querySelector('.settings-modal');
         const body = modal.querySelector('.set-body');
         const pane = modal.querySelector('.set-panel');
-        // A search draws its matches from every section in one results list.
-        const results = modal.querySelector('[data-search-results]');
-        const active = results || modal.querySelector('.set-advanced-group:not([hidden])');
+        const active = modal.querySelector('.set-advanced-group:not([hidden])');
         const scrollable = [body, pane].filter((el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== 'hidden');
         return {
-          group: results ? 'search' : active?.dataset.advancedPanel,
+          group: active?.dataset.advancedPanel,
           rows: active?.querySelectorAll('.set-row:not([hidden])').length || 0,
           placementLabels: [...(active?.querySelectorAll('.set-row:not([hidden]) .ls-label') || [])].map((node) => node.textContent),
           viewport: [innerWidth, innerHeight],
@@ -192,13 +189,13 @@ async function main() {
           overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         };
       })()`);
-      if (state.group !== (shape.search ? 'search' : shape.group) || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
+      if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
         throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
       }
       if (shape.search && !state.placementLabels.some((label) => label.toLocaleLowerCase().includes(shape.search.toLocaleLowerCase()))) {
         throw new Error(`${shape.name}: no result names "${shape.search}": ${JSON.stringify(state)}`);
       }
-      // Every placement control must be reachable from search, by its exact
+      // Every placement control must be reachable in its section, by its exact
       // label (the row Reset sits beside the label, so it is not in it).
       if (shape.name.endsWith('-placement') && !['Player preferred row (A–F)', 'Enemy preferred row (A–F)', 'Player preferred column', 'Enemy preferred column']
         .every((label) => state.placementLabels.includes(label))) {

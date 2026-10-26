@@ -3246,7 +3246,7 @@
                     "__string": "Hover explanations"
                   },
                   "note": {
-                    "__string": "Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available."
+                    "__string": "Show explanations when the pointer rests on a detail."
                   }
                 }
               },
@@ -3273,7 +3273,7 @@
                     "__string": "Explanation delay"
                   },
                   "note": {
-                    "__string": "Wait before opening or switching hover and nested explanations. A tap or click selects a detail; a second one explains it."
+                    "__string": "Wait before hover explanations open or switch."
                   }
                 }
               },
