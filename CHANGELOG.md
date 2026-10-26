@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
-- **Combat recovers after delayed animation callbacks** ([#2329](https://github.com/cehinds/AshenSpire/pull/2329), `0.7.1.1860`). A long browser pause no longer starts another overdue animation or keeps the hand and End Turn locked; authored long reactions and contact holds still finish normally.
+- **Combat recovers after delayed animation callbacks** ([#2329](https://github.com/cehinds/AshenSpire/pull/2329), `0.7.1.1862`). A long browser pause no longer starts another overdue animation or keeps the hand and End Turn locked; authored long reactions and contact holds still finish normally.
 
 ## 2026-10-25
 
