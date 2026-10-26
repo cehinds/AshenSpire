@@ -584,6 +584,11 @@ const PROBE = `(() => {
     // short phones. It is still usable if a finger-sized patch of that button
     // wins the hit test. A wholly blocked badge remains a failure.
     if (c.matches('.combatant-leading .overhead-control') && exposedPatch(c, 24)) continue;
+    // A damage number on a hand card is covered by its card's .hand-hit-lane ON
+    // PURPOSE and stays reachable: damageReceipt.js routes a click or hover on
+    // the lane to the number under the pointer (damageNumberUnderLane). Accept
+    // exactly that route: the number's own card lane, nothing else.
+    if (c.matches('[data-damage-receipt]') && hit?.matches('.hand-hit-lane') && hit.parentElement?.contains(c)) continue;
     // A fan intentionally covers card centers. Require an exposed 24px square
     // on the actual card, and only permit another hand card to cover its center.
     if (c.matches('.hand .card') && hit?.closest('.hand .card')) {
