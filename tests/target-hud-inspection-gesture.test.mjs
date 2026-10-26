@@ -208,25 +208,22 @@ test('Enter on a focused target HUD panel is left to the panel; the cursor card 
   });
 });
 
-test('an inspection-door panel holds no focusable intent row and keeps its content as its name', async () => {
+test('an inspection-door panel is one button and keeps its content as its name', async () => {
   const { withKitDom } = await import('./helpers/kit-dom.mjs');
   withKitDom(({ document }) => {
     const shell = document.createElement('section'); shell.className = 'target-hud-detail';
     shell.setAttribute('aria-label', 'Hound details');
     const panel = document.createElement('div'); panel.className = 'target-hud-panel';
     const name = document.createElement('div'); name.className = 'target-hud-name';
-    const intent = document.createElement('div'); intent.className = 'target-hud-intent'; intent.tabIndex = 0;
-    panel.append(name, intent); shell.append(panel); document.body.append(shell);
+    panel.append(name); shell.append(panel); document.body.append(shell);
     const scope = { document: target(), window: target(), gestures: new AbortController(), eligible: [], onActivate: () => {}, canInspect: () => true, entries: new Map(), hideTooltip() {}, setTimeout, clearTimeout, performance };
     const { syncActivation } = runInNewContext(`${source.slice(begin, end)}\n({ syncActivation });`, scope);
     syncActivation(shell, 'e1');
     assert.equal(panel.getAttribute('role'), 'button');
     assert.equal(panel.getAttribute('tabindex'), '0');
-    assert.equal(intent.hasAttribute('tabindex'), false, 'no interactive descendant inside a role=button panel');
-    assert.equal(panel.hasAttribute('aria-label'), false, 'the name, HP and intent text name the button');
+    assert.equal(panel.hasAttribute('aria-label'), false, 'the name, HP and stats text name the button');
     scope.eligible = ['e1']; syncActivation(shell, 'e1');
     assert.equal(panel.hasAttribute('role'), false); assert.equal(panel.hasAttribute('tabindex'), false);
-    assert.equal(intent.getAttribute('tabindex'), '0', 'an armed panel keeps the intent row reachable for its tooltip');
     assert.equal(name.getAttribute('role'), 'button');
   });
 });
