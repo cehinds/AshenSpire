@@ -74,6 +74,8 @@
 }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
+/* battlefieldStage.js slides an intent sideways (overheadIntentSeparation.js) when a neighbour's stands on it. */
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { left:var(--combat-intent-shift,auto)!important; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
 :root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#8ad498; }

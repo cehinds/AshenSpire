@@ -29,6 +29,7 @@ import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
+import { separateOverheadIntents } from './overheadIntentSeparation.js';
 
 // These classes change controls, tint or outlines, not the figure's pose.
 // Unknown classes remain conservative: action/reaction transforms still track.
@@ -311,6 +312,21 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // overhead's own box after its reset), then the final translate. A write
   // between two reads made each following read a forced layout, once per
   // combatant per tracked frame.
+  // Reads the settled intents after the rack writes above, then writes one
+  // sideways offset per intent (a CSS variable the stylesheet applies).
+  function separateRackedIntents(racked, zoom) {
+    const rows = racked.filter(row => row.intent);
+    for (const { intent } of rows) if (intent.style.getPropertyValue('--combat-intent-shift')) intent.style.removeProperty('--combat-intent-shift');
+    if (rows.length < 2) return;
+    const fieldBox = field.getBoundingClientRect();
+    const items = rows.map(({ frame, intent }, id) => {
+      const box = intent.getBoundingClientRect();
+      return { id, left: box.left, right: box.right, top: box.top, bottom: box.bottom,
+        movable: intent.classList.contains('player-action-intent'), visible: box.width > 0 && box.height > 0 };
+    }).filter(item => item.visible);
+    const shifts = separateOverheadIntents(items, { left: fieldBox.left, right: fieldBox.right }, 4 * zoom);
+    for (const [id, dx] of shifts) if (dx) rows[id].intent.style.setProperty('--combat-intent-shift', `${dx / zoom}px`);
+  }
   function centerTargetOverheads() {
     invalidateSpriteRects();
     const zoom = uiZoom();
@@ -324,10 +340,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (rack) {
         const body = currentSpriteBodyBounds(sprite, schedule);
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        racked.push({ frame, body, placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+        racked.push({ frame, body, intent: rack.querySelector(':scope > :is(.intent,.player-action-intent)'), placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
           groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       } else plain.push({ frame, sprite, leading });
     }
+    separateRackedIntents(racked, zoom);
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     for (const { frame, body, placement } of racked) {
