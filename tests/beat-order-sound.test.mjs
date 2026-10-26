@@ -15,6 +15,8 @@ const IMPACT = 100, TOTAL = 300;
 
 function drive(t, events, beatOrder) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   const trace = [];
   const at = (what) => trace.push({ what, at: Date.now() });
   const oldSfx = sfx.sink, oldHaptic = haptic.sink;
@@ -81,3 +83,4 @@ test('sequential: an attack card\'s heal and Block sounds come with their number
   assert.equal(timeOf(trace, (w) => w === 'sound:heal'), timeOf(trace, (w) => w === 'float:+3'), 'heal sound with its number');
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:+5'), 'block sound with its number');
 });
+

@@ -96,6 +96,8 @@ const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 500, REACTION = 500;
 // 500ms; the authored 300ms sprite duration remains independent.
 function drive(t2, fn) {
   t2.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t2.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom((dom) => {
     const trace = [];
     const at = (what) => trace.push({ what, at: Date.now() });
@@ -332,3 +334,4 @@ test('a fully guarded contact says Hit, then Blocked after the target reaction',
     assert.ok(!trace.some(row => row.what === 'float:-4'), 'a fully absorbed contact paints no HP loss');
   });
 });
+

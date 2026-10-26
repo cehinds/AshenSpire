@@ -86,6 +86,8 @@ function timeline(t, enabled, { fallback = false, lethal = false, cancel = false
 
 for (const order of ['impact', 'sequential']) test(`on/off keeps contact, numbers and completion clocks under ${order} pacing`, t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   try {
     setAnimSpeed('normal'); setBeatOrder(order);
     const start = Date.now(), on = timeline(t, true).map(row => ({ ...row, at: row.at - start }));
@@ -103,6 +105,8 @@ for (const order of ['impact', 'sequential']) test(`on/off keeps contact, number
 
 test('disabled FX fallback cannot start CSS/action poses; defeated drawing remains and cancel completes', t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   try {
     setAnimSpeed('normal');
     const trace = timeline(t, false, { fallback: true, lethal: true });
@@ -143,6 +147,8 @@ test('the specialized Reaver renderer honors module off while returning its orig
 
 test('saved animation policy settles reused player readiness without authored enter or leave playback', t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   // Execute the actual solo-screen call against the shipped painted renderer.
   const restCall = screen.split('\n').find(line => line.includes('stageFor(box)?.setRestPose?.'));
   assert.ok(restCall);
@@ -189,3 +195,4 @@ test('saved animation policy settles reused player readiness without authored en
     }
   });
 });
+
