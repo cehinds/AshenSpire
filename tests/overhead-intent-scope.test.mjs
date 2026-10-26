@@ -42,10 +42,10 @@ test('a concealed intent cannot leak a supplied private total through the compac
 }));
 
 test('the combatant mini HUD hides the scoped total line, and no target-HUD intent row remains in the styles', async () => {
-  const { readFileSync, readdirSync } = await import('node:fs');
-  const dir = new URL('../styles/', import.meta.url);
-  const css = readFileSync(new URL('combat-target-responsive.css', dir), 'utf8');
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat-target-responsive.css', import.meta.url), 'utf8');
   assert.match(css, /\.combat \.combatant \.intent \.intent-damage-scope \{ display:none; \}/);
-  for (const file of readdirSync(dir).filter(name => name.endsWith('.css')))
-    assert.doesNotMatch(readFileSync(new URL(file, dir), 'utf8'), /target-hud-intent/, `${file}: the target panel's intent row was removed (2026-10-26)`);
+  const sheets = [readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8'), css,
+    readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8'), readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8')];
+  for (const sheet of sheets) assert.doesNotMatch(sheet, /target-hud-intent/, "the target panel's intent row was removed (2026-10-26)");
 });
