@@ -14,7 +14,7 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
   assert.ok(first.x*zoom>=19);
   assert.ok((last.x+last.w)*zoom<=width-19);
   assert.ok(Math.abs((end.x+end.w/2)*zoom-width/2)<.001);
-  assert.ok(Math.abs((end.y+end.h)*zoom-(height-6*footer.unit*zoom))<.001);
+  assert.ok(Math.abs((end.y+end.h)*zoom-(height-uiConfig.scenes.w4a.sizing.desktopFooter.bottomInsetPx*footer.unit*zoom))<.001);
   for(const count of [1,3,5,7,10]){
     const hand=desktopHandLayout({width:width/zoom,height:footer.handHeight,count,zoom});
     assert.ok(hand.cardWidth*zoom>=150 && hand.cardWidth*zoom<=181, "desktop cards sit in the SPEC 150-180px band, below the previous 184px reference size");
