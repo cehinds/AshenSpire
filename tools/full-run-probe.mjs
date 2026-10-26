@@ -416,8 +416,11 @@ async function playFight() {
       await wait(250);
       // Defensive and other self cards use the real friendly confirmation;
       // attacks still go through the enemy's ordinary target control.
-      if (await has('.combatant.player.armed')) await press('.combatant.player.armed');
-      else if (await has('.combatant.enemy:not(.dead)')) await press('.combatant.enemy:not(.dead)');
+      // The combatant box is a tall pointer-events:none column (the figure
+      // stands on its bottom), so its centre is empty field; a player taps the
+      // figure, so press the visible sprite.
+      if (await has('.combatant.player.armed .sprite')) await press('.combatant.player.armed .sprite');
+      else if (await has('.combatant.enemy:not(.dead) .sprite')) await press('.combatant.enemy:not(.dead) .sprite');
       // Draw-on-play can leave the hand's size unchanged. Follow this exact
       // instance instead of treating a smaller total as the play receipt.
       const left = await ev(`(async () => { const end = Date.now() + 2500; while (Date.now() < end) { if (!window.__combat || !window.__combat.piles.hand.some(c => c.instanceId === ${JSON.stringify(card)})) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);
