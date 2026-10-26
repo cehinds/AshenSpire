@@ -2,9 +2,8 @@ import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
 import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
-import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
-import { combatantInfo, intentParts } from './combatantOverhead.js';
+import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -23,21 +22,6 @@ function corridor(a, b, x, y, radius) {
 }
 function node(tag, className, text) { const n = document.createElement(tag); n.className = className; if (text != null) n.textContent = text; return n; }
 
-export function combatTargetIntentRow(entry) {
-  const row = node('div', 'target-hud-intent');
-  const badge = entry.intent ? combatIntentPresentation(entry.intent) : null;
-  const action = entry.action?.maneuver || 'ready';
-  const playerIcon = ({ attack: 'attack', smash: 'smash', sweep: 'sweep', counter: 'counter', defend: 'defend', evade: 'evade' })[action] || 'prepare';
-  const title = badge?.title || (['casting', 'prepared'].includes(action) ? t('combat.targetHud.prepare') : action === 'ready' ? t('combat.targetHud.ready') : action === 'defend' ? t('combat.targetHud.defend') : action[0].toUpperCase() + action.slice(1));
-  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }));
-  // Owner 2026-10-25: no stance/action name in the panel (it cost a wrapped row). The damage and multiplier stay; the title lives in the tooltip.
-  row.dataset.intentVisibility = badge?.visibility || 'known';
-  if (badge?.projectedDamage?.tone) row.dataset.damageTone = badge.projectedDamage.tone;
-  row.tabIndex = 0;
-  attachTooltip(row, () => `<div class="tt-title">${esc(title)}</div>${badge && badge.visibility !== 'known' ? t('combat.targetHud.unknown') : esc(entry.intent?.projectedDamage ? t('combat.targetHud.damageScope') : entry.intent?.label || title)}`);
-  return row;
-}
-
 function panelFor(entry) {
   const shell = node('section', 'target-hud-detail');
   shell.dataset.eid = entry.id;
@@ -48,7 +32,8 @@ function panelFor(entry) {
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
-  panel.append(meters, combatTargetIntentRow(entry));
+  // Owner (2026-10-26): the panel is name, HP bar and stats row only; the intent reads above the figure.
+  panel.append(meters);
   const statuses = entry.createStatuses();
   statuses.classList.add('target-hud-statuses');
   statuses.hidden = !statuses.querySelector('.status-icon');
@@ -80,14 +65,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
     else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
     // Owner 2026-10-25: out of targeting the whole panel is the inspection door.
-    // A button holds no interactive children, so the intent row leaves the tab
-    // order while the panel is one. Its name comes from its content (name, HP,
-    // intent), not an override that would hide them.
-    const panel = shell.querySelector('.target-hud-panel'), intent = shell.querySelector('.target-hud-intent');
+    // Its name comes from its content (name, HP, stats), not an override.
+    const panel = shell.querySelector('.target-hud-panel');
     const door = !active && canInspect();
     if (door) { panel.setAttribute('role', 'button'); panel.tabIndex = 0; }
     else { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
-    if (intent) { if (door) intent.removeAttribute('tabindex'); else intent.tabIndex = 0; }
   };
   function wireInspect(shell, id) {
     // The visible name/HP replaces the frame footer in this layout. While
@@ -102,7 +84,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (event.detail > 1 && tapInspected) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       if (!onActivate || !eligible.includes(id)) {
         if (event.detail > 1 && clickSeriesActivated) lastTap = null;
-        // Not a target: one tap or click anywhere on the panel (name, HP, intent,
+        // Not a target: one tap or click anywhere on the panel (name, HP,
         // statuses, padding) opens the inspection; the rest of a double-click
         // series is swallowed so it cannot open it twice. Keys are handled by
         // the keydown below and never click this div; a detail-0 click on the
@@ -116,7 +98,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
         if (event.detail === 1) { clickSeriesActivated = true; if (readGesture) readGesture.blocked = true; lastTap = null; tapInspected = true; inspect(id, shell); }
         return;
       }
-      // The status tray and detailed intent keep their authored reading doors.
+      // The status tray keeps its authored reading door.
       // Only the footer replacement (name, HP, and its panel padding) confirms.
       if (!event.target.closest('.target-hud-name, .target-hud-meters')
           && !event.target.matches('.target-hud-panel')) return;

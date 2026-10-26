@@ -29,6 +29,7 @@ import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
+import { separateOverheadIntents } from './overheadIntentSeparation.js';
 
 // These classes change controls, tint or outlines, not the figure's pose.
 // Unknown classes remain conservative: action/reaction transforms still track.
@@ -311,6 +312,21 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // overhead's own box after its reset), then the final translate. A write
   // between two reads made each following read a forced layout, once per
   // combatant per tracked frame.
+  // Reads the settled intents after the rack writes above, then writes one
+  // sideways offset per intent (a CSS variable the stylesheet applies).
+  function separateRackedIntents(racked, zoom) {
+    const rows = racked.filter(row => row.intent);
+    for (const { intent } of rows) if (intent.style.getPropertyValue('--combat-intent-shift')) intent.style.removeProperty('--combat-intent-shift');
+    if (rows.length < 2) return;
+    const fieldBox = field.getBoundingClientRect();
+    const items = rows.map(({ frame, intent }, id) => {
+      const box = intent.getBoundingClientRect();
+      return { id, left: box.left, right: box.right, top: box.top, bottom: box.bottom,
+        movable: intent.classList.contains('player-action-intent'), visible: box.width > 0 && box.height > 0 };
+    }).filter(item => item.visible);
+    const shifts = separateOverheadIntents(items, { left: fieldBox.left, right: fieldBox.right }, 4 * zoom);
+    for (const [id, dx] of shifts) if (dx) rows[id].intent.style.setProperty('--combat-intent-shift', `${dx / zoom}px`);
+  }
   function centerTargetOverheads() {
     invalidateSpriteRects();
     const zoom = uiZoom();
@@ -324,7 +340,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (rack) {
         const body = currentSpriteBodyBounds(sprite, schedule);
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        racked.push({ frame, body, placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+        racked.push({ frame, body, intent: rack.querySelector(':scope > :is(.intent,.player-action-intent)'), placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
           groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       } else plain.push({ frame, sprite, leading });
     }
@@ -345,13 +361,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
     }
-    if (!plain.length) return;
+    if (!plain.length) { separateRackedIntents(racked, zoom); return; }
     const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
     const placements = plain.map(({ frame, sprite, leading }) => {
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
+    separateRackedIntents(racked, zoom);
   }
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
@@ -636,7 +653,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       width: Math.round(measuredField.width * 64) / 64,
       height: Math.round(measuredField.height * 64) / 64 };
     const zoom = fieldRect.width / field.offsetWidth || 1;
-    combat.style.setProperty('--combat-mini-hud-scale', String(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHudScale));
+    // Owner (2026-10-26): on desktop and widescreen the HUD reads smaller; phones keep their scale.
+    const hudGrid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const hudWide = isWideFormFactor(document.documentElement.dataset.formFactor);
+    combat.style.setProperty('--combat-mini-hud-scale', String(hudWide ? hudGrid.desktopMiniHudScale : hudGrid.miniHudScale));
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
@@ -691,7 +711,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
-      uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.enemyMiniHudScale,
+      hudWide ? hudGrid.desktopEnemyMiniHudScale : hudGrid.enemyMiniHudScale,
       Math.max(1, Math.min((fieldRect.width - 24) / plan.rows,
         ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12)) / 104))));
     // Geometry uses local offset dimensions, which already exclude CSS zoom.
