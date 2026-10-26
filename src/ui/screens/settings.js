@@ -378,7 +378,7 @@ const ROWS = [
   { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
     min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, label: t('settings.row.combatSpeed'),
     note: tFull('settings.row.combatSpeed') },
-  { cat: 'Combat', key: 'combatPreference', retired: true, type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+  { cat: 'Combat', key: 'combatPreference', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
     choices: ['offense', 'defense'], label: t('settings.row.combatPreference'), note: tFull('settings.row.combatPreference') },
   { cat: 'Combat', key: 'autoCombatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
     min: AUTOMATION_DEFAULTS.autoSpeedMinimum, max: AUTOMATION_DEFAULTS.autoSpeedMaximum, step: 0.25, label: t('settings.row.autoCombatSpeed'),

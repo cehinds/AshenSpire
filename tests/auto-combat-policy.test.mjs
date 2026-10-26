@@ -61,9 +61,9 @@ test('automation settings participate in durable profile export and reset rows',
     assert.ok(rows.some(row => row.key === key)); assert.ok(keys.includes(key), key);
   }
 });
-test('the unused combat preference row is hidden but its key survives', () => {
+test('the combat preference row is shown now that auto battle plays cards with it', () => {
   const row = settingsRows().find(candidate => candidate.key === 'combatPreference');
-  assert.ok(row && row.retired === true);
+  assert.ok(row && !row.retired);
   assert.equal(resolveCombatAutomation({ combatPreference: 'defense' }).preference, 'defense');
 });
 test('the auto combat setting says it also plays cards and ends the turn', () => {

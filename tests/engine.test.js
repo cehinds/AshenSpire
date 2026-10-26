@@ -7356,7 +7356,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Combat log,Range,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
       'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
