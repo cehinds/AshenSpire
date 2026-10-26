@@ -464,6 +464,9 @@ const TOGGLE_SETTING = (opener) => `(async () => {
   const section = await __fm.until(() => document.querySelector('.set-subtab[data-advanced-group="Rewards"]'));
   if (!section) return 'no Settings Rewards section';
   section.click();
+  const topic = await __fm.until(() => [...document.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')].find(t => t.dataset.topic === 'Flasks'));
+  if (!topic) return 'no Settings Flasks topic';
+  topic.click();
   const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
   if (!toggle) return 'the "Use flasks outside combat" row did not appear';
   if ((toggle.type === 'checkbox' ? String(toggle.checked) : toggle.getAttribute('aria-checked')) !== 'false') return 'the toggle did not start off';
