@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-26
 
+- **Auto battle plays your cards, faster combat and cleaner settings** ([#2331](https://github.com/cehinds/AshenSpire/pull/2331), `0.7.1.1862`). Auto combat now plays your cards and ends your turn, following your offense or defense preference, and stops the moment you take over; combat runs at ×1.25 speed by default (still adjustable); Settings uses real toggle switches, shows each topic as a titled section, and hides debug-only co-op and gauntlet tuning rows.
+
 - **Combat recovers after delayed animation callbacks** ([#2329](https://github.com/cehinds/AshenSpire/pull/2329), `0.7.1.1862`). A long browser pause no longer starts another overdue animation or keeps the hand and End Turn locked; authored long reactions and contact holds still finish normally.
 
 ## 2026-10-25

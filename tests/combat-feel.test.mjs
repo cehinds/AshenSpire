@@ -18,6 +18,7 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
+setCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -161,7 +162,7 @@ test('a painted sequence holds: its remaining frames move back by the hold', asy
 });
 
 function drive(t, fn, { maxHp } = {}) {
-  setCombatPacing();
+  setCombatPacing({ combatSpeed: 1 });
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
   // The scheduler's monotonic clock must advance with these mocked timers.
   t.mock.method(globalThis.performance, 'now', () => Date.now());

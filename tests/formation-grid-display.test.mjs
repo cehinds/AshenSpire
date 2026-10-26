@@ -18,9 +18,9 @@ test('simple grid switch is available in both profile Display sections without a
     assert.equal(display.filter(r=>r.key===key).length,1);
     assert.ok(!display.some(r=>r.key==='gameConfig.presentation.movementEnabled'));
   }
-  assert.match(settingsRowHtml({},row),/aria-checked="true"/);
-  assert.match(settingsRowHtml({},row),/aria-label="Show battlefield grid"/);
-  assert.match(settingsRowHtml({[key]:false},row),/aria-checked="false"/);
+  assert.match(settingsRowHtml({},row),/type="checkbox" role="switch"[^>]* checked/);
+  assert.match(settingsRowHtml({},row),/<span class="sr-only">Show battlefield grid<\/span>/);
+  assert.doesNotMatch(settingsRowHtml({[key]:false},row),/ checked/);
 });
 test('grid defaults migrate untouched owner defaults while retaining explicit off preferences',()=>{
   assert.equal(SETTINGS_DEFAULTS.values[key],true);
