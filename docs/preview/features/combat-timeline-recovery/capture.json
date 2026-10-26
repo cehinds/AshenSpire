@@ -1,0 +1,97 @@
+{
+  "feature": "Combat timeline recovery",
+  "pullRequest": 2329,
+  "date": "2026-10-26",
+  "query": "?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+  "source": {
+    "baseCommit": "72809f7fd5a35ab4f80a19087763b29bc87342a0",
+    "candidate": "uncommitted reviewed v5",
+    "productionSHA256": "6cfcbba2a20c849be6885561223eb871b8670db847fe544aebeee35520cd92ab",
+    "prSourceHead": "694171c9fef43dd69c004ef00835c393f8272ef5",
+    "scope": "Scheduler and test bytes match; PR additionally contains its receipt/generated About changelog. No whole-tree or HTML byte-equivalence claim."
+  },
+  "localBuild": {
+    "version": "0.7.1.1862",
+    "digest": "c8f6f42daa",
+    "htmlBytes": 14815829,
+    "htmlSHA256": "3737b4bdb36fa71dbe2ebf7fa04198d429ad318c46b55215df98f1d049743501"
+  },
+  "ciBuild": {
+    "source": "694171c9fef43dd69c004ef00835c393f8272ef5",
+    "run": 40252515865,
+    "job": 121347290178,
+    "artifact": 12621138483,
+    "version": "0.7.1.1861",
+    "digest": "d9ab90dcda",
+    "artifactSHA256": "2b95785c7171a2ba1f31c2fd7d194f0b0222e949a2656b78b65d179f4b49090f",
+    "download": "https://github.com/cehinds/AshenSpire/actions/runs/40252515865/artifacts/12621138483",
+    "hostedPlayVerified": false
+  },
+  "captures": [
+    {
+      "file": "mobile.png",
+      "viewport": [
+        375,
+        667
+      ],
+      "DPR": 3,
+      "touch": true,
+      "bytes": 321762,
+      "sha256": "a9a6ee2e507ae467c6fbdfca7db4eba62bb5629b79e57b719b76c2e377c43a09",
+      "scope": "Individual responsive visual evidence accepted. Original overall run FAIL on pre-input vibration-policy console notice remains FAIL."
+    },
+    {
+      "file": "desktop.png",
+      "viewport": [
+        1200,
+        730
+      ],
+      "DPR": 1,
+      "touch": false,
+      "bytes": 1252616,
+      "sha256": "53c62587075de355f395ef4efbc0563c6b19b6a2535c69120d789c553ba24407"
+    },
+    {
+      "file": "wide.png",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "DPR": 1,
+      "touch": false,
+      "bytes": 2562916,
+      "sha256": "c1b33b90af9201646ed26a282e464e57839b0a0689af957fcba68a3c8cd44f77"
+    },
+    {
+      "file": "tablet.png",
+      "viewport": [
+        820,
+        1180
+      ],
+      "DPR": 3,
+      "touch": true,
+      "bytes": 887529,
+      "sha256": "ac566ddbff47a2ba5a39d878c8fb587794a922ffadc8cc287ad58f1f5d62ec77"
+    }
+  ],
+  "validation": {
+    "timelineTests": {
+      "pass": 28
+    },
+    "relatedTests": {
+      "pass": 21,
+      "existingCoopPolicySkip": 1
+    },
+    "externalPackChecks": 314,
+    "visual": "Root individually inspected and accepted all four original PNGs; desktop/wide/tablet prospective run PASS, no four-context overall-PASS claim.",
+    "readiness": "15 fonts loaded; visible images/CSS resources decoded; cost bindings nonempty and fit; controls in viewport; no page/HTTP/request failures.",
+    "consoleNotice": "Exact Chrome navigator.vibrate pre-user-activation policy notice retained and prospectively classified for the last three views; src/ui/haptics.js61-62 treats refused vibration as silence.",
+    "native": "Candidate-only blocked and normal Defend→Strike assertions pass against immutable1860 baseline references. Original overall comparison-wrapper FAIL retained (undefined live keys vs JSON omission); separate read-only persisted initial/final engine/event parity proof accepted.",
+    "nativePersistedProofSHA256": "bb12079824584dbc787ff3379609a6f6f8fd5ebff2e07b92428ac9cba164ff95",
+    "limits": "No performance, physical-device, concurrent-playback or general clean-console claim. Settled fixture captures perform no gameplay actions.",
+    "closure": "All owned Node/Chrome processes absent, profiles removed, HTTP/CDP ports refused; source/artifact/Root/cache unchanged."
+  },
+  "notes": [
+    "Wide footer HOLD hint at bottom edge is pre-existing geometry; accepted as nonblocking for this scheduler fix."
+  ]
+}
