@@ -996,21 +996,25 @@ async function main() {
     // mount itself.
     const seededFlask = await evalIn(`(async () => {
       const { projectGameCard } = await import('/src/model/gameProfile.js');
+      const { expandStoredRun } = await import('/src/model/runStorage.js');
       const { combatProfileFor } = await import('/src/model/combatCardProfile.js');
       const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
       const key = 'sote_run_v1';
       const raw = localStorage.getItem(key);
       if (!raw) return false;
       const saved = JSON.parse(raw);
+      // The stored run is compact (gameProfileRef). Project cards against the
+      // expanded view; mutate and write back the compact saved run only.
+      const view = expandStoredRun(JSON.parse(raw));
       saved.flasks = [{ flaskId: 'blightCoating' }];
       // The class starter deck may have no Counter. Add an owned authored
       // instance before CONTINUE, then let the real loader and draw find it.
       const selfCounter = saved.deck.find(card => {
-        const def = projectGameCard(saved, card);
+        const def = projectGameCard(view, card);
         return def ? combatProfileFor(def).maneuver === 'counter' : card.cardId === 'shieldBash';
-      }) || { instanceId: 'tutorial-reach-counter', cardId: projectGameCard(saved, 'core.counter') ? 'core.counter' : 'shieldBash', upgraded: false };
+      }) || { instanceId: 'tutorial-reach-counter', cardId: projectGameCard(view, 'core.counter') ? 'core.counter' : 'shieldBash', upgraded: false };
       const attack = saved.deck.find(card => {
-        const def = projectGameCard(saved, card);
+        const def = projectGameCard(view, card);
         return def ? combatProfileFor(def).maneuver !== 'counter' && hasImmediateHostileDamage(def, { targeted: true }) : card.cardId === 'strike';
       });
       if (!selfCounter || !attack) return false;
