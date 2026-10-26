@@ -1023,7 +1023,7 @@ settings.row.rewardTreasureArmaments,,Treasure · Equipment,Include armaments fo
 settings.row.shrinePathGlow,,Shrine path glow,Light the path to the nearest shrine on the act map.,
 settings.row.walkedFade,,Walked nodes,"How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.",
 settings.row.accent,,Accent color,"Tint the interface — highlights, borders, focus ring, and glow.",
-settings.row.artQuality,,Art quality,Auto picks art for your screen and memory. Light or High forces one.,
+settings.row.artQuality,,Art quality,Auto picks art for your screen and memory. Light and High pick one.,
 settings.row.cardArtStyle,,Card artwork,Simple uses the new card art. Legacy keeps the originals.,
 settings.row.uiScale,,UI size,Auto fits your screen. S–XL sets a fixed size.,
 settings.row.cardMotif,,Card motif,Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.,
