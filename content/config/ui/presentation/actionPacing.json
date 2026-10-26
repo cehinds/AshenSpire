@@ -6,7 +6,7 @@
   },
   "behavior": {
     "autoCombat": false,
-    "combatSpeed": 1,
+    "combatSpeed": 1.25,
     "combatPreference": "offense",
     "speedMinimum": 0.25,
     "speedMaximum": 8,
