@@ -30,6 +30,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
+import { storedGameProfile } from '../model/runStorage.js';
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
@@ -650,7 +651,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     peekRunGameProfile(slot = 1) {
       const json = storage.getItem(runKey(slot));
       if (!json) return null;
-      const snapshot = JSON.parse(json).gameProfile;
+      const snapshot = storedGameProfile(JSON.parse(json));
       return snapshot ? validateResolvedGameProfile(snapshot) : null;
     },
 
@@ -663,8 +664,12 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       // Profile mismatch is recoverable: preserve the original bytes instead
       // of archiving a slot against the wrong content registry.
       let pinned = null;
-      try { pinned = JSON.parse(json).gameProfile; } catch { /* Legacy malformed JSON follows the existing archive path below. */ }
+      let parsedForProfile = null;
+      try { parsedForProfile = JSON.parse(json); } catch { /* Legacy malformed JSON follows the existing archive path below. */ }
       try {
+        // A reference (`gameProfileRef`) resolves from THIS build's catalog; one
+        // it cannot resolve is a profile mismatch, kept in the slot like any other.
+        if (parsedForProfile) pinned = storedGameProfile(parsedForProfile);
         if (pinned) {
           validateResolvedGameProfile(pinned);
           if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
