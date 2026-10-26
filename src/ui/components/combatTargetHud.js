@@ -65,14 +65,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
     else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
     // Owner 2026-10-25: out of targeting the whole panel is the inspection door.
-    // A button holds no interactive children, so the intent row leaves the tab
-    // order while the panel is one. Its name comes from its content (name, HP,
-    // intent), not an override that would hide them.
-    const panel = shell.querySelector('.target-hud-panel'), intent = shell.querySelector('.target-hud-intent');
+    // Its name comes from its content (name, HP, stats), not an override.
+    const panel = shell.querySelector('.target-hud-panel');
     const door = !active && canInspect();
     if (door) { panel.setAttribute('role', 'button'); panel.tabIndex = 0; }
     else { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
-    if (intent) { if (door) intent.removeAttribute('tabindex'); else intent.tabIndex = 0; }
   };
   function wireInspect(shell, id) {
     // The visible name/HP replaces the frame footer in this layout. While
@@ -87,7 +84,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (event.detail > 1 && tapInspected) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       if (!onActivate || !eligible.includes(id)) {
         if (event.detail > 1 && clickSeriesActivated) lastTap = null;
-        // Not a target: one tap or click anywhere on the panel (name, HP, intent,
+        // Not a target: one tap or click anywhere on the panel (name, HP,
         // statuses, padding) opens the inspection; the rest of a double-click
         // series is swallowed so it cannot open it twice. Keys are handled by
         // the keydown below and never click this div; a detail-0 click on the
@@ -101,7 +98,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
         if (event.detail === 1) { clickSeriesActivated = true; if (readGesture) readGesture.blocked = true; lastTap = null; tapInspected = true; inspect(id, shell); }
         return;
       }
-      // The status tray and detailed intent keep their authored reading doors.
+      // The status tray keeps its authored reading door.
       // Only the footer replacement (name, HP, and its panel padding) confirms.
       if (!event.target.closest('.target-hud-name, .target-hud-meters')
           && !event.target.matches('.target-hud-panel')) return;
