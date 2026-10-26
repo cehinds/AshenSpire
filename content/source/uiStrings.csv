@@ -978,7 +978,6 @@ settings.row.downloadSaves,,Download & saves,"Export or import your saves, or ge
 settings.row.resetAllSettings,,Reset all settings,"Put every setting back to its default. Asks first, and the change can be undone for a few seconds.",
 settings.resetAll.title,,Reset all settings?,"Every setting, in every section, goes back to its default. Saves and progress are not touched.",
 settings.resetAll.confirm,,Reset all,,
-settings.defaults.reset,,Reset to defaults,,
 settings.defaults.choice,,Which settings would you like to use?,"This build has default settings. Keep this device's saved local settings, or reset every setting to the current defaults. Saves and progress are not touched.",
 settings.defaults.local,,Keep local settings,,
 settings.defaults.use,,Use defaults,,

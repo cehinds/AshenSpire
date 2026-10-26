@@ -627,7 +627,7 @@ const ROWS = [
   // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
   // The only door to Download & saves from Settings now the top action row is
   // gone (owner, 2026-10-26); it opens the same panel the row used to.
-  { cat: 'Display', key: 'downloadSaves', type: 'button', btn: offlinePlay.title, label: t('settings.row.downloadSaves'),
+  { cat: 'Display', key: 'downloadSaves', id: 'settings-download', type: 'button', btn: offlinePlay.title, label: t('settings.row.downloadSaves'),
     note: tFull('settings.row.downloadSaves') },
   { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
     note: tFull('settings.row.resetAllSettings') },
@@ -1918,7 +1918,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'button') {
     return `${rowOpen()}
         ${stack()}
-        <span class="r-trail"><button type="button" class="as-btn" data-btn="${r.key}">${r.btn || 'Open'}</button></span>
+        <span class="r-trail"><button type="button" class="as-btn"${r.id ? ` id="${r.id}"` : ''} data-btn="${r.key}">${r.btn || 'Open'}</button></span>
       </div>`;
   }
   if (r.type === 'choice') {
@@ -2914,7 +2914,7 @@ export function restoreView(root, view) {
  * its place in the ring all follow from that one list.
  */
 const MARKS_MODIFIED = Symbol('marks modified rows');
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
   const activeProfile = () => activeSettingsProfile(gameProfile);
   const nextProfile = () => gameProfile?.read?.() || readNewGameProfile(settings, activeProfile() || undefined);
   panelSettings = settings;
@@ -2928,20 +2928,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (seed) settings[SEED_KEY] = seed;
       const out = report(changes);
       markModified(container, settings, changes);
-      syncHeaderState();
       return out;
     }, { [MARKS_MODIFIED]: true });
   }
   let html = '';
   let cats = [];
   let current = null;
-  if (!headerTools) {
-    headerTools = settingsHeaderTools();
-    headerTools.dataset.inlineSettings = 'true';
-  }
-  const searchQuery = () => (grouped ? headerTools.querySelector('[data-advanced-search]')?.value.trim() || '' : '');
-  const changedOnly = () => grouped && headerTools.dataset.changedOnly === '1';
-  const filtering = () => !!searchQuery() || changedOnly();
   if (grouped) {
     cats = shownCategories(saves);
     // A stored category that no longer exists must not blank the screen. Fail
@@ -2982,7 +2974,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile())}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, '', false, activeProfile(), nextProfile())}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
@@ -2990,21 +2982,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const view = captureView(container);
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
-  // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
-  // in-run overlay has no head to hang them in, so they used to be prepended
-  // one after the other and landed as two stacked rows above the rail — the
-  // download button on its own line, the icon pair floating at the right of the
-  // next. Both ride one row now, and the CSS that styles them keys off
-  // `[data-settings-host]` so the overlay gets the same faces as the modal.
-  const inlineBar = document.createElement('div');
-  inlineBar.className = 'set-inline-bar';
-  if (onOffline) {
-    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
-    offline.addEventListener('click', onOffline);
-    inlineBar.append(offline);
-  }
-  if (headerTools.dataset.inlineSettings) inlineBar.append(headerTools);
-  if (inlineBar.childElementCount) container.prepend(inlineBar);
   // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
   // belongs to this render, so clearing Settings for Deck disconnects it and
   // releases listeners even while the shared container remains on the page.
@@ -3045,31 +3022,27 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // ONE REPAINT for everything that changes what the pane shows — a category,
   // an Advanced section or topic, a search, a row reset. Only the pane is
   // rebuilt; the rail, the header tools and the page-level listeners stay.
-  let searchTimer = null;
   function repaintPanel({ keepScroll = false } = {}) {
     // The formation editor holds an unapplied draft in its DOM; apply it before
     // the pane it lives in is rebuilt, or stay put when it cannot be applied.
     if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
-    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
     // A tab switch starts at the top on purpose, so only a keepScroll repaint
     // carries the scroll offsets over; focus is kept either way.
     const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile());
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, '', false, activeProfile(), nextProfile());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
-    panel.dataset.searching = String(filtering());
-    const groupReset = headerTools.querySelector('[data-reset-config="group"]');
-    if (groupReset) groupReset.textContent = filtering() ? 'Reset these results' : 'Reset this group';
     paintUndo();
     wire();
     panel.scrollTop = scroll;
     if (panel.parentElement) panel.parentElement.scrollTop = outer;
     restoreView(container, view);
   }
-  // ---- the Undo bar, the first-open tip, the Changed toggle --------------
+  // ---- the Undo bar ------------------------------------------------------
   let undoTimer = null;
   function paintUndo() {
     container.querySelector(':scope > .set-undo')?.remove();
@@ -3112,71 +3085,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     clearTimeout(undoTimer);
     undoTimer = setTimeout(() => { if (undoOffer === offer) { undoOffer = null; bar.remove(); } }, Math.max(0, offer.until - Date.now()));
   }
-  function paintTip() {
-    if (!grouped || settings.settingsTipSeen || container.querySelector(':scope > .set-tip')) return;
-    const tip = document.createElement('div');
-    tip.className = 'set-tip';
-    tip.setAttribute('role', 'note');
-    tip.innerHTML = '<span><b>Tip:</b> the magnifier finds any setting in every section. A dot marks a setting you changed, and its Reset puts it back. <b>Changed</b> lists all of them.</span>'
-      + '<button type="button" class="as-btn" data-tip-dismiss>Got it</button>';
-    tip.querySelector('[data-tip-dismiss]').onclick = () => {
-      settings.settingsTipSeen = true;
-      onChange({ settingsTipSeen: true });
-      tip.remove();
-    };
-    container.insertBefore(tip, container.querySelector(':scope > .set-railed') || container.firstChild);
-  }
-  function syncHeaderState() {
-    const toggle = headerTools.querySelector('[data-changed-toggle]');
-    if (toggle) {
-      // The rows Changed can show: on a release build, hidden tuning is
-      // counted by Clear hidden tuning instead.
-      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true, profile: activeProfile(), nextProfile: nextProfile() }).length;
-      toggle.textContent = count ? `Changed · ${count}` : 'Changed';
-      toggle.setAttribute('aria-pressed', String(changedOnly()));
-      toggle.classList.toggle('on', changedOnly());
-    }
-    const clear = headerTools.querySelector('[data-clear-tuning]');
-    if (clear) {
-      const hidden = hiddenTuningKeys(settings);
-      clear.hidden = !hidden.length;
-      clear.textContent = `Clear hidden tuning (${hidden.length})`;
-    }
-  }
   const wire = () => {
   const profileHost = container.querySelector('[data-game-profile-settings]');
   if (profileHost && !profileHost.childElementCount) mountGameProfileSettings(profileHost, { settings, onChange, gameProfile });
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
   mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
-  headerTools.querySelector('[data-search-toggle]').onclick = () => {
-    const input = headerTools.querySelector('[data-advanced-search]');
-    input.hidden = !input.hidden;
-    headerTools.classList.toggle('search-open', !input.hidden);
-    headerTools.querySelector('[data-search-toggle]').setAttribute('aria-expanded', String(!input.hidden));
-    if (!input.hidden) input.focus();
-    else if (input.value) { input.value = ''; repaintPanel(); }
-  };
-  const changedToggle = headerTools.querySelector('[data-changed-toggle]');
-  if (changedToggle) changedToggle.onclick = () => {
-    if (changedOnly()) delete headerTools.dataset.changedOnly; else headerTools.dataset.changedOnly = '1';
-    repaintPanel();
-  };
-  const clearTuning = headerTools.querySelector('[data-clear-tuning]');
-  if (clearTuning) clearTuning.onclick = async () => {
-    const keys = hiddenTuningKeys(settings);
-    if (!keys.length) return;
-    // Cleared, not reset: a promoted value for hidden tuning is not this
-    // build's default either (promotionFor leaves it out at boot).
-    await resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
-    headerTools.querySelector('details').open = false;
-    repaintPanel({ keepScroll: true });
-  };
-  syncHeaderState();
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -3200,9 +3118,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // topics at once; they show their rows without an example until it clears.
   const drawnPreviews = new WeakMap();
   const refreshStatsPreviews = () => {
-    const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
     container.querySelectorAll('[data-stats-preview]').forEach((node) => {
-      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const shown = !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
       const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel, previewClassId) : '';
       if (drawnPreviews.get(node) === html) return;
       node.innerHTML = html;
@@ -3216,7 +3133,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       });
     });
     container.querySelectorAll('[data-level-pace-preview]').forEach((node) => {
-      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const shown = !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
       const html = shown ? levelPacePreviewHtml(settings) : '';
       if (drawnPreviews.get(node) === html) return;
       node.innerHTML = html;
@@ -3327,7 +3244,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  const advancedSearch = headerTools.querySelector('[data-advanced-search]');
   // Rows are no longer filtered in place: a query repaints the panel with its
   // matches from every section (`searchResultsHtml`). What is left here is the
   // open topic's own bookkeeping — rows the hand rules hide, the count.
@@ -3345,12 +3261,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     syncSubsectionHeadings();
     refreshStatsPreviews();
   };
-  if (advancedSearch) {
-    advancedSearch.oninput = () => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => { if (lifecycleSentinel.isConnected) repaintPanel(); }, 160);
-    };
-  }
   container.querySelectorAll('.set-advanced-group').forEach(section => {
     const selectTopic = topic => {
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
@@ -3361,7 +3271,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         tab.setAttribute('aria-selected', String(active));
         tab.classList.toggle('on', active);
       });
-      if (advancedSearch) advancedSearch.value = '';
       repaintPanel();
       container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
@@ -3381,39 +3290,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
   });
   filterAdvancedRows();
-
-  headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
-    button.onclick = () => {
-      const currentGroup = activeAdvancedGroup(settings, activeProfile());
-      const groups = cachedSubgroups(ROWS, currentGroup, activeProfile());
-      const selected = storedAdvancedTopic(settings, currentGroup);
-      // Reset all also clears inert retired keys: they are off the screen, so
-      // this is the only door that can take a stale one out of a profile.
-      // While a search is open the pane shows its matches, so "this group" IS
-      // the matches — every one the pane counts, not only the page it draws —
-      // and never the section that was open behind the search.
-      const query = searchQuery();
-      const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile(), nextProfile: nextProfile() }).map((hit) => hit.row)
-        : current === 'General' || current === 'Accessibility' ? (() => {
-          const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          // Every topic of the section is on screen now, so Reset this group covers them all.
-          return [...generalGroups(section, activeProfile(), nextProfile()).values()].flat();
-        })()
-        : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
-      const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()
-        : rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
-      const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
-      const fromMenu = !!button.closest('.set-options');
-      headerTools.querySelector('details').open = false;
-      const run = async () => {
-        await resetKeys(settings, onChange, keys, label);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
-      };
-      // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
-      if (button.dataset.resetConfig === 'all') confirmResetAll(run, fromMenu ? headerTools.querySelector('.set-options summary') : button); else run();
-    };
-  });
 
   container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
     btn.onclick = () => previewPrologue(settings);
@@ -3475,7 +3351,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if ((await onChange(changes))?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -3532,7 +3408,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -3685,7 +3561,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
       await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));
   });
@@ -3754,7 +3630,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -4009,7 +3885,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
     }
     markModified(container, settings, changes);
-    syncHeaderState();
     if (key.startsWith('gameConfig.')) reportAdvancedProblems();
     else refreshGates(container, settings);
     refreshApplied(container, settings);
@@ -4049,7 +3924,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
-  paintTip();
   paintUndo();
 
   // THE ART-QUALITY FOLDER BUTTON, delegated once per container: the button
@@ -4136,9 +4010,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   function selectCategory(cat) {
-    const searching = !!searchQuery();
-    if (!cats.includes(cat) || (cat === current && !searching)) return;
-    if (searching) headerTools.querySelector('[data-advanced-search]').value = '';
+    if (!cats.includes(cat) || cat === current) return;
     current = cat;
     settings[CAT_KEY] = cat;
     // Persisted through the same free bag every other setting rides in
@@ -4229,27 +4101,6 @@ export function clearSettingsNotice(tag) {
   }
 }
 
-function settingsHeaderTools() {
-  const tools = document.createElement('div');
-  tools.className = 'set-header-tools';
-  tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
-    + '<button type="button" class="as-btn set-reset-defaults" data-reset-config="all">' + esc(t('settings.defaults.reset')) + '</button>'
-    + '<button type="button" class="as-btn set-changed-toggle" data-changed-toggle aria-pressed="false" title="Show only the settings you have changed">Changed</button>'
-    + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
-    + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
-    + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">' + esc(t('settings.row.resetAllSettings')) + '</button>'
-    + (pageDebug() ? '<button type="button" class="as-btn" data-export-settings>Export configuration</button>'
-      : '<button type="button" class="as-btn" data-clear-tuning hidden>Clear hidden tuning</button>') + '</div></details>';
-  const exportItem = tools.querySelector('[data-export-settings]');
-  // Import and export are debug tools (owner, 2026-09-24): a release build has
-  // neither the menu item, the Load button, nor the export prompt on Done.
-  if (exportItem) exportItem.onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
-    build: { contentVersion: contentBundle.version },
-    includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
-  });
-  return tools;
-}
-
 // `onOffline` was destructured here and then dropped: both renderSettings calls
 // below left it out, so main.js handed this door `showOfflinePlay` and the
 // title screen's Settings never grew the button it opens. The changelog for
@@ -4262,7 +4113,6 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
   // this surface owns only the body, which is the NavRail + Pane it always was.
   const done = button({ label: 'Done and Save', weight: 'primary', id: 'set-close' });
   const load = button({ label: 'Load settings', id: 'settings-load' });
-  const headerTools = settingsHeaderTools();
   // W1a header: the title and the exit, nothing above them. The old eyebrow
   // ("Title") named the door it was opened from, which W1a does not carry.
   let rendered = null;
@@ -4273,12 +4123,11 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile }); },
     secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
   });
-  door.head.querySelector('.modal-head-actions').prepend(headerTools);
   const picker = document.createElement('input');
   picker.type = 'file'; picker.accept = '.json,application/json'; picker.hidden = true;
   load.after(picker);
@@ -4298,7 +4147,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       if ((await onChange(saved))?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });

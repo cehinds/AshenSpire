@@ -456,12 +456,14 @@ const TOGGLE_SETTING = (opener) => `(async () => {
   document.querySelector('${opener}').click();
   const tab = await __fm.until(() => document.querySelector('.qn-row[data-tab="settings"]'));
   if (tab) tab.click(); else if (!document.querySelector('.ov-tab')) return 'no Settings door';
-  const search = await __fm.until(() => document.querySelector('[data-search-toggle]'));
-  if (!search) return 'no Settings search';
-  search.click();
-  const input = document.querySelector('[data-advanced-search]');
-  input.value = 'outside combat';
-  input.dispatchEvent(new Event('input', { bubbles: true }));
+  // No search box any more (owner, 2026-10-26): open Advanced, then the section
+  // that files the row, and find it by its data-key.
+  const advanced = await __fm.until(() => document.querySelector('.set-tab[data-member="Advanced"]'));
+  if (!advanced) return 'no Settings Advanced tab';
+  advanced.click();
+  const section = await __fm.until(() => document.querySelector('.set-subtab[data-advanced-group="Rewards"]'));
+  if (!section) return 'no Settings Rewards section';
+  section.click();
   const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
   if (!toggle) return 'the "Use flasks outside combat" row did not appear';
   if ((toggle.type === 'checkbox' ? String(toggle.checked) : toggle.getAttribute('aria-checked')) !== 'false') return 'the toggle did not start off';
