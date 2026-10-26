@@ -522,7 +522,8 @@ const READ = `(() => {
     fs: fs[0] || null,
     // The control's OWN box, so D3 can stop trusting the container to speak for
     // the thing inside it.
-    fsCtrl: fsEls[0] ? boxOf(fsEls[0]) : null,
+    // The checkbox switch is an opacity:0 input laid over its label; the thing a player sees is the track beside it.
+    fsCtrl: fsEls[0] ? boxOf(fsEls[0].matches('input.as-switch-input') ? (fsEls[0].parentElement.querySelector('.as-switch-track') || fsEls[0]) : fsEls[0]) : null,
     panelEffOpacity: effOpacity(panel),
     rootFontPx: +parseFloat(getComputedStyle(document.documentElement).fontSize).toFixed(2),
     scroll: { ancestors: scrollAncestors, docY: window.scrollY, docX: window.scrollX },
@@ -1472,7 +1473,7 @@ function selftestPlants() {
       // the check reads is correct and the player cannot reach the control.
       name: 'the Fullscreen CONTROL sits 4000px right while its row does not move',
       file: 'styles/ui.css',
-      append: '.set-panel .set-row [data-key="fullscreen"] { position: relative !important; left: 4000px !important; }',
+      append: '.set-panel .set-row .as-switch:has([data-key="fullscreen"]) { position: relative !important; left: 4000px !important; }',
       expectRed: /FINDING D3\/ink .*control\(present=true .*onscreen=false/,
     },
     {
