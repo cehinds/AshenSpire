@@ -73,12 +73,15 @@ test('a card shown on a recent reward screen is offered less often than a fresh 
 
 test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards (owner 2026-10-27)', () => {
   const isBasic = basicOrCantripMatcher(reg, fresh(1)), defs = new Map(cardsOf(fresh(1)).map(c => [c.id, c]));
-  const share = depths => {
+  const rules = fresh(1).gameProfile.content.rewards, minRank = rules.eligibility.combatCards.rankOfRarity;
+  const rankOf = c => Number.isSafeInteger(c.rank) ? c.rank : minRank?.[c.rarity] ?? 1;
+  const highRankMin = 2;
+  const share = (depths, registries = reg) => {
     let total = 0, basic = 0, mana = 0, high = 0;
     for (const depth of depths) for (let i = 0; i < 250; i++) {
-      const run = fresh(i + 1); run.floor = depth;
-      for (const o of gameProfileRewardOffers(reg, run, createRng(i * 7 + depth), { offerId: 'f' }).options) if (o.kind === 'combatCards') {
-        total++; if (isBasic(o.id)) basic++; if ((defs.get(o.id).manaCost || 0) > 0) mana++; if (['uncommon', 'rare'].includes(defs.get(o.id).rarity)) high++;
+      const run = fresh(i + 1, registries); run.floor = depth;
+      for (const o of gameProfileRewardOffers(registries, run, createRng(i * 7 + depth), { offerId: 'f' }).options) if (o.kind === 'combatCards') {
+        total++; if (isBasic(o.id)) basic++; if ((defs.get(o.id).manaCost || 0) > 0) mana++; if (rankOf(defs.get(o.id)) >= highRankMin) high++;
       }
     }
     return { basic: basic / total, mana: mana / total, high: high / total };
@@ -88,6 +91,9 @@ test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards 
   assert.ok(early.basic > late.basic + .05, `basic/cantrip early ${early.basic} vs late ${late.basic}`);
   assert.ok(late.mana > early.mana + .02, `mana late ${late.mana} vs early ${early.mana}`);
   assert.ok(late.high > early.high, `rank 2+ share at depth 4+ ${late.high} vs depths 1-3 ${early.high}`);
+  const flat = build({ 'reward-ranks': { ...NO_RESERVE['reward-ranks'], depthBias: { earlyMaxDepth: 3, early: { basicOrCantrip: 2.5, mana: 0.4 }, late: { mana: 1.8, highRankMin: 2, highRank: 1 } } } });
+  const lateFlat = share([4, 5, 6], flat);
+  assert.ok(late.high > lateFlat.high + .01, `highRank 1.5 late ${late.high} vs highRank 1 ${lateFlat.high}`);
 });
 
 test('Core 1 stays neutral: no depth, recent or ownership bias', () => {
