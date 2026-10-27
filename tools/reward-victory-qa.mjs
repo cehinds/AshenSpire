@@ -48,10 +48,13 @@ try {
     await page.screenshot({ path: `${output}/${width}-offers.png`, fullPage: true });
     await page.evaluate(async () => {
       const { mountRewards } = await import('/src/ui/screens/reward.js');
+      const { allocateAttributePoint } = await import('/src/model/levelup.js');
       const { registries, run } = window.rewardFixture;
       run.skills = { 'class:reaver': { level: 0, xp: 3 }, 'item:blade': { level: 0, xp: 2 } };
+      run.level = { xp: 40, level: 2, unspentPoints: 1 };
       mountRewards(document.querySelector('#app'), { registries, run, receiptOnly: true,
-        rewards: { title: 'Victory', xpGains: { level: 0, tracks: { 'class:reaver': 3, 'item:blade': 2 } }, xpBefore: { tracks: { 'class:reaver': { level: 0, xp: 0 }, 'item:blade': { level: 0, xp: 0 } } } },
+        rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'class:reaver': 3, 'item:blade': 2 } }, xpBefore: { character: { xp: 0, level: 2, unspentPoints: 1 }, tracks: { 'class:reaver': { level: 0, xp: 0 }, 'item:blade': { level: 0, xp: 0 } } } },
+        onAllocateStat: id => allocateAttributePoint(registries, run, id), onPersist() {},
         onDone() { window.rewardFixture.continued++; },
       });
     });
@@ -59,8 +62,10 @@ try {
     const continueButton = page.locator('#reward-continue');
     assert.equal(await continueButton.getAttribute('data-beat-action'), 'rewardContinue');
     assert.equal(await continueButton.getAttribute('data-hold-ms'), '600');
-    assert.equal(await page.locator('.reward-progress-row').count(), 2);
-    assert.equal(await page.locator('[data-track="character"]').count(), 0);
+    // Owner, 2026-10-27: the Core receipt shows the Character bar alone and offers the earned attribute point.
+    assert.equal(await page.locator('.reward-progress-row').count(), 1);
+    assert.equal(await page.locator('[role="progressbar"][data-track="character"]').count(), 1);
+    assert.equal(await page.locator('.reward-stat-allocation .reward-stat-add').count() > 0, true);
     await page.screenshot({ path: `${output}/${width}-victory.png`, fullPage: true });
     await continueButton.click();
     await page.locator('.confirmation-confirm').waitFor();
