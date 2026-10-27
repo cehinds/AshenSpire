@@ -52,7 +52,7 @@ function pools(registries, run) {
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
-    weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id))) : [],
+    weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id)) ) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
@@ -95,6 +95,12 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   // them instead. Claiming still accepts them, so an offer saved before this change stays claimable.
   const excludedFlasks=gameContent(run,'rewards')?.eligibility?.potions?.excludeKinds||[];
   if(excludedFlasks.length)available.potions=available.potions.filter(id=>!excludedFlasks.includes(flaskKindOf(registries.flasks.get(id))));
+  // Owner 2026-10-27: a reward screen (not the shop) never offers a weapon art the character already owns, when
+  // eligibility.weaponArts.skipOwned is set (Core 2).
+  if(source!=='shop'&&gameContent(run,'rewards')?.eligibility?.weaponArts?.skipOwned){
+    const owned=new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card));
+    available.weaponArts=available.weaponArts.filter(id=>!owned.has(id));
+  }
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
