@@ -433,19 +433,14 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       entries = new Map(combatants.map(entry => [entry.id, entry])); eligible = [...eligibleIds]; focused = focusedId;
       gate(); refreshDesired(); paint();
     },
-    // `keepLayout`: the fight is over but the screen stays up for the victory
-    // handoff. Deleting data-target-hud there re-lays the whole battlefield out
-    // in the legacy HUD (the field re-fits, every health bar jumps to the top
-    // strip) for the ~1 s until the spoils veil mounts; keep the mode and let
-    // the screen's teardown go with the node.
-    release({ keepLayout = false } = {}) {
+    release() {
       if (disposed) return; disposed = true; cancelHold(); inspectionPointer = null; readGesture = null; clickSeriesActivated = false; gestures.abort(); dwell.dispose(); if (raf !== null) cancelAnimationFrame(raf);
       for (const node of layer.querySelectorAll('.target-hud-detail')) clearTimeout(node.ashenRemove);
       combat.removeEventListener('pointermove', pointer); combat.removeEventListener('pointerleave', pointer);
       field.removeEventListener('focusin', focus); field.removeEventListener('focusout', focusOut);
       field.removeEventListener('battlefieldgeometrychange', scheduleGeometry);
       field.removeEventListener('formationlayoutchange', scheduleGeometry); window.removeEventListener('resize', resized);
-      observer.disconnect(); resize.disconnect(); clearPanels(); layer.remove(); cells.remove(); if (!keepLayout) delete combat.dataset.targetHud;
+      observer.disconnect(); resize.disconnect(); clearPanels(); layer.remove(); cells.remove(); delete combat.dataset.targetHud;
     },
   };
 }

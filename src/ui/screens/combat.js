@@ -3370,7 +3370,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // only thing that happens next is the spoils door. Close it, disable
           // it, and refuse the actions even if something re-opens it.
           fightOver = true;
-          targetHud.release({ keepLayout: true });
+          // release() drops data-target-hud from the root. Left off, the whole
+          // battlefield re-lays out in the legacy HUD (field re-fit, every health bar
+          // jumping to the top strip) for the ~0.8 s until the spoils veil mounts.
+          // The screen is torn down by main.js next, so keep the layout mode it was drawn in.
+          const hudMode = combatEl.dataset.targetHud;
+          targetHud.release();
+          if (hudMode != null) combatEl.dataset.targetHud = hudMode;
           closeQuickNav();
           if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);

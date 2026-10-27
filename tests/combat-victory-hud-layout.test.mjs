@@ -10,23 +10,22 @@ import { readFileSync } from 'node:fs';
 // re-fitted and every combat-health-row jumped to a strip at the top. The screen
 // is about to be torn down anyway, so the fight-over release keeps the mode.
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
-const hud = read('src/ui/components/combatTargetHud.js');
+const hudSource = read('src/ui/components/combatTargetHud.js');
 const combat = read('src/ui/screens/combat.js');
 const css = read('styles/combat-target-responsive.css');
 
-test('releasing the target HUD at fight end keeps the layout mode the battlefield is drawn in', () => {
-  const release = hud.slice(hud.indexOf('    release('), hud.indexOf('    release(') + 1500);
-  assert.match(release, /release\(\{ keepLayout = false \} = \{\}\)/);
-  assert.match(release, /if \(!keepLayout\) delete combat\.dataset\.targetHud;/);
-  assert.doesNotMatch(release.replace(/if \(!keepLayout\) delete combat\.dataset\.targetHud;/, ''), /delete combat\.dataset\.targetHud/,
-    'no unconditional delete of data-target-hud may remain in release()');
+test('combat.js restores the target-HUD layout mode right after releasing the HUD at fight end', () => {
+  const at = combat.indexOf('fightOver = true;');
+  const over = combat.slice(at, at + 1200);
+  const hud = over.indexOf('const hudMode = combatEl.dataset.targetHud;');
+  const rel = over.indexOf('targetHud.release();');
+  const back = over.indexOf('if (hudMode != null) combatEl.dataset.targetHud = hudMode;');
+  assert.ok(hud > 0 && rel > hud && back > rel, 'read the mode, release, then put the mode back');
 });
 
-test('combat.js releases with keepLayout when the fight is over and fully when the screen unmounts', () => {
-  const over = combat.slice(combat.indexOf('fightOver = true;'), combat.indexOf('fightOver = true;') + 120);
-  assert.match(over, /targetHud\.release\(\{ keepLayout: true \}\);/);
-  const unmount = combat.indexOf('targetHud.release();\n        battlefieldStage.release();');
-  assert.ok(unmount > 0, 'the unmount still releases the target HUD completely');
+test('the target HUD still drops its own layout mode on a full release (screen unmount)', () => {
+  assert.match(hudSource, /release\(\) \{[\s\S]{0,900}delete combat\.dataset\.targetHud;/);
+  assert.ok(combat.indexOf('targetHud.release();\n        battlefieldStage.release();') > 0, 'the unmount still releases the target HUD');
 });
 
 test('a fallen combatant takes its overhead HP bar with it under the target HUD', () => {
