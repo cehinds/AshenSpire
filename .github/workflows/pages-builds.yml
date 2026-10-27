@@ -149,12 +149,16 @@ on:
         default: ''
 
 concurrency:
-  # A workflow_run whose jobs all skip (the same clause the jobs' `if:` use is false) is still
-  # a queued run when it arrives. In `pages-builds` it would supersede a PENDING publication
-  # (a newer arrival replaces a queued run even with cancel-in-progress: false), so it goes to
-  # its own group, `pages-builds-skipped`. Only a workflow_run the jobs will run for, and every
-  # non-workflow_run event, use `pages-builds`.
-  group: ${{ (github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) && 'pages-builds' || 'pages-builds-skipped' }}
+  # Only a run the deploy job's `if:` can admit joins `pages-builds`: a release push, a
+  # build-stamp completion on dev (or a branch preview), a closed PR, and the owner's
+  # PUBLISH dispatch. A run that cannot deploy is still a queued run when it arrives, and a
+  # newer arrival replaces a PENDING run even with cancel-in-progress: false. So it takes
+  # a group of its own: a workflow_run the jobs skip goes to `pages-builds-skipped`; a push
+  # to test or main, and a dispatch without PUBLISH, assemble and stop, so they go to
+  # `pages-builds-assemble-only`. Measured 2026-10-26: the push to test from promotion PR
+  # 2344 (run 5268) superseded the queued dev publication (run 5266/5267, 0.7.1.1878),
+  # and the site stayed on 1876 while dev and test were on 1878.
+  group: ${{ (github.event_name == 'push' && github.ref_name == 'release' || github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner || github.event_name == 'workflow_run' && ((github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))))) && 'pages-builds' || (github.event_name == 'workflow_run' && 'pages-builds-skipped' || 'pages-builds-assemble-only') }}
   # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
   #
   # One group keeps publications serialised, which is right — two deploys to the
