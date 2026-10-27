@@ -5,7 +5,7 @@ import { primaryStatCards, classResourceGrid } from './creationCards.js';
 import { renderStatAllocationCard } from './statAllocationCard.js';
 import { attachTooltip, esc, hideTooltip, showTooltipFor } from './tooltip.js';
 import { progressionStats } from '../models/ProgressionInspectionModel.js';
-import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
+import { levelUpPlan, allocateAttributePoint } from '../../model/levelup.js';
 
 export function progressionTip(node, text) {
   const content = () => `<div class="tt-title">${esc(typeof text === 'function' ? text() : text)}</div>`;
@@ -94,7 +94,7 @@ export function openProgressionAllocation({ registries, run, settings = {}, onCh
     onClose: hideTooltip,
     onDone: () => {
       if (!count() || count() > levelUpPlan(registries, run).points) return;
-      for (const attr of plan.attributes) for (let n = 0; n < pending[attr.id]; n++) applyLevelUp(registries, run, attr.id);
+      for (const attr of plan.attributes) for (let n = 0; n < pending[attr.id]; n++) allocateAttributePoint(registries, run, attr.id);
       allocation.close();
       onChange?.();
     },
