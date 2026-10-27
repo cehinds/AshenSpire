@@ -49,27 +49,29 @@ function verifyPaths(map, rests) {
 }
 function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
   const b = map.bossIds.length;
-  assert.ok(b >= 1 && b <= 5);
+  assert.ok(b >= 1 && b <= 3, 'Core caps the branch count at three (owner, 2026-10-27)');
   assert.equal(map.bossId, map.bossIds[0]);
   assert.equal(new Set(map.bossIds.map(id => map.nodes[id].encounterId)).size, b, 'bosses are distinct');
-  assert.equal(map.shrineIds.length, b);
+  assert.equal(map.shrineIds.length, map.columns, 'every lane has its own pre-boss rest');
   assert.equal(map.shrineId, map.shrineIds[0]);
   const lanes = map.columns / b;
+  assert.equal(map.shrineIds.length, b * lanes);
   assert.ok(Number.isInteger(lanes) && lanes >= 1);
   assert.deepEqual(map.startIds, ['n1_0'], 'depth 1 is a single start node');
   assert.equal(map.nodes.n1_0.col, (map.columns - 1) / 2, 'the start node is centred');
   const secondDepth = Object.values(map.nodes).filter(node => node.floor === 2);
   assert.deepEqual([...map.nodes.n1_0.next].sort(), secondDepth.map(node => node.id).sort(), 'the start reaches the first node(s) of every branch');
   assert.equal(new Set(secondDepth.map(node => node.branch)).size, b, 'every branch is reachable from the start');
-  assert.equal(Object.keys(map.nodes).length, 1 + (count - 1 - rests.filter(f => f > 1).length) * map.columns + rests.filter(f => f > 1).length * b + b);
+  assert.equal(Object.keys(map.nodes).length, 1 + (count - 1 - rests.filter(f => f > 1).length) * map.columns + rests.filter(f => f > 1).length * map.columns + b);
   for (let k = 0; k < b; k++) {
     const own = Object.values(map.nodes).filter(node => node.branch === k);
-    assert.equal(own.filter(node => node.type === 'shrine').map(node => node.floor).sort((x, y) => x - y).join(), rests.join(), `branch ${k} has its own rest at every rest floor`);
+    // Owner 2026-10-27: a rest never forces a merge, so every lane keeps its own rest node at each rest floor.
+    for (const floor of rests) assert.equal(own.filter(node => node.type === 'shrine' && node.floor === floor).length, lanes, `branch ${k} keeps ${lanes} rests at floor ${floor}`);
     assert.ok(own.some(node => node.actualType === 'elite' && node.floor >= minimumThreatFloor), `branch ${k} has an elite`);
     assert.equal(own.filter(node => node.type === 'boss').length, 1);
     const preboss = own.filter(node => node.next.includes(map.bossIds[k]));
-    assert.ok(preboss.length && preboss.every(node => node.type === 'shrine' && node.floor === count));
-    assert.ok(map.shrineIds.includes(preboss[0].id));
+    assert.equal(preboss.length, lanes);
+    assert.ok(preboss.every(node => node.type === 'shrine' && node.floor === count && map.shrineIds.includes(node.id)));
   }
   for (const node of Object.values(map.nodes)) if (node.branch != null) for (const next of node.next) assert.equal(map.nodes[next].branch, node.branch, `${node.id} -> ${next} crosses branches`);
 }
@@ -95,7 +97,7 @@ test('every seeded core map splits into distinct-boss branches, each with its ow
       }
     }
   }
-  assert.deepEqual([...seen].sort(), [1, 2, 3, 4], 'branch count varies from 1 up to the bosses available (4 at act 3)');
+  assert.deepEqual([...seen].sort(), [1, 2, 3], 'branch count varies from 1 to the Core cap of 3');
   for (const tier of [1, 3]) {
     const counts = new Set();
     for (let seed = 1; seed <= 40; seed++) counts.add(buildActMap(reg, createRng(seed), run.seatOrder[tier - 1], tier).bossIds.length);
@@ -112,7 +114,11 @@ test('branch count never exceeds the distinct bosses of the act or maxBranches',
   const act3 = setup();
   let widest = 0;
   for (let seed = 1; seed <= 60; seed++) widest = Math.max(widest, buildActMap(act3.reg, createRng(seed), act3.run.seatOrder[2], 3).bossIds.length);
-  assert.equal(widest, 4, 'the final act offers four distinct bosses');
+  assert.equal(widest, 3, 'Core caps the branch count at 3 even where four bosses exist');
+  const uncapped = setup({ maxBranches: 5 });
+  let widest5 = 0;
+  for (let seed = 1; seed <= 60; seed++) widest5 = Math.max(widest5, buildActMap(uncapped.reg, createRng(seed), uncapped.run.seatOrder[2], 3).bossIds.length);
+  assert.equal(widest5, 4, 'the final act offers four distinct bosses');
 });
 test('branch width, length, rest placement and exposed node types follow JSON settings', () => {
   const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false, maxBranches: 1 });
@@ -121,11 +127,44 @@ test('branch width, length, rest placement and exposed node types follow JSON se
   assert.equal(map.floors, 6);
   verifyPaths(map, [2, 5]);
   assert.ok(Object.values(map.nodes).some(node => ['monster', 'merchant', 'treasure'].includes(node.type)));
-  assert.equal(map.nodes.n2_0.col, 1.5);
+  assert.equal(map.nodes.n2_0.col, 0, 'a rest sits on its own lane');
   const noRests = setup({ prebossNodes: 3, restsPerAct: 0, restFloors: [], requirePrebossRest: false, branchColumns: 2 });
   const noRestMap = buildActMap(noRests.reg, createRng(7), noRests.run.seatOrder[0], 1);
   verifyPaths(noRestMap, []);
   assert.equal(noRestMap.shrineId, null);
+});
+test('rests do not merge lanes and remerges are rare, seeded and never on every rest depth (owner, 2026-10-27)', () => {
+  const { reg, run } = setup();
+  let gaps = 0, crossed = 0, restGaps = 0, restCrossed = 0, branches = 0, allRestGapsCrossed = 0, forkNodes = 0, lanesTotal = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    for (let tier = 1; tier <= 3; tier++) {
+      const map = buildActMap(reg, createRng(seed), run.seatOrder[tier - 1], tier);
+      verifyPaths(map, [3, 6, 9]);
+      for (const node of Object.values(map.nodes)) for (const next of node.next) if (node.branch != null) assert.equal(map.nodes[next].branch, node.branch, 'no cross-branch edge');
+      const b = map.bossIds.length, lanes = map.columns / b;
+      for (let k = 0; k < b; k++) {
+        const own = Object.values(map.nodes).filter(node => node.branch === k);
+        let restGapAll = 0, restGapTotal = 0;
+        for (let floor = 2; floor < 9; floor++) {
+          const layer = own.filter(node => node.floor === floor);
+          assert.equal(layer.length, lanes, 'no depth collapses a branch to one node');
+          const cross = layer.filter(node => node.next.some(id => map.nodes[id].col !== node.col));
+          forkNodes += layer.filter(node => node.next.length > 1).length; lanesTotal += lanes;
+          gaps++; if (cross.length) crossed++;
+          assert.ok(cross.length <= 1, 'at most one remerge edge per gap');
+          if ([2, 5, 8].includes(floor)) { restGaps++; restGapTotal++; if (cross.length) { restCrossed++; restGapAll++; } }
+        }
+        branches++;
+        if (restGapAll === restGapTotal) allRestGapsCrossed++;
+      }
+      assert.deepEqual(map, buildActMap(reg, createRng(seed), run.seatOrder[tier - 1], tier), 'replays identically');
+    }
+  }
+  const share = crossed / gaps, restShare = restCrossed / restGaps;
+  assert.ok(share > 0.05 && share < 0.3, `remerge/fork share per gap is rare but not absent (got ${share.toFixed(3)})`);
+  assert.ok(restShare < 0.3, `rest depths rarely carry a remerge (got ${restShare.toFixed(3)})`);
+  assert.equal(allRestGapsCrossed, 0, 'no branch remerges on every rest depth');
+  console.log(`# remerge measured over 200 seeds x 3 acts: ${branches} branches, per-gap ${(share * 100).toFixed(1)}%, into-rest gaps ${(restShare * 100).toFixed(1)}%, forking nodes ${(forkNodes / lanesTotal * 100).toFixed(1)}%`);
 });
 test('a one-depth branched route links every entrance to its branch boss', () => {
   const named = setup();
