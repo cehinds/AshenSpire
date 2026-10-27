@@ -26,3 +26,17 @@ test('Core Armory sheet spends an earned attribute point without a rest visit', 
     sheet.close();
   });
 });
+
+test('the character sheet cadence line is profile-aware: Core says where points are spent, legacy keeps Level up', () => {
+  withModalDom(() => {
+    const core = createRunState({ seed: 73, classId: 'reaver', registries });
+    const sheet = openCharacterSheet({ registries, run: core });
+    assert.match(sheet.panel.querySelector('.cs-cadence').textContent, /Spend attribute points here or on the Victory screen/);
+    sheet.close();
+    const legacyRegistries = createRegistries(contentBundle);
+    const legacy = createRunState({ seed: 4242, classId: 'reaver', registries: legacyRegistries });
+    const old = openCharacterSheet({ registries: legacyRegistries, run: legacy });
+    assert.match(old.panel.querySelector('.cs-cadence').textContent, /Each level is claimed with Level up/);
+    old.close();
+  });
+});
