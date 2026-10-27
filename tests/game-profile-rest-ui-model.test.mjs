@@ -15,8 +15,8 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fixture() {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-ui-test' });
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = 'n3_0';
-  const visit = beginGameProfileRest(run, '1:n3_0');
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   run.hp = 1; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
   return { run, visit };
@@ -127,10 +127,10 @@ test('the editor follows an explicit nonempty configured basic policy without le
 test('arriving with full pools but a spent flask records the flask refill (review finding)', () => {
   const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
   run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
-  run.mapNodeId = 'n3_0';
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
   run.flaskCharges.hpCurrent = 0;
-  const visit = beginGameProfileRest(run, '1:n3_0');
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   assert.equal(visit.healed.hp + visit.healed.mana + visit.healed.stamina, 0);
   assert.ok(visit.healed.flaskHp > 0);
   assert.equal(restHealedAny(visit.healed), true);
