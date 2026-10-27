@@ -86,7 +86,7 @@ import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
+import { applyLevelUp, allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
 import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
 import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
@@ -4103,6 +4103,9 @@ function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   if (pending.victoryReceipt) return mountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
+    // Owner, 2026-10-27: earned attribute points are spent here too; each spend is saved at once.
+    onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
+    onPersist: persistContinuing,
     onDone: () => {
       acknowledgeVictoryReceipt(pending, persistContinuing);
       showGameProfileReward();

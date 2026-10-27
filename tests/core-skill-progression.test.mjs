@@ -12,6 +12,7 @@ import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from 
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
 import { openRunClassMastery, registriesForClassMastery, recordClassMasteryXp } from '../src/model/classMasteryRun.js';
+import { allocateAttributePoint } from '../src/model/levelup.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
@@ -539,6 +540,38 @@ test('Core Victory receipt draws the Character bar alone and Continue still work
     assert.equal(app.querySelectorAll('.reward-progress-row').length, 1);
     assert.ok(app.querySelector('[role="progressbar"][data-track="character"]'));
     app.querySelector('#reward-continue').click();
+  });
+});
+
+test('Core Victory receipt spends an earned attribute point and saves it at once', () => {
+  const { run } = live();
+  run.level.unspentPoints = 2;
+  const strength = run.attributes.strength, hp = run.hp;
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    let saves = 0;
+    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
+      onAllocateStat: id => allocateAttributePoint(reg, run, id),
+      rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    const add = app.querySelector('.reward-stat-row .reward-stat-add');
+    assert.ok(add, 'the receipt offers the allocation section');
+    app.querySelectorAll('.reward-stat-row')[0].querySelector('.reward-stat-add').click();
+    assert.equal(run.level.unspentPoints, 1);
+    assert.equal(saves, 1);
+    assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), 7);
+    assert.equal(run.hp, hp, 'a spend does not heal');
+    void strength;
+  });
+  // Without the callback (co-op, legacy) the section is absent.
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
+      rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    assert.equal(app.querySelector('.reward-stat-allocation'), null);
   });
 });
 

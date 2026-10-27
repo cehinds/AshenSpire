@@ -758,7 +758,7 @@ export function mountRewards(app, {
   }
 
   function statAllocationSection() {
-    if ((settings.levelUpAllocateStats !== true && checkpoint?.source !== 'character') || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
+    if ((settings.levelUpAllocateStats !== true && checkpoint?.source !== 'character' && !receiptOnly) || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
     const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
     const draw = () => {
       const points = run.level?.unspentPoints || 0;
@@ -902,7 +902,7 @@ export function mountRewards(app, {
       body: el('div', { class: 'reward-claim-layout', 'aria-busy': String(!xpAnimationDone || !!refill) }, [
         el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
-        checkpoint?.source === 'character' || levelLog.length ? statAllocationSection() : null,
+        checkpoint?.source === 'character' || levelLog.length || receiptOnly ? statAllocationSection() : null,
       ]),
       foot,
     });
