@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-27
 
-- **A simpler Victory screen, faster levels and points you can spend anywhere** ([#2345](https://github.com/cehinds/AshenSpire/pull/2345), `0.7.1.1878`). After a Core fight the Victory screen shows only your character level bar, character XP is 1.5×, and earned attribute points can be spent right on the Victory screen or on the Armory character sheet (which used to refuse them) without using up a rest.
+- **A simpler Victory screen, faster levels and points you can spend anywhere** ([#2345](https://github.com/cehinds/AshenSpire/pull/2345), `0.7.1.1880`). After a Core fight the Victory screen shows only your character level bar, character XP is 1.5×, and earned attribute points can be spent right on the Victory screen or on the Armory character sheet (which used to refuse them) without using up a rest.
 
 ## 2026-10-26
 
