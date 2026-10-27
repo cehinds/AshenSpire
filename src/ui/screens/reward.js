@@ -67,7 +67,7 @@ import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { acquireFlask, flaskAcquisitionPlan, flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unownedRelicChoices, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
-import { orderedXpRows, xpFillDurations } from '../../model/rewardXpPresentation.js';
+import { orderedXpRows, xpFillDurations, scopeXpProgress } from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
@@ -123,7 +123,9 @@ export function mountRewards(app, {
   // panel's whole claim is what this one moved, and a treasure room (or an
   // offer saved before the receipt existed) moved nothing, so it draws the
   // spoils alone rather than a heading with no gains under it.
-  let progress = rewards.xpGains || onClaimLevel ? rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity }) : null;
+  // The Victory receipt (receiptOnly) draws the Character bar alone; every other door draws all bars.
+  const scoped = (value) => receiptOnly ? scopeXpProgress(value) : value;
+  let progress = rewards.xpGains || onClaimLevel ? scoped(rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity })) : null;
   const standingProgress = !rewards.xpGains;
   const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
   let xpAnimationDone = !progress || !rewards.xpBefore || !orderedXpRows(progress).length || document.body.classList.contains('reduced-motion');
@@ -142,7 +144,7 @@ export function mountRewards(app, {
   const refreshProgress = () => {
     if (checkpoint?.rewards) rewards = checkpoint.rewards;
     plan = rewardPlan(rewards, planOptions());
-    progress = rewardProgress(registries, run, standingProgress ? null : rewards.xpGains, { maxSkills: Infinity });
+    progress = scoped(rewardProgress(registries, run, standingProgress ? null : rewards.xpGains, { maxSkills: Infinity }));
   };
   // All tracks finish before any claim becomes interactive. Claims never
   // consume another track's XP or depend on which ready button was first.
@@ -756,7 +758,7 @@ export function mountRewards(app, {
   }
 
   function statAllocationSection() {
-    if ((settings.levelUpAllocateStats !== true && checkpoint?.source !== 'character') || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
+    if ((settings.levelUpAllocateStats !== true && checkpoint?.source !== 'character' && !receiptOnly) || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
     const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
     const draw = () => {
       const points = run.level?.unspentPoints || 0;
@@ -900,7 +902,7 @@ export function mountRewards(app, {
       body: el('div', { class: 'reward-claim-layout', 'aria-busy': String(!xpAnimationDone || !!refill) }, [
         el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
-        checkpoint?.source === 'character' || levelLog.length ? statAllocationSection() : null,
+        checkpoint?.source === 'character' || levelLog.length || receiptOnly ? statAllocationSection() : null,
       ]),
       foot,
     });

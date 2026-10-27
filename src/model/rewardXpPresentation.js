@@ -17,3 +17,17 @@ export function xpFillDurations(entries, fullMeterMs) {
   const duration = Number.isFinite(fullMeterMs) ? Math.max(0, fullMeterMs) : 0;
   return distances.map(value => duration * value);
 }
+
+// The Core Victory receipt shows only the Character bar, the one labelled with
+// the class name (owner, 2026-10-27: "for now disable all but class level").
+// Presentation only: every track is still paid, banked and noticed elsewhere.
+export const VICTORY_RECEIPT_XP_KINDS = Object.freeze(['character']);
+
+export function scopeXpProgress(progress, kinds = VICTORY_RECEIPT_XP_KINDS) {
+  if (!progress) return progress;
+  return Object.freeze({
+    character: kinds.includes('character') ? progress.character : null,
+    skills: Object.freeze((progress.skills || []).filter(row => kinds.includes(row.kind))),
+    hidden: 0,
+  });
+}
