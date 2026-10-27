@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-27
 
-- **Branches that branch, full flasks each act, and a still battlefield** ([#2350](https://github.com/cehinds/AshenSpire/pull/2350), `0.7.1.1884`). Each act map's 1 to 3 main branches now open as a single path and split into sub-paths that sometimes cross before all joining at that branch's boss; both flasks refill to full at every new act; and the battlefield scenery no longer jumps when the last enemy falls, in solo or co-op.
+- **Branches that branch, full flasks each act, and a still battlefield** ([#2350](https://github.com/cehinds/AshenSpire/pull/2350), `0.7.1.1886`). Each act map's 1 to 3 main branches now open as a single path and split into sub-paths that sometimes cross before all joining at that branch's boss; both flasks refill to full at every new act; and the battlefield scenery no longer jumps when the last enemy falls, in solo or co-op.
 
 - **Branching maps and fresher rewards** ([#2348](https://github.com/cehinds/AshenSpire/pull/2348), `0.7.1.1884`). Each act map now splits from one start into 1 to 3 separate branches, every path has its own rests and its own elite, and paths only occasionally cross or rejoin before each branch's boss. Core fight rewards roll 70% cards, 20% potions and 10% weapons, cards you already own or were just offered turn up far less often, early nodes lean toward basic and cantrip cards and later nodes toward mana and higher-rank cards, and treasure chests keep their chance at relics, armor and weapons.
 
