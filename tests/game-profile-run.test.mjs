@@ -16,7 +16,9 @@ import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
-const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId='n3_0'; return beginGameProfileRest(run,'1:n3_0'); };
+// A branch may open narrow, so a rest depth's lane ids vary by seed: take the first rest on the floor.
+const restId=(run,floor)=>Object.values(run.mapGraph.nodes).find(n=>n.type==='shrine'&&n.floor===floor).id;
+const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
 
 test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
@@ -45,7 +47,8 @@ test('seeded route has nine preboss depths, a rest in every lane of every branch
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
   const b=map.bossIds.length;assert.ok(b>=1&&b<=5);assert.equal(map.floors,10);
-  assert.deepEqual(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor).sort(),Array.from({length:map.columns},()=>[3,6,9]).flat().sort());
+  for(let k=0;k<b;k++){const lanes=map.columns/b;for(const floor of [3,6,9]){const row=Object.values(map.nodes).filter(n=>n.branch===k&&n.floor===floor);assert.ok(row.length>=1&&row.length<=lanes&&row.every(n=>n.type==='shrine'),`branch ${k} floor ${floor} is all rests`);}}
+  assert.deepEqual([...new Set(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor))].sort(),[3,6,9]);
   const bosses=map.bossIds.map(id=>map.nodes[id]);assert.ok(bosses.every(n=>n.floor===10));assert.equal(new Set(bosses.map(n=>n.encounterId)).size,b);
   assert.notEqual(map.nodes[map.bossId].encounterId,prior);prior=map.nodes[map.bossId].encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
@@ -135,7 +138,7 @@ test('profile completion ledger persists independently from bounded history and 
 test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
  const run=fresh();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- run.mapNodeId='n6_0';beginGameProfileRest(run,'1:n6_0');commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxStamina,initial+1);
  const smith=fresh();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
@@ -158,7 +161,7 @@ test('core Smith is a free single-tier service without stones, with paid overrid
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef}),/spent/);
  const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,paid)),paid);
- const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n3_0';beginGameProfileRest(next);
+ const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId=restId(next,3);beginGameProfileRest(next);
  const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
 });
 
@@ -203,7 +206,7 @@ test('Smith tier bonuses share UI combat preview and real damage/block, survive 
  const after=fight();assert.equal(after.player.ratings.ar,beforeRatings.ar+1);assert.deepEqual(after.player.ratings,gameProfileRatingReceipt(reg,run).totals);assert.deepEqual(after.player.ratings,ratingReceipt(reg,run,{}).totals);
  const damaging=after.piles.hand.find(card=>(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'at least one real drawn attack gains damage after the weapon upgrade');
  const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').value,hp=after.enemies[0].hp;dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
- run.mapNodeId='n6_0';beginGameProfileRest(run);const armor=smithingPlan(reg,run).candidates.find(row=>row.itemKind==='armor');assert.ok(armor);const dr=gameProfileRatingReceipt(reg,run).totals.dr;commitGameProfileRest(reg,run,'smith',{itemRef:armor.itemRef});const blockFight=fight();assert.equal(blockFight.player.ratings.dr,dr+1);const defend=blockFight.piles.hand.find(card=>card.cardId==='core.defend');assert.ok(defend);const shown=previewCard(blockFight,defend.instanceId).values.find(e=>e.op==='block').value;assert.equal(shown,oldBlock+1);const blockBefore=blockFight.player.block;dispatch(blockFight,{type:'playCard',cardInstanceId:defend.instanceId});assert.equal(blockFight.player.block-blockBefore,shown);
+ run.mapNodeId=restId(run,6);beginGameProfileRest(run);const armor=smithingPlan(reg,run).candidates.find(row=>row.itemKind==='armor');assert.ok(armor);const dr=gameProfileRatingReceipt(reg,run).totals.dr;commitGameProfileRest(reg,run,'smith',{itemRef:armor.itemRef});const blockFight=fight();assert.equal(blockFight.player.ratings.dr,dr+1);const defend=blockFight.piles.hand.find(card=>card.cardId==='core.defend');assert.ok(defend);const shown=previewCard(blockFight,defend.instanceId).values.find(e=>e.op==='block').value;assert.equal(shown,oldBlock+1);const blockBefore=blockFight.player.block;dispatch(blockFight,{type:'playCard',cardInstanceId:defend.instanceId});assert.equal(blockFight.player.block-blockBefore,shown);
  const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));assert.deepEqual(gameProfileRatingReceipt(reg,restored).totals,gameProfileRatingReceipt(reg,run).totals);
  run.loadout.sets.rightHand[0]='straightSword';run.loadout.sets.armor[0]='vigil';assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,beforeRatings.ar);assert.equal(gameProfileRatingReceipt(reg,run).totals.dr,beforeRatings.dr);
  const off=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,0);
