@@ -3370,7 +3370,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // only thing that happens next is the spoils door. Close it, disable
           // it, and refuse the actions even if something re-opens it.
           fightOver = true;
-          targetHud.release();
+          targetHud.release({ keepLayout: true });
           closeQuickNav();
           if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);
