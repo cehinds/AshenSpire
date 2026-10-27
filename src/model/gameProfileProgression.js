@@ -100,6 +100,16 @@ function progressionEffects(registries, before, after, award, beforeState, settl
   return { version: 1, changes, nextMilestone };
 }
 
+// Owner, 2026-10-27: the Core Victory receipt shows only the Character bar, so a
+// won fight raises no class or weapon level popup after it. The levels are already
+// on the run; the notice rows are display only, so they are acknowledged silently.
+// A defeat keeps its notices. Returns true when it removed any.
+export function silenceVictoryLevelNotices(pending) {
+  if (!pending?.progression?.length || pending.after === 'defeat') return false;
+  delete pending.progression;
+  return true;
+}
+
 export function acknowledgeSkillLevelNotices(pending) {
   delete pending.progression;
 }
@@ -108,6 +118,13 @@ export function acknowledgeSkillLevelNotices(pending) {
 // retroactively slows its progression. New Core profiles author their own rate.
 export function configuredSkillXpMultiplier(subject, kind = 'weapon') {
   const value = gameModule(subject, 'progression')?.[kind === 'class' ? 'classXpMultiplier' : 'weaponXpMultiplier'];
+  return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
+}
+
+// Character-level XP rate (owner, 2026-10-27: raise XP gained). Missing means the old
+// rate, so a run snapshotted before the key existed is never retroactively sped up.
+export function configuredCharacterXpMultiplier(subject) {
+  const value = gameModule(subject, 'progression')?.characterXpMultiplier;
   return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
 }
 

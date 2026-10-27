@@ -1,6 +1,7 @@
 // Progression hub and read-only skill / feat inspection. Reward claims and
 // attribute allocation use their existing game writers.
 
+import { isConfiguredRun } from '../../model/gameProfileRun.js';
 import { el, meter, openModal, pill, prose, statusText, titleS, button } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { characterSheetModel, characterSheetRegistries, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
@@ -90,7 +91,7 @@ function characterPane(registries, run, sheet, state) {
     meter({ stack: true, tone: 'xp', label: progress.label, value: progress.value, pct: progress.pct,
       cur: progress.capped ? null : progress.xp, max: progress.capped ? null : progress.xpToNext, ariaLabel: progress.sense,
       attrs: { class: 'cs-meter' } }),
-    prose(t('characterSheet.character.cadence', { max: sheet.character.maxLevel }), { class: 'cs-cadence' }),
+    prose(t(isConfiguredRun(run) ? 'characterSheet.character.cadenceConfigured' : 'characterSheet.character.cadence', { max: sheet.character.maxLevel }), { class: 'cs-cadence' }),
     attributesCard({ registries, run, settings: state.settings, onChange: state.onChange ? () => { state.onChange(); state.show('character'); state.host.querySelector('.progression-points')?.focus({ preventScroll: true }); } : null }),
     characterStatsButton({ registries, run, settings: state.settings }),
     featButtons(registries, run, ownedFeatInspections(registries, run)),
