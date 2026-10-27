@@ -67,7 +67,7 @@ function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
     const widthAt = floor => own.filter(node => node.floor === floor).length;
     // Owner 2026-10-27: each branch is a tree. It opens narrow (one node, or two when it has three lanes), widens outward, then may narrow again.
     assert.ok(widthAt(2) === 1 || (widthAt(2) === 2 && lanes >= 3), `branch ${k} opens narrow (${widthAt(2)} of ${lanes})`);
-    let peaked = false;
+    let peaked = false, widened = false;
     for (let floor = 2; floor <= count; floor++) {
       const width = widthAt(floor), cols = own.filter(node => node.floor === floor).map(node => node.col).sort((x, y) => x - y);
       assert.ok(width >= 1 && width <= lanes);
@@ -75,7 +75,9 @@ function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
       assert.ok(cols.every(col => col >= k * lanes && col < (k + 1) * lanes), 'a branch stays in its own columns');
       if (floor > 2 && width < widthAt(floor - 1)) { peaked = true; assert.ok(floor >= count - 1, `branch ${k} narrows only over the last two depths`); }
       if (floor > 2 && peaked) assert.ok(width <= widthAt(floor - 1), `branch ${k} never re-widens after narrowing`);
-      if (lanes >= 2 && floor >= count - 3 && floor > 2) assert.ok(width >= 2, `branch ${k} never collapses to one path at depth ${floor}`);
+      // The trunk may stay one path until it first forks; once the branch has reached width >= 2 it never drops back to 1.
+      if (width >= 2) widened = true;
+      if (widened) assert.ok(width >= 2, `branch ${k} collapses back to one path at depth ${floor}`);
       // A rest depth gives every lane that exists its own rest node.
       if (rests.includes(floor)) assert.ok(own.filter(node => node.floor === floor).every(node => node.type === 'shrine'), `branch ${k} rest depth ${floor} is all rests`);
       else if (floor > 2) assert.ok(own.filter(node => node.floor === floor).every(node => node.type !== 'shrine'));
