@@ -1,6 +1,7 @@
 // Owner 2026-10-27: Core combat rewards are 70% cards / 20% potions / 10% weapons, lean hard to cards the character does not
 // own, avoid the last reward screens, and favour basic/cantrip cards early and mana-cost cards after map depth 3.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -113,4 +114,16 @@ test('treasure chests keep relics, armor and weapons; combat offers never roll r
   const treasure = kinds('treasure'), combat = kinds('combat');
   for (const kind of ['relics', 'armor', 'weapons']) assert.ok(treasure.has(kind), `treasure offers include ${kind}`);
   for (const kind of ['relics', 'armor']) assert.ok(!combat.has(kind), `combat offers never include ${kind}`);
+});
+
+test('treasure rolls its own 60/10/30 table (cards 60, equipment 10, potions 30) and main.js asks for source treasure', () => {
+  const registries = build({ 'reward-ranks': NO_RESERVE['reward-ranks'], rewards: { offerCount: 1 } }), counts = {};
+  for (let i = 0; i < 1000; i++) {
+    const [option] = gameProfileRewardOffers(registries, fresh(i + 1, registries), createRng(9000 + i), { offerId: 't', source: 'treasure' }).options;
+    const kind = ['combatCards', 'weaponArts'].includes(option.kind) ? 'cards' : ['weapons', 'armor', 'relics'].includes(option.kind) ? 'equipment' : option.kind;
+    counts[kind] = (counts[kind] || 0) + 1;
+  }
+  for (const [kind, share] of Object.entries({ cards: .6, equipment: .1, potions: .3 })) assert.ok(Math.abs((counts[kind] || 0) / 1000 - share) <= .03, JSON.stringify(counts));
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /case 'treasure': \{\s*if \(isConfiguredRun\(run\)\) return beginGameProfileReward\(\{ source: 'treasure'/, 'the treasure node must open a treasure-source reward');
 });
