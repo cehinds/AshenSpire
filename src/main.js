@@ -66,7 +66,7 @@ import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, smithingRewardId, smithingRewardPays } from './model/smithing.js';
-import { applyNodeRefill } from './model/nodeRefill.js';
+import { applyNodeRefill, refillFlasksAtActChange } from './model/nodeRefill.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
 import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
@@ -1537,6 +1537,8 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
+  // Owner 2026-10-27: both flask pools refill at every act change (configured runs; legacy keeps its behaviour).
+  refillFlasksAtActChange(run);
   run.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   persistOrWarn(); // reached from a boss reward: a full store must not strand the climb
   showMap();

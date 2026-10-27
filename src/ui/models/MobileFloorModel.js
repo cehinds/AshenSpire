@@ -20,3 +20,15 @@ export function mobileFloorShadowTop(shadows) {
   const band = ['A','B','C'].find(band => occupied.some(row => row.band === band));
   return band ? Math.min(...occupied.filter(row => row.band === band).map(row => row.top)) : undefined;
 }
+
+// The floor is anchored to the living enemies' shadows. When the last one dies
+// there is nothing to measure, and an undefined anchor drops the ground layer's
+// extension behind the hand: the whole painted floor jumps to its authored
+// place for the beat between the killing blow and the spoils. A fight keeps the
+// last anchor it measured, so the backdrop holds still once the field is empty.
+// `state` is the fight's layout state: co-op re-wires the stage on every render,
+// so the memory cannot live in a per-mount closure.
+export function holdFloorShadowTop(state, top) {
+  if (Number.isFinite(top)) state.floorShadowTop = top;
+  return state.floorShadowTop;
+}
