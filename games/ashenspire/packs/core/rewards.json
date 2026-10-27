@@ -231,5 +231,31 @@
         "armor"
       ]
     }
+  ],
+  "treasureRewardGroups": [
+    {
+      "id": "cards",
+      "weight": 60,
+      "categories": [
+        "combatCards",
+        "weaponArts"
+      ]
+    },
+    {
+      "id": "equipment",
+      "weight": 10,
+      "categories": [
+        "weapons",
+        "armor",
+        "relics"
+      ]
+    },
+    {
+      "id": "consumables",
+      "weight": 30,
+      "categories": [
+        "potions"
+      ]
+    }
   ]
 }

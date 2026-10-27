@@ -2971,7 +2971,7 @@ function enterNode(nodeId) {
       return showShop();
     }
     case 'treasure': {
-      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'combat', after: 'map' });
+      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'treasure', after: 'map' });
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
       // Treasure pays Smithing Stones through the combat door's faucet (SPEC

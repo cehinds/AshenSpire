@@ -164,7 +164,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
   return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
-    groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):[]});
+    groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 export function claimGameProfileReward(registries,run,offerId,index) {
   const offer=run.gameProfileRewardOffers?.[offerId];
