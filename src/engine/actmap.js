@@ -208,15 +208,46 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
 
 
 /**
- * Branched act map (owner, 2026-10-25). Depth 1 is ONE start node (n1_0, centred) that reaches every branch's first lane(s); it refills HP and flasks when routes.startNodeRefills is not false. From depth 2 each
- * branch k is its own subgraph of L lanes: its own rest node in every lane on every rest floor, at least one elite per lane at or past minimumThreatFloor, and
- * its own boss `boss_k`. Edges after depth 1 never leave a branch, so a branch's rests are never on another branch's route.
+ * Branched act map (owner, 2026-10-25; sub-branches 2026-10-27). Depth 1 is ONE start node (n1_0, centred) that reaches the opening node(s) of every branch; it refills
+ * HP and flasks when routes.startNodeRefills is not false. From depth 2 each main branch k is a TREE inside up to L lanes that joins at its own boss `boss_k`:
+ * it opens narrow (one node, or two when L >= 3), forks outward lane by lane over the next depths (FORK_PERCENT per boundary node per depth, forced so the branch
+ * is full by depth count-3), may narrow again over the last two depths (never below two lanes, so no rest depth collapses to one path), and every path ends at the
+ * branch's boss. Rests: one per lane that exists on a rest depth. Elites: every lane holds at least one elite at or past minimumThreatFloor on a depth where the
+ * lane exists (a lane too short to have one has none). Edges after depth 1 never leave a branch. REMERGE_PERCENT of in-branch gaps add one neighbour edge.
  *
  * b = rng.int('map', 1, min(maxBranches, distinct bosses)); the bosses are the first b of a seeded shuffle, so they are distinct.
  * L = clamp(floor(2 * branchColumns / b), 1, branchColumns): 3 lanes for b 1-2, 2 for b 3, 1 for b 4-5. That caps the board at
  * 2 * branchColumns columns (6 today), the widest the 390 px map frames with free pan, while a lone branch keeps the old width.
  */
 const REMERGE_PERCENT = 18;
+const FORK_PERCENT = 40;
+const NARROW_PERCENT = 25;
+// Per-branch lane occupancy: { [floor]: { lo, hi } } (contiguous lanes, branch-local), plus the fork/narrow edges that make the tree.
+function drawBranchShape(rng, lanes, count) {
+  const active = {}, edges = []; // edges: [floor, fromLane, toLane] join floor -> floor + 1, branch-local lanes
+  if (count < 2) return { active, edges };
+  const width = lanes >= 3 && rng.chance('map', 50) ? 2 : 1;
+  const lo0 = rng.int('map', Math.floor((lanes - width) / 2), Math.ceil((lanes - width) / 2));
+  active[2] = { lo: lo0, hi: lo0 + width - 1 };
+  const fillBy = Math.max(3, count - 3);
+  for (let floor = 2; floor < count; floor++) {
+    const { lo, hi } = active[floor], next = { lo, hi };
+    if (floor < fillBy) {
+      const left = rng.chance('map', FORK_PERCENT), right = rng.chance('map', FORK_PERCENT);
+      const left0 = lo, right0 = hi, remaining = fillBy - floor;
+      if (lo > 0 && (left || lo >= remaining)) { next.lo = lo - 1; edges.push([floor, left0, lo - 1]); }
+      if (hi < lanes - 1 && (right || lanes - 1 - hi >= remaining)) { next.hi = hi + 1; edges.push([floor, right0, hi + 1]); }
+    } else {
+      const narrow = rng.chance('map', NARROW_PERCENT), dropLeft = rng.chance('map', 50);
+      if (floor >= count - 2 && narrow && hi - lo + 1 >= 3) {
+        if (dropLeft) { next.lo = lo + 1; edges.push([floor, lo, lo + 1]); }
+        else { next.hi = hi - 1; edges.push([floor, hi, hi - 1]); }
+      }
+    }
+    active[floor + 1] = next;
+  }
+  return { active, edges };
+}
 function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const { rules, count, columns, minimumThreatFloor, restFloors, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history } = ctx;
   const maxBranches = rules.maxBranches;
@@ -228,11 +259,17 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const lanes = Math.max(1, Math.min(columns, Math.floor(2 * columns / branchCount)));
   const total = branchCount * lanes;
   const restSet = new Set(restFloors);
-  // One guaranteed elite slot per lane (owner, 2026-10-27: lanes are straight, so every lane choice meets an elite), drawn before any node so it cannot depend on how the lanes roll.
-  const eliteFloors = [];
-  for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) if (!restSet.has(floor) && alternatives.includes('elite')) eliteFloors.push(floor);
+  const nodeId = (floor, globalLane) => `n${floor}_${globalLane}`;
+  // Every branch's tree shape is drawn first, so what a lane holds cannot depend on how its nodes roll.
+  const shapes = Array.from({ length: branchCount }, () => drawBranchShape(rng, lanes, count));
+  const laneAt = (k, floor, lane) => { const a = shapes[k].active[floor]; return !!a && lane >= a.lo && lane <= a.hi; };
+  // One guaranteed elite slot per lane (owner, 2026-10-27): drawn from the depths where that lane exists, before any node rolls.
   const guaranteed = new Set();
-  if (eliteFloors.length) for (let lane = 0; lane < total; lane++) guaranteed.add(`${rng.pick('map', eliteFloors)}:${lane}`);
+  if (alternatives.includes('elite')) for (let k = 0; k < branchCount; k++) for (let lane = 0; lane < lanes; lane++) {
+    const floors = [];
+    for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) if (!restSet.has(floor) && laneAt(k, floor, lane)) floors.push(floor);
+    if (floors.length) guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
+  }
   const nodes = {}, layers = [], seenEvents = [];
   const makeNode = (id, floor, col, branch, rest, lane) => {
     const choices = alternatives.filter(type => type !== 'elite' || floor >= minimumThreatFloor);
@@ -266,8 +303,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
       if (rules.startNodeRefills !== false) nodes.n1_0.refill = true;
     }
     else for (let k = 0; k < branchCount; k++) {
-      // Owner 2026-10-27: a rest depth gives every lane its own rest node, so a rest never forces a merge.
-      for (let j = 0; j < lanes; j++) layer.push(makeNode(`n${floor}_${k * lanes + j}`, floor, k * lanes + j, k, restSet.has(floor), k * lanes + j));
+      for (let j = 0; j < lanes; j++) if (laneAt(k, floor, j)) layer.push(makeNode(nodeId(floor, k * lanes + j), floor, k * lanes + j, k, restSet.has(floor), k * lanes + j));
     }
     layers.push(layer);
   }
@@ -277,41 +313,39 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     return id;
   });
   layers.push(bossIds);
-  // Edges: depth 1 fans out to every branch; afterwards every node continues straight down its own lane, and the boss is each
-  // branch's only guaranteed join. Owner 2026-10-27: remerges/forks are rare and seeded. Per branch and per gap between two
-  // in-branch depths, a 'map' draw (REMERGE_PERCENT) may add ONE edge between neighbouring lanes (so one node forks and its
-  // neighbour gains a second parent). Every draw is made so the stream is fixed; a branch never crosses on every rest-depth gap.
-  const crossings = new Map(); // `${depth}:${branch}` -> [fromId, toId]
-  const lastInner = count - 1; // layers index of the last non-boss depth is count-1
-  for (let depth = 1; depth < lastInner; depth++) {
+  // Edges: depth 1 reaches every branch's opening node(s); inside a branch each node continues straight down its lane, the fork /
+  // narrow edges drawn in the shape add the tree, and the boss is each branch's join. Remerges (owner 2026-10-27: "it can remerge
+  // but not consistently"): per branch and per gap between two in-branch depths one 'map' draw (REMERGE_PERCENT) may add ONE edge
+  // between neighbouring lanes that exist on both depths. Every draw is made so the stream is fixed; a branch never remerges
+  // into every rest depth.
+  const link = (from, to) => { if (nodes[from] && nodes[to] && !nodes[from].next.includes(to)) nodes[from].next.push(to); };
+  for (const id of layers[0]) for (const to of layers[1] || []) link(id, to);
+  for (let k = 0; k < branchCount; k++) {
+    const base = k * lanes;
+    for (let floor = 2; floor < count; floor++) {
+      for (let j = 0; j < lanes; j++) if (laneAt(k, floor, j) && laneAt(k, floor + 1, j)) link(nodeId(floor, base + j), nodeId(floor + 1, base + j));
+    }
+    for (const [floor, from, to] of shapes[k].edges) link(nodeId(floor, base + from), nodeId(floor + 1, base + to));
+    if (count >= 2) for (let j = 0; j < lanes; j++) if (laneAt(k, count, j)) link(nodeId(count, base + j), bossIds[k]);
+  }
+  const crossings = new Map(); // `${floor}:${branch}` -> [fromId, toId]
+  for (let floor = 2; floor < count; floor++) {
     for (let k = 0; k < branchCount; k++) {
-      if (lanes < 2) continue;
-      const hit = rng.chance('map', REMERGE_PERCENT);
-      const pair = rng.int('map', 0, lanes - 2), forward = rng.chance('map', 50);
-      if (!hit) continue;
-      const lo = layers[depth].find(id => nodes[id].branch === k && nodes[id].col === k * lanes + pair);
-      const hi = layers[depth].find(id => nodes[id].branch === k && nodes[id].col === k * lanes + pair + 1);
-      const loNext = layers[depth + 1].find(id => nodes[id].col === nodes[lo].col), hiNext = layers[depth + 1].find(id => nodes[id].col === nodes[hi].col);
-      crossings.set(`${depth}:${k}`, forward ? [lo, hiNext] : [hi, loNext]);
+      const hit = rng.chance('map', REMERGE_PERCENT), pick = rng.int('map', 0, Math.max(0, lanes - 2)), forward = rng.chance('map', 50);
+      const pairs = [];
+      for (let j = 0; j + 1 < lanes; j++) if ([floor, floor + 1].every(f => laneAt(k, f, j) && laneAt(k, f, j + 1))) pairs.push(j);
+      if (!hit || !pairs.length) continue;
+      const j = pairs[pick % pairs.length], g = k * lanes + j;
+      crossings.set(`${floor}:${k}`, forward ? [nodeId(floor, g), nodeId(floor + 1, g + 1)] : [nodeId(floor, g + 1), nodeId(floor + 1, g)]);
     }
   }
   for (let k = 0; k < branchCount; k++) {
     const intoRest = [];
-    for (let depth = 1; depth < lastInner; depth++) if (restSet.has(depth + 2)) intoRest.push(`${depth}:${k}`);
+    for (let floor = 2; floor < count; floor++) if (restSet.has(floor + 1)) intoRest.push(`${floor}:${k}`);
     if (intoRest.length > 1 && intoRest.every(key => crossings.has(key))) crossings.delete(intoRest[intoRest.length - 1]);
   }
-  for (let depth = 0; depth < layers.length - 1; depth++) {
-    for (const id of layers[depth]) {
-      const from = nodes[id];
-      from.next = layers[depth + 1].filter((target) => {
-        const to = nodes[target];
-        if (depth === 0) return true; // the single start node reaches the first node(s) of every branch
-        if (from.branch !== to.branch) return false;
-        return to.type === 'boss' || from.col === to.col;
-      });
-    }
-  }
-  for (const [, [fromId, toId]] of crossings) nodes[fromId].next.push(toId);
+  for (const [, [fromId, toId]] of crossings) link(fromId, toId);
+  for (const id of Object.keys(nodes)) nodes[id].next.sort((a, b) => nodes[a].col - nodes[b].col || (a < b ? -1 : 1));
   const shrineIds = restSet.has(count) ? layers[count - 1].filter(id => nodes[id].actualType === 'rest') : [];
   const branches = bosses.map((boss, k) => ({ index: k, bossId: bossIds[k], encounterId: boss.id, firstCol: k * lanes, lanes, restIds: layers.flat().filter(id => nodes[id].branch === k && nodes[id].actualType === 'rest') }));
   return { nodes, startIds: layers[0], shrineId: shrineIds[0] ?? null, shrineIds, bossId: bossIds[0], bossIds, branches, floors: count + 1, columns: total, gameProfileHash: registries.gameProfile.hash };

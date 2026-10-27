@@ -23,10 +23,14 @@ test('Core has three rest sites per act and the floor before the boss is always 
       for (const bossId of map.bossIds) {
         const branch = map.nodes[bossId].branch;
         const rests = Object.values(map.nodes).filter(node => node.type === 'shrine' && node.branch === branch);
-        // Owner 2026-10-27: every lane has its own rest at each rest floor (a rest never merges lanes).
+        // Owner 2026-10-27: every lane that exists at a rest floor has its own rest (a rest never merges lanes), so a rest floor is
+        // all rests, one to `lanes` wide, as wide as the branch is at that depth.
         const lanes = map.columns / map.bossIds.length;
         assert.deepEqual([...new Set(rests.map(node => node.floor))].sort((a, b) => a - b), [3, 6, 9]);
-        assert.equal(rests.length, 3 * lanes);
+        for (const floor of [3, 6, 9]) {
+          const row = Object.values(map.nodes).filter(node => node.branch === branch && node.floor === floor);
+          assert.ok(row.length >= 1 && row.length <= lanes && row.every(node => node.type === 'shrine'), `branch ${branch} floor ${floor} is all rests`);
+        }
         const before = Object.values(map.nodes).filter(node => node.next.includes(bossId));
         assert.ok(before.length && before.every(node => node.type === 'shrine' && node.floor === map.nodes[bossId].floor - 1));
       }
