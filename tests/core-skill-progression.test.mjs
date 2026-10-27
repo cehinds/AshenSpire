@@ -12,7 +12,7 @@ import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from 
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
 import { openRunClassMastery, registriesForClassMastery, recordClassMasteryXp } from '../src/model/classMasteryRun.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices } from '../src/model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -327,7 +327,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   const saves = createSaveManager(createMemoryStorage());
   const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
-    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices };
+    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -554,7 +554,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
-    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, gameProfileRewardOffers };
+    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
@@ -609,4 +609,13 @@ test('a won Core fight silences level notices after the receipt; a defeat keeps 
   assert.equal(silenceVictoryLevelNotices(lost), false);
   assert.equal(lost.progression.length, 1);
   assert.equal(silenceVictoryLevelNotices({ after: 'map' }), false);
+});
+
+test('Core pays character XP at the authored 1.5 rate and a snapshot without the key keeps 1', async () => {
+  const { configuredCharacterXpMultiplier } = await import('../src/model/gameProfileProgression.js');
+  assert.equal(gameModule(profile, 'progression').characterXpMultiplier, 1.5);
+  assert.equal(configuredCharacterXpMultiplier({ gameProfile: { modules: { progression: { mode: 'configured' } } } }), 1);
+  assert.equal(configuredCharacterXpMultiplier({ gameProfile: { modules: { progression: { characterXpMultiplier: 99 } } } }), 10);
+  assert.equal(gameModule(profile, 'progression').classXpMultiplier, 1);
+  assert.equal(gameModule(profile, 'progression').weaponXpMultiplier, 1);
 });

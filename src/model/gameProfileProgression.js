@@ -121,6 +121,13 @@ export function configuredSkillXpMultiplier(subject, kind = 'weapon') {
   return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
 }
 
+// Character-level XP rate (owner, 2026-10-27: raise XP gained). Missing means the old
+// rate, so a run snapshotted before the key existed is never retroactively sped up.
+export function configuredCharacterXpMultiplier(subject) {
+  const value = gameModule(subject, 'progression')?.characterXpMultiplier;
+  return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
+}
+
 // Core earns character XP and levels like any configured profile: the bundle's
 // progression.characterLevels setting decides. Old saves that carried
 // characterLevels:false keep their unspent points claimable (the rest service
