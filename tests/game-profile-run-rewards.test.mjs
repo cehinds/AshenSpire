@@ -18,11 +18,11 @@ test('mixed reward is stable across reload, choose one once, card acquisition do
  claimGameProfileReward(reg,run,'level1',0);assert.deepEqual(run.deck,deck);assert.equal(run.sideboard.length,1);
  assert.throws(()=>claimGameProfileReward(reg,run,'level1',1),/claimed/);
 });
-test('all six categories can occur and configured count overrides apply',()=>{
+test('the owner 70/20/10 mix: cards, potions and weapons occur; retired relics/armor and the owned weapon art do not (2026-10-27)',()=>{
  const categories=new Set();for(let seed=0;seed<300;seed++){
   const run=fresh(),o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:'fight'});assert.equal(o.options.length,3);o.options.forEach(row=>categories.add(row.kind));
  }
- assert.deepEqual([...categories].sort(),['armor','combatCards','potions','relics','weaponArts','weapons'].sort());
+ assert.deepEqual([...categories].sort(),['combatCards','potions','weapons'].sort());
  const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rewards:{offerCount:2,takeCount:1}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile),run=createRunState({seed:1,classId:'reaver',registries:r});
  assert.equal(gameProfileRewardOffers(r,run,createRng(2),{offerId:'fight'}).options.length,2);
