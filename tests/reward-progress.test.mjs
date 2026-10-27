@@ -810,3 +810,15 @@ test('a class claim adds its newly paid skill rows once and refills bonuses with
     app.remove();
   } finally { Object.assign(globalThis, saved); }
 });
+
+test('scopeXpProgress keeps only the allowed bar kinds and leaves the input alone', async () => {
+  const { scopeXpProgress } = await import('../src/model/rewardXpPresentation.js');
+  const progress = Object.freeze({ character: { kind: 'character', id: 'character' },
+    skills: [{ kind: 'class', id: 'class:reaver' }, { kind: 'weapon', id: 'item:blade' }], hidden: 3 });
+  const scoped = scopeXpProgress(progress);
+  assert.equal(scoped.character.id, 'character');
+  assert.deepEqual(scoped.skills, []);
+  assert.equal(progress.skills.length, 2);
+  assert.deepEqual(scopeXpProgress(progress, ['class']).skills.map(row => row.id), ['class:reaver']);
+  assert.equal(scopeXpProgress(null), null);
+});

@@ -17,6 +17,14 @@
   gap:calc(5px / var(--ui-zoom,1)); pointer-events:none; padding:0; margin:0; transform:none; translate:none;
 }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { pointer-events:auto; }
+/* A fallen combatant takes its overhead HP bar (and intent) with it. The
+   dead frame fades to .25 for the body, but the rack is not a child of the
+   faded stack, so without this the 0/N bar of every dead enemy stayed on the
+   field through the victory beat and behind the spoils veil. Transitions are
+   already off under reduced motion (base.css), so it simply hides there. */
+:root .combat[data-target-hud='true'] .combatant.dead > .target-hud-overhead-meters {
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .25s ease, visibility 0s linear .25s;
+}
 :root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters {
   display:flex!important; top:var(--combat-selected-intent-top,calc(var(--combat-mini-hud-top,-63px) + 22px / var(--ui-zoom,1)));
   left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
