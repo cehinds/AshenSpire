@@ -5,7 +5,7 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from './model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
@@ -4108,6 +4108,7 @@ function showGameProfileReward() {
       showGameProfileReward();
     },
   });
+  if (silenceVictoryLevelNotices(pending)) persistOrWarn();
   if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, registries, run, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
     persistOrWarn();

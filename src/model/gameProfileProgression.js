@@ -100,6 +100,16 @@ function progressionEffects(registries, before, after, award, beforeState, settl
   return { version: 1, changes, nextMilestone };
 }
 
+// Owner, 2026-10-27: the Core Victory receipt shows only the Character bar, so a
+// won fight raises no class or weapon level popup after it. The levels are already
+// on the run; the notice rows are display only, so they are acknowledged silently.
+// A defeat keeps its notices. Returns true when it removed any.
+export function silenceVictoryLevelNotices(pending) {
+  if (!pending?.progression?.length || pending.after === 'defeat') return false;
+  delete pending.progression;
+  return true;
+}
+
 export function acknowledgeSkillLevelNotices(pending) {
   delete pending.progression;
 }
