@@ -15,12 +15,12 @@ const combat = read('src/ui/screens/combat.js');
 const css = read('styles/combat-target-responsive.css');
 
 test('combat.js restores the target-HUD layout mode right after releasing the HUD at fight end', () => {
-  const at = combat.indexOf('fightOver = true;');
+  const at = combat.indexOf('const hudMode = combatEl.dataset.targetHud;');
   const over = combat.slice(at, at + 1200);
-  const hud = over.indexOf('const hudMode = combatEl.dataset.targetHud;');
+  const end = over.indexOf('fightOver = true;');
   const rel = over.indexOf('targetHud.release();');
   const back = over.indexOf('if (hudMode != null) combatEl.dataset.targetHud = hudMode;');
-  assert.ok(hud > 0 && rel > hud && back > rel, 'read the mode, release, then put the mode back');
+  assert.ok(at > 0 && end > 0 && rel > end && back > rel, 'read the mode, release, then put the mode back');
 });
 
 test('the target HUD still drops its own layout mode on a full release (screen unmount)', () => {
