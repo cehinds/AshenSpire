@@ -209,7 +209,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
 
 /**
  * Branched act map (owner, 2026-10-25). Depth 1 is ONE start node (n1_0, centred) that reaches every branch's first lane(s); it refills HP and flasks when routes.startNodeRefills is not false. From depth 2 each
- * branch k is its own subgraph of L lanes: one rest node per rest floor, at least one elite at or past minimumThreatFloor, and
+ * branch k is its own subgraph of L lanes: its own rest node in every lane on every rest floor, at least one elite per lane at or past minimumThreatFloor, and
  * its own boss `boss_k`. Edges after depth 1 never leave a branch, so a branch's rests are never on another branch's route.
  *
  * b = rng.int('map', 1, min(maxBranches, distinct bosses)); the bosses are the first b of a seeded shuffle, so they are distinct.
@@ -228,11 +228,11 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const lanes = Math.max(1, Math.min(columns, Math.floor(2 * columns / branchCount)));
   const total = branchCount * lanes;
   const restSet = new Set(restFloors);
-  // One guaranteed elite slot per branch, drawn before any node so it cannot depend on how the lanes roll.
+  // One guaranteed elite slot per lane (owner, 2026-10-27: lanes are straight, so every lane choice meets an elite), drawn before any node so it cannot depend on how the lanes roll.
   const eliteFloors = [];
   for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) if (!restSet.has(floor) && alternatives.includes('elite')) eliteFloors.push(floor);
   const guaranteed = new Set();
-  if (eliteFloors.length) for (let k = 0; k < branchCount; k++) guaranteed.add(`${rng.pick('map', eliteFloors)}:${k * lanes + rng.int('map', 0, lanes - 1)}`);
+  if (eliteFloors.length) for (let lane = 0; lane < total; lane++) guaranteed.add(`${rng.pick('map', eliteFloors)}:${lane}`);
   const nodes = {}, layers = [], seenEvents = [];
   const makeNode = (id, floor, col, branch, rest, lane) => {
     const choices = alternatives.filter(type => type !== 'elite' || floor >= minimumThreatFloor);

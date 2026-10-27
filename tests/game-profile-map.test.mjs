@@ -68,6 +68,8 @@ function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
     // Owner 2026-10-27: a rest never forces a merge, so every lane keeps its own rest node at each rest floor.
     for (const floor of rests) assert.equal(own.filter(node => node.type === 'shrine' && node.floor === floor).length, lanes, `branch ${k} keeps ${lanes} rests at floor ${floor}`);
     assert.ok(own.some(node => node.actualType === 'elite' && node.floor >= minimumThreatFloor), `branch ${k} has an elite`);
+    // Lanes descend straight, so the elite guarantee holds per lane: every lane has an elite at or past the threat floor.
+    for (const col of new Set(own.filter(node => node.type !== 'boss').map(node => node.col))) assert.ok(own.some(node => node.col === col && node.actualType === 'elite' && node.floor >= minimumThreatFloor), `branch ${k} lane at column ${col} has an elite`);
     assert.equal(own.filter(node => node.type === 'boss').length, 1);
     const preboss = own.filter(node => node.next.includes(map.bossIds[k]));
     assert.equal(preboss.length, lanes);
