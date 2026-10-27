@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mobileFloorLayer, mobileFloorShadowTop } from '../src/ui/models/MobileFloorModel.js';
+import { mobileFloorLayer, mobileFloorShadowTop, holdFloorShadowTop } from '../src/ui/models/MobileFloorModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 import { alternativeArtCatalog } from '../src/ui/alternativeArtCatalog.js';
 
@@ -38,4 +38,13 @@ test('ground extends beneath the hand without lowering its painted horizon', () 
   assert(Math.abs(result.y + result.height - 844) < 1e-6);
   assert(Math.abs(result.width / result.height - layer.width / layer.height) < 1e-6, 'ground keeps its authored aspect ratio');
   assert.deepEqual(mobileFloorLayer(result, { paintStart: .5, maximumPaintTop: 210, minimumBottom: 844 }), result, 'fitting is stable');
+});
+
+test('the floor anchor holds its last measure once no enemy is left alive', () => {
+  const hold = holdFloorShadowTop();
+  assert.equal(hold(undefined), undefined, 'nothing measured yet');
+  assert.equal(hold(212), 212);
+  assert.equal(hold(190), 190, 'a new measure replaces the held one');
+  assert.equal(hold(undefined), 190, 'the last enemy died: the anchor stays');
+  assert.equal(hold(NaN), 190);
 });
