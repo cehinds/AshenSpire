@@ -14,7 +14,7 @@ const groupOf = kind => rules.rewardGroups.find(group => group.categories.includ
 test('authored 66/4/20/10 card, weapon-art, potion, weapon groups govern seeded draws, including exhausted-group renormalization', () => {
   assert.deepEqual(rewardGroupProblems(rules.rewardGroups, rules.categories), []);
   const rng = createRng(417), counts = { cards: 0, weaponArts: 0, potions: 0, weapons: 0, retired: 0 }, total = 30000;
-  for (let i = 0; i < total; i++) counts[groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, rules.rewardGroups))]++;
+  for (let i = 0; i < total; i++) { const group = groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, rules.rewardGroups)); counts[group === 'flaskRelic' ? 'potions' : group]++; } // the flask relic sits inside the 20% potions share
   for (const [kind, fraction] of Object.entries({cards: .66, weaponArts: .04, potions: .2, weapons: .1, retired: 0})) assert.ok(Math.abs(counts[kind] / total - fraction) < .012, JSON.stringify(counts));
   // After all weapons are exhausted, 66:4:20 renormalizes (cards 66/90).
   const remaining = rules.categories.filter(kind => groupOf(kind) !== 'weapons');

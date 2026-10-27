@@ -124,6 +124,10 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const owned=new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card));
     available.weaponArts=available.weaponArts.filter(id=>!owned.has(id));
   }
+  // Owner 2026-10-27: combat rewards retire relics except the ids in eligibility.relics.combatIds (the flask relic, which
+  // stays inside the potions share). Chests (source 'treasure') and shops keep every relic.
+  const combatRelics=gameContent(run,'rewards')?.eligibility?.relics?.combatIds;
+  if(source==='combat'&&Array.isArray(combatRelics))available.relics=available.relics.filter(id=>combatRelics.includes(id));
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);

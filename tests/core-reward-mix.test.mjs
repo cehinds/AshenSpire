@@ -25,11 +25,11 @@ test('combat reward kinds roll 70% cards, 20% potions, 10% weapons over 1000 see
   const registries = build(profile), counts = {};
   for (let i = 0; i < 1000; i++) {
     const [option] = gameProfileRewardOffers(registries, fresh(i + 1, registries), createRng(7000 + i), { offerId: 'f' }).options;
-    const kind = ['combatCards', 'weaponArts'].includes(option.kind) ? 'cards' : option.kind;
+    const kind = ['combatCards', 'weaponArts'].includes(option.kind) ? 'cards' : option.kind === 'relics' ? (assert.equal(option.id, 'brimmingGourd'), 'potions') : option.kind;
     counts[kind] = (counts[kind] || 0) + 1;
   }
   for (const [kind, share] of Object.entries({ cards: .7, potions: .2, weapons: .1 })) assert.ok(Math.abs(counts[kind] / 1000 - share) <= .03, JSON.stringify(counts));
-  assert.deepEqual(Object.keys(counts).sort(), ['cards', 'potions', 'weapons'], 'relics and armor are retired from combat rewards');
+  assert.deepEqual(Object.keys(counts).sort(), ['cards', 'potions', 'weapons'], 'armor and every relic but the flask relic are retired from combat rewards (the gourd counts inside the 20% potions share)');
 });
 
 test('owned cards are offered far less often than unowned ones, per card', () => {
@@ -105,7 +105,7 @@ test('Core 1 stays neutral: no depth, recent or ownership bias', () => {
   assert.equal(rule.depthBias.late.mana, 1);
 });
 
-test('treasure chests keep relics, armor and weapons; combat offers never roll relics or armor (owner 2026-10-27)', () => {
+test('treasure chests keep relics, armor and weapons; combat offers never roll armor (owner 2026-10-27)', () => {
   const kinds = source => {
     const seen = new Set();
     for (let i = 0; i < 400; i++) for (const o of gameProfileRewardOffers(reg, fresh(i + 1), createRng(300 + i), { offerId: `t${i}`, source }).options) seen.add(o.kind);
@@ -113,7 +113,8 @@ test('treasure chests keep relics, armor and weapons; combat offers never roll r
   };
   const treasure = kinds('treasure'), combat = kinds('combat');
   for (const kind of ['relics', 'armor', 'weapons']) assert.ok(treasure.has(kind), `treasure offers include ${kind}`);
-  for (const kind of ['relics', 'armor']) assert.ok(!combat.has(kind), `combat offers never include ${kind}`);
+  assert.ok(!combat.has('armor'), 'combat offers never include armor');
+  // Relics: only the flask relic may drop from a fight (own test below).
 });
 
 test('treasure rolls its own 60/10/30 table (cards 60, equipment 10, potions 30) and main.js asks for source treasure', () => {
@@ -126,4 +127,11 @@ test('treasure rolls its own 60/10/30 table (cards 60, equipment 10, potions 30)
   for (const [kind, share] of Object.entries({ cards: .6, equipment: .1, potions: .3 })) assert.ok(Math.abs((counts[kind] || 0) / 1000 - share) <= .03, JSON.stringify(counts));
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /case 'treasure': \{\s*if \(isConfiguredRun\(run\)\) return beginGameProfileReward\(\{ source: 'treasure'/, 'the treasure node must open a treasure-source reward');
+});
+
+test('combat offers admit no relic but brimmingGourd, and no armor', () => {
+  const registries = build({ ...NO_RESERVE, rewards: { offerCount: 1000 } }), relics = new Set(), kinds = new Set();
+  for (let i = 0; i < 20; i++) for (const o of gameProfileRewardOffers(registries, fresh(i + 1, registries), createRng(40 + i), { offerId: 'c', source: 'combat' }).options) { kinds.add(o.kind); if (o.kind === 'relics') relics.add(o.id); }
+  assert.deepEqual([...relics], ['brimmingGourd']);
+  assert.ok(!kinds.has('armor'));
 });

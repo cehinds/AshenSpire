@@ -191,7 +191,10 @@
       ],
       "weights": {
         "brimmingGourd": 20
-      }
+      },
+      "combatIds": [
+        "brimmingGourd"
+      ]
     }
   },
   "rewardGroups": [
@@ -211,9 +214,16 @@
     },
     {
       "id": "potions",
-      "weight": 20,
+      "weight": 18,
       "categories": [
         "potions"
+      ]
+    },
+    {
+      "id": "flaskRelic",
+      "weight": 2,
+      "categories": [
+        "relics"
       ]
     },
     {
@@ -227,7 +237,6 @@
       "id": "retired",
       "weight": 0,
       "categories": [
-        "relics",
         "armor"
       ]
     }
