@@ -507,10 +507,10 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
         });
         continues++;
       } });
-    assert.equal(app.querySelectorAll('.reward-progress-row').length, 2);
-    assert.equal(app.querySelector('[data-track="character"]'), null);
-    assert.ok(app.querySelector('[role="progressbar"][data-track="class:reaver"]'));
-    assert.ok(app.querySelector('[role="progressbar"][data-track="item:blade"]'));
+    // Owner, 2026-10-27: the Core receipt draws the Character bar alone. The tracks above were still paid.
+    assert.equal(app.querySelectorAll('.reward-progress-row').length, 0);
+    assert.equal(app.querySelector('[role="progressbar"][data-track="class:reaver"]'), null);
+    assert.equal(app.querySelector('[role="progressbar"][data-track="item:blade"]'), null);
     const done = app.querySelector('#reward-continue');
     assert.equal(done.dataset.beatAction, 'rewardContinue');
     done.click();
@@ -524,6 +524,21 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
     assert.equal(saves.loadRun(reg).gameProfilePendingReward.victoryReceipt, undefined);
     assert.deepEqual(saves.loadRun(reg).skills, paid);
     assert.equal(acknowledgeVictoryReceipt(pending, () => { throw Error('already done'); }), false);
+  });
+});
+
+test('Core Victory receipt draws the Character bar alone and Continue still works', () => {
+  const { run } = live();
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    let done = 0;
+    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
+      rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'item:blade': 5, 'class:reaver': 9 } }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    assert.equal(app.querySelectorAll('.reward-progress-row').length, 1);
+    assert.ok(app.querySelector('[role="progressbar"][data-track="character"]'));
+    app.querySelector('#reward-continue').click();
   });
 });
 
