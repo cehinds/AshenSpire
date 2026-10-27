@@ -26,10 +26,9 @@ export function mobileFloorShadowTop(shadows) {
 // extension behind the hand: the whole painted floor jumps to its authored
 // place for the beat between the killing blow and the spoils. A fight keeps the
 // last anchor it measured, so the backdrop holds still once the field is empty.
-export function holdFloorShadowTop() {
-  let held;
-  return (top) => {
-    if (Number.isFinite(top)) held = top;
-    return held;
-  };
+// `state` is the fight's layout state: co-op re-wires the stage on every render,
+// so the memory cannot live in a per-mount closure.
+export function holdFloorShadowTop(state, top) {
+  if (Number.isFinite(top)) state.floorShadowTop = top;
+  return state.floorShadowTop;
 }

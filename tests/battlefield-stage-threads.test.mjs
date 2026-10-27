@@ -71,8 +71,7 @@ test('responsive formation keeps every rank readout above its body', () => {
   assert.match(stage, /const hudBelow = \(\) => false;/);
 });
 
-test('the backdrop floor keeps its anchor after the last enemy dies (no jump before the spoils)', () => {
-  assert.match(stage, /import \{ mobileFloorShadowTop, holdFloorShadowTop \} from/);
-  assert.match(stage, /const holdFloorShadow = holdFloorShadowTop\(\);/);
-  assert.match(stage, /floorShadowTop: holdFloorShadow\(Number\.isFinite\(floorShadowTop\) \? \(floorShadowTop - rect\.top\) \/ zoom : undefined\)/);
+test('the stage keeps the floor anchor on the fight\'s layoutState, not a per-mount closure', () => {
+  assert.doesNotMatch(stage, /const holdFloorShadow = /);
+  assert.match(stage, /floorShadowTop: holdFloorShadowTop\(layoutState, /);
 });

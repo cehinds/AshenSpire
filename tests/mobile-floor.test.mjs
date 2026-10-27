@@ -40,11 +40,13 @@ test('ground extends beneath the hand without lowering its painted horizon', () 
   assert.deepEqual(mobileFloorLayer(result, { paintStart: .5, maximumPaintTop: 210, minimumBottom: 844 }), result, 'fitting is stable');
 });
 
-test('the floor anchor holds its last measure once no enemy is left alive', () => {
-  const hold = holdFloorShadowTop();
-  assert.equal(hold(undefined), undefined, 'nothing measured yet');
-  assert.equal(hold(212), 212);
-  assert.equal(hold(190), 190, 'a new measure replaces the held one');
-  assert.equal(hold(undefined), 190, 'the last enemy died: the anchor stays');
-  assert.equal(hold(NaN), 190);
+test('the floor anchor holds its last measure once no enemy is left alive, across a re-wire', () => {
+  const layoutState = {}; // co-op passes the same state to every freshly wired stage
+  assert.equal(holdFloorShadowTop(layoutState, undefined), undefined, 'nothing measured yet');
+  assert.equal(holdFloorShadowTop(layoutState, 212), 212);
+  assert.equal(holdFloorShadowTop(layoutState, 190), 190, 'a new measure replaces the held one');
+  // The kill snapshot re-renders: a new stage is wired with the same layoutState.
+  assert.equal(holdFloorShadowTop(layoutState, undefined), 190, 'the last enemy died: the anchor stays');
+  assert.equal(holdFloorShadowTop(layoutState, NaN), 190);
+  assert.equal(holdFloorShadowTop({}, undefined), undefined, 'a new fight starts with no anchor');
 });
