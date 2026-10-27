@@ -87,6 +87,7 @@ test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards 
   console.log('depth shares', JSON.stringify({ early, late }));
   assert.ok(early.basic > late.basic + .05, `basic/cantrip early ${early.basic} vs late ${late.basic}`);
   assert.ok(late.mana > early.mana + .02, `mana late ${late.mana} vs early ${early.mana}`);
+  assert.ok(late.high > early.high, `rank 2+ share at depth 4+ ${late.high} vs depths 1-3 ${early.high}`);
 });
 
 test('Core 1 stays neutral: no depth, recent or ownership bias', () => {
@@ -95,4 +96,15 @@ test('Core 1 stays neutral: no depth, recent or ownership bias', () => {
   assert.equal(rule.recentOfferWindow, 0);
   assert.equal(rule.depthBias.early.basicOrCantrip, 1);
   assert.equal(rule.depthBias.late.mana, 1);
+});
+
+test('treasure chests keep relics, armor and weapons; combat offers never roll relics or armor (owner 2026-10-27)', () => {
+  const kinds = source => {
+    const seen = new Set();
+    for (let i = 0; i < 400; i++) for (const o of gameProfileRewardOffers(reg, fresh(i + 1), createRng(300 + i), { offerId: `t${i}`, source }).options) seen.add(o.kind);
+    return seen;
+  };
+  const treasure = kinds('treasure'), combat = kinds('combat');
+  for (const kind of ['relics', 'armor', 'weapons']) assert.ok(treasure.has(kind), `treasure offers include ${kind}`);
+  for (const kind of ['relics', 'armor']) assert.ok(!combat.has(kind), `combat offers never include ${kind}`);
 });
