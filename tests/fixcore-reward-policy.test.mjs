@@ -11,16 +11,16 @@ import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/game
 
 const rules = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/rewards.json', import.meta.url)));
 const groupOf = kind => rules.rewardGroups.find(group => group.categories.includes(kind)).id;
-test('authored 60/10/30 groups govern seeded draws, including exhausted-group renormalization', () => {
+test('authored 66/4/20/10 card, weapon-art, potion, weapon groups govern seeded draws, including exhausted-group renormalization', () => {
   assert.deepEqual(rewardGroupProblems(rules.rewardGroups, rules.categories), []);
-  const rng = createRng(417), counts = { cards: 0, equipment: 0, consumables: 0 }, total = 30000;
-  for (let i = 0; i < total; i++) counts[groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, rules.rewardGroups))]++;
-  for (const [kind, fraction] of Object.entries({cards: .6, equipment: .1, consumables: .3})) assert.ok(Math.abs(counts[kind] / total - fraction) < .012, JSON.stringify(counts));
-  // After all equipment is exhausted, 60:30 renormalizes to 2:1.
-  const remaining = rules.categories.filter(kind => groupOf(kind) !== 'equipment');
+  const rng = createRng(417), counts = { cards: 0, weaponArts: 0, potions: 0, weapons: 0, retired: 0 }, total = 30000;
+  for (let i = 0; i < total; i++) { const group = groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, rules.rewardGroups)); counts[group === 'flaskRelic' ? 'potions' : group]++; } // the flask relic sits inside the 20% potions share
+  for (const [kind, fraction] of Object.entries({cards: .66, weaponArts: .04, potions: .2, weapons: .1, retired: 0})) assert.ok(Math.abs(counts[kind] / total - fraction) < .012, JSON.stringify(counts));
+  // After all weapons are exhausted, 66:4:20 renormalizes (cards 66/90).
+  const remaining = rules.categories.filter(kind => groupOf(kind) !== 'weapons');
   let cards = 0;
   for (let i = 0; i < total; i++) if (groupOf(pickRewardCategory(rng, 'cardRewards', remaining, rules.rewardGroups)) === 'cards') cards++;
-  assert.ok(Math.abs(cards / total - 2 / 3) < .012);
+  assert.ok(Math.abs(cards / total - 66 / 90) < .012);
   assert.equal(pickRewardCategory(rng, 'cardRewards', [], rules.rewardGroups), null);
   assert.equal(pickRewardCategory(rng, 'cardRewards', ['potions'], [{id:'off',weight:0,categories:['potions']}]), null);
 });
@@ -31,7 +31,7 @@ test('reward policy rejects missing, duplicate, negative and unknown group assig
   }
 });
 test('JSON tuning reaches live offers; exhausted pools fall back and saved offers consume no more RNG', () => {
-  const groups=rules.rewardGroups.map(group=>({...group,weight:group.id==='consumables'?1:0}));
+  const groups=rules.rewardGroups.map(group=>({...group,weight:group.id==='potions'?1:0}));
   const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rewards:{offerCount:100,rewardGroups:groups},shops:{itemsPerCategory:2}}});
   const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
   const run=createRunState({seed:1,classId:'reaver',registries:reg}), rng=createRng(31);
