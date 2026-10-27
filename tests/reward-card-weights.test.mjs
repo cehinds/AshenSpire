@@ -13,14 +13,16 @@ const build = modules => {
 };
 // Module overrides merge into the defaults, so a neutral tag table names every authored tag.
 const NEUTRAL = { 'maneuver:casting': 1, 'maneuver:smash': 1, 'maneuver:counter': 1, 'maneuver:sweep': 1, default: 1 };
-const weighted = build({}), uniform = build({ 'reward-ranks': { ownedCopyWeight: 1, tagWeights: NEUTRAL } });
+// The depth bias and the recent-offer penalty (owner 2026-10-27, tests/core-reward-mix.test.mjs) are switched off here so these tests isolate ownership and tag weights.
+const NO_DEPTH = { recentOfferWindow: 0, depthBias: { earlyMaxDepth: 3, early: { basicOrCantrip: 1, mana: 1 }, late: { mana: 1, highRankMin: 2, highRank: 1 } } };
+const weighted = build({ 'reward-ranks': NO_DEPTH }), uniform = build({ 'reward-ranks': { ...NO_DEPTH, ownedCopyWeight: 1, tagWeights: NEUTRAL } });
 const starter = ['core.strike', 'core.strike', 'core.strike', 'core.defend', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade', 'base.draw', 'core.reaverSpecial'];
-function sample(registries, offers = 120) {
+function sample(registries, offers = 120, deck = starter) {
   const picks = [];
   for (let i = 0; i < offers; i++) {
     const run = createRunState({ seed: i + 1, classId: 'reaver', registries });
-    run.deck = starter.map((cardId, n) => ({ instanceId: `d${n}`, cardId, upgraded: false }));
-    const owned = new Set(starter);
+    run.deck = deck.map((cardId, n) => ({ instanceId: `d${n}`, cardId, upgraded: false }));
+    const owned = new Set(deck);
     for (const option of gameProfileRewardOffers(registries, run, createRng(500 + i), { offerId: `w${i}` }).options) if (option.kind === 'combatCards') picks.push({ id: option.id, owned: owned.has(option.id) });
   }
   return picks;
@@ -29,15 +31,16 @@ function sample(registries, offers = 120) {
 test('Core Smash and the other basic stance cards are offerable rank 1 cards', () => {
   const cards = weighted.cards;
   for (const id of ['core.smash', 'core.sweep', 'core.counter', 'core.strike', 'core.defend']) assert.equal(cards.get(id).rarity, 'common', id);
-  assert.ok(sample(weighted, 200).some(pick => pick.id === 'core.smash'), 'Smash appears among 200 Core offers');
+  // Smash is owned by the starter deck and owned cards are now rare (owner 2026-10-27), so offerability is checked for a character without it.
+  assert.ok(sample(weighted, 200, starter.filter(id => id !== 'core.smash')).some(pick => pick.id === 'core.smash'), 'Smash appears among 200 Core offers');
 });
 test('owned cards are weighted down, non-casting maneuvers up, and the pick is deterministic', () => {
   const run = createRunState({ seed: 1, classId: 'reaver', registries: weighted });
   const combat = run.gameProfile.content.rewards.eligibility.combatCards;
-  assert.equal(combat.ownedCopyWeight, 0.2);
+  assert.equal(combat.ownedCopyWeight, 0.05);
   assert.equal(cardPickWeight(combat, { tags: ['maneuver:casting'] }, 0), 1);
-  assert.equal(cardPickWeight(combat, { tags: ['maneuver:attack'] }, 0), 3);
-  assert.ok(Math.abs(cardPickWeight(combat, { tags: ['maneuver:smash'] }, 2) - 10 * 0.2 * 0.2) < 1e-12);
+  assert.equal(cardPickWeight(combat, { tags: ['maneuver:attack'] }, 0), 1.5);
+  assert.ok(Math.abs(cardPickWeight(combat, { tags: ['maneuver:smash'] }, 2) - 2 * 0.05 * 0.05) < 1e-12);
   assert.equal(cardPickWeight({}, { tags: ['x'] }, 3), 1);
   const a = sample(weighted, 30), b = sample(weighted, 30);
   assert.deepEqual(a, b);
@@ -48,6 +51,6 @@ test('weights cut the owned-card rate and raise non-casting maneuvers against un
   const before = sample(uniform, 600), after = sample(weighted, 600);
   assert.ok(share(weighted, after) > share(uniform, before), `non-casting share rises: ${share(weighted, after)} vs ${share(uniform, before)}`);
   // Basics are favoured by tag weight, so compare owned copies of NON-basic picks too: the penalty alone must lower the rate.
-  const penaltyOnly = sample(build({ 'reward-ranks': { tagWeights: NEUTRAL } }), 600);
+  const penaltyOnly = sample(build({ 'reward-ranks': { ...NO_DEPTH, tagWeights: NEUTRAL } }), 600);
   assert.ok(rate(penaltyOnly) < rate(before), `owned rate ${rate(penaltyOnly)} < ${rate(before)}`);
 });

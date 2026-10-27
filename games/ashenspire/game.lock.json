@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:e60d0b86792da5c51d26b62b99d9217a4f323e01a85eb5fe38a92bc0b2d42d56",
+      "hash": "sha256:f04a9093db42ce70946a13997978319ef1a06790fbac0376ae5ec99ccac6eba1",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -436,7 +436,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:4b8fdcbe92268c84317a4104b03e06cd2b012b71c6f1375cfcf1e88a0f1ff721"
+          "hash": "sha256:516115fc761304ae071defd61e12a66db9abf06a0f665f2edb25f6402ba28f55"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -448,7 +448,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:9574f123a943d666364aff7152d3dd9a3ef9f04456257f55cf91a03b9861299c"
+          "hash": "sha256:d9710b057604b230eb27fc9923548965aaedbdc11b0fa0ff3e1e24fb903f65cd"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:325247ed975d7b18ab5a977e3efb8483e5e8c654a0a9d11c9b7a53bedd87e603"
     },
     "core": {
-      "hash": "sha256:e60d0b86792da5c51d26b62b99d9217a4f323e01a85eb5fe38a92bc0b2d42d56",
+      "hash": "sha256:f04a9093db42ce70946a13997978319ef1a06790fbac0376ae5ec99ccac6eba1",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1160,7 +1160,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:4b8fdcbe92268c84317a4104b03e06cd2b012b71c6f1375cfcf1e88a0f1ff721"
+          "hash": "sha256:516115fc761304ae071defd61e12a66db9abf06a0f665f2edb25f6402ba28f55"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -1172,7 +1172,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:9574f123a943d666364aff7152d3dd9a3ef9f04456257f55cf91a03b9861299c"
+          "hash": "sha256:d9710b057604b230eb27fc9923548965aaedbdc11b0fa0ff3e1e24fb903f65cd"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
