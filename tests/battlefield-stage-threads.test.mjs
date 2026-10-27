@@ -70,3 +70,9 @@ test('co-op enemy frames mark a readied hostile card\'s hover target, as solo do
 test('responsive formation keeps every rank readout above its body', () => {
   assert.match(stage, /const hudBelow = \(\) => false;/);
 });
+
+test('the backdrop floor keeps its anchor after the last enemy dies (no jump before the spoils)', () => {
+  assert.match(stage, /import \{ mobileFloorShadowTop, holdFloorShadowTop \} from/);
+  assert.match(stage, /const holdFloorShadow = holdFloorShadowTop\(\);/);
+  assert.match(stage, /floorShadowTop: holdFloorShadow\(Number\.isFinite\(floorShadowTop\) \? \(floorShadowTop - rect\.top\) \/ zoom : undefined\)/);
+});

@@ -1,5 +1,5 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
-import { mobileFloorShadowTop } from '../models/MobileFloorModel.js';
+import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -237,6 +237,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
+  const holdFloorShadow = holdFloorShadowTop(); // the last measured floor anchor, kept once the field has no living enemy
   const loadedGeometry = layoutState.loadedGeometry ||= new Map();
   let trackingRequest = 0;
   let settledTargets = [], settledFooterSize = 44, settledTargetCores = [];
@@ -1476,7 +1477,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
       standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      coverFloor: true, zoom, floorShadowTop: Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined });
+      coverFloor: true, zoom, floorShadowTop: holdFloorShadow(Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined) });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
