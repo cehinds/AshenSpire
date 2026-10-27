@@ -40,12 +40,12 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has nine preboss depths, a rest per branch on depths 3, 6 and 9, distinct branch bosses, and replay stability',()=>{
+test('seeded route has nine preboss depths, a rest in every lane of every branch on depths 3, 6 and 9, distinct branch bosses, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
   const b=map.bossIds.length;assert.ok(b>=1&&b<=5);assert.equal(map.floors,10);
-  assert.deepEqual(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor).sort(),Array.from({length:b},()=>[3,6,9]).flat().sort());
+  assert.deepEqual(Object.values(map.nodes).filter(n=>n.type==='shrine').map(n=>n.floor).sort(),Array.from({length:map.columns},()=>[3,6,9]).flat().sort());
   const bosses=map.bossIds.map(id=>map.nodes[id]);assert.ok(bosses.every(n=>n.floor===10));assert.equal(new Set(bosses.map(n=>n.encounterId)).size,b);
   assert.notEqual(map.nodes[map.bossId].encounterId,prior);prior=map.nodes[map.bossId].encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
