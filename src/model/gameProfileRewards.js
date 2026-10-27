@@ -4,7 +4,7 @@ import { syncZones } from './state.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { reserveStanceCards } from './stanceCoverage.js';
+import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
@@ -52,7 +52,7 @@ function pools(registries, run) {
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
-    weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id))) : [],
+    weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id)) ) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
@@ -69,11 +69,34 @@ export function cardPickWeight(rule,card,owned) {
   const tag=matched.length?matched.reduce((product,key)=>product*tagWeights[key],1):(Number.isFinite(tagWeights.default)?tagWeights.default:1);
   return tag*Math.pow(Number.isFinite(rule?.ownedCopyWeight)?rule.ownedCopyWeight:1,owned);
 }
-function weightedCardPick(run,rule,rng,stream,ids) {
+// Owner 2026-10-27: favour basic and cantrip cards on the first map depths of an act, mana-cost and higher-rank cards after
+// them, and avoid cards shown on the last few reward screens. Every number is `rule.depthBias` / `rule.recentOffer*`; absent or
+// 1 is neutral (Core 1). Multiplies the ownership weight, so an unowned card still beats an owned one at every depth.
+function depthWeight(rule,card,rank,isBasic,depth) {
+  const bias=rule?.depthBias;
+  if(!bias||!card)return 1;
+  const early=depth<=(bias.earlyMaxDepth??3),band=early?bias.early:bias.late,mana=(card.manaCost||0)>0;
+  if(!band)return 1;
+  let weight=1;
+  if(early&&isBasic)weight*=band.basicOrCantrip??1;
+  if(mana)weight*=band.mana??1;
+  if(!early&&rank>=(band.highRankMin??2))weight*=band.highRank??1;
+  return weight;
+}
+function recentOfferedIds(run,rule) {
+  const window=rule?.recentOfferWindow??0;
+  if(!(window>0))return new Set();
+  const rows=Object.values(run.gameProfileRewardOffers||{}).filter(offer=>offer?.source!=='shop').slice(-window);
+  return new Set(rows.flatMap(offer=>(offer.options||[]).filter(option=>option.kind==='combatCards').map(option=>option.id)));
+}
+function weightedCardPick(registries,run,rule,rng,stream,ids) {
   if(ids.length<2)return rng.pick(stream,ids);
   const defs=new Map((gameContent(run,'cards')||[]).map(card=>[card.id,card])),owned=new Map();
   for(const card of [...(run.deck||[]),...(run.sideboard||[])]){const id=card?.cardId??card?.id??card;owned.set(id,(owned.get(id)||0)+1);}
-  const weights=ids.map(id=>cardPickWeight(rule,defs.get(id),owned.get(id)||0)),total=weights.reduce((sum,weight)=>sum+weight,0);
+  const rules=gameContent(run,'rewards'),recent=recentOfferedIds(run,rule),recentWeight=rule?.recentOfferWeight??1,depth=run.floor||0;
+  const isBasic=rule?.depthBias?basicOrCantripMatcher(registries,run):()=>false;
+  const weights=ids.map(id=>{const card=defs.get(id);
+    return cardPickWeight(rule,card,owned.get(id)||0)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1);}),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
@@ -95,6 +118,16 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   // them instead. Claiming still accepts them, so an offer saved before this change stays claimable.
   const excludedFlasks=gameContent(run,'rewards')?.eligibility?.potions?.excludeKinds||[];
   if(excludedFlasks.length)available.potions=available.potions.filter(id=>!excludedFlasks.includes(flaskKindOf(registries.flasks.get(id))));
+  // Owner 2026-10-27: a reward screen (not the shop) never offers a weapon art the character already owns, when
+  // eligibility.weaponArts.skipOwned is set (Core 2).
+  if(source!=='shop'&&gameContent(run,'rewards')?.eligibility?.weaponArts?.skipOwned){
+    const owned=new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card));
+    available.weaponArts=available.weaponArts.filter(id=>!owned.has(id));
+  }
+  // Owner 2026-10-27: combat rewards retire relics except the ids in eligibility.relics.combatIds (the flask relic, which
+  // stays inside the potions share). Chests (source 'treasure') and shops keep every relic.
+  const combatRelics=gameContent(run,'rewards')?.eligibility?.relics?.combatIds;
+  if(source==='combat'&&Array.isArray(combatRelics))available.relics=available.relics.filter(id=>combatRelics.includes(id));
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
@@ -121,7 +154,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'?weightedCardPick(run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
@@ -135,7 +168,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
   return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
-    groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):[]});
+    groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 export function claimGameProfileReward(registries,run,offerId,index) {
   const offer=run.gameProfileRewardOffers?.[offerId];

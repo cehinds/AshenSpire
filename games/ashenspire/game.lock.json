@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:7fd96d679dd74920041009740e1b8e72c77bd7a70c15a26e538bcd3b27eeec2a",
+      "hash": "sha256:acbcab5c23cd97060d08437f8498d350897a420488ef9001bce31d6dcb3a4bd9",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -436,7 +436,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:4b8fdcbe92268c84317a4104b03e06cd2b012b71c6f1375cfcf1e88a0f1ff721"
+          "hash": "sha256:516115fc761304ae071defd61e12a66db9abf06a0f665f2edb25f6402ba28f55"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -448,7 +448,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:9574f123a943d666364aff7152d3dd9a3ef9f04456257f55cf91a03b9861299c"
+          "hash": "sha256:d9710b057604b230eb27fc9923548965aaedbdc11b0fa0ff3e1e24fb903f65cd"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -694,13 +694,13 @@
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:4906eebe6d4a3a2689049e5e67e6207d08a3625b64d1e78937eb69ab6a22d63c"
+          "hash": "sha256:e7f29490e48e9a40e4d4512fd5a0dbb79cc12068a3b6071ad0f7bf51dfccb2ef"
         },
         {
           "path": "games/ashenspire/packs/core/routes.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:7e78cc83ffd6c5c8e991119c66dfd38ba0d6120d7c233aee7656f6dc83e1b375"
+          "hash": "sha256:f01202961280faa41d3ea2a162a0794fef417134ef0e0386ef786b0465de5c80"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:325247ed975d7b18ab5a977e3efb8483e5e8c654a0a9d11c9b7a53bedd87e603"
     },
     "core": {
-      "hash": "sha256:7fd96d679dd74920041009740e1b8e72c77bd7a70c15a26e538bcd3b27eeec2a",
+      "hash": "sha256:acbcab5c23cd97060d08437f8498d350897a420488ef9001bce31d6dcb3a4bd9",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1160,7 +1160,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:4b8fdcbe92268c84317a4104b03e06cd2b012b71c6f1375cfcf1e88a0f1ff721"
+          "hash": "sha256:516115fc761304ae071defd61e12a66db9abf06a0f665f2edb25f6402ba28f55"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -1172,7 +1172,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:9574f123a943d666364aff7152d3dd9a3ef9f04456257f55cf91a03b9861299c"
+          "hash": "sha256:d9710b057604b230eb27fc9923548965aaedbdc11b0fa0ff3e1e24fb903f65cd"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -1418,13 +1418,13 @@
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:4906eebe6d4a3a2689049e5e67e6207d08a3625b64d1e78937eb69ab6a22d63c"
+          "hash": "sha256:e7f29490e48e9a40e4d4512fd5a0dbb79cc12068a3b6071ad0f7bf51dfccb2ef"
         },
         {
           "path": "games/ashenspire/packs/core/routes.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:7e78cc83ffd6c5c8e991119c66dfd38ba0d6120d7c233aee7656f6dc83e1b375"
+          "hash": "sha256:f01202961280faa41d3ea2a162a0794fef417134ef0e0386ef786b0465de5c80"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",

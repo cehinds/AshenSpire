@@ -25,6 +25,6 @@
   "firstFloor": "fight",
   "shopShare": 0.15,
   "requirePrebossRest": true,
-  "maxBranches": 5,
+  "maxBranches": 3,
   "startNodeRefills": true
 }

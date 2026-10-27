@@ -32,6 +32,12 @@ function tierMembers(registries, run, rule) {
   return id => (rule.preferTiers.includes('basic') && basic.has(id)) || (rule.preferTiers.includes('cantrip') && isCantrip(id));
 }
 
+/** basicOrCantripMatcher(registries, run) → id => boolean: the card is a basic (named by a card pool outside `special`) or a rank.cantrip card. */
+export function basicOrCantripMatcher(registries, run) {
+  const rule = gameContent(run, 'rewards')?.eligibility?.combatCards?.stanceCoverage;
+  return tierMembers(registries, run, { preferTiers: ['basic', 'cantrip'], excludePools: rule?.excludePools || ['special'] });
+}
+
 /**
  * Up to min(`reservedSlots`, `limit`) card ids for the offer: each a basic/cantrip card (from `eligibleIds`) of a stance the
  * character lacks, distinct stances, seeded draws on `stream`. Draws nothing when no candidate exists.

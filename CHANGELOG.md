@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-27
 
+- **Branching maps and fresher rewards** ([#2348](https://github.com/cehinds/AshenSpire/pull/2348), `0.7.1.1882`). Each act map now splits from one start into 1 to 3 separate branches, every path has its own rests and its own elite, and paths only occasionally cross or rejoin before each branch's boss. Core fight rewards roll 70% cards, 20% potions and 10% weapons, cards you already own or were just offered turn up far less often, early nodes lean toward basic and cantrip cards and later nodes toward mana and higher-rank cards, and treasure chests keep their chance at relics, armor and weapons.
+
 - **Combat ends cleanly and previews stop skipping builds** ([#2346](https://github.com/cehinds/AshenSpire/pull/2346), `0.7.1.1882`). After the last enemy falls the battlefield no longer jumps to the old top-strip health layout before Victory, dead enemies' empty health bars fade away instead of lingering, and a promotion to test can no longer cancel a waiting publish of the dev preview.
 
 - **A simpler Victory screen, faster levels and points you can spend anywhere** ([#2345](https://github.com/cehinds/AshenSpire/pull/2345), `0.7.1.1880`). After a Core fight the Victory screen shows only your character level bar, character XP is 1.5×, and earned attribute points can be spent right on the Victory screen or on the Armory character sheet (which used to refuse them) without using up a rest.
