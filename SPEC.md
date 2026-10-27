@@ -1533,7 +1533,7 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 The Crimson/Azure charge pool's shared capacity is 3 (`balance.flaskCapacity`; owner, 2026-09-24 — 4 before). Utility
 potions remain separate inventory entries sized by `balance.flaskSlots`; increasing one does
 not silently increase the other. Utility potions are found from combats, shops and events,
-while Crimson/Azure charges refill at every grace (§5.5.1).
+while Crimson/Azure charges refill at every grace (§5.5.1). **Act change (owner, 2026-10-27):** the owner said "Refull potions between acts", and "potions" means the HP and MP flasks. So in a configured run `advanceAct()` refills both Crimson and Azure pools to their allocation at every act change, whatever `routes.startNodeRefills` says (that flag still governs the start node's own entry refill, which also restores HP). A legacy/current-profile run never refilled its flasks between acts and still does not. Falsified by `tests/act-change-flask-refill.test.mjs`.
 
 Crimson and Azure are displayed in the same potion tray as utility potions, but remain permanent
 charge vessels: they are always present, do not consume utility-potion slots, and are never dropped.
