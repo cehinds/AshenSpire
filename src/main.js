@@ -5,7 +5,7 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from './model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
@@ -86,7 +86,7 @@ import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
+import { applyLevelUp, allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
 import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
 import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
@@ -3473,7 +3473,7 @@ async function onCombatEnd(result, combat, enc) {
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
-    characterMultiplier: featMultiplier(run, 'characterXp'),
+    characterMultiplier: featMultiplier(run, 'characterXp') * (configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1),
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
   const levelAward = manualLevelUp
@@ -4103,11 +4103,15 @@ function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   if (pending.victoryReceipt) return mountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
+    // Owner, 2026-10-27: earned attribute points are spent here too; each spend is saved at once.
+    onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
+    onPersist: persistContinuing,
     onDone: () => {
       acknowledgeVictoryReceipt(pending, persistContinuing);
       showGameProfileReward();
     },
   });
+  if (silenceVictoryLevelNotices(pending)) persistOrWarn();
   if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, registries, run, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
     persistOrWarn();

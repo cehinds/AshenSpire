@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-27
+
+- **A simpler Victory screen, faster levels and points you can spend anywhere** ([#2345](https://github.com/cehinds/AshenSpire/pull/2345), `0.7.1.1880`). After a Core fight the Victory screen shows only your character level bar, character XP is 1.5×, and earned attribute points can be spent right on the Victory screen or on the Armory character sheet (which used to refuse them) without using up a rest.
+
 ## 2026-10-26
 
 - **The whole-run browser check plays its first fight again** ([#2343](https://github.com/cehinds/AshenSpire/pull/2343), `0.7.1.1878`). After fighters moved to the bottom of their cells, the automated full-run check tapped the empty middle of each fighter's box and never played a card; it now taps the figure, as a player does. No change to the game.

@@ -32,6 +32,11 @@
       "type": "number",
       "minimum": 0,
       "maximum": 10
+    },
+    "characterXpMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
     }
   },
   "required": [

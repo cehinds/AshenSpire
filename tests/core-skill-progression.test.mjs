@@ -12,7 +12,8 @@ import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from 
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
 import { openRunClassMastery, registriesForClassMastery, recordClassMasteryXp } from '../src/model/classMasteryRun.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from '../src/model/gameProfileProgression.js';
+import { allocateAttributePoint } from '../src/model/levelup.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -327,7 +328,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   const saves = createSaveManager(createMemoryStorage());
   const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
-    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt };
+    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -507,10 +508,10 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
         });
         continues++;
       } });
-    assert.equal(app.querySelectorAll('.reward-progress-row').length, 2);
-    assert.equal(app.querySelector('[data-track="character"]'), null);
-    assert.ok(app.querySelector('[role="progressbar"][data-track="class:reaver"]'));
-    assert.ok(app.querySelector('[role="progressbar"][data-track="item:blade"]'));
+    // Owner, 2026-10-27: the Core receipt draws the Character bar alone. The tracks above were still paid.
+    assert.equal(app.querySelectorAll('.reward-progress-row').length, 0);
+    assert.equal(app.querySelector('[role="progressbar"][data-track="class:reaver"]'), null);
+    assert.equal(app.querySelector('[role="progressbar"][data-track="item:blade"]'), null);
     const done = app.querySelector('#reward-continue');
     assert.equal(done.dataset.beatAction, 'rewardContinue');
     done.click();
@@ -527,6 +528,53 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
   });
 });
 
+test('Core Victory receipt draws the Character bar alone and Continue still works', () => {
+  const { run } = live();
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    let done = 0;
+    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
+      rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'item:blade': 5, 'class:reaver': 9 } }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    assert.equal(app.querySelectorAll('.reward-progress-row').length, 1);
+    assert.ok(app.querySelector('[role="progressbar"][data-track="character"]'));
+    app.querySelector('#reward-continue').click();
+  });
+});
+
+test('Core Victory receipt spends an earned attribute point and saves it at once', () => {
+  const { run } = live();
+  run.level.unspentPoints = 2;
+  const strength = run.attributes.strength, hp = run.hp;
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    let saves = 0;
+    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
+      onAllocateStat: id => allocateAttributePoint(reg, run, id),
+      rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    const add = app.querySelector('.reward-stat-row .reward-stat-add');
+    assert.ok(add, 'the receipt offers the allocation section');
+    app.querySelectorAll('.reward-stat-row')[0].querySelector('.reward-stat-add').click();
+    assert.equal(run.level.unspentPoints, 1);
+    assert.equal(saves, 1);
+    assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), 7);
+    assert.equal(run.hp, hp, 'a spend does not heal');
+    void strength;
+  });
+  // Without the callback (co-op, legacy) the section is absent.
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
+      rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    assert.equal(app.querySelector('.reward-stat-allocation'), null);
+  });
+});
+
 test('actual Core victory settlement persists the scaled XP receipt before offers and resumes without repayment', async () => {
   const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
@@ -539,7 +587,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
-    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, gameProfileRewardOffers };
+    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
@@ -583,4 +631,24 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   assert.deepEqual(saved.skills, paid);
   resumed.resume();
   assert.equal(receipts.length, 2, 'acknowledged receipt stays closed');
+});
+
+test('a won Core fight silences level notices after the receipt; a defeat keeps them', async () => {
+  const { silenceVictoryLevelNotices } = await import('../src/model/gameProfileProgression.js');
+  const won = { after: 'map', progression: [{ skillId: 'item:blade' }] };
+  assert.equal(silenceVictoryLevelNotices(won), true);
+  assert.equal(won.progression, undefined);
+  const lost = { after: 'defeat', progression: [{ skillId: 'item:blade' }] };
+  assert.equal(silenceVictoryLevelNotices(lost), false);
+  assert.equal(lost.progression.length, 1);
+  assert.equal(silenceVictoryLevelNotices({ after: 'map' }), false);
+});
+
+test('Core pays character XP at the authored 1.5 rate and a snapshot without the key keeps 1', async () => {
+  const { configuredCharacterXpMultiplier } = await import('../src/model/gameProfileProgression.js');
+  assert.equal(gameModule(profile, 'progression').characterXpMultiplier, 1.5);
+  assert.equal(configuredCharacterXpMultiplier({ gameProfile: { modules: { progression: { mode: 'configured' } } } }), 1);
+  assert.equal(configuredCharacterXpMultiplier({ gameProfile: { modules: { progression: { characterXpMultiplier: 99 } } } }), 10);
+  assert.equal(gameModule(profile, 'progression').classXpMultiplier, 1);
+  assert.equal(gameModule(profile, 'progression').weaponXpMultiplier, 1);
 });
