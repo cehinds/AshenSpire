@@ -210,6 +210,7 @@
       "miniHudInsetPx": 2,
       "miniHudGroupHeightPx": 61,
       "desktopMiniHudGroupHeightPx": 96,
+      "desktopShortMiniHudGroupHeightPx": 80,
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5
     }

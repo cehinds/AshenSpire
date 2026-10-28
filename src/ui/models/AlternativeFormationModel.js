@@ -183,3 +183,12 @@ export function perspectiveCellContains(box, x, y) {
   const centre = box.left + box.width / 2 + (box.skew || 0) * (box.top + box.height / 2 - y);
   return Math.abs(x - centre) <= box.width / 2;
 }
+
+// The height the overhead group (intent + health row) takes above a head. Pure config, no DOM and no selection
+// state: a selected frame hides its meters, so a measured height would refit the art on every click (owner
+// 2026-10-28). Desktop and widescreen draw the taller health row; a short desktop window steps it down (the
+// `min-width: 1200px and max-height: 800px` rule in styles/combat-target-responsive.css).
+export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false } = {}) {
+  if (!wide) return grid.miniHudGroupHeightPx;
+  return shortWindow ? grid.desktopShortMiniHudGroupHeightPx : grid.desktopMiniHudGroupHeightPx;
+}

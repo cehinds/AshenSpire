@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeFormation, fitAlternativeSprites, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
+import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -252,4 +253,20 @@ test('a short landscape field stands its enemy ranks low and fits bodies about 1
     heights[label] = Math.max(...fitAlternativeSprites({ width, height, actors, narrow: false }).map(f => f.visibleHeight));
   }
   assert.ok(heights.landscape >= heights.portrait * 1.4, `enemy height ${heights.landscape} vs ${heights.portrait}`);
+});
+
+test('the overhead group height is config only: phone, desktop and short desktop window, never selection', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  assert.equal(overheadGroupHeightPx(grid, { wide: false }), grid.miniHudGroupHeightPx);
+  assert.equal(overheadGroupHeightPx(grid, { wide: false, shortWindow: true }), grid.miniHudGroupHeightPx, 'phones ignore the short-window rule');
+  assert.equal(overheadGroupHeightPx(grid, { wide: true }), 96);
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, shortWindow: true }), 80);
+  assert.ok(overheadGroupHeightPx(grid, { wide: true }) > overheadGroupHeightPx(grid, { wide: true, shortWindow: true }));
+  // The stage's helper takes no frame and reads no layout: a selected frame hides its meters, so any DOM
+  // measurement here would change with selection and refit the settled artwork on every click.
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const helper = source.slice(source.indexOf('const miniHudGroupHeight ='), source.indexOf('\n\n', source.indexOf('const miniHudGroupHeight =')));
+  assert.ok(helper.length > 40, 'helper found');
+  assert.doesNotMatch(helper, /offsetHeight|getBoundingClientRect|clientHeight|querySelector|classList/);
+  assert.doesNotMatch(source, /miniHudGroupHeight\([^)]*\bframe\b/, 'no call passes a frame');
 });
