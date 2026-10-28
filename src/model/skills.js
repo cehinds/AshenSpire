@@ -379,6 +379,25 @@ export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchoo
   return Math.min(bonus, MAX_SKILL_BONUS);
 }
 
+/**
+ * cardTrackLevel(registries, run, def) → R, the highest skill-track level
+ * (run.skills[t].level, 0..10) over the rank-up tracks whose schools match the
+ * card's tags. The same school match as skillBonusFor (via skillSchools); unlike
+ * trackSchools it does not wait for a track to earn a flat bonus. Core card
+ * upgrades read it for the free allowance (model/cardUpgradeLimits.js).
+ */
+export function cardTrackLevel(registries, run, def) {
+  const tags = (def && def.tags) || [];
+  let best = 0;
+  for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
+    const level = row && Number.isInteger(row.level) ? row.level : 0;
+    if (level <= best || !rankUpKind(skillKindOf(registries, skillId))) continue;
+    const schools = new Set(skillSchools(registries, run.loadout, skillId));
+    if (tags.some((tag) => schools.has(tag))) best = level;
+  }
+  return Math.max(0, Math.min(10, best));
+}
+
 // The tracks that earn a flat now, with their schools: read once per stamp.
 function trackSchools(registries, run) {
   const every = draftRows(registries).flatEvery;

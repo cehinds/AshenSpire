@@ -1,6 +1,7 @@
 import { deckCopyLimit as configuredCopyLimit, characterSettings, characterTags } from '../../engine/kernel/gameConfig.js';
 import { deckRules } from '../content/deckRules.js';
 import { gameContent } from './gameProfile.js';
+import { basicCardKind } from './basicCardRule.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds } from './collectedCards.js';
 
 /** Display names share the stable saved class tags used by the copy rules. */
@@ -15,18 +16,7 @@ export function activeAdeptTraining(run) {
 
 function eligibleAdeptDefinition(run, cardId) {
   const card = gameContent(run, 'cards')?.find(card => card.id === cardId), adept = activeAdeptTraining(run);
-  if (!card || !adept || card.rank > 0 || card.abilityRank > 0 || ['power', 'status', 'curse', 'consumable'].includes(card.type)) return false;
-  const tags = card.tags || [];
-  if (tags.includes('extractable') || tags.includes('classification.weaponArt')) return false;
-  // Exclude every class's special pool, including a foreign special whose
-  // starter rarity would otherwise match the generic Basic training rule.
-  const pools = gameContent(run, 'cardPools') || {};
-  const ownedPools = run.gameProfile.modules['deck-training'].owned?.pools || [];
-  const excluded = ownedPools.flatMap(id => [...Object.values(pools[id]?.byTag || {}),
-    ...Object.values(pools[id]?.byClass || {}).flatMap(row => Object.values(row))]);
-  if (excluded.includes(cardId) || (gameContent(run, 'classes') || []).some(row => row.specialCardId === cardId)) return false;
-  const spell = tags.includes('source:spell') || tags.includes('camp:spell');
-  return adept.id === 'training.graduate' ? spell && tags.includes('rank.cantrip') : !spell;
+  return !!card && !!adept && basicCardKind(run, card) === adept.kind;
 }
 
 // Profiles are immutable snapshots. Compile the data-only training catalogue
