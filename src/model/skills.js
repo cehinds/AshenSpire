@@ -386,13 +386,35 @@ export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchoo
  * trackSchools it does not wait for a track to earn a flat bonus. Core card
  * upgrades read it for the free allowance (model/cardUpgradeLimits.js).
  */
+// (keyed by the track id without its item: prefix)
+// Core cards carry camp:/maneuver: tags, never the weapon-family tags (blade, bow ...) that
+// skillSchools matches, so the school match alone gives Core cards R = 0. These are Core's
+// own tracks mapped to the tags their cards carry (an owner-facing choice, see the card
+// upgrade doc): blade and dual-wield level martial cards, the shield level guard cards,
+// and Spellcraft (the focus track) spell cards. Pairs, not tag literals: the mechanics
+// generator takes a quoted tag for that tag's reader.
+const CORE_TRACK_TAGS = Object.freeze({
+  blade: [['camp', 'physical']],
+  shield: [['maneuver', 'defend']],
+  dualWield: [['camp', 'physical']],
+  'magic-focus': [['camp', 'spell']],
+});
+
+/**
+ * cardTrackLevel(registries, run, def) → R, the highest skill-track level
+ * (run.skills[t].level, 0..10) over the rank-up tracks whose schools match the
+ * card: the held weapons' school tags (skillSchools, as skillBonusFor does) or
+ * Core's explicit track-to-tag map above. Unlike trackSchools it does not wait
+ * for a track to earn a flat bonus. Core card upgrades read it for the free
+ * allowance (model/cardUpgradeLimits.js).
+ */
 export function cardTrackLevel(registries, run, def) {
   const tags = (def && def.tags) || [];
   let best = 0;
   for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
     const level = row && Number.isInteger(row.level) ? row.level : 0;
     if (level <= best || !rankUpKind(skillKindOf(registries, skillId))) continue;
-    const schools = new Set(skillSchools(registries, run.loadout, skillId));
+    const schools = new Set([...skillSchools(registries, run.loadout, skillId), ...(CORE_TRACK_TAGS[skillId.replace(/^item:/, '')] || []).map(([family, name]) => `${family}:${name}`)]);
     if (tags.some((tag) => schools.has(tag))) best = level;
   }
   return Math.max(0, Math.min(10, best));
