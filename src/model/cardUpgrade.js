@@ -38,6 +38,9 @@ const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
 /** The steps an instance carries: its list, or [authored] for an old `upgraded` flag. */
 export function upgradeStepsOf(instance) {
   if (!instance || typeof instance !== 'object') return [];
+  // An explicit `upgraded: false` wins: a site that resets the flag (Smithing's equipment-bound basics)
+  // and spreads an old instance cannot leave a stale step list playing as an upgrade.
+  if (instance.upgraded === false) return [];
   if (Array.isArray(instance.upgradeSteps) && instance.upgradeSteps.length) return instance.upgradeSteps;
   return instance.upgraded ? AUTHORED_ONLY : [];
 }

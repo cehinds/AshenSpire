@@ -3178,6 +3178,7 @@ export function stampDeck(registries, run, cards, {
         // Equipment-bound basics derive their upgrade from the source piece.
         // Per-copy flags remain authoritative only for ordinary cards.
         inst.upgraded = false;
+        delete inst.upgradeSteps;
       } else {
         delete inst.sourceArmamentId;
         delete inst.smithingLevel;
