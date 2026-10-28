@@ -555,9 +555,10 @@ export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRul
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
 }
 
-/** The merchant's Upgrade an Item service: the same commit, no wrapper yet. */
+/** The merchant's Upgrade an Item service: pays smithingPlan's stone price inside the Smith service a Core run requires. */
 export function commitMerchantSmithing(registries, run, itemRef) {
-  return commitSmithing(registries, run, itemRef);
+  const commit = () => commitSmithing(registries, run, itemRef);
+  return gameProfileServiceActive(run, 'smith') ? commit() : withGameProfileService(run, 'smith', commit);
 }
 
 /**
