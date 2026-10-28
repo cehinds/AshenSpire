@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
@@ -284,7 +284,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
       const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
-      return { frame, intentWidth: intentBox?.width || 0, intentHeight, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
+      return { frame, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
     });
     // Phase 2: reads that follow. The intent placement itself is written last:
     // it moves only the intent inside its own frame, and none of the boxes read
@@ -293,12 +293,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
     const boxes = frames.map(frame => rect(frame));
-    // Owner 2026-10-28: an armed card's panel never covers an enemy's intent. The intent's box is where
-    // the placement below will put it (centre over the body, above the head), not where it was last pass.
-    intents.forEach(({ frame, intentWidth, intentHeight, placement }, index) => {
+    // Owner 2026-10-28: an armed card's panel never covers an enemy's intent. A selected frame's intent moves to
+    // where the placement below will put it; an unselected one stays where it renders, so its own rect is the
+    // obstacle (the group height and lane centring differ by profile).
+    intents.forEach(({ frame, intentWidth, intentHeight, intentBox, placement }, index) => {
       if (!intentWidth || frame.classList.contains('player')) return;
-      const box = boxes[index];
-      obstacles.push({ left: box.left + placement.center * zoom - intentWidth / 2, top: box.top + (frame.classList.contains('target-hud-selected') ? placement.selectedTop : placement.miniTop) * zoom, width: intentWidth, height: intentHeight });
+      obstacles.push(targetHudIntentObstacle({ selected: frame.classList.contains('target-hud-selected'), box: boxes[index], placement, intentBox, intentWidth, intentHeight, zoom }));
     });
     frames.forEach((frame, index) => {
       const { core } = metricsFor(frame, zoom), box = boxes[index];
