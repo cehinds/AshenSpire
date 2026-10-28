@@ -165,7 +165,11 @@
               "pommelStrike",
               "steadyGuard",
               "drivingThrust",
-              "expose"
+              "expose",
+              "hammerBlow",
+              "rendingSmash",
+              "wideSweep",
+              "reapingArc"
             ],
             "cards": {
               "rarity": [
