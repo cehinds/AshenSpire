@@ -346,6 +346,23 @@ export function rankUpCandidates(registries, run, skillId) {
 }
 
 /**
+ * pendingRankUpRows(registries, run) → the reward-door rows for the rank-ups a
+ * Core run has queued (card ranks on): one per queued rank-up of a track that
+ * still has a card to raise, at most balance.skill.draftsPerCombat per track.
+ * Same row shape the Legacy door takes ({ skillId, level, claimOrdinal }).
+ */
+export function pendingRankUpRows(registries, run) {
+  const perDoor = draftRows(registries).draftsPerCombat || 1;
+  const rows = [];
+  for (const track of skillTracks(registries)) {
+    const row = run && run.skills && run.skills[track.id];
+    if (!row || !(row.pendingRankUps > 0) || !rankUpCandidates(registries, run, track.id).length) continue;
+    for (let i = 0; i < Math.min(perDoor, row.pendingRankUps); i += 1) rows.push({ skillId: track.id, level: row.level, claimOrdinal: 0 });
+  }
+  return rows;
+}
+
+/**
  * raiseCardRank(registries, run, skillId, instanceId) → the instance raised by
  * one rank, spending one queued rank-up; null (and nothing written) when the
  * ledger holds none or the card is not a candidate.

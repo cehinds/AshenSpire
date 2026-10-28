@@ -79,7 +79,7 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
+import { pendingRankUpRows, coreCardRanks, skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
@@ -4123,6 +4123,17 @@ function showGameProfileReward() {
     delete run.gameProfilePendingReward;
     persistOrWarn();
     return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'defeat' ? showFinishedRun(false) : pending.after === 'advanceAct' ? advanceAct() : showMap();
+  }
+  // Card ranks (SPEC 13.4o, Core): the rank-ups this victory's track levels queued are offered once, on the
+  // existing reward door's rank-up picker, before the reward offer. Skipping one keeps it queued for the next victory.
+  if (!pending.rankUpsOffered && coreCardRanks(run)) {
+    const rankUps = pendingRankUpRows(registries, run);
+    if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
+    else return mountRewards(app, { registries, run, saves, rng,
+      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: rankUps },
+      onPersist: persistContinuing,
+      // Set on leaving the door, so a reload mid-pick offers it again from the ledger.
+      onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
