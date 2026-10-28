@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
+- **Ten new spells** ([#2360](https://github.com/cehinds/AshenSpire/pull/2360), `0.7.1.1896`). Starseers can now find Starfall, Comet Lance, Searing Ray and Meteor, Heralds Sanctified Ward, Healing Prayer, Judgment and Dawn Bulwark, and every class Arcane Siphon and Ember Wave; these Mana spells turn up mostly after the first few fights.
+
 - **Ten new maneuvers and a second casting cantrip** ([#2358](https://github.com/cehinds/AshenSpire/pull/2358), `0.7.1.1896`). Core reward offers can now show Hammer Blow, Rending Smash, Wide Sweep and Reaping Arc as early smashes and sweeps; Stunning Blow and Raking Sweep for everyone, Skullsplitter and Whirlwind for the Reaver and Feint and Hit and Run for the Rogue later on; and Warding Glance beside Glimpse, so the early spell slot stops offering Glimpse every time.
 
 - **Ten new early cards** ([#2356](https://github.com/cehinds/AshenSpire/pull/2356), `0.7.1.1894`). Core reward offers can now show Jab, Gash, Pommel Strike, Steady Guard, Driving Thrust, Expose, Cinder Dart, Mending Touch, Glimpse and Gale Push, so early fights stop repeating the same handful of cards; Reavers and Rogues can copy the new Basics and Starseers and Heralds the new Cantrips, as with the starter cards.
