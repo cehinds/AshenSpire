@@ -790,5 +790,225 @@
       "staminaCost": 1,
       "manaCost": 0
     }
+  },
+  "core.starfall": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2
+    }
+  },
+  "core.cometLance": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.searingRay": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.meteor": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 3
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 3
+    }
+  },
+  "core.sanctifiedWard": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.healingPrayer": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.judgment": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2
+    }
+  },
+  "core.dawnBulwark": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2
+    }
+  },
+  "core.arcaneSiphon": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
+  },
+  "core.emberWave": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    }
   }
 }
