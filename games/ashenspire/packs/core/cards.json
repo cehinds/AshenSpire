@@ -893,7 +893,8 @@
           "target": "self",
           "amount": 1
         }
-      ]
+      ],
+      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
