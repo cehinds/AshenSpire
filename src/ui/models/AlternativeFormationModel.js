@@ -11,7 +11,7 @@ export function validatePerspectiveGrid(grid) {
       // Feet may stand on the cell's bottom edge (y = 1): that is where the owner wants them.
       || !(Number.isFinite(band.anchor?.y) && band.anchor.y > 0 && band.anchor.y <= 1)
       || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
-  for (const key of ['wide','narrow','short', ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
+  for (const key of ['wide','narrow','short', ...(grid.shortLandscape ? ['shortLandscape'] : []), ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
     if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
       || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
@@ -43,7 +43,10 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
   const formFactor = presentation.formFactor || (narrow ? 'mobile' : width <= 1024 ? 'tablet' : 'desktop');
-  const profile = height < GRID.shortBelowPx ? GRID.short : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
+  // Owner 2026-10-28: a short LANDSCAPE strip (phone on its side, min width as the layout's own 600px container query)
+  // stands its ranks low so the bodies get the height; a short portrait field keeps the original short profile.
+  const shortProfile = width >= 600 && GRID.shortLandscape ? GRID.shortLandscape : GRID.short;
+  const profile = height < GRID.shortBelowPx ? shortProfile : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
   const lanes = plan.rows || 3;
   // The grid is sheared: every row slides right in proportion to its height
   // above the party's baseline, so lanes run on a diagonal and cells are
@@ -67,15 +70,16 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const ground = top + band.anchor.y * rowHeight;
     // A short strip has no room for a lane-wide bar: it would lie across the neighbouring
     // lane's body. The profile may narrow the HUD to a fraction of the lane, kept centred.
-    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2;
+    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2; // hudCenterOnBody (desktop, widescreen): the bar is centred on the body's x, not the lane's.
     const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
+    const bodyX = laneLeft + band.anchor.x * laneWidth + shear(ground);
     return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
-      x: laneLeft + band.anchor.x * laneWidth + shear(ground), ground, fitGround: ground,
+      x: bodyX, ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
+      artWidth: laneWidth, miniHudLeft: profile.hudCenterOnBody ? bodyX - hudWidth / 2 + GRID.miniHudInsetPx : left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
       miniHudWidth: hudWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
@@ -178,4 +182,13 @@ export function perspectiveCellContains(box, x, y) {
   if (y < box.top || y > box.top + box.height) return false;
   const centre = box.left + box.width / 2 + (box.skew || 0) * (box.top + box.height / 2 - y);
   return Math.abs(x - centre) <= box.width / 2;
+}
+
+// The height the overhead group (intent + health row) takes above a head. Pure config, no DOM and no selection
+// state: a selected frame hides its meters, so a measured height would refit the art on every click (owner
+// 2026-10-28). Desktop and widescreen draw the taller health row; a short desktop window steps it down (the
+// `min-width: 1200px and max-height: 800px` rule in styles/combat-target-responsive.css).
+export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false } = {}) {
+  if (!wide) return grid.miniHudGroupHeightPx;
+  return shortWindow ? grid.desktopShortMiniHudGroupHeightPx : grid.desktopMiniHudGroupHeightPx;
 }

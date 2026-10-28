@@ -94,3 +94,13 @@ test('empty legacy leading hosts do not block otherwise clear panel space', () =
   assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 2, top: 325, width: 130, height: 0 }), false);
   assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 20, top: 290, width: 0, height: 100 }), false);
 });
+
+test('only phones and portrait take the tighter top inset; desktop keeps the common edge inset', () => {
+  const bounds = { left: 0, top: 100, width: 800, height: 400 };
+  const panels = [{ id: 'e', role: 'enemy', lane: 0, anchor: { left: 300, top: 120, width: 60, height: 60 }, width: 140, height: 60 }];
+  const config = targetHudConfig();
+  const highest = options => Math.min(...placeTargetHudPanels({ bounds, panels, ...options }).map(row => row.top));
+  assert.ok(highest({ tightTop: false }) >= bounds.top + config.positioning.edgeInsetPx - 1e-9, 'desktop panel stays 12px below the field top');
+  assert.ok(highest({ tightTop: true }) >= bounds.top + config.positioning.topInsetPx - 1e-9);
+  assert.ok(highest({ tightTop: true }) < bounds.top + config.positioning.edgeInsetPx, 'phone panel may rise above the common inset');
+});

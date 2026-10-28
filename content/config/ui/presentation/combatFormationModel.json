@@ -47,7 +47,9 @@
         "playerRowHeight": 0.26,
         "skew": 0.6,
         "top": 0.3,
-        "rowHeight": 0.17
+        "rowHeight": 0.17,
+        "hudWidthFraction": 0.5,
+        "hudCenterOnBody": true
       },
       "narrow": {
         "left": 0.01,
@@ -86,6 +88,18 @@
         "skew": 1.6,
         "top": 0.48,
         "rowHeight": 0.115
+      },
+      "shortLandscape": {
+        "left": 0.12,
+        "right": 0.88,
+        "enemyTop": 0.56,
+        "enemyRowHeight": 0.12,
+        "playerTop": 0.8,
+        "playerRowHeight": 0.2,
+        "hudWidthFraction": 0.55,
+        "skew": 4.2,
+        "top": 0.7,
+        "rowHeight": 0.06
       },
       "bands": [
         {
@@ -188,11 +202,16 @@
           "playerRowHeight": 0.26,
           "skew": 0.6,
           "top": 0.3,
-          "rowHeight": 0.17
+          "rowHeight": 0.17,
+          "hudWidthFraction": 0.5,
+          "hudCenterOnBody": true
         }
       },
       "miniHudInsetPx": 2,
       "miniHudGroupHeightPx": 61,
+      "desktopMiniHudGroupHeightPx": 96,
+      "desktopShortMiniHudGroupHeightPx": 80,
+      "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5
     }
   }

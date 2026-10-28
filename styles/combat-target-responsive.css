@@ -156,3 +156,51 @@
 :root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
   right:0!important;
 }
+
+/* Owner 2026-10-28: the panel's icon badges (Precision, Evade) grow to fit a two-digit value instead of clipping it
+   at the fixed 1.8em square; they are a pill that hugs icon and number. Poise and Block stay round. */
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge:is(.combat-health-precision, .combat-health-evade) {
+  display:inline-flex; align-items:center; justify-content:center; gap:.2em; aspect-ratio:auto;
+  flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:.35em; box-sizing:border-box; border-radius:999px;
+}
+
+/* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
+   numbers. The bar is now 16px thick, its value 16px and the badges 1.6x, all in physical px (the width cap and the
+   centring on the body are the profile's hudWidthFraction and hudCenterOnBody). Badges stay flush left and the value
+   flush right. Phones and tablets keep the rules above. */
+@media (min-width: 1200px) {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+    --health-row-h: calc(16px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(15px / var(--ui-zoom,1));
+    height: calc(54px / var(--ui-zoom,1))!important; min-height: calc(54px / var(--ui-zoom,1))!important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+    inset: calc(18px / var(--ui-zoom,1)) 0 auto auto !important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+    width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
+  }
+}
+
+/* Owner 2026-10-28, phone landscape: the enemies were too tiny because the overhead readout (intent, bar, badges)
+   took 65px of a 146px field and the body is fitted into what is left under it. A leaner intent gives that height
+   back to the bodies (the short profile in combatFormationModel.json moves the ranks down for the rest). */
+@container game-viewport (max-height: 480px) and (min-width: 600px) {
+  :root .combat[data-layout='formation'] { --intent-value-size: calc(16px / var(--ui-zoom,1)); }
+  :root .combat[data-layout='formation'][data-target-hud='true'] .intent-action .intent-icon { width:calc(19px / var(--ui-zoom,1)); height:calc(19px / var(--ui-zoom,1)); }
+}
+
+/* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
+   first approved sizes so the bodies keep their height (the stage measures the rack, so the reserve follows). */
+@media (min-width: 1200px) and (max-height: 800px) {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+    --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));
+    height: calc(38px / var(--ui-zoom,1))!important; min-height: calc(38px / var(--ui-zoom,1))!important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+    inset: calc(14px / var(--ui-zoom,1)) 0 auto auto !important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(12px / var(--ui-zoom,1)); }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.25; }
+}
