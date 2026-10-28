@@ -235,3 +235,21 @@ test('the short profile narrows each HUD to 0.55 of its lane, desktop to 0.5 cen
     }
   }
 });
+
+test('a short landscape field stands its enemy ranks low and fits bodies about 1.5x taller than the portrait short profile', () => {
+  // Owner 2026-10-28, phone landscape (844x390, field ~146px): "enemies are too tiny".
+  const height = 146;
+  const heights = {};
+  for (const [label, width] of [['landscape', 844], ['portrait', 599]]) {
+    const formation = alternativeFormation(plan(3), width, height, false);
+    const back = formation.cells.filter(c => c.side === 'enemy' && c.rank === 0);
+    const player = formation.cells.filter(c => c.side === 'player');
+    const ground = Math.max(...back.map(c => c.ground));
+    if (label === 'landscape') assert.ok(ground >= height * 0.7, `back-rank feet at ${ground}`);
+    // The party's baseline stays at the bottom of the field either way: feet on the cell bottom.
+    assert.ok(Math.max(...player.map(c => c.ground)) <= height * 0.95 + 1e-6);
+    const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
+    heights[label] = Math.max(...fitAlternativeSprites({ width, height, actors, narrow: false }).map(f => f.visibleHeight));
+  }
+  assert.ok(heights.landscape >= heights.portrait * 1.4, `enemy height ${heights.landscape} vs ${heights.portrait}`);
+});

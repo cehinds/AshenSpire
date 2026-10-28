@@ -11,7 +11,7 @@ export function validatePerspectiveGrid(grid) {
       // Feet may stand on the cell's bottom edge (y = 1): that is where the owner wants them.
       || !(Number.isFinite(band.anchor?.y) && band.anchor.y > 0 && band.anchor.y <= 1)
       || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
-  for (const key of ['wide','narrow','short', ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
+  for (const key of ['wide','narrow','short', ...(grid.shortLandscape ? ['shortLandscape'] : []), ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
     if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
       || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
@@ -43,7 +43,10 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
   const formFactor = presentation.formFactor || (narrow ? 'mobile' : width <= 1024 ? 'tablet' : 'desktop');
-  const profile = height < GRID.shortBelowPx ? GRID.short : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
+  // Owner 2026-10-28: a short LANDSCAPE strip (phone on its side, min width as the layout's own 600px container query)
+  // stands its ranks low so the bodies get the height; a short portrait field keeps the original short profile.
+  const shortProfile = width >= 600 && GRID.shortLandscape ? GRID.shortLandscape : GRID.short;
+  const profile = height < GRID.shortBelowPx ? shortProfile : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
   const lanes = plan.rows || 3;
   // The grid is sheared: every row slides right in proportion to its height
   // above the party's baseline, so lanes run on a diagonal and cells are
