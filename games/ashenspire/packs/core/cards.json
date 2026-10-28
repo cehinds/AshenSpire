@@ -1712,5 +1712,209 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.sanctifiedWard",
+    "name": "Sanctified Ward",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 12
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 15
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.healingPrayer",
+    "name": "Healing Prayer",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 6
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 5
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "fx:heal",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Heal {heal} HP. Gain {block} Block. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "heal",
+          "target": "self",
+          "amount": 8
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 7
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.judgment",
+    "name": "Judgment",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 10
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frail",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak. Apply {frail} Frail.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 13
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frail",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.dawnBulwark",
+    "name": "Dawn Bulwark",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 20
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 26
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   }
 ]
