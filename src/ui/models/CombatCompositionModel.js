@@ -16,7 +16,7 @@ export function combatArtworkKey({ width, height, zoom, wide = false, presentati
   return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, ceiling, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
-    actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset,
+    actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset, actor.artLeading,
   ])], (_key, value) => typeof value === 'number' ? Math.round(value * 1000) / 1000 : value);
 }
 
