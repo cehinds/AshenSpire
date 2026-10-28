@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
+- **Ten new maneuvers and a second casting cantrip** ([#2358](https://github.com/cehinds/AshenSpire/pull/2358), `0.7.1.1894`). Core reward offers can now show Hammer Blow, Rending Smash, Wide Sweep and Reaping Arc as early smashes and sweeps; Stunning Blow and Raking Sweep for everyone, Skullsplitter and Whirlwind for the Reaver and Feint and Hit and Run for the Rogue later on; and Warding Glance beside Glimpse, so the early spell slot stops offering Glimpse every time.
+
 - **Ten new early cards** ([#2356](https://github.com/cehinds/AshenSpire/pull/2356), `0.7.1.1894`). Core reward offers can now show Jab, Gash, Pommel Strike, Steady Guard, Driving Thrust, Expose, Cinder Dart, Mending Touch, Glimpse and Gale Push, so early fights stop repeating the same handful of cards; Reavers and Rogues can copy the new Basics and Starseers and Heralds the new Cantrips, as with the starter cards.
 
 - **Armaments level up three times** ([#2355](https://github.com/cehinds/AshenSpire/pull/2355), `0.7.1.1892`). In Core, weapons, armor and shields can now be upgraded three times instead of once, for +1, +1 and then +2; relics and Legacy runs keep their single upgrade, and existing saves keep the upgrades they already have.
