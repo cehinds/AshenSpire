@@ -1,5 +1,5 @@
 import { gameModule } from './gameProfile.js';
-import { gameProfileServiceActive } from './gameProfileRun.js';
+import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
 // Smithing is a run-owned transaction over a namespaced item, never a card copy.
 // The caller supplies the balance block so this model does not become a second
 // home for economy tuning. Exact item/tier tags own every cost and change.
@@ -553,6 +553,11 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
 export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRules = undefined, options = {}) {
   if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
+}
+
+/** The merchant's Upgrade an Item service: the same commit, no wrapper yet. */
+export function commitMerchantSmithing(registries, run, itemRef) {
+  return commitSmithing(registries, run, itemRef);
 }
 
 /**
