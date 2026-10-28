@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
+- **Blacksmith and merchant upgrades work in Core** ([#2364](https://github.com/cehinds/AshenSpire/pull/2364), `0.7.1.1898`). Upgrading a weapon or armor at the Blacksmith or the merchant no longer fails in a Core run; it costs 1, 2 and 3 Smithing Stones for the three levels, and upgraded armor raises your maximum HP, Mana and Stamina straight away.
+
 - **Ten new spells** ([#2360](https://github.com/cehinds/AshenSpire/pull/2360), `0.7.1.1898`). Starseers can now find Starfall, Comet Lance, Searing Ray and Meteor, Heralds Sanctified Ward, Healing Prayer, Judgment and Dawn Bulwark, and every class Arcane Siphon and Ember Wave; these Mana spells turn up mostly after the first few fights.
 
 - **Ten new maneuvers and a second casting cantrip** ([#2358](https://github.com/cehinds/AshenSpire/pull/2358), `0.7.1.1896`). Core reward offers can now show Hammer Blow, Rending Smash, Wide Sweep and Reaping Arc as early smashes and sweeps; Stunning Blow and Raking Sweep for everyone, Skullsplitter and Whirlwind for the Reaver and Feint and Hit and Run for the Rogue later on; and Warding Glance beside Glimpse, so the early spell slot stops offering Glimpse every time.
