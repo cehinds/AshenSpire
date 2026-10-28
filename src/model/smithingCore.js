@@ -130,7 +130,7 @@ function liveCardValues(registries, run, itemRef, level) {
       // A card with no damage or block effect cannot change; skip its (costly) detached preview.
       const def = resolveCombatCard(combat, instance);
       if (!(def.effects || []).some((effect) => CARD_VALUES.some(({ op }) => op === effect.op))) { rows.set(key, { cardId: instance.cardId, name: def.name, copies: 1, values: {} }); continue; }
-      const preview = previewCard(combat, instance.instanceId);
+      const preview = previewCard(combat, instance.instanceId, undefined, undefined, { rawFace: true });
       rows.set(key, { cardId: instance.cardId, name: preview.name, copies: 1,
         values: Object.fromEntries(CARD_VALUES.map(({ op }) => { const entry = preview.values.find((value) => value.op === op); return [op, entry?.faceValue ?? entry?.value]; })) });
     }

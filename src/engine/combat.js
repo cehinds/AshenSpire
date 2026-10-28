@@ -2513,7 +2513,7 @@ export function getEntity(combat, id) {
  * defender mults when a target is given); block through computeBlockGain.
  * perTarget maps every living enemy's instance id → the damage it would take.
  */
-export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { rangeRoute = 'advance' } = {}) {
+export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { rangeRoute = 'advance', rawFace = false } = {}) {
   if (combat.enemyKnowledge && !combat._knowledgePreview) {
     const visible = F.candidateState(combat, { detached: true });
     visible._knowledgePreview = true;
@@ -2523,7 +2523,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       delete enemy.combatCounter;
       delete enemy.pendingMove;
     }
-    return previewCard(visible, cardInstanceId, targetId, upcastRanks, { rangeRoute });
+    return previewCard(visible, cardInstanceId, targetId, upcastRanks, { rangeRoute, rawFace });
   }
   const inst =
     combat.piles.hand.find((c) => c.instanceId === cardInstanceId) ||
@@ -2535,7 +2535,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   if (!combat._abilityPreparingPreview) {
     const clone = preparingPreview(combat, inst, def, targetId);
     clone._abilityPreparingPreview = true;
-    return previewCard(clone, cardInstanceId, targetId, upcastRanks, { rangeRoute });
+    return previewCard(clone, cardInstanceId, targetId, upcastRanks, { rangeRoute, rawFace });
   }
   const p = combat.player;
   const isX = def.cost === 'X';
@@ -2721,6 +2721,20 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
+        // Core face (owner, 2026-10-28): the reference enemy's state as this effect meets it, before this effect's own hits drain it.
+        // Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
+        const faceEnemy = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && (!primary || primary.kind === 'enemy')
+          ? (target?.kind === 'enemy' && target.alive ? target : allLiving[0]) : null;
+        let faceState = null;
+        if (faceEnemy) {
+          const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
+          const d = shared.defender;
+          faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
+            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, barrier: 0, wardBlock: 0,
+              persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
+              ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
+              ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
+        }
         for (const e of living) {
           const result = isCounterReply
             ? previewCounter(e, i)
@@ -2746,10 +2760,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         }
         // An un-aimed face states the card's offensive amount. Target rows
         // retain exact mitigation for inspection and target previews.
-        if (combat.combatExpansionVersion === 2 && !targetId && !isCounterReply) {
+        // rawFace: a caller outside a fight (the smithing preview runs a stand-in fight) keeps the raw number.
+        if (combat.combatExpansionVersion === 2 && (faceEnemy || !targetId) && !isCounterReply) {
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           // Shown on the card: a whole number, rounded down (owner, 2026-10-18); the chain itself stays exact.
           entry.faceValue = Math.floor(A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true }));
+          // The reference is the aimed living enemy, else the frontmost living one; no enemy leaves the raw number.
+          if (faceState) {
+            const faceHits = previewDamageHits(combat, p, faceState.defender, evalPreview(combat, action, eff.amount, faceEnemy) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
+              attackTags, carrier, Math.max(1, Math.floor(entry.hits)), faceState).hitDamages;
+            entry.faceValue = Math.floor(faceHits[0] ?? entry.faceValue);
+            entry.faceHitDamages = faceHits.map(Math.floor);
+          }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
           entry.ratingBonus = Math.floor(A.cardRatingDamage(combat, p, carrier, printedBase));
@@ -2856,11 +2878,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           tokens[`${token}.block`] = entry.defenseSplit.block;
           tokens[`${token}.ward`] = entry.defenseSplit.ward;
         }
-        if (eff.op === 'damage' && entry.hitDamages?.length > 1
-          && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
+        const sequence = entry.faceHitDamages && entry.hits > 0 ? entry.faceHitDamages : entry.hitDamages;
+        if (eff.op === 'damage' && sequence?.length > 1
+          && sequence.some(amount => amount !== sequence[0])) {
           const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
           if (hitsToken) damageSequences.push({ amountToken: token, hitsToken,
-            hitDamages: entry.hitDamages, totalDamage: entry.totalDamage });
+            hitDamages: sequence, totalDamage: sequence.reduce((sum, amount) => sum + amount, 0) });
         }
       }
       const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
