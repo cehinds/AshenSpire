@@ -127,3 +127,30 @@ export function applyUpgradeSteps(base, steps) {
   if (steps.length >= 2) card.name = `${base.name}+${steps.length}`;
   return card;
 }
+
+const isCount = (value, max = 99) => Number.isInteger(value) && value >= 1 && value <= max;
+/** Problems with an instance's optional `upgradeSteps` (empty when sound or absent). */
+export function upgradeStepsProblems(instance, path) {
+  const steps = instance && instance.upgradeSteps;
+  if (steps === undefined) return [];
+  if (!Array.isArray(steps)) return [`${path}.upgradeSteps must be an array when present`];
+  const problems = [];
+  if (steps.length > MAX_CARD_UPGRADES) problems.push(`${path}.upgradeSteps holds at most ${MAX_CARD_UPGRADES} steps`);
+  if (steps.length && instance.upgraded !== true) problems.push(`${path}.upgradeSteps requires upgraded: true`);
+  steps.forEach((step, i) => {
+    const at = `${path}.upgradeSteps[${i}]`;
+    if (!step || typeof step !== 'object' || Array.isArray(step) || !UPGRADE_STEP_KINDS.includes(step.k)) {
+      problems.push(`${at} must be a known step kind (${UPGRADE_STEP_KINDS.join(', ')})`);
+      return;
+    }
+    if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
+    const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
+    if (['dmg', 'blk', 'stk', 'plus'].includes(step.k) && !isCount(step.n)) bad('n');
+    if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
+    if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
+    if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
+    if (step.k === 'hits' && !(isCount(step.hits, 3) && step.hits >= 2)) bad('hits');
+    if (step.k === 'hits' && !isCount(step.per)) bad('per');
+  });
+  return problems;
+}
