@@ -60,5 +60,48 @@
         "default": "core.heraldSpecial"
       }
     }
+  },
+  "jab": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.jab"
+    },
+    "byClass": {}
+  },
+  "gash": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.gash"
+    },
+    "byClass": {}
+  },
+  "pommelStrike": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.pommelStrike"
+    },
+    "byClass": {}
+  },
+  "steadyGuard": {
+    "slot": "offHand",
+    "byTag": {
+      "default": "core.steadyGuard"
+    },
+    "byClass": {},
+    "fallbackSlot": "mainHand"
+  },
+  "drivingThrust": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.drivingThrust"
+    },
+    "byClass": {}
+  },
+  "expose": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.expose"
+    },
+    "byClass": {}
   }
 }
