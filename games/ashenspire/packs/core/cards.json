@@ -1475,5 +1475,51 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.wardingGlance",
+    "name": "Warding Glance",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "draw",
+        "amount": 1
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Draw {draw} card. Gain {block} Block.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "draw",
+          "amount": 1
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   }
 ]
