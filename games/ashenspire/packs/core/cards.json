@@ -1572,7 +1572,7 @@
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 6
   },
   {
     "id": "core.cometLance",
@@ -1621,7 +1621,7 @@
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 6
   },
   {
     "id": "core.searingRay",
@@ -1639,13 +1639,13 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 9
       },
       {
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 5
+        "stacks": 3
       }
     ],
     "tags": [
@@ -1660,19 +1660,19 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 13
         },
         {
           "op": "applyStatus",
           "target": "enemy",
           "status": "burn",
-          "stacks": 7
+          "stacks": 3
         }
       ]
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 5
   },
   {
     "id": "core.meteor",
@@ -1711,7 +1711,7 @@
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 10
   },
   {
     "id": "core.sanctifiedWard",
@@ -1870,7 +1870,7 @@
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 6
   },
   {
     "id": "core.dawnBulwark",
@@ -1964,7 +1964,7 @@
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 5
   },
   {
     "id": "core.emberWave",
@@ -2004,18 +2004,18 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 4
+          "amount": 5
         },
         {
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "burn",
-          "stacks": 4
+          "stacks": 3
         }
       ]
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 5
   }
 ]

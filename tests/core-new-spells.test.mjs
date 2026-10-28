@@ -10,6 +10,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 import { balanceMana } from '../src/content/generated/balanceMana.js';
+import { balanceExposure } from '../src/content/generated/balanceExposure.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -38,6 +39,7 @@ test('every new spell is authored in its class, costs mana, is not a cantrip, an
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
     assert.ok(card.tags.includes('camp:spell'), id);
+    if (card.effects.some(e => e.op === 'damage')) assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a mana attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
   }
   assert.equal(ALL.length, 10);
   assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
@@ -53,6 +55,12 @@ test('every new spell resolves at base and upgraded with its authored cost, a fa
     assert.ok(base.textTemplate && up.textTemplate, id);
     assert.notDeepEqual(up.effects, base.effects, `${id}: the upgrade changes numbers`);
     assert.deepEqual(up.keywords, base.keywords, `${id}: the upgrade keeps its keywords`);
+  }
+});
+
+test('no authored Burn exceeds the 3-stack application cap, so the face never promises more than lands', () => {
+  for (const id of ALL) for (const effects of [def(id).effects, def(id).upgrade.effects]) for (const effect of effects) {
+    if (effect.op === 'applyStatus' && effect.status === 'burn') assert.ok(effect.stacks <= 3, `${id}: Burn ${effect.stacks} (the engine caps Burn at 3 stacks)`);
   }
 });
 
