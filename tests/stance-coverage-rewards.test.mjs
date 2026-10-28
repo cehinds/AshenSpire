@@ -62,7 +62,7 @@ test('the reserved slot is never a stance already owned', () => {
     }
   }
   const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== 'core.sweep'); own(run, 'core.evade');
-  for (const seed of SEEDS) assert.equal(offer(reg, run, seed).options[0].id, 'core.sweep', `seed ${seed}`);
+  for (const seed of SEEDS) assert.equal(stanceOfId(offer(reg, run, seed).options[0].id), 'sweep', `seed ${seed}`); // any sweep-stance basic (Reaping Arc, Wide Sweep, Sweep)
 });
 test('owning every basic stance leaves offers exactly as the unreserved roll, with the same draws', () => {
   for (const seed of SEEDS) {
