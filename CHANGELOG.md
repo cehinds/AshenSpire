@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-28
+
+- **Cleaner combat HUD** ([#2352](https://github.com/cehinds/AshenSpire/pull/2352), `0.7.1.1886`). On desktop each enemy's health bar is now a shorter, thicker bar centred over it, with readable numbers and a fixed height that keeps it clear of the enemy's head; on phones the target panel no longer covers enemy attack intents and its badges fit two-digit values; touch screens no longer show the E and HOLD key hints on End Turn; and enemies are about 1.5x larger on a phone held sideways.
+
 ## 2026-10-27
 
 - **Branches that branch, full flasks each act, and a still battlefield** ([#2350](https://github.com/cehinds/AshenSpire/pull/2350), `0.7.1.1886`). Each act map's 1 to 3 main branches now open as a single path and split into sub-paths that sometimes cross before all joining at that branch's boss; both flasks refill to full at every new act; and the battlefield scenery no longer jumps when the last enemy falls, in solo or co-op.
