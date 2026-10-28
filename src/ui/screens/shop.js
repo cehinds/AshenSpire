@@ -44,7 +44,7 @@ import {
 import { consumableText, consumableSalePlan, commitConsumableSale } from '../../model/consumables.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { settingOn } from './settings.js';
-import { commitSmithing, smithingPlan } from '../../model/smithing.js';
+import { commitMerchantSmithing, smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService } from './smithServices.js';
@@ -624,7 +624,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
             onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },
             onBack: () => { render(); app.querySelector('#shop-upgrade')?.focus({ preventScroll: true }); },
             onConfirm: (itemRef) => {
-              commitSmithing(registries, run, itemRef);
+              commitMerchantSmithing(registries, run, itemRef);
               sfx.play('shrine');
               onChanged();
               if (run.smithingStones > 0) { openUpgrade(); return; }
