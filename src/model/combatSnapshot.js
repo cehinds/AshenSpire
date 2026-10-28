@@ -368,7 +368,7 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
         ? (registries.equipment.armour || []).some((row) => row.classId === identity.classId && row.id === identity.itemId)
         : identity?.itemKind === 'relic' && registries.relics.has(identity.itemId);
     if (!known) problems.push(`itemUpgradeLevels.${itemRef} is unknown`);
-    else if (level > (itemUpgradeTiers(registries, itemRef).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
+    else if (level > (itemUpgradeTiers(registries, itemRef, snapshot).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
   }
   if (snapshot.pendingCardChoice?.effect?.transformTo) has(registries.cards,snapshot.pendingCardChoice.effect.transformTo,'pendingCardChoice.transformTo');
   for (const row of snapshot.hiddenCards || []) has(registries.cards,row.card?.cardId,'hiddenCards.cardId');

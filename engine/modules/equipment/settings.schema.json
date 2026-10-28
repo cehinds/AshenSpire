@@ -35,6 +35,20 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 1000000
+        },
+        "tierBonusSteps": {
+          "type": "array",
+          "description": "Optional Core Smith ladder: the bonus each tier adds (Core: [1,1,2] = +1, +1, +2). Its length is the top tier; the item's effective bonus is the sum of the steps taken. Absent: the authored CSV ladder and one bonus per tier.",
+          "items": { "type": "integer", "minimum": 0, "maximum": 1000 },
+          "minItems": 1,
+          "maxItems": 10
+        },
+        "tierStoneCosts": {
+          "type": "array",
+          "description": "Smithing Stones to promote to each tier of tierBonusSteps (same length).",
+          "items": { "type": "integer", "minimum": 1, "maximum": 1000 },
+          "minItems": 1,
+          "maxItems": 10
         }
       },
       "required": [

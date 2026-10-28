@@ -3,6 +3,7 @@ export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
+import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 
 export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
@@ -136,7 +137,7 @@ export function gameProfileRatingReceipt(registries, run) {
           const itemTier = tier(`armament/${id}`);
           weaponTier = Math.max(weaponTier,itemTier);
           if (gameModule(run,'gear')?.armorBudget && itemTier) {
-            const ar = itemTier * policy.weaponARPerTier;
+            const ar = upgradeTierBonus(gameModule(run,'equipment'),itemTier) * policy.weaponARPerTier;
             totals.ar += ar;
             sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr:0,ward:0,poise:0,weaponTier:itemTier});
           }
