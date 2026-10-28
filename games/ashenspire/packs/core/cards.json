@@ -819,12 +819,14 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "skill",
     "mirrors": "defend",
     "icon": "skill",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "heal",
@@ -837,9 +839,11 @@
       "source:spell",
       "maneuver:casting",
       "classification.skill",
-      "rank.cantrip"
+      "rank.cantrip",
+      "fx:heal",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Heal {heal} HP.",
+    "textTemplate": "Heal {heal} HP. Exhaust.",
     "upgrade": {
       "effects": [
         {

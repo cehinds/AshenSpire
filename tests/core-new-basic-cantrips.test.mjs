@@ -42,3 +42,14 @@ test('basicOrCantripMatcher counts all ten new cards and not an ordinary common'
   for (const id of [...BASICS, ...CANTRIPS]) assert.ok(matches(id), id);
   assert.ok(!matches('core.advance'));
 });
+
+test('Mending Touch matches the heal-rules cheap shape (fx:heal, Exhaust, 1 SP + 1 MP) at both grades', () => {
+  const card = profile.content.cards.find(row => row.id === 'core.mendingTouch'), shapes = profile.modules['heal-rules'].shapes;
+  const shape = shapes.filter(s => s.tags.every(t => card.tags.includes(t))).sort((a, b) => b.tags.length - a.tags.length)[0];
+  assert.equal(shape.id, 'cheap');
+  assert.deepEqual([card.staminaCost, card.manaCost], [shape.cost.sp, shape.cost.mp]);
+  assert.ok(card.keywords.includes('exhaust'));
+  assert.equal(card.effects[0].amount, 4);
+  assert.equal(card.upgrade.effects[0].amount, 6);
+  assert.equal(card.upgrade.keywords, undefined, 'the upgrade keeps Exhaust');
+});
