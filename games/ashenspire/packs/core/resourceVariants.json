@@ -864,8 +864,8 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 0
     },
     "mp": {
@@ -874,8 +874,8 @@
       "manaCost": 3
     },
     "sp,mp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 3
     }
   },
@@ -952,8 +952,8 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 0
     },
     "mp": {
@@ -962,8 +962,8 @@
       "manaCost": 2
     },
     "sp,mp": {
-      "cost": 0,
-      "staminaCost": 0,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 2
     }
   },

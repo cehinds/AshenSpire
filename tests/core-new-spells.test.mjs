@@ -9,6 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
+import { balanceMana } from '../src/content/generated/balanceMana.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -33,6 +34,7 @@ test('every new spell is authored in its class, costs mana, is not a cantrip, an
     const card = def(id);
     assert.equal(card.class, cls, id);
     assert.ok(card.manaCost >= 1, `${id} costs mana`);
+    assert.ok(card.staminaCost >= balanceMana.minActionCost, `${id}: a mana card costs at least ${balanceMana.minActionCost} SP (balance.mana.minActionCost)`);
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
     assert.ok(card.tags.includes('camp:spell'), id);
