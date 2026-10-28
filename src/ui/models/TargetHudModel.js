@@ -16,11 +16,11 @@ export const targetHudOverlaps = (a, b, gap = 0) => a.width > 0 && a.height > 0 
 // Physical pixels, including viewport scaling. A lane owns its preferred side;
 // staggering and alternate sides are tried before a free-space lattice. Every
 // candidate survives; no crowded target is omitted or docked over the hand.
-export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig() }) {
+export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig(), tightTop = false }) {
   const gap = config.positioning.gapPx, step = config.positioning.staggerStepPx, inset = config.positioning.edgeInsetPx;
-  // Owner 2026-10-28: the top edge is tighter than the sides so a panel can sit above an enemy's overhead intent
-  // instead of covering it (topInsetPx, falling back to the common inset).
-  const topInset = config.positioning.topInsetPx ?? inset;
+  // Owner 2026-10-28: on phones and portrait the top edge is tighter than the sides so a panel can sit above an
+  // enemy's overhead intent instead of covering it (topInsetPx); desktop and widescreen keep the common inset.
+  const topInset = tightTop ? config.positioning.topInsetPx ?? inset : inset;
   const area = { left: bounds.left + inset, top: bounds.top + topInset,
     width: bounds.width - inset * 2, height: bounds.height - topInset - inset };
   const requests = [];

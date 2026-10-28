@@ -5,6 +5,7 @@ import { classicAppearance } from '../displayAppearance.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
+import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 
@@ -336,7 +337,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     const requests = sizing.map(({ id, entry, panel, anchor, lane, width }) => ({ id, role: entry.role, lane, anchor, width: width + 25,
       height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }));
-    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config });
+    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config, tightTop: !isWideFormFactor(document.documentElement.dataset.formFactor) });
     // Phase 4: panel positions, then each panel's box; then the Info buttons.
     const positioned = [];
     for (const box of placed) {
