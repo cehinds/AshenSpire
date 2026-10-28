@@ -482,6 +482,8 @@ export function deckCopyLimit(cardId, row, content = {}, settings = {}, gearSett
   if ((rules.owned.tags || []).some(t => tags.includes(t)) || fromPools(rules.owned.pools).has(cardId)) return have;
   for (const rule of rules.unlimited) {
     if (!charTags.includes(rule.requiresTag)) continue;
+    // excludeCards (owner 2026-10-28): named cards stay owned-count under a rule that would otherwise cover them.
+    if ((rule.excludeCards || []).includes(cardId)) continue;
     const c = rule.cards || {};
     const matches = (!c.rarity || c.rarity.includes(card.rarity)) && (!c.tagsAny || c.tagsAny.some(t => tags.includes(t))) && (!c.tagsAll || c.tagsAll.every(t => tags.includes(t)));
     if (fromPools(rule.pools).has(cardId) || ((c.rarity || c.tagsAny || c.tagsAll) && matches)) return Infinity;
