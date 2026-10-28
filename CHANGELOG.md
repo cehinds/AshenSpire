@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
-- **Armaments level up three times** ([#2355](https://github.com/cehinds/AshenSpire/pull/2355), `0.7.1.1888`). In Core, weapons, armor and shields can now be upgraded three times instead of once, for +1, +1 and then +2; relics and Legacy runs keep their single upgrade, and existing saves keep the upgrades they already have.
+- **Armaments level up three times** ([#2355](https://github.com/cehinds/AshenSpire/pull/2355), `0.7.1.1890`). In Core, weapons, armor and shields can now be upgraded three times instead of once, for +1, +1 and then +2; relics and Legacy runs keep their single upgrade, and existing saves keep the upgrades they already have.
+
+- **Cleaner combat HUD** ([#2352](https://github.com/cehinds/AshenSpire/pull/2352), `0.7.1.1890`). On desktop each enemy's health bar is now a shorter, thicker bar centred over it, with readable numbers and a fixed height that keeps it clear of the enemy's head; on phones the target panel no longer covers enemy attack intents and its badges fit two-digit values; touch screens no longer show the E and HOLD key hints on End Turn; and enemies are about 1.5x larger on a phone held sideways.
 
 - **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1888`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
 

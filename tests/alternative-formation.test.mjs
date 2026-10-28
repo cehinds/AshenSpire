@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeFormation, fitAlternativeSprites, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
+import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -203,6 +204,12 @@ test('every form factor fits the entire artwork envelope within its own cell', (
       const right = box.left + box.width - Math.abs(box.skew) * box.height / 2;
       assert(fit.x - half >= left + 6 - 1e-6, `${formFactor} complete left edge`);
       assert(fit.x + half <= right - 6 + 1e-6, `${formFactor} complete right edge`);
+      if (formFactor === 'desktop') {
+        // Owner 2026-10-28: on desktop and widescreen the HP bar is capped at half the lane and centred on its body.
+        assert(Math.abs(actor.slot.miniHudWidth - (box.width * 0.5 - 4)) < 1e-6);
+        assert(Math.abs(actor.slot.miniHudLeft + actor.slot.miniHudWidth / 2 - actor.slot.x) < 1e-6, 'desktop HUD is centred over its body');
+        continue;
+      }
       assert.equal(actor.slot.miniHudWidth, box.width - 4);
       assert(Math.abs(actor.slot.miniHudLeft - (box.left + box.skew * box.height / 2 + 2)) < 1e-6);
     }
@@ -211,17 +218,90 @@ test('every form factor fits the entire artwork envelope within its own cell', (
   }
 });
 
-test('the short profile narrows each HUD to 0.55 of its lane, centred; every other profile keeps the whole lane', () => {
+test('the short profile narrows each HUD to 0.55 of its lane, desktop to 0.5 centred on the body; phone keeps the whole lane', () => {
   const inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHudInsetPx;
   assert.equal(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.short.hudWidthFraction, 0.55);
-  for (const [width, height, narrow, fraction] of [[844, 240, false, 0.55], [1600, 620, false, 1], [390, 420, true, 1]]) {
+  for (const [width, height, narrow, fraction] of [[844, 240, false, 0.55], [1600, 620, false, 0.5], [390, 420, true, 1]]) {
     const formation = alternativeFormation(plan(3), width, height, narrow);
     for (const cell of formation.cells) {
       const lane = cell.box.width;
       assert.ok(Math.abs(cell.miniHudWidth - (lane * fraction - 2 * inset)) < 1e-6, `${width}x${height}: HUD width is ${fraction} of the lane`);
+      if (width === 1600) { // desktop: centred on the body, not the lane (owner 2026-10-28)
+        assert.ok(Math.abs(cell.miniHudLeft + cell.miniHudWidth / 2 - cell.x) < 1e-6, `${width}x${height}: the desktop HUD is centred over its body`);
+        continue;
+      }
       const slack = (lane - lane * fraction) / 2;
       const flush = cell.box.left + cell.box.skew * cell.box.height / 2 + inset;
       assert.ok(Math.abs(cell.miniHudLeft - (flush + slack)) < 1e-6, `${width}x${height}: the narrowed HUD stays centred in its lane`);
     }
+  }
+});
+
+test('a short landscape field stands its enemy ranks low and fits bodies about 1.5x taller than the portrait short profile', () => {
+  // Owner 2026-10-28, phone landscape (844x390, field ~146px): "enemies are too tiny".
+  const height = 146;
+  const heights = {};
+  for (const [label, width] of [['landscape', 844], ['portrait', 599]]) {
+    const formation = alternativeFormation(plan(3), width, height, false);
+    const back = formation.cells.filter(c => c.side === 'enemy' && c.rank === 0);
+    const player = formation.cells.filter(c => c.side === 'player');
+    const ground = Math.max(...back.map(c => c.ground));
+    if (label === 'landscape') assert.ok(ground >= height * 0.7, `back-rank feet at ${ground}`);
+    // The party's baseline stays at the bottom of the field either way: feet on the cell bottom.
+    assert.ok(Math.max(...player.map(c => c.ground)) <= height * 0.95 + 1e-6);
+    const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
+    heights[label] = Math.max(...fitAlternativeSprites({ width, height, actors, narrow: false }).map(f => f.visibleHeight));
+  }
+  assert.ok(heights.landscape >= heights.portrait * 1.4, `enemy height ${heights.landscape} vs ${heights.portrait}`);
+});
+
+test('the overhead group height is config only: phone, desktop and short desktop window, never selection', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  assert.equal(overheadGroupHeightPx(grid, { wide: false }), grid.miniHudGroupHeightPx);
+  assert.equal(overheadGroupHeightPx(grid, { wide: false, shortWindow: true }), grid.miniHudGroupHeightPx, 'phones ignore the short-window rule');
+  assert.equal(overheadGroupHeightPx(grid, { wide: true }), 96);
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, shortWindow: true }), 80);
+  assert.ok(overheadGroupHeightPx(grid, { wide: true }) > overheadGroupHeightPx(grid, { wide: true, shortWindow: true }));
+  // Desktop form factor at 1101-1199 wide: the tall health row (min-width 1200) is not drawn, so the group is the phone's.
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false }), grid.miniHudGroupHeightPx, '1150 wide');
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false, shortWindow: false }), 61);
+  // The stage's helper takes no frame and reads no layout: a selected frame hides its meters, so any DOM
+  // measurement here would change with selection and refit the settled artwork on every click.
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const helper = source.slice(source.indexOf('const miniHudGroupHeight ='), source.indexOf('\n\n', source.indexOf('const miniHudGroupHeight =')));
+  assert.ok(helper.length > 40, 'helper found');
+  assert.doesNotMatch(helper, /offsetHeight|getBoundingClientRect|clientHeight|querySelector|classList/);
+  assert.doesNotMatch(source, /miniHudGroupHeight\([^)]*\bframe\b/, 'no call passes a frame');
+});
+
+test('a taller short-landscape field keeps its sprite width: the shear is capped and enemies never fall below the parent short profile', () => {
+  // Codex review on #2352: skew 4.2 at 844x240 shears 121px out of 133px cells and clamps the artwork to 1px (2.5px
+  // tall enemies). Floors below are the parent `short` profile's fitted enemy heights at 844 wide for the same
+  // 60x150 artwork envelope (measured with the parent profile forced), per field height.
+  const parentFloor = { 146: 16.8, 200: 47, 240: 70.8, 279: 74.2 };
+  for (const count of [3, 4]) for (const [height, floor] of Object.entries(parentFloor)) {
+    const formation = alternativeFormation(plan(count), 844, Number(height), false);
+    const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
+    const fitted = fitAlternativeSprites({ width: 844, height: Number(height), actors, narrow: false });
+    for (const fit of fitted) assert.ok(fit.visibleHeight >= floor - 0.05, `${count} enemies at 844x${height}: ${fit.visibleHeight} < parent ${floor}`);
+    const cell = formation.cells[0].box;
+    const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortLandscape;
+    const unshearedLane = 844 * (grid.right - grid.left) / 3 /* the plan helper builds three lanes */;
+    assert.ok(cell.width - 2 * cell.skew * cell.height >= grid.minArtLaneFraction * unshearedLane - 1e-6, `${count} enemies at 844x${height}: artwork keeps under 40% of the unsheared lane`);
+  }
+});
+
+test('narrow phone strips keep sprite width and stay above the parent short profile (667, 740, 780 wide)', () => {
+  // The cap also bites at the tuned 146px height on narrower strips; floors are the parent `short` profile's fitted
+  // heights for the same 60x150 envelope, 3 enemies (measured with the parent profile forced).
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortLandscape;
+  const makePlan = (width, height) => combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+    friends: ['p0'], enemies: ['e0', 'e1', 'e2'] });
+  for (const [width, height, floor] of [[667, 131, 15.1], [740, 116, 13.3], [780, 116, 13.3], [667, 187, 39.3]]) {
+    const formation = alternativeFormation(makePlan(width, height), width, height, false);
+    const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
+    for (const fit of fitAlternativeSprites({ width, height, actors, narrow: false })) assert.ok(fit.visibleHeight >= floor - 0.05, `${width}x${height}: ${fit.visibleHeight} < parent ${floor}`);
+    const cell = formation.cells[0].box;
+    assert.ok(cell.width - 2 * cell.skew * cell.height >= grid.minArtLaneFraction * width * (grid.right - grid.left) / 3 - 1e-6, `${width}x${height}: artwork keeps under ${grid.minArtLaneFraction} of the unsheared lane`);
   }
 });

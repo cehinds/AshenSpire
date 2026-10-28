@@ -16,10 +16,13 @@ export const targetHudOverlaps = (a, b, gap = 0) => a.width > 0 && a.height > 0 
 // Physical pixels, including viewport scaling. A lane owns its preferred side;
 // staggering and alternate sides are tried before a free-space lattice. Every
 // candidate survives; no crowded target is omitted or docked over the hand.
-export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig() }) {
+export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig(), tightTop = false }) {
   const gap = config.positioning.gapPx, step = config.positioning.staggerStepPx, inset = config.positioning.edgeInsetPx;
-  const area = { left: bounds.left + inset, top: bounds.top + inset,
-    width: bounds.width - inset * 2, height: bounds.height - inset * 2 };
+  // Owner 2026-10-28: on phones and portrait the top edge is tighter than the sides so a panel can sit above an
+  // enemy's overhead intent instead of covering it (topInsetPx); desktop and widescreen keep the common inset.
+  const topInset = tightTop ? config.positioning.topInsetPx ?? inset : inset;
+  const area = { left: bounds.left + inset, top: bounds.top + topInset,
+    width: bounds.width - inset * 2, height: bounds.height - topInset - inset };
   const requests = [];
   // Owner (2026-10-17): the player's panel is pinned to the player's right. It
   // is placed first and never falls back to another side or the free-space
@@ -133,4 +136,13 @@ export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHe
   return { miniTop: (head - frame.top - gap - groupHeight) / zoom,
     selectedTop: (head - frame.top - gap - intentHeight) / zoom,
     center: ((body.left + body.right) / 2 - frame.left) / zoom };
+}
+
+// The rect a panel must keep clear for one enemy's overhead intent, in screen px. A selected frame's intent is moved
+// to `selectedTop` over the body centre by the placement written after the panels; an unselected one is not moved,
+// so its rendered box is the truth (its group height is per profile and, on phone landscape, its rack is centred on
+// the lane rather than the body).
+export function targetHudIntentObstacle({ selected, box, placement, intentBox, intentWidth, intentHeight, zoom = 1 }) {
+  if (selected) return { left: box.left + placement.center * zoom - intentWidth / 2, top: box.top + placement.selectedTop * zoom, width: intentWidth, height: intentHeight };
+  return { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height };
 }
