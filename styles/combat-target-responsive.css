@@ -161,7 +161,7 @@
    at the fixed 1.8em square; they are a pill that hugs icon and number. Poise and Block stay round. */
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge:is(.combat-health-precision, .combat-health-evade) {
   display:inline-flex; align-items:center; justify-content:center; gap:.2em; aspect-ratio:auto;
-  flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:.35em; box-sizing:border-box; border-radius:999px;
+  flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:0; box-sizing:border-box;
 }
 
 /* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
@@ -192,7 +192,7 @@
 }
 
 /* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
-   first approved sizes so the bodies keep their height (the stage measures the rack, so the reserve follows). */
+   first approved sizes so the bodies keep their height (the stage's group height is config: desktopShortMiniHudGroupHeightPx, matched to this rule). */
 @media (min-width: 1200px) and (max-height: 800px) {
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
     --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));

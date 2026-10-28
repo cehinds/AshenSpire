@@ -39,13 +39,25 @@ export function perspectiveLanePattern(count, lanes) {
 // foot anchor (its shadow) is where the sprite's feet stand. Enemies fill the
 // back rank first, then the front rank; the player's party shares one rank.
 // Cell IDs stay gameplay addresses: column = depth (outer = back), row = lane.
+// The landscape strip's ranks are tuned for a ~146px field. On a taller field the same skew shears the grid too far:
+// a back-rank cell's artwork width is laneWidth - 2*skew*cellHeight, and the lane itself narrows by the shear, so at
+// 240px high the width clamps to 1px. The skew is therefore capped so the artwork keeps at least
+// (1 - maxShearFraction) of the unsheared lane width: skew <= A*(1 - f) / (rowHeight*H*(4 + 2*lanes)), A the grid's
+// width. The 146px field is under the cap, so its tuned skew is unchanged.
+export function shortLandscapeProfile(width, height, lanes = 3) {
+  const near = GRID.shortLandscape;
+  const area = width * (near.right - near.left);
+  const cap = area * (1 - near.maxShearFraction) / (near.rowHeight * height * (4 + 2 * lanes));
+  return near.skew <= cap ? near : { ...near, skew: cap };
+}
+
 export function alternativeFormation(plan, width, height, narrow, presentation = {}) {
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
   const formFactor = presentation.formFactor || (narrow ? 'mobile' : width <= 1024 ? 'tablet' : 'desktop');
   // Owner 2026-10-28: a short LANDSCAPE strip (phone on its side, min width as the layout's own 600px container query)
   // stands its ranks low so the bodies get the height; a short portrait field keeps the original short profile.
-  const shortProfile = width >= 600 && GRID.shortLandscape ? GRID.shortLandscape : GRID.short;
+  const shortProfile = width >= 600 && GRID.shortLandscape ? shortLandscapeProfile(width, height, plan.rows || 3) : GRID.short;
   const profile = height < GRID.shortBelowPx ? shortProfile : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
   const lanes = plan.rows || 3;
   // The grid is sheared: every row slides right in proportion to its height
@@ -188,7 +200,9 @@ export function perspectiveCellContains(box, x, y) {
 // state: a selected frame hides its meters, so a measured height would refit the art on every click (owner
 // 2026-10-28). Desktop and widescreen draw the taller health row; a short desktop window steps it down (the
 // `min-width: 1200px and max-height: 800px` rule in styles/combat-target-responsive.css).
-export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false } = {}) {
-  if (!wide) return grid.miniHudGroupHeightPx;
+export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false, tall = true } = {}) {
+  // `tall` is the 1200px-wide window the taller health row is drawn at: a desktop form factor at 1101-1199 wide
+  // still renders the phone-height group.
+  if (!wide || !tall) return grid.miniHudGroupHeightPx;
   return shortWindow ? grid.desktopShortMiniHudGroupHeightPx : grid.desktopMiniHudGroupHeightPx;
 }

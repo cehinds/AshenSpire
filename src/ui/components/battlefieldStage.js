@@ -34,6 +34,7 @@ import { separateOverheadIntents } from './overheadIntentSeparation.js';
 // selection (a selected frame hides its meters) and would refit the settled artwork on every click.
 const miniHudGroupHeight = grid => overheadGroupHeightPx(grid, {
   wide: isWideFormFactor(document.documentElement.dataset.formFactor),
+  tall: window.matchMedia('(min-width: 1200px)').matches,
   shortWindow: window.matchMedia('(min-width: 1200px) and (max-height: 800px)').matches });
 
 // These classes change controls, tint or outlines, not the figure's pose.
