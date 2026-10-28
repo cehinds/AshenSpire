@@ -67,15 +67,16 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const ground = top + band.anchor.y * rowHeight;
     // A short strip has no room for a lane-wide bar: it would lie across the neighbouring
     // lane's body. The profile may narrow the HUD to a fraction of the lane, kept centred.
-    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2;
+    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2; // hudCenterOnBody (desktop, widescreen): the bar is centred on the body's x, not the lane's.
     const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
+    const bodyX = laneLeft + band.anchor.x * laneWidth + shear(ground);
     return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
-      x: laneLeft + band.anchor.x * laneWidth + shear(ground), ground, fitGround: ground,
+      x: bodyX, ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, miniHudLeft: left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
+      artWidth: laneWidth, miniHudLeft: profile.hudCenterOnBody ? bodyX - hudWidth / 2 + GRID.miniHudInsetPx : left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
       miniHudWidth: hudWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);

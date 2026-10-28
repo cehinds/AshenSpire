@@ -203,6 +203,12 @@ test('every form factor fits the entire artwork envelope within its own cell', (
       const right = box.left + box.width - Math.abs(box.skew) * box.height / 2;
       assert(fit.x - half >= left + 6 - 1e-6, `${formFactor} complete left edge`);
       assert(fit.x + half <= right - 6 + 1e-6, `${formFactor} complete right edge`);
+      if (formFactor === 'desktop') {
+        // Owner 2026-10-28: on desktop and widescreen the HP bar is capped at half the lane and centred on its body.
+        assert(Math.abs(actor.slot.miniHudWidth - (box.width * 0.5 - 4)) < 1e-6);
+        assert(Math.abs(actor.slot.miniHudLeft + actor.slot.miniHudWidth / 2 - actor.slot.x) < 1e-6, 'desktop HUD is centred over its body');
+        continue;
+      }
       assert.equal(actor.slot.miniHudWidth, box.width - 4);
       assert(Math.abs(actor.slot.miniHudLeft - (box.left + box.skew * box.height / 2 + 2)) < 1e-6);
     }
@@ -211,14 +217,18 @@ test('every form factor fits the entire artwork envelope within its own cell', (
   }
 });
 
-test('the short profile narrows each HUD to 0.55 of its lane, centred; every other profile keeps the whole lane', () => {
+test('the short profile narrows each HUD to 0.55 of its lane, desktop to 0.5 centred on the body; phone keeps the whole lane', () => {
   const inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHudInsetPx;
   assert.equal(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.short.hudWidthFraction, 0.55);
-  for (const [width, height, narrow, fraction] of [[844, 240, false, 0.55], [1600, 620, false, 1], [390, 420, true, 1]]) {
+  for (const [width, height, narrow, fraction] of [[844, 240, false, 0.55], [1600, 620, false, 0.5], [390, 420, true, 1]]) {
     const formation = alternativeFormation(plan(3), width, height, narrow);
     for (const cell of formation.cells) {
       const lane = cell.box.width;
       assert.ok(Math.abs(cell.miniHudWidth - (lane * fraction - 2 * inset)) < 1e-6, `${width}x${height}: HUD width is ${fraction} of the lane`);
+      if (width === 1600) { // desktop: centred on the body, not the lane (owner 2026-10-28)
+        assert.ok(Math.abs(cell.miniHudLeft + cell.miniHudWidth / 2 - cell.x) < 1e-6, `${width}x${height}: the desktop HUD is centred over its body`);
+        continue;
+      }
       const slack = (lane - lane * fraction) / 2;
       const flush = cell.box.left + cell.box.skew * cell.box.height / 2 + inset;
       assert.ok(Math.abs(cell.miniHudLeft - (flush + slack)) < 1e-6, `${width}x${height}: the narrowed HUD stays centred in its lane`);

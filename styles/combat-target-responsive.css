@@ -163,3 +163,22 @@
   display:inline-flex; align-items:center; justify-content:center; gap:.2em; aspect-ratio:auto;
   flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:.35em; box-sizing:border-box; border-radius:999px;
 }
+
+/* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
+   numbers. The bar is now 16px thick, its value 16px and the badges 1.6x, all in physical px (the width cap and the
+   centring on the body are the profile's hudWidthFraction and hudCenterOnBody). Badges stay flush left and the value
+   flush right. Phones and tablets keep the rules above. */
+@media (min-width: 1200px) {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+    --health-row-h: calc(16px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(15px / var(--ui-zoom,1));
+    height: calc(54px / var(--ui-zoom,1))!important; min-height: calc(54px / var(--ui-zoom,1))!important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+    inset: calc(18px / var(--ui-zoom,1)) 0 auto auto !important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+    width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
+  }
+}
