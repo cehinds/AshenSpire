@@ -742,3 +742,15 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
   verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyRewardGroups(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
   return freezeGameData({...value,hash});
 }
+
+/**
+ * The effective Smith bonus of an item at `level`: the sum of the first `level` entries of the equipment module's
+ * upgradeBonuses.tierBonusSteps (Core: [1,1,2] gives 0,1,2,4), or the level itself when no steps are configured.
+ */
+export function upgradeTierBonus(equipmentSettings, level) {
+  const steps = equipmentSettings?.upgradeBonuses?.tierBonusSteps;
+  if (!Array.isArray(steps) || !steps.length) return level || 0;
+  let total = 0;
+  for (let index = 0; index < Math.min(level || 0, steps.length); index += 1) total += steps[index];
+  return total;
+}
