@@ -155,7 +155,53 @@
     "deck-training": {
       "version": "1.0.0",
       "settings": {
-        "ownedOnlyCollection": true
+        "ownedOnlyCollection": true,
+        "unlimited": [
+          {
+            "id": "basicTraining",
+            "requiresTag": "training.basic",
+            "pools": [
+              "strike",
+              "defend",
+              "counter",
+              "smash",
+              "sweep",
+              "evade",
+              "jab",
+              "gash",
+              "pommelStrike",
+              "steadyGuard",
+              "drivingThrust",
+              "expose",
+              "hammerBlow",
+              "rendingSmash",
+              "wideSweep",
+              "reapingArc"
+            ],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAny": [
+                "maneuver:attack",
+                "maneuver:defend",
+                "maneuver:counter",
+                "maneuver:smash",
+                "maneuver:sweep"
+              ]
+            }
+          },
+          {
+            "id": "graduate",
+            "requiresTag": "training.graduate",
+            "pools": [],
+            "cards": {
+              "tagsAll": [
+                "rank.cantrip"
+              ]
+            }
+          }
+        ]
       }
     },
     "card-pools": {

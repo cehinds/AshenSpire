@@ -60,5 +60,76 @@
         "default": "core.heraldSpecial"
       }
     }
+  },
+  "jab": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.jab"
+    },
+    "byClass": {}
+  },
+  "gash": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.gash"
+    },
+    "byClass": {}
+  },
+  "pommelStrike": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.pommelStrike"
+    },
+    "byClass": {}
+  },
+  "steadyGuard": {
+    "slot": "offHand",
+    "byTag": {
+      "default": "core.steadyGuard"
+    },
+    "byClass": {},
+    "fallbackSlot": "mainHand"
+  },
+  "drivingThrust": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.drivingThrust"
+    },
+    "byClass": {}
+  },
+  "expose": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.expose"
+    },
+    "byClass": {}
+  },
+  "hammerBlow": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.hammerBlow"
+    },
+    "byClass": {}
+  },
+  "rendingSmash": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.rendingSmash"
+    },
+    "byClass": {}
+  },
+  "wideSweep": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.wideSweep"
+    },
+    "byClass": {}
+  },
+  "reapingArc": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.reapingArc"
+    },
+    "byClass": {}
   }
 }
