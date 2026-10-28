@@ -104,6 +104,34 @@
         "default": "core.expose"
       },
       "byClass": {}
+    },
+    "hammerBlow": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.hammerBlow"
+      },
+      "byClass": {}
+    },
+    "rendingSmash": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.rendingSmash"
+      },
+      "byClass": {}
+    },
+    "wideSweep": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.wideSweep"
+      },
+      "byClass": {}
+    },
+    "reapingArc": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.reapingArc"
+      },
+      "byClass": {}
     }
   },
   "cards": [
