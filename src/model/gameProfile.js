@@ -3,7 +3,7 @@ import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gam
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
-import { upgradedDefinition } from './cardUpgrade.js';
+import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
 import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
@@ -44,7 +44,7 @@ export function projectGameCard(subject,idOrInstance) {
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
-  if (typeof idOrInstance === 'object' && idOrInstance?.upgraded && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(upgradedDefinition(chosen));
+  if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);

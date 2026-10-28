@@ -1,5 +1,5 @@
 import { applyBaseManaPolicy } from './cardManaPolicy.js';
-import { upgradedDefinition } from './cardUpgrade.js';
+import { applyUpgradeSteps, upgradeStepsOf, upgradeCount, upgradeSignature } from './cardUpgrade.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -628,7 +628,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
+  if (!upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -638,7 +638,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -652,7 +652,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const school = typeof instanceOrRef.damageSchool === 'string' ? instanceOrRef.damageSchool : profile?.damageSchool;
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
-  if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
+  if (upgradeCount(instanceOrRef) && !usesAbilityGrade) result = mergeUpgrade(result, upgradeStepsOf(instanceOrRef));
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
   result = applyBaseManaPolicy(registries, result);
@@ -797,6 +797,6 @@ export function applyCardRank(card, rank, skillBonus = 0) {
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */
-export function mergeUpgrade(base) {
-  return deepFreeze(upgradedDefinition(base));
+export function mergeUpgrade(base, steps) {
+  return deepFreeze(applyUpgradeSteps(base, Array.isArray(steps) && steps.length ? steps : [{ k: 'authored' }]));
 }
