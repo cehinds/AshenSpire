@@ -297,7 +297,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     intents.forEach(({ frame, intentWidth, intentHeight, placement }, index) => {
       if (!intentWidth || frame.classList.contains('player')) return;
       const box = boxes[index];
-      obstacles.push({ left: box.left + placement.center * zoom - intentWidth / 2, top: box.top + placement.selectedTop * zoom, width: intentWidth, height: intentHeight });
+      obstacles.push({ left: box.left + placement.center * zoom - intentWidth / 2, top: box.top + (frame.classList.contains('target-hud-selected') ? placement.selectedTop : placement.miniTop) * zoom, width: intentWidth, height: intentHeight });
     });
     frames.forEach((frame, index) => {
       const { core } = metricsFor(frame, zoom), box = boxes[index];
