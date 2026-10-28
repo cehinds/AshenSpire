@@ -1,18 +1,31 @@
 // How many Core card upgrades are free, what the next one costs, and whether it
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
-import { basicCardKind } from './basicCardRule.js';
 import { cardTrackLevel } from './skills.js';
 import { upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
 /**
- * freeAllowance(run, def[, registries]) → F. A Basic or cantrip card gets 1;
+ * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
+ * 2026-10-28): a common card that is not a spell, or any cantrip. Uncommon,
+ * rare and starter cards (the class specials, Mana Surge) are not. This is
+ * deliberately not the Martial Adept training rule (model/basicCardRule.js),
+ * which marks almost every martial card Basic.
+ */
+export function upgradeBasic(def) {
+  const tags = (def && def.tags) || [];
+  if (tags.includes('rank.cantrip')) return true;
+  const spell = tags.includes('source:spell') || tags.includes('camp:spell');
+  return !!def && def.rarity === 'common' && !spell;
+}
+
+/**
+ * freeAllowance(run, def[, registries]) → F. An upgradeBasic card gets 1;
  * every other card gets 1 + R, R being the highest skill-track level over the
  * tracks whose schools match the card (0..10).
  */
 export function freeAllowance(run, def, registries) {
   if (!def) return 0;
-  if (basicCardKind(run, def)) return 1;
+  if (upgradeBasic(def)) return 1;
   return 1 + (registries ? cardTrackLevel(registries, run, def) : 0);
 }
 

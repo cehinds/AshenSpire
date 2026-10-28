@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
-import { freeAllowance, upgradeCost, canUpgrade } from '../src/model/cardUpgradeLimits.js';
+import { freeAllowance, upgradeCost, canUpgrade, upgradeBasic } from '../src/model/cardUpgradeLimits.js';
 import { basicCardKind } from '../src/model/basicCardRule.js';
 import { cardTrackLevel } from '../src/model/skills.js';
 
@@ -14,26 +14,22 @@ const inst = (cardId, count) => ({ instanceId: `i-${cardId}`, cardId, ...(count 
 // A ranked card carrying the blade school: not Basic, so it earns 1 + R.
 const blade = { id: 't.blade', name: 'Bladework', type: 'attack', rank: 1, tags: ['blade'] };
 
-test('Basic and cantrip cards are recognised by one shared rule', () => {
-  const run = newRun();
-  assert.equal(basicCardKind(run, def('core.strike')), 'Basic');
-  assert.equal(basicCardKind(run, def('core.cantrip')), 'Cantrip');
-  assert.equal(basicCardKind(run, def('core.starfall')), null, 'a ranked spell is not a cantrip');
-  assert.equal(basicCardKind(run, def('core.reaverSpecial')), null, 'a class special is not Basic');
-  assert.equal(basicCardKind(run, blade), null);
+test('upgradeBasic: common non-spells and cantrips only', () => {
+  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart', 'core.cantrip', 'core.mendingTouch']) assert.equal(upgradeBasic(def(id)), true, id);
+  for (const id of ['core.stunningBlow', 'core.ironbreaker', 'core.cometLance', 'core.starfall', 'core.reaverSpecial', 'core.starseerSpecial', 'core.manaSurge']) assert.equal(upgradeBasic(def(id)), false, id);
+  // The Adept rule is untouched: it still calls a martial uncommon Basic.
+  assert.equal(basicCardKind(newRun(), def('core.stunningBlow')), 'Basic');
 });
 
-test('F is 1 for Basic and cantrip cards whatever the skill level; 1 + R otherwise', () => {
+test('F is 1 for Basic and cantrips; 1 + R for every other card', () => {
   const run = newRun();
   run.skills = { 'item:blade': { level: 4, xp: 0 } };
   assert.equal(cardTrackLevel(registries, run, blade), 4);
   assert.equal(freeAllowance(run, blade, registries), 5);
-  assert.equal(freeAllowance(run, def('core.strike'), registries), 1);
-  assert.equal(freeAllowance(run, def('core.cantrip'), registries), 1);
+  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart']) assert.equal(freeAllowance(run, def(id), registries), 1, id);
   run.skills['item:blade'].level = 10;
   assert.equal(freeAllowance(run, blade, registries), 11);
   assert.equal(freeAllowance(run, { ...blade, tags: ['unrelated'] }, registries), 1, 'a track whose schools do not match gives R = 0');
-  assert.equal(freeAllowance(run, blade, registries), 11);
   run.skills['item:blade'].level = 0;
   assert.equal(freeAllowance(run, blade, registries), 1);
 });

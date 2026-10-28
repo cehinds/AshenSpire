@@ -5,9 +5,9 @@ The owner made these decisions on 2026-10-28. Co-op is ignored. This applies to 
 ## Owner rulings
 - Card upgrades can be bought at rest sites and at the Blacksmith.
 - **Free allowance F:**
-  - A Basic or cantrip card gets F = 1.
+  - A Basic or cantrip card gets F = 1. For upgrades, Basic means a Core card of rarity `common` that is not a spell, and a cantrip is a card tagged `rank.cantrip` (so Strike, Hammer Blow and Cinder Dart get 1). Uncommon, rare and starter cards (the class specials, Mana Surge) are not Basic. This is `upgradeBasic(def)` in `src/model/cardUpgradeLimits.js`, not the Martial Adept rule in `basicCardRule.js`, which marks almost every martial card Basic.
   - Every other card gets F = 1 + R.
-  - R is the player's highest skill-track level, `run.skills[t].level` (0..10), over the tracks whose schools match the card. Use the same schools logic as `trackSchools` in src/model/skills.js:383-392.
+  - R is the player's highest skill-track level, `run.skills[t].level` (0..10), over the tracks whose schools match the card. Use the schools logic of `trackSchools` in src/model/skills.js, plus Core's explicit track map (Core cards carry `camp:`/`maneuver:` tags, which the weapon-family schools never match): `item:blade` and `dualWield` match `camp:physical`, `item:shield` matches `maneuver:defend`, `item:magic-focus` matches `camp:spell` (`cardTrackLevel`).
 - **Cost:**
   - The upgrade number n is the index of the upgrade about to be applied, starting at 1.
   - Upgrade number n is free while n <= F.
@@ -71,7 +71,7 @@ The owner made these decisions on 2026-10-28. Co-op is ignored. This applies to 
 5. Clear `upgradeSteps` wherever `upgraded` is reset to false: `src/model/smithing.js:497` and `:661`, and `src/model/loadout.js`.
 6. New `src/model/cardUpgradeLimits.js`:
    - `freeAllowance(run, def)`, `upgradeCost(run, instance, def)` (0 or 1 stone, or null when the card is at the cap) and `canUpgrade`.
-   - Move the Basic test out of `src/model/deckCopyLimit.js:16-29` into a shared helper rather than copying it.
+   - The Adept Basic test was moved to `src/model/basicCardRule.js` (shared with `deckCopyLimit.js`); upgrades use their own narrower `upgradeBasic`.
 7. New `src/model/cardUpgradeService.js`:
    - `planCardUpgrade(run, registries, instanceId)` is inert. It returns the rolled step, the before and after definitions, and the cost.
    - `commitCardUpgrade` re-plans, refuses a stale quote, spends the stones and appends the step.
