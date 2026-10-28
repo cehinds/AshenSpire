@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
+- **Armaments level up three times** ([#2355](https://github.com/cehinds/AshenSpire/pull/2355), `0.7.1.1888`). In Core, weapons, armor and shields can now be upgraded three times instead of once, for +1, +1 and then +2; relics and Legacy runs keep their single upgrade, and existing saves keep the upgrades they already have.
+
 - **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1888`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
 
 ## 2026-10-27
