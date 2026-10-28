@@ -282,7 +282,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const intents = frames.map(frame => {
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-      return { frame, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
+      const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
+      return { frame, intentWidth: intentBox?.width || 0, intentHeight, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
     });
     // Phase 2: reads that follow. The intent placement itself is written last:
     // it moves only the intent inside its own frame, and none of the boxes read
@@ -291,6 +292,13 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
     const boxes = frames.map(frame => rect(frame));
+    // Owner 2026-10-28: an armed card's panel never covers an enemy's intent. The intent's box is where
+    // the placement below will put it (centre over the body, above the head), not where it was last pass.
+    intents.forEach(({ frame, intentWidth, intentHeight, placement }, index) => {
+      if (!intentWidth || frame.classList.contains('player')) return;
+      const box = boxes[index];
+      obstacles.push({ left: box.left + placement.center * zoom - intentWidth / 2, top: box.top + placement.selectedTop * zoom, width: intentWidth, height: intentHeight });
+    });
     frames.forEach((frame, index) => {
       const { core } = metricsFor(frame, zoom), box = boxes[index];
       if (core) obstacles.push({ left: box.left + core.x * zoom - 22, top: box.top + core.y * zoom - 22, width: 44, height: 44 });

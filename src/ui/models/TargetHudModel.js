@@ -18,8 +18,11 @@ export const targetHudOverlaps = (a, b, gap = 0) => a.width > 0 && a.height > 0 
 // candidate survives; no crowded target is omitted or docked over the hand.
 export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig() }) {
   const gap = config.positioning.gapPx, step = config.positioning.staggerStepPx, inset = config.positioning.edgeInsetPx;
-  const area = { left: bounds.left + inset, top: bounds.top + inset,
-    width: bounds.width - inset * 2, height: bounds.height - inset * 2 };
+  // Owner 2026-10-28: the top edge is tighter than the sides so a panel can sit above an enemy's overhead intent
+  // instead of covering it (topInsetPx, falling back to the common inset).
+  const topInset = config.positioning.topInsetPx ?? inset;
+  const area = { left: bounds.left + inset, top: bounds.top + topInset,
+    width: bounds.width - inset * 2, height: bounds.height - topInset - inset };
   const requests = [];
   // Owner (2026-10-17): the player's panel is pinned to the player's right. It
   // is placed first and never falls back to another side or the free-space

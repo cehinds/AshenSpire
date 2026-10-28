@@ -20,6 +20,7 @@
   "positioning": {
     "gapPx": 8,
     "edgeInsetPx": 12,
+    "topInsetPx": 4,
     "staggerStepPx": 36,
     "enemyLaneSides": [
       "left",

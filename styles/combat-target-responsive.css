@@ -156,3 +156,10 @@
 :root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
   right:0!important;
 }
+
+/* Owner 2026-10-28: the panel's icon badges (Precision, Evade) grow to fit a two-digit value instead of clipping it
+   at the fixed 1.8em square; they are a pill that hugs icon and number. Poise and Block stay round. */
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge:is(.combat-health-precision, .combat-health-evade) {
+  display:inline-flex; align-items:center; justify-content:center; gap:.2em; aspect-ratio:auto;
+  flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:.35em; box-sizing:border-box; border-radius:999px;
+}
