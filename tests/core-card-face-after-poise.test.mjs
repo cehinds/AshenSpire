@@ -9,6 +9,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
+import { applyStatus } from '../src/engine/statuses.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -79,4 +80,42 @@ test('outside combat (rawFace): the face is the raw number', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10 }] });
   const row = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage');
   assert.equal(row.faceValue, 12);
+});
+
+test('self-target damage keeps the raw face: the player loses the full amount', () => {
+  const { combat, id } = fight({ cardId: 'base.fire-cleanse', enemies: [{ poise: 10 }] });
+  const rows = previewCard(combat, id).values.filter(v => v.op === 'damage' && v.faceValue != null);
+  assert.ok(rows.length, 'the card has a self damage row');
+  const self = previewCard(combat, id).values.find(v => v.op === 'damage' && v.target === 'self');
+  assert.ok(self, 'self row found');
+  const raw = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage' && v.target === 'self');
+  assert.equal(self.faceValue, raw.faceValue, 'raw, not cut by the enemy\'s Poise');
+});
+
+test('a Poise-draining card: every damage face equals the targeted row (no Block), later hits see the drained state', () => {
+  const { combat, id } = fight({ classId: 'starseer', cardId: 'astralCleave', enemies: [{ poise: 10 }] });
+  applyStatus(combat, combat.player, 'starstoneCharge', 1);
+  const aimed = previewCard(combat, id, combat.enemies[0].id).values.filter(v => v.op === 'damage');
+  assert.ok(aimed.length >= 2);
+  for (const row of aimed) assert.equal(row.faceValue, row.hitDamages[0], 'face equals the targeted first hit');
+  combat.enemies[0].block = 4;
+  const blocked = previewCard(combat, id, combat.enemies[0].id).values.filter(v => v.op === 'damage');
+  blocked.forEach((row, i) => assert.equal(row.faceValue, aimed[i].faceValue, 'Block does not move the face'));
+});
+
+test('an X-hit card with no energy still faces the after-Poise number', () => {
+  const { combat, id } = fight({ classId: 'starseer', cardId: 'supernova', enemies: [{ poise: 10 }] });
+  combat.player.energy = 0; combat.player.stamina = 0;
+  const row = previewCard(combat, id).values.find(v => v.op === 'damage');
+  const raw = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage').faceValue;
+  assert.equal(row.hits, 0, 'zero hits');
+  assert.equal(row.faceValue, Math.floor(raw * 0.75));
+});
+
+test('an aimed enemy that died falls back to the frontmost living enemy', () => {
+  const { combat, id } = fight({ enemies: [{}, { poise: 10 }] });
+  const [a, b] = combat.enemies;
+  a.alive = false; a.hp = 0;
+  assert.equal(previewCard(combat, id, a.id).values.find(v => v.op === 'damage').faceValue, 9);
+  assert.equal(previewCard(combat, id, b.id).values.find(v => v.op === 'damage').faceValue, 9);
 });

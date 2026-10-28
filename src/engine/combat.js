@@ -2721,6 +2721,20 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
+        // Core face (owner, 2026-10-28): the reference enemy's state as this effect meets it, before this effect's own hits drain it.
+        // Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
+        const faceEnemy = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && (!primary || primary.kind === 'enemy')
+          ? (target?.kind === 'enemy' && target.alive ? target : allLiving[0]) : null;
+        let faceState = null;
+        if (faceEnemy) {
+          const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
+          const d = shared.defender;
+          faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
+            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, barrier: 0, wardBlock: 0,
+              persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
+              ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
+              ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
+        }
         for (const e of living) {
           const result = isCounterReply
             ? previewCounter(e, i)
@@ -2747,19 +2761,16 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         // An un-aimed face states the card's offensive amount. Target rows
         // retain exact mitigation for inspection and target previews.
         // rawFace: a caller outside a fight (the smithing preview runs a stand-in fight) keeps the raw number.
-        const coreFace = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat);
-        if (combat.combatExpansionVersion === 2 && (coreFace || !targetId) && !isCounterReply) {
+        if (combat.combatExpansionVersion === 2 && (faceEnemy || !targetId) && !isCounterReply) {
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           // Shown on the card: a whole number, rounded down (owner, 2026-10-18); the chain itself stays exact.
           entry.faceValue = Math.floor(A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true }));
-          // Core face (owner, 2026-10-28): what the hit does after the target's Poise, Vulnerable and Weak, without its Block or Barrier.
-          // The reference is the aimed enemy, else the frontmost living one; no enemy leaves the raw number.
-          const faceEnemy = target?.kind === 'enemy' && target.alive ? target : allLiving[0];
-          if (coreFace && faceEnemy) {
-            const bare = { ...faceEnemy, block: 0, barrier: 0 };
-            const faceHit = previewDamageHits(combat, p, bare, evalPreview(combat, action, eff.amount, faceEnemy) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
-              attackTags, carrier, entry.hits, damagePreviewState(combat, bare)).hitDamages[0];
-            if (faceHit != null) entry.faceValue = Math.floor(faceHit);
+          // The reference is the aimed living enemy, else the frontmost living one; no enemy leaves the raw number.
+          if (faceState) {
+            const faceHits = previewDamageHits(combat, p, faceState.defender, evalPreview(combat, action, eff.amount, faceEnemy) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
+              attackTags, carrier, Math.max(1, Math.floor(entry.hits)), faceState).hitDamages;
+            entry.faceValue = Math.floor(faceHits[0] ?? entry.faceValue);
+            entry.faceHitDamages = faceHits.map(Math.floor);
           }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
@@ -2867,11 +2878,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           tokens[`${token}.block`] = entry.defenseSplit.block;
           tokens[`${token}.ward`] = entry.defenseSplit.ward;
         }
-        if (eff.op === 'damage' && entry.hitDamages?.length > 1
-          && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
+        const sequence = entry.faceHitDamages && entry.hits > 0 ? entry.faceHitDamages : entry.hitDamages;
+        if (eff.op === 'damage' && sequence?.length > 1
+          && sequence.some(amount => amount !== sequence[0])) {
           const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
           if (hitsToken) damageSequences.push({ amountToken: token, hitsToken,
-            hitDamages: entry.hitDamages, totalDamage: entry.totalDamage });
+            hitDamages: sequence, totalDamage: sequence.reduce((sum, amount) => sum + amount, 0) });
         }
       }
       const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
