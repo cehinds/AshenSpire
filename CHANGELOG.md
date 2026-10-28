@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
-- **Blacksmith and merchant upgrades work in Core** ([#2364](https://github.com/cehinds/AshenSpire/pull/2364), `0.7.1.1898`). Upgrading a weapon or armor at the Blacksmith or the merchant no longer fails in a Core run; it costs 1, 2 and 3 Smithing Stones for the three levels, and upgraded armor raises your maximum HP, Mana and Stamina straight away.
+- **Blacksmith and merchant upgrades work in Core** ([#2364](https://github.com/cehinds/AshenSpire/pull/2364), `0.7.1.1900`). Upgrading a weapon or armor at the Blacksmith or the merchant no longer fails in a Core run; it costs 1, 2 and 3 Smithing Stones for the three levels, and upgraded armor raises your maximum HP, Mana and Stamina straight away.
+- **Upgraded cards work in Core** ([#2362](https://github.com/cehinds/AshenSpire/pull/2362), `0.7.1.1900`). An upgraded card in a Core run now plays and shows its upgraded numbers and name (for example Pommel Strike+ deals 7 and 6 Poise); before, it fought as the plain card, so upgrades already bought now take effect.
 
 - **Ten new spells** ([#2360](https://github.com/cehinds/AshenSpire/pull/2360), `0.7.1.1898`). Starseers can now find Starfall, Comet Lance, Searing Ray and Meteor, Heralds Sanctified Ward, Healing Prayer, Judgment and Dawn Bulwark, and every class Arcane Siphon and Ember Wave; these Mana spells turn up mostly after the first few fights.
 
