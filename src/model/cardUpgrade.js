@@ -29,8 +29,7 @@ export function upgradedDefinition(base) {
 //   addStatus { status, stacks }   a new applyStatus on the enemy
 //   cost { pool: 'sp' | 'mp' }     -1 stamina (and action) cost, or -1 mana cost
 //   hits { hits, per }             the first damage effect becomes `per` x `hits`
-//   plus { n }                     fallback: +n on the first numeric effect field
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'plus']);
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits']);
 export const MAX_CARD_UPGRADES = 10;
 
 const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
@@ -63,6 +62,10 @@ const CONDITION_KEYS = ['when', 'if', 'condition', 'unless', 'repeat'];
 export function isPlainEffect(effect, op) {
   return !!effect && effect.op === op && Number.isFinite(effect.amount) && !CONDITION_KEYS.some((key) => key in effect);
 }
+/** An applyStatus with a plain numeric `stacks` and no condition. */
+export function isPlainStatus(effect) {
+  return !!effect && effect.op === 'applyStatus' && Number.isFinite(effect.stacks) && !CONDITION_KEYS.some((key) => key in effect);
+}
 export function firstPlainIndex(effects, op) {
   return (effects || []).findIndex((effect) => isPlainEffect(effect, op));
 }
@@ -78,7 +81,7 @@ function applyStep(card, step) {
       break;
     }
     case 'stk': {
-      const effect = effects.find((e) => e.op === 'applyStatus' && e.status === step.status && Number.isFinite(e.stacks));
+      const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
       if (effect) effect.stacks += step.n;
       break;
     }
@@ -99,11 +102,6 @@ function applyStep(card, step) {
           out.textTemplate = template.replace('{damage} damage', '{damage} damage {hits} times');
         }
       }
-      break;
-    }
-    case 'plus': {
-      const effect = effects.find((e) => Number.isFinite(e.amount)) || effects.find((e) => Number.isFinite(e.stacks));
-      if (effect) effect[Number.isFinite(effect.amount) ? 'amount' : 'stacks'] += step.n;
       break;
     }
     default:
@@ -148,7 +146,7 @@ export function upgradeStepsProblems(instance, path) {
     }
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
-    if (['dmg', 'blk', 'stk', 'plus'].includes(step.k) && !isCount(step.n)) bad('n');
+    if (['dmg', 'blk', 'stk'].includes(step.k) && !isCount(step.n)) bad('n');
     if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');

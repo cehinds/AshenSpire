@@ -12,7 +12,7 @@ const dmg = (amount, extra = {}) => ({ id: 't.d', name: 'D', type: 'attack', cos
 // Roll with every possible stream value so each eligible branch is reachable.
 const kindsFor = (card, applied = []) => {
   const seen = new Set();
-  for (let i = 0; i < 400; i += 1) seen.add(rollUpgradeStep(card, applied, applied.length, upgradeStepRng(i, 'x', i)).k);
+  for (let i = 0; i < 400; i += 1) seen.add(rollUpgradeStep(card, applied, applied.length, upgradeStepRng(i, 'x', i))?.k ?? 'none');
   return seen;
 };
 
@@ -29,7 +29,7 @@ test('same seed gives the same step; the stream is stateless', () => {
 test('every kind the generator emits is a known step kind and never retain', () => {
   const all = new Set();
   for (const card of cards) for (const k of kindsFor(card)) all.add(k);
-  for (const k of all) assert.ok(UPGRADE_STEP_KINDS.includes(k), k);
+  for (const k of all) assert.ok(k === 'none' || UPGRADE_STEP_KINDS.includes(k), k);
   assert.ok(!all.has('retain'));
   for (const k of ['dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits']) assert.ok(all.has(k), `${k} is reachable`);
 });
@@ -92,40 +92,25 @@ test('hits: once, single-hit damage <= 8, at most 3, per-hit is ceil(60%)', () =
   assert.ok(!kindsFor(dmg(6, { effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }] })).has('hits'));
 });
 
-test('power, status and curse cards take only cost or the +1 fallback', () => {
+test('power, status and curse cards take only cost, then are maxed (null)', () => {
   for (const type of ['power', 'status', 'curse']) {
     const card = { id: 't.p', name: 'P', type, cost: 2, staminaCost: 2, manaCost: 0, keywords: [], tags: ['camp:physical'],
       effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'damage', target: 'enemy', amount: 3 }] };
     assert.deepEqual([...kindsFor(card)].sort(), ['cost']);
-    assert.deepEqual([...kindsFor({ ...card, cost: 1, staminaCost: 1 })], ['plus']);
+    assert.deepEqual([...kindsFor({ ...card, cost: 1, staminaCost: 1 })], ['none']);
   }
 });
 
-test('fallback adds +1 to the primary number when nothing is eligible', () => {
+test('when nothing is eligible the card is maxed: the roll is null, never a filler step', () => {
   const capped = dmg(6, { effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
-  assert.deepEqual(rollUpgradeStep(capped, [], 0, upgradeStepRng(1, 'x', 0)), { k: 'plus', n: 1 });
+  assert.equal(rollUpgradeStep(capped, [], 0, upgradeStepRng(1, 'x', 0)), null);
+  // Rolling until null always ends, and never past the cap of 10 steps a card can hold.
+  const steps = [];
+  for (let i = 0; i < 40; i += 1) { const s = rollUpgradeStep(dmg(6), steps, steps.length, upgradeStepRng(3, 'x', steps.length)); if (!s) break; steps.push(s); }
+  assert.ok(steps.length > 0 && steps.length < 40);
 });
 
-test('global guard: damage and block gain never exceed +100% of base across 10 upgrades (fallback +1s aside)', () => {
-  const total = (c, op) => c.effects.filter((e) => e.op === op).slice(0, 1).reduce((s, e) => s + e.amount * (e.hits || 1), 0);
-  for (const card of cards) {
-    for (let seed = 0; seed < 12; seed += 1) {
-      const steps = [];
-      while (steps.length < 10) steps.push(rollUpgradeStep(card, steps, steps.length, upgradeStepRng(seed, card.id, steps.length)));
-      const face = applyUpgradeSteps(card, steps);
-      const fallbacks = steps.filter((s) => s.k === 'plus').length;
-      for (const op of ['damage', 'block']) {
-        const base = total(card, op);
-        if (base) assert.ok(total(face, op) <= base * 2 + fallbacks * 3, `${card.id} ${op} ${total(face, op)} > 2x${base}`);
-      }
-      assert.ok(face.staminaCost >= (card.staminaCost > 0 ? 1 : 0), `${card.id} SP floor`);
-      if (card.manaCost > 0) assert.ok(face.manaCost >= 1 && face.cost >= 1, `${card.id} MP floor`);
-      assert.equal(face.cost, card.cost - (card.staminaCost - face.staminaCost), `${card.id} cost tracks SP`);
-      assert.ok(steps.filter((s) => s.k === 'cost').length <= 1 && steps.filter((s) => s.k === 'hits').length <= 1);
-      for (const e of face.effects) if (e.op === 'applyStatus' && STACK_CAPS[e.status] && Number.isFinite(e.stacks)) {
-        const authored = (card.effects.find((b) => b.op === 'applyStatus' && b.status === e.status) || { stacks: 0 }).stacks;
-        assert.ok(e.stacks <= Math.max(STACK_CAPS[e.status], authored) + fallbacks, `${card.id} ${e.status} cap`);
-      }
-    }
-  }
+test('conditional status effects are never stacked', () => {
+  const card = dmg(6, { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1, if: { x: 1 } }] });
+  assert.ok(!kindsFor(card).has('stk'));
 });

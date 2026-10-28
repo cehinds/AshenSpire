@@ -2,7 +2,8 @@
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardTrackLevel } from './skills.js';
-import { upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeCount, upgradeStepsOf, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { rollUpgradeStep, upgradeStepRng } from './cardUpgradeSteps.js';
 
 /**
  * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
@@ -30,13 +31,27 @@ export function freeAllowance(run, def, registries) {
 }
 
 /**
+ * nextUpgradeStep(run, instance, base, registries) → the step the next upgrade
+ * would add: `authored` for a first upgrade when the card has an upgrade block,
+ * else the seeded roll; null when no kind is eligible (the card is maxed).
+ * Stateless: the same run, instance and count always give the same step.
+ */
+export function nextUpgradeStep(run, instance, base, registries) {
+  const applied = upgradeStepsOf(instance);
+  if (applied.length === 0 && base.upgrade) return { k: 'authored' };
+  const mana = (registries && registries.balance && registries.balance.mana) || {};
+  return rollUpgradeStep(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), mana);
+}
+
+/**
  * upgradeCost(run, instance, def[, registries]) → the Smithing Stones the NEXT
  * upgrade costs: 0 while its number n (1-based) is within F, else 1; null when
- * the card is at the 10-upgrade cap.
+ * the card is at the 10-upgrade cap or maxed (no step is eligible any more).
  */
 export function upgradeCost(run, instance, def, registries) {
   const n = upgradeCount(instance) + 1;
   if (n > MAX_CARD_UPGRADES) return null;
+  if (def && instance && nextUpgradeStep(run, instance, def, registries) === null) return null;
   return n <= freeAllowance(run, def, registries) ? 0 : 1;
 }
 
@@ -45,7 +60,7 @@ const stonesOf = (run) => (Number.isSafeInteger(run && run.smithingStones) ? run
 /**
  * canUpgrade(registries, run, instance) → { ok, code, reason, cost, n, free }.
  * Codes: 'missing' (not a known card), 'armament' (an armament's own cards upgrade
- * with their armament), 'cap', 'stones'.
+ * with their armament), 'cap' (10 upgrades), 'maxed' (no step is eligible any more), 'stones'.
  */
 export function canUpgrade(registries, run, instance) {
   const def = instance && registries.cards.has(instance.cardId) ? registries.cards.get(instance.cardId) : null;
@@ -54,7 +69,10 @@ export function canUpgrade(registries, run, instance) {
   if (!def) return refuse('missing', 'That card is not in the deck.');
   if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
   const cost = upgradeCost(run, instance, def, registries);
-  if (cost === null) return refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`);
+  if (cost === null) {
+    return n > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
+      : refuse('maxed', `${def.name} is fully upgraded.`);
+  }
   if (cost > stonesOf(run)) return refuse('stones', `Needs ${cost} Smithing Stone; you have ${stonesOf(run)}.`, cost);
   return { ok: true, code: '', reason: '', cost, n, free: cost === 0 };
 }

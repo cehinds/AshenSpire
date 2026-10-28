@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
-import { applyUpgradeSteps, firstPlainIndex } from './cardUpgrade.js';
+import { applyUpgradeSteps, firstPlainIndex, isPlainStatus } from './cardUpgrade.js';
 
 export const STACK_CAPS = Object.freeze({ burn: 3, weak: 3, vulnerable: 3, frail: 3, bleed: 4 });
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5 });
@@ -67,8 +67,13 @@ function options(base, current, applied, limits) {
     const n = Math.max(2, Math.ceil(baseTotal * 0.2));
     if (effects[blkIndex].amount + n - baseTotal <= baseTotal) found.blk = { n };
   }
-  const stackable = effects.find((e) => e.op === 'applyStatus' && Number.isFinite(e.stacks)
-    && STACK_CAPS[e.status] !== undefined && e.stacks + 1 <= STACK_CAPS[e.status]);
+  // apply raises the FIRST plain effect of a status, so only that one is a candidate.
+  const seenStatus = new Set();
+  const stackable = effects.find((e) => {
+    if (!isPlainStatus(e) || seenStatus.has(e.status)) return false;
+    seenStatus.add(e.status);
+    return STACK_CAPS[e.status] !== undefined && e.stacks + 1 <= STACK_CAPS[e.status];
+  });
   if (stackable) found.stk = { status: stackable.status };
 
   if (!effects.some((e) => e.op === 'applyStatus') && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
@@ -96,7 +101,7 @@ function options(base, current, applied, limits) {
  * stored step. `appliedSteps` are the steps the card already has; `rng` is
  * upgradeStepRng(run.seed, instanceId, stepIndex). Filters the options to the
  * ones the card is eligible for, then makes a weighted pick; if none is
- * eligible the step is { k: 'plus', n: 1 } on the primary number.
+ * eligible the card is fully upgraded and the result is null (no filler step).
  */
 export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = {}) {
   const applied = appliedSteps || [];
@@ -106,7 +111,7 @@ export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = 
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
   const pick = rng();
   const choice = rng();
-  if (!kinds.length) return { k: 'plus', n: 1 };
+  if (!kinds.length) return null;
   let roll = pick * kinds.reduce((sum, kind) => sum + WEIGHTS[kind], 0);
   let kind = kinds[kinds.length - 1];
   for (const candidate of kinds) {

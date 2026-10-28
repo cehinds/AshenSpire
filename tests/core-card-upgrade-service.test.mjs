@@ -81,16 +81,18 @@ test('short of stones: the plan still previews, the commit refuses and spends no
   assert.equal(upgradeCount(card), 1);
 });
 
-test('the 10-upgrade cap: ten commits, then a refusal', () => {
+test('upgrading until nothing is eligible: every commit is real, then the card is maxed (or capped at 10)', () => {
   const run = newRun(); run.smithingStones = 50;
   const card = strikeOf(run);
-  for (let i = 1; i <= 10; i += 1) assert.equal(commitCardUpgrade(run, registries, planCardUpgrade(run, registries, card.instanceId)).n, i);
-  assert.equal(run.smithingStones, 50 - 9);
-  const capped = planCardUpgrade(run, registries, card.instanceId);
-  assert.deepEqual([capped.ok, capped.code, capped.step], [false, 'cap', null]);
-  assert.throws(() => commitCardUpgrade(run, registries, capped), /10 upgrades/);
-  assert.equal(upgradeStepsOf(card).length, 10);
-  assert.equal(projectGameCard(run, card).name, 'Strike+10');
+  let n = 0;
+  for (; ; n += 1) {
+    const quote = planCardUpgrade(run, registries, card.instanceId);
+    if (!quote.ok) { assert.ok(['maxed', 'cap'].includes(quote.code), quote.code); assert.equal(quote.step, null); assert.throws(() => commitCardUpgrade(run, registries, quote)); break; }
+    commitCardUpgrade(run, registries, quote);
+  }
+  assert.ok(n >= 3 && n <= 10, `${n} upgrades`);
+  assert.equal(upgradeStepsOf(card).length, n);
+  assert.equal(projectGameCard(run, card).name, n === 1 ? 'Strike+' : `Strike+${n}`);
 });
 
 test('unknown, armament-owned and sideboard cards', () => {

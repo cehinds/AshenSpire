@@ -4,12 +4,17 @@ import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { freeAllowance, upgradeCost, canUpgrade, upgradeBasic } from '../src/model/cardUpgradeLimits.js';
+import { rollUpgradeStep, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
 import { basicCardKind } from '../src/model/basicCardRule.js';
 import { cardTrackLevel } from '../src/model/skills.js';
 
 const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 const def = (id) => registries.cards.get(id);
-const steps = (n) => Array.from({ length: n }, (_, i) => (i === 0 ? { k: 'authored' } : { k: 'plus', n: 1 }));
+// A card rich enough to take ten rolled upgrades, and a helper that grows real steps on it.
+const rich = { id: 't.rich', name: 'Rich', type: 'attack', rarity: 'common', cost: 3, staminaCost: 3, manaCost: 4, keywords: [], tags: ['camp:physical'],
+  effects: [{ op: 'damage', target: 'enemy', amount: 40 }, { op: 'block', target: 'self', amount: 40 }, { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1 }] };
+const steps = (n, card = rich) => { const out = []; while (out.length < n) out.push(rollUpgradeStep(card, out, out.length, upgradeStepRng(5, 'rich', out.length))); return out; };
+const owned = (n) => ({ instanceId: 'rich', cardId: 't.rich', upgraded: n > 0, ...(n ? { upgradeSteps: steps(n) } : {}) });
 const inst = (cardId, count) => ({ instanceId: `i-${cardId}`, cardId, ...(count ? { upgraded: true, upgradeSteps: steps(count) } : {}) });
 // A ranked card carrying the blade school: not Basic, so it earns 1 + R.
 const blade = { id: 't.blade', name: 'Bladework', type: 'attack', rank: 1, tags: ['blade'] };
@@ -42,18 +47,27 @@ test('R is the highest matching track, not the sum', () => {
 
 test('a Basic card: first upgrade free, second 1 stone, up to the cap of 10 then null', () => {
   const run = newRun();
-  const d = def('core.strike');
-  assert.equal(upgradeCost(run, inst('core.strike', 0), d, registries), 0);
-  assert.equal(upgradeCost(run, inst('core.strike', 1), d, registries), 1);
-  assert.equal(upgradeCost(run, inst('core.strike', 9), d, registries), 1);
-  assert.equal(upgradeCost(run, inst('core.strike', 10), d, registries), null);
+  const costs = Array.from({ length: 11 }, (_, count) => upgradeCost(run, owned(count), rich, registries));
+  assert.deepEqual(costs, [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, null]);
 });
 
 test('upgrade number n is free while n <= F, then 1 stone', () => {
   const run = newRun();
   run.skills = { 'item:blade': { level: 2 } };
-  const costs = Array.from({ length: 11 }, (_, count) => upgradeCost(run, { upgraded: count > 0, upgradeSteps: steps(count) }, blade, registries));
+  const notBasic = { ...rich, rarity: 'uncommon' };
+  const costs = Array.from({ length: 11 }, (_, count) => upgradeCost(run, { ...owned(count) }, notBasic, registries));
   assert.deepEqual(costs, [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, null]);
+});
+
+test('a card with no eligible step left is maxed: null cost, refused as maxed', () => {
+  const run = newRun(); run.smithingStones = 9;
+  const maxed = { instanceId: 'm', cardId: 'core.strike', upgraded: true, upgradeSteps: [] };
+  const strike = registries.cards.get('core.strike');
+  while (true) { const s = rollUpgradeStep(strike, maxed.upgradeSteps, maxed.upgradeSteps.length, upgradeStepRng(run.seed, 'm', maxed.upgradeSteps.length)); if (!s) break; maxed.upgradeSteps.push(s); }
+  assert.ok(maxed.upgradeSteps.length < 10);
+  assert.equal(upgradeCost(run, maxed, strike, registries), null);
+  const verdict = canUpgrade(registries, run, maxed);
+  assert.deepEqual([verdict.ok, verdict.code], [false, 'maxed']);
 });
 
 test('an old upgraded:true instance with no list counts as one upgrade', () => {

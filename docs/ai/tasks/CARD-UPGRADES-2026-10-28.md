@@ -52,7 +52,7 @@ The owner made these decisions on 2026-10-28. Co-op is ignored. This applies to 
 | `retain` | 5 | **Only if Core actually honours `keywords:['retain']` at end of turn. Verify this first; if it doesn't, leave the option out.** At most once; skip if the card already has Retain or has Exhaust |
 
 - **Global guard:** the total damage or block gain is capped at +100% of the base value.
-- **Fallback:** if nothing is eligible, add +1 to the primary number.
+- **Maxed:** if nothing is eligible, the card is fully upgraded. `rollUpgradeStep` returns null, `upgradeCost` is null, `canUpgrade` refuses with code `maxed`, and the plan is refused. There is no filler step. A step never touches a conditional effect or a `loseHp` effect.
 - Power, status and curse cards can only take `cost` or `retain`.
 
 ## Naming

@@ -1,8 +1,7 @@
 // The Core card-upgrade service: plan (inert) then commit (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md).
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
-import { canUpgrade } from './cardUpgradeLimits.js';
-import { rollUpgradeStep, upgradeStepRng } from './cardUpgradeSteps.js';
+import { canUpgrade, nextUpgradeStep } from './cardUpgradeLimits.js';
 import { upgradeStepsOf } from './cardUpgrade.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
@@ -25,11 +24,7 @@ export function planCardUpgrade(run, registries, instanceId) {
 
   const base = registries.cards.get(instance.cardId);
   const applied = upgradeStepsOf(instance);
-  const stepIndex = applied.length;
-  const mana = (registries.balance && registries.balance.mana) || {};
-  const step = stepIndex === 0 && base.upgrade
-    ? { k: 'authored' }
-    : rollUpgradeStep(base, applied, stepIndex, upgradeStepRng(run.seed, instance.instanceId, stepIndex), mana);
+  const step = nextUpgradeStep(run, instance, base, registries);
   const upgradedInstance = { ...instance, upgraded: true, upgradeSteps: [...applied, step] };
   return { ...quote, step, before: face(registries, run, instance), after: face(registries, run, upgradedInstance) };
 }

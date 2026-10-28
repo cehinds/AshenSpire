@@ -20,7 +20,7 @@ test('upgradeStepsProblems: absent is fine; unknown kinds, bad fields, cap and c
   assert.match(p({ upgraded: true, upgradeSteps: [{ k: 'dmg', n: 1 }, { k: 'authored' }] })[0], /first step/);
   assert.match(p({ upgraded: true, upgradeSteps: [{ k: 'cost', pool: 'xp' }] })[0], /pool/);
   assert.match(p({ upgraded: false, upgradeSteps: STEPS })[0], /requires upgraded/);
-  assert.match(p({ upgraded: true, upgradeSteps: Array.from({ length: 11 }, () => ({ k: 'plus', n: 1 })) })[0], /at most 10/);
+  assert.match(p({ upgraded: true, upgradeSteps: Array.from({ length: 11 }, () => ({ k: 'dmg', n: 1 })) })[0], /at most 10/);
 });
 
 import { createRunState } from '../src/model/state.js';

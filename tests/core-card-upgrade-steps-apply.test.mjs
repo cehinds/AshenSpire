@@ -65,7 +65,7 @@ test('each step kind changes exactly its number', () => {
   const hits = run({ k: 'hits', hits: 2, per: 4 });
   assert.deepEqual([hits.effects[0].amount, hits.effects[0].hits], [4, 2]);
   assert.equal(hits.textTemplate, 'Deal {damage} damage {hits} times.');
-  assert.equal(run({ k: 'plus', n: 1 }).effects[0].amount, 7);
+  assert.throws(() => run({ k: 'plus', n: 1 }), /Unknown card upgrade step/);
 });
 
 test('unknown kinds and a late authored step throw', () => {
