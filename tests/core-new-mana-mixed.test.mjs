@@ -91,20 +91,31 @@ test('resource variants are authored for all four resource modes and agree with 
   }
 });
 
-test('no card is strictly better than a peer: no same-rarity, same-cost card in one pool dominates it', () => {
+test('no card is strictly better than a peer it shares a reward pool with, in either direction', () => {
   const all = profile.content.cards.filter(card => card.id.startsWith('core.'));
   const amount = (card, key) => card.effects.filter(e => e.op === key).reduce((n, e) => n + (e.amount || 0), 0);
   const stacks = card => Object.fromEntries(card.effects.filter(e => e.op === 'applyStatus').map(e => [e.status, e.stacks]));
+  // x is at least as good as y in every effect (so a card that only does more of y's job, for no more cost, makes y dead).
+  const covers = (x, y) => {
+    const keys = new Set([...x.effects.map(e => e.op), ...y.effects.map(e => e.op)]);
+    const sx = stacks(x), sy = stacks(y);
+    return [...keys].every(k => k === 'applyStatus' || amount(x, k) >= amount(y, k))
+      && Object.keys(sy).every(s => (sx[s] || 0) >= sy[s]) && x.keywords.length <= y.keywords.length;
+  };
+  const samePool = (x, y) => x.class === y.class || x.class === 'colorless' || y.class === 'colorless';
   for (const id of ALL) for (const other of all) {
-    if (other.id === id || other.rarity !== def(id).rarity || other.staminaCost !== def(id).staminaCost || other.manaCost !== def(id).manaCost) continue;
     const a = def(id);
-    if (other.class !== 'colorless' && other.class !== a.class && a.class !== 'colorless') continue;   // never in one reward pool
-    const keys = new Set([...a.effects.map(e => e.op), ...other.effects.map(e => e.op)]);
-    const sa = stacks(a), so = stacks(other);
-    const dominates = [...keys].every(k => k === 'applyStatus' || amount(a, k) >= amount(other, k))
-      && Object.keys(so).every(s => (sa[s] || 0) >= so[s]) && a.keywords.length <= other.keywords.length;
-    assert.ok(!dominates, `${id} is at least as good as ${other.id} in every effect at the same cost and rarity`);
+    if (other.id === id || !samePool(a, other)) continue;
+    // Existing cards (starters and class specials included) at the same or lower cost, any rarity, must not cover the new card.
+    if (other.staminaCost <= a.staminaCost && other.manaCost <= a.manaCost) assert.ok(!covers(other, a), `${other.id} (${other.staminaCost} SP / ${other.manaCost} MP) covers ${id} at no more cost`);
+    // The new card must not cover an existing same-rarity card at the same or higher cost.
+    if (other.rarity === a.rarity && other.staminaCost >= a.staminaCost && other.manaCost >= a.manaCost && !ALL.includes(other.id)) assert.ok(!covers(a, other), `${id} covers ${other.id} at no more cost`);
   }
+  // Ironbreaker is the cheap-SP mana option, so the 2 SP / 1 MP Reaver starter must not beat it, nor share its cost.
+  const starter = def('core.reaverSpecial'), ironbreaker = def('core.ironbreaker');
+  assert.ok(starter, 'core.reaverSpecial exists');
+  assert.ok(!covers(starter, ironbreaker), 'core.reaverSpecial does not dominate Ironbreaker');
+  assert.ok(ironbreaker.staminaCost < starter.staminaCost && ironbreaker.manaCost <= starter.manaCost, 'Ironbreaker costs less SP than the starter');
 });
 
 test('the reward model counts each card as a mana card, never as a basic or cantrip', () => {

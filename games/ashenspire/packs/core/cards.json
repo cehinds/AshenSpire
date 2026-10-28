@@ -2023,8 +2023,8 @@
     "name": "Ironbreaker",
     "class": "reaver",
     "rarity": "rare",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
@@ -2034,7 +2034,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 20
+        "amount": 14
       },
       {
         "op": "poiseDamage",
@@ -2053,7 +2053,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 25
+          "amount": 18
         },
         {
           "op": "poiseDamage",
@@ -2486,6 +2486,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -2494,7 +2500,7 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
@@ -2506,6 +2512,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 8
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 2
         }
       ]
     },
