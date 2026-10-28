@@ -285,6 +285,23 @@ test('a taller short-landscape field keeps its sprite width: the shear is capped
     const fitted = fitAlternativeSprites({ width: 844, height: Number(height), actors, narrow: false });
     for (const fit of fitted) assert.ok(fit.visibleHeight >= floor - 0.05, `${count} enemies at 844x${height}: ${fit.visibleHeight} < parent ${floor}`);
     const cell = formation.cells[0].box;
-    assert.ok(cell.width - 2 * cell.skew * cell.height >= 0.4 * cell.width, `${count} enemies at 844x${height}: shear leaves under 40% of the cell for artwork`);
+    const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortLandscape;
+    const unshearedLane = 844 * (grid.right - grid.left) / 3 /* the plan helper builds three lanes */;
+    assert.ok(cell.width - 2 * cell.skew * cell.height >= grid.minArtLaneFraction * unshearedLane - 1e-6, `${count} enemies at 844x${height}: artwork keeps under 40% of the unsheared lane`);
+  }
+});
+
+test('narrow phone strips keep sprite width and stay above the parent short profile (667, 740, 780 wide)', () => {
+  // The cap also bites at the tuned 146px height on narrower strips; floors are the parent `short` profile's fitted
+  // heights for the same 60x150 envelope, 3 enemies (measured with the parent profile forced).
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortLandscape;
+  const makePlan = (width, height) => combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+    friends: ['p0'], enemies: ['e0', 'e1', 'e2'] });
+  for (const [width, height, floor] of [[667, 131, 15.1], [740, 116, 13.3], [780, 116, 13.3], [667, 187, 39.3]]) {
+    const formation = alternativeFormation(makePlan(width, height), width, height, false);
+    const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
+    for (const fit of fitAlternativeSprites({ width, height, actors, narrow: false })) assert.ok(fit.visibleHeight >= floor - 0.05, `${width}x${height}: ${fit.visibleHeight} < parent ${floor}`);
+    const cell = formation.cells[0].box;
+    assert.ok(cell.width - 2 * cell.skew * cell.height >= grid.minArtLaneFraction * width * (grid.right - grid.left) / 3 - 1e-6, `${width}x${height}: artwork keeps under ${grid.minArtLaneFraction} of the unsheared lane`);
   }
 });
