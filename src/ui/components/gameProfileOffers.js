@@ -66,7 +66,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       : registries.equipment.armour.find(item => item.id === option.id && item.classId === run.class);
     const unavailable = offer.taken.includes(index) || offer.claimed !== null;
     const column = el('div', { class: `reward-choice-option${unavailable ? ' is-owned' : ''}`, dataset: { pickId: String(index) } });
-    const face = card ? renderCard(registries, { cardId: option.id, instanceId: `offer:${index}`, upgraded: false }, {
+    const face = card ? renderCard(registries, { cardId: option.id, instanceId: `offer:${index}`, upgraded: false, ...(option.rank > 1 ? { rank: option.rank } : {}) }, {
       rules: run, surface: 'reward', level: 'glance', actionOwnsTouch: true,
       // Reading a reward never chooses it; the chooser owns that action.
       only: [],
