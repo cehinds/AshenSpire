@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
-- **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1900`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
+- **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1902`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
 - **Upgraded cards work in Core** ([#2362](https://github.com/cehinds/AshenSpire/pull/2362), `0.7.1.1900`). An upgraded card in a Core run now plays and shows its upgraded numbers and name (for example Pommel Strike+ deals 7 and 6 Poise); before, it fought as the plain card, so upgrades already bought now take effect.
 
 - **Ten new spells** ([#2360](https://github.com/cehinds/AshenSpire/pull/2360), `0.7.1.1898`). Starseers can now find Starfall, Comet Lance, Searing Ray and Meteor, Heralds Sanctified Ward, Healing Prayer, Judgment and Dawn Bulwark, and every class Arcane Siphon and Ember Wave; these Mana spells turn up mostly after the first few fights.
