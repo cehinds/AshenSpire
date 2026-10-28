@@ -34,9 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
-- **Ten new mana cards** ([#2366](https://github.com/cehinds/AshenSpire/pull/2366), `0.7.1.1900`). Core reward offers can now show Ironbreaker and Rallying Roar for Reavers, Venomed Edge and Smoke Veil for Rogues, Eclipse and Astral Bolt for Starseers, Censure and Smite for Heralds, and Hexmark and Mana Lash for any class. Each costs mana, and most also cost stamina.
+- **Ten new mana cards** ([#2366](https://github.com/cehinds/AshenSpire/pull/2366), `0.7.1.1904`). Core reward offers can now show Ironbreaker and Rallying Roar for Reavers, Venomed Edge and Smoke Veil for Rogues, Eclipse and Astral Bolt for Starseers, Censure and Smite for Heralds, and Hexmark and Mana Lash for any class. Each costs mana, and most also cost stamina.
 
-- **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1900`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
+- **Card damage shown after Poise** ([#2365](https://github.com/cehinds/AshenSpire/pull/2365), `0.7.1.1904`). In Core, the damage number on a combat card now shows what one hit does to the aimed enemy, or the front enemy, after its Poise (Core Strike shows 9, not 12). The enemy's Block is not taken off. Cards that damage yourself, and cards outside combat, still show the raw number.
+- **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1902`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
 - **Upgraded cards work in Core** ([#2362](https://github.com/cehinds/AshenSpire/pull/2362), `0.7.1.1900`). An upgraded card in a Core run now plays and shows its upgraded numbers and name (for example Pommel Strike+ deals 7 and 6 Poise); before, it fought as the plain card, so upgrades already bought now take effect.
 
 - **Ten new spells** ([#2360](https://github.com/cehinds/AshenSpire/pull/2360), `0.7.1.1898`). Starseers can now find Starfall, Comet Lance, Searing Ray and Meteor, Heralds Sanctified Ward, Healing Prayer, Judgment and Dawn Bulwark, and every class Arcane Siphon and Ember Wave; these Mana spells turn up mostly after the first few fights.
