@@ -2213,5 +2213,104 @@
       ]
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.eclipse",
+    "name": "Eclipse",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {weak} Weak to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 9
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "weak",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.astralBolt",
+    "name": "Astral Bolt",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 7
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ]
