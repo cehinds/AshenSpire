@@ -273,3 +273,18 @@ test('the overhead group height is config only: phone, desktop and short desktop
   assert.doesNotMatch(helper, /offsetHeight|getBoundingClientRect|clientHeight|querySelector|classList/);
   assert.doesNotMatch(source, /miniHudGroupHeight\([^)]*\bframe\b/, 'no call passes a frame');
 });
+
+test('a taller short-landscape field keeps its sprite width: the shear is capped and enemies never fall below the parent short profile', () => {
+  // Codex review on #2352: skew 4.2 at 844x240 shears 121px out of 133px cells and clamps the artwork to 1px (2.5px
+  // tall enemies). Floors below are the parent `short` profile's fitted enemy heights at 844 wide for the same
+  // 60x150 artwork envelope (measured with the parent profile forced), per field height.
+  const parentFloor = { 146: 16.8, 200: 47, 240: 70.8, 279: 74.2 };
+  for (const count of [3, 4]) for (const [height, floor] of Object.entries(parentFloor)) {
+    const formation = alternativeFormation(plan(count), 844, Number(height), false);
+    const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
+    const fitted = fitAlternativeSprites({ width: 844, height: Number(height), actors, narrow: false });
+    for (const fit of fitted) assert.ok(fit.visibleHeight >= floor - 0.05, `${count} enemies at 844x${height}: ${fit.visibleHeight} < parent ${floor}`);
+    const cell = formation.cells[0].box;
+    assert.ok(cell.width - 2 * cell.skew * cell.height >= 0.4 * cell.width, `${count} enemies at 844x${height}: shear leaves under 40% of the cell for artwork`);
+  }
+});
