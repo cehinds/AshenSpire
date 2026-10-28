@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
-- **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1886`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
+- **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1888`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
 
 ## 2026-10-27
 
