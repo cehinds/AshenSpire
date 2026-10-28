@@ -137,3 +137,12 @@ export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHe
     selectedTop: (head - frame.top - gap - intentHeight) / zoom,
     center: ((body.left + body.right) / 2 - frame.left) / zoom };
 }
+
+// The rect a panel must keep clear for one enemy's overhead intent, in screen px. A selected frame's intent is moved
+// to `selectedTop` over the body centre by the placement written after the panels; an unselected one is not moved,
+// so its rendered box is the truth (its group height is per profile and, on phone landscape, its rack is centred on
+// the lane rather than the body).
+export function targetHudIntentObstacle({ selected, box, placement, intentBox, intentWidth, intentHeight, zoom = 1 }) {
+  if (selected) return { left: box.left + placement.center * zoom - intentWidth / 2, top: box.top + placement.selectedTop * zoom, width: intentWidth, height: intentHeight };
+  return { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height };
+}

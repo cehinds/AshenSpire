@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudIntentObstacle, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
 
 test('target details support every alternative formation form factor', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
@@ -103,4 +103,19 @@ test('only phones and portrait take the tighter top inset; desktop keeps the com
   assert.ok(highest({ tightTop: false }) >= bounds.top + config.positioning.edgeInsetPx - 1e-9, 'desktop panel stays 12px below the field top');
   assert.ok(highest({ tightTop: true }) >= bounds.top + config.positioning.topInsetPx - 1e-9);
   assert.ok(highest({ tightTop: true }) < bounds.top + config.positioning.edgeInsetPx, 'phone panel may rise above the common inset');
+});
+
+test('an unselected frame keeps its rendered intent rect clear; a selected frame uses the placement', () => {
+  const box = { left: 100, top: 50 }, placement = { center: 80, selectedTop: 10, miniTop: -40 };
+  // Desktop: the rack is 96px tall, so the intent renders at the group's top, far from what miniTop (61px group) predicts.
+  const rendered = { left: 140, top: 20, width: 50, height: 37 };
+  assert.deepEqual(targetHudIntentObstacle({ selected: false, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37, zoom: 1.3 }), rendered);
+  // Selected: moved to selectedTop over the body centre, scaled by the zoom.
+  assert.deepEqual(targetHudIntentObstacle({ selected: true, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37, zoom: 2 }),
+    { left: 100 + 160 - 25, top: 50 + 20, width: 50, height: 37 });
+  // A panel solved against the unselected obstacle lands clear of the rendered intent.
+  const bounds = { left: 0, top: 0, width: 600, height: 400 };
+  const obstacle = targetHudIntentObstacle({ selected: false, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37 });
+  const placed = placeTargetHudPanels({ bounds, obstacles: [obstacle], panels: [{ id: 'e', role: 'enemy', lane: 0, anchor: { left: 120, top: 80, width: 60, height: 80 }, width: 140, height: 60 }] })[0];
+  assert.equal(targetHudOverlaps(placed, obstacle), false);
 });

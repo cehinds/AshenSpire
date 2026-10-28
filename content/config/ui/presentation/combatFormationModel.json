@@ -100,7 +100,7 @@
         "skew": 4.2,
         "top": 0.7,
         "rowHeight": 0.06,
-        "maxShearFraction": 0.4
+        "minArtLaneFraction": 0.4
       },
       "bands": [
         {

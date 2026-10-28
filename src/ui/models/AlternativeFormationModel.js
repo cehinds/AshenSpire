@@ -39,15 +39,15 @@ export function perspectiveLanePattern(count, lanes) {
 // foot anchor (its shadow) is where the sprite's feet stand. Enemies fill the
 // back rank first, then the front rank; the player's party shares one rank.
 // Cell IDs stay gameplay addresses: column = depth (outer = back), row = lane.
-// The landscape strip's ranks are tuned for a ~146px field. On a taller field the same skew shears the grid too far:
-// a back-rank cell's artwork width is laneWidth - 2*skew*cellHeight, and the lane itself narrows by the shear, so at
-// 240px high the width clamps to 1px. The skew is therefore capped so the artwork keeps at least
-// (1 - maxShearFraction) of the unsheared lane width: skew <= A*(1 - f) / (rowHeight*H*(4 + 2*lanes)), A the grid's
-// width. The 146px field is under the cap, so its tuned skew is unchanged.
+// The landscape strip's ranks are tuned for a ~146px field. On a taller or narrower one the same skew shears the grid
+// too far: a back-rank cell's artwork width is laneWidth - 2*skew*cellHeight, the lane itself narrows by the shear
+// (laneWidth = (A - 4*skew*rowHeight*H)/lanes, A the grid's width) and at 844x240 the width clamped to 1px. The skew is
+// capped so the artwork keeps at least `minArtLaneFraction` (m) of the UNSHEARED lane width A/lanes:
+//   (A - 4srH)/L - 2srH >= m*A/L   =>   s <= A*(1 - m) / (rowHeight*H*(4 + 2L)).
 export function shortLandscapeProfile(width, height, lanes = 3) {
   const near = GRID.shortLandscape;
   const area = width * (near.right - near.left);
-  const cap = area * (1 - near.maxShearFraction) / (near.rowHeight * height * (4 + 2 * lanes));
+  const cap = area * (1 - near.minArtLaneFraction) / (near.rowHeight * height * (4 + 2 * lanes));
   return near.skew <= cap ? near : { ...near, skew: cap };
 }
 
