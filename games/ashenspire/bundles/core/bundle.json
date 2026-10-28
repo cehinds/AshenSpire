@@ -195,6 +195,9 @@
             "id": "graduate",
             "requiresTag": "training.graduate",
             "pools": [],
+            "excludeCards": [
+              "core.mendingTouch"
+            ],
             "cards": {
               "tagsAll": [
                 "rank.cantrip"
