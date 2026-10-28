@@ -65,7 +65,7 @@ test('an old upgraded:true instance with no list counts as one upgrade', () => {
   assert.equal(upgradeCost(run, { cardId: 'core.strike', upgraded: true }, def('core.strike'), registries), 1);
 });
 
-test('canUpgrade: free, paid, short of stones, bound, capped and missing', () => {
+test('canUpgrade: free, paid, short of stones, armament-owned, capped and missing', () => {
   const run = newRun();
   run.smithingStones = 0;
   const free = canUpgrade(registries, run, inst('core.strike', 0));
@@ -76,7 +76,7 @@ test('canUpgrade: free, paid, short of stones, bound, capped and missing', () =>
   const paid = canUpgrade(registries, run, inst('core.strike', 1));
   assert.deepEqual([paid.ok, paid.cost, paid.free, paid.n], [true, 1, false, 2]);
   assert.equal(canUpgrade(registries, run, inst('core.strike', 10)).code, 'cap');
-  assert.equal(canUpgrade(registries, run, { ...inst('core.strike', 0), sourceArmamentId: 'x' }).code, 'bound');
-  assert.equal(canUpgrade(registries, run, { ...inst('core.strike', 0), grantedBy: 'x' }).code, 'bound');
+  assert.equal(canUpgrade(registries, run, { ...inst('core.strike', 0), sourceArmamentId: 'x' }).code, 'armament');
+  assert.equal(canUpgrade(registries, run, { ...inst('core.strike', 0), grantedBy: 'x' }).code, 'armament');
   assert.equal(canUpgrade(registries, run, { instanceId: 'z', cardId: 'no.such' }).code, 'missing');
 });

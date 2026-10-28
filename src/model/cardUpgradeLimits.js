@@ -31,7 +31,7 @@ const stonesOf = (run) => (Number.isSafeInteger(run && run.smithingStones) ? run
 
 /**
  * canUpgrade(registries, run, instance) → { ok, code, reason, cost, n, free }.
- * Codes: 'missing' (not a known card), 'bound' (equipment-bound cards upgrade
+ * Codes: 'missing' (not a known card), 'armament' (an armament's own cards upgrade
  * with their armament), 'cap', 'stones'.
  */
 export function canUpgrade(registries, run, instance) {
@@ -39,7 +39,7 @@ export function canUpgrade(registries, run, instance) {
   const n = upgradeCount(instance) + 1;
   const refuse = (code, reason, cost = null) => ({ ok: false, code, reason, cost, n, free: null });
   if (!def) return refuse('missing', 'That card is not in the deck.');
-  if (instance.sourceArmamentId || instance.grantedBy) return refuse('bound', `${def.name} is upgraded with its armament.`);
+  if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
   const cost = upgradeCost(run, instance, def, registries);
   if (cost === null) return refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`);
   if (cost > stonesOf(run)) return refuse('stones', `Needs ${cost} Smithing Stone; you have ${stonesOf(run)}.`, cost);

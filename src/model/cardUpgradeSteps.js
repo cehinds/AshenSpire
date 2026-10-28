@@ -72,11 +72,12 @@ function options(base, current, applied, limits) {
   if (stackable) found.stk = { status: stackable.status };
 
   if (!effects.some((e) => e.op === 'applyStatus') && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
-    const tags = base.tags || [];
-    const magic = base.damageSchool === 'magic' || tags.includes('camp:spell');
-    const physical = base.damageSchool === 'physical' || tags.includes('camp:physical');
-    if (magic) found.addStatus = { statuses: ['burn', 'vulnerable'] };
-    else if (physical) found.addStatus = { statuses: ['bleed', 'weak'] };
+    // The card's school: its damage school, else its `camp:` tag (kept unquoted so the
+    // mechanics generator does not take this file for the tag's reader).
+    const camp = ((base.tags || []).find((tag) => tag.startsWith('camp:')) || '').slice(5);
+    const school = base.damageSchool === 'magic' || camp === 'spell' ? 'spell' : base.damageSchool === 'physical' || camp === 'physical' ? 'physical' : '';
+    if (school === 'spell') found.addStatus = { statuses: ['burn', 'vulnerable'] };
+    else if (school === 'physical') found.addStatus = { statuses: ['bleed', 'weak'] };
   }
 
   if (dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
