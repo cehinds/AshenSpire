@@ -106,7 +106,8 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
   // after a hostile effect (Gale Push) leaves the plan as it was.
   let planState = ctx.rangeState;
   for (const action of actions) {
-    if (hostileOps.has(action.effect.op)) break;
+    // A conditional close is only known at play time: it ends the leading run, as projectEnemyMovement skips it.
+    if (hostileOps.has(action.effect.op) || (action.effect.op === 'moveEngagement' && action.effect.if)) break;
     if (action.effect.op !== 'moveEngagement' || !action.target || action.target.kind === source.kind) continue;
     planState = movedEngagementState(planState, actorRangeKey(ctx, source), actorRangeKey(ctx, action.target), action.effect.bands);
   }

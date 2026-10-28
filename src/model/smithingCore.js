@@ -7,8 +7,8 @@
 // that same pipeline (the gear resolver, the rating receipt, and the live combat card
 // preview), so the receipt cannot disagree with the fight.
 import { gameModule, gameContent } from './gameProfile.js';
-import { resolveGearItem } from '../../engine/kernel/gameConfig.js';
-import { itemRefIdentity } from './itemUpgrades.js';
+import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
+import { itemRefIdentity, coreGearActive } from './itemUpgrades.js';
 // The combat engine is bound, not imported: this module is reached from the Smith screens and from actions.js, and a
 // static import of runCombat/combat here would reorder the engine's import cycle, which the production bundler does
 // not keep live (named imports inside a cycle read undefined). runCombat.js binds it once it has loaded.
@@ -33,8 +33,7 @@ const CARD_VALUES = [
 
 /** True when this run's Smith upgrades follow the Core 2 gear pipeline. */
 export function coreSmithingActive(run) {
-  const gear = gameModule(run, 'gear');
-  return gear?.mode === 'configured' && !!gear.armorBudget && gameModule(run, 'stats')?.mode === 'configured';
+  return coreGearActive(run);
 }
 
 function gearItemFor(run, itemRef) {
@@ -48,11 +47,13 @@ function gearItemFor(run, itemRef) {
 /** The item's own stat points and values at a tier, exactly as the equipped-gear receipt resolves them. */
 function itemAtTier(run, item, level) {
   const settings = gameModule(run, 'gear');
-  const resolved = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + level });
+  // The tier's effective bonus (Core ladder: tier 1/2/3 = +1/+2/+4), not the raw tier.
+  const bonus = upgradeTierBonus(gameModule(run, 'equipment'), level);
+  const resolved = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + bonus });
   const values = { ...resolved.values };
   // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does.
   if (item.kind !== 'armor' && item.kind !== 'shield') {
-    values.ar += level * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
+    values.ar += bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
   }
   const points = Object.values(resolved.points).reduce((sum, n) => sum + n, 0) + resolved.tagCost;
   return { values, points, budget: resolved.budget };
