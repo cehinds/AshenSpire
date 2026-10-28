@@ -682,7 +682,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 4
       }
     ],
     "tags": [
@@ -701,7 +701,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 6
         }
       ]
     },
