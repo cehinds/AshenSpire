@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
+- **Ten new mana cards** ([#2366](https://github.com/cehinds/AshenSpire/pull/2366), `0.7.1.1900`). Core reward offers can now show Ironbreaker and Rallying Roar for Reavers, Venomed Edge and Smoke Veil for Rogues, Eclipse and Astral Bolt for Starseers, Censure and Smite for Heralds, and Hexmark and Mana Lash for any class. Each costs mana, and most also cost stamina.
+
 - **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1900`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
 - **Upgraded cards work in Core** ([#2362](https://github.com/cehinds/AshenSpire/pull/2362), `0.7.1.1900`). An upgraded card in a Core run now plays and shows its upgraded numbers and name (for example Pommel Strike+ deals 7 and 6 Poise); before, it fought as the plain card, so upgrades already bought now take effect.
 
