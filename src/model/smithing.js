@@ -11,7 +11,9 @@ import {
   cumulativeRequirementDelta,
   itemRefIdentity,
   itemUpgradeCost,
+  itemUpgradeCostAt,
   itemUpgradeRows,
+  itemUpgradeRowsAt,
   itemUpgradeTiers,
   itemUpgradeValueReceipts,
   parseItemUpgradeTag,
@@ -305,7 +307,7 @@ function validateLastReceipt(registries, run) {
   for (const key of ['beforeLevel', 'afterLevel', 'authoredCost', 'spent', 'cost', 'stoneBalanceBefore', 'stoneBalanceAfter']) {
     integer(receipt[key], `run.lastSmithingReceipt.${key}`);
   }
-  if (receipt.afterLevel !== receipt.beforeLevel + 1 || !itemUpgradeTiers(registries, receipt.itemRef).includes(receipt.afterLevel)) {
+  if (receipt.afterLevel !== receipt.beforeLevel + 1 || !itemUpgradeTiers(registries, receipt.itemRef, run).includes(receipt.afterLevel)) {
     throw new Error('run.lastSmithingReceipt levels do not describe one valid Smithing promotion');
   }
   if (typeof receipt.free !== 'boolean') throw new Error('run.lastSmithingReceipt.free must be boolean');
@@ -318,7 +320,7 @@ function validateLastReceipt(registries, run) {
       throw new Error('run.lastSmithingReceipt refined balance does not describe its Smithing transaction');
     }
   }
-  const authoredCost = itemUpgradeCost(itemUpgradeRows(registries, receipt.itemRef, receipt.afterLevel));
+  const authoredCost = itemUpgradeCostAt(registries, receipt.itemRef, receipt.afterLevel, itemUpgradeRowsAt(registries, receipt.itemRef, receipt.afterLevel, run), run);
   const expectedSpend = receipt.free || purse === 'refined' ? 0 : authoredCost;
   if (receipt.authoredCost !== authoredCost || receipt.spent !== expectedSpend || receipt.cost !== receipt.spent
       || receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.spent) {
@@ -390,7 +392,7 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
   const levelMap = levels(run);
   for (const [itemRef, level] of Object.entries(levelMap)) {
     if (!itemByRef(registries, itemRef)) throw new Error(`Unknown run.itemUpgradeLevels item '${itemRef}'`);
-    const tiers = itemUpgradeTiers(registries, itemRef);
+    const tiers = itemUpgradeTiers(registries, itemRef, run);
     if (level > (tiers.at(-1) || 0)) throw new Error(`run.itemUpgradeLevels.${itemRef} exceeds its highest authored tier ${tiers.at(-1) || 0}`);
   }
   const stones = stoneBalance(run);
@@ -405,9 +407,11 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
     const piece = itemByRef(registries, itemRef);
     const currentLevel = levelMap[itemRef] || 0;
     const nextLevel = currentLevel + 1;
-    const upgradeRows = itemUpgradeRows(registries, itemRef, nextLevel);
+    const upgradeRows = itemUpgradeRowsAt(registries, itemRef, nextLevel, run);
+    // A Core item stops at its ladder's top tier (the CSV only authors tier 1).
+    if (upgradeRows.length && !itemUpgradeTiers(registries, itemRef, run).includes(nextLevel)) continue;
     if (!upgradeRows.length) continue;
-    const cost = free ? 0 : itemUpgradeCost(upgradeRows);
+    const cost = free ? 0 : itemUpgradeCostAt(registries, itemRef, nextLevel, upgradeRows, run);
     // Core 2: cards are not tier-rewritten, so the receipt comes from the Core pipeline (smithingCore.js)
     // and the legacy source rows only supply the item's tier ladder and stone cost.
     const core = identity.itemKind !== 'relic' && coreSmithingActive(run)
@@ -433,7 +437,7 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
     const coreExtras = core?.length ? [
       ...requirements.filter((row) => row.currentRequired !== row.nextRequired)
         .map((row) => ({ kind: 'requirement', tag: `requirement:${row.attributeId}`, label: `${row.label} requirement`, before: row.currentRequired, after: row.nextRequired })),
-      ...(identity.itemKind === 'armor' ? itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel) : []),
+      ...(identity.itemKind === 'armor' && itemUpgradeRows(registries, itemRef, nextLevel).length ? itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel) : []),
     ] : [];
     const changes = core ? Object.freeze([...core, ...coreExtras].map((row) => Object.freeze({ ...row })))
       : identity.itemKind === 'armament'
@@ -624,7 +628,7 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
   const wasMissing = run.smithingStones == null || run.itemUpgradeLevels == null || run.smithingRewardClaims == null;
   const priorLevels = levels(run);
   for (const [itemRef, level] of Object.entries(priorLevels)) {
-    const maxTier = itemUpgradeTiers(registries, itemRef).at(-1) || 0;
+    const maxTier = itemUpgradeTiers(registries, itemRef, run).at(-1) || 0;
     if (!itemByRef(registries, itemRef) || level > maxTier) throw new Error(`Invalid item upgrade level '${itemRef}=${level}'`);
   }
   const itemUpgradeLevels = { ...priorLevels };
