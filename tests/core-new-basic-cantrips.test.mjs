@@ -31,10 +31,16 @@ test('Reaver and Rogue copy limits: every new Basic is unlimited like Strike, no
   }
 });
 
-test('Starseer copy limits: every new Cantrip is unlimited, no new Basic is', () => {
-  const run = live('starseer', [...BASICS, ...CANTRIPS]);
-  for (const id of CANTRIPS) assert.equal(deckCopyLimit(registries, id, {}, run), Infinity, id);
-  for (const id of BASICS) assert.notEqual(deckCopyLimit(registries, id, {}, run), Infinity, id);
+// Owner ruling (2026-10-28): Mending Touch is excluded from the Magic Adept's unlimited copies. Starseer and Herald
+// own only the copies they collect; every other new Cantrip stays unlimited.
+const UNLIMITED_CANTRIPS = CANTRIPS.filter(id => id !== 'core.mendingTouch');
+test('Starseer and Herald copy limits: the new Cantrips are unlimited except Mending Touch, which counts owned copies', () => {
+  for (const classId of ['starseer', 'herald']) {
+    const run = live(classId, [...BASICS, ...CANTRIPS]);
+    for (const id of UNLIMITED_CANTRIPS) assert.equal(deckCopyLimit(registries, id, {}, run), Infinity, `${classId}/${id}`);
+    assert.equal(deckCopyLimit(registries, 'core.mendingTouch', {}, run), 1, `${classId}/core.mendingTouch`);
+    for (const id of BASICS) assert.notEqual(deckCopyLimit(registries, id, {}, run), Infinity, `${classId}/${id}`);
+  }
 });
 
 test('basicOrCantripMatcher counts all ten new cards and not an ordinary common', () => {
