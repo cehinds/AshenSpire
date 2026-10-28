@@ -6,6 +6,14 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
+// The overhead group's real height. Desktop and widescreen draw a taller health row (owner 2026-10-28), so the reserve
+// above the head is the group's MEASURED height there (the config value only before the first paint); phones keep
+// the config value.
+const miniHudGroupHeight = (grid, frame = null) => {
+  if (!isWideFormFactor(document.documentElement.dataset.formFactor)) return grid.miniHudGroupHeightPx;
+  const rack = frame?.querySelector(':scope > .target-hud-overhead-meters');
+  return rack?.offsetHeight ? rack.offsetHeight * (frame.getBoundingClientRect().width / frame.offsetWidth || 1) : grid.desktopMiniHudGroupHeightPx ?? grid.miniHudGroupHeightPx;
+};
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
@@ -341,7 +349,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const body = currentSpriteBodyBounds(sprite, schedule);
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
         racked.push({ frame, body, intent: rack.querySelector(':scope > :is(.intent,.player-action-intent)'), placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
-          groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
+          groupHeight: miniHudGroupHeight(config, frame), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       } else plain.push({ frame, sprite, leading });
     }
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
@@ -760,13 +768,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (image && (!image.complete || !image.naturalWidth)) {
         geometry = loadedGeometry.get(geometryKey) || geometry;
       } else loadedGeometry.set(geometryKey, geometry);
+      const racked = hudWide && !frame.classList.contains('player') && frame.querySelector(':scope > .target-hud-overhead-meters')
+        ? Math.max(0, miniHudGroupHeight(hudGrid, frame) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
-        leadingHeight, leadingWidth, artLeading: ceiling * zoom,
+        leadingHeight, leadingWidth, artLeading: Math.max(ceiling * zoom, racked),
         // Reading controls do not change the unselected fitting envelope.
-        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap) };
+        // Desktop and widescreen enemies carry the taller racked group (intent + health row) above the head: the body is
+        // fitted under it, so the group never overlaps the head. It may rise desktopMiniHudBandOverlapPx into the HUD
+        // band's empty middle, as the old group did (owner 2026-10-28).
+        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap, racked) };
     });
     // A readout below the feet needs no headroom above the head.
     for (const actor of actors) if (hudBelow(actor)) actor.leading = 6;
@@ -1008,8 +1021,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const peers = actors.filter(other => other.slot.visualBand === slot.visualBand);
         const groupTop = Math.min(...peers.map(other => {
           const fit = sizes.find(size => size.id === other.slot.id);
-          return (fit?.ground ?? other.slot.ground) - (fit?.visibleHeight ?? 0);
-        })) - miniHud.miniHudGroupHeightPx - miniHud.miniHudSpriteGapPx;
+          return (fit?.ground ?? other.slot.ground) - (fit?.visibleHeight ?? 0) - miniHudGroupHeight(miniHud, other.frame);
+        })) - miniHud.miniHudSpriteGapPx;
         frame.style.setProperty('--combat-mini-hud-left', `${(slot.miniHudLeft - x + nameWidth / 2) / pageZoom}px`);
         frame.style.setProperty('--combat-mini-hud-top', `${groupTop / pageZoom}px`);
         frame.style.setProperty('--combat-mini-hud-width', `${slot.miniHudWidth / pageZoom}px`);

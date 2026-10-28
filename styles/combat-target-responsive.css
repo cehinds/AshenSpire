@@ -190,3 +190,17 @@
   :root .combat[data-layout='formation'] { --intent-value-size: calc(16px / var(--ui-zoom,1)); }
   :root .combat[data-layout='formation'][data-target-hud='true'] .intent-action .intent-icon { width:calc(19px / var(--ui-zoom,1)); height:calc(19px / var(--ui-zoom,1)); }
 }
+
+/* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
+   first approved sizes so the bodies keep their height (the stage measures the rack, so the reserve follows). */
+@media (min-width: 1200px) and (max-height: 800px) {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+    --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));
+    height: calc(38px / var(--ui-zoom,1))!important; min-height: calc(38px / var(--ui-zoom,1))!important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+    inset: calc(14px / var(--ui-zoom,1)) 0 auto auto !important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(12px / var(--ui-zoom,1)); }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.25; }
+}
