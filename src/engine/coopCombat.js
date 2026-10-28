@@ -322,6 +322,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(c.weaponId ? { weaponId: c.weaponId } : {}),
     ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
     upgraded: !!c.upgraded,
+    ...(Array.isArray(c.upgradeSteps) && c.upgradeSteps.length ? { upgradeSteps: structuredClone(c.upgradeSteps) } : {}),
     ...(Number.isInteger(c.abilityRank) ? { abilityRank: c.abilityRank } : {}),
     ...(c.legacyAbility === true ? { legacyAbility: true } : {}),
     ...(c.abilityOfferId ? { abilityOfferId: c.abilityOfferId } : {}),
@@ -877,7 +878,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, rangeRout
     ratingValue: inst.ratingValue,
     ratingCap: inst.ratingCap,
     equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
     // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
