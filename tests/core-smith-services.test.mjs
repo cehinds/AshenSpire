@@ -9,6 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
+import { rederivePools } from '../src/model/levelup.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
 import { blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../src/model/blacksmith.js';
@@ -78,4 +79,37 @@ test('Legacy Blacksmith upgrade is unchanged: one tier for one stone', () => {
   assert.equal(receipt.afterLevel, 1);
   assert.equal(run.smithingStones, 4);
   assert.equal(blacksmithUpgradePlan(legacyOut, run, ref).ok, false);
+});
+
+test('Core Blacksmith and merchant upgrades re-derive the pools like the rest Smith', () => {
+  const armorRun = (registries, runId) => {
+    const run = createRunState({ seed: 33, classId: 'reaver', registries, runId });
+    const id = 'vigil'; // the first Reaver armour that is a Smith candidate (the starting 'default' is not)
+    run.loadout.sets.armor = [id];
+    run.smithingStones = 9;
+    run.seenEvents = [];
+    run.shopStock = buildBlacksmithStock(registries, createRng(33), run);
+    return { run, ref: `armor/${run.class}/${id}` };
+  };
+  const pools = (run) => [run.maxHp, run.maxMana, run.maxStamina];
+  for (const [name, commit] of [
+    ['Blacksmith', (registries, run, ref) => upgrade(registries, run, ref)],
+    ['merchant', (registries, run, ref) => commitMerchantSmithing(registries, run, ref)],
+  ]) {
+    const { run, ref } = armorRun(coreOut, `pools-${name}`);
+    const before = pools(run);
+    commit(coreOut, run, ref);
+    assert.equal(run.itemUpgradeLevels[ref], 1);
+    const after = pools(run);
+    assert.notDeepEqual(after, before, `${name}: an equipped armour tier moves a maximum`);
+    const settled = structuredClone(run);
+    rederivePools(coreOut, settled, 'check');
+    assert.deepEqual(pools(settled), after, `${name}: the maxima are already re-derived`);
+  }
+});
+
+test('shop.js upgrades through commitMerchantSmithing, never commitSmithing directly', () => {
+  const source = readFileSync(new URL('../src/ui/screens/shop.js', import.meta.url), 'utf8');
+  assert.match(source, /commitMerchantSmithing\(registries, run, itemRef\)/);
+  assert.doesNotMatch(source, /\bcommitSmithing\(/);
 });

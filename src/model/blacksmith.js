@@ -34,8 +34,7 @@
 // as unavailable, with the reason `serviceIdleReason` names.
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, isItemOwned } from './loadout.js';
-import { smithingPlan, commitItemUpgrade, SMITHING_PURSES } from './smithing.js';
-import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
+import { smithingPlan, commitItemUpgrade, withSmithService, SMITHING_PURSES } from './smithing.js';
 import { extractionPlan, extractionRefusal, installPlan, commitExtraction, commitInstall } from './cardExtraction.js';
 import { deckRules } from '../content/deckRules.js';
 import { deckCopyLimit, ownedCopies } from './deckRules.js';
@@ -257,8 +256,7 @@ export function commitBlacksmithUpgrade(registries, run, quote) {
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   // A Core run commits equipment upgrades only inside the Smith service; the stone price is still smithingPlan's.
-  const commit = () => commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse });
-  const receipt = gameProfileServiceActive(run, 'smith') ? commit() : withGameProfileService(run, 'smith', commit);
+  const receipt = withSmithService(registries, run, () => commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse }));
   bump(run, plan);
   return receipt;
 }
