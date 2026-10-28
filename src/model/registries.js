@@ -1,4 +1,5 @@
 import { applyBaseManaPolicy } from './cardManaPolicy.js';
+import { upgradedDefinition } from './cardUpgrade.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -797,14 +798,5 @@ export function applyCardRank(card, rank, skillBonus = 0) {
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */
 export function mergeUpgrade(base) {
-  const up = base.upgrade || {};
-  return deepFreeze({
-    ...base,
-    ...up,
-    name: up.name != null ? up.name : `${base.name}+`,
-    keywords: up.keywords != null ? up.keywords : base.keywords || [],
-    effects: up.effects != null ? up.effects : base.effects,
-    textTemplate: up.textTemplate != null ? up.textTemplate : base.textTemplate,
-    upgraded: true,
-  });
+  return deepFreeze(upgradedDefinition(base));
 }
