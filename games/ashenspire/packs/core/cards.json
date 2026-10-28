@@ -1916,5 +1916,106 @@
       ]
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.arcaneSiphon",
+    "name": "Arcane Siphon",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 7
+      },
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Gain {restoreMana} Mana.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.emberWave",
+    "name": "Ember Wave",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "burn",
+          "stacks": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
   }
 ]
