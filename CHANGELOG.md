@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-28
+
+- **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1886`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
+
 ## 2026-10-27
 
 - **Branches that branch, full flasks each act, and a still battlefield** ([#2350](https://github.com/cehinds/AshenSpire/pull/2350), `0.7.1.1886`). Each act map's 1 to 3 main branches now open as a single path and split into sub-paths that sometimes cross before all joining at that branch's boss; both flasks refill to full at every new act; and the battlefield scenery no longer jumps when the last enemy falls, in solo or co-op.
