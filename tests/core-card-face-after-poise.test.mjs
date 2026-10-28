@@ -119,3 +119,22 @@ test('an aimed enemy that died falls back to the frontmost living enemy', () => 
   assert.equal(previewCard(combat, id, a.id).values.find(v => v.op === 'damage').faceValue, 9);
   assert.equal(previewCard(combat, id, b.id).values.find(v => v.op === 'damage').faceValue, 9);
 });
+
+test('the rendered face sequence and total are the before-Block ones (cardFaceLines and combatCardSummary)', async () => {
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const { combatCardSummary } = await import('../src/model/playingCard.js');
+  const { combat, id } = fight({ classId: 'starseer', cardId: 'supernova', enemies: [{ poise: 10, block: 5 }] });
+  combat.player.energy = 3; combat.player.stamina = 3; combat.player.mana = 9;
+  const preview = previewCard(combat, id, combat.enemies[0].id);
+  const row = preview.values.find(v => v.op === 'damage');
+  assert.equal(row.hits, 3);
+  assert.ok(row.faceHitDamages.some(n => n !== row.faceHitDamages[0]), 'the hits differ');
+  assert.notDeepEqual(Array.from(row.hitDamages), Array.from(row.faceHitDamages), 'Block changes the targeted hits');
+  const want = row.faceHitDamages.join(' + ');
+  const total = row.faceHitDamages.reduce((a, b) => a + b, 0);
+  const strip = h => h.replace(/<[^>]+>/g, '');
+  const faceText = cardFaceLines(preview.resolvedDefinition, preview, reg).map(l => strip(l.html)).join(' | ');
+  assert.ok(faceText.includes(want) && faceText.includes(`${total} total`), faceText);
+  const summary = combatCardSummary(preview.resolvedDefinition, preview, reg);
+  assert.ok(String(summary).includes(want) && String(summary).includes(`${total} total`), String(summary));
+});
