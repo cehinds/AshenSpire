@@ -101,7 +101,16 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
     action.meta = { ...action.meta, rangeTargetBatches: batches };
   }
   const lineage = Lineage.extendRangeEnvelope(planningCtx,source,actions,contacts,{preview,carrier:actions[0]?.card || {}});
-  const plan = rangeActionPlan(ctx.rangeState, actorRangeKey(ctx, source), contacts, { route, context });
+  // A card's own leading close (every moveEngagement before its first hostile effect) is part of the plan: the hit is priced
+  // at the distance that close reaches, so it never pays an implicit Advance for ground the card itself covers. Movement
+  // after a hostile effect (Gale Push) leaves the plan as it was.
+  let planState = ctx.rangeState;
+  for (const action of actions) {
+    if (hostileOps.has(action.effect.op)) break;
+    if (action.effect.op !== 'moveEngagement' || !action.target || action.target.kind === source.kind) continue;
+    planState = movedEngagementState(planState, actorRangeKey(ctx, source), actorRangeKey(ctx, action.target), action.effect.bands);
+  }
+  const plan = rangeActionPlan(planState, actorRangeKey(ctx, source), contacts, { route, context });
   Object.defineProperty(plan,'lineage',{value:lineage});
   return plan;
 }
