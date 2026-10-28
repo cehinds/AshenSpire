@@ -2412,5 +2412,105 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.hexmark",
+    "name": "Hexmark",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Apply {vulnerable} Vulnerable. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.manaLash",
+    "name": "Mana Lash",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 8
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 8
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ]
