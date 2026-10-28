@@ -192,7 +192,7 @@
 }
 
 /* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
-   first approved sizes so the bodies keep their height (the stage measures the rack, so the reserve follows). */
+   first approved sizes so the bodies keep their height (the stage's group height is config: desktopShortMiniHudGroupHeightPx, matched to this rule). */
 @media (min-width: 1200px) and (max-height: 800px) {
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
     --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));

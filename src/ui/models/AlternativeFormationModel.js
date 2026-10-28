@@ -188,7 +188,9 @@ export function perspectiveCellContains(box, x, y) {
 // state: a selected frame hides its meters, so a measured height would refit the art on every click (owner
 // 2026-10-28). Desktop and widescreen draw the taller health row; a short desktop window steps it down (the
 // `min-width: 1200px and max-height: 800px` rule in styles/combat-target-responsive.css).
-export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false } = {}) {
-  if (!wide) return grid.miniHudGroupHeightPx;
+export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false, tall = true } = {}) {
+  // `tall` is the 1200px-wide window the taller health row is drawn at: a desktop form factor at 1101-1199 wide
+  // still renders the phone-height group.
+  if (!wide || !tall) return grid.miniHudGroupHeightPx;
   return shortWindow ? grid.desktopShortMiniHudGroupHeightPx : grid.desktopMiniHudGroupHeightPx;
 }

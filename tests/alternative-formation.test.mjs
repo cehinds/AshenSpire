@@ -262,6 +262,9 @@ test('the overhead group height is config only: phone, desktop and short desktop
   assert.equal(overheadGroupHeightPx(grid, { wide: true }), 96);
   assert.equal(overheadGroupHeightPx(grid, { wide: true, shortWindow: true }), 80);
   assert.ok(overheadGroupHeightPx(grid, { wide: true }) > overheadGroupHeightPx(grid, { wide: true, shortWindow: true }));
+  // Desktop form factor at 1101-1199 wide: the tall health row (min-width 1200) is not drawn, so the group is the phone's.
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false }), grid.miniHudGroupHeightPx, '1150 wide');
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false, shortWindow: false }), 61);
   // The stage's helper takes no frame and reads no layout: a selected frame hides its meters, so any DOM
   // measurement here would change with selection and refit the settled artwork on every click.
   const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
