@@ -41,7 +41,14 @@
     },
     "equipment": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "upgradeBonuses": {
+          "weaponARPerTier": 1,
+          "armorDRPerTier": 1,
+          "tierBonusSteps": [1, 1, 2],
+          "tierStoneCosts": [1, 2, 3]
+        }
+      }
     },
     "gear": {
       "version": "1.0.0",

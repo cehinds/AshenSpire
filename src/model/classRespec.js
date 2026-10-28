@@ -81,7 +81,7 @@ function transferItem(registries,candidate,grant,choice,original,transfers) {
   if (!tier && !mounts && !sigils) return;
   if (choice.transfer !== 'retain') throw new Error('Review and retain this item’s upgrades and components before exchanging it.');
   if (candidate.itemUpgradeLevels?.[newRef] || candidate.itemMounts?.[newRef] || candidate.sigilSlots?.[newRef]) throw new Error('The replacement has its own upgrade or component history. Choose another item.');
-  if (tier && !itemUpgradeTiers(registries,newRef).includes(tier)) throw new Error('The replacement does not support the retained smithing tier.');
+  if (tier && !itemUpgradeTiers(registries,newRef,candidate).includes(tier)) throw new Error('The replacement does not support the retained smithing tier.');
   if (mounts) {
     const oldPiece=itemPiece(registries,oldRef),newPiece=itemPiece(registries,newRef);
     if (!oldPiece || !newPiece || oldPiece.kind !== newPiece.kind) throw new Error('Mounted cards can transfer only between the same equipment kind.');
