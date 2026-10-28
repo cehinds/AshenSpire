@@ -3,6 +3,7 @@ import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gam
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
+import { mergeUpgrade } from './registries.js';
 import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
@@ -41,7 +42,9 @@ export function projectGameCard(subject,idOrInstance) {
   if ((!enabled.includes('sp') && def.staminaCost > 0) || (!enabled.includes('mp') && def.manaCost > 0)) {
     if (!alternate) throw new GameConfigError(`$/content/cards/${id}`,'missing authored disabled-resource variant');
   }
-  const chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
+  if (typeof idOrInstance === 'object' && idOrInstance?.upgraded && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(mergeUpgrade(chosen));
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);

@@ -796,7 +796,7 @@ export function applyCardRank(card, rank, skillBonus = 0) {
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */
-function mergeUpgrade(base) {
+export function mergeUpgrade(base) {
   const up = base.upgrade || {};
   return deepFreeze({
     ...base,
