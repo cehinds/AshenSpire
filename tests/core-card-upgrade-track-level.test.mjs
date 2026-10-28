@@ -1,4 +1,4 @@
-// Card upgrades 8b: R (cardTrackLevel) on the real Core profile and cards, via Core's explicit track-to-tag map.
+// Card ranks: cardTrackLevel (the ceiling a drafted Core card's rank is rolled against) on the real Core profile and cards, via Core's explicit track-to-tag map.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -38,14 +38,12 @@ test('guard cards also read the shield track', () => {
   assert.equal(R({ 'item:shield': 2 }, 'core.stunningBlow'), 0);
 });
 
-test('R feeds F on real cards: 1 + R for non-Basic, 1 for Basic and cantrips', () => {
-  const r = run({ 'item:blade': 3, 'item:magic-focus': 4 });
-  const F = (id) => freeAllowance(r, def(id), registries);
-  assert.equal(F('core.stunningBlow'), 4);
-  assert.equal(F('core.reaverSpecial'), 4);
-  assert.equal(F('core.cometLance'), 5);
-  assert.equal(F('core.strike'), 1);
-  assert.equal(F('core.hammerBlow'), 1);
-  assert.equal(F('core.cinderDart'), 1);
-  assert.equal(F('core.manaSurge'), 5);
+test('the allowance reads the instance rank, not the track level', () => {
+  const F = (id, rank) => freeAllowance({ cardId: id, ...(rank ? { rank } : {}) }, def(id));
+  assert.equal(F('core.stunningBlow', 4), 4);
+  assert.equal(F('core.ironbreaker', 3), 3);
+  assert.equal(F('core.cometLance', 5), 5);
+  assert.equal(F('core.manaSurge', 2), 2);
+  assert.equal(F('core.stunningBlow'), 1);
+  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart']) assert.equal(F(id, 9), 1, id);
 });

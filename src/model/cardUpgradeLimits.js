@@ -1,7 +1,7 @@
 // How many Core card upgrades are free, what the next one costs, and whether it
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
-import { cardTrackLevel } from './skills.js';
+import { cardRank } from './cardRank.js';
 import { upgradeCount, upgradeStepsOf, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { rollUpgradeStep, upgradeStepRng } from './cardUpgradeSteps.js';
 
@@ -20,14 +20,14 @@ export function upgradeBasic(def) {
 }
 
 /**
- * freeAllowance(run, def[, registries]) → F. An upgradeBasic card gets 1;
- * every other card gets 1 + R, R being the highest skill-track level over the
- * tracks whose schools match the card (0..10).
+ * freeAllowance(instance, def) → F. An upgradeBasic card gets 1; every other
+ * card gets its rank (default 1, at most 10): a rank-3 Ironbreaker has 3 free
+ * upgrades, a Strike has 1 at any rank.
  */
-export function freeAllowance(run, def, registries) {
+export function freeAllowance(instance, def) {
   if (!def) return 0;
   if (upgradeBasic(def)) return 1;
-  return 1 + (registries ? cardTrackLevel(registries, run, def) : 0);
+  return Math.min(MAX_CARD_UPGRADES, cardRank(instance));
 }
 
 /**
@@ -52,7 +52,7 @@ export function upgradeCost(run, instance, def, registries) {
   const n = upgradeCount(instance) + 1;
   if (n > MAX_CARD_UPGRADES) return null;
   if (def && instance && nextUpgradeStep(run, instance, def, registries) === null) return null;
-  return n <= freeAllowance(run, def, registries) ? 0 : 1;
+  return n <= freeAllowance(instance, def) ? 0 : 1;
 }
 
 const stonesOf = (run) => (Number.isSafeInteger(run && run.smithingStones) ? run.smithingStones : 0);

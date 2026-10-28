@@ -6,8 +6,9 @@ The owner made these decisions on 2026-10-28. Co-op is ignored. This applies to 
 - Card upgrades can be bought at rest sites and at the Blacksmith.
 - **Free allowance F:**
   - A Basic or cantrip card gets F = 1. For upgrades, Basic means a Core card of rarity `common` that is not a spell, and a cantrip is a card tagged `rank.cantrip` (so Strike, Hammer Blow and Cinder Dart get 1). Uncommon, rare and starter cards (the class specials, Mana Surge) are not Basic. This is `upgradeBasic(def)` in `src/model/cardUpgradeLimits.js`, not the Martial Adept rule in `basicCardRule.js`, which marks almost every martial card Basic.
-  - Every other card gets F = 1 + R.
-  - R is the player's highest skill-track level, `run.skills[t].level` (0..10), over the tracks whose schools match the card. Use the schools logic of `trackSchools` in src/model/skills.js, plus Core's explicit track map (Core cards carry `camp:`/`maneuver:` tags, which the weapon-family schools never match): `item:blade` and `dualWield` match `camp:physical`, `item:shield` matches `maneuver:defend`, `item:magic-focus` matches `camp:spell` (`cardTrackLevel`).
+  - Every other card gets F = its rank: `instance.rank`, default 1 (old saves have none), at most 10. A rank-3 Ironbreaker has 3 free upgrades; a Strike has 1 at any rank.
+  - Ranks (owner, 2026-10-28: "turn on the existing logic", SPEC 13.4o) are on in Core through `progression.cardRanks` in the Core bundle. Each Core track level from 2 queues a rank-up (picked on the existing reward-door rank-up picker after a victory); drafted reward cards arrive at rank 1..min(track level, rankMax); a rank adds 1 to the card's primary number per step past 1 (`projectGameCard`).
+  - Core cards carry `camp:`/`maneuver:` tags, which the weapon-family schools never match, so ranking uses Core's explicit track map (`rankSchools`, `cardTrackLevel` in src/model/skills.js): `item:blade` and `dualWield` rank `camp:physical` cards, `item:shield` ranks `maneuver:defend` cards, `item:magic-focus` ranks `camp:spell` cards.
 - **Cost:**
   - The upgrade number n is the index of the upgrade about to be applied, starting at 1.
   - Upgrade number n is free while n <= F.
