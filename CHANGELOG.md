@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
-- **Blacksmith and merchant upgrades work in Core** ([#2364](https://github.com/cehinds/AshenSpire/pull/2364), `0.7.1.1902`). Upgrading a weapon or armor at the Blacksmith or the merchant no longer fails in a Core run; it costs 1, 2 and 3 Smithing Stones for the three levels, and upgraded armor raises your maximum HP, Mana and Stamina straight away.
+- **Blacksmith and merchant upgrades work in Core** ([#2364](https://github.com/cehinds/AshenSpire/pull/2364), `0.7.1.1904`). Upgrading a weapon or armor at the Blacksmith or the merchant no longer fails in a Core run; it costs 1, 2 and 3 Smithing Stones for the three levels, and upgraded armor raises your maximum HP, Mana and Stamina straight away.
+- **Card damage shown after Poise** ([#2365](https://github.com/cehinds/AshenSpire/pull/2365), `0.7.1.1904`). In Core, the damage number on a combat card now shows what one hit does to the aimed enemy, or the front enemy, after its Poise (Core Strike shows 9, not 12). The enemy's Block is not taken off. Cards that damage yourself, and cards outside combat, still show the raw number.
 - **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1902`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
 - **Upgraded cards work in Core** ([#2362](https://github.com/cehinds/AshenSpire/pull/2362), `0.7.1.1900`). An upgraded card in a Core run now plays and shows its upgraded numbers and name (for example Pommel Strike+ deals 7 and 6 Poise); before, it fought as the plain card, so upgrades already bought now take effect.
 

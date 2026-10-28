@@ -150,7 +150,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         if (typeof hits !== 'number') fail();
         // Core 2: one row carries the computed return; every other damage row of the Counter is zeroed and not listed.
         if (counter && preview?.counterReturn && live && hits === 0 && live.totalDamage === 0) return [];
-        const sequence = live?.hitDamages;
+        // Core: the face's sequence is the before-Block one (faceHitDamages); the targeted preview keeps hitDamages.
+        const sequence = live?.faceHitDamages && hits > 0 ? live.faceHitDamages : live?.hitDamages;
+        const sequenceTotal = sequence === live?.hitDamages ? live?.totalDamage : sequence?.reduce((sum, amount) => sum + amount, 0);
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
         // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.
         const type = combatCardDamageLabel(def, preview, registries, index).split(' · ')[0];
@@ -164,7 +166,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`
             + (hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : '');
         } else if (unequal) {
-          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(live.totalDamage, typeof base === 'number' ? base * sequence.length : undefined)} total across ${sequence.length} hits)`;
+          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(sequenceTotal, typeof base === 'number' ? base * sequence.length : undefined)} total across ${sequence.length} hits)`;
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
