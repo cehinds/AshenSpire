@@ -2,7 +2,7 @@ import { equippedIn } from '../model/loadout.js';
 import { gameContent } from '../model/gameProfile.js';
 // Runtime projections of authored behavior. The same definition is used for
 // presentation, affordability and actual effect execution.
-import { evalPredicate } from './triggers.js';
+import * as Triggers from './triggers.js';
 export function projectCardBehavior(ctx, instance, def) {
   let result=def;
   if(def.playLimit && (ctx.player.abilityRiders?.instanceUsesCombat?.[instance.instanceId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
@@ -21,7 +21,7 @@ export function projectCardBehavior(ctx, instance, def) {
 export function selectCardVariant(ctx, def, paid, target=null) {
   if (!def.effectVariants?.length) return def;
   const meta={energySpent:paid.energy || 0,manaSpent:paid.mana || 0,staminaSpent:paid.stamina || 0};
-  const variant=def.effectVariants.find(row=>evalPredicate(ctx,row.if,{source:ctx.player,owner:ctx.player,target,card:def,meta}));
+  const variant=def.effectVariants.find(row=>Triggers.evalPredicate(ctx,row.if,{source:ctx.player,owner:ctx.player,target,card:def,meta}));
   return variant ? {...def,effects:variant.effects,...(variant.textTemplate ? {textTemplate:variant.textTemplate} : {}),activeEffectVariant:def.effectVariants.indexOf(variant)} : def;
 }
 
