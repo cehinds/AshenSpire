@@ -1276,6 +1276,26 @@ if (CORE) try {
   zoomExtra++;
   console.error('FAIL  Card removal and touch flick regressions:', error);
 }
+// The bundler rewrites `import { x } from` into a load-time destructure, so a
+// named import of a module that is still loading (an import cycle) is undefined
+// for good, while Node's ESM live bindings hide it from every other test here.
+// This walks the same module graph in the bundle's require order. Origin/dev
+// had three (evalPredicate in cardBehavior.js crashed selectCardVariant live).
+if (CORE) try {
+  const { findCycleHazards } = await import('../tools/bundle-cycles.mjs');
+  const hazards = findCycleHazards('src/main.js');
+  if (hazards.length) {
+    for (const h of hazards) console.log(`  ${h.importer}:${h.line} destructures {${h.names.join(', ')}} from ${h.target} mid-load: ${h.chain.join(' -> ')}`);
+    console.log(`FAIL  no bundled named import targets a module still loading: ${hazards.length} hazard(s); use \`import * as N\` for cyclic edges`);
+    zoomExtra++;
+  } else {
+    console.log('PASS  no bundled named import targets a module still loading (import-cycle destructure hazard)');
+    zoomPassed++;
+  }
+} catch (error) {
+  console.log('FAIL  bundle cycle check: ' + error.message);
+  zoomExtra++;
+}
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
