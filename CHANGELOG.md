@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-28
 
+- **Ten new early cards** ([#2356](https://github.com/cehinds/AshenSpire/pull/2356), `0.7.1.1888`). Core reward offers can now show Jab, Gash, Pommel Strike, Steady Guard, Driving Thrust, Expose, Cinder Dart, Mending Touch, Glimpse and Gale Push, so early fights stop repeating the same handful of cards; Reavers and Rogues can copy the new Basics and Starseers and Heralds the new Cantrips, as with the starter cards.
+
 - **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1888`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
 
 ## 2026-10-27
