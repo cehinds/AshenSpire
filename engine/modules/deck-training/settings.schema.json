@@ -34,6 +34,14 @@
               "minLength": 1
             }
           },
+          "excludeCards": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "cards": {
             "type": "object",
             "properties": {
