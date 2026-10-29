@@ -139,7 +139,7 @@ function analyseTrace(events) {
       const f = (e.args?.beginData?.stackTrace || e.args?.stackTrace || [])[0];
       if (f) {
         const k = `${(f.url || '').replace(/^https?:\/\/[^/]+\//, '')}:${f.lineNumber}${f.functionName ? ` ${f.functionName}` : ''}`;
-        const o = forced.get(k) || { ms: 0, n: 0 }; o.ms += ms(e); o.n++; forced.set(k, o);
+        const kk = (e.name === 'Layout' ? 'L ' : 'S ') + k; const o = forced.get(kk) || { ms: 0, n: 0 }; o.ms += ms(e); o.n++; forced.set(kk, o);
       }
     }
     // Raster and decode run on worker threads: sum them all.
@@ -154,7 +154,7 @@ function analyseTrace(events) {
   let scriptMs = 0, edge = -Infinity;
   for (const [a, b] of jsIv) { if (b > edge) { scriptMs += (b - Math.max(a, edge)) / 1000; edge = b; } }
   const tasks = events.filter((e) => e.ph === 'X' && on(e) && e.name === 'RunTask').map(ms);
-  return { by, syncLayout, syncStyle, forced: [...forced.entries()].sort((a, b) => b[1].ms - a[1].ms).slice(0, 8),
+  return { by, syncLayout, syncStyle, forced: [...forced.entries()].sort((a, b) => b[1].ms - a[1].ms).slice(0, 16),
     drawGaps: gaps, mainFrames, scriptMs, mainTasksOver50: tasks.filter((d) => d > 50), mainBusyMs: sum(tasks) };
 }
 
@@ -291,6 +291,12 @@ const SCENARIOS = {
       if (!await playCard(ctx)) throw new Error('the card was not played');
       return { cardsPlayed: 1 };
     },
+  },
+  // The same window with no input at all: what the combat screen costs while it only animates.
+  idle: {
+    title: 'Combat idle (3.5 s, no input)',
+    url: (s) => `?shot=combat&shotSeed=${s}`, ready: COMBAT_READY,
+    async run() { await wait(3500); return {}; },
   },
   map: {
     title: 'Act map (pan, drag, one zoom)',
@@ -566,7 +572,7 @@ if (summaries.some((s) => s.scenario === 'play')) {
 for (const s of summaries) {
   console.log(`\n## ${s.scenario}: top JS self time (CPU profile, median ms over the window)${s.profileTotals ? ` — profile total ${s.profileTotals.totalMs} ms, idle ${s.profileTotals.idleMs}, native/program ${s.profileTotals.programMs}, GC ${s.profileTotals.gcMs}` : ''}`);
   for (const [k, v] of s.profileTop) console.log(`  ${String(v).padStart(8)} ms  ${k}`);
-  if (s.forced.length) { console.log('  synchronous layout/style, by JS caller (first run):'); for (const f of s.forced) console.log(`    ${f}`); }
+  if (s.forced.length) { console.log('  synchronous layout/style, by JS caller (first run; L = layout, S = style recalc):'); for (const f of s.forced) console.log(`    ${f}`); }
   if (s.errors.length) console.log(`  page errors: ${s.errors.join(' | ')}`);
   if (s.extra && Object.keys(s.extra).length) console.log(`  ${JSON.stringify(s.extra)}`);
 }
