@@ -348,7 +348,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
         racked.push({ frame, body, intent: rack.querySelector(':scope > :is(.intent,.player-action-intent)'), placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
           groupHeight: miniHudGroupHeight(config), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
-      } else plain.push({ frame, sprite, leading });
+      // A detailed HUD rack is absent briefly while its frame is rendered.
+      // Keep its settled leading host until the rack is rebuilt; placing a
+      // legacy overhead here would make the controls jump between beats.
+      } else if (field.closest('.combat')?.dataset.targetHud !== 'true') plain.push({ frame, sprite, leading });
     }
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
@@ -766,7 +769,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (image && (!image.complete || !image.naturalWidth)) {
         geometry = loadedGeometry.get(geometryKey) || geometry;
       } else loadedGeometry.set(geometryKey, geometry);
-      const racked = hudWide && !frame.classList.contains('player') && frame.querySelector(':scope > .target-hud-overhead-meters')
+      // Rendering rebuilds the overhead rack after the actor frame. Reserve
+      // its configured headroom throughout that rebuild: an absent DOM node
+      // must not briefly refit the settled artwork and backdrop between beats.
+      const racked = hudWide && targetHud && !frame.classList.contains('player')
         ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
