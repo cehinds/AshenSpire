@@ -320,11 +320,31 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // combatant per tracked frame.
   // Reads the settled intents after the rack writes above, then writes one
   // sideways offset per intent (a CSS variable the stylesheet applies).
+  // The shifts are a pure function of where the intents rest unshifted, which
+  // follows from the frame's box, the intent's size and the placement variables
+  // written just before (a shift moves only an intent's `left`, never its size
+  // or its frame). A pass that finds all of those as the last pass did, on the
+  // same intent elements still holding the shifts written, keeps them and skips
+  // the reset that made every intent read a forced layout.
+  let racksKey = '', racksIntents = [], racksShifts = [];
+  const shiftOf = intent => intent.style.getPropertyValue('--combat-intent-shift');
   function separateRackedIntents(racked, zoom) {
     const rows = racked.filter(row => row.intent);
-    for (const { intent } of rows) if (intent.style.getPropertyValue('--combat-intent-shift')) intent.style.removeProperty('--combat-intent-shift');
-    if (rows.length < 2) return;
+    if (rows.length < 2) {
+      racksKey = '';
+      for (const { intent } of rows) if (shiftOf(intent)) intent.style.removeProperty('--combat-intent-shift');
+      return;
+    }
     const fieldBox = field.getBoundingClientRect();
+    const key = [fieldBox.left, fieldBox.right, zoom, ...rows.map(({ frame, intent }) => {
+      const frameBox = frame.getBoundingClientRect(), box = intent.getBoundingClientRect(), style = frame.style;
+      const rack = intent.parentElement.getBoundingClientRect();
+      return [frameBox.left, frameBox.top, frameBox.width, rack.left, rack.width, box.width, box.height, box.top, intent.className, intent.textContent,
+        style.getPropertyValue('--combat-mini-hud-top'), style.getPropertyValue('--combat-selected-intent-top'),
+        style.getPropertyValue('--combat-selected-intent-center')].join('|');
+    })].join('\n');
+    if (key === racksKey && rows.every(({ intent }, i) => intent === racksIntents[i] && shiftOf(intent) === racksShifts[i])) return;
+    for (const { intent } of rows) if (shiftOf(intent)) intent.style.removeProperty('--combat-intent-shift');
     const items = rows.map(({ frame, intent }, id) => {
       const box = intent.getBoundingClientRect();
       return { id, left: box.left, right: box.right, top: box.top, bottom: box.bottom,
@@ -332,6 +352,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }).filter(item => item.visible);
     const shifts = separateOverheadIntents(items, { left: fieldBox.left, right: fieldBox.right }, 4 * zoom);
     for (const [id, dx] of shifts) if (dx) rows[id].intent.style.setProperty('--combat-intent-shift', `${dx / zoom}px`);
+    racksKey = key;
+    racksIntents = rows.map(row => row.intent);
+    racksShifts = rows.map(row => shiftOf(row.intent));
   }
   function centerTargetOverheads() {
     invalidateSpriteRects();
