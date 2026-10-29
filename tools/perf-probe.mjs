@@ -63,6 +63,7 @@ const r1 = (x) => Math.round(x * 10) / 10;
 // ---- in-page instrumentation (installed before any page script) --------------
 const INIT = `(() => {
   window.__perfCounts = {};
+  window.__perfCount = (name) => { window.__perfCounts[name] = (window.__perfCounts[name] || 0) + 1; };
   const S = { on: false, frames: [], long: [], anim: [] };
   try { new PerformanceObserver((l) => { if (S.on) for (const e of l.getEntries()) S.long.push(e.duration); }).observe({ type: 'longtask' }); } catch {}
   let last = 0, n = 0;
@@ -282,8 +283,8 @@ const SCENARIOS = {
     },
   },
   // The deterministic metric (wave 4 step 0): one card play, counted rather than timed. The
-  // counters are src/ui/performance.js perfCount() calls, live only where the probe installs
-  // window.__perfCounts. Run `--scenario play --runs 5`.
+  // counters are `globalThis.__perfCount?.(name)` calls in the combat screen and the battlefield stage, live only
+  // where the probe installs window.__perfCount. Run `--scenario play --runs 5`.
   play: {
     title: 'One card play (counted renders, HUD passes, forced layouts)',
     url: (s) => `?shot=combat&shotSeed=${s}`, ready: COMBAT_READY,
