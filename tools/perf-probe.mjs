@@ -314,28 +314,31 @@ const SCENARIOS = {
       const { page, input } = ctx;
       let inspected = 0;
       for (let round = 0; round < 2; round++) {
-        const ids = await page.evaluate(`[...document.querySelectorAll('.hand .card')].map((n) => n.dataset.instanceId)`);
-        const sel = `.hand .card[data-instance-id="${ids[round * 2 % ids.length]}"]`;
+        // Targeted cards only (an Attack): released away from an enemy they are never played by accident.
+        const ids = await page.evaluate(`[...document.querySelectorAll('.hand .card.type-attack:not(.unaffordable)')].map((n) => n.dataset.instanceId)`);
+        if (!ids.length) throw new Error('no Attack card in the opening hand of this seed');
+        const dragSel = `.hand .card[data-instance-id="${ids[(round + 1) % ids.length]}"]`;
+        // The inspect card is the same each round: some other cards' info buttons sit under a field hit box.
+        const sel = `.hand .card[data-instance-id="${ids[0]}"]`;
         // Drag the card up toward the field, dwell, bring it back and release (no play).
-        const a = await input.at(sel);
+        const a = await input.at(dragSel);
         await input.drag(a, { x: a.x + 30, y: a.y - 230 }, { steps: 16, dwell: 300, back: true });
         await wait(500);
+        if (!await page.evaluate(`!!document.querySelector(${JSON.stringify(dragSel)})`)) throw new Error('the dragged card was played');
         // Inspect: the first tap selects the card and reveals its info button, the button opens the modal.
         // A tap that lands while the fan is re-laying out can miss, so each step is retried a few times.
         let opened = false;
-        for (let attempt = 0; attempt < 3 && !opened; attempt++) {
-          await input.tap(sel).catch((e) => log('select', e.message)); await wait(500);
-          // The info buttons sit beside the cards in hand order, not inside them.
-          const marked = await page.evaluate(`(() => {
-            document.querySelectorAll('[data-perf-info]').forEach((b) => b.removeAttribute('data-perf-info'));
-            const i = [...document.querySelectorAll('.hand .card')].findIndex((c) => c.classList.contains('selected'));
-            const b = document.querySelectorAll('.card-info-button')[i];
-            if (b) b.setAttribute('data-perf-info', '1');
-            return !!b;
-          })()`);
-          if (!marked) continue; // the tap toggled the card off: tap again
-          await input.tap('.card-info-button[data-perf-info="1"]').catch((e) => log('info', e.message)); await wait(900);
+        for (let attempt = 0; attempt < 2 && !opened; attempt++) {
+          // A card that is still selected from before is not tapped again (that would play or toggle it).
+          const state = await page.evaluate(`(() => { const c = document.querySelector(${JSON.stringify(sel)}); return c ? [c.classList.contains('selected'), c.classList.contains('inspection-info-visible')].join() : 'gone'; })()`);
+          if (state === 'true,false') { await page.keyboard.press('Escape'); await wait(500); }
+          if (state !== 'true,true') await input.tap(sel).catch((e) => log('select', e.message));
+          // Once the card's inspection is revealed, the hand lifts its info button out as `.hand-info-portal`.
+          await until(page, `(() => { const b = document.querySelector('.hand-info-portal'); return !!b && getComputedStyle(b).visibility !== 'hidden' && b.getBoundingClientRect().width > 0 && !!document.querySelector('.hand .card.inspection-info-visible'); })()`, 'the info button', 4000).catch((e) => log(e.message));
+          if (DEBUG) log('portal', await page.evaluate(`(() => { const b = document.querySelector('.hand-info-portal'); const r = b.getBoundingClientRect(); const h = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return JSON.stringify([r.x, r.y, r.width, r.height]) + ' hit ' + (h && (h.className || h.tagName)).toString().slice(0, 50) + ' sel ' + [...document.querySelectorAll('.hand .card.selected')].map((c) => c.dataset.cardId); })()`));
+          await input.tap('.hand-info-portal').catch((e) => log('info', e.message)); await wait(900);
           opened = await page.evaluate(`!!document.querySelector('.card-inspection-modal')`);
+          if (!opened) { await page.keyboard.press('Escape'); await wait(500); }
         }
         inspected += opened ? 1 : 0;
         log('modal', opened);
