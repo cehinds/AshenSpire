@@ -274,13 +274,14 @@ if (argv.includes('--selftest')) {
         expectRed: /RED REDUCED setting\+os — .*card-flight/,
       },
       {
-        // A timer flipbook: lift the timeline and the actual figure's effect
-        // gate. Alternative silhouettes have no pose attachment host, so their
-        // six-frame effect uses playCombatEffect's fallback overlay instead of
-        // combatant-effect-layer. Each branch must expose its real src swaps.
+        // A timer flipbook: force the active timeline through its reduced-speed
+        // gate and lift the actual effect gate. Alternative silhouettes have
+        // no pose attachment host, so their six-frame effect uses
+        // playCombatEffect's fallback overlay instead of combatant-effect-layer.
+        // Each branch must expose its real src swaps.
         name: 'the combatant effect flipbook runs under reduced motion',
         edits: [
-          { file: 'src/ui/fx.js', find: '  if (!speed || reduced) {', replace: '  if (!speed) {' },
+          { file: 'src/ui/fx.js', find: '  const timing = actionPacing({ reduced: reducedMotionRequested() });', replace: '  const timing = actionPacing({ reduced: false });' },
           ALTERNATIVE ? { file: 'src/ui/combatEffectSprites.js',
             find: " if(!layer||!from||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return ()=>{};",
             replace: " if(!layer||!from||document.body.classList.contains('reduce-flashes'))return ()=>{};" }

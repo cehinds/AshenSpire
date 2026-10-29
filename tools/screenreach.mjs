@@ -169,13 +169,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
-        // An enemy's transparent tap core (::before, above neighbouring art)
-        // grown to ~160 px answers taps on the fighter in front of it. The
-        // enemy-art guard names the art and the frame that took it.
+        // The combat-overlap setup stages e2's sprite across e3's frame. In
+        // that 390x650 scene e3 has no fitted core coordinates of its own, so
+        // enlarging only width/height leaves ::before at its static origin,
+        // above the scene. Place the *same real tap core* over the staged e2
+        // art: e3's frame is at (155,76), the field zoom is .83, and
+        // left/top 70/180 put the 160px core around (213,225), with its right
+        // edge before e1's art. That intersects e2's measured sprite box
+        // (153..237,175..276), including sampled points below e3's own art.
+        // The production detector must name e2's art leak; a generic covered-
+        // control red does not catch this plant.
         name: "one fighter's tap core grows over the fighter in front of it",
         file: 'styles/combat-layers.css',
-        append: ":root .combat[data-layout='formation'] .combatant.enemy[data-eid='e3'].enemy-target-hitbox::before { width: 160px !important; height: 160px !important; }",
-        expectRed: /enemy art e\d+\s+<-\s+e\d+ frame\/tap plate/,
+        append: ":root .combat[data-layout='formation'] .combatant.enemy[data-eid='e3'].enemy-target-hitbox::before { left: 70px !important; top: 180px !important; width: 160px !important; height: 160px !important; }",
+        expectRed: /enemy art e2\s+<-\s+e3 frame\/tap plate/,
       },
       {
         name: 'a player loses its exposed artwork or frame-level tap area',

@@ -3,6 +3,54 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
+test('rebuilding detailed HUD racks preserves reserved artwork headroom', () => {
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const start = source.indexOf('      const racked = ');
+  const end = source.indexOf('\n      return { slot,', start);
+  assert.ok(start >= 0 && end > start, 'the actor headroom calculation exists');
+  let rackMounted = true;
+  const scope = { hudWide: true, targetHud: true,
+    frame: { classList: { contains: () => false }, querySelector: () => rackMounted ? {} : null },
+    miniHudGroupHeight: () => 70,
+    hudGrid: { miniHudSpriteGapPx: 8, desktopMiniHudBandOverlapPx: 7 } };
+  const reserve = () => runInNewContext(source.slice(start, end) + '\nracked', { ...scope });
+  assert.equal(reserve(), 77);
+  rackMounted = false;
+  assert.equal(reserve(), 77, 'a rack removed during frame rendering retains its artwork envelope');
+  rackMounted = true;
+  assert.equal(reserve(), 77, 'reattaching controls cannot invalidate the settled fit');
+  scope.targetHud = false;
+  assert.equal(reserve(), 0, 'leaving detailed HUD mode releases its reserved headroom');
+  scope.targetHud = true; scope.hudWide = false;
+  assert.equal(reserve(), 0, 'phone fitting keeps its existing envelope');
+  scope.hudWide = true; scope.frame.classList.contains = () => true;
+  assert.equal(reserve(), 0, 'the player keeps its separate artwork envelope');
+});
+
+test('a detailed HUD rack rebuild cannot temporarily position a legacy leading host', () => {
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const start = source.indexOf('  function centerTargetOverheads() {');
+  const end = source.indexOf('\n  function placePlayerHud(', start);
+  assert.ok(start >= 0 && end > start, 'the overhead placement pass exists');
+  const style = { left: '0px', top: 'var(--combat-elev, 0px)', translate: 'none' };
+  const leading = { style, getBoundingClientRect: () => ({}) };
+  const sprite = {};
+  const combat = { dataset: { targetHud: 'true' }, querySelector: () => null };
+  const frame = { dataset: {}, querySelector: selector => selector === '.sprite' ? sprite : selector === '.combatant-leading' ? leading : null };
+  const field = { querySelectorAll: () => [frame], closest: () => combat };
+  const place = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
+    field, invalidateSpriteRects() {}, uiZoom: () => 1, readHitBadges: () => null,
+    uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: {} } } } },
+    separateRackedIntents() {}, currentSpriteArtBounds: () => ({}), schedule() {},
+    targetOverheadPlacement: () => ({ dx: 25, dy: -60 }),
+  });
+  place(); place();
+  assert.equal(style.translate, 'none', 'missing rebuilt racks do not run legacy placement');
+  combat.dataset.targetHud = 'false';
+  place();
+  assert.equal(style.translate, '25px -60px', 'the legacy placement remains available outside detailed HUD mode');
+});
+
 test('glyph-only detailed selection coalesces overhead placement; inspection and legacy still refit', () => {
   const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
   const start = source.indexOf('  let overheadRequest = 0;'), end = source.indexOf("  combatHost.addEventListener('combatantselectionchange'", start);
