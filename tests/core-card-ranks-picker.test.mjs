@@ -60,6 +60,9 @@ test('main.js offers the rank-up door once per victory for Core runs only', () =
   assert.match(block, /coreCardRanks\(run\)/);
   assert.match(block, /pendingRankUpRows\(registries, run\)/);
   assert.match(block, /rankUpsOffered/);
+  // A claim is saved with the door's rows and claim state, so a reload resumes it rather than re-offering.
+  assert.match(block, /pending\.rankUpRows/);
+  assert.match(block, /checkpoint: \(pending\.rankUpCheckpoint \|\|= \{\}\)/);
 });
 
 test('a Core run with queued rank-ups and ranked cards is a sound saved run', async () => {
@@ -68,4 +71,51 @@ test('a Core run with queued rank-ups and ranked cards is a sound saved run', as
   level(run, 'item:blade', 3);
   run.deck.find((c) => c.cardId === 'core.strike').rank = 3;
   assert.deepEqual(validateRunShape(run), []);
+});
+
+test('a reload after a rank-up claim resumes the same door and offers no second rank-up there', async () => {
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { validateRunShape } = await import('../src/model/state.js');
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    let run = newRun();
+    level(run, 'item:blade', 5);
+    assert.ok(run.skills['item:blade'].pendingRankUps >= 2, 'two rank-ups are queued on one track');
+    const queued = run.skills['item:blade'].pendingRankUps;
+    run.gameProfilePendingReward = { offerId: '1:n:combat', source: 'combat', after: 'map', levelOffers: 0 };
+    let saves = 0, saveJson = null;
+    // The same door main.js builds: rows fixed on first open, claim state in rankUpCheckpoint, saved at each claim.
+    const open = () => {
+      const pending = run.gameProfilePendingReward;
+      const rows = pending.rankUpRows || pendingRankUpRows(registries, run);
+      const app = document.createElement('main'); document.body.append(app);
+      mountRewards(app, { registries, run, onDone() {}, saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
+        rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rows) },
+        checkpoint: (pending.rankUpCheckpoint ||= {}),
+        onPersist: () => { saves += 1; saveJson = JSON.stringify(run); } });
+      return { app, rows };
+    };
+    const first = open();
+    assert.equal(first.rows.length, 1, 'draftsPerCombat caps one per track per door');
+    first.app.querySelector('.reward-kind[data-kind="skillRankUp"]').click();
+    const strike = run.deck.find((c) => c.cardId === 'core.strike');
+    [...first.app.querySelectorAll('.reward-row .card')].find((face) => face.dataset.pickId === strike.instanceId).click();
+    first.app.querySelector('#reward-card-confirm').click();
+    first.app.querySelector('#reward-card-confirm').click();
+    assert.equal(strike.rank, 2);
+    assert.equal(run.skills['item:blade'].pendingRankUps, queued - 1);
+    // Reload: rebuild from the saved run.
+    run = JSON.parse(saveJson);
+    assert.deepEqual(validateRunShape(run), []);
+    const again = open();
+    assert.equal(again.rows.length, 1, 'the reloaded door holds the same one row, not a fresh one from the ledger');
+    assert.equal(run.skills['item:blade'].pendingRankUps, queued - 1, 'nothing more is spent');
+    assert.ok(again.app.querySelector('.reward-kind[data-kind="skillRankUp"]'), 'the row is still listed (as claimed)');
+    // The next victory's door (a new pending reward) offers the remaining rank-up.
+    run.gameProfilePendingReward = { offerId: '1:m:combat', source: 'combat', after: 'map', levelOffers: 0 };
+    assert.equal(pendingRankUpRows(registries, run).length, 1);
+  } finally { Object.assign(globalThis, saved); }
 });
