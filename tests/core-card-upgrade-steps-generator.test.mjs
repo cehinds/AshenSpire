@@ -114,3 +114,19 @@ test('conditional status effects are never stacked', () => {
   const card = dmg(6, { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1, if: { x: 1 } }] });
   assert.ok(!kindsFor(card).has('stk'));
 });
+
+test('over many rolls, cost and hits each land at most once per card and cost keeps tracking staminaCost', () => {
+  const rich = dmg(8, { cost: 3, staminaCost: 3, manaCost: 3, effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'block', target: 'self', amount: 20 }] });
+  let costs = 0;
+  for (let seed = 0; seed < 200; seed += 1) {
+    const steps = [];
+    while (steps.length < 10) { const s = rollUpgradeStep(rich, steps, steps.length, upgradeStepRng(seed, 'rich', steps.length)); if (!s) break; steps.push(s); }
+    const face = applyUpgradeSteps(rich, steps);
+    assert.ok(steps.filter((s) => s.k === 'cost').length <= 1, 'cost once');
+    assert.ok(steps.filter((s) => s.k === 'hits').length <= 1, 'hits once');
+    assert.equal(face.cost, face.staminaCost, 'cost equals staminaCost');
+    assert.ok(face.staminaCost >= 1 && face.manaCost >= 1);
+    costs += steps.filter((s) => s.k === 'cost').length;
+  }
+  assert.ok(costs > 20, 'the cost step is actually exercised');
+});
