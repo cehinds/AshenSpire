@@ -1,6 +1,7 @@
 // Card upgrades UI 2/5: the picker's read model. Rows show Free / 1 Smithing Stone, 'maxed' and 'cap' rows are
 // disabled "Fully upgraded", and the preview faces are the plan's own (the rolled step), so preview == commit.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import '../src/engine/runCombat.js';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -113,4 +114,26 @@ test('the picker draws a row per deck card with its cost; a capped card reads "F
     assert.match(host.querySelector('.smith-confirm').outerHTML, /Upgrade \(Free\)/);
     door.close();
   });
+});
+
+test('rows carry a plain chip: rank and upgrade count', () => {
+  const run = newRun();
+  const card = strike(run);
+  const row = () => cardUpgradeModel(registries, run).rows.find(r => r.instanceId === card.instanceId);
+  assert.equal(row().chipLabel, 'Rank 1 · 0 upgrades');
+  card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+  assert.equal(row().chipLabel, 'Rank 1 · 1 upgrade');
+  card.rank = 3;
+  assert.equal(row().chipLabel, 'Rank 3 · 1 upgrade');
+});
+
+test('the preview shows the card\'s main lines only: no Entry bonus line, no recovery block', () => {
+  const run = newRun();
+  const model = cardUpgradeModel(registries, run, strike(run).instanceId);
+  const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
+  assert.doesNotMatch(html, /Entry:/);
+  assert.doesNotMatch(html, /Recovery|rest-recovery/i);
+  const rest = readFileSync(new URL('../src/ui/components/gameProfileRest.js', import.meta.url), 'utf8');
+  const open = rest.slice(rest.indexOf('const openUpgradeCard'), rest.indexOf('const openLevel'));
+  assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
 });
