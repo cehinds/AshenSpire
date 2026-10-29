@@ -111,6 +111,7 @@ import {
   rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
+import { configuredShopIsBlacksmith } from './model/gameProfileShopKind.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
@@ -4168,6 +4169,15 @@ function showShop() {
     if (!gameModule(run, 'shops')) return showMap();
     const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
     run.gameProfileOpenShop = shopId;
+    // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
+    // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
+    if (shopStockKind(run.shopStock) === 'blacksmith' || (!run.shopStock && configuredShopIsBlacksmith(run, shopId))) {
+      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = buildBlacksmithStock(registries, rng, run);
+      persist(); audio.music('shop');
+      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+        onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),
+        onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+    }
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
     audio.music('shop');
     return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
@@ -5042,6 +5052,15 @@ if (shotState === 'combat-test') {
     // out is the harness's own settings door (?shotSettings, Advanced → Shops).
     run.cinders = 2000;
     run.smithingStones = 12;
+    if (isConfiguredRun(run)) {
+      // A Core run reaches the Blacksmith through the configured shop door: pose the node as `?shot=shop` does, and
+      // showShop opens the Blacksmith because the stock rides run.shopStock.
+      if (!gameModule(run, 'shops')) throw new Error('Configured blacksmith screenshot requires shops to be enabled');
+      const node = Object.values(run.mapGraph.nodes).find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
+      run.mapNodeId = node.id; run.floor = node.floor;
+      run.path = screenshotRoutePath(run.mapGraph, node.id);
+      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
+    }
     run.loadout.storage.push('katana');
     run.sigils = [registries.sigils.all()[0].id];
     run.shopStock = buildBlacksmithStock(registries, rng, run);
