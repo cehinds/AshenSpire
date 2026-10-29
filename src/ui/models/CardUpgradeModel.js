@@ -12,6 +12,7 @@ const SPENT_CODES = freeze(['maxed', 'cap']);
 // 'armament' (upgraded with its armament) and 'missing' are not deck-card upgrades at all.
 const HIDDEN_CODES = freeze(['armament', 'missing']);
 
+const row_upgrades = (instance) => (upgradeCount(instance) === 1 ? 'cardUpgrade.row.chipOne' : 'cardUpgrade.row.chip');
 const costLabel = (plan) => (SPENT_CODES.includes(plan.code) ? t('cardUpgrade.maxed') : plan.cost === 0 ? t('cardUpgrade.free') : t('cardUpgrade.stone', { n: plan.cost }));
 
 export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '' } = {}) {
@@ -26,6 +27,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       instanceId: instance.instanceId, cardId: instance.cardId, name: plan.before?.name || base.name, rarity: base.rarity || 'common',
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
       spent, disabled: spent, cost: plan.cost, costLabel: costLabel(plan),
+      chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
       statusLabel: spent ? t('cardUpgrade.maxed') : t('cardUpgrade.row.next', { n: plan.n }),
     }));
   }
