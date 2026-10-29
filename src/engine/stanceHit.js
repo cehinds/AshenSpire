@@ -1,5 +1,6 @@
 import * as Engagement from './combatEngagement.js';
-import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { proposalTargetPlan } from './proposalStatusRuntime.js';
 // One seeded Accuracy decision gates an entire committed hostile action.
