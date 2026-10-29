@@ -100,6 +100,16 @@ function progressionEffects(registries, before, after, award, beforeState, settl
   return { version: 1, changes, nextMilestone };
 }
 
+// Owner, 2026-10-27: the Core Victory receipt shows only the Character bar, so a
+// won fight raises no class or weapon level popup after it. The levels are already
+// on the run; the notice rows are display only, so they are acknowledged silently.
+// A defeat keeps its notices. Returns true when it removed any.
+export function silenceVictoryLevelNotices(pending) {
+  if (!pending?.progression?.length || pending.after === 'defeat') return false;
+  delete pending.progression;
+  return true;
+}
+
 export function acknowledgeSkillLevelNotices(pending) {
   delete pending.progression;
 }
@@ -111,16 +121,19 @@ export function configuredSkillXpMultiplier(subject, kind = 'weapon') {
   return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
 }
 
-// Core progression policy v1: preserve earned character ledgers and attributes,
-// but stop future character XP, including old saves. Existing earned points
-// and already queued character rewards remain claimable.
-export const CORE_PROGRESSION_POLICY_VERSION = 1;
-export function coreSkillOnlyProgression(subject) {
-  return subject?.gameProfile?.foundation?.mode === 'configured'
-    && subject.gameProfile.author?.core === 'ashen.core@2.0.0';
+// Character-level XP rate (owner, 2026-10-27: raise XP gained). Missing means the old
+// rate, so a run snapshotted before the key existed is never retroactively sped up.
+export function configuredCharacterXpMultiplier(subject) {
+  const value = gameModule(subject, 'progression')?.characterXpMultiplier;
+  return Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 1;
 }
+
+// Core earns character XP and levels like any configured profile: the bundle's
+// progression.characterLevels setting decides. Old saves that carried
+// characterLevels:false keep their unspent points claimable (the rest service
+// checks both), and a Core profile that switches levels off is honoured.
 export function configuredCharacterLevels(subject) {
-  return !coreSkillOnlyProgression(subject) && gameModule(subject, 'progression')?.characterLevels === true;
+  return gameModule(subject, 'progression')?.characterLevels === true;
 }
 
 // A receipt acknowledges already-paid XP. A failed save keeps it resumable;

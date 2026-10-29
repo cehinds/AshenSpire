@@ -3,7 +3,8 @@ import { createRng } from './rng.js';
 // Runtime adapter around the pure engagement planner. No pricing or distance is
 // inferred from a stance, screen coordinates, or another held weapon.
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
-import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState } from '../model/combatEngagement.js';
+import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
+import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor } from '../model/attackTags.js';
@@ -100,7 +101,17 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
     action.meta = { ...action.meta, rangeTargetBatches: batches };
   }
   const lineage = Lineage.extendRangeEnvelope(planningCtx,source,actions,contacts,{preview,carrier:actions[0]?.card || {}});
-  const plan = rangeActionPlan(ctx.rangeState, actorRangeKey(ctx, source), contacts, { route, context });
+  // A card's own leading close (every moveEngagement before its first hostile effect) is part of the plan: the hit is priced
+  // at the distance that close reaches, so it never pays an implicit Advance for ground the card itself covers. Movement
+  // after a hostile effect (Gale Push) leaves the plan as it was.
+  let planState = ctx.rangeState;
+  for (const action of actions) {
+    // A conditional close is only known at play time: it ends the leading run, as projectEnemyMovement skips it.
+    if (hostileOps.has(action.effect.op) || (action.effect.op === 'moveEngagement' && action.effect.if)) break;
+    if (action.effect.op !== 'moveEngagement' || !action.target || action.target.kind === source.kind) continue;
+    planState = movedEngagementState(planState, actorRangeKey(ctx, source), actorRangeKey(ctx, action.target), action.effect.bands);
+  }
+  const plan = rangeActionPlan(planState, actorRangeKey(ctx, source), contacts, { route, context });
   Object.defineProperty(plan,'lineage',{value:lineage});
   return plan;
 }
@@ -153,6 +164,11 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
       ctx.emit?.('energySpent', { amount: extra }); ctx.emit?.('staminaSpent', { amount: extra });
     }
   }
+  // Core 2 rules version 2: a paid Advance persists; an older fight keeps it temporary to the action.
+  // Committing the movement is separate from charging it: a plan prepaid at preparation (a charged enemy attack) has no
+  // root yet and commits here, once, at resolution; an accepted plan carries its rootId and is never committed again.
+  const unpaidPlan = !carrier.rangePlan, prepaidPlanPending = !!carrier.rangePlan && !carrier.rangePlan.rootId;
+  if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) ctx.rangeState = advancedEngagementState(ctx.rangeState, plan);
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
   if (lineage) carrier.rangeLineagePlan={...lineage,rootId};

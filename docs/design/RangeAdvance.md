@@ -48,12 +48,29 @@ missing count across targets times the SP-per-band setting. At defaults this is
 Apply it after all base-card reductions; reaction/stance discounts cannot reduce
 it and it never costs MP. Pay once per action, not per target or hit. It is a
 temporary green action modifier, never an automatically generated card. Approach
-reduces effective distance for that action and its nested reactions without
-changing persistent engagement. Restore the outer context after each reaction.
+reduces effective distance for that action and its nested reactions. Restore the
+outer context after each reaction.
+
+**Paid Advance persists (owner, 2026-10-25).** Once an Advance has been paid, it is
+not paid again unless the enemy increases the distance again: when an action pays
+a positive Advance, the pair is committed at the distance that action closed to,
+for the player and for enemies alike, and later actions against that opponent
+quote no Advance. The committed state is ordinary saved engagement state, so
+saves, snapshots, forecasts and co-op seats all agree. Reaction contexts that only
+borrow a temporary distance, and a prepaid reaction return, never commit.
+
+**Enemy retreat (owner, 2026-10-25).** An enemy increasing the distance works like
+Advance in the other direction: a `moveEngagement` card with `bands: 1` moves the
+pair one band out (clamped at Ranged) and costs its authored SP, usually the
+Advance price plus one (2 SP at defaults). Core authors a retreat card for each
+enemy that starts at Reach or beyond. The enemy plans it only while the fight is
+closer than its starting range, with a lower weight than its attacks, and never
+twice in a row, so the player must pay Advance again but is never pushed out of
+reach forever.
 
 A Reach weapon gains the configured flat Precision bonus at actual persistent
-Melee engagement, normal Precision at Reach. Temporary Advance cannot manufacture
-this bonus. Precision changes hit chance only, never damage/protection bypass.
+Melee engagement, normal Precision at Reach. The Advance that an action pays cannot
+manufacture this bonus for that same action (the committed distance applies to later actions). Precision changes hit chance only, never damage/protection bypass.
 
 An explicitly Throw-capable weapon attack can instead extend coverage by one
 band, capped at Ranged, with the configured flat Precision penalty and no Advance

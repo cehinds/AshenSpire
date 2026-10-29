@@ -21,7 +21,8 @@
         "enum": [
           "strategize",
           "smith",
-          "levelUp"
+          "levelUp",
+          "upgradeCard"
         ]
       },
       "minItems": 1

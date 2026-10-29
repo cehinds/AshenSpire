@@ -65,6 +65,17 @@ export function movedEngagementState(state, sourceKey, targetKey, bands) {
   const next = Math.max(0, Math.min(2, engagementBand(state, sourceKey, targetKey) + bands));
   return { ...state, engagements: { ...state.engagements, [rangePairKey(sourceKey, targetKey)]: next } };
 }
+/** A paid implicit Advance is committed: each opposing pair stays at the
+ * distance the action closed to, until something grows it again. */
+export function advancedEngagementState(state, plan) {
+  if (!state?.policy.enabled || !plan || plan.route !== 'advance' || !(plan.advanceSp > 0)) return state;
+  const engagements = { ...state.engagements };
+  for (const row of plan.targets) {
+    const key = rangePairKey(plan.sourceKey, row.targetKey);
+    if (row.missingBands > 0 && band(engagements[key])) engagements[key] = Math.min(engagements[key], Math.max(0, row.effectiveBand));
+  }
+  return { ...state, engagements };
+}
 const contextBand = (context, sourceKey, targetKey, fallback) => {
   const row = context?.targets?.find(row => rangePairKey(context.sourceKey, row.targetKey) === rangePairKey(sourceKey, targetKey));
   return row ? row.effectiveBand : fallback;

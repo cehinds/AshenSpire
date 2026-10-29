@@ -129,7 +129,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
-        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+        expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
         name: "the Rendered figure bobs",
@@ -153,7 +153,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite :is(img,svg,canvas) { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
-        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+        expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
         name: "a resting figure scales",
@@ -161,7 +161,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { scale:1.1; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
-        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+        expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
         name: "the idle carriers are made transparent",
@@ -185,7 +185,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:4px 0; } }\n.combatant .sprite { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
-        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+        expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
         name: "a resting figure rotates",
@@ -193,7 +193,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { rotate:5deg; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
-        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+        expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
         name: "a companion shake moves resting art",
@@ -201,7 +201,7 @@ if (argv.includes('--selftest')) {
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite .facing { animation: shake 3.1s infinite; }",
-        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+        expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
         name: "the resting figure artwork is hidden",

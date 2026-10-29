@@ -11,6 +11,7 @@ function clock() {
     advance(ms) { const end = now + ms; for (;;) { const next = [...timers.entries()].sort((a,b) => a[1].at - b[1].at || a[0] - b[0])[0]; if (!next || next[1].at > end) break; now = next[1].at; timers.delete(next[0]); next[1].fn(); } now = end; },
     get pending() { return timers.size; }, get callbacks() { return [...timers.values()].map(timer => timer.fn); } };
 }
+const timerOptions = c => ({ setTimer: c.setTimer, clearTimer: c.clearTimer, now: () => c.now });
 function run(multiplier = 1) {
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: multiplier });
   const c = clock(), trace = [], timing = actionPacing();
@@ -20,7 +21,7 @@ function run(multiplier = 1) {
     maxSpriteMs: speed => speed.lungeMs,
     onWatchdog: () => trace.push(['watchdog', '', c.now]),
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   return { c, trace, handle };
 }
 test('ordered actions and counters finish every stage before the next actor begins', () => {
@@ -61,7 +62,7 @@ for (const advance of [0, 600]) test(`watchdog expiration ${advance ? 'after' : 
     onSprite: () => ({ impactMs: 1000, totalMs: 2000, cancel() {} }),
     onWatchdog: () => { assert.equal(handle.finished, true); trace.push('watchdog'); handle.skip(); },
     onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
-  }, { wordMs: 500 }, c);
+  }, { wordMs: 500 }, timerOptions(c));
   c.advance(advance);
   const lateCallbacks = c.callbacks;
   handle.pauseForSkip();
@@ -78,7 +79,7 @@ test('a failing watchdog hook reports its error and still flushes and completes 
   const handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }], {
     onWatchdog: () => { trace.push('watchdog'); throw Error('diagnostic failed'); },
     onError: error => trace.push(error.message), onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
-  }, { wordMs: 500 }, c);
+  }, { wordMs: 500 }, timerOptions(c));
   handle.pauseForSkip(); c.advance(100000);
   assert.deepEqual(trace, ['watchdog', 'diagnostic failed', 'flush', 'done']);
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);
@@ -96,7 +97,7 @@ test('watchdog extends to the real authored handle when its estimate is too shor
     maxSpriteMs: () => 1,
     onSprite: () => ({ impactMs: 5000, totalMs: 10000, cancel() {} }),
     onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(6000); assert.deepEqual(trace, [], 'the underestimated watchdog cannot finish a live clip');
   c.advance(10000); assert.deepEqual(trace, ['done']); assert.equal(c.pending, 0);
 });
@@ -120,22 +121,22 @@ test('auto-combat runs at its own multiplier, default ×1.5, and manual play kee
 });
 
 test('D11: the default gap is 0.5 s at every stage boundary and the active speed scales it', () => {
-  setAnimSpeed('normal'); setCombatPacing();
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
   const gaps = t => [t.wordMs, t.afterSpriteMs, t.resultMs, t.reactionMs, t.damageMs, t.resetMs];
   const normal = actionPacing();
   assert.equal(normal.gapMs, 500); assert.equal(normal.intentMs, 0);
   assert.deepEqual(gaps(normal), [500, 500, 500, 500, 500, 500]);
   setCombatPacing({ combatSpeed: 2 }); assert.deepEqual(gaps(actionPacing()), Array(6).fill(250));
-  setCombatPacing({ autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
-  setCombatPacing({ combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
-  setCombatPacing({ combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
-  setCombatPacing({ combatStepPause: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
-  setCombatPacing({ combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 10, 'short pauses remain configurable');
+  setCombatPacing({ combatSpeed: 1, autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 10, 'short pauses remain configurable');
   setCombatPacing();
 });
 
 test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hit beat never trip it', () => {
-  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 2000 });
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: 2000 });
   const c = clock(), trace = [], timing = actionPacing();
   const beat = { actorId: 'player', kind: 'attack', events: [{ type: 'damageDealt' }, { type: 'damageDealt' }, { type: 'damageDealt' }] };
   runActionTimeline([beat, { ...beat, actorId: 'enemy' }], {
@@ -144,7 +145,7 @@ test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hi
     maxSpriteMs: speed => speed.lungeMs,
     onStage: (stage, b) => trace.push([stage, b.actorId, c.now]),
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(300000); setCombatPacing();
   assert.ok(!trace.some(row => row[0] === 'flush'), 'the watchdog never forced a flush');
   assert.equal(trace.at(-1)[0], 'done'); assert.equal(c.pending, 0);
@@ -156,13 +157,13 @@ test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hi
 // One enemy turn of three enemies, as the combat screen runs it. A watchdog
 // flush here would mean the budget is shorter than the real gaps.
 function enemyTurn(settings) {
-  setAnimSpeed('normal'); setCombatPacing(settings);
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, ...settings });
   const c = clock(), trace = [], timing = actionPacing();
   runActionTimeline(['e1', 'e2', 'e3'].map(actorId => ({ actorId, kind: 'attack' })), {
     onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
     maxSpriteMs: speed => speed.lungeMs,
     onFlush: () => trace.push('flush'), onDone: () => trace.push(['done', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(10 * 60 * 1000); setCombatPacing();
   return trace;
 }
@@ -181,14 +182,14 @@ test('D11: three enemies finish by themselves at every pause and speed, with no 
 
 
 test('zero pauses preserve complete ordered actions and counters without watchdog cleanup', () => {
-  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 0 });
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: 0 });
   const c = clock(), trace = [], timing = actionPacing();
   const handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }, { actorId: 'enemy', kind: 'counter' }], {
     onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
     onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
     maxSpriteMs: speed => speed.lungeMs,
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
-  }, timing, c);
+  }, timing, timerOptions(c));
   c.advance(2000);
   const stages = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
   assert.deepEqual(trace.slice(0, 9).map(row => row[0]), stages);

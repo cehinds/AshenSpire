@@ -15,12 +15,16 @@ import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 // D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
 const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 1000, REACTION = 500, GAP = 500;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom((dom) => {
     const trace = [], words = [];
     const at = (what) => trace.push({ what, at: Date.now() });
@@ -308,7 +312,19 @@ test('a short ordered swing finishes its total duration plus hit-stop before the
 
 test('a delayed ordered contact retains the full hit-stop and remaining authored frames from delivery', t => {
   drive(t, ({ trace, run, finish, tick }) => {
-    run(accuracyHit(7), { animateActor: shortActor(trace), maxHpFor: () => 54 });
+    // Unlike an elapsed CSS animation, this actor starts its recovery at contact
+    // and reports the remaining authored frames plus every requested hit-stop.
+    let contactAt = null, held = 0;
+    const actor = { impactMs: IMPACT, totalMs: 195,
+      contact() { contactAt = Date.now(); },
+      hold(ms) { held += ms; trace.push({ what: 'hold', ms, at: Date.now() }); },
+      remainingMs() {
+        assert.notEqual(contactAt, null, 'contact cues the authored recovery');
+        return Math.max(0, 195 - IMPACT + held - (Date.now() - contactAt));
+      },
+      cancel() { trace.push({ what: 'settle', at: Date.now() }); },
+    };
+    run(accuracyHit(7), { animateActor: () => actor, maxHpFor: () => 54 });
     tick(LEAD); // Let the required pre-sprite wait finish on time.
     tick(350); // Deliver the sprite's 100 ms contact callback 250 ms late.
     finish();
@@ -353,3 +369,4 @@ test('impact order retains its existing terminal visual delay',t=>{
   assert.equal(timeOf(trace,'settle'),300+ANIM_SPEEDS.normal.stepMs+60);
  });
 });
+

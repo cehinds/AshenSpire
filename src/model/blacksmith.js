@@ -17,7 +17,9 @@
 //   sigils       set a carried sigil into an empty slot, or take one out; free
 //   extractArt   cardExtraction's commitExtraction, at its authored cost
 //   installArt   cardExtraction's commitInstall (deck ∪ sideboard, §14.1)
-//   upgradeArt   a loose weapon-art card's `upgraded`, for upgradeArt.stones
+//   upgradeArt   a loose weapon-art card's `upgraded`, for upgradeArt.stones. In a Core run (card ranks on)
+//                it is the card upgrade of any deck card, through cardUpgradeService at its own
+//                price (Free, or 1 Smithing Stone past the free allowance), with no per-visit limit
 //   stackCopy    one more loose copy of a weapon art or technique, into the
 //                sideboard, at stack.* rising per copy owned beyond the first
 //
@@ -34,12 +36,15 @@
 // as unavailable, with the reason `serviceIdleReason` names.
 import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js';
 import { carriedIds, isItemOwned } from './loadout.js';
-import { smithingPlan, commitItemUpgrade, SMITHING_PURSES } from './smithing.js';
+import { smithingPlan, commitItemUpgrade, withSmithService, SMITHING_PURSES } from './smithing.js';
 import { extractionPlan, extractionRefusal, installPlan, commitExtraction, commitInstall } from './cardExtraction.js';
 import { deckRules } from '../content/deckRules.js';
 import { deckCopyLimit, ownedCopies } from './deckRules.js';
+import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
+/** The `{plural}` token of the uiStrings rows: '' for exactly one, 's' otherwise. */
+export const plural = (count) => (count === 1 ? '' : 's');
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const ART_TAG = 'extractable';
 const TECHNIQUE_PREFIX = 'technique:';
@@ -54,9 +59,20 @@ export function blacksmithOffering(registries, id) {
   return (registries.shops?.blacksmith?.offerings || []).find((row) => row && row.id === id) || null;
 }
 
+/** What a Core (card ranks on) Blacksmith offers: the equipment upgrade and the card upgrade, and nothing else. */
+export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt']);
+
+/**
+ * Core (card ranks on) is an allow-list, not a deny-list: Core has no sigils, no copy-stacking, no weapon-art mounts
+ * (a configured deck is not projected from `run.itemMounts`, so extracting or installing would delete a card with
+ * nothing equipment-owned in its place) and no refined stones, so every offering outside CORE_BLACKSMITH_OFFERINGS is
+ * withheld: never rolled, never planned or committed, and hidden by the screen even for an old saved stock.
+ */
+export const blacksmithWithholds = (run, id) => run?.gameProfile?.modules?.progression?.cardRanks === true && !CORE_BLACKSMITH_OFFERINGS.includes(id);
+
 /** Whether the visit open now is a blacksmith that laid out `id`. */
 export function blacksmithOffers(run, id) {
-  return !!run.shopStock && shopStockKind(run.shopStock) === 'blacksmith' && shopStockOfferings(run.shopStock).includes(id);
+  return !blacksmithWithholds(run, id) && !!run.shopStock && shopStockKind(run.shopStock) === 'blacksmith' && shopStockOfferings(run.shopStock).includes(id);
 }
 
 const cinders = (n, priceMult) => (priceMult === 1 ? n : Math.ceil(n * priceMult));
@@ -90,8 +106,13 @@ const tagsOf = (registries, cardId) => registries.cards.get(cardId)?.tags || [];
 const isArt = (registries, cardId) => tagsOf(registries, cardId).includes(ART_TAG);
 const isTechnique = (registries, cardId) => tagsOf(registries, cardId).some((tag) => String(tag).startsWith(TECHNIQUE_PREFIX));
 
-/** The loose weapon-art instances an art upgrade could take now. */
+/** Core (card ranks on): `upgradeArt` upgrades any deck card through the card-upgrade service (owner ruling 2026-10-28). */
+export const coreCardUpgrades = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true;
+const upgradeablePlan = (plan) => plan.ok || plan.code === 'stones';
+
+/** The loose weapon-art instances an art upgrade could take now. In Core: every deck card with a next upgrade (a short purse still lists it). */
 export function upgradeableArts(registries, run) {
+  if (coreCardUpgrades(run)) return (run.deck || []).filter((card) => card && upgradeablePlan(planCardUpgrade(run, registries, card.instanceId)));
   return owned(run).filter((card) => isLooseCard(card) && isArt(registries, card.cardId) && card.upgraded !== true && !!registries.cards.get(card.cardId)?.upgrade);
 }
 
@@ -214,7 +235,7 @@ export function refinePlan(registries, run, { priceMult = 1 } = {}) {
   const cost = refine ? cinders(refine.cinders, priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'refineStones') || !refine) reason = say('blacksmith.refuse.notOffered');
-  else if (stones(run) < refine.from) reason = say('blacksmith.refuse.refineStones', { from: refine.from, have: stones(run) });
+  else if (stones(run) < refine.from) reason = say('blacksmith.refuse.refineStones', { from: refine.from, have: stones(run), plural: plural(refine.from) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, stones: refine?.from ?? 0, cost, value: refine?.value ?? null, revision: blacksmithRevision(run) };
 }
@@ -240,9 +261,11 @@ export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stone
   let reason = '';
   if (!blacksmithOffers(run, 'upgrade')) reason = say('blacksmith.refuse.notOffered');
   else if (!SMITHING_PURSES.includes(purse)) reason = say('blacksmith.refuse.notOffered');
+  // Core has no refining, so no refined purse to pay from.
+  else if (refinedPurse && blacksmithWithholds(run, 'refineStones')) reason = say('blacksmith.refuse.notOffered');
   else if (!candidate) reason = say('blacksmith.refuse.upgradeNone', { name: armamentName(registries, itemRef) });
-  else if (refinedPurse && !candidate.refinedAffordable) reason = say('blacksmith.refuse.refined', { cost: candidate.refinedCost ?? '—', have: run.smithingStonesRefined || 0 });
-  else if (!refinedPurse && !candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
+  else if (refinedPurse && !candidate.refinedAffordable) reason = say('blacksmith.refuse.refined', { cost: candidate.refinedCost ?? '—', have: run.smithingStonesRefined || 0, plural: plural(candidate.refinedCost) });
+  else if (!refinedPurse && !candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
   return {
     ok: !reason, reason, itemRef, purse, candidate,
     stones: candidate && !refinedPurse ? candidate.cost : 0,
@@ -255,7 +278,8 @@ export function commitBlacksmithUpgrade(registries, run, quote) {
   const plan = blacksmithUpgradePlan(registries, run, quote.itemRef, { purse: quote.purse });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
-  const receipt = commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse });
+  // A Core run commits equipment upgrades only inside the Smith service; the stone price is still smithingPlan's.
+  const receipt = withSmithService(registries, run, () => commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse }));
   bump(run, plan);
   return receipt;
 }
@@ -272,7 +296,7 @@ export function blacksmithExtractPlan(registries, run, itemRef, mountKey) {
   if (!blacksmithOffers(run, 'extractArt')) reason = say('blacksmith.refuse.notOffered');
   else if (plan.refusal) reason = say(`blacksmith.refuse.extract.${plan.refusal}`);
   else if (!mount) reason = say('blacksmith.refuse.noMount');
-  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
+  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
   return { ok: !reason, reason, itemRef, mountKey, stones: plan.cost, cost: 0, revision: blacksmithRevision(run) };
 }
 
@@ -293,7 +317,7 @@ export function blacksmithInstallPlan(registries, run, itemRef, mountKey, instan
   let reason = '';
   if (!blacksmithOffers(run, 'installArt')) reason = say('blacksmith.refuse.notOffered');
   else if (!mount || !card) reason = say('blacksmith.refuse.noMount');
-  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
+  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
   return { ok: !reason, reason, itemRef, mountKey, instanceId, stones: plan.cost, cost: 0, revision: blacksmithRevision(run) };
 }
 
@@ -306,7 +330,18 @@ export function commitBlacksmithInstall(registries, run, quote) {
   return receipt;
 }
 
+function coreUpgradeArtPlan(registries, run, instanceId) {
+  const card = (run.deck || []).find((row) => row && row.instanceId === instanceId) || null;
+  const verdict = card ? planCardUpgrade(run, registries, instanceId) : null;
+  let reason = '';
+  if (!blacksmithOffers(run, 'upgradeArt')) reason = say('blacksmith.refuse.notOffered');
+  else if (!card) reason = say('shop.refuse.gone');
+  else if (!verdict.ok) reason = verdict.reason;
+  return { ok: !reason, reason, instanceId, stones: verdict ? (verdict.cost ?? 0) : 0, cost: 0, revision: blacksmithRevision(run), cardQuote: verdict };
+}
+
 export function upgradeArtPlan(registries, run, instanceId) {
+  if (coreCardUpgrades(run)) return coreUpgradeArtPlan(registries, run, instanceId);
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
   const price = blacksmithOffering(registries, 'upgradeArt')?.stones ?? 0;
   const name = card ? cardName(registries, card.cardId) : '';
@@ -317,7 +352,7 @@ export function upgradeArtPlan(registries, run, instanceId) {
   else if (!isArt(registries, card.cardId)) reason = say('blacksmith.refuse.notArt', { name });
   else if (card.upgraded === true) reason = say('blacksmith.refuse.artUpgraded', { name });
   else if (!registries.cards.get(card.cardId)?.upgrade) reason = say('blacksmith.refuse.noCardUpgrade', { name });
-  else if (stones(run) < price) reason = say('blacksmith.refuse.stones', { cost: price, have: stones(run) });
+  else if (stones(run) < price) reason = say('blacksmith.refuse.stones', { cost: price, have: stones(run), plural: plural(price) });
   return { ok: !reason, reason, instanceId, stones: price, cost: 0, revision: blacksmithRevision(run) };
 }
 
@@ -325,6 +360,12 @@ export function commitUpgradeArt(registries, run, quote) {
   const plan = upgradeArtPlan(registries, run, quote.instanceId);
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
+  if (coreCardUpgrades(run)) {
+    // The service re-plans and refuses a quote whose rolled step, number or price changed; it spends the stones.
+    const receipt = commitCardUpgrade(run, registries, quote.cardQuote || plan.cardQuote);
+    bump(run, plan);
+    return { instanceId: receipt.instanceId, spentStones: receipt.spentStones, step: receipt.step, n: receipt.n };
+  }
   owned(run).find((row) => row.instanceId === plan.instanceId).upgraded = true;
   run.smithingStones = stones(run) - plan.stones;
   bump(run, plan);
@@ -354,7 +395,7 @@ export function stackCopyPlan(registries, run, cardId, { priceMult = 1, settings
   // Extractable arts can still be seated in an item; a capped technique with
   // no such use must not sell another permanently unused sideboard copy.
   else if (!isArt(registries, cardId) && copies.length >= limit) reason = say('deckEditor.refuse.copyLimit', { name, limit });
-  else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run) });
+  else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run), plural: plural(stonePrice) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, cardId, name, owned: copies.length, stones: stonePrice, cost, revision: blacksmithRevision(run) };
 }
@@ -413,5 +454,6 @@ export function serviceCandidates(registries, run, id, settings = {}) {
  */
 export function serviceIdleReason(id, run = null) {
   const refusal = id === 'extractArt' && run ? extractionRefusal(run) : null;
+  if (!refusal && id === 'upgradeArt' && run && coreCardUpgrades(run)) return say('blacksmith.idle.upgradeCard');
   return say(refusal ? `blacksmith.refuse.extract.${refusal}` : `blacksmith.idle.${id}`);
 }

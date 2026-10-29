@@ -70,7 +70,9 @@ test('WC2b1 / WC2b2: relic modes come from passives and triggers, and may coexis
   // The registries are the second half of the answer since plan phase 2: a
   // relic's triggers are its property rules', so a mode read without them sees
   // only passives and a triggers-only relic reads as inert.
-  assert.ok(relics.every((relic) => relicEffectModes(relic, r).length > 0), 'every shipped relic has an authored mode');
+  // A `core2` relic (Brimming Gourd) is a pickup effect the Core profile pack applies (balanceCore.json flask capacity),
+  // not a passive or a trigger, so it has no mode to read.
+  assert.ok(relics.filter((relic) => relic.pool !== 'core2').every((relic) => relicEffectModes(relic, r).length > 0), 'every shipped relic has an authored mode');
   assert.deepEqual(relicEffectModes(r.relics.get('whetstoneFragment'), r), ['triggered'],
     'a triggers-only relic is Triggered, and its triggers come from its rule');
   const medallion = possessionVariant(r, r.relics.get('forsakenMedallion'), { kind: 'relic' });

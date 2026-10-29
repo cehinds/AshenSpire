@@ -2612,15 +2612,17 @@ export function mountEquipment(host, {
     } else inventory.remove();
     if (view === 'cards') {
       wrap.querySelector('.armoury-content').remove();
-      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'));
       // The deck editor's Armoury door (SPEC §14.1): the host hands it in only
-      // under `free` and out of combat; the Armoury closes onto the editor.
+      // under `free` and out of combat; the Armoury closes onto the editor. It
+      // shares the title's row, so the first card fits the pane on a short phone.
+      const cardsHead = el('div', { class: 'armoury-section-head armoury-cards-head' }, [titleS(`Cards · ${(run.deck || []).length}`)]);
+      cards.append(cardsHead, prose('Your complete deck, including class and equipment cards.'));
       if (onEditDeck && !inCombat) {
         const edit = button({ label: t('deckEditor.armoury'), weight: 'primary', id: 'armoury-edit-deck', className: 'armoury-edit-deck', attrs: { title: t('deckEditor.armoury') } });
         // Through `leave`, so the Armoury's own deck floor still gates the way
         // out; a refused leave keeps the Armoury open and opens no editor.
         edit.addEventListener('click', () => { leave(); if (!wrap.isConnected) onEditDeck(); });
-        cards.append(edit);
+        cardsHead.append(edit);
       }
       cards.append(cardStrip());
     } else cards.parentElement.remove();

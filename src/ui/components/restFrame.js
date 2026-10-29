@@ -18,12 +18,12 @@ export function restPresentation(registries) {
   };
 }
 
-export function mountRestFrame(app, { registries, run, meta, hud, title, status, choices, consequences, foot, remount }) {
+export function mountRestFrame(app, { registries, run, meta, hud, eyebrow = t('rest.eyebrow'), title, status, choices, consequences, foot, remount }) {
   app.innerHTML = `${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header workspace-hud' }) : ''}
     <div class="screen room-screen rest-screen" style="${restPresentation(registries).style}"></div>`;
   const screen = app.querySelector('.rest-screen');
   screen.appendChild(scenePainting('rest'));
-  mountChoiceBody(screen, { className: 'rest-door', eyebrow: t('rest.eyebrow'), title, status, choices, consequences, foot });
+  mountChoiceBody(screen, { className: 'rest-door', eyebrow, title, status, choices, consequences, foot });
   if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount });
   return screen;
 }

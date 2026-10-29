@@ -1,6 +1,8 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
+import { upgradeStepsProblems } from './cardUpgrade.js';
+import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
@@ -120,7 +122,9 @@ export const MAX_CARD_RANK = 99;
 // read it and drop the choice; a 23 save has no relic choices, so 23 → 24 is a
 // no-op at the migration door.
 // 25: pinned game profile, durable run ID and configured service receipts.
-export const RUN_SCHEMA_VERSION = 25;
+// 26: the stored form may carry `gameProfileRef` instead of the pinned profile
+// (model/runStorage.js); a 25 save loads unchanged, an older build keeps a 26 one.
+export const RUN_SCHEMA_VERSION = 26;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -844,6 +848,9 @@ export const RUN_SHAPE = [
   // rather than Settings because the ladder and pan are live choices for this
   // climb; Settings only supplies the default when this field is absent.
   { key: 'mapView', type: 'object', optional: true, nullable: true },
+  // The painted ground under the node the player last travelled to (map.js),
+  // so the fight there shows it. Decorative; absent on older saves.
+  { key: 'mapTerrain', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
 
@@ -1142,6 +1149,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
   });
   problems.push(...sigilInventoryProblems(run), ...attunedSigilProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
+  for (const zone of ['deck', 'sideboard', 'collection']) {
+    if (Array.isArray(run[zone])) run[zone].forEach((card, i) => { if (card && typeof card === 'object') problems.push(...upgradeStepsProblems(card, `${zone}[${i}]`)); });
+  }
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1173,6 +1183,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
     }
+  }
+  if (run.mapTerrain !== undefined && run.mapTerrain !== null && typeOk(run.mapTerrain, 'object')) {
+    const t = run.mapTerrain;
+    if (typeof t.nodeId !== 'string' || !t.nodeId) problems.push('mapTerrain.nodeId must be a non-empty string');
+    if (typeof t.settingId !== 'string' || !t.settingId) problems.push('mapTerrain.settingId must be a non-empty string');
   }
   if (run.mapView !== undefined && run.mapView !== null && typeOk(run.mapView, 'object')) {
     const v = run.mapView;
@@ -1655,11 +1670,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   return problems;
 }
 
-export function serializeRun(run) {
+export function serializeRun(run, { inline = false, hasCopy = null } = {}) {
   // What is written is what the legacy fields say NOW — a writer between two
   // saves touches `relics` or the loadout, never `zones` (syncZones's contract).
   syncZones(run);
-  return JSON.stringify(run);
+  return JSON.stringify(inline ? run : compactRun(run, hasCopy));
 }
 
 export function initializeRunFlaskCharges(run, registries) {
@@ -1785,7 +1800,12 @@ export function migrateRunSchema(run) {
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
   // v23 → v24: no relic choices could be written before (SPEC §6); nothing to fill.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+  // v25 → v26: the stored form may hold a reference to the pinned game profile
+  // instead of the profile (model/runStorage.js); deserializeRun expands it
+  // before this runs, so there is nothing to fill. The bump exists so an OLDER
+  // build refuses and keeps a v26 slot (save.js 'newer') rather than reading a
+  // run with no pinned profile as corrupt and archiving it.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
   }
   if (run.combatExpansionVersion === 2) {
@@ -1834,8 +1854,8 @@ export function migrateRunSchema(run) {
   return run;
 }
 
-export function deserializeRun(json) {
-  return migrateRunSchema(JSON.parse(json));
+export function deserializeRun(json, lookup = null) {
+  return migrateRunSchema(expandStoredRun(JSON.parse(json), lookup));
 }
 
 // ---------------------------------------------------------------------------

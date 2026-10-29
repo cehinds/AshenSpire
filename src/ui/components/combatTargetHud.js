@@ -1,11 +1,11 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { classicAppearance } from '../displayAppearance.js';
-import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
-import { combatantInfo, intentParts } from './combatantOverhead.js';
+import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
+import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 
@@ -23,20 +23,6 @@ function corridor(a, b, x, y, radius) {
 }
 function node(tag, className, text) { const n = document.createElement(tag); n.className = className; if (text != null) n.textContent = text; return n; }
 
-export function combatTargetIntentRow(entry) {
-  const row = node('div', 'target-hud-intent');
-  const badge = entry.intent ? combatIntentPresentation(entry.intent) : null;
-  const action = entry.action?.maneuver || 'ready';
-  const playerIcon = ({ attack: 'attack', smash: 'smash', sweep: 'sweep', counter: 'counter', defend: 'defend', evade: 'evade' })[action] || 'prepare';
-  const title = badge?.title || (['casting', 'prepared'].includes(action) ? t('combat.targetHud.prepare') : action === 'ready' ? t('combat.targetHud.ready') : action === 'defend' ? t('combat.targetHud.defend') : action[0].toUpperCase() + action.slice(1));
-  row.append(intentParts(badge?.parts.length ? badge.parts : [{ icon: badge ? 'prepare' : playerIcon, value: null }], { unknown: !!badge && badge.visibility !== 'known' }), node('span', 'target-hud-intent-name', title));
-  row.dataset.intentVisibility = badge?.visibility || 'known';
-  if (badge?.projectedDamage?.tone) row.dataset.damageTone = badge.projectedDamage.tone;
-  row.tabIndex = 0;
-  attachTooltip(row, () => `<div class="tt-title">${esc(title)}</div>${badge && badge.visibility !== 'known' ? t('combat.targetHud.unknown') : esc(entry.intent?.projectedDamage ? t('combat.targetHud.damageScope') : entry.intent?.label || title)}`);
-  return row;
-}
-
 function panelFor(entry) {
   const shell = node('section', 'target-hud-detail');
   shell.dataset.eid = entry.id;
@@ -47,7 +33,8 @@ function panelFor(entry) {
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
-  panel.append(meters, combatTargetIntentRow(entry));
+  // Owner (2026-10-26): the panel is name, HP bar and stats row only; the intent reads above the figure.
+  panel.append(meters);
   const statuses = entry.createStatuses();
   statuses.classList.add('target-hud-statuses');
   statuses.hidden = !statuses.querySelector('.status-icon');
@@ -65,7 +52,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const panels = new Map(), infoButtons = new Map();
   let drawnCells = null;
   const gestures = new AbortController();
-  let holdTimer = null, held = null, lastTap = null, inspectionPointer = null, readGesture = null, clickSeriesActivated = false;
+  let holdTimer = null, held = null, lastTap = null, inspectionPointer = null, readGesture = null, clickSeriesActivated = false, tapInspected = false, pressMoved = false;
   const cancelHold = () => { clearTimeout(holdTimer); held = null; };
   // A read owns its originating pointer's trailing click, however long the
   // finger stays down. A new press after release is a separate gesture.
@@ -78,6 +65,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const name = shell.querySelector('.target-hud-name');
     if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
     else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
+    // Owner 2026-10-25: out of targeting the whole panel is the inspection door.
+    // Its name comes from its content (name, HP, stats), not an override.
+    const panel = shell.querySelector('.target-hud-panel');
+    const door = !active && canInspect();
+    if (door) { panel.setAttribute('role', 'button'); panel.tabIndex = 0; }
+    else { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
   };
   function wireInspect(shell, id) {
     // The visible name/HP replaces the frame footer in this layout. While
@@ -85,14 +78,28 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     // tooltip listeners otherwise swallow the click before it reaches us.
     shell.addEventListener('click', event => {
       // Native detail joins the two presses of a double-click without a timer.
-      if (event.detail === 1) clickSeriesActivated = false;
+      if (event.detail === 1) { clickSeriesActivated = false; tapInspected = false; }
       if (inspectionClick(event)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       if (event.detail !== 0 && readGesture?.blocked) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+      // The rest of a series whose first tap inspected is never a target press.
+      if (event.detail > 1 && tapInspected) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       if (!onActivate || !eligible.includes(id)) {
         if (event.detail > 1 && clickSeriesActivated) lastTap = null;
+        // Not a target: one tap or click anywhere on the panel (name, HP,
+        // statuses, padding) opens the inspection; the rest of a double-click
+        // series is swallowed so it cannot open it twice. Keys are handled by
+        // the keydown below and never click this div; a detail-0 click on the
+        // panel itself is an assistive-technology activation of the button.
+        if (event.detail === 0) {
+          if (event.target.classList?.contains('target-hud-panel') && canInspect()) { event.preventDefault(); event.stopImmediatePropagation(); inspect(id, event.target); }
+          return;
+        }
+        if (!canInspect() || pressMoved) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (event.detail === 1) { clickSeriesActivated = true; if (readGesture) readGesture.blocked = true; lastTap = null; tapInspected = true; inspect(id, shell); }
         return;
       }
-      // The status tray and detailed intent keep their authored reading doors.
+      // The status tray keeps its authored reading door.
       // Only the footer replacement (name, HP, and its panel padding) confirms.
       if (!event.target.closest('.target-hud-name, .target-hud-meters')
           && !event.target.matches('.target-hud-panel')) return;
@@ -101,6 +108,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       lastTap = null; cancelHold(); hideTooltip(); onActivate(id);
     }, true);
     shell.addEventListener('keydown', event => {
+      if (event.target.classList?.contains('target-hud-panel') && ['Enter', ' '].includes(event.key)
+          && !(onActivate && eligible.includes(id)) && canInspect()) { event.preventDefault(); event.stopPropagation(); inspect(id, event.target); return; }
       if (!onActivate || !eligible.includes(id) || !event.target.closest('.target-hud-name')
           || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation(); event.target.click();
@@ -115,6 +124,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     shell.addEventListener('pointerdown', event => {
       if (!event.isPrimary || event.button !== 0) return;
       if (inspectionPointer?.released) inspectionPointer = null;
+      pressMoved = false;
       // Keep the state at press start: playback can finish before release.
       readGesture = { blocked: !canInspect() };
       if (readGesture.blocked) lastTap = null;
@@ -131,7 +141,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     });
   }
   const listen = (target, type, handler, capture = false) => target.addEventListener(type, handler, { signal: gestures.signal, capture });
-  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; } });
+  listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; pressMoved = true; } });
   listen(document, 'pointerup', event => {
     if (inspectionPointer?.id === event.pointerId) inspectionPointer.released = true;
   }, true);
@@ -273,7 +283,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const intents = frames.map(frame => {
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-      return { frame, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
+      const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
+      return { frame, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
     });
     // Phase 2: reads that follow. The intent placement itself is written last:
     // it moves only the intent inside its own frame, and none of the boxes read
@@ -282,6 +293,13 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
     const boxes = frames.map(frame => rect(frame));
+    // Owner 2026-10-28: an armed card's panel never covers an enemy's intent. A selected frame's intent moves to
+    // where the placement below will put it; an unselected one stays where it renders, so its own rect is the
+    // obstacle (the group height and lane centring differ by profile).
+    intents.forEach(({ frame, intentWidth, intentHeight, intentBox, placement }, index) => {
+      if (!intentWidth || frame.classList.contains('player')) return;
+      obstacles.push(targetHudIntentObstacle({ selected: frame.classList.contains('target-hud-selected'), box: boxes[index], placement, intentBox, intentWidth, intentHeight, zoom }));
+    });
     frames.forEach((frame, index) => {
       const { core } = metricsFor(frame, zoom), box = boxes[index];
       if (core) obstacles.push({ left: box.left + core.x * zoom - 22, top: box.top + core.y * zoom - 22, width: 44, height: 44 });
@@ -319,7 +337,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     const requests = sizing.map(({ id, entry, panel, anchor, lane, width }) => ({ id, role: entry.role, lane, anchor, width: width + 25,
       height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }));
-    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config });
+    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config, tightTop: !isWideFormFactor(document.documentElement.dataset.formFactor) });
     // Phase 4: panel positions, then each panel's box; then the Info buttons.
     const positioned = [];
     for (const box of placed) {

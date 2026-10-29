@@ -145,6 +145,13 @@ export function actionDestination(id) {
 // FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
 // why it is `key` and not `defKey` — the same shape `cancel` already uses.
 const CONFIRM_KEY = ACTIONS.find((a) => a.id === 'confirm').key;
+/** A checkbox or role=switch input: a toggle, not a text field. */
+export const isSwitchInput = (el) => el?.tagName === 'INPUT' && ((el.type || el.getAttribute?.('type')) === 'checkbox' || el.getAttribute?.('role') === 'switch');
+/** True when the key belongs to a text-entry control: any input but a switch, or a textarea. */
+export const isTypingTarget = (el) => {
+  const tag = el?.tagName || '';
+  return (tag === 'INPUT' && !isSwitchInput(el)) || tag === 'TEXTAREA';
+};
 
 /** Compact label for the hint bar. The full `label` reads as a settings row
  *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
@@ -847,8 +854,7 @@ function onBackKey(ev) {
   const aim = backAim && backAim.ev === ev ? backAim : null;
   backAim = null;
   if (!aim) return;
-  const tag = (ev.target && ev.target.tagName) || '';
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (isTypingTarget(ev.target) || ev.target?.tagName === 'SELECT') return;
   setTimeout(() => {
     if (ev.defaultPrevented) return;
     if (aim.popover) {
@@ -964,13 +970,18 @@ function onKeydown(ev) {
   // Inspection and route controls own native Enter/Space activation. The
   // game cursor may still point at their card, whose action must stay inert.
   if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
+  // A focused target HUD panel opens its own inspection on Enter/Space the
+  // same way; every other key (arrows) still drives the game cursor.
+  if (ev.target?.closest?.('.target-hud-panel') && (ev.key === 'Enter' || ev.key === ' ')) return;
   // The focused log handle uses these keys for its three drawer heights.
   // Let the component resize without also moving the game cursor away.
   if (ev.target?.closest?.('[data-combat-tool="log"]')
     && ['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(ev.key)) return;
-  const tag = (ev.target && ev.target.tagName) || '';
-  const typing = tag === 'INPUT' || tag === 'TEXTAREA';
+  const typing = isTypingTarget(ev.target);
   const cur = current();
+  // A checkbox switch is a button in every way that matters here: Enter toggles it (Space already does, natively)
+  // and the arrows keep driving the game cursor. Once the cursor has moved off the switch, Enter follows the cursor.
+  if (isSwitchInput(ev.target) && ev.key === CONFIRM_KEY && !ev.repeat && (!cur || cur === ev.target)) { ev.preventDefault(); ev.target.click(); return; }
 
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
     engaged = true;

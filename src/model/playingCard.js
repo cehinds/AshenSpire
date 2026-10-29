@@ -170,14 +170,15 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
         if (typeof hits !== 'number') return null;
-        const sequence = live?.hitDamages;
+        const sequence = live?.faceHitDamages && hits > 0 ? live.faceHitDamages : live?.hitDamages;
+        const sequenceTotal = sequence === live?.hitDamages ? live?.totalDamage : sequence?.reduce((sum, amount) => sum + amount, 0);
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
         const type = combatCardDamageLabel(def, preview, registries, index);
         const word = `${type ? `${type} ` : ''}damage`;
         // A hit part magic and part physical reads both parts, the physical first, and keeps its hit count.
         const split = !unequal ? splitOf(def, p, n, ratings, live) : null;
         const damage = split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: split.types.physical, magic: split.magic, magicType: split.types.magic }) + (hits !== 1 ? ` ×${hits}` : '')
-          : unequal ? `${sequence.join(' + ')} ${word} (${live.totalDamage} total across ${sequence.length} hits)`
+          : unequal ? `${sequence.join(' + ')} ${word} (${sequenceTotal} total across ${sequence.length} hits)`
           : `${n} ${word}${hits !== 1 ? ` ×${hits}` : ''}`;
         text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
       }
@@ -303,8 +304,9 @@ export function staticCardTokens(def, registries = null, rules = null) {
     if (typeof value === 'number') tokens[binding.token] = value;
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
+      // A combat's snapshotted fixCoreRules win over the profile's, so a resumed fight's face matches what the card grants.
       const configured = raw?.f === 'metric' && raw.metric === 'evadeStackGain' && raw.of === 'self' && raw.per === undefined
-        ? evadeStackGainPhrase({ combatExpansionVersion: 2, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def) : undefined;
+        ? evadeStackGainPhrase({ combatExpansionVersion: 2, fixCoreRules: rules?.fixCoreRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def) : undefined;
       const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
       if (authored !== undefined) tokens[binding.token] = authored;
       // Weapon-scaled attacks have a static authored multiplier even though

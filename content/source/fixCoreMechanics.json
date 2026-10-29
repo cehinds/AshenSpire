@@ -27,6 +27,9 @@
   "reaction": {
     "handCostDiscount": 1
   },
+  "pierce": {
+    "blockBypassFraction": 0.2
+  },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,
     "blockFraction": 0.25,
@@ -40,7 +43,7 @@
   "accuracy": {
     "evasionVersion": 2,
     "baseAC": 1,
-    "evadeStackBase": 1,
+    "evadeStackBase": 3,
     "evadeStackDex": 0,
     "precisionBase": 1,
     "evasionBase": 1,

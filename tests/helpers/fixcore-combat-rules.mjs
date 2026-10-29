@@ -21,10 +21,10 @@ export function live() {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
   }
-  // This fixture authors three contacts; fund its two-SP minimum and select
+  // This fixture authors three contacts, which cost 3 SP (1 SP per hit); fund that price and select
   // that move explicitly instead of inheriting the one-SP native plan.
   const enemy = combat.enemies[0];
-  Object.assign(enemy, { maxStamina: 2, stamina: 2 });
+  Object.assign(enemy, { maxStamina: 3, stamina: 3 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' };
   enemy.plannedMoves = [];
   return combat;

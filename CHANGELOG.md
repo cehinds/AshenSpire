@@ -32,8 +32,80 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-29
+
+- **Cards, forecasts and merchant trading** ([#2374](https://github.com/cehinds/AshenSpire/pull/2374), `0.7.1.1918`). Hold Block keeps its remaining protection for the stated duration; Fire Cleanse pays its self-damage before cleansing. Intent shows the current pending hit and clears completed attacks, with numbers and icons 20% smaller. Completed card upgrades leave the picker, unavailable upgrades are disabled at the bottom, and merchants buy inventory and replace purchases with a random item from the same category. Compact rows reduce scrolling. Veil and Shuffle Deck descriptions now match their effects.
+- **A cleaner Core Blacksmith** ([#2372](https://github.com/cehinds/AshenSpire/pull/2372), `0.7.1.1916`). In Core the Blacksmith offers only what Core uses, upgrading equipment and upgrading a card, as a two-option switch that fits a phone screen without scrolling. Item names read properly (no stray "default" row) and counts use real plurals: "12 Smithing Stones", "Upgrade (1 stone)".
+- **Rank-ups stay one per victory** ([#2371](https://github.com/cehinds/AshenSpire/pull/2371), `0.7.1.1914`). In Core, reloading the game part-way through the rank-up screen after a fight no longer offers a second rank-up at the same victory; the same screen comes back with your pick kept.
+- **Promotion check unblocked** ([#2370](https://github.com/cehinds/AshenSpire/pull/2370), `0.7.1.1912`). A variable in the Core reward code named `window` made the architecture check on test read it as a browser reference and stop the promotion; it is renamed. Nothing changes in play.
+
+- **Card upgrades and card ranks** ([#2368](https://github.com/cehinds/AshenSpire/pull/2368), `0.7.1.1910`). In Core, cards now have ranks: a reward card can arrive at a higher rank, and each skill level-up lets you raise one card's rank. Any card can be upgraded at a rest site (one per visit), at the Blacksmith (as often as you can pay) and from events. Each upgrade adds a random improvement such as more damage, more block, an extra status or a lower cost. A card's first upgrades up to its rank are free (basic cards and cantrips get one free), after that each costs 1 Smithing Stone, up to 10. A quarter of Core shops are now Blacksmiths.
+
+## 2026-10-28
+
+- **Ten new mana cards** ([#2366](https://github.com/cehinds/AshenSpire/pull/2366), `0.7.1.1908`). Core reward offers can now show Ironbreaker and Rallying Roar for Reavers, Venomed Edge and Smoke Veil for Rogues, Eclipse and Astral Bolt for Starseers, Censure and Smite for Heralds, and Hexmark and Mana Lash for any class. Each costs mana, and most also cost stamina.
+- **Blacksmith and merchant upgrades work in Core** ([#2364](https://github.com/cehinds/AshenSpire/pull/2364), `0.7.1.1906`). Upgrading a weapon or armor at the Blacksmith or the merchant no longer fails in a Core run; it costs 1, 2 and 3 Smithing Stones for the three levels, and upgraded armor raises your maximum HP, Mana and Stamina straight away.
+- **Card damage shown after Poise** ([#2365](https://github.com/cehinds/AshenSpire/pull/2365), `0.7.1.1904`). In Core, the damage number on a combat card now shows what one hit does to the aimed enemy, or the front enemy, after its Poise (Core Strike shows 9, not 12). The enemy's Block is not taken off. Cards that damage yourself, and cards outside combat, still show the raw number.
+- **Mending Touch copies limited** ([#2363](https://github.com/cehinds/AshenSpire/pull/2363), `0.7.1.1902`). Starseers and Heralds now keep only the Mending Touch copies they find instead of copying it without limit; their other Cantrips still copy freely.
+- **Upgraded cards work in Core** ([#2362](https://github.com/cehinds/AshenSpire/pull/2362), `0.7.1.1900`). An upgraded card in a Core run now plays and shows its upgraded numbers and name (for example Pommel Strike+ deals 7 and 6 Poise); before, it fought as the plain card, so upgrades already bought now take effect.
+
+- **Ten new spells** ([#2360](https://github.com/cehinds/AshenSpire/pull/2360), `0.7.1.1898`). Starseers can now find Starfall, Comet Lance, Searing Ray and Meteor, Heralds Sanctified Ward, Healing Prayer, Judgment and Dawn Bulwark, and every class Arcane Siphon and Ember Wave; these Mana spells turn up mostly after the first few fights.
+
+- **Ten new maneuvers and a second casting cantrip** ([#2358](https://github.com/cehinds/AshenSpire/pull/2358), `0.7.1.1896`). Core reward offers can now show Hammer Blow, Rending Smash, Wide Sweep and Reaping Arc as early smashes and sweeps; Stunning Blow and Raking Sweep for everyone, Skullsplitter and Whirlwind for the Reaver and Feint and Hit and Run for the Rogue later on; and Warding Glance beside Glimpse, so the early spell slot stops offering Glimpse every time.
+
+- **Ten new early cards** ([#2356](https://github.com/cehinds/AshenSpire/pull/2356), `0.7.1.1894`). Core reward offers can now show Jab, Gash, Pommel Strike, Steady Guard, Driving Thrust, Expose, Cinder Dart, Mending Touch, Glimpse and Gale Push, so early fights stop repeating the same handful of cards; Reavers and Rogues can copy the new Basics and Starseers and Heralds the new Cantrips, as with the starter cards.
+
+- **Armaments level up three times** ([#2355](https://github.com/cehinds/AshenSpire/pull/2355), `0.7.1.1892`). In Core, weapons, armor and shields can now be upgraded three times instead of once, for +1, +1 and then +2; relics and Legacy runs keep their single upgrade, and existing saves keep the upgrades they already have.
+
+- **Cleaner combat HUD** ([#2352](https://github.com/cehinds/AshenSpire/pull/2352), `0.7.1.1890`). On desktop each enemy's health bar is now a shorter, thicker bar centred over it, with readable numbers and a fixed height that keeps it clear of the enemy's head; on phones the target panel no longer covers enemy attack intents and its badges fit two-digit values; touch screens no longer show the E and HOLD key hints on End Turn; and enemies are about 1.5x larger on a phone held sideways.
+
+- **Card crash fixed** ([#2353](https://github.com/cehinds/AshenSpire/pull/2353), `0.7.1.1888`). Playing or inspecting a card with variant effects no longer crashes the built game with "evalPredicate is not a function"; two other hidden crashes of the same kind are fixed, and a check now catches the cause before it ships.
+
+## 2026-10-27
+
+- **Branches that branch, full flasks each act, and a still battlefield** ([#2350](https://github.com/cehinds/AshenSpire/pull/2350), `0.7.1.1886`). Each act map's 1 to 3 main branches now open as a single path and split into sub-paths that sometimes cross before all joining at that branch's boss; both flasks refill to full at every new act; and the battlefield scenery no longer jumps when the last enemy falls, in solo or co-op.
+
+- **Branching maps and fresher rewards** ([#2348](https://github.com/cehinds/AshenSpire/pull/2348), `0.7.1.1884`). Each act map now splits from one start into 1 to 3 separate branches, every path has its own rests and its own elite, and paths only occasionally cross or rejoin before each branch's boss. Core fight rewards roll 70% cards, 20% potions and 10% weapons, cards you already own or were just offered turn up far less often, early nodes lean toward basic and cantrip cards and later nodes toward mana and higher-rank cards, and treasure chests keep their chance at relics, armor and weapons.
+
+- **Combat ends cleanly and previews stop skipping builds** ([#2346](https://github.com/cehinds/AshenSpire/pull/2346), `0.7.1.1882`). After the last enemy falls the battlefield no longer jumps to the old top-strip health layout before Victory, dead enemies' empty health bars fade away instead of lingering, and a promotion to test can no longer cancel a waiting publish of the dev preview.
+
+- **A simpler Victory screen, faster levels and points you can spend anywhere** ([#2345](https://github.com/cehinds/AshenSpire/pull/2345), `0.7.1.1880`). After a Core fight the Victory screen shows only your character level bar, character XP is 1.5×, and earned attribute points can be spent right on the Victory screen or on the Armory character sheet (which used to refuse them) without using up a rest.
+
+## 2026-10-26
+
+- **The whole-run browser check plays its first fight again** ([#2343](https://github.com/cehinds/AshenSpire/pull/2343), `0.7.1.1878`). After fighters moved to the bottom of their cells, the automated full-run check tapped the empty middle of each fighter's box and never played a card; it now taps the figure, as a player does. No change to the game.
+
+- **Roomier combat with smaller cards** ([#2341](https://github.com/cehinds/AshenSpire/pull/2341), `0.7.1.1876`). The battle grid is bigger with every fighter standing on the bottom of their cell, HP badges and numbers sit flush with the ends of the bar, desktop and widescreen cards are smaller, the target panel shows only name, HP and stats, and a sideways phone keeps the back row clear of your party.
+
+- **The map keeps your place on phones** ([#2339](https://github.com/cehinds/AshenSpire/pull/2339), `0.7.1.1874`). Coming back to the map on a phone returns to where you had scrolled instead of snapping back to the centre after the slimmer map bars settle.
+
+- **Saving no longer fills browser storage** ([#2338](https://github.com/cehinds/AshenSpire/pull/2338), `0.7.1.1872`). A Core run save was carrying the whole rulebook (0.7–1.5 MB) until a full store refused the victory save and a reload went back to before the fight; the rules are now kept once on the device and each save is about 30–190 KB, a full store is tidied and retried before any warning, and older saves and runs from earlier builds still load.
+
+- **Leaner Settings, a phone-width Victory screen and a roomier map** ([#2336](https://github.com/cehinds/AshenSpire/pull/2336), `0.7.1.1870`). Settings drops its top button row and tip (Download & saves is now a Display row) and every description is one short sentence; the Victory screen is a single centred column on desktop too, with progress numbers that no longer clip; the map's top and bottom bars are thin strips with the zoom buttons tucked into the footer, and the map opens further out with sharper detail on high-density screens.
+
+- **Piercing attacks no longer ignore Block** ([#2334](https://github.com/cehinds/AshenSpire/pull/2334), `0.7.1.1868`). In Core a piercing hit now spends Block like any other hit, but up to a fifth of the damage Block caught slips through to Poise first and then HP, shown as a "Pierced N" float and log line; a piercing attack never does less damage than the same attack without pierce.
+
+- **Preview checks read the new settings switches** ([#2332](https://github.com/cehinds/AshenSpire/pull/2332), `0.7.1.1866`). The map-dragging, flask and formation-grid probes now read the on/off state of the new toggle switches, so the dev preview gate measures them again; nothing in play changes.
+
+- **Auto battle plays your cards, faster combat and cleaner settings** ([#2331](https://github.com/cehinds/AshenSpire/pull/2331), `0.7.1.1864`). Auto combat now plays your cards and ends your turn, following your offense or defense preference, and stops the moment you take over; combat runs at ×1.25 speed by default (still adjustable); Settings uses real toggle switches, shows each topic as a titled section, and hides debug-only co-op and gauntlet tuning rows.
+
+- **Combat recovers after delayed animation callbacks** ([#2329](https://github.com/cehinds/AshenSpire/pull/2329), `0.7.1.1862`). A long browser pause no longer starts another overdue animation or keeps the hand and End Turn locked; authored long reactions and contact holds still finish normally.
+
 ## 2026-10-25
 
+- **Harder-hitting Core 2 combat, smarter rewards and a roomier battlefield** ([#2327](https://github.com/cehinds/AshenSpire/pull/2327), `0.7.1.1860`). Block now soaks magic (piercing hits skip it), Evade gives 3 stacks, enemies are a little weaker, bosses act at most three times a turn, and multi-hit moves cost stamina per hit (finesse and spell multi-hits cost less); card rewards favour your stance cards and rarely repeat what you own, every hand item can drop, the new Brimming Gourd grows and refills your flasks, and each shop item has its own, lower price; the combat header and footer are slimmer so the fight gets more room.
+
+- **Startup, map framing and inactive auras** ([#2322](https://github.com/cehinds/AshenSpire/pull/2322), `0.7.1.1858`). The game builds your selected rules once during loading. Map selection and refits share the visible area above the footer, while empty auras stay still and Lite mode or phones keep visible aura cues without the breathing animation.
+
+- **Map selections keep the visible viewport** ([#2324](https://github.com/cehinds/AshenSpire/pull/2324), `0.7.1.1858`). Touch selection and camera refits use the same visible map above the footer, and the camera catches initial note-driven height changes. Restored manual and saved views keep their framing.
+
+- **Maps start at one node, framed on your biome, and fights show the ground you walked onto** ([#2323](https://github.com/cehinds/AshenSpire/pull/2323), `0.7.1.1856`). Each act opens on a single start node that leads to every path and restores your health and flasks; the world painting is framed so the act begins on its own biome; a fight on a bridge, city, forest, shore or lava field shows that scenery; tapping a target's info panel opens its inspection, with slimmer health bars; and picking a map node on a phone now centres it properly.
+
+- **Shorter rest screen** ([#2321](https://github.com/cehinds/AshenSpire/pull/2321), `0.7.1.1854`). Level Up comes first, options you can't use sink to one line at the bottom, and the extra text is gone, so nothing scrolls on a phone.
+
+- **Act maps branch toward different bosses** ([#2319](https://github.com/cehinds/AshenSpire/pull/2319), `0.7.1.1852`). Each act now splits into 1 to 4 paths (never more than 5), each with its own rests, elites and boss, and an act is nine floors long with rests on floors 3, 6 and 9.
+
+- **Level up at rest spots again** ([#2317](https://github.com/cehinds/AshenSpire/pull/2317), `0.7.1.1850`). Fights now pay character XP, so once you have a point the rest spot's Level Up option is there to spend it.
 
 - **Portable art checks follow the same physical folders on Windows and macOS** ([#2314](https://github.com/cehinds/AshenSpire/pull/2314), `0.7.1.1847`). Canonicalize temporary roots and full Python image paths in the art relocation fixtures, and let Workbench wait briefly through Windows build-lock release races while preserving live ownership, cancellation, deadlines and persistent access errors.
 - **Art files live in the shared AshenSpire art repository** ([#2309](https://github.com/cehinds/AshenSpire/pull/2309), `0.7.1.1846`). Display images load from the verified AI-Art release while their game catalogs keep the same IDs and gallery membership. Art editors and exporters use an explicit AI-Art checkout on the AshenSpire branch, keeping editable artwork separate from game code and immutable runtime downloads.
@@ -2218,3 +2290,4 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **The verified current build lives at the repository root** ([#186](https://github.com/cehinds/AshenSpire/pull/186), `0.4.0.0788`). `AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.
 
 - **A reversible architecture map** ([#180](https://github.com/cehinds/AshenSpire/pull/180), `0.4.0.0777`). Docs only.
+

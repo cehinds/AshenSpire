@@ -1,6 +1,6 @@
 {
   "acts": 3,
-  "prebossNodes": 7,
+  "prebossNodes": 9,
   "bosses": 3,
   "restsPerAct": 3,
   "hiddenTypes": [
@@ -16,13 +16,15 @@
   ],
   "restFloors": [
     3,
-    5,
-    7
+    6,
+    9
   ],
   "branchColumns": 3,
   "minimumThreatFloor": 3,
   "mapMode": "fog",
   "firstFloor": "fight",
   "shopShare": 0.15,
-  "requirePrebossRest": true
+  "requirePrebossRest": true,
+  "maxBranches": 3,
+  "startNodeRefills": true
 }

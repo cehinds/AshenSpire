@@ -19,5 +19,27 @@
     "excludePools": [
       "special"
     ]
+  },
+  "ownedCopyWeight": 0.05,
+  "tagWeights": {
+    "maneuver:casting": 1,
+    "maneuver:smash": 2,
+    "maneuver:counter": 2,
+    "maneuver:sweep": 2,
+    "default": 1.5
+  },
+  "recentOfferWindow": 3,
+  "recentOfferWeight": 0.1,
+  "depthBias": {
+    "earlyMaxDepth": 3,
+    "early": {
+      "basicOrCantrip": 2.5,
+      "mana": 0.4
+    },
+    "late": {
+      "mana": 1.8,
+      "highRankMin": 2,
+      "highRank": 1.5
+    }
   }
 }

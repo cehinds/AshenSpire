@@ -53,6 +53,7 @@ import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
+import { cardUpgradeStepsOn, freeCardUpgradeStep, applyFreeCardUpgrade } from '../model/cardUpgradeService.js';
 import { coreAffectedCards } from '../model/smithingCore.js';
 import { gameProfileServiceActive, withGameProfileService } from '../model/gameProfileRun.js';
 import * as Properties from './properties.js';
@@ -403,7 +404,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
@@ -599,6 +600,28 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   parts.forEach((part, p) => {
     if (part.magic) magicTyped[part.index] += typed[p]; else physicalTyped[part.index] += typed[p];
   });
+  // Block soaks the whole hit, the physical part first and then the magic part, in the order contacts strike (owner, 2026-10-25).
+  // A pierce bypass (piercing damage or a Precision tag) lets that much of the hit past Block. What Block leaves of the magic meets Barrier, then Ward.
+  const blockable = physicalTyped.slice();
+  const residual = hits.map(() => 0);
+  const magicBlocked = hits.map(() => 0);
+  const magicToWard = magicTyped.slice();
+  const physicalBypassed = hits.map(() => 0), bypassSpent = hits.map(() => 0);
+  let blockLeft = Math.max(0, target.block || 0);
+  let bypassLeft = receipt.guardBypass || 0;
+  hits.forEach((hit, index) => {
+    const pool = physicalTyped[index];
+    const bypass = Math.min(pool + magicTyped[index], bypassLeft);
+    bypassLeft -= bypass;
+    const physicalBypass = Math.min(pool, bypass);
+    physicalBypassed[index] = physicalBypass; bypassSpent[index] = bypass;
+    const blocked = Math.min(blockLeft, Math.max(0, pool - physicalBypass));
+    blockLeft -= blocked;
+    residual[index] = pool - blocked;
+    magicBlocked[index] = Math.min(blockLeft, Math.max(0, magicTyped[index] - (bypass - physicalBypass)));
+    blockLeft -= magicBlocked[index];
+    magicToWard[index] = magicTyped[index] - magicBlocked[index];
+  });
   const magicHits = hits.map((hit, index) => index).filter(index => hits[index].magic > 0);
   // Magic meets Barrier, then Ward, once per action. Barrier is consumed in hit order and soaks
   // fully. Ward's budget is shared over the magic parts and spent by what it absorbs.
@@ -606,11 +629,11 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   let barrierLeft = Math.max(0, target.barrier || 0);
   const barrierSpent = hits.map(() => 0);
   magicHits.forEach(index => {
-    const take = Math.min(barrierLeft, Math.max(0, magicTyped[index]));
+    const take = Math.min(barrierLeft, Math.max(0, magicToWard[index]));
     barrierLeft -= take;
     barrierSpent[index] = take;
   });
-  const afterBarrier = magicHits.map(index => magicTyped[index] - barrierSpent[index]);
+  const afterBarrier = magicHits.map(index => magicToWard[index] - barrierSpent[index]);
   let wardBudget = Math.max(0, target.persistentWard?.value || 0);
   const legacyWardTotal = afterBarrier.reduce((sum, value) => sum + value, 0);
   const legacyWard = legacyWardTotal > 0 ? allocateInteger(Math.min(wardBudget, legacyWardTotal), afterBarrier) : afterBarrier.map(() => 0);
@@ -632,19 +655,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     }
     wardBudget -= wardSpent[index];
   });
-  // Block soaks the physical part, in the order contacts strike, and never a magic part.
   // A split hit that would cost no HP while Ward absorbed some of it lets 1 through from Ward.
-  const blockable = physicalTyped.slice();
-  const residual = hits.map(() => 0);
-  let blockLeft = Math.max(0, target.block || 0);
-  let bypassLeft = receipt.guardBypass || 0;
   hits.forEach((hit, index) => {
-    const pool = physicalTyped[index];
-    const bypass = Math.min(pool, bypassLeft);
-    bypassLeft -= bypass;
-    const blocked = Math.min(blockLeft, Math.max(0, pool - bypass));
-    blockLeft -= blocked;
-    residual[index] = pool - blocked;
     if (!fixCoreEnabled(ctx) && residual[index] === 0 && magicLeft[index] === 0 && wardSpent[index] > 0) {
       magicLeft[index] += 1;
       wardSpent[index] -= 1;
@@ -679,7 +691,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.poiseReducedAmounts = poiseAbsorbed;
   receipt.damageReceipt = damageReceipt(target.id, hits.map((hit, index) => ({
     incoming: hit.amount, physical: physicalTyped[index], magical: magicTyped[index],
-    blocked: physicalTyped[index] - residual[index], wardReduced: wardReduced[index],
+    blocked: physicalTyped[index] - residual[index] + magicBlocked[index], wardReduced: wardReduced[index],
     poiseReduced: poiseAbsorbed[index], hpLoss: receipt.hpAmounts[index],
     sources: [{ id: 'incoming', label: 'Offensive damage', amount: hit.amount, stage: 'offense', operation: 'set' },
       ...protectionSources[index],
@@ -687,11 +699,15 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   })));
   // resistedAmounts is the whole protection a hit met; magicResistedAmounts is what Barrier and Ward kept of the magic part alone.
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
-  receipt.magicResistedAmounts = hits.map((hit, index) => Math.max(0, hit.magic - magicLeft[index]));
+  receipt.magicResistedAmounts = hits.map((hit, index) => Math.max(0, magicToWard[index] - magicLeft[index]));
+  receipt.magicBlockedAmounts = magicBlocked;
   receipt.magicAmounts = magicTyped;
   receipt.physicalAmounts = physicalTyped;
   receipt.blockableAmounts = blockable;
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
+  // The live apply spends the bypass exactly as planned: per contact, its physical share and its whole share.
+  receipt.physicalBypassAmounts = physicalBypassed;
+  receipt.guardBypassAmounts = bypassSpent;
 }
 
 /**
@@ -768,14 +784,23 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // Revalidate the current active pool: status riders between contacts can change it.
   const liveWardReduction = fixCoreEnabled(ctx) ? (plannedWard > 0 && wardSpent > 0 ? plannedReduction : 0) : wardSpent;
   amount += (plannedBarrier - barrierSpent) + (plannedReduction - liveWardReduction);
-  // Block soaks the physical part only: a Spell never touches target.block (and spends no guard bypass).
+  // Block soaks the physical part first, then the magic part the plan assigned it (owner, 2026-10-25); a pierce bypass spends none of it.
   const pool = 'block';
   const blockable = tactical.blockableAmounts?.[contactIndex] ?? (spell ? 0 : amount);
-  const bypass = Math.min(blockable, tactical.guardBypassRemaining || 0);
-  tactical.guardBypassRemaining -= bypass;
+  // The plan spent the bypass over the whole hit, physical then magic, in contact order; the live apply follows it, so
+  // a bypass the plan gave to one contact's magic is not carried to the next contact's physical part.
+  const plannedBypass = tactical.physicalBypassAmounts?.[contactIndex];
+  const bypass = plannedBypass === undefined ? Math.min(blockable, tactical.guardBypassRemaining || 0) : Math.min(blockable, plannedBypass);
+  tactical.guardBypassRemaining -= plannedBypass === undefined ? bypass
+    : Math.min(tactical.guardBypassRemaining || 0, tactical.guardBypassAmounts?.[contactIndex] ?? bypass);
   const blockBefore = target[pool] || 0;
   const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, blockable - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
+  // The planned magic Block comes off what the live pool still holds; any shortfall (a rider spent Block between hits) lands as damage.
+  const plannedMagicBlock = tactical.magicBlockedAmounts?.[contactIndex] || 0;
+  const magicBlocked = Math.min(Math.max(0, target[pool] || 0), plannedMagicBlock);
+  target[pool] = Math.max(0, (target[pool] || 0) - magicBlocked);
+  amount += plannedMagicBlock - magicBlocked;
   if (blockBefore > 0 && !(target[pool] > 0)) breaks.push(['blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
     ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) }]);
   // Poise is the physical twin of Ward and sits after Block: it soaks what Block left of the
@@ -801,11 +826,12 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // From here `amount` is what the hit did after Poise, as it is after Ward; the log adds each layer back.
   amount -= poiseAbsorbed;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
-  Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
-  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+  Matchups.recordTacticalContact(tactical, { hpLoss, blocked: blocked + magicBlocked, wardResisted: resisted });
+  // `amount` already excludes the magic Block soaked, so the event adds it back: amount - blocked is the HP actually lost.
+  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: amount + magicBlocked, blocked: blocked + magicBlocked, wardResisted: ward,
     ...(fixCoreEnabled(ctx) ? { damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
       incoming: raw, physical: blockable, magical: tactical.magicAmounts?.[contactIndex] || 0,
-      blocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
+      blocked: blocked + magicBlocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
       sources: tactical.damageReceipt?.hits?.[contactIndex]?.sources || [] }]) } : {}),
     // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
     ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
@@ -1599,9 +1625,17 @@ function runOpcode(ctx, action, eff) {
         if(ctx.rangeState) action.meta.rangeHitIndex=h;
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
-        const plannedContacts = action.meta?.expansionContacts?.[action.meta.expansionCursor || 0];
+        const plannedIndex = action.meta?.expansionCursor || 0;
+        const plannedContacts = action.meta?.expansionContacts?.[plannedIndex];
         if (plannedContacts) action.meta.expansionCursor = (action.meta.expansionCursor || 0) + 1;
-        let targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
+        // Self damage has an accepted target in the seeded plan but does not
+        // create a hostile contact/reaction against its own caster. Preserve
+        // that target without reviving conditional effects the plan rejected.
+        const plannedSelf = plannedContacts ? (action.meta.expansionTargets?.[plannedIndex] || [])
+          .map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => entity === action.source) : [];
+        let targets = plannedContacts
+          ? [...new Set([...plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean), ...plannedSelf])]
+          : resolveTargets(ctx, action, eff.target);
         if(eff.target==='allEnemies' && action.card?.targetLimit!==undefined) targets=targets.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,targets.length)));
         for (const t of targets) {
           if (!Expanded.expansionTargetPresent(ctx, t)) continue;
@@ -1616,11 +1650,13 @@ function runOpcode(ctx, action, eff) {
           if (action.card?.rangeLineage) carrier.rangeContactId=RangeLineage.inheritedContactId(ctx,action,t);
           if (plannedContacts) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
-            carrier.expansionGroup = action.meta.expansionGroup;
-            carrier.expansionContact = { index: contact.index, receipt: action.meta.expansionGroup.targets[contact.key].receipt };
-            const serial = action.meta.expansionGroup.manualCounterSerials?.[ctx.playerIdForEntity?.(t) || 'player'];
-            if (serial) carrier.manualCounterSerial = serial;
-            if (contact.crit) carrier.critMultiplier = contact.crit;
+            if (contact) {
+              carrier.expansionGroup = action.meta.expansionGroup;
+              carrier.expansionContact = { index: contact.index, receipt: action.meta.expansionGroup.targets[contact.key].receipt };
+              const serial = action.meta.expansionGroup.manualCounterSerials?.[ctx.playerIdForEntity?.(t) || 'player'];
+              if (serial) carrier.manualCounterSerial = serial;
+              if (contact.crit) carrier.critMultiplier = contact.crit;
+            }
           }
           if (Array.isArray(carrier.appliedStatusEffects)) {
             carrier.appliedStatuses = carrier.appliedStatusEffects
@@ -2129,8 +2165,12 @@ function runRunOpcode(ctx, action, eff) {
         // reconcile (loadout.js resets it only when a piece takes the slot),
         // so it stays a candidate. A card whose upgrade is not authored — the
         // pure Dodge Roll — is never one: the event would spend for nothing.
-        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
-        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && (!eff.card || card.cardId === eff.card))
+        // Core (card steps on): any card with a next step below the 10-upgrade cap; the event is free. Otherwise
+        // only a card with an authored upgrade that is not upgraded yet.
+        .filter((card) => (cardUpgradeStepsOn(run)
+          ? freeCardUpgradeStep(run, ctx.registries, card) !== null
+          : !card.upgraded && ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade))
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
@@ -2140,6 +2180,8 @@ function runRunOpcode(ctx, action, eff) {
         const commit = () => commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
         const receipt = gameProfileServiceActive(run, 'smith') ? commit() : withGameProfileService(run, 'smith', commit);
         ctx.emit('armamentSmithed', receipt);
+      } else if (cardUpgradeStepsOn(run)) {
+        applyFreeCardUpgrade(run, ctx.registries, chosen.card);
       } else {
         chosen.card.upgraded = true;
       }

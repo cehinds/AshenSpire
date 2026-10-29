@@ -7,7 +7,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
-import { missingBasicStances } from '../src/model/stanceCoverage.js';
+import { missingBasicStances, basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 import { stanceOf } from '../src/model/stanceRules.js';
 const bind = profile => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const core = resolveGameProfile('core'), reg = bind(core);
@@ -22,7 +22,7 @@ const fresh = (r = reg) => {
 };
 const own = (run, cardId) => run.sideboard.push({ instanceId: `t:${cardId}`, cardId, upgraded: false });
 const offer = (r, run, seed, source = 'combat') => gameProfileRewardOffers(r, run, createRng(seed), { offerId: `o${seed}`, source });
-const stanceOfId = id => stanceOf(reg.cards.get(id)).maneuver;
+const stanceOfId = id => stanceOf(reg.cards.get(id))?.maneuver ?? null;
 const SEEDS = Array.from({ length: 12 }, (_, i) => i);
 
 test('the Core Reaver opening deck lacks the sweep, casting and evade stances', () => {
@@ -48,17 +48,27 @@ test('the Reaver starting deck: every combat and level offer holds the missing-s
   }
 });
 test('the reserved slot is never a stance already owned', () => {
-  for (const [dropped, accepted] of [['core.sweep', ['core.sweep']], ['core.strike', ['core.strike', 'core.cantrip']], ['core.counter', ['core.counter']]]) {
+  // The reserved card is any basic or cantrip of the dropped card's stance (several Core cards share Attack now), never an owned stance.
+  for (const dropped of ['core.sweep', 'core.strike', 'core.counter']) {
     const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== dropped);
+    const accepted = reg.cards.all().map(card => card.id).filter(id => stanceOfId(id) === stanceOfId(dropped));
+    assert.ok(accepted.includes(dropped));
     const missing = missingBasicStances(run, reg);
     assert.ok(missing.includes('evade') && missing.length === 2, `${dropped}: ${missing}`);
     for (const seed of SEEDS) {
       const ids = offer(reg, run, seed).options.map(row => row.id);
       assert.ok(ids[0] === 'core.evade' || accepted.includes(ids[0]), `${dropped} seed ${seed}: ${ids}`);
+      assert.ok(basicOrCantripMatcher(reg, run)(ids[0]), `${dropped} seed ${seed}: reserved ${ids[0]} is not a basic or cantrip`);
+      assert.ok(ids[0] === 'core.evade' || missingBasicStances(run, reg).includes(stanceOfId(ids[0])), `${dropped} seed ${seed}: reserved card is of an owned stance`);
     }
   }
   const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== 'core.sweep'); own(run, 'core.evade');
-  for (const seed of SEEDS) assert.equal(offer(reg, run, seed).options[0].id, 'core.sweep', `seed ${seed}`);
+  for (const seed of SEEDS) {
+    const first = offer(reg, run, seed).options[0].id;
+    assert.equal(stanceOfId(first), 'sweep', `seed ${seed}`);
+    assert.ok(basicOrCantripMatcher(reg, run)(first), `seed ${seed}: reserved ${first} is not a basic or cantrip`);
+  }
+  // Any sweep-stance basic or cantrip qualifies (Reaping Arc, Wide Sweep, Sweep), never a rare such as Whirlwind.
 });
 test('owning every basic stance leaves offers exactly as the unreserved roll, with the same draws', () => {
   for (const seed of SEEDS) {

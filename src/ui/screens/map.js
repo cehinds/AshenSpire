@@ -242,7 +242,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatOrder: run.seatOrder, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
@@ -291,6 +291,21 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // resets the framing only when the tray moved it.
   const COMFORT_MARGIN_PX = 24;
   let trayCentred = false;
+  // The reveal is anchored to the tray, not necessarily the scrollport: flow
+  // notes can sit between their bottom edges. Rects are physical CSS pixels;
+  // the board's inset and client geometry remain local pixels under UI zoom.
+  function trayViewport(revealHeight) {
+    const port = board.scroll, portBox = port.getBoundingClientRect();
+    const measuredScale = port.offsetHeight > 0 ? portBox.height / port.offsetHeight : 1;
+    const scaleY = Number.isFinite(measuredScale) && measuredScale > 0 ? measuredScale : 1;
+    const height = Number.isFinite(revealHeight) ? Math.max(0, revealHeight) : 0;
+    const trayTop = tray.getBoundingClientRect().top;
+    const gap = Math.max(0, trayTop - portBox.bottom);
+    const inset = Math.max(0, height - gap / scaleY);
+    const visibleBottom = Math.max(portBox.top, Math.min(portBox.top + port.clientHeight * scaleY, trayTop - height * scaleY));
+    return { portBox, inset, visibleBottom };
+  }
+  const trayInset = () => trayViewport(trayReveal.scrollHeight).inset;
   function nodeComfortablyVisible(revealHeight) {
     // Touch only: a finger that just tapped the node is about to tap it again.
     // Use that activation's pointer, not the device's primary-pointer media
@@ -300,9 +315,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const nodeEl = app.querySelector(`.map-node[data-node="${selection.selectedId}"]`);
     if (!nodeEl) return false;
     const nodeBox = nodeEl.getBoundingClientRect();
-    const portBox = board.scroll.getBoundingClientRect();
-    const coveredTop = tray.getBoundingClientRect().top - revealHeight;
-    const visibleBottom = Math.min(portBox.bottom, coveredTop);
+    const { portBox, visibleBottom } = trayViewport(revealHeight);
     const margin = COMFORT_MARGIN_PX;
     return nodeBox.left >= portBox.left + margin && nodeBox.right <= portBox.right - margin
       && nodeBox.top >= portBox.top + margin && nodeBox.bottom <= visibleBottom - margin;
@@ -316,8 +329,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.inert = false;
       if (!nodeComfortablyVisible(trayReveal.scrollHeight)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: trayReveal.scrollHeight });
+        board.centerOnNode(selection.selectedId, { inset: trayInset, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset });
       return;
     }
     wait(trayTiming.openDelayMs, () => {
@@ -327,8 +340,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       trayReveal.style.height = `${height}px`;
       if (!nodeComfortablyVisible(height)) {
         trayCentred = true;
-        board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
-      } else board.holdLook(selection.selectedId, { inset: height });
+        board.centerOnNode(selection.selectedId, { inset: trayInset, glideMs: glideMs() });
+      } else board.holdLook(selection.selectedId, { inset: trayInset });
       wait(trayTiming.slideMs, () => {
         tray.dataset.shown = 'true';
         if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
@@ -353,7 +366,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   backButton.addEventListener('click', () => clearSelection());
   enterButton.addEventListener('click', () => {
-    if (selection.selectedId && reachable.has(selection.selectedId)) leaving(onPick)(selection.selectedId);
+    if (selection.selectedId && reachable.has(selection.selectedId)) travelTo(selection.selectedId);
   });
   // A tap on the map away from the lit nodes closes the tray; a mouse drag
   // that pans the board is not a tap.
@@ -365,11 +378,22 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
     clearSelection();
   });
+  // Remember the ground under the node for the fight that follows: the combat
+  // backdrop matches it (city, bridge, forest...). Decorative; the adapter maps
+  // (legacy dungeon, co-op) have no painting and record nothing.
+  function travelTo(id) {
+    if (!mapAdapter) {
+      const settingId = board.terrainAt?.(id);
+      if (settingId) run.mapTerrain = { nodeId: id, settingId };
+      else delete run.mapTerrain;
+    }
+    leaving(onPick)(id);
+  }
   function selectNode(id, reading, pointerType = 'mouse') {
     lastPickPointerType = pointerType;
     if (reading) readings.set(id, reading);
     const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
-    if (next.enter) { leaving(onPick)(id); return; }
+    if (next.enter) { travelTo(id); return; }
     selection = next;
     renderSelection();
     if (selection.selectedId) openTray();

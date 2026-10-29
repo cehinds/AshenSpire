@@ -2,7 +2,10 @@
   "energy": 3,
   "draw": 5,
   "flaskCapacity": 3,
-  "flaskGrowth": [{ "source": "relic", "id": "goldenSprout", "kind": "hp", "amount": 1 }],
+  "flaskGrowth": [
+    { "source": "relic", "id": "goldenSprout", "kind": "hp", "amount": 1 },
+    { "source": "relic", "id": "brimmingGourd", "kind": "hp", "amount": 1 }
+  ],
   "flaskSlots": 3,
   "startingCinders": 20,
   "startingDeckSize": 11,

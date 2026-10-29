@@ -35,6 +35,8 @@ test('only actual positive gains earn floats; meters, bookkeeping and hostile ef
 
 function playback(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom(dom => {
     setAnimSpeed('normal'); setBeatOrder('sequential');
     const run = (events, options = {}) => {
@@ -192,3 +194,4 @@ test('missing status context safely omits gains while hostile words, heal and Bl
     assert.deepEqual(result.shown.map(({ node }) => node.textContent), ['ASLEEP', '+3 Precision', '+2', '+4']);
   });
 });
+

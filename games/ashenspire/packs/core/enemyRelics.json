@@ -31,9 +31,10 @@
     "name": "Titan_Heart",
     "modifiers": [
       "self.constitution=+2",
-      "self.strength=+1"
+      "self.strength=+1",
+      "self.sp=-1"
     ],
-    "text": "CON +2, STR +1"
+    "text": "CON +2, STR +1, SP -1"
   },
   {
     "id": "enemy.relic.ashenCore",
@@ -41,9 +42,18 @@
     "modifiers": [
       "self.constitution=+2",
       "self.strength=+2",
-      "self.wisdom=+1"
+      "self.wisdom=+1",
+      "self.sp=-2"
     ],
-    "text": "CON +2, STR +2, WIS +1"
+    "text": "CON +2, STR +2, WIS +1, SP -2"
+  },
+  {
+    "id": "enemy.relic.emberBrand",
+    "name": "Ember_Brand",
+    "modifiers": [
+      "self.sp=-1"
+    ],
+    "text": "SP -1"
   },
   {
     "id": "enemy.relic.abyssalCrown",

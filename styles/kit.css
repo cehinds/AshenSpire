@@ -222,16 +222,23 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .as-seg button:disabled { color: var(--muted); background: transparent; }
 
 /* Toggle — a binary setting. The knob is the state; the pill is the track. */
-.as-toggle {
+.as-toggle, .as-switch-track {
   position: relative; display: inline-block; flex: 0 0 auto;
   width: 5.2rem; height: 2.8rem; min-height: 0; padding: 0;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-pill);
   cursor: pointer;
 }
-.as-toggle .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
-.as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
-.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
-.as-toggle:disabled { opacity: 0.55; cursor: default; }
+.as-toggle .knob, .as-switch-track .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
+.as-toggle.on, .as-toggle[aria-checked="true"], .as-switch-input:checked + .as-switch-track { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
+.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob, .as-switch-input:checked + .as-switch-track .knob { left: calc(100% - 2.3rem); background: var(--gold); }
+.as-toggle:disabled, .as-switch-input:disabled + .as-switch-track { opacity: 0.55; cursor: default; }
+/* The switch is a real checkbox (role="switch"): the input covers the label so it takes every tap, Space toggles it
+   from the keyboard, and the track beside it draws the state and the focus ring. */
+.as-switch { position: relative; display: inline-flex; flex: 0 0 auto; cursor: pointer; }
+.as-switch-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.as-switch-input:disabled { cursor: default; }
+.as-switch-input:is(:focus-visible, .gp-focus) + .as-switch-track { outline: 2px solid var(--gold); outline-offset: 2px; }
+.as-switch::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
 /* The drawn pill is 2.8rem × 5.2rem; the finger gets the tap floor around it
    on both axes. `overflow: visible` because `button { overflow: hidden }`
    (CONTAINMENT, above) clipped this pseudo to the pill: measured 17–33 px of
@@ -638,7 +645,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
   .modal-btnrow > button, .as-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
   .as-railed { grid-template-columns: 10rem minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .as-toggle .knob { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .as-toggle .knob, .as-switch-track .knob { transition: none; } }
 
 /* ═══ INPUTS INSIDE A ROW — the kit's field, one look ══════════════════════ */
 .as-row.setting input[type="text"], .as-row.setting input[type="number"] {
@@ -1603,6 +1610,9 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    field it was won on (or the map, or a bare backdrop after a reload). Rows
    are OptionCards; the foot carries the hold copy and Continue on the ladder. */
 .reward-backdrop { min-height: 100%; }
+/* ONE LAYOUT AT EVERY WIDTH (owner, 2026-10-26): the phone's single column,
+   capped at a phone-like width and centred, so desktop reads the same. */
+.modal.reward-door[data-size]:has(.reward-claim-layout) { --modal-rung-width: calc(480px / var(--ui-zoom, 1)); width: var(--modal-rung-width); max-width: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door[data-victory-compact='true'] > .modal-head { justify-content: center; }
 .reward-door[data-victory-compact='true'] > .modal-head .modal-head-id { align-items: center; text-align: center; }
@@ -1626,9 +1636,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* A reward's intrinsic title width must not expand into the XP column. */
 .reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
 .reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
-/* W1t: reward choices beside their claim status; stacked on narrow hosts. */
-.reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(2 * var(--view-vw, 1vw)); align-items: start; }
-:root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); }
+/* W1t: reward choices above their claim status, one column at every width. */
+.reward-door .reward-claim-layout { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); align-items: start; }
 .reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
 .reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
 .reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
@@ -1681,7 +1690,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
 .reward-door .rp-layered-bar .rp-under { background: #62c686; z-index: 1; }
 .reward-door .rp-layered-bar .rp-over { background: #d7b64b; z-index: 2; }
-.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
+.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; justify-content: safe flex-end; max-width: calc(100% - 1.1rem); color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
 .reward-door .rp-layered-bar.rp-bar-ready .rp-under, .reward-door .rp-layered-bar.rp-bar-ready .rp-over { background: #6ab8f5; }
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
 .reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
@@ -1728,14 +1737,14 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
 .reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
-:root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
-:root[data-layout='narrow'] .reward-door .reward-progress-row {
+.reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
+.reward-door .reward-progress-row {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
-:root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
+.reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
+.reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
+.reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
 /* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
@@ -2215,6 +2224,13 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
    so the pinned strip sits flush on the card's foot. */
 .smith-preview-card { flex: 1 1 auto; min-height: 0; width: 100%; gap: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: 0; }
+/* The card-upgrade picker sizes its preview to its lines, so Confirm sits under them instead of under an empty box. */
+.card-upgrade-modal .smith-preview-host { flex: 0 1 auto; }
+.card-upgrade-modal .smith-preview-card { flex: 0 1 auto; padding-bottom: 0.6rem; }
+.card-upgrade-modal .smith-candidate-region > .as-rail { gap: .3rem; }
+.card-upgrade-modal .card-upgrade-row { padding: .35rem .6rem; gap: .6rem; }
+.card-upgrade-modal .smith-cost-strip { margin-top: .5rem; padding: .5rem 0; }
+.card-upgrade-modal .smith-confirm { margin-top: auto; flex-shrink: 0; }
 /* The summary: the selected item — its art beside its name, tier, kind and
    tags — one column, the rows flush so the stats row follows. */
 .smith-summary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding-bottom: 0.6rem; }
@@ -3569,6 +3585,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-shell-body > *, .armoury .armoury-trays { flex: 0 0 auto; }
 .armoury-card-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(230px / var(--ui-zoom, 1)))); justify-content: center; align-items: start; gap: calc(20px / var(--ui-zoom, 1)); padding: calc(14px / var(--ui-zoom, 1)) 0; }
 .armoury-card-gallery > .card { --card-w: 100%; width: 100%; height: auto; aspect-ratio: var(--card-ratio); min-height: 0; max-height: none; transform: none; margin: 0; box-sizing: border-box; --card-art-h: 5rem; --card-name-h: 3.5rem; }
+/* A short phone (320x740): the title row, the lead and a 230px card are taller than the pane, so the first
+   card hung under Back. A 200px track keeps the 2:3 card whole above the fold; the text keeps its 15px floor. */
+@media (max-height: 760px) {
+  .armoury-card-gallery { grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(200px / var(--ui-zoom, 1)))); }
+}
 .armoury-card-gallery .cname { font-size: max(1.6rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.2; white-space: normal; }
 .armoury-card-gallery .ctext { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.35; }
 .armoury-card-gallery .cost { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
@@ -5066,6 +5087,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
 @media (pointer: coarse) {
   .footer-art-face [data-footer-binding='endTurnKey'] { display: none; }
+  /* Owner 2026-10-28: no keyboard key hints on touch. The compact End Turn label's key line (second line) and
+     its HOLD word go; the hold gesture itself is unchanged. Keyboard and mouse keep both. */
+  .combat-action-row .end-turn .footer-compact-line:nth-child(n+2),
+  .combat-action-row .end-turn > .hold-hint,
+  .combat-action-row .end-turn .et-key { display: none; }
 }
 .footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
 .combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
@@ -5140,6 +5166,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
+/* The pile and potion labels sit above their art too: a dropped face (--art-drop) overlaps its label's box with
+   blank strip, and the label is the text a player reads, so it paints over the face, never under it. */
+.combat-action-row[data-footer-art] :is(.pile,.combat-potions) > .footer-compact-label { position: relative; z-index: 1; }
+/* HOLD's line box (line-height 1) is shorter than the glyphs' content area, so a hit at the edge of its ink
+   landed on the plate beneath it. A pixel of padding, taken back by a negative margin, makes its box the
+   ink's box without moving it or growing the button. */
+.combat-action-row[data-footer-art] .end-turn > .hold-hint { padding-block: 1px; margin-block: -1px; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
@@ -6136,12 +6169,12 @@ button[data-button-size] {
   grid-template-areas: 'name level bar next' 'gain gain gain gain';
   gap: 0 .6rem;
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] {
+.reward-door .reward-progress-row[data-kind='character'] {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
   font-size: 1rem;
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+.reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
   grid-template-areas: 'name level' 'bar next' 'gain gain';
 }
 /* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */

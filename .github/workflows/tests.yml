@@ -108,6 +108,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         run: |
           python3 -m venv "$RUNNER_TEMP/card-art-python"
@@ -174,6 +179,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         run: |
           python3 -m venv "$RUNNER_TEMP/card-art-python"

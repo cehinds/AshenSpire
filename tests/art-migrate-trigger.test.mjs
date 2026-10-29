@@ -296,9 +296,24 @@ test('pages: a workflow_run whose jobs skip gets its own concurrency group, so i
   assert.equal(groupFor(run('build-stamp', 'alternative/a/dev', 'success')), 'pages-builds-skipped');
   assert.equal(groupFor(run('dev preview', 'dev', 'success')), 'pages-builds-skipped');
   assert.equal(groupFor(run('dev preview', 'alternative/a/dev', 'failure')), 'pages-builds-skipped');
-  // Non-workflow_run events keep the publication group.
+  // Events whose deploy job can run keep the publication group.
   assert.equal(groupFor({ event: 'push', ref: 'refs/heads/release', refName: 'release' }), 'pages-builds');
   assert.equal(groupFor({ event: 'pull_request_target' }), 'pages-builds');
+  const dispatch = over => ({ event: 'workflow_dispatch', publish: 'PUBLISH', actor: 'owner', owner: 'owner', triggeringActor: 'owner', ...over });
+  assert.equal(groupFor(dispatch({})), 'pages-builds');
+  // A run that assembles and never deploys must not supersede a queued publication
+  // (2026-10-26: the push to test from PR 2344 replaced the queued dev publication).
+  assert.equal(groupFor({ event: 'push', ref: 'refs/heads/test', refName: 'test' }), 'pages-builds-assemble-only');
+  assert.equal(groupFor({ event: 'push', ref: 'refs/heads/main', refName: 'main' }), 'pages-builds-assemble-only');
+  assert.equal(groupFor(dispatch({ publish: '' })), 'pages-builds-assemble-only');
+  assert.equal(groupFor(dispatch({ actor: 'someone', triggeringActor: 'someone' })), 'pages-builds-assemble-only');
+});
+
+test('pages: the concurrency group agrees with the deploy guard for every case', () => {
+  const expr = pages.match(/^  group: (\$\{\{ .* \}\})$/m)[1].slice(3, -3);
+  for (const [name, ctx, , deploy] of CASES) {
+    assert.equal(evalGh(expr, ctx) === 'pages-builds', deploy, `group vs deploy: ${name}`);
+  }
 });
 
 test('pages: the art token is gated on a protected ref AND, for a workflow_run, on a same-repository head', () => {

@@ -963,6 +963,21 @@
       "settings": {
         "stanceCoverage": {
           "enabled": false
+        },
+        "ownedCopyWeight": 1,
+        "recentOfferWindow": 0,
+        "recentOfferWeight": 1,
+        "depthBias": {
+          "earlyMaxDepth": 3,
+          "early": { "basicOrCantrip": 1, "mana": 1 },
+          "late": { "mana": 1, "highRankMin": 2, "highRank": 1 }
+        },
+        "tagWeights": {
+          "maneuver:casting": 1,
+          "maneuver:smash": 1,
+          "maneuver:counter": 1,
+          "maneuver:sweep": 1,
+          "default": 1
         }
       }
     }

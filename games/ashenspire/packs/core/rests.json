@@ -2,7 +2,8 @@
   "servicesPerVisit": "all",
   "services": [
     "smith",
-    "levelUp"
+    "levelUp",
+    "upgradeCard"
   ],
   "recovery": {
     "hp": "full",

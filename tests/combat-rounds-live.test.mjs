@@ -326,22 +326,72 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   // public forecasts on the actor-start/move-start events. Remove only those
   // two new fields at those event boundaries; every old field and ordering
   // must still match the existing golden. The full new log repeats above.
-  // #2260 adds only previousTotal to statusApplied for actual-gain feedback.
-  // Pin those 18 receipts before removing that single additive field; keep
-  // every prior gameplay byte, end state and full-log replay check intact.
-  const previousTotals = [];
+  // Re-recorded for the 2026-10-25 enemy stat offset (-2 STR/CON/DEX): a key-by-key comparison with origin/dev 1bb9b1925 shows
+  // exactly 11 differences across the three logs, all an enemy hit's `accuracy` lowered by 4 (13 -> 9, 14 -> 10, 15 -> 11);
+  // every outcome, play order and other field matches.
+  // #2260 adds previousTotal to statusApplied for actual-gain feedback. Intent
+  // playback also adds forecasts and enemyMoveEnded receipts. Validate those
+  // additive shapes before filtering them, then keep the historical event log
+  // and its end-state receipts pinned.
+  const previousTotals = [], endedMoves = [], projectedRanges = [];
+  const forecastCounts = { actor: 0, move: 0, action: 0 };
   const legacy = logs.map(text => {
     const log = JSON.parse(text);
     for (const entry of log) {
       const events = entry[0] === 'play' ? entry[2] : entry[0] === 'end' ? entry[1] : [];
-      for (const event of events) {
+      const retained = events.filter(event => {
+        if (event.type !== 'enemyMoveEnded') return true;
+        assert.deepEqual(Object.keys(event).sort(), ['moveId', 'sourceId', 'type'], 'the additive lifecycle receipt has only its event name, actor and consumed move');
+        assert.equal(event.sourceId, 'e1');
+        assert.ok(['slash', 'guard', 'warcry'].includes(event.moveId));
+        endedMoves.push([event.sourceId, event.moveId]);
+        return false;
+      });
+      if (entry[0] === 'play') entry[2] = retained;
+      else if (entry[0] === 'end') entry[1] = retained;
+      for (const event of retained) {
         if (event.type === 'statusApplied') {
           assert.ok(Number.isInteger(event.previousTotal) && event.previousTotal >= 0);
           previousTotals.push(event.previousTotal);
           delete event.previousTotal;
         } else assert.equal(Object.hasOwn(event, 'previousTotal'), false, 'before-total metadata belongs only to statusApplied');
-        if (event.type === 'enemyActorTurnStarted') delete event.intentPreview;
+        if (event.type === 'enemyActorTurnStarted') {
+          if (event.intentPreview) {
+            assert.equal(event.intentPreview.moveId, event.moveId);
+            assert.equal(event.intentPreview.revealed, true);
+            assert.equal(event.intentPreview.hidden, false);
+            forecastCounts.actor++;
+            if (event.intentPreview.kind === 'attack') {
+              const projection = event.intentPreview.projectedDamage;
+              assert.ok(projection, 'public attack intent carries its projected damage receipt');
+              assert.deepEqual(Object.keys(projection).sort(), ['baseline', 'basis', 'displayedReduction', 'expected', 'hitChance', 'label', 'max', 'min', 'scope', 'stanceReduced', 'tone', 'uncertain']);
+              assert.equal(projection.basis, 'hp');
+              assert.equal(projection.scope, 'directDamageAtCurrentDefenses');
+              assert.equal(projection.label, `${projection.min}–${projection.max}`);
+              assert.equal(projection.uncertain, projection.min !== projection.max);
+              projectedRanges.push(['actor', projection.min, projection.max, projection.label]);
+            } else assert.equal(Object.hasOwn(event.intentPreview, 'projectedDamage'), false);
+            delete event.intentPreview;
+          } else assert.equal(event.moveId, null, 'an empty actor receipt has no public forecast to remove');
+        }
         if (event.type === 'enemyMoveStarted') {
+          assert.equal(event.intentPreview?.moveId, event.moveId);
+          assert.equal(event.intentPreview?.revealed, true);
+          assert.equal(event.intentPreview?.hidden, false);
+          assert.equal(event.actionPreview?.moveId, event.moveId);
+          assert.ok(Array.isArray(event.actionPreview?.actionEffects));
+          forecastCounts.move++;
+          forecastCounts.action++;
+          if (event.intentPreview.kind === 'attack') {
+            const projection = event.intentPreview.projectedDamage;
+            assert.ok(projection, 'public attack intent carries its projected damage receipt');
+            assert.deepEqual(Object.keys(projection).sort(), ['baseline', 'basis', 'displayedReduction', 'expected', 'hitChance', 'label', 'max', 'min', 'scope', 'stanceReduced', 'tone', 'uncertain']);
+            assert.equal(projection.basis, 'hp');
+            assert.equal(projection.scope, 'directDamageAtCurrentDefenses');
+            assert.equal(projection.label, `${projection.min}–${projection.max}`);
+            assert.equal(projection.uncertain, projection.min !== projection.max);
+            projectedRanges.push(['move', projection.min, projection.max, projection.label]);
+          } else assert.equal(Object.hasOwn(event.intentPreview, 'projectedDamage'), false);
           delete event.intentPreview;
           delete event.actionPreview;
         }
@@ -351,8 +401,17 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   }).join('\n');
   assert.equal(previousTotals.length, 18, 'the scripted fights carry exactly 18 status before-total receipts');
   assert.deepEqual(previousTotals, [0, 0, 0, 1, 2, 2, 0, 0, 1, 1, 2, 0, 0, 1, 2, 0, 0, 0]);
+  assert.equal(endedMoves.length, 22, 'only the new consumed-move lifecycle events are excluded');
+  assert.deepEqual(endedMoves.reduce((counts, [, moveId]) => ({ ...counts, [moveId]: (counts[moveId] || 0) + 1 }), {}),
+    { slash: 11, guard: 7, warcry: 4 });
+  assert.deepEqual(forecastCounts, { actor: 11, move: 22, action: 22 });
+  assert.deepEqual(projectedRanges.reduce((counts, [, min, max]) => {
+    const key = `${min}-${max}`;
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {}), { '0-7': 11, '0-9': 6 }, 'projected HP ranges are present only on the public attacking forecasts');
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
-    { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
+    { sha256: 'be9793f5c2a4140c461f9d218d7334555ad276b67f71cb4c96111bdaf8ca85b0', length: 414756 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

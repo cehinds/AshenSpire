@@ -1,6 +1,7 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
-import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
+import { actorRangeKey, engagementBand, rangeBand } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
@@ -69,12 +70,14 @@ import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
+import { gameModule } from '../model/gameProfile.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
-import { ownRestoreFunds } from '../model/actionCosts.js';
+import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
+import * as IntentProjection from './enemyIntentProjection.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax, enemyMoveDamage } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
@@ -334,7 +337,8 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
-    combat.core2ActionRulesVersion = CORE2_ACTION_RULES_VERSION;
+    // Stamp v2 only when the run's own profile carries the current rules; a run started on an older profile keeps v1.
+    combat.core2ActionRulesVersion = Math.min(CORE2_ACTION_RULES_VERSION, gameModule(combat, 'effects')?.core2ActionRulesVersion ?? 1);
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
   }
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
@@ -436,6 +440,7 @@ export function createCombat({
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
+    ...(Array.isArray(c.upgradeSteps) && c.upgradeSteps.length ? { upgradeSteps: structuredClone(c.upgradeSteps) } : {}),
     ...(Number.isInteger(c.abilityRank) ? { abilityRank: c.abilityRank } : {}),
     ...(c.legacyAbility === true ? { legacyAbility: true } : {}),
     ...(c.abilityOfferId ? { abilityOfferId: c.abilityOfferId } : {}),
@@ -534,6 +539,13 @@ function drainQueue(combat) {
     }
     try {
       A.executeAction(combat, action);
+      const group = action.meta?.expansionGroup;
+      if (action.effect?.op === 'completeCombatAction' && !action.meta?.contactCompletion
+        && action.source?.kind === 'enemy' && group?.enemyMoveStart) {
+        // The head forecast has been spent. A follow-up replaces it through
+        // presentIntent; a reaction pause on another actor must not revive it.
+        if (!group.enemyMoveStart.reaction) consumeEnemyIntent(combat, action.source, group.enemyMoveStart.moveId);
+      }
     } finally {
       if (roundPoiseMultiplier) {
         combat.enqueue = previousEnqueue;
@@ -756,6 +768,14 @@ function enemyOwnerTurnStart(combat, enemy) {
   }
 }
 
+function consumeEnemyIntent(combat, enemy, moveId = enemy.intent?.moveId) {
+  // A held delayed payload is still next, even on a turn with no action.
+  if (enemy.pendingMove || !enemy.intent || enemy.intent.kind === 'staggered'
+    || enemy.intent.resolved || enemy.intent.moveId !== moveId) return;
+  enemy.intent.resolved = true;
+  combat.emit('enemyMoveEnded', { sourceId: enemy.id, moveId });
+}
+
 function enemyPhase(combat) {
   // With the Combat Rounds Preview on, the turn start ran in the round commit, before the moves.
   const preview = Boolean(combat.combatRounds);
@@ -826,6 +846,7 @@ function enemyPhase(combat) {
     if (combat.result) return;
     // The move has resolved: its momentum exchange ends with it (normalPreview.js), so its owner-turn-end hooks and
     // anything after are their own exchanges.
+    consumeEnemyIntent(combat, enemy);
     closeEnemyExchange(combat, enemy.id);
 
     // Normal combat (SPEC §4.6, owner 2026-10-12): the rest of the enemy's planned pool plays in order after its head.
@@ -852,6 +873,7 @@ function enemyPhase(combat) {
       drainQueue(combat);
       if (Reactions.reactionPaused(combat)) return;
       if (combat.result) return;
+      consumeEnemyIntent(combat, enemy);
       closeEnemyExchange(combat, enemy.id);
     }
     if (enemy.plannedMoves?.length === 0) enemy.planDue = false;
@@ -1085,8 +1107,13 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
     && closing?.effects?.some(effect => effect.op === 'moveEngagement')
     && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
   const replacements = new Map();
+  // A retreat (a move with its own retreatWeight) is offered only while the fight is closer than the enemy
+  // prefers; maxConsecutive keeps it from repeating back to back, so the player is not chased out of reach forever.
+  const wantsDistance = policy && combat.rangeState?.policy.enabled && def.startingRange !== undefined
+    && engagementBand(combat.rangeState, actorRangeKey(combat, enemy), actorRangeKey(combat, combat.player)) < rangeBand(def.startingRange);
   const entries = Object.entries(def.moves).filter(
     ([id, mv]) => {
+      if (mv.retreatWeight != null && !wantsDistance) return false;
       if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
       if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
       const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
@@ -1115,11 +1142,12 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   });
   const pool = eligible.length > 0 ? eligible : entries;
 
-  const total = pool.reduce((acc, [, mv]) => acc + mv.weight, 0);
+  const weightOf = mv => mv.retreatWeight ?? mv.weight;
+  const total = pool.reduce((acc, [, mv]) => acc + weightOf(mv), 0);
   if (total <= 0) return replacements.get(pool[0][0]) ?? pool[0][0];
   let r = combat.rng.float('enemyAI') * total;
   for (const [id, mv] of pool) {
-    r -= mv.weight;
+    r -= weightOf(mv);
     if (r < 0) return replacements.get(id) ?? id;
   }
   const last = pool[pool.length - 1][0];
@@ -1576,6 +1604,9 @@ function resolvedCardPriceReceipt(combat,def,claimed=null) {
 function baseCardPriceReceipt(combat, def, claimed = null) {
   if (configuredCombat(combat)) {
     const paid = profileCardCosts(combat, def);
+    // Multi-hit floor (owner, 2026-10-25): a fixed Core cost is read here, so the floor applies here too.
+    const hitFloor = core2MultiHitRulesEnabled(combat) ? multiHitSpFloor(def, { mana: paid.mana }) : 0;
+    if (hitFloor > paid.stamina) { paid.energy = hitFloor; paid.stamina = hitFloor; }
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
   }
   const weightClass = playerWeightClass(combat).weightClass;
@@ -1826,7 +1857,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     ratingValue: inst.ratingValue,
     ratingCap: inst.ratingCap,
     equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
+    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
     // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
@@ -2501,7 +2532,7 @@ export function getEntity(combat, id) {
  * defender mults when a target is given); block through computeBlockGain.
  * perTarget maps every living enemy's instance id → the damage it would take.
  */
-export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { rangeRoute = 'advance' } = {}) {
+export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { rangeRoute = 'advance', rawFace = false } = {}) {
   if (combat.enemyKnowledge && !combat._knowledgePreview) {
     const visible = F.candidateState(combat, { detached: true });
     visible._knowledgePreview = true;
@@ -2511,7 +2542,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       delete enemy.combatCounter;
       delete enemy.pendingMove;
     }
-    return previewCard(visible, cardInstanceId, targetId, upcastRanks, { rangeRoute });
+    return previewCard(visible, cardInstanceId, targetId, upcastRanks, { rangeRoute, rawFace });
   }
   const inst =
     combat.piles.hand.find((c) => c.instanceId === cardInstanceId) ||
@@ -2523,7 +2554,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   if (!combat._abilityPreparingPreview) {
     const clone = preparingPreview(combat, inst, def, targetId);
     clone._abilityPreparingPreview = true;
-    return previewCard(clone, cardInstanceId, targetId, upcastRanks, { rangeRoute });
+    return previewCard(clone, cardInstanceId, targetId, upcastRanks, { rangeRoute, rawFace });
   }
   const p = combat.player;
   const isX = def.cost === 'X';
@@ -2552,7 +2583,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       ratingValue: inst.ratingValue,
       ratingCap: inst.ratingCap,
       equipmentRole: inst.equipmentRole,
-      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
+      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}), ...(inst.passiveBlock > 0 ? { passiveBlock: inst.passiveBlock } : {}),
       // The kind tag and the grip's derived tags, as the live play reads them
       // (above) — a preview that disagreed with the play would lie.
       type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
@@ -2709,6 +2740,20 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
+        // Core face (owner, 2026-10-28): the reference enemy's state as this effect meets it, before this effect's own hits drain it.
+        // Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
+        const faceEnemy = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && (!primary || primary.kind === 'enemy')
+          ? (target?.kind === 'enemy' && target.alive ? target : allLiving[0]) : null;
+        let faceState = null;
+        if (faceEnemy) {
+          const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
+          const d = shared.defender;
+          faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
+            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, barrier: 0, wardBlock: 0,
+              persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
+              ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
+              ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
+        }
         for (const e of living) {
           const result = isCounterReply
             ? previewCounter(e, i)
@@ -2734,10 +2779,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         }
         // An un-aimed face states the card's offensive amount. Target rows
         // retain exact mitigation for inspection and target previews.
-        if (combat.combatExpansionVersion === 2 && !targetId && !isCounterReply) {
+        // rawFace: a caller outside a fight (the smithing preview runs a stand-in fight) keeps the raw number.
+        if (combat.combatExpansionVersion === 2 && (faceEnemy || !targetId) && !isCounterReply) {
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           // Shown on the card: a whole number, rounded down (owner, 2026-10-18); the chain itself stays exact.
           entry.faceValue = Math.floor(A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true }));
+          // The reference is the aimed living enemy, else the frontmost living one; no enemy leaves the raw number.
+          if (faceState) {
+            const faceHits = previewDamageHits(combat, p, faceState.defender, evalPreview(combat, action, eff.amount, faceEnemy) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
+              attackTags, carrier, Math.max(1, Math.floor(entry.hits)), faceState).hitDamages;
+            entry.faceValue = Math.floor(faceHits[0] ?? entry.faceValue);
+            entry.faceHitDamages = faceHits.map(Math.floor);
+          }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
           entry.ratingBonus = Math.floor(A.cardRatingDamage(combat, p, carrier, printedBase));
@@ -2844,11 +2897,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           tokens[`${token}.block`] = entry.defenseSplit.block;
           tokens[`${token}.ward`] = entry.defenseSplit.ward;
         }
-        if (eff.op === 'damage' && entry.hitDamages?.length > 1
-          && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
+        const sequence = entry.faceHitDamages && entry.hits > 0 ? entry.faceHitDamages : entry.hitDamages;
+        if (eff.op === 'damage' && sequence?.length > 1
+          && sequence.some(amount => amount !== sequence[0])) {
           const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
           if (hitsToken) damageSequences.push({ amountToken: token, hitsToken,
-            hitDamages: entry.hitDamages, totalDamage: entry.totalDamage });
+            hitDamages: sequence, totalDamage: sequence.reduce((sum, amount) => sum + amount, 0) });
         }
       }
       const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
@@ -2881,6 +2935,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     cardId: inst.cardId,
     upgraded: inst.upgraded,
+    ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),
     name: def.name,
     type: def.type,
     cost: shownCost + (range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0),
@@ -2956,6 +3011,7 @@ export function previewIntent(combat, enemyInstanceId) {
   const { knowledge, proposalRead, concealed } = intentReadGate(combat, enemy);
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
   if (concealed) return concealIntent(intent, profile);
+  if (intent.resolved) return { kind: 'unknown', moveId: null, revealed: true, hidden: false };
   const out = { ...intent, ...previewEnemyAction(combat, enemy, intent.moveId), profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is
   // base counter damage, matching the inspector's prepared reaction value.
@@ -2970,7 +3026,7 @@ export function previewIntent(combat, enemyInstanceId) {
     const effect = move?.effects?.find(e => e.op === 'damage');
     const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId, combat), damageSchool: damageSchool && damageSchool !== 'auto' ? damageSchool : effect?.damageSchool || move?.damageSchool };
     Object.assign(out, previewDamageHits(combat, enemy, combat.player, intent.damage, carrier.tags, carrier,
-      intent.hits != null ? intent.hits : 1));
+      intent.hits != null ? intent.hits : 1, IntentProjection.enemyIntentDamageState(combat, enemy, carrier, intent.damage)));
   }
   out.pending = !!enemy.pendingMove;
   if (knowledge) {

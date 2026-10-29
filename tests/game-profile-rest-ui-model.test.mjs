@@ -5,7 +5,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey, restIntroKey, restSmithFree } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restSmithFree } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -15,18 +15,19 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fixture() {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-ui-test' });
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = 'n3_0';
-  const visit = beginGameProfileRest(run, '1:n3_0');
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   run.hp = 1; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
   return { run, visit };
 }
 
-test('configured Rest uses exact non-mutating previews and hides unearned character leveling', () => {
+test('configured Rest uses exact non-mutating previews and offers Level Up only as unavailable without points', () => {
   const { run, visit } = fixture();
   const before = structuredClone(run);
   const model = gameProfileRestModel(registries, run, visit);
-  assert.deepEqual(model.services.map(row => row.id), ['smith']);
+  assert.deepEqual(model.services.map(row => row.id), ['smith', 'upgradeCard', 'levelUp']);
+  assert.equal(model.services.find(row => row.id === 'levelUp').available, false, 'no points earned yet');
   const preview = model.services.find(row => row.id === 'smith').preview;
   assert.equal(preview.hp, preview.maxHp);
   assert.equal(preview.flaskCharges.hpCurrent, preview.flaskCharges.hp);
@@ -126,33 +127,14 @@ test('the editor follows an explicit nonempty configured basic policy without le
 test('arriving with full pools but a spent flask records the flask refill (review finding)', () => {
   const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
   run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
-  run.mapNodeId = 'n3_0';
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
   run.flaskCharges.hpCurrent = 0;
-  const visit = beginGameProfileRest(run, '1:n3_0');
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   assert.equal(visit.healed.hp + visit.healed.mana + visit.healed.stamina, 0);
   assert.ok(visit.healed.flaskHp > 0);
   assert.equal(restHealedAny(visit.healed), true);
   assert.equal(restHealedAny({ hp: 0, mana: 0, stamina: 0 }), false, 'older saves count missing flask fields as 0');
-});
-
-test('the rest completion copy follows what is actually still open (review finding)', () => {
-  const rows = (smith, level) => [{ id: 'smith', available: smith }, { id: 'levelUp', available: level }];
-  const used = ids => id => ids.includes(id);
-  assert.equal(restCompletionKey(rows(true, true), used([])), 'chooseAll');
-  assert.equal(restCompletionKey(rows(false, true), used(['smith'])), 'completeAll');
-  assert.equal(restCompletionKey(rows(false, false), used(['smith'])), 'completeDoneAll', 'no earned point left');
-  assert.equal(restCompletionKey(rows(false, false), used(['smith', 'levelUp'])), 'completeDoneAll');
-});
-
-test('the all-services intro names Smith and Level Up only when those are exactly the services', () => {
-  const ids = (...list) => list.map(id => ({ id }));
-  assert.equal(restIntroKey(ids('smith', 'levelUp'), { smithFree: true }), 'chooseAll');
-  assert.equal(restIntroKey(ids('levelUp', 'smith'), { smithFree: true }), 'chooseAll');
-  assert.equal(restIntroKey(ids('smith', 'levelUp')), 'chooseAllAny', 'a paid Smith is not called free');
-  assert.equal(restIntroKey(ids('strategize'), { smithFree: true }), 'chooseAllAny');
-  assert.equal(restIntroKey(ids('strategize', 'smith', 'levelUp'), { smithFree: true }), 'chooseAllAny');
-  assert.equal(restIntroKey(ids('smith'), { smithFree: true }), 'chooseAllAny');
 });
 
 test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', () => {
@@ -161,7 +143,6 @@ test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', 
   const freeModel = gameProfileRestModel(registries, free.run, free.visit);
   assert.equal(freeModel.smithFree, true);
   assert.match(freeModel.services.find(row => row.id === 'smith').description, /for free/);
-  assert.equal(restIntroKey(freeModel.services, { smithFree: freeModel.smithFree }), 'chooseAll');
   const paid = fixture();
   paid.run.gameProfile = structuredClone(paid.run.gameProfile);
   paid.run.gameProfile.content.rests.smith.free = false;
@@ -169,7 +150,17 @@ test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', 
   const paidModel = gameProfileRestModel(registries, paid.run, paid.visit);
   assert.equal(paidModel.smithFree, false);
   assert.doesNotMatch(paidModel.services.find(row => row.id === 'smith').description, /free/i);
-  assert.equal(restIntroKey(paidModel.services, { smithFree: paidModel.smithFree }), 'chooseAllAny');
   const noLevel = gameProfileSmithModel(registries, paidModel.smith, paidModel.smithPreviews, null, () => '', { all: true, levelUpOffered: false });
   assert.doesNotMatch(noLevel.properties.consequence, /Level Up/);
+});
+
+test('rest options list available choices first with Level Up leading, and unavailable ones last', () => {
+  const none = fixture();
+  assert.deepEqual(gameProfileRestModel(registries, none.run, none.visit).services.map(row => [row.id, row.available]),
+    [['smith', true], ['upgradeCard', true], ['levelUp', false]], 'unavailable Level Up sorts after an available Smith');
+  const points = fixture(); points.run.level.unspentPoints = 1;
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.visit).services.map(row => row.id), ['levelUp', 'smith', 'upgradeCard'], 'an available Level Up comes first');
+  commitGameProfileRest(registries, points.run, 'levelUp', { attributeId: 'constitution' });
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.run.gameProfileRestVisits[points.visit.id]).services.map(row => [row.id, row.available]),
+    [['smith', true], ['upgradeCard', true], ['levelUp', false]], 'a spent Level Up drops below the open Smith');
 });

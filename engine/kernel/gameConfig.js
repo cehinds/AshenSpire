@@ -410,11 +410,18 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
   }
   return bonus;
 }
+// Authored `attributeOffset` (owner, 2026-10-25): added to each enemy attribute AFTER gear and relic bonuses, floored at 0.
+// Validation keeps checking the own points against the tier budget before the offset.
+// Players have no tier and are never offset.
+export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
+  const offset = row?.tier ? settings.attributeOffset?.[id] || 0 : 0;
+  return Math.max(0, (own || 0) + (bonus?.[id] || 0) + offset);
+}
 export function enemyPools(row, settings, level = enemyLevel(row, settings), bonus = null) {
   const tier = characterRule(row, settings), round = settings.rounding === 'up' ? Math.ceil : settings.rounding === 'nearest' ? Math.round : Math.floor;
   const base = { hp: tier.pools.hp, sp: tier.pools.sp, mp: tier.pools.mp, hand: tier.hand, ar: 0, dr: 0 };
   const own = row.resolvedAttributes || resolveEnemyAttributes(row, settings);
-  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(0, (own[id] || 0) + (bonus?.[id] || 0))]));
+  const attributes = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, enemyAttributeTotal(row, settings, id, own[id], bonus)]));
   const pools = {};
   for (const [stat, rule] of Object.entries(settings.statRules)) {
     let value = base[stat] ?? 0;
@@ -424,6 +431,8 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
     const mod = ENEMY_POOL_MODS.includes(stat) ? bonus?.[stat] || 0 : 0, floor = settings.penaltyFloor?.[stat] ?? 0;
     pools[stat] = mod < 0 ? Math.max(value + mod, Math.min(value, floor)) : value + mod;
   }
+  // Authored `spFloor` (owner, 2026-10-25): an enemy whose attribute offset would leave it unable to pay its costliest card keeps that much SP.
+  if (Number.isSafeInteger(row.spFloor) && row.spFloor > 0) pools.sp = Math.max(pools.sp, row.spFloor);
   return pools;
 }
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's
@@ -473,6 +482,8 @@ export function deckCopyLimit(cardId, row, content = {}, settings = {}, gearSett
   if ((rules.owned.tags || []).some(t => tags.includes(t)) || fromPools(rules.owned.pools).has(cardId)) return have;
   for (const rule of rules.unlimited) {
     if (!charTags.includes(rule.requiresTag)) continue;
+    // excludeCards (owner 2026-10-28): named cards stay owned-count under a rule that would otherwise cover them.
+    if ((rule.excludeCards || []).includes(cardId)) continue;
     const c = rule.cards || {};
     const matches = (!c.rarity || c.rarity.includes(card.rarity)) && (!c.tagsAny || c.tagsAny.some(t => tags.includes(t))) && (!c.tagsAll || c.tagsAll.every(t => tags.includes(t)));
     if (fromPools(rule.pools).has(cardId) || ((c.rarity || c.tagsAny || c.tagsAll) && matches)) return Infinity;
@@ -732,4 +743,16 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
   }
   verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyRewardGroups(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
   return freezeGameData({...value,hash});
+}
+
+/**
+ * The effective Smith bonus of an item at `level`: the sum of the first `level` entries of the equipment module's
+ * upgradeBonuses.tierBonusSteps (Core: [1,1,2] gives 0,1,2,4), or the level itself when no steps are configured.
+ */
+export function upgradeTierBonus(equipmentSettings, level) {
+  const steps = equipmentSettings?.upgradeBonuses?.tierBonusSteps;
+  if (!Array.isArray(steps) || !steps.length) return level || 0;
+  let total = 0;
+  for (let index = 0; index < Math.min(level || 0, steps.length); index += 1) total += steps[index];
+  return total;
 }

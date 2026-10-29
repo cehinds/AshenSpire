@@ -54,8 +54,36 @@ try {
     await inspector.waitFor({ state: 'detached' });
     await page.waitForTimeout(750);
     await panel.locator('.as-meter[data-res="hp"]').click();
-    await page.locator('#tooltip[data-open="true"]').waitFor({ state: 'visible' });
-    assert.equal(await inspector.count(), 0, 'an individual resource tap explains without inspecting');
+    await inspector.waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    await inspector.waitFor({ state: 'detached' });
+    // Owner 2026-10-25: one tap anywhere on a selected panel (padding, statuses) inspects. The panel
+    // holds name, HP and stats only now (2026-10-26), so its padding is the part that is always there.
+    assert.equal(await panel.locator('.target-hud-intent').count(), 0, 'the panel no longer carries an intent strip');
+    for (const [label, press] of [['padding', () => panel.locator('.target-hud-panel').click({ position: { x: 3, y: 3 } })],
+      ['status icon', () => panel.locator('.target-hud-statuses .status-icon').first().click()]]) {
+      if (label === 'status icon' && !(await panel.locator('.target-hud-statuses .status-icon').count())) continue; // the player carries no status in this fixture
+      await page.waitForTimeout(450);
+      await press();
+      await inspector.waitFor({ state: 'visible' });
+      await page.keyboard.press('Escape');
+      await inspector.waitFor({ state: 'detached' });
+    }
+    // The game cursor may sit on a hand card while the panel has DOM focus;
+    // Enter belongs to the panel and must not also press that card.
+    const handState = () => page.evaluate(() => ({
+      selected: [...document.querySelectorAll('.hand .card.selected, .hand .card.is-selected, .hand .card.armed')].length,
+      candidates: document.querySelectorAll('.combatant.target-hud-candidate').length,
+      played: window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length,
+    }));
+    await page.evaluate(() => { document.querySelector('.gp-focus')?.classList.remove('gp-focus'); document.querySelector('.hand .card')?.classList.add('gp-focus'); });
+    const beforeEnter = await handState();
+    await panel.locator('.target-hud-panel').focus();
+    await page.keyboard.press('Enter');
+    await inspector.waitFor({ state: 'visible' });
+    await page.keyboard.press('Escape');
+    await inspector.waitFor({ state: 'detached' });
+    assert.deepEqual(await handState(), beforeEnter, 'Enter on the panel leaves the cursor card unpressed');
     if (width === 390) {
       await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=3&shotEnemyCount=3&shotHand=5`, { waitUntil: 'networkidle' });
       const strike = page.locator('.hand .card[data-card-id="core.strike"]').first();
@@ -81,4 +109,4 @@ try {
     await page.close();
   }
   console.log('Native target HUD: info, double-click, hold/cancel, double-tap, and resource tooltip pass at mobile/tablet sizes.');
-} finally { await browser.close(); await server?.close(); }
+} finally { await browser.close(); server?.server.close(); }

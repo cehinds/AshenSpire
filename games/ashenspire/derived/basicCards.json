@@ -61,127 +61,80 @@
           "default": "core.heraldSpecial"
         }
       }
+    },
+    "jab": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.jab"
+      },
+      "byClass": {}
+    },
+    "gash": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.gash"
+      },
+      "byClass": {}
+    },
+    "pommelStrike": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.pommelStrike"
+      },
+      "byClass": {}
+    },
+    "steadyGuard": {
+      "slot": "offHand",
+      "byTag": {
+        "default": "core.steadyGuard"
+      },
+      "byClass": {},
+      "fallbackSlot": "mainHand"
+    },
+    "drivingThrust": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.drivingThrust"
+      },
+      "byClass": {}
+    },
+    "expose": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.expose"
+      },
+      "byClass": {}
+    },
+    "hammerBlow": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.hammerBlow"
+      },
+      "byClass": {}
+    },
+    "rendingSmash": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.rendingSmash"
+      },
+      "byClass": {}
+    },
+    "wideSweep": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.wideSweep"
+      },
+      "byClass": {}
+    },
+    "reapingArc": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.reapingArc"
+      },
+      "byClass": {}
     }
   },
   "cards": [
-    {
-      "id": "core.strike",
-      "name": "Strike",
-      "rarity": "starter",
-      "rank": 0,
-      "type": "attack",
-      "sp": 1,
-      "mp": 0,
-      "tags": [
-        "camp:physical",
-        "maneuver:attack",
-        "classification.attack"
-      ],
-      "effects": [
-        {
-          "op": "damage",
-          "target": "enemy",
-          "amount": 6
-        }
-      ],
-      "copiesWithBasicTraining": "unlimited"
-    },
-    {
-      "id": "core.defend",
-      "name": "Defend",
-      "rarity": "starter",
-      "rank": 0,
-      "type": "skill",
-      "sp": 1,
-      "mp": 0,
-      "tags": [
-        "camp:physical",
-        "maneuver:defend",
-        "classification.skill",
-        "trait:reaction"
-      ],
-      "effects": [
-        {
-          "op": "block",
-          "target": "self",
-          "amount": 10
-        }
-      ],
-      "copiesWithBasicTraining": "unlimited"
-    },
-    {
-      "id": "core.counter",
-      "name": "Counter",
-      "rarity": "starter",
-      "rank": 0,
-      "type": "attack",
-      "sp": 1,
-      "mp": 0,
-      "tags": [
-        "camp:physical",
-        "maneuver:counter",
-        "classification.attack",
-        "trait:reaction"
-      ],
-      "effects": [
-        {
-          "op": "block",
-          "target": "self",
-          "amount": 5
-        },
-        {
-          "op": "damage",
-          "target": "enemy",
-          "amount": 4
-        }
-      ],
-      "copiesWithBasicTraining": "unlimited"
-    },
-    {
-      "id": "core.smash",
-      "name": "Smash",
-      "rarity": "starter",
-      "rank": 0,
-      "type": "attack",
-      "sp": 2,
-      "mp": 0,
-      "tags": [
-        "camp:physical",
-        "maneuver:smash",
-        "classification.attack"
-      ],
-      "effects": [
-        {
-          "op": "damage",
-          "target": "enemy",
-          "amount": 12
-        }
-      ],
-      "copiesWithBasicTraining": "unlimited"
-    },
-    {
-      "id": "core.sweep",
-      "name": "Sweep",
-      "rarity": "starter",
-      "rank": 0,
-      "type": "attack",
-      "sp": 1,
-      "mp": 0,
-      "tags": [
-        "camp:physical",
-        "maneuver:sweep",
-        "classification.attack",
-        "targeting:area"
-      ],
-      "effects": [
-        {
-          "op": "damage",
-          "target": "allEnemies",
-          "amount": 4
-        }
-      ],
-      "copiesWithBasicTraining": "unlimited"
-    },
     {
       "id": "core.reaverSpecial",
       "name": "Sundering Art",

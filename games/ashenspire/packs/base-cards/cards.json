@@ -2380,7 +2380,7 @@
             "position": "random"
           }
         ],
-        "textTemplate": "Shuffle the entire draw pile.",
+        "textTemplate": "Shuffle up to 100 random cards in your draw pile.",
         "icon": "shield",
         "flavor": "An ordering exercise of the Observatory's apprentices.\n\nThe students sorted loose charts until each could name their place by touch. Their teachers then scattered the stack and ordered them to begin again. The exercise continued after the charts ceased to describe the sky outside.\n\nNo arrangement was permitted to become certain."
       },
@@ -2449,7 +2449,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Shuffle the entire draw pile."
+          "Shuffle up to 100 random cards in your draw pile."
         ],
         "sourceFaceLines": [
           "Shuffle the deck"
@@ -2467,7 +2467,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Shuffle the entire draw pile.",
+        "chosenRules": "Shuffle up to 100 random cards in your draw pile.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -7666,7 +7666,7 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Become untargetable without a perception check for {base.veil} turns.",
+        "textTemplate": "Gain Veil for {base.veil} turns. Single-target actions require a Perception check; area actions bypass it.",
         "icon": "skill",
         "flavor": "A veiling art of the river city's hidden messengers.\n\nCouriers crossed occupied bridges by moving where a watcher's attention had just departed. A small working deepened that omission until a searching gaze passed over them. Those with a practiced eye could still find the disturbance in the crowd.\n\nA missing figure leaves an occupied space."
       },
@@ -7738,7 +7738,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Become untargetable without a perception check for 2 turns."
+          "Gain Veil for 2 turns. Single-target actions require a Perception check; area actions bypass it."
         ],
         "sourceFaceLines": [
           "Untargetable unless perceived"
@@ -7756,7 +7756,7 @@
           "mana": 1,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Become untargetable without a perception check for 2 turns.",
+        "chosenRules": "Gain Veil for 2 turns. Single-target actions require a Perception check; area actions bypass it.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }

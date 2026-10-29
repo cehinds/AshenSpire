@@ -5,7 +5,7 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from './model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
@@ -66,6 +66,7 @@ import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, smithingRewardId, smithingRewardPays } from './model/smithing.js';
+import { applyNodeRefill, refillFlasksAtActChange } from './model/nodeRefill.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
 import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
@@ -78,14 +79,14 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
+import { pendingRankUpRows, coreCardRanks, skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
+import { applyLevelUp, allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
 import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
 import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
@@ -110,6 +111,8 @@ import {
   rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
+import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
@@ -255,10 +258,11 @@ const profileQuery = new URLSearchParams(location.search);
 const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
 let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
 let registryGameProfile = selectedGameProfile;
-let registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, registryGameProfile)), registryGameProfile);
+// The first rebuild below owns construction after saved profile/settings and
+// promoted defaults have settled. It also installs that registry's vocabulary
+// and class glyphs; an earlier provisional build has no screen to serve.
+let registries;
 let xpCombat = null;
-configureTooltipGlossary(registries);
-setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
   const result = validateContent(configured);
@@ -1173,7 +1177,7 @@ function reportAutosaveFailure(error, now = Date.now()) {
   if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
   lastSaveWarningAt = now;
   const body = full
-    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues; delete an old save slot from the title screen to free space.'
+    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
     : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
   const key = full ? 'save:storage-full' : 'save:failed';
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
@@ -1535,6 +1539,8 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
+  // Owner 2026-10-27: both flask pools refill at every act change (configured runs; legacy keeps its behaviour).
+  refillFlasksAtActChange(run);
   run.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   persistOrWarn(); // reached from a boss reward: a full store must not strand the climb
   showMap();
@@ -2914,8 +2920,13 @@ function enterNode(nodeId) {
   // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
   clearRestRevisitOnTravel(run, nodeId);
   run.mapNodeId = nodeId;
-  if (!run.path.includes(nodeId)) run.path.push(nodeId);
+  const firstVisit = !run.path.includes(nodeId);
+  if (firstVisit) run.path.push(nodeId);
   run.floor = node.floor;
+  const refillHealMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  // The destination owns its checkpoint: combat saves the refill together with
+  // its encounter receipt, and a failed autosave must not prevent entry.
+  if (firstVisit) applyNodeRefill(run, node, { healMult: refillHealMult });
 
   let kind = node.type;
   if (kind === 'event') {
@@ -2964,7 +2975,7 @@ function enterNode(nodeId) {
       return showShop();
     }
     case 'treasure': {
-      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'combat', after: 'map' });
+      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'treasure', after: 'map' });
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
       // Treasure pays Smithing Stones through the combat door's faucet (SPEC
@@ -3466,7 +3477,7 @@ async function onCombatEnd(result, combat, enc) {
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
-    characterMultiplier: featMultiplier(run, 'characterXp'),
+    characterMultiplier: featMultiplier(run, 'characterXp') * (configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1),
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
   const levelAward = manualLevelUp
@@ -4096,11 +4107,15 @@ function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   if (pending.victoryReceipt) return mountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
+    // Owner, 2026-10-27: earned attribute points are spent here too; each spend is saved at once.
+    onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
+    onPersist: persistContinuing,
     onDone: () => {
       acknowledgeVictoryReceipt(pending, persistContinuing);
       showGameProfileReward();
     },
   });
+  if (silenceVictoryLevelNotices(pending)) persistOrWarn();
   if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, registries, run, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
     persistOrWarn();
@@ -4110,6 +4125,20 @@ function showGameProfileReward() {
     delete run.gameProfilePendingReward;
     persistOrWarn();
     return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'defeat' ? showFinishedRun(false) : pending.after === 'advanceAct' ? advanceAct() : showMap();
+  }
+  // Card ranks (SPEC 13.4o, Core): the rank-ups this victory's track levels queued are offered once, on the
+  // existing reward door's rank-up picker, before the reward offer. Skipping one keeps it queued for the next victory.
+  if (!pending.rankUpsOffered && coreCardRanks(run)) {
+    // The door's rows are fixed the first time it opens and saved with its claim state (rankUpCheckpoint), so a
+    // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
+    const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
+    if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
+    else return mountRewards(app, { registries, run, saves, rng,
+      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
+      checkpoint: (pending.rankUpCheckpoint ||= {}),
+      onPersist: persistContinuing,
+      // Rows and claims are saved at once; Continue marks the door done.
+      onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
@@ -4144,10 +4173,20 @@ function showShop() {
     if (!gameModule(run, 'shops')) return showMap();
     const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
     run.gameProfileOpenShop = shopId;
+    // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
+    // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
+    if (configuredShopKind(run, shopId) === 'blacksmith') {
+      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = buildBlacksmithStock(registries, rng, run);
+      persist(); audio.music('shop');
+      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+        onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),
+        onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+    }
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
     audio.music('shop');
     return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onTake: index => { purchaseGameProfileShopOffer(registries, run, shopId, index); persist(); showShop(); },
+      onTake: (index, quote) => { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop(); },
+      onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
       onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   if (run.journey?.activeService) {
@@ -5018,6 +5057,15 @@ if (shotState === 'combat-test') {
     // out is the harness's own settings door (?shotSettings, Advanced → Shops).
     run.cinders = 2000;
     run.smithingStones = 12;
+    if (isConfiguredRun(run)) {
+      // A Core run reaches the Blacksmith through the configured shop door: pose the node as `?shot=shop` does, and
+      // showShop opens the Blacksmith because the stock rides run.shopStock.
+      if (!gameModule(run, 'shops')) throw new Error('Configured blacksmith screenshot requires shops to be enabled');
+      const node = Object.values(run.mapGraph.nodes).find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
+      run.mapNodeId = node.id; run.floor = node.floor;
+      run.path = screenshotRoutePath(run.mapGraph, node.id);
+      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
+    }
     run.loadout.storage.push('katana');
     run.sigils = [registries.sigils.all()[0].id];
     run.shopStock = buildBlacksmithStock(registries, rng, run);

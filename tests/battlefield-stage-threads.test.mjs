@@ -70,3 +70,8 @@ test('co-op enemy frames mark a readied hostile card\'s hover target, as solo do
 test('responsive formation keeps every rank readout above its body', () => {
   assert.match(stage, /const hudBelow = \(\) => false;/);
 });
+
+test('the stage keeps the floor anchor on the fight\'s layoutState, not a per-mount closure', () => {
+  assert.doesNotMatch(stage, /const holdFloorShadow = /);
+  assert.match(stage, /floorShadowTop: holdFloorShadowTop\(layoutState, /);
+});

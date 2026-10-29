@@ -21,7 +21,7 @@ import * as Screen from '../src/ui/models/CombatRoundsScreenModel.js';
 // The fixture soldier carries stats for a pool of 3 (SPEC §4.6a: base 1, +1 Dexterity 4, +1 Constitution 4), so its plan
 // holds follow-ups; the shipped soldier is a 1-SP minion (owner, 2026-10-13).
 const POOL_STATS = { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 };
-const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, attributes: POOL_STATS } : e)) });
+const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, attributes: POOL_STATS, equipmentSp: 0 } : e)) });
 const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 

@@ -401,7 +401,7 @@ test('the actual lightweight HUD gate skips disabled co-op and restores enabled 
 test('the source test census loses exactly the reviewed dedicated co-op scope while disabled', () => {
   const files = readdirSync(join(ROOT, 'tests')).filter(file => file.endsWith('.test.mjs')).map(file => `tests/${file}`).sort();
   const parked = files.filter(isCoopTestFile);
-  assert.equal(parked.length, 32, 'review any newly dedicated co-op suite and update this census');
+  assert.equal(parked.length, 33, 'review any newly dedicated co-op suite and update this census');
   const enabled = discoveryFeatureFiles(files, { coopEnabled: true });
   const disabled = discoveryFeatureFiles(files, { coopEnabled: false });
   assert.deepEqual([...disabled, ...parked].sort(), enabled);

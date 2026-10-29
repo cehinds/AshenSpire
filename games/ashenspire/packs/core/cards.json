@@ -3,7 +3,7 @@
     "id": "core.strike",
     "name": "Strike",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -32,7 +32,7 @@
     "id": "core.defend",
     "name": "Defend",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -60,7 +60,7 @@
     "id": "core.counter",
     "name": "Counter",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -95,7 +95,7 @@
     "id": "core.smash",
     "name": "Smash",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 0,
@@ -124,7 +124,7 @@
     "id": "core.sweep",
     "name": "Sweep",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -467,5 +467,2062 @@
       "stance": "evade"
     },
     "textTemplate": "Gain {evade} Evade.\nRetreat one band."
+  },
+  {
+    "id": "core.jab",
+    "name": "Jab",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.gash",
+    "name": "Gash",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "bleed",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "bleed",
+          "stacks": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.pommelStrike",
+    "name": "Pommel Strike",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 5
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 7
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.steadyGuard",
+    "name": "Steady Guard",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 6
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 8
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.drivingThrust",
+    "name": "Driving Thrust",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Close one band. Deal {damage} damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "moveEngagement",
+          "target": "enemy",
+          "bands": -1
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.expose",
+    "name": "Expose",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.cinderDart",
+    "name": "Cinder Dart",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.mendingTouch",
+    "name": "Mending Touch",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "mirrors": "defend",
+    "icon": "skill",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "rank.cantrip",
+      "fx:heal",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Heal {heal} HP. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "heal",
+          "target": "self",
+          "amount": 6
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.glimpse",
+    "name": "Glimpse",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "draw",
+        "amount": 1
+      },
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "draw",
+          "amount": 2
+        },
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 1
+        }
+      ],
+      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana."
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.galePush",
+    "name": "Gale Push",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage. Retreat one band.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 5
+        },
+        {
+          "op": "moveEngagement",
+          "target": "enemy",
+          "bands": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.hammerBlow",
+    "name": "Hammer Blow",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 10
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 13
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 8
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.rendingSmash",
+    "name": "Rending Smash",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 8
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "bleed",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {bleed} Bleed.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "bleed",
+          "stacks": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.wideSweep",
+    "name": "Wide Sweep",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:sweep",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {weak} Weak to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 8
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "weak",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.reapingArc",
+    "name": "Reaping Arc",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 5
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 5
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:sweep",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Gain {block} Block.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 7
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 7
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.stunningBlow",
+    "name": "Stunning Blow",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 8
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.skullsplitter",
+    "name": "Skullsplitter",
+    "class": "reaver",
+    "rarity": "rare",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 16
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 20
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 8
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.whirlwind",
+    "name": "Whirlwind",
+    "class": "reaver",
+    "rarity": "rare",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 8
+      },
+      {
+        "op": "poiseDamage",
+        "target": "allEnemies",
+        "amount": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:sweep",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 11
+        },
+        {
+          "op": "poiseDamage",
+          "target": "allEnemies",
+          "amount": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.feint",
+    "name": "Feint",
+    "class": "rogue",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 4
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 5
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.hitAndRun",
+    "name": "Hit and Run",
+    "class": "rogue",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 5
+      },
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Retreat one band.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 7
+        },
+        {
+          "op": "moveEngagement",
+          "target": "enemy",
+          "bands": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.rakingSweep",
+    "name": "Raking Sweep",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "bleed",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:sweep",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {bleed} Bleed to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "bleed",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.wardingGlance",
+    "name": "Warding Glance",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "draw",
+        "amount": 1
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Draw {draw} card. Gain {block} Block.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "draw",
+          "amount": 1
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.starfall",
+    "name": "Starfall",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "vulnerable",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {vulnerable} Vulnerable to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 11
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "vulnerable",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.cometLance",
+    "name": "Comet Lance",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 12
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 16
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.searingRay",
+    "name": "Searing Ray",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 9
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 13
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.meteor",
+    "name": "Meteor",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 3,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 30
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 38
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 10
+  },
+  {
+    "id": "core.sanctifiedWard",
+    "name": "Sanctified Ward",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 12
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 15
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.healingPrayer",
+    "name": "Healing Prayer",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 6
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 5
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "fx:heal",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Heal {heal} HP. Gain {block} Block. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "heal",
+          "target": "self",
+          "amount": 8
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 7
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.judgment",
+    "name": "Judgment",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 10
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frail",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak. Apply {frail} Frail.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 13
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frail",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.dawnBulwark",
+    "name": "Dawn Bulwark",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 20
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 26
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.arcaneSiphon",
+    "name": "Arcane Siphon",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 7
+      },
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Gain {restoreMana} Mana.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.emberWave",
+    "name": "Ember Wave",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 5
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.ironbreaker",
+    "name": "Ironbreaker",
+    "class": "reaver",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 14
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 8
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 18
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 10
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.rallyingRoar",
+    "name": "Rallying Roar",
+    "class": "reaver",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "targeting:area"
+    ],
+    "textTemplate": "Gain {block} Block. Apply {weak} Weak to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 11
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "weak",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.venomedEdge",
+    "name": "Venomed Edge",
+    "class": "rogue",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "bleed",
+        "stacks": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "bleed",
+          "stacks": 5
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.smokeVeil",
+    "name": "Smoke Veil",
+    "class": "rogue",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 7
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 10
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.eclipse",
+    "name": "Eclipse",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {weak} Weak to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 9
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "weak",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.astralBolt",
+    "name": "Astral Bolt",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 7
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.censure",
+    "name": "Censure",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 5
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frail",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {frail} Frail.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 7
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frail",
+          "stacks": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.smite",
+    "name": "Smite",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 8
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Gain {block} Block.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 10
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 6
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.hexmark",
+    "name": "Hexmark",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Apply {vulnerable} Vulnerable. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.manaLash",
+    "name": "Mana Lash",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 8
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 8
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ]

@@ -3,6 +3,8 @@ import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gam
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
+import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
+import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
@@ -41,7 +43,13 @@ export function projectGameCard(subject,idOrInstance) {
   if ((!enabled.includes('sp') && def.staminaCost > 0) || (!enabled.includes('mp') && def.manaCost > 0)) {
     if (!alternate) throw new GameConfigError(`$/content/cards/${id}`,'missing authored disabled-resource variant');
   }
-  const chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
+  if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
+  // Card ranks (SPEC 13.4o) when the profile turns them on: each rank past 1 adds 1 to the primary number, as Legacy's resolveCard does.
+  if (typeof idOrInstance === 'object' && gameModule(subject,'progression')?.cardRanks === true && !Array.isArray(chosen.gradeProfiles) && cardRank(idOrInstance) > 1) {
+    chosen = {...chosen, effects: rankedEffectsCapped(chosen, cardRank(idOrInstance) - 1), rank: cardRank(idOrInstance)};
+  }
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);
@@ -79,13 +87,44 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
     moves[row.rangeClosingMove] = { intent: 'buff', sp: card.staminaCost, weight: hint.aiWeight ?? 0, effects: dataClone(card.effects) };
     closingKeys.add(JSON.stringify([def.id, row.rangeClosingMove]));
     additions.push(...[...(card.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeClosingMove, tagId })));
+    // A retreat is the opposite one-band move: authored price (the closing price plus one), and a
+    // dynamic weight the engine applies only while the fight is closer than the enemy prefers.
+    if (row.rangeRetreatMove !== undefined) {
+      const rEntry = Object.entries(row.cardHints || {}).find(([id, h]) => owned.has(id) && h.legacyMove === row.rangeRetreatMove);
+      const rCard = rEntry && cards.get(rEntry[0]), rHint = rEntry?.[1];
+      if (!rCard || !Number.isSafeInteger(rCard.staminaCost) || rCard.staminaCost < 0 || rCard.manaCost !== 0
+        || rCard.effects?.length !== 1 || rCard.effects[0].op !== 'moveEngagement' || rCard.effects[0].target !== 'enemy' || rCard.effects[0].bands !== 1) {
+        throw new GameConfigError(`$/content/enemies/${def.id}/rangeRetreatMove`, 'requires an owned, explicitly priced one-band retreat card');
+      }
+      moves[row.rangeRetreatMove] = { intent: 'buff', sp: rCard.staminaCost, weight: 0, retreatWeight: rHint.aiWeight ?? 0,
+        ...(rHint.maxConsecutive ? { maxConsecutive: rHint.maxConsecutive } : {}), effects: dataClone(rCard.effects) };
+      closingKeys.add(JSON.stringify([def.id, row.rangeRetreatMove]));
+      additions.push(...[...(rCard.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeRetreatMove, tagId })));
+    }
     for (const [id, metadata] of Object.entries(row.cardHints || {})) {
       const source = cards.get(id);
+      // Core-only offense (owner, 2026-10-25): a hint with coreOffense "card" takes its move's hit count and per-hit
+      // damage from the Core card, so a multi-hit move trimmed to fit the enemy's SP pool stays in Core content only.
+      if (metadata.coreOffense === 'card' && moves[metadata.legacyMove]) {
+        const hits = (source?.effects || []).filter(effect => effect.op === 'damage');
+        if (hits.length !== 1 || !Number.isSafeInteger(hits[0].amount) || !Number.isSafeInteger(hits[0].hits ?? 1) || moves[metadata.legacyMove].damage === undefined) {
+          throw new GameConfigError(`$/content/enemies/${def.id}/cardHints/${id}/coreOffense`, 'requires one whole-number damage effect on the card and a move with authored damage');
+        }
+        moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], damage: hits[0].amount, hits: hits[0].hits ?? 1 };
+      }
+      // Core-only price (owner, 2026-10-25): a hint with coreSp "card" prices its move at the Core card's staminaCost, so a
+      // single-hit attack is not left costing the stance-table 2 SP against a 1 SP pool. Legacy keeps the stance price.
+      if (metadata.coreSp === 'card' && moves[metadata.legacyMove]) {
+        if (!source || !Number.isSafeInteger(source.staminaCost) || source.staminaCost < 0) {
+          throw new GameConfigError(`$/content/enemies/${def.id}/cardHints/${id}/coreSp`, 'requires an owned card with a whole-number staminaCost');
+        }
+        moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], sp: source.staminaCost };
+      }
       if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
         rangeOverrides.set(JSON.stringify([def.id, metadata.legacyMove]), source.range);
       }
     }
-    return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, rangeRoutePolicy: row.rangeRoutePolicy };
+    return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, ...(row.rangeRetreatMove === undefined ? {} : { rangeRetreatMove: row.rangeRetreatMove }), rangeRoutePolicy: row.rangeRoutePolicy };
   });
   bundle.enemyMoves = deriveEnemyMoves(bundle.enemies);
   bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && (closingKeys.has(JSON.stringify([row.scope, row.objectId])) || rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId)))),

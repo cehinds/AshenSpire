@@ -5,7 +5,7 @@ export function desktopFooterEnabled({ formFactor, appearance, layout }) {
   return ['desktop', 'widescreen'].includes(formFactor) && appearance === 'alternative' && layout === 'formation';
 }
 export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
-  const scale = Math.min(config.maximumScale, height * zoom / config.referenceHeightPx);
+  const scale = Math.max(config.minimumScale, Math.min(config.maximumScale, height * zoom / config.scaleHeightPx));
   const unit = scale / zoom;
   const bottom = height - config.bottomInsetPx * unit;
   const corner = config.cornerInsetPx * unit;
@@ -25,9 +25,12 @@ export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConf
 }
 export function desktopHandLayout({ width, height, count, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
   const unit = height / config.handHeightPx;
-  const cardWidth = config.cardWidthPx * unit, cardHeight = config.cardHeightPx * unit;
+  // Owner (2026-10-26): desktop cards stay at the SPEC floor (150 viewport px) however large
+  // the screen, so the whole face, bottom line included, shows above the footer.
+  const capped = Math.min(config.cardWidthPx * unit, (config.cardMaxViewportPx || Infinity) / zoom);
+  const cardWidth = capped, cardHeight = capped * config.cardHeightPx / config.cardWidthPx;
   const side = Math.max(14 / zoom, (width - 1010 * unit) / 2);
-  const step = count > 1 ? Math.max(44 / zoom, Math.min(config.cardStepPx * unit, (width - side * 2 - cardWidth) / (count - 1))) : 0;
+  const step = count > 1 ? Math.max(44 / zoom, Math.min(config.cardStepPx * unit * (capped / (config.cardWidthPx * unit)), (width - side * 2 - cardWidth) / (count - 1))) : 0;
   const span = count ? cardWidth + (count - 1) * step : 0;
   const start = Math.max(side, (width - span) / 2), middle = (count - 1) / 2;
   const cards = Array.from({ length: count }, (_, i) => {

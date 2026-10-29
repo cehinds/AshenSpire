@@ -28,7 +28,7 @@ const fresh = () => {
   if (!run.deck.some((card) => card.cardId === 'core.smash')) run.deck.push(createCardInstance('core.smash', false, () => 'smash-fixture'));
   return run;
 };
-const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = 'n3_0'; return beginGameProfileRest(run, '1:n3_0'); };
+const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
 const fight = (run) => {
   const combat = createRunCombat({ registries: reg, run, rng: createRng(17), enemyIds: ['wanderingSoldier'] });
   combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
@@ -62,7 +62,7 @@ test('Core weapon tier: receipt names AR and each card it changes, and a played 
   assert.ok(smith);
   // The receipt is the printed face: a fight's card face shows exactly before/after (levels reset for before).
   const face = (cardId) => { const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === cardId);
-    const entry = previewCard(combat, card.instanceId).values.find((e) => e.op === 'damage'); return entry.faceValue ?? entry.value; };
+    const entry = previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'damage'); return entry.faceValue ?? entry.value; };
   const shown = new Map(cards.map((row) => [row.cardId, face(row.cardId)]));
   const played = new Map(cards.map((row) => [row.cardId, liveDamage(run, row.cardId)]));
   run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 0 };
@@ -89,7 +89,7 @@ test('Core armor tier: receipt shows the budget point and the block it adds to D
   assert.equal(gear.resolved.budget, budget.after);
   const block = run.lastSmithingReceipt.changes.find((row) => row.kind === 'card' && row.op === 'block' && row.cardId === 'core.defend');
   assert.ok(block && block.after > block.before);
-  const defend = (combat) => { const card = cardsOf(combat).find((row) => row.cardId === 'core.defend'); return previewCard(combat, card.instanceId).values.find((e) => e.op === 'block').value; };
+  const defend = (combat) => { const card = cardsOf(combat).find((row) => row.cardId === 'core.defend'); return previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'block').value; };
   assert.equal(defend(fight(run)), block.after);
   run.itemUpgradeLevels = {};
   assert.equal(defend(fight(run)), block.before);
@@ -201,7 +201,7 @@ test('card rows record the printed face number, not the number against the first
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
   const smash = candidate.coreCardRows.find((row) => row.cardId === 'core.smash' && row.op === 'damage');
   const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === 'core.smash');
-  const entry = previewCard(combat, card.instanceId).values.find((e) => e.op === 'damage');
+  const entry = previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'damage');
   assert.equal(smash.before, entry.faceValue ?? entry.value);
 });
 
@@ -231,7 +231,7 @@ test('an armor tier always raises DR, and Defend block preview equals the played
   const run = fresh(); run.loadout.sets.armor[0] = 'vigil'; visit(run);
   const dr = gameProfileRatingReceipt(reg, run).totals.dr;
   const defendBlock = (combat) => { const card = cardsOf(combat).find((row) => row.cardId === 'core.defend');
-    const shown = previewCard(combat, card.instanceId).values.find((e) => e.op === 'block').value;
+    const shown = previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((e) => e.op === 'block').value;
     combat.piles.hand = [card, ...combat.piles.hand.filter((row) => row !== card)];
     const had = combat.player.block; dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
     assert.equal(combat.player.block - had, shown, 'preview equals live'); return shown; };

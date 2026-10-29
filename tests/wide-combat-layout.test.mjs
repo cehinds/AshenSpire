@@ -41,7 +41,7 @@ for (const { width, height, zoom } of WINDOWS) {
       const wide = planCombatLayout({ formFactor, ...local });
       assert.deepEqual(SHARED.map(key => wide[key]), SHARED.map(key => phone[key]), `${formFactor} bands at ${width}x${height}`);
       assert.ok(wide.footer * zoom >= 92 && wide.footer * zoom <= height * .3, `${formFactor} footer at ${width}x${height}: ${wide.footer * zoom}px`);
-      assert.ok(near(wide.hand / local.height, .27) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
+      assert.ok(near(wide.hand / local.height, .20) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
     }
   });
 }

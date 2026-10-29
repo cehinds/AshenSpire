@@ -31,10 +31,15 @@ test('compact band, footer and low-level hand arithmetic retain the captured bas
   const { bandsTablet, ...actual } = JSON.parse(JSON.stringify(phoneGeometry()));
   const { bandsTablet: retiredTablet, ...expected } = fixture;
   assert.deepEqual(actual, expected);
-  const height = 844 / .91;
-  assert.ok(Math.abs(bandsTablet.battlefield / height - .49) < 1e-9);
-  assert.ok(Math.abs(bandsTablet.hand / height - .27) < 1e-9);
-  assert.ok(Math.abs(bandsTablet.footer / height - .14) < 1e-9);
+  // The approved 6/61/20/13 shares, with the hand's 184px and the footer art's
+  // physical minimums taking over where a share falls under them.
+  const zoom = .91, height = 844 / zoom;
+  const hand = Math.max(height * .20, 184 / zoom);
+  const footer = Math.max(height * .13, footerArtHeight(390 / zoom, zoom, 'mobile'));
+  assert.ok(Math.abs(bandsTablet.hud / height - .06) < 1e-9);
+  assert.ok(Math.abs(bandsTablet.hand - hand) < 1e-9);
+  assert.ok(Math.abs(bandsTablet.footer - footer) < 1e-9);
+  assert.ok(Math.abs(bandsTablet.battlefield - (height - bandsTablet.hud - hand - footer)) < 1e-9);
 });
 
 test('the phone band plan never reads the wide sizing: its shares are the phone bands', () => {

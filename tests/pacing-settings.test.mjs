@@ -18,7 +18,7 @@ test('Auto combat speed defaults to ×1.5 and ranges ×1 to ×3, beside the manu
   const auto = row('autoCombatSpeed');
   assert.deepEqual([auto.def, auto.min, auto.max, auto.type], [1.5, 1, 3, 'number']);
   assert.match(auto.label, /Auto combat speed/);
-  assert.equal(row('combatSpeed').def, 1, 'the manual multiplier stays ×1');
+  assert.equal(row('combatSpeed').def, 1.25, 'the manual multiplier defaults to ×1.25 (owner 2026-10-26)');
 });
 
 test('both rows persist and export with the settings profile', () => {
@@ -33,7 +33,7 @@ test('saved values reach the pacing, and a cleared value falls back to the defau
   setCombatPacing({ autoCombat: true, autoCombatSpeed: undefined, combatStepPause: undefined });
   assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9);
   setCombatPacing({});
-  assert.equal(actionPacing().gapMs, 500);
+  assert.equal(actionPacing().gapMs, 500 / 1.25, 'the default 500 ms at the ×1.25 manual default');
   setCombatPacing();
 });
 
@@ -46,9 +46,9 @@ test('reduced motion and the Instant pace still drop every pause', () => {
 });
 
 test('the shorter default preserves an explicitly saved pause and authored sprite duration', () => {
-  setAnimSpeed('normal'); setCombatPacing();
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
   const defaultClip = actionPacing().spriteSpeed.lungeMs;
-  setCombatPacing({ combatStepPause: 1000 });
+  setCombatPacing({ combatSpeed: 1, combatStepPause: 1000 });
   assert.equal(actionPacing().gapMs, 1000);
   assert.equal(actionPacing().spriteSpeed.lungeMs, defaultClip);
   assert.equal(defaultClip, 390);
@@ -57,29 +57,29 @@ test('the shorter default preserves an explicitly saved pause and authored sprit
 
 test('a saved pre-D11 combatActionDelay (old Action delay) does not carry into the new pause', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatActionDelay: 0 });
-  assert.equal(actionPacing().gapMs, 500);
+  assert.equal(actionPacing().gapMs, 500 / 1.25);
   setCombatPacing({ combatActionDelay: 5000 });
-  assert.equal(actionPacing().gapMs, 500);
+  assert.equal(actionPacing().gapMs, 500 / 1.25);
   setCombatPacing();
 });
 
 test('animation duration and combat interval independently control their timeline paths', () => {
-  setAnimSpeed('normal'); setCombatPacing();
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
   const baseline = actionPacing();
-  setCombatPacing({ animationStepDuration: 195 });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: 195 });
   const quickSprite = actionPacing();
   assert.equal(quickSprite.spriteSpeed.lungeMs, 195);
   for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'stepMs']) {
     assert.equal(quickSprite[key], baseline[key], key);
   }
-  setCombatPacing({ animationStepDuration: 195, combatStepPause: 1000 });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: 195, combatStepPause: 1000 });
   assert.equal(actionPacing().gapMs, 1000);
   assert.deepEqual(actionPacing().spriteSpeed, quickSprite.spriteSpeed);
-  setCombatPacing({ animationStepDuration: Infinity });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: Infinity });
   assert.equal(actionPacing().spriteSpeed.lungeMs, 390);
-  setCombatPacing({ animationStepDuration: -5 });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: -5 });
   assert.ok(Math.abs(actionPacing().spriteSpeed.lungeMs - 50) < 1e-9);
-  setCombatPacing({ animationStepDuration: 99999 });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: 99999 });
   assert.equal(actionPacing().spriteSpeed.lungeMs, 3000);
   setCombatPacing();
 });
@@ -104,7 +104,7 @@ test('mobile fast preset writes visible persisted controls, manual edits return 
 test('zero pause is a valid committed value and preserves normal sprite duration', () => {
   const committed = commitNumberRow({}, row('combatStepPause'), '0');
   assert.deepEqual(committed, { value: 0, refusal: null });
-  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: committed.value });
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: committed.value });
   const timing = actionPacing();
   for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 0, key);
   assert.equal(timing.spriteSpeed.lungeMs, 390, 'turning pauses off retains normal animation');

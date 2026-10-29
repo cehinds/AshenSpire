@@ -1,5 +1,6 @@
 import { gameModule } from './gameProfile.js';
-import { gameProfileServiceActive } from './gameProfileRun.js';
+import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
+import { rederivePools } from './levelup.js';
 // Smithing is a run-owned transaction over a namespaced item, never a card copy.
 // The caller supplies the balance block so this model does not become a second
 // home for economy tuning. Exact item/tier tags own every cost and change.
@@ -11,7 +12,9 @@ import {
   cumulativeRequirementDelta,
   itemRefIdentity,
   itemUpgradeCost,
+  itemUpgradeCostAt,
   itemUpgradeRows,
+  itemUpgradeRowsAt,
   itemUpgradeTiers,
   itemUpgradeValueReceipts,
   parseItemUpgradeTag,
@@ -305,7 +308,7 @@ function validateLastReceipt(registries, run) {
   for (const key of ['beforeLevel', 'afterLevel', 'authoredCost', 'spent', 'cost', 'stoneBalanceBefore', 'stoneBalanceAfter']) {
     integer(receipt[key], `run.lastSmithingReceipt.${key}`);
   }
-  if (receipt.afterLevel !== receipt.beforeLevel + 1 || !itemUpgradeTiers(registries, receipt.itemRef).includes(receipt.afterLevel)) {
+  if (receipt.afterLevel !== receipt.beforeLevel + 1 || !itemUpgradeTiers(registries, receipt.itemRef, run).includes(receipt.afterLevel)) {
     throw new Error('run.lastSmithingReceipt levels do not describe one valid Smithing promotion');
   }
   if (typeof receipt.free !== 'boolean') throw new Error('run.lastSmithingReceipt.free must be boolean');
@@ -318,7 +321,7 @@ function validateLastReceipt(registries, run) {
       throw new Error('run.lastSmithingReceipt refined balance does not describe its Smithing transaction');
     }
   }
-  const authoredCost = itemUpgradeCost(itemUpgradeRows(registries, receipt.itemRef, receipt.afterLevel));
+  const authoredCost = itemUpgradeCostAt(registries, receipt.itemRef, receipt.afterLevel, itemUpgradeRowsAt(registries, receipt.itemRef, receipt.afterLevel, run), run);
   const expectedSpend = receipt.free || purse === 'refined' ? 0 : authoredCost;
   if (receipt.authoredCost !== authoredCost || receipt.spent !== expectedSpend || receipt.cost !== receipt.spent
       || receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.spent) {
@@ -390,7 +393,7 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
   const levelMap = levels(run);
   for (const [itemRef, level] of Object.entries(levelMap)) {
     if (!itemByRef(registries, itemRef)) throw new Error(`Unknown run.itemUpgradeLevels item '${itemRef}'`);
-    const tiers = itemUpgradeTiers(registries, itemRef);
+    const tiers = itemUpgradeTiers(registries, itemRef, run);
     if (level > (tiers.at(-1) || 0)) throw new Error(`run.itemUpgradeLevels.${itemRef} exceeds its highest authored tier ${tiers.at(-1) || 0}`);
   }
   const stones = stoneBalance(run);
@@ -405,9 +408,11 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
     const piece = itemByRef(registries, itemRef);
     const currentLevel = levelMap[itemRef] || 0;
     const nextLevel = currentLevel + 1;
-    const upgradeRows = itemUpgradeRows(registries, itemRef, nextLevel);
+    const upgradeRows = itemUpgradeRowsAt(registries, itemRef, nextLevel, run);
+    // A Core item stops at its ladder's top tier (the CSV only authors tier 1).
+    if (upgradeRows.length && !itemUpgradeTiers(registries, itemRef, run).includes(nextLevel)) continue;
     if (!upgradeRows.length) continue;
-    const cost = free ? 0 : itemUpgradeCost(upgradeRows);
+    const cost = free ? 0 : itemUpgradeCostAt(registries, itemRef, nextLevel, upgradeRows, run);
     // Core 2: cards are not tier-rewritten, so the receipt comes from the Core pipeline (smithingCore.js)
     // and the legacy source rows only supply the item's tier ladder and stone cost.
     const core = identity.itemKind !== 'relic' && coreSmithingActive(run)
@@ -433,7 +438,7 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
     const coreExtras = core?.length ? [
       ...requirements.filter((row) => row.currentRequired !== row.nextRequired)
         .map((row) => ({ kind: 'requirement', tag: `requirement:${row.attributeId}`, label: `${row.label} requirement`, before: row.currentRequired, after: row.nextRequired })),
-      ...(identity.itemKind === 'armor' ? itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel) : []),
+      ...(identity.itemKind === 'armor' && itemUpgradeRows(registries, itemRef, nextLevel).length ? itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel) : []),
     ] : [];
     const changes = core ? Object.freeze([...core, ...coreExtras].map((row) => Object.freeze({ ...row })))
       : identity.itemKind === 'armament'
@@ -490,6 +495,7 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
     instance.sourceArmamentId = pieceId;
     instance.smithingLevel = levels(run)[`armament/${pieceId}`] || 0;
     instance.upgraded = false;
+    delete instance.upgradeSteps;
   }
   return cards;
 }
@@ -549,6 +555,23 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
 export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRules = undefined, options = {}) {
   if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
+}
+
+/**
+ * Run `commit` inside the Smith service a Core run requires, then re-derive the pools like the rest Smith does:
+ * an equipped item's tier moves attributes and max HP/MP/SP. Already inside the service (the rest Smith), the
+ * caller owns the re-derive. Legacy and Current have no derived-stat snapshot, so rederivePools is a no-op.
+ */
+export function withSmithService(registries, run, commit) {
+  if (gameProfileServiceActive(run, 'smith')) return commit();
+  const receipt = withGameProfileService(run, 'smith', commit);
+  rederivePools(registries, run, 'Smith equipment upgrade');
+  return receipt;
+}
+
+/** The merchant's Upgrade an Item service: pays smithingPlan's stone price inside the Smith service. */
+export function commitMerchantSmithing(registries, run, itemRef) {
+  return withSmithService(registries, run, () => commitSmithing(registries, run, itemRef));
 }
 
 /**
@@ -624,7 +647,7 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
   const wasMissing = run.smithingStones == null || run.itemUpgradeLevels == null || run.smithingRewardClaims == null;
   const priorLevels = levels(run);
   for (const [itemRef, level] of Object.entries(priorLevels)) {
-    const maxTier = itemUpgradeTiers(registries, itemRef).at(-1) || 0;
+    const maxTier = itemUpgradeTiers(registries, itemRef, run).at(-1) || 0;
     if (!itemByRef(registries, itemRef) || level > maxTier) throw new Error(`Invalid item upgrade level '${itemRef}=${level}'`);
   }
   const itemUpgradeLevels = { ...priorLevels };
@@ -637,6 +660,7 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
     itemUpgradeLevels[itemRef] = Math.max(beforeLevel, 1);
     if (itemUpgradeLevels[itemRef] !== beforeLevel) promotedArmaments.add(pieceId);
     instance.upgraded = false;
+    delete instance.upgradeSteps;
   }
   run.smithingStones = run.smithingStones == null ? 0 : stoneBalance(run);
   run.itemUpgradeLevels = itemUpgradeLevels;

@@ -110,7 +110,9 @@ export function stanceEntryBonuses(carrier, ctx = null) {
   const profile = carrier.combatProfile || carrier;
   const auxiliaryEvade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true);
-  return { precision: offensive ? cfg.offensivePrecision : 0, evade: stance.maneuver === 'evade' || auxiliaryEvade ? cfg.evadeStacks : 0,
+  // Core 2 reads the entry grant from its own rules (the Evade card's evadeStackBase: 3, or a resumed fight's snapshot value);
+  // the global stanceRules.evadeStacks stays 1 for the non-Core expanded path.
+  return { precision: offensive ? cfg.offensivePrecision : 0, evade: stance.maneuver === 'evade' || auxiliaryEvade ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
     block, barrier: amount - block };
 }
 

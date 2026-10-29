@@ -39,7 +39,7 @@ import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import {
-  MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
+  MAP_MODES, MAP_MODE_DEFAULT, SHRINE_GLOW_DEFAULT,
 } from '../../model/map/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
@@ -331,7 +331,7 @@ function recoverySettingRows() {
 }
 
 const ROWS = [
-  { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
+  { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'On: pick an Upcast rank before the play. Off: use the Upcast button.' },
   { cat: 'Combat', key: 'combatLogConsole', type: 'toggle', def: false, label: t('settings.row.combatLogConsole'),
     note: tFull('settings.row.combatLogConsole') },
   { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
@@ -378,7 +378,7 @@ const ROWS = [
   { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
     min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, label: t('settings.row.combatSpeed'),
     note: tFull('settings.row.combatSpeed') },
-  { cat: 'Combat', key: 'combatPreference', retired: true, type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+  { cat: 'Combat', key: 'combatPreference', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
     choices: ['offense', 'defense'], label: t('settings.row.combatPreference'), note: tFull('settings.row.combatPreference') },
   { cat: 'Combat', key: 'autoCombatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
     min: AUTOMATION_DEFAULTS.autoSpeedMinimum, max: AUTOMATION_DEFAULTS.autoSpeedMaximum, step: 0.25, label: t('settings.row.autoCombatSpeed'),
@@ -453,7 +453,7 @@ const ROWS = [
   // steps for a night).
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: t('settings.row.mapMode'),
-    note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
+    note: tFull('settings.row.mapMode') },
   // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
   // nearest shrine should have a glowing effect. (make this toggleable in the
   // settings)". He scoped the switch himself in the same sentence that asked
@@ -625,6 +625,10 @@ const ROWS = [
   // One visible door to Reset all (owner, 2026-10-04): the ⋮ menu item is easy
   // to miss. Both doors ask first through confirmResetAll. Last in Interface on
   // purpose: tools/displayfirst.mjs plants expect fullscreen then accent first.
+  // The only door to Download & saves from Settings now the top action row is
+  // gone (owner, 2026-10-26); it opens the same panel the row used to.
+  { cat: 'Display', key: 'downloadSaves', id: 'settings-download', type: 'button', btn: offlinePlay.title, label: t('settings.row.downloadSaves'),
+    note: tFull('settings.row.downloadSaves') },
   { cat: 'Display', key: 'resetAllSettings', type: 'button', btn: `${t('settings.resetAll.confirm')}…`, label: t('settings.row.resetAllSettings'),
     note: tFull('settings.row.resetAllSettings') },
 
@@ -998,6 +1002,17 @@ export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'T
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
 /**
+ * switchHtml({ label, on, key, attrs }) → a boolean setting as a real checkbox with role="switch" (owner,
+ * 2026-10-26). The input is the control: native keyboard (Space), the browser's own checked state and a
+ * visible focus ring on its track; the label text is read from the row, not from an aria-label copy.
+ * `attrs` is already-escaped extra attributes (data-key, data-action, aria-describedby, disabled).
+ */
+function switchHtml({ label, on, attrs = '' }) {
+  return `<label class="as-switch"><input type="checkbox" role="switch" class="as-switch-input toggle"${on ? ' checked' : ''}${attrs}>`
+    + `<span class="as-switch-track" aria-hidden="true"><span class="knob"></span></span><span class="sr-only">${esc(stripTags(label))}</span></label>`;
+}
+
+/**
  * developerSwitchHtml() → the Developer tools switch drawn above every
  * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
  * at all on the 1.0 release builds, where the tools stay off (owner,
@@ -1005,9 +1020,10 @@ const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount'
  */
 export function developerSwitchHtml(state = debugSwitch()) {
   if (state.hidden) return '';
+  const label = 'Developer tools';
   return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
-    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
-    + `<span class="r-trail"><button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button></span></div>`;
+    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">${label}</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
+    + `<span class="r-trail">${switchHtml({ label, on: state.on, attrs: ' data-developer-switch' })}</span></div>`;
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
@@ -1902,7 +1918,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'button') {
     return `${rowOpen()}
         ${stack()}
-        <span class="r-trail"><button type="button" class="as-btn" data-btn="${r.key}">${r.btn || 'Open'}</button></span>
+        <span class="r-trail"><button type="button" class="as-btn"${r.id ? ` id="${r.id}"` : ''} data-btn="${r.key}">${r.btn || 'Open'}</button></span>
       </div>`;
   }
   if (r.type === 'choice') {
@@ -1927,13 +1943,13 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <span class="ls-hint set-note">${note}</span>
         <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.</span>
       </span>
-      <span class="r-trail"><button type="button" class="as-toggle toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true"><span class="knob"></span></button></span>
+      <span class="r-trail">${switchHtml({ label: r.label, on: false, attrs: ` data-key="${r.key}" data-action="1" aria-describedby="set-${r.key}-status" disabled` })}</span>
     </div>`;
   }
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `${rowOpen()}
       ${stack()}
-      <span class="r-trail"><button type="button" class="as-toggle toggle ${on ? 'on' : ''}" data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"><span class="knob"></span></button></span>
+      <span class="r-trail">${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''}` })}</span>
     </div>`;
 }
 
@@ -2520,12 +2536,15 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(row);
   }
+  // Auto combat and pacing is what a player reaches for first in Combat (owner, 2026-10-26).
+  const first = t('settings.topic.autoCombat');
+  if (category === 'Combat' && groups.has(first)) return new Map([[first, groups.get(first)], ...groups]);
   return groups;
 }
 
@@ -2724,20 +2743,23 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
     const topics = generalGroups(selected, profile, nextProfile);
-    const storedTopic = settings[`settingsGeneralTopic.${selected}`];
-    const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
-    const rows = topics.get(topic);
+    // Every topic is a titled section of one scrolling pane (owner, 2026-10-26), not a dropdown that hides the rest.
     const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
-    const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
-    const rowHtml = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected) ? [] : rows.map(row => settingsRowHtml(settings, row));
-    // On a phone the expanded preview can fill the visible pane. Keep the
-    // first Display control ahead of it so Fullscreen is reachable on entry.
-    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : firstFullscreen
-      ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
-      : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
+    const custom = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected);
+    const firstFullscreen = selected === 'Display' && [...topics.values()][0]?.[0]?.key === 'fullscreen';
+    const sections = [...topics.entries()].map(([label, topicRows], index) => {
+      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));
+      // On a phone the expanded preview can fill the visible pane. Keep the
+      // first Display control ahead of it so Fullscreen is reachable on entry.
+      const list = firstFullscreen && index === 0 ? `${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}` : rowHtml.join('');
+      const id = `set-topic-${selected}-${index}`.replace(/[^A-Za-z0-9_-]/g, '-');
+      return topics.size > 1
+        ? `<section class="set-topic" aria-labelledby="${id}" data-section-topic="${esc(label)}"><h4 class="set-subsection-heading" id="${id}">${esc(label)}</h4><div class="set-card-list">${list}</div></section>`
+        : `<div class="set-card-list">${list}</div>`;
+    }).join('');
+    const body = selected === 'Game rules' ? '<div data-game-profile-settings></div>' : `${firstFullscreen ? '' : preview}${sections}`;
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option value="${esc(group)}"${group === selected ? ' selected' : ''}>${esc(categoryLabel(group))}</option>`).join('')}</select>` : '')
-      + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
       + `</div>${body}`;
   }
   const h = categoryHandler(cat);
@@ -2892,7 +2914,7 @@ export function restoreView(root, view) {
  * its place in the ring all follow from that one list.
  */
 const MARKS_MODIFIED = Symbol('marks modified rows');
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
   const activeProfile = () => activeSettingsProfile(gameProfile);
   const nextProfile = () => gameProfile?.read?.() || readNewGameProfile(settings, activeProfile() || undefined);
   panelSettings = settings;
@@ -2906,20 +2928,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (seed) settings[SEED_KEY] = seed;
       const out = report(changes);
       markModified(container, settings, changes);
-      syncHeaderState();
       return out;
     }, { [MARKS_MODIFIED]: true });
   }
   let html = '';
   let cats = [];
   let current = null;
-  if (!headerTools) {
-    headerTools = settingsHeaderTools();
-    headerTools.dataset.inlineSettings = 'true';
-  }
-  const searchQuery = () => (grouped ? headerTools.querySelector('[data-advanced-search]')?.value.trim() || '' : '');
-  const changedOnly = () => grouped && headerTools.dataset.changedOnly === '1';
-  const filtering = () => !!searchQuery() || changedOnly();
   if (grouped) {
     cats = shownCategories(saves);
     // A stored category that no longer exists must not blank the screen. Fail
@@ -2960,7 +2974,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile())}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, '', false, activeProfile(), nextProfile())}</div></div>`;
     }
   } else {
     html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
@@ -2968,21 +2982,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const view = captureView(container);
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
-  // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
-  // in-run overlay has no head to hang them in, so they used to be prepended
-  // one after the other and landed as two stacked rows above the rail — the
-  // download button on its own line, the icon pair floating at the right of the
-  // next. Both ride one row now, and the CSS that styles them keys off
-  // `[data-settings-host]` so the overlay gets the same faces as the modal.
-  const inlineBar = document.createElement('div');
-  inlineBar.className = 'set-inline-bar';
-  if (onOffline) {
-    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
-    offline.addEventListener('click', onOffline);
-    inlineBar.append(offline);
-  }
-  if (headerTools.dataset.inlineSettings) inlineBar.append(headerTools);
-  if (inlineBar.childElementCount) container.prepend(inlineBar);
   // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
   // belongs to this render, so clearing Settings for Deck disconnects it and
   // releases listeners even while the shared container remains on the page.
@@ -2994,8 +2993,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (!btn) return;
     const capability = fullscreenCapability();
     const on = isFullscreen();
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-checked', String(on));
+    btn.checked = on;
     btn.disabled = !capability.supported;
     btn.setAttribute('aria-disabled', String(!capability.supported));
     const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
@@ -3024,31 +3022,27 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // ONE REPAINT for everything that changes what the pane shows — a category,
   // an Advanced section or topic, a search, a row reset. Only the pane is
   // rebuilt; the rail, the header tools and the page-level listeners stay.
-  let searchTimer = null;
   function repaintPanel({ keepScroll = false } = {}) {
     // The formation editor holds an unapplied draft in its DOM; apply it before
     // the pane it lives in is rebuilt, or stay put when it cannot be applied.
     if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
-    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
     // A tab switch starts at the top on purpose, so only a keepScroll repaint
     // carries the scroll offsets over; focus is kept either way.
     const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile());
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, '', false, activeProfile(), nextProfile());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
-    panel.dataset.searching = String(filtering());
-    const groupReset = headerTools.querySelector('[data-reset-config="group"]');
-    if (groupReset) groupReset.textContent = filtering() ? 'Reset these results' : 'Reset this group';
     paintUndo();
     wire();
     panel.scrollTop = scroll;
     if (panel.parentElement) panel.parentElement.scrollTop = outer;
     restoreView(container, view);
   }
-  // ---- the Undo bar, the first-open tip, the Changed toggle --------------
+  // ---- the Undo bar ------------------------------------------------------
   let undoTimer = null;
   function paintUndo() {
     container.querySelector(':scope > .set-undo')?.remove();
@@ -3091,77 +3085,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     clearTimeout(undoTimer);
     undoTimer = setTimeout(() => { if (undoOffer === offer) { undoOffer = null; bar.remove(); } }, Math.max(0, offer.until - Date.now()));
   }
-  function paintTip() {
-    if (!grouped || settings.settingsTipSeen || container.querySelector(':scope > .set-tip')) return;
-    const tip = document.createElement('div');
-    tip.className = 'set-tip';
-    tip.setAttribute('role', 'note');
-    tip.innerHTML = '<span><b>Tip:</b> the magnifier finds any setting in every section. A dot marks a setting you changed, and its Reset puts it back. <b>Changed</b> lists all of them.</span>'
-      + '<button type="button" class="as-btn" data-tip-dismiss>Got it</button>';
-    tip.querySelector('[data-tip-dismiss]').onclick = () => {
-      settings.settingsTipSeen = true;
-      onChange({ settingsTipSeen: true });
-      tip.remove();
-    };
-    container.insertBefore(tip, container.querySelector(':scope > .set-railed') || container.firstChild);
-  }
-  function syncHeaderState() {
-    const toggle = headerTools.querySelector('[data-changed-toggle]');
-    if (toggle) {
-      // The rows Changed can show: on a release build, hidden tuning is
-      // counted by Clear hidden tuning instead.
-      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true, profile: activeProfile(), nextProfile: nextProfile() }).length;
-      toggle.textContent = count ? `Changed · ${count}` : 'Changed';
-      toggle.setAttribute('aria-pressed', String(changedOnly()));
-      toggle.classList.toggle('on', changedOnly());
-    }
-    const clear = headerTools.querySelector('[data-clear-tuning]');
-    if (clear) {
-      const hidden = hiddenTuningKeys(settings);
-      clear.hidden = !hidden.length;
-      clear.textContent = `Clear hidden tuning (${hidden.length})`;
-    }
-  }
   const wire = () => {
   const profileHost = container.querySelector('[data-game-profile-settings]');
   if (profileHost && !profileHost.childElementCount) mountGameProfileSettings(profileHost, { settings, onChange, gameProfile });
   mountFormationSettings(container, settings, onChange, formationLayoutRows());
   mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
-  headerTools.querySelector('[data-search-toggle]').onclick = () => {
-    const input = headerTools.querySelector('[data-advanced-search]');
-    input.hidden = !input.hidden;
-    headerTools.classList.toggle('search-open', !input.hidden);
-    headerTools.querySelector('[data-search-toggle]').setAttribute('aria-expanded', String(!input.hidden));
-    if (!input.hidden) input.focus();
-    else if (input.value) { input.value = ''; repaintPanel(); }
-  };
-  const changedToggle = headerTools.querySelector('[data-changed-toggle]');
-  if (changedToggle) changedToggle.onclick = () => {
-    if (changedOnly()) delete headerTools.dataset.changedOnly; else headerTools.dataset.changedOnly = '1';
-    repaintPanel();
-  };
-  const clearTuning = headerTools.querySelector('[data-clear-tuning]');
-  if (clearTuning) clearTuning.onclick = async () => {
-    const keys = hiddenTuningKeys(settings);
-    if (!keys.length) return;
-    // Cleared, not reset: a promoted value for hidden tuning is not this
-    // build's default either (promotionFor leaves it out at boot).
-    await resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
-    headerTools.querySelector('details').open = false;
-    repaintPanel({ keepScroll: true });
-  };
-  syncHeaderState();
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
-  });
-  container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
-    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
-    settings[key] = event.target.value;
-    onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -3185,9 +3118,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // topics at once; they show their rows without an example until it clears.
   const drawnPreviews = new WeakMap();
   const refreshStatsPreviews = () => {
-    const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
     container.querySelectorAll('[data-stats-preview]').forEach((node) => {
-      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const shown = !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
       const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel, previewClassId) : '';
       if (drawnPreviews.get(node) === html) return;
       node.innerHTML = html;
@@ -3201,7 +3133,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       });
     });
     container.querySelectorAll('[data-level-pace-preview]').forEach((node) => {
-      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const shown = !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
       const html = shown ? levelPacePreviewHtml(settings) : '';
       if (drawnPreviews.get(node) === html) return;
       node.innerHTML = html;
@@ -3212,6 +3144,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // capacity, or a search) draws no heading over nothing.
   const syncSubsectionHeadings = () => {
     container.querySelectorAll('.set-subsection-heading').forEach((heading) => {
+      // A General topic's heading titles its own section (the rows sit in a sibling list), so it always shows.
+      if (heading.closest('.set-topic')) return;
       let node = heading.nextElementSibling;
       let visible = false;
       while (node && !node.classList.contains('set-subsection-heading')) {
@@ -3310,7 +3244,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  const advancedSearch = headerTools.querySelector('[data-advanced-search]');
   // Rows are no longer filtered in place: a query repaints the panel with its
   // matches from every section (`searchResultsHtml`). What is left here is the
   // open topic's own bookkeeping — rows the hand rules hide, the count.
@@ -3328,12 +3261,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     syncSubsectionHeadings();
     refreshStatsPreviews();
   };
-  if (advancedSearch) {
-    advancedSearch.oninput = () => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => { if (lifecycleSentinel.isConnected) repaintPanel(); }, 160);
-    };
-  }
   container.querySelectorAll('.set-advanced-group').forEach(section => {
     const selectTopic = topic => {
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
@@ -3344,7 +3271,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         tab.setAttribute('aria-selected', String(active));
         tab.classList.toggle('on', active);
       });
-      if (advancedSearch) advancedSearch.value = '';
       repaintPanel();
       container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
@@ -3364,39 +3290,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
   });
   filterAdvancedRows();
-
-  headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
-    button.onclick = () => {
-      const currentGroup = activeAdvancedGroup(settings, activeProfile());
-      const groups = cachedSubgroups(ROWS, currentGroup, activeProfile());
-      const selected = storedAdvancedTopic(settings, currentGroup);
-      // Reset all also clears inert retired keys: they are off the screen, so
-      // this is the only door that can take a stale one out of a profile.
-      // While a search is open the pane shows its matches, so "this group" IS
-      // the matches — every one the pane counts, not only the page it draws —
-      // and never the section that was open behind the search.
-      const query = searchQuery();
-      const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile(), nextProfile: nextProfile() }).map((hit) => hit.row)
-        : current === 'General' || current === 'Accessibility' ? (() => {
-          const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          const topics = generalGroups(section, activeProfile(), nextProfile());
-          return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
-        })()
-        : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
-      const keys = button.dataset.resetConfig === 'all' ? allResettableKeys()
-        : rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
-      const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
-      const fromMenu = !!button.closest('.set-options');
-      headerTools.querySelector('details').open = false;
-      const run = async () => {
-        await resetKeys(settings, onChange, keys, label);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
-      };
-      // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
-      if (button.dataset.resetConfig === 'all') confirmResetAll(run, fromMenu ? headerTools.querySelector('.set-options summary') : button); else run();
-    };
-  });
 
   container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
     btn.onclick = () => previewPrologue(settings);
@@ -3458,7 +3351,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if ((await onChange(changes))?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -3515,7 +3408,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -3654,17 +3547,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-developer-switch]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const on = setDebugEnabled(btn.getAttribute('aria-checked') !== 'true');
+    btn.addEventListener('change', () => {
+      const on = setDebugEnabled(btn.checked);
       showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
       repaintPanel({ keepScroll: true });
     });
   });
 
+  container.querySelectorAll('[data-btn="downloadSaves"]').forEach((btn) => {
+    btn.addEventListener('click', () => onOffline?.());
+  });
+
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
       await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));
   });
@@ -3733,7 +3630,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -3988,7 +3885,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
     }
     markModified(container, settings, changes);
-    syncHeaderState();
     if (key.startsWith('gameConfig.')) reportAdvancedProblems();
     else refreshGates(container, settings);
     refreshApplied(container, settings);
@@ -4005,17 +3901,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('change', async () => {
       if (btn.dataset.action) {
+        // The browser flips the box first; fullscreen is the truth, so the box is set back from it.
+        btn.checked = !btn.checked;
         const result = await toggleFullscreen();
         syncFullscreen(result.ok || result.reason === 'unsupported'
           ? ''
           : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
         return;
       }
-      const now = !btn.classList.contains('on');
-      btn.classList.toggle('on', now);
-      btn.setAttribute('aria-checked', String(now));
+      const now = btn.checked;
       const row = ROWS.find((candidate) => candidate.key === btn.dataset.key);
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
@@ -4028,7 +3924,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
-  paintTip();
   paintUndo();
 
   // THE ART-QUALITY FOLDER BUTTON, delegated once per container: the button
@@ -4115,9 +4010,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   function selectCategory(cat) {
-    const searching = !!searchQuery();
-    if (!cats.includes(cat) || (cat === current && !searching)) return;
-    if (searching) headerTools.querySelector('[data-advanced-search]').value = '';
+    if (!cats.includes(cat) || cat === current) return;
     current = cat;
     settings[CAT_KEY] = cat;
     // Persisted through the same free bag every other setting rides in
@@ -4208,27 +4101,6 @@ export function clearSettingsNotice(tag) {
   }
 }
 
-function settingsHeaderTools() {
-  const tools = document.createElement('div');
-  tools.className = 'set-header-tools';
-  tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
-    + '<button type="button" class="as-btn set-reset-defaults" data-reset-config="all">' + esc(t('settings.defaults.reset')) + '</button>'
-    + '<button type="button" class="as-btn set-changed-toggle" data-changed-toggle aria-pressed="false" title="Show only the settings you have changed">Changed</button>'
-    + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
-    + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
-    + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">' + esc(t('settings.row.resetAllSettings')) + '</button>'
-    + (pageDebug() ? '<button type="button" class="as-btn" data-export-settings>Export configuration</button>'
-      : '<button type="button" class="as-btn" data-clear-tuning hidden>Clear hidden tuning</button>') + '</div></details>';
-  const exportItem = tools.querySelector('[data-export-settings]');
-  // Import and export are debug tools (owner, 2026-09-24): a release build has
-  // neither the menu item, the Load button, nor the export prompt on Done.
-  if (exportItem) exportItem.onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
-    build: { contentVersion: contentBundle.version },
-    includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
-  });
-  return tools;
-}
-
 // `onOffline` was destructured here and then dropped: both renderSettings calls
 // below left it out, so main.js handed this door `showOfflinePlay` and the
 // title screen's Settings never grew the button it opens. The changelog for
@@ -4241,7 +4113,6 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
   // this surface owns only the body, which is the NavRail + Pane it always was.
   const done = button({ label: 'Done and Save', weight: 'primary', id: 'set-close' });
   const load = button({ label: 'Load settings', id: 'settings-load' });
-  const headerTools = settingsHeaderTools();
   // W1a header: the title and the exit, nothing above them. The old eyebrow
   // ("Title") named the door it was opened from, which W1a does not carry.
   let rendered = null;
@@ -4252,12 +4123,11 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile }); },
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile }); },
     secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
   });
-  door.head.querySelector('.modal-head-actions').prepend(headerTools);
   const picker = document.createElement('input');
   picker.type = 'file'; picker.accept = '.json,application/json'; picker.hidden = true;
   load.after(picker);
@@ -4277,7 +4147,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       if ((await onChange(saved))?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId, gameProfile });
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });

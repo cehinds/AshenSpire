@@ -12,11 +12,13 @@ import { readFileSync } from 'node:fs';
 import { SHAKE_STEPS, SHAKE_STEPS_HP, SHAKE_MAX_PX, SHAKE_FLOOR_PX, BIG_HIT_SHARE, HUGE_HIT_SHARE, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
 import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { playReaverAttack } from '../src/ui/reaverAttack.js';
+import { playReaverAttack, REAVER_ATTACK } from '../src/ui/reaverAttack.js';
+import { runActionTimeline } from '../src/ui/actionTimeline.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
+setCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -160,8 +162,10 @@ test('a painted sequence holds: its remaining frames move back by the hold', asy
 });
 
 function drive(t, fn, { maxHp } = {}) {
-  setCombatPacing();
+  setCombatPacing({ combatSpeed: 1 });
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom((dom, win, listeners) => {
     const actor = dom.document.createElement('div');
     const target = dom.document.createElement('div');
@@ -356,4 +360,57 @@ test('a damage float sizes by its share of the target max HP; no max HP keeps th
   const css = src('styles/combat.css');
   assert.match(css, /\.float-num\.pct20 \{ --pop: 1\.6; font-size: 3\.6rem; \}/);
   assert.match(css, /\.float-num\.pct35 \{ --pop: 1\.9; font-size: 4\.6rem; \}/);
+});
+
+
+
+test('ordered delayed Reaver contact preserves every timer-driven frame and its hold', t => {
+  drive(t, ({ dom, actor, tick }) => {
+    const figure = dom.document.createElement('div'); figure.className = 'class-sprite'; actor.appendChild(figure);
+    const query = actor.querySelector.bind(actor);
+    actor.querySelector = selector => selector === ':scope > .class-sprite' ? figure : query(selector);
+    const timing = { frameMs: 20, impactMs: 40, totalMs: REAVER_ATTACK.frameCount * 20 };
+    let sequence, image, done = 0, watchdog = 0, contactAt;
+    runActionTimeline([{ actorId: 'player', kind: 'attack', events: [] }], {
+      maxSpriteMs: () => timing.totalMs,
+      onSprite() { sequence = playReaverAttack(actor, timing); image = actor.children.at(-1); return sequence; },
+      onContact() { contactAt = Date.now(); sequence.hold(60); return 60; },
+      onDone() { done++; },
+      onWatchdog() { watchdog++; },
+    }, {});
+    t.mock.timers.tick(0); // Start the actual painted actor on time.
+    t.mock.timers.tick(300); // One frame callback and contact arrive late together.
+    assert.equal(contactAt, 10300);
+    assert.equal(image.dataset.frameId, 'P02', 'a delayed timer advances one authored frame');
+    const remaining = (REAVER_ATTACK.frameCount - 1) * timing.frameMs + 60;
+    const reportedRemaining = sequence.remainingMs?.();
+    tick(remaining - 1);
+    assert.equal(done, 0, 'the timeline keeps the actor until its final frame finishes');
+    assert.equal(reportedRemaining, remaining, 'the hold and all unplayed frames remain authoritative');
+    assert.equal(image.dataset.frameId, `P${String(REAVER_ATTACK.frameCount).padStart(2, '0')}`);
+    tick(1);
+    assert.equal(done, 1);
+    assert.equal(watchdog, 0);
+    assert.equal(figure.hidden, false);
+    assert.equal(sequence.remainingMs(), 0, 'cancelled actor reports no pending recovery');
+    sequence.cancel(); tick(100);
+    assert.equal(done, 1);
+  });
+});
+
+
+test('an exhausted Reaver sequence reports zero remaining duration before restoration', t => {
+  drive(t, ({ dom, actor, tick }) => {
+    const figure = dom.document.createElement('div'); figure.className = 'class-sprite'; actor.appendChild(figure);
+    const query = actor.querySelector.bind(actor);
+    actor.querySelector = selector => selector === ':scope > .class-sprite' ? figure : query(selector);
+    const timing = { frameMs: 20, impactMs: 40, totalMs: REAVER_ATTACK.frameCount * 20 };
+    const sequence = playReaverAttack(actor, timing);
+    assert.equal(sequence.remainingMs(), timing.totalMs);
+    tick(timing.totalMs);
+    assert.equal(sequence.remainingMs(), 0, 'no authored frame time remains after exhaustion');
+    sequence.cancel();
+    assert.equal(sequence.remainingMs(), 0);
+    assert.equal(figure.hidden, false);
+  });
 });

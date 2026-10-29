@@ -3246,7 +3246,7 @@
                     "__string": "Hover explanations"
                   },
                   "note": {
-                    "__string": "Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available."
+                    "__string": "Show explanations when the pointer rests on a detail."
                   }
                 }
               },
@@ -3273,7 +3273,7 @@
                     "__string": "Explanation delay"
                   },
                   "note": {
-                    "__string": "Wait before opening or switching hover and nested explanations. A tap or click selects a detail; a second one explains it."
+                    "__string": "Wait before hover explanations open or switch."
                   }
                 }
               },
@@ -9146,16 +9146,16 @@
         "frozen": true,
         "values": {
           "hud": {
-            "__number": "60"
+            "__number": "36"
           },
           "battlefield": {
-            "__number": "248"
+            "__number": "302"
           },
           "hand": {
-            "__number": "208"
+            "__number": "184"
           },
           "footer": {
-            "__number": "84.00000000000001"
+            "__number": "78"
           },
           "minimumBattlefield": {
             "__number": "148"
@@ -9183,16 +9183,16 @@
         "frozen": true,
         "values": {
           "hud": {
-            "__number": "81.2"
+            "__number": "48.72"
           },
           "battlefield": {
-            "__number": "397.87999999999994"
+            "__number": "473.71999999999997"
           },
           "hand": {
-            "__number": "219.24"
+            "__number": "184"
           },
           "footer": {
-            "__number": "113.68"
+            "__number": "105.56"
           },
           "minimumBattlefield": {
             "__number": "148"

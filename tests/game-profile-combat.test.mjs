@@ -22,7 +22,7 @@ const fighter = (id, extra = {}) => ({ id, kind: id === 'player' ? 'player' : 'e
   alive: true, block: 0, statuses: {}, ratings: { ar: 2, dr: 1, poise: 0 }, ...extra });
 function live(modules = {}, selectedProfile = null, moves = null) {
   const gameProfile = selectedProfile || profile(modules);
-  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(moves ? { ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, id: 'profileTestSoldier', firstMove: 'slash', attributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 }, moves } : enemy) } : contentBundle, gameProfile)), gameProfile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(moves ? { ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, id: 'profileTestSoldier', firstMove: 'slash', attributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 }, equipmentSp: 0, moves } : enemy) } : contentBundle, gameProfile)), gameProfile);
   const deck = Array.from({ length: 10 }, (_, i) => ({ instanceId: `core-${i}`, cardId: i < 6 ? 'core.strike' : 'core.defend', upgraded: false }));
   const combat = createCombat({ registries, rng: createRng(311), gameProfile, enemyIds: [moves ? 'profileTestSoldier' : 'wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 100, hp: 100, maxStamina: 10, stamina: 10, maxMana: 5, mana: 5,

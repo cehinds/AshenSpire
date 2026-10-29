@@ -1,3 +1,4 @@
+import { CORE2_ACTION_RULES_VERSIONS } from './core2ActionPolicy.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from './fixCoreMechanics.js';
 import { enemySpPaymentValid } from './core2ActionPolicy.js';
 import { enemyBurdenProblems } from '../engine/enemyBurdens.js';
@@ -7,6 +8,7 @@ import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
 import { recoveryRulesProblems } from './recoveryRules.js';
+import { upgradeStepsProblems } from './cardUpgrade.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems, combatTraitGuardProblems } from './combatTacticsRules.js';
 import { statusControlProblems } from './combatStatusState.js';
@@ -54,6 +56,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.proposalIntentRevealedUntilByOwner !== undefined && (!record(entity.proposalIntentRevealedUntilByOwner)
     || Object.entries(entity.proposalIntentRevealedUntilByOwner).some(([id, until]) => !nonEmptyString(id) || !Number.isSafeInteger(until) || until < 0)))
     problems.push(`${path}.proposalIntentRevealedUntilByOwner must map player ids to non-negative turn numbers`);
+  if (entity.intent?.resolved !== undefined && typeof entity.intent.resolved !== 'boolean') problems.push(`${path}.intent.resolved must be boolean`);
   if (entity.intent?.counterDefensePrimed !== undefined) {
     if (typeof entity.intent.counterDefensePrimed !== 'boolean') problems.push(`${path}.intent.counterDefensePrimed must be boolean`);
     else if (entity.intent.counterDefensePrimed && (!nonEmptyString(entity.intent.moveId) || entity.intent.combatProfile?.maneuver !== 'counter')) problems.push(`${path}.intent.counterDefensePrimed requires the committed Counter move`);
@@ -115,6 +118,7 @@ function cardProblems(card, path) {
   if (!nonEmptyString(card.instanceId)) problems.push(`${path}.instanceId must be a non-empty string`);
   if (!nonEmptyString(card.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
+  problems.push(...upgradeStepsProblems(card, path));
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
   if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_SKILL_BONUS)) problems.push(`${path}.passiveBlock must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
@@ -125,7 +129,7 @@ function cardProblems(card, path) {
 export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
-  if (snapshot.core2ActionRulesVersion !== undefined && snapshot.core2ActionRulesVersion !== 1) problems.push('snapshot.core2ActionRulesVersion must be 1 when present');
+  if (snapshot.core2ActionRulesVersion !== undefined && !CORE2_ACTION_RULES_VERSIONS.includes(snapshot.core2ActionRulesVersion)) problems.push(`snapshot.core2ActionRulesVersion must be one of ${CORE2_ACTION_RULES_VERSIONS.join(', ')} when present`);
   if (snapshot.gameProfile !== undefined) {
     try { validateGameProfileSnapshot(snapshot.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (!Number.isInteger(snapshot.gameProfileCommands) || snapshot.gameProfileCommands < 0) problems.push('gameProfileCommands must be a nonnegative integer');
@@ -367,7 +371,7 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
         ? (registries.equipment.armour || []).some((row) => row.classId === identity.classId && row.id === identity.itemId)
         : identity?.itemKind === 'relic' && registries.relics.has(identity.itemId);
     if (!known) problems.push(`itemUpgradeLevels.${itemRef} is unknown`);
-    else if (level > (itemUpgradeTiers(registries, itemRef).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
+    else if (level > (itemUpgradeTiers(registries, itemRef, snapshot).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
   }
   if (snapshot.pendingCardChoice?.effect?.transformTo) has(registries.cards,snapshot.pendingCardChoice.effect.transformTo,'pendingCardChoice.transformTo');
   for (const row of snapshot.hiddenCards || []) has(registries.cards,row.card?.cardId,'hiddenCards.cardId');

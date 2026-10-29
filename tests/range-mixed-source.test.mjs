@@ -42,7 +42,7 @@ test('one live root retains the bow and dagger source of each contact in either 
     assert.equal(ctx.player.stamina,0);
     const hits=ctx.eventLog.slice(start).filter(row=>row.type==='attackHit');
     assert.equal(hits.length,2);
-    assert.equal(ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')],2);
+    assert.equal(ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')],0);
   }
 });
 test('a weapon plus independent spell keeps each delivery range through a real save',()=>{

@@ -10,11 +10,15 @@ import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { sfx } from '../src/ui/sfx.js';
 import { haptic } from '../src/ui/haptics.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const IMPACT = 100, TOTAL = 300;
 
 function drive(t, events, beatOrder) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   const trace = [];
   const at = (what) => trace.push({ what, at: Date.now() });
   const oldSfx = sfx.sink, oldHaptic = haptic.sink;
@@ -81,3 +85,4 @@ test('sequential: an attack card\'s heal and Block sounds come with their number
   assert.equal(timeOf(trace, (w) => w === 'sound:heal'), timeOf(trace, (w) => w === 'float:+3'), 'heal sound with its number');
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:+5'), 'block sound with its number');
 });
+

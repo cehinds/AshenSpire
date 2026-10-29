@@ -45,9 +45,11 @@
         "enemyRowHeight": 0.11,
         "playerTop": 0.68,
         "playerRowHeight": 0.26,
-        "skew": 0.95,
-        "top": 0.56,
-        "rowHeight": 0.11
+        "skew": 0.6,
+        "top": 0.3,
+        "rowHeight": 0.17,
+        "hudWidthFraction": 0.5,
+        "hudCenterOnBody": true
       },
       "narrow": {
         "left": 0.01,
@@ -82,9 +84,23 @@
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "skew": 0.45,
-        "top": 0.52,
+        "hudWidthFraction": 0.55,
+        "skew": 1.6,
+        "top": 0.48,
         "rowHeight": 0.115
+      },
+      "shortLandscape": {
+        "left": 0.12,
+        "right": 0.88,
+        "enemyTop": 0.56,
+        "enemyRowHeight": 0.12,
+        "playerTop": 0.8,
+        "playerRowHeight": 0.2,
+        "hudWidthFraction": 0.55,
+        "skew": 4.2,
+        "top": 0.7,
+        "rowHeight": 0.06,
+        "minArtLaneFraction": 0.4
       },
       "bands": [
         {
@@ -92,7 +108,7 @@
           "index": 0,
           "anchor": {
             "x": 0.5,
-            "y": 0.24
+            "y": 1
           },
           "depth": 0.84,
           "layer": 0
@@ -102,7 +118,7 @@
           "index": 1,
           "anchor": {
             "x": 0.5,
-            "y": 0.24
+            "y": 1
           },
           "depth": 0.92,
           "layer": 1
@@ -112,7 +128,7 @@
           "index": 2,
           "anchor": {
             "x": 0.5,
-            "y": 0.24
+            "y": 1
           },
           "depth": 0.96,
           "layer": 2
@@ -122,7 +138,7 @@
           "index": 3,
           "anchor": {
             "x": 0.5,
-            "y": 0.4
+            "y": 1
           },
           "depth": 1,
           "layer": 3
@@ -152,6 +168,8 @@
         }
       },
       "enemyMiniHudScale": 1.5,
+      "desktopMiniHudScale": 1.3,
+      "desktopEnemyMiniHudScale": 1.1,
       "spaciousEnemyClassHeightFraction": 0.717,
       "profiles": {
         "mobile": {
@@ -183,13 +201,18 @@
           "enemyRowHeight": 0.11,
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
-          "skew": 0.95,
-          "top": 0.56,
-          "rowHeight": 0.11
+          "skew": 0.6,
+          "top": 0.3,
+          "rowHeight": 0.17,
+          "hudWidthFraction": 0.5,
+          "hudCenterOnBody": true
         }
       },
       "miniHudInsetPx": 2,
       "miniHudGroupHeightPx": 61,
+      "desktopMiniHudGroupHeightPx": 96,
+      "desktopShortMiniHudGroupHeightPx": 80,
+      "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5
     }
   }

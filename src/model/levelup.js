@@ -1,6 +1,6 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { gameModule } from './gameProfile.js';
-import { gameProfileServiceActive } from './gameProfileRun.js';
+import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
 // src/model/levelup.js — THE CHARACTER LEVEL (plan phase 6, proposal §10).
 //
 // A level is EARNED, not bought. The run keeps one ledger, `run.level =
@@ -435,6 +435,18 @@ export function applyLevelUp(registries, run, attributeId) {
     why: `one earned point assigned at level ${run.level.level} (${run.levelPoints} assigned in total, ${run.level.unspentPoints} waiting); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
   });
   return { ...plan, attributeId, points: run.level.unspentPoints, level: run.level.level };
+}
+
+/**
+ * allocateAttributePoint(registries, run, attributeId) — spend ONE earned point
+ * outside a rest visit (owner, 2026-10-27: at the Victory receipt and on the
+ * Armory character sheet). It enters the same committed 'levelUp' scope
+ * applyLevelUp demands, but neither heals nor spends a rest service; every other
+ * caller of applyLevelUp stays rest-only.
+ */
+export function allocateAttributePoint(registries, run, attributeId) {
+  if (gameProfileServiceActive(run, 'levelUp')) return applyLevelUp(registries, run, attributeId);
+  return withGameProfileService(run, 'levelUp', () => applyLevelUp(registries, run, attributeId));
 }
 
 /**

@@ -31,7 +31,8 @@
     "effects": {
       "version": "1.0.0",
       "settings": {
-        "fixCoreVersion": 1
+        "fixCoreVersion": 1,
+        "core2ActionRulesVersion": 2
       }
     },
     "statuses": {
@@ -40,7 +41,14 @@
     },
     "equipment": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "upgradeBonuses": {
+          "weaponARPerTier": 1,
+          "armorDRPerTier": 1,
+          "tierBonusSteps": [1, 1, 2],
+          "tierStoneCosts": [1, 2, 3]
+        }
+      }
     },
     "gear": {
       "version": "1.0.0",
@@ -62,9 +70,12 @@
       "version": "1.0.0",
       "settings": {
         "entitlementPolicy": "authored",
-        "characterLevels": false,
+        "cardRanks": true,
+        "characterLevels": true,
+        "attributePointsPerLevel": 1,
         "classXpMultiplier": 1,
-        "weaponXpMultiplier": 1
+        "weaponXpMultiplier": 1,
+        "characterXpMultiplier": 1.5
       }
     },
     "routes": {
@@ -145,7 +156,56 @@
     "deck-training": {
       "version": "1.0.0",
       "settings": {
-        "ownedOnlyCollection": true
+        "ownedOnlyCollection": true,
+        "unlimited": [
+          {
+            "id": "basicTraining",
+            "requiresTag": "training.basic",
+            "pools": [
+              "strike",
+              "defend",
+              "counter",
+              "smash",
+              "sweep",
+              "evade",
+              "jab",
+              "gash",
+              "pommelStrike",
+              "steadyGuard",
+              "drivingThrust",
+              "expose",
+              "hammerBlow",
+              "rendingSmash",
+              "wideSweep",
+              "reapingArc"
+            ],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAny": [
+                "maneuver:attack",
+                "maneuver:defend",
+                "maneuver:counter",
+                "maneuver:smash",
+                "maneuver:sweep"
+              ]
+            }
+          },
+          {
+            "id": "graduate",
+            "requiresTag": "training.graduate",
+            "pools": [],
+            "excludeCards": [
+              "core.mendingTouch"
+            ],
+            "cards": {
+              "tagsAll": [
+                "rank.cantrip"
+              ]
+            }
+          }
+        ]
       }
     },
     "card-pools": {
@@ -183,7 +243,9 @@
         "mapMode": "mapMode",
         "firstFloor": "firstFloor",
         "shopShare": "shopShare",
-        "requirePrebossRest": "requirePrebossRest"
+        "requirePrebossRest": "requirePrebossRest",
+        "maxBranches": "maxBranches",
+        "startNodeRefills": "startNodeRefills"
       }
     },
     {
