@@ -100,7 +100,6 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
       title: t('gameProfile.rest.service.upgradeCard'),
       consequence: t('gameProfile.rest.upgradeCardConsequence'), decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
-      servicePreviewHtml: m => (m.selected && model.cardPreviews.get(m.selected.instanceId)?.available ? recoveryHtml(model.cardPreviews.get(m.selected.instanceId).preview) : ''),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
       onConfirm: (instanceId, quote) => { screen.inert = false; commit('upgradeCard', { instanceId, quote }); },
