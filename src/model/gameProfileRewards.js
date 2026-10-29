@@ -85,9 +85,9 @@ function depthWeight(rule,card,rank,isBasic,depth) {
   return weight;
 }
 function recentOfferedIds(run,rule) {
-  const window=rule?.recentOfferWindow??0;
-  if(!(window>0))return new Set();
-  const rows=Object.values(run.gameProfileRewardOffers||{}).filter(offer=>offer?.source!=='shop').slice(-window);
+  const recentWindow=rule?.recentOfferWindow??0;
+  if(!(recentWindow>0))return new Set();
+  const rows=Object.values(run.gameProfileRewardOffers||{}).filter(offer=>offer?.source!=='shop').slice(-recentWindow);
   return new Set(rows.flatMap(offer=>(offer.options||[]).filter(option=>option.kind==='combatCards').map(option=>option.id)));
 }
 function weightedCardPick(registries,run,rule,rng,stream,ids) {
