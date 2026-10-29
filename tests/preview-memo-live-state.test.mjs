@@ -63,3 +63,14 @@ test('a hand quote follows the fight: player status, target status, spent stamin
   assert.ok(!combat.piles.hand.some(c => c.instanceId === defend), 'the played card left the hand');
   agrees();
 });
+
+test('a shared knowledge view prices every card exactly as a private one does', () => {
+  const combat = fight();
+  assert.ok(combat.enemyKnowledge, 'this fight hides enemy intents, the case the shared view serves');
+  const view = {};
+  for (const inst of combat.piles.hand) for (const target of [undefined, 'e1', 'e2']) {
+    assert.deepEqual(previewCard(combat, inst.instanceId, target, undefined, { knowledgeView: view }), previewCard(combat, inst.instanceId, target), `${inst.cardId} -> ${target}`);
+  }
+  assert.ok(view.visible, 'the view was built once and kept');
+  assert.equal(view.visible._knowledgePreview, true);
+});

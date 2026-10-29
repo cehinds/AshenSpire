@@ -10,7 +10,10 @@
 // A preview that throws is never kept.
 export function createPreviewMemo({ combat, preview, dispatch }) {
   const kept = new Map();
-  const invalidate = () => kept.clear();
+  // The player's-eye clone of the fight (engine previewCard builds it when enemy
+  // knowledge is on) is shared by every card priced on one unchanged fight.
+  let view = {};
+  const invalidate = () => { kept.clear(); view = {}; };
   return {
     invalidate,
     // Every state change goes through here: drop before (so the engine sees no
@@ -23,7 +26,7 @@ export function createPreviewMemo({ combat, preview, dispatch }) {
       if (target !== combat) return preview(target, instanceId, targetId, upcastRanks, options);
       const key = JSON.stringify([instanceId, targetId, upcastRanks, options?.rangeRoute ?? 'advance', target.rangeState]);
       if (kept.has(key)) return kept.get(key);
-      const shown = preview(target, instanceId, targetId, upcastRanks, options);
+      const shown = preview(target, instanceId, targetId, upcastRanks, { ...options, knowledgeView: view });
       kept.set(key, shown);
       return shown;
     },

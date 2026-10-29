@@ -90,8 +90,22 @@ test('route and pair distance changes never reuse another approach quote', () =>
   const before = memo.previewCard(combat, 'c1', 'e1', ranks, { rangeRoute: 'advance' });
   assert.equal(memo.previewCard(combat, 'c1', 'e1', ranks), before);
   const thrown = memo.previewCard(combat, 'c1', 'e1', ranks, { rangeRoute: 'throw' });
-  assert.notEqual(thrown, before); assert.deepEqual(calls[1].slice(3), [ranks, { rangeRoute: 'throw' }]);
+  assert.notEqual(thrown, before); assert.equal(calls[1][3], ranks); assert.equal(calls[1][4].rangeRoute, 'throw');
   combat.rangeState.engagements.pair = 0;
   assert.notEqual(memo.previewCard(combat, 'c1', 'e1', ranks, { rangeRoute: 'advance' }), before);
   assert.equal(calls.length, 3);
+});
+
+test('one unchanged fight shares one knowledge view; any dispatch or invalidate hands out a fresh one', () => {
+  const combat = {};
+  const views = [];
+  const memo = createPreviewMemo({ combat, dispatch() {}, preview: (c, id, t, r, o) => { views.push(o.knowledgeView); return { id }; } });
+  memo.previewCard(combat, 'a'); memo.previewCard(combat, 'b');
+  assert.equal(views[0], views[1], 'two cards on one fight share the view holder');
+  memo.dispatch(combat, {});
+  memo.previewCard(combat, 'a');
+  assert.notEqual(views[2], views[0], 'a dispatch drops the shared view');
+  memo.invalidate();
+  memo.previewCard(combat, 'b');
+  assert.notEqual(views[3], views[2], 'invalidate drops the shared view');
 });
