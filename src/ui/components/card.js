@@ -641,8 +641,19 @@ export function upgradePreviewHtml(registries, ref, faces = null) {
   const upg = faces && faces.after ? faces.after : resolveCard(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
-  const baseText = fillTemplate(base, baseTokens, null);
-  const upgradedText = fillTemplate(upg, upgTokens, baseTokens);
+  let baseText = fillTemplate(base, baseTokens, null);
+  let upgradedText = fillTemplate(upg, upgTokens, baseTokens);
+  if (faces && faces.before && faces.after && !baseCardPresentation[base.id]) {
+    // A procedural step (an added status, +hits) lives in the card's effects, not in its authored template, so the
+    // preview reads the same face lines the card draws; lines the step changed are marked as raised.
+    const lines = (def) => (cardFaceLines(def, null, registries, null) || []).filter(line => line.kind !== 'bonus');
+    const beforeLines = lines(base), afterLines = lines(upg);
+    if (beforeLines.length && afterLines.length) {
+      const had = new Set(beforeLines.map(line => line.html));
+      baseText = beforeLines.map(line => line.html).join(' · ');
+      upgradedText = afterLines.map(line => had.has(line.html) ? line.html : line.html.replace(/class="val"/g, 'class="val up"')).join(' · ');
+    }
+  }
   // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
   // are keyed to (ui.css). Without it the preview drew the number it had just
   // computed as changed in the same colour and weight as the word beside it.

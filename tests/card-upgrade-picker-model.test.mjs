@@ -79,3 +79,38 @@ test('the Core rest model lists Upgrade Card with a preview per upgradable deck 
   assert.ok(model.cardPreviews.size > 0);
   assert.ok([...model.cardPreviews.values()].every(p => p.available));
 });
+
+test('a procedural step the template does not mention (an added status) still shows in the preview', () => {
+  let found = 0;
+  for (let seed = 1; seed <= 40 && !found; seed += 1) {
+    const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const model = cardUpgradeModel(registries, run, strike(run).instanceId);
+    if (model.selected.plan.step.k !== 'addStatus') continue;
+    found = seed;
+    const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
+    assert.match(html, /(Weak|Bleed)[^<]*<span class="val up">1/, 'the new status is named and marked as raised');
+  }
+  assert.ok(found, 'some seed rolls an added status');
+});
+
+test('the picker draws a row per deck card with its cost; a capped card reads "Fully upgraded" and is aria-disabled', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 1;
+    const capped = strike(run);
+    capped.upgraded = true; capped.upgradeSteps = Array.from({ length: 10 }, () => ({ k: 'dmg', n: 1 }));
+    const fresh = run.deck.find(c => c.cardId === 'core.defend');
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const model = cardUpgradeModel(registries, run, fresh.instanceId);
+    const door = mountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const rowOf = id => host.querySelector(`.card-upgrade-row[data-instance-id="${id}"]`);
+    assert.equal(rowOf(capped.instanceId).getAttribute('aria-disabled'), 'true');
+    assert.match(rowOf(capped.instanceId).outerHTML, /Fully upgraded/);
+    assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
+    assert.match(rowOf(fresh.instanceId).outerHTML, /Free/);
+    assert.equal(host.querySelector('.card-upgrade-preview').dataset.cardUpgradePreview, fresh.instanceId);
+    assert.match(host.querySelector('.smith-confirm').outerHTML, /Upgrade \(Free\)/);
+    door.close();
+  });
+});

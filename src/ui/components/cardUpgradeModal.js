@@ -58,7 +58,7 @@ export function mountCardUpgradeModal(host, initialModel, {
         el('strong', { class: 'smith-weapon-name', text: row.name }),
         statusText(row.costLabel, { class: 'smith-row-status card-upgrade-cost' }),
       ]),
-      pill({ label: String(row.upgrades), attrs: { class: 'smith-weapon-count', 'aria-label': t('cardUpgrade.row.count', { n: row.upgrades }) } }),
+      pill({ label: `+${row.upgrades}`, attrs: { class: 'smith-weapon-count', 'aria-label': t('cardUpgrade.row.count', { n: row.upgrades }) } }),
     );
     item.setAttribute('aria-label', `${row.name}, ${row.costLabel}`);
     markUiComponent(item, UI.smithCandidateCard, 'available');
