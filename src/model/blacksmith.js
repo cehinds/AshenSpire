@@ -144,8 +144,7 @@ export function sigilSlotsOf(registries, run, itemRef) {
 /** Every carried armament with its slots, for the screen and the live service check. */
 export function sigilSlotPieces(registries, run) {
   const { max } = slotRules(registries);
-  // A carried id with no armament record (the starting 'default' fists) has no name to show and no slot to cut.
-  return carriedRefs(run).filter((itemRef) => (registries.equipment.armaments || []).some((piece) => `armament/${piece.id}` === itemRef)).map((itemRef) => {
+  return carriedRefs(run).map((itemRef) => {
     const slots = sigilSlotsOf(registries, run, itemRef);
     return { itemRef, name: armamentName(registries, itemRef), slots, max, canCut: slots.length < max };
   });

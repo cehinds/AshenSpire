@@ -144,9 +144,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     },
     sigils(shelf) {
       const pieces = sigilSlotPieces(registries, run);
-      // A record kept for an item with no armament of its own has no name to show; it is left out, not drawn as a raw id.
-      const named = (ref) => (registries.equipment.armaments || []).some((piece) => `armament/${piece.id}` === ref);
-      const records = Object.entries(run.sigilSlots || {}).filter(([ref]) => named(ref) && !pieces.some((piece) => piece.itemRef === ref));
+      const records = Object.entries(run.sigilSlots || {}).filter(([ref]) => !pieces.some((piece) => piece.itemRef === ref));
       const all = [...pieces.map((piece) => [piece.itemRef, piece.slots, piece.name]), ...records.map(([ref, slots]) => [ref, slots, ref.replace(/^armament\//, '')])];
       for (const [itemRef, slots, name] of all) {
         slots.forEach((slot, index) => {
