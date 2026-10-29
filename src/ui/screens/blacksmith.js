@@ -21,7 +21,7 @@ import { servicePortrait } from '../components/servicePortrait.js';
 import { engravedIconHtml, engravedGlyphId } from '../components/engravedIcon.js';
 import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
-import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
+import { button, statusText, el, railItem, categoryNav, segmented } from '../kit/index.js';
 import { t } from '../strings.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
@@ -304,21 +304,38 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       const n = readyCount(key);
       return n ? t('blacksmith.status.ready', { count: n }) : t('blacksmith.status.idle');
     };
-    const railItems = categories.map((key) => {
-      const item = railItem({
-        label: t(key === 'upgradeArt' && coreCardUpgrades(run) ? 'blacksmith.bar.upgradeCard' : `blacksmith.bar.${key}`), member: key, current: key === activeCategory, id: `shop-cat-${key}`,
-        className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: key }, 'aria-controls': 'shop-pane' },
+    // Core offers two services: a compact switch at the top of the pane, like the card upgrade picker's own controls,
+    // instead of a rail. Legacy keeps the category rail.
+    const compact = coreCardUpgrades(run);
+    const labelOf = (key) => t(key === 'upgradeArt' && compact ? 'blacksmith.bar.upgradeCard' : `blacksmith.bar.${key}`);
+    let railItems;
+    if (compact) {
+      const switchNode = segmented({
+        options: categories.map((key) => ({ label: labelOf(key), value: key, pressed: key === activeCategory, attrs: { id: `shop-cat-${key}`, role: 'tab', 'aria-controls': 'shop-pane', dataset: { shopCategory: key } } })),
+        attrs: { class: 'shop-switch', role: 'tablist', 'aria-label': t('blacksmith.rail.aria') },
       });
-      item.appendChild(statusText(statusOf(key)));
-      item.addEventListener('click', () => { activeCategory = key; paint(); });
-      return item;
-    });
-    const nav = categoryNav({
-      items: railItems, ariaLabel: t('blacksmith.rail.aria'), railAttrs: { class: 'shop-rail' }, toggleId: 'shop-cat-select',
-      onChange: ({ mode }) => { root.dataset.shopRail = mode === 'rail' ? 'side' : 'top'; },
-    });
-    railed.prepend(nav.rail);
-    nav.attach(railed);
+      railItems = [...switchNode.querySelectorAll('button')];
+      for (const item of railItems) item.addEventListener('click', () => { activeCategory = item.dataset.shopCategory; paint(); });
+      root.dataset.shopRail = 'top';
+      railed.prepend(switchNode);
+    } else {
+      railItems = categories.map((key) => {
+        const item = railItem({
+          label: labelOf(key), member: key, current: key === activeCategory, id: `shop-cat-${key}`,
+          className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: key }, 'aria-controls': 'shop-pane' },
+        });
+        item.appendChild(statusText(statusOf(key)));
+        item.addEventListener('click', () => { activeCategory = key; paint(); });
+        return item;
+      });
+      const nav = categoryNav({
+        items: railItems, ariaLabel: t('blacksmith.rail.aria'), railAttrs: { class: 'shop-rail' }, toggleId: 'shop-cat-select',
+        onChange: ({ mode }) => { root.dataset.shopRail = mode === 'rail' ? 'side' : 'top'; },
+      });
+      railed.prepend(nav.rail);
+      nav.attach(railed);
+    }
+    root.classList.toggle('blacksmith-compact', compact);
     const leave = button({ label: t('blacksmith.leave'), role: 'exit', id: 'leave-shop' });
     leave.addEventListener('click', onLeave);
     const footHost = el('div', { class: 'shop-foot-host' });
@@ -329,6 +346,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const item of railItems) {
         const on = item.dataset.shopCategory === activeCategory;
         item.classList.toggle('on', on);
+        if (compact) item.setAttribute('aria-pressed', on ? 'true' : 'false');
         item.setAttribute('aria-selected', on ? 'true' : 'false');
         if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
       }
