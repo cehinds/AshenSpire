@@ -247,7 +247,7 @@ async function playCard(ctx, index = 0) {
     log('tap card', sel, 'target', tgt);
     // A card that names no target is played by a second tap on it.
     await input.tap(tgt || sel); await wait(200);
-    try { await until(page, `window.__combat.piles.hand.length < ${before}`, 'the card to leave the hand', 3000); await wait(1200); return true; }
+    try { await until(page, `window.__combat.piles.hand.length < ${before}`, 'the card to leave the hand', 12000); await wait(1200); return true; }
     catch { await input.tap('.combat-log, .enemy-row').catch(() => {}); await wait(400); }
   }
   return false;
