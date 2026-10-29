@@ -111,7 +111,7 @@ import {
   rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { configuredShopIsBlacksmith } from './model/gameProfileShopKind.js';
+import { configuredShopKind } from './model/gameProfileShopKind.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
@@ -4171,7 +4171,7 @@ function showShop() {
     run.gameProfileOpenShop = shopId;
     // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
     // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
-    if (shopStockKind(run.shopStock) === 'blacksmith' || (!run.shopStock && configuredShopIsBlacksmith(run, shopId))) {
+    if (configuredShopKind(run, shopId) === 'blacksmith') {
       if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = buildBlacksmithStock(registries, rng, run);
       persist(); audio.music('shop');
       return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),

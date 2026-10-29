@@ -110,3 +110,25 @@ test('about 25% of Core shop nodes are a Blacksmith, decided per node and the sa
   assert.equal(configuredShopBlacksmithChance(legacy), 0);
   assert.equal(configuredShopIsBlacksmith(legacy, '1:node-1'), false);
 });
+
+test('configuredShopKind (the call showShop makes): a saved merchandise offer stays a shop, an open Blacksmith stays one', async () => {
+  const { configuredShopKind } = await import('../src/model/gameProfileShopKind.js');
+  const run = createRunState({ seed: 91, classId: 'reaver', registries: coreOut, runId: 'shop-kind-saved' });
+  const hashed = Array.from({ length: 400 }, (_, i) => `1:n${i}`).find((id) => configuredShopIsBlacksmith(run, id));
+  assert.ok(hashed, 'some node hashes to a Blacksmith');
+  assert.equal(configuredShopKind(run, hashed), 'blacksmith');
+  // A save taken mid-shop already holds this node's merchandise offer: it must not flip to a Blacksmith.
+  run.gameProfileRewardOffers = { [`shop:${hashed}`]: { source: 'shop', options: [] } };
+  assert.equal(configuredShopKind(run, hashed), 'merchant');
+  // An open Blacksmith visit stays one, saved offer or not.
+  run.shopStock = { kind: 'blacksmith' };
+  assert.equal(configuredShopKind(run, hashed), 'blacksmith');
+  // A market-kind stock never turns into a Blacksmith.
+  run.shopStock = { kind: 'market' }; delete run.gameProfileRewardOffers;
+  assert.equal(configuredShopKind(run, hashed), 'merchant');
+});
+
+test('main.js showShop asks configuredShopKind (the roll is wired, not dropped)', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /configuredShopKind\(run, shopId\) === 'blacksmith'/);
+});

@@ -15,3 +15,15 @@ export function configuredShopIsBlacksmith(run, shopId) {
   if (!chance) return false;
   return upgradeStepRng(run.seed, `shop-kind:${shopId}`, 0)() * 100 < chance;
 }
+
+/**
+ * configuredShopKind(run, shopId) → 'blacksmith' | 'merchant': the one decision showShop (main.js) acts on.
+ * An open Blacksmith visit (the kind rides run.shopStock) stays one; a node whose merchandise offer is already saved
+ * (a Core save taken mid-shop before this rule existed) stays a merchandise shop whatever the hash says; otherwise the
+ * seeded share decides.
+ */
+export function configuredShopKind(run, shopId) {
+  if (run.shopStock && run.shopStock.kind === 'blacksmith') return 'blacksmith';
+  if (run.gameProfileRewardOffers?.[`shop:${shopId}`]) return 'merchant';
+  return !run.shopStock && configuredShopIsBlacksmith(run, shopId) ? 'blacksmith' : 'merchant';
+}
