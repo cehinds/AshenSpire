@@ -40,7 +40,9 @@ export function nextUpgradeStep(run, instance, base, registries) {
   const applied = upgradeStepsOf(instance);
   if (applied.length === 0 && base.upgrade) return { k: 'authored' };
   const mana = (registries && registries.balance && registries.balance.mana) || {};
-  return rollUpgradeStep(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), mana);
+  // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
+  const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
+  return rollUpgradeStep(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), { ...mana, rank });
 }
 
 /**

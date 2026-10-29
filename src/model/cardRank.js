@@ -55,3 +55,21 @@ export function rankedEffects(card, steps) {
     return effect.op === 'applyStatus' ? { ...effect, stacks: effect.stacks + bonus } : { ...effect, amount: effect.amount + bonus };
   });
 }
+
+/** The most stacks a Core step or rank may bring a status to (an authored value already past it is left alone). */
+export const STACK_CAPS = Object.freeze({ burn: 3, weak: 3, vulnerable: 3, frail: 3, bleed: 4 });
+
+/**
+ * rankedEffectsCapped(card, steps) → rankedEffects, except a capped status is
+ * never raised past max(STACK_CAPS, the stacks it had before the rank). Core
+ * uses this; Legacy keeps the plain rankedEffects.
+ */
+export function rankedEffectsCapped(card, steps) {
+  const before = card.effects || [];
+  return rankedEffects(card, steps).map((effect, i) => {
+    const was = before[i];
+    if (effect === was || effect.op !== 'applyStatus' || STACK_CAPS[effect.status] === undefined) return effect;
+    const limit = Math.max(STACK_CAPS[effect.status], was.stacks);
+    return effect.stacks > limit ? { ...effect, stacks: limit } : effect;
+  });
+}

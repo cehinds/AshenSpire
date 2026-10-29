@@ -45,3 +45,19 @@ test('a Legacy-style profile without cardRanks ignores rank on the Core projecti
   const off = { ...run, gameProfile: { ...run.gameProfile, modules: { ...run.gameProfile.modules, progression: { ...run.gameProfile.modules.progression, cardRanks: false } } } };
   assert.equal(damage(projectGameCard(off, { cardId: 'core.strike', rank: 5 })), damage(projectGameCard(run, { cardId: 'core.strike' })));
 });
+
+test('rank never raises a capped status past its cap, and a step on a rank-capped status is not offered', async () => {
+  const { nextUpgradeStep } = await import('../src/model/cardUpgradeLimits.js');
+  const { profile } = await import('./helpers/fixcore-combat-rules.mjs');
+  const run = newRun();
+  const vulnerable = (rank, extra = {}) => projectGameCard(run, { instanceId: 'x', cardId: 'core.hexmark', rank, ...extra }).effects.find((e) => e.op === 'applyStatus' && e.status === 'vulnerable').stacks;
+  const base = vulnerable(1);
+  assert.ok(base <= 3);
+  for (const rank of [2, 3, 10]) assert.equal(vulnerable(rank), Math.max(3, base), `rank ${rank}`);
+  // At rank 10 Hexmark is already at the cap through rank: no stk step can be rolled for it.
+  const hexmark = registries.cards.get('core.hexmark');
+  for (let seed = 1; seed <= 60; seed += 1) {
+    const step = nextUpgradeStep({ seed, gameProfile: profile }, { instanceId: 'h', cardId: 'core.hexmark', rank: 10 }, hexmark, registries);
+    assert.notEqual(step?.k, 'stk', `seed ${seed}`);
+  }
+});

@@ -8,8 +8,9 @@
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
 import { applyUpgradeSteps, firstPlainIndex, isPlainStatus } from './cardUpgrade.js';
+import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
-export const STACK_CAPS = Object.freeze({ burn: 3, weak: 3, vulnerable: 3, frail: 3, bleed: 4 });
+export { STACK_CAPS };
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
@@ -67,12 +68,20 @@ function options(base, current, applied, limits) {
     const n = Math.max(2, Math.ceil(baseTotal * 0.2));
     if (effects[blkIndex].amount + n - baseTotal <= baseTotal) found.blk = { n };
   }
-  // apply raises the FIRST plain effect of a status, so only that one is a candidate.
+  // apply raises the FIRST plain effect of a status, so only that one is a candidate. It is judged on the
+  // FINAL face, rank applied: a status the rank already holds at its cap gains nothing from a step.
+  const rank = limits.rank > 1 ? limits.rank : 1;
+  const finalStacks = (card, status) => {
+    const shown = rank > 1 ? { ...card, effects: rankedEffectsCapped(card, rank - 1) } : card;
+    return (shown.effects || []).find((e) => isPlainStatus(e) && e.status === status)?.stacks;
+  };
   const seenStatus = new Set();
   const stackable = effects.find((e) => {
     if (!isPlainStatus(e) || seenStatus.has(e.status)) return false;
     seenStatus.add(e.status);
-    return STACK_CAPS[e.status] !== undefined && e.stacks + 1 <= STACK_CAPS[e.status];
+    if (STACK_CAPS[e.status] === undefined || e.stacks + 1 > STACK_CAPS[e.status]) return false;
+    const stepped = applyUpgradeSteps(base, [...applied, { k: 'stk', status: e.status, n: 1 }]);
+    return finalStacks(stepped, e.status) > finalStacks(current, e.status);
   });
   if (stackable) found.stk = { status: stackable.status };
 
@@ -97,7 +106,7 @@ function options(base, current, applied, limits) {
 }
 
 /**
- * rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits?) → the next
+ * rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits?) → the next (limits: minStaminaCost, minActionCost, rank)
  * stored step. `appliedSteps` are the steps the card already has; `rng` is
  * upgradeStepRng(run.seed, instanceId, stepIndex). Filters the options to the
  * ones the card is eligible for, then makes a weighted pick; if none is
