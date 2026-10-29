@@ -11,6 +11,21 @@ export function ownGameProfile(profile, freezeFallback) {
 // in place so profile aliases elsewhere in that private graph remain aliases.
 export function pinGameProfileCopy(copy, freezeFallback) {
   if (!copy || typeof copy !== 'object') return freezeFallback(copy);
+  // Unsupported values retain the previous ownership boundary behavior rather
+  // than introducing a new rejection rule for callers of create/restore.
+  return pinGameProfileInPlace(copy) ? copy : freezeFallback(copy);
+}
+
+/** Pin `profile` as owned and deeply immutable where it stands. Returns false,
+ * leaving it untouched, if it holds anything but plain finite JSON-like data
+ * (so a caller keeps its old clone path). Already-pinned profiles return true.
+ * Once pinned, a profile can ride along in a structuredClone of its holder by
+ * reference (shareableGameProfile), which is how a 700 KB profile stops being
+ * copied on every save.
+ */
+export function pinGameProfileInPlace(profile) {
+  if (!profile || typeof profile !== 'object') return false;
+  if (ownedProfiles.has(profile)) return true;
   const members = new WeakSet(), visiting = new WeakSet(), ordered = [];
   function collect(value) {
     if (value === null || ['string', 'boolean'].includes(typeof value)) return true;
@@ -28,12 +43,10 @@ export function pinGameProfileCopy(copy, freezeFallback) {
     members.add(value); ordered.push(value);
     return true;
   }
-  // Unsupported values retain the previous ownership boundary behavior rather
-  // than introducing a new rejection rule for callers of create/restore.
-  if (!collect(copy)) return freezeFallback(copy);
+  if (!collect(profile)) return false;
   for (const value of ordered) Object.freeze(value);
-  ownedProfiles.set(copy, members);
-  return copy;
+  ownedProfiles.set(profile, members);
+  return true;
 }
 
 /** Return a shareable profile only if removing it preserves the cloned graph.
