@@ -9,6 +9,7 @@
 import { mulberry32 } from '../engine/rng.js';
 import { applyUpgradeSteps, firstPlainIndex, isPlainStatus } from './cardUpgrade.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
+import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 export { STACK_CAPS };
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5 });
@@ -36,6 +37,17 @@ const totalOf = (effects, op) => {
   return index < 0 ? 0 : effects[index].amount * hitsOf(effects[index]);
 };
 
+// Core 2 charges a multi-hit card at least max(hits - offset, minimum) SP (SPEC 4.3a, model/actionCosts.js multiHitFloorFor):
+// offset 0, or 1 for a `finesse` card, or 2 for a Mana card. Mirrored here because this module must stay a leaf.
+const hitFloor = (card, hits) => {
+  if (!(hits > 1)) return 0;
+  const rule = MULTI_HIT_SP_FLOOR;
+  const finesse = [...(card.tags || []), ...(card.cardTags || []), ...(card.authoredTags || [])].includes('finesse');
+  const offset = Math.max(rule.baseOffset, finesse ? rule.finesseOffset : 0, card.manaCost > 0 ? rule.manaOffset : 0);
+  return Math.max(hits - offset, rule.minimum);
+};
+const currentHits = (effects) => effects.reduce((most, e) => (e.op === 'damage' ? Math.max(most, hitsOf(e)) : most), 1);
+
 function options(base, current, applied, limits) {
   const type = base.type;
   const restricted = RESTRICTED_TYPES.has(type);
@@ -47,7 +59,9 @@ function options(base, current, applied, limits) {
   if (!applied.some((s) => s.k === 'cost')) {
     const pools = [];
     if (Number.isInteger(current.staminaCost) && current.staminaCost - 1 >= spMin && current.cost === current.staminaCost
-      && current.cost - 1 >= actionMin) pools.push('sp');
+      && current.cost - 1 >= actionMin
+      // a multi-hit card pays at least its hit floor, so a cheaper printed SP would buy nothing
+      && hitFloor(current, currentHits(current.effects || [])) <= current.staminaCost - 1) pools.push('sp');
     if (Number.isInteger(current.manaCost) && current.manaCost >= 2) pools.push('mp');
     if (pools.length) found.cost = { pools };
   }
@@ -99,7 +113,9 @@ function options(base, current, applied, limits) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const amount = effects[dmgIndex].amount;
     const per = Math.ceil(amount * 0.6);
-    const counts = [2, 3].filter((hits) => hits <= 3 && per * hits - baseTotal <= baseTotal && per * hits > amount);
+    // The step must not raise what the card costs to play: its hit floor has to fit the SP it already pays.
+    const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
+    const counts = [2, 3].filter((hits) => hits <= 3 && per * hits - baseTotal <= baseTotal && per * hits > amount && hitFloor(current, hits) <= sp);
     if (counts.length) found.hits = { per, counts };
   }
   return found;

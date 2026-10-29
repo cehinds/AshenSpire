@@ -84,12 +84,28 @@ test('cost: at most once; SP never below 1; MP keeps mana >= 1; cost tracks stam
 
 test('hits: once, single-hit damage <= 8, at most 3, per-hit is ceil(60%)', () => {
   const steps = new Set(); let counts = new Set();
-  for (let i = 0; i < 600; i += 1) { const s = rollUpgradeStep(dmg(8), [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'hits') { steps.add(s.per); counts.add(s.hits); } }
+  for (let i = 0; i < 600; i += 1) { const s = rollUpgradeStep(dmg(8, { cost: 3, staminaCost: 3 }), [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'hits') { steps.add(s.per); counts.add(s.hits); } }
   assert.deepEqual([...steps], [5]);
   assert.ok([...counts].every((n) => n >= 2 && n <= 3));
   assert.ok(!kindsFor(dmg(9)).has('hits'));
   assert.ok(!kindsFor(dmg(6), [{ k: 'hits', hits: 2, per: 4 }]).has('hits'));
   assert.ok(!kindsFor(dmg(6, { effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }] })).has('hits'));
+});
+
+test('hits never raises the SP a card costs to play: its Core hit floor must fit the SP it already pays', () => {
+  // A 1-SP plain card would pay 2 or 3 SP for 2 or 3 hits, so it never rolls hits.
+  assert.ok(!kindsFor(dmg(6)).has('hits'));
+  // 2 SP covers 2 hits (floor 2) but not 3 (floor 3).
+  const two = new Set();
+  for (let i = 0; i < 600; i += 1) { const s = rollUpgradeStep(dmg(6, { cost: 2, staminaCost: 2 }), [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'hits') two.add(s.hits); }
+  assert.deepEqual([...two], [2]);
+  // A finesse card has a one-hit offset: 2 hits cost 1 SP, 3 cost 2.
+  const fin = new Set();
+  for (let i = 0; i < 600; i += 1) { const s = rollUpgradeStep(dmg(6, { tags: ['camp:physical', 'finesse'] }), [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'hits') fin.add(s.hits); }
+  assert.deepEqual([...fin], [2]);
+  // A card with its hits already printed gets no cost step that its hit floor would undo.
+  const volley = dmg(2, { cost: 3, staminaCost: 3, effects: [{ op: 'damage', target: 'enemy', amount: 2, hits: 3 }] });
+  assert.ok(!kindsFor(volley).has('cost'));
 });
 
 test('power, status and curse cards take only cost, then are maxed (null)', () => {
