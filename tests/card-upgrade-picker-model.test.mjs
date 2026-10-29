@@ -14,10 +14,10 @@ import { projectGameCard } from '../src/model/gameProfile.js';
 const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 const strike = run => run.deck.find(c => c.cardId === 'core.strike');
 
-test('rows: a fresh Strike is Free, its second upgrade is 1 Smithing Stone', () => {
+test('rows: a fresh Strike costs nothing, its second upgrade is 1 Smithing Stone', () => {
   const run = newRun(); run.smithingStones = 1;
   const row = () => cardUpgradeModel(registries, run).rows.find(r => r.instanceId === strike(run).instanceId);
-  assert.equal(row().costLabel, 'Free');
+  assert.equal(row().costLabel, 'No charge');
   assert.equal(row().disabled, false);
   commitCardUpgrade(run, registries, row().plan);
   assert.equal(row().costLabel, '1 Smithing Stone');
@@ -109,9 +109,9 @@ test('the picker draws a row per deck card with its cost; a capped card reads "F
     assert.equal(rowOf(capped.instanceId).getAttribute('aria-disabled'), 'true');
     assert.match(rowOf(capped.instanceId).outerHTML, /Fully upgraded/);
     assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
-    assert.match(rowOf(fresh.instanceId).outerHTML, /Free/);
+    assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
     assert.equal(host.querySelector('.card-upgrade-preview').dataset.cardUpgradePreview, fresh.instanceId);
-    assert.match(host.querySelector('.smith-confirm').outerHTML, /Upgrade \(Free\)/);
+    assert.match(host.querySelector('.smith-confirm').outerHTML, /Buy upgrade · No charge/);
     door.close();
   });
 });
