@@ -163,6 +163,7 @@ import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { perfCount } from '../performance.js';
 
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
@@ -1659,6 +1660,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage({ fit = true, refreshTargets = true } = {}) {
+    perfCount('stage');
     $('.field').dataset.playerCell = combat.player.formationCell || '';
     $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
     $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
@@ -1674,6 +1676,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function render() {
+    perfCount('render');
     if (paintedAppearance !== displayAppearance()) {
       combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
       combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
@@ -2374,6 +2377,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderHand({ refreshHitChances = true } = {}) {
+    perfCount('hand');
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
     // Each write below is skipped when it would repeat: an unchanged attribute or text node
     // still dirties style/layout for the board that hangs off it.
@@ -3464,6 +3468,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function flushBeatRender() {
     if (beatDirty.frame) { if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(beatDirty.frame); beatDirty.frame = 0; }
     if (!beatDirty.on) return;
+    perfCount('beatFlush');
     const { geometry, hand } = beatDirty;
     beatDirty.on = beatDirty.geometry = beatDirty.hand = false;
     if (!combatEl.isConnected) return;

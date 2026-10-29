@@ -62,6 +62,7 @@ const r1 = (x) => Math.round(x * 10) / 10;
 
 // ---- in-page instrumentation (installed before any page script) --------------
 const INIT = `(() => {
+  window.__perfCounts = {};
   const S = { on: false, frames: [], long: [], anim: [] };
   try { new PerformanceObserver((l) => { if (S.on) for (const e of l.getEntries()) S.long.push(e.duration); }).observe({ type: 'longtask' }); } catch {}
   let last = 0, n = 0;
@@ -78,7 +79,8 @@ const INIT = `(() => {
     requestAnimationFrame(tick);
   };
   window.__perf = {
-    start() { S.frames = []; S.long = []; S.anim = []; last = 0; n = 0; S.on = true; requestAnimationFrame(tick); },
+    counts() { return { ...window.__perfCounts }; },
+    start() { for (const k of Object.keys(window.__perfCounts)) delete window.__perfCounts[k]; S.frames = []; S.long = []; S.anim = []; last = 0; n = 0; S.on = true; requestAnimationFrame(tick); },
     stop() { S.on = false; return { frames: S.frames, long: S.long, anim: S.anim }; },
     census() {
       const all = [...document.getElementsByTagName('*')];
@@ -279,6 +281,17 @@ const SCENARIOS = {
       return { cardsPlayed: played };
     },
   },
+  // The deterministic metric (wave 4 step 0): one card play, counted rather than timed. The
+  // counters are src/ui/performance.js perfCount() calls, live only where the probe installs
+  // window.__perfCounts. Run `--scenario play --runs 5`.
+  play: {
+    title: 'One card play (counted renders, HUD passes, forced layouts)',
+    url: (s) => `?shot=combat&shotSeed=${s}`, ready: COMBAT_READY,
+    async run(ctx) {
+      if (!await playCard(ctx)) throw new Error('the card was not played');
+      return { cardsPlayed: 1 };
+    },
+  },
   map: {
     title: 'Act map (pan, drag, one zoom)',
     url: (s) => `?shot=map&shotSeed=${s}&shotWalk=3`, ready: `!!document.querySelector('.map-scroll[data-detail-state="ready"]')`,
@@ -418,6 +431,7 @@ async function onePass(browser, base, name, { trace, profile }) {
     const extra = await sc.run(c);
     const wall = Date.now() - t0;
     const raw = await page.evaluate('window.__perf.stop()');
+    const counts = await page.evaluate('window.__perf.counts()');
     const end = await page.evaluate('window.__perf.census()');
     let traceOut = null, profOut = null;
     if (profile) { const { profile: p } = await cdp.send('Profiler.stop'); profOut = analyseProfile(p); if (process.env.PERF_PROFILE_DIR) { mkdirSync(process.env.PERF_PROFILE_DIR, { recursive: true }); writeFileSync(join(process.env.PERF_PROFILE_DIR, `${name}-${Date.now()}.cpuprofile`), JSON.stringify(p)); } }
@@ -429,7 +443,7 @@ async function onePass(browser, base, name, { trace, profile }) {
     }
     const f = raw.frames;
     const peak = (i) => Math.max(0, ...raw.anim.map((a) => a[i]));
-    return { wallMs: wall, errors, extra, census, end,
+    return { wallMs: wall, errors, extra, census, end, counts,
       frames: { n: f.length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
         over16: r1(100 * f.filter((d) => d > 16.7 + 0.5).length / (f.length || 1)), over33: r1(100 * f.filter((d) => d > 33.4).length / (f.length || 1)) },
       long: { n: raw.long.length, totalMs: r1(sum(raw.long)), blockingMs: r1(sum(raw.long.map((d) => Math.max(0, d - 50)))), maxMs: r1(Math.max(0, ...raw.long)) },
@@ -469,6 +483,7 @@ function summarise(name, runs) {
     profileTop: mergeProfiles(runs.map((r) => r.b?.profile).filter(Boolean)),
     profileTotals: PROFILE ? { totalMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.totalMs)), idleMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.idleMs)),
       programMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.programMs)), gcMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.gcMs)) } : null,
+    counts: Object.fromEntries([...new Set(A.flatMap((r) => Object.keys(r.counts || {})))].sort().map((k) => [k, med(A, (r) => r.counts?.[k] ?? 0)])),
     errors: [...new Set(runs.flatMap((r) => [...r.a.errors, ...(r.b?.errors || [])]))].slice(0, 5),
   };
 }
@@ -539,6 +554,14 @@ console.log('|---|---|---|---|---|---|---|---|---|---|---|---|');
 for (const s of summaries) {
   const a = s.census.start, e = s.census.end;
   console.log(`| ${s.scenario} | ${a.nodes} / ${e.nodes} | ${e.canvases} | ${e.imgs} | ${e.filter} | ${e.backdrop} | ${e.boxShadow} | ${e.textShadow} | ${e.blend} | ${e.willChange} | ${e.oversizedImgs} | ${e.decodedMpx} / ${e.neededMpx} |`);
+}
+if (summaries.some((s) => s.scenario === 'play')) {
+  console.log('\n| per card play (median) | full renders | stage renders | hand renders | beat flushes | HUD placement passes | HUD tracking frames | forced layouts | forced style | script ms | style ms | layout ms | script+style+layout ms |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const s of summaries.filter((x) => x.scenario === 'play')) {
+    const c = s.counts, t = s.traceMs;
+    console.log(`| play | ${c.render ?? 0} | ${c.stage ?? 0} | ${c.hand ?? 0} | ${c.beatFlush ?? 0} | ${c.hudPass ?? 0} | ${c.hudTrack ?? 0} | ${t.syncLayoutN} | ${t.syncStyleN} | ${t.script} | ${t.style} | ${t.layout} | ${r1(t.script + t.style + t.layout)} |`);
+  }
 }
 for (const s of summaries) {
   console.log(`\n## ${s.scenario}: top JS self time (CPU profile, median ms over the window)${s.profileTotals ? ` — profile total ${s.profileTotals.totalMs} ms, idle ${s.profileTotals.idleMs}, native/program ${s.profileTotals.programMs}, GC ${s.profileTotals.gcMs}` : ''}`);

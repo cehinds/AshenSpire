@@ -30,6 +30,7 @@ import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 import { separateOverheadIntents } from './overheadIntentSeparation.js';
+import { perfCount } from '../performance.js';
 // The overhead group's height above a head: config only, never a DOM measurement. A measured height changes with
 // selection (a selected frame hides its meters) and would refit the settled artwork on every click.
 const miniHudGroupHeight = grid => overheadGroupHeightPx(grid, {
@@ -357,6 +358,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     racksShifts = rows.map(row => shiftOf(row.intent));
   }
   function centerTargetOverheads() {
+    perfCount('hudPass');
     invalidateSpriteRects();
     const zoom = uiZoom();
     const commitBadges = readHitBadges();
@@ -629,6 +631,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const sameBodies = (a, b) => !!a && !!b && a.length === b.length
     && a.every((value, i) => value === b[i] || Math.abs(value - b[i]) <= .5 || (Number.isNaN(value) && Number.isNaN(b[i])));
   function trackPlayerHud() {
+    perfCount('hudTrack');
     invalidateSpriteRects();
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
