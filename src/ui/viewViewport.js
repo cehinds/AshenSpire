@@ -17,10 +17,25 @@ export function resolveViewViewport(preset, width, height) {
     top: (height - dimensions.height * scale) / 2 };
 }
 
+// Reading innerWidth/innerHeight flushes pending style and layout, and a drag asks
+// for the viewport on every pointer move. The answer only changes with a resize
+// or a pinch, which arrive with a new frame, so it is kept for the frame it was read in
+// (20 ms at most), and only for the live window: a test's stand-in window
+// is read every time.
+let viewportCache = null;
+
 export function logicalViewport(win = globalThis.window) {
   const preset = win?.document?.documentElement?.dataset?.viewPreset;
-  return VIEW_PRESETS[preset] || { width: win?.innerWidth ?? 0,
+  if (VIEW_PRESETS[preset]) return VIEW_PRESETS[preset];
+  const live = win === globalThis.window && win?.document?.timeline;
+  const frame = live ? win.document.timeline.currentTime : null;
+  if (frame != null) {
+    if (viewportCache && viewportCache.frame === frame && performance.now() - viewportCache.at < 20) return viewportCache.value;
+  }
+  const value = { width: win?.innerWidth ?? 0,
     height: win?.visualViewport?.scale === 1 ? win.visualViewport.height : win?.innerHeight ?? 0 };
+  if (frame != null) viewportCache = { frame, at: performance.now(), value: Object.freeze(value) };
+  return frame != null ? viewportCache.value : value;
 }
 
 export function viewScale(win = globalThis.window) {
