@@ -9,6 +9,8 @@ import { engravedIconHtml } from './engravedIcon.js';
 import { mountRestFrame, restPresentation } from './restFrame.js';
 import { renderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
+import { mountCardUpgradeModal } from './cardUpgradeModal.js';
+import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
 import { openConfirmationModal } from './confirmationModal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { gameProfileRestModel, gameProfileSmithModel } from '../models/GameProfileRestModel.js';
@@ -19,8 +21,8 @@ import { el, button, modalFooter } from '../kit/index.js';
 // final validation and every pool/flask refill; closing a review changes none.
 export function mountGameProfileRest(app, { registries, run, meta, hud, visit, onStrategize, onCommit, onLeave, remount }) {
   const model = gameProfileRestModel(registries, run, visit);
-  const icons = { strategize: 'deck', smith: 'smith', levelUp: 'progression' };
-  const optionIds = { strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt' };
+  const icons = { strategize: 'deck', smith: 'smith', levelUp: 'progression', upgradeCard: 'deck' };
+  const optionIds = { strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt', upgradeCard: 'upgrade-card-opt' };
   const all = restServicesAll(run); // Core: heal on arrival, every service once, only Continue leaves
   const usedOf = id => all ? restServiceUsed(visit, id) : visit.service === id;
   const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: usedOf(service.id) })));
@@ -88,6 +90,23 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     });
   };
 
+  // Core: pick one deck card; the modal previews the plan's own before/after and the recovery ledger of the same transaction.
+  const openUpgradeCard = () => {
+    let selected = null;
+    screen.inert = true;
+    const makeModel = () => cardUpgradeModel(registries, run, selected,
+      { blockedReason: selected && model.cardPreviews.get(selected)?.available === false ? model.cardPreviews.get(selected).reason : '' });
+    const modal = mountCardUpgradeModal(app, makeModel(), {
+      registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
+      title: t('gameProfile.rest.service.upgradeCard'),
+      consequence: t('gameProfile.rest.upgradeCardConsequence'), decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
+      servicePreviewHtml: m => (m.selected && model.cardPreviews.get(m.selected.instanceId)?.available ? recoveryHtml(model.cardPreviews.get(m.selected.instanceId).preview) : ''),
+      onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
+      onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
+      onConfirm: (instanceId, quote) => { screen.inert = false; commit('upgradeCard', { instanceId, quote }); },
+    });
+  };
+
   const openLevel = () => {
     let selected = null;
     let allocation;
@@ -133,6 +152,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     const open = () => invoke(() => {
       if (service.id === 'smith') return openSmith();
       if (service.id === 'levelUp') return openLevel();
+      if (service.id === 'upgradeCard') return openUpgradeCard();
       if (gameModule(run, 'cards')) return onStrategize();
       openConfirmationModal({ title: service.title, message: t('gameProfile.rest.chooseOne'),
         detailsHtml: recoveryHtml(service.preview), confirmLabel: service.title,
