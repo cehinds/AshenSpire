@@ -21,7 +21,7 @@ export function gameProfileRestModel(registries, run, visit) {
     return { id, label: def.label || def.name || id, shortLabel: def.shortLabel || id, value: run.attributes[id], ...attempt('levelUp', { attributeId: id }) };
   });
   const rank = service => (service.available ? 0 : 2) + (service.id === 'levelUp' ? 0 : 1);
-  const services = rules.services.filter(id => id !== 'levelUp' || configuredCharacterLevels(run) || run.level?.unspentPoints > 0).map(id => {
+  const services = rules.services.filter(id => id !== 'upgradeCard').filter(id => id !== 'levelUp' || configuredCharacterLevels(run) || run.level?.unspentPoints > 0).map(id => {
     const result = id === 'smith' ? [...smithPreviews.values()].find(row => row.available) || [...smithPreviews.values()][0] || { available: false, reason: t('gameProfile.rest.noSmith') }
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
       : attempt(id);
