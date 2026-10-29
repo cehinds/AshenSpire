@@ -381,13 +381,15 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
-        // AN INDIVIDUAL TRANSFORM ON THE LABEL: the same block over the count,
-        // but a stacking context by `scale: 1` alone — the transform
-        // shorthand stays "none" and the item has no z-index (Codex, #550).
-        name: "the DRAW artwork, given scale: 1 and nothing else, paints an opaque block over its compact count",
+        // THE LABEL'S SHIPPED POSITION/Z-INDEX PROTECTS IT FROM AN AUTO-LEVEL
+        // STACKING CONTEXT. Remove only that protection in this fixture; the
+        // artwork gets scale:1 but no position or z-index, so the individual
+        // transform is the sole property that promotes it above the later
+        // in-flow count. This is the specific #550 branch under test.
+        name: "the DRAW artwork's scale-only stacking context paints over the in-flow compact count",
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw > .footer-art-face { scale: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
+          append: "\n.combat-action-row > .pile.draw > .footer-compact-label { position: static !important; z-index: auto !important; }\n.combat-action-row > .pile.draw > .footer-art-face { transform: none !important; scale: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
