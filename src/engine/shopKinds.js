@@ -342,7 +342,7 @@ function blacksmithArmamentPool(registries, run) {
  * Service prices are never stored: model/blacksmith.js reads them when quoted.
  */
 export function buildBlacksmithStock(registries, rng, run) {
-  // Core withholds the legacy mount services (model/blacksmith.js blacksmithWithholds): they are never rolled or added by the guarantee.
+  // Core offers only CORE_BLACKSMITH_OFFERINGS (model/blacksmith.js blacksmithWithholds): the rest are never rolled or added by the guarantee.
   const shown = registries.shops.blacksmith;
   const kindDef = { ...shown, offerings: (shown.offerings || []).filter((offering) => !offering || !blacksmithWithholds(run, offering.id)) };
   const written = (kindDef.offerings || []).filter(Boolean);

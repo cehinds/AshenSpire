@@ -57,12 +57,16 @@ export function blacksmithOffering(registries, id) {
   return (registries.shops?.blacksmith?.offerings || []).find((row) => row && row.id === id) || null;
 }
 
+/** What a Core (card ranks on) Blacksmith offers: the equipment upgrade and the card upgrade, and nothing else. */
+export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt']);
+
 /**
- * Core (card ranks on) withholds the legacy weapon-art mount services: a configured deck is not projected from
- * `run.itemMounts` (its equipment cards come from `gear[].grantedCards`), so extracting or installing there would
- * delete a card with nothing equipment-owned in its place. Core keeps equipment and card upgrades.
+ * Core (card ranks on) is an allow-list, not a deny-list: Core has no sigils, no copy-stacking, no weapon-art mounts
+ * (a configured deck is not projected from `run.itemMounts`, so extracting or installing would delete a card with
+ * nothing equipment-owned in its place) and no refined stones, so every offering outside CORE_BLACKSMITH_OFFERINGS is
+ * withheld: never rolled, never planned or committed, and hidden by the screen even for an old saved stock.
  */
-export const blacksmithWithholds = (run, id) => (id === 'extractArt' || id === 'installArt') && run?.gameProfile?.modules?.progression?.cardRanks === true;
+export const blacksmithWithholds = (run, id) => run?.gameProfile?.modules?.progression?.cardRanks === true && !CORE_BLACKSMITH_OFFERINGS.includes(id);
 
 /** Whether the visit open now is a blacksmith that laid out `id`. */
 export function blacksmithOffers(run, id) {
@@ -255,6 +259,8 @@ export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stone
   let reason = '';
   if (!blacksmithOffers(run, 'upgrade')) reason = say('blacksmith.refuse.notOffered');
   else if (!SMITHING_PURSES.includes(purse)) reason = say('blacksmith.refuse.notOffered');
+  // Core has no refining, so no refined purse to pay from.
+  else if (refinedPurse && blacksmithWithholds(run, 'refineStones')) reason = say('blacksmith.refuse.notOffered');
   else if (!candidate) reason = say('blacksmith.refuse.upgradeNone', { name: armamentName(registries, itemRef) });
   else if (refinedPurse && !candidate.refinedAffordable) reason = say('blacksmith.refuse.refined', { cost: candidate.refinedCost ?? '—', have: run.smithingStonesRefined || 0 });
   else if (!refinedPurse && !candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
