@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-29
 
-- **A cleaner Core Blacksmith** ([#2372](https://github.com/cehinds/AshenSpire/pull/2372), `0.7.1.1914`). In Core the Blacksmith offers only what Core uses, upgrading equipment and upgrading a card, as a two-option switch that fits a phone screen without scrolling. Item names read properly (no stray "default" row) and counts use real plurals: "12 Smithing Stones", "Upgrade (1 stone)".
+- **A cleaner Core Blacksmith** ([#2372](https://github.com/cehinds/AshenSpire/pull/2372), `0.7.1.1916`). In Core the Blacksmith offers only what Core uses, upgrading equipment and upgrading a card, as a two-option switch that fits a phone screen without scrolling. Item names read properly (no stray "default" row) and counts use real plurals: "12 Smithing Stones", "Upgrade (1 stone)".
 - **Rank-ups stay one per victory** ([#2371](https://github.com/cehinds/AshenSpire/pull/2371), `0.7.1.1914`). In Core, reloading the game part-way through the rank-up screen after a fight no longer offers a second rank-up at the same victory; the same screen comes back with your pick kept.
 - **Promotion check unblocked** ([#2370](https://github.com/cehinds/AshenSpire/pull/2370), `0.7.1.1912`). A variable in the Core reward code named `window` made the architecture check on test read it as a browser reference and stop the promotion; it is renamed. Nothing changes in play.
 
