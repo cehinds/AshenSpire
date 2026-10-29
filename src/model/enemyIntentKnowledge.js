@@ -1,4 +1,5 @@
-import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 // The authority creates a read once. UI/preview callers only project it.
 export const PREDICTION_CHOICES = Object.freeze(['Attack', 'Smash', 'Sweep', 'Ranged', 'Defend', 'Counter', 'Spell', 'Casting', 'Preparing']);
 export const HIDDEN_INTENT_LABELS = Object.freeze(['?', 'Attack?', 'Magic?', 'Preparing?']);

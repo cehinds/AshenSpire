@@ -1,4 +1,5 @@
-import { fixCoreEnabled, fixCoreRules, fixCoreReactionRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreReactionRules } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceRules } from '../content/stanceRules.js';
 import { cardPreparationCategory } from './cardClassification.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';

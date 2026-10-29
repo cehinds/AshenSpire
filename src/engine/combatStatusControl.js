@@ -1,4 +1,5 @@
-import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
 import * as Statuses from './statuses.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
