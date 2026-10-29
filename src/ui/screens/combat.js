@@ -2674,6 +2674,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const rangeSelectable = canChooseRangeRoute(pv) && !isUnplayable(inst);
     let dragGhost = null;
     let dragging = false;
+    // What a drag reads once, not on every pointer move: the ghost's own size
+    // (its style fixes it) and the drop target, which is re-planned once per
+    // frame from the latest pointer position instead of once per event.
+    let ghostBox = null, dropFrame = 0, dropEvent = null;
+    let dropPrimed = false;
+    const queueDropTarget = event => {
+      // The first move plans at once, so the ghost never paints a frame without its verdict.
+      if (!dropPrimed) { dropPrimed = true; updateDropTarget(event); return; }
+      dropEvent = event;
+      if (dropFrame) return;
+      dropFrame = requestAnimationFrame(() => {
+        dropFrame = 0;
+        const latest = dropEvent; dropEvent = null;
+        if (latest) updateDropTarget(latest);
+      });
+    };
+    const cancelDropTarget = () => { cancelAnimationFrame(dropFrame); dropFrame = 0; dropEvent = null; };
     let startX = 0;
     let startY = 0;
     let gripX = 0;
@@ -2747,6 +2764,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
 
     const clearDragTargeting = () => {
+      cancelDropTarget();
       combatEl.classList.remove('drag-targeting');
       combatEl.removeAttribute('data-drop-state');
       app.querySelectorAll('[data-drop-state]').forEach((node) => node.removeAttribute('data-drop-state'));
@@ -2855,6 +2873,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           dragGhost.classList.remove('selected', 'card-drawn', 'drag-source');
           dragGhost.style.cssText = `position:fixed;z-index:600;pointer-events:none;opacity:.8;transform:none;margin:0;zoom:1;width:${ghostWidth / bodyZoom}px;height:${ghostHeight / bodyZoom}px;`;
           document.body.appendChild(dragGhost);
+          ghostBox = null; dropPrimed = false;
           beginDragTargeting();
         }
         if (dragging && dragGhost) {
@@ -2866,7 +2885,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // affordance the first-run tutorial teaches. The grip (70, 100) is
           // unchanged: it was always meant as local px, into a 140×196 card.
           const view = viewportLocalBox();
-          const g = anchorLocalBox(VIEWPORT_ORIGIN, dragGhost);
+          const g = ghostBox ||= anchorLocalBox(VIEWPORT_ORIGIN, dragGhost);
           const at = anchorLocalBox(VIEWPORT_ORIGIN, { left: mv.clientX, top: mv.clientY, width: 0, height: 0 });
           // keep:40, not the whole box — a card dragged to the edge of the screen
           // SHOULD hang over it, the way it does in the hand. What must never
@@ -2874,7 +2893,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const ghostPlacement = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
           dragGhost.style.left = `${ghostPlacement.left}px`;
           dragGhost.style.top = `${ghostPlacement.top}px`;
-          updateDropTarget(mv);
+          queueDropTarget(mv);
         }
       };
       trackGesture(ev, {
