@@ -188,7 +188,10 @@ export function runEnemyPlan(ctx, entry, hooks) {
     hooks.drain(ctx);
     // The reaction move has resolved: its normal-combat momentum exchange ends with it (SPEC §4.11). A drain that
     // paused for a reaction has not resolved it yet, so the exchange stays open for the resume (as in enemyPhase).
-    if (!reactionPaused(ctx)) NormalPreview.closeEnemyExchange(ctx, entry.ownerId);
+    if (!reactionPaused(ctx)) {
+      NormalPreview.closeEnemyExchange(ctx, entry.ownerId);
+      ctx.emit('enemyMoveEnded', { sourceId: entry.ownerId, moveId: entry.moveId, reaction: true });
+    }
   } finally {
     if (wasPlaying) ctx._reactionPlaying = wasPlaying; else delete ctx._reactionPlaying;
     const left = ctx.queue;

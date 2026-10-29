@@ -1625,9 +1625,17 @@ function runOpcode(ctx, action, eff) {
         if(ctx.rangeState) action.meta.rangeHitIndex=h;
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
-        const plannedContacts = action.meta?.expansionContacts?.[action.meta.expansionCursor || 0];
+        const plannedIndex = action.meta?.expansionCursor || 0;
+        const plannedContacts = action.meta?.expansionContacts?.[plannedIndex];
         if (plannedContacts) action.meta.expansionCursor = (action.meta.expansionCursor || 0) + 1;
-        let targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
+        // Self damage has an accepted target in the seeded plan but does not
+        // create a hostile contact/reaction against its own caster. Preserve
+        // that target without reviving conditional effects the plan rejected.
+        const plannedSelf = plannedContacts ? (action.meta.expansionTargets?.[plannedIndex] || [])
+          .map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => entity === action.source) : [];
+        let targets = plannedContacts
+          ? [...new Set([...plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean), ...plannedSelf])]
+          : resolveTargets(ctx, action, eff.target);
         if(eff.target==='allEnemies' && action.card?.targetLimit!==undefined) targets=targets.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,targets.length)));
         for (const t of targets) {
           if (!Expanded.expansionTargetPresent(ctx, t)) continue;
@@ -1642,11 +1650,13 @@ function runOpcode(ctx, action, eff) {
           if (action.card?.rangeLineage) carrier.rangeContactId=RangeLineage.inheritedContactId(ctx,action,t);
           if (plannedContacts) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
-            carrier.expansionGroup = action.meta.expansionGroup;
-            carrier.expansionContact = { index: contact.index, receipt: action.meta.expansionGroup.targets[contact.key].receipt };
-            const serial = action.meta.expansionGroup.manualCounterSerials?.[ctx.playerIdForEntity?.(t) || 'player'];
-            if (serial) carrier.manualCounterSerial = serial;
-            if (contact.crit) carrier.critMultiplier = contact.crit;
+            if (contact) {
+              carrier.expansionGroup = action.meta.expansionGroup;
+              carrier.expansionContact = { index: contact.index, receipt: action.meta.expansionGroup.targets[contact.key].receipt };
+              const serial = action.meta.expansionGroup.manualCounterSerials?.[ctx.playerIdForEntity?.(t) || 'player'];
+              if (serial) carrier.manualCounterSerial = serial;
+              if (contact.crit) carrier.critMultiplier = contact.crit;
+            }
           }
           if (Array.isArray(carrier.appliedStatusEffects)) {
             carrier.appliedStatuses = carrier.appliedStatusEffects

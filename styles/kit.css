@@ -2227,6 +2227,10 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 /* The card-upgrade picker sizes its preview to its lines, so Confirm sits under them instead of under an empty box. */
 .card-upgrade-modal .smith-preview-host { flex: 0 1 auto; }
 .card-upgrade-modal .smith-preview-card { flex: 0 1 auto; padding-bottom: 0.6rem; }
+.card-upgrade-modal .smith-candidate-region > .as-rail { gap: .3rem; }
+.card-upgrade-modal .card-upgrade-row { padding: .35rem .6rem; gap: .6rem; }
+.card-upgrade-modal .smith-cost-strip { margin-top: .5rem; padding: .5rem 0; }
+.card-upgrade-modal .smith-confirm { margin-top: auto; flex-shrink: 0; }
 /* The summary: the selected item — its art beside its name, tier, kind and
    tags — one column, the rows flush so the stats row follows. */
 .smith-summary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding-bottom: 0.6rem; }

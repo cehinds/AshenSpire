@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — card behavior, intent and merchant fixes
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/CardIntentShopPolish/latest/)
+
+Hold Block retains its protection, enemy forecasts follow the pending action, completed upgrades leave the picker, and merchants sell inventory and replace purchases within the same category. Compact shop rows and smaller intent symbols preserve readable controls.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile merchant with Sell](docs/preview/features/card-intent-shop-polish/mobile.png) | ![Desktop merchant](docs/preview/features/card-intent-shop-polish/desktop.png) | ![Wide merchant](docs/preview/features/card-intent-shop-polish/wide.png) | ![Tablet merchant](docs/preview/features/card-intent-shop-polish/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 

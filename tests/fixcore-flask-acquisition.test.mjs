@@ -6,7 +6,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 import { acquireFlask, chargeFlaskId, flaskAcquisitionPlan, reallocateFlaskCharges, utilityFlaskIds } from '../src/model/gracerefill.js';
-import { claimGameProfileReward, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
+import { claimGameProfileReward, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
@@ -40,10 +40,12 @@ test('charge acquisition bypasses full utility belt and grows the reallocation l
 test('capacity shop pickup debits once, persists through reload, and refused purchases leave ledgers untouched',()=>{
   const run=fresh(), before=structuredClone(run.flaskCharges);
   run.cinders=20;run.gameProfileRewardOffers={'shop:one':offer('shop:one',mana,'shop')};
-  purchaseGameProfileShopOffer(reg,run,'one',0);
+  const quote=gameProfileShopPurchasePlan(reg,run,'one',0);
+  const bought=purchaseGameProfileShopOffer(reg,run,'one',0,null,quote);
   assert.equal(run.cinders,10);assert.equal(run.flaskCharges.mana,before.mana+1);
   const after=JSON.stringify(run);
-  assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'one',0),/claimed/);
+  assert.equal(bought.replacement?.kind,'potions');
+  assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'one',0,null,quote),/changed/);
   assert.equal(JSON.stringify(run),after);
   const saves=createSaveManager(createMemoryStorage());saves.saveRun(run,null);
   const restored=saves.loadRun(reg);

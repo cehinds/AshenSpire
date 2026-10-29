@@ -45,13 +45,13 @@
 /* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
    with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
    Solo (target HUD) and co-op share one size so neither role drifts. */
-:root .combat { --intent-value-size: calc(22px / var(--ui-zoom,1)); }
+:root .combat { --intent-content-scale: .8; --intent-value-size: calc(22px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 /* Owner (2026-10-26): desktop and widescreen read smaller than the phone. */
-:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat { --intent-value-size: calc(18px / var(--ui-zoom,1)); }
-:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-target-hud='true'] :is(.intent-action,.intent-followup) .intent-icon { width:calc(20px / var(--ui-zoom,1)); height:calc(20px / var(--ui-zoom,1)); }
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat { --intent-value-size: calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-target-hud='true'] :is(.intent-action,.intent-followup) .intent-icon { width:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
 :root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
-:root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
+:root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
   width:100%!important; min-width:0!important; margin:0!important; gap:0!important;
 }
@@ -120,7 +120,7 @@
 :root .combat .intent > .intent-followups.intent-followups-expanded { display:none; }
 :root .combat[data-layout='formation'] .combatant.context-selected .intent > .intent-followups.intent-followups-expanded { display:inline-flex; }
 :root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
-:root .combat .intent .intent-followup .intent-icon { width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-followup .intent-icon { width:calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 
 /* The same scoped total remains visible in compact overheads and target HUDs.
    Narrow hosts wrap action groups and the title instead of clipping the total. */
@@ -187,8 +187,8 @@
    took 65px of a 146px field and the body is fitted into what is left under it. A leaner intent gives that height
    back to the bodies (the short profile in combatFormationModel.json moves the ranks down for the rest). */
 @container game-viewport (max-height: 480px) and (min-width: 600px) {
-  :root .combat[data-layout='formation'] { --intent-value-size: calc(16px / var(--ui-zoom,1)); }
-  :root .combat[data-layout='formation'][data-target-hud='true'] .intent-action .intent-icon { width:calc(19px / var(--ui-zoom,1)); height:calc(19px / var(--ui-zoom,1)); }
+  :root .combat[data-layout='formation'] { --intent-value-size: calc(16px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+  :root .combat[data-layout='formation'][data-target-hud='true'] .intent-action .intent-icon { width:calc(19px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(19px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 }
 
 /* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the

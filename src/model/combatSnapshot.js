@@ -56,6 +56,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.proposalIntentRevealedUntilByOwner !== undefined && (!record(entity.proposalIntentRevealedUntilByOwner)
     || Object.entries(entity.proposalIntentRevealedUntilByOwner).some(([id, until]) => !nonEmptyString(id) || !Number.isSafeInteger(until) || until < 0)))
     problems.push(`${path}.proposalIntentRevealedUntilByOwner must map player ids to non-negative turn numbers`);
+  if (entity.intent?.resolved !== undefined && typeof entity.intent.resolved !== 'boolean') problems.push(`${path}.intent.resolved must be boolean`);
   if (entity.intent?.counterDefensePrimed !== undefined) {
     if (typeof entity.intent.counterDefensePrimed !== 'boolean') problems.push(`${path}.intent.counterDefensePrimed must be boolean`);
     else if (entity.intent.counterDefensePrimed && (!nonEmptyString(entity.intent.moveId) || entity.intent.combatProfile?.maneuver !== 'counter')) problems.push(`${path}.intent.counterDefensePrimed requires the committed Counter move`);

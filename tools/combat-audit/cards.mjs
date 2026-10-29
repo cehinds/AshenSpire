@@ -29,7 +29,7 @@ export function assertImmediateContracts(def, events, instanceId) {
     }
     const matching = events.filter(e => e.type === eventType && e.cardInstanceId === instanceId);
     assert.ok(matching.length, `${def.id}: unconditional ${effect.op} must emit ${eventType}`);
-    if (effect.op === 'damage') assert.ok(matching.some(e => e.incoming > 0), `${def.id}: positive damage must reach defense processing`);
+    if (effect.op === 'damage') assert.ok(matching.some(e => e.incoming > 0 || e.damageReceipt?.hits?.some(hit => hit.incoming > 0)), `${def.id}: positive damage must reach defense processing`);
     covered.push(effect.op);
   }
   return { covered, uncovered };
@@ -54,6 +54,7 @@ export async function auditCards({ mode = 'native', configuration = 'raw-authore
       const choicePlan = api.cardChoicePlan(c, inst.instanceId);
       const choice = choicePlan?.options?.find(option => !option.active)?.id;
       const costs = api.cardPlayCosts(c, inst.instanceId, variant.upcastTier);
+      const executedDef = api.selectCardVariant(c, def, costs, targetId === c.player.id ? c.player : c.enemies.find(enemy => enemy.id === targetId));
       const beforePools = { energy: c.player.energy, mana: c.player.mana };
       const eventStart = c.eventLog.length;
       try { api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId, ...(choice ? { choice } : {}), ...(variant.upcastTier !== undefined ? { upcastTier: variant.upcastTier } : {}) }); }
@@ -80,7 +81,7 @@ export async function auditCards({ mode = 'native', configuration = 'raw-authore
       assert.equal(c.player.stamina, beforePools.energy - receipts[0].staminaSpent + restoredStamina, 'actual Stamina payment/restoration ledger');
       assert.equal(c.player.mana, beforePools.mana - receipts[0].manaSpent + restoredMana, 'actual Mana payment/restoration ledger');
       report.resourceDeltaChecks++;
-      const contract = assertImmediateContracts(def, events, inst.instanceId);
+      const contract = assertImmediateContracts(executedDef, events, inst.instanceId);
       for (const op of contract.covered) report.contracts[op] = (report.contracts[op] || 0) + 1;
       for (const op of contract.uncovered) report.uncovered[op] = (report.uncovered[op] || 0) + 1;
       const turn = c.turn;
