@@ -113,7 +113,10 @@ test('a reload after a rank-up claim resumes the same door and offers no second 
     const again = open();
     assert.equal(again.rows.length, 1, 'the reloaded door holds the same one row, not a fresh one from the ledger');
     assert.equal(run.skills['item:blade'].pendingRankUps, queued - 1, 'nothing more is spent');
-    assert.ok(again.app.querySelector('.reward-kind[data-kind="skillRankUp"]'), 'the row is still listed (as claimed)');
+    const doorRow = again.app.querySelector('.reward-kind[data-kind="skillRankUp"]');
+    assert.ok(doorRow, 'the row is still listed');
+    assert.equal(doorRow.dataset.state, 'taken', 'the reloaded door shows the row as claimed, not offered again');
+    assert.equal(run.gameProfilePendingReward.rankUpCheckpoint.states[doorRow.dataset.key], 'taken', 'the claim is saved on the pending reward');
     // The next victory's door (a new pending reward) offers the remaining rank-up.
     run.gameProfilePendingReward = { offerId: '1:m:combat', source: 'combat', after: 'map', levelOffers: 0 };
     assert.equal(pendingRankUpRows(registries, run).length, 1);
