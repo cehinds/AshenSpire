@@ -43,6 +43,8 @@ import { deckCopyLimit, ownedCopies } from './deckRules.js';
 import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
+/** The `{plural}` token of the uiStrings rows: '' for exactly one, 's' otherwise. */
+export const plural = (count) => (count === 1 ? '' : 's');
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const ART_TAG = 'extractable';
 const TECHNIQUE_PREFIX = 'technique:';
@@ -142,7 +144,8 @@ export function sigilSlotsOf(registries, run, itemRef) {
 /** Every carried armament with its slots, for the screen and the live service check. */
 export function sigilSlotPieces(registries, run) {
   const { max } = slotRules(registries);
-  return carriedRefs(run).map((itemRef) => {
+  // A carried id with no armament record (the starting 'default' fists) has no name to show and no slot to cut.
+  return carriedRefs(run).filter((itemRef) => (registries.equipment.armaments || []).some((piece) => `armament/${piece.id}` === itemRef)).map((itemRef) => {
     const slots = sigilSlotsOf(registries, run, itemRef);
     return { itemRef, name: armamentName(registries, itemRef), slots, max, canCut: slots.length < max };
   });
@@ -233,7 +236,7 @@ export function refinePlan(registries, run, { priceMult = 1 } = {}) {
   const cost = refine ? cinders(refine.cinders, priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'refineStones') || !refine) reason = say('blacksmith.refuse.notOffered');
-  else if (stones(run) < refine.from) reason = say('blacksmith.refuse.refineStones', { from: refine.from, have: stones(run) });
+  else if (stones(run) < refine.from) reason = say('blacksmith.refuse.refineStones', { from: refine.from, have: stones(run), plural: plural(refine.from) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, stones: refine?.from ?? 0, cost, value: refine?.value ?? null, revision: blacksmithRevision(run) };
 }
@@ -262,8 +265,8 @@ export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stone
   // Core has no refining, so no refined purse to pay from.
   else if (refinedPurse && blacksmithWithholds(run, 'refineStones')) reason = say('blacksmith.refuse.notOffered');
   else if (!candidate) reason = say('blacksmith.refuse.upgradeNone', { name: armamentName(registries, itemRef) });
-  else if (refinedPurse && !candidate.refinedAffordable) reason = say('blacksmith.refuse.refined', { cost: candidate.refinedCost ?? '—', have: run.smithingStonesRefined || 0 });
-  else if (!refinedPurse && !candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
+  else if (refinedPurse && !candidate.refinedAffordable) reason = say('blacksmith.refuse.refined', { cost: candidate.refinedCost ?? '—', have: run.smithingStonesRefined || 0, plural: plural(candidate.refinedCost) });
+  else if (!refinedPurse && !candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
   return {
     ok: !reason, reason, itemRef, purse, candidate,
     stones: candidate && !refinedPurse ? candidate.cost : 0,
@@ -294,7 +297,7 @@ export function blacksmithExtractPlan(registries, run, itemRef, mountKey) {
   if (!blacksmithOffers(run, 'extractArt')) reason = say('blacksmith.refuse.notOffered');
   else if (plan.refusal) reason = say(`blacksmith.refuse.extract.${plan.refusal}`);
   else if (!mount) reason = say('blacksmith.refuse.noMount');
-  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
+  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
   return { ok: !reason, reason, itemRef, mountKey, stones: plan.cost, cost: 0, revision: blacksmithRevision(run) };
 }
 
@@ -315,7 +318,7 @@ export function blacksmithInstallPlan(registries, run, itemRef, mountKey, instan
   let reason = '';
   if (!blacksmithOffers(run, 'installArt')) reason = say('blacksmith.refuse.notOffered');
   else if (!mount || !card) reason = say('blacksmith.refuse.noMount');
-  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run) });
+  else if (!candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
   return { ok: !reason, reason, itemRef, mountKey, instanceId, stones: plan.cost, cost: 0, revision: blacksmithRevision(run) };
 }
 
@@ -350,7 +353,7 @@ export function upgradeArtPlan(registries, run, instanceId) {
   else if (!isArt(registries, card.cardId)) reason = say('blacksmith.refuse.notArt', { name });
   else if (card.upgraded === true) reason = say('blacksmith.refuse.artUpgraded', { name });
   else if (!registries.cards.get(card.cardId)?.upgrade) reason = say('blacksmith.refuse.noCardUpgrade', { name });
-  else if (stones(run) < price) reason = say('blacksmith.refuse.stones', { cost: price, have: stones(run) });
+  else if (stones(run) < price) reason = say('blacksmith.refuse.stones', { cost: price, have: stones(run), plural: plural(price) });
   return { ok: !reason, reason, instanceId, stones: price, cost: 0, revision: blacksmithRevision(run) };
 }
 
@@ -393,7 +396,7 @@ export function stackCopyPlan(registries, run, cardId, { priceMult = 1, settings
   // Extractable arts can still be seated in an item; a capped technique with
   // no such use must not sell another permanently unused sideboard copy.
   else if (!isArt(registries, cardId) && copies.length >= limit) reason = say('deckEditor.refuse.copyLimit', { name, limit });
-  else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run) });
+  else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run), plural: plural(stonePrice) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, cardId, name, owned: copies.length, stones: stonePrice, cost, revision: blacksmithRevision(run) };
 }

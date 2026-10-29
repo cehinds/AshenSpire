@@ -39,7 +39,7 @@ import {
   refinePlan, commitRefine,
   sigilSlotPieces, sigilSlotPlan, commitSigilSlot,
   sigilInstallPlan, commitSigilInstall, sigilRemovePlan, commitSigilRemove,
-  upgradeableArts, upgradeArtPlan, commitUpgradeArt, coreCardUpgrades, blacksmithWithholds,
+  upgradeableArts, upgradeArtPlan, commitUpgradeArt, coreCardUpgrades, blacksmithWithholds, plural,
   stackableCardIds, stackCopyPlan, commitStackCopy,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
   blacksmithExtractPlan, commitBlacksmithExtract,
@@ -93,7 +93,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const item of stock.armaments || []) {
         const plan = armamentPurchasePlan(registries, run, item);
         if (!plan.def) continue;
-        const host = tile(GLYPH.armaments, plan.def.name, t('blacksmith.armament.line', { name: plan.def.name, cost: item.cost }));
+        const host = tile(GLYPH.armaments, plan.def.name, t('blacksmith.armament.line', { cost: item.cost }));
         actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => {
           const receipt = commitArmamentPurchase(registries, run, plan);
           onArmamentPurchased(receipt.id);
@@ -110,16 +110,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       shelf.append(host);
     },
     upgrade(shelf) {
-      for (const candidate of smithingPlan(registries, run).candidates) {
-        const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.line', { name: candidate.itemName, from: candidate.currentLevel, to: candidate.nextLevel }));
+      // An item with no name of its own is a raw id; the screen never shows one.
+      for (const candidate of smithingPlan(registries, run).candidates.filter((row) => row.itemName)) {
+        const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.line', { from: candidate.currentLevel, to: candidate.nextLevel }));
         // The stone purse opens the smith's own upgrade modal (SmithSelectionModel),
         // whose confirm commits the blacksmith's quote.
         const stonesPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones' });
-        const control = button({ label: t('blacksmith.action.upgrade', { cost: candidate.cost }), weight: 'primary', disabled: !stonesPlan.ok });
+        const control = button({ label: t('blacksmith.action.upgrade', { cost: candidate.cost, plural: plural(candidate.cost) }), weight: 'primary', disabled: !stonesPlan.ok });
         if (stonesPlan.ok) control.addEventListener('click', () => openUpgradeModal(candidate.itemRef, control));
         host.append(control);
         if (!stonesPlan.ok) host.append(statusText(stonesPlan.reason, { class: 'shop-offer-avail' }));
-        if (candidate.refinedCost !== null) {
+        // Core has no refining, so there is no refined purse to offer.
+        if (candidate.refinedCost !== null && !blacksmithWithholds(run, 'refineStones')) {
           const refinedPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'refined' });
           actionButton(host, { label: t('blacksmith.action.upgradeRefined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, refinedPlan) });
         }
@@ -128,21 +130,23 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     },
     refineStones(shelf) {
       const plan = refinePlan(registries, run, { priceMult });
-      const host = tile(GLYPH.refineStones, t('blacksmith.refine.title'), t('blacksmith.refine.desc', { from: plan.stones, cost: plan.cost, value: plan.value ?? 0 }));
+      const host = tile(GLYPH.refineStones, t('blacksmith.refine.title'), t('blacksmith.refine.desc', { from: plan.stones, cost: plan.cost, value: plan.value ?? 0, plural: plural(plan.stones), valuePlural: plural(plan.value ?? 0) }));
       actionButton(host, { id: 'blacksmith-refine', label: t('blacksmith.action.refine'), plan, commit: () => commitRefine(registries, run, plan, { priceMult }) });
       shelf.append(host);
     },
     sigilSlots(shelf) {
       for (const piece of sigilSlotPieces(registries, run)) {
         const plan = sigilSlotPlan(registries, run, piece.itemRef, { priceMult });
-        const host = tile(GLYPH.sigilSlots, piece.name, t('blacksmith.slots.line', { name: piece.name, count: piece.slots.length, max: piece.max }));
+        const host = tile(GLYPH.sigilSlots, piece.name, t('blacksmith.slots.line', { count: piece.slots.length, max: piece.max, plural: plural(piece.max) }));
         actionButton(host, { label: t('blacksmith.action.cutSlot', { cost: plan.cost }), plan, commit: () => commitSigilSlot(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
     sigils(shelf) {
       const pieces = sigilSlotPieces(registries, run);
-      const records = Object.entries(run.sigilSlots || {}).filter(([ref]) => !pieces.some((piece) => piece.itemRef === ref));
+      // A record kept for an item with no armament of its own has no name to show; it is left out, not drawn as a raw id.
+      const named = (ref) => (registries.equipment.armaments || []).some((piece) => `armament/${piece.id}` === ref);
+      const records = Object.entries(run.sigilSlots || {}).filter(([ref]) => named(ref) && !pieces.some((piece) => piece.itemRef === ref));
       const all = [...pieces.map((piece) => [piece.itemRef, piece.slots, piece.name]), ...records.map(([ref, slots]) => [ref, slots, ref.replace(/^armament\//, '')])];
       for (const [itemRef, slots, name] of all) {
         slots.forEach((slot, index) => {
@@ -178,16 +182,16 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const card of upgradeableArts(registries, run)) {
         const plan = upgradeArtPlan(registries, run, card.instanceId);
         const name = registries.cards.get(card.cardId)?.name || card.cardId;
-        const host = tile(GLYPH.upgradeArt, name, t('blacksmith.art.line', { name }));
-        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones }), plan, commit: () => commitUpgradeArt(registries, run, plan) });
+        const host = tile(GLYPH.upgradeArt, name, t('blacksmith.art.line'));
+        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones, plural: plural(plan.stones) }), plan, commit: () => commitUpgradeArt(registries, run, plan) });
         shelf.append(host);
       }
     },
     stackCopy(shelf) {
       for (const cardId of stackableCardIds(registries, run, meta?.settings)) {
         const plan = stackCopyPlan(registries, run, cardId, { priceMult, settings: meta?.settings });
-        const host = tile(GLYPH.stackCopy, plan.name, t('blacksmith.stack.line', { name: plan.name, owned: plan.owned }));
-        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost }), plan, commit: () => commitStackCopy(registries, run, plan, { priceMult, settings: meta?.settings }) });
+        const host = tile(GLYPH.stackCopy, plan.name, t('blacksmith.stack.line', { owned: plan.owned }));
+        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost, plural: plural(plan.stones) }), plan, commit: () => commitStackCopy(registries, run, plan, { priceMult, settings: meta?.settings }) });
         shelf.append(host);
       }
     },
@@ -278,7 +282,12 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const frame = root.querySelector('.shop-frame');
     const railed = root.querySelector('.shop-railed');
     const paneHead = root.querySelector('.shop-pane-head');
-    const purse = t('blacksmith.purse', { stones: run.smithingStones || 0, refined: run.smithingStonesRefined || 0, cinders: run.cinders });
+    const stonesHeld = run.smithingStones || 0;
+    const refinedHeld = run.smithingStonesRefined || 0;
+    // Core has no refining, so its purse never names refined stones.
+    const purse = coreCardUpgrades(run)
+      ? t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders })
+      : t('blacksmith.purse', { stones: stonesHeld, plural: plural(stonesHeld), refined: refinedHeld, refinedPlural: plural(refinedHeld), cinders: run.cinders });
     frame.prepend(modalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: statusText(purse, { class: 'modal-head-status' }) }));
 
     const idle = {};
