@@ -1,9 +1,9 @@
 // Browser-safe fixture factory. Callers provide native or compiled API exports.
 // These are capability fixtures, not completed player runs or balance simulations.
 export const AUDIT_SCENARIOS = Object.freeze(['baseline', 'wounded', 'charged', 'protected', 'empty-pools']);
-export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, scenario = 'baseline', cardInstances = [], relicIds, carrierId } = {}) {
+export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, scenario = 'baseline', cardInstances = [], relicIds, carrierId, profileMeta } = {}) {
   if (!AUDIT_SCENARIOS.includes(scenario)) throw new Error(`Unknown audit scenario '${scenario}'`);
-  const run = api.createRunState({ registries: api.registries, classId, seed });
+  const run = api.createRunState({ registries: api.registries, classId, seed, ...(profileMeta ? { profileMeta } : {}) });
   let fixtureKind = 'registered-card';
   if (Number.isInteger(instance?.abilityRank) && instance.abilityRank > 0) {
     const card = api.registries.cards.get(instance.cardId);
@@ -54,6 +54,9 @@ export function settleAuditChoices(api, combat, { maxChoices = 30 } = {}) {
     if (combat.pendingAbilityDiscard) {
       const ids = api.discardCandidates(combat).slice(0, combat.pendingAbilityDiscard.count).map(c => c.instanceId);
       api.dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }); answered.push('discard');
+    } else if (combat.pendingCardChoice) {
+      const pending = combat.pendingCardChoice;
+      api.dispatch(combat, { type: 'chooseCards', cardInstanceIds: pending.candidateIds.slice(0, pending.count) }); answered.push('cards');
     } else if (combat.pendingReaction) {
       api.dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); answered.push('reaction');
     } else return answered;

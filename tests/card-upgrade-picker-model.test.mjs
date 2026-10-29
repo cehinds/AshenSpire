@@ -1,5 +1,5 @@
-// Card upgrades UI 2/5: the picker's read model. Rows show Free / 1 Smithing Stone, 'maxed' and 'cap' rows are
-// disabled "Fully upgraded", and the preview faces are the plan's own (the rolled step), so preview == commit.
+// Card upgrades UI 2/5: completed cards leave the picker; unaffordable cards
+// follow available cards, and the preview faces match the committed upgrade.
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import '../src/engine/runCombat.js';
@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
-import { commitCardUpgrade } from '../src/model/cardUpgradeService.js';
+import { commitCardUpgrade, planCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { upgradePreviewHtml } from '../src/ui/components/card.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
 
@@ -24,25 +24,56 @@ test('rows: a fresh Strike costs nothing, its second upgrade is 1 Smithing Stone
   assert.equal(row().upgrades, 1);
 });
 
-test('rows: the 10-upgrade cap and a maxed card are disabled "Fully upgraded" and cannot be selected', () => {
+test('rows: capped and fully upgraded cards are absent and cannot be selected', () => {
   const run = newRun(); run.smithingStones = 50;
   const card = strike(run);
   card.upgraded = true; card.upgradeSteps = Array.from({ length: 10 }, () => ({ k: 'dmg', n: 1 }));
   const model = cardUpgradeModel(registries, run, card.instanceId);
-  const row = model.rows.find(r => r.instanceId === card.instanceId);
-  assert.deepEqual([row.code, row.disabled, row.costLabel], ['cap', true, 'Fully upgraded']);
-  assert.equal(model.selected, null, 'a disabled row is never the selection');
+  assert.equal(model.rows.some(r => r.instanceId === card.instanceId), false);
+  assert.equal(model.selected, null);
   assert.equal(model.canConfirm, false);
+
+  card.upgradeSteps = [];
+  let plan = planCardUpgrade(run, registries, card.instanceId);
+  while (plan.ok) {
+    commitCardUpgrade(run, registries, plan);
+    plan = planCardUpgrade(run, registries, card.instanceId);
+  }
+  assert.equal(plan.code, 'maxed', 'the real upgrade sequence exhausts before the cap');
+  const maxedModel = cardUpgradeModel(registries, run, card.instanceId);
+  assert.equal(maxedModel.rows.some(r => r.instanceId === card.instanceId), false);
+  assert.equal(maxedModel.selected, null);
 });
 
-test('rows: a short purse keeps the row selectable but blocks Confirm with the reason', () => {
+test('rows: a short purse disables and moves paid cards after free cards while preserving the selected preview', () => {
   const run = newRun(); run.smithingStones = 0;
   const card = strike(run);
   card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
   const model = cardUpgradeModel(registries, run, card.instanceId);
   assert.equal(model.selected.instanceId, card.instanceId);
+  assert.equal(model.selected.disabled, true);
+  assert.ok(model.faces?.after, 'an existing selection retains its upgrade preview');
   assert.equal(model.canConfirm, false);
   assert.match(model.blockedReasons[0], /Smithing Stone/);
+  assert.equal(model.selected.blockedReason, model.blockedReasons[0]);
+  assert.equal(model.rows.at(-1).instanceId, card.instanceId);
+  assert.deepEqual(model.rows.filter(row => !row.disabled).map(row => row.instanceId),
+    run.deck.filter(instance => instance.instanceId !== card.instanceId
+      && planCardUpgrade(run, registries, instance.instanceId).ok).map(instance => instance.instanceId));
+  run.smithingStones = 1;
+  const replenished = cardUpgradeModel(registries, run, card.instanceId);
+  assert.equal(replenished.rows[0].instanceId, card.instanceId, 'affordable cards return to deck order');
+  assert.equal(replenished.canConfirm, true);
+});
+
+test('a spent service disables every remaining upgrade and keeps its reason in the selected preview', () => {
+  const run = newRun();
+  const model = cardUpgradeModel(registries, run, strike(run).instanceId, { blockedReason: 'This service has already been used.' });
+  assert.ok(model.rows.length > 0);
+  assert.ok(model.rows.every(row => row.disabled && row.blockedReason === 'This service has already been used.'));
+  assert.equal(model.canConfirm, false);
+  assert.deepEqual(model.blockedReasons, ['This service has already been used.']);
+  assert.ok(model.faces?.after);
 });
 
 test('the preview shows the plan face, so it equals the card after commit', () => {
@@ -94,7 +125,7 @@ test('a procedural step the template does not mention (an added status) still sh
   assert.ok(found, 'some seed rolls an added status');
 });
 
-test('the picker draws a row per deck card with its cost; a capped card reads "Fully upgraded" and is aria-disabled', async () => {
+test('the picker omits capped cards and draws available cards with their upgrade cost', async () => {
   const { withKitDom } = await import('./helpers/kit-dom.mjs');
   const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
@@ -106,12 +137,86 @@ test('the picker draws a row per deck card with its cost; a capped card reads "F
     const model = cardUpgradeModel(registries, run, fresh.instanceId);
     const door = mountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const rowOf = id => host.querySelector(`.card-upgrade-row[data-instance-id="${id}"]`);
-    assert.equal(rowOf(capped.instanceId).getAttribute('aria-disabled'), 'true');
-    assert.match(rowOf(capped.instanceId).outerHTML, /Fully upgraded/);
+    assert.equal(rowOf(capped.instanceId), null);
     assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
     assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
     assert.equal(host.querySelector('.card-upgrade-preview').dataset.cardUpgradePreview, fresh.instanceId);
     assert.match(host.querySelector('.smith-confirm').outerHTML, /Buy upgrade · No charge/);
+    door.close();
+  });
+});
+
+test('picker updates disable unaffordable upgrades, reorder rows, and use the current selection rules', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 1;
+    const paid = strike(run);
+    paid.upgraded = true; paid.upgradeSteps = [{ k: 'authored' }];
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const selected = [];
+    let commits = 0;
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, paid.instanceId), {
+      registries, meta: {}, onSelect: id => selected.push(id), onBack() {}, onConfirm() { commits += 1; },
+    });
+    const rows = () => [...host.querySelectorAll('.card-upgrade-row')];
+    const paidRow = () => rows().find(row => row.dataset.instanceId === paid.instanceId);
+    const confirm = host.querySelector('.smith-confirm');
+    assert.equal(confirm.disabled, false);
+    paidRow().click();
+    assert.deepEqual(selected, [paid.instanceId]);
+
+    run.smithingStones = 0;
+    door.update(cardUpgradeModel(registries, run, paid.instanceId));
+    assert.equal(rows().at(-1).dataset.instanceId, paid.instanceId);
+    assert.equal(paidRow().getAttribute('aria-disabled'), 'true');
+    assert.equal(paidRow().dataset.upgradeState, 'blocked');
+    assert.match(paidRow().querySelector('.card-upgrade-reason').textContent, /Smithing Stone/);
+    paidRow().click();
+    paidRow().dispatchEvent(new dom.Event('keydown', { key: 'Enter' }));
+    assert.deepEqual(selected, [paid.instanceId], 'disabled rows cannot be selected by click or keyboard');
+    assert.equal(confirm.disabled, true);
+    assert.equal(confirm.getAttribute('aria-disabled'), 'true');
+    assert.equal(confirm.hidden, false, 'keep the selected preview and its blocked action visible');
+    assert.match(host.querySelector('.as-reasonnote').textContent, /Smithing Stone/);
+    confirm.click();
+    assert.equal(commits, 0);
+    assert.equal(host.querySelectorAll('[aria-modal="true"]').length, 1, 'a disabled action opens no decision');
+
+    run.smithingStones = 1;
+    door.update(cardUpgradeModel(registries, run, paid.instanceId));
+    assert.equal(rows()[0].dataset.instanceId, paid.instanceId);
+    assert.equal(paidRow().getAttribute('aria-disabled'), 'false');
+    assert.equal(confirm.disabled, false);
+    paidRow().click();
+    assert.deepEqual(selected, [paid.instanceId, paid.instanceId]);
+    door.close();
+  });
+});
+
+test('picker updates remove an exhausted upgrade and clear its selection', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 50;
+    const card = strike(run);
+    let plan = planCardUpgrade(run, registries, card.instanceId);
+    while (plan.ok) {
+      const before = structuredClone(card);
+      commitCardUpgrade(run, registries, plan);
+      const next = planCardUpgrade(run, registries, card.instanceId);
+      if (!next.ok) { Object.assign(card, before); break; }
+      plan = next;
+    }
+    const model = cardUpgradeModel(registries, run, card.instanceId);
+    assert.equal(model.canConfirm, true);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    commitCardUpgrade(run, registries, model.selected.plan);
+    door.update(cardUpgradeModel(registries, run, card.instanceId));
+    assert.equal(host.querySelector(`.card-upgrade-row[data-instance-id="${card.instanceId}"]`), null);
+    assert.equal(host.querySelector('.card-upgrade-preview'), null);
+    assert.equal(host.querySelector('.smith-confirm').disabled, true);
     door.close();
   });
 });

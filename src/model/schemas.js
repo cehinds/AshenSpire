@@ -134,7 +134,7 @@ export const EVENTS = Object.freeze([
   'playerTurnEnd',
   'enemyTurnStart',
   'enemyTurnEnd',
-  'enemyMoveStarted',
+  'enemyMoveStarted', 'enemyMoveEnded',
   'combatHitStarted',
   'combatContactPrepared',
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',

@@ -46,7 +46,9 @@ test('committed full-action and each contact retain adjusted AR, Block and Poise
     assert.equal(begun.intentPreview.hits, 1);
     assert.equal(begun.intentPreview.contactIndex, hit);
     assert.equal(begun.intentPreview.contactCount, 3);
-    assert.equal(combatIntentPresentation(begun.intentPreview).parts[0].value, String(damage.hpLoss));
+    const projected = begun.intentPreview.projectedDamage;
+    assert.ok(projected.min <= damage.hpLoss && projected.max >= damage.hpLoss, 'the pre-roll contact forecast contains the landed HP outcome');
+    assert.equal(combatIntentPresentation(begun.intentPreview).parts[0].value, projected.label);
     assert.match(combatIntentPresentation(begun.intentPreview).parts[0].summary, new RegExp(`Hit ${hit + 1}/3`));
   }
   assert.equal(combat.player.hp, 72);

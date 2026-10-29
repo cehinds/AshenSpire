@@ -7,13 +7,11 @@ import { cardRank } from '../../model/cardRank.js';
 import { t } from '../strings.js';
 
 const freeze = (value) => Object.freeze(value);
-// A 'maxed' or 'cap' card cannot be upgraded again: its row is disabled and says so.
-const SPENT_CODES = freeze(['maxed', 'cap']);
-// 'armament' (upgraded with its armament) and 'missing' are not deck-card upgrades at all.
-const HIDDEN_CODES = freeze(['armament', 'missing']);
+// Completed cards leave the picker, as do cards upgraded with their armament.
+const HIDDEN_CODES = freeze(['armament', 'missing', 'maxed', 'cap']);
 
 const row_upgrades = (instance) => (upgradeCount(instance) === 1 ? 'cardUpgrade.row.chipOne' : 'cardUpgrade.row.chip');
-const costLabel = (plan) => (SPENT_CODES.includes(plan.code) ? t('cardUpgrade.maxed') : plan.cost === 0 ? t('cardUpgrade.free') : t('cardUpgrade.stone', { n: plan.cost }));
+const costLabel = (plan) => (plan.cost === 0 ? t('cardUpgrade.free') : t('cardUpgrade.stone', { n: plan.cost }));
 
 export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '' } = {}) {
   const stones = Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0;
@@ -22,16 +20,19 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     const plan = planCardUpgrade(run, registries, instance.instanceId);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     const base = registries.cards.get(instance.cardId);
-    const spent = SPENT_CODES.includes(plan.code);
     rows.push(freeze({
       instanceId: instance.instanceId, cardId: instance.cardId, name: plan.before?.name || base.name, rarity: base.rarity || 'common',
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
-      spent, disabled: spent, cost: plan.cost, costLabel: costLabel(plan),
+      spent: false, disabled: !plan.ok || !!blockedReason, cost: plan.cost, costLabel: costLabel(plan),
+      blockedReason: plan.reason || blockedReason,
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
-      statusLabel: spent ? t('cardUpgrade.maxed') : t('cardUpgrade.row.next', { n: plan.n }),
+      statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
     }));
   }
-  const selected = rows.find((row) => row.instanceId === selectedInstanceId && !row.disabled) || null;
+  // Stable sorting keeps deck order within each group. An existing selection
+  // can keep its preview after a purse/service change, with Confirm disabled.
+  rows.sort((a, b) => Number(a.disabled) - Number(b.disabled));
+  const selected = rows.find((row) => row.instanceId === selectedInstanceId) || null;
   const affordable = !!selected && selected.plan.ok;
   return freeze({
     rows: freeze(rows), selected, stones, affordable,

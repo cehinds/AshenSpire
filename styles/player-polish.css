@@ -632,7 +632,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
 
 
-/* Approved merchant composition: four compact offers, category dock, footer.
+/* Merchant composition: five compact offers, category dock, footer.
    All dimensions below are local CSS pixels; UI zoom keeps tap targets physical. */
 :root .shop-workspace.merchant-workspace { --merchant-gold:var(--gold); padding:7rem 2rem 1rem; }
 :root .shop-workspace.merchant-workspace .shop-railed { overflow:hidden; gap:0; }
@@ -671,7 +671,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 .merchant-inspection > :first-child { max-width:min(100%,28rem); }
 .merchant-inspection > .book-art { width:24rem; }
 .merchant-inspection > p { white-space:pre-line; color:var(--parchment); }
-:root .shop-workspace.merchant-workspace .merchant-category-dock { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:calc(44px / var(--ui-zoom,1)); max-height:calc(94px / var(--ui-zoom,1)); overflow:auto; gap:6px; padding:6px 1rem; border-top:1px solid var(--line-soft); }
+:root .shop-workspace.merchant-workspace .merchant-category-dock { flex:0 0 auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:calc(44px / var(--ui-zoom,1)); max-height:calc(88px / var(--ui-zoom,1) + 19px); overflow:auto; gap:6px; padding:6px 1rem; border-top:1px solid var(--line-soft); }
 :root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:0; padding:2px; width:100%; font-size:calc(11px / var(--ui-zoom,1)); line-height:1.2; color:var(--ink-dim); border:1px solid var(--line-soft); background:var(--panel); }
 :root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem.on { --gold:var(--merchant-gold); color:var(--gold); border-color:var(--gold); }
 :root .shop-workspace.merchant-workspace .merchant-category-dock .as-status { font-size:calc(9px / var(--ui-zoom,1)); line-height:1.1; color:inherit; }
@@ -684,7 +684,10 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
 @container game-viewport (max-height:500px) {
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
- :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
+ :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(7,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1) + 13px); }
+}
+@container game-viewport (min-width:800px) {
+ :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(7,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1) + 13px); }
 }
 /* The shared renderer inherits the existing optional HP-width preference. */
 :root .shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }

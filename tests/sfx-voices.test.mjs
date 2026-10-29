@@ -15,8 +15,10 @@ const graph = stubGraph();
 const BaseCtx = window.AudioContext;
 let ctx = null;
 window.AudioContext = class extends BaseCtx { constructor() { super(); ctx = this; } };
-// No sample is ever available here; the synth is what plays.
-globalThis.fetch = async () => ({ ok: false, status: 404 });
+// No sample is ever available here; the synth is what plays. Keep requests so
+// composed action ids can assert they fall back without a known-missing URL.
+const sampleRequests = [];
+globalThis.fetch = async (url) => { sampleRequests.push(String(url)); return { ok: false, status: 404 }; };
 
 const { initAudio, sfxVariance } = await import('../src/ui/audio.js');
 const { SFX_RECIPES } = await import('../src/content/sfx.js');
@@ -171,4 +173,14 @@ test('the hold phrase stays on the score pitch; other cues still take the pitch 
     engine.sfx('hit_light');
     assert.ok(Math.abs(oscs()[0].frequency.value - hit.freq * 1.04) < 1e-9, 'hit_light is still scaled by the draw');
   });
+});
+
+test('an action-specific hold with only a family recipe synthesizes without requesting a missing sample', () => {
+  const engine = fresh();
+  const before = sampleRequests.length;
+  ctx.currentTime = 63;
+  engine.sfx('holdTick_shopSell');
+  const tick = SFX_RECIPES.holdTick.find((layer) => layer.kind === 'tone');
+  assert.equal(oscs()[0].frequency.value, tick.freq, 'the holdTick family recipe answers shopSell');
+  assert.equal(sampleRequests.length, before, 'no holdTick_shopSell.ogg request is made without an exact sample or manifest entry');
 });

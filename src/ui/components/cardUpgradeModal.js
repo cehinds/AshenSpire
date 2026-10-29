@@ -4,7 +4,7 @@
 // commitCardUpgrade applies, so the before/after preview is exactly what the commit does.
 import {
   el, modalHead, modalFooter, pill, button, eyebrow, prose, artWell, detailCard,
-  blocker, glyph, railItem, railed, statusText, categoryNav, stampModalSize,
+  blocker, glyph, railItem, railed, statusText, categoryNav, stampModalSize, landControl,
 } from '../kit/index.js';
 import { upgradePreviewHtml } from './card.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
@@ -43,8 +43,8 @@ export function mountCardUpgradeModal(host, initialModel, {
   let closed = false;
   let disarmDecision = null;
 
-  // One rail row per deck card: its name, what the next upgrade costs (or "Fully upgraded"), the upgrade count.
-  const cards = initialModel.rows.map((row) => {
+  // The model omits completed cards and orders available upgrades first.
+  function cardRow(row) {
     const item = railItem({
       tag: 'div', label: '', member: row.instanceId, current: false,
       className: `smith-candidate-card smith-weapon-card card-upgrade-row rarity-${row.rarity}${row.disabled ? ' locked' : ''}`,
@@ -52,15 +52,16 @@ export function mountCardUpgradeModal(host, initialModel, {
     });
     item.dataset.instanceId = row.instanceId;
     item.dataset.cardId = row.cardId;
-    item.dataset.upgradeState = row.disabled ? 'maxed' : row.cost === 0 ? 'free' : 'stone';
+    item.dataset.upgradeState = row.disabled ? 'blocked' : row.cost === 0 ? 'free' : 'stone';
     item.replaceChildren(
       el('span', { class: 'smith-row-text' }, [
         el('strong', { class: 'smith-weapon-name', text: row.name }),
         statusText(row.costLabel, { class: 'smith-row-status card-upgrade-cost' }),
+        row.blockedReason ? statusText(row.blockedReason, { class: 'smith-row-status card-upgrade-reason' }) : null,
       ]),
       pill({ label: row.chipLabel, attrs: { class: 'smith-weapon-count', 'aria-label': t('cardUpgrade.row.count', { n: row.upgrades }) } }),
     );
-    item.setAttribute('aria-label', `${row.name}, ${row.costLabel}`);
+    item.setAttribute('aria-label', [row.name, row.costLabel, row.blockedReason].filter(Boolean).join(', '));
     markUiComponent(item, UI.smithCandidateCard, 'available');
     item.addEventListener('keydown', (event) => {
       if (event.target !== item || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -68,11 +69,17 @@ export function mountCardUpgradeModal(host, initialModel, {
       item.click();
     });
     return item;
-  });
-  const nav = categoryNav({ items: cards, ariaLabel: t('cardUpgrade.items'), railAttrs: { role: 'listbox' },
-    face: () => currentModel.selected?.name || t('cardUpgrade.selector.none'),
-    // A disabled row is not a choice: "Fully upgraded" cannot be picked.
-    choose: (instanceId) => { if (!initialModel.rows.find((row) => row.instanceId === instanceId)?.disabled) onSelect(instanceId); } });
+  }
+  function navigation(items) {
+    return categoryNav({ items, ariaLabel: t('cardUpgrade.items'), railAttrs: { role: 'listbox' },
+      face: () => currentModel.selected?.name || t('cardUpgrade.selector.none'),
+      choose: (instanceId) => {
+        const row = currentModel.rows.find((candidate) => candidate.instanceId === instanceId);
+        if (row && !row.disabled) onSelect(instanceId);
+      } });
+  }
+  let cards = initialModel.rows.map(cardRow);
+  let nav = navigation(cards);
   const previewHost = el('div', { class: 'smith-preview-host' });
   const consequenceNode = el('p', { class: 'as-flavor smith-consequence', id: 'card-upgrade-consequence', text: consequence });
   const previewRegion = el('section', { class: 'as-pane smith-preview-region', id: 'card-upgrade-preview-region', 'aria-live': 'polite', 'aria-label': t('cardUpgrade.preview.label') }, [previewHost, consequenceNode]);
@@ -122,6 +129,21 @@ export function mountCardUpgradeModal(host, initialModel, {
   }
 
   function draw(model) {
+    let restoreNavFocus = null;
+    if (model !== currentModel) {
+      const active = document.activeElement;
+      const focusedRow = cards.find((card) => card === active);
+      const focusedToggle = active === nav.toggle;
+      const wasOpen = nav.isOpen();
+      nav.release();
+      cards = model.rows.map(cardRow);
+      nav = navigation(cards);
+      body.replaceChildren(railed(nav, previewRegion, { class: 'smith-candidate-region' }));
+      nav.plan();
+      nav.setOpen(wasOpen);
+      if (focusedRow || focusedToggle) restoreNavFocus = focusedToggle ? nav.toggle
+        : cards.find((card) => card.dataset.instanceId === focusedRow.dataset.instanceId) || nav.start();
+    }
     currentModel = model;
     const { selected } = model;
     markCurrent(cards, selected ? selected.instanceId : null);
@@ -137,7 +159,7 @@ export function mountCardUpgradeModal(host, initialModel, {
       : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [artWell({ glyph: 'smith', cool: true }), prose(t('cardUpgrade.instruction'))]));
     disarmDecision?.();
     disarmDecision = null;
-    confirmBtn.disabled = !selected;
+    confirmBtn.disabled = !model.canConfirm;
     confirmBtn.hidden = !selected;
     confirmBtn.textContent = selected ? t('cardUpgrade.confirm', { cost: selected.costLabel }) : '';
     confirmBtn.setAttribute('aria-disabled', String(!model.canConfirm));
@@ -162,6 +184,7 @@ export function mountCardUpgradeModal(host, initialModel, {
         returnFocusElement: confirmBtn,
       });
     }
+    if (restoreNavFocus) landControl(restoreNavFocus);
   }
 
   function close({ restoreFocus = true } = {}) {

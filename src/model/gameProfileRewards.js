@@ -9,6 +9,7 @@ import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
+import { createRng } from '../engine/rng.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -55,7 +56,7 @@ function pools(registries, run) {
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
     weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id)) ) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
-    armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
+    armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.classId===row.classId&&owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
 }
 function cardRank(card,rules) {
@@ -111,10 +112,11 @@ function weightedRelicPick(weights,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=list[index];if(roll<0)return id;}
   return ids.at(-1);
 }
-function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null}) {
+function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[]}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
+  for(const kind of Object.keys(available))available[kind]=available[kind].filter(id=>!excludedIds.includes(id));
   // Owner 2026-10-24: eligibility.potions.excludeKinds keeps the charge flasks (hp, mana) out of NEW Core offers; a relic grows
   // them instead. Claiming still accepts them, so an offer saved before this change stays claimable.
   const excludedFlasks=gameContent(run,'rewards')?.eligibility?.potions?.excludeKinds||[];
@@ -187,7 +189,8 @@ export function claimGameProfileReward(registries,run,offerId,index) {
   const draft=structuredClone(run);
   if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
-    draft.sideboard.push({instanceId:`reward:${offerId}:${index}`,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
+    const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
+    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
   } else if(option.kind==='weapons') {
     if(!(registries.equipment.armaments||[]).some(row=>row.id===option.id))throw new Error('Unknown reward weapon');
     if(draft.loadout.storage.includes(option.id))throw new Error('Reward weapon already owned');
@@ -268,13 +271,47 @@ function rollOfferPrice(registries,run,rng,table,option) {
   return rng.int('shop',range[0],range[1]);
 }
 export { shopOfferPrice };
-export function purchaseGameProfileShopOffer(registries,run,shopId,index) {
+export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
-  if(!stock||stock.source!=='shop')throw new Error('Missing configured shop');
   const price=shopOfferPrice(stock,index);
-  if(!Number.isSafeInteger(price)||price<0)throw new Error('Invalid configured shop price');
-  if(run.cinders<price)throw new Error('Insufficient cinders');
+  let reason='';
+  if(!stock||stock.source!=='shop')reason='Missing configured shop';
+  else if(!Number.isInteger(index)||!stock.options[index]||stock.taken.includes(index)||stock.claimed!==null)reason='This offer is sold out.';
+  else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
+  else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
+  else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
+  else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
+  return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
+}
+export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=null,quote=null) {
+  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index);
+  if(quote&&(quote.revision!==plan.revision||quote.signature!==plan.signature||quote.price!==plan.price||quote.shopId!==shopId||quote.index!==index))throw new Error('This offer changed. Inspect it again.');
+  if(!plan.ok)throw new Error(plan.reason);
+  const offerId=`shop:${shopId}`,price=plan.price;
   const draft=structuredClone(run);draft.cinders-=price;
   const receipt=claimGameProfileReward(registries,draft,offerId,index);
-  Object.assign(run,draft);return {...receipt,price};
+  // Old saves can offer a much lower flat price. Retain that paid-price
+  // ceiling across reloads and later merchants so resale cannot profit.
+  draft.gameProfileShopPurchasePrices ||= {};
+  const purchaseKey=`${receipt.kind}:${receipt.id}`,previousPrice=draft.gameProfileShopPurchasePrices[purchaseKey];
+  draft.gameProfileShopPurchasePrices[purchaseKey]=Number.isSafeInteger(previousPrice)?Math.min(previousPrice,price):price;
+  const stock=draft.gameProfileRewardOffers[offerId];
+  // Persist the new option itself: reloads never roll a replacement again.
+  const random=rng||createRng(run.seed,{shop:plan.revision*1000+index});
+  const counters=random.getCounters?.();
+  try {
+    let temporaryId=`${offerId}:restock`;
+    while(Object.hasOwn(draft.gameProfileRewardOffers,temporaryId))temporaryId+=':';
+    const excludedIds=stock.options.map(option=>option.id);
+    const replacement=makeOffer(registries,draft,random,{offerId:temporaryId,source:'shop',count:1,takeCount:1,categories:[receipt.kind],itemsPerCategory:1,excludedIds}).options[0];
+    delete draft.gameProfileRewardOffers[temporaryId];
+    if(replacement){
+      const table=gameModule(run,'shops').priceTable??gameContent(run,'shops').priceTable;
+      if(table)replacement.price=rollOfferPrice(registries,draft,random,table,replacement);
+      stock.options[index]=replacement;
+      stock.taken=stock.taken.filter(taken=>taken!==index);stock.claimed=null;
+    }
+    stock.tradeRevision=plan.revision+1;
+    Object.assign(run,draft);return {...receipt,price,replacement:replacement||null};
+  } catch(error) {if(counters&&random.restoreCounters)random.restoreCounters(counters);throw error;}
 }

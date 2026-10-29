@@ -160,9 +160,15 @@ test('guard redirects before damage with stable actor ordering and a finite char
 
 test('retention never creates Block and Many Forms extends capacity through explicit stacks',()=>{
  const owner=actor('p',{'retain-block':2,'many-forms':1},{block:13});
- assert.equal(proposalRetainProtection({actor:owner,rules}),8);
- assert.equal(proposalRetainProtection({actor:owner,amount:3,rules}),3);
- assert.equal(proposalRetainProtection({actor:owner,pool:'barrier',amount:9,rules}),0);
+ // Capped retention remains available to other authored rules. Hold Block uses
+ // the generic full-retention modifier so it matches its unqualified card text.
+ const cappedRules={...rules,'base.retain-block':{...rules['base.retain-block'],behaviors:[{kind:'retainProtection',pool:'block',amountPerStack:4}]}};
+ assert.equal(proposalRetainProtection({actor:owner,rules:cappedRules}),8);
+ assert.equal(proposalRetainProtection({actor:owner,amount:3,rules:cappedRules}),3);
+ assert.equal(proposalRetainProtection({actor:owner,pool:'barrier',amount:9,rules:cappedRules}),0);
+ assert.equal(data.statuses.find(row=>row.id==='base.retain-block').modifiers.retainBlock,true);
+ assert.deepEqual(rules['base.retain-block'].behaviors,[]);
+ assert.deepEqual(rules['base.retain-block'].decay,{phase:'start',stacks:1});
  assert.equal(proposalCardRules({actor:owner,card,rules}).additionalStanceCapacity,1);
  assert.equal(proposalCardRules({actor:actor('p',{'read-intent':1}),card,rules}).revealIntent,undefined,
   'the status marker cannot reveal intents without a selected-target read ledger');
