@@ -12,6 +12,7 @@
 //   node tools/perf-probe.mjs --keep-trace         also keep each Chromium trace in DIR (large)
 //   node tools/perf-probe.mjs --no-profile         skip the CPU-profile pass
 //   node tools/perf-probe.mjs --from DIR           re-print the report from the runs-*.json saved in DIR
+//   PERF_PROFILE_DIR=DIR node tools/perf-probe.mjs   also save each raw .cpuprofile there (large; prune it)
 //   node tools/perf-probe.mjs --debug              log each step and the controls on screen
 //
 // Profile: Playwright Chromium, 390x844 phone (deviceScaleFactor 3, isMobile,
@@ -419,7 +420,7 @@ async function onePass(browser, base, name, { trace, profile }) {
     const raw = await page.evaluate('window.__perf.stop()');
     const end = await page.evaluate('window.__perf.census()');
     let traceOut = null, profOut = null;
-    if (profile) { const { profile: p } = await cdp.send('Profiler.stop'); profOut = analyseProfile(p); }
+    if (profile) { const { profile: p } = await cdp.send('Profiler.stop'); profOut = analyseProfile(p); if (process.env.PERF_PROFILE_DIR) { mkdirSync(process.env.PERF_PROFILE_DIR, { recursive: true }); writeFileSync(join(process.env.PERF_PROFILE_DIR, `${name}-${Date.now()}.cpuprofile`), JSON.stringify(p)); } }
     if (trace) {
       const done = new Promise((res) => bcdp.once('Tracing.tracingComplete', res));
       await bcdp.send('Tracing.end'); await done; traceOn = false;
