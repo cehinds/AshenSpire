@@ -34,13 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-29
 
-<<<<<<< HEAD
 - **Promotion check unblocked** ([#2370](https://github.com/cehinds/AshenSpire/pull/2370), `0.7.1.1910`). A variable in the Core reward code named `window` made the architecture check on test read it as a browser reference and stop the promotion; it is renamed. Nothing changes in play.
 
-- **Card upgrades and card ranks** ([#2368](https://github.com/cehinds/AshenSpire/pull/2368), `0.7.1.1908`). In Core, cards now have ranks: a reward card can arrive at a higher rank, and each skill level-up lets you raise one card's rank. Any card can be upgraded at a rest site (one per visit), at the Blacksmith (as often as you can pay) and from events. Each upgrade adds a random improvement such as more damage, more block, an extra status or a lower cost. A card's first upgrades up to its rank are free (basic cards and cantrips get one free), after that each costs 1 Smithing Stone, up to 10. A quarter of Core shops are now Blacksmiths.
-=======
 - **Card upgrades and card ranks** ([#2368](https://github.com/cehinds/AshenSpire/pull/2368), `0.7.1.1910`). In Core, cards now have ranks: a reward card can arrive at a higher rank, and each skill level-up lets you raise one card's rank. Any card can be upgraded at a rest site (one per visit), at the Blacksmith (as often as you can pay) and from events. Each upgrade adds a random improvement such as more damage, more block, an extra status or a lower cost. A card's first upgrades up to its rank are free (basic cards and cantrips get one free), after that each costs 1 Smithing Stone, up to 10. A quarter of Core shops are now Blacksmiths.
->>>>>>> origin/dev
 
 ## 2026-10-28
 
