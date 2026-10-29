@@ -708,3 +708,14 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off p { display: block; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off { display: flex; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off > .cp-body { flex: 1 1 auto; width: 100%; }
+
+/* Core Blacksmith: two services behind a compact switch, the rest of the frame is the content, and only the list
+   scrolls (never the frame around it). */
+:root .shop-workspace.blacksmith-compact .shop-railed { overflow:hidden; gap:.6rem; }
+:root .shop-workspace.blacksmith-compact .shop-switch { display:flex; flex:0 0 auto; width:auto; margin-inline:.5rem; }
+:root .shop-workspace.blacksmith-compact .shop-switch > button { flex:1 1 0; min-width:0; justify-content:center; text-align:center; text-transform:uppercase; letter-spacing:.06em; white-space:normal; }
+:root .shop-workspace.blacksmith-compact .shop-pane { flex:1 1 auto; min-height:0; max-height:none; }
+:root .shop-workspace.blacksmith-compact .shop-offers { min-height:0; }
+:root .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { gap:.6rem 1rem; padding:.7rem 1rem; }
+:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { flex-wrap:wrap; }
+:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick > .as-btn { flex:1 1 100%; }
