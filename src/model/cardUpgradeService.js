@@ -2,7 +2,7 @@
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
 import { canUpgrade, nextUpgradeStep } from './cardUpgradeLimits.js';
-import { upgradeStepsOf } from './cardUpgrade.js';
+import { upgradeStepsOf, upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
 
@@ -46,4 +46,27 @@ export function commitCardUpgrade(run, registries, quote) {
   instance.upgradeSteps = [...upgradeStepsOf(instance), plan.step];
   instance.upgraded = true;
   return { instanceId: plan.instanceId, step: plan.step, n: plan.n, spentStones: plan.cost };
+}
+
+/** Core (card ranks on) upgrades cards through steps; Legacy and Current keep the single authored upgrade. */
+export const cardUpgradeStepsOn = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true;
+
+/**
+ * freeCardUpgradeStep(run, registries, instance) → the step an event's free upgrade would add, or null when the
+ * card is not an upgrade candidate (armament-bound, granted, at the cap, or maxed). Price is not asked: an event
+ * reward is free. Same roll as the plan, so what the rules allow is what the picker would show.
+ */
+export function freeCardUpgradeStep(run, registries, instance) {
+  if (!instance || instance.sourceArmamentId || instance.grantedBy || !registries.cards.has(instance.cardId)) return null;
+  if (upgradeCount(instance) >= MAX_CARD_UPGRADES) return null;
+  return nextUpgradeStep(run, instance, registries.cards.get(instance.cardId), registries);
+}
+
+/** applyFreeCardUpgrade(run, registries, instance) → { step, n }: appends the next step at no cost (an event reward). */
+export function applyFreeCardUpgrade(run, registries, instance) {
+  const step = freeCardUpgradeStep(run, registries, instance);
+  if (!step) throw new Error('That card cannot be upgraded.');
+  instance.upgradeSteps = [...upgradeStepsOf(instance), step];
+  instance.upgraded = true;
+  return { step, n: instance.upgradeSteps.length };
 }
