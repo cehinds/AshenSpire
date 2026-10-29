@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-29
 
+- **Rank-ups stay one per victory** ([#2371](https://github.com/cehinds/AshenSpire/pull/2371), `0.7.1.1910`). In Core, reloading the game part-way through the rank-up screen after a fight no longer offers a second rank-up at the same victory; the same screen comes back with your pick kept.
+
 - **Card upgrades and card ranks** ([#2368](https://github.com/cehinds/AshenSpire/pull/2368), `0.7.1.1910`). In Core, cards now have ranks: a reward card can arrive at a higher rank, and each skill level-up lets you raise one card's rank. Any card can be upgraded at a rest site (one per visit), at the Blacksmith (as often as you can pay) and from events. Each upgrade adds a random improvement such as more damage, more block, an extra status or a lower cost. A card's first upgrades up to its rank are free (basic cards and cantrips get one free), after that each costs 1 Smithing Stone, up to 10. A quarter of Core shops are now Blacksmiths.
 
 ## 2026-10-28
