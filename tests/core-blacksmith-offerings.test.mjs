@@ -16,6 +16,8 @@ import {
   refinePlan, commitRefine, sigilSlotPlan, commitSigilSlot, sigilInstallPlan, stackCopyPlan, commitStackCopy,
   blacksmithExtractPlan, blacksmithInstallPlan, blacksmithUpgradePlan,
 } from '../src/model/blacksmith.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
+import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -72,4 +74,24 @@ test('Core withheld services refuse to plan and to commit', () => {
   assert.equal(blacksmithInstallPlan(coreOut, run, 'armament/greatsword', 'x', 'y').ok, false);
   assert.equal(blacksmithUpgradePlan(coreOut, run, 'armament/greatsword', { purse: 'refined' }).ok, false);
   assert.equal(blacksmithUpgradePlan(coreOut, run, 'armament/greatsword').ok, true);
+});
+
+test('Core Blacksmith screen draws only the two allowed services, even for an old saved stock, and no raw ids', () => {
+  const run = smithRun(coreOut);
+  run.sigils = [];
+  run.shopStock.offerings = [...BLACKSMITH_SERVICES, 'armaments', 'smithStones'];
+  run.shopStock.armaments = [{ id: 'bone-sceptre', cost: 100 }];
+  run.shopStock.smithStones = { price: 10, left: 3 };
+  withKitDom((dom) => {
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: coreOut, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    const keys = [...app.querySelectorAll('.shop-switch [data-shop-category]')].map((el) => el.dataset.shopCategory);
+    assert.deepEqual(keys, ['upgrade', 'upgradeArt'], 'a two-option switch, no rail');
+    assert.equal(app.querySelector('.shop-rail'), null);
+    assert.deepEqual([...app.querySelectorAll('[data-shop-shelf]')].map((el) => el.dataset.shopShelf), ['upgrade', 'upgradeArt']);
+    const text = app.textContent;
+    assert.doesNotMatch(text, /sigil|stack a copy|\(s\)|default/i);
+    assert.doesNotMatch(text, /refined/i, 'Core has no refined stones to show');
+  });
 });
