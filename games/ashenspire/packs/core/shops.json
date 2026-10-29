@@ -1,6 +1,7 @@
 {
   "offerCount": 3,
   "price": 10,
+  "blacksmithChance": 25,
   "itemsPerCategory": 3,
   "priceTable": {
     "card": {

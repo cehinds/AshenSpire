@@ -3,6 +3,7 @@ import { gameContent } from '../../model/gameProfile.js';
 import { previewGameProfileRest, restServiceSpent, restServicesAll, restSmithFree } from '../../model/gameProfileRest.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from './SmithSelectionModel.js';
+import { cardUpgradeModel } from './CardUpgradeModel.js';
 import { t } from '../strings.js';
 
 // Every available choice has successfully previewed the same transaction that
@@ -16,6 +17,10 @@ export function gameProfileRestModel(registries, run, visit) {
   };
   const smith = smithingPlan(registries, run, undefined, { free: restSmithFree(run) });
   const smithPreviews = new Map(smith.candidates.map(candidate => [candidate.itemRef, attempt('smith', { itemRef: candidate.itemRef })]));
+  // Core card upgrade: each deck card previews the same transaction its confirmation commits, quote included.
+  const cardUpgrade = rules.services.includes('upgradeCard') ? cardUpgradeModel(registries, run) : { rows: [] };
+  const cardPreviews = new Map(cardUpgrade.rows.filter(row => !row.disabled).map(row =>
+    [row.instanceId, attempt('upgradeCard', { instanceId: row.instanceId, quote: row.plan })]));
   const attributes = Object.keys(run.attributes || {}).map(id => {
     const def = registries.attributes.get(id);
     return { id, label: def.label || def.name || id, shortLabel: def.shortLabel || id, value: run.attributes[id], ...attempt('levelUp', { attributeId: id }) };
@@ -24,13 +29,14 @@ export function gameProfileRestModel(registries, run, visit) {
   const services = rules.services.filter(id => id !== 'levelUp' || configuredCharacterLevels(run) || run.level?.unspentPoints > 0).map(id => {
     const result = id === 'smith' ? [...smithPreviews.values()].find(row => row.available) || [...smithPreviews.values()][0] || { available: false, reason: t('gameProfile.rest.noSmith') }
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
+      : id === 'upgradeCard' ? [...cardPreviews.values()].find(row => row.available) || (restServiceSpent(run, visit, id) ? attempt(id) : { available: false, reason: t('gameProfile.rest.noUpgradeCard') })
       : attempt(id);
     if (id === 'levelUp' && !restServiceSpent(run, visit, id) && !result.available && !(run.level?.unspentPoints > 0)) result.reason = t('gameProfile.rest.noLevel');
     return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(restServicesAll(run) ? `gameProfile.rest.description.${id === 'smith' && !restSmithFree(run) ? 'smithAllPaid' : `${id}All`}` : `gameProfile.rest.description.${id}`) };
   });
   // Available choices first, Level Up leading; spent or unavailable ones sink to the bottom. Array#sort is stable.
   services.sort((a, b) => rank(a) - rank(b));
-  return { services, smith, smithPreviews, attributes, smithFree: restSmithFree(run) };
+  return { services, smith, smithPreviews, attributes, cardUpgrade, cardPreviews, smithFree: restSmithFree(run) };
 }
 
 export function gameProfileSmithModel(registries, plan, previews, selectedItemRef, recoveryHtml, { all = false, levelUpOffered = true } = {}) {

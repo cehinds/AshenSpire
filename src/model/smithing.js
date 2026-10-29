@@ -495,6 +495,7 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
     instance.sourceArmamentId = pieceId;
     instance.smithingLevel = levels(run)[`armament/${pieceId}`] || 0;
     instance.upgraded = false;
+    delete instance.upgradeSteps;
   }
   return cards;
 }
@@ -659,6 +660,7 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
     itemUpgradeLevels[itemRef] = Math.max(beforeLevel, 1);
     if (itemUpgradeLevels[itemRef] !== beforeLevel) promotedArmaments.add(pieceId);
     instance.upgraded = false;
+    delete instance.upgradeSteps;
   }
   run.smithingStones = run.smithingStones == null ? 0 : stoneBalance(run);
   run.itemUpgradeLevels = itemUpgradeLevels;

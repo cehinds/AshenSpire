@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { runCombatEnd } from '../src/engine/runCombat.js';
 import { isConfiguredRun } from '../src/model/gameProfileRun.js';
 import { gameModule } from '../src/model/gameProfile.js';
-import { skillKindOf } from '../src/model/skills.js';
+import { skillKindOf, coreCardRanks, pendingRankUpRows } from '../src/model/skills.js';
 import { featMultiplier } from '../src/model/feats.js';
 import { awardLevelXp, pendingLevelCount, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
@@ -587,7 +587,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
-    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers };
+    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;

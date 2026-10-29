@@ -3,7 +3,8 @@ import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gam
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
-import { upgradedDefinition } from './cardUpgrade.js';
+import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
+import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
@@ -44,7 +45,11 @@ export function projectGameCard(subject,idOrInstance) {
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
-  if (typeof idOrInstance === 'object' && idOrInstance?.upgraded && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(upgradedDefinition(chosen));
+  if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
+  // Card ranks (SPEC 13.4o) when the profile turns them on: each rank past 1 adds 1 to the primary number, as Legacy's resolveCard does.
+  if (typeof idOrInstance === 'object' && gameModule(subject,'progression')?.cardRanks === true && !Array.isArray(chosen.gradeProfiles) && cardRank(idOrInstance) > 1) {
+    chosen = {...chosen, effects: rankedEffectsCapped(chosen, cardRank(idOrInstance) - 1), rank: cardRank(idOrInstance)};
+  }
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);

@@ -31,7 +31,7 @@ test('core class/hand/deck facts are source-owned and immutable per profile',()=
  assert.deepEqual(gameContent(p,'classes').map(row=>Object.values(row.attributes).reduce((a,b)=>a+b)),[6,6,6,6]);
  assert.equal(gameContent(p,'starterDeck').shared.reduce((n,row)=>n+row.copies,0)+1,10);
  assert.equal(gameContent(p,'starterDeck').shared.some(row=>row.card==='core.evade'),false);
- assert.deepEqual(gameContent(p,'rests').services,['smith','levelUp']);assert.equal(gameContent(p,'rests').servicesPerVisit,'all');assert.equal(gameContent(p,'stats').levelGains.constitution.hp,10);
+ assert.deepEqual(gameContent(p,'rests').services,['smith','levelUp','upgradeCard']);assert.equal(gameContent(p,'rests').servicesPerVisit,'all');assert.equal(gameContent(p,'stats').levelGains.constitution.hp,10);
  assert.throws(()=>{p.modules.cards.handBase=90},TypeError);assert.notEqual(p,resolveGameProfile('core'));assert.equal(resolveGameProfile('core').modules.cards.handBase,4);
 });
 test('resource-off cards select explicit authored alternatives and retain card identities',()=>{

@@ -1,0 +1,139 @@
+// Card upgrades UI 2/5: the picker's read model. Rows show Free / 1 Smithing Stone, 'maxed' and 'cap' rows are
+// disabled "Fully upgraded", and the preview faces are the plan's own (the rolled step), so preview == commit.
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import '../src/engine/runCombat.js';
+import assert from 'node:assert/strict';
+import { registries } from './helpers/fixcore-combat-rules.mjs';
+import { createRunState } from '../src/model/state.js';
+import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
+import { commitCardUpgrade } from '../src/model/cardUpgradeService.js';
+import { upgradePreviewHtml } from '../src/ui/components/card.js';
+import { projectGameCard } from '../src/model/gameProfile.js';
+
+const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+const strike = run => run.deck.find(c => c.cardId === 'core.strike');
+
+test('rows: a fresh Strike costs nothing, its second upgrade is 1 Smithing Stone', () => {
+  const run = newRun(); run.smithingStones = 1;
+  const row = () => cardUpgradeModel(registries, run).rows.find(r => r.instanceId === strike(run).instanceId);
+  assert.equal(row().costLabel, 'No charge');
+  assert.equal(row().disabled, false);
+  commitCardUpgrade(run, registries, row().plan);
+  assert.equal(row().costLabel, '1 Smithing Stone');
+  assert.equal(row().upgrades, 1);
+});
+
+test('rows: the 10-upgrade cap and a maxed card are disabled "Fully upgraded" and cannot be selected', () => {
+  const run = newRun(); run.smithingStones = 50;
+  const card = strike(run);
+  card.upgraded = true; card.upgradeSteps = Array.from({ length: 10 }, () => ({ k: 'dmg', n: 1 }));
+  const model = cardUpgradeModel(registries, run, card.instanceId);
+  const row = model.rows.find(r => r.instanceId === card.instanceId);
+  assert.deepEqual([row.code, row.disabled, row.costLabel], ['cap', true, 'Fully upgraded']);
+  assert.equal(model.selected, null, 'a disabled row is never the selection');
+  assert.equal(model.canConfirm, false);
+});
+
+test('rows: a short purse keeps the row selectable but blocks Confirm with the reason', () => {
+  const run = newRun(); run.smithingStones = 0;
+  const card = strike(run);
+  card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+  const model = cardUpgradeModel(registries, run, card.instanceId);
+  assert.equal(model.selected.instanceId, card.instanceId);
+  assert.equal(model.canConfirm, false);
+  assert.match(model.blockedReasons[0], /Smithing Stone/);
+});
+
+test('the preview shows the plan face, so it equals the card after commit', () => {
+  const run = newRun();
+  const model = cardUpgradeModel(registries, run, strike(run).instanceId);
+  const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
+  assert.match(html, /Strike → Strike\+/);
+  commitCardUpgrade(run, registries, model.selected.plan);
+  assert.equal(model.faces.after.name, projectGameCard(run, strike(run)).name);
+  assert.deepEqual(JSON.parse(JSON.stringify(model.faces.after)), JSON.parse(JSON.stringify(projectGameCard(run, strike(run)))));
+});
+
+test('the preview without faces is unchanged (authored upgrade)', () => {
+  assert.match(upgradePreviewHtml(registries, { cardId: 'core.strike' }), /Strike → Strike\+/);
+});
+
+test('the Core rest model lists Upgrade Card with a preview per upgradable deck card, and none for a Current profile', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { beginGameProfileRest } = await import('../src/model/gameProfileRest.js');
+  const { buildActMap } = await import('../src/engine/actmap.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { gameProfileRestModel } = await import('../src/ui/models/GameProfileRestModel.js');
+  const profile = resolveGameProfile('core');
+  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'picker-rest' });
+  run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1);
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
+  const model = gameProfileRestModel(reg, run, visit);
+  const service = model.services.find(s => s.id === 'upgradeCard');
+  assert.equal(service.available, true);
+  assert.equal(service.title, 'Upgrade Card');
+  assert.ok(model.cardPreviews.size > 0);
+  assert.ok([...model.cardPreviews.values()].every(p => p.available));
+});
+
+test('a procedural step the template does not mention (an added status) still shows in the preview', () => {
+  let found = 0;
+  for (let seed = 1; seed <= 40 && !found; seed += 1) {
+    const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const model = cardUpgradeModel(registries, run, strike(run).instanceId);
+    if (model.selected.plan.step.k !== 'addStatus') continue;
+    found = seed;
+    const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
+    assert.match(html, /(Weak|Bleed)[^<]*<span class="val up">1/, 'the new status is named and marked as raised');
+  }
+  assert.ok(found, 'some seed rolls an added status');
+});
+
+test('the picker draws a row per deck card with its cost; a capped card reads "Fully upgraded" and is aria-disabled', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 1;
+    const capped = strike(run);
+    capped.upgraded = true; capped.upgradeSteps = Array.from({ length: 10 }, () => ({ k: 'dmg', n: 1 }));
+    const fresh = run.deck.find(c => c.cardId === 'core.defend');
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const model = cardUpgradeModel(registries, run, fresh.instanceId);
+    const door = mountCardUpgradeModal(host, model, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const rowOf = id => host.querySelector(`.card-upgrade-row[data-instance-id="${id}"]`);
+    assert.equal(rowOf(capped.instanceId).getAttribute('aria-disabled'), 'true');
+    assert.match(rowOf(capped.instanceId).outerHTML, /Fully upgraded/);
+    assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
+    assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
+    assert.equal(host.querySelector('.card-upgrade-preview').dataset.cardUpgradePreview, fresh.instanceId);
+    assert.match(host.querySelector('.smith-confirm').outerHTML, /Buy upgrade · No charge/);
+    door.close();
+  });
+});
+
+test('rows carry a plain chip: rank and upgrade count', () => {
+  const run = newRun();
+  const card = strike(run);
+  const row = () => cardUpgradeModel(registries, run).rows.find(r => r.instanceId === card.instanceId);
+  assert.equal(row().chipLabel, 'Rank 1 · 0 upgrades');
+  card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+  assert.equal(row().chipLabel, 'Rank 1 · 1 upgrade');
+  card.rank = 3;
+  assert.equal(row().chipLabel, 'Rank 3 · 1 upgrade');
+});
+
+test('the preview shows the card\'s main lines only: no Entry bonus line, no recovery block', () => {
+  const run = newRun();
+  const model = cardUpgradeModel(registries, run, strike(run).instanceId);
+  const html = upgradePreviewHtml(registries, { cardId: 'core.strike' }, model.faces);
+  assert.doesNotMatch(html, /Entry:/);
+  assert.doesNotMatch(html, /Recovery|rest-recovery/i);
+  const rest = readFileSync(new URL('../src/ui/components/gameProfileRest.js', import.meta.url), 'utf8');
+  const open = rest.slice(rest.indexOf('const openUpgradeCard'), rest.indexOf('const openLevel'));
+  assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
+});

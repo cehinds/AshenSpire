@@ -79,7 +79,7 @@ import { createRng, seedToString, seedFromString, seedProblem } from './engine/r
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
+import { pendingRankUpRows, coreCardRanks, skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
 import { equippedPieces } from './model/loadout.js';
@@ -111,6 +111,7 @@ import {
   rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
+import { configuredShopKind } from './model/gameProfileShopKind.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
@@ -4124,6 +4125,17 @@ function showGameProfileReward() {
     persistOrWarn();
     return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'defeat' ? showFinishedRun(false) : pending.after === 'advanceAct' ? advanceAct() : showMap();
   }
+  // Card ranks (SPEC 13.4o, Core): the rank-ups this victory's track levels queued are offered once, on the
+  // existing reward door's rank-up picker, before the reward offer. Skipping one keeps it queued for the next victory.
+  if (!pending.rankUpsOffered && coreCardRanks(run)) {
+    const rankUps = pendingRankUpRows(registries, run);
+    if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
+    else return mountRewards(app, { registries, run, saves, rng,
+      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: rankUps },
+      onPersist: persistContinuing,
+      // Set on leaving the door, so a reload mid-pick offers it again from the ledger.
+      onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
+  }
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
   mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
@@ -4157,6 +4169,15 @@ function showShop() {
     if (!gameModule(run, 'shops')) return showMap();
     const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
     run.gameProfileOpenShop = shopId;
+    // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
+    // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
+    if (configuredShopKind(run, shopId) === 'blacksmith') {
+      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = buildBlacksmithStock(registries, rng, run);
+      persist(); audio.music('shop');
+      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+        onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),
+        onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+    }
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
     audio.music('shop');
     return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
@@ -5031,6 +5052,15 @@ if (shotState === 'combat-test') {
     // out is the harness's own settings door (?shotSettings, Advanced → Shops).
     run.cinders = 2000;
     run.smithingStones = 12;
+    if (isConfiguredRun(run)) {
+      // A Core run reaches the Blacksmith through the configured shop door: pose the node as `?shot=shop` does, and
+      // showShop opens the Blacksmith because the stock rides run.shopStock.
+      if (!gameModule(run, 'shops')) throw new Error('Configured blacksmith screenshot requires shops to be enabled');
+      const node = Object.values(run.mapGraph.nodes).find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
+      run.mapNodeId = node.id; run.floor = node.floor;
+      run.path = screenshotRoutePath(run.mapGraph, node.id);
+      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
+    }
     run.loadout.storage.push('katana');
     run.sigils = [registries.sigils.all()[0].id];
     run.shopStock = buildBlacksmithStock(registries, rng, run);

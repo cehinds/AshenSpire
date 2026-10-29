@@ -8,6 +8,7 @@ import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
 import { recoveryRulesProblems } from './recoveryRules.js';
+import { upgradeStepsProblems } from './cardUpgrade.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems, combatTraitGuardProblems } from './combatTacticsRules.js';
 import { statusControlProblems } from './combatStatusState.js';
@@ -116,6 +117,7 @@ function cardProblems(card, path) {
   if (!nonEmptyString(card.instanceId)) problems.push(`${path}.instanceId must be a non-empty string`);
   if (!nonEmptyString(card.cardId)) problems.push(`${path}.cardId must be a non-empty string`);
   if (typeof card.upgraded !== 'boolean') problems.push(`${path}.upgraded must be boolean`);
+  problems.push(...upgradeStepsProblems(card, path));
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
   if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_SKILL_BONUS)) problems.push(`${path}.passiveBlock must be a whole number from 1 to ${MAX_SKILL_BONUS}`);

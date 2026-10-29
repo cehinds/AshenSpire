@@ -26,7 +26,7 @@
 import { equippedIn, slotHand, gripOf } from '../model/loadout.js';
 import { ownerItemRef } from '../model/cardMounts.js';
 import { playerWeightClass } from '../model/combatWeight.js';
-import { awardSkillXp, bankSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../model/skills.js';
+import { awardSkillXp, bankSkillXp, armourSkillId, DUAL_WIELD_SKILL, coreCardRanks } from '../model/skills.js';
 import { configuredSkillProgression, configuredSkillXpMultiplier } from '../model/gameProfileProgression.js';
 import { awardClassXp } from '../model/classTree.js';
 
@@ -292,10 +292,10 @@ export function skillXpReceipt(combat, ownerKey = 'player') {
 }
 
 /** applySkillXp(registries, run, receipt) → the awards, one per track paid. */
-export function applySkillXp(registries, run, receipt, { bank = false, queueRewards = true } = {}) {
+export function applySkillXp(registries, run, receipt, { bank = false, queueRewards = true, queueRankUps = false } = {}) {
   const awards = [];
   for (const [skillId, amount] of Object.entries(receipt || {})) {
-    awards.push((bank ? bankSkillXp : awardSkillXp)(registries, run, skillId, amount, { queueRewards }));
+    awards.push((bank ? bankSkillXp : awardSkillXp)(registries, run, skillId, amount, { queueRewards, queueRankUps }));
   }
   return awards;
 }
@@ -309,7 +309,7 @@ export function settleConfiguredSkillProgression(registries, run, combat, { vict
   const multiplier = configuredSkillXpMultiplier(run);
   const scaledReceipt = Object.fromEntries(Object.entries(receipt).map(([id, amount]) => [id, Math.floor(amount * multiplier)]));
   return {
-    trackAwards: applySkillXp(registries, run, scaledReceipt, { queueRewards: false }),
+    trackAwards: applySkillXp(registries, run, scaledReceipt, { queueRewards: false, queueRankUps: coreCardRanks(run) }),
     classAward: awardClassXp(registries, run, { victory, pool, multiplier: classMultiplier * configuredSkillXpMultiplier(run, 'class'), queueRewards: false }),
   };
 }

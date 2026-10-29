@@ -13,6 +13,10 @@
     "classUnlocks": {
       "type": "boolean"
     },
+    "cardRanks": {
+      "type": "boolean",
+      "description": "Card ranks (SPEC 13.4o): card-school track levels queue rank-ups, drafted cards arrive ranked, and rank scales the card. Absent or false keeps cards unranked."
+    },
     "attributePointsPerLevel": {
       "type": "integer",
       "minimum": 0,

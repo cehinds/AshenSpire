@@ -39,7 +39,7 @@ export function openRestRecord(run, { multiUse = false } = {}) {
 export function recordRestConsumed(run, kind) {
   if (!matchesPlace(run, run.restRevisit)) return;
   if (kind === 'rest') run.restRevisit.rested = true;
-  if (['rest', 'smith', 'extract', 'install'].includes(kind)) run.restRevisit.spent = true;
+  if (['rest', 'smith', 'extract', 'install', 'upgradeCard'].includes(kind)) run.restRevisit.spent = true;
 }
 
 // The player has walked out of the visit.

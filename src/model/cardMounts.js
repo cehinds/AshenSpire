@@ -198,11 +198,12 @@ export function applyMountOverrides(registries, run, desired) {
     const entry = itemRef ? itemMountEntries(run, itemRef)[inst.instanceId] : null;
     if (!entry) { out.push(inst); continue; }
     if (entry.card) {
-      out.push({ ...inst, cardId: entry.card, upgraded: entry.upgraded === true });
+      const { upgradeSteps: _steps, ...rest } = inst; // a mounted card is a different card: its steps do not carry over
+      out.push({ ...rest, cardId: entry.card, upgraded: entry.upgraded === true });
       continue;
     }
     const fallback = resolveFallbackCard(registries, rules, itemRef, inst.equipmentRole);
-    if (fallback) out.push({ ...inst, cardId: fallback, upgraded: false });
+    if (fallback) { const { upgradeSteps: _steps, ...rest } = inst; out.push({ ...rest, cardId: fallback, upgraded: false }); }
   }
   return out;
 }
