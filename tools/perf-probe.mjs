@@ -11,6 +11,7 @@
 //   node tools/perf-probe.mjs --out DIR            raw per-run JSON goes here (default $TMPDIR/ashen-perf)
 //   node tools/perf-probe.mjs --keep-trace         also keep each Chromium trace in DIR (large)
 //   node tools/perf-probe.mjs --no-profile         skip the CPU-profile pass
+//   node tools/perf-probe.mjs --from DIR           re-print the report from the runs-*.json saved in DIR
 //   node tools/perf-probe.mjs --debug              log each step and the controls on screen
 //
 // Profile: Playwright Chromium, 390x844 phone (deviceScaleFactor 3, isMobile,
@@ -311,6 +312,7 @@ const SCENARIOS = {
     url: (s) => `?shot=combat&shotSeed=${s}`, ready: COMBAT_READY,
     async run(ctx) {
       const { page, input } = ctx;
+      let inspected = 0;
       for (let round = 0; round < 2; round++) {
         const ids = await page.evaluate(`[...document.querySelectorAll('.hand .card')].map((n) => n.dataset.instanceId)`);
         const sel = `.hand .card[data-instance-id="${ids[round * 2 % ids.length]}"]`;
@@ -318,17 +320,28 @@ const SCENARIOS = {
         const a = await input.at(sel);
         await input.drag(a, { x: a.x + 30, y: a.y - 230 }, { steps: 16, dwell: 300, back: true });
         await wait(500);
-        // Inspect: first tap selects and reveals the info button, second opens the modal.
-        await input.tap(sel); await wait(450);
-        // The info buttons sit beside the cards in hand order, not inside them.
-        await page.evaluate(`document.querySelectorAll('[data-perf-info]').forEach((b) => b.removeAttribute('data-perf-info'));
-          const i = [...document.querySelectorAll('.hand .card')].findIndex((c) => c.classList.contains('selected'));
-          document.querySelectorAll('.card-info-button')[i]?.setAttribute('data-perf-info', '1');`);
-        await input.tap('.card-info-button[data-perf-info="1"]'); await wait(900);
-        log('modal', await page.evaluate(`!!document.querySelector('.card-inspection-modal')`));
+        // Inspect: the first tap selects the card and reveals its info button, the button opens the modal.
+        // A tap that lands while the fan is re-laying out can miss, so each step is retried a few times.
+        let opened = false;
+        for (let attempt = 0; attempt < 3 && !opened; attempt++) {
+          await input.tap(sel).catch((e) => log('select', e.message)); await wait(500);
+          // The info buttons sit beside the cards in hand order, not inside them.
+          const marked = await page.evaluate(`(() => {
+            document.querySelectorAll('[data-perf-info]').forEach((b) => b.removeAttribute('data-perf-info'));
+            const i = [...document.querySelectorAll('.hand .card')].findIndex((c) => c.classList.contains('selected'));
+            const b = document.querySelectorAll('.card-info-button')[i];
+            if (b) b.setAttribute('data-perf-info', '1');
+            return !!b;
+          })()`);
+          if (!marked) continue; // the tap toggled the card off: tap again
+          await input.tap('.card-info-button[data-perf-info="1"]').catch((e) => log('info', e.message)); await wait(900);
+          opened = await page.evaluate(`!!document.querySelector('.card-inspection-modal')`);
+        }
+        inspected += opened ? 1 : 0;
+        log('modal', opened);
         await page.keyboard.press('Escape'); await wait(700);
       }
-      return {};
+      return { inspectsOpened: inspected };
     },
   },
   transitions: {
@@ -377,6 +390,7 @@ async function onePass(browser, base, name, { trace, profile }) {
   await page.addInitScript(INIT);
   const cdp = await ctx.newCDPSession(page);
   const bcdp = await browser.newBrowserCDPSession();
+  let traceOn = false;
   try {
     await page.goto(base + sc.url(SEED));
     await until(page, sc.ready, 'the scenario to mount', 60000);
@@ -388,6 +402,7 @@ async function onePass(browser, base, name, { trace, profile }) {
     const census = await page.evaluate('window.__perf.census()');
     const events = [];
     if (trace) {
+      traceOn = true;
       bcdp.on('Tracing.dataCollected', (m) => events.push(...m.value));
       await bcdp.send('Tracing.start', { traceConfig: { recordMode: 'recordAsMuchAsPossible', includedCategories: [
         'devtools.timeline', 'disabled-by-default-devtools.timeline', 'disabled-by-default-devtools.timeline.stack',
@@ -404,7 +419,7 @@ async function onePass(browser, base, name, { trace, profile }) {
     if (profile) { const { profile: p } = await cdp.send('Profiler.stop'); profOut = analyseProfile(p); }
     if (trace) {
       const done = new Promise((res) => bcdp.once('Tracing.tracingComplete', res));
-      await bcdp.send('Tracing.end'); await done;
+      await bcdp.send('Tracing.end'); await done; traceOn = false;
       traceOut = analyseTrace(events);
       if (KEEP_TRACE) { mkdirSync(OUT, { recursive: true }); writeFileSync(join(OUT, `trace-${name}-${Date.now()}.json`), JSON.stringify({ traceEvents: events })); }
     }
@@ -417,6 +432,8 @@ async function onePass(browser, base, name, { trace, profile }) {
       anim: { peakRunning: peak(0), peakTransitions: peak(1), peakInfinite: peak(2), meanRunning: r1(median(raw.anim.map((a) => a[0]))) },
       trace: traceOut, profile: profOut };
   } finally {
+    // A failed pass must not leave the browser-wide trace running for the next one.
+    if (traceOn) { const done = new Promise((res) => bcdp.once('Tracing.tracingComplete', res)); await bcdp.send('Tracing.end').catch(() => {}); await Promise.race([done, wait(5000)]); }
     await ctx.close().catch(() => {});
   }
 }
@@ -458,28 +475,47 @@ function mergeProfiles(ps) {
 }
 
 // ---- main ---------------------------------------------------------------------
-const server = await serve({ root: ROOT, port: 0, open: false, quiet: true });
-const base = `http://localhost:${server.server.address().port}/`;
-const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
-const summaries = [];
-try {
-  for (const name of Object.keys(SCENARIOS).filter((n) => WANT.has(n))) {
-    const runs = [];
-    for (let i = 0; i < RUNS; i++) {
-      process.stderr.write(`${name} run ${i + 1}/${RUNS} ...`);
-      const a = await onePass(browser, base, name, { trace: true, profile: false });
-      const b = PROFILE ? await onePass(browser, base, name, { trace: false, profile: true }) : null;
-      process.stderr.write(` median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
-      runs.push({ a, b });
-    }
-    summaries.push(summarise(name, runs));
-    mkdirSync(OUT, { recursive: true });
-    writeFileSync(join(OUT, `runs-${name}.json`), JSON.stringify(runs));
+// A pass that fails (a tap swallowed while the fan re-lays out, a timeout under throttle) is
+// retried on a fresh page, up to three times, so one flaky input does not lose the run.
+async function passWithRetry(browser, base, name, opts) {
+  for (let attempt = 1; ; attempt++) {
+    try { return await onePass(browser, base, name, opts); }
+    catch (e) { process.stderr.write(` [attempt ${attempt} failed: ${String(e.message).split('\n')[0].slice(0, 90)}]`); if (attempt >= 3) throw e; }
   }
-} finally {
-  await browser.close().catch(() => {});
-  server.server.close();
 }
+// --from DIR: summarise the runs-*.json an earlier invocation saved there, without measuring again.
+const FROM = arg('--from', null);
+const summaries = [];
+if (FROM) {
+  const { readFileSync, existsSync } = await import('node:fs');
+  for (const name of Object.keys(SCENARIOS).filter((n) => WANT.has(n))) {
+    const f = join(resolve(FROM), `runs-${name}.json`);
+    if (existsSync(f)) summaries.push(summarise(name, JSON.parse(readFileSync(f, 'utf8'))));
+  }
+} else {
+  const server = await serve({ root: ROOT, port: 0, open: false, quiet: true });
+  const base = `http://localhost:${server.server.address().port}/`;
+  const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
+  try {
+    for (const name of Object.keys(SCENARIOS).filter((n) => WANT.has(n))) {
+      const runs = [];
+      for (let i = 0; i < RUNS; i++) {
+        process.stderr.write(`${name} run ${i + 1}/${RUNS} ...`);
+        const a = await passWithRetry(browser, base, name, { trace: true, profile: false });
+        const b = PROFILE ? await passWithRetry(browser, base, name, { trace: false, profile: true }) : null;
+        process.stderr.write(` median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
+        runs.push({ a, b });
+      }
+      summaries.push(summarise(name, runs));
+      mkdirSync(OUT, { recursive: true });
+      writeFileSync(join(OUT, `runs-${name}.json`), JSON.stringify(runs));
+    }
+  } finally {
+    await browser.close().catch(() => {});
+    server.server.close();
+  }
+}
+mkdirSync(OUT, { recursive: true });
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(summaries, null, 1));
 
 console.log(`# perf-probe: ${THROTTLE}x CPU throttle, 390x844 @3x, seed ${SEED}, median of ${RUNS} run(s)\n`);
