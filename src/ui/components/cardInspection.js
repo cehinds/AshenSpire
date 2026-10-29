@@ -314,7 +314,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   // actions — one fills it — and a read-only door has no footer at all, not a
   // redundant Back beside the close it duplicates.
   const shell = openModal({ title, size: 'lg',
-    className: 'card-inspection-modal', opener,
+    className: 'card-inspection-modal', opener, deferFocus: true,
     primary: buttons[0] || null,
     secondary: buttons.slice(1),
     body: cardInspectionLayout(card, details) });
