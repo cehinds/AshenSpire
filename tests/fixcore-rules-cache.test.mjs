@@ -80,3 +80,72 @@ test('a played turn reads the same rules through the cache as without it', () =>
     agree(combat, combat.enemies[0]);
   }
 });
+
+// Every numeric leaf of the raw rules: bump it, and the cache must answer what the
+// uncached adapter answers. A key that left any rule out would return the stale
+// earlier answer for the leaf it ignored.
+function numericLeaves(value, path = [], out = []) {
+  if (typeof value === 'number') out.push(path);
+  else if (value && typeof value === 'object') for (const k of Object.keys(value)) numericLeaves(value[k], [...path, k], out);
+  return out;
+}
+const at = (root, path) => path.reduce((o, k) => o[k], root);
+
+test('changing any single numeric rule leaf is seen by the cache (no field is dropped from the key)', () => {
+  clearFixCoreRulesCache();
+  const combat = fight();
+  const leaves = numericLeaves(combat.fixCoreRules);
+  assert.ok(leaves.length > 20, `expected many rule leaves, found ${leaves.length}`);
+  cached(combat, combat.player); // warm the unmodified answer
+  let compared = 0;
+  for (const path of leaves) {
+    const holder = at(combat.fixCoreRules, path.slice(0, -1)), leaf = path[path.length - 1], original = holder[leaf];
+    for (const bumped of [original + 1, original + 13]) {
+      holder[leaf] = bumped;
+      let expected;
+      try { expected = uncached(combat, combat.player); } catch { expected = null; }
+      if (expected) {
+        assert.deepEqual(cached(combat, combat.player), expected, `rules.${path.join('.')} = ${bumped}`);
+        compared++;
+      } else assert.throws(() => cached(combat, combat.player));
+    }
+    holder[leaf] = original;
+    assert.deepEqual(cached(combat, combat.player), uncached(combat, combat.player), `restored rules.${path.join('.')}`);
+  }
+  assert.ok(compared > 20, 'enough edits were valid rules');
+});
+
+test('the carrier and the owning entity each take part in the key', () => {
+  clearFixCoreRulesCache();
+  const combat = fight();
+  const carriers = [null, { cardId: 'core.strike', instanceId: 'x1' }, { cardId: 'core.defend', instanceId: 'x2' }, { cardId: 'core.strike', instanceId: 'x1', upgraded: true }];
+  for (let pass = 0; pass < 2; pass++) for (const entity of [combat.player, combat.enemies[0]]) for (const carrier of carriers) agree(combat, entity, carrier);
+});
+
+test('a caller cannot corrupt the cache through the nested fields it is handed', () => {
+  clearFixCoreRulesCache();
+  const combat = fight();
+  const pristine = structuredClone(uncached(combat, combat.player));
+  const first = cached(combat, combat.player);
+  const nested = Object.entries(first).filter(([, v]) => v && typeof v === 'object');
+  assert.ok(nested.length > 3, 'the result has nested sections to attack');
+  for (const [name, value] of nested) {
+    const field = Object.keys(value)[0];
+    assert.throws(() => { value[field] = 'scribbled'; }, TypeError, `${name} is read-only`);
+    assert.throws(() => { value.addedByCaller = 1; }, TypeError, `${name} takes no new keys`);
+  }
+  assert.deepEqual(cached(combat, combat.player), pristine);
+});
+
+test('editing one fight\'s rules in place never leaks into another fight that read the same rules earlier', () => {
+  clearFixCoreRulesCache();
+  const a = fight(), b = fight();
+  assert.deepEqual(JSON.stringify(a.fixCoreRules), JSON.stringify(b.fixCoreRules));
+  cached(a, a.player); // a stores the entry
+  const baseline = structuredClone(uncached(b, b.player));
+  for (const value of Object.values(a.fixCoreRules)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) { const k = Object.keys(value).find(key => typeof value[key] === 'number'); if (k) value[k] += 99; }
+    
+  }
+  assert.deepEqual(cached(b, b.player), baseline, 'b still reads its own, unedited rules');
+});

@@ -19,6 +19,28 @@ import { fixCoreRules as computeFixCoreRules, fixCoreAttachments } from './fixCo
 const CACHE_MAX = 512;
 const cache = new Map();
 
+function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const inner of Object.values(value)) deepFreeze(inner);
+  }
+  return value;
+}
+
+// The uncached answer aliases the raw rules for every field that is not a rule
+// family (range, protectionParameters, ...). Stored as is, an entry would keep
+// pointing into the first caller's rules object and show that caller's later
+// edits to a second caller whose rules merely read the same when it was stored.
+// The key is JSON of exactly those rules, so an owned frozen copy is the same
+// answer. The family values are already frozen compiled queries.
+function detach(result) {
+  const out = {};
+  for (const [name, value] of Object.entries(result)) {
+    out[name] = value && typeof value === 'object' && !Object.isFrozen(value) ? deepFreeze(structuredClone(value)) : value;
+  }
+  return out;
+}
+
 function keyFor(ctx, entity, carrier) {
   try {
     const raw = ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules;
@@ -33,13 +55,13 @@ export function fixCoreRules(ctx, entity = null, carrier = null) {
   if (key === null) return computeFixCoreRules(ctx, entity, carrier);
   let hit = cache.get(key);
   if (!hit) {
-    hit = computeFixCoreRules(ctx, entity, carrier);
+    hit = detach(computeFixCoreRules(ctx, entity, carrier));
     if (cache.size >= CACHE_MAX) cache.clear();
     cache.set(key, hit);
   }
-  // The family values are deep-frozen compiled queries; the rest aliases the
-  // raw rules exactly as an uncached call does. Hand out a fresh top level so
-  // a caller assigning to its copy cannot reach the next caller's.
+  // Every nested value in an entry is frozen and owned by the cache, so a caller
+  // cannot corrupt the next caller's answer. Hand out a fresh top level so a
+  // caller assigning to its copy cannot reach the next caller's either.
   return { ...hit };
 }
 
