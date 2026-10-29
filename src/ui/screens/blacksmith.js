@@ -26,6 +26,8 @@ import { t } from '../strings.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
+import { mountCardUpgradeModal } from '../components/cardUpgradeModal.js';
+import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
 import { openMountService } from './smithServices.js';
 import { wireShopLayout } from './shop.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
@@ -37,7 +39,7 @@ import {
   refinePlan, commitRefine,
   sigilSlotPieces, sigilSlotPlan, commitSigilSlot,
   sigilInstallPlan, commitSigilInstall, sigilRemovePlan, commitSigilRemove,
-  upgradeableArts, upgradeArtPlan, commitUpgradeArt,
+  upgradeableArts, upgradeArtPlan, commitUpgradeArt, coreCardUpgrades, blacksmithWithholds,
   stackableCardIds, stackCopyPlan, commitStackCopy,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
   blacksmithExtractPlan, commitBlacksmithExtract,
@@ -163,6 +165,16 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     extractArt(shelf) { mountServiceTile(shelf, 'extract'); },
     installArt(shelf) { mountServiceTile(shelf, 'install'); },
     upgradeArt(shelf) {
+      // Core: one tile opens the card picker; any deck card, as many upgrades as the purse pays for.
+      if (coreCardUpgrades(run)) {
+        const host = tile(GLYPH.upgradeArt, t('blacksmith.cardUpgrade.title'), t('blacksmith.cardUpgrade.desc'));
+        const ready = readyCount('upgradeArt') > 0;
+        const control = button({ label: t('blacksmith.cardUpgrade.open'), id: 'blacksmith-upgrade-card', weight: 'primary', disabled: !ready });
+        if (ready) control.addEventListener('click', () => openCardUpgradeModal(control, host));
+        host.append(control);
+        shelf.append(host);
+        return;
+      }
       for (const card of upgradeableArts(registries, run)) {
         const plan = upgradeArtPlan(registries, run, card.instanceId);
         const name = registries.cards.get(card.cardId)?.name || card.cardId;
@@ -220,6 +232,19 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     });
   }
 
+  function openCardUpgradeModal(returnFocusElement, host) {
+    let selection = null;
+    const model = () => cardUpgradeModel(registries, run, selection);
+    const modal = mountCardUpgradeModal(app, model(), {
+      registries, meta, returnFocusElement,
+      consequence: t('blacksmith.cardUpgrade.consequence'), decisionConsequence: t('blacksmith.cardUpgrade.decision'),
+      onSelect: (instanceId) => { selection = instanceId; modal.update(model()); },
+      onBack: () => {},
+      // The quote is the plan the modal showed (rolled step included); a stale one is refused by name.
+      onConfirm: (instanceId, cardQuote) => act(host, () => commitUpgradeArt(registries, run, { ...upgradeArtPlan(registries, run, instanceId), cardQuote })),
+    });
+  }
+
   // How many things each offering can act on now: the rail's {Status}.
   const readyCount = (key) => {
     if (key === 'armaments') return (stock.armaments || []).length;
@@ -229,7 +254,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function render() {
     if (layout) layout.release();
-    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key]);
+    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
       ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
@@ -272,7 +297,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     };
     const railItems = categories.map((key) => {
       const item = railItem({
-        label: t(`blacksmith.bar.${key}`), member: key, current: key === activeCategory, id: `shop-cat-${key}`,
+        label: t(key === 'upgradeArt' && coreCardUpgrades(run) ? 'blacksmith.bar.upgradeCard' : `blacksmith.bar.${key}`), member: key, current: key === activeCategory, id: `shop-cat-${key}`,
         className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: key }, 'aria-controls': 'shop-pane' },
       });
       item.appendChild(statusText(statusOf(key)));

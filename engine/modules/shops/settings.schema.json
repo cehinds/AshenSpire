@@ -23,6 +23,12 @@
       "maximum": 1000,
       "description": "Distinct eligible items on each merchandise shelf; depleted catalogs offer fewer."
     },
+    "blacksmithChance": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percent of shop nodes that are a Blacksmith instead of the merchandise shop, decided once per node from the run seed."
+    },
     "priceTable": {
       "type": "object",
       "description": "Per-offer prices: kind (card, relic, armament, armour, weaponArt, flask) to a [min, max] range or a rarity-keyed map of ranges. Each offer rolls its own price on the shop stream; absent, every offer costs `price`.",

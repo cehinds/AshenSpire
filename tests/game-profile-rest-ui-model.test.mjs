@@ -26,7 +26,7 @@ test('configured Rest uses exact non-mutating previews and offers Level Up only 
   const { run, visit } = fixture();
   const before = structuredClone(run);
   const model = gameProfileRestModel(registries, run, visit);
-  assert.deepEqual(model.services.map(row => row.id), ['smith', 'levelUp']);
+  assert.deepEqual(model.services.map(row => row.id), ['smith', 'upgradeCard', 'levelUp']);
   assert.equal(model.services.find(row => row.id === 'levelUp').available, false, 'no points earned yet');
   const preview = model.services.find(row => row.id === 'smith').preview;
   assert.equal(preview.hp, preview.maxHp);
@@ -157,10 +157,10 @@ test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', 
 test('rest options list available choices first with Level Up leading, and unavailable ones last', () => {
   const none = fixture();
   assert.deepEqual(gameProfileRestModel(registries, none.run, none.visit).services.map(row => [row.id, row.available]),
-    [['smith', true], ['levelUp', false]], 'unavailable Level Up sorts after an available Smith');
+    [['smith', true], ['upgradeCard', true], ['levelUp', false]], 'unavailable Level Up sorts after an available Smith');
   const points = fixture(); points.run.level.unspentPoints = 1;
-  assert.deepEqual(gameProfileRestModel(registries, points.run, points.visit).services.map(row => row.id), ['levelUp', 'smith'], 'an available Level Up comes first');
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.visit).services.map(row => row.id), ['levelUp', 'smith', 'upgradeCard'], 'an available Level Up comes first');
   commitGameProfileRest(registries, points.run, 'levelUp', { attributeId: 'constitution' });
   assert.deepEqual(gameProfileRestModel(registries, points.run, points.run.gameProfileRestVisits[points.visit.id]).services.map(row => [row.id, row.available]),
-    [['smith', true], ['levelUp', false]], 'a spent Level Up drops below the open Smith');
+    [['smith', true], ['upgradeCard', true], ['levelUp', false]], 'a spent Level Up drops below the open Smith');
 });

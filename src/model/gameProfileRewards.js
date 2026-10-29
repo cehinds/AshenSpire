@@ -1,6 +1,7 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
+import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
@@ -84,9 +85,9 @@ function depthWeight(rule,card,rank,isBasic,depth) {
   return weight;
 }
 function recentOfferedIds(run,rule) {
-  const window=rule?.recentOfferWindow??0;
-  if(!(window>0))return new Set();
-  const rows=Object.values(run.gameProfileRewardOffers||{}).filter(offer=>offer?.source!=='shop').slice(-window);
+  const recentWindow=rule?.recentOfferWindow??0;
+  if(!(recentWindow>0))return new Set();
+  const rows=Object.values(run.gameProfileRewardOffers||{}).filter(offer=>offer?.source!=='shop').slice(-recentWindow);
   return new Set(rows.flatMap(offer=>(offer.options||[]).filter(option=>option.kind==='combatCards').map(option=>option.id)));
 }
 function weightedCardPick(registries,run,rule,rng,stream,ids) {
@@ -158,6 +159,13 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
+  // Card ranks (SPEC 13.4o): a drafted card arrives at rank 1..min(its track's level, rankMax), rolled now so the
+  // offer, its save and its reload show one card. Level 1 (or no matching track) rolls nothing and moves no stream.
+  if(source!=='shop'&&coreCardRanks(run))for(const option of options){
+    if(option.kind!=='combatCards')continue;
+    const rank=rollDraftRank(registries,rng,cardTrackLevel(registries,run,registries.cards.get(option.id)));
+    if(rank>1)option.rank=rank;
+  }
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
@@ -179,7 +187,7 @@ export function claimGameProfileReward(registries,run,offerId,index) {
   const draft=structuredClone(run);
   if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
-    draft.sideboard.push({instanceId:`reward:${offerId}:${index}`,cardId:option.id,upgraded:false});
+    draft.sideboard.push({instanceId:`reward:${offerId}:${index}`,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
   } else if(option.kind==='weapons') {
     if(!(registries.equipment.armaments||[]).some(row=>row.id===option.id))throw new Error('Unknown reward weapon');
     if(draft.loadout.storage.includes(option.id))throw new Error('Reward weapon already owned');

@@ -472,6 +472,7 @@ const KNOWN = {
   'src/ui/components/overlay.js': ["'ashenspire:quicknav-mode-change'", "'keydown'"],
   'src/ui/components/quicknav.js': ["'keydown'", ['type', "one of the four literal fullscreen change/error events in the loop: re-syncs the quick-nav rows only"]],
   'src/ui/components/saveSlotSelector.js': ["'keydown'"],
+  'src/ui/components/cardUpgradeModal.js': ["'keydown'"],
   'src/ui/components/smithUpgradeModal.js': ["'keydown'"],
   'src/ui/components/tooltip.js': ["'pointerover'", "'focusin'", "'click'", "'keydown'", "'pointerdown'", "'keydown'", "'resize'"],
   'src/ui/components/trayComponents.js': ["'pointermove'", "'pointerup'", "'pointercancel'"],

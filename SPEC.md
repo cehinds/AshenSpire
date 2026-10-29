@@ -2802,6 +2802,17 @@ Status resistance reduces hostile buildup or incoming stacks, not duration or pr
 
 The shipped solo combat path adopts these rules. The independent foundation/combat-workshop and LAN paths retain their existing rules until explicitly supplied a compatible rating context.
 
+### 13.4s Core card upgrades: free by rank, a stone past that, ten at most (owner ruling, 2026-10-28)
+
+**Owner ruling, 2026-10-28. Core only; Legacy and Current keep the single authored upgrade, and co-op is out of scope.** The decided design and its build order are `docs/ai/tasks/CARD-UPGRADES-2026-10-28.md`.
+
+- **Ranks are on in Core** (`progression.cardRanks`, §13.4o): a rank adds 1 to a card's primary number per step past 1.
+- **Free upgrades.** An upgrade's number n starts at 1 and is free while n is at most the card's free allowance F. F is the instance's rank (default 1, at most 10), except that a Basic card or a cantrip gets F = 1. For upgrades, Basic means a common card that is not a spell, and a cantrip is a card tagged `rank.cantrip`; uncommon, rare and starter cards are not Basic. This is not the Martial Adept Basic rule.
+- **Cost and cap.** Each upgrade past F costs 1 Smithing Stone. A card takes at most 10 upgrades. A card with no eligible step left is fully upgraded; both refusals read "Fully upgraded" and cannot be bought again.
+- **What an upgrade does.** Step 1 is the card's authored upgrade when it has one; otherwise, and for every later step, a seeded procedural step: +damage, +block, +status stacks, an added status, -1 cost, or +hits. Each is capped (a status never past its cap, damage or block gain never past +100% of the base, cost never below 1, cost and hits once per card) and never touches a conditional or HP-loss effect. Power, status and curse cards take only a cost step. Retain is not offered, because Core does not honour it at end of turn. The roll is `mulberry32(hash(run.seed, instanceId, stepIndex))`, so a preview equals the commit; the step is stored on the card (`upgradeSteps`) and never re-derived. The name is `Name+` for one upgrade and `Name+N` for N.
+- **Where.** At a rest site, one card upgrade per visit, alongside the other services (it does not close them). At the Blacksmith, any deck card, with no limit per visit while the player can pay. As an event reward, one free step (still capped at 10). In every case the picker shows the cost (Free, or 1 Smithing Stone) and the card before and after, from the same step the commit applies.
+- **Blacksmith reach.** 25% of Core shop nodes are a Blacksmith instead of the merchandise shop (`shops.blacksmithChance`), decided once per node from the run seed.
+
 ## 14. The deck editor and the three shops (owner brief, 2026-09-26)
 
 **Status: partly built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; step 3, the deck editor UI, in #1372; step 4, the shop-kind framework, in #1371; step 5, the market additions, in #1374 and #1377; step 6, the blacksmith, in #1390; step 7, the wise master, in #1438). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.

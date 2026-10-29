@@ -70,6 +70,7 @@
       "version": "1.0.0",
       "settings": {
         "entitlementPolicy": "authored",
+        "cardRanks": true,
         "characterLevels": true,
         "attributePointsPerLevel": 1,
         "classXpMultiplier": 1,

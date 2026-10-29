@@ -53,6 +53,7 @@ import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
+import { cardUpgradeStepsOn, freeCardUpgradeStep, applyFreeCardUpgrade } from '../model/cardUpgradeService.js';
 import { coreAffectedCards } from '../model/smithingCore.js';
 import { gameProfileServiceActive, withGameProfileService } from '../model/gameProfileRun.js';
 import * as Properties from './properties.js';
@@ -2154,8 +2155,12 @@ function runRunOpcode(ctx, action, eff) {
         // reconcile (loadout.js resets it only when a piece takes the slot),
         // so it stays a candidate. A card whose upgrade is not authored — the
         // pure Dodge Roll — is never one: the event would spend for nothing.
-        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
-        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && (!eff.card || card.cardId === eff.card))
+        // Core (card steps on): any card with a next step below the 10-upgrade cap; the event is free. Otherwise
+        // only a card with an authored upgrade that is not upgraded yet.
+        .filter((card) => (cardUpgradeStepsOn(run)
+          ? freeCardUpgradeStep(run, ctx.registries, card) !== null
+          : !card.upgraded && ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade))
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
@@ -2165,6 +2170,8 @@ function runRunOpcode(ctx, action, eff) {
         const commit = () => commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
         const receipt = gameProfileServiceActive(run, 'smith') ? commit() : withGameProfileService(run, 'smith', commit);
         ctx.emit('armamentSmithed', receipt);
+      } else if (cardUpgradeStepsOn(run)) {
+        applyFreeCardUpgrade(run, ctx.registries, chosen.card);
       } else {
         chosen.card.upgraded = true;
       }

@@ -634,19 +634,32 @@ export function cardPlainText(registries, ref, opts = {}) {
  * muted, upgraded text below with changed values highlighted green/red (the
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
-export function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { ...ref, upgraded: false });
-  const upg = resolveCard(registries, { ...ref, upgraded: true });
+export function upgradePreviewHtml(registries, ref, faces = null) {
+  // `faces` ({ before, after } card definitions) lets a Core card-upgrade picker preview the plan's own faces,
+  // the rolled step applied, so the preview is what the commit applies. Without it the authored upgrade is shown.
+  const base = faces && faces.before ? faces.before : resolveCard(registries, { ...ref, upgraded: false });
+  const upg = faces && faces.after ? faces.after : resolveCard(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
-  const baseText = fillTemplate(base, baseTokens, null);
-  const upgradedText = fillTemplate(upg, upgTokens, baseTokens);
+  let baseText = fillTemplate(base, baseTokens, null);
+  let upgradedText = fillTemplate(upg, upgTokens, baseTokens);
+  if (faces && faces.before && faces.after && !baseCardPresentation[base.id]) {
+    // A procedural step (an added status, +hits) lives in the card's effects, not in its authored template, so the
+    // preview reads the same face lines the card draws; lines the step changed are marked as raised.
+    const lines = (def) => (cardFaceLines(def, null, registries, null) || []).filter(line => line.kind !== 'bonus');
+    const beforeLines = lines(base), afterLines = lines(upg);
+    if (beforeLines.length && afterLines.length) {
+      const had = new Set(beforeLines.map(line => line.html));
+      baseText = beforeLines.map(line => line.html).join(' · ');
+      upgradedText = afterLines.map(line => had.has(line.html) ? line.html : line.html.replace(/class="val"/g, 'class="val up"')).join(' · ');
+    }
+  }
   // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
   // are keyed to (ui.css). Without it the preview drew the number it had just
   // computed as changed in the same colour and weight as the word beside it.
   // `.ctext` carries the marks only; the card face's block layout stays on
   // `.card .ctext` and does not follow the text into the tooltip.
-  let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
+  let html = `<div class="tt-title">${esc(base.name)} → ${esc(faces && faces.after ? upg.name : `${base.name}+`)}</div>`;
   html += `<div class="ctext" style="color:var(--muted)">${baseText}</div>`;
   html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
