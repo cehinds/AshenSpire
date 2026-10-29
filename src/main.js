@@ -112,6 +112,7 @@ import {
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
@@ -4184,7 +4185,8 @@ function showShop() {
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
     audio.music('shop');
     return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onTake: index => { purchaseGameProfileShopOffer(registries, run, shopId, index); persist(); showShop(); },
+      onTake: (index, quote) => { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop(); },
+      onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
       onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   if (run.journey?.activeService) {

@@ -10,7 +10,7 @@ import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseReaction, chooseCardPlay, AUTOMATION_DEFAULTS, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
-import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { projectCombatIntent, applyCombatIntentReceipt } from '../models/CombatIntentProjectionModel.js';
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
@@ -1297,21 +1297,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
+      applyCombatIntentReceipt(disp.ents, e);
       if (applyCombatDisplayReceipt(disp.ents, e)) continue;
       switch (e.type) {
-        case 'combatCounterTriggered': {
-          const actor = disp.ents[e.sourceId];
-          if (actor && e.sourceKind === 'enemy') actor.intentPreview = { kind: 'attack', moveId: e.moveId,
-            damage: e.amount, hits: 1, counterDamage: e.amount, counterPoiseDamage: e.poiseDamage,
-            counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
-          break;
-        }
-        case 'combatContactPrepared':
-        case 'combatHitStarted':
-          if (disp.ents[e.sourceId] && e.intentPreview) disp.ents[e.sourceId].intentPreview = e.intentPreview;
-          break;
         case 'enemyMoveStarted': {
-          if (disp.ents[e.sourceId] && e.intentPreview) disp.ents[e.sourceId].intentPreview = e.intentPreview;
           // Reactions return to the planned hold; pooled follow-ups replace it.
           if (e.reaction) break;
           const actor = disp.ents[e.sourceId];
@@ -1326,8 +1315,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
           if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
-          if (actor) actor.intentPreview = e.intentPreview || { ...e.intent, profile: e.intent?.combatProfile || {},
-            stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
           break;
         }
         case 'playerTurnStart':

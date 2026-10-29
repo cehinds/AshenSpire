@@ -5,7 +5,7 @@ import {createRegistries} from '../src/model/registries.js';
 import {resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries} from '../src/model/gameProfile.js';
 import {createRunState} from '../src/model/state.js';
 import {createRng} from '../src/engine/rng.js';
-import {gameProfileRewardOffers,claimGameProfileReward,gameProfileShopStock,purchaseGameProfileShopOffer} from '../src/model/gameProfileRewards.js';
+import {gameProfileRewardOffers,claimGameProfileReward,gameProfileShopStock,gameProfileShopPurchasePlan,purchaseGameProfileShopOffer} from '../src/model/gameProfileRewards.js';
 import { missingBasicStances } from '../src/model/stanceCoverage.js';
 const p=resolveGameProfile('core'),reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p);
 const fresh=()=>createRunState({seed:1,classId:'reaver',registries:reg});
@@ -37,8 +37,10 @@ test('shop stock persists and failed purchases do not debit or grant',()=>{
  run.cinders=0;const before=JSON.stringify(run);assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0),/Insufficient/);assert.equal(JSON.stringify(run),before);
  // Each Core offer carries its own price (rolled once, saved with the stock); the flat price stays as the old-save fallback.
  assert.ok(stock.options.every(row=>Number.isSafeInteger(row.price)&&row.price>10));
- run.cinders=100000;purchaseGameProfileShopOffer(reg,run,'act1',0);assert.equal(run.cinders,100000-stock.options[0].price);
- assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0),/claimed/);assert.equal(run.cinders,100000-stock.options[0].price);
+ run.cinders=100000;const quote=gameProfileShopPurchasePlan(reg,run,'act1',0);
+ const bought=purchaseGameProfileShopOffer(reg,run,'act1',0,null,quote);assert.equal(run.cinders,100000-stock.options[0].price);
+ assert.equal(bought.replacement?.kind,stock.options[0].kind);
+ assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0,null,quote),/changed/);assert.equal(run.cinders,100000-stock.options[0].price);
 });
 
 test('owned basic cards are never offered; most card offers are rank 1+ (owner 2026-10-17)',()=>{

@@ -1,15 +1,13 @@
-import * as Matchups from './combatMatchups.js';
 import * as ActionPreview from './enemyActionPreview.js';
 // Public forecasts captured at the event boundary, before the live queue moves
 // on. A contact refresh quotes only that contact, never all remaining hits.
 import * as Damage from './combatDamagePreview.js';
 import * as Tactics from './combatCardTactics.js';
-import * as Counter from './counterRule.js';
 import * as Actions from './actions.js';
 import { evaluate } from '../model/formulas.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
-import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
+import * as IntentProjection from './enemyIntentProjection.js';
 
 export function captureEnemyIntent(ctx, enemy, action = null) {
   // Co-op keeps its existing observer-specific projection; one shared event
@@ -40,29 +38,12 @@ export function captureEnemyIntent(ctx, enemy, action = null) {
     return out;
   }
   if (base == null) return out;
-  const state = Damage.damagePreviewState(ctx, ctx.player);
-  // Live Core grants an armed Counter's extra Block immediately before its
-  // covered hit. A whole-action forecast earns that automatic grant once;
-  // later hits spend the same detached Block/Poise state. A freshly paid
-  // per-contact response retains its own serial even after an earlier return.
-  if (fixCoreEnabled(ctx) && configuredCombat(ctx)) {
-    const planned = contact && action.meta?.expansionContacts?.[0]?.[0];
-    const serial = contact && group?.manualCounterSerials?.[ctx.playerKey || 'player'];
-    const receipt = contact ? planned && group?.targets?.[planned.key]?.receipt
-      : Matchups.previewTacticalAction(state.previewCtx, enemy, state.defender, carrier,
-        [{ amount: Actions.computeAttackDamage(state.previewCtx, enemy, state.defender, base, carrier.tags, carrier, { matchups: false, beforeDefense: true }) }]);
-    const paid = serial && serial === receipt?.counter?.serial;
-    if (receipt && (!Counter.counterReturnSpent(ctx.player) || paid)) {
-      const chance = profileDamageReceipt(state.previewCtx, enemy, state.defender, base, carrier);
-      const extra = Counter.counterBlockBonus(state.previewCtx, receipt, contact ? planned.index : 0, chance.damageReceipt?.hits?.[0]?.incoming);
-      state.defender.block = (state.defender.block || 0) + Counter.counterBlockGrant(state.previewCtx, state.defender, extra);
-    }
-  }
+  const state = IntentProjection.enemyIntentDamageState(ctx, enemy, carrier, base, action);
   const values = Damage.previewDamageHits(ctx, enemy, ctx.player, base, carrier.tags, carrier, hits, state);
   // Executed damage events already retain the full source receipt; forecasts
   // keep only the compact public quantities needed by presentation.
   for (const key of ['damage', 'hits', 'hitDamages', 'totalDamage', 'hpLoss', 'hpLossBounds', 'hitChance', 'uncertain'])
     if (values[key] !== undefined) out[key] = values[key];
   out.damageBasis = fixCoreEnabled(ctx) ? 'hp' : 'beforeBlock';
-  return out;
+  return IntentProjection.projectEnemyIntentDamage(ctx, enemy, out, { action, base, hits, move });
 }

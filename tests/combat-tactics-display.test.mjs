@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { reconcileWardBlock } from '../src/model/blockPresentation.js';
 import { applyCombatDisplayReceipt } from '../src/ui/models/CombatDisplayReceiptModel.js';
+import { applyCombatIntentReceipt } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { activeCombatStance, combatStanceRow, combatTacticsRows, preparedEvadeCharges, preparedEvadeRow } from '../src/model/combatTacticsDisplay.js';
 
 const evade = (extra = {}) => ({ charges: 2, bonus: 0, advantage: false, disadvantage: false, expiresOnOwnerCycle: 4, ...extra });
@@ -50,8 +51,8 @@ test('playback shows the prepared Evade, not the foundation Evade, as a combat E
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const start = screen.indexOf('  function applyBeatToDisp(beat) {');
   const end = screen.indexOf('  // ---------- rendering ----------', start);
-  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat,
-    (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, () => {});
+  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'applyCombatIntentReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat,
+    (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, applyCombatIntentReceipt, () => {});
   applyBeat({ events: [{ type: 'evadeGained', sourceId: 'player', charges: 2 }] });
   assert.equal(disp.ents.player.combatEvade, undefined, 'the foundation Evade (combatRules.js) adds no prepared-Evade row');
   applyBeat({ events: [{ type: 'evadeGained', sourceId: 'player', charges: 1, combatEvade: true }] });

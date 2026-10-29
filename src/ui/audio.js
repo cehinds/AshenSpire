@@ -1,10 +1,11 @@
 // src/ui/audio.js — procedural WebAudio engine (SPEC §7.4 audio).
 //
 // Hybrid design (per product decision): every sound and music bed has a
-// synthesized fallback (zero required assets, zero licensing). SFX ids first
-// try assets/sfx/<id>.ogg, with SFX_MANIFEST reserved for explicit path/format
-// overrides. The triggering cue is always immediate: synth plays while an
-// unknown sample warms, and only a known-good cached sample replaces later cues.
+// synthesized fallback (zero required assets, zero licensing). SFX ids with
+// exact recipe rows try assets/sfx/<id>.ogg; SFX_MANIFEST can name an explicit
+// sample for an asset-only cue. An id answered only by a family recipe uses
+// that synth immediately unless it has an explicit manifest sample, avoiding
+// a guaranteed 404 for each composed variant.
 //
 // Wiring: `initAudio()` returns an engine; main.js sets `sfx.sink = engine.sfx`
 // and calls `engine.music(context)` as screens mount. The AudioContext starts
@@ -181,14 +182,23 @@ export function initAudio(settings = {}) {
     // one voice; anything else (no sample, or one still warming or failed)
     // falls back to the synth, one voice per recipe layer, so a 4-layer burst
     // on 6 live voices is refused, not let through to 10.
-    const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
-    const cached = state.sampleCache.get(sample)?.status === 'ready';
+    const sampleOverride = own(SFX_MANIFEST, id);
+    const hasRecipe = Object.prototype.hasOwnProperty.call(SFX_RECIPES, id);
+    // A composed id such as `holdTick_shopSell` can be answered by its family
+    // recipe without having an action-specific sample. Do not request a file
+    // for that missing variant: synthSfx() already plays the family recipe,
+    // and a guaranteed 404 only adds noise to the console. An asset-only cue
+    // still opts in through SFX_MANIFEST.
+    const sample = sampleOverride || hasRecipe
+      ? assetUrl(sampleOverride || `assets/sfx/${encodeURIComponent(id)}.ogg`)
+      : null;
+    const cached = sample && state.sampleCache.get(sample)?.status === 'ready';
     const layers = cached ? 1 : Math.max(1, resolveRecipe(id).recipe.length);
     if (gate.voices + layers > gate.max) return;
     gate.lastAt.set(id, at);
     if (cached && playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
-    warmSample(sample);
+    if (sample) warmSample(sample);
   }
 
   const now = () => ctx.currentTime;
