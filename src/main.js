@@ -4128,12 +4128,15 @@ function showGameProfileReward() {
   // Card ranks (SPEC 13.4o, Core): the rank-ups this victory's track levels queued are offered once, on the
   // existing reward door's rank-up picker, before the reward offer. Skipping one keeps it queued for the next victory.
   if (!pending.rankUpsOffered && coreCardRanks(run)) {
-    const rankUps = pendingRankUpRows(registries, run);
+    // The door's rows are fixed the first time it opens and saved with its claim state (rankUpCheckpoint), so a
+    // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
+    const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
     if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
     else return mountRewards(app, { registries, run, saves, rng,
-      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: rankUps },
+      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
+      checkpoint: (pending.rankUpCheckpoint ||= {}),
       onPersist: persistContinuing,
-      // Set on leaving the door, so a reload mid-pick offers it again from the ledger.
+      // Rows and claims are saved at once; Continue marks the door done.
       onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
