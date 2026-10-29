@@ -61,3 +61,12 @@ test('rank never raises a capped status past its cap, and a step on a rank-cappe
     assert.notEqual(step?.k, 'stk', `seed ${seed}`);
   }
 });
+
+test('stk is judged on the ranked face: a status the rank already caps never rolls stk (no authored block)', async () => {
+  const { rollUpgradeStep, upgradeStepRng } = await import('../src/model/cardUpgradeSteps.js');
+  const hex = { id: 't.weaken', name: 'Weaken', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, keywords: [], tags: ['camp:physical'],
+    effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }] };
+  const kinds = (rank) => { const seen = new Set(); for (let seed = 1; seed <= 100; seed += 1) seen.add(rollUpgradeStep(hex, [], 0, upgradeStepRng(seed, 'w', 0), { rank })?.k ?? 'none'); return seen; };
+  assert.ok(kinds(1).has('stk'), 'below the cap at rank 1, stk is offered');
+  assert.ok(!kinds(10).has('stk'), 'rank 10 already holds Weak at its cap of 3');
+});
