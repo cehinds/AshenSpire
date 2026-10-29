@@ -32,6 +32,8 @@ function fixture(code = rendering) {
       toolsTop=footerTop; events.push('measure-tools');
     } },
     renderHand: () => { handReceipt = handWidth; events.push('hand'); },
+    // The hand strip's box is read at the top of the render, while layout is clean; it moves no state the order below pins.
+    handStrip: { primeStripBox() {} },
     syncHitChances: () => { assert.equal(handReceipt, handWidth, 'badges require the current hand'); badgesReady = true; events.push('badges'); },
     battlefieldStage: { refresh() { fits.push({ handWidth, handReceipt, toolsTop, controlsReady, toolsReady, badgesReady }); events.push('fit'); } },
     formationMovement: { refresh: () => events.push('formation') },
