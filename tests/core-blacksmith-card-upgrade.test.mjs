@@ -132,3 +132,25 @@ test('main.js showShop asks configuredShopKind (the roll is wired, not dropped)'
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /configuredShopKind\(run, shopId\) === 'blacksmith'/);
 });
+
+test('a Core Blacksmith offers no extract or install service, and the commits refuse without touching the deck', async () => {
+  const { blacksmithExtractPlan, commitBlacksmithExtract, blacksmithInstallPlan, commitBlacksmithInstall } = await import('../src/model/blacksmith.js');
+  const { shopStockOfferings } = await import('../src/model/shopKinds.js');
+  const run = smithRun(coreOut, 3);
+  const offered = shopStockOfferings(run.shopStock);
+  assert.ok(!offered.includes('extractArt') && !offered.includes('installArt'));
+  assert.ok(offered.includes('upgradeArt') && offered.includes('upgrade'), 'equipment and card upgrades stay');
+  // Even a stock forged (or saved by an older build) with the services cannot commit them.
+  run.shopStock.offerings = [...run.shopStock.offerings, 'extractArt', 'installArt'];
+  const deck = JSON.stringify(run.deck), sideboard = JSON.stringify(run.sideboard), mounts = JSON.stringify(run.itemMounts || null);
+  const ex = blacksmithExtractPlan(coreOut, run, 'armament/greatsword', 'any');
+  assert.equal(ex.ok, false);
+  assert.throws(() => commitBlacksmithExtract(coreOut, run, ex));
+  const inst = blacksmithInstallPlan(coreOut, run, 'armament/greatsword', 'any', run.deck[0].instanceId);
+  assert.equal(inst.ok, false);
+  assert.throws(() => commitBlacksmithInstall(coreOut, run, inst));
+  assert.deepEqual([JSON.stringify(run.deck), JSON.stringify(run.sideboard), JSON.stringify(run.itemMounts || null)], [deck, sideboard, mounts]);
+  // Legacy keeps both services.
+  const legacy = smithRun(legacyOut, 3);
+  assert.ok(shopStockOfferings(legacy.shopStock).includes('extractArt'));
+});

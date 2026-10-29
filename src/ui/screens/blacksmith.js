@@ -39,7 +39,7 @@ import {
   refinePlan, commitRefine,
   sigilSlotPieces, sigilSlotPlan, commitSigilSlot,
   sigilInstallPlan, commitSigilInstall, sigilRemovePlan, commitSigilRemove,
-  upgradeableArts, upgradeArtPlan, commitUpgradeArt, coreCardUpgrades,
+  upgradeableArts, upgradeArtPlan, commitUpgradeArt, coreCardUpgrades, blacksmithWithholds,
   stackableCardIds, stackCopyPlan, commitStackCopy,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
   blacksmithExtractPlan, commitBlacksmithExtract,
@@ -254,7 +254,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function render() {
     if (layout) layout.release();
-    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key]);
+    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
       ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}

@@ -57,9 +57,16 @@ export function blacksmithOffering(registries, id) {
   return (registries.shops?.blacksmith?.offerings || []).find((row) => row && row.id === id) || null;
 }
 
+/**
+ * Core (card ranks on) withholds the legacy weapon-art mount services: a configured deck is not projected from
+ * `run.itemMounts` (its equipment cards come from `gear[].grantedCards`), so extracting or installing there would
+ * delete a card with nothing equipment-owned in its place. Core keeps equipment and card upgrades.
+ */
+export const blacksmithWithholds = (run, id) => (id === 'extractArt' || id === 'installArt') && run?.gameProfile?.modules?.progression?.cardRanks === true;
+
 /** Whether the visit open now is a blacksmith that laid out `id`. */
 export function blacksmithOffers(run, id) {
-  return !!run.shopStock && shopStockKind(run.shopStock) === 'blacksmith' && shopStockOfferings(run.shopStock).includes(id);
+  return !blacksmithWithholds(run, id) && !!run.shopStock && shopStockKind(run.shopStock) === 'blacksmith' && shopStockOfferings(run.shopStock).includes(id);
 }
 
 const cinders = (n, priceMult) => (priceMult === 1 ? n : Math.ceil(n * priceMult));
