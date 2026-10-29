@@ -137,6 +137,13 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const rect = handEl.getBoundingClientRect();
     return { rect, clientWidth: handEl.clientWidth, clientHeight: handEl.clientHeight, fontSize: layoutMetrics().fontSize };
   };
+  const stripReadable = () => fitFan && fanApplied && handEl.isConnected && handEl.dataset.wireframeHand === 'true';
+  // A full combat render writes the topbar, the stage and the controls before it
+  // reaches the hand, and none of those move the strip. The screen primes the
+  // strip's box at the top of the render, while layout is still clean, so the
+  // hand's own read is not the flush that pays for every write in between.
+  let primedBox = null;
+  const primeStripBox = (on = true) => { primedBox = on && stripReadable() ? readStripBox() : null; };
   function applyHandLayout(box = null) {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
@@ -336,7 +343,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // written): the layout pass at the end of this render then needs no read
     // and so forces no layout. Only once the strip is set up (first render
     // writes the wireframe attribute the box depends on) and attached.
-    const preBox = fitFan && fanApplied && handEl.isConnected && handEl.dataset.wireframeHand === 'true' ? readStripBox() : null;
+    const preBox = primedBox || (stripReadable() ? readStripBox() : null);
+    primedBox = null;
     const wanted = new Set(cards.map(entry => entry.inst.instanceId));
     // Whether this pass changed anything the fan plan reads: a card made or
     // dropped, or the order. A pure selection change keeps every element, so the
@@ -529,5 +537,5 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     presentationOrder = moveHandInstance(presentationOrder, id, slot);
     if (lastRender) render(lastRender);
   }
-  return { render, teardown, reorderAt };
+  return { render, teardown, reorderAt, primeStripBox };
 }

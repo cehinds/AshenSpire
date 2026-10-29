@@ -1680,6 +1680,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       syncBackdropFlag(combatEl);
       paintedAppearance = displayAppearance();
     }
+    handStrip.primeStripBox();
     renderTopbar();
     syncEditLock();
     renderPotionTray();
@@ -1702,6 +1703,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
     scheduleAutoCombat();
+    handStrip.primeStripBox(false); // a render that never reached the hand leaves nothing primed
   }
   // The Combat Rounds Preview's additions (SPEC §4.11). A no-op unless combat.combatRounds is set.
   function decorateRoundsScreen() {
