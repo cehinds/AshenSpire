@@ -44,11 +44,15 @@ export function shareableGameProfile(data) {
   const profile = data.gameProfile, members = ownedProfiles.get(profile);
   if (!members) return null;
   const visited = new WeakSet();
+  // This walk runs on every candidate clone (hundreds per fight), so it avoids
+  // allocating a descriptors object per node: Object.keys names the same
+  // enumerable own string keys, and one descriptor is read per key.
+  const getDescriptor = Object.getOwnPropertyDescriptor, getPrototype = Object.getPrototypeOf;
   function separate(value) {
     if (!value || typeof value !== 'object') return true;
     if (members.has(value)) return false;
     if (visited.has(value)) return true;
-    const proto = Object.getPrototypeOf(value);
+    const proto = getPrototype(value);
     if (proto === Map.prototype) {
       // Every live fight has a triggerState Map. Inspect native entries only;
       // structuredClone still owns its graph/alias/cycle reconstruction.
@@ -60,15 +64,19 @@ export function shareableGameProfile(data) {
     }
     if (proto !== Object.prototype && proto !== Array.prototype && proto !== null) return false;
     visited.add(value);
-    for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(value))) {
-      if (!descriptor.enumerable) continue;
+    const keys = Object.keys(value);
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i], descriptor = getDescriptor(value, key);
       const data = 'value' in descriptor ? descriptor : turnStaminaAliasData(value, key, descriptor);
       if (!data || !separate(data.value)) return false;
     }
     return true;
   }
-  for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(data))) {
-    if (key === 'gameProfile' || !descriptor.enumerable) continue;
+  const rootKeys = Object.keys(data);
+  for (let i = 0; i < rootKeys.length; i++) {
+    const key = rootKeys[i];
+    if (key === 'gameProfile') continue;
+    const descriptor = getDescriptor(data, key);
     if (!('value' in descriptor) || !separate(descriptor.value)) return null;
   }
   return profile;
