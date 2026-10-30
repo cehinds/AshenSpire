@@ -615,7 +615,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     invalidateSpriteRects();
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
-    if (stillHud()) { trackingRequest = 0; return; }
+    if (reducedMotionRequested()) { trackingRequest = 0; return; }
+    if (effectsOff()) { trackingRequest = 0; return; } // Effects off settles at the start and end of a move
     const open = field.isConnected && field.querySelector('.combatant.player') && performance.now() < trackUntil;
     if (open && lite() && trackTick++ % 2 === 1) { trackingRequest = requestAnimationFrame(trackPlayerHud); return; }
     const bodies = trackedBodies();
@@ -1574,7 +1575,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // not a new 900ms body-motion window. Pose/source and action changes keep it.
     if (!mutations.some(m => combatantBodyMutation(m, combatHost.dataset.targetHud === 'true'))) return;
     // A deliberate stance still settles its readout when idle motion is off.
-    if (stillHud()) {
+    if (reducedMotionRequested()) {
+      if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
+      return;
+    }
+    // Effects off: the same one-shot settle, no frame loop.
+    if (effectsOff()) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
       return;
     }
