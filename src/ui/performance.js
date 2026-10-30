@@ -47,9 +47,9 @@ export function liteRendering() {
   return typeof document !== 'undefined' && document.documentElement?.dataset.performance === 'lite';
 }
 
-/** effectsOff() → true when the Effects switch is off (the root `data-effects` attribute). */
+/** effectsOff() → true when the Effects switch is off (root `data-effects="off"`, set at boot by main.js; absent in bare test DOMs reads as on). */
 export function effectsOff() {
-  return typeof document !== 'undefined' && document.documentElement?.dataset.effects !== 'on';
+  return typeof document !== 'undefined' && document.documentElement?.dataset.effects === 'off';
 }
 
 /** motionOff(kind) → true when that fighter-motion option is off; kind is attack|hit|idle|defeat. */
