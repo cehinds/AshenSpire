@@ -327,11 +327,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     el.style.zIndex = i;
   }
 
+  // Returns what the pass did to the strip: `reshaped` (the fan plan was re-applied, so the hand's
+  // geometry may have moved) and `rebuilt` (how many card faces were built from scratch).
   function render(args) {
-    renderCards(args);
+    const result = renderCards(args);
     // `data-has-selection` stands in for `.hand:has(.selected)` in combat.css.
     const on = String(!!handEl.querySelector('.selected'));
     if (handEl.getAttribute('data-has-selection') !== on) handEl.setAttribute('data-has-selection', on);
+    return result;
   }
   function renderCards({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
@@ -350,6 +353,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // dropped, or the order. A pure selection change keeps every element, so the
     // plan (and its forced layout) is the one already applied.
     let reshaped = !fanApplied || emptyHtml != null || n0 !== cards.length;
+    let rebuilt = 0;
     for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
       record.release?.(); record.el.remove(); renderedCards.delete(id); reshaped = true;
     }
@@ -365,7 +369,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml;
       observeCards();
       if (fitFan) applyHandLayout();
-      return;
+      return { reshaped: true, rebuilt: 0 };
     }
     const n = cards.length;
     // The legacy transform fan publishes its lift for CSS to reserve. The
@@ -415,6 +419,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // surface `none`, and the door that exists to offer `Play card` offered
       // nothing at all. Caught in review on the promotion, not by a test,
       // which is why tests/hand-forwards-surface.test.mjs now exists.
+      rebuilt++;
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
@@ -515,6 +520,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // which used to schedule another fan and battlefield fit after every render.
     observeCards();
     if (reshaped) { applyHandLayout(preBox); fanApplied = true; }
+    return { reshaped, rebuilt };
   }
 
   function teardown() {

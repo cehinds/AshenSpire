@@ -1676,12 +1676,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
-    renderPlayer();
-    renderEnemies({ refreshTargets });
+    const playerWrote = renderPlayer();
+    const enemiesWrote = renderEnemies({ refreshTargets });
     if (fit) {
       battlefieldStage.refresh();
       formationMovement?.refresh();
     }
+    return !!(playerWrote || enemiesWrote);
   }
 
   function render() {
@@ -1716,6 +1717,44 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
     scheduleAutoCombat();
     handStrip.primeStripBox(false); // a render that never reached the hand leaves nothing primed
+  }
+  // The end of a played-out sequence. The same sequence as render(), but the renderers say whether they
+  // wrote, and the two geometry passes that follow (the tools' measure and the full battlefield fit, which
+  // between them force most of the layout in a play) run only when something that can move the board wrote:
+  // a stage slot, the top bar, or a hand pass that reshaped the fan. Otherwise the board is as the last beat
+  // left it and syncHitChances' own badge placement is all the geometry owed. A skipped playback and the
+  // mount/resync paths keep the full render().
+  function finishRender() {
+    globalThis.__perfCount?.('finishRender');
+    let moved = false;
+    if (paintedAppearance !== displayAppearance()) {
+      combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
+      combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
+      syncBackdropFlag(combatEl);
+      paintedAppearance = displayAppearance();
+      moved = true;
+    }
+    handStrip.primeStripBox();
+    if (renderTopbar()) moved = true;
+    syncEditLock();
+    renderPotionTray();
+    if (renderCombatantStage({ fit: false, refreshTargets: false })) moved = true;
+    renderControls();
+    renderCombatTools();
+    if (renderHand({ refreshHitChances: false })?.reshaped) moved = true;
+    syncHitChances();
+    if (moved) {
+      combatTools.flushGeometry();
+      battlefieldStage.refresh();
+    }
+    // The movement grid's cells follow `busy`, which has just cleared: always refreshed (it writes only on change).
+    formationMovement?.refresh();
+    applyTargetLayer();
+    refreshAim();
+    decorateRoundsScreen();
+    setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+    scheduleAutoCombat();
+    handStrip.primeStripBox(false);
   }
   // The Combat Rounds Preview's additions (SPEC §4.11). A no-op unless combat.combatRounds is set.
   function decorateRoundsScreen() {
@@ -2570,7 +2609,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     const previewCache = handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh ? handPreviewCache.cards : new Map();
     const nextPreviews = new Map();
-    handStrip.render({
+    const painted = handStrip.render({
       cards: handList.map((inst) => {
         // disp.hand is a pre-dispatch snapshot; on a combat-ending play the
         // engine strands the in-flight card in no pile (finishCombat clears the
@@ -2612,6 +2651,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     handPaintedIds = handIds;
     handPreviewCache = { stateKey, cards: nextPreviews };
     if (refreshHitChances) syncHitChances();
+    return painted;
   }
 
   /**
@@ -3540,12 +3580,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         timelinePlayback = null;
         if (!combatEl.isConnected) return;
         try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
-        discardBeatRender(); // the full render below paints what a coalesced beat still owed
+        discardBeatRender(); // the render below paints what a coalesced beat still owed
         disp = null;
         heldTurnHand = null;
         enemyPlayback = false;
         busy = false;
-        render();
+        finishRender();
         showPendingDiscard();
         if (combat.result) {
           // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.

@@ -10,7 +10,7 @@ const end = source.indexOf("  if (typeof window !== 'undefined'", begin);
 assert.ok(begin >= 0 && end > begin);
 const rendering = source.slice(begin, end);
 
-function fixture(code = rendering) {
+function fixture(code = rendering, wrote = {}) {
   const events = [], fits = [], field = { dataset: {} };
   // A requested tools raise must inspect the incoming card rectangles before
   // the one board fit. The dock itself belongs to the current footer row.
@@ -22,8 +22,8 @@ function fixture(code = rendering) {
     paintedAppearance: 'alternative', displayAppearance: () => 'alternative',
     $: selector => { assert.equal(selector, '.field'); return field; },
     hideTooltip: () => events.push('hide'),
-    renderPlayer: () => events.push('player'), renderEnemies: () => events.push('enemies'),
-    renderTopbar: () => events.push('topbar'), syncEditLock: () => {}, renderPotionTray: () => events.push('potions'),
+    renderPlayer: () => { events.push('player'); return wrote.player; }, renderEnemies: () => { events.push('enemies'); return wrote.enemies; },
+    renderTopbar: () => { events.push('topbar'); return wrote.topbar; }, syncEditLock: () => {}, renderPotionTray: () => events.push('potions'),
     renderControls: () => { controlsReady = true; events.push('controls'); },
     renderCombatTools: () => { toolsReady = true; events.push('tools'); },
     combatTools: { flushGeometry() {
@@ -31,7 +31,7 @@ function fixture(code = rendering) {
       assert.equal(handReceipt,handWidth,'raised toolbar collision checks must measure current card geometry');
       toolsTop=footerTop; events.push('measure-tools');
     } },
-    renderHand: () => { handReceipt = handWidth; events.push('hand'); },
+    renderHand: () => { handReceipt = handWidth; events.push('hand'); return wrote.hand; },
     // The hand strip's box is read at the top of the render, while layout is clean; it moves no state the order below pins.
     handStrip: { primeStripBox() {} },
     syncHitChances: () => { assert.equal(handReceipt, handWidth, 'badges require the current hand'); badgesReady = true; events.push('badges'); },
@@ -44,8 +44,8 @@ function fixture(code = rendering) {
     setHintMode: () => events.push('hint'),
     scheduleAutoCombat: () => events.push('automation'),
   };
-  const api = runInNewContext(code + '\n({render, renderCombatantStage})', context);
-  return { api, events, fits, field };
+  const api = runInNewContext(code + '\n({render, renderCombatantStage, finishRender})', context);
+  return { api, events, fits, field, context };
 }
 
 test('the actual full combat render fits once after hand layout and measured incoming footer tools', () => {
@@ -111,4 +111,36 @@ test('tools-first ordering cannot inspect the incoming card obstacle receipt',()
     (_all,hand,between)=>'    combatTools.flushGeometry();\n'+hand+between);
   assert.notEqual(wrong,rendering);
   assert.throws(()=>fixture(wrong).api.render(),/raised toolbar collision checks must measure current card geometry/);
+});
+
+// finishRender: the end of a played-out sequence. Same order as render(); the tools measure and the full
+// battlefield fit run only when a stage slot, the top bar or the hand's fan wrote.
+const FINISH_QUIET = ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','formation','targets','aim','hint','automation'];
+const FINISH_MOVED = ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','aim','hint','automation'];
+
+test('finishRender skips the tools measure and the battlefield fit when nothing that can move the board wrote', () => {
+  for (const wrote of [{}, { hand: undefined }, { hand: { reshaped: false, rebuilt: 2 } }, { player: false, enemies: false, topbar: false }]) {
+    const probe = fixture(rendering, wrote); probe.api.finishRender();
+    assert.deepEqual(probe.events, FINISH_QUIET, JSON.stringify(wrote));
+    assert.equal(probe.fits.length, 0);
+  }
+});
+
+test('finishRender runs the same measure and fit as render() when a stage slot, the top bar or the hand fan wrote', () => {
+  for (const wrote of [{ player: true }, { enemies: true }, { topbar: true }, { hand: { reshaped: true, rebuilt: 0 } }]) {
+    const probe = fixture(rendering, wrote); probe.api.finishRender();
+    assert.deepEqual(probe.events, FINISH_MOVED, JSON.stringify(wrote));
+    assert.deepEqual(probe.fits, [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true,badgesReady:true}],
+      'the fit still sees the final hand, the measured tools and the placed badges');
+  }
+});
+
+test('finishRender keeps render()\'s order before the geometry and reports itself to the perf counters', () => {
+  const counted = [];
+  const code = rendering.replace("globalThis.__perfCount?.('finishRender');", "__counted('finishRender');");
+  assert.notEqual(code, rendering, 'finishRender emits the finishRender counter first');
+  const instrumented = fixture(code, { player: true }); instrumented.context.__counted = name => counted.push(name);
+  instrumented.api.finishRender();
+  assert.deepEqual(counted, ['finishRender']);
+  assert.ok(rendering.slice(rendering.indexOf('  function finishRender()')).indexOf("globalThis.__perfCount?.('finishRender');") < 60);
 });
