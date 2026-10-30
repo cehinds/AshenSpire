@@ -13,7 +13,7 @@ lives only in `src/content/index.js` (`contentBundle.version`), and
 | Segment | Who moves it | How |
 |---|---|---|
 | MAJOR | Constantine (Tier 2 decision) | hand-edit the one home, via PR |
-| MINOR | Constantine, proposed in the delivering PR | hand-edit the one home, via PR |
+| MINOR | Constantine, proposed in the delivering PR | advanced by the PR that follows a `release` → `main` merge |
 | PATCH | Constantine, proposed in the delivering PR | hand-edit the one home, via PR; advanced after every release cut |
 | ordinal | nobody — `tools/bundle.mjs` writes `buildordinal.json` | derived, every rebuild |
 | digest | nobody — derived from the covered source set | derived, every rebuild |
@@ -45,6 +45,13 @@ line in the PR body ("Version: no bump" / "Version: proposes 0.5.0").
    (the ordinal and digest still move on rebuild; the
    CHANGELOG receipt still records the delivery)
 ```
+
+The owner's 2026-10-30 rule now moves MINOR and the candidate by branch events,
+not by PR content: a `release` → `main` merge advances MINOR, and a `test` →
+`release` cut advances the candidate (see "A main merge advances the minor" and
+"A release cut advances the candidate" under *Release candidates*). The MAJOR
+rule above still stands; the MINOR and PATCH triggers above no longer name the
+triple.
 
 Rule 4 is why #508 (the whole framework candidate) and #509 (the first port
 tranche) did not move `0.4.0`: both are proven behavior-preserving, so the
@@ -86,6 +93,11 @@ The answer is semver's own pre-release segment, not a bent ladder:
 - **The `-rc` suffix is dropped by the owner's release cut** (`rc/<version>` → `release`, a branch pinned at the tested RC SHA on `test`,
   owner-exclusive), which is the MINOR bump
   the ladder already names. Nothing else removes it.
+- **A main merge advances the minor (owner, 2026-10-30).** When `release` is
+  merged to `main`, the PR that follows the merge moves the MINOR (second
+  component) in `contentBundle.version` by one and resets the candidate to `0`,
+  so the next build reads `<major>.<minor+1>.0.0`. Example: after 0.7.x reaches
+  `main`, the next build is 0.8.0.0. MAJOR stays the owner's Tier 2 decision.
 - **A release cut advances the candidate (owner, 2026-10-30).** When `test` is
   cut to `release`, the PR that follows the cut moves the candidate (third
   component) in `contentBundle.version` by one, so the next build after the
