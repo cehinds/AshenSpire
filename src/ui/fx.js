@@ -2,6 +2,7 @@ import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
+import { effectsOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
@@ -719,7 +720,7 @@ export function dmgClass(amount, targetMaxHp = 0) {
 
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
 function spawnFx(layer, anchor, cls, ms, text) {
-  if (!layer || !anchor) return;
+  if (!layer || !anchor || effectsOff()) return; // Effects off: no sparks, slashes or glyphs (numbers and callouts stay)
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = cls;
@@ -749,7 +750,7 @@ export function banner(layer, text, cls = '', lifeMs = null) {
 let hitStop = 0;
 const heldFigures = new Map();
 function hold(el, ms) {
-  if (!el || !(ms > 0)) return;
+  if (!el || !(ms > 0) || effectsOff()) return;
   const swing = flashTimers.get(el)?.get('act-attack');
   if (swing) {
     clearTimeout(swing.id); swing.due += ms;
@@ -780,7 +781,7 @@ const SHAKE_MS = 200;
 const shakeStates = new WeakMap();
 const FIXED_SHAKE_PX = 4; // a stagger's shake: the old fixed amplitude, not scaled by a hit
 function shake(combatEl, px = FIXED_SHAKE_PX) {
-  if (!combatEl || !(px > 0)) return;
+  if (!combatEl || !(px > 0) || effectsOff()) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
   const now = Date.now();
@@ -807,8 +808,12 @@ function shake(combatEl, px = FIXED_SHAKE_PX) {
 
 // Add a short-lived CSS class (restarting its animation if already present).
 const flashTimers = new WeakMap();
+// Fighter motion (lunge, hit recoil, stagger wobble) rides this same helper but is
+// governed by its own motion options in CSS, not by Effects.
+const MOTION_FLASH = new Set(['act-attack', 'act-move', 'hitflash', 'hit-heavy', 'wobble']);
 function flash(el, cls, ms = 300, pauseMs = 0) {
   if (!el) return;
+  if (effectsOff() && !MOTION_FLASH.has(cls)) return; // relic proc / orb pulse flashes
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
   if (document.body.classList.contains('reduce-flashes')) return;
@@ -833,7 +838,7 @@ function flash(el, cls, ms = 300, pauseMs = 0) {
 
 // Radial flare over an anchor (stance entries, big procs).
 function flare(layer, anchor, color) {
-  if (!layer || !anchor) return;
+  if (!layer || !anchor || effectsOff()) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = 'stance-flare';
