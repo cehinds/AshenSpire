@@ -2522,7 +2522,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     handPageCursor = paging ? handPageCursor : null;
     handOverlay.dataset.paging = String(paging);
-    handPages.forEach((page) => { page.hidden = !paging; });
+    handPages.forEach((page) => { if (page.hidden === paging) page.hidden = !paging; });
   }
 
   // F1's previous/next controls move the real focus cursor through the real

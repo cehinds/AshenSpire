@@ -954,7 +954,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Offsets and edge clamping must not resize the reference tiles.
       const gridCells = plan.visualCells || plan.cells;
       const activeCells = new Set(gridCells.map(cell => cell.cell));
-      for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
+      for (const tile of grid.querySelectorAll('[data-cell]')) { const hide = !activeCells.has(tile.dataset.cell); if (tile.hidden !== hide) tile.hidden = hide; }
       for (const cell of gridCells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
@@ -987,8 +987,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.dataset.visualBand = cell.visualBand || '';
         tile.dataset.visualOnly = String(!!cell.visualOnly);
         // Each shared edge is painted once, so translucent seams stay thin.
-        tile.querySelector('[data-perspective-outline]')?.setAttribute('d',
-          perspectiveCellOutlinePath(cell, plan.rows));
+        const outline = tile.querySelector('[data-perspective-outline]');
+        if (outline) {
+          const path = perspectiveCellOutlinePath(cell, plan.rows);
+          if (outline.getAttribute('d') !== path) outline.setAttribute('d', path);
+        }
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
