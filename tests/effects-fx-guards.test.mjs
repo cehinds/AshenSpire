@@ -100,3 +100,18 @@ test('idle motion off stops resting swaps but lets every action pose through', a
     assert.equal(stage.play('idle', 100), false, 'an idle swap is refused');
   } finally { globalThis.document = saved.document; globalThis.Image = saved.Image; }
 });
+
+test('with Effects off the figure hit keyframes keep the recoil and drop the red tint', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  const frames = name => { const m = css.match(new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)); return (m && (m[1] || m[2])) || ''; };
+  const names = new Map();
+  for (const m of css.matchAll(/(:root\[data-effects='off'\][^{]*\.sprite\.hitflash[^{]*>\s*:first-child)\s*\{\s*animation-name:\s*([\w-]+)/g)) names.set(m[1], m[2]);
+  assert.equal(names.size, 5, 'generic, enemy, player and both heavy variants are overridden');
+  for (const name of new Set(names.values())) {
+    const body = frames(name);
+    assert.match(body, /translateX/, `${name} keeps the recoil`);
+    assert.doesNotMatch(body, /filter/, `${name} carries no tint`);
+  }
+  assert.match(css, /:root\[data-effects='off'\] body\.motion-hit-off \.sprite\.hitflash > :first-child/, 'motionHit off still removes the recoil');
+});

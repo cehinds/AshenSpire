@@ -2112,3 +2112,19 @@ body.motion-defeat-off .combatant.dead,
 body.motion-defeat-off .combatant.down { transition: none; animation: none; }
 /* Idle motion: the pose aura holds still too (pose swaps are gated in ui/services/PoseAnimator.js). */
 body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
+/* Effects off keeps the recoil (motionHit) and drops the red tint the same keyframes carry. */
+@keyframes hitflash-notint { 0%, 100% { transform: none; } 30% { transform: translateX(4px); } }
+@keyframes hit-enemy-notint { 0% { transform: none; } 20%, 45% { transform: translateX(22px); } 100% { transform: none; } }
+@keyframes hit-player-notint { 0%, 100% { transform: none; } 30% { transform: translateX(-13px); } }
+@keyframes hit-enemy-heavy-notint { 0% { transform: none; } 20%, 45% { transform: translateX(34px); } 100% { transform: none; } }
+@keyframes hit-player-heavy-notint { 0%, 100% { transform: none; } 30% { transform: translateX(-26px); } }
+:root[data-effects='off'] .sprite.hitflash > :first-child { animation-name: hitflash-notint; }
+:root[data-effects='off'] .enemy .sprite.hitflash > :first-child { animation-name: hit-enemy-notint; }
+:root[data-effects='off'] .player .sprite.hitflash > :first-child { animation-name: hit-player-notint; }
+:root[data-effects='off'] .enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy-notint; }
+:root[data-effects='off'] .player .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-player-heavy-notint; }
+:root[data-effects='off'] .player .sprite.wobble:not(.hitflash) > .alternative-card-stage:first-child,
+:root[data-effects='off'] .player .sprite.hitflash > .alternative-card-stage[data-still]:first-child,
+:root[data-effects='off'] .player .sprite.hitflash.hit-heavy > .alternative-card-stage[data-still]:first-child { animation-name: none; }
+:root[data-effects='off'] body.motion-hit-off .sprite.hitflash > :first-child,
+:root[data-effects='off'] body.motion-hit-off .sprite.hitflash.hit-heavy > :first-child { animation: none; }
