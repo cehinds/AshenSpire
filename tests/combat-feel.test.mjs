@@ -195,6 +195,26 @@ function drive(t, fn, { maxHp } = {}) {
   });
 }
 
+test('with Effects off the figure is not held but the timeline spacing is unchanged', (t) => {
+  drive(t, ({ dom, start, tick, holds, reactions, stats }) => {
+    const timing = actionPacing();
+    const reactionAt = timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs;
+    const root = dom.document.documentElement;
+    dom.document.documentElement = { dataset: { effects: 'off' } };
+    try { start([6, 10]); tick(reactionAt); } finally { dom.document.documentElement = root; }
+    assert.deepEqual(holds, [], 'no actor or target hold with Effects off');
+    assert.deepEqual(reactions, [['hit', 220]], 'the reaction lands at the same time as with Effects on');
+  });
+});
+
+test('with Effects on the same contact still holds', (t) => {
+  drive(t, ({ start, tick, holds }) => {
+    const timing = actionPacing();
+    start([6, 10]); tick(timing.intentMs + timing.wordMs + 100);
+    assert.equal(holds.length, 1, 'Effects on still holds');
+  });
+});
+
 // Ordered playback pays both pre-sprite waits, holds the authored contact
 // frame for every qualifying hit, then separates reaction and numbers.
 test('multi-hit contact holds the attacker and buzzes once with the first number', (t) => {

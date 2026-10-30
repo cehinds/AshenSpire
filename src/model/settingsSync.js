@@ -77,7 +77,7 @@ export function profileName(cfg) {
 // player: a profile saved on a desktop must not shrink a phone's text. They are
 // left out of a profile, and a profile that carries them does not move them,
 // unless this device opts in (SYNC_STORAGE.includeDevice).
-export const DEVICE_KEYS = Object.freeze(['uiScale', 'viewPreset', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement']);
+export const DEVICE_KEYS = Object.freeze(['uiScale', 'viewPreset', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement', 'effects', 'motionAttack', 'motionHit', 'motionIdle', 'motionDefeat']);
 const DEVICE_KEY_SET = new Set(DEVICE_KEYS);
 // LOCAL-ONLY KEYS, stricter than DEVICE_KEYS: never saved in a profile and never
 // taken from one, even on a device that shares its screen settings. Art quality

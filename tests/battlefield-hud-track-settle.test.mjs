@@ -10,7 +10,7 @@ const start = source.indexOf('  const TRACK_WINDOW_MS');
 const end = source.indexOf('\n  }\n', source.indexOf('  function trackPlayerHud()', start)) + 4;
 assert.ok(start > 0 && end > start);
 
-function loop() {
+function loop(effectsAreOff = false) {
   let now = 0, frames = [], x = 0, animations = [];
   const sprite = { getAnimations: () => animations };
   const env = {
@@ -19,7 +19,7 @@ function loop() {
     document: { documentElement: { dataset: {} } },
     field: { isConnected: true, querySelector: () => ({}), querySelectorAll: () => [sprite], closest: () => ({ dataset: { targetHud: 'true' } }) },
     currentSpriteBodyBounds: () => ({ left: x, right: x + 10, top: 0, bottom: 10, headY: 0, feetY: 10 }),
-    reducedMotionRequested: () => false, invalidateSpriteRects() {}, stageFor: () => null,
+    reducedMotionRequested: () => false, effectsOff: () => effectsAreOff, invalidateSpriteRects() {}, stageFor: () => null,
     placePlayerHud() {}, placeHitBadges() {}, placeEnemyInspect() {}, schedule() {}, settledTargetCores: null,
   };
   const body = `let trackingRequest = 0, inspectTick = 0;\n${source.slice(start, end)}\nreturn { extendTracking, trackPlayerHud, running: () => trackingRequest };`;
@@ -59,4 +59,14 @@ test('a classic figure holding mid-action keeps the loop running until its anima
   l.animate([bob]);                                  // the hit ends; only the idle bob remains
   for (let i = 0; i < 4; i++) l.step();
   assert.equal(l.frames(), 0, 'the endless idle bob alone does not keep tracking');
+});
+
+test('with Effects off the HUD settles and schedules no per-frame tracking', () => {
+  const l = loop(true);
+  l.api.extendTracking(); l.api.trackPlayerHud();
+  assert.equal(l.frames(), 0, 'no animation frame is requested');
+  assert.equal(l.api.running(), 0);
+  const on = loop(false);
+  on.api.extendTracking(); on.api.trackPlayerHud();
+  assert.ok(on.frames() > 0, 'Effects on still follows the move');
 });

@@ -7,7 +7,7 @@ import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
 import { reducedMotionRequested } from './motion.js';
-import { liteRendering } from './performance.js';
+import { liteRendering, effectsOff, motionOff } from './performance.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
@@ -107,11 +107,14 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard','evade'].includes(rest) ? 'guard-brace' : 'ready';
   // Lite already omits decorative filters on image-backed figures. Apply the
   // same quality policy to canvas bodies; contact, recoil and hit masks stay.
+  // Effects off keeps the stance glow but holds it still: the resting glow of the held stance or
+  // status, never the casting pulse (the action and its payment colours only tint while Effects is on).
   const filterFor = (frame, action, paid = resources, active = !!action) =>
-    liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
+    effectsOff() ? auraFilter('ready', ['defend','counter'].includes(rest) ? 'guard' : rest, [], false)
+    : liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
-    paintedLite=liteRendering();
+    paintedLite=liteRendering()+'/'+effectsOff();
     ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
     let x=0, effect=null;
@@ -123,7 +126,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       if(pose==='origin')pose=restPose();
       if (pose==='ready' && stance) pose='stance-'+stance;
       effect=playing.sequence.effects?.[sampled.index];
-      x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
+      x=['attack','smash','sweep'].includes(playing.action)&&!motionOff('attack')?sampled.x:0;
     }
     if (rest !== 'defeated' && bodyReaction) {
       const sampled=sampleSequence(bodyReaction.sequence,bodyReaction.elapsed,bodyReaction.duration,{reduced:still||reducedMotionRequested()||!ANIM_SPEEDS[getAnimSpeed()]});
@@ -164,14 +167,14 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     currentArt={canvas,image:source,left,top,width,height,body};
     ctx.save();
     // Loaded outfit and hurt images never change their pixels after decoding.
-    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
+    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!effectsOff(),still:effectsOff(),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
-    if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
+    if(effect && !still && !effectsOff() && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
       if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);el.dataset.effect=effect;}
     }
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
-    const flash=flashAt===null||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
+    const flash=flashAt===null||effectsOff()||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
     if (flash) {
       if(mask.width!==dimensions[0])mask.width=dimensions[0];
       if(mask.height!==dimensions[1])mask.height=dimensions[1];
@@ -211,7 +214,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   function endReaction() { if(flashAt===null&&!bodyReaction)return false;flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;if(!playing)pose=restPose();paint();return true; }
   function settleStage({reaction=false}={}) { if(reaction){flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;} settle(); }
   // Instant drops pacing and hit-stop but keeps fixed-duration effects, so the hurt clip still plays.
-  function hit(ms=220) { if (reducedMotionRequested() || still) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
+  function hit(ms=220) { if (reducedMotionRequested() || still || motionOff('hit')) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
@@ -255,7 +258,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       // must not rasterize it again; initial/failed loads have no currentArt,
       // and action, reaction and asset-load paths still paint themselves.
       if(next===rest&&!resume&&!playing&&flashAt===null&&!bodyReaction
-        &&currentArt&&paintedLite===liteRendering()&&el.dataset.rest===next&&pose===restPose()){resources=[];elapsed=0;return;}
+        &&currentArt&&paintedLite===liteRendering()+'/'+effectsOff()&&el.dataset.rest===next&&pose===restPose()){resources=[];elapsed=0;return;}
       rest=next;el.dataset.rest=next;if(next==='defeated'){bodyReaction=null;flashAt=null;}
       if(resume?.action&&resume.rest===next&&!immediate&&!still&&!reducedMotionRequested()){
         const sequence=family.sequences[resume.action];

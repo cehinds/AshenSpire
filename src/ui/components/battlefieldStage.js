@@ -28,6 +28,7 @@ import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from 
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
+import { effectsOff } from '../performance.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 import { separateOverheadIntents } from './overheadIntentSeparation.js';
 // The overhead group's height above a head: config only, never a DOM measurement. A measured height changes with
@@ -592,6 +593,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // frames in a row end the window. Lite samples every second frame, except the one that closes the window.
   let trackFresh = true, trackStable = 0, trackTick = 0, trackBodies = null;
   const lite = () => document.documentElement.dataset.performance === 'lite';
+  // Effects off settles the HUD at the start and end of a move, exactly as reduced motion does.
+  const stillHud = () => reducedMotionRequested() || effectsOff();
   // Classic figures report no `busy`: their actions are finite CSS animations (a hit holds its displaced pose
   // mid-way, then recovers with no attribute change), so a running one counts as busy. The idle bob loops forever
   // and does not.
@@ -613,6 +616,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
     if (reducedMotionRequested()) { trackingRequest = 0; return; }
+    if (effectsOff()) { trackingRequest = 0; return; } // Effects off settles at the start and end of a move
     const open = field.isConnected && field.querySelector('.combatant.player') && performance.now() < trackUntil;
     if (open && lite() && trackTick++ % 2 === 1) { trackingRequest = requestAnimationFrame(trackPlayerHud); return; }
     const bodies = trackedBodies();
@@ -1575,6 +1579,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
       return;
     }
+    // Effects off: the same one-shot settle, no frame loop.
+    if (effectsOff()) {
+      if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
+      return;
+    }
     // Genuine body motion still follows the complete stance/action transition.
     extendTracking();
     if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
@@ -1584,10 +1593,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
   // enabled again; otherwise the HUD can retain the last idle-frame offset.
-  let reduced = reducedMotionRequested();
+  let reduced = stillHud();
   const reducedMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   const reconcileReducedMotion = () => {
-    const next = reducedMotionRequested();
+    const next = stillHud();
     if (next === reduced) return;
     reduced = next;
     trackFresh = true; trackStable = 0;
@@ -1599,6 +1608,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   reducedMedia?.addEventListener('change', reconcileReducedMotion);
   const reducedSettingObserver = new MutationObserver(reconcileReducedMotion);
   reducedSettingObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  // Effects is a root attribute: a toggle in play settles or resumes tracking without a reload.
+  reducedSettingObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-effects'] });
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });

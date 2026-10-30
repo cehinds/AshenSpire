@@ -49,7 +49,7 @@ test('reduced motion settles a deliberate pose once without starting an idle tra
   const begin = source.indexOf('  const poseObserver = new MutationObserver(');
   const finish = source.indexOf('\n  poseObserver.observe(', begin);
   let callback, settled = 0, requested = 0;
-  const context = { MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => true,
+  const context = { MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => true, effectsOff: () => false,
     combatantBodyMutation, combatHost: { dataset: { targetHud: 'true' } },
     field: { closest: () => ({ dataset: { targetHud: 'true' } }) }, centerTargetOverheads: () => settled++,
     trackingRequest: 0, requestAnimationFrame: () => requested++, trackPlayerHud() {} };
@@ -69,7 +69,7 @@ test('pose tracking ignores render no-ops but follows real sprite and combatant 
   const finish = source.indexOf('\n  poseObserver.observe(', begin);
   let callback, windows = 0, requested = 0;
   runInNewContext(source.slice(begin, finish), {
-    MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => false,
+    MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => false, effectsOff: () => false,
     combatantBodyMutation, combatHost: { dataset: { targetHud: 'true' } },
     extendTracking: () => windows++, trackingRequest: 0,
     requestAnimationFrame: () => ++requested, trackPlayerHud() {},
