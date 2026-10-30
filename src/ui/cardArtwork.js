@@ -1,6 +1,7 @@
 import { EXTENDED_CARD_ART } from './extendedCardArtwork.js';
 import { defaultCardArtwork, defaultCardArtFallbacks } from './defaultCardArtwork.js';
 import { simpleCardArt } from './cardArtComposition.js';
+import { reviewedCardArt } from './reviewedCardArt.js';
 import { cardArtStyle, CARD_ART_LEGACY } from './cardArtStyle.js';
 export { defaultCardArtFallbacks };
 
@@ -36,6 +37,10 @@ export function playingCardArtwork(ref, { large = false, extended = EXTENDED_CAR
 /** Resolve the visual style without changing the legacy artwork catalog. */
 export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART, definition, registries, style = cardArtStyle() } = {}) {
   if (style !== CARD_ART_LEGACY && definition) {
+    if (!playingCardArtwork(ref, {large, extended})) {
+      const reviewed = reviewedCardArt(ref, definition);
+      if (reviewed) return reviewed;
+    }
     const simple = simpleCardArt(definition, { ref, registries, large });
     if (simple) return simple;
   }

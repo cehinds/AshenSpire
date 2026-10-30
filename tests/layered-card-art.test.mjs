@@ -20,7 +20,8 @@ test('approved PNGs are packaged byte-for-byte and generated JSON agrees with ru
   const json = JSON.parse(readFileSync(new URL('../asset-data/card-art/layered-runtime.json', import.meta.url)));
   assert.deepEqual(catalog, json);
   const assets = cardCutoutAssets(root);
-  assert.equal(assets.length, 44);
+  const reviewed = JSON.parse(readFileSync(new URL('../asset-data/card-art/reviewed-assets.json', import.meta.url)));
+  assert.equal(assets.length, 44 + Object.keys(reviewed.assets).length);
   const manifest = withCardCutouts({schema:2,assets:{}}, root);
   for (const asset of assets) {
     assert.equal(asset.bytes.toString('hex', 0, 8), '89504e470d0a1a0a');
