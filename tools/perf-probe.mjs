@@ -80,8 +80,8 @@ const CALIBRATION = `(() => {
     for (let i = 0; i < 3e6; i++) x = (x * 1664525 + 1013904223 + (i & 255)) >>> 0;
     globalThis.__calib = x; return performance.now() - t0; };
   once();
-  const r = []; for (let k = 0; k < 5; k++) r.push(once());
-  return Math.min(...r);
+  const r = []; for (let k = 0; k < 7; k++) r.push(once());
+  r.sort((a, b) => a - b); return r[3]; // the median: a min follows the one lucky fast rep, a mean the one stall
 })()`;
 function hostLoad() {
   try { return Number(readFileSync('/proc/loadavg', 'utf8').split(' ')[0]); } catch { return null; }
@@ -647,7 +647,11 @@ function certify(name, runs) {
     const vals = A.map((a) => get(a.frames, a.long));
     const t = r1(trimmedMedian(vals));
     verdicts.push({ label, t, limit, pass: t <= limit, perRunPass: vals.map((v) => v <= limit) });
-    out.push(`target ${name} ${label} <= ${limit}: trimmed median ${t} -> ${t <= limit ? 'PASS' : 'FAIL'} (runs passing ${vals.filter((v) => v <= limit).length}/${vals.length})`);
+    // The limit sits inside the kept (middle) runs: the verdict is not decidable at this noise, say so.
+    const inner = sorted(vals).slice(vals.length >= 3 ? 1 : 0, vals.length >= 3 ? -1 : undefined);
+    const borderline = Math.min(...inner) <= limit && Math.max(...inner) > limit;
+    verdicts[verdicts.length - 1].borderline = borderline;
+    out.push(`target ${name} ${label} <= ${limit}: trimmed median ${t} -> ${t <= limit ? 'PASS' : 'FAIL'}${borderline ? ' (BORDERLINE: the limit lies inside the kept runs)' : ''} (runs passing ${vals.filter((v) => v <= limit).length}/${vals.length})`);
   }
   return { text: out.join('\n'), rows, verdicts, tm: Object.fromEntries(cols.map((c) => [c[1], tm(c[1])])) };
 }
