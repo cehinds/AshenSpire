@@ -214,7 +214,7 @@ if (argv.includes('--selftest')) {
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
         file: 'src/ui/alternativeCardStage.js',
-        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
+        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!effectsOff(),still:effectsOff(),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
         replace: '    ctx.restore();',
         expectRed: /RED IDLE player#\d+ — .*canvas has no painted pixels/,
       }, {
@@ -283,8 +283,8 @@ if (argv.includes('--selftest')) {
         edits: [
           { file: 'src/ui/fx.js', find: '  const timing = actionPacing({ reduced: reducedMotionRequested() });', replace: '  const timing = actionPacing({ reduced: false });' },
           ALTERNATIVE ? { file: 'src/ui/combatEffectSprites.js',
-            find: " if(!layer||!from||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return ()=>{};",
-            replace: " if(!layer||!from||document.body.classList.contains('reduce-flashes'))return ()=>{};" }
+            find: " if(!layer||!from||reducedMotionRequested()||effectsOff()||document.body.classList.contains('reduce-flashes'))return ()=>{};",
+            replace: " if(!layer||!from||effectsOff()||document.body.classList.contains('reduce-flashes'))return ()=>{};" }
             : { file: 'src/ui/combatantEffectLayers.js',
               find: " if(!stage||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return null;",
               replace: " if(!stage||document.body.classList.contains('reduce-flashes'))return null;" },
