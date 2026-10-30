@@ -1676,13 +1676,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
-    const playerWrote = renderPlayer();
-    const enemiesWrote = renderEnemies({ refreshTargets });
+    renderPlayer();
+    renderEnemies({ refreshTargets });
     if (fit) {
       battlefieldStage.refresh();
       formationMovement?.refresh();
     }
-    return !!(playerWrote || enemiesWrote);
   }
 
   function render() {
@@ -1738,7 +1737,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (renderTopbar()) moved = true;
     syncEditLock();
     renderPotionTray();
-    if (renderCombatantStage({ fit: false, refreshTargets: false })) moved = true;
+    stageWrote = false;
+    renderCombatantStage({ fit: false, refreshTargets: false });
+    if (stageWrote) moved = true;
     renderControls();
     renderCombatTools();
     if (renderHand({ refreshHitChances: false })?.reshaped) moved = true;
@@ -2221,6 +2222,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // The settings object is part of every slot key (any setting can restyle any slot), but as a short stamp
   // that moves only when the serialised settings do, not the whole text five times over.
+  // Set by renderPlayer/renderEnemies whenever they wrote; finishRender clears it before its stage pass and reads it after.
+  let stageWrote = false;
   let settingsText = null, settingsSerial = 0;
   function settingsStamp() {
     const text = JSON.stringify(readSettings());
@@ -2345,23 +2348,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return chips;
       },
     };
-    let box, wrote;
+    const slots = existing ? null : {
+      role: 'player',
+      entityId: 'player',
+      leading: build.leading(),
+      classNames: build.classNames(),
+      sprite: profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
+      name: build.name(),
+      meters: build.meters(),
+      trailing: [build.statuses(), ...build.chips()],
+    };
+    const box = existing ? existing : combatantFrame(slots);
+    let wrote;
     if (existing) {
-      box = existing;
       wrote = writeSlots(box, playerSlots, keys, build);
       // A reused frame keeps its listeners; only the per-render attributes move.
       refreshCombatantContext(box, playerName);
     } else {
-      box = combatantFrame({
-        role: 'player',
-        entityId: 'player',
-        leading: build.leading(),
-        classNames: build.classNames(),
-        sprite: profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
-        name: build.name(),
-        meters: build.meters(),
-        trailing: [build.statuses(), ...build.chips()],
-      });
       playerSlots.slotKeys = keys;
       wrote = true;
       wireCombatantContext(box, playerName);
@@ -2400,6 +2403,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     stageFor(box)?.setStance?.(playerStance(activeDef));
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing || !figureAnimationsEnabled(run) });
     playerRenderKey = renderKey;
+    if (wrote) stageWrote = true;
     return wrote;
   }
 
@@ -2517,23 +2521,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         statuses: () => statusRow(enemy, {}, statusIn),
         chips: () => [],
       };
-      let box, rowWrote;
-      if (record) {
-        box = record.box;
-        rowWrote = writeSlots(box, record, keys, build);
-      } else {
-        box = combatantFrame({
-          role: 'enemy',
-          entityId: enemy.id,
-          classNames: build.classNames(),
-          leading: build.leading(),
-          sprite: profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
-          name: build.name(),
-          meters: build.meters(),
-          trailing: [build.statuses()],
-        });
-        rowWrote = true;
-      }
+      const slots = record ? null : {
+        role: 'enemy',
+        entityId: enemy.id,
+        classNames: build.classNames(),
+        leading: build.leading(),
+        sprite: profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
+        name: build.name(),
+        meters: build.meters(),
+        trailing: [build.statuses()],
+      };
+      const box = record ? record.box : combatantFrame(slots);
+      const rowWrote = record ? writeSlots(box, record, keys, build) : true;
       if (rowWrote) wrote = true;
       stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
@@ -2580,6 +2579,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       syncHitChances();
       applyTargetLayer();
     }
+    if (wrote) stageWrote = true;
     return wrote;
   }
 
