@@ -280,7 +280,7 @@ export function cardInspectionLayout(card, details) {
 // `actions` may be a function so a door that stands open while the run moves
 // re-reads on press rather than acting on what was true when it opened. That
 // is the one behaviour the old `getAction()`-on-click had right.
-export function openCardInspection({ title, card, details, opener, actions = null, commands = {} }) {
+export function openCardInspection({ title, card, details, opener, actions = null, commands = {}, deferLift = false }) {
   hideTooltip();
   document.getSelection()?.removeAllRanges();
   const read = () => {
@@ -314,7 +314,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   // actions — one fills it — and a read-only door has no footer at all, not a
   // redundant Back beside the close it duplicates.
   const shell = openModal({ title, size: 'lg',
-    className: 'card-inspection-modal', opener, deferFocus: true,
+    className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
     secondary: buttons.slice(1),
     body: cardInspectionLayout(card, details) });

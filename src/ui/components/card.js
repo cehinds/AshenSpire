@@ -519,7 +519,9 @@ export function renderCard(registries, ref, opts = {}) {
       const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
         actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
-        commands: opts.commands || {} });
+        commands: opts.commands || {},
+        // Combat's hand: the page lock lifts a frame after the door leaves.
+        deferLift: surface === 'combat' });
     } });
   // The read-only binder adds keyboard behavior; retain the richer card name.
   el.setAttribute?.('aria-label',accessibleLabel);

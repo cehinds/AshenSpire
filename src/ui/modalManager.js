@@ -152,7 +152,7 @@ function syncPage() {
   // and is itself left live along with everything that holds it. An entry above
   // the lock with no element cannot be exempted, so the lock lifts, as before.
   let lockAt = -1;
-  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element) { lockAt = i; break; }
+  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element && !live[i].unarmed) { lockAt = i; break; }
   const above = lockAt >= 0 ? live.slice(lockAt + 1) : [];
   const want = new Set();
   if (lockAt >= 0 && above.every((entry) => entry.element)) {
@@ -250,6 +250,9 @@ export function registerModal(name, element, opts = {}) {
     inert: opts?.inert === true ? true : opts?.inert === false ? false : !!dismiss,
     dismiss,
     back: opts?.back === true,
+    // deferInert: the entry is on the stack but does not lock the page until
+    // release.arm() (a door that mounts in one frame and locks in a later one).
+    unarmed: opts?.deferInert === true,
   };
   stack.push(entry);
   if (entry.dismiss) ensureEscape();
@@ -273,6 +276,11 @@ export function registerModal(name, element, opts = {}) {
    * inert must go before the focus does. modalOpen() still reports the entry
    * until release().
    */
+  release.arm = function arm() {
+    if (released || entry.closing || !entry.unarmed) return;
+    entry.unarmed = false;
+    syncPage();
+  };
   release.unlock = function unlock() {
     if (released || entry.closing) return;
     entry.closing = true;
