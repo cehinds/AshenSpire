@@ -77,3 +77,11 @@ test('Effects-off CSS never blanks a figure\'s filter: focus ring, skill-selecte
   assert.match(css, /\.combat \.combatant:focus-visible \.sprite \{ filter: drop-shadow/);
   assert.doesNotMatch(css, /data-performance='lite'\]:not\(\[data-effects='off'\]\)/, 'the unreachable lite selector is gone');
 });
+
+test('image figures draw only the held stance glow with Effects off (no casting pulse)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/ui/paintedOutfits.js', import.meta.url), 'utf8');
+  assert.match(src, /effectsOff\(\) \? auraFilter\('ready', resting, \[\], false\)/);
+  const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
+  assert.match(fx, /holdMs && !effectsOff\(\)/, 'hit-stop does not hold the figure with Effects off');
+});

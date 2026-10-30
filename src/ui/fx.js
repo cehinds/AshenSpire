@@ -1116,7 +1116,7 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
+      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
       if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
@@ -1492,7 +1492,7 @@ function playLegacyTimeline(events, ctx, done) {
           if (held) {
             safe(() => actorEl && hold(actorEl, holdMs));
             safe(() => {
-              if (activeActorAnimation?.hold) activeActorAnimation.hold(holdMs);
+              if (activeActorAnimation?.hold && !effectsOff()) activeActorAnimation.hold(holdMs);
               else if (ctx.figureAnimations !== false) stageFor(actorEl)?.hold?.(holdMs);
             });
             heldMs += holdMs;
