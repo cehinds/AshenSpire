@@ -13,8 +13,8 @@ lives only in `src/content/index.js` (`contentBundle.version`), and
 | Segment | Who moves it | How |
 |---|---|---|
 | MAJOR | Constantine (Tier 2 decision) | hand-edit the one home, via PR |
-| MINOR | Constantine, proposed in the delivering PR | hand-edit the one home, via PR |
-| PATCH | Constantine, proposed in the delivering PR | hand-edit the one home, via PR |
+| MINOR | Constantine, proposed in the delivering PR | advanced by the PR that follows a `release` → `main` merge |
+| CANDIDATE (third component) | Constantine, proposed in the delivering PR | advanced by the PR that follows a `test` → `release` cut |
 | ordinal | nobody — `tools/bundle.mjs` writes `buildordinal.json` | derived, every rebuild |
 | digest | nobody — derived from the covered source set | derived, every rebuild |
 
@@ -26,25 +26,21 @@ the release triple's job, and only a decision moves the release triple.
 ## Decision workflow at PR time
 
 Ask these in order; the first "yes" names the bump. Record the answer as one
-line in the PR body ("Version: no bump" / "Version: proposes 0.5.0").
+line in the PR body ("Version: no bump" / "Version: 0.7.2 after the 0.7.1.1848 cut").
 
 ```text
 1. Does this PR break existing saves with no migration path,
    or is it the first governed public release?          → MAJOR
-2. Does this PR complete a milestone that changes what
-   the game IS — a new playable system live for players,
-   a new class, a new act, a framework cutover tranche
-   becoming the live authority, or a save-schema change
-   that ships with its migration?                        → MINOR
-3. Does this PR change shipped player-visible behavior
-   (balance retune, bug-fix batch, content correction)
-   on top of the current MINOR, and is a citable stamp
-   for that correction wanted?                           → PATCH
+2. Has `release` merged to `main` since the last bump?   → MINOR (candidate resets to 0)
+3. Has `test` been cut to `release` since the last bump? → CANDIDATE (tail resets to 0)
 4. Anything else — refactors, docs, evidence, tooling,
    tests, dormant candidates, behavior-preserving ports  → NO BUMP
    (the ordinal and digest still move on rebuild; the
    CHANGELOG receipt still records the delivery)
 ```
+
+Rules 2 and 3 move MINOR and the candidate by branch events, not by PR content
+(owner, 2026-10-30); see the two bullets under *Release candidates*.
 
 Rule 4 is why #508 (the whole framework candidate) and #509 (the first port
 tranche) did not move `0.4.0`: both are proven behavior-preserving, so the
@@ -73,7 +69,7 @@ The answer is semver's own pre-release segment, not a bent ladder:
   this is its first candidate"; it orders BELOW `0.5.0`, so the final stamp
   still marks the milestone (the cutover gate SUCCESS) and nothing is
   claimed early.
-- **`rc.<n>` advances when the owner names a new candidate for QA** — every
+- **`rc.<n>` advances when the owner names a new candidate for QA** (historical; since 2026-10-30 the candidate advances by the PR after each release cut) — every
   candidate QA receives is distinguishable by its stamp, and the ordinal keeps
   ordering builds within it. It once advanced at every `dev → test` promotion;
   since 2026-09-26 every session promotes `dev` to `test` after each merge
@@ -84,14 +80,28 @@ The answer is semver's own pre-release segment, not a bent ladder:
   by it alone, and every tool that orders builds (`about-changelog`,
   `buildversion` row H) read the ordinal column.
 - **The `-rc` suffix is dropped by the owner's release cut** (`rc/<version>` → `release`, a branch pinned at the tested RC SHA on `test`,
-  owner-exclusive), which is the MINOR bump
-  the ladder already names. Nothing else removes it.
+  owner-exclusive). The cut advances the CANDIDATE (third component) for the
+  line that follows (see "A release cut advances the candidate" below); MINOR
+  moves when `release` merges to `main`. Nothing else removes it.
+- **A main merge advances the minor (owner, 2026-10-30).** When `release` is
+  merged to `main`, the PR that follows the merge moves the MINOR (second
+  component) in `contentBundle.version` by one and resets the candidate to `0`,
+  so the next build reads `<major>.<minor+1>.0.0`. Example: after 0.7.x reaches
+  `main`, the next build is 0.8.0.0. MAJOR stays the owner's Tier 2 decision.
+- **A release cut advances the candidate (owner, 2026-10-30).** When `test` is
+  cut to `release`, the PR that follows the cut moves the candidate (third
+  component) in `contentBundle.version` by one, so the next build after the
+  release reads `<major>.<minor>.<candidate+1>.0`; `bumpOrdinal` restarts the
+  tail on its own. Example: 0.7.1.1848 was released on 2026-10-25 (PR #2316,
+  https://github.com/cehinds/AshenSpire/pull/2316), so the first build after it
+  is 0.7.2.0. Two releases must never share a triple (0.7.1.1784
+  and 0.7.1.1848 both carried 0.7.1, which prompted the rule).
 - The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
   milestone in flight; it moves only when that answer changes.
-- **The candidate rides on the BASE PATCH, and `0.5.2-rc.1` is refused.** Not a
+- **The candidate rides in the third component, and `0.5.2-rc.1` is refused.** Not a
   narrow regex — a slot that does not exist. The stamp holds major, minor,
-  candidate and build; a patch-bearing candidate is a fifth fact with nowhere
-  to go, so `0.5.2-rc.4` and `0.5.1-rc.4` would BOTH fold to `0.5.4` and two
+  candidate and build; a candidate that also carried a base patch would be a
+  fifth fact with nowhere to go, so `0.5.2-rc.4` and `0.5.1-rc.4` would BOTH fold to `0.5.4` and two
   different releases-in-flight would share one version. Review on #579 built
   `0.5.2-rc.4.9 → 0.5.1-rc.4.10`: a rise by the folded version while the
   release the candidate is *for* moved backward. It is the same collision the
