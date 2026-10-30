@@ -50,7 +50,9 @@ ok(/commands:\s*\{\s*play:/.test(combat), 'combat.js supplies the play command')
 // names appeared elsewhere in the file on the entry it was given.
 const call = hand.match(/renderCard\(registries,\s*entry\.inst,[\s\S]*?\}\);/);
 ok(!!call, 'mountHand still renders its cards through renderCard');
-for (const field of ['surface', 'availability', 'commands']) {
+ok(/availability:\s*liveAvailability/.test(call[0]) && /liveAvailability\s*=\s*syncAvailability\(\{\},\s*entry\.availability\)/.test(hand),
+  'mountHand forwards entry.availability to renderCard through the live copy it rewrites on every render');
+for (const field of ['surface', 'commands']) {
   ok(new RegExp(`${field}:\\s*entry\\.${field}`).test(call[0]),
     `mountHand forwards entry.${field} to renderCard`);
 }
@@ -60,14 +62,18 @@ for (const field of ['surface', 'availability', 'commands']) {
 ok(!/inspectionAction/.test(hand), 'hand.js no longer reads the retired inspectionAction');
 ok(!/inspectionAction/.test(combat), 'combat.js no longer builds the retired inspectionAction');
 
-// ---- the reuse signature carries the action state ---------------------------
-// A kept card is a card whose signature did not change. Availability moves
-// within a turn — the energy spent, the target gone — so a signature blind to
-// it keeps a door that still says the act is offered.
+// ---- the reuse signature carries the action state --------------------------
+// A kept card is a card whose signature did not change. The surface is in it.
+// Availability moves within a turn (the energy spent, the target gone) and the
+// face never prints it, so it is NOT in the signature: the door reads the live
+// object the card was built with, and every render rewrites that object, so a
+// kept card still answers with the current verdict.
 const signature = hand.match(/const signature = JSON\.stringify\(\[[^\]]*\]\);/);
 ok(!!signature, 'the hand still derives a reuse signature');
-ok(/entry\.surface/.test(signature[0]) && /entry\.availability/.test(signature[0]),
-  'the reuse signature includes the surface and its availability');
+ok(/entry\.surface/.test(signature[0]) && !/entry\.availability/.test(signature[0]),
+  'the reuse signature includes the surface; availability rides the live copy instead');
+ok(/if \(record\) \{\s*syncAvailability\(record\.availability, entry\.availability\);/.test(hand),
+  'a kept card has its live availability rewritten on every render');
 // `commands` are closures that resolve the live combat when pressed, so a kept
 // one is never stale — and JSON.stringify drops functions, which would make a
 // signature that named them silently blind rather than strict.

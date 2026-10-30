@@ -37,3 +37,16 @@ test('a hand render that only changes selection or slot keeps every card element
   assert.deepEqual(keys, ['1', '2', '3']);
   hand.teardown();
 }));
+
+test('a hand render that only changes availability keeps every card element and updates what its door reads', () => withModalDom(() => {
+  document.documentElement ??= { dataset: { handLayout: 'paging' }, getAttribute: () => null };
+  const handEl = document.createElement('div');
+  document.body.append(handEl);
+  const hand = mountHand(handEl, { registries, reuseCards: true });
+  const withAvailability = (availability) => entries(ids).map((entry) => ({ ...entry, availability }));
+  hand.render({ cards: withAvailability({ play: true }) });
+  const before = new Map([...handEl.children].map((el) => [el.dataset.instanceId, el]));
+  hand.render({ cards: withAvailability({ play: 'Wait for your turn.' }) });
+  for (const el of handEl.children) assert.equal(el, before.get(el.dataset.instanceId), 'an availability change rebuilt a card');
+  hand.teardown();
+}));
