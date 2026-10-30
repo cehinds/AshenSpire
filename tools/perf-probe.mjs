@@ -16,6 +16,7 @@
 //   node tools/perf-probe.mjs --no-profile         skip the CPU-profile pass
 //   node tools/perf-probe.mjs --from DIR           re-print the report from the runs-*.json saved in DIR
 //   PERF_PROFILE_DIR=DIR node tools/perf-probe.mjs   also save each raw .cpuprofile there (large; prune it)
+//   node tools/perf-probe.mjs --force              start although the host is busy (load1 > cores/2 is refused otherwise)
 //   node tools/perf-probe.mjs --debug              log each step and the controls on screen
 //
 // Profile: Playwright Chromium, 390x844 phone (deviceScaleFactor 3, isMobile,
@@ -32,8 +33,8 @@
 // are the throttled ones that transfer.
 
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir, cpus } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -53,6 +54,7 @@ const OUT = resolve(arg('--out', join(process.env.TMPDIR || tmpdir(), 'ashen-per
 const KEEP_TRACE = argv.includes('--keep-trace');
 const PROFILE = !argv.includes('--no-profile') && !CERTIFY;
 const DEBUG = argv.includes('--debug');
+const FORCE = argv.includes('--force');
 const WANT = new Set(String(arg('--scenario', CERTIFY ? 'combat,hand' : 'combat,map,hand,transitions')).split(','));
 const log = (...a) => { if (DEBUG) console.error('  [dbg]', ...a); };
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -65,6 +67,33 @@ const sum = (a) => a.reduce((t, x) => t + x, 0);
 const r1 = (x) => Math.round(x * 10) / 10;
 // Trimmed median: drop the single lowest and highest value, take the median of the rest (plain median under 3 values).
 const trimmedMedian = (a) => { const s = sorted(a.filter((x) => Number.isFinite(x))); return s.length >= 3 ? median(s.slice(1, -1)) : median(s); };
+
+// ---- host guard and CPU calibration ---------------------------------------------
+// The numbers are only comparable when the host is quiet and the throttled CPU runs at the same speed
+// in every pass: refuse to start on a busy host, and time a fixed JS loop under the same throttle before
+// each pass; a pass whose loop deviates more than CALIB_TOLERANCE from the first pass is rerun (at most
+// CALIB_RETRIES times, then it is kept and reported as unstable).
+const CALIB_TOLERANCE = 0.15;
+const CALIB_RETRIES = 2;
+const CALIBRATION = `(() => {
+  const once = () => { const t0 = performance.now(); let x = 1;
+    for (let i = 0; i < 3e6; i++) x = (x * 1664525 + 1013904223 + (i & 255)) >>> 0;
+    globalThis.__calib = x; return performance.now() - t0; };
+  once();
+  const r = []; for (let k = 0; k < 5; k++) r.push(once());
+  return Math.min(...r);
+})()`;
+function hostLoad() {
+  try { return Number(readFileSync('/proc/loadavg', 'utf8').split(' ')[0]); } catch { return null; }
+}
+function checkHostIdle() {
+  const load = hostLoad(), cores = cpus().length;
+  if (load === null) { console.error('host load: /proc/loadavg unavailable, idle check skipped'); return; }
+  const busy = load > cores / 2;
+  console.error(`host load1 ${load} on ${cores} cores (limit ${cores / 2})${busy ? (FORCE ? ' - busy, continuing because of --force' : ' - BUSY') : ' - idle enough'}`);
+  if (busy && !FORCE) { console.error('refusing to measure on a busy host: wait for the load to drop, or pass --force'); process.exit(2); }
+}
+const calib = { ref: null, rejected: 0 };
 
 // ---- in-page instrumentation (installed before any page script) --------------
 const INIT = `(() => {
@@ -411,7 +440,8 @@ const SCENARIOS = {
 };
 
 // ---- one pass -----------------------------------------------------------------
-async function onePass(browser, base, name, { trace, profile }) {
+async function onePass(browser, base, name, opts) {
+  const { trace, profile } = opts;
   const sc = SCENARIOS[name];
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
@@ -429,6 +459,16 @@ async function onePass(browser, base, name, { trace, profile }) {
     if (sc.setup) await sc.setup(c);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
     await wait(600);
+    const calibMs = r1(await page.evaluate(CALIBRATION));
+    let unstable = null;
+    if (calib.ref === null) calib.ref = calibMs;
+    const drift = (calibMs - calib.ref) / calib.ref;
+    log('calibration', calibMs, 'ref', calib.ref, 'drift', r1(drift * 100) + '%');
+    if (Math.abs(drift) > CALIB_TOLERANCE) {
+      const msg = `calibration ${calibMs} ms vs ${calib.ref} ms (${drift > 0 ? '+' : ''}${r1(drift * 100)}%)`;
+      if (opts.rejectable) { const e = new Error(msg); e.calibration = true; throw e; }
+      unstable = msg;
+    }
     const census = await page.evaluate('window.__perf.census()');
     const events = [];
     if (trace) {
@@ -456,7 +496,7 @@ async function onePass(browser, base, name, { trace, profile }) {
     }
     const f = raw.frames;
     const peak = (i) => Math.max(0, ...raw.anim.map((a) => a[i]));
-    return { wallMs: wall, errors, extra, census, end, counts,
+    return { wallMs: wall, calibMs, unstable, errors, extra, census, end, counts,
       frameList: f.map((d) => Math.round(d * 10) / 10),
       frames: { n: f.length, n33: f.filter((d) => d > 33.4).length, n100: f.filter((d) => d > 100).length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
         over16: r1(100 * f.filter((d) => d > 16.7 + 0.5).length / (f.length || 1)), over33: r1(100 * f.filter((d) => d > 33.4).length / (f.length || 1)) },
@@ -521,10 +561,10 @@ function certify(name, runs) {
     const f = a.frames, fl = a.frameList;
     return { i: i + 1, p95: f.p95, n33: f.n33 ?? (fl ? fl.filter((d) => d > 33.4).length : NaN), over33: f.over33, over16: f.over16,
       n100: f.n100 ?? (fl ? fl.filter((d) => d > 100).length : NaN), over100: r1(100 * (f.n100 ?? (fl ? fl.filter((d) => d > 100).length : 0)) / (f.n || 1)),
-      blocking: a.long.blockingMs, max: f.maxMs, frames: f.n, unstable: a.unstable || null };
+      blocking: a.long.blockingMs, max: f.maxMs, frames: f.n, calib: a.calibMs ?? NaN, unstable: a.unstable || null };
   };
   const rows = A.map(row);
-  const cols = [['p95 ms', 'p95'], ['frames>33ms (n)', 'n33'], ['frames>33ms %', 'over33'], ['frames>100ms (n)', 'n100'], ['frames>100ms %', 'over100'], ['>16.7 %', 'over16'], ['blocking ms', 'blocking'], ['max ms', 'max'], ['frames', 'frames']];
+  const cols = [['p95 ms', 'p95'], ['frames>33ms (n)', 'n33'], ['frames>33ms %', 'over33'], ['frames>100ms (n)', 'n100'], ['frames>100ms %', 'over100'], ['>16.7 %', 'over16'], ['blocking ms', 'blocking'], ['max ms', 'max'], ['frames', 'frames'], ['calib ms', 'calib']];
   const out = [];
   out.push(`\n## certify ${name}: ${SCENARIOS[name].title} — ${runs.length} run(s)`);
   out.push(`| run | ${cols.map((c) => c[0]).join(' | ')} | note |`);
@@ -548,9 +588,14 @@ function certify(name, runs) {
 // A pass that fails (a tap swallowed while the fan re-lays out, a timeout under throttle) is
 // retried on a fresh page, up to three times, so one flaky input does not lose the run.
 async function passWithRetry(browser, base, name, opts) {
+  let drifted = 0;
   for (let attempt = 1; ; attempt++) {
-    try { return await onePass(browser, base, name, opts); }
-    catch (e) { process.stderr.write(` [attempt ${attempt} failed: ${String(e.message).split('\n')[0].slice(0, 90)}]`); if (attempt >= 3) throw e; }
+    try { return await onePass(browser, base, name, { ...opts, rejectable: drifted < CALIB_RETRIES }); }
+    catch (e) {
+      if (e.calibration) { drifted++; calib.rejected++; process.stderr.write(` [${e.message}: pass rerun ${drifted}/${CALIB_RETRIES}]`); attempt--; continue; }
+      process.stderr.write(` [attempt ${attempt} failed: ${String(e.message).split('\n')[0].slice(0, 90)}]`);
+      if (attempt >= 3) throw e;
+    }
   }
 }
 // --from DIR: summarise the runs-*.json an earlier invocation saved there, without measuring again.
@@ -564,6 +609,7 @@ if (FROM) {
     if (existsSync(f)) { allRuns[name] = JSON.parse(readFileSync(f, 'utf8')); summaries.push(summarise(name, allRuns[name])); }
   }
 } else {
+  checkHostIdle();
   const server = await serve({ root: ROOT, port: 0, open: false, quiet: true });
   const base = `http://localhost:${server.server.address().port}/`;
   const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
@@ -574,7 +620,7 @@ if (FROM) {
         process.stderr.write(`${name} run ${i + 1}/${RUNS} ...`);
         const a = await passWithRetry(browser, base, name, { trace: true, profile: false });
         const b = PROFILE ? await passWithRetry(browser, base, name, { trace: false, profile: true }) : null;
-        process.stderr.write(` median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
+        process.stderr.write(` calib ${a.calibMs} ms${a.unstable ? ' UNSTABLE' : ''}, median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
         runs.push({ a, b });
       }
       allRuns[name] = runs;
@@ -625,5 +671,6 @@ for (const s of summaries) {
   if (s.errors.length) console.log(`  page errors: ${s.errors.join(' | ')}`);
   if (s.extra && Object.keys(s.extra).length) console.log(`  ${JSON.stringify(s.extra)}`);
 }
+if (calib.ref !== null) console.log(`\ncalibration: reference ${calib.ref} ms (first pass), tolerance ${CALIB_TOLERANCE * 100}%, ${calib.rejected} pass(es) rerun`);
 console.log(`\nraw per-run JSON: ${OUT}`);
 process.exit(0);
