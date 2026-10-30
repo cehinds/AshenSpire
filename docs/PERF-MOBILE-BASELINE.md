@@ -129,6 +129,15 @@ combat p95 frame <= 100 ms (now 217) and frames over 33 ms <= 8% (now 17%);
 combat long-task blocking <= 2.8 s (now 5.7 s); hand p95 <= 33 ms (now 50);
 map and transitions no worse than now.
 
+Deciding these on one run is noise. Certify with `node tools/perf-probe.mjs --certify`
+(combat and hand, 5 runs, no CPU profile): it prints per-run rows, the trimmed median
+(min and max dropped), the min-max spread, the counts of frames over 33 and 100 ms next to
+the percentages, and PASS/FAIL per target on the trimmed median. A fixed JS loop is timed
+under the throttle before each pass (a pass more than 15% off the first is rerun, twice at
+most, then flagged UNSTABLE), and the probe refuses to start when the host's load1 is above
+half its cores (`--force` overrides). The report also lists long frames and render counts by
+phase (tap, playback, finish, enemy turn, idle).
+
 ## What this does not cover
 
 - **No real phone and no GPU.** Headless Chromium rasterises in software, so

@@ -5,6 +5,9 @@
 //
 //   node tools/perf-probe.mjs                      all scenarios, 3 runs, median across runs
 //   node tools/perf-probe.mjs --runs 5             more runs
+//   node tools/perf-probe.mjs --certify            certification: scenarios combat,hand, 5 runs, no CPU profile,
+//                                                  per-run rows, trimmed median (drop min and max), min-max spread
+//                                                  and PASS/FAIL against the targets (see TARGETS below)
 //   node tools/perf-probe.mjs --scenario combat,map   only these (combat, map, hand, transitions)
 //   node tools/perf-probe.mjs --seed PERF1         the fixed seed (default PERF1)
 //   node tools/perf-probe.mjs --throttle 4         CPU slowdown (default 4; 1 = none)
@@ -13,6 +16,7 @@
 //   node tools/perf-probe.mjs --no-profile         skip the CPU-profile pass
 //   node tools/perf-probe.mjs --from DIR           re-print the report from the runs-*.json saved in DIR
 //   PERF_PROFILE_DIR=DIR node tools/perf-probe.mjs   also save each raw .cpuprofile there (large; prune it)
+//   node tools/perf-probe.mjs --force              start although the host is busy (load1 > cores/2 is refused otherwise)
 //   node tools/perf-probe.mjs --debug              log each step and the controls on screen
 //
 // Profile: Playwright Chromium, 390x844 phone (deviceScaleFactor 3, isMobile,
@@ -29,8 +33,8 @@
 // are the throttled ones that transfer.
 
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir, cpus } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -42,14 +46,16 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const argv = process.argv.slice(2);
 const arg = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
-const RUNS = Math.max(1, Number(arg('--runs', 3)) || 3);
+const CERTIFY = argv.includes('--certify');
+const RUNS = Math.max(1, Number(arg('--runs', CERTIFY ? 5 : 3)) || (CERTIFY ? 5 : 3));
 const SEED = arg('--seed', 'PERF1');
 const THROTTLE = Number(arg('--throttle', 4)) || 4;
 const OUT = resolve(arg('--out', join(process.env.TMPDIR || tmpdir(), 'ashen-perf')));
 const KEEP_TRACE = argv.includes('--keep-trace');
-const PROFILE = !argv.includes('--no-profile');
+const PROFILE = !argv.includes('--no-profile') && !CERTIFY;
 const DEBUG = argv.includes('--debug');
-const WANT = new Set(String(arg('--scenario', 'combat,map,hand,transitions')).split(','));
+const FORCE = argv.includes('--force');
+const WANT = new Set(String(arg('--scenario', CERTIFY ? 'combat,hand' : 'combat,map,hand,transitions')).split(','));
 const log = (...a) => { if (DEBUG) console.error('  [dbg]', ...a); };
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -59,17 +65,50 @@ const pct = (a, q) => { if (!a.length) return 0; const s = sorted(a); return s[M
 const median = (a) => { if (!a.length) return 0; const s = sorted(a), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const sum = (a) => a.reduce((t, x) => t + x, 0);
 const r1 = (x) => Math.round(x * 10) / 10;
+// Trimmed median: drop the single lowest and highest value, take the median of the rest (plain median under 3 values).
+const trimmedMedian = (a) => { const s = sorted(a.filter((x) => Number.isFinite(x))); return s.length >= 3 ? median(s.slice(1, -1)) : median(s); };
+
+// ---- host guard and CPU calibration ---------------------------------------------
+// The numbers are only comparable when the host is quiet and the throttled CPU runs at the same speed
+// in every pass: refuse to start on a busy host, and time a fixed JS loop under the same throttle before
+// each pass; a pass whose loop deviates more than CALIB_TOLERANCE from the first pass is rerun (at most
+// CALIB_RETRIES times, then it is kept and reported as unstable).
+const CALIB_TOLERANCE = 0.15;
+const CALIB_RETRIES = 2;
+const CALIBRATION = `(() => {
+  const once = () => { const t0 = performance.now(); let x = 1;
+    for (let i = 0; i < 3e6; i++) x = (x * 1664525 + 1013904223 + (i & 255)) >>> 0;
+    globalThis.__calib = x; return performance.now() - t0; };
+  once();
+  const r = []; for (let k = 0; k < 7; k++) r.push(once());
+  r.sort((a, b) => a - b); return r[3]; // the median: a min follows the one lucky fast rep, a mean the one stall
+})()`;
+function hostLoad() {
+  try { return Number(readFileSync('/proc/loadavg', 'utf8').split(' ')[0]); } catch { return null; }
+}
+function checkHostIdle() {
+  const load = hostLoad(), cores = cpus().length;
+  if (load === null) { console.error('host load: /proc/loadavg unavailable, idle check skipped'); return; }
+  const busy = load > cores / 2;
+  console.error(`host load1 ${load} on ${cores} cores (limit ${cores / 2})${busy ? (FORCE ? ' - busy, continuing because of --force' : ' - BUSY') : ' - idle enough'}`);
+  if (busy && !FORCE) { console.error('refusing to measure on a busy host: wait for the load to drop, or pass --force'); process.exit(2); }
+}
+const calib = { ref: null, rejected: 0 };
 
 // ---- in-page instrumentation (installed before any page script) --------------
 const INIT = `(() => {
   window.__perfCounts = {};
-  window.__perfCount = (name) => { window.__perfCounts[name] = (window.__perfCounts[name] || 0) + 1; };
-  const S = { on: false, frames: [], long: [], anim: [] };
+  // Marks are [name, performance.now()] in call order: every __perfCount call (the screens' counters, e.g.
+  // render, stage, hand, beatFlush, finishRender) and the probe's own __perfMark('tap') before each input.
+  window.__perfMarks = [];
+  window.__perfCount = (name) => { window.__perfCounts[name] = (window.__perfCounts[name] || 0) + 1; if (S.on) window.__perfMarks.push([name, performance.now()]); };
+  window.__perfMark = (name) => { if (S.on) window.__perfMarks.push([name, performance.now()]); };
+  const S = { on: false, frames: [], ft: [], turn: [], long: [], anim: [] };
   try { new PerformanceObserver((l) => { if (S.on) for (const e of l.getEntries()) S.long.push(e.duration); }).observe({ type: 'longtask' }); } catch {}
   let last = 0, n = 0;
   const tick = (t) => {
     if (!S.on) return;
-    if (last) S.frames.push(t - last);
+    if (last) { S.frames.push(t - last); S.ft.push(t); S.turn.push(document.querySelector('.combat')?.dataset.turn || ''); }
     last = t;
     if (++n % 15 === 0) {
       const all = document.getAnimations();
@@ -81,8 +120,8 @@ const INIT = `(() => {
   };
   window.__perf = {
     counts() { return { ...window.__perfCounts }; },
-    start() { for (const k of Object.keys(window.__perfCounts)) delete window.__perfCounts[k]; S.frames = []; S.long = []; S.anim = []; last = 0; n = 0; S.on = true; requestAnimationFrame(tick); },
-    stop() { S.on = false; return { frames: S.frames, long: S.long, anim: S.anim }; },
+    start() { for (const k of Object.keys(window.__perfCounts)) delete window.__perfCounts[k]; window.__perfMarks = []; S.frames = []; S.ft = []; S.turn = []; S.long = []; S.anim = []; last = 0; n = 0; S.on = true; requestAnimationFrame(tick); },
+    stop() { S.on = false; return { frames: S.frames, ft: S.ft, turn: S.turn, marks: window.__perfMarks, long: S.long, anim: S.anim }; },
     census() {
       const all = [...document.getElementsByTagName('*')];
       const cs = all.map((e) => getComputedStyle(e));
@@ -160,6 +199,57 @@ function analyseTrace(events) {
 }
 
 const PROBE_NOISE = new Set(['elementFromPoint', 'evaluate', 'tick', 'getAnimations']);
+// ---- phase attribution -----------------------------------------------------------
+// Each rAF interval (a, b] gets one phase, from the marks (probe input marks 'tap' and the screens' counters):
+//   finish      a render() / finishRender() call lands in the interval while a playback is running
+//   tap         an input mark lands in it, or an input happened and no beat has been flushed yet
+//   enemy turn  combat.dataset.turn is 'enemy' at b (and the interval is not tap / finish)
+//   playback    a beat has flushed since the input and the playback has not finished
+//   idle        everything else
+// Until the screens emit 'finishRender' (the incremental end-of-playback update) a full 'render' during a
+// playback is the finish; once they do, 'render' mid-playback would only be a resync, which is counted as such.
+const PHASE_COUNTERS = ['render', 'finishRender', 'stage', 'hand', 'beatFlush', 'hudPass', 'hudTrack'];
+const PHASES = ['tap', 'playback', 'finish', 'enemy turn', 'idle'];
+const TAP_WINDOW_MS = 1500, PLAYBACK_MAX_MS = 4000; // a tap with no beat flush, or a playback with no finish, lapses to idle
+function attributePhases(raw) {
+  const { frames = [], ft = [], turn = [], marks = [] } = raw;
+  const out = [], perMark = [];
+  let mi = 0, state = 'idle', since = 0;
+  for (let i = 0; i < frames.length; i++) {
+    const b = ft[i], a = b - frames[i];
+    if (state === 'tap' && a - since > TAP_WINDOW_MS) state = 'idle';
+    if (state === 'playback' && a - since > PLAYBACK_MAX_MS) state = 'idle';
+    const startState = state;
+    let tap = false, finish = false;
+    const inFrame = [];
+    while (mi < marks.length && marks[mi][1] <= b) {
+      const [name, t] = marks[mi++];
+      inFrame.push(name);
+      if (name === 'tap') { tap = true; state = 'tap'; since = t; }
+      else if (name === 'beatFlush' && state === 'tap') { state = 'playback'; since = t; }
+      else if ((name === 'finishRender' || name === 'render') && state === 'playback') { finish = true; state = 'idle'; }
+    }
+    let phase;
+    if (finish) phase = 'finish';
+    else if (tap || startState === 'tap') phase = 'tap';
+    else if (turn[i] === 'enemy') phase = 'enemy turn';
+    else if (startState === 'playback') phase = 'playback';
+    else phase = 'idle';
+    out.push({ d: frames[i], phase });
+    perMark.push(inFrame);
+  }
+  const long = Object.fromEntries(PHASES.map((p) => [p, { n: 0, ms: 0, max: 0 }]));
+  const framesBy = Object.fromEntries(PHASES.map((p) => [p, 0]));
+  const counts = Object.fromEntries(PHASES.map((p) => [p, {}]));
+  out.forEach((f, i) => {
+    framesBy[f.phase]++;
+    if (f.d > 33.4) { const o = long[f.phase]; o.n++; o.ms += f.d; o.max = Math.max(o.max, f.d); }
+    for (const nm of perMark[i]) if (nm !== 'tap') counts[f.phase][nm] = (counts[f.phase][nm] || 0) + 1;
+  });
+  for (const p of PHASES) { long[p].ms = r1(long[p].ms); long[p].max = r1(long[p].max); }
+  return { long, framesBy, counts };
+}
+
 // ---- CPU profile -> top self-time functions -----------------------------------
 function analyseProfile(profile, top = 25) {
   const nodes = new Map(profile.nodes.map((n) => [n.id, n]));
@@ -195,11 +285,12 @@ function makeInput(cdp, page) {
   };
   const api = {
     at,
-    async tapAt({ x, y }, holdMs = 40) { await touch('touchStart', [[x, y]]); await wait(holdMs); await touch('touchEnd', []); },
+    async tapAt({ x, y }, holdMs = 40) { await page.evaluate("window.__perfMark('tap')"); await touch('touchStart', [[x, y]]); await wait(holdMs); await touch('touchEnd', []); },
     async tap(selector, holdMs) { await api.tapAt(await at(selector), holdMs); },
     async hold(selector, ms) { await api.tapAt(await at(selector), ms); },
     // A drag from a to b in `steps` touchMove events, one every ~16 ms; `back` returns to a before release.
     async drag(a, b, { steps = 14, back = false, dwell = 0 } = {}) {
+      await page.evaluate("window.__perfMark('tap')");
       await touch('touchStart', [[a.x, a.y]]);
       const go = async (p, q) => { for (let i = 1; i <= steps; i++) { await touch('touchMove', [[p.x + (q.x - p.x) * i / steps, p.y + (q.y - p.y) * i / steps]]); await wait(16); } };
       await go(a, b);
@@ -208,6 +299,7 @@ function makeInput(cdp, page) {
       await touch('touchEnd', []);
     },
     async pinch(c, from, to, steps = 12) {
+      await page.evaluate("window.__perfMark('tap')");
       const pts = (d) => [[c.x - d, c.y], [c.x + d, c.y]];
       await touch('touchStart', pts(from));
       for (let i = 1; i <= steps; i++) { await touch('touchMove', pts(from + (to - from) * i / steps)); await wait(16); }
@@ -290,7 +382,13 @@ const SCENARIOS = {
     url: (s) => `?shot=combat&shotSeed=${s}`, ready: COMBAT_READY,
     async run(ctx) {
       if (!await playCard(ctx)) throw new Error('the card was not played');
-      return { cardsPlayed: 1 };
+      // playCard returns ~1.2 s after the dispatch; the playback's finish (the full render, or finishRender once
+      // the screen emits it) lands after that, so the window waits for it, then one more frame.
+      let finishSeen = true;
+      try { await until(ctx.page, `((window.__perfCounts.render || 0) + (window.__perfCounts.finishRender || 0)) > 0`, 'the playback to finish', 8000); }
+      catch { finishSeen = false; }
+      await wait(500);
+      return { cardsPlayed: 1, finishSeen };
     },
   },
   // The same window with no input at all: what the combat screen costs while it only animates.
@@ -405,7 +503,8 @@ const SCENARIOS = {
 };
 
 // ---- one pass -----------------------------------------------------------------
-async function onePass(browser, base, name, { trace, profile }) {
+async function onePass(browser, base, name, opts) {
+  const { trace, profile } = opts;
   const sc = SCENARIOS[name];
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
@@ -423,6 +522,16 @@ async function onePass(browser, base, name, { trace, profile }) {
     if (sc.setup) await sc.setup(c);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE });
     await wait(600);
+    const calibMs = r1(await page.evaluate(CALIBRATION));
+    let unstable = null;
+    if (calib.ref === null) calib.ref = calibMs;
+    const drift = (calibMs - calib.ref) / calib.ref;
+    log('calibration', calibMs, 'ref', calib.ref, 'drift', r1(drift * 100) + '%');
+    if (Math.abs(drift) > CALIB_TOLERANCE) {
+      const msg = `calibration ${calibMs} ms vs ${calib.ref} ms (${drift > 0 ? '+' : ''}${r1(drift * 100)}%)`;
+      if (opts.rejectable) { const e = new Error(msg); e.calibration = true; throw e; }
+      unstable = msg;
+    }
     const census = await page.evaluate('window.__perf.census()');
     const events = [];
     if (trace) {
@@ -450,8 +559,10 @@ async function onePass(browser, base, name, { trace, profile }) {
     }
     const f = raw.frames;
     const peak = (i) => Math.max(0, ...raw.anim.map((a) => a[i]));
-    return { wallMs: wall, errors, extra, census, end, counts,
-      frames: { n: f.length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
+    const phases = attributePhases(raw);
+    return { wallMs: wall, calibMs, unstable, phases, errors, extra, census, end, counts,
+      frameList: f.map((d) => Math.round(d * 10) / 10),
+      frames: { n: f.length, n33: f.filter((d) => d > 33.4).length, n100: f.filter((d) => d > 100).length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
         over16: r1(100 * f.filter((d) => d > 16.7 + 0.5).length / (f.length || 1)), over33: r1(100 * f.filter((d) => d > 33.4).length / (f.length || 1)) },
       long: { n: raw.long.length, totalMs: r1(sum(raw.long)), blockingMs: r1(sum(raw.long.map((d) => Math.max(0, d - 50)))), maxMs: r1(Math.max(0, ...raw.long)) },
       anim: { peakRunning: peak(0), peakTransitions: peak(1), peakInfinite: peak(2), meanRunning: r1(median(raw.anim.map((a) => a[0]))) },
@@ -471,7 +582,7 @@ function summarise(name, runs) {
   const tn = (k) => med(A, (r) => r.trace?.by[k]?.n ?? 0);
   return {
     scenario: name, runs: runs.length, windowS: r1(med(A, (r) => r.wallMs) / 1000),
-    frames: Object.fromEntries(['n', 'medianMs', 'p95', 'p99', 'maxMs', 'over16', 'over33'].map((k) => [k, med(A, (r) => r.frames[k])])),
+    frames: Object.fromEntries(['n', 'n33', 'n100', 'medianMs', 'p95', 'p99', 'maxMs', 'over16', 'over33'].map((k) => [k, med(A, (r) => r.frames[k])])),
     long: { n: med(A, (r) => r.long.n), totalMs: med(A, (r) => r.long.totalMs), blockingMs: med(A, (r) => r.long.blockingMs), maxMs: med(A, (r) => r.long.maxMs) },
     anim: { peakRunning: med(A, (r) => r.anim.peakRunning), peakTransitions: med(A, (r) => r.anim.peakTransitions), peakInfinite: med(A, (r) => r.anim.peakInfinite) },
     traceMs: { style: r1(t('UpdateLayoutTree')), styleN: tn('UpdateLayoutTree'), layout: r1(t('Layout')), layoutN: tn('Layout'),
@@ -491,6 +602,10 @@ function summarise(name, runs) {
     profileTotals: PROFILE ? { totalMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.totalMs)), idleMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.idleMs)),
       programMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.programMs)), gcMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.gcMs)) } : null,
     counts: Object.fromEntries([...new Set(A.flatMap((r) => Object.keys(r.counts || {})))].sort().map((k) => [k, med(A, (r) => r.counts?.[k] ?? 0)])),
+    phases: Object.fromEntries(PHASES.map((ph) => [ph, {
+      frames: r1(med(A, (r) => r.phases?.framesBy[ph] ?? 0)),
+      longN: r1(med(A, (r) => r.phases?.long[ph].n ?? 0)), longMs: r1(med(A, (r) => r.phases?.long[ph].ms ?? 0)), longMax: r1(med(A, (r) => r.phases?.long[ph].max ?? 0)),
+      counts: Object.fromEntries(PHASE_COUNTERS.map((k) => [k, r1(med(A, (r) => r.phases?.counts[ph][k] ?? 0))])) }])),
     errors: [...new Set(runs.flatMap((r) => [...r.a.errors, ...(r.b?.errors || [])]))].slice(0, 5),
   };
 }
@@ -500,25 +615,74 @@ function mergeProfiles(ps) {
   return [...m.entries()].map(([k, v]) => [k, r1(median(v.concat(Array(Math.max(0, ps.length - v.length)).fill(0))))]).sort((a, b) => b[1] - a[1]).slice(0, 15);
 }
 
+// ---- certification ---------------------------------------------------------------
+// Targets (docs/PERF-MOBILE-BASELINE.md): decided on the trimmed median of the runs, never a single run.
+// Note frame deltas are vsync-quantised (16.7 / 33.4 / 50 ...), so "p95 <= 33" means p95 = 16.7: fewer than
+// 5% of frames may take two vsyncs or more.
+const TARGETS = {
+  combat: [['p95 ms', (f) => f.p95, 100], ['frames > 33 ms %', (f) => f.over33, 8], ['blocking ms', (f, l) => l.blockingMs, 2800]],
+  hand: [['p95 ms', (f) => f.p95, 33]],
+};
+function certify(name, runs) {
+  const A = runs.map((r) => r.a);
+  const row = (a, i) => {
+    const f = a.frames, fl = a.frameList;
+    return { i: i + 1, p95: f.p95, n33: f.n33 ?? (fl ? fl.filter((d) => d > 33.4).length : NaN), over33: f.over33, over16: f.over16,
+      n100: f.n100 ?? (fl ? fl.filter((d) => d > 100).length : NaN), over100: r1(100 * (f.n100 ?? (fl ? fl.filter((d) => d > 100).length : 0)) / (f.n || 1)),
+      blocking: a.long.blockingMs, max: f.maxMs, frames: f.n, calib: a.calibMs ?? NaN, unstable: a.unstable || null };
+  };
+  const rows = A.map(row);
+  const cols = [['p95 ms', 'p95'], ['frames>33ms (n)', 'n33'], ['frames>33ms %', 'over33'], ['frames>100ms (n)', 'n100'], ['frames>100ms %', 'over100'], ['>16.7 %', 'over16'], ['blocking ms', 'blocking'], ['max ms', 'max'], ['frames', 'frames'], ['calib ms', 'calib']];
+  const out = [];
+  out.push(`\n## certify ${name}: ${SCENARIOS[name].title} — ${runs.length} run(s)`);
+  out.push(`| run | ${cols.map((c) => c[0]).join(' | ')} | note |`);
+  out.push(`|---|${cols.map(() => '---').join('|')}|---|`);
+  for (const r of rows) out.push(`| ${r.i} | ${cols.map((c) => r[c[1]]).join(' | ')} | ${r.unstable ? 'UNSTABLE: ' + r.unstable : ''} |`);
+  const tm = (k) => r1(trimmedMedian(rows.map((r) => r[k])));
+  const lo = (k) => Math.min(...rows.map((r) => r[k])), hi = (k) => Math.max(...rows.map((r) => r[k]));
+  out.push(`| **trimmed median** | ${cols.map((c) => `**${tm(c[1])}**`).join(' | ')} | drop min and max |`);
+  out.push(`| min-max | ${cols.map((c) => `${r1(lo(c[1]))}-${r1(hi(c[1]))}`).join(' | ')} | |`);
+  const verdicts = [];
+  for (const [label, get, limit] of TARGETS[name] || []) {
+    const vals = A.map((a) => get(a.frames, a.long));
+    const t = r1(trimmedMedian(vals));
+    verdicts.push({ label, t, limit, pass: t <= limit, perRunPass: vals.map((v) => v <= limit) });
+    // The limit sits inside the kept (middle) runs: the verdict is not decidable at this noise, say so.
+    const inner = sorted(vals).slice(vals.length >= 3 ? 1 : 0, vals.length >= 3 ? -1 : undefined);
+    const borderline = Math.min(...inner) <= limit && Math.max(...inner) > limit;
+    verdicts[verdicts.length - 1].borderline = borderline;
+    out.push(`target ${name} ${label} <= ${limit}: trimmed median ${t} -> ${t <= limit ? 'PASS' : 'FAIL'}${borderline ? ' (BORDERLINE: the limit lies inside the kept runs)' : ''} (runs passing ${vals.filter((v) => v <= limit).length}/${vals.length})`);
+  }
+  return { text: out.join('\n'), rows, verdicts, tm: Object.fromEntries(cols.map((c) => [c[1], tm(c[1])])) };
+}
+
 // ---- main ---------------------------------------------------------------------
 // A pass that fails (a tap swallowed while the fan re-lays out, a timeout under throttle) is
 // retried on a fresh page, up to three times, so one flaky input does not lose the run.
 async function passWithRetry(browser, base, name, opts) {
+  let drifted = 0;
   for (let attempt = 1; ; attempt++) {
-    try { return await onePass(browser, base, name, opts); }
-    catch (e) { process.stderr.write(` [attempt ${attempt} failed: ${String(e.message).split('\n')[0].slice(0, 90)}]`); if (attempt >= 3) throw e; }
+    try { return await onePass(browser, base, name, { ...opts, rejectable: drifted < CALIB_RETRIES }); }
+    catch (e) {
+      if (e.calibration) { drifted++; calib.rejected++; process.stderr.write(` [${e.message}: pass rerun ${drifted}/${CALIB_RETRIES}]`); attempt--; continue; }
+      process.stderr.write(` [attempt ${attempt} failed: ${String(e.message).split('\n')[0].slice(0, 90)}]`);
+      if (attempt >= 3) throw e;
+    }
   }
 }
 // --from DIR: summarise the runs-*.json an earlier invocation saved there, without measuring again.
 const FROM = arg('--from', null);
 const summaries = [];
+const allRuns = {};
+const droppedRuns = [];
 if (FROM) {
   const { readFileSync, existsSync } = await import('node:fs');
   for (const name of Object.keys(SCENARIOS).filter((n) => WANT.has(n))) {
     const f = join(resolve(FROM), `runs-${name}.json`);
-    if (existsSync(f)) summaries.push(summarise(name, JSON.parse(readFileSync(f, 'utf8'))));
+    if (existsSync(f)) { allRuns[name] = JSON.parse(readFileSync(f, 'utf8')); summaries.push(summarise(name, allRuns[name])); }
   }
 } else {
+  checkHostIdle();
   const server = await serve({ root: ROOT, port: 0, open: false, quiet: true });
   const base = `http://localhost:${server.server.address().port}/`;
   const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] });
@@ -527,11 +691,18 @@ if (FROM) {
       const runs = [];
       for (let i = 0; i < RUNS; i++) {
         process.stderr.write(`${name} run ${i + 1}/${RUNS} ...`);
-        const a = await passWithRetry(browser, base, name, { trace: true, profile: false });
-        const b = PROFILE ? await passWithRetry(browser, base, name, { trace: false, profile: true }) : null;
-        process.stderr.write(` median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
+        // A run that still fails after its retries (e.g. the page never loads) is dropped and reported, not fatal:
+        // the runs already measured are kept.
+        let a, b = null;
+        try {
+          a = await passWithRetry(browser, base, name, { trace: true, profile: false });
+          b = PROFILE ? await passWithRetry(browser, base, name, { trace: false, profile: true }) : null;
+        } catch (e) { process.stderr.write(` run dropped: ${String(e.message).split('\n')[0].slice(0, 80)}\n`); droppedRuns.push(`${name} run ${i + 1}`); continue; }
+        process.stderr.write(` calib ${a.calibMs} ms${a.unstable ? ' UNSTABLE' : ''}, median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
         runs.push({ a, b });
       }
+      if (!runs.length) continue;
+      allRuns[name] = runs;
       summaries.push(summarise(name, runs));
       mkdirSync(OUT, { recursive: true });
       writeFileSync(join(OUT, `runs-${name}.json`), JSON.stringify(runs));
@@ -544,7 +715,9 @@ if (FROM) {
 mkdirSync(OUT, { recursive: true });
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(summaries, null, 1));
 
-console.log(`# perf-probe: ${THROTTLE}x CPU throttle, 390x844 @3x, seed ${SEED}, median of ${RUNS} run(s)\n`);
+console.log(`# perf-probe: ${THROTTLE}x CPU throttle, 390x844 @3x, seed ${SEED}, ${CERTIFY ? 'trimmed median (min and max dropped) of' : 'median of'} ${RUNS} run(s)\n`);
+if (CERTIFY) { for (const s of summaries) console.log(certify(s.scenario, allRuns[s.scenario]).text); console.log(); }
+
 console.log('| scenario | window s | frames | median ms | p95 | p99 | >16.7 % | >33 % | long tasks (n / total ms / blocking ms) | peak anims (running / transitions / infinite) |');
 console.log('|---|---|---|---|---|---|---|---|---|---|');
 for (const s of summaries) {
@@ -570,6 +743,16 @@ if (summaries.some((s) => s.scenario === 'play')) {
     console.log(`| play | ${c.render ?? 0} | ${c.stage ?? 0} | ${c.hand ?? 0} | ${c.beatFlush ?? 0} | ${c.hudPass ?? 0} | ${c.hudTrack ?? 0} | ${t.syncLayoutN} | ${t.syncStyleN} | ${t.script} | ${t.style} | ${t.layout} | ${r1(t.script + t.style + t.layout)} |`);
   }
 }
+if (summaries.some((x) => x.phases && PHASES.some((ph) => x.phases[ph].frames))) {
+  console.log('\n### long frames (> 33.4 ms) by phase (median over runs; tap = input to first beat flush, playback = beats to finish, finish = the end-of-playback render frame, enemy turn = dataset.turn enemy, idle = the rest)');
+  console.log(`| scenario | ${PHASES.map((ph) => `${ph}: frames / long n / long ms / worst ms`).join(' | ')} |`);
+  console.log(`|---|${PHASES.map(() => '---').join('|')}|`);
+  for (const s of summaries) console.log(`| ${s.scenario} | ${PHASES.map((ph) => { const o = s.phases[ph]; return `${o.frames} / ${o.longN} / ${o.longMs} / ${o.longMax}`; }).join(' | ')} |`);
+  console.log('\n### render counts by phase (median over runs; finishRender stays 0 until the screen emits it)');
+  console.log(`| scenario | phase | ${PHASE_COUNTERS.join(' | ')} |`);
+  console.log(`|---|---|${PHASE_COUNTERS.map(() => '---').join('|')}|`);
+  for (const s of summaries) for (const ph of PHASES) { const o = s.phases[ph]; if (PHASE_COUNTERS.some((k) => o.counts[k])) console.log(`| ${s.scenario} | ${ph} | ${PHASE_COUNTERS.map((k) => o.counts[k]).join(' | ')} |`); }
+}
 for (const s of summaries) {
   console.log(`\n## ${s.scenario}: top JS self time (CPU profile, median ms over the window)${s.profileTotals ? ` — profile total ${s.profileTotals.totalMs} ms, idle ${s.profileTotals.idleMs}, native/program ${s.profileTotals.programMs}, GC ${s.profileTotals.gcMs}` : ''}`);
   for (const [k, v] of s.profileTop) console.log(`  ${String(v).padStart(8)} ms  ${k}`);
@@ -577,5 +760,7 @@ for (const s of summaries) {
   if (s.errors.length) console.log(`  page errors: ${s.errors.join(' | ')}`);
   if (s.extra && Object.keys(s.extra).length) console.log(`  ${JSON.stringify(s.extra)}`);
 }
+if (droppedRuns.length) console.log(`\nDROPPED runs (failed after retries, the report has fewer runs than asked): ${droppedRuns.join(', ')}`);
+if (calib.ref !== null) console.log(`\ncalibration: reference ${calib.ref} ms (first pass), tolerance ${CALIB_TOLERANCE * 100}%, ${calib.rejected} pass(es) rerun`);
 console.log(`\nraw per-run JSON: ${OUT}`);
 process.exit(0);
