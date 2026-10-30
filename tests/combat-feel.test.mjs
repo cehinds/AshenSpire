@@ -195,14 +195,15 @@ function drive(t, fn, { maxHp } = {}) {
   });
 }
 
-test('with Effects off the contact hit-stop is not held, and its time is not waited out', (t) => {
-  drive(t, ({ dom, start, tick, holds }) => {
+test('with Effects off the figure is not held but the timeline spacing is unchanged', (t) => {
+  drive(t, ({ dom, start, tick, holds, reactions, stats }) => {
     const timing = actionPacing();
-    const contactAt = timing.intentMs + timing.wordMs + 100;
+    const reactionAt = timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs;
     const root = dom.document.documentElement;
     dom.document.documentElement = { dataset: { effects: 'off' } };
-    try { start([6, 10]); tick(contactAt + 400); } finally { dom.document.documentElement = root; }
+    try { start([6, 10]); tick(reactionAt); } finally { dom.document.documentElement = root; }
     assert.deepEqual(holds, [], 'no actor or target hold with Effects off');
+    assert.deepEqual(reactions, [['hit', 220]], 'the reaction lands at the same time as with Effects on');
   });
 });
 

@@ -1115,8 +1115,8 @@ export function playTimeline(events, ctx, done) {
     onContact: (beat, actor) => {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
-      const holdMs = timing.scale === 0 || effectsOff() ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
+      const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
+      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
       if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
@@ -1457,7 +1457,7 @@ function playLegacyTimeline(events, ctx, done) {
     // Every qualifying hit holds at its own visual, including multi-hit and
     // multi-target attacks. Recovery includes only the holds actually played.
     let heldMs = 0;
-    const holdFor = (event) => (!effectsOff() && (beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
+    const holdFor = (event) => ((beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
       ? hitStopMsFor(guardHitFloatParts(event).residual || 0, typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(event.targetId)) || 0 : 0) : 0);
     const markContact = (what) => {
       // An observable contact marker (tools/click-impact-probe.mjs): the
@@ -1492,6 +1492,9 @@ function playLegacyTimeline(events, ctx, done) {
           if (held) {
             safe(() => actorEl && hold(actorEl, holdMs));
             safe(() => {
+              // Effects off: the timeline still spends the hit-stop time (the feel contract's spacing is
+              // unchanged) but the figure is not frozen.
+              if (effectsOff()) return;
               if (activeActorAnimation?.hold) activeActorAnimation.hold(holdMs);
               else if (ctx.figureAnimations !== false) stageFor(actorEl)?.hold?.(holdMs);
             });

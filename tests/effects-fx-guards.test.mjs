@@ -83,8 +83,9 @@ test('image figures draw only the held stance glow with Effects off (no casting 
   const src = readFileSync(new URL('../src/ui/paintedOutfits.js', import.meta.url), 'utf8');
   assert.match(src, /effectsOff\(\) \? auraFilter\('ready', resting, \[\], false\)/);
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
-  assert.match(fx, /timing\.scale === 0 \|\| effectsOff\(\) \? 0/, 'the hit-stop duration itself is 0 with Effects off');
-  assert.match(fx, /holdFor = \(event\) => \(!effectsOff\(\) &&/);
+  assert.doesNotMatch(fx, /timing\.scale === 0 \|\| effectsOff\(\)/, 'the hit-stop duration still flows into the timeline with Effects off');
+  assert.doesNotMatch(fx, /holdFor = \(event\) => \(!effectsOff\(\)/);
+  assert.match(fx, /if \(effectsOff\(\)\) return;\n\s+if \(activeActorAnimation\?\.hold\)/, 'the figure is not frozen');
 });
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {
