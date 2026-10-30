@@ -14,7 +14,7 @@ lives only in `src/content/index.js` (`contentBundle.version`), and
 |---|---|---|
 | MAJOR | Constantine (Tier 2 decision) | hand-edit the one home, via PR |
 | MINOR | Constantine, proposed in the delivering PR | hand-edit the one home, via PR |
-| PATCH | Constantine, proposed in the delivering PR | hand-edit the one home, via PR |
+| PATCH | Constantine, proposed in the delivering PR | hand-edit the one home, via PR; advanced after every release cut |
 | ordinal | nobody — `tools/bundle.mjs` writes `buildordinal.json` | derived, every rebuild |
 | digest | nobody — derived from the covered source set | derived, every rebuild |
 
