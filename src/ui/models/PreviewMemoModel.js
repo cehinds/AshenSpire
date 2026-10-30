@@ -8,14 +8,66 @@
 // writes the screen names with `invalidate()`), so a preview is kept until the
 // next of those and then dropped. The numbers shown are always the engine's.
 // A preview that throws is never kept.
-export function createPreviewMemo({ combat, preview, dispatch }) {
+//
+// PRE-WARM. After a dispatch the fight is final for the whole playback, and the
+// finish render asks for a fixed set of quotes. `prewarm(jobs)` fills them in
+// idle time, one job per idle callback and only when the slot is long enough
+// for a whole preview, so a pre-warm never lands inside a frame. Any
+// invalidate (dispatch, direct write, teardown) drops the pending jobs: a
+// stale quote is never kept. With no requestIdleCallback (Safari) it does
+// nothing and the finish render pays as before.
+export const PREWARM_MIN_IDLE_MS = 24;
+const PREWARM_MAX_SKIPS = 40;
+const globalIdle = () => (typeof globalThis.requestIdleCallback === 'function'
+  ? { request: cb => globalThis.requestIdleCallback(cb), cancel: h => globalThis.cancelIdleCallback?.(h) } : null);
+
+/** The jobs a finished play's render will ask for, through the screen's own wrappers so the keys are the same. */
+export function fightPrewarmJobs({ combat, previewCard, projectIntent, upcastRanks }) {
+  if (!combat || combat.result) return [];
+  return [
+    ...combat.piles.hand.map(inst => { const id = inst.instanceId, ranks = upcastRanks(id); return () => previewCard(combat, id, undefined, ranks); }),
+    ...combat.enemies.filter(enemy => enemy.alive).map(enemy => () => projectIntent(combat, enemy.id)),
+  ];
+}
+
+export function createPreviewMemo({ combat, preview, dispatch, idle }) {
   const kept = new Map();
+  let queue = [], handle = null, generation = 0, skips = 0;
+  const cancelPrewarm = () => {
+    queue = []; skips = 0; generation += 1;
+    if (handle !== null) { try { (idle || globalIdle())?.cancel(handle); } catch { /* nothing to cancel */ } handle = null; }
+  };
   // The player's-eye clone of the fight (engine previewCard builds it when enemy
   // knowledge is on) is shared by every card priced on one unchanged fight.
   let view = {};
-  const invalidate = () => { kept.clear(); view = {}; };
+  const invalidate = () => { cancelPrewarm(); kept.clear(); view = {}; };
+  const schedule = (api) => {
+    const mine = generation;
+    handle = api.request((deadline) => {
+      handle = null;
+      if (mine !== generation || !queue.length) return;
+      if (deadline.timeRemaining() < PREWARM_MIN_IDLE_MS) { // a frame is near: keep the job, retry next idle
+        if (++skips <= PREWARM_MAX_SKIPS) schedule(api); else queue = [];
+        return;
+      }
+      skips = 0;
+      const job = queue.shift();
+      try { job(); } catch { /* a preview that throws is not kept; the render handles it */ }
+      if (queue.length) schedule(api);
+    });
+  };
   return {
     invalidate,
+    // Returns whether anything was scheduled (false without idle callbacks).
+    prewarm(jobs) {
+      cancelPrewarm();
+      const api = idle || globalIdle();
+      if (!api || !jobs?.length) return false;
+      queue = [...jobs];
+      schedule(api);
+      return true;
+    },
+    get pendingPrewarm() { return queue.length; },
     // Any other pure read of the unchanged fight (an enemy's intent, its plan),
     // kept under the same lifetime as a preview. `compute` must not mutate it.
     memo(key, compute) {
