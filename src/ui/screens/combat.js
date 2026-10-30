@@ -10,7 +10,7 @@ import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseReaction, chooseCardPlay, AUTOMATION_DEFAULTS, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
-import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
@@ -210,6 +210,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
   const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
   const { dispatch, previewCard: memoPreviewCard } = previewMemo;
+  // An enemy's projected intent reads only the fight, so it is kept like a preview until the next change.
+  const projectCombatIntent = (target, enemyId) => target === combat
+    ? previewMemo.memo(`project:${enemyId}`, () => projectIntentUncached(target, enemyId)) : projectIntentUncached(target, enemyId);
   function previewCard(target, instanceId, targetId, ranks, options) {
     return memoPreviewCard(target, instanceId, targetId, ranks, options ?? { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance' });
   }
