@@ -109,3 +109,17 @@ test('one unchanged fight shares one knowledge view; any dispatch or invalidate 
   memo.previewCard(combat, 'b');
   assert.notEqual(views[3], views[2], 'invalidate drops the shared view');
 });
+
+test('memo keeps any other read of an unchanged fight until a dispatch or invalidate', () => {
+  const combat = {};
+  const memo = createPreviewMemo({ combat, dispatch() {}, preview: () => ({}) });
+  let runs = 0;
+  const read = () => memo.memo('intent:e1', () => ++runs);
+  assert.equal(read(), 1);
+  assert.equal(read(), 1, 'the second ask is served from the kept value');
+  assert.equal(memo.size, 0, 'size still counts previews only');
+  memo.dispatch(combat, {});
+  assert.equal(read(), 2, 'a dispatch drops it');
+  memo.invalidate();
+  assert.equal(read(), 3, 'invalidate drops it');
+});

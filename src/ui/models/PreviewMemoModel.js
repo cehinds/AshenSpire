@@ -16,6 +16,15 @@ export function createPreviewMemo({ combat, preview, dispatch }) {
   const invalidate = () => { kept.clear(); view = {}; };
   return {
     invalidate,
+    // Any other pure read of the unchanged fight (an enemy's intent, its plan),
+    // kept under the same lifetime as a preview. `compute` must not mutate it.
+    memo(key, compute) {
+      const name = 'memo:' + key;
+      if (kept.has(name)) return kept.get(name);
+      const value = compute();
+      kept.set(name, value);
+      return value;
+    },
     // Every state change goes through here: drop before (so the engine sees no
     // stale reads) and after (a refused dispatch can still have partly run).
     dispatch(target, intent) {
@@ -30,6 +39,6 @@ export function createPreviewMemo({ combat, preview, dispatch }) {
       kept.set(key, shown);
       return shown;
     },
-    get size() { return kept.size; },
+    get size() { return [...kept.keys()].filter(k => typeof k !== 'string' || !k.startsWith('memo:')).length; },
   };
 }

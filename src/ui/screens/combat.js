@@ -1709,7 +1709,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   // The Combat Rounds Preview's additions (SPEC §4.11). A no-op unless combat.combatRounds is set.
   function decorateRoundsScreen() {
-    decorateCombatRoundsScreen(combatEl, combat, { armedCardId: selected || null, targetedId: targetedEnemyId(combat, lastTargetId) });
+    decorateCombatRoundsScreen(combatEl, combat, { armedCardId: selected || null, targetedId: targetedEnemyId(combat, lastTargetId), memo: previewMemo.memo });
   }
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
     window.__renderCombatForShot = render;

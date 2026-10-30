@@ -40,7 +40,7 @@ function fixture(code = rendering) {
     applyTargetLayer: () => events.push('targets'), refreshAim: () => events.push('aim'),
     // The Combat Rounds Preview's screen layer (SPEC 4.11). It only adds marks and changes no layout, so it is a
     // no-op here and leaves the recorded order above unchanged.
-    decorateRoundsScreen: () => {}, decorateCombatRoundsScreen: () => {}, targetedEnemyId: () => null, lastTargetId: null, combatEl: null,
+    decorateRoundsScreen: () => {}, decorateCombatRoundsScreen: () => {}, previewMemo: {}, targetedEnemyId: () => null, lastTargetId: null, combatEl: null,
     setHintMode: () => events.push('hint'),
     scheduleAutoCombat: () => events.push('automation'),
   };

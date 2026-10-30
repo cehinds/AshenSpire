@@ -17,7 +17,7 @@ const CLEAN = ['.cr-followups', '.cr-speed', '.cr-queue', '.cr-momentum'];
 // banner and the hand hints read (the caller's last target, else the first living enemy).
 // Two passes (review item 4): every read (the boxes, the forecasts and the outline art's layout) happens first, then
 // every write. The browser lays the page out once for the whole decoration, not once per enemy.
-export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, targetedId = null } = {}) {
+export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, targetedId = null, memo = (key, compute) => compute() } = {}) {
   if (!root) return;
   // The rounds layer (follow-ups, hints, queue order) needs combat.combatRounds. The momentum tab also shows in a
   // normal fight whose momentum toggle is on (SPEC §4.11), and reads that fight's own stored value.
@@ -33,8 +33,8 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   for (const enemy of on || followUpsOn || armedCardId ? combat.enemies : []) {
     const box = root.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`);
     if (!box || !enemy.alive) continue;
-    const intent = previewIntent(combat, enemy.id);
-    const actions = on ? enemyActions(combat, enemy.id) : enemyPlanActions(combat, enemy);
+    const intent = memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
+    const actions = on ? enemyActions(combat, enemy.id) : memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
     const row = { box, intentEl: box.querySelector('.intent'), actions: followUpsOn ? actions : [], stage: readStage(intent), colour: null, art: [] };
     // The target outline (every fight, SPEC §4.11): only while a card is aimed, and only the visible art and the
     // intent glyphs. Rounds mode reads stance and speed; a normal fight reads the stance alone.
@@ -81,7 +81,7 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   // Hand: the queue order on a queued card, and the speed hint against the targeted enemy when its speed is read.
   // (Rounds mode only; the follow-ups and the outline were drawn above.)
   const targetedRead = targetedId && combat.enemies.some((e) => e.id === targetedId && e.alive)
-    ? readStage(previewIntent(combat, targetedId)) : 0;
+    ? readStage(memo(`intent:${targetedId}`, () => previewIntent(combat, targetedId))) : 0;
   for (const card of root.querySelectorAll('.hand .card[data-instance-id]')) {
     const id = card.dataset.instanceId;
     const at = cr.playerQueue?.findIndex((record) => record.instanceId === id) ?? -1;
