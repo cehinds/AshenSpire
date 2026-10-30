@@ -185,7 +185,7 @@ import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
-import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, motionFlags } from './ui/performance.js';
+import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, motionFlags, coarsePointer } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
@@ -1042,7 +1042,7 @@ function applyDisplaySettings(settings) {
   // applyUiScale for readability only: `--tap-floor` divides one by the other
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
-  setAnimSpeed(resolveCombatPacing(settings, quality));
+  setAnimSpeed(resolveCombatPacing(settings, coarsePointer()));
   setCombatPacing(settings);
   // A cleared key (a Reset, a profile that leaves it out) means the default:
   // setVolumes ignores a missing field, so say the default out loud.

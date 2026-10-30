@@ -63,7 +63,9 @@ export function motionOff(kind) {
   return typeof document !== 'undefined' && !!document.body?.classList.contains(`motion-${kind}-off`);
 }
 
-export function resolveCombatPacing(settings = {}, quality = 'full') {
+// PACING IS NOT EFFECTS (owner review, 2026-10-30): Auto pace is Fast on a touch screen and Normal elsewhere,
+// whatever the Effects switch says, so action words and callouts last as long as they always did.
+export function resolveCombatPacing(settings = {}, coarse = false) {
   return ['slow', 'normal', 'fast', 'instant'].includes(settings.animSpeed)
-    ? settings.animSpeed : quality === 'lite' ? 'fast' : 'normal';
+    ? settings.animSpeed : coarse ? 'fast' : 'normal';
 }

@@ -5,17 +5,23 @@ import { motionFlags, effectsOff, motionOff, resolveMotionIdle, resolvePerforman
 import { preloadPoses, clearPosePreloads } from '../src/ui/services/posePreloads.js';
 import { runtimeAsset } from '../tools/assetmime.mjs';
 
-test('Effects decides quality: off is lite everywhere, on is full; pacing follows', () => {
+test('Effects decides quality (off is lite everywhere, on is full); pacing is independent of it', () => {
   assert.equal(resolvePerformanceMode({}, true), 'lite');
   assert.equal(resolvePerformanceMode({}, false), 'lite', 'default is off on every device');
   assert.equal(resolvePerformanceMode({ effects: true }, true), 'full');
   assert.equal(resolvePerformanceMode({ effects: false }, false), 'lite');
   assert.equal(resolvePerformanceMode({ performanceMode: 'full' }, true), 'full', 'a saved explicit Full still reads as on');
   assert.equal(resolvePerformanceMode({ performanceMode: 'lite', effects: true }, false), 'full', 'an explicit Effects wins');
-  assert.equal(resolveCombatPacing({}, 'lite'), 'fast');
-  assert.equal(resolveCombatPacing({ animSpeed: 'auto' }, 'full'), 'normal');
+  // Pacing follows the touch screen, never Effects: auto is fast on a phone and normal elsewhere.
+  assert.equal(resolveCombatPacing({}, true), 'fast');
+  assert.equal(resolveCombatPacing({ animSpeed: 'auto' }, false), 'normal');
+  for (const effects of [true, false]) {
+    assert.equal(resolveCombatPacing({ effects }, true), 'fast', 'phone pace ignores Effects');
+    assert.equal(resolveCombatPacing({ effects }, false), 'normal', 'desktop pace ignores Effects');
+  }
   for (const animSpeed of ['slow', 'normal', 'fast', 'instant']) {
-    assert.equal(resolveCombatPacing({ animSpeed }, 'lite'), animSpeed);
+    assert.equal(resolveCombatPacing({ animSpeed }, true), animSpeed);
+    assert.equal(resolveCombatPacing({ animSpeed }, false), animSpeed);
   }
 });
 
@@ -113,4 +119,13 @@ test('the motion body classes and the Effects root attribute are what the helper
     document.documentElement.dataset.effects = 'on';
     assert.equal(effectsOff(), false, 'toggling on at runtime flips the reading with no reload');
   } finally { delete globalThis.document; }
+});
+
+test('the Effects toggle never changes the pace, so callout lifetimes are the same on and off', async () => {
+  const { ANIM_SPEEDS } = await import('../src/ui/fx.js');
+  for (const coarse of [true, false]) {
+    const on = resolveCombatPacing({ effects: true }, coarse), off = resolveCombatPacing({ effects: false }, coarse);
+    assert.equal(on, off);
+    assert.deepEqual(ANIM_SPEEDS[on], ANIM_SPEEDS[off]);
+  }
 });
