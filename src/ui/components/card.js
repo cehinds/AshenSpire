@@ -165,6 +165,57 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
   return html;
 }
 
+// THE FACE A CARD WAS PAINTED WITH, kept so a card rebuilt for the same entry
+// can take it over instead of parsing and fitting a second copy. Keyed by the
+// card element: `html` is the face markup exactly as it was handed to
+// innerHTML (before the appearance pass and the fitter touched the nodes),
+// `at` the level it was drawn at, `receipt` what its damage numbers explain.
+const paintedFaces = new WeakMap();
+// The art <img>'s error handler is bound once, to the image, and reads this: a
+// face that moves to a rebuilt card keeps its handler, which must then repaint
+// and mark the NEW card, and must keep the fallbacks it has already spent.
+const artStates = new WeakMap();
+// The text rows of a face (`.ic-text`) and everything around them. Two faces
+// whose markup differs only INSIDE those rows are the same face with new words
+// (the numbers a preview moved), and the rows are the only thing to rewrite.
+const TEXT_ROW = /(<div class="ic-text"[^>]*>)([\s\S]*?)(<\/div>)/g;
+function splitFace(html) {
+  const rows = [];
+  const skeleton = html.replace(TEXT_ROW, (_m, open, inner, close) => { rows.push(inner); return open + close; });
+  return { skeleton, rows };
+}
+// Moves the painted nodes of `from` into `into` when the new face html is the
+// old one or the old one with other words in its text rows. Returns the rows
+// it rewrote (empty when none), or null when the face cannot be taken over, in
+// which case `from` is left exactly as it was.
+function takeOverFace(into, from, prior, html, receipt) {
+  if (!from || prior.html === undefined) return null;
+  let changed = [];
+  const next = splitFace(html);
+  if (prior.html !== html) {
+    const old = splitFace(prior.html);
+    if (old.skeleton !== next.skeleton || old.rows.length !== next.rows.length) return null;
+    // A row holding a nested block is a row the pattern may have cut short.
+    if (next.rows.some(row => row.includes('<div'))) return null;
+    changed = next.rows.map((row, i) => (row === old.rows[i] ? -1 : i)).filter(i => i >= 0);
+  }
+  const painted = [...from.children].filter(node => node?.dataset?.cardPainted === '1');
+  if (!painted.length) return null;
+  const texts = painted.flatMap(node => [...node.querySelectorAll('.ic-text')]);
+  if (texts.length !== next.rows.length) return null;
+  // Rows the appearance pass re-skinned hold no words of their own.
+  const rewrite = new Set(changed);
+  if (prior.receipt !== receipt) rewrite.add(texts.findIndex(row => row.dataset.cardBinding === 'rules'));
+  for (const i of rewrite) {
+    if (i < 0) return null;
+    const row = texts[i];
+    if (row.dataset.customImage || row.querySelector('[data-card-decoration]')) return null;
+  }
+  for (const node of painted) into.append(node);
+  for (const i of rewrite) texts[i].innerHTML = next.rows[i];
+  return { rewrite, texts };
+}
+
 /**
  * renderCard(registries, ref, opts) → element.
  *   ref  — { cardId, upgraded, instanceId? }
@@ -173,9 +224,13 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
  *            small?      (scale for reward/pile grids),
  *            tooltip?    (false suppresses the shared hover/focus tooltip),
  *            definition? (an already projected definition, e.g. the run's trait projection),
- *            rules?      (run rules for faces outside combat) }
+ *            rules?      (run rules for faces outside combat),
+ *            reuseFace?  (the card element this one replaces: its painted face is taken over when this one's markup matches) }
  */
 export function renderCard(registries, ref, opts = {}) {
+  // The donor is read once and not kept: the door's closure spreads `opts` into the reading face it builds.
+  const { reuseFace, ...ownOpts } = opts;
+  opts = ownOpts;
   configureTooltipGlossary(registries);
   const def = playingCardDefinition(registries, ref, opts);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
@@ -326,6 +381,7 @@ export function renderCard(registries, ref, opts = {}) {
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
   const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
+  let reuseFrom = reuseFace || null;
   const paint = (at) => {
     const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
     const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
@@ -340,7 +396,7 @@ export function renderCard(registries, ref, opts = {}) {
       // A face the shared model refused keeps the authored rules, never the looser summary.
       : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
     el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
-    el.innerHTML = illustratedCardHtml(model,{
+    const faceHtml = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
       painting:artwork?.path,
@@ -352,24 +408,48 @@ export function renderCard(registries, ref, opts = {}) {
       rulesOverflow: at !== 'inspect' && Boolean(allFaceLines?.length > (faceLines?.length ?? 0)),
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
-    applyCardAppearance(el.querySelector('.illustrated-card-face'));
-    bindDamageReceipt(el, opts.preview);
-    if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
-    // The illustrated face owns the rank label and keeps it above its fitted panel.
-    if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
+    // The numbers on the face come from a preview, and a hand's previews move
+    // on every play while the face itself rarely does. A card rebuilt for the
+    // same entry (opts.reuseFace) takes over the nodes of the face it replaces
+    // when this markup is that face's, or that face's with other words in its
+    // text rows; only those rows are written, and only the first paint asks.
+    const receipt = cardDamageReceipt(opts.preview);
+    const receiptKey = receipt ? JSON.stringify([receipt, opts.preview.targetName]) : '';
+    const donor = reuseFrom; reuseFrom = null;
+    const priorFace = donor && paintedFaces.get(donor);
+    const taken = priorFace && (priorFace.at === 'inspect') === (at === 'inspect')
+      ? takeOverFace(el, donor, { html: priorFace.html, receipt: priorFace.receipt }, faceHtml, receiptKey) : null;
+    if (!taken) {
+      el.innerHTML = faceHtml;
+      applyCardAppearance(el.querySelector('.illustrated-card-face'));
+      bindDamageReceipt(el, opts.preview);
+      if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
+      // The illustrated face owns the rank label and keeps it above its fitted panel.
+      if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
+    } else if (taken.texts.some((row, i) => taken.rewrite.has(i) && row.dataset.cardBinding === 'rules')) {
+      // The rewritten rules lost their bindings with their nodes; the damage numbers explain themselves again.
+      bindDamageReceipt(el, opts.preview);
+    }
+    paintedFaces.set(el, { html: faceHtml, at, receipt: receiptKey });
     for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);
     el.setAttribute?.('aria-label',accessibleLabel);
     const image = el.querySelector?.('.playing-card-art');
-    if(image){
+    const art = image && artStates.get(image);
+    if(image && taken && art){
+      // A taken-over image keeps its handler and the fallbacks it has spent; it now answers to this card.
+      art.host = el; art.repaint = () => paint(drawn);
+    }else if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
       const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
         legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
+      const state = { host: el, repaint: () => paint(drawn), fallbacks };
+      artStates.set(image, state);
       image.addEventListener('error',()=>{
-        markArtPlaceholder(el, () => paint(drawn));
-        const next=fallbacks.shift();
+        markArtPlaceholder(state.host, state.repaint);
+        const next=state.fallbacks.shift();
         if(next){
           image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
           image.dataset.cardArt=next.kind;

@@ -394,7 +394,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // A face rebuilt in place (its preview or affordability moved, same slot,
       // same count) keeps the fan plan already applied to its predecessor.
       let predecessor = null;
+      // The face of the card this one replaces (its preview or affordability moved): the new card takes
+      // it over when the markup is the same, or the same with other numbers in its text rows.
+      let donor = null;
       if (record && record.signature !== signature) {
+        donor = record.el;
         predecessor = fitFan && fanApplied && n0 === cards.length && handEl.children[i] === record.el ? record : null;
         if (predecessor) predecessor.controls = predecessor.el.querySelector('.card-upcast-controls');
         if (predecessor) predecessor.controlsHtml = predecessor.controls ? predecessor.controls.outerHTML : '';
@@ -422,7 +426,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       rebuilt++;
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
-          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
+          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3,
+          reuseFace: donor });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
       // sits on the strip's own baseline and nothing is pushed below it.
