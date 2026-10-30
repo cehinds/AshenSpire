@@ -1766,13 +1766,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     window.__combatRunForShot = run;
   }
 
+  // The formatted log, memoised on what it reads: the event log object and how much of it is shown,
+  // the registries, and the combatants it names. A pass that changes none of them (the several a play
+  // makes) reuses the rows; a longer log is formatted once. combatTools asks for the rows only when a
+  // reader (drawer or full log) is open or opens.
+  let logMemo = null;
+  function logEntries() {
+    const shown = disp?.logLength ?? combat.eventLog.length;
+    const who = `${run.name || ''}|${combat.enemies.map(enemy => `${enemy.id}:${enemy.enemyId}`).join(',')}`;
+    if (logMemo && logMemo.log === combat.eventLog && logMemo.shown === shown && logMemo.registries === registries && logMemo.who === who) return logMemo.rows;
+    globalThis.__perfCount?.('combatLogFormat');
+    const rows = combatLogEntries(combat.eventLog.slice(0, shown),
+      { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+    logMemo = { log: combat.eventLog, shown, registries, who, rows };
+    return rows;
+  }
+
   function renderCombatTools() {
     debugButton.sync();
     combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion >= 1,
       enabled: combat.player.reactionsEnabled !== false,
       disabled: busy || combat.phase !== 'player' || hasCardChoice(combat) || !!combat.pendingReaction,
-      ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
-        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }), { auto: resolveCombatAutomation(readSettings()).enabled });
+      ...combatToolsState, entries: [] }), { auto: resolveCombatAutomation(readSettings()).enabled, entries: logEntries });
     renderReactionNote();
   }
 

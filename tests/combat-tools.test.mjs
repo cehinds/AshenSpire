@@ -513,3 +513,31 @@ test('the reachable Combat log shortcut follows the setting live and across remo
     closeCombatFullLog(state); tools.release();
   });
 });
+
+test('lazy entries: nothing is formatted until a reader is open or opens', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    const tools = mountCombatTools(combatEl, { state, onViewChange() {}, onToggle() {} });
+    let formatted = 0, rows = logRows;
+    const entries = () => { formatted++; return rows; };
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: [], ...state }), { entries });
+    for (let i = 0; i < 5; i++) paint();
+    assert.equal(formatted, 0, 'no reader open: the log is never formatted');
+    fullLogButton(combatEl).click();
+    assert.equal(formatted, 1, 'opening the full log formats it once');
+    assert.equal(state.fullLog.panel.querySelectorAll('li').length, logRows.length);
+    rows = logRowsMore;
+    paint();
+    assert.ok(formatted >= 2, 'an open reader is kept current');
+    assert.equal(state.fullLog.panel.querySelectorAll('li').length, logRowsMore.length);
+    const door = state.fullLog;
+    closeDoor(door);
+    const after = formatted;
+    paint(); paint();
+    assert.equal(formatted, after, 'closed again: formatting stops');
+    tools.release();
+  });
+});
