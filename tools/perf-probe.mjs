@@ -674,6 +674,7 @@ async function passWithRetry(browser, base, name, opts) {
 const FROM = arg('--from', null);
 const summaries = [];
 const allRuns = {};
+const droppedRuns = [];
 if (FROM) {
   const { readFileSync, existsSync } = await import('node:fs');
   for (const name of Object.keys(SCENARIOS).filter((n) => WANT.has(n))) {
@@ -690,11 +691,17 @@ if (FROM) {
       const runs = [];
       for (let i = 0; i < RUNS; i++) {
         process.stderr.write(`${name} run ${i + 1}/${RUNS} ...`);
-        const a = await passWithRetry(browser, base, name, { trace: true, profile: false });
-        const b = PROFILE ? await passWithRetry(browser, base, name, { trace: false, profile: true }) : null;
+        // A run that still fails after its retries (e.g. the page never loads) is dropped and reported, not fatal:
+        // the runs already measured are kept.
+        let a, b = null;
+        try {
+          a = await passWithRetry(browser, base, name, { trace: true, profile: false });
+          b = PROFILE ? await passWithRetry(browser, base, name, { trace: false, profile: true }) : null;
+        } catch (e) { process.stderr.write(` run dropped: ${String(e.message).split('\n')[0].slice(0, 80)}\n`); droppedRuns.push(`${name} run ${i + 1}`); continue; }
         process.stderr.write(` calib ${a.calibMs} ms${a.unstable ? ' UNSTABLE' : ''}, median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
         runs.push({ a, b });
       }
+      if (!runs.length) continue;
       allRuns[name] = runs;
       summaries.push(summarise(name, runs));
       mkdirSync(OUT, { recursive: true });
@@ -753,6 +760,7 @@ for (const s of summaries) {
   if (s.errors.length) console.log(`  page errors: ${s.errors.join(' | ')}`);
   if (s.extra && Object.keys(s.extra).length) console.log(`  ${JSON.stringify(s.extra)}`);
 }
+if (droppedRuns.length) console.log(`\nDROPPED runs (failed after retries, the report has fewer runs than asked): ${droppedRuns.join(', ')}`);
 if (calib.ref !== null) console.log(`\ncalibration: reference ${calib.ref} ms (first pass), tolerance ${CALIB_TOLERANCE * 100}%, ${calib.rejected} pass(es) rerun`);
 console.log(`\nraw per-run JSON: ${OUT}`);
 process.exit(0);
