@@ -86,6 +86,13 @@ The answer is semver's own pre-release segment, not a bent ladder:
 - **The `-rc` suffix is dropped by the owner's release cut** (`rc/<version>` → `release`, a branch pinned at the tested RC SHA on `test`,
   owner-exclusive), which is the MINOR bump
   the ladder already names. Nothing else removes it.
+- **A release cut advances the candidate (owner, 2026-10-30).** When `test` is
+  cut to `release`, the PR that follows the cut moves the candidate (third
+  component) in `contentBundle.version` by one, so the next build after the
+  release reads `<major>.<minor>.<candidate+1>.0`; `bumpOrdinal` restarts the
+  tail on its own. Example: 0.7.1.1848 was released on 2026-10-25, so the first
+  build after it is 0.7.2.0. Two releases must never share a triple (0.7.1.1784
+  and 0.7.1.1848 both carried 0.7.1, which prompted the rule).
 - The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
   milestone in flight; it moves only when that answer changes.
 - **The candidate rides on the BASE PATCH, and `0.5.2-rc.1` is refused.** Not a
