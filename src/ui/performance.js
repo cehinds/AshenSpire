@@ -9,6 +9,16 @@
 /** The fighter-motion sub-options, each default ON, each independent of Effects. */
 export const MOTION_KEYS = Object.freeze(['motionAttack', 'motionHit', 'motionIdle', 'motionDefeat']);
 
+/** coarsePointer() → true on a touch-first device. The one matchMedia read, here so tests can stub it. */
+export function coarsePointer() {
+  return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+}
+
+/** resolveMotionIdle(settings) → idle motion: an explicit saved boolean wins; else off on touch devices (battery), on elsewhere. */
+export function resolveMotionIdle(settings = {}) {
+  return typeof settings.motionIdle === 'boolean' ? settings.motionIdle : !coarsePointer();
+}
+
 /** effectsEnabled(settings) → true only when the player turned Effects on (or had picked Full quality). */
 export function effectsEnabled(settings = {}) {
   if (typeof settings.effects === 'boolean') return settings.effects;

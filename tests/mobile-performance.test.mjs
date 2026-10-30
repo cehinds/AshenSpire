@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled } from '../src/ui/performance.js';
+import { resolveMotionIdle, resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled } from '../src/ui/performance.js';
 import { preloadPoses, clearPosePreloads } from '../src/ui/services/posePreloads.js';
 import { runtimeAsset } from '../tools/assetmime.mjs';
 
@@ -73,4 +73,16 @@ test('authoring equipment stays out of both builds; runtime art stays included',
     }
   }
   check(new URL('../src/', import.meta.url));
+});
+
+test('idle motion defaults off on touch devices and on elsewhere; a saved choice wins', () => {
+  const real = globalThis.matchMedia;
+  try {
+    globalThis.matchMedia = () => ({ matches: true });
+    assert.equal(resolveMotionIdle({}), false, 'phone default');
+    assert.equal(resolveMotionIdle({ motionIdle: true }), true, 'explicit on wins on a phone');
+    globalThis.matchMedia = () => ({ matches: false });
+    assert.equal(resolveMotionIdle({}), true, 'desktop default');
+    assert.equal(resolveMotionIdle({ motionIdle: false }), false, 'explicit off wins on desktop');
+  } finally { if (real) globalThis.matchMedia = real; else delete globalThis.matchMedia; }
 });
