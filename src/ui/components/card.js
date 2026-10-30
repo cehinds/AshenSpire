@@ -171,6 +171,8 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
 // innerHTML (before the appearance pass and the fitter touched the nodes),
 // `at` the level it was drawn at, `receipt` what its damage numbers explain.
 const paintedFaces = new WeakMap();
+// A card element's in-place refresher (renderCard fills it): the opts it was built with, replaced.
+const refreshers = new WeakMap();
 // The art <img>'s error handler is bound once, to the image, and reads this: a
 // face that moves to a rebuilt card keeps its handler, which must then repaint
 // and mark the NEW card, and must keep the fallbacks it has already spent.
@@ -232,39 +234,45 @@ export function renderCard(registries, ref, opts = {}) {
   const { reuseFace, ...ownOpts } = opts;
   opts = ownOpts;
   configureTooltipGlossary(registries);
-  const def = playingCardDefinition(registries, ref, opts);
-  // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
-  // way to innerHTML — the tag junction, the cost profile, the type row, the
-  // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
-  // left. The output is byte-identical by construction: the model's bodies are
-  // the ones that stood here.
-  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
-  const combatProfile = combatProfileFor(def);
-  const combatTags = combatProfileTags(combatProfile, registries);
-  const expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2
-    || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
-  const model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
-    tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries, opts.preview || null, opts.rules || null);
-  // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
-  model.range = opts.range ? combatCardRange(def) : null;
-  // When the shared face model refuses a card, the authored clauses (family
-  // limits, charge and payment constraints) stay complete on the face, led by
-  // the damage label in an expanded combat view.
-  const fallbackDamageLabel = expanded
-    && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
-    ? combatCardDamageLabel(def, opts.preview, registries) : '';
-  const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
-  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
-    model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
-    damageWords.length && `Damage: ${damageWords.join(', ')}`,
-    ...model.sideTags.map(tag => tag.label + (Number.isInteger(tag.count) ? ` ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : '')),
-    rawModel.type.label,
-    rawModel.type.subtype,
-    rawModel.type.abilityLabel,
-    rawModel.type.weaponArt,
-    model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
-  ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
+  // Everything below that reads the opts is derived here, so refreshCard can re-derive it for a card kept in place
+  // (a hand card whose preview or affordability moved). The door's closure reads these names when it opens.
+  let def, rawModel, combatProfile, combatTags, expanded, model, fallbackDamageLabel, damageWords, accessibleLabel;
+  const deriveModel = () => {
+    def = playingCardDefinition(registries, ref, opts);
+    // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
+    // way to innerHTML — the tag junction, the cost profile, the type row, the
+    // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
+    // left. The output is byte-identical by construction: the model's bodies are
+    // the ones that stood here.
+    rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
+    combatProfile = combatProfileFor(def);
+    combatTags = combatProfileTags(combatProfile, registries);
+    expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2
+      || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
+    model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
+      tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
+    model.sideTags = cardSideTags(model, def, registries, opts.preview || null, opts.rules || null);
+    // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
+    model.range = opts.range ? combatCardRange(def) : null;
+    // When the shared face model refuses a card, the authored clauses (family
+    // limits, charge and payment constraints) stay complete on the face, led by
+    // the damage label in an expanded combat view.
+    fallbackDamageLabel = expanded
+      && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
+      ? combatCardDamageLabel(def, opts.preview, registries) : '';
+    damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
+    accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
+      model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
+      damageWords.length && `Damage: ${damageWords.join(', ')}`,
+      ...model.sideTags.map(tag => tag.label + (Number.isInteger(tag.count) ? ` ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : '')),
+      rawModel.type.label,
+      rawModel.type.subtype,
+      rawModel.type.abilityLabel,
+      rawModel.type.weaponArt,
+      model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
+    ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
+  };
+  deriveModel();
   const sourcePiece = ref.sourceArmamentId
     ? registries.equipment?.armaments?.find(piece => piece.id === ref.sourceArmamentId)
     : null;
@@ -363,22 +371,26 @@ export function renderCard(registries, ref, opts = {}) {
   let drawn = levelNow();
   // Every printed surface uses the same compact benefits. A visible tag keeps
   // the exact amount and condition available without repeating it in the body.
-  const faceRules = gameModule(registries, 'cards');
-  const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
-  const representedEffects = model.sideTags.flatMap(tag => tag.representedEffects || []);
-  const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
-  const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
-  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
-    { stanceEntry: false, representedEffects, representedEntry, representedRules });
-  const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
-    ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
-  if (faceLines && def.weightClassPriced) {
-    const pricingNote = { kind: 'detail', html: 'Cost reflects your current weight' };
-    faceLines.push(pricingNote);
-    if (allFaceLines !== faceLines) allFaceLines?.push(pricingNote);
-  }
-  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
-  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
+  let faceRules, wardPoise, allFaceLines, faceLines, faceLineLimit;
+  const deriveFace = () => {
+    faceRules = gameModule(registries, 'cards');
+    wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
+    const representedEffects = model.sideTags.flatMap(tag => tag.representedEffects || []);
+    const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
+    const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
+    allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
+      { stanceEntry: false, representedEffects, representedEntry, representedRules });
+    faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
+      ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
+    if (faceLines && def.weightClassPriced) {
+      const pricingNote = { kind: 'detail', html: 'Cost reflects your current weight' };
+      faceLines.push(pricingNote);
+      if (allFaceLines !== faceLines) allFaceLines?.push(pricingNote);
+    }
+    // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+    faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
+  };
+  deriveFace();
   // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
   const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   let reuseFrom = reuseFace || null;
@@ -470,10 +482,32 @@ export function renderCard(registries, ref, opts = {}) {
   // number in the status row's own tint — "these cards just lit up" instead
   // of set-intersection math. Non-matching cards get nothing (absence = no
   // bonus; never a "+0%" badge).
-  if (model.paint.boostTint) {
-    el.classList.add('tag-boost');
-    el.style.setProperty('--boost-tint', model.paint.boostTint);
-  }
+  const syncBoost = () => {
+    el.classList.toggle('tag-boost', !!model.paint.boostTint);
+    if (model.paint.boostTint) el.style.setProperty('--boost-tint', model.paint.boostTint);
+    else el.style.removeProperty('--boost-tint');
+  };
+  if (model.paint.boostTint) syncBoost();
+
+  // What is fixed on the element when it is built (its classes, type paint, identity, the
+  // hold-to-select kind): a refresh may change the numbers on the face and nothing here.
+  const shellKey = () => JSON.stringify([playingCardClasses(model), !!def.corrupted, !!expanded, model.paint.typeColor, model.paint.radiusPx,
+    model.paint.artRadiusPx, model.paint.tint, model.instanceId || '', model.id, combatProfile.camp, combatProfile.maneuver, combatProfile.school,
+    !!opts.small, !!opts.preview?.needsTarget, opts.inspection !== false]);
+  const builtShell = shellKey();
+  refreshers.set(el, next => {
+    const { reuseFace: _unused, ...nextOpts } = next;
+    const was = opts;
+    opts = nextOpts;
+    deriveModel(); deriveFace();
+    if (shellKey() !== builtShell) { opts = was; deriveModel(); deriveFace(); return false; }
+    el.classList.toggle('unaffordable', opts.affordable === false);
+    syncBoost();
+    reuseFrom = el; // the face is taken over from itself: only the words that moved are rewritten
+    paint(drawn);
+    reuseFrom = null;
+    return true;
+  });
 
   // NO HOVER TOOLTIP ON A CARD (owner, 2026-09-11: "all cards will use the
   // (i) over on selection"). Selecting a card reveals its Information button
@@ -554,6 +588,18 @@ export function renderCard(registries, ref, opts = {}) {
     el.addEventListener('cardinspectiondouse', restate);
   }
   return el;
+}
+
+/**
+ * refreshCard(el, opts) → true when the card kept its element and now shows `opts` (a new preview,
+ * affordability or availability): the face's moved words are rewritten in place, the classes follow, and the
+ * reading door reads the new opts when it next opens. False when the new opts would change what the element
+ * itself is built from (type, classes, identity); the caller then builds a new card, as before. `opts` is the
+ * complete set renderCard was given, not a patch.
+ */
+export function refreshCard(el, opts) {
+  const refresh = refreshers.get(el);
+  return refresh ? refresh(opts) : false;
 }
 
 /**

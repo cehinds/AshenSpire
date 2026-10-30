@@ -52,7 +52,7 @@ import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // on flip; the same warning rides handAxis.js.
 
 import { reducedMotionRequested } from '../motion.js';
-import { renderCard, setHandFaceBudget } from './card.js';
+import { renderCard, refreshCard, setHandFaceBudget } from './card.js';
 import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
@@ -95,7 +95,11 @@ export function measureHandUpcastHeight(controls, { zoom, width, cache }) {
   return height;
 }
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false,
+  // liveWiring: the host's wireCard reads a live record that updateCard refreshes, so a card whose preview,
+  // affordability or availability moved keeps its element and listeners (refreshCard). rebuildKey(entry) is a string
+  // that, when it moves, still forces a new card (the host's own controls on it, built from the preview).
+  liveWiring = false, updateCard = null, rebuildKey = null }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -336,6 +340,21 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     if (handEl.getAttribute('data-has-selection') !== on) handEl.setAttribute('data-has-selection', on);
     return result;
   }
+  // The options renderCard is given above, for refreshCard (tests/hand-keeps-cards-on-refresh.test.mjs holds the two equal).
+  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
+    surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
+  // A card that keeps its element while its look changes runs without transitions for the frame that paints the
+  // change, so it lands as a rebuilt card did. The second frame callback restores the stylesheet's own.
+  const quieted = new Set();
+  function quiet(el) {
+    if (!quieted.size) {
+      const restore = () => { for (const node of quieted) node.style.removeProperty('transition'); quieted.clear(); };
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(restore)); else restore();
+    }
+    if (quieted.has(el)) return;
+    quieted.add(el);
+    el.style.setProperty('transition', 'none');
+  }
   function renderCards({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
@@ -390,7 +409,17 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // live combat by instance id when pressed, so a kept one is never stale,
       // and JSON.stringify would drop them anyway.
       const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability]);
+      // What a refresh cannot change: the instance, the viewer's reason and name, the surface, whether the card is wired
+      // at all (it has a preview), and the host's own controls.
+      const structure = liveWiring ? JSON.stringify([entry.inst, entry.reason, entry.name, entry.surface, !!entry.preview, rebuildKey ? rebuildKey(entry) : '']) : '';
       let record = renderedCards.get(id);
+      if (record && record.signature !== signature && liveWiring && !entry.reason && record.structure === structure
+          && refreshCard(record.el, cardOpts(entry))) {
+        updateCard?.(record.el, entry);
+        record.signature = signature;
+        // A rebuilt card appeared in place with no transition; the kept one must not animate the same change.
+        quiet(record.el);
+      }
       // A face rebuilt in place (its preview or affordability moved, same slot,
       // same count) keeps the fan plan already applied to its predecessor.
       let predecessor = null;
@@ -496,7 +525,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // every hand card as well.
       if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      renderedCards.set(id, { el, signature, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
+      renderedCards.set(id, { el, signature, structure, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
       handEl.insertBefore(el, handEl.children[i] || null);
       if (predecessor) {
         // Same controls (so the same reserved height): take over the placement
