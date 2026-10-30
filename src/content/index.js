@@ -89,8 +89,9 @@ export const coreContentBundle = {
   // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
   // 0.7.2: the candidate after the 0.7.1.1848 release cut (2026-10-25). The
   // owner's rule of 2026-10-30 is that each release cut advances the candidate
-  // for the line that follows, and the tail restarts at 0
-  // (docs/versioning.md, "A release cut advances the candidate").
+  // for the line that follows, and the tail restarts at 0; a release merged to
+  // main advances MINOR instead (docs/versioning.md, "A release cut advances the
+  // candidate" and "A main merge advances the minor").
   version: '0.7.2',
   balance,
   // The shop kinds and their offerings (SPEC §14.2). A bundle key, not a
