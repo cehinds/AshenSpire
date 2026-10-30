@@ -2132,7 +2132,7 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
 :root[data-effects='off'] .player .sprite.hitflash > .alternative-card-stage:not([data-still]):first-child,
 :root[data-effects='off'] .player .sprite.hitflash.hit-heavy > .alternative-card-stage:not([data-still]):first-child { animation-name: none; }
 /* Effects off: the action keyframes keep their travel (motionAttack) and drop the brightness / drop-shadow
-   flash they also animate on the sprite host. Filter-only families have nothing left to play. */
+   flash they also animate on the sprite host. Filter-only families (release, cast, brace) have nothing left to play; the sidestep's opacity dip stays. */
 @keyframes lunge-left-nofx { 0%, 100% { translate: 0 0; } 35% { translate: -26px 0; } }
 @keyframes lunge-right-nofx { 0%, 100% { translate: 0 0; } 35% { translate: 26px 0; } }
 @keyframes family-slash-nofx { 0%, 100% { translate: 0 0; } 22% { translate: var(--action-recoil, -12px) 0; } 55% { translate: var(--action-travel, 26px) 0; } }
@@ -2145,9 +2145,16 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
 :root[data-effects='off'] .sprite.act-attack[data-action-motion="lunge"] { animation-name: family-thrust-nofx; }
 :root[data-effects='off'] .sprite.act-attack[data-action-motion="impact"] { animation-name: family-strike-nofx; }
 :root[data-effects='off'] .sprite.act-attack[data-action-motion="release"] { animation-name: none; }
-:root[data-effects='off'] .sprite.act-move[data-action-motion] { animation-name: none; }
+:root[data-effects='off'] .sprite.act-move[data-action-motion="cast"],
+:root[data-effects='off'] .sprite.act-move[data-action-motion="brace"] { animation-name: none; }
+/* family-dodge only dips opacity (no filter), so the sidestep keeps it: it still reads as "dodged". */
 /* Attack lunge off still wins over the overrides above. */
 :root[data-effects='off'] body.motion-attack-off .sprite.act-attack,
 :root[data-effects='off'] body.motion-attack-off .sprite.act-move,
 :root[data-effects='off'] body.motion-attack-off .sprite[data-action-motion].act-attack,
 :root[data-effects='off'] body.motion-attack-off .sprite[data-action-motion].act-move { animation: none; }
+/* Reduced motion still wins over every override above: repeat the full shorthand so the duration resets too. */
+:root[data-effects='off'] .reduced-motion .sprite.act-attack,
+:root[data-effects='off'] .reduced-motion .sprite.act-move,
+:root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-attack,
+:root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-move { animation: none; }

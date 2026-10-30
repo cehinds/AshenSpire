@@ -20,10 +20,21 @@ test('every action keyframe applied to a sprite host under Effects off animates 
   }
   // every filter-animating action family has an override (a name or none) for both attack and move hosts
   for (const family of ['sweep', 'lunge', 'impact', 'release']) assert.ok([...applied.keys()].some(k => k.includes(`"${family}"`)), family);
-  assert.ok([...applied.keys()].some(k => /act-move\[data-action-motion\]/.test(k)), 'cast / brace move hosts');
+  for (const motion of ['cast', 'brace']) assert.equal(applied.get([...applied.keys()].find(k => k.includes(`"${motion}"`))), 'none', `${motion} has only a flash, so it plays nothing`);
+  assert.ok(![...applied.keys()].some(k => k.includes('"sidestep"')) && ![...applied.keys()].some(k => /act-move\[data-action-motion\]$/.test(k)), 'the sidestep is not silenced');
+  assert.match(keyframes('family-dodge'), /opacity/);
+  assert.doesNotMatch(keyframes('family-dodge'), /filter/);
+  assert.match(css, /\.sprite\.act-move\[data-action-motion="sidestep"\] \{ animation-name: family-dodge; \}/, 'the dodge opacity dip is still named under Effects off');
 });
 
 test('Attack lunge off still removes the travel under Effects off', () => {
   assert.match(css, /:root\[data-effects='off'\] body\.motion-attack-off \.sprite\[data-action-motion\]\.act-attack/);
   assert.ok(css.lastIndexOf("body.motion-attack-off .sprite.act-attack") > css.lastIndexOf('family-strike-nofx { 0%'), 'it comes after the overrides');
+});
+
+test('Reduced motion still beats the Effects-off overrides with a full animation: none shorthand', () => {
+  assert.match(css, /\.reduced-motion \.sprite\.act-attack,\s*\.reduced-motion \.sprite\.act-move \{ animation: none; \}/);
+  const at = css.lastIndexOf(":root[data-effects='off'] .reduced-motion .sprite.act-attack,");
+  assert.ok(at > css.lastIndexOf('family-strike-nofx { 0%') && at > css.lastIndexOf(".sprite.act-attack[data-action-motion=\"impact\"] { animation-name: family-strike-nofx"), 'repeated after the overrides');
+  assert.match(css.slice(at, at + 400), /animation: none;/);
 });
