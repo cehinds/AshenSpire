@@ -169,12 +169,12 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // Loaded outfit and hurt images never change their pixels after decoding.
     auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!effectsOff(),still:effectsOff(),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
-    if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
+    if(effect && !still && !effectsOff() && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
       if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);el.dataset.effect=effect;}
     }
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
-    const flash=flashAt===null||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
+    const flash=flashAt===null||effectsOff()||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
     if (flash) {
       if(mask.width!==dimensions[0])mask.width=dimensions[0];
       if(mask.height!==dimensions[1])mask.height=dimensions[1];
