@@ -2074,3 +2074,37 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: var(--bg-raise); color: var(--parchment);
   touch-action: manipulation; pointer-events: auto;
 }
+
+/* ---------- Effects off and the fighter-motion options (owner, 2026-10-30) ----------
+   `data-effects="off"` is the default (main.js, ui/performance.js; `data-performance="lite"` is its
+   older twin, and the lite rules above already cover the stance glow, backdrop bloom, weather and
+   sprite filters). These rules add what lite left animated or soft. They sit in their own rules
+   so the reduced-motion rules above stay as they are. Damage numbers, callouts, intents, statuses
+   and card text are never touched here. */
+:root[data-effects='off'] .hand .card.card-drawn,
+:root[data-effects='off'] .combat .pile.spent.pile-received { animation: none; }
+:root[data-effects='off'] .hand .card,
+:root[data-effects='off'] .hand .card.selected,
+:root[data-effects='off'] .hand .card[data-selected="true"] { transition: none; }
+:root[data-effects='off'] .combat *:not(.float-num):not(.fx-callout) { text-shadow: none; }
+:root[data-effects='off'] .combat .intent-icon,
+:root[data-effects='off'] .combat .combatant .sprite { filter: none; }
+:root[data-effects='off'] .combat-pose-aura,
+:root[data-effects='off'] .pose-stage[data-pose-reaction] .combat-pose-aura { filter: none; }
+:root[data-effects='off'] .backdrop::after { animation: none; opacity: 0.7; }
+:root[data-effects='off'] .layered-particles { animation: none; will-change: auto; }
+:root[data-effects='off'] .combat-pose-aura svg { animation: none; }
+/* Attack lunge: the figure stays put; the attack pose, the number and the intent still say who struck. */
+body.motion-attack-off .sprite.act-attack,
+body.motion-attack-off .sprite.act-move,
+body.motion-attack-off .sprite[data-action-motion].act-attack,
+body.motion-attack-off .sprite[data-action-motion].act-move { animation: none; }
+/* Hit recoil and stagger wobble: the number, the health bar and the hit class remain. */
+body.motion-hit-off .sprite.hitflash > :first-child,
+body.motion-hit-off .sprite.hitflash.hit-heavy > :first-child,
+body.motion-hit-off .sprite.wobble > :first-child { animation: none; }
+/* Defeat fall: the defeated frame and the dead class appear at once, with no dissolve. */
+body.motion-defeat-off .combatant.dead .sprite > img,
+body.motion-defeat-off .combatant.down .sprite > img,
+body.motion-defeat-off .combatant.dead,
+body.motion-defeat-off .combatant.down { transition: none; animation: none; }
