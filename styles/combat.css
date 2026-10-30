@@ -2087,7 +2087,8 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root[data-effects='off'] .hand .card,
 :root[data-effects='off'] .hand .card.selected,
 :root[data-effects='off'] .hand .card[data-selected="true"] { transition: none; }
-:root[data-effects='off'] .combat *:not(.float-num):not(.fx-callout) { text-shadow: none; }
+/* Blurred glows go flat; the dark outline that keeps HUD text, stance names and numbers legible stays. */
+:root[data-effects='off'] .combat :is(.fx-banner, .fx-glyph, .fx-spark, .fx-banner.turn) { text-shadow: none; }
 :root[data-effects='off'] .combat .intent-icon,
 :root[data-effects='off'] .combat .combatant .sprite { filter: none; }
 :root[data-effects='off'] .combat-pose-aura,
