@@ -1,6 +1,7 @@
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { paintedOutfit, armourArtClass, armourArtKey } from '../model/paintedOutfitArt.js';
 import { auraFilter, POWER_FRAMES } from './combatAura.js';
+import { effectsOff } from './performance.js';
 import { COMBAT_SEQUENCES } from '../model/combatAnimation.js';
 import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
 import { READINESS_POSE_ART } from '../content/readinessPoseArt.js';
@@ -170,7 +171,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     current = pose;
     el.dataset.pose = pose;
     img.src = assetUrl(frame.file);
-    const auraCss = auraFilter(pose, resting, resources, active);
+    // Effects off: the held stance glow only, never the casting/payment pulse.
+    const auraCss = effectsOff() ? auraFilter('ready', resting, [], false) : auraFilter(pose, resting, resources, active);
     img.style.filter = `var(--combatant-edge, blur(0px))${auraCss === 'none' ? '' : ` ${auraCss}`}`;
     const restingState = COMBAT_POSE_STATES[resting];
     el.dataset.poseState = restingState && resting !== POSE.defeatedPose ? resting : '';

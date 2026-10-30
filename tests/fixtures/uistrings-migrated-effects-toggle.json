@@ -1,0 +1,10 @@
+{
+  "reason": "Effects toggle copy (owner, 2026-10-30); retain the shadow sweep after origin/dev advances.",
+  "ids": [
+    "settings.row.effects",
+    "settings.row.motionAttack",
+    "settings.row.motionHit",
+    "settings.row.motionIdle",
+    "settings.row.motionDefeat"
+  ]
+}

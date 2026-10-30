@@ -32,6 +32,7 @@ import { tierStatus, tierChoiceDisabled, retryOffered, retryBuiltInArt, retryRun
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
+import { resolveMotionIdle } from '../performance.js';
 import { HAPTICS_DEFAULT_ON } from '../../content/haptics.js';
 import { balance } from '../../content/balance.js';
 import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
@@ -394,9 +395,25 @@ const ROWS = [
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
     note: tFull('settings.row.animSpeed') },
-  { cat: 'Combat', key: 'performanceMode', type: 'choice', def: 'auto',
+  // RENDERING QUALITY FOLDED INTO EFFECTS (owner, 2026-10-30). The key stays so a
+  // settings file that names it still imports; ui/performance.js reads a saved
+  // 'full' once as `effects: true` (migrateEffectsSetting).
+  { cat: 'Combat', key: 'performanceMode', type: 'choice', def: 'auto', retired: true,
     choices: ['auto', 'full', 'lite'], label: t('settings.row.performanceMode'),
     note: tFull('settings.row.performanceMode') },
+  // EFFECTS (default OFF) turns the decoration on: animated stance glow, hit sparks
+  // and flashes, card motion, blur and shadows, live-tracking bars. Off stays fully
+  // informative. The four fighter-motion rows are independent of it (default ON).
+  { cat: 'Combat', key: 'effects', def: false, label: t('settings.row.effects'),
+    note: tFull('settings.row.effects') },
+  { cat: 'Combat', key: 'motionAttack', def: true, label: t('settings.row.motionAttack'), selfEvident: true,
+    note: tFull('settings.row.motionAttack') },
+  { cat: 'Combat', key: 'motionHit', def: true, label: t('settings.row.motionHit'), selfEvident: true,
+    note: tFull('settings.row.motionHit') },
+  { cat: 'Combat', key: 'motionIdle', def: true, resolve: resolveMotionIdle, label: t('settings.row.motionIdle'), selfEvident: true,
+    note: tFull('settings.row.motionIdle') },
+  { cat: 'Combat', key: 'motionDefeat', def: true, label: t('settings.row.motionDefeat'), selfEvident: true,
+    note: tFull('settings.row.motionDefeat') },
   { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
     choices: Object.keys(TITLE_ENTRANCE_TIMING.holdDurations), label: t('settings.row.titleCityHold'),
     note: tFull('settings.row.titleCityHold') },

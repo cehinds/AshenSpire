@@ -185,7 +185,7 @@ import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
-import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
+import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, motionFlags, coarsePointer } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
@@ -448,6 +448,8 @@ function bringStoredProfileForward(meta) {
 }
 let activeMeta = saves.loadMeta();
 let activeSettings = bringStoredProfileForward(activeMeta);
+// Rendering quality folded into Effects: a saved explicit Full becomes Effects on, once.
+if (migrateEffectsSetting(activeSettings)) { activeMeta.settings = activeSettings; saves.saveMeta(activeMeta); }
 // Explicit preview URLs remain reproducible; otherwise use the saved rules for future runs.
 if (!profileQuery.has('gameProfile') && !profileQuery.has('wb.gameProfile') && !globalThis.__ASHEN_GAME_PROFILE_PREVIEW__) {
   selectedGameProfile = readNewGameProfile(activeSettings, selectedGameProfile);
@@ -953,6 +955,12 @@ function applyDisplaySettings(settings) {
   document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
+  // Effects (owner, 2026-10-30): `data-performance` stays the CSS hook (lite = off);
+  // `data-effects` is its readable alias. The fighter-motion options are body
+  // classes (`motion-attack-off`, ...), each independent of Effects.
+  document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
+  const motion = motionFlags(settings);
+  for (const kind of Object.keys(motion)) document.body.classList.toggle(`motion-${kind}-off`, !motion[kind]);
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
   configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);
@@ -1034,7 +1042,7 @@ function applyDisplaySettings(settings) {
   // applyUiScale for readability only: `--tap-floor` divides one by the other
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
-  setAnimSpeed(resolveCombatPacing(settings, quality));
+  setAnimSpeed(resolveCombatPacing(settings, coarsePointer()));
   setCombatPacing(settings);
   // A cleared key (a Reset, a profile that leaves it out) means the default:
   // setVolumes ignores a missing field, so say the default out loud.
