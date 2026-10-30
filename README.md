@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Applied layered card art
+
+[Feature play link](https://cehinds.github.io/AshenSpire/branches/feature/apply-card-art-library/latest/) · [Verified CI build download](https://github.com/cehinds/AshenSpire/actions/runs/41013207417/artifacts/12958626850)
+
+All 156 cards without dedicated art use approved independent cutouts. Open **Card art review library** in the local Workbench to inspect components, edit placements and export JSON/PNG. The captures below show that source review screen using the native game card renderer. The game build artifact is verified available; this environment blocks the Pages host, so its play link has not been browser-verified here.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile card art review](docs/preview/features/apply-card-art-library/mobile.png) | ![Standalone art, components and native Stone Sling card](docs/preview/features/apply-card-art-library/desktop.png) | ![Fire Counter with separate sword and shield](docs/preview/features/apply-card-art-library/wide.png) | ![Tablet card art review](docs/preview/features/apply-card-art-library/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
