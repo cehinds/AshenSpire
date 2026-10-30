@@ -51,8 +51,12 @@ export function createPreviewMemo({ combat, preview, dispatch, idle }) {
         return;
       }
       skips = 0;
-      const job = queue.shift();
-      try { job(); } catch { /* a preview that throws is not kept; the render handles it */ }
+      // Another job only while the slot still holds a whole preview: idle slots are rare during playback
+      // and a 50 ms one fits two.
+      do {
+        const job = queue.shift();
+        try { job(); } catch { /* a preview that throws is not kept; the render handles it */ }
+      } while (queue.length && mine === generation && deadline.timeRemaining() >= PREWARM_MIN_IDLE_MS);
       if (queue.length) schedule(api);
     });
   };

@@ -18,7 +18,8 @@ function idleStub() {
   const pending = new Map(); let next = 1; const cancelled = [];
   return { pending, cancelled,
     api: { request: cb => { const h = next++; pending.set(h, cb); return h; }, cancel: h => { cancelled.push(h); pending.delete(h); } },
-    fire(budget = 50) { const [h, cb] = [...pending][0]; pending.delete(h); cb({ timeRemaining: () => budget, didTimeout: false }); return h; },
+    // timeRemaining falls 25 ms each time it is read: the entry check, then one read per finished job.
+    fire(budget = PREWARM_MIN_IDLE_MS) { const [h, cb] = [...pending][0]; pending.delete(h); let reads = 0; cb({ timeRemaining: () => budget - 25 * reads++, didTimeout: false }); return h; },
     fireStale(cb, budget = 50) { cb({ timeRemaining: () => budget, didTimeout: false }); } };
 }
 function setup(idle) {
@@ -49,11 +50,13 @@ test('prewarmed hand quotes are exactly the keys the finish render asks for: zer
   assert.equal(computed, 0, 'the intent projection was kept too');
 });
 
-test('one job per idle callback', () => {
+test('one job per callback in a minimal slot, a second only while a whole preview still fits', () => {
   const idle = idleStub(); const { memo, calls, jobs } = setup(idle);
   memo.prewarm(jobs());
   idle.fire();
   assert.equal(calls.preview, 1);
+  idle.fire(PREWARM_MIN_IDLE_MS + 25); // reads 49, 24, -1: two jobs
+  assert.equal(calls.preview, 3);
 });
 
 test('a job is skipped when under the budget, kept, and retried on the next idle', () => {
