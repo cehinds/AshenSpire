@@ -10,6 +10,9 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, previewCard } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { mountHand } from '../src/ui/components/hand.js';
+import { openBoundCardInspection } from '../src/ui/components/cardInspection.js';
+import { clearSelection, resetSelection } from '../src/ui/components/cardSelection.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 
 const registries = createRegistries(contentBundle);
@@ -73,4 +76,29 @@ test('a donor that is a different card, or an inspect face, is not taken over', 
   assert.equal(rebuilt.outerHTML, renderCard(registries, other, options(previewCard(combat, other.instanceId))).outerHTML);
   const reading = renderCard(registries, first, { inspection: false, level: 'inspect', reuseFace: donor });
   assert.notEqual(faceOf(reading), face);
+}));
+
+test('the rebuilt hand card opens a door that says the current availability', () => withModalDom(() => {
+  globalThis.NodeFilter ??= { SHOW_ELEMENT: 1 };
+  document.createTreeWalker = () => ({ nextNode: () => false, currentNode: null });
+  document.getSelection = () => ({ removeAllRanges() {}, rangeCount: 0 });
+  resetSelection(); clearSelection();
+  const combat = fightWith();
+  const inst = combat.piles.hand[0];
+  const preview = previewCard(combat, inst.instanceId);
+  document.documentElement ??= { dataset: { handLayout: 'paging' }, getAttribute: () => null };
+  const handEl = document.createElement('div');
+  document.body.append(handEl);
+  const hand = mountHand(handEl, { registries, reuseCards: true });
+  const entry = (affordable, availability) => ({ inst, preview, affordable, selected: false, surface: 'combat', availability, commands: { play: () => {} } });
+  hand.render({ cards: [entry(true, { play: true })] });
+  const first = handEl.children[0];
+  const face = faceOf(first);
+  hand.render({ cards: [entry(false, { play: 'Not enough stamina for this card.' })] });
+  const second = handEl.children[0];
+  assert.notEqual(second, first, 'the card is rebuilt: its wiring captured the old affordability');
+  assert.equal(faceOf(second), face, 'and carries the same face');
+  assert.ok(openBoundCardInspection(second), 'the door opens');
+  assert.match(document.body.outerHTML, /Not enough stamina for this card\./);
+  hand.teardown();
 }));
