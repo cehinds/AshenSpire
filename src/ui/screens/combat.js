@@ -2813,8 +2813,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     paintEndTurnKey($('.end-turn'), etKey);
     const hasPlayable = endTurnHasPlayable();
+    $('.end-turn').classList.toggle('pulse', hasPlayable);
     const endTurn = $('.end-turn');
-    endTurn.classList.toggle('pulse', hasPlayable);
     const confirmReady = String(combat.phase === 'player' && !hasPlayable);
     if (endTurn.dataset.confirmReady !== confirmReady) endTurn.dataset.confirmReady = confirmReady;
 
