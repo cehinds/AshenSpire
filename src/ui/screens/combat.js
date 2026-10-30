@@ -136,7 +136,7 @@ import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { combatantFrame, updateCombatantFrame } from '../components/combatantFrame.js';
+import { combatantFrame, updateCombatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
@@ -1842,7 +1842,35 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
 
-  function statusRow(entity, { inspection = false } = {}) {
+  // Every status icon's inputs as plain data. The row is drawn from these and the
+  // stage keys it by them, so what is keyed is exactly what is drawn.
+  function statusRows(entity) {
+    const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
+    const rows = [];
+    // Evasion and Precision stacks have one home: the dedicated defense badge. Prepared
+    // reaction charges remain available in the actor's inspection details.
+    for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
+      if (combat.combatExpansionVersion === 2 && (sid === 'evade' || sid === 'precision')) continue;
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid, entity));
+      const stacks = inst.meter ? inst.meter.value : inst.stacks;
+      const presentation = statusInstancePresentation(def, inst);
+      // M1's "absent at zero", applied to pips too: a spent proc row (Mana 0
+      // after a burst) is an empty frame, not information (Sunna's S-flag).
+      if (def.proc && stacks <= 0) continue;
+      const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      const pip = plan.pips.includes(sid);
+      rows.push({
+        sid, glyph: def.icon || '?', count: presentation.valueText, tone: def.tint || 'var(--muted)', ring: pip,
+        label: semanticAttrs['aria-label'], statusId: semanticAttrs['data-status-id'], valueToken: semanticAttrs['data-status-value-token'],
+        tipTitle: presentation.label, tipText: presentation.tooltip,
+        build: inst.meter ? { value: inst.meter.value, max: inst.meter.max } : null,
+        fillPct: pip ? Math.min(100, (inst.meter.value / inst.meter.max) * 100) : null,
+      });
+    }
+    return rows;
+  }
+
+  function statusRow(entity, { inspection = false } = {}, rows = statusRows(entity)) {
     // The status row is THE shared icon tray (components/iconTray.js) — the
     // reference the relic rail and the Potions minis inherit: one round Pip per
     // effect, its count a round StatePill on the corner, one row that never
@@ -1854,39 +1882,26 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
-    const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
-    // Evasion and Precision stacks have one home: the dedicated defense badge. Prepared
-    // reaction charges remain available in the actor's inspection details.
-    for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      if (combat.combatExpansionVersion === 2 && (sid === 'evade' || sid === 'precision')) continue;
-      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid, entity));
-      const stacks = inst.meter ? inst.meter.value : inst.stacks;
-      const presentation = statusInstancePresentation(def, inst);
-      // M1's "absent at zero", applied to pips too: a spent proc row (Mana 0
-      // after a burst) is an empty frame, not information (Sunna's S-flag).
-      if (def.proc && stacks <= 0) continue;
-      const shownValue = presentation.valueText;
+    for (const status of rows) {
       const statusTip = () => {
         let extra = '';
-        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+        if (status.build) extra = `<br>Build-up: ${status.build.value} / ${status.build.max}`;
+        return `<div class="tt-title">${esc(status.tipTitle)}</div>${esc(status.tipText)}${extra}`;
       };
-      const semanticAttrs = statusInstanceSemanticAttrs(presentation);
       const el = trayIcon({
-        glyph: def.icon || '?', count: shownValue, tone: def.tint || 'var(--muted)', ring: plan.pips.includes(sid),
-        label: semanticAttrs['aria-label'], attrs: { class: 'status-icon' }, tip: statusTip, yieldTap: armed,
+        glyph: status.glyph, count: status.count, tone: status.tone, ring: status.ring,
+        label: status.label, attrs: { class: 'status-icon' }, tip: statusTip, yieldTap: armed,
       });
-      el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
-      el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
+      el.setAttribute('data-status-id', status.statusId);
+      el.setAttribute('data-status-value-token', status.valueToken);
       // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
       // background is a conic fill in the row's tint, same value/threshold
       // semantics as the bar it stands in for. A resistance pip's number is its
       // countdown (M3 — the receipt reads in turns); every other pip keeps its
       // stack count, and that choice is made where `shownValue` is derived.
-      if (plan.pips.includes(sid)) {
-        const fillPct = Math.min(100, (inst.meter.value / inst.meter.max) * 100);
+      if (status.ring) {
         el.classList.add('proc-pip');
-        el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
+        el.style.background = `conic-gradient(${status.tone} ${status.fillPct}%, transparent ${status.fillPct}%)`;
       }
       row.appendChild(el);
     }
@@ -2021,8 +2036,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     battlefieldStage.placeHitBadges();
   }
 
-  function meterBars(entity, { tooltips = true } = {}) {
+  // Everything the meter strip is drawn from, as plain data (the stage keys the strip by `key`).
+  function meterInputs(entity) {
     const v = dv(entity);
+    const procPlan = entity.kind === 'enemy' ? procDisplayPlan(entity) : null;
+    const stackHidden = new Set(procPlan ? procPlan.hidden : []);
+    const expanded = combat.combatExpansionVersion === 2;
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp'));
+    const hp = {
+      hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null },
+      // The holder's own numbers (its gear Evasion), not the player's.
+      evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
+      poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
+      wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
+    };
+    const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
+    const procs = procPlan && !expanded ? procPlan.bars.map((sid) => ({ sid, value: v.statuses[sid].meter.value, max: v.statuses[sid].meter.max, resisted: hasResistAgainst(entity, sid) })) : [];
+    return { v, plan, stackHidden, hp, procs, key: [entity.kind, plan, hp, arcane, procs] };
+  }
+
+  function meterBars(entity, { tooltips = true, inputs = meterInputs(entity) } = {}) {
+    const { v, stackHidden, plan, hp, procs } = inputs;
     const wrap = meters([], { class: 'meters tight' });
     // THE UNDER-MODEL HUD — "should really just show health and poise", his
     // words. Same renderer, same table, different surface: the rows carry which
@@ -2031,9 +2065,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // too: the player entity carries the real-but-empty vessel, so his strip
     // shows health and poise exactly as the enemies' do — and a zero-threshold
     // entity still refuses (no meter → ABSENT).
-    // Resources the WCF2 stack could not fit stay readable in the inspector.
-    const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (combat.combatExpansionVersion !== 2 || bar.id === 'hp'));
+    // Resources the WCF2 stack could not fit stay readable in the inspector (see meterInputs).
     const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips, showLabels: entity.kind === 'player' });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
@@ -2042,11 +2074,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
-          // The holder's own numbers (its gear Evasion), not the player's.
-          evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
-          poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
-          wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward') });
+        const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
+        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -2067,8 +2096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
       // tint + glyph nub from the row's own data, absent at zero. Numbers
       // live in the tooltip; the bar's job is HOW CLOSE, at a glance.
-      const plan = procDisplayPlan(entity);
-      for (const sid of combat.combatExpansionVersion === 2 ? [] : plan.bars) {
+      for (const { sid, resisted } of procs) {
         // v, not entity: the bar is the thing the drain animates, so it must
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
@@ -2077,7 +2105,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // row's glyph as its plate — hue is never the only channel. S2: an
         // active resistance stripes the fill, so the state reads without a
         // tooltip.
-        const resisted = hasResistAgainst(entity, sid);
         const meterEl = meter({
           id: sid, valueNode: engravedIcon(def.icon || 'unknown') || document.createTextNode('?'),
           cur: inst.meter.value, max: inst.meter.max,
@@ -2138,6 +2165,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let lastEndTurnPlayable = null;
   const enemyFrames = new Map();
 
+  // Each combatant slot (leading / name / meters / statuses / chips / classes) is keyed on
+  // the data it is drawn from. A slot whose key is unchanged is left in the frame, so one
+  // changed number no longer rebuilds the whole HUD. The frame-wide `renderKey` below still
+  // gates the frame's non-slot work (pose, attributes).
+  function writeSlots(box, record, keys, build) {
+    const changed = {};
+    let any = false;
+    for (const name of Object.keys(keys)) if (record.slotKeys[name] !== keys[name]) { changed[name] = true; any = true; }
+    // The frame's classes are reconciled either way (a repeat is a no-op); only a changed key is a write.
+    if (!any) { updateCombatantSlots(box, { classNames: build.classNames() }); return false; }
+    const slots = { classNames: build.classNames() };
+    if (changed.leading) slots.leading = build.leading();
+    if (changed.name) slots.name = build.name();
+    if (changed.meters) slots.meters = build.meters();
+    if (changed.statuses) slots.statuses = build.statuses();
+    if (changed.chips) slots.chips = build.chips();
+    if (!updateCombatantSlots(box, slots)) {
+      // The target-HUD rack holds the meters: a full update discards it, as it always has.
+      updateCombatantFrame(box, { classNames: slots.classNames, leading: slots.leading ?? build.leading(), name: slots.name ?? build.name(),
+        meters: slots.meters ?? build.meters(), trailing: [slots.statuses ?? build.statuses(), ...(slots.chips ?? build.chips())] });
+    }
+    record.slotKeys = keys;
+   
+    return true;
+  }
+
+  const playerSlots = { slotKeys: {} };
   function renderPlayer() {
     const zone = $('.player-zone');
     const p = combat.player;
@@ -2146,8 +2200,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
-    if (existing && playerRenderKey === renderKey) return;
-    if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
+    if (existing && playerRenderKey === renderKey) return false;
+    if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); playerSlots.slotKeys = {}; }
     playerArtKey = artKey;
     if (isReaverAttackEligible({
       classId: run.class,
@@ -2155,53 +2209,91 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       customization: run.customization,
       spritesEnabled: spritesAreEnabled(),
     })) preloadReaverAttackFrames();
-    const trailing = [];
-    if (p.stanceId) {
-      const st = registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId));
-      // The stance is a StatePill in its own tone — ember by default, frost for
-      // Bulwark, which is the stance's own colour and not this screen's.
-      const chip = pill({
-        label: st.name,
-        attrs: { class: `stance-chip lg ${p.stanceId}`, dataset: { tone: p.stanceId === 'bulwark' ? 'frost' : 'ember' } },
-      });
-      if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
-      bindAbilityBadge(chip, p, p.stanceId);
-      // WCM4: in formation the chip is the stance strip, after the buildup rows.
-      markMeterRow(chip, 'stance');
-      trailing.push(chip);
-    }
-    trailing.push(statusRow(p));
-    // SPEC §14.3: each companion travelling with the run stands beside the
-    // player as an ally portrait — its name and the fights it has left.
+    const settings = JSON.stringify(readSettings());
+    const stanceDef = p.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId)) : null;
+    const companionRows = [];
     for (const id of combat.companions || []) {
       if (!registries.companions.has(id)) continue;
       const def = registries.companions.get(id);
-      const fightsLeft = ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1;
-      const chip = pill({ label: t('combat.companion.left', { name: def.name, n: fightsLeft }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
-      chip.setAttribute('title', def.blurb);
-      const art = alternativeCompanionIcon(id);
-      if (art) chip.prepend(art);
-      trailing.push(chip);
+      companionRows.push({ id, def, fightsLeft: ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1 });
     }
-    if (combat.foundation && p.evade > 0) {
-      const chip = pill({ label: `${t('card.tags.evade')} ${p.evade}`, attrs: { class: 'foundation-evade' } });
-      bindAbilityBadge(chip, p, 'evade');
-      trailing.push(chip);
-    }
-    const slots = {
-      role: 'player',
-      entityId: 'player',
-      leading: [combatantInfo(combatantName('player', p), opener => openCombatantDoor(combatantSubject('player', p), opener))],
-      classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
-      name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
-      meters: meterBars(p),
-      trailing,
+    const evadeChip = !!(combat.foundation && p.evade > 0);
+    const abilityName = (id) => activeCombatAbilities(registries, p, Boolean(combat.foundation)).find(row => row.id === id)?.name;
+    const playerName = combatantName('player', p);
+    const nameLabel = `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`;
+    const meterIn = meterInputs(p);
+    const statusIn = statusRows(p);
+    const classNames = () => [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
+    const keys = {
+      classes: JSON.stringify(classNames()),
+      leading: JSON.stringify([playerName, settings]),
+      name: JSON.stringify([nameLabel, settings]),
+      meters: JSON.stringify([meterIn.key, settings]),
+      statuses: JSON.stringify([statusIn, settings]),
+      chips: JSON.stringify([stanceDef && [p.stanceId, stanceDef.name, stanceDef.icon, abilityName(p.stanceId)],
+        companionRows.map(({ id, def, fightsLeft }) => [id, def.name, def.blurb, fightsLeft]),
+        evadeChip && [p.evade, abilityName('evade')], settings]),
     };
-    const box = existing ? updateCombatantFrame(existing, slots) : combatantFrame(slots);
-    // A reused frame keeps its listeners; only the per-render attributes move.
-    if (existing) refreshCombatantContext(box, combatantName('player', p));
-    else wireCombatantContext(box, combatantName('player', p));
+    const build = {
+      classNames,
+      leading: () => [combatantInfo(combatantName('player', p), opener => openCombatantDoor(combatantSubject('player', p), opener))],
+      name: () => markMeterRow(labelStack({ label: nameLabel, attrs: { class: 'nm' } }), 'name'),
+      meters: () => meterBars(p, { inputs: meterIn }),
+      statuses: () => statusRow(p, {}, statusIn),
+      chips: () => {
+        const chips = [];
+        if (stanceDef) {
+          const st = stanceDef;
+          // The stance is a StatePill in its own tone — ember by default, frost for
+          // Bulwark, which is the stance's own colour and not this screen's.
+          const chip = pill({
+            label: st.name,
+            attrs: { class: `stance-chip lg ${p.stanceId}`, dataset: { tone: p.stanceId === 'bulwark' ? 'frost' : 'ember' } },
+          });
+          if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
+          bindAbilityBadge(chip, p, p.stanceId);
+          // WCM4: in formation the chip is the stance strip, after the buildup rows.
+          markMeterRow(chip, 'stance');
+          chips.push(chip);
+        }
+        // SPEC §14.3: each companion travelling with the run stands beside the
+        // player as an ally portrait — its name and the fights it has left.
+        for (const { id, def, fightsLeft } of companionRows) {
+          const chip = pill({ label: t('combat.companion.left', { name: def.name, n: fightsLeft }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
+          chip.setAttribute('title', def.blurb);
+          const art = alternativeCompanionIcon(id);
+          if (art) chip.prepend(art);
+          chips.push(chip);
+        }
+        if (evadeChip) {
+          const chip = pill({ label: `${t('card.tags.evade')} ${p.evade}`, attrs: { class: 'foundation-evade' } });
+          bindAbilityBadge(chip, p, 'evade');
+          chips.push(chip);
+        }
+        return chips;
+      },
+    };
+    let box, wrote;
+    if (existing) {
+      box = existing;
+      wrote = writeSlots(box, playerSlots, keys, build);
+      // A reused frame keeps its listeners; only the per-render attributes move.
+      refreshCombatantContext(box, playerName);
+    } else {
+      box = combatantFrame({
+        role: 'player',
+        entityId: 'player',
+        leading: build.leading(),
+        classNames: build.classNames(),
+        sprite: profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
+        name: build.name(),
+        meters: build.meters(),
+        trailing: [build.statuses(), ...build.chips()],
+      });
+      playerSlots.slotKeys = keys;
+      wrote = true;
+      wireCombatantContext(box, playerName);
+    }
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
     // enemy target. Without this, armSelf() asks focusFirst() for the player,
@@ -2211,7 +2303,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (selfArm) {
       const armedInst = findInst(selfArm);
       const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
-      const playerName = combatantName('player', p);
       box.dataset.focusable = '';
       box.tabIndex = -1;
       box.setAttribute('role', 'button');
@@ -2237,6 +2328,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     stageFor(box)?.setStance?.(playerStance(activeDef));
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing || !figureAnimationsEnabled(run) });
     playerRenderKey = renderKey;
+    return wrote;
   }
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
@@ -2265,9 +2357,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderEnemies({ refreshTargets = true } = {}) {
     const row = $('.enemy-row');
+    let wrote = false;
     const present = new Set(combat.enemies.map(enemy => enemy.id));
     for (const [id, record] of enemyFrames) if (!present.has(id)) {
-      stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id);
+      stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id); wrote = true;
     }
     const targeting = selected || selectedFlask != null;
     // WGC4: one eligibility home; a defeated enemy is never highlighted.
@@ -2277,60 +2370,99 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const def = registries.enemies.get(enemy.enemyId);
       const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance, displayAppearance()]);
       let record = enemyFrames.get(enemy.id);
-      if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; }
-      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; wrote = true; }
+      // `combat.player` is deliberately not part of this key. Every enemy slot is drawn from the
+      // enemy itself (its display copy, name, statuses, meters, arcane receipt) or from its intent;
+      // the intent reads the player through projectCombatIntent, and its result is in the leading
+      // slot's key below. The hit-chance badges read the player too but are synced by
+      // syncHitChances, not drawn here.
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
-      const leading = [];
-      // WCO1: Inspect above the intent; the intent shows per the overlay config.
-      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy') ? intentEl(enemy) : null);
-      // Target-number badge for keyboard targeting (SPEC §7.3).
-      if (enemy.alive && targeting) {
-        const idx = living.indexOf(enemy);
-        // The target number is a Keycap, the same atom every other key wears.
-        if (idx < 9) leading.push(keycap(String(idx + 1), { class: 'enemy-key' }));
-      }
-      // The nameplate is a LabelStack: the name, and under it what kind of
-      // thing it is (its stature reads from the frame, so the hint is the tags).
-      const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
-      // With no card/flask selected, the name opens the full read directly;
-      // the separate side core selects the fighter's contextual explanation.
-      // During targeting both retain the existing card/flask commit behavior.
-      // (Sprite, intent and HP select; the name never only selects —
-      // docs/combat-target-pointer-behavior.md.)
-      // Stop bubbling so the name never invokes the frame's handler as well.
-      if (enemy.alive) {
-        nm.classList.add('nm-inspect');
-        nm.setAttribute('role', 'button');
-        nm.tabIndex = 0;
-        nm.setAttribute('aria-label', `${def.name} — the full read`);
-      }
-      const openThisRead = (event) => {
-        event.stopPropagation();
-        if (!getEntity(combat, enemy.id)?.alive) {
-          if (selected || selectedFlask != null) dlog('ignored', `enemy name tap ${enemy.id}`, 'dead target');
-          return;
-        }
-        if (selected) playCard(selected, enemy.id);
-        else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-        else openCombatantDoor(combatantSubject('enemy', enemy), nm);
+      const settings = JSON.stringify(readSettings());
+      const idx = living.indexOf(enemy);
+      const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
+      const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
+      const followUps = showIntent ? (disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor)) : null;
+      const meterIn = meterInputs(enemy);
+      const statusIn = statusRows(enemy);
+      const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
+      const keys = {
+        classes: JSON.stringify(classNames()),
+        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && targeting ? (idx < 9 ? idx : null) : null, settings]),
+        name: JSON.stringify([def.name, enemy.alive, settings]),
+        meters: JSON.stringify([meterIn.key, settings]),
+        statuses: JSON.stringify([statusIn, settings]),
+        chips: '',
       };
-      nm.addEventListener('click', openThisRead);
-      nm.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        openThisRead(event);
-      });
-      const slots = {
-        role: 'enemy',
-        entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
-        leading,
-        sprite: record ? null : profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
-        name: markMeterRow(nm, 'name'),
-        meters: meterBars(enemy),
-        trailing: [statusRow(enemy)],
+      const build = {
+        classNames,
+        leading: () => {
+          const leading = [];
+          // WCO1: Inspect above the intent; the intent shows per the overlay config.
+          if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), showIntent ? intentEl(enemy) : null);
+          // Target-number badge for keyboard targeting (SPEC §7.3).
+          if (enemy.alive && targeting) {
+            // The target number is a Keycap, the same atom every other key wears.
+            if (idx < 9) leading.push(keycap(String(idx + 1), { class: 'enemy-key' }));
+          }
+          return leading;
+        },
+        name: () => {
+          // The nameplate is a LabelStack: the name, and under it what kind of
+          // thing it is (its stature reads from the frame, so the hint is the tags).
+          const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
+          // With no card/flask selected, the name opens the full read directly;
+          // the separate side core selects the fighter's contextual explanation.
+          // During targeting both retain the existing card/flask commit behavior.
+          // (Sprite, intent and HP select; the name never only selects —
+          // docs/combat-target-pointer-behavior.md.)
+          // Stop bubbling so the name never invokes the frame's handler as well.
+          if (enemy.alive) {
+            nm.classList.add('nm-inspect');
+            nm.setAttribute('role', 'button');
+            nm.tabIndex = 0;
+            nm.setAttribute('aria-label', `${def.name} — the full read`);
+          }
+          const openThisRead = (event) => {
+            event.stopPropagation();
+            if (!getEntity(combat, enemy.id)?.alive) {
+              if (selected || selectedFlask != null) dlog('ignored', `enemy name tap ${enemy.id}`, 'dead target');
+              return;
+            }
+            if (selected) playCard(selected, enemy.id);
+            else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
+            else openCombatantDoor(combatantSubject('enemy', enemy), nm);
+          };
+          nm.addEventListener('click', openThisRead);
+          nm.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            openThisRead(event);
+          });
+          return markMeterRow(nm, 'name');
+        },
+        meters: () => meterBars(enemy, { inputs: meterIn }),
+        statuses: () => statusRow(enemy, {}, statusIn),
+        chips: () => [],
       };
-      const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
+      let box, rowWrote;
+      if (record) {
+        box = record.box;
+        rowWrote = writeSlots(box, record, keys, build);
+      } else {
+        box = combatantFrame({
+          role: 'enemy',
+          entityId: enemy.id,
+          classNames: build.classNames(),
+          leading: build.leading(),
+          sprite: profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
+          name: build.name(),
+          meters: build.meters(),
+          trailing: [build.statuses()],
+        });
+        rowWrote = true;
+      }
+      if (rowWrote) wrote = true;
       stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
       if (!record) {
@@ -2367,7 +2499,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.removeAttribute('aria-disabled');
       }
       if (!record) row.appendChild(box);
-      enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
+      enemyFrames.set(enemy.id, { key: artKey, renderKey, box, slotKeys: record ? record.slotKeys : keys });
     }
     // `data-wide-enemy-row` stands in for `.field:has(.enemy-row > .combatant:nth-child(4))`
     // in combat.css. One frame per enemy, dead ones included, and nothing else lives in the row.
@@ -2376,6 +2508,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       syncHitChances();
       applyTargetLayer();
     }
+    return wrote;
   }
 
   function renderHand({ refreshHitChances = true } = {}) {
