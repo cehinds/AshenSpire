@@ -3045,10 +3045,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       showDragAims(plan.enemies);
       if (selfOnlyTarget) showSelfAim(plan.legal);
       const state = plan.legal ? 'legal' : 'illegal';
-      combatEl.dataset.dropState = state;
-      dragGhost.dataset.dropState = state;
+      // Same-value skips: a pointermove that changes nothing must dirty no style.
+      if (combatEl.dataset.dropState !== state) combatEl.dataset.dropState = state;
+      if (dragGhost.dataset.dropState !== state) dragGhost.dataset.dropState = state;
       const verdict = dragGhost.querySelector('.drop-verdict');
-      if (verdict) verdict.textContent = plan.legal ? (plan.flick ? 'FLICK TO PLAY' : 'DROP') : 'NO TARGET';
+      const verdictText = plan.legal ? (plan.flick ? 'FLICK TO PLAY' : 'DROP') : 'NO TARGET';
+      if (verdict && verdict.textContent !== verdictText) verdict.textContent = verdictText;
     };
 
     el.addEventListener('pointerdown', (ev) => {
