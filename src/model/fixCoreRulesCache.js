@@ -41,7 +41,7 @@ function detach(result) {
   return out;
 }
 
-function keyFor(ctx, entity, carrier) {
+export function keyFor(ctx, entity, carrier) {
   try {
     const raw = ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules;
     const key = JSON.stringify([raw === undefined ? 0 : raw, fixCoreAttachments(ctx, entity, carrier)]);
