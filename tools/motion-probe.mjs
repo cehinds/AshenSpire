@@ -214,7 +214,7 @@ if (argv.includes('--selftest')) {
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
         file: 'src/ui/alternativeCardStage.js',
-        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
+        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!effectsOff(),still:effectsOff(),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
         replace: '    ctx.restore();',
         expectRed: /RED IDLE player#\d+ — .*canvas has no painted pixels/,
       }, {
@@ -269,8 +269,8 @@ if (argv.includes('--selftest')) {
         name: 'the card-play flight (Element.animate) ignores reduced motion',
         args: ['--seed', 'T14'],
         file: 'src/ui/screens/combat.js',
-        find: "    if (readSettings().showPlayedCard !== true || reducedMotionRequested()) return;",
-        replace: "    if (readSettings().showPlayedCard !== true) return;",
+        find: "    if (readSettings().showPlayedCard !== true || reducedMotionRequested() || effectsOff()) return; // Effects off: the played card does not fly",
+        replace: "    if (readSettings().showPlayedCard !== true || effectsOff()) return;",
         expectRed: /RED REDUCED setting\+os — .*card-flight/,
       },
       {
@@ -283,8 +283,8 @@ if (argv.includes('--selftest')) {
         edits: [
           { file: 'src/ui/fx.js', find: '  const timing = actionPacing({ reduced: reducedMotionRequested() });', replace: '  const timing = actionPacing({ reduced: false });' },
           ALTERNATIVE ? { file: 'src/ui/combatEffectSprites.js',
-            find: " if(!layer||!from||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return ()=>{};",
-            replace: " if(!layer||!from||document.body.classList.contains('reduce-flashes'))return ()=>{};" }
+            find: " if(!layer||!from||reducedMotionRequested()||effectsOff()||document.body.classList.contains('reduce-flashes'))return ()=>{};",
+            replace: " if(!layer||!from||effectsOff()||document.body.classList.contains('reduce-flashes'))return ()=>{};" }
             : { file: 'src/ui/combatantEffectLayers.js',
               find: " if(!stage||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return null;",
               replace: " if(!stage||document.body.classList.contains('reduce-flashes'))return null;" },
@@ -474,7 +474,7 @@ async function until(evaluate, expression, what, ms = 20000, onWait = null) {
 
 async function boot({ send, evaluate }, base, { setting, os, classic = CLASSIC }) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: os ? 'reduce' : 'no-preference' }] });
-  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, classicAppearance: classic }));
+  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, effects: true, classicAppearance: classic }));
   await send('Page.navigate', { url: `${base}?shot=combat&shotSeed=${encodeURIComponent(SEED)}&shotSettings=${settings}` });
   await wait(300);
   await until(evaluate, `!!(window.__combat && window.__motionProbe && document.querySelector('.combatant.enemy') && document.querySelector('.hand .card') && document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled)`, 'combat to mount', BOOT_TIMEOUT_MS);
