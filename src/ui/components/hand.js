@@ -327,13 +327,6 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     el.style.zIndex = i;
   }
 
-  // The availability object a card was built with stays the one its door reads;
-  // each render rewrites it in place to the current answer.
-  function syncAvailability(live, next) {
-    for (const key of Object.keys(live)) delete live[key];
-    return Object.assign(live, next);
-  }
-
   function render(args) {
     renderCards(args);
     // `data-has-selection` stands in for `.hand:has(.selected)` in combat.css.
@@ -392,10 +385,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // `commands` is deliberately absent: those are closures that resolve the
       // live combat by instance id when pressed, so a kept one is never stale,
       // and JSON.stringify would drop them anyway.
-      // `availability` is the exception: the face never prints it. Only the
-      // inspection door reads it, when opened, through the record's live copy
-      // below, so a turn change that only moves it keeps the element.
-      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface]);
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability]);
       let record = renderedCards.get(id);
       // A face rebuilt in place (its preview or affordability moved, same slot,
       // same count) keeps the fan plan already applied to its predecessor.
@@ -407,7 +397,6 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         record.release?.(); record.el.remove(); renderedCards.delete(id); record = null;
       }
       if (record) {
-        syncAvailability(record.availability, entry.availability);
         record.el.classList.toggle('selected', !!entry.selected);
         setHandFaceBudget(record.el, !!entry.selected);
         record.el.classList.toggle('is-stacked', !!entry.stacked);
@@ -426,10 +415,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // surface `none`, and the door that exists to offer `Play card` offered
       // nothing at all. Caught in review on the promotion, not by a test,
       // which is why tests/hand-forwards-surface.test.mjs now exists.
-      const liveAvailability = syncAvailability({}, entry.availability);
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
-          surface: entry.surface, availability: liveAvailability, commands: entry.commands, faceLineLimit: 3 });
+          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
       // sits on the strip's own baseline and nothing is pushed below it.
@@ -498,7 +486,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // every hand card as well.
       if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      renderedCards.set(id, { el, signature, availability: liveAvailability, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
+      renderedCards.set(id, { el, signature, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
       handEl.insertBefore(el, handEl.children[i] || null);
       if (predecessor) {
         // Same controls (so the same reserved height): take over the placement
