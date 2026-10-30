@@ -195,6 +195,25 @@ function drive(t, fn, { maxHp } = {}) {
   });
 }
 
+test('with Effects off the contact hit-stop is not held, and its time is not waited out', (t) => {
+  drive(t, ({ dom, start, tick, holds }) => {
+    const timing = actionPacing();
+    const contactAt = timing.intentMs + timing.wordMs + 100;
+    const root = dom.document.documentElement;
+    dom.document.documentElement = { dataset: { effects: 'off' } };
+    try { start([6, 10]); tick(contactAt + 400); } finally { dom.document.documentElement = root; }
+    assert.deepEqual(holds, [], 'no actor or target hold with Effects off');
+  });
+});
+
+test('with Effects on the same contact still holds', (t) => {
+  drive(t, ({ start, tick, holds }) => {
+    const timing = actionPacing();
+    start([6, 10]); tick(timing.intentMs + timing.wordMs + 100);
+    assert.equal(holds.length, 1, 'Effects on still holds');
+  });
+});
+
 // Ordered playback pays both pre-sprite waits, holds the authored contact
 // frame for every qualifying hit, then separates reaction and numbers.
 test('multi-hit contact holds the attacker and buzzes once with the first number', (t) => {
