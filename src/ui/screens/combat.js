@@ -2219,6 +2219,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     chip.addEventListener('keydown', inspect);
   }
 
+  // The settings object is part of every slot key (any setting can restyle any slot), but as a short stamp
+  // that moves only when the serialised settings do, not the whole text five times over.
+  let settingsText = null, settingsSerial = 0;
+  function settingsStamp() {
+    const text = JSON.stringify(readSettings());
+    if (text !== settingsText) { settingsText = text; settingsSerial++; }
+    return settingsSerial;
+  }
+
   let playerArtKey = null;
   let playerRenderKey = null;
   let topbarRenderKey = null;
@@ -2272,7 +2281,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       customization: run.customization,
       spritesEnabled: spritesAreEnabled(),
     })) preloadReaverAttackFrames();
-    const settings = JSON.stringify(readSettings());
+    const settings = settingsStamp();
     const stanceDef = p.stanceId ? registries.frameworkTerms.withStanceWords(registries.stances.get(p.stanceId)) : null;
     const companionRows = [];
     for (const id of combat.companions || []) {
@@ -2441,7 +2450,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // syncHitChances, not drawn here.
       const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
-      const settings = JSON.stringify(readSettings());
+      const settings = settingsStamp();
       const idx = living.indexOf(enemy);
       const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
       const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
