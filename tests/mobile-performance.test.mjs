@@ -1,20 +1,39 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { resolvePerformanceMode, resolveCombatPacing } from '../src/ui/performance.js';
+import { resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled } from '../src/ui/performance.js';
 import { preloadPoses, clearPosePreloads } from '../src/ui/services/posePreloads.js';
 import { runtimeAsset } from '../tools/assetmime.mjs';
 
-test('automatic quality follows input capability; explicit quality and pacing win', () => {
+test('Effects decides quality: off is lite everywhere, on is full; pacing follows', () => {
   assert.equal(resolvePerformanceMode({}, true), 'lite');
-  assert.equal(resolvePerformanceMode({}, false), 'full');
-  assert.equal(resolvePerformanceMode({ performanceMode: 'full' }, true), 'full');
-  assert.equal(resolvePerformanceMode({ performanceMode: 'lite' }, false), 'lite');
+  assert.equal(resolvePerformanceMode({}, false), 'lite', 'default is off on every device');
+  assert.equal(resolvePerformanceMode({ effects: true }, true), 'full');
+  assert.equal(resolvePerformanceMode({ effects: false }, false), 'lite');
+  assert.equal(resolvePerformanceMode({ performanceMode: 'full' }, true), 'full', 'a saved explicit Full still reads as on');
+  assert.equal(resolvePerformanceMode({ performanceMode: 'lite', effects: true }, false), 'full', 'an explicit Effects wins');
   assert.equal(resolveCombatPacing({}, 'lite'), 'fast');
   assert.equal(resolveCombatPacing({ animSpeed: 'auto' }, 'full'), 'normal');
   for (const animSpeed of ['slow', 'normal', 'fast', 'instant']) {
     assert.equal(resolveCombatPacing({ animSpeed }, 'lite'), animSpeed);
   }
+});
+
+test('a saved explicit Full quality migrates once to Effects on; everything else to off', () => {
+  const full = { performanceMode: 'full', screenShake: false };
+  assert.equal(migrateEffectsSetting(full), true);
+  assert.deepEqual(full, { effects: true, screenShake: false });
+  assert.equal(migrateEffectsSetting(full), false, 'idempotent');
+  for (const performanceMode of ['auto', 'lite']) {
+    const s = { performanceMode };
+    assert.equal(migrateEffectsSetting(s), true);
+    assert.deepEqual(s, {});
+    assert.equal(effectsEnabled(s), false);
+  }
+  const chosen = { performanceMode: 'full', effects: false };
+  migrateEffectsSetting(chosen);
+  assert.deepEqual(chosen, { effects: false }, 'an explicit Effects choice is never overwritten');
+  assert.equal(migrateEffectsSetting({}), false);
 });
 
 test('pose preloads deduplicate images and reuse a bounded recent working set', () => {
