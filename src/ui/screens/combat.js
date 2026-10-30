@@ -653,17 +653,29 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // entries off the paced snapshot, and wireCardInput as the play wiring.
   // wireCardInput is a hoisted declaration below; cards with no preview
   // (stale playback snapshot on a combat-ending play) render inert.
+  const cardRelive = new WeakMap(); // hand card element -> the function that hands its wiring the entry's new values
   const handStrip = mountHand($('.hand'), {
     inspectHold: false,
     reuseCards: true,
     animateArrival: true,
     fitFan: true,
     registries,
+    // A card keeps its element (and its listeners) while only its preview, affordability or availability move:
+    // updateCard hands the wiring the new values on every hand pass (wireCardInput's cardRelive).
+    liveWiring: true,
     wireCard: (el, entry) => {
       if (!entry.preview) return null;
       const release = wireCardInput(el, entry.inst, entry.preview, entry.affordable);
       wireUpcastControl(el, entry.inst, entry.preview);
       return release;
+    },
+    updateCard: (el, entry) => { cardRelive.get(el)?.(entry); },
+    // The upcast control is built from the preview's upcast options and the chosen tier: when either moves, the card is rebuilt.
+    rebuildKey: entry => {
+      const def = entry.preview?.resolvedDefinition;
+      if (combat.combatExpansionVersion !== 2 || !def || !upcastOptions(def).length) return '';
+      return JSON.stringify([def.upcast.baseTier, upcastChoicePlan(def).options.map(option => [option.id, option.name]),
+        upcastRanksByCard.get(entry.inst.instanceId) ?? def.upcast.baseTier, entry.preview.name]);
     },
   });
 
@@ -2911,7 +2923,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
   function wireCardInput(el, inst, pv, affordable) {
-    const rangeSelectable = canChooseRangeRoute(pv) && !isUnplayable(inst);
+    let rangeSelectable = canChooseRangeRoute(pv) && !isUnplayable(inst);
     let dragGhost = null;
     let dragging = false;
     // What a drag reads once, not on every pointer move: the ghost's own size
@@ -2940,8 +2952,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let flickStart = null;
     let flickPoints = [];
     const flickRules = registries.balance.ui.touchFlick;
-    const dragTargetMode = pv.needsTarget ? 'single'
+    const readDragTargetMode = () => pv.needsTarget ? 'single'
       : cardTargets(inst.instanceId).mode === 'enemy' ? 'all' : 'none';
+    let dragTargetMode = readDragTargetMode();
     // A card whose only legal target is the player has ONE destination, so the
     // drag names it instead of making him aim at it (his words: "dragging a
     // block should default highlight player character since it can only target
@@ -2955,13 +2968,26 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // player — so it can never light a target the release would refuse. The
     // A-side (declared mode only: `self` lights, `mixed` never does) is the
     // shipped behaviour this replaces. Co-op keeps its own aiming.
-    const dragDef = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
-    const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
-      { id: combat.player.id, alive: combat.player.alive, connected: true },
-    ]).legalIds;
-    const selfOnlyTarget = dragTargetMode === 'none'
-      && friendlyTargetMode(dragDef) !== 'none'
-      && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
+    // Read at drag start (the board as it is then) and kept for the drag's moves.
+    const readSelfOnlyTarget = () => {
+      const dragDef = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
+      const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
+        { id: combat.player.id, alive: combat.player.alive, connected: true },
+      ]).legalIds;
+      return dragTargetMode === 'none'
+        && friendlyTargetMode(dragDef) !== 'none'
+        && friendlyLegal.length === 1 && friendlyLegal[0] === combat.player.id;
+    };
+    let selfOnlyTarget = false;
+    // THE HAND KEEPS THIS ELEMENT when only the preview, the affordability or the availability moved (liveWiring in
+    // mountHand): the next values arrive here, and every listener below reads these variables when a gesture
+    // happens, so a kept card never plays, refuses or selects on what it was dealt with. `cardRelive` is the
+    // screen's registry; the typeof guard is for the source-evaluating tests that run this function alone.
+    if (typeof cardRelive !== 'undefined') cardRelive.set(el, next => {
+      inst = next.inst; pv = next.preview; affordable = next.affordable;
+      rangeSelectable = canChooseRangeRoute(pv) && !isUnplayable(inst);
+      dragTargetMode = readDragTargetMode();
+    });
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
@@ -3116,6 +3142,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           dragGhost.style.cssText = `position:fixed;z-index:600;pointer-events:none;opacity:.8;transform:none;margin:0;zoom:1;width:${ghostWidth / bodyZoom}px;height:${ghostHeight / bodyZoom}px;`;
           document.body.appendChild(dragGhost);
           ghostBox = null; dropPrimed = false;
+          selfOnlyTarget = readSelfOnlyTarget();
           beginDragTargeting();
         }
         if (dragging && dragGhost) {
