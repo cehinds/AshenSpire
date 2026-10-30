@@ -229,3 +229,7 @@ moved. The comment names:
 
 After sign-off the owner cuts `release` from that RC SHA, merges it into `main`,
 tags `vX.Y.Z` on `main`, and publishes.
+
+## After the cut
+
+- [ ] Open the PR into `dev` that advances the candidate in `src/content/index.js` (`contentBundle.version`), so the next build is `<next candidate>.0` (docs/versioning.md, *A release cut advances the candidate*).
