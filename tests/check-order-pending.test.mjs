@@ -24,7 +24,14 @@ const TOOL = fileURLToPath(new URL('../tools/about-changelog.mjs', import.meta.u
 // would fail them for the wrong reason.
 const REAL = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
 const BOX = JSON.parse(readFileSync(new URL('../buildordinal.json', import.meta.url), 'utf8'));
-const STALE = `${BOX.release}.${BOX.ordinal - 10}`;
+// A stamp below the box, in the box's own release: a pending receipt must carry
+// that release, so an older candidate is refused by shape, not by order. The tail
+// restarts at 0 whenever the release moves (docs/versioning.md, "A release cut
+// advances the candidate"), so right after a cut the box can read 0.7.2.1 and
+// "ten builds below" would not be a stamp at all; clamp at 0. Only the first build
+// of a candidate (ordinal 0) has no lower stamp in its release — see FIRST_BUILD.
+const STALE = `${BOX.release}.${Math.max(0, BOX.ordinal - 10)}`;
+const FIRST_BUILD = BOX.ordinal === 0 ? 'the first build of a candidate has no lower stamp in its release to be stale against' : false;
 const receipt = (n, s) => `- **Stale branch** ([#${n}](https://github.com/cehinds/AshenSpire/pull/${n}), \`${s}\`). Probe.\n`;
 function withReceipt(line) {
   const i = REAL.indexOf('\n## ');
@@ -49,7 +56,7 @@ function run(args, { changelog = markdown(), event = null } = {}) {
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
 
-test('without --pending the stale receipt is a rise, as before', () => {
+test('without --pending the stale receipt is a rise, as before', { skip: FIRST_BUILD }, () => {
   const r = run([]);
   assert.equal(r.status, 1, r.stdout + r.stderr);
   assert.match(r.stdout + r.stderr, /RED — .*build (runs backward|rises within)/);
