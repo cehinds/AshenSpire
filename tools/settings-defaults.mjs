@@ -19,7 +19,7 @@ import { resolve, dirname } from 'node:path';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TARGET = resolve(ROOT, 'src/content/settingsDefaults.js');
-const DEVICE_KEYS_FALLBACK = ['uiScale', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement'];
+const DEVICE_KEYS_FALLBACK = ['uiScale', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement', 'effects', 'motionAttack', 'motionHit', 'motionIdle', 'motionDefeat'];
 // Never promoted either: Art quality names a folder on one device (settingsSync.js).
 const LOCAL_ONLY_KEYS_FALLBACK = ['artQuality'];
 

@@ -89,6 +89,7 @@ function boot(options = {}) {
     seedSettingsDefaults: () => record('seed-defaults', f.promoted),
     showSettingsNotice: (...args) => record('notice', args),
     initAudio(settings) { return record('audio', plain(settings)); },
+    migrateEffectsSetting: () => false, // main.js folds the retired Rendering quality into Effects at boot; not under test here
   });
   vm.runInContext(clean(read('src/model/contentValidationCache.js'))
     + '\nglobalThis.createContentValidationCache = createContentValidationCache;', context);

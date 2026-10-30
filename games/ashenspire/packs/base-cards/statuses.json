@@ -201,7 +201,10 @@
       "icon": "block",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Retain up to 4 existing Block per stack when Block would expire. This does not create protection or duplicate Persistent Block."
+      "modifiers": {
+        "retainBlock": true
+      },
+      "tooltip": "Keep all remaining Block when your next turn starts. Lose one stack after retaining; each stack lasts one turn. This does not create Block."
     },
     {
       "id": "base.read-intent",
@@ -796,13 +799,7 @@
         "phase": "start",
         "stacks": 1
       },
-      "behaviors": [
-        {
-          "kind": "retainProtection",
-          "pool": "block",
-          "amountPerStack": 4
-        }
-      ]
+      "behaviors": []
     },
     "base.read-intent": {
       "requires": {

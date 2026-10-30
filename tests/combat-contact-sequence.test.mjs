@@ -14,7 +14,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
-import { prepareTacticalCard, tacticalCarrier } from '../src/engine/combatCardTactics.js';
+import { prepareTacticalCard, tacticalCarrier, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 // Fund the authored three-contact Slash before the planner selects its head.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
@@ -29,17 +29,20 @@ const registries = Object.freeze({ ...baseRegistries, enemies: {
     return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 5, hits: 3 } } } : row;
   }
 } });
-function live(damage = 5, effects = undefined) {
+function live(damage = 5, effects = undefined, enemyIds = ['wanderingSoldier']) {
   const selected = damage === 5 && effects === undefined ? registries : { ...registries, enemies: { ...registries.enemies, get(id) {
     const row = registries.enemies.get(id);
     return id === 'wanderingSoldier' ? { ...row, moves: { ...row.moves, slash: { ...row.moves.slash, damage, ...(effects ? { effects } : {}) } } } : row;
   } } };
   const run = createRunState({ registries: selected, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds });
   assert.equal(combat.enemies[0].maxStamina, 2, 'the native pool is two SP');
   // A three-contact move costs 1 SP per hit (owner, 2026-10-25): fund the fixture's slash.
   Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3, plannedMoves: [] });
-  combat.enemies[0].intent = { ...combat.enemies[0].intent, moveId: 'slash' };
+  const enemy = combat.enemies[0], move = selected.enemies.get(enemy.enemyId).moves.slash;
+  enemy.intent = { kind: 'attack', moveId: 'slash', damage, hits: 3,
+    combatProfile: enemyMoveCarrier(enemy, move, 'slash', combat).combatProfile };
+  enemy.actorIntentRevealed = true;
   assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], basePrecisionBonus: 1000, persistentPoise: { value: 0, max: 0 } });
@@ -167,7 +170,7 @@ test('missing contact policy in a saved Core fight preserves its historical whol
   assert.equal(live().reactionRules.contactPolicy, 'perHit', 'the next newly created fight gets the new policy');
 });
 
-test('a paid Counter with a nested discard resumes its one contact exactly after JSON reload', () => {
+test('a paid Counter with a nested discard resumes its one contact exactly after JSON reload', async () => {
   const base = contentBundle.cards.find(card => card.id === 'guardCounter');
   const localBase = createRegistries({ ...contentBundle,
     cards: [...contentBundle.cards, { ...base, id: 'chooseCounter', name: 'Choose Counter', gradeProfiles: undefined, legacyFace: undefined,
@@ -192,6 +195,9 @@ test('a paid Counter with a nested discard resumes its one contact exactly after
   const option = ctx.pendingReaction.options.find(row => row.play.cardInstanceId === 'nested-counter');
   assert.ok(option); answer(ctx, option.id);
   assert.ok(ctx.pendingAbilityDiscard, JSON.stringify(ctx.eventLog.slice(-15))); assert.ok(ctx.reactionResume);
+  const { projectCombatIntent } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const paused = projectCombatIntent(ctx, ctx.enemies[0].id);
+  assert.equal(paused.damageScope, 'contact'); assert.equal(paused.hits, 1); assert.equal(paused.contactIndex, 0);
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
   const restored = restoreCombatSnapshot({ registries: local, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: saved });
   for (const combat of [ctx, restored]) dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ['filler-a'] });
@@ -278,4 +284,118 @@ test('an already armed automatic Counter remains one charge when optional prompt
   assert.equal(ctx.pendingReaction, undefined);
   assert.equal(ctx.eventLog.filter(row => row.type === 'combatCounterTriggered').length, 1);
   assert.equal(ctx.eventLog.filter(row => row.type === 'combatCounterConsumed').length, 1);
+});
+
+// The overhead forecast is the next unresolved contact of this exact actor.
+// Exercise production engine receipts and the screen's reducer together.
+test('Core2 next-contact forecasts survive reaction pauses and JSON reload without replaying full damage', async () => {
+  const { projectCombatIntent, applyCombatIntentReceipt } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  let ctx = live(8); counters(ctx);
+  ctx.player.block = 12;
+  ctx.enemies[0].intent.damage = 8; ctx.enemies[0].intent.hits = 3;
+  const whole = projectCombatIntent(ctx, ctx.enemies[0].id);
+  let totalLoss = 0;
+  const id = ctx.enemies[0].id;
+  const entities = { [id]: { kind: 'enemy', intentPreview: projectCombatIntent(ctx, id) } };
+  primeAccuracyRolls(ctx, { count: 3 }); dispatch(ctx, { type: 'endTurn' });
+  for (let hit = 0; hit < 3; hit++) {
+    assert.ok(ctx.pendingReaction);
+    const before = JSON.stringify({ player: ctx.player, enemies: ctx.enemies, events: ctx.eventLog, counters: ctx.rng.getCounters() });
+    const shown = projectCombatIntent(ctx, id);
+    assert.equal(JSON.stringify({ player: ctx.player, enemies: ctx.enemies, events: ctx.eventLog, counters: ctx.rng.getCounters() }), before);
+    assert.equal(shown.damageScope, 'contact'); assert.equal(shown.hits, 1);
+    assert.equal(shown.contactIndex, hit); assert.equal(shown.contactCount, 3);
+    const prepared = ctx.eventLog.findLast(event => event.type === 'combatContactPrepared');
+    assert.deepEqual(shown.projectedDamage, prepared.intentPreview.projectedDamage, 'the snapshot and announcing receipt use the same current HP math');
+    const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
+    const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: saved });
+    assert.deepEqual(projectCombatIntent(restored, id), shown);
+    ctx = restored;
+    const start = ctx.eventLog.length;
+    primeAccuracyRolls(ctx, { count: 3 }); answer(ctx);
+    const events = ctx.eventLog.slice(start);
+    const damage = events.find(event => event.type === 'damageDealt' && event.sourceId === id);
+    totalLoss += damage.amount - damage.blocked;
+    assert.equal(damage.amount - damage.blocked, shown.projectedDamage.max, 'the displayed current-contact HP matches the actual landed contact');
+    for (const event of [prepared, ...events]) {
+      applyCombatIntentReceipt(entities, event);
+      if (event.type === 'damageDealt' && event.sourceId === id)
+        assert.equal(entities[id].intentPreview.damage, undefined, 'the completed damage is no longer a forecast');
+    }
+  }
+  assert.equal(totalLoss, whole.projectedDamage.max, 'the pre-action forecast and all landed contacts spend defenses identically');
+});
+
+test('intent playback clears only the acting instance and restores a prepared hold after a Counter', async () => {
+  const { applyCombatIntentReceipt } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const hold = { kind: 'block', moveId: 'guard', block: 9, revealed: true };
+  const other = { kind: 'attack', moveId: 'slash', damage: 17, revealed: true };
+  const entities = { e1: { kind: 'enemy', intentPreview: hold }, e2: { kind: 'enemy', intentPreview: other } };
+  applyCombatIntentReceipt(entities, { type: 'combatCounterTriggered', sourceId: 'e1', sourceKind: 'enemy', amount: 7 });
+  assert.equal(entities.e1.intentPreview.damage, 7);
+  applyCombatIntentReceipt(entities, { type: 'damageDealt', sourceId: 'e1' });
+  assert.equal(entities.e1.intentPreview, hold);
+  assert.equal(entities.e2.intentPreview, other);
+  applyCombatIntentReceipt(entities, { type: 'damageDealt', sourceId: 'e2' });
+  assert.equal(entities.e2.intentPreview, other, 'damage outside an announced move does not consume a future intent');
+  applyCombatIntentReceipt(entities, { type: 'combatContactPrepared', sourceId: 'e2', intentPreview: other });
+  applyCombatIntentReceipt(entities, { type: 'attackMissed', sourceId: 'e2' });
+  assert.equal(entities.e2.intentPreview.damage, undefined, 'misses consume the contact too');
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveStarted', sourceId: 'e1', intentPreview: hold });
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveEnded', sourceId: 'e1' });
+  assert.equal(entities.e1.intentPreview.block, undefined, 'finished support moves stop advertising the previous Block');
+  entities.e1.intentPreview = hold;
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveStarted', sourceId: 'e1', reaction: true });
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveEnded', sourceId: 'e1', reaction: true });
+  assert.equal(entities.e1.intentPreview, hold, 'support-only reactions return to their planned hold');
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveStarted', sourceId: 'e1', reaction: true });
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveStarted', sourceId: 'e1', intentPreview: other });
+  applyCombatIntentReceipt(entities, { type: 'damageDealt', sourceId: 'e1' });
+  assert.equal(entities.e1.intentPreview.damage, undefined, 'an unrelated move cannot resurrect the saved reaction hold');
+});
+
+
+test('Core2 armed Counter is priced identically before the move, at the first contact, and at impact', async () => {
+  const { projectCombatIntent } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const ctx = live(20); counters(ctx); primeAccuracyRolls(ctx, { count: 3 });
+  dispatch(ctx, { type: 'playCard', cardInstanceId: 'counter-0' });
+  ctx.player.block = 0; ctx.enemies[0].hp = ctx.enemies[0].maxHp = 1000;
+  const id = ctx.enemies[0].id;
+  ctx.enemies[0].actorIntentRevealed = true;
+  const before = projectCombatIntent(ctx, id);
+  assert.ok(before.projectedDamage, JSON.stringify({before, intent:ctx.enemies[0].intent}));
+  dispatch(ctx, { type: 'endTurn' });
+  const first = projectCombatIntent(ctx, id);
+  assert.ok(first.projectedDamage, JSON.stringify({first, before, pending:ctx.pendingReaction, events:ctx.eventLog.slice(-25)}));
+  const initialHp = ctx.player.hp;
+  const start = ctx.eventLog.length;
+  while (ctx.pendingReaction) { primeAccuracyRolls(ctx, { count: 3 }); answer(ctx); }
+  const actual = ctx.eventLog.slice(start).filter(event => event.type === 'damageDealt' && event.sourceId === id);
+  assert.equal(first.projectedDamage.max, actual[0].amount - actual[0].blocked);
+  assert.equal(before.projectedDamage.max, initialHp - ctx.player.hp);
+});
+
+test('completed enemy intent stays consumed while another instance pauses, and a pooled follow-up gets a fresh forecast', async () => {
+  const { projectCombatIntent } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const ctx = live(5, undefined, ['wanderingSoldier', 'wanderingSoldier']); counters(ctx);
+  const [first, second] = ctx.enemies;
+  second.intent = structuredClone(first.intent);
+  Object.assign(second, { maxStamina: 3, stamina: 3, plannedMoves: [], actorIntentRevealed: true });
+  primeAccuracyRolls(ctx, { count: 3 }); dispatch(ctx, { type: 'endTurn' });
+  for (let hit = 0; hit < 3; hit++) { primeAccuracyRolls(ctx, { count: 3 }); answer(ctx); }
+  assert.equal(ctx.pendingReaction.sourceId, second.id);
+  assert.equal(projectCombatIntent(ctx, first.id).damage, undefined, 'the completed instance does not repeat its last attack');
+  assert.equal(projectCombatIntent(ctx, second.id).contactIndex, 0);
+
+  const pooled = live(); counters(pooled);
+  const enemy = pooled.enemies[0];
+  enemy.maxStamina = enemy.stamina = 6;
+  enemy.plannedMoves = [{ moveId: 'slash' }]; enemy.planDue = true;
+  primeAccuracyRolls(pooled, { count: 3 }); dispatch(pooled, { type: 'endTurn' });
+  for (let hit = 0; hit < 3; hit++) { primeAccuracyRolls(pooled, { count: 3 }); answer(pooled); }
+  assert.ok(pooled.pendingReaction);
+  const follow = projectCombatIntent(pooled, enemy.id);
+  assert.equal(follow.contactIndex, 0, 'the pooled successor begins at its own first contact');
+  assert.equal(follow.moveId, 'slash'); assert.equal(follow.hits, 1);
+  assert.equal(enemy.intent.resolved, undefined, 'the successor replaces the spent head intent');
 });

@@ -77,6 +77,23 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     step(300);stage.setRestPose('defend');
     quality.performance='full';stage.setRestPose('defend');
     assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','switching back restores Standard aura at the same rest pose');
+    // Effects off keeps the glow but holds it still: a baked bitmap, no pixel readback, no action pulse.
+    quality.effects='off';quality.performance='lite';stage.setRestPose('idle');stage.setRestPose('defend');
+    assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','Effects off still draws the stance aura');
+    const beforeStill=readbacks.length;
+    stage.play('attack',260,['stamina','mana']);step(100);stage.settle({reaction:true});step(300);
+    assert.equal(readbacks.length,beforeStill,'Effects off never materializes through getImageData');
+    // Effects off: no red hit mask and no attack trail, but the recoil (motionHit) still travels.
+    stage.settle({reaction:true});step(16);paints.length=0;
+    stage.play('hit',220);const stillLeft=stage.currentArt.left;step(66);
+    assert.ok(!paints.some(p=>p.fill==='#ff2424'),'Effects off never fills the red hit mask');
+    assert.notEqual(stage.currentArt.left,stillLeft,'the hit recoil still moves the body');
+    step(300);stage.settle({reaction:true});
+    quality.effects='on';quality.performance='full';paints.length=0;
+    stage.play('hit',220);step(66);
+    assert.ok(paints.some(p=>p.fill==='#ff2424'),'Effects on fills the red hit mask');
+    step(300);stage.settle({reaction:true});delete quality.performance;
+    delete quality.effects;
     delete quality.performance;stage.setRestPose('idle');paints.length=0;
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
     let unchangedPaints=paints.length;

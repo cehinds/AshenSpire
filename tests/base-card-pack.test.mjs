@@ -66,11 +66,41 @@ test('all 67 authored combat cards preview and resolve through the actual curren
   }
 });
 test('every admitted core combat card resolves through the unified engine with no disabled-resource variants failing',()=>{
-  for(const include of [['sp','mp'],['sp'],['mp'],[]]) {
-    const p=profile({resources:{include}}),reg=registries(p);
+  for(const core of ['ashen.core@1.0.0','ashen.core@2.0.0']) for(const include of [['sp','mp'],['sp'],['mp'],[]]) {
+    const p=resolveGameProfile({formatVersion:1,core,modules:{resources:{include}}}),reg=registries(p);
     for(const card of p.content.cards.filter(row=>row.id.startsWith('base.') && row.rarity!=='special')) {
       const combat=fixture(card.id,reg);
-      assert.doesNotThrow(()=>play(combat),`${card.id} ${include.join(',')||'none'}`);
+      assert.doesNotThrow(()=>play(combat),`${core}: ${card.id} ${include.join(',')||'none'}`);
+    }
+  }
+});
+test('Hold Block keeps all remaining protection for exactly its displayed number of turns',()=>{
+  for(const p of [resolveGameProfile('current'),profile(),resolveGameProfile('core')]) {
+    const reg=registries(p);
+    for(const initialBlock of [0,13]) for(const plays of [1,2]) {
+      const combat=fixture('base.retain-block',reg);
+      combat.player.block=initialBlock;
+      // An empty enemy turn isolates expiration from incoming damage.
+      for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
+      for(let i=0;i<plays;i++){
+        combat.piles.hand.unshift({cardId:'base.retain-block',instanceId:`hold-block-${i}`});
+        play(combat);
+      }
+      // Current's consecutive casting stance can amplify the second guard.
+      // Retention must keep that actual protection too, rather than regranting
+      // or capping it at the nominal six printed on the unmodified card.
+      const expectedBlock=combat.player.block;
+      assert.ok(expectedBlock>=initialBlock+6*plays);
+      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block\. Retain Block for 1 turn\./);
+      for(let turn=0;turn<plays;turn++){
+        for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
+        dispatch(combat,{type:'endTurn'});
+        assert.equal(combat.player.block,expectedBlock,`${p.core}: retain all remaining Block on turn ${turn+1}`);
+        assert.equal(combat.player.statuses['base.retain-block']?.stacks||0,plays-turn-1);
+      }
+      for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
+      dispatch(combat,{type:'endTurn'});
+      assert.equal(combat.player.block,0,'protection expires on the following turn');
     }
   }
 });

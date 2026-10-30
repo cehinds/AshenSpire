@@ -50,7 +50,7 @@ test('valid filtered weapon claims and armor purchases preserve active deck and 
   const granted=claimGameProfileReward(registries,run,'claim',weapon);assert.ok(run.loadout.storage.includes(granted.id));assert.deepEqual(run.deck,deck);
   const stock=gameProfileShopStock(registries,run,createRng(3),{shopId:'filtered'}),armor=stock.options.findIndex(row=>row.kind==='armor');assert.ok(armor>=0);
   run.cinders=100;purchaseGameProfileShopOffer(registries,run,'filtered',armor);assert.equal(run.cinders,90);assert.deepEqual(run.deck,deck);
-  assert.throws(()=>purchaseGameProfileShopOffer(registries,run,'filtered',armor),/claimed/);assert.equal(run.cinders,90);
+  assert.throws(()=>purchaseGameProfileShopOffer(registries,run,'filtered',armor),/sold out/);assert.equal(run.cinders,90);
 });
 test('ineligible persisted weapon or legacy art cannot be claimed or purchased',()=>{
   for(const [kind,id]of [['weapons','katana'],['weaponArts','katanaDrawCut']]) {

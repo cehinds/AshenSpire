@@ -116,9 +116,18 @@ test('preview-off saves preserve historical bytes apart from approved event meta
   // public intent/action receipt keys on six actor/move events. Normalize only
   // those approved event fields to retain both historical snapshot goldens.
   let receiptKeys = 0;
-  const previousTotals = [], metadataCompatible = [];
+  const previousTotals = [], endedMoves = [], rawCompatible = [], metadataCompatible = [];
   const compatible = out.map(text => {
     const snapshot = JSON.parse(text);
+    snapshot.eventLog = snapshot.eventLog.filter(event => {
+      if (event.type !== 'enemyMoveEnded') return true;
+      assert.deepEqual(Object.keys(event).sort(), ['moveId', 'sourceId', 'type'], 'the additive lifecycle receipt has only its event name, actor and consumed move');
+      assert.equal(event.sourceId, snapshot.enemies[0].id);
+      assert.equal(typeof event.moveId, 'string');
+      endedMoves.push([event.sourceId, event.moveId]);
+      return false;
+    });
+    rawCompatible.push(JSON.stringify(snapshot));
     // #2260's additive status receipt records the pre-grant total. Verify
     // every occurrence before excluding only that field from prior goldens.
     for (const event of snapshot.eventLog) {
@@ -131,10 +140,15 @@ test('preview-off saves preserve historical bytes apart from approved event meta
     metadataCompatible.push(JSON.stringify(snapshot));
     for (const event of snapshot.eventLog) {
       if (event.type === 'enemyActorTurnStarted') {
+        assert.equal(event.intentPreview?.moveId, event.moveId);
+        assert.equal(event.intentPreview?.revealed, true);
+        assert.equal(event.intentPreview?.hidden, false);
         assert.equal(typeof event.intentPreview?.moveId, 'string');
         delete event.intentPreview; receiptKeys++;
       } else if (event.type === 'enemyMoveStarted') {
         assert.equal(event.intentPreview?.moveId, event.moveId);
+        assert.equal(event.intentPreview?.revealed, true);
+        assert.equal(event.intentPreview?.hidden, false);
         assert.equal(event.actionPreview?.moveId, event.moveId);
         delete event.intentPreview; delete event.actionPreview; receiptKeys += 2;
       }
@@ -143,6 +157,10 @@ test('preview-off saves preserve historical bytes apart from approved event meta
   });
   assert.equal(previousTotals.length, 6, 'the four snapshots carry exactly six status before-total receipts');
   assert.deepEqual(previousTotals, [0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(endedMoves, [['e1', 'warcry'], ['e1', 'guard'], ['e1', 'warcry'], ['e1', 'guard']],
+    'only the consumed-move lifecycle events are removed from the historical snapshots');
+  assert.equal(createHash('sha256').update(rawCompatible.join('\n')).digest('hex'), '99e51d2dc12e025176c5bc228ecdd68189aa34f7dab51134bad239e3eed484ff',
+    'filtering only the four verified additive lifecycle events retains the raw historical snapshots');
   assert.equal(createHash('sha256').update(metadataCompatible.join('\n')).digest('hex'), '85aa5931f4ec09a49f7ebf62ab172d024a1828d8d2ed2c6e886dc567d7829778',
     'removing only the six approved status fields retains the previous complete snapshot golden');
   assert.equal(receiptKeys, 10, 'two actor and four move events carry the approved metadata');
@@ -156,10 +174,9 @@ test('preview-off saves preserve historical bytes apart from approved event meta
     return JSON.stringify(snapshot);
   }).join('\n');
   assert.equal(createHash('sha256').update(legacyText).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
-  // Independently verified full text: the old raw golden above plus exactly
-  // six previousTotal:0 fields. Gameplay and historical goldens stay pinned.
-  assert.equal(all.length, 137297);
-  assert.equal(createHash('sha256').update(all).digest('hex'), '99e51d2dc12e025176c5bc228ecdd68189aa34f7dab51134bad239e3eed484ff');
+  // The raw historical golden includes the six previousTotal receipts; the
+  // additive end events above are checked by exact shape and move identity.
+  assert.equal(rawCompatible.join('\n').length, 137297);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

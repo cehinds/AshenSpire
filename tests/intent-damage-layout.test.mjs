@@ -1,5 +1,6 @@
-// Owner 2026-10-18: an enemy's intent amount sits LEFT of its maneuver icon, on the icon's row, at about 2x the old
-// size (11px to the 22px titleM step); the hit-% badge is white with a black outline and never takes a tap.
+// Owner 2026-10-18: an enemy's intent amount sits LEFT of its maneuver icon, on the icon's row. The current .8
+// content scale keeps the original 22px / 18px / short-landscape 16px size steps compact; the hit-% badge is
+// white with a black outline and never takes a tap.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -25,13 +26,28 @@ test('each action lists its amount before its icon, so a row layout puts the amo
   });
 });
 
-test('the action is a centred row and the amount is the 22px title step, in solo and co-op alike', () => {
+test('the action is a centred row and the scaled amount retains readable mobile, desktop and short-landscape steps', () => {
   const text = css('combat-target-responsive.css');
   const action = rule(text, ":root .combat .intent .intent-action");
   assert.match(action, /flex-direction:\s*row/);
   assert.match(action, /align-items:\s*center/);
   assert.doesNotMatch(action, /flex-direction:\s*column/);
-  assert.match(text, /--intent-value-size:\s*calc\(22px \/ var\(--ui-zoom,1\)\)/, '2x the old 11px');
+  assert.match(text, /--intent-content-scale:\s*\.8/);
+  assert.match(text, /--intent-value-size:\s*calc\(22px \* var\(--intent-content-scale\) \/ var\(--ui-zoom,1\)\)/);
+  assert.match(text, /--intent-value-size:\s*calc\(18px \* var\(--intent-content-scale\) \/ var\(--ui-zoom,1\)\)/,
+    'desktop and widescreen use the 18px step');
+  assert.match(text, /--intent-value-size:\s*calc\(16px \* var\(--intent-content-scale\) \/ var\(--ui-zoom,1\)\)/,
+    'short landscape uses the 16px step');
+  const scale = .8;
+  assert.ok(22 * scale >= 17, 'mobile amount remains at least 17px before UI zoom');
+  assert.ok(18 * scale >= 14, 'desktop amount remains at least 14px before UI zoom');
+  assert.ok(16 * scale >= 12, 'short-landscape amount remains at least 12px before UI zoom');
+  assert.match(text, /width:calc\(25px \* var\(--intent-content-scale\) \/ var\(--ui-zoom,1\)\); height:calc\(25px \* var\(--intent-content-scale\)/,
+    'mobile target-HUD icons use the same scale');
+  assert.match(text, /width:calc\(20px \* var\(--intent-content-scale\) \/ var\(--ui-zoom,1\)\); height:calc\(20px \* var\(--intent-content-scale\)/,
+    'desktop target-HUD icons use the same scale');
+  assert.match(text, /width:calc\(18px \* var\(--intent-content-scale\) \/ var\(--ui-zoom,1\)\); height:calc\(18px \* var\(--intent-content-scale\)/,
+    'follow-up icons use the same scale');
   assert.match(rule(text, ":root .combat .intent .intent-action-value"), /font:\s*700 var\(--intent-value-size\)/);
   // The old stacked, 11px target-HUD rules are gone: nothing re-stacks the amount above the icon.
   assert.doesNotMatch(text, /\[data-target-hud='true'\] \.intent-action \{[^}]*column/);

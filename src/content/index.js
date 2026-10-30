@@ -87,10 +87,12 @@ export const coreContentBundle = {
   // Release series and candidate live here; tools/buildversion.mjs derives the
   // fourth component and resets it to zero whenever this release changes.
   // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
-  // 0.7.1: the first candidate of the 0.7 line — seats (SPEC §13), a new
-  // run-order system live for players with its save-schema migration, is a
-  // MINOR under docs/versioning.md rule 2; the owner's release cut names 0.7.0.
-  version: '0.7.1',
+  // 0.7.2: the candidate after the 0.7.1.1848 release cut (2026-10-25). The
+  // owner's rule of 2026-10-30 is that each release cut advances the candidate
+  // for the line that follows, and the tail restarts at 0; a release merged to
+  // main advances MINOR instead (docs/versioning.md, "A release cut advances the
+  // candidate" and "A main merge advances the minor").
+  version: '0.7.2',
   balance,
   // The shop kinds and their offerings (SPEC §14.2). A bundle key, not a
   // balance leaf, so Advanced → Shops can generate its own rows from it.

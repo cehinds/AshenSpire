@@ -77,6 +77,7 @@ import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
+import * as IntentProjection from './enemyIntentProjection.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax, enemyMoveDamage } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
@@ -538,6 +539,13 @@ function drainQueue(combat) {
     }
     try {
       A.executeAction(combat, action);
+      const group = action.meta?.expansionGroup;
+      if (action.effect?.op === 'completeCombatAction' && !action.meta?.contactCompletion
+        && action.source?.kind === 'enemy' && group?.enemyMoveStart) {
+        // The head forecast has been spent. A follow-up replaces it through
+        // presentIntent; a reaction pause on another actor must not revive it.
+        if (!group.enemyMoveStart.reaction) consumeEnemyIntent(combat, action.source, group.enemyMoveStart.moveId);
+      }
     } finally {
       if (roundPoiseMultiplier) {
         combat.enqueue = previousEnqueue;
@@ -760,6 +768,14 @@ function enemyOwnerTurnStart(combat, enemy) {
   }
 }
 
+function consumeEnemyIntent(combat, enemy, moveId = enemy.intent?.moveId) {
+  // A held delayed payload is still next, even on a turn with no action.
+  if (enemy.pendingMove || !enemy.intent || enemy.intent.kind === 'staggered'
+    || enemy.intent.resolved || enemy.intent.moveId !== moveId) return;
+  enemy.intent.resolved = true;
+  combat.emit('enemyMoveEnded', { sourceId: enemy.id, moveId });
+}
+
 function enemyPhase(combat) {
   // With the Combat Rounds Preview on, the turn start ran in the round commit, before the moves.
   const preview = Boolean(combat.combatRounds);
@@ -830,6 +846,7 @@ function enemyPhase(combat) {
     if (combat.result) return;
     // The move has resolved: its momentum exchange ends with it (normalPreview.js), so its owner-turn-end hooks and
     // anything after are their own exchanges.
+    consumeEnemyIntent(combat, enemy);
     closeEnemyExchange(combat, enemy.id);
 
     // Normal combat (SPEC §4.6, owner 2026-10-12): the rest of the enemy's planned pool plays in order after its head.
@@ -856,6 +873,7 @@ function enemyPhase(combat) {
       drainQueue(combat);
       if (Reactions.reactionPaused(combat)) return;
       if (combat.result) return;
+      consumeEnemyIntent(combat, enemy);
       closeEnemyExchange(combat, enemy.id);
     }
     if (enemy.plannedMoves?.length === 0) enemy.planDue = false;
@@ -3000,6 +3018,7 @@ export function previewIntent(combat, enemyInstanceId) {
   const { knowledge, proposalRead, concealed } = intentReadGate(combat, enemy);
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
   if (concealed) return concealIntent(intent, profile);
+  if (intent.resolved) return { kind: 'unknown', moveId: null, revealed: true, hidden: false };
   const out = { ...intent, ...previewEnemyAction(combat, enemy, intent.moveId), profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is
   // base counter damage, matching the inspector's prepared reaction value.
@@ -3014,7 +3033,7 @@ export function previewIntent(combat, enemyInstanceId) {
     const effect = move?.effects?.find(e => e.op === 'damage');
     const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId, combat), damageSchool: damageSchool && damageSchool !== 'auto' ? damageSchool : effect?.damageSchool || move?.damageSchool };
     Object.assign(out, previewDamageHits(combat, enemy, combat.player, intent.damage, carrier.tags, carrier,
-      intent.hits != null ? intent.hits : 1));
+      intent.hits != null ? intent.hits : 1, IntentProjection.enemyIntentDamageState(combat, enemy, carrier, intent.damage)));
   }
   out.pending = !!enemy.pendingMove;
   if (knowledge) {

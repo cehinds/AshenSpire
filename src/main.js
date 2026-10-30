@@ -112,6 +112,7 @@ import {
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
@@ -184,7 +185,7 @@ import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
-import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
+import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, motionFlags, coarsePointer } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
@@ -447,6 +448,8 @@ function bringStoredProfileForward(meta) {
 }
 let activeMeta = saves.loadMeta();
 let activeSettings = bringStoredProfileForward(activeMeta);
+// Rendering quality folded into Effects: a saved explicit Full becomes Effects on, once.
+if (migrateEffectsSetting(activeSettings)) { activeMeta.settings = activeSettings; saves.saveMeta(activeMeta); }
 // Explicit preview URLs remain reproducible; otherwise use the saved rules for future runs.
 if (!profileQuery.has('gameProfile') && !profileQuery.has('wb.gameProfile') && !globalThis.__ASHEN_GAME_PROFILE_PREVIEW__) {
   selectedGameProfile = readNewGameProfile(activeSettings, selectedGameProfile);
@@ -952,6 +955,12 @@ function applyDisplaySettings(settings) {
   document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
+  // Effects (owner, 2026-10-30): `data-performance` stays the CSS hook (lite = off);
+  // `data-effects` is its readable alias. The fighter-motion options are body
+  // classes (`motion-attack-off`, ...), each independent of Effects.
+  document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
+  const motion = motionFlags(settings);
+  for (const kind of Object.keys(motion)) document.body.classList.toggle(`motion-${kind}-off`, !motion[kind]);
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
   configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);
@@ -1033,7 +1042,7 @@ function applyDisplaySettings(settings) {
   // applyUiScale for readability only: `--tap-floor` divides one by the other
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
-  setAnimSpeed(resolveCombatPacing(settings, quality));
+  setAnimSpeed(resolveCombatPacing(settings, coarsePointer()));
   setCombatPacing(settings);
   // A cleared key (a Reset, a profile that leaves it out) means the default:
   // setVolumes ignores a missing field, so say the default out loud.
@@ -4128,12 +4137,15 @@ function showGameProfileReward() {
   // Card ranks (SPEC 13.4o, Core): the rank-ups this victory's track levels queued are offered once, on the
   // existing reward door's rank-up picker, before the reward offer. Skipping one keeps it queued for the next victory.
   if (!pending.rankUpsOffered && coreCardRanks(run)) {
-    const rankUps = pendingRankUpRows(registries, run);
+    // The door's rows are fixed the first time it opens and saved with its claim state (rankUpCheckpoint), so a
+    // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
+    const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
     if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
     else return mountRewards(app, { registries, run, saves, rng,
-      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: rankUps },
+      rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
+      checkpoint: (pending.rankUpCheckpoint ||= {}),
       onPersist: persistContinuing,
-      // Set on leaving the door, so a reload mid-pick offers it again from the ledger.
+      // Rows and claims are saved at once; Continue marks the door done.
       onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
@@ -4181,7 +4193,8 @@ function showShop() {
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
     audio.music('shop');
     return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onTake: index => { purchaseGameProfileShopOffer(registries, run, shopId, index); persist(); showShop(); },
+      onTake: (index, quote) => { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop(); },
+      onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
       onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
   if (run.journey?.activeService) {

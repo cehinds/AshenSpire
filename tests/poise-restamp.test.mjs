@@ -7,6 +7,7 @@ import { createRunState, stampPlayerPoiseMax } from '../src/model/state.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import { reconcileWardBlock } from '../src/model/blockPresentation.js';
 import { applyCombatDisplayReceipt } from '../src/ui/models/CombatDisplayReceiptModel.js';
+import { applyCombatIntentReceipt } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { dealPoiseDamage, executeAction } from '../src/engine/actions.js';
@@ -79,7 +80,7 @@ test('paced player Poise follows each shipped impact, including fill overflow an
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const start = screen.indexOf('  function applyBeatToDisp(beat) {');
   const end = screen.indexOf('  // ---------- rendering ----------', start);
-  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat, (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, () => {});
+  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'applyCombatIntentReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat, (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, applyCombatIntentReceipt, () => {});
   function hit() {
     const before = combat.eventLog.length;
     executeAction(combat, { effect: { op: 'damage', target: 'player', amount: 1 }, source: combat.enemies[0], owner: combat.enemies[0], target: combat.player, meta: {} });

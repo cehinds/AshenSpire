@@ -103,7 +103,7 @@ test('the alternative flipbook plant opens the actual production fallback and sc
   const context = {
     document: dom.document, M: uiConfig.presentation.combatEffectPlayback.motion,
     SZ: uiConfig.presentation.combatEffectPlayback.sizing, active: new WeakMap(),
-    reducedMotionRequested: () => true, combatEffectFrames: () => Array.from({ length: 6 }, (_, i) => `frame-${i + 1}.webp`),
+    reducedMotionRequested: () => true, effectsOff: () => false, combatEffectFrames: () => Array.from({ length: 6 }, (_, i) => `frame-${i + 1}.webp`),
     combatEffectPresentation: () => ({ sizeScale: 1, startScale: 1, endScale: 1, opacity: 1 }),
     warmEffectFrames() {}, hintImage: image => image, currentArtUrl: url => url,
     combatEffectAngle: () => 0, combatEffectOrientation: () => '',

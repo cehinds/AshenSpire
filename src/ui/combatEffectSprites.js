@@ -1,5 +1,6 @@
 import { combatEffectFrames } from './assets.js';
 import { reducedMotionRequested } from './motion.js';
+import { effectsOff } from './performance.js';
 import { combatEffectAngle, combatEffectOrientation } from './combatEffectDirection.js';
 import { combatEffectPresentation } from '../content/combatEffectPresentation.js';
 import {playPresentationSequence} from './presentationSequence.js';
@@ -25,7 +26,7 @@ function warmEffectFrames(kind,frames){
 }
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
 export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=M.defaultDurationMs,size=SZ.planEffectSize,actor=null,localBox=null}={}){
- if(!plan||!layer||!from)return ()=>{};
+ if(!plan||!layer||!from||effectsOff())return ()=>{};
  size*=plan.sizeScale??1;
  const set=active.get(layer)||new Set();active.set(layer,set);
  const studioStop=playPresentationSequence(layer,from,plan.bindingContext,{targets:authoredTargets,duration,onStop:()=>set.delete(studioStop)});
@@ -58,7 +59,7 @@ export function clearCombatEffects(layer){for(const stop of [...(active.get(laye
 // Caller supplies boxes in layer-local coordinates, using the shared geometry
 // helper. All six frames retain one center anchor and common canvas scale.
 export function playCombatEffect(layer,from,kind,{to=null,direction='auto',duration=M.defaultDurationMs,size=SZ.defaultEffectSize,delay=0,impactKind='impact'}={}){
- if(!layer||!from||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return ()=>{};
+ if(!layer||!from||reducedMotionRequested()||effectsOff()||document.body.classList.contains('reduce-flashes'))return ()=>{};
  if(delay>0){
    const set=active.get(layer)||new Set();active.set(layer,set);let child=()=>{};
    const stop=()=>{clearTimeout(ticket);child();set.delete(stop);};

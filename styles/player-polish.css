@@ -632,7 +632,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
 
 
-/* Approved merchant composition: four compact offers, category dock, footer.
+/* Merchant composition: five compact offers, category dock, footer.
    All dimensions below are local CSS pixels; UI zoom keeps tap targets physical. */
 :root .shop-workspace.merchant-workspace { --merchant-gold:var(--gold); padding:7rem 2rem 1rem; }
 :root .shop-workspace.merchant-workspace .shop-railed { overflow:hidden; gap:0; }
@@ -671,7 +671,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 .merchant-inspection > :first-child { max-width:min(100%,28rem); }
 .merchant-inspection > .book-art { width:24rem; }
 .merchant-inspection > p { white-space:pre-line; color:var(--parchment); }
-:root .shop-workspace.merchant-workspace .merchant-category-dock { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:calc(44px / var(--ui-zoom,1)); max-height:calc(94px / var(--ui-zoom,1)); overflow:auto; gap:6px; padding:6px 1rem; border-top:1px solid var(--line-soft); }
+:root .shop-workspace.merchant-workspace .merchant-category-dock { flex:0 0 auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:calc(44px / var(--ui-zoom,1)); max-height:calc(88px / var(--ui-zoom,1) + 19px); overflow:auto; gap:6px; padding:6px 1rem; border-top:1px solid var(--line-soft); }
 :root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; min-height:0; padding:2px; width:100%; font-size:calc(11px / var(--ui-zoom,1)); line-height:1.2; color:var(--ink-dim); border:1px solid var(--line-soft); background:var(--panel); }
 :root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem.on { --gold:var(--merchant-gold); color:var(--gold); border-color:var(--gold); }
 :root .shop-workspace.merchant-workspace .merchant-category-dock .as-status { font-size:calc(9px / var(--ui-zoom,1)); line-height:1.1; color:inherit; }
@@ -684,7 +684,10 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
 @container game-viewport (max-height:500px) {
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
- :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
+ :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(7,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1) + 13px); }
+}
+@container game-viewport (min-width:800px) {
+ :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(7,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1) + 13px); }
 }
 /* The shared renderer inherits the existing optional HP-width preference. */
 :root .shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }
@@ -708,3 +711,14 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off p { display: block; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off { display: flex; }
 :where(.core-rest) .rest-door .rest-choices .class-pick.rest-option-off > .cp-body { flex: 1 1 auto; width: 100%; }
+
+/* Core Blacksmith: two services behind a compact switch, the rest of the frame is the content, and only the list
+   scrolls (never the frame around it). */
+:root .shop-workspace.blacksmith-compact .shop-railed { overflow:hidden; gap:.6rem; }
+:root .shop-workspace.blacksmith-compact .shop-switch { display:flex; flex:0 0 auto; width:auto; margin-inline:.5rem; }
+:root .shop-workspace.blacksmith-compact .shop-switch > button { flex:1 1 0; min-width:0; justify-content:center; text-align:center; text-transform:uppercase; letter-spacing:.06em; white-space:normal; }
+:root .shop-workspace.blacksmith-compact .shop-pane { flex:1 1 auto; min-height:0; max-height:none; }
+:root .shop-workspace.blacksmith-compact .shop-offers { min-height:0; }
+:root .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { gap:.6rem 1rem; padding:.7rem 1rem; }
+:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { flex-wrap:wrap; }
+:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick > .as-btn { flex:1 1 100%; }
