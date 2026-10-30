@@ -171,3 +171,17 @@ test('opt-in fixed phase reuse preserves pixels, filter and materialization with
   assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
   renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
 });
+
+test('a context whose filter already reads back as the requested value is not assigned again', () => {
+  const f = fixture(), image = {};
+  let writes = 0, stored = 'none', restoring = false;
+  const restore = f.target.restore;
+  f.target.restore = function () { restoring = true; try { restore.call(this); } finally { restoring = false; } };
+  Object.defineProperty(f.target, 'filter', { get: () => stored, set(v) { if (!restoring) writes++; stored = v; }, configurable: true });
+  f.renderer.draw(f.target, image, 'none', 128, 16);
+  assert.equal(writes, 0, 'drawing with the default filter never assigns it (an assignment forces a style flush)');
+  assert.equal(f.draws.at(-1).filter, 'none');
+  f.renderer.draw(f.target, image, 'blur(7px) contrast(1.2)', 128, 16);
+  assert.equal(f.draws.at(-1).filter, 'blur(7px) contrast(1.2)');
+  assert.ok(writes > 0, 'a different filter is still assigned');
+});
