@@ -23,10 +23,13 @@ export function alternativeAuraLayers(filter) {
   return shadows.length ? { shadows, brightness: light } : null;
 }
 
+const STILL_LIMIT = 12;
+
 export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
   let surface = null, work = null, disposed = false, current = null;
   const parsed = new Map();
   const rendered = []; // Opt-in fixed-travel actions retain at most four phase surfaces.
+  const stills = []; // Effects off: one baked bitmap per (artwork, glow, size); at most STILL_LIMIT.
   function layers(filter) {
     if (!parsed.has(filter)) {
       // Parsing is tiny; bound retained configurations even if runtime settings
@@ -37,7 +40,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     return parsed.get(filter);
   }
   return Object.freeze({
-    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, immutable = false } = {}) {
+    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, immutable = false, still = false } = {}) {
       if (disposed || !image) return false;
       const plan = layers(filter);
       context.save();
@@ -50,6 +53,31 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
           // Hit-stop and contact holds can request the same immutable bitmap at
           // the same placement on successive frames. The work surface already
           // contains those pixels; do not rasterize its shadows again.
+          // STATIC AURA (Effects off, owner 2026-10-30): the glow is drawn once for this
+          // artwork + glow + size and every later frame only blits that bitmap, shifted by
+          // however far the body has moved. It never reads pixels back (no materialize)
+          // and never re-rasterizes shadows while a stance, status and pose hold.
+          if (still) {
+            let entry = stills.find(e => e.image === image && e.filter === filter && e.width === width && e.height === height);
+            if (!entry) {
+              const copy = createCanvas(); copy.width = canvasWidth; copy.height = canvasHeight;
+              const copyContext = copy.getContext('2d');
+              if (!copyContext) throw new Error('Character aura requires a canvas context');
+              const outside = canvasWidth + width + Math.abs(x);
+              for (const glow of plan.shadows) {
+                copyContext.save(); copyContext.shadowColor = glow.color; copyContext.shadowBlur = glow.blur;
+                copyContext.shadowOffsetX = glow.x - outside; copyContext.shadowOffsetY = glow.y;
+                copyContext.drawImage(image, x + outside, y, width, height); copyContext.restore();
+              }
+              copyContext.save(); copyContext.drawImage(image, x, y, width, height); copyContext.restore();
+              entry = { image, filter, x, y, width, height, surface: copy };
+              stills.push(entry);
+              if (stills.length > STILL_LIMIT) { const oldest = stills.shift().surface; oldest.width = oldest.height = 0; }
+            }
+            context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
+            context.drawImage(entry.surface, x - entry.x, y - entry.y);
+            return true;
+          }
           const matches = entry => entry && entry.image === image && entry.filter === filter
             && entry.x === x && entry.y === y && entry.width === width && entry.height === height;
           const cached = (reuse && rendered.find(matches)) || (immutable && matches(current) && current);
@@ -94,8 +122,8 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     dispose() {
       disposed = true; parsed.clear();
       if (surface) { surface.width = 0; surface.height = 0; }
-      for (const entry of rendered) entry.surface.width = entry.surface.height = 0;
-      rendered.length = 0;surface = null; work = null; current = null;
+      for (const entry of [...rendered, ...stills]) entry.surface.width = entry.surface.height = 0;
+      rendered.length = 0; stills.length = 0;surface = null; work = null; current = null;
     },
   });
 }

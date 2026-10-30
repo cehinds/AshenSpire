@@ -77,6 +77,13 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     step(300);stage.setRestPose('defend');
     quality.performance='full';stage.setRestPose('defend');
     assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','switching back restores Standard aura at the same rest pose');
+    // Effects off keeps the glow but holds it still: a baked bitmap, no pixel readback, no action pulse.
+    quality.effects='off';quality.performance='lite';stage.setRestPose('idle');stage.setRestPose('defend');
+    assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','Effects off still draws the stance aura');
+    const beforeStill=readbacks.length;
+    stage.play('attack',260,['stamina','mana']);step(100);stage.settle({reaction:true});step(300);
+    assert.equal(readbacks.length,beforeStill,'Effects off never materializes through getImageData');
+    delete quality.effects;
     delete quality.performance;stage.setRestPose('idle');paints.length=0;
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
     let unchangedPaints=paints.length;

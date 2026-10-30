@@ -1549,8 +1549,9 @@
 }
 /* Lite also stops the backdrop ambient layer; resting figures stay still in all modes. */
 :root[data-performance='lite'] .backdrop::after { animation: none; }
-:root[data-performance='lite'] .sprite img,
-:root[data-performance='lite'] .sprite .facing { filter: none !important; }
+/* Effects off keeps the stance glow on image figures too: set once per pose change, never per frame. */
+:root[data-performance='lite']:not([data-effects='off']) .sprite img,
+:root[data-performance='lite']:not([data-effects='off']) .sprite .facing { filter: none !important; }
 
 /* Grid geometry and actor placement share the formation model. */
 .formation-grid {
