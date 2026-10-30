@@ -5,6 +5,9 @@
 //
 //   node tools/perf-probe.mjs                      all scenarios, 3 runs, median across runs
 //   node tools/perf-probe.mjs --runs 5             more runs
+//   node tools/perf-probe.mjs --certify            certification: scenarios combat,hand, 5 runs, no CPU profile,
+//                                                  per-run rows, trimmed median (drop min and max), min-max spread
+//                                                  and PASS/FAIL against the targets (see TARGETS below)
 //   node tools/perf-probe.mjs --scenario combat,map   only these (combat, map, hand, transitions)
 //   node tools/perf-probe.mjs --seed PERF1         the fixed seed (default PERF1)
 //   node tools/perf-probe.mjs --throttle 4         CPU slowdown (default 4; 1 = none)
@@ -42,14 +45,15 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const argv = process.argv.slice(2);
 const arg = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
-const RUNS = Math.max(1, Number(arg('--runs', 3)) || 3);
+const CERTIFY = argv.includes('--certify');
+const RUNS = Math.max(1, Number(arg('--runs', CERTIFY ? 5 : 3)) || (CERTIFY ? 5 : 3));
 const SEED = arg('--seed', 'PERF1');
 const THROTTLE = Number(arg('--throttle', 4)) || 4;
 const OUT = resolve(arg('--out', join(process.env.TMPDIR || tmpdir(), 'ashen-perf')));
 const KEEP_TRACE = argv.includes('--keep-trace');
-const PROFILE = !argv.includes('--no-profile');
+const PROFILE = !argv.includes('--no-profile') && !CERTIFY;
 const DEBUG = argv.includes('--debug');
-const WANT = new Set(String(arg('--scenario', 'combat,map,hand,transitions')).split(','));
+const WANT = new Set(String(arg('--scenario', CERTIFY ? 'combat,hand' : 'combat,map,hand,transitions')).split(','));
 const log = (...a) => { if (DEBUG) console.error('  [dbg]', ...a); };
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -59,6 +63,8 @@ const pct = (a, q) => { if (!a.length) return 0; const s = sorted(a); return s[M
 const median = (a) => { if (!a.length) return 0; const s = sorted(a), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const sum = (a) => a.reduce((t, x) => t + x, 0);
 const r1 = (x) => Math.round(x * 10) / 10;
+// Trimmed median: drop the single lowest and highest value, take the median of the rest (plain median under 3 values).
+const trimmedMedian = (a) => { const s = sorted(a.filter((x) => Number.isFinite(x))); return s.length >= 3 ? median(s.slice(1, -1)) : median(s); };
 
 // ---- in-page instrumentation (installed before any page script) --------------
 const INIT = `(() => {
@@ -451,7 +457,8 @@ async function onePass(browser, base, name, { trace, profile }) {
     const f = raw.frames;
     const peak = (i) => Math.max(0, ...raw.anim.map((a) => a[i]));
     return { wallMs: wall, errors, extra, census, end, counts,
-      frames: { n: f.length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
+      frameList: f.map((d) => Math.round(d * 10) / 10),
+      frames: { n: f.length, n33: f.filter((d) => d > 33.4).length, n100: f.filter((d) => d > 100).length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
         over16: r1(100 * f.filter((d) => d > 16.7 + 0.5).length / (f.length || 1)), over33: r1(100 * f.filter((d) => d > 33.4).length / (f.length || 1)) },
       long: { n: raw.long.length, totalMs: r1(sum(raw.long)), blockingMs: r1(sum(raw.long.map((d) => Math.max(0, d - 50)))), maxMs: r1(Math.max(0, ...raw.long)) },
       anim: { peakRunning: peak(0), peakTransitions: peak(1), peakInfinite: peak(2), meanRunning: r1(median(raw.anim.map((a) => a[0]))) },
@@ -471,7 +478,7 @@ function summarise(name, runs) {
   const tn = (k) => med(A, (r) => r.trace?.by[k]?.n ?? 0);
   return {
     scenario: name, runs: runs.length, windowS: r1(med(A, (r) => r.wallMs) / 1000),
-    frames: Object.fromEntries(['n', 'medianMs', 'p95', 'p99', 'maxMs', 'over16', 'over33'].map((k) => [k, med(A, (r) => r.frames[k])])),
+    frames: Object.fromEntries(['n', 'n33', 'n100', 'medianMs', 'p95', 'p99', 'maxMs', 'over16', 'over33'].map((k) => [k, med(A, (r) => r.frames[k])])),
     long: { n: med(A, (r) => r.long.n), totalMs: med(A, (r) => r.long.totalMs), blockingMs: med(A, (r) => r.long.blockingMs), maxMs: med(A, (r) => r.long.maxMs) },
     anim: { peakRunning: med(A, (r) => r.anim.peakRunning), peakTransitions: med(A, (r) => r.anim.peakTransitions), peakInfinite: med(A, (r) => r.anim.peakInfinite) },
     traceMs: { style: r1(t('UpdateLayoutTree')), styleN: tn('UpdateLayoutTree'), layout: r1(t('Layout')), layoutN: tn('Layout'),
@@ -500,6 +507,43 @@ function mergeProfiles(ps) {
   return [...m.entries()].map(([k, v]) => [k, r1(median(v.concat(Array(Math.max(0, ps.length - v.length)).fill(0))))]).sort((a, b) => b[1] - a[1]).slice(0, 15);
 }
 
+// ---- certification ---------------------------------------------------------------
+// Targets (docs/PERF-MOBILE-BASELINE.md): decided on the trimmed median of the runs, never a single run.
+// Note frame deltas are vsync-quantised (16.7 / 33.4 / 50 ...), so "p95 <= 33" means p95 = 16.7: fewer than
+// 5% of frames may take two vsyncs or more.
+const TARGETS = {
+  combat: [['p95 ms', (f) => f.p95, 100], ['frames > 33 ms %', (f) => f.over33, 8], ['blocking ms', (f, l) => l.blockingMs, 2800]],
+  hand: [['p95 ms', (f) => f.p95, 33]],
+};
+function certify(name, runs) {
+  const A = runs.map((r) => r.a);
+  const row = (a, i) => {
+    const f = a.frames, fl = a.frameList;
+    return { i: i + 1, p95: f.p95, n33: f.n33 ?? (fl ? fl.filter((d) => d > 33.4).length : NaN), over33: f.over33, over16: f.over16,
+      n100: f.n100 ?? (fl ? fl.filter((d) => d > 100).length : NaN), over100: r1(100 * (f.n100 ?? (fl ? fl.filter((d) => d > 100).length : 0)) / (f.n || 1)),
+      blocking: a.long.blockingMs, max: f.maxMs, frames: f.n, unstable: a.unstable || null };
+  };
+  const rows = A.map(row);
+  const cols = [['p95 ms', 'p95'], ['frames>33ms (n)', 'n33'], ['frames>33ms %', 'over33'], ['frames>100ms (n)', 'n100'], ['frames>100ms %', 'over100'], ['>16.7 %', 'over16'], ['blocking ms', 'blocking'], ['max ms', 'max'], ['frames', 'frames']];
+  const out = [];
+  out.push(`\n## certify ${name}: ${SCENARIOS[name].title} — ${runs.length} run(s)`);
+  out.push(`| run | ${cols.map((c) => c[0]).join(' | ')} | note |`);
+  out.push(`|---|${cols.map(() => '---').join('|')}|---|`);
+  for (const r of rows) out.push(`| ${r.i} | ${cols.map((c) => r[c[1]]).join(' | ')} | ${r.unstable ? 'UNSTABLE: ' + r.unstable : ''} |`);
+  const tm = (k) => r1(trimmedMedian(rows.map((r) => r[k])));
+  const lo = (k) => Math.min(...rows.map((r) => r[k])), hi = (k) => Math.max(...rows.map((r) => r[k]));
+  out.push(`| **trimmed median** | ${cols.map((c) => `**${tm(c[1])}**`).join(' | ')} | drop min and max |`);
+  out.push(`| min-max | ${cols.map((c) => `${r1(lo(c[1]))}-${r1(hi(c[1]))}`).join(' | ')} | |`);
+  const verdicts = [];
+  for (const [label, get, limit] of TARGETS[name] || []) {
+    const vals = A.map((a) => get(a.frames, a.long));
+    const t = r1(trimmedMedian(vals));
+    verdicts.push({ label, t, limit, pass: t <= limit, perRunPass: vals.map((v) => v <= limit) });
+    out.push(`target ${name} ${label} <= ${limit}: trimmed median ${t} -> ${t <= limit ? 'PASS' : 'FAIL'} (runs passing ${vals.filter((v) => v <= limit).length}/${vals.length})`);
+  }
+  return { text: out.join('\n'), rows, verdicts, tm: Object.fromEntries(cols.map((c) => [c[1], tm(c[1])])) };
+}
+
 // ---- main ---------------------------------------------------------------------
 // A pass that fails (a tap swallowed while the fan re-lays out, a timeout under throttle) is
 // retried on a fresh page, up to three times, so one flaky input does not lose the run.
@@ -512,11 +556,12 @@ async function passWithRetry(browser, base, name, opts) {
 // --from DIR: summarise the runs-*.json an earlier invocation saved there, without measuring again.
 const FROM = arg('--from', null);
 const summaries = [];
+const allRuns = {};
 if (FROM) {
   const { readFileSync, existsSync } = await import('node:fs');
   for (const name of Object.keys(SCENARIOS).filter((n) => WANT.has(n))) {
     const f = join(resolve(FROM), `runs-${name}.json`);
-    if (existsSync(f)) summaries.push(summarise(name, JSON.parse(readFileSync(f, 'utf8'))));
+    if (existsSync(f)) { allRuns[name] = JSON.parse(readFileSync(f, 'utf8')); summaries.push(summarise(name, allRuns[name])); }
   }
 } else {
   const server = await serve({ root: ROOT, port: 0, open: false, quiet: true });
@@ -532,6 +577,7 @@ if (FROM) {
         process.stderr.write(` median frame ${a.frames.medianMs} ms, p95 ${a.frames.p95}, ${a.frames.over16}% over 16.7\n`);
         runs.push({ a, b });
       }
+      allRuns[name] = runs;
       summaries.push(summarise(name, runs));
       mkdirSync(OUT, { recursive: true });
       writeFileSync(join(OUT, `runs-${name}.json`), JSON.stringify(runs));
@@ -544,7 +590,9 @@ if (FROM) {
 mkdirSync(OUT, { recursive: true });
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(summaries, null, 1));
 
-console.log(`# perf-probe: ${THROTTLE}x CPU throttle, 390x844 @3x, seed ${SEED}, median of ${RUNS} run(s)\n`);
+console.log(`# perf-probe: ${THROTTLE}x CPU throttle, 390x844 @3x, seed ${SEED}, ${CERTIFY ? 'trimmed median (min and max dropped) of' : 'median of'} ${RUNS} run(s)\n`);
+if (CERTIFY) { for (const s of summaries) console.log(certify(s.scenario, allRuns[s.scenario]).text); console.log(); }
+
 console.log('| scenario | window s | frames | median ms | p95 | p99 | >16.7 % | >33 % | long tasks (n / total ms / blocking ms) | peak anims (running / transitions / infinite) |');
 console.log('|---|---|---|---|---|---|---|---|---|---|');
 for (const s of summaries) {
