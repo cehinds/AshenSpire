@@ -24,14 +24,26 @@ const TOOL = fileURLToPath(new URL('../tools/about-changelog.mjs', import.meta.u
 // would fail them for the wrong reason.
 const REAL = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
 const BOX = JSON.parse(readFileSync(new URL('../buildordinal.json', import.meta.url), 'utf8'));
-// A stamp below the box, in the box's own release: a pending receipt must carry
-// that release, so an older candidate is refused by shape, not by order. The tail
+// The stale stamp sits one build below the highest receipt of the box's release in
+// the newest date group, where the probe is inserted: that is what makes it a rise
+// against the receipt that follows it. It is not derived from the box: the tail
 // restarts at 0 whenever the release moves (docs/versioning.md, "A release cut
-// advances the candidate"), so right after a cut the box can read 0.7.2.1 and
-// "ten builds below" would not be a stamp at all; clamp at 0. Only the first build
-// of a candidate (ordinal 0) has no lower stamp in its release — see FIRST_BUILD.
-const STALE = `${BOX.release}.${Math.max(0, BOX.ordinal - 10)}`;
-const FIRST_BUILD = BOX.ordinal === 0 ? 'the first build of a candidate has no lower stamp in its release to be stale against' : false;
+// advances the candidate"), so "ten builds below the box" was no stamp at all right
+// after a cut (0.7.2.-9) and no longer below the group's receipts once the box ran
+// ahead of them. A pending receipt must carry the box's own release, so an older
+// candidate would be refused by shape, not order. When the newest group has no
+// receipt of this release above build 0, nothing can be stale against it: the rise
+// test says so and steps aside (NO_LOWER_STAMP).
+function topOfRelease(markdown, release) {
+  const start = markdown.indexOf('\n## ');
+  const next = markdown.indexOf('\n## ', start + 1);
+  const group = markdown.slice(start, next === -1 ? undefined : next);
+  const tails = [...group.matchAll(/`(\d+\.\d+\.\d+)\.(\d+)`/g)].filter(([, rel]) => rel === release).map(([, , tail]) => Number(tail));
+  return tails.length ? Math.max(...tails) : null;
+}
+const TOP = topOfRelease(REAL, BOX.release);
+const STALE = `${BOX.release}.${TOP > 0 ? TOP - 1 : 0}`;
+const NO_LOWER_STAMP = TOP > 0 ? false : `the newest date group has no ${BOX.release} receipt above build 0 to be stale against`;
 const receipt = (n, s) => `- **Stale branch** ([#${n}](https://github.com/cehinds/AshenSpire/pull/${n}), \`${s}\`). Probe.\n`;
 function withReceipt(line) {
   const i = REAL.indexOf('\n## ');
@@ -56,7 +68,7 @@ function run(args, { changelog = markdown(), event = null } = {}) {
   } finally { rmSync(root, { recursive: true, force: true }); }
 }
 
-test('without --pending the stale receipt is a rise, as before', { skip: FIRST_BUILD }, () => {
+test('without --pending the stale receipt is a rise, as before', { skip: NO_LOWER_STAMP }, () => {
   const r = run([]);
   assert.equal(r.status, 1, r.stdout + r.stderr);
   assert.match(r.stdout + r.stderr, /RED — .*build (runs backward|rises within)/);

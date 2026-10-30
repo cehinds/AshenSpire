@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-30
 
-- **Test suite green after a version reset** ([#2382](https://github.com/cehinds/AshenSpire/pull/2382), `0.7.2.1`). A changelog-order test built its "stale" stamp as ten builds below the current one, which stopped being a real stamp once 0.7.2 restarted the build counter at 0; it now clamps at 0 and steps aside on a candidate's very first build. Nothing changes in play.
+- **Changelog-order test survives a version reset** ([#2382](https://github.com/cehinds/AshenSpire/pull/2382), `0.7.2.1`). The test that proves a stale receipt is caught built its stale stamp as ten builds below the current one, which stopped being a real stamp once 0.7.2 restarted the build counter at 0. It now takes one build below the newest receipt of the current version, so it holds at any build number. Nothing changes in play.
 - **Builds now read 0.7.2** ([#2380](https://github.com/cehinds/AshenSpire/pull/2380), `0.7.2.1`). The owner's rule: every release cut moves the third number up for the builds that follow, and a release reaching `main` moves the second. 0.7.1 shipped as 0.7.1.1848, so development builds continue from 0.7.2.0. Nothing changes in play; the rule is written into docs/versioning.md and the release checklist.
 
 ## 2026-10-29
