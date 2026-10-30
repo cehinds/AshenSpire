@@ -21,7 +21,14 @@ test('every action keyframe applied to a sprite host under Effects off animates 
   // every filter-animating action family has an override (a name or none) for both attack and move hosts
   for (const family of ['sweep', 'lunge', 'impact', 'release']) assert.ok([...applied.keys()].some(k => k.includes(`"${family}"`)), family);
   for (const motion of ['cast', 'brace']) assert.equal(applied.get([...applied.keys()].find(k => k.includes(`"${motion}"`))), 'none', `${motion} has only a flash, so it plays nothing`);
-  assert.ok(![...applied.keys()].some(k => k.includes('"sidestep"')) && ![...applied.keys()].some(k => /act-move\[data-action-motion\]$/.test(k)), 'the sidestep is not silenced');
+  // the sidestep host carries data-action-motion="sidestep": no Effects-off move override may match it, so every
+  // such override must either name a different motion value or exclude attributed hosts outright
+  const moveOverrides = [...applied.keys()].filter(k => /\.act-move/.test(k));
+  assert.ok(moveOverrides.length >= 2, 'move overrides exist');
+  for (const k of moveOverrides) {
+    const matchesSidestep = !/data-action-motion="(?!sidestep")[a-z]+"/.test(k) && !/act-move:not\(\[data-action-motion\]\)/.test(k);
+    assert.ok(!matchesSidestep, `${k} would silence the sidestep dodge`);
+  }
   assert.match(keyframes('family-dodge'), /opacity/);
   assert.doesNotMatch(keyframes('family-dodge'), /filter/);
   assert.match(css, /\.sprite\.act-move\[data-action-motion="sidestep"\] \{ animation-name: family-dodge; \}/, 'the dodge opacity dip is still named under Effects off');

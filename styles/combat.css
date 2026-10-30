@@ -2140,7 +2140,7 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
 @keyframes family-strike-nofx { 0%, 100% { translate: 0 0; } 30% { translate: var(--action-recoil, -12px) 0; } 55% { translate: var(--action-travel, 26px) 0; } }
 :root[data-effects='off'] .enemy .sprite.act-attack { animation-name: lunge-left-nofx; }
 :root[data-effects='off'] .player .sprite.act-attack { animation-name: lunge-right-nofx; }
-:root[data-effects='off'] .sprite.act-move { animation-name: none; }
+:root[data-effects='off'] .sprite.act-move:not([data-action-motion]) { animation-name: none; }
 :root[data-effects='off'] .sprite.act-attack[data-action-motion="sweep"] { animation-name: family-slash-nofx; }
 :root[data-effects='off'] .sprite.act-attack[data-action-motion="lunge"] { animation-name: family-thrust-nofx; }
 :root[data-effects='off'] .sprite.act-attack[data-action-motion="impact"] { animation-name: family-strike-nofx; }
