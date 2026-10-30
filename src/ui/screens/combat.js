@@ -188,6 +188,11 @@ export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingE
   return index < handSize ? { kind: 'select', index } : { kind: 'none' };
 }
 
+// Last markup written into a render-owned host. Kept per node (not in a `let` inside mountCombat: render()
+// runs before that function's later declarations on the first paint).
+const expansionControlsHtml = new WeakMap();
+const topbarWrites = new WeakMap();
+
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, onEditDeck = null, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {}, opening = false }) {
   // One preview per (card, target, ranks) until the fight next changes: see
   // PreviewMemoModel. The fight changes only through dispatch and the Classic
@@ -840,11 +845,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const alive = !!getEntity(combat, id)?.alive;
       const legal = armed && plan.legalIds.includes(id);
       frame.classList.toggle('targetable', legal && frame.classList.contains('enemy'));
-      frame.inert = !alive || (armed && !legal);
-      if (frame.inert) {
-        frame.setAttribute('aria-disabled', 'true');
+      // Same-value writes are skipped: a repeated inert/aria write still dirties the frame's subtree.
+      const inert = !alive || (armed && !legal);
+      if (frame.inert !== inert) frame.inert = inert;
+      if (inert) {
+        if (frame.getAttribute('aria-disabled') !== 'true') frame.setAttribute('aria-disabled', 'true');
         frame.classList.remove('hover-target', 'gp-focus');
-      } else frame.removeAttribute('aria-disabled');
+      } else if (frame.hasAttribute('aria-disabled')) frame.removeAttribute('aria-disabled');
     });
     renderEnemyTargetPicker($('.field'), {
       targets: (combatEl.dataset.targetHud === 'true' ? [] : layer.eligibleIds).map(id => {
@@ -1740,22 +1747,36 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const pv = dv(p);
     const key = JSON.stringify([p, pv, readSettings()]);
-    if (topbarRenderKey === key) return;
-    $('.combat-blight-hud').innerHTML = ashenBlightBarHtml({ ...p, ...pv }, { compact: true });
+    if (topbarRenderKey === key) return false;
+    // Each piece below is rewritten only when what it draws changed; the key above moves
+    // for any player field (stamina, stance) that none of the three shows.
+    let wrote = false;
+    const write = (node, id, value, apply) => {
+      let memo = topbarWrites.get(node);
+      if (!memo) topbarWrites.set(node, memo = {});
+      if (memo[id] === value) return;
+      memo[id] = value; apply(); wrote = true;
+    };
+    const blightHud = $('.combat-blight-hud');
+    const blightHtml = ashenBlightBarHtml({ ...p, ...pv }, { compact: true });
+    write(blightHud, 'blight', blightHtml, () => { blightHud.innerHTML = blightHtml; });
     // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
     // content/resources.js's business, not this screen's. Player Poise belongs
     // only on the combat character card's model surface; it is deliberately
     // absent from this shared map/combat top HUD.
     const host = $('.topbar .resbars-host');
     if (host) {
-      host.innerHTML = '';
       const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
-      host.appendChild(resourceBars(mainPlan.filter(bar=>bar.id==='hp'), { surface: 'main', tooltipExtra: poiseTip('player') }));
-      host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
+      write(host, 'resbars', JSON.stringify(mainPlan.filter(bar=>bar.id==='hp')), () => {
+        host.innerHTML = '';
+        host.appendChild(resourceBars(mainPlan.filter(bar=>bar.id==='hp'), { surface: 'main', tooltipExtra: poiseTip('player') }));
+        host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
+      });
     }
     // WGH6: the same relic tile renderer the rooms use (components/relicRail.js);
     // a HUD whose relic layer is off has no rail and draws none.
-    mountRelicRail($('.topbar .relics'), registries, p.relicIds);
+    const rail = $('.topbar .relics');
+    if (rail) write(rail, 'relics', JSON.stringify(p.relicIds || []), () => mountRelicRail(rail, registries, p.relicIds));
     // Combat potions live in the bottom menu; the shared map HUD is unchanged.
     // Quick Access no longer carries a charge-flask tray — Crimson and Azure
     // moved into the potion belt — so the tray is looked up optionally rather
@@ -1763,10 +1784,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const selector of ['.hud-charge-flasks', '.hud-potions']) {
       const tray = $('.topbar ' + selector);
       if (!tray) continue;
-      tray.replaceChildren(); tray.hidden = true;
+      if (tray.childNodes.length) { tray.replaceChildren(); wrote = true; }
+      if (!tray.hidden) tray.hidden = true;
     }
-    $('.topbar .shared-hud')?.setAttribute('data-has-utility-potions', 'false');
+    const shared = $('.topbar .shared-hud');
+    if (shared && shared.getAttribute('data-has-utility-potions') !== 'false') shared.setAttribute('data-has-utility-potions', 'false');
     topbarRenderKey = key;
+    return wrote;
   }
 
   // THE POTIONS MINIS (owner, 2026-09-14): the WGH8 entries — the charge
@@ -2749,31 +2773,44 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     paintEndTurnKey($('.end-turn'), etKey);
     const hasPlayable = endTurnHasPlayable();
-    $('.end-turn').classList.toggle('pulse', hasPlayable);
-    $('.end-turn').dataset.confirmReady = String(combat.phase === 'player' && !hasPlayable);
+    const endTurn = $('.end-turn');
+    endTurn.classList.toggle('pulse', hasPlayable);
+    const confirmReady = String(combat.phase === 'player' && !hasPlayable);
+    if (endTurn.dataset.confirmReady !== confirmReady) endTurn.dataset.confirmReady = confirmReady;
 
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
     // reason a beat can live on a control its own screen repaints every frame
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
-    $('.end-turn').disabled = busy || enemyPlayback || !!combat.pendingReaction || combat.phase !== 'player' || !!combat.result;
+    const endTurnDisabled = busy || enemyPlayback || !!combat.pendingReaction || combat.phase !== 'player' || !!combat.result;
+    if (endTurn.disabled !== endTurnDisabled) endTurn.disabled = endTurnDisabled;
     paintActionCounts();
     const expandedHost = $('.combat-expansion-controls');
     if (combat.combatExpansionVersion === 2) {
       const pendingFeat = combat.player.ashenBlight?.milestones.some(row => row.path === null);
       const recoveries = recoveryControls(combat, combat.player);
-      expandedHost.hidden = !pendingFeat && !recoveries.length;
-      expandedHost.innerHTML = `${pendingFeat ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}${recoveries.length ? `<div class="combat-recovery-controls">${recoveries.map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>` : ''}`;
-      expandedHost.querySelector('[data-blight-feat]')?.addEventListener('click', () => {
-        if (busy || expansionChoiceShell || combat.result) return;
-        const pending = combat.player.ashenBlight.milestones.find(row => row.path === null);
-        expansionChoiceShell = openAshenBlightMilestone({ threshold: pending.threshold,
-          onClosed: () => { expansionChoiceShell = null; },
-          onChoose: selection => expansionIntent({ type: 'chooseBlightFeat', ...selection }) });
-      });
-      for (const node of expandedHost.querySelectorAll('[data-control-recovery]')) node.addEventListener('click', () => expansionIntent({ type: 'recoverControl', selections: [{ status: node.dataset.controlRecovery, stacks: 1 }] }));
-    } else { expandedHost.replaceChildren(); expandedHost.hidden = true; }
+      const hidden = !pendingFeat && !recoveries.length;
+      if (expandedHost.hidden !== hidden) expandedHost.hidden = hidden;
+      const html = `${pendingFeat ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}${recoveries.length ? `<div class="combat-recovery-controls">${recoveries.map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>` : ''}`;
+      // The handlers below read live state when pressed, so unchanged markup keeps its buttons and handlers.
+      if (expansionControlsHtml.get(expandedHost) !== html) {
+        expansionControlsHtml.set(expandedHost, html);
+        expandedHost.innerHTML = html;
+        expandedHost.querySelector('[data-blight-feat]')?.addEventListener('click', () => {
+          if (busy || expansionChoiceShell || combat.result) return;
+          const pending = combat.player.ashenBlight.milestones.find(row => row.path === null);
+          expansionChoiceShell = openAshenBlightMilestone({ threshold: pending.threshold,
+            onClosed: () => { expansionChoiceShell = null; },
+            onChoose: selection => expansionIntent({ type: 'chooseBlightFeat', ...selection }) });
+        });
+        for (const node of expandedHost.querySelectorAll('[data-control-recovery]')) node.addEventListener('click', () => expansionIntent({ type: 'recoverControl', selections: [{ status: node.dataset.controlRecovery, stacks: 1 }] }));
+      }
+    } else {
+      if (expandedHost.childNodes.length) expandedHost.replaceChildren();
+      expansionControlsHtml.delete(expandedHost);
+      if (!expandedHost.hidden) expandedHost.hidden = true;
+    }
 
   }
 
