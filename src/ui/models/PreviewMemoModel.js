@@ -11,7 +11,7 @@
 //
 // PRE-WARM. After a dispatch the fight is final for the whole playback, and the
 // finish render asks for a fixed set of quotes. `prewarm(jobs)` fills them in
-// idle time, one job per idle callback and only when the slot is long enough
+// idle time, jobs run only while the idle slot is long enough
 // for a whole preview, so a pre-warm never lands inside a frame. Any
 // invalidate (dispatch, direct write, teardown) drops the pending jobs: a
 // stale quote is never kept. With no requestIdleCallback (Safari) it does
