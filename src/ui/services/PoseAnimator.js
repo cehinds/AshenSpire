@@ -22,6 +22,7 @@
 import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/poseSprites.js';
 import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
+import { motionOff } from '../performance.js';
 import { hintImage } from '../imageHints.js';
 import { preloadPoses } from './posePreloads.js';
 
@@ -145,6 +146,8 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = POSE_MOTION.defaultPlayMs) {
       if (reducedMotionRequested()) return false;
+      // Idle motion off: no pose swaps at rest. The strike, the struck and the fallen keep theirs.
+      if (motionOff('idle') && !['attack', 'hit', 'defeated'].includes(pose)) return false;
       // Decide what would be shown BEFORE cancelling the hold already running. A
       // pose this build does not carry used to clear the settle timer and then
       // bail, which left whatever was on screen — a lunge, mid-swing — frozen

@@ -7,7 +7,7 @@ import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
 import { reducedMotionRequested } from './motion.js';
-import { liteRendering, effectsOff } from './performance.js';
+import { liteRendering, effectsOff, motionOff } from './performance.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
@@ -126,7 +126,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       if(pose==='origin')pose=restPose();
       if (pose==='ready' && stance) pose='stance-'+stance;
       effect=playing.sequence.effects?.[sampled.index];
-      x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
+      x=['attack','smash','sweep'].includes(playing.action)&&!motionOff('attack')?sampled.x:0;
     }
     if (rest !== 'defeated' && bodyReaction) {
       const sampled=sampleSequence(bodyReaction.sequence,bodyReaction.elapsed,bodyReaction.duration,{reduced:still||reducedMotionRequested()||!ANIM_SPEEDS[getAnimSpeed()]});
@@ -214,7 +214,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   function endReaction() { if(flashAt===null&&!bodyReaction)return false;flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;if(!playing)pose=restPose();paint();return true; }
   function settleStage({reaction=false}={}) { if(reaction){flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;} settle(); }
   // Instant drops pacing and hit-stop but keeps fixed-duration effects, so the hurt clip still plays.
-  function hit(ms=220) { if (reducedMotionRequested() || still) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
+  function hit(ms=220) { if (reducedMotionRequested() || still || motionOff('hit')) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],

@@ -2109,3 +2109,5 @@ body.motion-defeat-off .combatant.dead .sprite > img,
 body.motion-defeat-off .combatant.down .sprite > img,
 body.motion-defeat-off .combatant.dead,
 body.motion-defeat-off .combatant.down { transition: none; animation: none; }
+/* Idle motion: the pose aura holds still too (pose swaps are gated in ui/services/PoseAnimator.js). */
+body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }

@@ -185,7 +185,7 @@ import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { createHaptics, haptic } from './ui/haptics.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
-import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, resolveMotionIdle, MOTION_KEYS } from './ui/performance.js';
+import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, motionFlags } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
 import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
@@ -959,10 +959,8 @@ function applyDisplaySettings(settings) {
   // `data-effects` is its readable alias. The fighter-motion options are body
   // classes (`motion-attack-off`, ...), each independent of Effects.
   document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
-  for (const key of MOTION_KEYS) {
-    const on = key === 'motionIdle' ? resolveMotionIdle(settings) : settings[key] !== false;
-    document.body.classList.toggle(`motion-${key.slice(6).toLowerCase()}-off`, !on);
-  }
+  const motion = motionFlags(settings);
+  for (const kind of Object.keys(motion)) document.body.classList.toggle(`motion-${kind}-off`, !motion[kind]);
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
   configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);

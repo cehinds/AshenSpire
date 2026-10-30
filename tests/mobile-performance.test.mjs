@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { resolveMotionIdle, resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled } from '../src/ui/performance.js';
+import { motionFlags, effectsOff, motionOff, resolveMotionIdle, resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled } from '../src/ui/performance.js';
 import { preloadPoses, clearPosePreloads } from '../src/ui/services/posePreloads.js';
 import { runtimeAsset } from '../tools/assetmime.mjs';
 
@@ -85,4 +85,32 @@ test('idle motion defaults off on touch devices and on elsewhere; a saved choice
     assert.equal(resolveMotionIdle({}), true, 'desktop default');
     assert.equal(resolveMotionIdle({ motionIdle: false }), false, 'explicit off wins on desktop');
   } finally { if (real) globalThis.matchMedia = real; else delete globalThis.matchMedia; }
+});
+
+test('each fighter-motion option maps to its body class flag, all on by default (idle off on touch)', () => {
+  const real = globalThis.matchMedia;
+  try {
+    globalThis.matchMedia = () => ({ matches: false });
+    assert.deepEqual(motionFlags({}), { attack: true, hit: true, idle: true, defeat: true });
+    globalThis.matchMedia = () => ({ matches: true });
+    assert.deepEqual(motionFlags({}), { attack: true, hit: true, idle: false, defeat: true });
+    for (const [key, kind] of [['motionAttack', 'attack'], ['motionHit', 'hit'], ['motionIdle', 'idle'], ['motionDefeat', 'defeat']]) {
+      assert.equal(motionFlags({ [key]: false })[kind], false, `${key} off`);
+      assert.equal(motionFlags({ [key]: true })[kind], true, `${key} on`);
+    }
+    // Effects is independent of every motion option
+    assert.deepEqual(motionFlags({ effects: false, motionHit: false }), { attack: true, hit: false, idle: false, defeat: true });
+  } finally { if (real) globalThis.matchMedia = real; else delete globalThis.matchMedia; }
+});
+
+test('the motion body classes and the Effects root attribute are what the helpers read', () => {
+  const classes = new Set(['motion-hit-off']);
+  globalThis.document = { documentElement: { dataset: { effects: 'off' } }, body: { classList: { contains: c => classes.has(c) } } };
+  try {
+    assert.equal(effectsOff(), true);
+    assert.equal(motionOff('hit'), true);
+    assert.equal(motionOff('attack'), false);
+    document.documentElement.dataset.effects = 'on';
+    assert.equal(effectsOff(), false, 'toggling on at runtime flips the reading with no reload');
+  } finally { delete globalThis.document; }
 });

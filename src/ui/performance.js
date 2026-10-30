@@ -9,6 +9,12 @@
 /** The fighter-motion sub-options, each default ON, each independent of Effects. */
 export const MOTION_KEYS = Object.freeze(['motionAttack', 'motionHit', 'motionIdle', 'motionDefeat']);
 
+/** motionFlags(settings) → { attack, hit, idle, defeat } booleans: true when that fighter motion plays. */
+export function motionFlags(settings = {}) {
+  return Object.fromEntries(MOTION_KEYS.map(key => [key.slice(6).toLowerCase(),
+    key === 'motionIdle' ? resolveMotionIdle(settings) : settings[key] !== false]));
+}
+
 /** coarsePointer() → true on a touch-first device. The one matchMedia read, here so tests can stub it. */
 export function coarsePointer() {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
