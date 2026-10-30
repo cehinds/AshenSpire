@@ -60,3 +60,20 @@ test('the root helpers read the attributes main.js writes', () => {
   assert.equal(effectsOff(), false, 'no document: not off');
   assert.equal(motionOff('attack'), false);
 });
+
+test('Effects-off CSS never blanks a figure\'s filter: focus ring, skill-selected and target outlines survive', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim(), body: m[2] }));
+  const off = rules.filter(r => /data-effects=['"]off['"]/.test(r.sel) && /(^|[;\s])filter\s*:/.test(r.body));
+  for (const r of off) {
+    for (const part of r.sel.split(',').map(s => s.trim())) {
+      assert.ok(!/\.sprite(\s|$|:)/.test(part.replace(/\.sprite\s+(img|\.facing)/, '')) || !/data-effects/.test(part),
+        `an Effects-off rule sets filter on a .sprite host: ${part}`);
+      assert.ok(!/\.sprite\s+(img|\.facing)/.test(part), `an Effects-off rule sets filter on the aura layer: ${part}`);
+    }
+  }
+  // the three states that must stay visible are still defined, unconditionally
+  assert.match(css, /\.combat \.combatant:focus-visible \.sprite \{ filter: drop-shadow/);
+  assert.doesNotMatch(css, /data-performance='lite'\]:not\(\[data-effects='off'\]\)/, 'the unreachable lite selector is gone');
+});

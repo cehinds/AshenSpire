@@ -1549,9 +1549,10 @@
 }
 /* Lite also stops the backdrop ambient layer; resting figures stay still in all modes. */
 :root[data-performance='lite'] .backdrop::after { animation: none; }
-/* Effects off keeps the stance glow on image figures too: set once per pose change, never per frame. */
-:root[data-performance='lite']:not([data-effects='off']) .sprite img,
-:root[data-performance='lite']:not([data-effects='off']) .sprite .facing { filter: none !important; }
+/* Effects off keeps the held stance glow on image figures (ui/paintedOutfits.js sets it once per pose
+   change) but nothing on those layers animates or tweens. */
+:root[data-effects='off'] .sprite img,
+:root[data-effects='off'] .sprite .facing { animation: none; transition: none; }
 
 /* Grid geometry and actor placement share the formation model. */
 .formation-grid {
@@ -2089,8 +2090,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root[data-effects='off'] .hand .card[data-selected="true"] { transition: none; }
 /* Blurred glows go flat; the dark outline that keeps HUD text, stance names and numbers legible stays. */
 :root[data-effects='off'] .combat :is(.fx-banner, .fx-glyph, .fx-spark, .fx-banner.turn) { text-shadow: none; }
-:root[data-effects='off'] .combat .intent-icon,
-:root[data-effects='off'] .combat .combatant .sprite { filter: none; }
+:root[data-effects='off'] .combat .intent-icon { filter: none; }
 :root[data-effects='off'] .combat-pose-aura,
 :root[data-effects='off'] .pose-stage[data-pose-reaction] .combat-pose-aura { filter: none; }
 :root[data-effects='off'] .backdrop::after { animation: none; opacity: 0.7; }
