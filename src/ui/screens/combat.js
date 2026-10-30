@@ -80,6 +80,7 @@ import { variableIntentDamage } from '../../model/intentDamage.js';
 import { ART_REDRAW_EVENT } from '../highResArt.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
+import { effectsOff } from '../performance.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
@@ -3482,7 +3483,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // Fly only accepted plays, with one cancellable browser-owned animation.
   function flyCard(instanceId, targetId, events) {
-    if (readSettings().showPlayedCard !== true || reducedMotionRequested()) return;
+    if (readSettings().showPlayedCard !== true || reducedMotionRequested() || effectsOff()) return; // Effects off: the played card does not fly
     const cardEl = app.querySelector(`.hand .card[data-instance-id="${instanceId}"]`);
     if (!cardEl || typeof cardEl.animate !== 'function') return;
     const dest = (targetId && fxCtx.anchorFor(targetId)) || fxCtx.anchorFor('player');

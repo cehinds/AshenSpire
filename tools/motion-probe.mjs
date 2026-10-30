@@ -269,8 +269,8 @@ if (argv.includes('--selftest')) {
         name: 'the card-play flight (Element.animate) ignores reduced motion',
         args: ['--seed', 'T14'],
         file: 'src/ui/screens/combat.js',
-        find: "    if (readSettings().showPlayedCard !== true || reducedMotionRequested()) return;",
-        replace: "    if (readSettings().showPlayedCard !== true) return;",
+        find: "    if (readSettings().showPlayedCard !== true || reducedMotionRequested() || effectsOff()) return; // Effects off: the played card does not fly",
+        replace: "    if (readSettings().showPlayedCard !== true || effectsOff()) return;",
         expectRed: /RED REDUCED setting\+os — .*card-flight/,
       },
       {
@@ -474,7 +474,7 @@ async function until(evaluate, expression, what, ms = 20000, onWait = null) {
 
 async function boot({ send, evaluate }, base, { setting, os, classic = CLASSIC }) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: os ? 'reduce' : 'no-preference' }] });
-  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, classicAppearance: classic }));
+  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, effects: true, classicAppearance: classic }));
   await send('Page.navigate', { url: `${base}?shot=combat&shotSeed=${encodeURIComponent(SEED)}&shotSettings=${settings}` });
   await wait(300);
   await until(evaluate, `!!(window.__combat && window.__motionProbe && document.querySelector('.combatant.enemy') && document.querySelector('.hand .card') && document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled)`, 'combat to mount', BOOT_TIMEOUT_MS);
