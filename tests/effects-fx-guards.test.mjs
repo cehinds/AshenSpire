@@ -85,3 +85,18 @@ test('image figures draw only the held stance glow with Effects off (no casting 
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   assert.match(fx, /holdMs && !effectsOff\(\)/, 'hit-stop does not hold the figure with Effects off');
 });
+
+test('idle motion off stops resting swaps but lets every action pose through', async () => {
+  const { createPoseStage } = await import('../src/ui/services/PoseAnimator.js');
+  const dom = (await import('./helpers/reward-dom.mjs')).rewardDom();
+  const saved = { document: globalThis.document, Image: globalThis.Image };
+  globalThis.document = dom.document; globalThis.Image = class { set src(v) { this._s = v; } };
+  dom.document.body.classList.add('motion-idle-off');
+  try {
+    const stage = createPoseStage('reaver', 'gold');
+    assert.ok(stage, 'the class has a pose stage');
+    for (const pose of ['attack', 'guard', 'hit']) if (stage.poses.includes(pose)) assert.equal(stage.play(pose, 100), true, `${pose} plays`);
+    assert.equal(stage.play('guard', 100), true, 'guard (what fx.js plays for non-attack actions) plays');
+    assert.equal(stage.play('idle', 100), false, 'an idle swap is refused');
+  } finally { globalThis.document = saved.document; globalThis.Image = saved.Image; }
+});
