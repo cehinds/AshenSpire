@@ -98,13 +98,17 @@ const calib = { ref: null, rejected: 0 };
 // ---- in-page instrumentation (installed before any page script) --------------
 const INIT = `(() => {
   window.__perfCounts = {};
-  window.__perfCount = (name) => { window.__perfCounts[name] = (window.__perfCounts[name] || 0) + 1; };
-  const S = { on: false, frames: [], long: [], anim: [] };
+  // Marks are [name, performance.now()] in call order: every __perfCount call (the screens' counters, e.g.
+  // render, stage, hand, beatFlush, finishRender) and the probe's own __perfMark('tap') before each input.
+  window.__perfMarks = [];
+  window.__perfCount = (name) => { window.__perfCounts[name] = (window.__perfCounts[name] || 0) + 1; if (S.on) window.__perfMarks.push([name, performance.now()]); };
+  window.__perfMark = (name) => { if (S.on) window.__perfMarks.push([name, performance.now()]); };
+  const S = { on: false, frames: [], ft: [], turn: [], long: [], anim: [] };
   try { new PerformanceObserver((l) => { if (S.on) for (const e of l.getEntries()) S.long.push(e.duration); }).observe({ type: 'longtask' }); } catch {}
   let last = 0, n = 0;
   const tick = (t) => {
     if (!S.on) return;
-    if (last) S.frames.push(t - last);
+    if (last) { S.frames.push(t - last); S.ft.push(t); S.turn.push(document.querySelector('.combat')?.dataset.turn || ''); }
     last = t;
     if (++n % 15 === 0) {
       const all = document.getAnimations();
@@ -116,8 +120,8 @@ const INIT = `(() => {
   };
   window.__perf = {
     counts() { return { ...window.__perfCounts }; },
-    start() { for (const k of Object.keys(window.__perfCounts)) delete window.__perfCounts[k]; S.frames = []; S.long = []; S.anim = []; last = 0; n = 0; S.on = true; requestAnimationFrame(tick); },
-    stop() { S.on = false; return { frames: S.frames, long: S.long, anim: S.anim }; },
+    start() { for (const k of Object.keys(window.__perfCounts)) delete window.__perfCounts[k]; window.__perfMarks = []; S.frames = []; S.ft = []; S.turn = []; S.long = []; S.anim = []; last = 0; n = 0; S.on = true; requestAnimationFrame(tick); },
+    stop() { S.on = false; return { frames: S.frames, ft: S.ft, turn: S.turn, marks: window.__perfMarks, long: S.long, anim: S.anim }; },
     census() {
       const all = [...document.getElementsByTagName('*')];
       const cs = all.map((e) => getComputedStyle(e));
@@ -195,6 +199,57 @@ function analyseTrace(events) {
 }
 
 const PROBE_NOISE = new Set(['elementFromPoint', 'evaluate', 'tick', 'getAnimations']);
+// ---- phase attribution -----------------------------------------------------------
+// Each rAF interval (a, b] gets one phase, from the marks (probe input marks 'tap' and the screens' counters):
+//   finish      a render() / finishRender() call lands in the interval while a playback is running
+//   tap         an input mark lands in it, or an input happened and no beat has been flushed yet
+//   enemy turn  combat.dataset.turn is 'enemy' at b (and the interval is not tap / finish)
+//   playback    a beat has flushed since the input and the playback has not finished
+//   idle        everything else
+// Until the screens emit 'finishRender' (the incremental end-of-playback update) a full 'render' during a
+// playback is the finish; once they do, 'render' mid-playback would only be a resync, which is counted as such.
+const PHASE_COUNTERS = ['render', 'finishRender', 'stage', 'hand', 'beatFlush', 'hudPass', 'hudTrack'];
+const PHASES = ['tap', 'playback', 'finish', 'enemy turn', 'idle'];
+const TAP_WINDOW_MS = 1500, PLAYBACK_MAX_MS = 4000; // a tap with no beat flush, or a playback with no finish, lapses to idle
+function attributePhases(raw) {
+  const { frames = [], ft = [], turn = [], marks = [] } = raw;
+  const out = [], perMark = [];
+  let mi = 0, state = 'idle', since = 0;
+  for (let i = 0; i < frames.length; i++) {
+    const b = ft[i], a = b - frames[i];
+    if (state === 'tap' && a - since > TAP_WINDOW_MS) state = 'idle';
+    if (state === 'playback' && a - since > PLAYBACK_MAX_MS) state = 'idle';
+    const startState = state;
+    let tap = false, finish = false;
+    const inFrame = [];
+    while (mi < marks.length && marks[mi][1] <= b) {
+      const [name, t] = marks[mi++];
+      inFrame.push(name);
+      if (name === 'tap') { tap = true; state = 'tap'; since = t; }
+      else if (name === 'beatFlush' && state === 'tap') { state = 'playback'; since = t; }
+      else if ((name === 'finishRender' || name === 'render') && state === 'playback') { finish = true; state = 'idle'; }
+    }
+    let phase;
+    if (finish) phase = 'finish';
+    else if (tap || startState === 'tap') phase = 'tap';
+    else if (turn[i] === 'enemy') phase = 'enemy turn';
+    else if (startState === 'playback') phase = 'playback';
+    else phase = 'idle';
+    out.push({ d: frames[i], phase });
+    perMark.push(inFrame);
+  }
+  const long = Object.fromEntries(PHASES.map((p) => [p, { n: 0, ms: 0, max: 0 }]));
+  const framesBy = Object.fromEntries(PHASES.map((p) => [p, 0]));
+  const counts = Object.fromEntries(PHASES.map((p) => [p, {}]));
+  out.forEach((f, i) => {
+    framesBy[f.phase]++;
+    if (f.d > 33.4) { const o = long[f.phase]; o.n++; o.ms += f.d; o.max = Math.max(o.max, f.d); }
+    for (const nm of perMark[i]) if (nm !== 'tap') counts[f.phase][nm] = (counts[f.phase][nm] || 0) + 1;
+  });
+  for (const p of PHASES) { long[p].ms = r1(long[p].ms); long[p].max = r1(long[p].max); }
+  return { long, framesBy, counts };
+}
+
 // ---- CPU profile -> top self-time functions -----------------------------------
 function analyseProfile(profile, top = 25) {
   const nodes = new Map(profile.nodes.map((n) => [n.id, n]));
@@ -230,11 +285,12 @@ function makeInput(cdp, page) {
   };
   const api = {
     at,
-    async tapAt({ x, y }, holdMs = 40) { await touch('touchStart', [[x, y]]); await wait(holdMs); await touch('touchEnd', []); },
+    async tapAt({ x, y }, holdMs = 40) { await page.evaluate("window.__perfMark('tap')"); await touch('touchStart', [[x, y]]); await wait(holdMs); await touch('touchEnd', []); },
     async tap(selector, holdMs) { await api.tapAt(await at(selector), holdMs); },
     async hold(selector, ms) { await api.tapAt(await at(selector), ms); },
     // A drag from a to b in `steps` touchMove events, one every ~16 ms; `back` returns to a before release.
     async drag(a, b, { steps = 14, back = false, dwell = 0 } = {}) {
+      await page.evaluate("window.__perfMark('tap')");
       await touch('touchStart', [[a.x, a.y]]);
       const go = async (p, q) => { for (let i = 1; i <= steps; i++) { await touch('touchMove', [[p.x + (q.x - p.x) * i / steps, p.y + (q.y - p.y) * i / steps]]); await wait(16); } };
       await go(a, b);
@@ -243,6 +299,7 @@ function makeInput(cdp, page) {
       await touch('touchEnd', []);
     },
     async pinch(c, from, to, steps = 12) {
+      await page.evaluate("window.__perfMark('tap')");
       const pts = (d) => [[c.x - d, c.y], [c.x + d, c.y]];
       await touch('touchStart', pts(from));
       for (let i = 1; i <= steps; i++) { await touch('touchMove', pts(from + (to - from) * i / steps)); await wait(16); }
@@ -325,7 +382,13 @@ const SCENARIOS = {
     url: (s) => `?shot=combat&shotSeed=${s}`, ready: COMBAT_READY,
     async run(ctx) {
       if (!await playCard(ctx)) throw new Error('the card was not played');
-      return { cardsPlayed: 1 };
+      // playCard returns ~1.2 s after the dispatch; the playback's finish (the full render, or finishRender once
+      // the screen emits it) lands after that, so the window waits for it, then one more frame.
+      let finishSeen = true;
+      try { await until(ctx.page, `((window.__perfCounts.render || 0) + (window.__perfCounts.finishRender || 0)) > 0`, 'the playback to finish', 8000); }
+      catch { finishSeen = false; }
+      await wait(500);
+      return { cardsPlayed: 1, finishSeen };
     },
   },
   // The same window with no input at all: what the combat screen costs while it only animates.
@@ -496,7 +559,8 @@ async function onePass(browser, base, name, opts) {
     }
     const f = raw.frames;
     const peak = (i) => Math.max(0, ...raw.anim.map((a) => a[i]));
-    return { wallMs: wall, calibMs, unstable, errors, extra, census, end, counts,
+    const phases = attributePhases(raw);
+    return { wallMs: wall, calibMs, unstable, phases, errors, extra, census, end, counts,
       frameList: f.map((d) => Math.round(d * 10) / 10),
       frames: { n: f.length, n33: f.filter((d) => d > 33.4).length, n100: f.filter((d) => d > 100).length, medianMs: r1(median(f)), p95: r1(pct(f, 0.95)), p99: r1(pct(f, 0.99)), maxMs: r1(Math.max(0, ...f)),
         over16: r1(100 * f.filter((d) => d > 16.7 + 0.5).length / (f.length || 1)), over33: r1(100 * f.filter((d) => d > 33.4).length / (f.length || 1)) },
@@ -538,6 +602,10 @@ function summarise(name, runs) {
     profileTotals: PROFILE ? { totalMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.totalMs)), idleMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.idleMs)),
       programMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.programMs)), gcMs: r1(med(runs.map((r) => r.b), (b) => b?.profile?.gcMs)) } : null,
     counts: Object.fromEntries([...new Set(A.flatMap((r) => Object.keys(r.counts || {})))].sort().map((k) => [k, med(A, (r) => r.counts?.[k] ?? 0)])),
+    phases: Object.fromEntries(PHASES.map((ph) => [ph, {
+      frames: r1(med(A, (r) => r.phases?.framesBy[ph] ?? 0)),
+      longN: r1(med(A, (r) => r.phases?.long[ph].n ?? 0)), longMs: r1(med(A, (r) => r.phases?.long[ph].ms ?? 0)), longMax: r1(med(A, (r) => r.phases?.long[ph].max ?? 0)),
+      counts: Object.fromEntries(PHASE_COUNTERS.map((k) => [k, r1(med(A, (r) => r.phases?.counts[ph][k] ?? 0))])) }])),
     errors: [...new Set(runs.flatMap((r) => [...r.a.errors, ...(r.b?.errors || [])]))].slice(0, 5),
   };
 }
@@ -663,6 +731,16 @@ if (summaries.some((s) => s.scenario === 'play')) {
     const c = s.counts, t = s.traceMs;
     console.log(`| play | ${c.render ?? 0} | ${c.stage ?? 0} | ${c.hand ?? 0} | ${c.beatFlush ?? 0} | ${c.hudPass ?? 0} | ${c.hudTrack ?? 0} | ${t.syncLayoutN} | ${t.syncStyleN} | ${t.script} | ${t.style} | ${t.layout} | ${r1(t.script + t.style + t.layout)} |`);
   }
+}
+if (summaries.some((x) => x.phases && PHASES.some((ph) => x.phases[ph].frames))) {
+  console.log('\n### long frames (> 33.4 ms) by phase (median over runs; tap = input to first beat flush, playback = beats to finish, finish = the end-of-playback render frame, enemy turn = dataset.turn enemy, idle = the rest)');
+  console.log(`| scenario | ${PHASES.map((ph) => `${ph}: frames / long n / long ms / worst ms`).join(' | ')} |`);
+  console.log(`|---|${PHASES.map(() => '---').join('|')}|`);
+  for (const s of summaries) console.log(`| ${s.scenario} | ${PHASES.map((ph) => { const o = s.phases[ph]; return `${o.frames} / ${o.longN} / ${o.longMs} / ${o.longMax}`; }).join(' | ')} |`);
+  console.log('\n### render counts by phase (median over runs; finishRender stays 0 until the screen emits it)');
+  console.log(`| scenario | phase | ${PHASE_COUNTERS.join(' | ')} |`);
+  console.log(`|---|---|${PHASE_COUNTERS.map(() => '---').join('|')}|`);
+  for (const s of summaries) for (const ph of PHASES) { const o = s.phases[ph]; if (PHASE_COUNTERS.some((k) => o.counts[k])) console.log(`| ${s.scenario} | ${ph} | ${PHASE_COUNTERS.map((k) => o.counts[k]).join(' | ')} |`); }
 }
 for (const s of summaries) {
   console.log(`\n## ${s.scenario}: top JS self time (CPU profile, median ms over the window)${s.profileTotals ? ` — profile total ${s.profileTotals.totalMs} ms, idle ${s.profileTotals.idleMs}, native/program ${s.profileTotals.programMs}, GC ${s.profileTotals.gcMs}` : ''}`);
