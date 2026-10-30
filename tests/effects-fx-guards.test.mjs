@@ -117,3 +117,14 @@ test('with Effects off the figure hit keyframes keep the recoil and drop the red
   }
   assert.match(css, /:root\[data-effects='off'\] body\.motion-hit-off \.sprite\.hitflash > :first-child/, 'motionHit off still removes the recoil');
 });
+
+test('Effects-off CSS keeps the recoil timing on .facing and never double-recoils the canvas stage', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  const rule = css.match(/:root\[data-effects='off'\] \.sprite img,\s*:root\[data-effects='off'\] \.sprite \.facing \{([^}]*)\}/);
+  assert.ok(rule, 'the image-layer rule exists');
+  assert.doesNotMatch(rule[1], /animation/, 'it must not reset animation-duration on the recoil wrapper');
+  const overrideAt = css.indexOf(".player .sprite.hitflash > :first-child { animation-name: hit-player-notint; }");
+  const canvasAt = css.lastIndexOf(":root[data-effects='off'] .player .sprite.hitflash > .alternative-card-stage:not([data-still]):first-child,");
+  assert.ok(overrideAt > 0 && canvasAt > overrideAt, 'the canvas exclusion comes after the recoil overrides and is more specific');
+});
