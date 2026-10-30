@@ -7,6 +7,7 @@ import { reducedMotionRequested } from './motion.js';
 import { registerStage } from './services/PoseAnimator.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { builtInFor } from './highResArt.js';
+import { warmImageBoundsWhenIdle } from './artBounds.js';
 
 const aliases = { guard: 'block', guardHit: 'block', projectile: 'rangedWeaponAttack', ranged: 'rangedWeaponAttack', buff: 'magicAttack', casting: 'magicAttack', magic: 'magicAttack', hurt: 'hit', afflicted: 'wounded', counter: 'counterattack', prone: 'defeated', sleep: 'defeated' };
 
@@ -93,7 +94,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
     if (presentation.rest === 'defeated' || !timer) settle();
   }
   const stancePoses = Object.values(enemyStanceSprites[definition.id] || {});
-  for (const pose of new Set([...art.poses, ...stancePoses])) { const preload = new Image(); preload.src = assetUrl(path(pose)); }
+  for (const pose of new Set([...art.poses, ...stancePoses])) { const preload = new Image(); preload.addEventListener('load', () => warmImageBoundsWhenIdle(preload), { once: true }); preload.src = assetUrl(path(pose)); }
   const stage = {
     el: root, enemy: true, poses: [...art.poses, ...Object.keys(art.actions), ...Object.keys(aliases)],
     setState, settle,

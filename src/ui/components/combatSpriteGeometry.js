@@ -3,46 +3,10 @@
 import { stageFor } from '../services/PoseAnimator.js';
 import { projectBodyBounds } from '../models/CombatBodyModel.js';
 import { measure, invalidateMeasures } from '../frameMeasure.js';
-const boundsCache = new Map();
+import { imageBounds } from '../artBounds.js';
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
 const paintedGround = img => img.naturalHeight * (364 / 384);
-function imageBounds(img, refresh) {
-  const key = img.currentSrc || img.src;
-  if (!key) return null;
-  if (!img.complete || !img.naturalWidth) {
-    img.addEventListener('load', refresh, { once: true });
-    img.addEventListener('error', refresh, { once: true });
-    return null;
-  }
-  if (boundsCache.has(key)) return boundsCache.get(key);
-  let bounds = null;
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    context.drawImage(img, 0, 0);
-    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
-    // The same box as testing every pixel, found from the edges inwards: each
-    // scan stops at the first opaque pixel, so only the transparent margin is
-    // read. A fight's first frame waits on this once per enemy art, and the
-    // whole-canvas loop read every pixel of a 512 px canvas to find four edges.
-    const w = canvas.width, h = canvas.height;
-    const opaque = (x, y) => data[(y * w + x) * 4 + 3] >= 40;
-    const rowHit = (y) => { for (let x = 0; x < w; x++) if (opaque(x, y)) return true; return false; };
-    let y0 = 0; while (y0 < h && !rowHit(y0)) y0++;
-    if (y0 < h) {
-      let y1 = h - 1; while (y1 > y0 && !rowHit(y1)) y1--;
-      const colHit = (x) => { for (let y = y0; y <= y1; y++) if (opaque(x, y)) return true; return false; };
-      let x0 = 0; while (!colHit(x0)) x0++;
-      let x1 = w - 1; while (x1 > x0 && !colHit(x1)) x1--;
-      bounds = { x0, y0, x1, y1 };
-    }
-  } catch { /* A cross-origin or unavailable image retains box geometry. */ }
-  boundsCache.set(key, bounds);
-  return bounds;
-}
-
 // W4c close-up (models/PortraitCropModel.js): the visible art's box inside
 // `host`, in the host's local px before any transform, read from the same
 // opaque bounds the formation fits by. A mirrored facing layer flips the

@@ -15,6 +15,7 @@ import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
 import { builtInFor } from './highResArt.js';
 import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
+import { warmImageBoundsWhenIdle } from './artBounds.js';
 
 import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES } from '../model/cardAnimationFamily.js';
 const cached = new Map();
@@ -87,8 +88,11 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const failed=results.some(result=>result.status==='rejected');
     if(failed){el.dataset.artError='Character artwork could not load.';markArtPlaceholder(el,preload);}
     else{delete el.dataset.artError;el.removeAttribute(ART_PLACEHOLDER_ATTR);delete el.ashenRestoreArt;}
-    placeholder.hidden=images.has('ready');paint();return !failed;
+    placeholder.hidden=images.has('ready');paint();warmBounds();return !failed;
   }
+  // The opaque box of each pose is read once per image and kept (artBounds). Reading them one per
+  // idle slot after the artwork lands keeps those readbacks out of the first card play.
+  const warmBounds=()=>{for(const name of Object.keys(frames))warmImageBoundsWhenIdle(images.get(name));};
   let down = null;
   // The hurt clip draws its own registered outfit art; until it loads the clip keeps the current pose.
   let hurt = null;
