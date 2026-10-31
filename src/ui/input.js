@@ -405,7 +405,7 @@ function focusables(key = null) {
   // unrelated controls before measuring layout on every child-list mutation.
   const candidates = key === null ? controls : controls.filter(el => keyOf(el) === key);
   return candidates.filter(
-    (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
+    (el) => !el.closest?.('[inert], [data-page-locked]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -842,7 +842,7 @@ function openPopover(root) {
 }
 function backIn(root) {
   return [...root.querySelectorAll(BACK_SELECTOR)]
-    .find((el) => !el.disabled && !el.closest('[inert]') && visible(el)) || null;
+    .find((el) => !el.disabled && !el.closest('[inert], [data-page-locked]') && visible(el)) || null;
 }
 function onBackCapture(ev) {
   if (ev.key !== 'Escape') return;

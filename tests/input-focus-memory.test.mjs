@@ -10,7 +10,7 @@ const functions=source.slice(source.indexOf('function visible(el) {'),source.ind
 function control(key,{hidden=false,inert=false,chrome=false,flask=false}={}){
  return {dataset:{instanceId:key},isConnected:true,reads:0,
   getBoundingClientRect(){this.reads++;return{width:20,height:20};},
-  closest(selector){return selector==='[inert]'?inert:chrome;},
+  closest(selector){return selector.includes('[inert]')?inert:chrome;},
   matches(){return flask;},hidden};
 }
 function fixture(controls,{modal=null,tooltip=[]}={}){

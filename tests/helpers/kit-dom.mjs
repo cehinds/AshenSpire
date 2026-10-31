@@ -69,6 +69,8 @@ export function withKitDom(fn) {
   proto.matches = function match(selector) {
     if (selector === ':disabled') return !!this.disabled;
     if (selector === '[inert]') return this.hasAttribute('inert');
+    if (selector === '[data-page-locked]') return this.hasAttribute('data-page-locked');
+    if (selector.includes(', ')) return selector.split(', ').some((part) => this.matches(part));
     return matches.call(this, selector);
   };
   const listeners = new Map();

@@ -12,12 +12,12 @@
 
 const stack = [];
 const waiters = [];
-// Every element this module has marked `inert`. Only these are ever cleared:
-// an inert some other surface set (deckEditor, gameProfileRest) is not ours.
-const inertByUs = new Set();
+// Every element this module has locked (aria-hidden + data-page-locked). Only
+// these are ever cleared: an aria-hidden some other surface set is not ours.
+const lockedByUs = new Set();
 // PAGE CHROME: body-level elements (the co-op seat strip) that are not modals.
 // They never hold the lock, never count in modalOpen() or data-modal-depth, and
-// never stall a whenNoOverlay() redraw; they only go inert under a lock, exactly
+// never stall a whenNoOverlay() redraw; they only lock under a lock, exactly
 // as an #app child does.
 const chrome = new Set();
 
@@ -129,11 +129,46 @@ function holds(a, b) {
   try { return typeof a.contains === 'function' && a.contains(b); } catch { return false; }
 }
 
+// The index (in `live`) of the entry holding the page lock, or -1.
+function lockIndex(live) {
+  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element && !live[i].unarmed) return i;
+  return -1;
+}
+
+// The elements the page lock leaves live, lowest first (the lock entry's element
+// and every entry above it), or null when no lock stands. The last is the top.
+function keptElements() {
+  const live = stack.filter((entry) => !entry.closing);
+  const lockAt = lockIndex(live);
+  if (lockAt < 0) return null;
+  const above = live.slice(lockAt + 1);
+  if (!above.every((entry) => entry.element)) return null;
+  const kept = [live[lockAt].element, ...above.map((entry) => entry.element)];
+  return kept.every((el) => el.isConnected !== false) ? kept : null;
+}
+
+/**
+ * The controls a Tab can reach inside `root`: the one definition of "focusable"
+ * the shell's own trap and the manager's page lock share.
+ */
+export function focusableControls(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return [];
+  return [...root.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
+    .filter((el) => el.tabIndex >= 0 && !el.matches(':disabled') && !el.closest('[inert]')
+      && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+}
+
 /**
  * The page-level effects of the stack, recomputed on every push and pop:
  *   - `data-modal-depth` on <html> (CSS locks the body scroll off it);
- *   - `inert` on the app's children that do not hold the top modal, and on the
- *     lower modals' elements, while the top entry has not opted out.
+ *   - `aria-hidden="true"` and `data-page-locked` on the app's children that do
+ *     not hold the top modal, and on the lower modals' elements, while the top
+ *     entry has not opted out. This replaces `inert`, whose toggle restyled the
+ *     whole combat subtree (~570 elements); no stylesheet selects either
+ *     attribute with descendants, so the toggle touches only the element. The
+ *     lock still gives assistive tech a hidden page; pointer blocking is the
+ *     veil's job, and keyboard containment is the Tab and focusin listeners
+ *     below (ensureFocusLock).
  * Attribute reads and writes only; no layout is read, so a push or pop costs
  * no reflow.
  */
@@ -151,8 +186,7 @@ function syncPage() {
   // place — the page beneath must not wake while the lower dialog still stands —
   // and is itself left live along with everything that holds it. An entry above
   // the lock with no element cannot be exempted, so the lock lifts, as before.
-  let lockAt = -1;
-  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element && !live[i].unarmed) { lockAt = i; break; }
+  const lockAt = lockIndex(live);
   const above = lockAt >= 0 ? live.slice(lockAt + 1) : [];
   const want = new Set();
   if (lockAt >= 0 && above.every((entry) => entry.element)) {
@@ -162,7 +196,7 @@ function syncPage() {
     for (const child of app?.children ? Array.from(app.children) : []) {
       if (!holdsKept(child)) want.add(child);
     }
-    // Every registered surface beneath the lock goes inert, whether or not it
+    // Every registered surface beneath the lock is locked, whether or not it
     // asked for a lock of its own: `inert` says what an entry does when it is
     // the lock, not whether a lock above may cover it (a legacy overlay whose
     // veil is a body sibling is not reached through #app).
@@ -170,23 +204,25 @@ function syncPage() {
       const lower = live[i];
       if (lower.element && !holdsKept(lower.element)) want.add(lower.element);
     }
-    // Page chrome under the lock goes inert too. A strip that left the page
+    // Page chrome under the lock is locked too. A strip that left the page
     // without its release running is dropped (attribute reads only, no layout).
     for (const el of [...chrome]) {
       if (el?.isConnected === false) { chrome.delete(el); continue; }
       if (!holdsKept(el)) want.add(el);
     }
   }
-  for (const el of [...inertByUs]) {
+  for (const el of [...lockedByUs]) {
     if (want.has(el)) continue;
-    inertByUs.delete(el);
-    el.removeAttribute?.('inert');
+    lockedByUs.delete(el);
+    el.removeAttribute?.('aria-hidden');
+    el.removeAttribute?.('data-page-locked');
   }
   for (const el of want) {
-    if (inertByUs.has(el) || typeof el.setAttribute !== 'function') continue;
-    if (el.hasAttribute?.('inert')) continue; // someone else's inert: leave it alone
-    el.setAttribute('inert', '');
-    inertByUs.add(el);
+    if (lockedByUs.has(el) || typeof el.setAttribute !== 'function') continue;
+    if (el.getAttribute?.('aria-hidden') === 'true') continue; // someone else's: leave it alone
+    el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('data-page-locked', '');
+    lockedByUs.add(el);
   }
 }
 
@@ -225,6 +261,64 @@ function ensureEscape() {
   document.addEventListener('keydown', onEscape, true);
 }
 
+// KEYBOARD CONTAINMENT. `inert` used to keep Tab and programmatic focus out of
+// the page behind a dialog; the lock now does it with two document listeners,
+// installed with the first lock (and again if the document object changes).
+// Tab from outside the kept elements, or off either end of the top one, wraps
+// into the top one. Focus that lands outside them (background code calling
+// .focus() while a dialog is open) is bounced back to where it last was.
+let focusLockOn = null;
+// The control last focused inside each dialog's element, recorded for every live
+// entry (armed or not: a door focuses its primary one frame before it arms), so
+// a lower dialog's place survives a confirmation above it.
+const lastFocusIn = new WeakMap();
+
+function onLockTab(event) {
+  if (event.key !== 'Tab' || event.defaultPrevented) return;
+  const kept = keptElements();
+  if (!kept) return;
+  const top = kept[kept.length - 1];
+  const active = document.activeElement;
+  const controls = focusableControls(top);
+  const first = controls[0], last = controls.at(-1);
+  const inTop = holds(top, active);
+  if (!inTop && kept.some((el) => holds(el, active))) return; // walking a lower kept dialog
+  if (inTop && active !== top && first && (event.shiftKey ? active !== first : active !== last)) return;
+  event.preventDefault();
+  const to = event.shiftKey ? last : first;
+  if (to) to.focus?.(); else focusInto(top);
+}
+
+function focusInto(top, related) {
+  const last = lastFocusIn.get(top);
+  if (last && last.isConnected !== false && holds(top, last) && last !== top) { last.focus?.({ preventScroll: true }); return; }
+  if (related && related !== top && related.isConnected !== false && holds(top, related)) { related.focus?.({ preventScroll: true }); return; }
+  const first = focusableControls(top)[0];
+  if (first) { first.focus?.({ preventScroll: true }); return; }
+  if (!top.hasAttribute?.('tabindex')) top.setAttribute?.('tabindex', '-1');
+  top.focus?.({ preventScroll: true });
+}
+
+function onLockFocusin(event) {
+  const target = event.target;
+  if (!target || target === document || target === document.body) return;
+  for (const entry of stack) {
+    if (entry.element && !entry.closing && entry.element !== target && holds(entry.element, target)) lastFocusIn.set(entry.element, target);
+  }
+  const kept = keptElements();
+  if (!kept) return;
+  if (kept.some((el) => holds(el, target))) return;
+  focusInto(kept[kept.length - 1], event.relatedTarget);
+}
+
+function ensureFocusLock() {
+  if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+  if (focusLockOn === document) return;
+  focusLockOn = document;
+  document.addEventListener('keydown', onLockTab, true);
+  document.addEventListener('focusin', onLockFocusin, true);
+}
+
 /**
  * registerModal(name, element, opts = {}) → release()
  *
@@ -236,7 +330,7 @@ function ensureEscape() {
  *   dismiss(reason)  closes this modal; reason is 'escape' | 'back' | 'program'.
  *                    Without it the manager never closes the entry.
  *   back             true → the browser/Android back button dismisses it.
- *   inert            false → do not make the page behind it inert.
+ *   inert            false → do not lock the page behind it.
  */
 export function registerModal(name, element, opts = {}) {
   const dismiss = typeof opts?.dismiss === 'function' ? opts.dismiss : null;
@@ -246,7 +340,7 @@ export function registerModal(name, element, opts = {}) {
     // The page lock is for entries the manager closes (the shared shell) or
     // that ask for it; a bespoke surface registered as it always was keeps
     // its own focus handling and its opener focusable (it restores focus
-    // before it releases, and an inert opener cannot take focus).
+    // before it releases, and a locked opener bounces focus).
     inert: opts?.inert === true ? true : opts?.inert === false ? false : !!dismiss,
     dismiss,
     back: opts?.back === true,
@@ -256,6 +350,7 @@ export function registerModal(name, element, opts = {}) {
   };
   stack.push(entry);
   if (entry.dismiss) ensureEscape();
+  if (entry.inert && element) ensureFocusLock();
   enterHistory(entry);
   syncPage();
   let released = false;
@@ -264,16 +359,17 @@ export function registerModal(name, element, opts = {}) {
     released = true;
     const at = stack.indexOf(entry);
     if (at >= 0) stack.splice(at, 1);
+    if (element) lastFocusIn.delete(element);
     leaveHistory();
     syncPage();
     notifyIfEmpty();
   }
   /**
-   * release.unlock(): lift this entry's page effects (inert, scroll lock) NOW,
+   * release.unlock(): lift this entry's page effects (page lock, scroll lock) NOW,
    * before the entry leaves the stack. A closing modal restores focus to its
    * opener first and releases last (so the onModalsClosed waiters run after the
-   * veil is gone); an element inside an inert subtree cannot take focus, so the
-   * inert must go before the focus does. modalOpen() still reports the entry
+   * veil is gone); an element inside a locked subtree is bounced out by the focus
+   * lock, so the lock must go before the focus does. modalOpen() still reports the entry
    * until release().
    */
   release.arm = function arm() {
