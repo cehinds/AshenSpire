@@ -9,6 +9,7 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { itemRefIdentity, coreGearActive } from './itemUpgrades.js';
+import { stampCombatPlaysEver } from './playsEver.js';
 // The combat engine is bound, not imported: this module is reached from the Smith screens and from actions.js, and a
 // static import of runCombat/combat here would reorder the engine's import cycle, which the production bundler does
 // not keep live (named imports inside a cycle read undefined). runCombat.js binds it once it has loaded.
@@ -120,6 +121,7 @@ function liveCardValues(registries, run, itemRef, level) {
     if (!enemyId) return new Map();
     const staged = { ...run, itemUpgradeLevels: levels };
     const combat = createRunCombat({ registries, run: staged, rng: createRng(17), enemyIds: [enemyId] });
+    stampCombatPlaysEver(staged, combat); // pile copies keep the deck copy's lifetime plays (Honed cards)
     const rows = new Map();
     for (const pile of ['hand', 'draw', 'discard']) for (const instance of combat.piles[pile]) {
       // Copies of one card can differ (mods, upgraded, rank...): each distinct face is its own row.
