@@ -79,7 +79,8 @@ test('a host 640px wide takes the single-row header at its authored 56px', () =>
 test('the desktop split always takes the single row, however narrow the host', () => {
   const result = run({ width: 500, height: 400, formFactor: 'desktop', layout: 'formation', sharedHud: true });
   assert.equal(result.row, 'single');
-  assert.equal(result.hud, header.heightPx);
+  // Owner (2026-10-31): the desktop split's band is 20% shorter than the shared single row (splitHeightPx).
+  assert.equal(result.hud, header.splitHeightPx);
 });
 
 test('the classic appearance keeps the measured band and writes no header row', () => {
