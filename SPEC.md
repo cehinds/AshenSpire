@@ -824,9 +824,14 @@ scope and verification.
 **Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
 at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
 the old rule, but it has no effect on the Stamina a fight opens with: every player turn start refills Stamina to its
-maximum less any Stagger loss, in `src/engine/combat.js`'s player turn start); a restored fight keeps the Stamina it was saved with. HP and
-Mana carry from one fight to the next, and only rests, flasks and effects
-restore them. The refill also clears the Stamina deficit an equipment swap
+maximum less any Stagger loss, in `src/engine/combat.js`'s player turn start); a restored fight keeps the Stamina it was saved with. HP
+carries from one fight to the next, and only rests, flasks and effects
+restore it. **Mana refills when a fight ends (2026-10-31, owner; supersedes
+plan A2 for Mana):** `runCombatEnd` (and the co-op host's `settleCombat`) write
+Mana back through `manaAtCombatEnd` (`mechanics.mana.combatEndRefill: "full"`;
+`"carry"` restores the 2026-09-24 rule), victory or defeat, and clear the Mana
+equipment deficit, so every fight opens on full Mana; HP still carries. The
+Stamina refill also clears the Stamina deficit an equipment swap
 carried, so the next swap cannot take the refilled points back. Rules text:
 [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5.
 
@@ -838,7 +843,7 @@ a percent of the maximum, rounded down, at the end of the player's turn),
 gated by **only after unused turns** (the pool's streak of rounds with no
 Stamina/Mana spent or no HP lost, the enemies' turn included; 0 = every turn)
 and **only every N rounds**; **after a won fight** (percent of the maximum,
-applied after the fight's pools are written back); and **at every Rest**
+applied after the fight's pools are written back; Mana's row is hidden and inert while a fight's end refills Mana); and **at every Rest**
 (percent of the maximum on top of the place's own tags, §13.4j, included in the
 Rest preview). The defaults are the rules above — Stamina gets no idle recovery (the turn-start
 refill in §4.1 already restores it, so `mechanics.stamina.idleRecoveryPerTurn` is

@@ -77,7 +77,7 @@ import {
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
-import { staminaAtCombatStart } from '../src/framework/resources.js';
+import { staminaAtCombatStart, manaAtCombatEnd, manaDeficitAtCombatEnd } from '../src/framework/resources.js';
 import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { recoveryControls } from '../src/engine/combatStatusControl.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
@@ -1064,7 +1064,8 @@ export function createSession({ registries, seedString, endless = false, restore
       if (s.blightTerminal) { m.alive = false; m.catchup.length = 0; }
       const P = c.players.get(m.id);
       if (P) {
-        m.run.mana = P.entity.mana;
+        m.run.mana = manaAtCombatEnd({ currentMana: P.entity.mana, maxMana: P.entity.maxMana });
+        if (m.run.equipmentPoolDeficits) m.run.equipmentPoolDeficits.mana = manaDeficitAtCombatEnd(m.run.equipmentPoolDeficits.mana ?? 0);
         if (P.entity.baseResourceMaxima) m.run.ashenBlightBasePools = structuredClone(P.entity.baseResourceMaxima);
         m.run.maxHp = P.entity.maxHp; m.run.maxMana = P.entity.maxMana; m.run.maxStamina = P.entity.maxStamina;
         if (P.entity.combatExpansionVersion === 2) { m.run.energyMax = P.entity.energyMax; m.run.drawPerTurn = P.entity.drawPerTurn; }
