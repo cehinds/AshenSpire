@@ -416,14 +416,14 @@ function adoptTitle(el) {
 }
 
 /**
- * A keyword inside a hand card explains only once that card is selected or in inspect mode
- * (owner, 2026-10-31); until then the card's own tap selects it and the keyword stays quiet.
- * Keywords anywhere else (inspector, rewards, shop, deck view) are not held back.
+ * A tooltip trigger inside a hand card (keyword, tag symbol, inspection tag, any detail on the face)
+ * explains only once that card is selected or in inspect mode (owner, 2026-10-31); until then the
+ * card's own tap selects it and the trigger stays quiet. The card's own tooltip and triggers anywhere
+ * else (inspector, rewards, shop, deck view) are not held back.
  */
-function heldBackKeyword(el) {
-  if (!el?.matches?.('.tooltip-keyword')) return false;
-  const card = el.closest('.hand .card');
-  return !!card && !card.matches('.selected, .inspection-selected');
+function heldBackInCard(el) {
+  const card = el?.closest?.('.hand .card');
+  return !!card && card !== el && !card.matches('.selected, .inspection-selected');
 }
 
 // ---- attaching --------------------------------------------------------------
@@ -445,7 +445,7 @@ export function attachTooltip(el, contentFn, {
   el.dataset.tipAttached = 'true';
   const show = () => {
     pending = null;
-    if (!el.isConnected || heldBackKeyword(el) || el.closest('[inert], [data-page-locked], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
+    if (!el.isConnected || heldBackInCard(el) || el.closest('[inert], [data-page-locked], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
     const information = el.querySelector('.card-info-button');
     const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
     return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
@@ -665,7 +665,7 @@ function wireTitles() {
     }
     const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .card-tag-symbol[data-tip], .as-tip [data-tip][role="button"]');
     if (!term || panels[1]?.contains(term)) return;
-    if (heldBackKeyword(term)) return; // not swallowed: the card's own tap still selects it
+    if (heldBackInCard(term)) return; // not swallowed: the card's own tap still selects it
     if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
     ev.preventDefault(); ev.stopPropagation();
     if (panels[0]?.contains(term)) { cancelNested(); showNested(term); return; }
@@ -691,7 +691,7 @@ function wireTitles() {
     if (!lane || !lane.parentElement) return null;
     for (const sym of lane.parentElement.querySelectorAll('.card-tag-symbol[data-tip]')) {
       const r = sym.getBoundingClientRect();
-      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) return sym;
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) return heldBackInCard(sym) ? null : sym;
     }
     return null;
   };

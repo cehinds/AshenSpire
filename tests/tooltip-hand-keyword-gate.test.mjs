@@ -83,3 +83,39 @@ test('a click on a held-back keyword is neither prevented nor stopped, so the ca
   assert.equal(prevented, false);
   assert.equal(open(), false);
 });
+
+function symbolIn(cardClasses, withLane = false) {
+  const hand = document.createElement('div'); hand.className = 'hand';
+  const card = document.createElement('div'); card.className = cardClasses;
+  const sym = document.createElement('span'); sym.className = 'card-tag-symbol'; sym.dataset.tip = 'Explained';
+  sym.box = { left: 0, top: 0, right: 50, bottom: 50, width: 50, height: 50 };
+  const lane = document.createElement('div'); lane.className = 'hand-hit-lane';
+  if (withLane) card.appendChild(lane);
+  card.appendChild(sym); hand.appendChild(card); document.body.appendChild(hand);
+  return { sym, lane };
+}
+function clickOn(target, options = {}) {
+  let prevented = false;
+  const event = new Event('click', { target, ...options });
+  event.preventDefault = () => { prevented = true; };
+  document.dispatchEvent(event);
+  return prevented;
+}
+
+test('a tag symbol click on an unselected hand card opens nothing and is not prevented', () => {
+  const { sym } = symbolIn('card');
+  assert.equal(clickOn(sym), false);
+  assert.equal(open(), false);
+});
+
+test('a tag symbol click on a selected hand card opens its tooltip', () => {
+  const { sym } = symbolIn('card selected');
+  clickOn(sym);
+  assert.equal(open(), true);
+});
+
+test('a hit-lane press over a tag symbol on an unselected card is not redirected to the symbol', () => {
+  const { lane } = symbolIn('card', true);
+  assert.equal(clickOn(lane, { clientX: 10, clientY: 10 }), false);
+  assert.equal(open(), false);
+});
