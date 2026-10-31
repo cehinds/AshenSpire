@@ -97,8 +97,10 @@ function weightedCardPick(registries,run,rule,rng,stream,ids) {
   for(const card of [...(run.deck||[]),...(run.sideboard||[])]){const id=card?.cardId??card?.id??card;owned.set(id,(owned.get(id)||0)+1);}
   const rules=gameContent(run,'rewards'),recent=recentOfferedIds(run,rule),recentWeight=rule?.recentOfferWeight??1,depth=run.floor||0;
   const isBasic=rule?.depthBias?basicOrCantripMatcher(registries,run):()=>false;
+  // Owner 2026-10-31: a card already shown (taken or not) is drawn at rule.offeredCopyWeight per earlier showing; absent/1 is neutral.
+  const offered=run.rewardOfferHistory?.cards||{},offeredWeight=Number.isFinite(rule?.offeredCopyWeight)?rule.offeredCopyWeight:1;
   const weights=ids.map(id=>{const card=defs.get(id);
-    return cardPickWeight(rule,card,owned.get(id)||0)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1);}),total=weights.reduce((sum,weight)=>sum+weight,0);
+    return cardPickWeight(rule,card,owned.get(id)||0)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
@@ -179,6 +181,12 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     if(option.kind!=='combatCards')continue;
     const rank=rollDraftRank(registries,rng,cardTrackLevel(registries,run,registries.cards.get(option.id)));
     if(rank>1)option.rank=rank;
+  }
+  // Owner 2026-10-31: remember every card shown (offers are cached per offerId, so a reload never counts twice).
+  const shown=options.filter(option=>option.kind==='combatCards'||option.kind==='weaponArts');
+  if(shown.length){
+    const history=run.rewardOfferHistory||={cards:{}};history.cards||={};
+    for(const option of shown)history.cards[option.id]=(history.cards[option.id]||0)+1;
   }
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
