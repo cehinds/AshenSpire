@@ -152,7 +152,9 @@ export function animationTiming(component, roleOrPose, speed) {
   const capped = cap > 0 && impactAt > cap;
   if (capped) scale *= cap / impactAt;
   // Floored when capped, so many short frames cannot round past the cap.
-  const frameMs = Math.max(1, (capped ? Math.floor : Math.round)(clip.frameMs * scale));
+  // A pace may also name a shortest hold per frame (ui/animationPace.js frameHoldMs, from the Animation step
+  // duration). It wins over the cap: every frame stays visible, and the beat waits the longer total.
+  const frameMs = Math.max(1, Number(speed?.minFrameMs) || 0, (capped ? Math.floor : Math.round)(clip.frameMs * scale));
   return { totalMs: frameMs * clip.frames.length, impactMs: frameMs * clip.impactIndex };
 }
 

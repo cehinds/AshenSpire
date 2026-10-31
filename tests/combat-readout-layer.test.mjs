@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatReadoutLayer, floatNum, callout, clearCallouts, setAnimSpeed } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { floaterLifeMs } from '../src/ui/animationPace.js';
 
 test('root text feedback uses the root ruler and expires without touching sprite effects', context => {
   context.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
@@ -31,6 +32,8 @@ test('root text feedback uses the root ruler and expires without touching sprite
     assert.ok(host.children.includes(number), 'numbers retain their existing lifetime');
     assert.equal(callout(fx, anchor, 'enemy', 'critical')?.parentNode, host, 'skip clears the deduplication queue');
     context.mock.timers.tick(1000);
+    assert.ok(host.children.includes(number), 'a number now outlives the old 600 ms removal');
+    context.mock.timers.tick(floaterLifeMs() + 60);
     assert.equal(host.children.length, 0);
     assert.ok(fx.children.includes(spriteEffect));
     host.remove();

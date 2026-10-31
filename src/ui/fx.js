@@ -34,7 +34,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { actionPacing } from './animationPace.js';
+import { actionPacing, floaterLifeMs } from './animationPace.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -411,6 +411,8 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const top = b.top + b.height * 0.25 + y;
   el.style.left = `${centre}px`;
   el.style.top = `${top}px`;
+  const life = floaterLifeMs();
+  el.style.setProperty('--float-ms', `${life}ms`);
   layer.appendChild(el);
   // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
   // layout rather than guessed from the string. offsetWidth is the untransformed
@@ -425,7 +427,7 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
     return () => { el.style.left = `${at.left + half}px`; };
   });
-  setTimeout(() => el.remove(), 600);
+  setTimeout(() => el.remove(), life + 60);
   return el;
 }
 
