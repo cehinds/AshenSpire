@@ -58,6 +58,8 @@ export function withModalDom(fn) {
   proto.matches = function match(selector) {
     if (selector === ':disabled') return !!this.disabled;
     if (selector === '[inert]') return this.hasAttribute('inert');
+    if (selector === '[data-page-locked]') return this.hasAttribute('data-page-locked');
+    if (selector.includes(', ')) return selector.split(', ').some((part) => this.matches(part));
     const child = selector.lastIndexOf(' > ');
     if (child >= 0) return this.matches(selector.slice(child + 3)) && !!this.parentNode?.matches(selector.slice(0, child));
     return matches.call(this, selector);
