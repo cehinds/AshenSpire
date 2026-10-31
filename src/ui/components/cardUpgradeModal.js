@@ -169,7 +169,10 @@ export function mountCardUpgradeModal(host, initialModel, {
           dataset: { cardUpgradeOption: String(option.index) },
         }, el('span', { class: 'card-upgrade-option-body' }, [
           el('b', { class: 'card-upgrade-option-title', text: t('cardUpgrade.option.n', { n: option.index + 1 }) }),
-          el('div', { class: 'card-upgrade-option-face' }, renderCard(registries, { cardId: selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: option.after })),
+          el('div', { class: 'card-upgrade-option-face' }, // The face is part of the option's radio button: a click or tap on it picks the option (not inspectReadOnly, which
+          // would swallow the click and open the reading), and actionOwnsTouch lets the first touch tap through. The (i) badge
+          // a selected face reveals, and a press-and-hold, still open the card's reading.
+          renderCard(registries, { cardId: selected.cardId }, { small: true, tooltip: false, actionOwnsTouch: true, definition: option.after })),
           el('ul', { class: 'card-upgrade-option-changes' }, option.changes.map((change) => el('li', { text: `${change.label} ${change.before} → ${change.after}` }))),
         ]));
         button.addEventListener('click', () => pick(option.index));

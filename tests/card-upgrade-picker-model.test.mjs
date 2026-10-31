@@ -372,6 +372,27 @@ test('the choice dialog shows every option and highlights the picked one', async
   });
 });
 
+test('clicking or tapping an option\'s card face picks that option (the face does not swallow the click)', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(async dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const card = strike(run);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const checked = () => [...host.querySelectorAll('.card-upgrade-option')].map(o => o.getAttribute('aria-checked'));
+    for (const pointerType of ['mouse', 'touch']) {
+      host.querySelectorAll('.card-upgrade-option')[0].click();
+      const face = i => host.querySelectorAll('.card-upgrade-option')[i].querySelector('.card-upgrade-option-face > *');
+      assert.ok(face(1), 'the option draws a card face');
+      face(1).dispatchEvent(Object.assign(new dom.Event('pointerdown', { bubbles: true }), { pointerType }));
+      face(1).click();
+      assert.deepEqual(checked(), ['false', 'true'], `${pointerType}: a face click moved the selection`);
+    }
+    door.close();
+  });
+});
+
 test('a chosen option commits exactly that step', () => {
   const run = newRun(); run.smithingStones = 3;
   const card = strike(run);
