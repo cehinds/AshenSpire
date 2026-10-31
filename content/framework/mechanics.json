@@ -4,13 +4,15 @@
     "wisdomWeight": 1,
     "intelligenceWeight": 0.5,
     "naturalRecoveryPerTurn": 0,
-    "restSpotRefill": "full"
+    "restSpotRefill": "full",
+    "combatEndRefill": "full",
+    "combatEndRefillNote": "Owner's call, 2026-10-31: Mana refills to its maximum when a fight ends ('full'); 'carry' keeps what the fight left, the 2026-09-24 plan A2 rule. The Mana A/B baseline numbers in stamina.combatStartRefillNote were measured under carry."
   },
   "stamina": {
     "idleRecoveryPerTurn": 1,
     "refundErasesSpend": false,
     "combatStartRefill": "full",
-    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana still carries between fights and only rests, flasks and effects restore it. Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
+    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana is governed separately by mana.combatEndRefill (refilled when a fight ends). Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
   },
   "weight": {
     "capacityBase": 0,

@@ -67,6 +67,10 @@ JSON default and the fallback for a missing `smashVsDefensive` block must agree.
 Persisted explicit rule values remain snapshots; this does not rewrite custom
 configuration or historical non-Core profiles.
 
+## Magic hits Poise first (owner, 2026-10-31)
+
+- D17: "Magic damage hits Poise first and then Block; physical damage hits Block first and then Poise." Core (Ward off): the magic part of a hit meets Poise 1:1 (full amount as Poise damage), then the Block left after the physical part, then Barrier, then HP, with no further Poise absorb; the physical part is unchanged (Block, then the 75/25 Poise absorb). A mixed hit resolves physical first, then magic, on one shared Poise pool. Amends the 2026-10-25 Block-soaks-whole-hit order (SPEC §17) for magic; D3/D4/D13 are otherwise unchanged. Tested by `tests/magic-poise-first.test.mjs`.
+
 ## Insight contests (2026-10-31)
 
 Owner: "Read Intent, Foresight and that kind of spell should not need a hit chance or care about range."
