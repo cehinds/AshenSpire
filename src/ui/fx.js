@@ -1474,6 +1474,7 @@ function playLegacyTimeline(events, ctx, done) {
       // A beat with nothing to draw at impact still reaches its impact frame.
       if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
+      let reactionEndAt = 0;
       const stepV = () => {
         if (finished) return;
         if (flushed) {
@@ -1506,6 +1507,10 @@ function playLegacyTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
+          // Impact order plays the sprite reaction with the contact; the beat must outlast its paced total so
+          // the next beat's action is not painted over it.
+          if (!sequential && ctx.reactionForReceipt?.(event))
+            reactionEndAt = Math.max(reactionEndAt, Date.now() + (Number(ctx.reactionTimingForReceipt?.(event, paced)) || 0));
           markContact(event.type);
           // Sequential: the damage buzz waits for the number (below).
           if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
@@ -1520,7 +1525,6 @@ function playLegacyTimeline(events, ctx, done) {
           schedule(stepV, Math.max(stepGap, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
-        let reactionEndAt = 0;
         const applyBeat = () => {
           cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(beatIndex) }));
