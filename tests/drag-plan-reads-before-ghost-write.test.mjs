@@ -18,7 +18,7 @@ const between = (from, to) => {
 };
 
 test('updateDropTarget reads the viewport, ghost, pointer and drop plan before the first ghost write', () => {
-  const body = between('const updateDropTarget = event => {', 'const queueDropTarget');
+  const body = between('const updateDropTarget = event => {', "el.addEventListener('pointerdown'");
   const firstWrite = body.indexOf('dragGhost.style');
   assert.ok(firstWrite > 0, 'the ghost is still positioned from updateDropTarget');
   for (const read of ['dropPlan(', 'viewportLocalBox()', 'anchorLocalBox(VIEWPORT_ORIGIN, { left: event.clientX']) {
