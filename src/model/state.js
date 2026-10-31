@@ -705,6 +705,7 @@ export const RUN_SHAPE = [
   { key: 'rangePolicy', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
   { key: 'gameProfileRestVisits', type: 'object', optional: true },
+  { key: 'rewardOfferHistory', type: 'object', optional: true },
   { key: 'contentVersion', type: 'string' },
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
