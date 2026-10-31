@@ -36,7 +36,7 @@ function visiblePointerTarget(selector) {
   // syncCoreTinyTarget: only tiny art gets a separate door). The frame is the
   // whole field column, so its fractions can all miss a sprite that is a small
   // part of it; the sprite's own box is a real destination to try first.
-  const sprite = el.matches?.('.combatant') ? el.querySelector('.sprite') : null;
+  const sprite = el.matches?.('.combatant') ? el.querySelector?.('.sprite') : null;
   if (sprite) {
     const sb = sprite.getBoundingClientRect();
     if (sb.width > 0 && sb.height > 0) boxes.push({ x: sb.x, y: sb.y, width: sb.width, height: sb.height });
