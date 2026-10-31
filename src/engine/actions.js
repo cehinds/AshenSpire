@@ -359,6 +359,23 @@ export function drainFixCorePoise(ctx, source, target, amount) {
   return spent;
 }
 
+// Owner, 2026-10-31 (SPEC 5.3): the non-damage weakness effects of a landed hit. `damage` was in the receipt; here the hit also
+// costs the weak enemy Mana or Stamina, or may stagger it (one stagger per target per round, as every other source).
+function applyWeaknessEffects(ctx, source, target, receipt) {
+  if (receipt.evaded || target.kind !== 'enemy' || !receipt.weaknesses?.length) return;
+  const tell = row => ctx.emit('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: row.to, effect: row.effect, amount: row.amount, ...seatOf(ctx, target) });
+  for (const row of receipt.weaknesses) {
+    if (!target.alive) break;
+    if (row.effect === 'damage') { if (receipt.amount > 0) tell(row); }
+    else if (row.effect === 'mana') {
+      const lost = Math.min(Math.max(0, target.mana || 0), row.amount);
+      if (lost > 0) { target.mana -= lost; ctx.emit('manaLost', { targetId: target.id, amount: lost, source: 'weakness' }); tell(row); }
+    } else if (row.effect === 'stamina') {
+      target.pendingStaminaLoss = (target.pendingStaminaLoss || 0) + row.amount; tell(row);
+    } else if (row.effect === 'stagger' && ctx.rng.chance('combatProcs', row.amount) && claimStagger(ctx, target) && staggerEnemy(ctx, target, { cause: 'weakness' })) tell(row);
+  }
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
@@ -406,7 +423,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
     poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
-    advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
+    advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
@@ -417,6 +434,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
+  applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
   return receipt.amount;
 }

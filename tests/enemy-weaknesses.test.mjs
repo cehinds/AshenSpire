@@ -9,6 +9,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { applyAttackDamage } from '../src/engine/actions.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { hitWeaknessTriggers } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
 
@@ -101,4 +103,45 @@ test('a spell triggers magic and its element, not a physical type', () => {
   const incoming = x => x.receipt.damageReceipt.hits[0].sources.filter(row => row.id.startsWith('weakness:')).at(-1).effective;
   assert.equal(incoming(r), 12);
   assert.equal(incoming(sacred), 18);
+});
+
+// ---- landed-hit effects ----
+function land(weaknesses, { hits = 1, chance = () => true, mana = 3 } = {}) {
+  const { combat, target } = liveCore();
+  target.weaknesses = weaknesses; target.mana = mana; target.hp = target.maxHp = 500;
+  combat.rng.chance = chance;
+  for (let i = 0; i < hits; i++) {
+    primeAccuracyRolls(combat, { die: 20 });
+    applyAttackDamage(combat, combat.player, target, 3, [], { ...blunt, skipRatingBonus: true });
+  }
+  return { combat, target, events: type => combat.eventLog.filter(e => e.type === type) };
+}
+
+test('a mana weakness costs the hit enemy Mana (floored at 0) and reports it', () => {
+  const r = land([{ to: 'blunt', effect: 'mana', amount: 2 }]);
+  assert.equal(r.target.mana, 1);
+  assert.deepEqual(r.events('manaLost').map(e => e.amount), [2]);
+  assert.equal(r.events('weaknessTriggered')[0].effect, 'mana');
+  assert.equal(land([{ to: 'blunt', effect: 'mana', amount: 2 }], { mana: 0 }).events('manaLost').length, 0);
+});
+
+test('a stamina weakness queues SP loss for the enemy next turn; a non-matching hit does not', () => {
+  assert.equal(land([{ to: 'blunt', effect: 'stamina' }]).target.pendingStaminaLoss, 1);
+  assert.equal(land([{ to: 'fire', effect: 'stamina' }]).target.pendingStaminaLoss || 0, 0);
+});
+
+test('a stagger weakness rolls its chance, and staggers once per target per round', () => {
+  const weak = [{ to: 'blunt', effect: 'stagger', amount: 40 }];
+  const rolls = [];
+  const r = land(weak, { hits: 2, chance: (stream, pct) => { rolls.push([stream, pct]); return true; } });
+  assert.deepEqual(rolls[0], ['combatProcs', 40]);
+  assert.equal(r.events('enemyStaggered').filter(e => e.cause === 'weakness').length, 1, 'second hit the same round does not stagger again');
+  assert.equal(land(weak, { chance: () => false }).events('enemyStaggered').length, 0);
+});
+
+test('the damage event lists the weaknesses it met', () => {
+  const r = land([{ to: 'blunt', effect: 'damage' }]);
+  const event = r.events('damageDealt')[0];
+  assert.deepEqual(event.weaknesses, [{ to: 'blunt', effect: 'damage', amount: 25 }]);
+  assert.equal(r.events('weaknessTriggered')[0].to, 'blunt');
 });

@@ -202,6 +202,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const kind = event.damageType ? `${word(event.damageType)} ` : '';
         const parts = [
           ...(mod ? [`modifiers ${mod > 0 ? '+' : '−'}${Math.abs(mod)} (${base} → ${incoming})`] : []),
+          ...(event.weaknesses || []).filter(row => row.effect === 'damage').map(row => `Weak to ${word(row.to)} +${row.amount}%`),
           ...(typed > 0 ? [`${kind}resisted ${typed} (${incoming} → ${layered})`] : []),
           ...(typed < 0 ? [`${kind}weakness +${-typed} (${incoming} → ${layered})`] : []),
           ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),

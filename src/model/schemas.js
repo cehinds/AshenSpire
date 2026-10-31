@@ -167,6 +167,9 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Enemy weaknesses (SPEC 5.3): a hit met a weakness { targetId, to, effect, amount }; a weakness took enemy Mana.
+  'weaknessTriggered',
+  'manaLost',
   // The player's poise meter filled (plan phase 8): { targetId, actionLoss,
   // statuses } — what balance.stagger.player took from them.
   'playerStaggered',
