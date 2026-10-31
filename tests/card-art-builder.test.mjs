@@ -147,7 +147,7 @@ test('mounted controls update the real preview, clear invalid input and export o
     mountProceduralBuilder({ registries, run, rootURL, imageURL: path => new URL(path, rootURL).href,
       download: (blob, name) => { exported = { blob, name }; } });
     assert.equal(find('type').children.length, 7);
-    assert.equal(find('element').children.length, 11);
+    assert.equal(find('element').children.length, BUILDER_ELEMENTS.length + 1);
     assert.equal(find('delivery').disabled, true);
     assert.equal(find('utility').disabled, true);
     assert.equal(find('export').disabled, false);

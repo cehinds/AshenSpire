@@ -20,16 +20,19 @@ import { playingCardDefinition } from '../src/model/playingCard.js';
 import { optionRowList } from '../src/ui/components/optionRowList.js';
 
 const recipe = (type = 'attack', tags = ['camp:physical'], rank = 1) => proceduralCardArt({ type, tags, rank });
-test('Burn and Earth recolor background hue while retaining texture and luminance', () => {
+test('element background takes precedence over magic and physical defaults, never status', () => {
   for (const camp of ['physical', 'spell']) {
     const plain = recipe('defend', [`camp:${camp}`]);
     const burn = recipe('defend', [`camp:${camp}`, 'status:burn']);
     const earth = recipe('defend', [`camp:${camp}`, 'element:earth']);
     const both = recipe('defend', [`camp:${camp}`, 'status:burn', 'element:earth']);
-    assert.equal(plain.componentArt.backgroundColor, null);
-    assert.deepEqual(burn.componentArt.backgroundColor, { id: 'status:burn', color: PROCEDURAL_BACKGROUND_COLORS.status.burn });
+    assert.deepEqual(plain.componentArt.backgroundColor, camp === 'spell'
+      ? { id: 'camp:spell', color: PROCEDURAL_BACKGROUND_COLORS.magic }
+      : { id: 'camp:physical', color: PROCEDURAL_BACKGROUND_COLORS.physical });
+    assert.deepEqual(burn.componentArt.backgroundColor, plain.componentArt.backgroundColor);
+    assert.ok(burn.componentArt.sprites.some(sprite => sprite.assetId.startsWith('cue.burn.')), 'Burn retains its status effect');
     assert.deepEqual(earth.componentArt.backgroundColor, { id: 'element:earth', color: PROCEDURAL_BACKGROUND_COLORS.element.earth });
-    assert.deepEqual(both.componentArt.backgroundColor, burn.componentArt.backgroundColor);
+    assert.deepEqual(both.componentArt.backgroundColor, earth.componentArt.backgroundColor);
     assert.strictEqual(both, recipe('defend', ['element:earth', 'status:burn', `camp:${camp}`]));
     assert.deepEqual(recipe('defend', [`camp:${camp}`, 'status:burning']).componentArt.backgroundColor, burn.componentArt.backgroundColor);
     for (const art of [burn, earth, both]) {
@@ -42,7 +45,12 @@ test('Burn and Earth recolor background hue while retaining texture and luminanc
       assert.ok(html.indexOf('data-art-background-color=') < html.indexOf('data-art-composition='), 'color treatment precedes the isolated component stage');
     }
     const html = cardArtLayersHtml(both);
-    assert.equal((html.match(/data-art-background-color=/g) || []).length, 1, 'combined tags use one status-priority color treatment');
+    assert.equal((html.match(/data-art-background-color=/g) || []).length, 1, 'combined tags use one element color treatment');
+    for (const element of ['force', 'fire', 'lightning', 'earth', 'frost', 'psychic', 'alteration', 'divine', 'necrotic', 'wind']) {
+      const art = recipe('attack', [`camp:${camp}`, `element:${element}`, 'status:burn']);
+      assert.deepEqual(art.componentArt.backgroundColor, { id: `element:${element}`, color: PROCEDURAL_BACKGROUND_COLORS.element[element] });
+      assert.match(art.componentArt.backgroundColor.color, /^#[0-9a-f]{6}$/);
+    }
   }
 });
 
@@ -78,7 +86,7 @@ test('row-list artwork shares isolated background recoloring without filtering f
   const well = rows.querySelector('.option-row-art');
   assert.equal(well.style.isolation, 'isolate');
   assert.ok(well.querySelector('img'));
-  assert.match(well.querySelector('[data-art-background-color="status:burn"]').getAttribute('style'), /mix-blend-mode:color/);
+  assert.match(well.querySelector('[data-art-background-color="camp:physical"]').getAttribute('style'), /mix-blend-mode:color/);
   assert.ok(well.querySelector('[data-card-art-component="O.object.1"]'));
   assert.ok([...well.querySelectorAll('[data-card-art-component]')].every(image => !image.style.filter));
 }));
@@ -157,20 +165,64 @@ test('Reviewed working placement edits cannot mutate the procedural template poo
     assert.deepEqual(after, before, 'approved template is detached from mutable review working catalog');
   } finally { source.css.left = saved; }
 });
+test('mixed elements deduplicate aliases, preserve precedence and bound cues across actions and consumers', () => withModalDom(() => {
+  for (const camp of ['physical', 'spell']) for (const action of ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend', 'skill']) {
+    const tags = [`camp:${camp}`, 'element:fire', 'element:cold', 'status:burn', 'status:bleed', 'status:frost'];
+    const mixed = recipe(action, tags, 3);
+    assert.deepEqual(mixed.elements, ['fire', 'frost']);
+    assert.equal(mixed.componentArt.backgroundColor.color, '#9455c7');
+    assert.strictEqual(mixed, recipe(action, [...tags, 'element:frost'].reverse(), 3));
+    assert.ok(mixed.visualCues.length <= 4);
+    assert.ok(mixed.componentArt.sprites.filter(row => row.id.startsWith('element-cue')).length <= 2);
+    const objects = art => art.componentArt.sprites.filter(row => /^(object|secondaryObject)/.test(row.id));
+    assert.deepEqual(objects(mixed), objects(recipe(action, tags, 5)), 'rank preserves weapon geometry');
+  }
+  const tags = ['camp:spell', 'element:lightning', 'element:alternation'];
+  const lime = recipe('attack', tags);
+  assert.equal(lime.componentArt.backgroundColor.color, '#9aca35');
+  assert.strictEqual(lime, recipe('attack', ['element:alteration', ...tags].reverse()));
+  const generic = recipe('attack', ['camp:physical', 'element:earth', 'element:wind', 'element:fire']);
+  assert.strictEqual(generic, recipe('attack', ['element:wind', 'element:fire', 'camp:physical', 'element:earth']));
+  assert.match(generic.componentArt.backgroundColor.color, /^#[0-9a-f]{6}$/);
+  assert.equal(recipe('attack', ['camp:spell', 'damage:fire', 'damage:frost']).componentArt.backgroundColor.color, '#9455c7');
+  const definition = { type: 'attack', cardTags: tags };
+  assert.strictEqual(proceduralDefinitionArt(definition), lime);
+  assert.strictEqual(playingCardArt({ cardId: 'mindSpike' }, { definition, style: 'Simple' }), lime);
+  const reg = createRegistries(contentBundle);
+  const card = renderCard(reg, { cardId: 'mindSpike' }, { definition: { ...reg.cards.get('mindSpike'), cardTags: tags }, artStyle: 'Simple' });
+  assert.match(card.querySelector('[data-art-background-color="element:alteration+lightning"]').getAttribute('style'), /#9aca35/);
+  assert.equal(PROCEDURAL_BACKGROUND_COLORS.element.fire, '#88552f');
+  assert.equal(PROCEDURAL_BACKGROUND_COLORS.element.earth, '#705440');
+  for (const prefix of ['element:', 'school:', 'damage:']) {
+    const blood = recipe('attack', ['camp:spell', prefix + 'blood']);
+    assert.equal(blood.componentArt.backgroundColor.color, '#b3271b');
+    assert.ok(blood.componentArt.sprites.every(row => row.path));
+  }
+  const magic = recipe('attack', ['camp:spell']);
+  const force = recipe('attack', ['camp:spell', 'element:force']);
+  assert.notStrictEqual(magic, force);
+  assert.equal(magic.componentArt.backgroundColor.color, '#427ec7');
+  assert.equal(force.componentArt.backgroundColor.color, '#b3271b');
+}));
+
 test('missing, empty, conflicting and unsupported camp or action identities fail safely', () => {
   for (const tags of [[], ['camp:physical', 'camp:spell'], ['camp:unknown'], ['camp:spell', 'maneuver:invented'], ['camp:spell', 'maneuver:attack', 'maneuver:sweep']]) {
     assert.equal(recipe('attack', tags), null);
   }
   assert.equal(recipe('unknown'), null);
-  assert.equal(recipe('attack', ['camp:physical', 'element:__proto__']).element, null);
+  assert.equal(recipe('attack', ['camp:physical', 'element:__proto__']), null);
   assert.equal(recipe('attack', ['camp:spell', 'element:cold', 'element:frost']).element, 'frost');
   assert.equal(recipe('attack', ['camp:spell', 'school:illusion', 'school:psychic']).element, 'psychic');
   assert.equal(recipe('attack', ['camp:physical', 'damage:cold', 'damage:frost']).element, 'frost');
   for (const tags of [
     ['element:fire', 'element:frost', 'school:divine'],
     ['school:fire', 'school:frost', 'damage:divine'],
-  ]) assert.equal(recipe('attack', ['camp:spell', ...tags]), null);
-  assert.equal(recipe('attack', ['camp:physical', 'damage:fire', 'damage:slashing']).element, null);
+  ]) assert.equal(recipe('attack', ['camp:spell', ...tags]).componentArt.backgroundColor.color, '#9455c7');
+  for (const tags of [['element:fire', 'element:unknown'], ['school:unknown', 'damage:fire']]) {
+    assert.equal(recipe('attack', ['camp:spell', ...tags]), null);
+  }
+  assert.equal(recipe('attack', ['camp:physical', 'damage:fire', 'damage:slashing']).element, 'fire');
+  assert.equal(recipe('attack', ['camp:physical', 'damage:blood', 'damage:blunt']).componentArt.backgroundColor.color, '#b3271b');
 });
 
 test('Simple is procedural before dedicated and curated ID routes, while Reviewed and Legacy retain them', () => {
@@ -184,7 +236,7 @@ test('Simple is procedural before dedicated and curated ID routes, while Reviewe
   assert.equal(playingCardArt({ cardId: 'gorefireSlash' }, { definition: def, style: 'Legacy' }).path, playingCardArtwork({ cardId: 'gorefireSlash' }));
   assert.equal(resolveCardArtStyle({ cardArtStyle: 'Reviewed' }), 'Reviewed');
   assert.equal(resolveCardArtStyle({ cardArtStyle: 'Simple' }), 'Simple');
-  for (const id of ['', 'mindSpike', 'gorefireSlash']) for (const cardTags of [[], null, undefined, ['camp:physical', 'camp:spell'], ['camp:spell', 'element:fire', 'element:frost']]) {
+  for (const id of ['', 'mindSpike', 'gorefireSlash']) for (const cardTags of [[], null, undefined, ['camp:physical', 'camp:spell'], ['camp:spell', 'element:fire', 'element:unknown']]) {
     assert.equal(playingCardArt({ cardId: id, profileId: 'bladeAttack' }, { definition: { id, type: 'attack', cardTags }, style: 'Simple' }), null,
       'explicit invalid or empty tags never repair through card/profile identity');
   }

@@ -12,7 +12,7 @@ tags, type and rank. Returned recipes and their nested transforms are frozen.
 An explicit physical/spell camp is required. Maneuver tags override type;
 attack, smash, counter, evade, sweep, defend, skill and power are supported,
 including defense/evasion aliases. Explicit element wins over school and then
-singleton damage tags; existing element aliases and wind are supported.
+damage tags; aliases deduplicate before combining canonical elements. Blood is also supported; its foreground uses the approved Force template.
 Cast/projectile delivery selects approved elemental projectiles; explicit melee
 retains the ethereal weapon. Counter paints the approved hammer in front of the shield for both camps; Evade
 uses the approved feather. Utility effect tags select healing, draw and cleanse
@@ -20,9 +20,13 @@ objects. Status tags select approved PNG marks/glows (a restrained approved
 generic cue for other registered statuses). Action plus element and statuses
 never exceeds four visual identities.
 
-`PROCEDURAL_BACKGROUND_COLORS` maps semantic identities to background hue and
-saturation. Earth uses brown (`#88552f`); Burn (including the burning alias) uses
-red (`#b3271b`) and wins when both apply, regardless of input tag order. CSS
+`PROCEDURAL_BACKGROUND_COLORS` maps element identities to background hue and
+saturation. Explicit element wins over the camp: physical cards without an
+element keep neutral gray smoke, while non-elemental magic defaults to Force blue.
+Explicit Force and Blood are red; untyped magic remains blue with a distinct cache identity. Fire uses the approved orange-brown (#88552f), Earth a muted brown (#705440), Lightning yellow, Alteration green, Frost pale blue
+with white highlights, Psychic violet, Divine warm ivory/gold, Necrotic purple,
+and Wind pale teal. Fire + Frost is purple (#9455c7), and Lightning + Alteration lime (#9aca35). Other combinations equally average the sRGB palette channels after alias deduplication and canonical sorting. All elements contribute to the background; at most two elemental PNG cues and one status cue accompany the action for mixed identities. The first canonical element selects the foreground template, retaining stable weapon geometry across tag order and ranks. Invalid explicit element/school tags fail safely; physical damage tags do not suppress recognized elemental damage tags. The builder includes Blood in its element selector; its additional-tag field accepts mixed elements. Counter uses a restrained warm gold 0.9px outline to separate the hammer from its shield. Burn and other statuses retain their PNG effects but never
+override the background element or category color. CSS
 `mix-blend-mode:color` preserves the original background PNG's per-pixel
 luminosity, texture and lighting instead of adding a translucent flat wash.
 The treatment paints before the component stacking context, inside the isolated
