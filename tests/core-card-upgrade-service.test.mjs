@@ -176,3 +176,22 @@ test('upgradeChoiceCount: 2 for a Basic card and 3 for a ranked one at a blacksm
   assert.equal(upgradeChoiceCount(ranked, {}), 1);
   assert.equal(upgradeChoiceCount(ranked, { upgradeSteps: [{ k: 'tag', tag: 'rank.cantrip' }], upgraded: true }, { blacksmith: true }), 2, 'a rank-down makes the card Basic');
 });
+
+test('a rolled alternative never resolves to the same card as the authored option (drivingThrust, seed 1)', async () => {
+  const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
+  const { applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
+  const face = (base, step) => { const { name, ...rest } = applyUpgradeSteps(base, [step]); return JSON.stringify(rest); };
+  const base = registries.cards.get('core.drivingThrust');
+  const run = { ...newRun(1) };
+  const options = nextUpgradeOptions(run, { instanceId: 'test', cardId: 'core.drivingThrust' }, base, registries, 3);
+  assert.deepEqual(options[0], { k: 'authored' });
+  assert.ok(options.length >= 2, 'a distinct alternative exists');
+  assert.equal(new Set(options.map((s) => face(base, s))).size, options.length, 'every option does something different');
+  // Over many seeds and cards no option list holds two identical outcomes, and option 1 stays the single roll.
+  for (const id of ['core.drivingThrust', 'core.strike', 'core.jab', 'core.hexmark']) for (let seed = 1; seed <= 60; seed += 1) {
+    const def = registries.cards.get(id);
+    const list = nextUpgradeOptions({ ...run, seed }, { instanceId: 'x', cardId: id }, def, registries, 3);
+    assert.equal(new Set(list.map((s) => face(def, s))).size, list.length, `${id} seed ${seed}`);
+    assert.deepEqual(list[0], nextUpgradeOptions({ ...run, seed }, { instanceId: 'x', cardId: id }, def, registries, 1)[0]);
+  }
+});

@@ -2,7 +2,9 @@
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardRank } from './cardRank.js';
-import { upgradeCount, upgradeStepsOf, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeCount, upgradeStepsOf, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+
+const MAX_CANDIDATES = 20;
 import { rollUpgradeOptions, upgradeStepRng } from './cardUpgradeSteps.js';
 
 /**
@@ -53,9 +55,24 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1) {
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
-  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), { ...mana, rank, exposure: registries?.balance?.exposure?.buildupPerManaSpell }, n);
-  if (applied.length === 0 && base.upgrade) return count > 1 ? [{ k: 'authored' }, ...roll(1)] : [{ k: 'authored' }];
-  return roll(count);
+  const limits = { ...mana, rank, exposure: registries?.balance?.exposure?.buildupPerManaSpell };
+  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), limits, n);
+  const authored = applied.length === 0 && base.upgrade;
+  if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);
+  // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
+  // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
+  // seeded stream in the same order, so the list stays deterministic; a card with no distinct candidate left shows fewer.
+  const outcome = (step) => { const { name, ...face } = applyUpgradeSteps(base, [...applied, step]); return JSON.stringify(face); };
+  const picked = authored ? [{ k: 'authored' }] : [];
+  const seen = new Set(picked.map(outcome));
+  for (const step of roll(MAX_CANDIDATES)) {
+    if (picked.length >= count) break;
+    const key = outcome(step);
+    if (picked.length && seen.has(key)) continue;
+    seen.add(key);
+    picked.push(step);
+  }
+  return picked.slice(0, authored ? 2 : count);
 }
 
 /**
