@@ -30,7 +30,8 @@ const flurry = renderCard(registries, { cardId: 'twinbladeFlurry' }, { tooltip: 
 // against the resolved per-hit base (action costs derive it, SPEC §4.3a) and its total.
 const flurryBase = resolveCard(registries, { cardId: 'twinbladeFlurry' }).effects[0].amount;
 const mark = value => value < flurryBase ? 'val down' : value > flurryBase ? 'val up' : 'val';
-assert.match(flurry, new RegExp(`<span class="${mark(1)}">1</span> \\+ <span class="${mark(3)}">3</span> \\+ <span class="${mark(3)}">3</span> Slashing damage \\(<span class="${7 < flurryBase * 3 ? 'val down' : 'val'}">7</span> total across 3 hits\\)`));
+assert.match(flurry, new RegExp(`<span class="${mark(1)}">1</span> \\+ <span class="${mark(3)}">3</span> \\+ <span class="${mark(3)}">3</span> Slashing damage`));
+// Owner 2026-10-31: the face drops the "(7 total across 3 hits)" rider to keep the line at five words; Information keeps it.
 assert.doesNotMatch(flurry, />1<\/span> damage <span class="val">3<\/span> times/);
 assert.match(render(undefined), /illustrated-card-face/);
 console.log('12 illustrated resource and tactical preview checks passed');

@@ -904,7 +904,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const active = selected || selfArm;
     // applyTargetLayer below updates the HUD once with the final legal targets.
     if (active) selectCombatant(null, { updateHud: false });
-    if (!active) combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => { card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current'); });
+    // A stale inspection mark never outlives its card's turn at the front: with nothing armed, or another card armed,
+    // only the armed card keeps it (owner, 2026-10-31: the hand shows one select state).
+    combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => {
+      if (active && card.dataset.instanceId === active) return;
+      card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current');
+    });
     combatEl.querySelectorAll('.hand .card').forEach(card => {
       const on = card.dataset.instanceId === active;
       card.classList.toggle('selected', on);
