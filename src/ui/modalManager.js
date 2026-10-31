@@ -385,6 +385,12 @@ export function registerModal(name, element, opts = {}) {
   return release;
 }
 
+/** True while a registered entry holds the page lock (a live, armed, inert entry with an element). */
+export function pageLockHeld() {
+  prune();
+  return lockIndex(stack.filter((entry) => !entry.closing)) >= 0;
+}
+
 /** True while at least one registered modal is open. */
 export function modalOpen() {
   prune();

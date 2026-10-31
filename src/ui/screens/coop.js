@@ -1310,7 +1310,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         return cardDef(inst)?.combatPreview ?? null;
       },
     });
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize,
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize, registries,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)

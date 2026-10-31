@@ -51,10 +51,21 @@ export function reserveStanceCards(registries, run, rng, stream, eligibleIds, li
     const ids = eligibleIds.filter(id => inTier(id) && stanceOfId(registries, id) === stance);
     if (ids.length) byStance.set(stance, ids);
   }
+  // Owner 2026-10-31: a card shown in an earlier offer is drawn at offeredCopyWeight^timesOffered (a stance by the mean of its cards);
+  // with no history or the weight at 1 every weight is equal and the draw is the old uniform rng.pick, so existing seeds hold.
+  const base = gameContent(run, 'rewards')?.eligibility?.combatCards?.offeredCopyWeight, history = run.rewardOfferHistory?.cards || {};
+  const weightOf = id => (Number.isFinite(base) && base !== 1 ? Math.pow(base, history[id] || 0) : 1);
+  const pickWeighted = (items, weight) => {
+    const weights = items.map(weight), total = weights.reduce((sum, value) => sum + value, 0);
+    if (items.length < 2 || !(total > 0) || weights.every(value => value === weights[0])) return rng.pick(stream, items);
+    let roll = rng.float(stream) * total;
+    for (const [index, item] of items.entries()) { roll -= weights[index]; if (roll < 0) return item; }
+    return items.at(-1);
+  };
   const picked = [];
   while (picked.length < slots && byStance.size) {
-    const stance = rng.pick(stream, [...byStance.keys()]);
-    picked.push(rng.pick(stream, byStance.get(stance)));
+    const stance = pickWeighted([...byStance.keys()], key => byStance.get(key).reduce((sum, id) => sum + weightOf(id), 0) / byStance.get(key).length);
+    picked.push(pickWeighted(byStance.get(stance), weightOf));
     byStance.delete(stance);
   }
   return picked;
