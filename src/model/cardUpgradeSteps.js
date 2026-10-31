@@ -74,8 +74,12 @@ function options(base, current, applied, limits) {
 
   const effects = current.effects || [];
   const baseEffects = base.effects || [];
+  // prepareTacticalCard turns a counter card's damage and poise into a return payload aimed at the one attacker it
+  // answers (the same `maneuver` test it makes), and Core 2 replaces that payload's HP and Poise with the fixed
+  // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
+  const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
   const dmgIndex = firstPlainIndex(effects, 'damage');
-  if (dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
+  if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const n = Math.max(2, Math.ceil(baseTotal * 0.15));
     const after = (effects[dmgIndex].amount + n) * hitsOf(effects[dmgIndex]);
@@ -113,7 +117,7 @@ function options(base, current, applied, limits) {
     else if (school === 'physical') found.addStatus = { statuses: ['bleed', 'weak'] };
   }
 
-  if (dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
+  if (!counterReturn && dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
     && effects[dmgIndex].target === 'enemy' && effects[dmgIndex].amount <= 8) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const amount = effects[dmgIndex].amount;
@@ -123,7 +127,7 @@ function options(base, current, applied, limits) {
     const counts = [2, 3].filter((hits) => hits <= 3 && per * hits - baseTotal <= baseTotal && per * hits > amount && hitFloor(current, hits) <= sp);
     if (counts.length) found.hits = { per, counts };
   }
-  addTagOptions(base, current, applied, found, dmgIndex, limits);
+  addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn);
   return found;
 }
 
@@ -137,7 +141,7 @@ const basicDef = (def) => {
 };
 
 /** The identity-change options (poise, range, targeting, stance, school, element, rank-down) for a non-restricted card. */
-function addTagOptions(base, current, applied, found, dmgIndex, limits = {}) {
+function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, counterReturn = false) {
   const effects = current.effects || [];
   const tags = tagsOf(current);
   const camp = familyValue(tags, 'camp:');
@@ -146,12 +150,9 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}) {
   const hitsEnemy = dmgIndex >= 0 && (effects[dmgIndex].target === 'enemy' || effects[dmgIndex].target === 'allEnemies');
   const attacking = hitsEnemy && (['attack', 'smash', 'sweep', 'ranged', 'counter'].includes(maneuver) || spell);
   const tagged = (predicate) => applied.some((s) => s.k === 'tag' && predicate(s));
-  // prepareTacticalCard turns a counter card's damage into a return payload aimed at the one attacker it answers
-  // (the same `maneuver` test it makes), so a range or area face could never be honoured: no such option is offered.
-  const counterReturn = maneuver === 'counter';
 
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
-  if (poiseIndex >= 0) {
+  if (poiseIndex >= 0 && !counterReturn) {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = Math.max(1, Math.ceil(baseTotal * 0.2));
     if (effects[poiseIndex].amount + n - baseTotal <= baseTotal) found.poise = { n };

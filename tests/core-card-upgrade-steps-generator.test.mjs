@@ -264,7 +264,8 @@ test('school change is offered to any spell-camp card, damaging or not, and neve
 });
 
 test('a counter card never gets a range or targeting option; Strike still does', () => {
-  const counters = [byId('core.counter'), { ...dmg(6), id: 'guardCounter', tags: ['camp:physical', 'maneuver:counter'] }];
+  const withPoiseEffect = (card) => ({ ...card, effects: [...card.effects, { op: 'poiseDamage', target: 'enemy', amount: 5 }] });
+  const counters = [byId('core.counter'), withPoiseEffect({ ...dmg(6), id: 'guardCounter', tags: ['camp:physical', 'maneuver:counter'] })];
   assert.ok(counters[0], 'core.counter exists');
   const seen = (card) => {
     const kinds = new Set();
@@ -274,7 +275,10 @@ test('a counter card never gets a range or targeting option; Strike still does',
   for (const card of counters) {
     const kinds = seen(card);
     assert.ok(!kinds.has('targeting') && !kinds.has('range'), `${card.id} offers neither area nor range`);
+    for (const k of ['poise', 'dmg', 'hits']) assert.ok(!kinds.has(k), `${card.id} offers no ${k} step (the fixed return replaces it)`);
   }
+  const plain = seen(withPoiseEffect(dmg(6)));
+  assert.ok(plain.has('poise') && plain.has('dmg'), 'a non-counter card still gets poise and damage');
   const strike = seen(byId('core.strike'));
   assert.ok(strike.has('targeting') && strike.has('range'), 'core.strike still gets both');
 });
