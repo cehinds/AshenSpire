@@ -1,9 +1,11 @@
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { canonicalDamageType, magicDamageTypeOf } from '../model/combatRatings.js';
 import * as Plans from '../model/proposalStatusRules.js';
+// Core (configured) combat has the fire element: Elemental Weapon (base.elemental-weapon) and Greased need it (owner, 2026-10-31, enemy weaknesses).
+const CONFIGURED_ELEMENTS=['fire'];
 export function proposalContext(ctx) {
  const profile=ctx.gameProfile;
- return {rules:ctx.registries?.proposalStatusRules?.rules || ctx.registries?.proposalStatusRules || {},capabilities:!profile ? {} : {modules:Object.entries(profile.modules || {}).filter(([,v])=>v!==false && v!=null).map(([k])=>k),...(profile.foundation?.mode==='legacy' ? {} : {elements:[],protections:profile.modules?.defenses?.include || []})}};
+ return {rules:ctx.registries?.proposalStatusRules?.rules || ctx.registries?.proposalStatusRules || {},capabilities:!profile ? {} : {modules:Object.entries(profile.modules || {}).filter(([,v])=>v!==false && v!=null).map(([k])=>k),...(profile.foundation?.mode==='legacy' ? {} : {elements:CONFIGURED_ELEMENTS,protections:profile.modules?.defenses?.include || []})}};
 }
 export function proposalActor(ctx,actor) {return actor && ctx.playerIdForEntity?.(actor) ? {...actor,id:ctx.playerIdForEntity(actor)} : actor;}
 export function proposalActors(ctx) {return [...(ctx.players ? [...ctx.players.values()].map(p=>p.entity) : [ctx.player]),...(ctx.enemies || [])].filter(Boolean);}

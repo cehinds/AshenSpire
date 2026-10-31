@@ -179,3 +179,24 @@ test('a bleed burst deals x1.5 to a bleed-tick-weak enemy', () => {
   executeAction(combat, { effect: { op: 'loseHp', target: 'self', amount: 10, cause: 'proc:bleed' }, source: target, owner: target, target });
   assert.equal(100 - target.hp, 15);
 });
+
+test('Elemental Weapon works in Core: a weapon hit adds fire damage, and the element triggers a fire weakness', () => {
+  const run = (enemyId, imbued) => {
+    const { combat, target } = liveCore(enemyId);
+    target.hp = target.maxHp = 500;
+    if (imbued) combat.player.statuses['base.elemental-weapon'] = { stacks: 2 };
+    primeAccuracyRolls(combat, { die: 20 });
+    const carrier = { ...blunt, cardTags: ['source:weapon'], skipRatingBonus: true };
+    const triggers = hitWeaknessTriggers(combat, combat.player, carrier);
+    applyAttackDamage(combat, combat.player, target, 10, [], carrier);
+    return { combat, triggers };
+  };
+  const plain = run('blightHound', false), fire = run('blightHound', true);
+  assert.ok(!plain.triggers.includes('fire'));
+  assert.ok(fire.triggers.includes('fire') && fire.triggers.includes('magic'), 'the imbued element is a trigger');
+  const bonus = fire.combat.queue.filter(a => a.effect?.op === 'damage' && a.card?.damageType === 'fire');
+  assert.equal(bonus.length, 1, 'the weapon bonus is queued as a fire hit');
+  assert.equal(bonus[0].effect.amount, 3);
+  assert.equal(plain.combat.queue.filter(a => a.effect?.op === 'damage').length, 0);
+  assert.deepEqual(fire.combat.eventLog.find(e => e.type === 'damageDealt').weaknesses.map(w => w.to).sort(), ['blunt', 'fire']);
+});
