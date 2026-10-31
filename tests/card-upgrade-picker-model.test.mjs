@@ -242,3 +242,28 @@ test('the preview shows the card\'s main lines only: no Entry bonus line, no rec
   const open = rest.slice(rest.indexOf('const openUpgradeCard'), rest.indexOf('const openLevel'));
   assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
 });
+
+test('compact host: picking a row closes the list so the pane is not hidden', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    // The fixture has no layout: the player's own wireframe choice forces the compact selector.
+    dom.document.documentElement = { dataset: { wireframeMenuNav: 'selector' }, style: {}, getBoundingClientRect: () => ({ width: 390, height: 844 }) };
+    const savedStyle = globalThis.getComputedStyle;
+    globalThis.getComputedStyle = () => ({ fontSize: '16px', minHeight: '44px', getPropertyValue: () => '' });
+    const run = newRun(); run.smithingStones = 1;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    let door;
+    const pick = id => door.update(cardUpgradeModel(registries, run, id));
+    door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: pick, onBack() {}, onConfirm() {} });
+    const railed = () => host.querySelector('.as-railed');
+    assert.equal(railed().dataset.catNav, 'selector');
+    assert.equal(railed().dataset.catOpen, 'true', 'nothing chosen: the list is open');
+    host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).click();
+    assert.equal(railed().dataset.catOpen, 'false', 'a chosen card closes the list');
+    assert.ok(host.querySelector('#card-upgrade-preview-region'), 'the preview region is drawn');
+    assert.equal(host.querySelector('.smith-confirm').hidden, false);
+    door.close();
+    if (savedStyle) globalThis.getComputedStyle = savedStyle; else delete globalThis.getComputedStyle;
+  });
+});

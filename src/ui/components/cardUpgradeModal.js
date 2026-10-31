@@ -140,7 +140,9 @@ export function mountCardUpgradeModal(host, initialModel, {
       nav = navigation(cards);
       body.replaceChildren(railed(nav, previewRegion, { class: 'smith-candidate-region' }));
       nav.plan();
-      nav.setOpen(wasOpen);
+      // The kit closes the list after a row pick, but on the nav this rebuild just released; a chosen
+      // card shows its pane, so the new list stays closed (an unchosen one stays open).
+      nav.setOpen(wasOpen && !model.selected);
       if (focusedRow || focusedToggle) restoreNavFocus = focusedToggle ? nav.toggle
         : cards.find((card) => card.dataset.instanceId === focusedRow.dataset.instanceId) || nav.start();
     }
