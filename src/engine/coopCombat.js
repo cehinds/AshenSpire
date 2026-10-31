@@ -78,6 +78,7 @@ import * as Reactions from './combatReactions.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
+import { decayAtTurnStart } from './statuses.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
@@ -625,7 +626,7 @@ function finish(C, result) {
 // ---- player phase -----------------------------------------------------------
 function startPlayerPhase(C) {
   C.turn += 1;
-  decayStanceRoundStart(C);
+  if (!fixCoreEnabled(C)) decayStanceRoundStart(C); // Core 2 decays Evade once, at the owner turn start (decayAtTurnStart), as solo does
   clearEnemyReactionRolls(C);
   C.phase = 'player';
   for (const P of livingPlayers(C)) {
@@ -637,6 +638,8 @@ function startPlayerPhase(C) {
     if (C.combatExpansionVersion === 2) e.barrier = 0;
     const tacticalProtection = startTacticalTurn(C, e);
     if (C.combatExpansionVersion === 2) beginAshenBlightCycle(C, e, String(e.combatOwnerCycle));
+    // Core 2 Precision loses a stack at its owner's turn start, as in solo (combat.js playerTurnStart); no-op outside Core 2.
+    decayAtTurnStart(C, e);
     R.beginAbilityTurn(e);
     F.startFoundationTurn(C, e);
     P.ended = false;
@@ -1257,6 +1260,7 @@ function enemyPhase(C) {
     if (C.result) return;
     if (!enemy.alive) continue;
     if (cursor.stage === 'start') {
+    decayAtTurnStart(C, enemy); // Core 2 Precision decay at the enemy's own turn start, first as in solo enemyOwnerTurnStart
     beginEnemyBurdens(C,enemy,Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId)));
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));

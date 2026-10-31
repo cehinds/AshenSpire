@@ -26,15 +26,14 @@ test('automatic Precision has an honest static formula, exact live count and com
   const def = definition('core.strike');
   const [staticTag] = cardBonusTags(def, null, core);
   assert.equal(staticTag.count, 1);
-  assert.equal(staticTag.countFormula, 'stat mix');
-  assert.match(staticTag.blurb, /On changing stance, gain 1 \+ stat mix Precision/);
+  assert.equal(staticTag.countFormula, undefined); // Rule: the entry grant is exactly 1 stack, no stat-mix formula (owner, 2026-10-31)
+  assert.match(staticTag.blurb, /On changing stance, gain 1 Precision/);
   assert.match(staticTag.blurb, /Repeating the same stance grants none/);
-  assert.match(staticTag.blurb, /Expires at the end of the owner's turn unless.*Persistent/);
-  assert.match(staticTag.blurb, /Does not increase damage/);
+  assert.match(staticTag.blurb, /Loses 1 stack at the start of your turn/); // Rule: Precision decays per turn; badge text is the statuses.json tooltip
   const [live] = cardBonusTags(def, { entryPrecision: 8 }, core);
   assert.equal(live.count, 8);
   assert.equal(live.countFormula, undefined);
-  assert.match(cardTagRailHtml([staticTag]), /aria-label="Precision 1 \+ stat mix"/);
+  assert.match(cardTagRailHtml([staticTag]), /aria-label="Precision 1"/);
   assert.match(cardTagRailHtml([live]), /Precision 8/);
   assert.doesNotMatch(text(faceWith(def, [live], { entryPrecision: 8 })), /Precision|Entry/);
 });
@@ -43,7 +42,7 @@ test('Core Evade retains its short body and one unquantified keyword tag', () =>
   const def = definition('core.evade');
   const [tag] = cardBonusTags(def, null, core);
   assert.equal(tag.count, undefined);assert.equal(tag.countFormula, undefined);
-  assert.match(tag.blurb, /Gain 3 Evade/);assert.match(tag.blurb, /to Evasion\. Only attacks roll\./);assert.doesNotMatch(tag.blurb, /fixed Evasion/);assert.doesNotMatch(tag.blurb, /On changing stance/);
+  assert.match(tag.blurb, /Gain 3 Evade/);assert.match(tag.blurb, /adds 2 Evasion\. Only attacks roll\./);assert.doesNotMatch(tag.blurb, /fixed Evasion/);assert.doesNotMatch(tag.blurb, /On changing stance/);
   assert.deepEqual(tag.representedEffects, []);
   assert.equal(text(faceWith(def, [tag])), 'Gain 3 Evade.', 'the shared face supplies the whole compact body');
   const preview = { values: [{ op: 'applyStatus', status: 'evade', value: 7 }] };
@@ -70,7 +69,7 @@ test('distinct automatic and authored Precision applications are not added into 
   assert.deepEqual(tag.representedEffects, []);
   assert.match(tag.blurb, /Gain 2 Precision/);
   assert.match(tag.blurb, /On changing stance, gain 8 Precision/);
-  assert.match(text(faceWith(def, [tag], { entryPrecision: 8 })), /Gain Precision 2/);
+  assert.match(text(faceWith(def, [tag], { entryPrecision: 8 })), /\+2 Precision/); // Rule: a self Precision grant prints "+N Precision" (owner, 2026-10-31)
 });
 
 test('a conditional Core Evade application does not promise a second automatic grant', () => {
@@ -126,7 +125,7 @@ test('hand, reward and complete printed faces show the short Evade grant with a 
         const card = renderCard(core, { cardId: id }, opts), html = markup.get(card);
         const body = html.replace(/(?:aria-label|aria-description|data-tip)="[^"]*"/g, '');
         assert.doesNotMatch(body, /Entry:|stat mix|Gain Evade/);
-        assert.match(html, id === 'core.strike' ? /aria-label="Precision 1 \+ stat mix"/ : /aria-label="Evade"/);
+        assert.match(html, id === 'core.strike' ? /aria-label="Precision 1"/ : /aria-label="Evade"/);
         if (id === 'core.evade') assert.match(body.replace(/<[^>]*>/g, ''), /Gain 3 Evade\./);
       }
     }

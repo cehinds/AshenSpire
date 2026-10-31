@@ -49,11 +49,10 @@ export function digest(combat) {
 
 // Re-pinned 2026-10-31 after merging dev cf6417b4d9: the same fights on the dev tree
 // (no transaction caches) give these digests, so the rules moved, not the caches.
+// Core 2 accuracy: Precision = 1 + stat mix + stacks, Evasion = 8 + DEX + 2/stack moves the seeded hit rolls.
 const PINNED = [
-  // Re-recorded for enemy weaknesses (SPEC 5.3, 2026-10-31): the enemy entity gains `weaknesses` and blunt/fire weak enemies take the
-  // weakness damage stage, so the log and state digests change; event counts and turn are unchanged.
-  [['PERF1', 'reaver'], { log: '4291ad0e4e4bdd80', state: 'adfec8710da3cea3', events: 184, turn: 6 }],
-  [[4242, 'reaver'], { log: 'bd525116c03ba22e', state: '517c8160598af8b5', events: 226, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '9a8c3db5e0ad128f', state: 'b5612bc2f237fe7c', events: 190, turn: 6 }],
+  [[4242, 'reaver'], { log: '3e6ceba14e98b63f', state: '464fa4b754e82ee6', events: 228, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

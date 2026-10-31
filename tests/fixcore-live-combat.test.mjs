@@ -35,9 +35,9 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
  assert.deepEqual(combat.player.ratings,ratings.totals);assert.equal(combat.piles.hand.length,run.drawPerTurn);
  const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
  const hit=attackHitPreview(combat,target,combat.player,carrier);
- assert.equal(hit.evasion,1+combat.player.attributes.dexterity+gear.totals.evasion); // DEX and gear remain at zero stacks
+ assert.equal(hit.evasion,8+combat.player.attributes.dexterity+gear.totals.evasion); // Rule: Evasion = 8 + DEX + gear + 2 per Evade stack (owner, 2026-10-31) // DEX and gear remain at zero stacks
  combat.player.statuses.evade={stacks:2};
- assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+combat.player.attributes.dexterity+gear.totals.evasion+2*(1+combat.player.attributes.dexterity));
+ assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,8+combat.player.attributes.dexterity+gear.totals.evasion+2*2);
  const read=rollKnowledgeRead({float:()=>.2},enemyKnowledge,{attributes:combat.player.attributes},'Attack',{ctx:combat,target});
  assert.equal(read.perception.total,5+combat.player.attributes.wisdom);
 });
@@ -189,11 +189,11 @@ test('card face prints the live Precision entry grant on the shipped Core strike
  for(const id of ['core.strike','core.sweep']) {
   const def=reg.cards.get(id);assert.ok(def,id);
   assert.ok(!def.defenseRulesVersion&&!def.minCombatExpansionVersion,id+' is the shipped definition, no per-card version field');
-  assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 \+ stat mix Precision/,id);
+  assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 Precision/,id);
  }
  const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
  const preview=previewCard(combat,card.instanceId,target.id);
- assert.equal(preview.entryPrecision,1+precisionStatMix(combat,combat.player));
+ assert.equal(preview.entryPrecision,1,'Rule: entry grants exactly 1 stack (owner, 2026-10-31); the stat mix is Precision, not stacks');void precisionStatMix;
  assert.match(entry(cardFaceLines(reg.cards.get('core.strike'),preview,reg)),new RegExp(`^Entry: \\+${preview.entryPrecision} Precision`));
  const legacy=resolveGameProfile('current');
  const legacyReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,legacy)),legacy);
