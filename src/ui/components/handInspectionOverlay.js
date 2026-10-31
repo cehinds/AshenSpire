@@ -122,10 +122,10 @@ export function mountHandInspectionOverlay(hand) {
       .map(node => ({ box: node.getBoundingClientRect(), style: getComputedStyle(node) }))
       .filter(({ box, style }) => box.width && box.height && style.visibility !== 'hidden' && style.display !== 'none')
       .map(({ box }) => box);
-    const position = handInfoPosition({ card: anchor, port: hand.getBoundingClientRect(), size: infoSize,
+    const placement = handInfoPosition({ card: anchor, port: hand.getBoundingClientRect(), size: infoSize,
       gap: Math.max(0, inspectControlRisePx() - infoSize), viewportWidth: viewViewportBox().right, obstacles: hud });
     const local = anchorLocalBox(hand.parentElement, {
-      ...position,
+      ...placement,
       width: 0,
       height: 0,
     });
