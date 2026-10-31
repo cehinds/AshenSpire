@@ -1,5 +1,6 @@
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
+import { startingWeaknesses, refillWeaknesses } from './weaknesses.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import * as Rounds from './combatRoundsAdapter.js';
@@ -197,6 +198,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     }
     // An older expanded save has Ward and no Poise: each restored combatant gets a full Poise pool.
     for (const P of C.players.values()) backfillPersistentPoise(C, P.entity);
+    refillWeaknesses(C, C.enemies, registries);
     for (const enemy of C.enemies) backfillPersistentPoise(C, enemy);
     setActive(C, C.players.get(saved.playerKey) || firstLiving(C));
     return C;
@@ -214,7 +216,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     C.enemies.push(createEnemyCombatEntity({
       instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
       arcaneExposure: C.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
-      damageResistanceBySchool: def.damageResistanceBySchool,
+      damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: startingWeaknesses(C, def),
       damageMult: enemyDamageMult,
     }));
     if (C.sharedExpansionVersion === 2 && !configuredCombat(C)) {
@@ -1258,7 +1260,7 @@ function enemyPhase(C) {
     beginEnemyBurdens(C,enemy,Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId)));
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
-    if (C.rangeState) { enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0)); enemy.stamina = enemy.fixCoreStaminaRemaining; delete enemy.pendingStaminaLoss; }
+    if (C.rangeState || fixCoreEnabled(C)) { enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0)); enemy.stamina = enemy.fixCoreStaminaRemaining; delete enemy.pendingStaminaLoss; }
     let tacticalProtection = { block: 0, barrier: 0 };
     if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; enemy.barrier = 0; tacticalProtection = startTacticalTurn(C, enemy); }
     proposalTurn(C,enemy,'start');

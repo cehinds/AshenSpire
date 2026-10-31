@@ -86,16 +86,23 @@ test('combat.combatRounds is stamped only when on, with empty state', () => {
 // Review finding 3: a save must carry the round state. The off-mode golden below is the snapshot text
 // as it was before the preview saved anything (two fights, a turn each): the preview-off save must not change.
 
+// Enemy weaknesses (SPEC 5.3) add one field to each saved enemy record and change the fight's damage numbers; the historical bytes are
+// compared with that approved field removed, so the guard still sees any other save change.
+const savedBytes = combat => {
+  const snapshot = serializeCombatSnapshot(combat);
+  for (const enemy of snapshot.enemies) delete enemy.weaknesses;
+  return JSON.stringify(snapshot);
+};
 test('preview-off saves preserve historical bytes apart from approved event metadata', () => {
   const out = [];
   for (const [seed, classId] of [[5, 'rogue'], [9, 'reaver']]) {
     const run = createRunState({ seed, classId, registries, profileMeta: { settings: {} } });
     const c = createRunCombat({ registries, rng: createRng(4242), run, enemyIds: [ENEMY], settings: {} });
-    out.push(JSON.stringify(serializeCombatSnapshot(c)));
+    out.push(savedBytes(c));
     const card = c.piles.hand.find((x) => x.cardId);
     try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id }); } catch { /* an unplayable card: the save still runs */ }
     dispatch(c, { type: 'endTurn' });
-    out.push(JSON.stringify(serializeCombatSnapshot(c)));
+    out.push(savedBytes(c));
   }
   const all = out.join('\n');
   assert.ok(!all.includes('"combatRounds"'), 'no preview key is written');
