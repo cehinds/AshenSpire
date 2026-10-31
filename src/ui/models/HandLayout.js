@@ -151,7 +151,10 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
     return { x: start + index * step, y: t * t * arc, angle: t * style.angle };
   });
   const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
-  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - 66 / zoom) * style.dock);
+  // The size plan may own the docking: the desktop footer plan docks the fan to the hand box's bottom with no
+  // tool-row reserve (its handGapPx buffer above End Turn replaces it); every other plan keeps the 66 px reserve.
+  const reserve = sizePlan.reserve ?? 66, dock = sizePlan.dock ?? style.dock;
+  const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - reserve / zoom) * dock);
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
     return top + card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth + Math.cos(radians) * cardHeight) / 2;
