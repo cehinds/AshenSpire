@@ -23,6 +23,8 @@ import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav, segmented } from '../kit/index.js';
 import { t } from '../strings.js';
+import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
+import { showRunReceipt } from '../components/whatChangedModal.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
@@ -68,6 +70,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   // One action: commit, sound, persist, redraw — or show the refusal in place.
   function act(tile, commit) {
+    const before = snapshotRunForDiff(run);
     try { commit(); }
     catch (error) {
       refuse(tile, error);
@@ -76,6 +79,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     sfx.play('shrine');
     onChanged();
     render();
+    // The what-changed receipt (SPEC §14.4): after the redraw, so the page lock covers the new screen. Refusals
+    // above keep the inline .bs-refusal and open nothing.
+    showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') });
   }
 
   function tile(glyph, title, desc, reason = '') {

@@ -8,6 +8,7 @@ import { renderCard } from './card.js';
 import { deltaNode, changeSummary } from './smithPaneParts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { t } from '../strings.js';
+import { coreSmithingStats } from '../../model/smithingCore.js';
 import { diffRunSnapshots, snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 
 const CHANGE_WORD = { added: 'whatChanged.added', removed: 'whatChanged.removed', upgraded: 'whatChanged.upgraded', ranked: 'whatChanged.ranked', tier: 'whatChanged.tier' };
@@ -70,8 +71,21 @@ export function openWhatChangedModal({ title, eyebrow: eyebrowText = t('whatChan
  */
 export function showRunReceipt({ run, registries, before, title, lead = '', costLine = null, onClose = null, returnFocusElement = undefined } = {}) {
   if (!before) return false;
-  const diff = diffRunSnapshots(before, snapshotRunForDiff(run), registries);
+  const after = snapshotRunForDiff(run);
+  const diff = diffRunSnapshots(before, after, registries);
   if (diff.empty) return false;
-  openWhatChangedModal({ title, lead, rows: diff.rows, registries, costLine, onClose, ...(returnFocusElement ? { returnFocusElement } : {}) });
+  // An armament that gained a tier (or arrived at one) shows the item's own stat rows for that step.
+  const rows = diff.rows.map((row) => {
+    if (row.kind !== 'armament' || (row.change !== 'tier' && row.change !== 'added')) return row;
+    const ref = row.itemRef || `armament/${row.armamentId}`;
+    const from = row.change === 'tier' ? row.tierBefore : 0, to = row.change === 'tier' ? row.tierAfter : (after.itemUpgradeLevels[ref] || 0);
+    if (!(to > from)) return row;
+    try { const stats = coreSmithingStats(run, ref, from, to); return stats.length ? Object.freeze({ ...row, stats }) : row; } catch { return row; }
+  });
+  // What the commit cost, read from the resources that went down.
+  const spent = (a, b) => Math.max(0, a - b);
+  const derived = { cinders: spent(before.cinders, after.cinders), stones: spent(before.smithingStones, after.smithingStones) + spent(before.smithingStonesRefined, after.smithingStonesRefined) };
+  const cost = costLine || (derived.cinders || derived.stones ? derived : null);
+  openWhatChangedModal({ title, lead, rows, registries, costLine: cost, onClose, ...(returnFocusElement ? { returnFocusElement } : {}) });
   return true;
 }
