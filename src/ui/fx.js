@@ -1202,6 +1202,8 @@ function playLegacyTimeline(events, ctx, done) {
   const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
+  // Reaction reservations use the paced sprite speed (frame hold included), as the sequential path does.
+  const paced = actionPacing({ reduced }).spriteSpeed;
   const beatOrder = ctx.beatOrder || getBeatOrder();
   if (!speed || reduced) {
     // No added waits. 'sequential' still updates the bars after the
@@ -1310,7 +1312,7 @@ function playLegacyTimeline(events, ctx, done) {
   // hold and a step after the swing.
   const sequentialMs = beatOrder === 'sequential'
     ? beats.filter((beat) => beat.kind === 'attack')
-      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,speed), speed.reactionMs) + speed.stepMs,0), 0)
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,paced), speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
   const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
@@ -1596,7 +1598,7 @@ function playLegacyTimeline(events, ctx, done) {
             traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
             said();
-            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs));
+            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,paced)) || speed.reactionMs));
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
               else schedule(stepR, Math.max(speed.reactionMs,reactionEndAt-Date.now()));

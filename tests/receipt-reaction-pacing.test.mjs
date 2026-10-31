@@ -14,3 +14,12 @@ test('reaction playback receives the paced speed and matches the reserved total'
   assert.equal(reactionPlayMs({}, 'x'), 280, 'fallback');
   setAnimSpeed('normal'); setCombatPacing();
 });
+
+test('playLegacyTimeline reserves reactions with the paced speed (source-anchored; the path needs a DOM)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
+  const body = src.slice(src.indexOf('function playLegacyTimeline'));
+  assert.match(body, /const paced = actionPacing\(\{ reduced \}\)\.spriteSpeed/);
+  assert.equal((body.match(/reactionTimingForReceipt\?\.\(event,paced\)/g) || []).length, 2);
+  assert.doesNotMatch(body, /reactionTimingForReceipt\?\.\(event,speed\)/);
+});
