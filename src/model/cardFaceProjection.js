@@ -33,6 +33,8 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   // Face-only shortenings (the full wording stays in Information).
   .replace(/ \((?:<[^>]*>)*\d+(?:<\/span>)* total across \d+ hits\)/g, '')
   .replace(/Double the target(?:'|&#39;)s Blight \(Crimson and Necrotic\)/g, 'Double target Blight (Crimson, Necrotic)')
+  // Two damage types of one hit read as one clause ("2 Blunt + 1 Force ×3"): the hit count and area qualify both.
+  .replace(/^(?:Deal )?((?:<span[^>]*>)?\d+(?:<\/span>)?) ([A-Za-z]+), ((?:<span[^>]*>)?\d+(?:<\/span>)?) ([A-Za-z]+) damage/, '$1 $2 + $3 $4')
   .replace(/^Remove all (\w+(?:, all \w+)+)/, (match, list) => 'Remove ' + list.replace(/all /g, ''))
   .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
 // A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
@@ -64,7 +66,12 @@ function clausesOf(line, { split = true } = {}) {
     else parts.push(piece);
   }
   for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > FACE_CLAUSE_WORDS) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
-  const whole = part => /\d/.test(plain(part)) || COST_RE.test(plain(part));
+  // A piece is a complete effect only when it names what the amount is of (damage, Poise, Block ...) or ends in its
+  // amount ("Weak 2"); a bare damage type ("Deal 2 Blunt") shares its noun and qualifiers with the next piece.
+  const whole = part => (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)))) || COST_RE.test(plain(part));
+  // A trailing qualifier (hit count, area) belongs to every piece or to none: a split would otherwise lose it.
+  const qualifier = part => /( ×\d+| to all| to random enemy)$/.exec(plain(part).trim())?.[1] ?? '';
+  if (parts.length > 1 && parts.some(part => qualifier(part) !== qualifier(parts[parts.length - 1]))) return null;
   if (parts.length < 2 || parts.some(part => wordCount(part) > FACE_CLAUSE_WORDS || CONDITIONAL_START.test(plain(part)) || !whole(part))) return null;
   return parts.map(html => ({ ...line, html }));
 }
@@ -141,8 +148,11 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   if (reservedCount <= FACE_EFFECT_CLAUSES) { reserved.forEach(take); fitted.forEach(entry => { if (count < FACE_EFFECT_CLAUSES && !chosen.has(entry)) take(entry); }); }
   const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => entry.parts);
   const shown = chosen.size;
+  // The primary effect that cannot be said in five words is named by the cue, never silently dropped behind a minor line.
+  const primary = fitted.find(entry => !reserved.includes(entry));
+  if (primary && !primary.parts && clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail')) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
   // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
-  if (clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
+  if (clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
   // An unfamiliar long rule is named, never shortened mid-condition. Current
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.

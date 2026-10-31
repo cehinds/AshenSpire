@@ -31,7 +31,7 @@ test('every authored base, upgrade and rank projects whole short clauses without
     assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 3, card.id);
     // Owner 2026-10-31: every clause is at most five words, else the face says the Inspect cue.
     const inspectCue = projection.clauses.length === 1 && plain(projection.clauses[0].html) === 'Inspect full effect';
-    assert.ok(inspectCue || projection.clauses.every(line => plain(line.html).split(/\s+/).filter(Boolean).length <= 5), `${card.id}: ${plain(projection.clauses.map(line => line.html).join('; '))}`);
+    assert.ok(inspectCue || projection.clauses.every(line => plain(line.html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length <= 5), `${card.id}: ${plain(projection.clauses.map(line => line.html).join('; '))}`);
     const text = projection.clauses.map(line => plain(line.html)).join('; ');
     assert.ok(text.length <= FACE_EFFECT_CHARACTERS, `${card.id}: ${text}`);
     if (longFormulaReadings.has(card.id)) {
@@ -211,4 +211,13 @@ test('a line with a tag rider reads its faceHtml on the face and drops when that
     { kind: 'bonus', html: 'Draw 1, Entry: +1 Precision', faceHtml: 'Draw 1' },
   ] });
   assert.deepEqual(projection.clauses.map(line => line.html), ['Deal 8 damage', 'Draw 1']);
+});
+
+test('a split-type hit keeps its hit count and area: never split into unqualified fragments', () => {
+  const faces = id => project(defOf(id)).clauses.map(line => plain(line.html));
+  // Both types belong to every one of the three hits.
+  assert.equal(faces('starShower')[0], '2 Blunt + 1 Force ×3');
+  // The area qualifier cannot be said in five words: the cue names the effect instead of a lone fragment.
+  assert.ok(!faces('meteorSwarm').some(clause => /^(?:Deal )?\d+ Blunt;|^\d+ Force damage/.test(clause)), faces('meteorSwarm').join(' | '));
+  assert.ok(faces('meteorSwarm').includes('Inspect full effect'));
 });
