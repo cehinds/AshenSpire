@@ -380,13 +380,19 @@
         "op": "moveEngagement",
         "target": "enemy",
         "bands": -1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 1
       }
     ],
     "tags": [
       "camp:physical",
       "classification.skill"
     ],
-    "textTemplate": "Close one band."
+    "textTemplate": "Close one band. Gain {precision} Precision."
   },
   {
     "id": "core.closingDodge",
@@ -637,6 +643,12 @@
       {
         "op": "draw",
         "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -645,7 +657,7 @@
       "classification.skill",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block. Draw {draw} card. Gain {precision} Precision.",
     "upgrade": {
       "effects": [
         {
@@ -656,6 +668,12 @@
         {
           "op": "draw",
           "amount": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 1
         }
       ]
     },
@@ -876,6 +894,12 @@
         "op": "restoreMana",
         "target": "self",
         "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -885,7 +909,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana.",
+    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana. Gain {precision} Precision.",
     "upgrade": {
       "effects": [
         {
@@ -896,9 +920,15 @@
           "op": "restoreMana",
           "target": "self",
           "amount": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 2
         }
       ],
-      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana."
+      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana. Gain {precision} Precision."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
