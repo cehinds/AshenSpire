@@ -8,6 +8,7 @@ import { renderCard } from './card.js';
 import { deltaNode, changeSummary } from './smithPaneParts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { t } from '../strings.js';
+import { diffRunSnapshots, snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 
 const CHANGE_WORD = { added: 'whatChanged.added', removed: 'whatChanged.removed', upgraded: 'whatChanged.upgraded', ranked: 'whatChanged.ranked', tier: 'whatChanged.tier' };
 
@@ -60,4 +61,17 @@ export function openWhatChangedModal({ title, eyebrow: eyebrowText = t('whatChan
   markUiComponent(handle.panel, UI.whatChangedModal);
   closeModal = handle.close;
   return closeModal;
+}
+
+/**
+ * showRunReceipt({ run, registries, before, title, lead, costLine, onClose, returnFocusElement })
+ * Diffs `before` (snapshotRunForDiff taken ahead of the commit) against the run now and opens the receipt
+ * when something changed. Returns true when it opened one; a pure flavour choice opens nothing.
+ */
+export function showRunReceipt({ run, registries, before, title, lead = '', costLine = null, onClose = null, returnFocusElement = undefined } = {}) {
+  if (!before) return false;
+  const diff = diffRunSnapshots(before, snapshotRunForDiff(run), registries);
+  if (diff.empty) return false;
+  openWhatChangedModal({ title, lead, rows: diff.rows, registries, costLine, onClose, ...(returnFocusElement ? { returnFocusElement } : {}) });
+  return true;
 }
