@@ -48,6 +48,8 @@ files, runs a suite, or repeats an edit goes to a worker.
 8. Report       orchestrator: to the owner, in CLAUDE.md's question shape when a decision is needed
 ```
 
+**Run the deterministic gate first** (`.claude/skills/jev/SKILL.md`): `node tools/jev.mjs triage <log>` on any red CI or test log and `node tools/jev.mjs devmerge` for any dev merge before delegating; only an exit 2 goes to a model, and `jev restamp` is the orchestrator's alone.
+
 Steps 5–7 are never delegated. A worker's "tests pass" is a claim until the
 orchestrator has seen the diff and the test output.
 

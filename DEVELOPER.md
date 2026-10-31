@@ -653,6 +653,10 @@ no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
 and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `tests/debug-banner.test.mjs` holds both edges.
 
+## Deterministic gate: tools/jev.mjs
+
+`node tools/jev.mjs <triage|checks|regen|restamp|devmerge>` is a zero-dependency gate that applies fixed rules before any model sees a failure. `triage [log]` matches a CI or local log against `tools/jev.rules.json` (stale generated files, conflict markers in generated files, receipt order, golden hashes, sparse-checkout ENOENT, runner loss, uistrings and mechanics-generate drift); `checks` runs the fast-check list and triages each failure; `regen` rebuilds every generated file; `restamp` (orchestrator only) re-points a PR's receipt at `buildordinal.json`; `devmerge` merges `origin/dev` into the current branch, resolving the derived files, and never pushes. Each command prints one JSON line (`--human` for text); exit 0 is resolved, 1 is explained with no safe fix, 2 needs a model. To add a rule, append it to the JSON and add a fixture to `tests/jev.test.mjs`. Skill: `.claude/skills/jev/SKILL.md`.
+
 ## Where a build comes from (not committed since 2026-09-26)
 
 `node tools/launch.mjs --build-only` still writes the build tree into `build/`

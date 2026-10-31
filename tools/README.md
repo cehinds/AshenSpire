@@ -173,6 +173,7 @@ prefix; its callers are the union.
 | `hybrid-input-parity.mjs` | hybrid-input-parity — same-door acceptance for AshenSpire #204. | tests qa-evidence-size; tools card-drag-targeting, plantsites-baseline.json; docs docs/workbench/CONSOLIDATION.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, docs/preview/hybrid-input-parity-manifest.json +2 |
 | `hybridstats.mjs` | hybridstats — observed contract for the integrated Hybrid stats slice. | other src/ui/components/runHud.js |
 | `inspecthold.mjs` | inspecthold — hold-to-inspect on the hand, observed: a read can | tools coop-hand-parity, creationbrief, handlayout +2; docs docs/preview/shared-card-inspection/README.md; other src/ui/components/holdconfirm.js, src/ui/input.js |
+| `jev.mjs` | tools/jev.mjs — the deterministic-first gate: triage logs against tools/jev.rules.json, run the fast checks, regen, restamp, devmerge. | tests jev; docs .claude/skills/jev/SKILL.md, DEVELOPER.md, docs/ai/AI-ROUTING.md |
 | `lan-resume-smoke.mjs` | lan-resume-smoke — headless check of host disk-resume over the wire: | docs docs/MULTIPLAYER.md |
 | `lan-smoke.mjs` | lan-smoke — headless end-to-end check of the LAN foundation (S1). | docs docs/MULTIPLAYER.md |
 | `lan-state.mjs`, `lan.mjs` | (no header comment) | wf ci; tests enemy-knowledge-lan, enemy-stance-sprites, lan-intent-privacy +6; tools lan, alternative-art-build.py, coop-restore-isolation +7; docs docs/design/update-stances/integration-notes.md, SPEC.md, docs/ART-EXPORT-POLICY.md +3; other src/content/mapconfig.js, src/engine/mapgen.js +6 |
