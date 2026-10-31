@@ -151,6 +151,7 @@ export const UI_COMPONENTS = Object.freeze({
   statAllocationRow: 'stat-allocation-row',
   shrineOptionCard: 'shrine-option-card',
   smithUpgradeModal: 'smith-upgrade-modal',
+  whatChangedModal: 'what-changed-modal',
   smithCandidateCard: 'smith-candidate-card',
   smithUpgradePreview: 'smith-upgrade-preview',
   mountServiceModal: 'mount-service-modal',
