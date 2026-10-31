@@ -2777,7 +2777,7 @@
         "op": "applyStatus",
         "target": "enemy",
         "status": "frost",
-        "stacks": 1
+        "stacks": 3
       }
     ],
     "tags": [
@@ -2800,7 +2800,7 @@
           "op": "applyStatus",
           "target": "enemy",
           "status": "frost",
-          "stacks": 2
+          "stacks": 4
         }
       ]
     },
@@ -2813,8 +2813,8 @@
     "name": "Ember Flick",
     "class": "colorless",
     "rarity": "common",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 0,
+    "staminaCost": 0,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -2831,7 +2831,7 @@
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 1
+        "stacks": 2
       }
     ],
     "tags": [
@@ -2853,7 +2853,7 @@
           "op": "applyStatus",
           "target": "enemy",
           "status": "burn",
-          "stacks": 2
+          "stacks": 3
         }
       ]
     },
@@ -2880,6 +2880,11 @@
         "amount": 2
       },
       {
+        "op": "gainBarrier",
+        "target": "self",
+        "amount": 1
+      },
+      {
         "op": "draw",
         "amount": 1
       }
@@ -2891,13 +2896,18 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
           "op": "block",
           "target": "self",
           "amount": 3
+        },
+        {
+          "op": "gainBarrier",
+          "target": "self",
+          "amount": 2
         },
         {
           "op": "draw",
