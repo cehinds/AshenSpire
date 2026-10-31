@@ -34,3 +34,17 @@ export function applyRamp(card, playsEver = 0, ownTags = []) {
   const own = card.cardTags ?? ownTags;
   return { ...card, effects, cardTags: own.includes(tag) ? [...own] : [...own, tag] };
 }
+
+/**
+ * rampParts(card, stat) -> `{ base, perUse, scope }` for a resolved card whose `stat` ('damage' | 'block') is ramped,
+ * or null. `base` is the retained flat amount (for 'run' the card's plays-ever growth is taken back out, given `playsEver`) and `perUse` the
+ * growth per earlier play; both are plain numbers, so a face comparison never reads the formula as text.
+ */
+export function rampParts(card, stat, playsEver = 0) {
+  const ramp = card?.ramp;
+  if (!ramp || ramp.stat !== stat) return null;
+  const amount = card.effects?.find(effect => effect.op === stat && effect.amount?.f === 'add')?.amount;
+  const base = amount?.args?.[0];
+  if (!Number.isFinite(base)) return null;
+  return { base: ramp.scope === 'run' ? base - playsEver * ramp.per : base, perUse: ramp.per, scope: ramp.scope };
+}
