@@ -2243,6 +2243,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   padding: 0.5rem 0.4rem 0.6rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--panel);
   color: var(--parchment); font-family: var(--font-body); text-align: center; cursor: pointer;
 }
+.card-upgrade-option-body { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; min-width: 0; }
 .card-upgrade-option:hover { border-color: var(--line-soft); }
 .card-upgrade-option.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 .card-upgrade-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -2252,8 +2253,11 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .card-upgrade-option-changes { list-style: none; margin: 0; padding: 0; font-size: 0.85rem; color: var(--ink-dim); }
 @media (max-width: 600px) {
   .card-upgrade-option-list { flex-direction: column; }
-  .card-upgrade-option { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; text-align: left; }
+  .card-upgrade-option { flex: 0 0 auto; text-align: left; }
+  .card-upgrade-option-body { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; }
   .card-upgrade-option-title { flex: 0 0 100%; }
+  .card-upgrade-option-face { flex: 0 0 8.5rem; width: 8.5rem; }
+  .card-upgrade-option-changes { flex: 1 1 0; min-width: 0; font-size: 0.9rem; }
 }
 /* The summary: the selected item — its art beside its name, tier, kind and
    tags — one column, the rows flush so the stats row follows. */

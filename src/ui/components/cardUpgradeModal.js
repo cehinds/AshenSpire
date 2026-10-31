@@ -155,11 +155,11 @@ export function mountCardUpgradeModal(host, initialModel, {
           type: 'button', class: `card-upgrade-option${on ? ' selected' : ''}`, role: 'radio', 'aria-checked': String(on), tabindex: on ? '0' : '-1',
           'aria-label': t('cardUpgrade.option.aria', { n: option.index + 1, total: selected.options.length, summary }),
           dataset: { cardUpgradeOption: String(option.index) },
-        }, [
+        }, el('span', { class: 'card-upgrade-option-body' }, [
           el('b', { class: 'card-upgrade-option-title', text: t('cardUpgrade.option.n', { n: option.index + 1 }) }),
           el('div', { class: 'card-upgrade-option-face' }, renderCard(registries, { cardId: selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: option.after })),
           el('ul', { class: 'card-upgrade-option-changes' }, option.changes.map((change) => el('li', { text: `${change.label} ${change.before} → ${change.after}` }))),
-        ]);
+        ]));
         button.addEventListener('click', () => pick(option.index));
         return button;
       })),
