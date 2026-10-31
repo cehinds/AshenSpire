@@ -53,7 +53,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
     chosen = {...chosen, effects: rankedEffectsCapped(chosen, cardRank(idOrInstance) - 1), rank: cardRank(idOrInstance)};
   }
   // Ramp lands last, after upgrade and rank growth, so the amount it wraps is still a plain number (SPEC §4.3).
-  if (chosen.ramp && !rampless) chosen = applyRamp(chosen, chosen.ramp.scope === 'run' ? playsEverOf(idOrInstance) : 0, chosen.tags || []);
+  if (chosen.ramp && !rampless) chosen = applyRamp(chosen, chosen.ramp.scope === 'run' ? playsEverOf(idOrInstance) : 0, (chosen.tags || []).filter(tag => !tag.startsWith('classification.')));
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);

@@ -6,6 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { stanceStaminaCost } from '../src/model/stanceRules.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { playingCardModel } from '../src/model/playingCard.js';
 import { upgradeBasic } from '../src/model/cardUpgradeLimits.js';
 import { validateRunShape } from '../src/model/state.js';
 import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
@@ -110,6 +111,13 @@ test('a card face reads the ramp as plain words', () => {
   assert.match(html({ cardId: 'core.brace', instanceId: 'x', upgraded: true }), /Gain 2 Block \| \+1 Block per play this combat$/);
   assert.match(html({ cardId: 'core.whetstoneNick', instanceId: 'x', playsEver: 3 }), /^5 damage.*\+1 damage per play this run$/);
   assert.doesNotMatch(html({ cardId: 'core.flick', instanceId: 'x' }), /per play/);
+});
+
+test('the tag rail names Momentum and Honed once and adds no classification words', () => {
+  const labels = ref => playingCardModel(registries, { instanceId: 'x', ...ref }).tags.map(tag => tag.label);
+  assert.deepEqual(labels({ cardId: 'core.whetstoneNick', playsEver: 3 }), ['Physical', 'Attack', 'exhaust', 'Honed']);
+  assert.deepEqual(labels({ cardId: 'core.brace', upgraded: true }), ['Physical', 'Defend', 'Momentum']);
+  assert.deepEqual(labels({ cardId: 'core.brace' }), ['Physical', 'Defend']);
 });
 
 test('playsEver is a saved, validated deck field', () => {
