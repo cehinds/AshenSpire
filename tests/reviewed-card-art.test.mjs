@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
@@ -64,4 +66,12 @@ test('a canonical visual reference does not hide the reviewed card recipe',()=>{
     const art=playingCardArt({cardId:baseCardPresentation[id].canonicalCardRef},{definition,registries:reg,style:'Simple'});
     assert.equal(art.componentArt,catalog.records[id],id);
   }
+});
+test('importing an edited background transform is refused before anything is written',()=>{
+  const edited={schema:1,checked:[],catalog:structuredClone(catalog)};
+  edited.catalog.records[Object.keys(catalog.records)[0]].sprites.find(s=>s.id==='background').transform.x+=10;
+  const file=join(mkdtempSync(join(tmpdir(),'art-import-')),'edits.json');writeFileSync(file,JSON.stringify(edited));
+  const before=readFileSync(new URL('../asset-data/card-art/reviewed-library.json',import.meta.url),'utf8');
+  assert.throws(()=>execFileSync(process.execPath,['tools/export-reviewed-card-art.mjs','--import',file],{cwd:new URL('../',import.meta.url),stdio:'pipe'}),/Background transform edits are not supported/);
+  assert.equal(readFileSync(new URL('../asset-data/card-art/reviewed-library.json',import.meta.url),'utf8'),before);
 });

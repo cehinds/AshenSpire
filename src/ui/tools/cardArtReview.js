@@ -37,7 +37,7 @@ function show(){
   for(const [index,sprite] of art.sprites.entries()){
     const box=element('section'),title=element('h4',sprite.label),img=element('img'),link=element('a',`${sprite.assetId} · PNG`);box.className='component';img.src=imageURL(sprite.path);img.alt=sprite.label;link.href=img.src;link.target='_blank';link.rel='noopener';box.append(title,img,link);
     for(const key of ['x','y','width','height','rotation','opacity']){
-      const label=element('label',key),input=element('input');input.type='number';input.step=key==='opacity'?'.05':'1';input.value=sprite.transform[key];input.setAttribute('aria-label',`${sprite.assetId} ${key}`);if(key==='opacity'){input.min=0;input.max=1;}else if(key==='width'||key==='height')input.min=1;
+      const label=element('label',key),input=element('input');input.type='number';input.step=key==='opacity'?'.05':'1';input.value=sprite.transform[key];input.setAttribute('aria-label',`${sprite.assetId} ${key}`);if(sprite.id==='background')input.disabled=true;if(key==='opacity'){input.min=0;input.max=1;}else if(key==='width'||key==='height')input.min=1;
       input.oninput=()=>{const value=input.valueAsNumber;if(!Number.isFinite(value)||!input.validity.valid)return; sprite.transform[key]=value;const t=sprite.transform;
         sprite.css.left=`${t.x/512*100}%`;sprite.css.top=`${t.y/640*100}%`;sprite.css.width=`${t.width/512*100}%`;sprite.css.height=`${t.height/640*100}%`;sprite.css.opacity=String(t.opacity);
         const initial=original[selected].sprites[index],r=(t.rotation-initial.transform.rotation)*Math.PI/180,c=Math.cos(r),s=Math.sin(r),[a,b,d,e]=initial.affine;

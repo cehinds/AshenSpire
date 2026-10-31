@@ -14,6 +14,13 @@ if (importAt !== -1) {
     row.layers = row.layers.map((layer,index) => {
       const sprite = sprites[index];
       if (sprite.assetId !== layer.assetId) throw Error(`Component identity changed: ${row.id}`);
+      if (layer.role === 'background') {
+        // Neither preview nor the game renderer applies background transforms, so refuse them.
+        const keys = ['x','y','width','height','rotation','opacity'];
+        const same = keys.every(k => sprite.transform?.[k] === layer[k]) && JSON.stringify(sprite.affine) === JSON.stringify(layer.affine ?? sprite.affine);
+        if (!same) throw Error(`Background transform edits are not supported: ${row.id}`);
+        return layer;
+      }
       return {...layer,...sprite.transform,affine:sprite.affine};
     });
   }
