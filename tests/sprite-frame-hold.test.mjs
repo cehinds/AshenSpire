@@ -56,3 +56,16 @@ test('the sprite lunge and reaction are never shorter than one held frame', () =
   assert.equal(instant.minFrameMs, 0); assert.equal(instant.reactionMs, 0);
   setAnimSpeed('normal'); setCombatPacing();
 });
+
+import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
+
+test('the pilot attack (6 frames) holds each frame, so a phone swing is no longer 16 ms a frame', () => {
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25 });
+  const speed = actionPacing().spriteSpeed;
+  const plain = selectedWeaponSequenceTiming(selectedWeaponSequence('attack'), { ...speed, minFrameMs: 0 });
+  const held = selectedWeaponSequenceTiming(selectedWeaponSequence('attack'), speed);
+  assert.ok(plain.totalMs / 6 < 20, `was ${plain.totalMs / 6} ms a frame`);
+  assert.equal(held.totalMs, speed.minFrameMs * 6);
+  assert.equal(held.impactMs, speed.minFrameMs * 3);
+  setAnimSpeed('normal'); setCombatPacing();
+});
