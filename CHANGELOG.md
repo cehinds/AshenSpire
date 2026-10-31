@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-31
 
-- **Layered art fills the remaining card library** ([#2384](https://github.com/cehinds/AshenSpire/pull/2384), `0.7.2.13`). All 156 cards without dedicated illustrations use reviewed background, object and effect cutouts in Simple mode. The art-review page shows each component and the actual game card, with placement controls and JSON/PNG export. Existing custom-art routing and Legacy mode stay available.
+- **Layered art fills the remaining card library** ([#2384](https://github.com/cehinds/AshenSpire/pull/2384), `0.7.2.15`). All 156 cards without dedicated illustrations use reviewed background, object and effect cutouts in Simple mode. The art-review page shows each component and the actual game card, with placement controls and JSON/PNG export. Existing custom-art routing and Legacy mode stay available.
+- **Upgrade a Card works like Upgrade an Item** ([#2393](https://github.com/cehinds/AshenSpire/pull/2393), `0.7.2.15`). The card upgrade screen at the shrine and the Blacksmith now matches the item one: a card list with art and copies owned, a stats-change summary, the current and upgraded cards side by side, the Smithing Stone cost as required/available, and a hold-to-confirm Upgrade button. On phones the list now closes after a tap, so the preview and the button are no longer hidden. The upgrade rules are unchanged.
 
 ## 2026-10-30
 
