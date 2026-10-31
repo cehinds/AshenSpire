@@ -253,9 +253,15 @@ export function restampChangelog(text, { pr, build }) {
   if (at < 0) throw new Error(`no receipt under the newest date heading names PR #${pr}`);
   if (!STAMP_RE.test(kept[at])) throw new Error(`the receipt for PR #${pr} carries no \`<release>.<ordinal>\` stamp to replace`);
   const before = kept[at];
-  kept[at] = before.replace(STAMP_RE, `\`${build}\``);
+  const after = before.replace(STAMP_RE, `\`${build}\``);
+  // The receipt now carries the newest build, so it moves to the top of its date group
+  // (as tools/pr-restamp.mjs does); the order check then validates it like any other.
+  const first = kept.findIndex(l => /^- /.test(l));
+  const moved = at !== first;
+  kept.splice(at, 1);
+  kept.splice(first, 0, after);
   const out = [...lines.slice(0, start + 1), ...kept, ...lines.slice(end)].join('\n');
-  return { text: out, deduped, restamped: kept[at] !== before, from: (before.match(STAMP_RE) || [''])[0].replace(/`/g, ''), to: build };
+  return { text: out, deduped, moved, restamped: after !== before, from: (before.match(STAMP_RE) || [''])[0].replace(/`/g, ''), to: build };
 }
 
 export function currentBuild(root = ROOT) {
@@ -278,11 +284,12 @@ export function restamp({ root = ROOT, pr, noRegen = false }) {
   const path = resolve(root, 'CHANGELOG.md');
   const r = restampChangelog(readFileSync(path, 'utf8'), { pr, build: currentBuild(root) });
   writeFileSync(path, r.text);
-  const info = { pr, from: r.from, to: r.to, deduped: r.deduped, restamped: r.restamped };
+  const info = { pr, from: r.from, to: r.to, deduped: r.deduped, moved: r.moved, restamped: r.restamped };
   if (noRegen) return { exit: 0, ...info };
   const w = node(['tools/about-changelog.mjs', '--write'], { cwd: root });
   if (w.status !== 0) return { exit: 1, ...info, failed: 'about-changelog --write', tail: w.out.trim().split('\n').slice(-6).join('\n') };
-  const c = node(['tools/about-changelog.mjs', '--check-order', '--pending', String(pr)], { cwd: root });
+  // No --pending: the restamped receipt is ordered, not exempted.
+  const c = node(['tools/about-changelog.mjs', '--check-order'], { cwd: root });
   if (c.status !== 0) return { exit: Math.max(1, triage(c.out).exit), ...info, failed: 'about-changelog --check-order', tail: c.out.trim().split('\n').slice(-6).join('\n') };
   return { exit: 0, ...info };
 }
@@ -387,9 +394,9 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
       notes.push(`restamp skipped: ${error.message}`);
     }
   } else notes.push('restamp skipped: no PR known (pass --pr N)');
-  const pending = prNumber ? ['--pending', String(prNumber)] : [];
+  // A restamped receipt is moved to the top of its date group, so it is checked, not exempted.
   const verify = runChecks([
-    { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order', ...pending] },
+    { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order'] },
     ...FAST_CHECKS.filter(c => ['content-build', 'config-build', 'game-config', 'framework-data-build', 'build-game'].includes(c.id)),
   ], c => runNode(c.args, { cwd: top }));
   if (verify.exit !== 0) return { exit: verify.exit, verdict: 'checks-failed', branch, resolved, checks: verify.results.filter(r => r.status === 'fail'), hint: 'merge left uncommitted; `git merge --abort` to undo' };

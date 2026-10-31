@@ -121,6 +121,23 @@ test('restampChangelog sets the first matching receipt and dedupes under the new
   assert.ok(lines.some(l => l.includes('Text A') && l.includes('`0.7.2.71`')), 'other PRs are untouched');
 });
 
+test('restampChangelog moves the restamped receipt to the top of its date group', () => {
+  const r = restampChangelog(CHANGELOG, { pr: 2500, build: '0.7.2.72' });
+  assert.equal(r.moved, true);
+  const receipts = r.text.split('\n').slice(0, r.text.split('\n').indexOf('## 2026-10-30')).filter(l => l.startsWith('- '));
+  assert.ok(receipts[0].includes('#2500') && receipts[0].includes('`0.7.2.72`'), 'restamped receipt is first');
+  assert.deepEqual(receipts.slice(1).map(l => l.match(/#(\d+)/)[1]), ['2436', '2432'], 'others keep their order');
+  // Codex's case: a lower receipt (#2432 at .69) restamped to .71 must rise above #2436.
+  const c = restampChangelog(CHANGELOG, { pr: 2432, build: '0.7.2.73' });
+  const first = c.text.split('\n').find(l => l.startsWith('- '));
+  assert.ok(first.includes('#2432') && first.includes('`0.7.2.73`'));
+});
+
+test('restamp and devmerge never exempt the receipt with --pending', () => {
+  const src = readFileSync(new URL('../tools/jev.mjs', import.meta.url), 'utf8');
+  assert.ok(!/'--pending'/.test(src), 'no --pending in jev.mjs');
+});
+
 test('restampChangelog refuses a PR with no receipt under the newest heading', () => {
   assert.throws(() => restampChangelog(CHANGELOG, { pr: 9999, build: '0.7.2.72' }), /names PR #9999/);
 });
