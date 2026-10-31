@@ -281,3 +281,20 @@ test('price multiplier 2 scales each shelf price once (visit door), and a purcha
   // Services still scale at the quote.
   assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId, { priceMult: 2 }).cost, 240);
 });
+
+test('armament purchase: a rack piece the run has since acquired is refused and charges nothing', () => {
+  const run = smithRun(coreOut);
+  const row = run.shopStock.armaments[0];
+  run.loadout.storage = [...run.loadout.storage, row.id];
+  const plan = coreArmamentPlan(coreOut, run, row.id);
+  assert.equal(plan.ok, false);
+  assert.match(plan.reason, /already own/i);
+  const cinders = run.cinders, storage = [...run.loadout.storage];
+  assert.throws(() => commitCoreArmament(coreOut, run, plan), /already own/i);
+  assert.deepEqual([run.cinders, run.loadout.storage], [cinders, storage]);
+  assert.ok(run.shopStock.armaments.some((r) => r.id === row.id), 'the piece stays on the rack');
+  // An equipped piece counts too.
+  const other = run.shopStock.armaments[1];
+  run.loadout.sets = { ...run.loadout.sets, extra: [other.id] };
+  assert.equal(coreArmamentPlan(coreOut, run, other.id).ok, false);
+});

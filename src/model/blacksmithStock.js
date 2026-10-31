@@ -11,6 +11,7 @@ import { gameContent, gameModule } from './gameProfile.js';
 import { gameProfileRewardPools } from './gameProfileRewards.js';
 import { itemUpgradeTiers } from './itemUpgrades.js';
 import { blacksmithRules } from './blacksmithConfig.js';
+import { carriedIds } from './loadout.js';
 import { shopSentence } from './shopKinds.js';
 import { CORE_BLACKSMITH_OFFERINGS } from './blacksmith.js';
 
@@ -77,6 +78,8 @@ export function coreArmamentPlan(registries, run, id) {
   let reason = '';
   if (!sells(run, 'armaments')) reason = say('blacksmith.refuse.notOffered');
   else if (!item || !def) reason = say('shop.refuse.gone');
+  // A rack rolled earlier can offer a piece the run has since found elsewhere; buying it would only duplicate an id.
+  else if (carriedIds(run.loadout).includes(id)) reason = say('shop.refuse.armourOwned', { name: def.name });
   else if ((run.loadout.storage || []).length >= (registries.balance.equipment.storageSlots ?? 8)) reason = say('blacksmith.refuse.storageFull');
   else if (!Number.isSafeInteger(run.cinders) || run.cinders < price) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, id, name: def?.name || id, tier: item?.tier ?? 0, cost: price, stones: 0, revision: revisionOf(run), def };
