@@ -18,6 +18,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { grantSmithingReward, smithingRewardId } from '../src/model/smithing.js';
 import { readFileSync } from 'node:fs';
 import { runCombatEnd } from '../src/engine/runCombat.js';
 import { isConfiguredRun } from '../src/model/gameProfileRun.js';
@@ -587,7 +588,9 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
-    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows };
+    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows,
+    // Core pays the §15.3 stone door too since #2392; a normal pool pays 0 and writes its claim.
+    grantSmithingReward, smithingRewardId };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;

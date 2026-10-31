@@ -98,7 +98,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       { blockedReason: selected && model.cardPreviews.get(selected)?.available === false ? model.cardPreviews.get(selected).reason : '' });
     const modal = mountCardUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
-      title: t('gameProfile.rest.service.upgradeCard'),
+      backLabel: t('smith.back.shrine'),
       consequence: t('gameProfile.rest.upgradeCardConsequence'), decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
