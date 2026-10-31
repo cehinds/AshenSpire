@@ -405,7 +405,7 @@ export function renderCard(registries, ref, opts = {}) {
     const faceHtml = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
-      painting:artwork?.path,
+      painting:artwork===null?null:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
