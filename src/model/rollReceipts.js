@@ -30,8 +30,10 @@ export function accuracyRollReceipt(event) {
   }
   if (!finite(event.need)) return null;
   // Legacy: the used die must reach the number Precision and Evasion leave it needing.
-  const used = mode === 'disadvantage' ? Math.min(...dice) : mode === 'advantage' ? Math.max(...dice) : dice[0];
-  return { ...base, parts: [], total: used, dcParts: [{ label: 'Needed (8 + Evasion − Precision)', value: num(event.need) }], dc: num(event.need) };
+  // A natural 20 on either die hits whatever the mode keeps (stanceHit.diceHit), so that die is the one shown.
+  const natural = dice.includes(20);
+  const used = natural ? 20 : mode === 'disadvantage' ? Math.min(...dice) : mode === 'advantage' ? Math.max(...dice) : dice[0];
+  return { ...base, ...(natural && dice.length > 1 ? { note: 'natural 20 hits' } : {}), parts: [], total: used, dcParts: [{ label: 'Needed (8 + Evasion − Precision)', value: num(event.need) }], dc: num(event.need) };
 }
 
 export function contestRollReceipt(event) {

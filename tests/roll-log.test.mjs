@@ -149,3 +149,12 @@ test('co-op: a crit roll carries the roller seat and the log names it', () => {
   const [row] = combatLogEntries(events, { registries, players: [{ id: 'p1', name: 'Ash' }, { id: 'p2', name: 'Briar' }], enemies });
   assert.match(row.text, /^Briar → Wyrm Lord: Crit:/);
 });
+
+test('legacy disadvantage with a natural 20 shows the 20 that hit, with a note', () => {
+  const row = one({ type: 'attackHit', sourceId: 'player', targetId: 'e1', dice: [3, 20], d20: 3, mode: 'disadvantage', need: 17, accuracy: 0, evasion: 9 });
+  assert.match(row.text, /: 20 vs 17 · lands$/);
+  assert.equal(rollReceiptLines(row.rollReceipt)[0], 'd20 [3, 20] → 20 · disadvantage · natural 20 hits');
+  const plain = one({ type: 'attackMissed', sourceId: 'player', targetId: 'e1', dice: [3, 12], mode: 'disadvantage', need: 17 });
+  assert.match(plain.text, /: 3 vs 17 · miss$/);
+  assert.equal(plain.rollReceipt.note, undefined);
+});

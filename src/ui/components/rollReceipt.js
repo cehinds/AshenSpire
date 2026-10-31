@@ -14,7 +14,7 @@ export function rollReceiptLines(receipt) {
   const multi = (receipt.dice || []).length > 1;
   const kept = multi ? receipt.total - spent : null;
   const mode = receipt.mode && receipt.mode !== 'normal' ? ` · ${receipt.mode}` : '';
-  lines.push(`${receipt.die} [${dice}]${multi ? ` → ${fmt(kept)}` : ''}${mode}`);
+  lines.push(`${receipt.die} [${dice}]${multi ? ` → ${fmt(kept)}` : ''}${mode}${receipt.note ? ` · ${receipt.note}` : ''}`);
   for (const part of parts) lines.push(signed(part.value, part.label, part.note));
   lines.push(`= ${fmt(receipt.total)}`);
   const dcParts = receipt.dcParts || [];
