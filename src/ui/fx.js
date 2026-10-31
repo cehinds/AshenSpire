@@ -375,7 +375,7 @@ export function combatReadoutLayer(layer, create = true) {
 // not counted: when the first of three expires the next floater takes lane 0, not lane 2 over a
 // floater still showing. With all three lanes taken, the lane freeing soonest is reused.
 const FLOAT_LANES = 3;
-let floaterLanes = new WeakMap();
+const floaterLanes = new WeakMap();
 function floaterLaneFor(anchor, lifeMs) {
   const now = Date.now();
   const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
@@ -386,9 +386,17 @@ function floaterLaneFor(anchor, lifeMs) {
     lane = soonest.lane;
     live.splice(live.indexOf(soonest), 1);
   }
-  live.push({ lane, until: now + lifeMs });
+  const entry = { lane, until: now + lifeMs, height: 0 };
+  live.push(entry);
   floaterLanes.set(anchor, live);
-  return lane;
+  return entry;
+}
+// A lane's lift is the measured height of every live floater in the lanes below it, so a small
+// number over a crit clears the crit's row rather than its own.
+function floaterLaneLift(anchor, entry) {
+  let lift = 0;
+  for (const other of floaterLanes.get(anchor) || []) if (other.lane < entry.lane) lift += (other.height || 22) * 1.1;
+  return lift;
 }
 
 /**
@@ -437,7 +445,8 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
   // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
   // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
-  const lane = placement.lane === false ? 0 : floaterLaneFor(anchor, life);
+  const entry = placement.lane === false ? null : floaterLaneFor(anchor, life);
+  const lane = entry?.lane ?? 0;
   el.dataset.floatLane = String(lane);
   layer.appendChild(el);
   // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
@@ -451,9 +460,10 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
     const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
+    if (entry) entry.height = height;
     return () => {
       el.style.left = `${at.left + half}px`;
-      if (lane > 0) el.style.setProperty('--float-lane', `${Math.round(lane * (height || 22) * 1.1)}px`);
+      if (lane > 0) el.style.setProperty('--float-lane', `${Math.round(floaterLaneLift(anchor, entry))}px`);
     };
   });
   setTimeout(() => el.remove(), life + 60);
@@ -698,10 +708,9 @@ export function clearCallouts(layer) {
   const queues = layer && calloutQueues.get(layer);
   for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
-  // The waiting queue goes with the visible words, and so do the floater lanes: a skip takes the
-  // numbers off screen early, so the next number must not rise over a gap nothing fills.
+  // The waiting queue goes with the visible words. Numbers keep their lifetime through a skip
+  // (combat-readout-layer test), so their lane records stay with them until they expire.
   if (layer) calloutQueues.delete(layer);
-  floaterLanes = new WeakMap();
 }
 
 /**

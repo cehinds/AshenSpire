@@ -81,3 +81,30 @@ test('a floater placed in a fixed slot (lane: false) takes no lane and holds non
     assert.deepEqual([guard, damage, next].map((n) => n.dataset.floatLane), ['0', '0', '0']);
   });
 });
+
+test('a lane lifts by the measured heights of the lanes below it', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    let nextHeight = 20;
+    document.createElement = (name) => {
+      const node = Object.assign(create(name), { offsetWidth: 40, offsetHeight: nextHeight });
+      const props = node.props = {};
+      const set = node.style.setProperty?.bind(node.style);
+      node.style.setProperty = (key, value) => { props[key] = value; return set?.(key, value); };
+      return node;
+    };
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    const a = document.createElement('div'); a.box = { left: 100, top: 100, width: 80, height: 120 };
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const opts = { jitter: false };
+    nextHeight = 60; const crit = floatNum(fx, a, '-40', 'dmg crit', null, opts);
+    nextHeight = 20; const small = floatNum(fx, a, '-2', 'dmg small', null, opts);
+    const third = floatNum(fx, a, '-3', 'dmg small', null, opts);
+    flushMeasureJobs();
+    assert.equal(crit.props['--float-lane'], undefined);
+    assert.equal(small.props['--float-lane'], '66px', 'lane 1 clears the 60px crit (60 x 1.1)');
+    assert.equal(third.props['--float-lane'], '88px', 'lane 2 clears the crit and the small number (66 + 22)');
+  });
+});
