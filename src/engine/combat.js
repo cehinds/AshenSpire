@@ -7,6 +7,7 @@ import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
 import { coreStatusPresentation } from '../model/statusPresentation.js';
+import { startingWeaknesses } from './weaknesses.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -389,7 +390,7 @@ export function createCombat({
       createEnemyCombatEntity({
         instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
         arcaneExposure: combat.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
-        damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: def.weaknesses,
+        damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: startingWeaknesses(combat, def),
         damageMult: enemyDamageMult,
       })
     );

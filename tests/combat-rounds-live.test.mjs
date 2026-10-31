@@ -415,7 +415,7 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
     return counts;
   }, {}), { '0-7': 11, '0-9': 6 }, 'projected HP ranges are present only on the public attacking forecasts');
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
-    { sha256: '300dd2a7b2e4cebc86e6ee8ce079ecb01198adc4e7eb4f4cd887b815a268edb1', length: 420691 });
+    { sha256: '7ae61b7bedb9ccad09e9f732ce0650c130d34c3f350eec866b1e7460546e80fe', length: 414757 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

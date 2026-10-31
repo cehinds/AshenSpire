@@ -12,7 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { weaknessTickMultiplier } from './weaknesses.js';
+import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
@@ -364,7 +364,7 @@ export function drainFixCorePoise(ctx, source, target, amount) {
 // Owner, 2026-10-31 (SPEC 5.3): the non-damage weakness effects of a landed hit. `damage` was in the receipt; here the hit also
 // costs the weak enemy Mana or Stamina, or may stagger it (one stagger per target per round, as every other source).
 function applyWeaknessEffects(ctx, source, target, receipt) {
-  if (receipt.evaded || target.kind !== 'enemy' || !receipt.weaknesses?.length) return;
+  if (!weaknessesActive(ctx) || receipt.evaded || target.kind !== 'enemy' || !receipt.weaknesses?.length) return;
   const tell = row => ctx.emit('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: row.to, effect: row.effect, amount: row.amount, ...seatOf(ctx, target) });
   for (const row of receipt.weaknesses) {
     if (!target.alive) break;
@@ -1981,7 +1981,7 @@ function runOpcode(ctx, action, eff) {
         let amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
         // Enemy weaknesses (SPEC 5.3): a burn or venom tick (its stacks formula) and a bleed or frost burst (its proc cause) hit a weak enemy harder.
         const tickStatus = eff.amount?.f === 'stacks' ? eff.amount.status : String(eff.cause || '').startsWith('proc:') ? eff.cause.slice(5) : null;
-        const tickMultiplier = tickStatus && amount > 0 ? weaknessTickMultiplier(t, tickStatus) : 1;
+        const tickMultiplier = tickStatus && amount > 0 ? weaknessTickMultiplier(ctx, t, tickStatus) : 1;
         if (tickMultiplier !== 1) { amount = Math.floor(amount * tickMultiplier); ctx.emit('weaknessTriggered', { targetId: t.id, to: tickStatus, effect: 'tick', amount: Math.round((tickMultiplier - 1) * 100) }); }
         if (eff.nonlethal && amount >= t.hp) throw new Error('Not enough HP for a nonlethal offering');
         applyLoseHp(ctx, t, amount, eff.cause || 'effect', action.meta?.killReceipt || { targetStatusesBefore: structuredClone(t.statuses || {}), sourceId: action.source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}) });

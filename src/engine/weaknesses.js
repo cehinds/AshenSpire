@@ -3,8 +3,19 @@
 import { canonicalDamageType, componentPartsOf, magicShareOf, schoolOf, splitDamageTypesOf } from '../model/combatRatings.js';
 import { combatRules as damageTypeRules } from '../content/combatRules.js';
 import { weaknessAmount, WEAKNESS_ELEMENTS, WEAKNESS_PHYSICAL, WEAKNESS_STATUS_EFFECTS } from '../model/enemyWeaknessRules.js';
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { proposalContext } from './proposalStatusRuntime.js';
 import { proposalRuleEnabled } from '../model/proposalStatusRules.js';
+
+/** Weaknesses belong to Core combat (SPEC 5.3): a legacy or expanded fight neither carries nor applies them. */
+export const weaknessesActive = ctx => fixCoreEnabled(ctx);
+/** The weaknesses an enemy of this definition starts a fight with: the definition's under Core, none otherwise. */
+export const startingWeaknesses = (ctx, def) => weaknessesActive(ctx) ? def?.weaknesses : undefined;
+/** A fight saved before weaknesses has none on its enemies: they take their definition's (solo and co-op restore share this). */
+export function refillWeaknesses(ctx, enemies, registries) {
+  return (enemies || []).map(enemy => enemy.weaknesses === undefined && weaknessesActive(ctx) && registries.enemies.get(enemy.enemyId)?.weaknesses
+    ? { ...enemy, weaknesses: structuredClone(registries.enemies.get(enemy.enemyId).weaknesses) } : enemy);
+}
 
 const add = (set, type) => { const t = canonicalDamageType(type); if (t && (WEAKNESS_PHYSICAL.includes(t) || WEAKNESS_ELEMENTS.includes(t))) set.add(t); };
 
@@ -59,14 +70,14 @@ const titled = word => word.charAt(0).toUpperCase() + word.slice(1);
 export const weaknessLabel = to => `Weak to ${titled(to)}`;
 
 /** Extra stacks a status gets when applied to a target weak to it (0 for a self- or ally-applied status). */
-export function weaknessStackBonus(target, statusId, source) {
-  if (target?.kind !== 'enemy' || !Array.isArray(target.weaknesses) || !source || source.kind === target.kind) return 0;
+export function weaknessStackBonus(ctx, target, statusId, source) {
+  if (!weaknessesActive(ctx) || target?.kind !== 'enemy' || !Array.isArray(target.weaknesses) || !source || source.kind === target.kind) return 0;
   return target.weaknesses.filter(row => row.effect === 'stacks' && row.to === statusId).reduce((sum, row) => sum + weaknessAmount(row), 0);
 }
 
 /** The multiplier on a status's own damage (burn or venom tick, bleed or frost burst) for a weak target. */
-export function weaknessTickMultiplier(target, statusId) {
-  if (target?.kind !== 'enemy' || !Array.isArray(target.weaknesses)) return 1;
+export function weaknessTickMultiplier(ctx, target, statusId) {
+  if (!weaknessesActive(ctx) || target?.kind !== 'enemy' || !Array.isArray(target.weaknesses)) return 1;
   return target.weaknesses.filter(row => row.effect === 'tick' && row.to === statusId)
     .reduce((product, row) => product * (1 + weaknessAmount(row) / 100), 1);
 }

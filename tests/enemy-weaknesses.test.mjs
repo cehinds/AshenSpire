@@ -13,6 +13,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { calloutForEvent } from '../src/ui/fx.js';
 import { weaknessTraitRows, describeWeakness } from '../src/model/enemyWeaknessRules.js';
 import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
+import { createCombat } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -292,4 +293,23 @@ test('riders keep their own damage type: Auto Counter stays physical, Elemental 
   executeAction(combat, blow);
   const hit = combat.eventLog.filter(e => e.type === 'damageDealt').at(-1).damageReceipt.hits[0];
   assert.ok(hit.physical > 0 && hit.magical === 0, `physical ${hit.physical}, magical ${hit.magical}`);
+});
+
+// ---- Core only ----
+test('a legacy (no profile) combat carries no weaknesses: 1 burn stack, x1 ticks, no stage', () => {
+  const player = { classId: 'reaver', maxHp: 100, hp: 80, maxMana: 10, maxStamina: 10, stamina: 10, energyMax: 3, drawPerTurn: 3,
+    attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
+    deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `l${i}`, cardId: 'lastStand', upgraded: false })), relicIds: [] };
+  const combat = createCombat({ registries, rng: createRng(1), enemyIds: ['lanternMoth', 'huskBrute'], player });
+  const [moth, brute] = combat.enemies;
+  assert.equal(moth.weaknesses, undefined);
+  applyStatus(combat, moth, 'burn', 1, combat.player);
+  assert.equal(moth.statuses.burn.stacks, 1);
+  brute.hp = brute.maxHp = 100; brute.statuses.burn = { stacks: 4 };
+  executeAction(combat, { effect: { op: 'loseHp', target: 'self', amount: { f: 'stacks', status: 'burn', of: 'owner' } }, source: brute, owner: brute, target: brute });
+  assert.equal(100 - brute.hp, 4);
+  // Even an enemy forced to carry weaknesses gets nothing outside Core.
+  moth.weaknesses = [{ to: 'burn', effect: 'stacks' }]; brute.weaknesses = [{ to: 'burn', effect: 'tick' }];
+  moth.statuses = {}; applyStatus(combat, moth, 'burn', 1, combat.player);
+  assert.equal(moth.statuses.burn.stacks, 1);
 });

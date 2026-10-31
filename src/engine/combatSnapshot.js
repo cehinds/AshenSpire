@@ -25,6 +25,7 @@ import { controlRestrictions, backfillPersistentPoise } from './combatStatusCont
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
+import { refillWeaknesses } from './weaknesses.js';
 import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
@@ -251,9 +252,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // Absent on a fight saved before ruleset 7, whose rows read no level.
     ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
     player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.energyMax ?? saved.player.maxStamina }),
-    // A fight saved before enemy weaknesses has none on its enemies: they take the registry definition's (SPEC 5.3).
-    enemies: saved.enemies.map(enemy => enemy.weaknesses === undefined && registries.enemies.get(enemy.enemyId)?.weaknesses
-      ? { ...enemy, weaknesses: structuredClone(registries.enemies.get(enemy.enemyId).weaknesses) } : enemy),
+    // A fight saved before enemy weaknesses: its enemies take their definition's (SPEC 5.3).
+    enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
     // A snapshot from before the field reads the run's creation mode.
@@ -341,6 +341,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     }).value);
   }
   // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
+  combat.enemies = refillWeaknesses(combat, combat.enemies, registries);
   for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
   const formationErrors = formationOccupancyProblems(combat);
   if (formationErrors.length) throw new Error(formationErrors.join('; '));

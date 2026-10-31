@@ -55,7 +55,7 @@ function syncPoolsAfterStatus(ctx, target) {
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
   const before = getStacks(target, statusId);
   // Enemy weaknesses (SPEC 5.3): a status an opponent applies to an enemy weak to it lands with extra stacks.
-  const weakBonus = stacks > 0 ? weaknessStackBonus(target, statusId, source) : 0;
+  const weakBonus = stacks > 0 ? weaknessStackBonus(ctx, target, statusId, source) : 0;
   if (weakBonus > 0) ctx.emit?.('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: statusId, effect: 'stacks', amount: weakBonus });
   const result = applyStatusRaw(ctx, target, statusId, stacks + weakBonus, source);
   // Persistence belongs to the granting effect, not every later application.

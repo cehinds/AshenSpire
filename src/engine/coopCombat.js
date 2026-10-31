@@ -1,5 +1,6 @@
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
+import { startingWeaknesses } from './weaknesses.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import * as Rounds from './combatRoundsAdapter.js';
@@ -214,7 +215,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     C.enemies.push(createEnemyCombatEntity({
       instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
       arcaneExposure: C.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
-      damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: def.weaknesses,
+      damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: startingWeaknesses(C, def),
       damageMult: enemyDamageMult,
     }));
     if (C.sharedExpansionVersion === 2 && !configuredCombat(C)) {
