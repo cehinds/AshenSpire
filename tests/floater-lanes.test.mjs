@@ -39,3 +39,29 @@ test('floaters on one anchor take separate lanes, reset after the life, and are 
     assert.equal(later.dataset.floatLane, '0', 'the lanes reset once the life has expired');
   });
 });
+
+test('a lane freed by an expired floater is reused before a lane still occupied', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    document.createElement = (name) => Object.assign(create(name), { offsetWidth: 40, offsetHeight: 20 });
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    const a = document.createElement('div'); a.box = { left: 100, top: 100, width: 80, height: 120 };
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const opts = { jitter: false };
+    const life = floaterLifeMs();
+    const first = floatNum(fx, a, '-1', 'dmg', null, opts);
+    t.mock.timers.tick(Math.floor(life / 3));
+    const second = floatNum(fx, a, '-2', 'dmg', null, opts);
+    t.mock.timers.tick(life - Math.floor(life / 3) + 1);
+    // first has expired, second is still showing in lane 1: the newcomer takes lane 0, not lane 1.
+    const third = floatNum(fx, a, '-3', 'dmg', null, opts);
+    const fourth = floatNum(fx, a, '-4', 'dmg', null, opts);
+    flushMeasureJobs();
+    assert.deepEqual([first, second, third, fourth].map((n) => n.dataset.floatLane), ['0', '1', '0', '2']);
+    // All three lanes taken: the lane whose floater expires soonest (lane 1) is reused.
+    const fifth = floatNum(fx, a, '-5', 'dmg', null, opts);
+    assert.equal(fifth.dataset.floatLane, '1');
+  });
+});

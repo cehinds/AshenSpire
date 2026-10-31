@@ -370,15 +370,23 @@ export function combatReadoutLayer(layer, create = true) {
   return host;
 }
 
-// Per anchor: the floaters still showing, so a new one takes the next free lane (0 is the spawn point,
-// each lane lifts it one line higher). Three lanes, then lane 0 is reused.
+// Per anchor: the floaters still showing, each with its lane, so a new one takes the lowest lane
+// nobody occupies (0 is the spawn point, each lane lifts it one line higher). Lanes are tracked,
+// not counted: when the first of three expires the next floater takes lane 0, not lane 2 over a
+// floater still showing. With all three lanes taken, the lane freeing soonest is reused.
 const FLOAT_LANES = 3;
 const floaterLanes = new WeakMap();
 function floaterLaneFor(anchor, lifeMs) {
   const now = Date.now();
   const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
-  const lane = live.length >= FLOAT_LANES ? 0 : live.length;
-  live.push({ until: now + lifeMs });
+  let lane = -1;
+  for (let i = 0; i < FLOAT_LANES && lane < 0; i++) if (!live.some((entry) => entry.lane === i)) lane = i;
+  if (lane < 0) {
+    const soonest = live.reduce((a, b) => (b.until < a.until ? b : a));
+    lane = soonest.lane;
+    live.splice(live.indexOf(soonest), 1);
+  }
+  live.push({ lane, until: now + lifeMs });
   floaterLanes.set(anchor, live);
   return lane;
 }
