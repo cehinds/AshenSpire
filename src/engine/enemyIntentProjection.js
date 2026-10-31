@@ -62,12 +62,12 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
       };
       for (const state of states) {
         if (!(state.attacker?.hp > 0)) { add(state); continue; }
-        const receipt = ProfileCombat.profileDamageReceipt(ctx, source, state.target, base, carrier);
+        const receipt = ProfileCombat.profileDamageReceipt(ctx, state.attacker || source, state.target, base, carrier);
         const landed = structuredClone(state.target);
         Damage.applyReceiptToPreviewTarget(ctx, landed, receipt);
         const attacker = Damage.cloneDetachedAttacker(state.attacker);
         Damage.previewReflectReturn(ctx, attacker, landed, receipt, carrier);
-        add({ attacker, target: landed, key: targetKey(landed) + `|${attacker?.hp}`, loss: state.loss + receipt.hpLoss, probability: state.probability * receipt.hitChance });
+        add({ attacker, target: landed, key: targetKey(landed) + `|${attacker?.hp}|${attacker?.combatStance}|${attacker?.persistentPoise?.value}|${JSON.stringify(attacker?.statuses)}`, loss: state.loss + receipt.hpLoss, probability: state.probability * receipt.hitChance });
         add({ ...state, probability: state.probability * (1 - receipt.hitChance) });
       }
       states = [...next.values()];

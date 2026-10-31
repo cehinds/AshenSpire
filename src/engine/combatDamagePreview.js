@@ -116,7 +116,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     const receipts = [];
     const attacker = cloneDetachedAttacker(source);
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, source, defender, base, carrier);
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
       receipts.push(receipt);
       if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).

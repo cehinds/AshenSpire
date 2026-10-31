@@ -195,3 +195,27 @@ test('a Reflect return that kills a multi-hit attacker cancels its later hits in
   assert.ok(bareProj.projectedDamage.max > cut, 'control: without Reflect the three hits exceed one cut hit');
   assert.ok(projected.projectedDamage.max <= cut, `projection max ${projected.projectedDamage.max} counts only the first hit (${cut}), not three`);
 });
+
+test('a Reflect return that breaks the attacker\'s Poise ends its matching-stance bonus for later hits, preview == live', async () => {
+  const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
+  const carrier = () => ({ tags: [], combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } });
+  const prime = () => {
+    const { combat, enemy } = live();
+    combat.player.reflectStacks = 1;
+    enemy.persistentPoise = { value: 1, max: 5 };
+    enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+    return { combat, enemy };
+  };
+  const p = prime();
+  const view = previewDamageHits(p.combat, p.enemy, p.combat.player, 20, [], carrier(), 3);
+  const l = prime();
+  const liveHits = [];
+  for (let i = 0; i < 3; i++) {
+    const hp = l.combat.player.hp;
+    applyAttackDamage(l.combat, l.enemy, l.combat.player, 20, [], carrier());
+    liveHits.push(hp - l.combat.player.hp);
+  }
+  assert.deepEqual(view.hitDamages, liveHits, 'preview hit-by-hit equals live');
+  assert.equal(view.totalDamage, liveHits.reduce((a, b) => a + b, 0));
+  assert.ok(liveHits[1] < liveHits[0] + 6 && liveHits[1] === liveHits[2], 'later hits are equal once the stance bonus is gone');
+});
