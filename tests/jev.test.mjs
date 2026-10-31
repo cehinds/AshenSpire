@@ -268,3 +268,100 @@ test('resolveChangelogConflict drops the diff3 base section', () => {
   const r = resolveChangelogConflict(text);
   assert.deepEqual(r.split('\n'), ['## 2026-10-31', '', '- **Mine** (#1, `0.7.2.60`).', '- **Theirs** (#3, `0.7.2.70`).', '- **Tail** (#4, `0.7.2.50`).', '']);
 });
+
+// ---- devmerge real paths, on a temp git fixture ----
+import { devmerge } from '../tools/jev.mjs';
+import { mkdirSync, existsSync } from 'node:fs';
+
+const OK_DEPS = (over = {}) => ({
+  regen: () => ({ exit: 0, steps: [] }),
+  restamp: () => ({ exit: 0, from: 'a', to: 'b' }),
+  node: () => ({ status: 0, out: '' }),
+  ...over,
+});
+
+// origin (bare) + work clone; `setup(w)` runs on both branches via helpers.
+function fixture(files) {
+  const root = mkdtempSync(join(tmpdir(), 'jev-dmx-'));
+  const sh = (cwd, ...a) => { const r = spawnSync('git', a, { cwd, encoding: 'utf8' }); if (r.status !== 0) throw new Error(`git ${a.join(' ')}: ${r.stderr}`); return r.stdout; };
+  const put = (cwd, path, text) => { mkdirSync(dirname(join(cwd, path)), { recursive: true }); writeFileSync(join(cwd, path), text); };
+  const origin = join(root, 'origin.git');
+  const work = join(root, 'work');
+  sh(root, 'init', '-q', '--bare', '-b', 'dev', origin);
+  sh(root, 'clone', '-q', origin, work);
+  sh(work, 'config', 'user.email', 'a@b.c'); sh(work, 'config', 'user.name', 'x');
+  sh(work, 'checkout', '-q', '-B', 'dev');
+  for (const [p, t] of Object.entries(files)) put(work, p, t);
+  sh(work, 'add', '.'); sh(work, 'commit', '-qm', 'base'); sh(work, 'push', '-q', 'origin', 'dev');
+  sh(work, 'checkout', '-q', '-b', 'feature');
+  const onDev = (edit, msg = 'dev change') => { sh(work, 'checkout', '-q', 'dev'); edit(work, put, sh); sh(work, 'add', '-A'); sh(work, 'commit', '-qm', msg); sh(work, 'push', '-q', 'origin', 'dev'); sh(work, 'checkout', '-q', 'feature'); };
+  const onFeature = (edit, msg = 'feature change') => { edit(work, put, sh); sh(work, 'add', '-A'); sh(work, 'commit', '-qm', msg); };
+  return { root, work, sh, put, onDev, onFeature, done: () => rmSync(root, { recursive: true, force: true }) };
+}
+
+const CL_BASE = '# Changelog\n\n## 2026-10-31\n\n- **Base** (#1, `0.7.2.1`).\n';
+
+test('devmerge: conflicting generated file takes dev side, conflicting CHANGELOG merges, then commits', () => {
+  const f = fixture({ 'src/content/generated/cards.js': 'base\n', 'CHANGELOG.md': CL_BASE, 'a.txt': 'a\n' });
+  try {
+    f.onDev(w => { f.put(w, 'src/content/generated/cards.js', 'dev\n'); f.put(w, 'CHANGELOG.md', CL_BASE + '- **Theirs** (#3, `0.7.2.3`).\n'); });
+    f.onFeature(w => { f.put(w, 'src/content/generated/cards.js', 'mine\n'); f.put(w, 'CHANGELOG.md', CL_BASE + '- **Mine** (#2, `0.7.2.2`).\n'); });
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS() });
+    assert.equal(r.exit, 0, JSON.stringify(r));
+    assert.equal(r.verdict, 'merged');
+    assert.deepEqual([r.resolved.generated, r.resolved.changelog], [['src/content/generated/cards.js'], ['CHANGELOG.md']]);
+    assert.equal(readFileSync(join(f.work, 'src/content/generated/cards.js'), 'utf8'), 'dev\n');
+    const cl = readFileSync(join(f.work, 'CHANGELOG.md'), 'utf8');
+    assert.ok(cl.indexOf('Mine') < cl.indexOf('Theirs') && !/<<<<<<<|=======|>>>>>>>/.test(cl));
+    assert.equal(f.sh(f.work, 'status', '--porcelain').trim(), '');
+    assert.equal(f.sh(f.work, 'rev-list', '--parents', '-n1', 'HEAD').trim().split(' ').length, 3, 'a merge commit');
+  } finally { f.done(); }
+});
+
+test('devmerge: a conflict in a non-generated file aborts the merge and exits 2', () => {
+  const f = fixture({ 'src/model/combat.js': 'base\n' });
+  try {
+    f.onDev(w => f.put(w, 'src/model/combat.js', 'dev\n'));
+    f.onFeature(w => f.put(w, 'src/model/combat.js', 'mine\n'));
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS() });
+    assert.deepEqual([r.exit, r.verdict, r.files], [2, 'needs-model', ['src/model/combat.js']]);
+    assert.equal(f.sh(f.work, 'status', '--porcelain').trim(), '');
+    assert.equal(readFileSync(join(f.work, 'src/model/combat.js'), 'utf8'), 'mine\n');
+    assert.equal(existsSync(join(f.work, '.git/MERGE_HEAD')), false);
+  } finally { f.done(); }
+});
+
+test('devmerge: a clean merge commits; an up-to-date branch reports so', () => {
+  const f = fixture({ 'a.txt': 'a\n' });
+  try {
+    assert.equal(devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS() }).verdict, 'up-to-date');
+    f.onDev(w => f.put(w, 'b.txt', 'b\n'));
+    f.onFeature(w => f.put(w, 'c.txt', 'c\n'));
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS() });
+    assert.deepEqual([r.exit, r.verdict], [0, 'merged']);
+    assert.ok(existsSync(join(f.work, 'b.txt')) && existsSync(join(f.work, 'c.txt')));
+  } finally { f.done(); }
+});
+
+test('devmerge: a generated file deleted on dev but edited here is removed, not left conflicted', () => {
+  const f = fixture({ 'src/content/generated/old.js': 'base\n', 'a.txt': 'a\n' });
+  try {
+    f.onDev((w, put, sh) => sh(w, 'rm', '-q', 'src/content/generated/old.js'));
+    f.onFeature(w => f.put(w, 'src/content/generated/old.js', 'mine\n'));
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS() });
+    assert.deepEqual([r.exit, r.verdict], [0, 'merged']);
+    assert.equal(existsSync(join(f.work, 'src/content/generated/old.js')), false);
+  } finally { f.done(); }
+});
+
+test('devmerge: a failing regen leaves the merge uncommitted with the abort hint (exit 1 or 2, never 0)', () => {
+  const f = fixture({ 'a.txt': 'a\n' });
+  try {
+    f.onDev(w => f.put(w, 'b.txt', 'b\n'));
+    f.onFeature(w => f.put(w, 'c.txt', 'c\n'));
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS({ regen: () => ({ exit: 2, failed: 'x', tail: 't' }) }) });
+    assert.deepEqual([r.exit, r.verdict], [2, 'regen-failed']);
+    assert.match(r.hint, /git merge --abort/);
+    assert.ok(existsSync(join(f.work, '.git/MERGE_HEAD')));
+  } finally { f.done(); }
+});

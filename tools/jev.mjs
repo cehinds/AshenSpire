@@ -334,7 +334,11 @@ export function resolveChangelogConflict(text) {
 
 const git = (args, cwd) => run('git', args, { cwd });
 
-export function devmerge({ base = 'dev', pr = null, cwd = ROOT }) {
+// deps: injectable regen/restamp/node runner, so tests need not run the full repo tools.
+export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
+  const doRegen = deps.regen || regen;
+  const doRestamp = deps.restamp || restamp;
+  const runNode = deps.node || node;
   const top = git(['rev-parse', '--show-toplevel'], cwd).out.trim() || cwd;
   const dirty = git(['status', '--porcelain', '--untracked-files=no'], top).out.trim();
   if (dirty) return { exit: 1, verdict: 'dirty-tree', files: dirty.split('\n') };
@@ -364,12 +368,12 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT }) {
     }
   }
   const notes = [];
-  const g = regen(top);
+  const g = doRegen(top);
   if (g.exit !== 0) return { exit: g.exit, verdict: 'regen-failed', branch, resolved, failed: g.failed, tail: g.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
   const prNumber = pr || detectPr([], top);
   if (prNumber) {
     try {
-      const r = restamp({ root: top, pr: prNumber });
+      const r = doRestamp({ root: top, pr: prNumber });
       if (r.exit !== 0) return { exit: r.exit, verdict: 'restamp-failed', branch, resolved, failed: r.failed, tail: r.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
       notes.push(`restamped #${prNumber} ${r.from} -> ${r.to}`);
     } catch (error) {
@@ -380,7 +384,7 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT }) {
   const verify = runChecks([
     { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order', ...pending] },
     ...FAST_CHECKS.filter(c => ['content-build', 'config-build', 'game-config', 'framework-data-build', 'build-game'].includes(c.id)),
-  ], c => node(c.args, { cwd: top }));
+  ], c => runNode(c.args, { cwd: top }));
   if (verify.exit !== 0) return { exit: verify.exit, verdict: 'checks-failed', branch, resolved, checks: verify.results.filter(r => r.status === 'fail'), hint: 'merge left uncommitted; `git merge --abort` to undo' };
   git(['add', '-u'], top);
   const fresh = git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean);
