@@ -12,7 +12,7 @@ import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { t } from '../src/ui/strings.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
-import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+import { setCombatPacing as pinCombatPacing, calloutLifeMs } from '../src/ui/animationPace.js';
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const callouts = (layer) => layer.children.filter((node) => node.dataset?.calloutFor !== undefined);
@@ -53,7 +53,7 @@ test('a callout names its fighter, shows three in lanes, queues the rest, and sk
     const starts = [first, second, third].map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
     assert.deepEqual(starts, [0, 150, 300], 'each word starts one step after the one before');
     const delayMs = Number.parseInt(fourth.style.animationDelay, 10);
-    assert.ok(delayMs >= 890 && delayMs <= 900, 'the fourth waits for the earliest visible word to finish');
+    assert.ok(delayMs >= 1390 && delayMs <= 1400, 'the fourth waits for the earliest visible word to finish');
     assert.equal(callouts(layer).length, 5, 'nothing is dropped: the fourth is queued');
     clearCallouts(layer);
     assert.equal(callouts(layer).length, 0, 'a skip ends the visible words and the queue');
@@ -337,3 +337,32 @@ test('a fully guarded contact says Hit, then Blocked after the target reaction',
   });
 });
 
+
+test('callout life scales with Combat speed only: 1400 at x1, 700 at x2, floored at 700 beyond, Instant keeps 500', () => {
+  try {
+    setAnimSpeed('normal');
+    pinCombatPacing({ combatSpeed: 1 });
+    assert.equal(calloutLifeMs(), 1400);
+    pinCombatPacing({ combatSpeed: 2 });
+    assert.equal(calloutLifeMs(), 700);
+    pinCombatPacing({ combatSpeed: 4 });
+    assert.equal(calloutLifeMs(), 700, 'floors at 700 ms');
+    setAnimSpeed('fast');
+    pinCombatPacing({ combatSpeed: 1.25 });
+    assert.equal(calloutLifeMs(), 1120, 'the Fast animation pace does not shrink the word');
+    setAnimSpeed('instant');
+    assert.equal(calloutLifeMs(), 500);
+  } finally {
+    setAnimSpeed('normal');
+    pinCombatPacing({ combatSpeed: 1 });
+  }
+});
+
+test('beat timing never reads calloutLifeMs: words outlive the beat, as floaters do', () => {
+  const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
+  const uses = fx.split('\n').filter((line) => line.includes('calloutLifeMs'));
+  assert.ok(uses.length >= 3 && uses.length <= 6, 'calloutLifeMs feeds only the callout lifetime sites');
+  const pace = readFileSync(new URL('../src/ui/animationPace.js', import.meta.url), 'utf8');
+  const actionPacing = pace.slice(pace.indexOf('export function actionPacing'), pace.indexOf('export function reactionPlayMs'));
+  assert.ok(!actionPacing.includes('calloutLifeMs') && !actionPacing.includes('calloutLife'), 'actionPacing (beat waits) does not read the callout life');
+});

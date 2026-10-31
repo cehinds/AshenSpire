@@ -34,7 +34,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { actionPacing, floaterLifeMs } from './animationPace.js';
+import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -461,8 +461,8 @@ export const CALLOUT_KINDS = {
   blocked: { string: 'combat.callout.blocked', tone: 'block' },
   immune: { string: 'combat.callout.immune', tone: 'immune' },
 };
-export const CALLOUT_MS = 900;
-export const CALLOUT_INSTANT_MS = 500;
+export const CALLOUT_MS = 900; // legacy base; live words use calloutLifeMs() (animationPace.js)
+export const CALLOUT_INSTANT_MS = COMBAT_TIMING.calloutInstantMs;
 // The words over one fighter (owner, 2026-10-12): at most three show at once, in three
 // lanes (lane 0 is the top). Words start one step apart in priority order; a fourth waits
 // for the earliest visible one to finish, and nothing is dropped.
@@ -516,7 +516,7 @@ export function stackPriority(kind = '') {
  * `lanes` are how long each lane is still busy, from now. Returns [{ id, start, lane }],
  * start in ms from now, in priority order (ties keep arrival order).
  */
-export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = CALLOUT_MS, after = null } = {}) {
+export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = calloutLifeMs(), after = null } = {}) {
   const sorted = items.map((item, arrival) => ({ ...item, arrival, rank: stackPriority(item.kind) }))
     .sort((a, b) => b.rank - a.rank || a.arrival - b.arrival);
   const free = [...lanes];
@@ -550,7 +550,7 @@ function queueFor(layer, forId) {
  * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
  * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
  */
-function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
+function layoutCallouts(layer, anchor, q, now, lifeMs = calloutLifeMs()) {
   const active = q.items.filter((it) => it.start <= now);
   const pending = q.items.filter((it) => it.start > now);
   const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
@@ -653,7 +653,7 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   el.textContent = def.word || t(def.string);
   if (kind.startsWith('buff:')) el.style.visibility = 'hidden';
   if (def.colour) el.style.color = def.colour;
-  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS * (actionPacing().scale || 1);
+  const ms = calloutLifeMs();
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // Not started yet: the layout plans it (start Infinity until then).
   const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
