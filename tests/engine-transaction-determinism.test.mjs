@@ -47,9 +47,11 @@ export function digest(combat) {
     state: createHash('sha256').update(text).digest('hex').slice(0, 16), events: combat.eventLog.length, turn: combat.turn };
 }
 
+// Re-pinned 2026-10-31 after merging dev cf6417b4d9: the same fights on the dev tree
+// (no transaction caches) give these digests, so the rules moved, not the caches.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '7ba86cb9c3cda5a8', state: 'd58dc39dd96016f5', events: 179, turn: 6 }],
-  [[4242, 'reaver'], { log: '136cd78ce89d73f5', state: '684e9137a63a956b', events: 221, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'eee368ba97f97147', state: '89938021e2dd2945', events: 184, turn: 6 }],
+  [[4242, 'reaver'], { log: 'f666484a313541df', state: 'd83928c1fe5a833b', events: 226, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
