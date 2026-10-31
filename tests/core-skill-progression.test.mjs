@@ -348,7 +348,11 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
       emptyDefeat: () => beginGameProfileReward({ after: 'defeat', noticeOnly: true }) };
   `)(deps, run, combat, reg, saves, screens, notices);
   const main = make(run);
+  const playedId = Object.keys(combat.player.abilityRiders.instanceUsesCombat)[0];
+  assert.ok(playedId, 'fixture: a deck card was played');
+  assert.equal(run.deck.find(card => card.instanceId === playedId)?.playsEver, undefined, 'fixture: nothing is folded before the fight ends');
   await main.settle();
+  assert.equal(run.deck.find(card => card.instanceId === playedId)?.playsEver, 1, 'the real onCombatEnd folds the fight\'s plays into the deck copy (playsEver)');
   assert.equal(run.skills['item:blade'].level, 1);
   assert.equal(run.skills['class:reaver']?.level || 0, 0, 'loss does not invent class XP');
   assert.deepEqual(run.gameProfilePendingReward.progression[0].effects.changes, [], 'the real settlement persists the actual lack of a stat gain');
@@ -655,4 +659,13 @@ test('Core pays character XP at the authored 1.5 rate and a snapshot without the
   assert.equal(configuredCharacterXpMultiplier({ gameProfile: { modules: { progression: { characterXpMultiplier: 99 } } } }), 10);
   assert.equal(gameModule(profile, 'progression').classXpMultiplier, 1);
   assert.equal(gameModule(profile, 'progression').weaponXpMultiplier, 1);
+});
+
+test('main.js stamps playsEver when a fight opens and folds it when the fight ends', () => {
+  const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const open = source.indexOf('const combat = savedSnapshot ? restoreCombatSnapshot');
+  assert.ok(open > 0 && source.indexOf('stampCombatPlaysEver(run, combat)', open) > open, 'a fight opened or restored in main.js is stamped');
+  assert.ok(source.indexOf('stampCombatPlaysEver(run, combat)', open) < source.indexOf('if (combat.combatExpansionVersion === 2) {', open), 'the stamp lands before the fight is used');
+  const end = source.indexOf('async function onCombatEnd(');
+  assert.ok(source.indexOf('foldCombatPlaysEver(run, combat)', end) > source.indexOf('runCombatEnd(run, combat)', end), 'the fold follows runCombatEnd');
 });
