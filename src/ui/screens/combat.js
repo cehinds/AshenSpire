@@ -3031,9 +3031,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const clearDragTargeting = () => {
       cancelDropTarget();
-      geometryField?.removeEventListener('battlefieldgeometrychange', dropSpriteBounds);
-      geometryField = null;
-      spriteBounds = null;
       combatEl.classList.remove('drag-targeting');
       combatEl.removeAttribute('data-drop-state');
       app.querySelectorAll('[data-drop-state]').forEach((node) => node.removeAttribute('data-drop-state'));
@@ -3041,21 +3038,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       applyTargetLayer();
     };
 
-    // Sprite bounds do not move during a drag, so they are read once per drag
-    // (not once per plan) and dropped whenever the field refits its formation.
-    let spriteBounds = null;
-    let geometryField = null;
-    const dropSpriteBounds = () => { spriteBounds = null; };
-    const spriteBoundsOf = (frame) => {
-      if (!spriteBounds) spriteBounds = new Map();
-      const id = frame.dataset.eid;
-      if (!spriteBounds.has(id)) spriteBounds.set(id, frame.querySelector('.sprite')?.getBoundingClientRect());
-      return spriteBounds.get(id);
-    };
     const beginDragTargeting = () => {
       clearDragTargeting();
-      geometryField = combatEl.querySelector('.field');
-      geometryField?.addEventListener('battlefieldgeometrychange', dropSpriteBounds);
       combatEl.classList.add('drag-targeting');
       applyTargetLayer(inst.instanceId);
     };
@@ -3081,7 +3065,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const forbidden = forbiddenCardDrop(targetPlan, point, [...combatEl.querySelectorAll('.combatant')].map(frame => ({
         id: frame.dataset.eid,
         alive: !!getEntity(combat, frame.dataset.eid)?.alive,
-        bounds: spriteBoundsOf(frame),
+        bounds: frame.querySelector('.sprite')?.getBoundingClientRect(),
       })));
       if (forbidden && !directLegal) return { legal: false, enemies: [], flick };
       const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer;
