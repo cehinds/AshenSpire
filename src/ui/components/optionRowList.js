@@ -77,7 +77,9 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
     const at = live.indexOf(event.target?.closest?.('.option-row') ?? event.target);
     if (at < 0) return;
     event.preventDefault?.();
-    live[(((at + step) % live.length) + live.length) % live.length].focus?.({ preventScroll: true });
+    const next = live[(((at + step) % live.length) + live.length) % live.length];
+    next.focus?.({ preventScroll: true });
+    next.scrollIntoView?.({ block: 'nearest' });
   });
   return list;
 }

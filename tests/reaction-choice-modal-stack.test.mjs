@@ -391,8 +391,11 @@ test('four options form a 2-column grid; ArrowDown moves a row, ArrowRight one t
     const list = rows[0].parentNode;
     assert.equal(list.getAttribute('data-columns'), '2');
     const key = (key, from) => list.listeners.get('keydown')[0]({ key, target: from, preventDefault() {} });
+    const scrolled = [];
+    rows[2].scrollIntoView = arg => scrolled.push(arg);
     key('ArrowDown', rows[0]);
     assert.equal(opened.document.activeElement, rows[2], 'ArrowDown from row 0 lands on row 2');
+    assert.deepEqual(scrolled, [{ block: 'nearest' }], 'the focused tile is scrolled into the list view');
     key('ArrowRight', rows[2]);
     assert.equal(opened.document.activeElement, rows[3]);
     key('ArrowDown', rows[3]);
