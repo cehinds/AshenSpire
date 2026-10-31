@@ -10,7 +10,7 @@ import { el, artWell } from '../kit/index.js';
 import { assetUrl } from '../assetmap.js';
 import { hideOnError } from '../artFallback.js';
 import { cardCutoutUrl } from '../layeredCardArt.js';
-import { cardArtLayersHtml } from '../cardArtLayers.js';
+import { cardArtLayersHtml, bindCardComponentFailures } from '../cardArtLayers.js';
 import { effectLine } from './cardOptionGrid.js';
 
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
@@ -36,10 +36,9 @@ function rowArt(row) {
   if (row.artComposition) {
     well.style && Object.assign(well.style, { position: 'relative', isolation: 'isolate' });
     well.insertAdjacentHTML?.('beforeend', cardArtLayersHtml(row.artComposition));
-    // A cutout that fails to load must not leave broken-image marks: drop the layers, like the card face.
-    for (const image of well.querySelectorAll?.('[data-card-art-component]') || []) {
-      image.addEventListener('error', () => well.querySelectorAll('[data-card-art-layers]').forEach(node => node.remove()), { once: true });
-    }
+    // A cutout that fails to load fires the base image's error (hidden and marked by hideOnError).
+    const base = well.querySelector?.('img');
+    if (base && well.querySelectorAll) bindCardComponentFailures(well, base);
   }
   return well;
 }
