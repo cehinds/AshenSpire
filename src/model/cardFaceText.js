@@ -247,7 +247,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
-        if (effect.target === 'self') out.push({ cat: 'gain', text: `${name}${duration}` });
+        // Precision is a flat bonus (owner, 2026-10-31): a self grant prints "+N Precision", matching the Entry line.
+        if (effect.target === 'self' && effect.status === 'precision') out.push({ cat: 'bonus', text: `+${num(stacks, stacksBase)} Precision${duration}` });
+        else if (effect.target === 'self') out.push({ cat: 'gain', text: `${name}${duration}` });
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
         else if (effect.target === 'ally') out.push({ cat: 'bonus', text: `Apply ${name} to an ally${duration}` });
         else out.push({ cat: 'bonus', text: `Apply ${name}${duration}${area}` });
@@ -387,7 +389,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
-  const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
+  const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount);
   // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
   const entryCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile, fixCoreRules: rules?.fixCoreRules };
   // The Entry Precision line follows the active Core profile, the predicate the live grant uses, not a per-card version field.

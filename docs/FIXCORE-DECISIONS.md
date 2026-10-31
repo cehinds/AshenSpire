@@ -71,6 +71,10 @@ configuration or historical non-Core profiles.
 
 - D17: "Magic damage hits Poise first and then Block; physical damage hits Block first and then Poise." Core (Ward off): the magic part of a hit meets Poise 1:1 (full amount as Poise damage), then the Block left after the physical part, then Barrier, then HP, with no further Poise absorb; the physical part is unchanged (Block, then the 75/25 Poise absorb). A mixed hit resolves physical first, then magic, on one shared Poise pool. Amends the 2026-10-25 Block-soaks-whole-hit order (SPEC §17) for magic; D3/D4/D13 are otherwise unchanged. Tested by `tests/magic-poise-first.test.mjs`.
 
+## Precision as stacks, Evasion base 8 (owner, 2026-10-31)
+
+- Owner decision: enemies hit too easily (any Precision of 1 or more hit 95% because the miss threshold was Evasion 1 + DEX). Core 2 only. Precision = 1 + statMix + stacks (was 1 + mix × (stacks + 1)); Evasion = 8 + DEX + gear + 2 × Evade stacks (was 1 + DEX + (1 + DEX) × stacks). The constants live in the `accuracy` block of `content/framework/mechanics.json` (`evasionBase` 8, `evadePerStack` 2, `precisionStackValue` 1, `precisionDecayPerTurn` 1), read in `src/engine/stanceHit.js`, because the locked `fixCoreMechanics.json` cannot change. A stance entry grants exactly 1 stack; Precision loses 1 stack at the owner's turn start (Persistent exempt) and the badge tooltip is `accuracy.precisionTooltip` (the `statuses.json` Precision row feeds a locked mechanic manifest and is unchanged). SPEC §17 Accuracy paragraph amended.
+
 ## Insight contests (2026-10-31)
 
 Owner: "Read Intent, Foresight and that kind of spell should not need a hit chance or care about range."

@@ -67,11 +67,11 @@ test('every printed surface moves automatic bonuses to tags and retains distinct
   const face = (surface, level) => faceLinesOf(printed(surface, level)).map(textOf).join(' | ');
   const hand = face('combat', 'glance');
   assert.doesNotMatch(hand, /Entry:/);
-  assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
+  assert.match(hand, /\+2 Precision/, 'an authored Precision effect remains on the hand face');
   assert.match(hand, /Deal/, 'the attack still explains its damage');
   for (const [surface, level] of [['combat', 'inspect'], ['reward', 'glance']]) {
     assert.doesNotMatch(face(surface, level), /Entry:/);
-    assert.match(face(surface, level), /Precision 2/, 'a distinct authored grant remains explicit');
+    assert.match(face(surface, level), /\+2 Precision/, 'a distinct authored grant remains explicit');
     assert.match(printed(surface, level), /On changing stance, gain 1 Precision/);
     assert.match(printed(surface, level), /Gain 2 Precision when this effect resolves/);
   }

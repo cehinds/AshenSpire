@@ -9,6 +9,7 @@ import * as Statuses from './statuses.js';
 import * as Contest from './contest.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
+import { mechanics } from '../framework/data/mechanics.js';
 import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
@@ -44,8 +45,10 @@ export function precisionStatMix(ctx, entity, carrier = null) {
   return Math.floor(wt.dex * (Number(attrs.dexterity) || 0) + wt.str * (Number(attrs.strength) || 0)
     + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * mixLevel(ctx, entity));
 }
-/** Precision stacks an offensive stance entry grants under FixCore: the base grant plus the stat mix. */
-export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base > 0 ? base + precisionStatMix(ctx, entity, carrier) : 0;
+/** Core 2 Accuracy constants (owner, 2026-10-31): editable data in content/framework/mechanics.json, not the locked FixCore rules. */
+export const accuracyRules = () => mechanics.accuracy;
+/** Precision stacks an offensive stance entry grants under FixCore: the base grant only (owner, 2026-10-31; the stat mix is Precision, not stacks). */
+export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base > 0 ? base : 0;
 /** Evade stacks one Evade play adds under FixCore: evadeStackBase + evadeStackDex × DEX (config, owner 2026-10-19); 0 elsewhere. */
 export function evadeStackGain(ctx, entity, carrier = null) {
   if (!fixCoreEnabled(ctx) || !entity) return 0;
@@ -55,11 +58,10 @@ export function evadeStackGain(ctx, entity, carrier = null) {
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
   const prepared = !evadeDisabled && eligiblePreparedEvade(entity);
   if (fixCoreEnabled(ctx)) {
-    const cfg = fixCoreRules(ctx, entity).accuracy;
     const dex = Number(attributesOf(ctx, baseEntity)?.dexterity) || 0;
-    // Fixed defense: base + DEX + flat gear + stacks × (baseAC + DEX).
-    const perStack = cfg.baseAC + dex;
-    return cfg.evasionBase + dex + (Number(baseEntity?.baseEvasionBonus) || 0)
+    // Fixed defense (owner, 2026-10-31): 8 + DEX + flat gear + 2 per Evade stack + prepared bonus.
+    const acc = accuracyRules(), perStack = acc.evadePerStack;
+    return acc.evasionBase + dex + (Number(baseEntity?.baseEvasionBonus) || 0)
       + (evadeDisabled ? 0 : perStack * stacks(entity, 'evade') + (prepared ? Number(prepared.bonus) || 0 : 0));
   }
   const preparedBonus = prepared ? stanceRulesFor(ctx).evasionPerStack + (Number.isFinite(prepared.bonus) ? prepared.bonus : 0) : 0;
@@ -110,7 +112,11 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const sweep = maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   // Under FixCore, Precision and fixed Evasion are whole numbers, rounded down.
-  const precisionMultiplier = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) * (precision + 1) : 0;
+  const statMix = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) : 0;
+  const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
+  // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
+  const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, { label: 'stat mix', value: statMix }, { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
+    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
     ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
@@ -127,7 +133,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   // Under FixCore a shown percentage is whole, rounded down (owner, 2026-10-18); advantage and disadvantage give quarters.
   const hitChance = fixCoreEnabled(ctx) ? Math.floor(100 * hits / outcomes) : 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
-  return { range, requiredRange, inRange, accuracy, evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
+  return { range, requiredRange, inRange, accuracy, ...(precisionParts ? { precisionParts } : {}), evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };
 }
 
