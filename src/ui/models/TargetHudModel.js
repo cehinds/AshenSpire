@@ -4,7 +4,13 @@ export const targetHudConfig = () => uiConfig.components.combatTargetHud;
 export function targetHudEnabled({ formFactor, classic, layout = 'formation' }, config = targetHudConfig()) {
   return !classic && layout === 'formation' && config.behavior.formFactors.includes(formFactor);
 }
-export function targetHudSide(role, lane, config = targetHudConfig()) {
+// Owner 2026-10-31: a lone living enemy's card sits to its left; with several enemies it sits below the selected
+// one. The lane table is only the fallback when the config lacks the two keys or the count is unknown.
+export function targetHudSide(role, lane, config = targetHudConfig(), enemyCount) {
+  if (role !== 'player' && Number.isFinite(enemyCount) && enemyCount >= 1) {
+    const side = enemyCount === 1 ? config.positioning.loneEnemySide : config.positioning.crowdedEnemySide;
+    if (side) return side;
+  }
   const sides = role === 'player' ? config.positioning.playerLaneSides : config.positioning.enemyLaneSides;
   const index = typeof lane === 'string' && ['left', 'middle', 'right'].includes(lane) ? ['left', 'middle', 'right'].indexOf(lane) : Number(lane) || 0;
   return sides[Math.min(2, Math.max(0, index))];
@@ -16,7 +22,7 @@ export const targetHudOverlaps = (a, b, gap = 0) => a.width > 0 && a.height > 0 
 // Physical pixels, including viewport scaling. A lane owns its preferred side;
 // staggering and alternate sides are tried before a free-space lattice. Every
 // candidate survives; no crowded target is omitted or docked over the hand.
-export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig(), tightTop = false }) {
+export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = targetHudConfig(), tightTop = false, enemyCount = panels.filter(panel => panel.role === 'enemy').length }) {
   const gap = config.positioning.gapPx, step = config.positioning.staggerStepPx, inset = config.positioning.edgeInsetPx;
   // Owner 2026-10-28: on phones and portrait the top edge is tighter than the sides so a panel can sit above an
   // enemy's overhead intent instead of covering it (topInsetPx); desktop and widescreen keep the common inset.
@@ -30,18 +36,18 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
   for (const panel of [...panels].sort((a, b) => (b.role === 'player') - (a.role === 'player') || a.anchor.top - b.anchor.top || a.anchor.left - b.anchor.left)) {
     const pinned = panel.role === 'player';
     const width = Math.min(panel.width, area.width), height = Math.min(panel.height, area.height), a = panel.anchor;
-    const side = targetHudSide(panel.role, panel.lane, config);
+    const side = targetHudSide(panel.role, panel.lane, config, enemyCount);
     const point = direction => direction === 'below' ? { left: a.left + (a.width - width) / 2, top: a.top + a.height + gap }
       : { left: direction === 'left' ? a.left - width - gap : a.left + a.width + gap, top: a.top - height / 3 };
     const choices = [], seen = new Set();
-    function add(left, top, penalty) {
+    function add(left, top, penalty, chosen = side) {
       const rect = { left: clamp(left, area.left, area.left + area.width - width), top: clamp(top, area.top, area.top + area.height - height), width, height };
       const key = `${rect.left}:${rect.top}`;
-      if (!seen.has(key)) { seen.add(key); choices.push({ ...rect, penalty }); }
+      if (!seen.has(key)) { seen.add(key); choices.push({ ...rect, penalty, side: chosen }); }
     }
     for (const [rank, direction] of (pinned ? [side] : [side, ...['left', 'below', 'right'].filter(value => value !== side)]).entries()) {
       const p = point(direction);
-      for (const offset of [0, -step, step, -height - gap, height + gap, -height * 2 - gap * 2, height * 2 + gap * 2]) add(p.left, p.top + offset, rank * 500 + Math.abs(offset));
+      for (const offset of [0, -step, step, -height - gap, height + gap, -height * 2 - gap * 2, height * 2 + gap * 2]) add(p.left, p.top + offset, rank * 500 + Math.abs(offset), direction);
     }
     if (!pinned) for (let top = area.top; top <= area.top + area.height - height; top += step)
       for (let left = area.left; left <= area.left + area.width - width; left += width + gap) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top));
@@ -56,7 +62,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     const free = choices.filter(choice => obstacleCount(choice) === 0);
     // A pinned panel overlaps a decoration before it leaves the player's side.
     const clear = pinned && !free.length ? choices.slice(0, 1) : free;
-    requests.push({ id: panel.id, side, choices, clear });
+    requests.push({ id: panel.id, choices, clear });
   }
   // Backtracking with the most constrained remaining target first avoids an
   // early preferred panel consuming the only free space for a front-row pair.
@@ -68,7 +74,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
       .sort((a, b) => a.choices.length - b.choices.length);
     const next = options[0];
     for (const rect of next.choices) {
-      const result = solve(remaining.filter(request => request !== next.request), [...assigned, { id: next.request.id, side: next.request.side, ...rect }]);
+      const result = solve(remaining.filter(request => request !== next.request), [...assigned, { id: next.request.id, ...rect }]);
       if (result) return result;
     }
     return null;
@@ -80,7 +86,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     const score = rect => rect.penalty + placed.filter(other => targetHudOverlaps(rect, other, gap)).length * 1e7
       + obstacles.filter(other => targetHudOverlaps(rect, other)).length * 1e5;
     const choices = [...request.choices].sort((a, b) => score(a) - score(b));
-    placed.push({ id: request.id, side: request.side, ...choices[0] });
+    placed.push({ id: request.id, ...choices[0] });
   }
   return placed;
 }
