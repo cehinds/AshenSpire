@@ -66,11 +66,14 @@ export const STREAM_NAMES = Object.freeze([
   // key and is byte-identical. A save written before the stream existed
   // reads it as 0.
   'combatRounds',
+  // Insight contests (SPEC §17 Contests): the d20 of a Read Intent / status contest.
+  // Appended last; an untouched run writes no key for it.
+  'combatContest',
 ]);
 
 // Streams whose zero counter is left out of getCounters() (and so out of a
 // save). Their counter is restored as 0 when missing.
-const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds']);
+const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds', 'combatContest']);
 
 const MULBERRY_INC = 0x6d2b79f5;
 
