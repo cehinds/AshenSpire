@@ -478,7 +478,7 @@ const KNOWN = {
   'src/ui/components/trayComponents.js': ["'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/components/tutorial.js': ["'keydown'", "'resize'"],
   'src/ui/debuglog.js': ["'error'", "'unhandledrejection'"],
-  'src/ui/modalManager.js': ["'popstate'", "'keydown'"], // the one modal stack: browser Back for entries that opt in; Escape capture for the top entry with dismiss
+  'src/ui/modalManager.js': ["'popstate'", "'keydown'", "'keydown'", "'focusin'"], // the one modal stack: browser Back for entries that opt in; Escape capture for the top entry with dismiss; Tab containment and focus bounce while a page lock is held
   'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'",
     ["'pointerdown'", 'pauses presentation for skip until the matching release; no engine action or authoritative mutation'],
     ["'pointerup'", 'flushes already committed public receipts for the held presentation skip; no engine dispatch'],
