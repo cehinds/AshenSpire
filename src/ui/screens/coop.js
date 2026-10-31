@@ -1,3 +1,4 @@
+import { floaterLifeMs } from '../animationPace.js';
 import { coopRangePreview } from '../models/CoopRangePreviewModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
@@ -2552,6 +2553,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
+      const life = floaterLifeMs();
+      el.style.setProperty('--float-ms', `${life}ms`);
       const centre = b.left + b.width / 2 + dx;
       const top = b.top + b.height * dy;
       el.style.left = `${centre}px`;
@@ -2570,7 +2573,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       } else {
         el.style.top = `${at.top}px`;
       }
-      setTimeout(() => el.remove(), 1100);
+      setTimeout(() => el.remove(), life + 60);
       return el;
     };
     const layoutReceiptRows = (rowsByTarget) => {
