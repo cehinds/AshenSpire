@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-31
 
+- **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.63`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields with a fine warm gold outline.
+
 - **Insight spells roll a contest instead of a hit chance** ([#2428](https://github.com/cehinds/AshenSpire/pull/2428), `0.7.2.63`). Read Intent, Blight, Charm, Weaken, Bind and Hexmark now resolve by a d20 plus your attributes and card rank against the target's current Poise, attributes and level, with no range to close, and Read Intent reveals intent in Core 2 again; Current combats keep their Accuracy roll.
 - **A per-stack checklist of every combat tag and status** ([#2427](https://github.com/cehinds/AshenSpire/pull/2427), `0.7.2.61`). `docs/design/TAG-EFFECTS-CHECKLIST.md` lists what each combat tag and stacked status does today, cited to the rule, and the per-stack effects proposed for each, with a suggested order of implementation.
 - **Spells strike Poise first, then Block** ([#2425](https://github.com/cehinds/AshenSpire/pull/2425), `0.7.2.59`). Magic damage now spends the target's Poise one for one before anything reaches Block or health, so spells break guards faster; physical hits still meet Block first and only then wear down Poise.

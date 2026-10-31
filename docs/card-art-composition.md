@@ -119,7 +119,9 @@ Each JSON asset includes its PNG reference, dimensions, hash, source references,
 
 All ten approved ethereal weapon/color combinations remain in the runtime JSON, including the scimitar. The melee mapping can select any of the five digit choices without regenerating art. Earth, alteration, necrotic and wind choose pale mint; the other schools use blue. All ten element projectiles are supported. Spell Counter and Evade retain the prior Simple bases until a matching cutout assembly is approved. Other unsupported identities retain Legacy; this pass does not invent additional status, power or consumable object art.
 
-## Selection and rendering
+## Retained compatibility selection and shared rendering
+
+The following selection rules describe the retained `simpleCardArt` compatibility resolver. Default procedural Simple mode uses the multi-element rules above: recognized elemental damage tags combine even alongside physical damage types, while invalid explicit element/school tags fail safely.
 
 `simpleCardArt(def, {ref, registries, large, variant})` accepts an already-resolved definition. Identity follows `cardTags ?? tags ?? activeRegistryJunction`. Explicit empty tags are authoritative. Conflicting camps/maneuvers fall back; names and profile IDs never guess a weapon. Cast skills/powers use utility objects; explicit maneuvers still take precedence. A legacy Attack type with an authored camp and no explicit maneuver remains Attack. An evade payload or direct `dodgeRoll` selects Evade; a block effect alone does not.
 
