@@ -1202,6 +1202,8 @@ function playLegacyTimeline(events, ctx, done) {
   const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
+  // Reaction reservations use the paced sprite speed (frame hold included), as the sequential path does.
+  const paced = actionPacing({ reduced }).spriteSpeed;
   const beatOrder = ctx.beatOrder || getBeatOrder();
   if (!speed || reduced) {
     // No added waits. 'sequential' still updates the bars after the
@@ -1310,9 +1312,14 @@ function playLegacyTimeline(events, ctx, done) {
   // hold and a step after the swing.
   const sequentialMs = beatOrder === 'sequential'
     ? beats.filter((beat) => beat.kind === 'attack')
-      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,speed), speed.reactionMs) + speed.stepMs,0), 0)
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,paced), speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
-  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  // Impact order plays each sprite reaction with its contact and holds the beat for the paced total, so the
+  // watchdog must outlast those reservations too.
+  const impactReactionMs = beatOrder === 'sequential' ? 0
+    : beats.reduce((ms, beat) => ms + beat.events.reduce((total, event) => total
+      + (ctx.reactionForReceipt?.(event) ? budgetRead(() => ctx.reactionTimingForReceipt?.(event, paced), speed.reactionMs) : 0), 0), 0);
+  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + impactReactionMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -1472,6 +1479,7 @@ function playLegacyTimeline(events, ctx, done) {
       // A beat with nothing to draw at impact still reaches its impact frame.
       if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
+      let reactionEndAt = 0;
       const stepV = () => {
         if (finished) return;
         if (flushed) {
@@ -1504,6 +1512,10 @@ function playLegacyTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
+          // Impact order plays the sprite reaction with the contact; the beat must outlast its paced total so
+          // the next beat's action is not painted over it.
+          if (!sequential && ctx.reactionForReceipt?.(event))
+            reactionEndAt = Math.max(reactionEndAt, Date.now() + (Number(ctx.reactionTimingForReceipt?.(event, paced)) || 0));
           markContact(event.type);
           // Sequential: the damage buzz waits for the number (below).
           if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
@@ -1518,7 +1530,6 @@ function playLegacyTimeline(events, ctx, done) {
           schedule(stepV, Math.max(stepGap, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
-        let reactionEndAt = 0;
         const applyBeat = () => {
           cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(beatIndex) }));
@@ -1596,7 +1607,7 @@ function playLegacyTimeline(events, ctx, done) {
             traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
             said();
-            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs));
+            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,paced)) || speed.reactionMs));
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
               else schedule(stepR, Math.max(speed.reactionMs,reactionEndAt-Date.now()));
