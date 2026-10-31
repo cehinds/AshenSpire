@@ -97,7 +97,7 @@ import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alte
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
 import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { ANIM_SPEEDS, COMBAT_TIMING, actionPacing, getAnimSpeed } from '../animationPace.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, actionPacing, getAnimSpeed, reactionPlayMs } from '../animationPace.js';
 import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { CARD_ACTION_CLASSES } from '../../model/alternativeCardAnimation.js';
@@ -419,7 +419,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!kind || defeatedBeat || !stage?.reactionPoses?.includes(kind)) return null;
       return () => {
         const current=stageFor(fxCtx.anchorFor(event.targetId));
-        current?.reactPose?.(kind, current.reactionTiming?.(kind,ANIM_SPEEDS[getAnimSpeed()])?.totalMs || 280);
+        current?.reactPose?.(kind, reactionPlayMs(current, kind, { reduced: reducedMotionRequested() }));
       };
     },
     reactionTimingForReceipt: (event,speed) => {
