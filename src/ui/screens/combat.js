@@ -671,7 +671,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       wireUpcastControl(el, entry.inst, entry.preview);
       return release;
     },
-    updateCard: (el, entry) => { cardRelive.get(el)?.(entry); },
+    updateCard: (el, entry) => {
+      cardRelive.get(el)?.(entry);
+      // The upcast toggle was built disabled if the card arrived mid-playback; the kept card re-reads the lock.
+      const upcast = el.querySelector?.('.card-upcast');
+      if (upcast) upcast.disabled = busy || enemyPlayback || !!combat.result;
+    },
     // The upcast control is built from the preview's upcast options and the chosen tier: when either moves, the card is rebuilt.
     rebuildKey: entry => {
       const def = entry.preview?.resolvedDefinition;
