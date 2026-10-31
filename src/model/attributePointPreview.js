@@ -13,6 +13,8 @@ import { statRowValue } from './derivedStats.js';
 import { statRow } from './statRows.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
+import { effectiveAshenBlightAttributes } from './ashenBlight.js';
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { t } from '../ui/strings.js';
 
 /** Pool stats are compared by delta / POOL_SCALE against rating stats by delta, so +10 HP ties +1 Poise. */
@@ -41,8 +43,12 @@ function previewContext(registries, run, attributes) {
 
 /** attributePointGains(registries, run, attributeId, { settings }) → [{ statId, label, before, after, delta, text }] for +1 of that attribute. */
 export function attributePointGains(registries, run, attributeId, { settings = {} } = {}) {
-  const current = { ...run.attributes };
-  const raised = { ...current, [attributeId]: (Number(current[attributeId]) || 0) + 1 };
+  // The same transforms rederivePools (model/levelup.js) applies before pricing a
+  // pool: a constant blight or gear bonus moves which floored point crosses a threshold.
+  const effective = (attributes) => { const probe = { ...run, attributes, allocatedAttributes: undefined }; return gameProfileEffectiveAttributes(registries, probe, effectiveAshenBlightAttributes(probe)); };
+  const rawNow = { ...run.attributes };
+  const current = effective(rawNow);
+  const raised = effective({ ...rawNow, [attributeId]: (Number(rawNow[attributeId]) || 0) + 1 });
   const level = run.level?.level;
   const classDef = registries.classes?.get?.(run.class);
   const gains = [];

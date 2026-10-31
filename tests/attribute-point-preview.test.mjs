@@ -45,7 +45,7 @@ test('a changed authored gain changes the text: nothing is hard-coded', () => {
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { withModalDom } from './helpers/modal-dom.mjs';
 import { mountRewards } from '../src/ui/screens/reward.js';
-import { allocateAttributePoint } from '../src/model/levelup.js';
+import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 
@@ -81,4 +81,19 @@ test('the Armoury allocation modal shows the same span, and the Rest card model 
   const cards = attributeCardModels(registries, run.attributes, { gainContext: { run } });
   assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+10 HP');
   assert.ok(cards.every(c => Array.isArray(c.gains)));
+});
+
+test('a blight attribute bonus moves the threshold: the preview matches what allocateAttributePoint changes', () => {
+  const { registries, run } = build((r) => {
+    r.ashenBlight = { milestones: [{ path: 'survivor', tier: 1 }] };
+    r.attributes.constitution = 1;
+    r.level.unspentPoints = 1;
+  });
+  const stamina = () => run.maxStamina;
+  const predicted = attributePointGains(registries, run, 'constitution').find(g => g.statId === 'stamina')?.delta ?? 0;
+  rederivePools(registries, run, 'test'); // the milestone was injected after birth: settle its one-off bonus first
+  const before = stamina();
+  allocateAttributePoint(registries, run, 'constitution');
+  assert.equal(stamina() - before, predicted, 'preview equals the real allocation');
+  assert.equal(predicted, 0, 'the +1 CON bonus makes floor(0.5 x CON) cross no threshold at CON 1 -> 2');
 });
