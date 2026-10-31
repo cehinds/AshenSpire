@@ -1104,6 +1104,8 @@ export const SCHEMAS = Object.freeze({
     damageResistanceBySchool: opt(obj(Object.fromEntries(
       DAMAGE_SCHOOLS.map((school) => [school, opt(num)])
     ))),
+    // Weaknesses (owner, 2026-10-31): [{ to, effect, amount? }], validated by model/enemyWeaknessRules.js in validate.js.
+    weaknesses: opt(arr(obj({ to: str, effect: str, amount: opt(num) }))),
     script: opt(ref('scripts')),
   }),
 
