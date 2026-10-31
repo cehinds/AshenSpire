@@ -4,11 +4,12 @@ import {createRegistries} from '../../model/registries.js';
 import {renderCard} from '../components/card.js';
 import {cardArtLayersHtml} from '../cardArtLayers.js';
 import {cardCutoutUrl} from '../layeredCardArt.js';
+import {gameRootURL} from './cardArtReviewUrl.js';
 const reg=createRegistries(contentBundle), original=structuredClone(catalog.records), checked=new Set();
 const $=id=>document.getElementById(id), records=Object.values(catalog.records);
 let selected=Object.keys(catalog.records)[0];
-// Source pages live below /docs; asset IDs are rooted at the game, not that page.
-const rootURL=new URL('../../../../',import.meta.url);
+// Asset IDs are rooted at the game (this module is src/ui/tools/), keeping any deployment prefix.
+const rootURL=gameRootURL(import.meta.url);
 const imageURL=path=>new URL(cardCutoutUrl(path),rootURL).href;
 function element(tag,text){const node=document.createElement(tag);if(text)node.textContent=text;return node;}
 function download(blob,name){const url=URL.createObjectURL(blob),a=element('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
