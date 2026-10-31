@@ -1990,6 +1990,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
       err(`${path}.class`, `class '${card.class}' is neither a class id nor 'colorless'`);
     }
     validateCardTemplates(card, path, err);
+    validateCardRamp(card, path, err);
     if (card.burden) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
@@ -2903,6 +2904,17 @@ function checkWardOffTemplate(card, path, err) {
   const bound = new Set([...computeTokenBindings(cardTokenEffects(card)).map((bd) => bd.token), 'poiseDamage']);
   for (const token of extractTemplateTokens(card.wardOffTextTemplate)) {
     if (!bound.has(token)) err(`${path}.wardOffTextTemplate`, `Template token '{${token}}' does not bind to any effect value`);
+  }
+}
+
+// A card's `ramp` (SPEC §4.3): per is a whole number 1..3; the stat must name an effect the card (or its upgrade) has.
+function validateCardRamp(card, path, err) {
+  for (const [at, ramp, effects] of [[`${path}.ramp`, card.ramp, card.effects], [`${path}.upgrade.ramp`, card.upgrade?.ramp, card.upgrade?.effects ?? card.effects]]) {
+    if (!ramp) continue;
+    if (!Number.isInteger(ramp.per) || ramp.per < 1 || ramp.per > 3) err(`${at}.per`, 'must be a whole number from 1 to 3');
+    const hit = (Array.isArray(effects) ? effects : []).find(effect => effect && effect.op === ramp.stat);
+    if (!hit) err(`${at}.stat`, `no '${ramp.stat}' effect to ramp`);
+    else if (!Number.isFinite(hit.amount)) err(`${at}.stat`, `the '${ramp.stat}' effect's amount must be a plain number to ramp`);
   }
 }
 
