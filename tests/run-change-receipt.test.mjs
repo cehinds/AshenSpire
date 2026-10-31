@@ -52,10 +52,12 @@ test('armament bought and tiered', () => {
   assert.equal(tier.tierBefore, 1); assert.equal(tier.tierAfter, 2); assert.equal(tier.label, registries.equipment.armaments.find((p) => p.id === id).name);
 });
 test('class swap and flask rows', () => {
-  const d = diff(newRun(), (r) => { r.class = 'warden'; r.flasks = ['hp']; });
+  const d = diff(newRun(), (r) => { r.class = 'warden'; r.flasks = [{ flaskId: [...registries.flasks.ids()][0] }]; r.flaskCharges.capacity += 1; });
   const cls = rowOf(d, 'class');
   assert.equal(cls.before, registries.classes.get('reaver').name);
-  assert.ok(d.rows.some((r) => r.kind === 'resource' && /FLASK/.test(r.label)));
+  assert.ok(d.rows.some((r) => r.kind === 'resource' && r.label === registries.flasks.get([...registries.flasks.ids()][0]).name.toUpperCase()), 'the flask is named, not [object Object]');
+  assert.ok(d.rows.some((r) => r.label === 'FLASK CHARGES'));
+  assert.ok(!d.rows.some((r) => /object/.test(r.label)));
 });
 
 test('a weapon art lands in the sideboard: a gained card row with its face', () => {

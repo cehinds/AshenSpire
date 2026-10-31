@@ -34,7 +34,8 @@ export function snapshotRunForDiff(run) {
     equipped: freeze(sets),
     itemUpgradeLevels: freeze({ ...levels }),
     classId: run?.class ?? null,
-    flasks: freeze([...(run?.flasks || [])]),
+    flasks: freeze((run?.flasks || []).map((f) => (typeof f === 'string' ? f : f?.flaskId)).filter(Boolean)),
+    flaskCharges: freeze({ capacity: num(run?.flaskCharges?.capacity), hp: num(run?.flaskCharges?.hp), mana: num(run?.flaskCharges?.mana) }),
     potions: freeze({ ...(run?.consumables || {}) }),
     sigilSlots: freeze(Object.fromEntries(Object.entries(run?.sigilSlots || {}).map(([ref, slots]) => [ref, freeze([...(slots || [])])]))),
   });
@@ -138,8 +139,10 @@ export function diffRunSnapshots(before, after, registries) {
   const flaskB = counted(before.flasks), flaskA = counted(after.flasks);
   for (const id of new Set([...flaskB.keys(), ...flaskA.keys()])) {
     const a = flaskB.get(id) || 0, b = flaskA.get(id) || 0;
-    if (a !== b) rows.push(stat(`FLASK ${id}`, a, b, 'resource'));
+    const name = registries?.flasks?.has?.(id) ? registries.flasks.get(id).name : id;
+    if (a !== b) rows.push(stat(String(name).toUpperCase(), a, b, 'resource'));
   }
+  pair('FLASK CHARGES', before.flaskCharges.capacity, after.flaskCharges.capacity, 'resource');
   for (const id of new Set([...Object.keys(before.potions), ...Object.keys(after.potions)])) {
     const a = num(before.potions[id]), b = num(after.potions[id]);
     if (a !== b) rows.push(stat(String(id).toUpperCase(), a, b, 'resource'));
