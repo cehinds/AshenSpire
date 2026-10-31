@@ -10,7 +10,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { applyReceiptToPreviewTarget } from '../src/engine/combatDamagePreview.js';
-import { guardHitFloatParts } from '../src/ui/fx.js';
+import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -114,4 +114,20 @@ test('the log reports the whole hit when a spell is absorbed by Poise (10 -> "fo
   assert.match(text(ev(partly)), /for 10/);
   const full = hit(spell, { poise: 20 });
   assert.match(text(ev(full)), /for 10/);
+});
+
+test('the Poise tooltip composes the locked physical text with the spell sentence under Core with Ward off', async () => {
+  const { poiseHelpText } = await import('../src/ui/poiseHelp.js');
+  const { fixCoreProtectionDescription } = await import('../src/model/fixCoreMechanics.js');
+  const combat = liveCore(), enemy = combat.enemies[0];
+  enemy.persistentPoise = { value: 5, max: 10 };
+  const text = poiseHelpText(combat, enemy);
+  assert.ok(text.startsWith(fixCoreProtectionDescription(combat, enemy, 'poise')), 'keeps the physical description');
+  assert.match(text, /Spells spend Poise one for one before Block\./);
+});
+
+test('a spell Poise absorbed with the rest blocked keeps the BLOCKED callout and the Poise N float part', () => {
+  const event = { type: 'damageDealt', amount: 4, blocked: 4, poiseAbsorbed: 6, magicPoise: 6 };
+  assert.equal(outcomeKindForEvent(event), 'blocked');
+  assert.equal(guardHitFloatParts(event).magicPoise.text, 'Poise 6');
 });

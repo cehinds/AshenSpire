@@ -195,7 +195,9 @@ legacy idle-recovery at turn end. Combat initializes pools through the existing
 resource entry rule; the first turn does not grant a duplicate setup refill.
 That entry rule opens every fight with Stamina at its maximum
 (`mechanics.stamina.combatStartRefill: "full"`, owner's call 2026-09-24, plan
-A2); Mana carries between fights as it stands.
+A2). Mana refills to its maximum when a fight ends
+(`mechanics.mana.combatEndRefill: "full"`, owner's call 2026-10-31, superseding
+the plan A2 Mana carry); `"carry"` keeps what the fight left.
 Mana has zero natural turn recovery and retains explicit flask/rest restoration.
 Resource refunds do not reset activation limits or allow replaying a paid effect.
 
