@@ -8,11 +8,15 @@ import {cardSigilsHtml} from './combatSigilView.js';
 import {fitIllustratedCards} from './illustratedCardFitter.js';
 import {rankAnchor} from './cardLayout.js';
 import {cardArtLayersHtml} from '../cardArtLayers.js';
+import {FACE_EFFECT_LINES} from '../../model/cardFaceProjection.js';
 import {t} from '../strings.js';
+import {cardArtStyle,CARD_ART_LEGACY,CARD_ART_REVIEWED} from '../cardArtStyle.js';
 
 export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,registries,style}={}) {
   const override=CARD_COMPONENTS.cards[id]?.layers.find(l=>l.bind==='artwork')?.href;
   const existing=playingCardArt(ref,{large,extended,definition,registries,style});
+  const mode=style??cardArtStyle();
+  if(!existing&&definition&&Object.hasOwn(definition,'cardTags')&&mode!==CARD_ART_LEGACY&&mode!==CARD_ART_REVIEWED)return null;
   // The shipped layout's older painting is part of Legacy. User component
   // overrides are still applied afterward by applyCardAppearance.
   if(existing?.kind==='simple')return {...existing,equipment:false};
@@ -45,8 +49,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   const costLayout=Number(model.costs.mana)>0?'staminaMana':'staminaOnly';
   const costLayers=doc.costLayouts?.[costLayout]?.layers||{};
   const portraitArt=artworkComposition?.fit==='cover'||painting?.startsWith('assets/cards/extended/');
-  // Face lines (cardFaceText.js) fit the rules layer to five lines; the hand
-  // shows three at rest through its own data-max-lines (card.js).
+  // Ordinary effects have the same physical line budget in every view.
   const faceRules=/class="face-line"/.test(rules);
   let faceLineCount=0;
   const renderedRules=faceRules&&!completeRules?rules.replace(/<span class="face-line"([^>]*)>/g,(_match,attrs)=>{
@@ -56,6 +59,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   if(faceRules&&completeRules)faceLineCount=(rules.match(/class="face-line"/g)||[]).length;
   const layers=doc.layers.map(l=>({...l,...costLayers[l.id],...(portraitArt&&l.bind==='artwork'?{visible:true,fit:'cover',trim:null}: {})})).filter(l=>l.visible!==false).map(source=>{
     let l=equipmentArtwork&&source.bind==='artwork'?{...source,...doc.equipmentArtwork}:source;
+    if(faceRules&&l.bind==='rules')l={...l,autoFit:true,maxLines:FACE_EFFECT_LINES};
     if(model.faceType&&l.bind==='tags')l={...l,fontSize:30,minFontSize:24,maxFontSize:30,fontWeight:'bold',maxLines:1,autoFit:true};
     if(model.sigils){
       // Raise the parchment as one piece, preserving its effect-text capacity.
@@ -71,7 +75,9 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
     if(l.bind==='tags'&&model.sigils){
       body=cardSigilsHtml(model.sigils);
     }else if(l.type==='image'){
-      const href=l.bind==='artwork'?(painting||l.href):l.href;
+      // Explicit null is an unresolved semantic art choice, not permission to
+      // restore the layout's ID-specific Legacy painting.
+      const href=l.bind==='artwork'?(painting===null?null:painting||l.href):l.href;
       if(href){
         const [x,y,w,h]=l.trim||[0,0,l.imageWidth||1,l.imageHeight||1];
         const crop=l.trim?`width:${l.imageWidth/w*100}%;height:${l.imageHeight/h*100}%;left:${-x/w*100}%;top:${-y/h*100}%;`:'width:100%;height:100%;left:0;top:0;';

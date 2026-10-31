@@ -48,19 +48,26 @@ export function fitIllustratedCards(cards) {
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
-      // Compact faces show three semantic effects; each may wrap inside
-      // the same authored rules bay.
+      const clauses=[...(text.querySelectorAll?.('[data-face-clause]')||[])];
+      const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
-        // Semantic effect lines can wrap over multiple printed rows.
-        lines:rules?Infinity:Number(text.dataset.maxLines)||1,
+      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:bounded?1.25:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+        lines:bounded?3:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesHidden==='true'};
+      if(bounded){
+        row.fallback=text.querySelector('[data-face-fallback]');
+        row.fallbackShort=text.querySelector('[data-face-fallback-short]');
+        for(const clause of clauses)clause.style.display='';
+        if(row.fallback)row.fallback.style.display='none';
+        if(row.fallbackShort)row.fallbackShort.style.display='none';
+      }
       if(rules){
         // A previous clipped fit must not constrain this fit's measurements.
         text.style.maxHeight='none';layer.style.justifyContent='';
         row.cue=face.querySelector('.card-rules-inspect-cue');
+        if(bounded&&row.cue)row.cue.style.display='none';
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');
@@ -105,7 +112,7 @@ export function fitIllustratedCards(cards) {
   const unknownFaces=new Set(texts.filter(row=>!fitResults.has(row.fitKey)).map(row=>row.face));
   for(const row of texts)if(!unknownFaces.has(row.face))row.result=fitResults.get(row.fitKey);
   const measured=texts.filter(row=>unknownFaces.has(row.face));
-  const rules=texts.filter(row=>row.rules);
+  const rules=texts.filter(row=>row.rules&&!row.bounded);
   for(const row of rules)row.face.dataset.rulesDense='false';
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
@@ -131,6 +138,44 @@ export function fitIllustratedCards(cards) {
     row.text.style.display='block';
     row.text.dataset.fittedFont=String(row.result/row.scale);
     if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
+  }
+  // Cached font searches and page zoom keep their current-dev semantics.
+  // At that readable floor, omit only whole clauses, remeasure the primary,
+  // and switch the entire reading to Information if its fixed bay is short.
+  const bounded=texts.filter(row=>row.bounded);
+  const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*row.lineHeight*row.lines)+1
+    ||row.text.scrollWidth>row.text.clientWidth+1;
+  for(const row of bounded)row.omitSecondary=overBudget(row);
+  for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1)row.clauses.at(-1).style.display='none';
+  for(const row of bounded)row.needsFallback=overBudget(row);
+  for(const row of bounded){
+    if(row.needsFallback&&row.fallback){
+      for(const clause of row.clauses)clause.style.display='none';
+      row.fallback.style.display='inline';
+    }
+    if(row.omitSecondary||row.needsFallback)row.face.dataset.faceOmitted='true';
+    row.face.dataset.rulesExpanded='false';
+    row.face.dataset.rulesDense='false';
+    row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
+    row.face.dataset.rulesFallback=String(row.needsFallback);
+    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.needsFallback||row.hasHiddenRules);
+    row.text.dataset.rulesComplete=String(!row.omitSecondary&&!row.hasHiddenRules);
+  }
+  // At the zoom-aware 11px floor even the full instruction can need two
+  // lines in the smallest authored bays. Use the existing localized short
+  // Inspect label, retaining the full instruction as its accessible name.
+  for(const row of bounded)row.useShortFallback=row.needsFallback&&overBudget(row);
+  for(const row of bounded)if(row.useShortFallback&&row.fallbackShort){
+    if(row.fallback)row.fallback.style.display='none';
+    row.fallbackShort.style.display='inline';
+  }
+  for(const row of bounded)row.fallbackUnavailable=row.useShortFallback&&overBudget(row);
+  for(const row of bounded){
+    // A designer can author a bay shorter than a single readable line. Keep
+    // the existing Information button as the reading door in that case,
+    // rather than clipping an instruction or shrinking below the font floor.
+    if(row.fallbackUnavailable&&row.fallbackShort)row.fallbackShort.style.display='none';
+    row.face.dataset.rulesShortFallback=String(row.useShortFallback);
   }
   for(const row of rules){
     row.face.dataset.rulesExpanded='false';

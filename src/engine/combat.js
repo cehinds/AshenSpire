@@ -6,6 +6,7 @@ import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
+import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -2940,6 +2941,11 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(range ? { range, costs: rangeCosts } : {}),
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
+    // Information travels with this preview, including custom saved status
+    // caps. Clone presentation metadata so a UI reader cannot alter combat.
+    combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
+    foundation: !!combat.foundation,
+    coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),

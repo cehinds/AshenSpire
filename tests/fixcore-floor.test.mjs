@@ -124,9 +124,19 @@ test('a scripted Core 2 fight logs no decimal damage, block or protection value'
   applyStatus(combat, combat.player, 'weak', 1, combat.player);
   combat.player.persistentPoise = { value: 30, max: 30 };
   const problems = [];
-  for (const card of combat.piles.hand) decimals(previewCard(combat, card.instanceId, target.id), `preview.${card.cardId}`, problems);
+  const checkPreview = (card, targetId, path) => {
+    const { combatStatusRules, ...quantities } = previewCard(combat, card.instanceId, targetId);
+    // This detached inspection receipt is configuration, not an applied
+    // quantity. Keep its intentional coefficients and scan everything else.
+    assert.equal(combatStatusRules.recovery.pendingRemoval, 0.25);
+    assert.deepEqual(combatStatusRules.profiles.elemental, { constitution: 0.5, wisdom: 0, intelligence: 0.5 });
+    assert.deepEqual(combatStatusRules.profiles.mental, { constitution: 0, wisdom: 0.75, intelligence: 0.25 });
+    assert.deepEqual(combatStatusRules.profiles.curse, { constitution: 0, wisdom: 0.5, intelligence: 0.5 });
+    decimals(quantities, `${path}.${card.cardId}`, problems);
+  };
+  for (const card of combat.piles.hand) checkPreview(card, target.id, 'preview');
   // Untargeted card faces (no enemy picked) are whole numbers too, matching stance included.
-  for (const card of combat.piles.hand) decimals(previewCard(combat, card.instanceId, null), `face.${card.cardId}`, problems);
+  for (const card of combat.piles.hand) checkPreview(card, null, 'face');
   const card = combat.piles.hand.find(row => row.cardId === 'core.strike' && previewCard(combat, row.instanceId, target.id).values.some(v => v.op === 'damage'));
   primeAccuracyRolls(combat);
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: target.id });

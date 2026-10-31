@@ -9,6 +9,8 @@ import { balance } from '../content/balance.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { thaw, shallowFrozen } from '../config/authored.js';
 import { variableIntentDamage } from '../model/intentDamage.js';
+import { resolveStatusPresentationDefinition, coreStatusLifecycle, statusPresentationContext } from '../model/statusPresentation.js';
+import { statusLifecycleText } from './statusLifecycle.js';
 
 // THE TABLES NOW LIVE IN content/config/ui/presentation/uiContent.json and are
 // compiled into src/config/generated/ui.js. What stays in this file is the
@@ -28,8 +30,13 @@ const fill = (template, values) => Object.entries(values)
 // tooltip prose is a copy nothing syncs). One substitution home; a token that
 // resolves to nothing stays visible as its literal '{...}' — a loud defect,
 // not a silent blank.
-export function statusTooltipText(def) {
+export function statusTooltipText(def, context = {}) {
+  context = statusPresentationContext(def, context);
+  def = resolveStatusPresentationDefinition(def, context);
   let t = def.tooltip || '';
+  // Core's shared descriptive facts include a generic application sentence;
+  // the structured stack mode below owns that sentence for custom overrides.
+  if (coreStatusLifecycle(def, context)) t = t.replace(/Applications add stacks\. ?/g, '');
   const sub = (token, v) => {
     if (v != null) t = t.split(`{${token}}`).join(String(v));
   };
@@ -47,13 +54,13 @@ export function statusTooltipText(def) {
   for (const [i, hook] of (def.hooks || []).entries()) {
     for (const [j, effect] of (hook.do || []).entries()) sub(`hooks.${i}.do.${j}.amount`, effect.amount);
   }
-  return t;
+  return [t, statusLifecycleText(def, context)].filter(Boolean).join(' ');
 }
 
 // One typed instance presentation for both combat clients. A registered
 // percent payload is not a generic stack count; its duration is a separate
 // clock and must be named separately.
-export function statusInstancePresentation(def, inst) {
+export function statusInstancePresentation(def, inst, context = {}) {
   const s = copy.status;
   const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
   const valueToken = def.instancePresentation?.valueToken || s.defaultValueToken;
@@ -69,7 +76,7 @@ export function statusInstancePresentation(def, inst) {
     valueText,
     durationText,
     label,
-    tooltip: `${statusTooltipText(def)}${durationText ? fill(s.turnsLeft, { duration: inst.duration }) : ''}`,
+    tooltip: `${statusTooltipText(def, { foundation: Array.isArray(inst?.applications), ...context })}${durationText ? fill(s.turnsLeft, { duration: inst.duration }) : ''}`,
     semantic: { statusId: def.id, valueToken, ariaLabel: label },
   };
 }

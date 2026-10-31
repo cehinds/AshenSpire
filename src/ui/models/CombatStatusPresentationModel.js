@@ -1,4 +1,4 @@
-import { statusPresentationDefinition } from '../../model/statusPresentation.js';
+import { statusPresentationDefinition, inheritStatusPresentationContext } from '../../model/statusPresentation.js';
 
 // A combat-local read view. The engine and other screens retain their original
 // registry; both card inspection and PIPs read the active rules' descriptions.
@@ -16,7 +16,7 @@ export function combatStatusPresentationRegistries(registries, combat) {
     all: () => original.all().map(definition => project(definition)),
   }, ...(registries.frameworkTerms ? { frameworkTerms: { ...registries.frameworkTerms,
     withStatusWords: definition => {
-      const named = registries.frameworkTerms.withStatusWords(definition);
+      const named = inheritStatusPresentationContext(definition, registries.frameworkTerms.withStatusWords(definition));
       // The terminology overlay owns names, but its authored legacy Evade
       // tooltip must not replace the active Core rule in either inspector.
       return definition?.id === 'evade' ? project(named, holders.get(definition) ?? null) : named;

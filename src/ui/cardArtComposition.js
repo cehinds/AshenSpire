@@ -1,6 +1,7 @@
 import { approvedCardArt } from './layeredCardArt.js';
 import { objectTagIds } from '../content/tags.js';
 import { tagService } from '../model/tagService.js';
+import { proceduralCardArt } from './proceduralCardArt.js';
 
 export const CARD_ART_MANEUVERS = Object.freeze(['attack', 'smash', 'counter', 'evade', 'sweep', 'defend']);
 // Presentation only: these palettes do not introduce damage schools or rules.
@@ -57,6 +58,45 @@ const damageElement = (def, tags) => {
   // Even one elemental component beside a physical component is mixed damage.
   return types.length === 1 ? cardArtElement(types[0]) : null;
 };
+
+/** Compatibility adapter only: old definitions may declare visual facts in DSL.
+ * Explicit cardTags are authoritative, even when empty; the pure factory never
+ * reads effects, card IDs or registry card definitions.
+ */
+export function proceduralDefinitionArt(def, { ref, registries } = {}) {
+  if (!def || typeof def !== 'object') return null;
+  const explicit = Object.hasOwn(def, 'cardTags');
+  const tags = tagIds(explicit ? def.cardTags : def.tags ?? (registries
+    ? tagService(registries).idsOf('card', def) : objectTagIds('card', def.id || ref?.cardId || '')));
+  if (!explicit) {
+    const visited = new Set();
+    const walk = (value, depth = 0) => {
+      if (!value || typeof value !== 'object' || depth > 12 || visited.has(value)) return;
+      visited.add(value);
+      if (['applyStatus', 'buildup'].includes(value.op) && typeof value.status === 'string') tags.push(`status:${value.status}`);
+      if (value.op === 'heal') tags.push('effect:heal');
+      if (['draw', 'shuffleDiscardIntoDraw'].includes(value.op)) tags.push('effect:draw');
+      if (value.op === 'removeStatus' && value.target === 'self') tags.push('effect:cleanse');
+      for (const child of Object.values(value)) if (child && typeof child === 'object') walk(child, depth + 1);
+    };
+    for (const key of ['effects', 'counterPayload', 'upcast', 'schoolEffect']) walk(def[key]);
+    if (def.evade || def.effects?.some?.(effect => effect.op === 'dodgeRoll')) {
+      for (let i = tags.length - 1; i >= 0; i--) if (tags[i].startsWith('maneuver:')) tags.splice(i, 1);
+      tags.push('maneuver:evade');
+    }
+    const components = def.attack?.components;
+    const damage = Array.isArray(components) ? components.map(row => row?.type) : [def.attack?.damageType];
+    if (damage.some(Boolean)) {
+      for (let i = tags.length - 1; i >= 0; i--) if (tags[i].startsWith('damage:')) tags.splice(i, 1);
+      tags.push(...damage.filter(type => typeof type === 'string').map(type => `damage:${type}`));
+    }
+  }
+  const validRank = rank => Number.isInteger(rank) && rank > 0;
+  const validAbility = rank => Number.isInteger(rank) && rank >= 0;
+  const rank = validRank(def.rank) ? def.rank : validAbility(def.abilityRank) ? def.abilityRank + 1
+    : validRank(ref?.rank) ? ref.rank : validAbility(ref?.abilityRank) ? ref.abilityRank + 1 : 1;
+  return proceduralCardArt({ type: def.type, tags, rank }, { registries });
+}
 
 /** Every active status can contribute a small motif; registry labels are data, not markup. */
 export function cardArtStatuses(def, tags = [], registries = null) {
