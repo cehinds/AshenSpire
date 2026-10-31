@@ -6,7 +6,7 @@
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
 import { t } from '../ui/strings.js';
-import { accuracyRollReceipt, contestRollReceipt, critRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
+import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -254,6 +254,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         if (d) lines.push(d.success ? `${target} avoided ${attack} at range: distance roll ${d.roll}, needed ${d.chance} or less.`
           : `${target}'s range failed against ${attack}: distance rolled ${d.roll}, needed ${d.chance} or less.`);
         if (e) {
+          rollReceipt = evadeRollReceipt(e);
           const roll = Number.isFinite(e.total) && e.total !== e.roll ? `${e.roll} + ${e.total - e.roll} = ${e.total}` : `${e.roll}`;
           lines.push(e.success ? `${target} evaded ${attack}: Evade roll ${roll} beat ${e.difficulty}.`
             : `${target}'s Evade failed against ${attack}: rolled ${roll}, needed more than ${e.difficulty}.`);
@@ -306,6 +307,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'statusExpired': text = `${target}'s ${statusName(registries, event.status)} expired.`; break;
       // The framework dodge (v1): the player rolls on playing a dodge card; a success lays down a guard.
       case 'dodgeRolled': {
+        rollReceipt = dodgeRollReceipt(event);
         const dodger = name(sourceKey || 'player');
         const via = paren(causeText({ self: sourceKey }));
         text = event.success

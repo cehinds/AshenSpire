@@ -95,3 +95,11 @@ test('rollStatusChance emits statusChanceRolled only when labelled, with the sam
   assert.equal(quiet.events.length, 0);
   assert.deepEqual(loud.events, [{ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [34], roll: 34, chance: 45, effectiveChance: 45, success: true }]);
 });
+
+test('Dodge and Evade keep their sentences and add an itemised receipt', () => {
+  const dodge = one({ type: 'dodgeRolled', sourceId: 'player', success: true, roll: 9, check: 12, difficulty: 10, temporaryGuard: 3 });
+  assert.match(dodge.text, /Dodge roll 12 beat 10/);
+  assert.deepEqual(rollReceiptLines(dodge.rollReceipt), ['d20 [9]', '+ Dexterity + Weight Class 3', '= 12', 'vs DC 10', 'success']);
+  const evade = one({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', evade: { roll: 7, total: 9, difficulty: 12, success: false } });
+  assert.deepEqual(rollReceiptLines(evade.rollReceipt), ['d20 [7]', '+ bonus 2', '= 9', 'vs DC 12', 'fail']);
+});

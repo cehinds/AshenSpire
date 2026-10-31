@@ -137,3 +137,16 @@ test('full detail shows shared damage receipts and can return to compact reading
     log.close();
   });
 });
+
+test('full detail itemises a roll under its row; compact reading hides it', () => {
+  withModalDom(dom => {
+    resetModalState();
+    const rollReceipt = { kind: 'accuracy', die: 'd20', dice: [14], mode: 'normal', success: true,
+      parts: [{ label: 'Precision', value: 4, note: 'mix 2 + stacks 2' }], total: 18, dcParts: [{ label: 'Evasion', value: 9 }], dc: 9 };
+    const log = openCombatLogModal({ entries: [{ id: 1, round: 1, text: 'Strike: 18 vs 9 · hit', rollReceipt }], opener: openerButton(dom) });
+    assert.match(log.panel.querySelector('.combat-log-roll').textContent, /d20 \[14\]\n\+ Precision 4 \(mix 2 \+ stacks 2\)\n= 18\nvs Evasion 9\nhit/);
+    [...log.panel.querySelectorAll('button')].find(node => node.textContent === 'Compact log').click();
+    assert.equal(log.panel.querySelector('.combat-log-roll'), null);
+    log.close();
+  });
+});
