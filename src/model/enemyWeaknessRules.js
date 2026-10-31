@@ -62,3 +62,11 @@ export function describeWeakness(weakness) {
   }[weakness.effect] || weakness.effect;
   return { label, text };
 }
+
+/** Weaknesses as inspector / bestiary trait rows: [{ name: 'Weak to Blunt', detail: '+25% damage' }]. */
+export function weaknessTraitRows(weaknesses) {
+  return (Array.isArray(weaknesses) ? weaknesses : []).map(row => {
+    const { label, text } = describeWeakness(row);
+    return { name: `Weak to ${label}`, detail: text };
+  });
+}

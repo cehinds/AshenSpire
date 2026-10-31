@@ -9,6 +9,10 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { calloutForEvent } from '../src/ui/fx.js';
+import { weaknessTraitRows, describeWeakness } from '../src/model/enemyWeaknessRules.js';
+import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -199,4 +203,28 @@ test('Elemental Weapon works in Core: a weapon hit adds fire damage, and the ele
   assert.equal(bonus[0].effect.amount, 3);
   assert.equal(plain.combat.queue.filter(a => a.effect?.op === 'damage').length, 0);
   assert.deepEqual(fire.combat.eventLog.find(e => e.type === 'damageDealt').weaknesses.map(w => w.to).sort(), ['blunt', 'fire']);
+});
+
+// ---- snapshots and UI rows ----
+test('a combat snapshot round trip keeps the weaknesses', () => {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['huskBrute'] }), target = combat.enemies[0];
+  assert.ok(target.weaknesses.length);
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries: reg, rng: createRng(511), snapshot, expectedGameProfile: combat.gameProfile });
+  assert.deepEqual(restored.enemies[0].weaknesses, target.weaknesses);
+});
+
+test('weaknesses read in words: inspector rows, bestiary traits, and the Weak! callout', () => {
+  assert.deepEqual(weaknessTraitRows([{ to: 'blunt', effect: 'damage' }, { to: 'burn', effect: 'tick' }, { to: 'lightning', effect: 'stagger' }]), [
+    { name: 'Weak to Blunt', detail: '+25% damage' },
+    { name: 'Weak to Burn', detail: 'ticks harder' },
+    { name: 'Weak to Lightning', detail: 'may stagger' },
+  ]);
+  assert.equal(describeWeakness({ to: 'burn', effect: 'stacks' }).text, '+1 stack applied');
+  const def = registries.enemies.get('wanderingSoldier');
+  const view = projectEnemyKnowledge(def, { target: 30, receipts: Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`r${i}`, { bonus: 0 }])) }, { registries });
+  const names = (view.traits || []).map(row => row.name);
+  assert.ok(names.includes('Weak to Blunt'), 'bestiary lists the weakness once the enemy is studied');
+  assert.deepEqual(calloutForEvent({ type: 'weaknessTriggered', targetId: 'e1', to: 'blunt', effect: 'damage', amount: 25 }), { kind: 'weak', targetId: 'e1' });
 });

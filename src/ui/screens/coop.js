@@ -98,6 +98,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
+import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { haptic } from '../haptics.js';
 import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, callout, calloutForEvent, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
@@ -1229,7 +1230,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         })
         : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards, history, ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
+        ? { moveCards, history, traits: learning ? learning.traits : weaknessTraitRows(entity.weaknesses || def.weaknesses), ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
           prediction: entity.intentPredictions?.[me], onPredict: (actionSerial, maneuver) => {
             conn.send({ t: 'predictIntent', as: me, enemyInstanceId: entity.id, actionSerial, maneuver });
             return { accepted: false };
