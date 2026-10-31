@@ -36,12 +36,15 @@ test('rows, faces and the cost strip are drawn; Continue closes and calls onClos
 test('closing the receipt lands focus inside the screen when its opener was redrawn away', () => {
   withKitDom((dom) => {
     const app = dom.document.createElement('main'); app.id = 'app';
+    const hud = dom.document.createElement('button'); hud.id = 'open-armoury'; // the HUD comes first in document order
+    const screen = dom.document.createElement('div'); screen.className = 'screen';
     const keep = dom.document.createElement('button'); keep.id = 'event-continue';
-    app.appendChild(keep);
+    screen.appendChild(keep); app.append(hud, screen);
     dom.document.body.replaceChildren(app);
     const gone = dom.document.createElement('button'); // an opener that was removed by a redraw
     openWhatChangedModal({ title: 'X', rows: [{ kind: 'stat', label: 'HP', before: '1', after: '2', delta: 1 }], registries, returnFocusElement: gone });
     dom.document.body.querySelector('#what-changed-continue').click();
-    assert.ok(app.contains(dom.document.activeElement), 'focus is inside the screen');
+    assert.ok(screen.contains(dom.document.activeElement), 'focus is inside the screen');
+    assert.notEqual(dom.document.activeElement, hud, 'not the HUD button');
   });
 });

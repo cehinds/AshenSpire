@@ -44,12 +44,16 @@ function rowNode(registries, row) {
 // The control that opened a receipt is gone by the time it closes (the event box, the rest screen and the
 // Blacksmith all redraw), so the shell cannot hand focus back. If focus fell to the page, land it on the
 // screen that is now mounted instead.
-function refocusScreen() {
+function refocusScreen(opened) {
+  const alive = (node) => node && node !== document.body && node.isConnected !== false && document.body.contains?.(node);
   const active = document.activeElement;
-  if (active && active !== document.body && document.body.contains?.(active) && active.isConnected !== false) return;
-  const root = document.getElementById?.('app') || document.body;
-  const target = root.querySelector('#event-continue:not(:disabled), .choice-foot button:not(:disabled), [data-focusable="true"], button:not(:disabled)');
-  target?.focus?.({ preventScroll: true });
+  if (alive(active)) return;
+  // 1. what had focus when the receipt opened; 2. the mounted screen's own controls (never the HUD above it).
+  if (alive(opened) && !opened.hidden) { opened.focus?.({ preventScroll: true }); return; }
+  const app = document.getElementById?.('app') || document.body;
+  const screen = app.querySelector('.screen, .blacksmith-workspace, .room-screen');
+  const pick = (root) => root?.querySelector('#event-continue:not(:disabled), .choice-foot button:not(:disabled), [data-focusable="true"], button:not(:disabled)');
+  (pick(screen) || pick(app))?.focus?.({ preventScroll: true });
 }
 
 /**
@@ -59,6 +63,7 @@ function refocusScreen() {
  */
 export function openWhatChangedModal({ title, eyebrow: eyebrowText = t('whatChanged.eyebrow'), lead = '', rows = [], registries = null, costLine = null, onClose = null, returnFocusElement = document.activeElement } = {}) {
   let closeModal = () => {};
+  const openedFrom = document.activeElement;
   const cont = button({ label: t('whatChanged.continue'), weight: 'primary', id: 'what-changed-continue' });
   cont.addEventListener('click', () => closeModal());
   const cost = typeof costLine === 'string' ? costLine
@@ -71,7 +76,7 @@ export function openWhatChangedModal({ title, eyebrow: eyebrowText = t('whatChan
   const handle = openModal({
     name: 'what-changed', size: 'sm', className: 'what-changed-modal',
     eyebrow: eyebrowText, title, closeLabel: t('whatChanged.close'),
-    body, primary: cont, onClose: () => { onClose?.(); refocusScreen(); }, opener: returnFocusElement,
+    body, primary: cont, onClose: () => { onClose?.(); refocusScreen(openedFrom); }, opener: returnFocusElement,
   });
   markUiComponent(handle.panel, UI.whatChangedModal);
   closeModal = handle.close;
