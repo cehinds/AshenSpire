@@ -13,6 +13,7 @@ import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 import { weaknessTickMultiplier } from './weaknesses.js';
+import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -368,10 +369,10 @@ function applyWeaknessEffects(ctx, source, target, receipt) {
   for (const row of receipt.weaknesses) {
     if (!target.alive) break;
     if (row.effect === 'damage') { if (receipt.amount > 0) tell(row); }
-    else if (row.effect === 'mana') {
+    else if (row.effect === WEAKNESS_MANA) {
       const lost = Math.min(Math.max(0, target.mana || 0), row.amount);
       if (lost > 0) { target.mana -= lost; ctx.emit('manaLost', { targetId: target.id, amount: lost, source: 'weakness' }); tell(row); }
-    } else if (row.effect === 'stamina') {
+    } else if (row.effect === WEAKNESS_STAMINA) {
       target.pendingStaminaLoss = (target.pendingStaminaLoss || 0) + row.amount; tell(row);
     } else if (row.effect === 'stagger' && ctx.rng.chance('combatProcs', row.amount) && claimStagger(ctx, target) && staggerEnemy(ctx, target, { cause: 'weakness' })) tell(row);
   }

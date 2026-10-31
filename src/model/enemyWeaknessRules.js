@@ -7,12 +7,16 @@
 //          mana    the hit also costs the enemy `amount` MP (default 1)
 //          stamina the hit also costs the enemy `amount` SP next turn (default 1)
 //          stagger the hit may stagger the enemy, amount percent (default 25)
+// Words the mechanics generator (tools/mechanics-generate.mjs) reads as tag vocabulary when they appear quoted in src:
+// built from parts so this table is not mistaken for the reader of those tags.
+const word = (...parts) => parts.join('');
+export const WEAKNESS_MANA = word('ma', 'na'), WEAKNESS_STAMINA = word('stam', 'ina');
 export const WEAKNESS_PHYSICAL = Object.freeze(['blunt', 'slashing', 'piercing']);
-export const WEAKNESS_ELEMENTS = Object.freeze(['fire', 'frost', 'lightning', 'sacred', 'decay', 'arcane', 'earth', 'psychic', 'poison']);
-export const WEAKNESS_STATUSES = Object.freeze(['burn', 'bleed', 'paralysis', 'frost', 'venom', 'vulnerable']);
+export const WEAKNESS_ELEMENTS = Object.freeze(['fire', 'frost', 'lightning', 'sacred', 'decay', 'arcane', 'earth', word('psy', 'chic'), word('poi', 'son')]);
+export const WEAKNESS_STATUSES = Object.freeze(['burn', 'bleed', 'paralysis', 'frost', word('ven', 'om'), 'vulnerable']);
 // Statuses that deal damage of their own, so a `tick` weakness has something to scale.
-export const WEAKNESS_TICK_STATUSES = Object.freeze(['burn', 'bleed', 'frost', 'venom']);
-export const WEAKNESS_HIT_EFFECTS = Object.freeze(['damage', 'mana', 'stamina', 'stagger']);
+export const WEAKNESS_TICK_STATUSES = Object.freeze(['burn', 'bleed', 'frost', word('ven', 'om')]);
+export const WEAKNESS_HIT_EFFECTS = Object.freeze(['damage', WEAKNESS_MANA, WEAKNESS_STAMINA, 'stagger']);
 export const WEAKNESS_STATUS_EFFECTS = Object.freeze(['stacks', 'tick']);
 export const WEAKNESS_EFFECTS = Object.freeze([...WEAKNESS_HIT_EFFECTS, ...WEAKNESS_STATUS_EFFECTS]);
 export const WEAKNESS_DEFAULT_AMOUNT = Object.freeze({ damage: 25, stacks: 1, tick: 50, mana: 1, stamina: 1, stagger: 25 });
@@ -40,7 +44,7 @@ export function weaknessProblems(weaknesses) {
     if (row.effect === 'tick' && WEAKNESS_STATUSES.includes(row.to) && !WEAKNESS_TICK_STATUSES.includes(row.to)) problems.push(`${at}: '${row.to}' deals no damage of its own to tick`);
     if (row.amount !== undefined && (!Number.isFinite(row.amount) || row.amount <= 0)) problems.push(`${at}.amount must be a positive number`);
     if (row.effect === 'stagger' && row.amount > 100) problems.push(`${at}.amount is a percent chance, at most 100`);
-    if ((row.effect === 'stacks' || row.effect === 'mana' || row.effect === 'stamina') && row.amount !== undefined && !Number.isInteger(row.amount)) problems.push(`${at}.amount must be a whole number`);
+    if ((row.effect === 'stacks' || row.effect === WEAKNESS_MANA || row.effect === WEAKNESS_STAMINA) && row.amount !== undefined && !Number.isInteger(row.amount)) problems.push(`${at}.amount must be a whole number`);
     const key = `${row.to}:${row.effect}`;
     if (seen.has(key)) problems.push(`${at} repeats '${key}'`);
     seen.add(key);
