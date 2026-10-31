@@ -13,6 +13,9 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { calloutForEvent } from '../src/ui/fx.js';
 import { weaknessTraitRows, describeWeakness } from '../src/model/enemyWeaknessRules.js';
 import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
+import { createCoopCombat, endTurn } from '../src/engine/coopCombat.js';
+import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
+import { runCombatPlayer } from '../src/engine/runCombat.js';
 import { createCombat } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
@@ -312,4 +315,34 @@ test('a legacy (no profile) combat carries no weaknesses: 1 burn stack, x1 ticks
   moth.weaknesses = [{ to: 'burn', effect: 'stacks' }]; brute.weaknesses = [{ to: 'burn', effect: 'tick' }];
   moth.statuses = {}; applyStatus(combat, moth, 'burn', 1, combat.player);
   assert.equal(moth.statuses.burn.stacks, 1);
+});
+
+// ---- co-op ----
+const coreProfile = resolveGameProfile('core');
+const coopReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, coreProfile)), coreProfile);
+function coopFight(extra = {}) {
+  const runs = ['reaver', 'herald'].map(id => createRunState({ registries: coopReg, classId: id, seed: 2, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }));
+  return createCoopCombat({ registries: coopReg, rng: createRng(2), gameProfile: coreProfile, rangePolicy: runs[0].rangePolicy, combatExpansionVersion: 2, ratingsRules: null,
+    enemyIds: ['wanderingSoldier'], players: runs.map((run, i) => ({ ...runCombatPlayer(run), id: String(i), level: run.level.level, combatExpansionVersion: run.combatExpansionVersion })), ...extra });
+}
+
+test('a co-op fight saved before weaknesses restores them, and a new co-op fight carries them', () => {
+  const combat = coopFight();
+  assert.deepEqual(combat.enemies[0].weaknesses, coopReg.enemies.get('wanderingSoldier').weaknesses);
+  delete combat.enemies[0].weaknesses; // a fight written before the field existed
+  const snapshot = JSON.parse(JSON.stringify(serializeCoopCombatSnapshot(combat)));
+  const restored = coopFight({ snapshot });
+  assert.deepEqual(restored.enemies[0].weaknesses, coopReg.enemies.get('wanderingSoldier').weaknesses);
+});
+
+test('a co-op Stamina weakness costs the enemy SP next turn even with range mechanics off', () => {
+  const combat = coopFight();
+  delete combat.rangeState;
+  const enemy = combat.enemies[0];
+  enemy.pendingStaminaLoss = 1; // what a landed stamina-weakness hit queues (applyWeaknessEffects)
+  for (const seat of combat.players.values()) { seat.entity.hp = seat.entity.maxHp = 500; }
+  const max = enemy.maxStamina;
+  endTurn(combat, '0'); endTurn(combat, '1');
+  assert.equal(enemy.fixCoreStaminaRemaining, max - 1);
+  assert.equal(enemy.pendingStaminaLoss ?? 0, 0);
 });

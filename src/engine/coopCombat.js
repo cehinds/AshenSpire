@@ -1,6 +1,6 @@
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
-import { startingWeaknesses } from './weaknesses.js';
+import { startingWeaknesses, refillWeaknesses } from './weaknesses.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import * as Rounds from './combatRoundsAdapter.js';
@@ -198,6 +198,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     }
     // An older expanded save has Ward and no Poise: each restored combatant gets a full Poise pool.
     for (const P of C.players.values()) backfillPersistentPoise(C, P.entity);
+    C.enemies = refillWeaknesses(C, C.enemies, registries);
     for (const enemy of C.enemies) backfillPersistentPoise(C, enemy);
     setActive(C, C.players.get(saved.playerKey) || firstLiving(C));
     return C;
