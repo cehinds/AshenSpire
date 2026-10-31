@@ -380,19 +380,13 @@
         "op": "moveEngagement",
         "target": "enemy",
         "bands": -1
-      },
-      {
-        "op": "applyStatus",
-        "target": "self",
-        "status": "precision",
-        "stacks": 1
       }
     ],
     "tags": [
       "camp:physical",
       "classification.skill"
     ],
-    "textTemplate": "Close one band. Gain {precision} Precision."
+    "textTemplate": "Close one band."
   },
   {
     "id": "core.closingDodge",
@@ -1527,6 +1521,12 @@
         "op": "block",
         "target": "self",
         "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -1536,7 +1536,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {block} Block.",
+    "textTemplate": "Draw {draw} card. Gain {block} Block. Gain {precision} Precision.",
     "upgrade": {
       "effects": [
         {
@@ -1547,6 +1547,12 @@
           "op": "block",
           "target": "self",
           "amount": 5
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 1
         }
       ]
     },
