@@ -407,13 +407,15 @@ function floaterLaneFor(anchor, lifeMs) {
   return entry;
 }
 // Floaters share one top edge, so a lane's lift must put the number's bottom above the current
-// top of every blocking number in a lower lane: that number's lift plus how far it has risen,
-// less how far this one has risen itself, plus this one's own height. Lane 0 never lifts.
+// top of every live number in a lower lane: that number's lift plus how far it has risen, less
+// how far this one has risen itself, plus this one's own height. Every live lower number counts
+// here, cleared or not (the blocking test picks lanes only): a re-lift that skipped a cleared
+// middle number would drop the one above it onto that number. Lane 0 never lifts.
 function floaterLaneLift(anchor, entry, now) {
   if (entry.lane === 0) return 0;
   let clear = -Infinity;
   for (const other of floaterLanes.get(anchor) || []) {
-    if (other.lane >= entry.lane || !floaterBlocks(other, now)) continue;
+    if (other.lane >= entry.lane || other.until <= now) continue;
     clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
   }
   return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
