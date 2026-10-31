@@ -56,20 +56,20 @@ test('data-modal-depth follows the stack up and down', () => {
 test('a modal marks the app behind it inert and clears exactly that on pop', () => {
   withPage(({ document, screen, hud }) => {
     const release = registerModal('door', modalIn(document), { dismiss() {} });
-    assert.equal(screen.hasAttribute('inert'), true);
-    assert.equal(hud.hasAttribute('inert'), true);
+    assert.equal(screen.hasAttribute('data-page-locked'), true);
+    assert.equal(hud.hasAttribute('data-page-locked'), true);
     release();
-    assert.equal(screen.hasAttribute('inert'), false);
-    assert.equal(hud.hasAttribute('inert'), false);
+    assert.equal(screen.hasAttribute('data-page-locked'), false);
+    assert.equal(hud.hasAttribute('data-page-locked'), false);
   });
 });
 
 test('release.unlock lifts the inert and the depth before the entry leaves the stack', () => {
   withPage(({ document, screen }) => {
     const release = registerModal('door', modalIn(document), { dismiss: () => {} });
-    assert.equal(screen.hasAttribute('inert'), true);
+    assert.equal(screen.hasAttribute('data-page-locked'), true);
     release.unlock();
-    assert.equal(screen.hasAttribute('inert'), false, 'the opener can take focus again');
+    assert.equal(screen.hasAttribute('data-page-locked'), false, 'the opener can take focus again');
     assert.equal(document.documentElement.dataset.modalDepth, '0');
     assert.equal(modalOpen(), true, 'still open until release(): waiters have not run');
     release();
@@ -82,12 +82,12 @@ test('lower modals go inert under a higher one and wake when it pops', () => {
     const lower = modalIn(document);
     const upper = modalIn(document);
     const releaseLower = registerModal('lower', lower, { dismiss() {} });
-    assert.equal(lower.hasAttribute('inert'), false, 'the top modal is never inert');
+    assert.equal(lower.hasAttribute('data-page-locked'), false, 'the top modal is never inert');
     const releaseUpper = registerModal('upper', upper, { dismiss() {} });
-    assert.equal(lower.hasAttribute('inert'), true);
-    assert.equal(upper.hasAttribute('inert'), false);
+    assert.equal(lower.hasAttribute('data-page-locked'), true);
+    assert.equal(upper.hasAttribute('data-page-locked'), false);
     releaseUpper();
-    assert.equal(lower.hasAttribute('inert'), false);
+    assert.equal(lower.hasAttribute('data-page-locked'), false);
     releaseLower();
   });
 });
@@ -96,28 +96,28 @@ test('an app child that holds the modal stays live; its siblings go inert', () =
   withPage(({ document, screen, hud }) => {
     const inside = modalIn(document, screen);
     const release = registerModal('in-screen', inside, { dismiss() {} });
-    assert.equal(screen.hasAttribute('inert'), false);
-    assert.equal(hud.hasAttribute('inert'), true);
+    assert.equal(screen.hasAttribute('data-page-locked'), false);
+    assert.equal(hud.hasAttribute('data-page-locked'), true);
     release();
-    assert.equal(hud.hasAttribute('inert'), false);
+    assert.equal(hud.hasAttribute('data-page-locked'), false);
   });
 });
 
-test('an inert the manager did not set survives the pop', () => {
+test('an aria-hidden the manager did not set survives the pop', () => {
   withPage(({ document, screen, hud }) => {
-    screen.setAttribute('inert', '');
+    screen.setAttribute('aria-hidden', 'true');
     const release = registerModal('door', modalIn(document), { dismiss() {} });
-    assert.equal(hud.hasAttribute('inert'), true);
+    assert.equal(hud.hasAttribute('data-page-locked'), true);
     release();
-    assert.equal(screen.hasAttribute('inert'), true, 'the other surface still owns its inert');
-    assert.equal(hud.hasAttribute('inert'), false);
+    assert.equal(screen.getAttribute('aria-hidden'), 'true', 'the other surface still owns its aria-hidden');
+    assert.equal(hud.hasAttribute('data-page-locked'), false);
   });
 });
 
 test('inert: false leaves the page behind interactive; depth still counts', () => {
   withPage(({ document, screen }) => {
     const release = registerModal('quiet', modalIn(document), { inert: false });
-    assert.equal(screen.hasAttribute('inert'), false);
+    assert.equal(screen.hasAttribute('data-page-locked'), false);
     assert.equal(document.documentElement.dataset.modalDepth, '1');
     release();
   });
@@ -127,18 +127,18 @@ test('a bespoke surface above a locking modal keeps the page locked and stays li
   withPage(({ document, screen, hud }) => {
     const settings = modalIn(document);
     const releaseSettings = registerModal('settings', settings, { dismiss() {} });
-    assert.equal(screen.hasAttribute('inert'), true);
+    assert.equal(screen.hasAttribute('data-page-locked'), true);
     const confirm = modalIn(document);
     const releaseConfirm = registerModal('confirmation', confirm); // no dismiss, no inert: a bespoke dialog
-    assert.equal(screen.hasAttribute('inert'), true, 'the page under Settings stays locked');
-    assert.equal(hud.hasAttribute('inert'), true);
-    assert.equal(confirm.hasAttribute('inert'), false, 'the confirmation is live');
-    assert.equal(settings.hasAttribute('inert'), false, 'the confirmation does not hold the lock; Settings is not inert under it');
+    assert.equal(screen.hasAttribute('data-page-locked'), true, 'the page under Settings stays locked');
+    assert.equal(hud.hasAttribute('data-page-locked'), true);
+    assert.equal(confirm.hasAttribute('data-page-locked'), false, 'the confirmation is live');
+    assert.equal(settings.hasAttribute('data-page-locked'), false, 'the confirmation does not hold the lock; Settings is not inert under it');
     releaseConfirm();
-    assert.equal(screen.hasAttribute('inert'), true);
+    assert.equal(screen.hasAttribute('data-page-locked'), true);
     releaseSettings();
-    assert.equal(screen.hasAttribute('inert'), false);
-    assert.equal(hud.hasAttribute('inert'), false);
+    assert.equal(screen.hasAttribute('data-page-locked'), false);
+    assert.equal(hud.hasAttribute('data-page-locked'), false);
   });
 });
 
@@ -146,13 +146,13 @@ test('a bespoke surface beneath a locking modal goes inert under it and wakes wh
   withPage(({ document }) => {
     const overlay = modalIn(document); // a veil that is a body sibling, not an #app child
     const releaseOverlay = registerModal('overlay', overlay, { inert: false });
-    assert.equal(overlay.hasAttribute('inert'), false);
+    assert.equal(overlay.hasAttribute('data-page-locked'), false);
     const shell = modalIn(document);
     const releaseShell = registerModal('offline-play', shell, { dismiss() {} });
-    assert.equal(overlay.hasAttribute('inert'), true, 'the lock above covers the legacy surface');
-    assert.equal(shell.hasAttribute('inert'), false);
+    assert.equal(overlay.hasAttribute('data-page-locked'), true, 'the lock above covers the legacy surface');
+    assert.equal(shell.hasAttribute('data-page-locked'), false);
     releaseShell();
-    assert.equal(overlay.hasAttribute('inert'), false);
+    assert.equal(overlay.hasAttribute('data-page-locked'), false);
     releaseOverlay();
   });
 });
@@ -161,10 +161,10 @@ test('a pruned (disconnected) entry clears its inert and depth', () => {
   withPage(({ document, screen }) => {
     const panel = modalIn(document);
     registerModal('ghost', panel, { dismiss() {} });
-    assert.equal(screen.hasAttribute('inert'), true);
+    assert.equal(screen.hasAttribute('data-page-locked'), true);
     panel.parentNode.remove();
     assert.equal(openModals().length, 0);
-    assert.equal(screen.hasAttribute('inert'), false);
+    assert.equal(screen.hasAttribute('data-page-locked'), false);
     assert.equal(document.documentElement.dataset.modalDepth, '0');
   });
 });
@@ -462,16 +462,16 @@ test('page chrome goes inert under a lock and wakes when it pops', () => {
     assert.equal(modalOpen(), false, 'chrome alone is not an open modal');
     assert.equal(document.documentElement.dataset.modalDepth, '0');
     assert.equal(openModals().length, 0);
-    assert.equal(strip.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), false);
     const releaseDoor = registerModal('door', modalIn(document), { dismiss() {} });
-    assert.equal(strip.hasAttribute('inert'), true, 'the door covers the strip');
+    assert.equal(strip.hasAttribute('data-page-locked'), true, 'the door covers the strip');
     assert.equal(openModals().length, 1, 'the strip does not appear on the stack');
     assert.equal(document.documentElement.dataset.modalDepth, '1');
     releaseDoor();
-    assert.equal(strip.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), false);
     releaseChrome();
     releaseChrome(); // idempotent
-    assert.equal(strip.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), false);
   });
 });
 
@@ -481,26 +481,26 @@ test('page chrome stacking order: it stays inert while any lock stands and wakes
     registerPageChrome(strip);
     const overlay = modalIn(document);
     const releaseOverlay = registerModal('overlay', overlay, { inert: false });
-    assert.equal(strip.hasAttribute('inert'), false, 'an overlay that asked for no lock leaves the strip live');
+    assert.equal(strip.hasAttribute('data-page-locked'), false, 'an overlay that asked for no lock leaves the strip live');
     const shell = modalIn(document);
     const releaseShell = registerModal('offline-play', shell, { dismiss() {} });
-    assert.equal(strip.hasAttribute('inert'), true);
-    assert.equal(overlay.hasAttribute('inert'), true);
-    assert.equal(shell.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), true);
+    assert.equal(overlay.hasAttribute('data-page-locked'), true);
+    assert.equal(shell.hasAttribute('data-page-locked'), false);
     const confirm = modalIn(document);
     const releaseConfirm = registerModal('confirmation', confirm); // bespoke, above the shell
-    assert.equal(strip.hasAttribute('inert'), true, 'the strip stays covered under the confirmation');
-    assert.equal(confirm.hasAttribute('inert'), false);
-    assert.equal(shell.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), true, 'the strip stays covered under the confirmation');
+    assert.equal(confirm.hasAttribute('data-page-locked'), false);
+    assert.equal(shell.hasAttribute('data-page-locked'), false);
     releaseConfirm();
-    assert.equal(strip.hasAttribute('inert'), true);
-    assert.equal(overlay.hasAttribute('inert'), true);
-    assert.equal(shell.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), true);
+    assert.equal(overlay.hasAttribute('data-page-locked'), true);
+    assert.equal(shell.hasAttribute('data-page-locked'), false);
     releaseShell();
-    assert.equal(strip.hasAttribute('inert'), false);
-    assert.equal(overlay.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), false);
+    assert.equal(overlay.hasAttribute('data-page-locked'), false);
     releaseOverlay();
-    assert.equal(strip.hasAttribute('inert'), false);
+    assert.equal(strip.hasAttribute('data-page-locked'), false);
   });
 });
 
@@ -509,21 +509,21 @@ test('chrome registered while the lock stands goes inert at once; releasing the 
     const releaseDoor = registerModal('door', modalIn(document), { dismiss() {} });
     const a = chromeIn(document);
     const releaseA = registerPageChrome(a);
-    assert.equal(a.hasAttribute('inert'), true);
+    assert.equal(a.hasAttribute('data-page-locked'), true);
     const b = chromeIn(document);
     const releaseB = registerPageChrome(b);
     releaseA();
-    assert.equal(b.hasAttribute('inert'), true);
-    assert.equal(a.hasAttribute('inert'), false, 'the released strip is freed');
+    assert.equal(b.hasAttribute('data-page-locked'), true);
+    assert.equal(a.hasAttribute('data-page-locked'), false, 'the released strip is freed');
     // A strip removed from the page without its release running is dropped silently.
     b.remove();
     const c = chromeIn(document);
     registerPageChrome(c);
-    assert.equal(c.hasAttribute('inert'), true);
+    assert.equal(c.hasAttribute('data-page-locked'), true);
     releaseB();
-    assert.equal(c.hasAttribute('inert'), true, 'a stale release touches only its own element');
+    assert.equal(c.hasAttribute('data-page-locked'), true, 'a stale release touches only its own element');
     releaseDoor();
-    assert.equal(c.hasAttribute('inert'), false);
+    assert.equal(c.hasAttribute('data-page-locked'), false);
   });
 });
 
@@ -543,7 +543,7 @@ test('a background/resume cycle changes nothing about the chrome lock and adds n
     try {
       const strip = chromeIn(document);
       registerPageChrome(strip);
-      const screenState = () => ({ inert: strip.hasAttribute('inert'), depth: document.documentElement.dataset.modalDepth, open: openModals().length });
+      const screenState = () => ({ inert: strip.hasAttribute('data-page-locked'), depth: document.documentElement.dataset.modalDepth, open: openModals().length });
       const releaseDoor = registerModal('door', modalIn(document), { dismiss() {} });
       const before = screenState();
       assert.deepEqual(before, { inert: true, depth: '1', open: 1 });
@@ -555,7 +555,7 @@ test('a background/resume cycle changes nothing about the chrome lock and adds n
       assert.deepEqual(screenState(), before);
       assert.deepEqual(seen.filter((entry) => !/ keydown$/.test(entry)), [], 'the manager adds only keydown, never a lifecycle listener');
       releaseDoor();
-      assert.equal(strip.hasAttribute('inert'), false);
+      assert.equal(strip.hasAttribute('data-page-locked'), false);
     } finally {
       delete document.addEventListener;
       if (!hadWindow) delete globalThis.window; else globalThis.window = savedWindow;
