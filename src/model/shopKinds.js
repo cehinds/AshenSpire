@@ -161,6 +161,9 @@ function stockedShelves(stock) {
   ];
 }
 
+/** Offerings only the Core Blacksmith lays out (model/blacksmith.js CORE_BLACKSMITH_OFFERINGS minus the shipped rows). */
+const CORE_ONLY_BLACKSMITH_OFFERINGS = Object.freeze(['rankUp', 'weaponArts']);
+
 /** The kind a persisted stock is. A stock saved before kinds existed is a market. */
 export function shopStockKind(stock) {
   return object(stock) && typeof stock.kind === 'string' ? stock.kind : 'market';
@@ -239,7 +242,8 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
       problems.push(`${path}.offerings is empty, but ${stockedShelves(stock).map((key) => `'${key}'`).join(', ')} still hold${stockedShelves(stock).length === 1 ? 's' : ''} stock`);
     } else {
       const kind = shopStockKind(stock);
-      const known = new Set([...(shippedShops[kind]?.offerings || []).map((row) => row.id), ...(kind === 'market' ? LEGACY_MARKET_OFFERINGS : [])]);
+      // The Core Blacksmith's two offerings are not rows of the shipped (Legacy) table: its workshop is fixed (blacksmithStock.js).
+      const known = new Set([...(shippedShops[kind]?.offerings || []).map((row) => row.id), ...(kind === 'market' ? LEGACY_MARKET_OFFERINGS : []), ...(kind === 'blacksmith' ? CORE_ONLY_BLACKSMITH_OFFERINGS : [])]);
       for (const id of stock.offerings) if (!known.has(id)) problems.push(`${path}.offerings names '${id}', which is not a ${kind} offering`);
     }
   }
