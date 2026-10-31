@@ -91,6 +91,13 @@ export function diffRunSnapshots(before, after, registries) {
       continue;
     }
     const stepsChanged = JSON.stringify(prev.steps) !== JSON.stringify(card.steps);
+    // The same instance now mounts a different card (an art extracted or installed on a legacy weapon).
+    if (prev.cardId !== card.cardId) {
+      const canFace = registries?.cards?.has?.(prev.cardId) && registries?.cards?.has?.(card.cardId);
+      rows.push(freeze({ kind: 'card', label: name, before: cardName(registries, prev.cardId), after: name, cardId: card.cardId, previousCardId: prev.cardId, instanceId: card.instanceId, change: 'replaced',
+        ...(canFace ? { faces: freeze({ before: faceOf(registries, after, prev.instance), after: faceOf(registries, after, card.instance) }) } : {}) }));
+      continue;
+    }
     if (!stepsChanged && prev.rank === card.rank) continue;
     const base = registries?.cards?.has?.(card.cardId) ? registries.cards.get(card.cardId) : null;
     const faces = base ? freeze({ before: faceOf(registries, after, prev.instance), after: faceOf(registries, after, card.instance) }) : undefined;

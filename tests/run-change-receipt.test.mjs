@@ -112,3 +112,19 @@ test('an acquired upgraded card carries the face of the owned instance, not the 
   assert.deepEqual(JSON.parse(JSON.stringify(row.face)), JSON.parse(JSON.stringify(projectGameCard(run, structuredClone(got)))));
   assert.notDeepEqual(JSON.parse(JSON.stringify(row.face.effects)), JSON.parse(JSON.stringify(registries.cards.get('core.strike').effects)), 'not the base card');
 });
+
+test('a mounted card replaced under the same instance is one replacement row with both faces', () => {
+  const run = newRun();
+  const katana = { instanceId: 'weaponArt:katana:katanaDrawCut', cardId: 'core.strike', upgraded: false };
+  run.deck.push(katana);
+  const d = diff(run, () => { katana.cardId = 'core.defend'; });
+  assert.equal(d.rows.length, 1);
+  const row = d.rows[0];
+  assert.equal(row.change, 'replaced');
+  assert.equal(row.instanceId, katana.instanceId);
+  assert.equal(row.before, registries.cards.get('core.strike').name);
+  assert.equal(row.after, registries.cards.get('core.defend').name);
+  assert.equal(row.faces.before.id ?? row.faces.before.cardId, 'core.strike');
+  assert.equal(row.faces.after.id ?? row.faces.after.cardId, 'core.defend');
+  assert.ok(!d.rows.some((r) => r.change === 'added' || r.change === 'removed'));
+});

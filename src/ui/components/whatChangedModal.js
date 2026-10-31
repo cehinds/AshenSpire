@@ -11,7 +11,7 @@ import { t } from '../strings.js';
 import { coreSmithingStats } from '../../model/smithingCore.js';
 import { diffRunSnapshots, snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 
-const CHANGE_WORD = { gained: 'whatChanged.gained', installed: 'whatChanged.sigil.installed',  added: 'whatChanged.added', removed: 'whatChanged.removed', upgraded: 'whatChanged.upgraded', ranked: 'whatChanged.ranked', tier: 'whatChanged.tier' };
+const CHANGE_WORD = { gained: 'whatChanged.gained', installed: 'whatChanged.sigil.installed',  added: 'whatChanged.added', removed: 'whatChanged.removed', upgraded: 'whatChanged.upgraded', ranked: 'whatChanged.ranked', replaced: 'whatChanged.replaced', tier: 'whatChanged.tier' };
 
 const facesNode = (registries, row) => el('div', { class: 'card-upgrade-faces', dataset: { whatChangedFaces: row.instanceId || row.cardId } },
   ['before', 'after'].map((which) => el('div', { class: `card-upgrade-face ${which}`, dataset: { cardUpgradeFace: which } },
