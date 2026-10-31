@@ -48,6 +48,11 @@ pull requests into `dev` opened ready for review, and only the owner merging to
 `main` — live in CONTRIBUTING.md under *Coordination and release boundary*,
 *Branch model* and *Commits & PRs*.)
 
+**Release numbering** (owner, 2026-10-31): a release cut bumps the third number of the
+version and resets the fourth (the build ordinal) to 0, so the release after `0.7.2.<n>`
+is `0.7.3.0` and dev stamps `0.7.3.1`, `0.7.3.2`, … from there (the rule
+`tools/buildversion.mjs` records from 2026-09-01). Do this as part of every release cut.
+
 **Never commit built HTML on `dev`** (`AshenSpire.html`, `AshenSpire-mobile.html`,
 `build/*.html`, `dist/*.html`). It exhausted the Git LFS budget; it is ignored,
 CI builds and publishes it as a workflow artifact, and a pull request commits
