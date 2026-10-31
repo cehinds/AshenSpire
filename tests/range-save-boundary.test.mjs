@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
 import { createRunCombat, runCombatPlayer } from '../src/engine/runCombat.js';
@@ -8,17 +7,14 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot, commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat, endTurn as endCoopTurn, chooseReaction as chooseCoopReaction } from '../src/engine/coopCombat.js';
-import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { createRangeState, rangeActionPlan, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { live, registries, profile } from './helpers/fixcore-combat-rules.mjs';
+import { live, registries } from './helpers/fixcore-combat-rules.mjs';
 const json = value => JSON.parse(JSON.stringify(value));
 function stamp(combat, startingRange = 'ranged') {
-  const players = combat.players instanceof Map ? [...combat.players].map(([id, seat]) => [seat.entity, `player:${id}`]) : [[combat.player, 'player:player']];
-  const actors = [...players, ...combat.enemies.map(enemy => [enemy, `enemy:${enemy.id}`])];
+  const actors = [[combat.player, 'player:player'], ...combat.enemies.map(enemy => [enemy, `enemy:${enemy.id}`])];
   for (const [entity, key] of actors) {
     entity.rangeActorKey = key;
     // Three SP for the repeated-hit fixture plus its two-band Advance.
@@ -90,23 +86,6 @@ test('malformed pairs, actors and range policy are refused at the solo load door
   for (const change of changes) {
     const broken = structuredClone(saved); change(broken);
     assert.throws(() => restore(combat, broken), /range|engagement/i);
-  }
-});
-
-test('co-op duplicate player entity ids retain distinct seat-owned pairs', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const player = id => ({ ...runCombatPlayer(createRunState({ registries, classId: 'reaver', seed: 4 })), id, combatExpansionVersion: 2, deck: [{ cardId: 'core.counter', instanceId: 'same-card-id', upgraded: false }] });
-  const combat = stamp(createCoopCombat({ registries, rng: createRng(4), gameProfile: profile, combatExpansionVersion: 2, players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] }));
-  assert.equal(combat.players.get('a').entity.id, combat.players.get('b').entity.id);
-  const enemyKey = combat.enemies[0].rangeActorKey;
-  combat.rangeState.engagements[rangePairKey('player:a', enemyKey)] = 0;
-  const saved = json(serializeCoopCombatSnapshot(combat));
-  const decoded = decodeCoopCombatSnapshot(saved);
-  assert.equal(decoded.rangeState.engagements[rangePairKey('player:a', enemyKey)], 0);
-  assert.equal(decoded.rangeState.engagements[rangePairKey('player:b', enemyKey)], 2);
-  for (const wrong of ['player:player', 'player:a', enemyKey]) {
-    const broken = decodeCoopCombatSnapshot(saved);
-    broken.players.get('b').entity.rangeActorKey = wrong;
-    assert.throws(() => serializeCoopCombatSnapshot(broken), /range actor identity/i);
   }
 });
 
@@ -257,38 +236,3 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   assert.equal(restored.pair, 0, 'a paid Advance persists in the committed pair');
 });
 
-test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const players = ['a', 'b'].map(id => ({ ...runCombatPlayer(createRunState({ registries, seed: 511, classId: 'reaver' })), id, combatExpansionVersion: 2,
-    deck: [{ cardId: 'core.counter', instanceId: 'shared-card-id', upgraded: false }] }));
-  const combat = createCoopCombat({ registries, rng: createRng(511), players, enemyIds: ['wanderingSoldier'],
-    gameProfile: profile, combatExpansionVersion: 2, reactionRulesVersion: 2 });
-  for (const seat of combat.players.values()) seat.entity.block = 100;
-  const enemy = combat.enemies[0]; Object.assign(enemy, { maxStamina: 3, stamina: 3 });
-  for (const key of Object.keys(combat.rangeState.engagements)) combat.rangeState.engagements[key] = 2;
-  endCoopTurn(combat, 'a'); endCoopTurn(combat, 'b');
-  assert.ok(combat.pendingReaction);
-  assert.equal(enemy.stamina, 0, 'the enemy pays base 1 + max approach 2 for the whole fan-out');
-  const plan = combat.queue[0].meta.expansionGroup.carrier.rangePlan;
-  assert.equal(plan.advanceSp, 2);
-  assert.equal(plan.paid.stamina, 3);
-  assert.deepEqual(new Set(plan.targets.map(row => row.targetKey)), new Set(['player:a', 'player:b']));
-  const saved = json(serializeCoopCombatSnapshot(combat));
-  const resumed = createCoopCombat({ registries, rng: createRng(511, combat.rng.getCounters()), players,
-    enemyIds: [], snapshot: saved });
-  assert.deepEqual(resumed.rangeState, combat.rangeState);
-  assert.deepEqual(resumed.queue[0].meta.expansionGroup.carrier.rangePlan, plan);
-  assert.deepEqual(resumed.rng.getCounters(), combat.rng.getCounters());
-  assert.equal(resumed.queue[0].source, resumed.enemies[0]);
-  assert.ok([...resumed.players.values()].some(seat => resumed.queue[0].target === seat.entity));
-  const finish = state => {
-    let answers = 0;
-    while (state.pendingReaction) {
-      assert.ok(++answers <= 6);
-      chooseCoopReaction(state, state.pendingReaction.ownerId, { offerId: state.pendingReaction.id, optionId: null });
-    }
-    return { answers, turn: state.turn, phase: state.phase, enemySp: state.enemies[0].stamina,
-      players: [...state.players].map(([id, seat]) => ({ id, hp: seat.entity.hp, block: seat.entity.block, energy: seat.entity.energy })),
-      range: state.rangeState, log: state.eventLog, rng: state.rng.getCounters() };
-  };
-  assert.deepEqual(json(finish(resumed)), json(finish(combat)));
-});

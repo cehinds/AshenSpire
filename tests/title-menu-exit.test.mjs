@@ -4,14 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 const title = readFileSync(new URL('../src/ui/screens/title.js', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-const source = JSON.parse(readFileSync(new URL('../content/config/ui/screens/title.json', import.meta.url)));
-import { uiConfig } from '../src/config/generated/ui.js';
 
-test('paused co-op is disabled in the authored and generated configuration', () => {
-  assert.equal(source.behavior.coopEnabled, false);
-  assert.equal(uiConfig.screens.title.behavior.coopEnabled, false);
-  assert.doesNotMatch(title, /entry\('Forsaken Together'/, 'the minimal title has no co-op door');
-});
 test('Exit is the final primary entry and is unique', () => {
   const primary = title.match(/entries: \[([\s\S]*?)\n      \],/)[1];
   assert.match(primary, /entry\('Exit', 'quit', \{ id: 'quit-game' \}\),\s*$/);

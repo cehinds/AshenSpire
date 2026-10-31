@@ -4,7 +4,6 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
@@ -72,12 +71,6 @@ test('the carry rule and an unknown rule', () => {
   } finally {
     mechanics.stamina.combatStartRefill = saved;
   }
-});
-
-test('the co-op host seats a member through the same entry rule', () => {
-  const session = readFileSync(new URL('../tools/session.mjs', import.meta.url), 'utf8');
-  assert.match(session, /stamina: staminaAtCombatStart\(\{ currentStamina: m\.run\.stamina/);
-  assert.match(session, /m\.run\.mana = manaAtCombatEnd\(\{ currentMana: P\.entity\.mana/, 'co-op settle refills Mana like solo');
 });
 
 test('the refill settles a Stamina deficit an equipment swap carried, and keeps the others', () => {

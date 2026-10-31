@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LAYERED_SCENES, INTRO_LAYERED_SCENES } from '../src/content/layeredEnvironments.js';
@@ -48,7 +47,6 @@ test('unknown or mismatched sites preserve the atlas fallback', () => {
   assert.equal(layeredCombatScene({ mapNodeId: 'unmapped', mapGraph: { nodes: { unmapped: { type: 'boss', displayName: 'Unknown Fortress' } } } }, { region: { id: 'drowned-coast' } }), null);
 });
 
-
 test('known authored settings stay within their region', () => {
   const run = { mapNodeId: 'fixture', mapGraph: { nodes: { fixture: { type: 'fight' } } } };
   assert.equal(layeredCombatScene(run, { region: { id: 'hollow-weald' } }).id, 'forest-path');
@@ -72,7 +70,6 @@ test('intro dressing is inserted before ground and scene recipes remain unchange
   assert.equal(JSON.stringify(LAYERED_SCENES), original);
 });
 
-
 test('indoor local ambient lighting survives default time selection', () => {
   const indoor = Object.values(LAYERED_SCENES).find(scene => scene.interior && !scene.layers.some(layer => layer.purpose === 'time-of-day'));
   assert.ok(indoor);
@@ -81,45 +78,12 @@ test('indoor local ambient lighting survives default time selection', () => {
   assert.ok(layeredCombatScene({ ...run, presentationTimeId: 'night' }).layers.some(layer => layer.filterId === 'night'));
 });
 
-test('real co-op fight snapshots select the same layered scenery as solo without changing session state', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createSession } = await import('../tools/session.mjs');
-  const { contentBundle } = await import('../src/content/index.js');
-  const { createRegistries } = await import('../src/model/registries.js');
-  const { initialClassTreeChoices } = await import('../src/model/classTree.js');
-  const { registriesForClassMastery } = await import('../src/model/classMasteryRun.js');
+test('explicit solo and journey cursors choose their layered scene', async () => {
   const { combatEnvironment } = await import('../src/model/environmentArt.js');
-  const registries = createRegistries(contentBundle);
-  const host = createSession({ registries, seedString: 'LAYERED', firstSeat: 'weald' });
-  host.addMember({ id: 'p1', name: 'One', classId: 'rogue' });
-  host.addMember({ id: 'p2', name: 'Two', classId: 'reaver' });
-  host.start();
-  for (const member of host.session.members.values()) {
-    while (member.run.classMasteryState?.initialTreeTiers.length) {
-      const choices = initialClassTreeChoices(registriesForClassMastery(registries, member.run), member.run);
-      assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
-    }
-  }
-  const nodeId = host.session.mapGraph.startIds[0];
-  for (const id of ['p1', 'p2']) assert.equal(host.chooseNode(id, nodeId).ok, true);
-  const snapshot = host.snapshot();
-  assert.equal(snapshot.scene.kind, 'combat');
-  assert.equal(snapshot.cursorId, nodeId);
-  assert.ok(Array.isArray(snapshot.map.nodes));
-  const beforeSnapshot = JSON.stringify(snapshot), beforeSession = JSON.stringify(host.serialize());
-  const selected = layeredCombatScene(snapshot, combatEnvironment(snapshot));
-  assert.equal(selected.id, 'forest-path');
-  const solo = { ...snapshot, mapNodeId: snapshot.cursorId, mapGraph: host.session.mapGraph };
-  assert.deepEqual(selected, layeredCombatScene(solo, combatEnvironment(solo)));
-  assert.equal(JSON.stringify(snapshot), beforeSnapshot);
-  assert.equal(JSON.stringify(host.serialize()), beforeSession, 'selection never advances shared RNG or changes host state');
-});
-
-test('co-op final-tier boss uses the causeway while explicit solo and journey cursors retain priority', async () => {
-  const { combatEnvironment } = await import('../src/model/environmentArt.js');
-  const snapshot = { seedString: 'COOP-CAUSEWAY', actNumber: 3, seatOrder: ['weald', 'marches', 'reach'],
+  const snapshot = { seedString: 'SOLO-SCENE', actNumber: 3, seatOrder: ['weald', 'marches', 'reach'],
     cursorId: 'boss', map: { nodes: [{ id: 'boss', type: 'boss' }] } };
   const original = JSON.stringify(snapshot);
-  if (COOP_TESTS_ENABLED) assert.equal(layeredCombatScene(snapshot, combatEnvironment(snapshot)).id, 'dungeon-corridor');
+
   const solo = { ...snapshot, mapNodeId: 'solo', environmentRegionId: 'ashen-crown',
     mapGraph: { nodes: { solo: { type: 'fight', layeredSceneId: 'castle-grounds' } } } };
   assert.equal(layeredCombatScene(solo).id, 'castle-grounds');

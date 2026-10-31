@@ -191,7 +191,7 @@ test('solo End Turn: a rebind repaint keeps the reworded face', () => {
   });
 });
 
-test('both boards repaint through the shared paths, not their own literals', async () => {
+test('the combat board repaints through the shared paths, not its own literals', async () => {
   const { readFileSync } = await import('node:fs');
   const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
   const solo = read('src/ui/screens/combat.js');
@@ -202,9 +202,6 @@ test('both boards repaint through the shared paths, not their own literals', asy
   assert.match(solo, /paintCombatActionCounts\(actionRow, \{ energy: p\.energy, energyMax: p\.energyMax,/, 'the adapter paints through the shared renderer');
   assert.match(solo, /const p = dv\(combat\.player\)/, 'the shared row adapter reads the current presentation snapshot');
   assert.match(solo, /<div class="tt-title">\$\{esc\(t\('combat\.endTurn'\)\)\}<\/div>/, 'solo End Turn tooltip title');
-  const coop = read('src/ui/screens/coop.js');
-  assert.match(coop, /combatActionRowHtml\(\{ endTurnId: 'coop-endturn' \}\)/);
-  assert.match(coop, /paintCombatActionCounts\(row, \{\s*energy: meP/, 'co-op repaints the row its own way');
 });
 
 

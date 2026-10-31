@@ -1,22 +1,19 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, joinCombat } from '../src/engine/coopCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { formationDimensions, isFormationCell } from '../src/model/formationLayout.js';
 import { formationOccupancy, initializeFormationOccupancy } from '../src/model/formationOccupancy.js';
 const player = () => ({ id: 'one', classId: 'reaver', maxHp: 100, hp: 100, maxStamina: 10, stamina: 10, maxMana: 5, mana: 5, energyMax: 10, drawPerTurn: 5, deck: Array.from({length:10},(_,i)=>({instanceId:`d${i}`,cardId:'strike',upgraded:false})) });
-function fixture(name, modules = {}, coop = false) {
+function fixture(name, modules = {}) {
   const gameProfile = resolveGameProfile({formatVersion:1,core:`ashen.${name}@1.0.0`,modules});
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,gameProfile)),gameProfile);
   const options={registries,rng:createRng(311),enemyIds:Array(7).fill('wanderingSoldier')};
-  const combat=coop ? createCoopCombat({...options,players:[player()]}) : createCombat({...options,gameProfile,player:player()});
+  const combat=createCombat({...options,gameProfile,player:player()});
   return {combat,registries,options};
 }
 test('current allocates a real seventh enemy to C; core uses only original enemy cells',()=>{
@@ -61,25 +58,11 @@ test('preserves older valid addresses and classic dimensions exclude extra cells
   const classic=formationDimensions({perspectiveGrid:false,formationPolicy:combat.formationPolicy},7);
   assert.equal(classic.extraCells,undefined);assert(!isFormationCell('A5',classic,'enemy'));
 });
-test('co-op uses the same extra occupancy and persists it through the graph snapshot', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
-  const {combat,options}=fixture('current',{},true);
-  assert.equal(combat.enemies[6].formationCell,'A5');
-  const restored=createCoopCombat({...options,rng:createRng(311),players:[player()],snapshot:serializeCoopCombatSnapshot(combat)});
-  assert.deepEqual(formationOccupancy(restored),formationOccupancy(combat));
-});
 
 test('Classic player column addresses remain saveable with a profile policy',()=>{
   const {combat,registries}=fixture('current');combat.player.formationCell='B2';
   const restored=restoreCombatSnapshot({registries,rng:createRng(311),snapshot:serializeCombatSnapshot(combat)});
   assert.equal(restored.player.formationCell,'B2');
-});
-
-test('a co-op late join receives an unoccupied stable player cell', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
-  const {combat}=fixture('current',{},true);const before=formationOccupancy(combat);
-  const newcomer={...player(),id:'two'};joinCombat(combat,newcomer);
-  const after=formationOccupancy(combat);assert.deepEqual(after.filter(row=>row.id!=='two'),before);
-  assert.equal(after.find(row=>row.id==='two').cell,'B1');
-  assert.doesNotThrow(()=>serializeCoopCombatSnapshot(combat));
 });
 
 test('fresh three-lane enemy allocation follows back right/left/middle then front right/middle/left', () => {
