@@ -626,3 +626,26 @@ test('what-changed: a cut sigil slot diffs to a slot-capacity row naming the ite
   assert.equal(row.before, String(slots.base)); assert.equal(row.after, String(slots.base + 1));
   assert.match(row.label, /Straight Sword|straightSword/i);
 });
+
+test('what-changed: committing the extract service opens a receipt with the art and the cinder cost', () => {
+  withKitDom((dom) => {
+    globalThis.HTMLElement = dom.document.body.constructor;
+    const { run } = smithRun(OUT);
+    run.loadout.storage.push('katana');
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    app.querySelector('#shop-cat-extractArt').click();
+    app.querySelector('#blacksmith-extractArt button').click();
+    const item = app.querySelector(`[data-item-ref="${KATANA}"]`);
+    item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
+    item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
+    app.querySelector('[data-mount-key]').click();
+    const cinders = run.cinders;
+    app.querySelector('.mount-confirm').click();
+    const modal = dom.document.body.querySelector('.what-changed-modal');
+    assert.ok(modal, 'receipt open');
+    assert.ok(modal.querySelector('[data-what-changed-kind="card"]'), 'the extracted art is a card row');
+    if (run.cinders < cinders) assert.ok(modal.querySelector('.what-changed-cost'), 'cinder cost strip');
+  });
+});

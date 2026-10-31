@@ -244,17 +244,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // line is the whole answer and no dead-end modal opens.
     const ready = readyCount(id) > 0;
     const control = button({ label: t('blacksmith.action.open'), weight: 'primary', disabled: !ready, attrs: { dataset: { smithService: id } } });
-    if (ready) control.addEventListener('click', () => openMountService(app, {
+    if (ready) control.addEventListener('click', () => { let before; openMountService(app, {
       service, registries, run, meta, returnFocusElement: control, multiUse: true, place: 'merchant',
       quote: (chosen) => (service === 'extract'
         ? blacksmithExtractPlan(registries, run, chosen.itemRef, chosen.mountKey)
         : blacksmithInstallPlan(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId)),
-      commit: (_chosen, quote) => (service === 'extract'
+      commit: (_chosen, quote) => { before = snapshotRunForDiff(run); return service === 'extract'
         ? commitBlacksmithExtract(registries, run, quote)
-        : commitBlacksmithInstall(registries, run, quote)),
+        : commitBlacksmithInstall(registries, run, quote); },
       onError: (error) => refuse(host, error),
-      onCommitted: () => { sfx.play('shrine'); onChanged(); render(); },
-    }));
+      // The receipt, as the other purchases show it (SPEC §14.4), after the redraw.
+      onCommitted: () => { sfx.play('shrine'); onChanged(); render(); showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') }); },
+    }); });
     host.append(control);
     shelf.append(host);
   }
