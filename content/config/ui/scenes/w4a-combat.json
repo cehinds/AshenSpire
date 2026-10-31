@@ -25,10 +25,10 @@
       "cornerWidthPx": 201,
       "groupHeightPx": 108,
       "toolsBottomPx": 164,
-      "endHitWidthPx": 320,
-      "endHitHeightPx": 80,
-      "endArtWidthPx": 240,
-      "endArtHeightPx": 74.5714285714,
+      "endHitWidthPx": 224,
+      "endHitHeightPx": 56,
+      "endArtWidthPx": 168,
+      "endArtHeightPx": 52.2,
       "bottomInsetPx": 26
     },
     "compactCombat": {
