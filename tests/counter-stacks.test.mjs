@@ -1,5 +1,5 @@
 // Counter stacks (owner 2026-10-31, SPEC §17): the Block a Counter card stands behind becomes stacks on the combat entity;
-// they persist until the fight ends, cap at mechanics.counter.stackCap, and a covered hit returns the card's base damage
+// they persist until the fight ends, have no cap (they fade 2 per owner turn), and a covered hit returns the card's base damage
 // plus floor(stacks x 10% x incoming). In Counter stance a card-less auto-Counter (1 SP, base 0) is offered, and a Counter
 // reaction costs one less SP there.
 import test from 'node:test';
@@ -42,24 +42,34 @@ test('playing a Counter adds the player\'s current Block (after the card\'s own 
   assert.equal(combat.player.counterStacks, combat.player.block, 'stacks equal the Block held after the play');
 });
 
-test('stacks are capped at mechanics.counter.stackCap', () => {
+test('no cap: 15 Block played twice makes 30 stacks', () => {
   const { combat } = withCounter();
-  combat.player.counterStacks = mechanics.counter.stackCap - 1;
+  combat.player.counterStacks = 15;
+  combat.player.block = 15; // as if a Counter had left 15 Block: the next play adds what the player holds
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
-  assert.equal(combat.player.counterStacks, mechanics.counter.stackCap);
+  assert.equal(combat.player.counterStacks, 15 + combat.player.block);
+  assert.ok(combat.player.counterStacks > 20, 'well past the old cap');
 });
 
-test('stacks persist across the owner turn start and a stance change (only the single-use charge clears)', () => {
+test('decay: stacks fade 2 per owner turn start, 9 -> 7 -> 5 -> 3 -> 1 -> 0, and log a fade line', () => {
+  const { combat } = live();
+  combat.player.counterStacks = 9;
+  const seen = [];
+  for (let i = 0; i < 5; i++) { endTurn(combat); seen.push(combat.player.counterStacks ?? 0); }
+  assert.deepEqual(seen, [7, 5, 3, 1, 0]);
+});
+
+test('stacks persist across the owner turn start (less the fade) and a stance change (only the single-use charge clears)', () => {
   const { combat } = withCounter();
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
   const stacks = combat.player.counterStacks;
   assert.ok(stacks > 0);
   endTurn(combat);
   assert.equal(combat.phase, 'player', 'a new owner turn began');
-  assert.equal(combat.player.counterStacks, stacks, 'owner turn start leaves the stacks alone');
+  assert.equal(combat.player.counterStacks, stacks - 2, 'owner turn start fades them by 2, no more');
   assert.equal(combat.player.combatCounter, undefined, 'the single-use charge is gone');
   combat.player.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
-  assert.equal(combat.player.counterStacks, stacks, 'a stance change leaves them alone');
+  assert.equal(combat.player.counterStacks, stacks - 2, 'a stance change leaves them alone');
 });
 
 test('the return is the card\'s base damage + floor(stacks x 0.1 x incoming) (+ the advantage share): 4 + floor(7 x 0.1 x 8) + 2 = 11', () => {
@@ -144,8 +154,10 @@ test('snapshots round-trip counterStacks, load without it, and refuse a count ov
   delete old.player.counterStacks;
   assert.deepEqual(combatSnapshotProblems(old), [], 'absent means 0: old saves load');
   old.player.counterStacks = 25;
-  assert.deepEqual(combatSnapshotProblems(old), [], 'a count over the live cap is not refused');
-  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.counterStacks, mechanics.counter.stackCap, 'it loads clamped to the live cap');
+  assert.deepEqual(combatSnapshotProblems(old), [], 'the rule has no cap, so 25 loads as 25');
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.counterStacks, 25);
+  old.player.counterStacks = 5000;
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.counterStacks, 999, 'garbage clamps to the safety ceiling');
   old.player.counterStacks = -1;
   assert.ok(combatSnapshotProblems(old).some(problem => problem.includes('counterStacks')));
 });

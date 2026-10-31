@@ -3,6 +3,7 @@ import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
 import * as CounterRule from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
+import { decayCounterStacks } from './guardStacks.js';
 const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
 const counterReturnForReceipt = (ctx, receipt, options) => CounterRule.counterReturnForReceipt(ctx, receipt, options);
 import { stanceMitigation } from './stanceMitigation.js';
@@ -404,6 +405,8 @@ export function startTacticalTurn(ctx, entity) {
   if (!combatExpansionEnabled(ctx) || !entity) return { block: 0, barrier: 0 };
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
   clearCombatCounter(entity, ctx);
+  // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start, after the charge clears (owner 2026-10-31).
+  if (entity.kind === 'player' && fixCoreEnabled(ctx)) decayCounterStacks(ctx, entity);
   delete entity.combatEvade;
   delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null

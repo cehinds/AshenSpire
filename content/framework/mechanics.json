@@ -80,8 +80,8 @@
   },
   "counter": {
     "stackFraction": 0.1,
-    "stackCap": 10,
-    "autoCounterStamina": 1
+    "autoCounterStamina": 1,
+    "decayPerTurn": 2
   },
   "reflect": {
     "reducePerStack": 0.3,

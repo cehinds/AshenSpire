@@ -14,7 +14,7 @@ import * as Tactics from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
 import { rememberCombatStance } from './concurrentStances.js';
 import * as statuses from '../framework/statusSemantics.js';
-import { counterStackReturn, counterStackCount } from './guardStacks.js';
+import { counterStackReturn, counterStackCount, STACK_CEILING } from './guardStacks.js';
 import { mechanics } from '../framework/data/mechanics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
@@ -45,7 +45,7 @@ export function counterReturn(ctx, incoming, advantaged, { stacks = 0, base = 0 
 }
 
 /** The Counter stacks `entity` would hold after playing a Counter card that leaves it `block` Block (capped). */
-export const counterStacksAfterCard = (entity, block) => Math.min(mechanics.counter.stackCap, counterStackCount(entity) + Math.max(0, Math.floor(Number(block) || 0)));
+export const counterStacksAfterCard = (entity, block) => Math.min(STACK_CEILING, counterStackCount(entity) + Math.max(0, Math.floor(Number(block) || 0)));
 
 /** The return of an executed action: the sum over the contacts the Counter covered. `base` is the card's own damage, paid on the first. */
 export function counterReturnForReceipt(ctx, receipt, { stacks = 0, base = 0 } = {}) {

@@ -1548,7 +1548,7 @@
       "school:alteration",
       "classification.skill"
     ],
-    "textTemplate": "Gain 1 Reflect.",
+    "textTemplate": "Gain {applyReflect} Reflect.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "upgrade": {
       "effects": [

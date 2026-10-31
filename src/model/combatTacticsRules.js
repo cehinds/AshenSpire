@@ -11,7 +11,7 @@ const whole = value => Number.isSafeInteger(value) && value >= 0;
 /** Clamps saved stack counts to the live caps (load-time companion of stackCountProblems). */
 export function clampStackCounts(entity) {
   if (!entity) return;
-  if (entity.counterStacks > mechanics.counter.stackCap) entity.counterStacks = mechanics.counter.stackCap;
+  if (entity.counterStacks > 999) entity.counterStacks = 999; // safety ceiling, not a rule
   if (entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
 }
 

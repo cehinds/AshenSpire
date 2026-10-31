@@ -3,6 +3,8 @@
 // `counter` / `reflect`), and they clear only when the fight ends (a fresh entity carries none). Pure helpers.
 import { mechanics } from '../framework/data/mechanics.js';
 
+/** Safety ceiling for a stack count in memory and in a save; not a game rule. */
+export const STACK_CEILING = 999;
 const whole = value => Math.max(0, Math.floor(Number(value) || 0));
 
 export const counterStackCount = entity => whole(entity?.counterStacks);
@@ -12,7 +14,8 @@ export const reflectStackCount = entity => whole(entity?.reflectStacks);
 export function gainCounterStacks(ctx, entity, amount) {
   if (!entity) return 0;
   const before = counterStackCount(entity);
-  const next = Math.min(mechanics.counter.stackCap, before + whole(amount));
+  // No rule cap (owner 2026-10-31); the ceiling only keeps garbage out of a save.
+  const next = Math.min(STACK_CEILING, before + whole(amount));
   if (next === before) return 0;
   entity.counterStacks = next;
   ctx?.emit?.('counterStacksChanged', { targetId: entity.id, stacks: next, amount: next - before,
@@ -59,3 +62,15 @@ export const reflectReturnPct = stacks => Math.min(pct(mechanics.reflect.reduceC
 export const reflectCut = (incoming, stacks) => Math.floor(whole(incoming) * (100 - reflectReducePct(stacks)) / 100);
 /** What a reflected hit sends back: floor(original x return% / 100). */
 export const reflectReturned = (original, stacks) => Math.floor(whole(original) * reflectReturnPct(stacks) / 100);
+
+/** Counter stacks fade by decayPerTurn at the owner's turn start, never below 0; emits counterStacksChanged when they change. */
+export function decayCounterStacks(ctx, entity) {
+  const before = counterStackCount(entity);
+  if (!before) return 0;
+  const next = Math.max(0, before - whole(mechanics.counter.decayPerTurn));
+  if (next === before) return 0;
+  if (next === 0) delete entity.counterStacks; else entity.counterStacks = next;
+  ctx?.emit?.('counterStacksChanged', { targetId: entity.id, stacks: next, amount: next - before, decay: true,
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
+  return before - next;
+}

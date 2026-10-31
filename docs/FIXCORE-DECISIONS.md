@@ -70,7 +70,7 @@ configuration or historical non-Core profiles.
 ## Counter stacks (2026-10-31)
 
 Owner: Counter becomes a stack badge. Playing a Counter adds the Block you hold
-as `counterStacks` (cap 10, kept until the fight ends). A covered hit returns the
+as `counterStacks` (owner, later 2026-10-31: no cap; they fade by 2 at each owner turn start, never below 0, and clear at fight end). A covered hit returns the
 card's own damage plus 10% of the incoming hit per stack, replacing the old
 floor(0.5 x incoming) share (the stance-advantage share and Block are unchanged).
 In Counter stance a card-less auto-Counter answers a covered hit for 1 SP with

@@ -519,7 +519,7 @@ test('a support-only Core Counter vs a hidden intent keeps the authored payload;
   assert.match(hidden.text, /Poise/, hidden.text);
   const covered = supportFace('wanderingSoldier');
   assert.ok(covered.view.counterReturn?.poise > 0 && !covered.view.counterReturn.uncovered);
-  assert.match(covered.text, /Counter 10/, covered.text); // stacks rule re-pin: 12 Block = 12 stacks, capped at 10: floor(1.0 x 8) + 2
+  assert.match(covered.text, /Counter 11/, covered.text); // stacks rule re-pin: 12 Block = 12 stacks (no cap): floor(1.2 x 8) + 2
   assert.doesNotMatch(covered.text, /Poise/, 'computed automatic reply stays in Counter inspection');
 });
 

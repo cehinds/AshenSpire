@@ -138,3 +138,12 @@ test('integer arithmetic: 10 incoming at 4 stacks leaves 1; 30 original at 3 sta
   const receipt = profileDamageReceipt(combat, enemy, combat.player, 10, carrier);
   assert.equal(receipt.damageReceipt.hits[0].incoming, reflectCut(receipt.reflect.original, 4), 'preview receipt == helper == live path');
 });
+
+test('Mirror Guard\'s face states the amount: 1 Reflect, 2 upgraded', async () => {
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const { combat } = live();
+  const face = upgraded => { combat.piles.hand.push({ instanceId: `mf${upgraded}`, cardId: 'core.mirrorGuard', upgraded }); const { previewCard } = globalThis.__pv; const view = previewCard(combat, `mf${upgraded}`); return (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(l => l.html).join(' ').replace(/<[^>]+>/g, ''); };
+  globalThis.__pv = await import('../src/engine/combat.js');
+  assert.match(face(false), /\b1\b.*Reflect|Reflect.*\b1\b/);
+  assert.match(face(true), /\b2\b.*Reflect|Reflect.*\b2\b/);
+});

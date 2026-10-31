@@ -164,6 +164,9 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = event.reaction ? `${source} reacts with ${move}.` : `${source} used ${move}.`;
         break;
       }
+      case 'counterStacksChanged':
+        if (event.decay) text = `${source}'s Counter fades to ${event.stacks}.`;
+        break;
       case 'reflectTriggered':
         text = `${source} reflected ${event.amount} back at ${target} (${event.stacks} stack${event.stacks === 1 ? '' : 's'}).`;
         break;
