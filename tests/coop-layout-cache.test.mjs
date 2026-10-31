@@ -43,3 +43,22 @@ test('co-op wires the battlefield stage once, with the layout state, after the h
   assert.ok(hand > 0, 'renderCombat must mount the hand');
   assert.ok(calls[0].index > hand, 'the stage must fit after the replacement hand establishes the field size');
 });
+
+test('coopMaxAnimationScale reads standalone scale and multiplies with transform', async () => {
+  globalThis.DOMMatrixReadOnly ??= class { constructor(t) { const m = /scale\(([\d.]+)\)/.exec(t); this.a = this.d = m ? +m[1] : 1; this.b = this.c = 0; } };
+  const { coopMaxAnimationScale } = await import('../src/ui/screens/coop.js');
+  const el = (frames) => ({ getAnimations: () => [{ effect: { getKeyframes: () => frames } }] });
+  assert.equal(coopMaxAnimationScale(el([{ scale: '0.4' }, { scale: '1.6' }, { scale: '1' }])), 1.6);
+  assert.equal(coopMaxAnimationScale(el([{ scale: '1.3 1.3' }, { scale: 'none' }])), 1.3);
+  assert.ok(Math.abs(coopMaxAnimationScale(el([{ transform: 'scale(1.2)', scale: '1.5' }])) - 1.8) < 1e-9);
+  assert.equal(coopMaxAnimationScale({}), 1);
+});
+
+// Source-anchored: the co-op float builder lives inside mountCoop and needs a
+// DOM, which the node runner lacks.
+test('co-op floaters take --float-ms from floaterLifeMs() and live life + 60 ms', () => {
+  assert.match(coop, /import \{ floaterLifeMs \} from '\.\.\/animationPace\.js';/);
+  assert.match(coop, /const life = floaterLifeMs\(\);\s*el\.style\.setProperty\('--float-ms', `\$\{life\}ms`\);/);
+  assert.match(coop, /setTimeout\(\(\) => el\.remove\(\), life \+ 60\);/);
+  assert.doesNotMatch(coop, /el\.remove\(\), 1100\)/);
+});

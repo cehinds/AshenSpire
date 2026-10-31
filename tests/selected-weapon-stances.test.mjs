@@ -156,7 +156,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
   const fxCtx={anchorFor:id=>{assert.equal(id,'player');return anchor;}};
   const combat={player:{alive:true},eventLog:[]};
   const factory=runInNewContext('({'+source.slice(begin,end)+'}).reactionForReceipt',{
-    ...bindings,selectedWeaponReactionFor,playbackCounterOrigins:new Set(),selectedProfile:()=>pilot,combat,playbackEvents:combat.eventLog,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
+    ...bindings,reducedMotionRequested:()=>false,selectedWeaponReactionFor,playbackCounterOrigins:new Set(),selectedProfile:()=>pilot,combat,playbackEvents:combat.eventLog,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
   });
   try {
     for(const speed of ['normal','slow','instant']) {
@@ -164,7 +164,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
       for(const event of [{type:'combatGuardBroken',targetId:'player'},
         {type:'combatAvoidanceResolved',targetId:'player',avoided:true,evade:{success:true}}]) {
         const callback=factory(event);assert.equal(typeof callback,'function');
-        callback();assert.deepEqual(calls.at(-1),[event.type==='combatGuardBroken'?'guard-break':'evade',selectedWeaponSequenceTiming(selectedWeaponSequence(event.type==='combatGuardBroken'?'guard-break':'evade'),animationPace.ANIM_SPEEDS[speed]).totalMs||280]);
+        callback();assert.deepEqual(calls.at(-1),[event.type==='combatGuardBroken'?'guard-break':'evade',selectedWeaponSequenceTiming(selectedWeaponSequence(event.type==='combatGuardBroken'?'guard-break':'evade'),animationPace.actionPacing({reduced:false}).spriteSpeed).totalMs||280]);
       }
     }
     const callback=factory({type:'combatGuardBroken',targetId:'player'});

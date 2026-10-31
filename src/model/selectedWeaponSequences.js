@@ -23,7 +23,8 @@ export function selectedWeaponSequence(kind) {
 export function selectedWeaponSequenceTiming(sequence, speed) {
   if (!speed || !sequence) return {totalMs:0,impactMs:0};
   if(sequence.reaction)return {totalMs:speed.reactionMs,impactMs:0};
-  const unit = speed.lungeMs / (sequence.timingUnits || 6);
+  // One unit is one frame at weight 1: never shown for less than the pace's frame hold (ui/animationPace.js frameHoldMs).
+  const unit = Math.max(speed.lungeMs / (sequence.timingUnits || 6), Number(speed.minFrameMs) || 0);
   return {totalMs:sequence.durations.reduce((a,b)=>a+b,0)*unit,
     impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)*unit};
 }
