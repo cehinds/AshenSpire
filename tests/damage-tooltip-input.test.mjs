@@ -78,3 +78,18 @@ test('ordinary card Confirm still activates once across the production keydown a
     assert.equal(activations(), 1);
   });
 });
+
+test('Enter on a keyword in an unselected hand card falls through to the game cursor; a selected card keeps it', () => {
+  withInput(({ document, app, press, activations }) => {
+    for (const [classes, owned] of [['card', false], ['card selected', true], ['card inspection-selected', true]]) {
+      const hand = document.createElement('div'); hand.className = 'hand';
+      const held = document.createElement('div'); held.className = classes;
+      const keyword = document.createElement('span'); keyword.className = 'tooltip-keyword'; keyword.dataset.tip = 'Explained';
+      keyword.tabIndex = 0; held.append(keyword); hand.append(held); app.append(hand);
+      const before = activations();
+      const event = press(keyword, 'Enter');
+      assert.equal(event.captured, !owned, classes);
+      assert.equal(activations() - before, owned ? 0 : 1, classes);
+    }
+  });
+});

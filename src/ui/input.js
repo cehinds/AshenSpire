@@ -969,7 +969,14 @@ function onKeydown(ev) {
   if (!enabled) return;
   // Inspection and route controls own native Enter/Space activation. The
   // game cursor may still point at their card, whose action must stay inert.
-  if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
+  if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt]')) return;
+  // A glossary keyword owns its keys too, except inside a hand card that is not selected or inspected: it
+  // explains nothing there (tooltip.js), so Enter/Space fall through to the game cursor and select the card.
+  const keyword = ev.target?.closest?.('.tooltip-keyword[data-tip]');
+  if (keyword) {
+    const heldCard = keyword.closest('.hand .card');
+    if (!heldCard || heldCard.matches('.selected, .inspection-selected')) return;
+  }
   // A focused target HUD panel opens its own inspection on Enter/Space the
   // same way; every other key (arrows) still drives the game cursor.
   if (ev.target?.closest?.('.target-hud-panel') && (ev.key === 'Enter' || ev.key === ' ')) return;
