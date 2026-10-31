@@ -27,6 +27,11 @@ export const COMBAT_TIMING = Object.freeze({
   floaterMinLifeMs: 400,   // the floor at the highest speed multiplier
   floaterInstantMs: 480,   // the Instant pace keeps the classic short number
   floaterFadeFraction: 1 / 3,
+  // Callout words (STAGGERED, EVADED, action words): life at combat speed 1, divided by the Combat speed
+  // only (like the numbers), never by the Fast/Slow animation pace (owner, 2026-10-31).
+  calloutLifeMs: 1400,
+  calloutMinLifeMs: 700,
+  calloutInstantMs: 500,   // the Instant pace keeps the classic short word
   // Sprite frames: each pose frame is held at least this share of the Animation step duration
   // (390 ms by default -> 109 ms at Combat speed 1), divided by the Combat speed, clamped below.
   // Mobile fast (195 ms) therefore holds ~55 ms. Instant and Reduced motion hold nothing.
@@ -82,6 +87,11 @@ export function setCombatPacing(settings = {}) { combatPacing = resolvePacing(se
 export function floaterLifeMs() {
   if (getAnimSpeed() === 'instant') return COMBAT_TIMING.floaterInstantMs;
   return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / combatPacing.speed));
+}
+// How long a callout word stays on screen, in ms. Presentation only: no beat waits on it.
+export function calloutLifeMs() {
+  if (getAnimSpeed() === 'instant') return COMBAT_TIMING.calloutInstantMs;
+  return Math.round(Math.max(COMBAT_TIMING.calloutMinLifeMs, COMBAT_TIMING.calloutLifeMs / combatPacing.speed));
 }
 // The shortest time one sprite frame is shown, in ms (0 on Instant and Reduced motion).
 export function frameHoldMs({ reduced = false } = {}) {

@@ -870,7 +870,10 @@ pile (`shuffleHand: true`). Played cards and forced or chosen discards go to the
 discard pile and return with its next reshuffle. When the draw pile holds fewer
 cards than the next turn's draw, the whole discard pile joins the returned
 cards in that one shuffle (in deck order under Play in deck order), so a held
-hand never starves the discard of its reshuffle. Retain does not change a
+hand never starves the discard of its reshuffle. The cards already in the
+draw pile stay on top in their order; the shuffled returned cards and discard
+go beneath them, so a short draw pile is drawn before anything reshuffled.
+Retain does not change a
 played card's destination. The authored Herald and Starseer pools give Retain to
 selected healing, ward, setup and costly spells, including their upgrades.
 At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
@@ -2330,7 +2333,7 @@ inspection also use that component; prices, smithing tiers, mounted cards and
 transaction rules remain live receipts outside the base-value card (#799).
 
 Item card presentation: weapon, potion and relic inventory faces share a 5:7 canvas. Standard listing cards use a 280px track (20% smaller than 350px), arranged in a responsive grid with no last-row stretching. Hold progress overlays the face; the existing hold duration and commit/cancel rules are unchanged. Potion and relic cards display authored effects, with full-text inspection.
-Combat presentation: the solo hand uses a 150–180 viewport-pixel card width range, preserving its 5:7 aspect ratio; on desktop and widescreen the cards are capped at 150 viewport pixels (owner, 2026-10-26: "make the cards smaller (desktop/widescreen especially) so the whole card incl. its bottom text shows"; `uiConfig.scenes.w4a.sizing.desktopFooter.cardMaxViewportPx`). More cards overlap or scroll rather than becoming smaller. Combatants expand within their available cells and stand close to the hand without overlapping its cards or the HUD. Three enemies fit without horizontal scrolling; four or more may scroll. Short-height combat may scroll vertically to preserve readable element sizes. Inspection must not play a card.
+Combat presentation: the solo hand uses a 150–180 viewport-pixel card width range, preserving its 5:7 aspect ratio; on desktop and widescreen the cards are capped at 97 viewport pixels at a 2:3 ratio (owner, 2026-10-26: "make the cards smaller (desktop/widescreen especially) so the whole card incl. its bottom text shows"; owner, 2026-10-31: End Turn, Reaction and Auto at 0.7 of their former sizes and desktop cards at 0.8 (asked 30% smaller, then about 10% larger), Reaction and Auto on widescreen too, the lowest hand card 10 px above End Turn, and the top HUD band 44.8 px; `uiConfig.scenes.w4a.sizing.desktopFooter.cardMaxViewportPx`, `handGapPx`, `desktopHeader.splitHeightPx`). More cards overlap or scroll rather than becoming smaller. Combatants expand within their available cells and stand close to the hand without overlapping its cards or the HUD. Three enemies fit without horizontal scrolling; four or more may scroll. Short-height combat may scroll vertically to preserve readable element sizes. Inspection must not play a card.
 
 Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
 

@@ -17,7 +17,9 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
   assert.ok(Math.abs((end.y+end.h)*zoom-(height-uiConfig.scenes.w4a.sizing.desktopFooter.bottomInsetPx*footer.unit*zoom))<.001);
   for(const count of [1,3,5,7,10]){
     const hand=desktopHandLayout({width:width/zoom,height:footer.handHeight,count,zoom});
-    assert.ok(hand.cardWidth*zoom>=150 && hand.cardWidth*zoom<=181, "desktop cards sit in the SPEC 150-180px band, below the previous 184px reference size");
+    // Owner (2026-10-31): desktop cards net 20% smaller than the measured ~121px (before), so the cap is 97 viewport px
+    // (first asked 30% smaller, 85px; then "about 10% larger, so net 20% smaller").
+    assert.ok(hand.cardWidth*zoom>=96.9 && hand.cardWidth*zoom<=97.1, "desktop cards sit at the 97px cap (0.8 x the measured ~121px of dev b506bf55)");
     assert.ok(Math.abs(hand.cardWidth/hand.cardHeight-2/3)<1e-9);
     assert.ok(hand.cards[0].x>=0);
     assert.ok(hand.cards.at(-1).x+hand.cardWidth<=width/zoom);

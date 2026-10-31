@@ -414,7 +414,7 @@
      width is never a number anyone maintains (#69). Standalone `translate`
      rather than `transform`, because num-pop animates transform and the two
      must compose. */
-  translate: -50% 0;
+  translate: -50% calc(var(--float-lane, 0px) * -1); /* --float-lane lifts a stacked floater one lane (ui/fx.js floatNum) */
   position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem;
   color: var(--parchment);
   /* A 1px dark outline keeps numbers legible over any sprite. */
