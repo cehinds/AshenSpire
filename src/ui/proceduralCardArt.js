@@ -18,10 +18,10 @@ const clone = value => structuredClone(value);
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
 for (const recipe of Object.values(reviewed.records)) {
-  for (const sprite of recipe.sprites) if (!spritesByAsset.has(sprite.assetId)) spritesByAsset.set(sprite.assetId, sprite);
+  for (const sprite of recipe.sprites) if (!spritesByAsset.has(sprite.assetId)) spritesByAsset.set(sprite.assetId, freeze(clone(sprite)));
   if (recipe.rule === 'status-symbol') for (const cue of recipe.visualCues) {
     if (cue.startsWith('status:') && !statusObjects.has(cue.slice(7))) {
-      statusObjects.set(cue.slice(7), recipe.sprites.find(sprite => sprite.id.startsWith('object')));
+      statusObjects.set(cue.slice(7), freeze(clone(recipe.sprites.find(sprite => sprite.id.startsWith('object')))));
     }
   }
 }
@@ -114,8 +114,10 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
   }
   const cueSprites = [];
-  // Physical elemental actions retain their weapon and add the approved PNG cue.
-  if (element && category === 'physical') {
+  // A projectile already carries its element. Every other action retains its
+  // silhouette and adds the approved elemental PNG (blue/mint alone is not an
+  // element identity, and Counter deliberately uses the separate real weapon).
+  if (element && !art.sprites.some(sprite => sprite.assetId === `Z.effect.${base.selection.projectiles[element]}`)) {
     const source = base.compositions[`Z0${base.selection.projectiles[element]}`].layers.find(sprite => sprite.id === 'foreground');
     cueSprites.push({ ...clone(source), id: 'element-cue', path: base.assets[source.assetId].path, css: { ...source.css, opacity: '0.23' } });
   }

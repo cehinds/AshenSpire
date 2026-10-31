@@ -65,7 +65,7 @@ const damageElement = (def, tags) => {
  */
 export function proceduralDefinitionArt(def, { ref, registries } = {}) {
   if (!def || typeof def !== 'object') return null;
-  const explicit = def.cardTags !== undefined && def.cardTags !== null;
+  const explicit = Object.hasOwn(def, 'cardTags');
   const tags = tagIds(explicit ? def.cardTags : def.tags ?? (registries
     ? tagService(registries).idsOf('card', def) : objectTagIds('card', def.id || ref?.cardId || '')));
   if (!explicit) {

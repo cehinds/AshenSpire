@@ -38,7 +38,7 @@ export function playingCardArtwork(ref, { large = false, extended = EXTENDED_CAR
 export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART, definition, registries, style = cardArtStyle() } = {}) {
   if (style !== CARD_ART_LEGACY && style !== CARD_ART_REVIEWED && definition) {
     const procedural = proceduralDefinitionArt(definition, { ref, registries });
-    if (procedural) return procedural;
+    if (procedural || Object.hasOwn(definition, 'cardTags')) return procedural;
   }
   if (style === CARD_ART_REVIEWED && definition) {
     // renderCard may pass a canonical visual reference (base.poison -> ironSkin); the

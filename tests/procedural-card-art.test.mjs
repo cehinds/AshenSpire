@@ -12,6 +12,7 @@ import { applyCardArtStyle, resolveCardArtStyle } from '../src/ui/cardArtStyle.j
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
+import { readFileSync } from 'node:fs';
 
 const recipe = (type = 'attack', tags = ['camp:physical'], rank = 1) => proceduralCardArt({ type, tags, rank });
 test('pure art depends only on canonical tags, type and rank, never identity or optional mechanics', () => {
@@ -65,6 +66,29 @@ test('elements, spell delivery, bounded status PNGs and unknown registry statuse
   assert.ok(generic.componentArt.sprites.some(sprite => sprite.assetId.startsWith('cue.prepared.')));
   assert.doesNotMatch(cardArtLayersHtml(generic), /evil/);
 });
+test('all ten elements visibly change every action through approved PNG source/CSS, not just metadata', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url)));
+  for (const action of ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend', 'skill']) {
+    const renders = new Set();
+    for (const [element, digit] of Object.entries(base.selection.projectiles)) {
+      const art = recipe(action, ['camp:spell', `element:${element}`]);
+      assert.equal(art.componentArt.sprites.filter(sprite => sprite.assetId === `Z.effect.${digit}`).length, 1, `${action}/${element} has one real elemental PNG`);
+      renders.add(JSON.stringify(art.componentArt.sprites.map(sprite => [sprite.path, sprite.css])));
+      for (const sprite of art.componentArt.sprites) assert.ok(manifest.assets[sprite.path]?.common, sprite.path);
+    }
+    assert.equal(renders.size, 10, `${action} has ten distinct rendered recipes`);
+  }
+});
+test('Reviewed working placement edits cannot mutate the procedural template pool on a cache miss', () => {
+  const source = Object.values(reviewed.records).flatMap(record => record.sprites).find(sprite => sprite.assetId === 'symbol.feather');
+  const before = recipe('evade', ['camp:physical'], 101).componentArt.sprites.find(sprite => sprite.assetId === 'symbol.feather');
+  const saved = source.css.left;
+  try {
+    source.css.left = '1%';
+    const after = recipe('evade', ['camp:physical'], 102).componentArt.sprites.find(sprite => sprite.assetId === 'symbol.feather');
+    assert.deepEqual(after, before, 'approved template is detached from mutable review working catalog');
+  } finally { source.css.left = saved; }
+});
 test('missing, empty, conflicting and unsupported camp or action identities fail safely', () => {
   for (const tags of [[], ['camp:physical', 'camp:spell'], ['camp:unknown'], ['camp:spell', 'maneuver:invented'], ['camp:spell', 'maneuver:attack', 'maneuver:sweep']]) {
     assert.equal(recipe('attack', tags), null);
@@ -92,6 +116,10 @@ test('Simple is procedural before dedicated and curated ID routes, while Reviewe
   assert.equal(playingCardArt({ cardId: 'gorefireSlash' }, { definition: def, style: 'Legacy' }).path, playingCardArtwork({ cardId: 'gorefireSlash' }));
   assert.equal(resolveCardArtStyle({ cardArtStyle: 'Reviewed' }), 'Reviewed');
   assert.equal(resolveCardArtStyle({ cardArtStyle: 'Simple' }), 'Simple');
+  for (const id of ['', 'mindSpike', 'gorefireSlash']) for (const cardTags of [[], null, undefined, ['camp:physical', 'camp:spell'], ['camp:spell', 'element:fire', 'element:frost']]) {
+    assert.equal(playingCardArt({ cardId: id, profileId: 'bladeAttack' }, { definition: { id, type: 'attack', cardTags }, style: 'Simple' }), null,
+      'explicit invalid or empty tags never repair through card/profile identity');
+  }
 });
 test('legacy adapter infers declared utility/status facts only when explicit cardTags are absent', () => {
   const def = { type: 'skill', tags: ['camp:physical'], effects: [{ op: 'heal', amount: 5 }, { op: 'applyStatus', status: 'burn' }] };
