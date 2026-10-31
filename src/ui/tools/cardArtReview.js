@@ -9,7 +9,8 @@ import {cardCutoutUrl} from '../layeredCardArt.js';
 import {gameRootURL} from './cardArtReviewUrl.js';
 import {containRect} from './cardArtReviewGeometry.js';
 import {mountProceduralBuilder} from './cardArtProceduralBuilder.js';
-import {t} from '../strings.js';
+import {t,tFull} from '../strings.js';
+import {CARD_ART_REVIEWED} from '../cardArtStyle.js';
 const profile=resolveGameProfile('default');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const run=createRunState({registries:reg,classId:'reaver',seed:73031});
@@ -26,7 +27,7 @@ function queue(){
   for(const [id,art] of Object.entries(catalog.records)){
     if(!`${art.label} ${id} ${art.tags.join(' ')}`.toLowerCase().includes(query))continue;
     const li=element('li'),check=element('input'),button=element('button',`${art.code} · ${art.label}`);
-    check.type='checkbox';check.checked=checked.has(id);check.setAttribute('aria-label',`Reviewed ${art.label}`);
+    check.type='checkbox';check.checked=checked.has(id);check.setAttribute('aria-label',tFull('cardArtBuilder.reviewedCard',{name:art.label}));
     check.onchange=()=>{check.checked?checked.add(id):checked.delete(id);summary();};
     button.setAttribute('aria-current',String(selected===id));button.onclick=()=>{selected=id;queue();show();};li.append(check,button);$('queue').append(li);
   }
@@ -35,7 +36,7 @@ function summary(){$('summary').textContent=`${records.length} cards · ${checke
 function preview(){
   const art=catalog.records[selected],base=element('img');base.src=imageURL(art.path);base.alt='';
   $('art').replaceChildren(base);$('art').insertAdjacentHTML('beforeend',cardArtLayersHtml({kind:'simple',componentArt:art,layers:[]}));
-  $('native').replaceChildren(renderCard(reg,{cardId:selected},{inspection:false,rules:run,artStyle:'Reviewed'}));
+  $('native').replaceChildren(renderCard(reg,{cardId:selected},{inspection:false,rules:run,artStyle:CARD_ART_REVIEWED}));
   for(const img of document.querySelectorAll('#art img,#native img')){
     const raw=img.getAttribute('src');if(raw&&!/^(data:|https?:|blob:)/.test(raw))img.src=new URL(raw,rootURL).href;
   }
