@@ -105,6 +105,8 @@ export function diffRunSnapshots(before, after, registries) {
     const b = after.itemUpgradeLevels[ref] || 0;
     if (a === b) continue;
     const id = ref.includes('/') ? ref.slice(ref.indexOf('/') + 1) : ref;
+    // A piece bought at a tier is one "gained" row (the receipt reads its tier stats), not also a tier-up.
+    if (!before.armaments.includes(id) && after.armaments.includes(id)) continue;
     rows.push(freeze({ kind: 'armament', label: armamentName(registries, id), before: `TIER ${a}`, after: `TIER ${b}`, delta: b - a, armamentId: id, itemRef: ref, change: 'tier', tierBefore: a, tierAfter: b }));
   }
 

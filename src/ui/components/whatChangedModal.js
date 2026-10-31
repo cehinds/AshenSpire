@@ -25,9 +25,11 @@ const cardFace = (registries, row) => el('div', { class: 'card-upgrade-faces', d
 function rowNode(registries, row) {
   const delta = row.before !== '' && row.after !== '' && row.kind !== 'relic'
     ? deltaNode(row.before, row.after) : null;
-  const word = !delta
+  const word = !delta && row.kind !== 'armament'
     ? el('span', { class: 'sp-v', text: row.kind === 'relic' ? t(row.gained ? 'whatChanged.gained' : 'whatChanged.lost') : (row.after || row.before) }) : null;
-  const hint = CHANGE_WORD[row.change] ? t(CHANGE_WORD[row.change]) : '';
+  // "Added to deck" is for cards only; gear that arrives or leaves reads Gained or Lost.
+  const hint = row.kind === 'armament' && (row.change === 'added' || row.change === 'removed') ? t(row.change === 'added' ? 'whatChanged.gained' : 'whatChanged.lost')
+    : CHANGE_WORD[row.change] ? t(CHANGE_WORD[row.change]) : '';
   const wrap = el('div', { class: 'what-changed-row', dataset: { whatChangedKind: row.kind, ...(row.change ? { whatChangedChange: row.change } : {}) } });
   wrap.appendChild(statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.label }), hint, values: [delta || word] }));
   if (row.stats?.length) wrap.appendChild(el('div', { class: 'confirmation-change-list' }, row.stats.map((s) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: s.label }), values: changeSummary({ values: [s] }) }))));

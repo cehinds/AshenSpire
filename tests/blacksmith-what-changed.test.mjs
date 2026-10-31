@@ -53,7 +53,8 @@ test('buying a tiered armament opens a receipt with the armament, its stat rows 
   withKitDom((dom) => {
     const run = smithRun(coreOut, { cinders: 5000 });
     const app = mount(dom, run);
-    const buy = [...app.querySelectorAll('button')].find((b) => b.textContent === 'Buy');
+    const tiered = [...app.querySelectorAll('.shop-offer[data-armament-tier]')].find((tile) => Number(tile.dataset.armamentTier) > 0);
+    const buy = [...(tiered || app).querySelectorAll('button')].find((b) => b.textContent === 'Buy');
     assert.ok(buy, 'a buy button is drawn');
     const cinders = run.cinders;
     buy.click();
@@ -61,6 +62,7 @@ test('buying a tiered armament opens a receipt with the armament, its stat rows 
     const modal = receipt(dom);
     assert.ok(modal, 'receipt open');
     assert.ok(modal.querySelector('[data-what-changed-kind="armament"]'), 'armament row');
+    if (tiered) assert.ok(modal.querySelector('[data-what-changed-kind="armament"] .as-delta'), 'the armament tier stat rows');
     assert.ok(modal.querySelector('[data-what-changed-kind="resource"]'), 'cinders row');
     assert.ok(modal.querySelector('.what-changed-cost'), 'cost strip');
   });

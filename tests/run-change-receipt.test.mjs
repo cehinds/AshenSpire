@@ -46,8 +46,10 @@ test('armament bought and tiered', () => {
   const id = registries.equipment.armaments.find((p) => !JSON.stringify(run.loadout).includes(p.id)).id;
   const d = diff(run, (r) => { r.loadout.storage = [...(r.loadout.storage || []), id]; r.itemUpgradeLevels = { [`armament/${id}`]: 1 }; });
   assert.ok(d.rows.some((r) => r.kind === 'armament' && r.change === 'added' && r.armamentId === id));
-  const tier = d.rows.find((r) => r.change === 'tier');
-  assert.equal(tier.tierBefore, 0); assert.equal(tier.tierAfter, 1); assert.equal(tier.label, registries.equipment.armaments.find((p) => p.id === id).name);
+  assert.ok(!d.rows.some((r) => r.change === 'tier'), 'a piece bought at a tier is one gained row');
+  const d2 = diff(run, (r) => { r.itemUpgradeLevels = { [`armament/${id}`]: 2 }; });
+  const tier = d2.rows.find((r) => r.change === 'tier');
+  assert.equal(tier.tierBefore, 1); assert.equal(tier.tierAfter, 2); assert.equal(tier.label, registries.equipment.armaments.find((p) => p.id === id).name);
 });
 test('class swap and flask rows', () => {
   const d = diff(newRun(), (r) => { r.class = 'warden'; r.flasks = ['hp']; });
