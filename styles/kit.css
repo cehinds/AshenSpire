@@ -2205,6 +2205,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-row-text { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
 .smith-row-text > .smith-weapon-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); font-weight: 600; }
 .smith-row-text > .as-status { text-align: left; }
+.smith-row-text > .card-upgrade-indeck { align-self: flex-start; padding: 0 0.4rem; font-size: 0.85rem; line-height: 1.35; }
 .smith-candidate-card > .smith-weapon-count { flex: 0 0 auto; }
 .smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: 8px; left: auto; transform: translateY(-50%); }
 .smith-item-type-row, .smith-weapon-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
