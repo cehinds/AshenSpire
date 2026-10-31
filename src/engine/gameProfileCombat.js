@@ -148,13 +148,22 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
     const plainPhysicalBlocked = Math.min(blockPool,physical);
     // Ward off: the magic part meets Poise before Block, so what Block soaks of it is decided after Poise (below); Ward on keeps Block-first.
-    let plainMagicBlocked = poiseMeetsMagic ? 0 : Math.min(blockPool-plainPhysicalBlocked,magical);
+    // Block is spent as the same hit without pierce would spend it, so the Ward-off magic lane reads the non-piercing resolution
+    // (physical Block, physical Poise, magic Poise, then magic Block), never the pool a pierce left.
+    let plainMagicBlocked;
+    if (poiseMeetsMagic) {
+      const poisePoolFull = Math.max(0,target?.persistentPoise?.value || 0);
+      const plainPoise = smashRule ? {reduced:0} : protectionReceipt(ctx,target,'physical',physical-plainPhysicalBlocked);
+      const plainMagicPoise = smashRule ? 0 : Math.min(magical,Math.max(0,poisePoolFull-plainPoise.reduced));
+      plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
+    } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
     const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
-    let magicBlocked = plainMagicBlocked-(pierceBypassed-piercedPhysicalPart);
+    const magicBypass = pierceBypassed-piercedPhysicalPart;
+    let magicBlocked = plainMagicBlocked-magicBypass;
     // The pierced physical amount meets Poise first, 1:1 (owner, 2026-10-26): Poise loses up to that much and only the rest reaches HP.
     // The remainder Block left then meets the ordinary Poise rule against what the pierce left of the pool, so Poise never counts the pierce twice.
     const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
@@ -169,11 +178,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     // Magic after the physical part: Poise first (1:1, the pool the physical part left), then the Block the physical part left, then Barrier, then HP.
     magicPoise = poiseMeetsMagic && !smashRule ? Math.min(magical,Math.max(0,poisePool-piercePoise-poise.reduced)) : 0;
     const magicAfterPoise = magical-magicPoise;
-    if (poiseMeetsMagic) {
-      const plain = Math.min(blockPool-plainPhysicalBlocked,magicAfterPoise);
-      const bypass = Math.max(0,Math.min(bypassAmount,plainPhysicalBlocked+plain)-pierceBypassed);
-      pierceBypassed += bypass; magicBlocked = plain-bypass; blockSpent = plainPhysicalBlocked+plain;
-    }
+    // What Poise left of the magic part meets the Block the plan set aside for it; Block itself is spent as planned (blockSpent).
+    if (poiseMeetsMagic) magicBlocked = Math.min(magicBlocked,magicAfterPoise);
     blocked = physicalBlocked+magicBlocked;
     const magicAfterBlock = magicAfterPoise-magicBlocked;
     barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);

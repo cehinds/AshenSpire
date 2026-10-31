@@ -190,7 +190,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const blocked = event.blocked || 0;
         const hp = Math.max(0, event.amount - blocked);
         // What reached the layers (Barrier, Ward, Block, Poise, then HP), after typed resistance or weakness.
-        const layered = event.amount + barrier + ward + poise;
+        const layered = event.amount + barrier + ward + poise + magicPoise;
         // The hit as it arrived. Newer events say so (`incoming`); an older one's typed reduction is
         // the whole protection before Block (`resisted`) less what Barrier and Ward took.
         const incoming = Number.isFinite(event.incoming) ? event.incoming
