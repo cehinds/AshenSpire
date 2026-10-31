@@ -20,7 +20,7 @@ import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { previewEnemyAction } from '../../engine/enemyActionPreview.js';
-import { critChance } from '../../engine/actions.js';
+import { combatStatRows as statRows } from '../models/CombatantStatRows.js';
 import { enemyDeckInspection } from '../models/EnemyDeckInspectionModel.js';
 import { editingLocked, markArmourySeen, noncombatEditing } from '../../model/armouryRules.js';
 import { syncArmouryNew } from '../components/runHud.js';
@@ -4002,18 +4002,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }))}`);
   }
 
-  // Precision, Evasion and Crit chance for the inspector's Current state: always shown, 0 when absent.
-  // Crit chance is the engine's own critChance() on the entity's rules (only the player's attacks roll one);
-  // with several rules it is the best any single rule gives.
-  function combatStatRows(v, entity, kind) {
-    const rules = kind === 'player' && Array.isArray(entity.critRules) ? entity.critRules : [];
-    const best = Math.max(0, ...rules.map(rule => critChance([rule], combat.attributes, rule.tags).chance));
-    return [
-      { label: t('combat.stat.precision'), tipId: 'precision', always: true, value: v.statuses?.precision?.stacks || 0 },
-      { label: t('combat.stat.evasion'), tipId: 'evasion', always: true, value: v.statuses?.evade?.stacks || 0 },
-      { label: t('combat.stat.critChance'), tipId: 'critChance', always: true, value: `${Math.round(best * 100)}%` },
-    ];
-  }
+  const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, attributes: combat.attributes, kind }, t);
 
   function inspectorResources(rows, kind, entity) {
     return rows.map(({ tipId, ...row }) => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: tipId || ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));
