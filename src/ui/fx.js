@@ -759,7 +759,8 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
   const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
-  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
+  const magicPoise = Math.max(0, Number(event && event.magicPoise) || 0);
+  const poise = Math.max(0, (Number(event && event.poiseAbsorbed) || 0) - magicPoise);
   // The Force part a Silenced target was immune to (the rest of the hit landed).
   const forceImmune = Math.max(0, Number(event && event.forceImmune) || 0);
   const pierced = Math.max(0, Number(event && event.pierced) || 0);
@@ -772,6 +773,8 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
     poise: poise > 0 ? { text: t('combat.receipt.poiseAbsorbed', { n: poise }), cls: 'poise small' } : null,
     // The part of a piercing hit that went past Block (owner, 2026-10-26); Poise met it first.
+    // Magic hits Poise first, 1:1 (owner, 2026-10-31).
+    magicPoise: magicPoise > 0 ? { text: t('combat.receipt.magicPoise', { n: magicPoise }), cls: 'poise small' } : null,
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
@@ -2101,14 +2104,19 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: (ctx) => {
           if (sequential && !outcome) hitSounds();
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
-          if (outcome) return;
+          // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
+          if (outcome) {
+            if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: -34, jitter: false, lane: false });
+            return;
+          }
           const anchor = ctx.anchorFor(e.targetId);
           // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
           // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
-          const lane = parts.barrier || parts.ward || parts.poise || parts.pierced || parts.immune || paired ? false : undefined;
+          const lane = parts.barrier || parts.ward || parts.poise || parts.magicPoise || parts.pierced || parts.immune || paired ? false : undefined;
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
           if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
+          if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: parts.poise ? -48 : -34, jitter: false, lane });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
