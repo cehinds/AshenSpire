@@ -12,7 +12,7 @@
       "minimumScale": 0.74,
       "maximumScale": 0.86,
       "cardWidthPx": 142.8,
-      "cardMaxViewportPx": 105,
+      "cardMaxViewportPx": 85,
       "cardHeightPx": 214.2,
       "cardStepPx": 140,
       "fanAngleDegrees": 4,
