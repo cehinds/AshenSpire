@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rollUpgradeStep, upgradeStepRng, upgradeSeed, STACK_CAPS } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeStep, rollUpgradeOptions, upgradeStepRng, upgradeSeed, STACK_CAPS } from '../src/model/cardUpgradeSteps.js';
 import { applyUpgradeSteps, UPGRADE_STEP_KINDS } from '../src/model/cardUpgrade.js';
 
 const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
@@ -118,7 +118,7 @@ test('power, status and curse cards take only cost, then are maxed (null)', () =
 });
 
 test('when nothing is eligible the card is maxed: the roll is null, never a filler step', () => {
-  const capped = dmg(6, { effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
+  const capped = dmg(6, { rarity: 'common', effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
   assert.equal(rollUpgradeStep(capped, [], 0, upgradeStepRng(1, 'x', 0)), null);
   // Rolling until null always ends, and never past the cap of 10 steps a card can hold.
   const steps = [];
@@ -145,4 +145,101 @@ test('over many rolls, cost and hits each land at most once per card and cost ke
     costs += steps.filter((s) => s.k === 'cost').length;
   }
   assert.ok(costs > 20, 'the cost step is actually exercised');
+});
+
+// ---- Owner ask 2026-10-31: a choice of options, and the poise / tag steps ----
+const withPoise = (extra = {}) => dmg(8, { cost: 2, staminaCost: 2, rarity: 'uncommon', tags: ['camp:physical', 'maneuver:smash'],
+  effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }], ...extra });
+const tagsFor = (card) => {
+  const out = new Set();
+  for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) {
+    out.add(s.k === 'tag' ? JSON.stringify(s) : s.k);
+  }
+  return out;
+};
+
+test('poise: +max(1, ceil 20%) and only on a card with a poiseDamage effect', () => {
+  const poise = [];
+  for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(withPoise(), [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) if (s.k === 'poise') poise.push(s.n);
+  assert.ok(poise.length > 0 && poise.every((n) => n === 1));
+  assert.ok(!kindsFor(dmg(8)).has('poise'));
+  const big = withPoise({ effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 20 }] });
+  assert.ok(rollUpgradeOptions(big, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.k === 'poise' && s.n === 4));
+});
+
+test('range tag steps go melee to reach to ranged and replace the old range tag', () => {
+  const seen = tagsFor(withPoise());
+  assert.ok(seen.has('{"k":"tag","tag":"range:reach"}'));
+  assert.ok(!seen.has('{"k":"tag","tag":"range:ranged"}'));
+  const reach = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:reach'] }));
+  assert.ok(reach.has('{"k":"tag","tag":"range:ranged"}') && !reach.has('{"k":"tag","tag":"range:reach"}'));
+  const done = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:ranged'] }));
+  assert.ok(![...done].some((k) => k.includes('range:')));
+  assert.ok(![...tagsFor(dmg(6, { effects: [{ op: 'block', target: 'self', amount: 5 }], type: 'skill', tags: ['camp:physical', 'maneuver:defend'] }))].some((k) => k.includes('range:')), 'a block card has no range');
+});
+
+test('targeting flips single and area, the amount x0.75 up or x1.25 up, once per card', () => {
+  const single = tagsFor(withPoise());
+  assert.ok(single.has('{"k":"tag","tag":"targeting:area","retarget":"area"}'));
+  const area = tagsFor(withPoise({ effects: [{ op: 'damage', target: 'allEnemies', amount: 8 }], tags: ['camp:physical', 'maneuver:attack', 'targeting:area'] }));
+  assert.ok(area.has('{"k":"tag","tag":"targeting:single","retarget":"single"}'));
+  const flipped = applyUpgradeSteps(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }]);
+  assert.equal(flipped.effects[0].target, 'allEnemies');
+  assert.equal(flipped.effects[0].amount, 6);
+  const after = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!after.some((s) => s.retarget), 'targeting changes once per card');
+  const sweep = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:sweep', 'targeting:area'] }));
+  assert.ok(![...sweep].some((k) => k.includes('targeting:')), 'a sweep stays area');
+});
+
+test('maneuver swaps within attack / smash / ranged; smash needs 2 SP; spells and others never', () => {
+  const seen = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack'] }));
+  assert.ok(seen.has('{"k":"tag","tag":"maneuver:smash"}') && seen.has('{"k":"tag","tag":"maneuver:ranged"}'));
+  const cheap = tagsFor(withPoise({ cost: 1, staminaCost: 1, tags: ['camp:physical', 'maneuver:attack'] }));
+  assert.ok(!cheap.has('{"k":"tag","tag":"maneuver:smash"}'));
+  assert.ok(![...tagsFor(withPoise({ tags: ['camp:spell', 'maneuver:casting'], damageSchool: 'magic' }))].some((k) => k.includes('maneuver:')));
+  assert.ok(![...tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:sweep'] }))].some((k) => k.includes('maneuver:')));
+});
+
+test('school: spells only, any school but the current; element: physical to magic / arcane / holy / fire once', () => {
+  const spell = dmg(6, { tags: ['camp:spell', 'maneuver:casting', 'school:fire'], damageSchool: 'magic', cost: 2, staminaCost: 1, manaCost: 2 });
+  const seen = tagsFor(spell);
+  assert.ok(seen.has('{"k":"tag","tag":"school:frost"}') && !seen.has('{"k":"tag","tag":"school:fire"}'));
+  assert.ok(![...tagsFor(withPoise())].some((k) => k.includes('school:')), 'a physical card gets no school tag');
+  assert.ok(![...seen].some((k) => k.includes('damageSchool')), 'a magic card gets no element');
+  const elements = new Set([...tagsFor(withPoise())].filter((k) => k.includes('damageSchool')).map((k) => JSON.parse(k).damageSchool));
+  assert.deepEqual([...elements].sort(), ['arcane', 'fire', 'holy', 'magic']);
+  const again = rollUpgradeOptions(withPoise(), [{ k: 'tag', damageSchool: 'fire' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!again.some((s) => s.damageSchool), 'element once per card');
+});
+
+test('rank-down adds rank.cantrip to a card that is not basic, once', () => {
+  assert.ok(tagsFor(withPoise()).has('{"k":"tag","tag":"rank.cantrip"}'));
+  assert.ok(!tagsFor(dmg(6, { rarity: 'common' })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a common non-spell is already basic');
+  assert.ok(!tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
+  const again = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!again.some((s) => s.tag === 'rank.cantrip'));
+});
+
+test('options are distinct, deterministic, capped at what is eligible, and the first is the single roll', () => {
+  const card = withPoise();
+  for (let i = 0; i < 200; i += 1) {
+    const three = rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3);
+    assert.equal(three.length, 3);
+    assert.equal(new Set(three.map((s) => JSON.stringify(s))).size, 3, 'distinct');
+    assert.equal(new Set(three.map((s) => (s.k === 'tag' ? `tag:${s.tag || s.damageSchool}` : s.k))).size, 3, 'distinct options');
+    assert.deepEqual(three, rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3), 'deterministic');
+    assert.deepEqual(three[0], rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)), 'option 1 is the single roll');
+  }
+  const power = { id: 't.p', name: 'P', type: 'power', cost: 2, staminaCost: 2, manaCost: 0, keywords: [], tags: ['camp:physical'], effects: [{ op: 'block', target: 'self', amount: 4 }] };
+  assert.equal(rollUpgradeOptions(power, [], 0, upgradeStepRng(1, 'x', 0), {}, 3).length, 1, 'only cost is eligible');
+});
+
+test('the tag vocabulary a step writes is the one combatCardProfile reads', async () => {
+  const { MANEUVER, SCHOOL } = await import('../src/model/combatCardProfile.js');
+  const { TAG_FAMILIES } = await import('../src/model/cardUpgrade.js');
+  assert.deepEqual([...TAG_FAMILIES['maneuver:']].sort(), [...MANEUVER].sort());
+  assert.deepEqual([...TAG_FAMILIES['school:']].sort(), [...SCHOOL].sort());
+  const { upgradeBasic } = await import('../src/model/cardUpgradeLimits.js');
+  for (const card of cards) assert.equal(rollUpgradeOptions(card, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.tag === 'rank.cantrip') && upgradeBasic(card), false, card.id);
 });

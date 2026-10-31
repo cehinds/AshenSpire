@@ -11,7 +11,7 @@ const ids = gameContent(subject, 'cards').filter((c) => c.id.startsWith('core.')
 const sum = (face, op) => face.effects.filter((e) => e.op === op).reduce((t, e) => t + (Number.isFinite(e.amount) ? e.amount * (e.hits > 1 ? e.hits : 1) : 0), 0);
 const first = (face, op) => face.effects.find((e) => e.op === op && Number.isFinite(e.amount));
 const total = (face, op) => { const e = first(face, op); return e ? e.amount * (e.hits > 1 ? e.hits : 1) : 0; };
-const numbers = (face) => JSON.stringify([face.cost, face.staminaCost, face.manaCost, face.effects]);
+const numbers = (face) => JSON.stringify([face.cost, face.staminaCost, face.manaCost, face.effects, face.tags, face.damageSchool]);
 
 test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost rules and "every step changes something" hold for 10 seeds x 10 upgrades', () => {
   assert.ok(ids.length >= 50);
