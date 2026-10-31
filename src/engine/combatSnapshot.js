@@ -341,7 +341,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     }).value);
   }
   // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
-  combat.enemies = refillWeaknesses(combat, combat.enemies, registries);
+  refillWeaknesses(combat, combat.enemies, registries);
   for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
   const formationErrors = formationOccupancyProblems(combat);
   if (formationErrors.length) throw new Error(formationErrors.join('; '));

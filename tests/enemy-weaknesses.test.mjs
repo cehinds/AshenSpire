@@ -22,7 +22,7 @@ import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { proposalContext, applyProposalPlan } from '../src/engine/proposalStatusRuntime.js';
 import { proposalRuleEnabled } from '../src/model/proposalStatusRules.js';
-import { hitWeaknessTriggers } from '../src/engine/weaknesses.js';
+import { hitWeaknessTriggers, refillWeaknesses } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
 
 const registries = createRegistries(contentBundle);
@@ -345,4 +345,20 @@ test('a co-op Stamina weakness costs the enemy SP next turn even with range mech
   endTurn(combat, '0'); endTurn(combat, '1');
   assert.equal(enemy.fixCoreStaminaRemaining, max - 1);
   assert.equal(enemy.pendingStaminaLoss ?? 0, 0);
+});
+
+// ---- restore keeps queued references live ----
+// Queued actions and pending reactions point at the restored enemy objects, so the refill must mutate them, never swap in copies.
+// (A saved queue needs a real pending choice to pass snapshot validation, so the identity is pinned on the shared helper both restores call.)
+test('refillWeaknesses fills enemies in place and keeps the array and the objects', () => {
+  const { combat } = liveCore('huskBrute');
+  const enemies = [{ id: 'e1', enemyId: 'huskBrute' }, { id: 'e2', enemyId: 'wanderingSoldier', weaknesses: [{ to: 'fire', effect: 'damage' }] }];
+  const [first, second] = enemies, queued = { target: first };
+  const out = refillWeaknesses(combat, enemies, reg);
+  assert.equal(out, enemies);
+  assert.equal(out[0], first);
+  assert.equal(queued.target, enemies[0]);
+  assert.deepEqual(first.weaknesses, reg.enemies.get('huskBrute').weaknesses);
+  assert.notEqual(first.weaknesses, reg.enemies.get('huskBrute').weaknesses, 'a clone, not the shared definition');
+  assert.deepEqual(second.weaknesses, [{ to: 'fire', effect: 'damage' }], 'an enemy that has weaknesses keeps them');
 });

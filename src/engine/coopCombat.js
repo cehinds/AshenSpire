@@ -198,7 +198,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     }
     // An older expanded save has Ward and no Poise: each restored combatant gets a full Poise pool.
     for (const P of C.players.values()) backfillPersistentPoise(C, P.entity);
-    C.enemies = refillWeaknesses(C, C.enemies, registries);
+    refillWeaknesses(C, C.enemies, registries);
     for (const enemy of C.enemies) backfillPersistentPoise(C, enemy);
     setActive(C, C.players.get(saved.playerKey) || firstLiving(C));
     return C;

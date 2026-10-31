@@ -11,10 +11,15 @@ import { proposalRuleEnabled } from '../model/proposalStatusRules.js';
 export const weaknessesActive = ctx => fixCoreEnabled(ctx);
 /** The weaknesses an enemy of this definition starts a fight with: the definition's under Core, none otherwise. */
 export const startingWeaknesses = (ctx, def) => weaknessesActive(ctx) ? def?.weaknesses : undefined;
-/** A fight saved before weaknesses has none on its enemies: they take their definition's (solo and co-op restore share this). */
+/** A fight saved before weaknesses has none on its enemies: they take their definition's (solo and co-op restore share this).
+ * Mutates the enemies in place: queued actions and pending reactions already point at these objects. */
 export function refillWeaknesses(ctx, enemies, registries) {
-  return (enemies || []).map(enemy => enemy.weaknesses === undefined && weaknessesActive(ctx) && registries.enemies.get(enemy.enemyId)?.weaknesses
-    ? { ...enemy, weaknesses: structuredClone(registries.enemies.get(enemy.enemyId).weaknesses) } : enemy);
+  if (!weaknessesActive(ctx)) return enemies;
+  for (const enemy of enemies || []) {
+    const authored = enemy.weaknesses === undefined && registries.enemies.get(enemy.enemyId)?.weaknesses;
+    if (authored) enemy.weaknesses = structuredClone(authored);
+  }
+  return enemies;
 }
 
 const add = (set, type) => { const t = canonicalDamageType(type); if (t && (WEAKNESS_PHYSICAL.includes(t) || WEAKNESS_ELEMENTS.includes(t))) set.add(t); };
