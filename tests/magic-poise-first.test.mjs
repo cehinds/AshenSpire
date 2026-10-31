@@ -95,3 +95,22 @@ test('the float splits magic Poise from absorbed Poise', () => {
   assert.equal(parts.magicPoise.text, 'Poise 6');
   assert.equal(parts.poise, null);
 });
+
+test('a pierce hit spends the same Block as the same mixed hit without pierce (arcane 10, Block 10, Poise 5)', () => {
+  const plain = hit(arcane, { poise: 5, block: 10 });
+  const pierced = hit({ ...arcane, tags: ['pierce'] }, { poise: 5, block: 10 });
+  assert.ok(pierced.receipt.pierceBypassed > 0, 'fixture: the hit pierces');
+  assert.equal(plain.blockAfter, 5);
+  assert.equal(pierced.blockAfter, plain.blockAfter, 'Block remaining is identical with and without pierce');
+  assert.ok(pierced.receipt.hpLoss >= plain.receipt.hpLoss, 'pierce never costs less HP');
+});
+
+test('the log reports the whole hit when a spell is absorbed by Poise (10 -> "for 10", fully absorbed too)', async () => {
+  const { combatLogEntries } = await import('../src/model/combatLog.js');
+  const text = event => JSON.stringify(combatLogEntries([{ type: 'damageDealt', sourceId: 'p', targetId: 'e', ...event }], { registries: reg }));
+  const partly = hit(spell, { poise: 6, block: 5 });
+  const ev = r => ({ amount: r.receipt.amount, blocked: r.receipt.blocked, hpLoss: r.receipt.hpLoss, poiseAbsorbed: r.receipt.poiseMitigated, magicPoise: r.receipt.magicPoise, poiseRemaining: r.poiseAfter, blockRemaining: r.blockAfter });
+  assert.match(text(ev(partly)), /for 10/);
+  const full = hit(spell, { poise: 20 });
+  assert.match(text(ev(full)), /for 10/);
+});
