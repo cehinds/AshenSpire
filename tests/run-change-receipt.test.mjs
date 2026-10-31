@@ -1,0 +1,57 @@
+// The what-changed receipt model: one row per kind, on real Core registries.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { registries } from './helpers/fixcore-combat-rules.mjs';
+import { createRunState } from '../src/model/state.js';
+import { snapshotRunForDiff, diffRunSnapshots } from '../src/model/runChangeReceipt.js';
+import { nextUpgradeStep } from '../src/model/cardUpgradeLimits.js';
+
+const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+const diff = (run, mutate) => { const before = snapshotRunForDiff(run); mutate(run); return diffRunSnapshots(before, snapshotRunForDiff(run), registries); };
+const rowOf = (d, kind) => d.rows.find((r) => r.kind === kind);
+
+test('no change is an empty frozen diff', () => {
+  const d = diff(newRun(), () => {});
+  assert.equal(d.empty, true); assert.deepEqual(d.rows, []); assert.ok(Object.isFrozen(d));
+});
+test('stat and resource rows carry before, after and delta', () => {
+  const d = diff(newRun(), (r) => { r.hp -= 5; r.cinders += 12; r.smithingStones += 1; });
+  assert.deepEqual(d.rows.map((r) => [r.kind, r.label, r.before, r.after, r.delta]).sort(), [
+    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', '71', '66', -5]].sort());
+});
+test('a relic gained and lost', () => {
+  const run = newRun();
+  const d = diff(run, (r) => { r.relics = [...r.relics.slice(1), 'forsakenMedallion'].filter((v, i, a) => a.indexOf(v) === i); r.relics.push('emberHeart'); });
+  assert.ok(d.rows.some((r) => r.kind === 'relic' && r.gained === true && r.relicId === 'emberHeart'));
+});
+test('a card upgrade carries before and after faces; add and remove are rows', () => {
+  const run = newRun();
+  const card = run.deck.find((c) => c.cardId === 'core.strike');
+  const step = nextUpgradeStep(run, card, registries.cards.get('core.strike'), registries);
+  const d = diff(run, (r) => { card.upgradeSteps = [step]; card.upgraded = true; r.deck.push({ instanceId: 'new1', cardId: 'core.strike' }); r.deck.splice(r.deck.findIndex((c) => c.instanceId !== card.instanceId && c.cardId === 'core.strike'), 1); });
+  const up = d.rows.find((r) => r.change === 'upgraded');
+  assert.equal(up.cardId, 'core.strike'); assert.equal(up.instanceId, card.instanceId);
+  assert.notDeepEqual(up.faces.before, up.faces.after);
+  assert.equal(up.after, '+1');
+  assert.ok(d.rows.some((r) => r.change === 'added' && r.instanceId === 'new1'));
+  assert.ok(d.rows.some((r) => r.change === 'removed'));
+});
+test('rank change is a card row', () => {
+  const run = newRun();
+  const d = diff(run, (r) => { r.deck[0].rank = 3; });
+  assert.equal(rowOf(d, 'card').change, 'ranked'); assert.equal(rowOf(d, 'card').after, 'RANK 3');
+});
+test('armament bought and tiered', () => {
+  const run = newRun();
+  const id = registries.equipment.armaments.find((p) => !JSON.stringify(run.loadout).includes(p.id)).id;
+  const d = diff(run, (r) => { r.loadout.storage = [...(r.loadout.storage || []), id]; r.itemUpgradeLevels = { [`armament/${id}`]: 1 }; });
+  assert.ok(d.rows.some((r) => r.kind === 'armament' && r.change === 'added' && r.armamentId === id));
+  const tier = d.rows.find((r) => r.change === 'tier');
+  assert.equal(tier.tierBefore, 0); assert.equal(tier.tierAfter, 1); assert.equal(tier.label, registries.equipment.armaments.find((p) => p.id === id).name);
+});
+test('class swap and flask rows', () => {
+  const d = diff(newRun(), (r) => { r.class = 'warden'; r.flasks = ['hp']; });
+  const cls = rowOf(d, 'class');
+  assert.equal(cls.before, registries.classes.get('reaver').name);
+  assert.ok(d.rows.some((r) => r.kind === 'resource' && /FLASK/.test(r.label)));
+});
