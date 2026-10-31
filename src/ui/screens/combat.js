@@ -2468,17 +2468,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance, displayAppearance()]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; wrote = true; }
-      // `combat.player` is deliberately not part of this key. Every enemy slot is drawn from the
-      // enemy itself (its display copy, name, statuses, meters, arcane receipt) or from its intent;
-      // the intent reads the player through projectCombatIntent, and its result is in the leading
-      // slot's key below. The hit-chance badges read the player too but are synced by
-      // syncHitChances, not drawn here.
-      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      // `combat.player` is deliberately not part of this key, but the intent is: it reads the player through
+      // projectCombatIntent (an equipment swap changes the defences without touching the enemy), so the shown
+      // intent is computed before the guard and keyed. The hit-chance badges read the player too but are synced
+      // by syncHitChances, not drawn here.
+      const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
+      const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const settings = settingsStamp();
       const idx = living.indexOf(enemy);
-      const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
-      const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
       const followUps = showIntent ? (disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor)) : null;
       const meterIn = meterInputs(enemy);
       const statusIn = statusRows(enemy);
