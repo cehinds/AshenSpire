@@ -4002,7 +4002,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }))}`);
   }
 
-  const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, evade: entity.evade, attributes: combat.attributes, kind }, t);
+  // The tag sets of the player's attack cards (draw, hand, discard, exhaust), as the engine reads them for a crit.
+  const ownedAttackTagSets = () => Object.values(combat.piles).flat().flatMap((inst) => {
+    const def = registries.cards.get(inst?.cardId);
+    const tags = Array.isArray(inst.tags) && inst.tags.length ? inst.tags : def?.tags;
+    return def?.type === 'attack' && Array.isArray(tags) && tags.length ? [tags] : [];
+  });
+  const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, evade: entity.evade, attributes: combat.attributes, kind, attackTagSets: kind === 'player' ? ownedAttackTagSets() : null }, t);
 
   function inspectorResources(rows, kind, entity) {
     return rows.map(({ tipId, ...row }) => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: tipId || ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));

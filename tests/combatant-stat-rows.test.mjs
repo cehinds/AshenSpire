@@ -34,3 +34,13 @@ test('Evasion reads status stacks first and falls back to the Foundation dodge c
   assert.equal(value({ statuses: { evade: { stacks: 1 } }, evade: 2 }), 1);
   assert.equal(value({ statuses: {} }), 0);
 });
+
+test('rules on different tags sum for an attack card that carries both', () => {
+  const keen = { tags: ['blade'], base: 0.08, weights: {}, divisor: 100, cap: 0.5, multiplier: 1.5 };
+  const blood = { tags: ['blood'], base: 0.12, weights: {}, divisor: 100, cap: 0.5, multiplier: 1.5 };
+  const chance = (attackTagSets) => combatStatRows({ statuses: {}, critRules: [keen, blood], attributes, kind: 'player', attackTagSets }, t)[2].value;
+  assert.equal(chance([['blade', 'blood']]), '20%');
+  assert.equal(chance([['blade'], ['blood']]), '12%');
+  assert.equal(chance([]), '12%'); // no attack cards known: each rule's own tags
+  assert.equal(chance([['guard']]), '0%');
+});
