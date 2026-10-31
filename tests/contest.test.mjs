@@ -104,3 +104,17 @@ test('callouts: Read when it passes, Resisted when it fails', () => {
   assert.equal(t(CALLOUT_KINDS.contestPassed.string), 'Read');
   assert.equal(t(CALLOUT_KINDS.contestFailed.string), 'Resisted');
 });
+
+// ---- hit badge ----------------------------------------------------------------------------------------------------
+import { previewCardHit } from '../src/engine/combat.js';
+test('the hit preview of a contest card carries the DC and no out-of-range state, at any distance', () => {
+  for (const enemyId of ['wanderingSoldier', 'graveWisp']) {
+    const combat = fight(enemyId, HIGH), target = combat.enemies[0];
+    combat.piles.hand.push({ instanceId: 'ri', cardId: 'base.reveal-opponent-hand', upgraded: false });
+    const preview = previewCardHit(combat, 'ri', target.id, undefined, { observerId: 'player' });
+    assert.equal(preview.inRange, true);
+    assert.equal(preview.contest.dc, target.persistentPoise.value + (target.attributes?.wisdom || 0) + 1);
+    assert.equal(preview.missReason, undefined);
+  }
+});
+test('the badge string reads DC N', () => assert.equal(t('combat.contest.dc', { dc: 9 }), 'DC 9'));

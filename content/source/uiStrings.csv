@@ -1594,6 +1594,7 @@ creation.feats.summary.vitalRenewal,,Recover HP after victory.,,
 combat.callout.hit,,Hit,,
 combat.callout.evadeFailed,,Hit — Evade Failed,,
 combat.callout.missed,,Missed,,
+combat.contest.dc,,DC {dc},,
 combat.callout.contestPassed,,Read,,
 combat.callout.contestFailed,,Resisted,,
 
