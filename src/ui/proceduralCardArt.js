@@ -15,11 +15,11 @@ const freeze = value => {
   return value;
 };
 const clone = value => structuredClone(value);
-// Texture-preserving washes: the element paints first, then status in sorted
-// semantic order. Burn over Earth therefore blends red over brown consistently.
-export const PROCEDURAL_BACKGROUND_TINTS = freeze({
-  element: { earth: { color: '#88552f', opacity: 0.48 } },
-  status: { burn: { color: '#b3271b', opacity: 0.34 } },
+// Color blending replaces hue/saturation while retaining the source luminance.
+// A matching status color takes precedence over the element color.
+export const PROCEDURAL_BACKGROUND_COLORS = freeze({
+  element: { earth: '#88552f' },
+  status: { burn: '#b3271b' },
 });
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
@@ -122,17 +122,21 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   }
   if (!art) return null;
   art = clone(art);
-  art.backgroundTints = [
-    ...(PROCEDURAL_BACKGROUND_TINTS.element[element] ? [{ id: `element:${element}`, ...PROCEDURAL_BACKGROUND_TINTS.element[element] }] : []),
-    ...[...new Set(statuses.map(statusCueId))].flatMap(id => Object.hasOwn(PROCEDURAL_BACKGROUND_TINTS.status, id)
-      ? [{ id: `status:${id}`, ...PROCEDURAL_BACKGROUND_TINTS.status[id] }] : []),
-  ];
+  const colorStatus = statuses.map(statusCueId).find(id => Object.hasOwn(PROCEDURAL_BACKGROUND_COLORS.status, id));
+  art.backgroundColor = colorStatus ? { id: `status:${colorStatus}`, color: PROCEDURAL_BACKGROUND_COLORS.status[colorStatus] }
+    : PROCEDURAL_BACKGROUND_COLORS.element[element] ? { id: `element:${element}`, color: PROCEDURAL_BACKGROUND_COLORS.element[element] } : null;
   if (maneuver === 'counter') {
     const shield = art.sprites.find(sprite => sprite.id === 'object');
-    const sword = art.sprites.find(sprite => sprite.id === 'secondaryObject');
+    const hammer = art.sprites.find(sprite => sprite.id === 'secondaryObject');
+    const source = approvedCardArt({ category: 'physical', maneuver: 'smash', tags: [], def: {} }).sprites.find(sprite => sprite.id === 'object');
     // Change only the cloned procedural recipe, never the approved catalog.
-    sword.zIndex = Number(shield.zIndex) + 5;
-    sword.css.zIndex = String(sword.zIndex);
+    Object.assign(hammer, { assetId: source.assetId, path: source.path, label: source.label, zIndex: Number(shield.zIndex) + 5 });
+    // The approved hammer points head-down; turn it head-up/right and size its
+    // complete silhouette inside the 512×640 well rather than reuse sword bounds.
+    Object.assign(hammer.transform, { x: 280, y: 310, width: 340, height: 425, rotationDeg: 180, scaleX: 1, scaleY: 1 });
+    hammer.affine = [-1, 0, 0, -1];
+    Object.assign(hammer.css, { left: '54.6875%', top: '48.4375%', width: '66.40625%', height: '66.40625%',
+      transform: 'translate(-50%, -50%) rotate(180deg) scale(1, 1)', zIndex: String(hammer.zIndex) });
   }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
   if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {

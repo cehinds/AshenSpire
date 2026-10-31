@@ -158,6 +158,14 @@ test('mounted controls update the real preview, clear invalid input and export o
     find('category').dispatchEvent(new Event('input'));
     assert.equal(find('delivery').disabled, false);
     assert.ok(JSON.parse(find('input').textContent).tags.includes('delivery:projectile'));
+    find('element').value = 'earth'; find('element').dispatchEvent(new Event('input'));
+    for (const surface of ['art', 'native']) {
+      const treatment = find(surface).querySelector('[data-art-background-color="element:earth"]');
+      assert.ok(treatment, `${surface} shares the background recoloring`);
+      assert.match(treatment.getAttribute('style'), /mix-blend-mode:color/);
+      assert.ok(find(surface).querySelector('img'), 'the existing background image remains');
+    }
+    find('element').value = 'fire'; find('element').dispatchEvent(new Event('input'));
     find('rank').value = '0'; find('rank').dispatchEvent(new Event('input'));
     assert.equal(find('export').disabled, true);
     assert.equal(find('native').children.length, 0);

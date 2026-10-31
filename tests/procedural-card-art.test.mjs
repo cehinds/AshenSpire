@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { proceduralCardArt, PROCEDURAL_BACKGROUND_TINTS } from '../src/ui/proceduralCardArt.js';
+import { proceduralCardArt, PROCEDURAL_BACKGROUND_COLORS } from '../src/ui/proceduralCardArt.js';
 import { cardArtLayersHtml } from '../src/ui/cardArtLayers.js';
 import { layeredCardArtCatalog as base } from '../src/content/layeredCardArt.generated.js';
 import { reviewedCardArtCatalog as reviewed } from '../src/content/reviewedCardArt.generated.js';
@@ -17,51 +17,71 @@ import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { playingCardDefinition } from '../src/model/playingCard.js';
+import { optionRowList } from '../src/ui/components/optionRowList.js';
 
 const recipe = (type = 'attack', tags = ['camp:physical'], rank = 1) => proceduralCardArt({ type, tags, rank });
-test('Burn and Earth wash only the procedural background, with stable Earth then Burn blending', () => {
+test('Burn and Earth recolor background hue while retaining texture and luminance', () => {
   for (const camp of ['physical', 'spell']) {
     const plain = recipe('defend', [`camp:${camp}`]);
     const burn = recipe('defend', [`camp:${camp}`, 'status:burn']);
     const earth = recipe('defend', [`camp:${camp}`, 'element:earth']);
     const both = recipe('defend', [`camp:${camp}`, 'status:burn', 'element:earth']);
-    assert.deepEqual(plain.componentArt.backgroundTints, []);
-    assert.deepEqual(burn.componentArt.backgroundTints, [{ id: 'status:burn', ...PROCEDURAL_BACKGROUND_TINTS.status.burn }]);
-    assert.deepEqual(earth.componentArt.backgroundTints, [{ id: 'element:earth', ...PROCEDURAL_BACKGROUND_TINTS.element.earth }]);
-    assert.deepEqual(both.componentArt.backgroundTints, [...earth.componentArt.backgroundTints, ...burn.componentArt.backgroundTints]);
+    assert.equal(plain.componentArt.backgroundColor, null);
+    assert.deepEqual(burn.componentArt.backgroundColor, { id: 'status:burn', color: PROCEDURAL_BACKGROUND_COLORS.status.burn });
+    assert.deepEqual(earth.componentArt.backgroundColor, { id: 'element:earth', color: PROCEDURAL_BACKGROUND_COLORS.element.earth });
+    assert.deepEqual(both.componentArt.backgroundColor, burn.componentArt.backgroundColor);
     assert.strictEqual(both, recipe('defend', ['element:earth', 'status:burn', `camp:${camp}`]));
-    assert.deepEqual(recipe('defend', [`camp:${camp}`, 'status:burning']).componentArt.backgroundTints, burn.componentArt.backgroundTints);
+    assert.deepEqual(recipe('defend', [`camp:${camp}`, 'status:burning']).componentArt.backgroundColor, burn.componentArt.backgroundColor);
     for (const art of [burn, earth, both]) {
       assert.equal(art.path, plain.path, 'the original background texture remains the base image');
       assert.deepEqual(art.componentArt.sprites.filter(s => s.id === 'object'), plain.componentArt.sprites.filter(s => s.id === 'object'));
       const html = cardArtLayersHtml(art);
-      assert.ok(html.indexOf('data-art-background-tint=') < html.indexOf('data-card-art-component='), 'wash is behind object and effect PNGs');
-      assert.ok(art.componentArt.backgroundTints.every(tint => tint.opacity > 0 && tint.opacity < 1));
+      assert.ok(html.indexOf('data-art-background-color=') < html.indexOf('data-card-art-component='), 'recoloring is behind object and effect PNGs');
+      assert.match(html, /mix-blend-mode:color/);
+      assert.doesNotMatch(html, /data-art-background-tint|brightness\(|sepia\(/);
+      assert.ok(html.indexOf('data-art-background-color=') < html.indexOf('data-art-composition='), 'color treatment precedes the isolated component stage');
     }
     const html = cardArtLayersHtml(both);
-    assert.ok(html.indexOf('data-art-background-tint="element:earth"') < html.indexOf('data-art-background-tint="status:burn"'));
+    assert.equal((html.match(/data-art-background-color=/g) || []).length, 1, 'combined tags use one status-priority color treatment');
   }
 });
 
-test('physical and magical procedural counters paint the sword in front of the shield at every rank', () => {
+test('physical and magical procedural counters paint the hammer in front of the shield at every rank', () => {
   const originalBase = JSON.stringify(base), originalReviewed = JSON.stringify(reviewed);
   for (const camp of ['physical', 'spell']) for (const rank of [1, 3, 5]) {
     const art = recipe('counter', [`camp:${camp}`, 'element:earth', 'status:burn'], rank);
-    const sword = art.componentArt.sprites.find(s => s.id === 'secondaryObject');
+    const hammer = art.componentArt.sprites.find(s => s.id === 'secondaryObject');
     const shield = art.componentArt.sprites.find(s => s.id === 'object');
-    assert.equal(sword.assetId, 'O.object.0');
+    assert.equal(hammer.assetId, 'O.object.1');
+    assert.equal(hammer.path, base.assets['O.object.1'].path);
+    assert.ok(!art.componentArt.sprites.some(sprite => sprite.assetId === 'O.object.0'), 'counter no longer contains a sword');
     assert.equal(shield.assetId, 'O.object.4');
-    assert.ok(sword.zIndex > shield.zIndex);
-    assert.ok(Number(sword.css.zIndex) > Number(shield.css.zIndex));
+    assert.ok(hammer.zIndex > shield.zIndex);
+    assert.ok(Number(hammer.css.zIndex) > Number(shield.css.zIndex));
     const html = cardArtLayersHtml(art);
-    assert.match(html, new RegExp(`data-art-layer="secondaryObject"[^>]+z-index:${sword.zIndex}`));
-    assert.equal(sword.transform.rotationDeg, -20, 'existing sword pose is preserved');
+    assert.match(html, new RegExp(`data-art-layer="secondaryObject"[^>]+z-index:${hammer.zIndex}`));
+    assert.equal(hammer.transform.rotationDeg, 180, 'hammer head points upper-right with grip lower-left');
+    assert.deepEqual(hammer.affine, [-1, 0, 0, -1]);
+    const { x, y, width, height } = hammer.transform;
+    assert.ok(x - width / 2 >= 32 && x + width / 2 <= 480, 'entire rotated hammer stays inside the horizontal inset');
+    assert.ok(y - height / 2 >= 32 && y + height / 2 <= 608, 'entire rotated hammer stays inside the vertical inset');
   }
   assert.equal(JSON.stringify(base), originalBase, 'approved/Legacy recipe catalog is unchanged');
   assert.equal(JSON.stringify(reviewed), originalReviewed, 'Reviewed snapshots are unchanged');
   const reviewedArt = playingCardArt({ cardId: 'mindSpike' }, { definition: { type: 'attack', cardTags: ['camp:spell', 'status:burn', 'element:earth'] }, style: 'Reviewed' });
-  assert.doesNotMatch(cardArtLayersHtml(reviewedArt), /data-art-background-tint/);
+  assert.doesNotMatch(cardArtLayersHtml(reviewedArt), /data-art-background-color/);
 });
+
+test('row-list artwork shares isolated background recoloring without filtering foreground PNGs', () => withModalDom(() => {
+  const art = recipe('counter', ['camp:physical', 'status:burn']);
+  const rows = optionRowList([{ id: 'preview', name: 'Preview', artAsset: art.path, artComposition: art }]);
+  const well = rows.querySelector('.option-row-art');
+  assert.equal(well.style.isolation, 'isolate');
+  assert.ok(well.querySelector('img'));
+  assert.match(well.querySelector('[data-art-background-color="status:burn"]').getAttribute('style'), /mix-blend-mode:color/);
+  assert.ok(well.querySelector('[data-card-art-component="O.object.1"]'));
+  assert.ok([...well.querySelectorAll('[data-card-art-component]')].every(image => !image.style.filter));
+}));
 
 test('pure art depends only on canonical tags, type and rank, never identity or optional mechanics', () => {
   const tags = Object.freeze(['status:burn', 'camp:spell', 'element:fire', 'delivery:projectile']);
@@ -85,7 +105,7 @@ test('all actions, utilities, aliases and explicit maneuver overrides use shippe
     assert.ok(recipe('skill', ['camp:physical', `effect:${effect}`]).componentArt.sprites.some(sprite => sprite.assetId === asset));
   }
   const counter = recipe('counter', ['camp:spell']).componentArt.sprites;
-  assert.ok(counter.some(sprite => sprite.id === 'secondaryObject'), 'counter retains separate shield and sword');
+  assert.ok(counter.some(sprite => sprite.id === 'secondaryObject'), 'counter retains separate shield and hammer');
   assert.ok(recipe('evade').componentArt.sprites.some(sprite => sprite.assetId === 'symbol.feather'));
 });
 test('rank changes rendered decorative intensity without changing weapon geometry or silhouette', () => {
