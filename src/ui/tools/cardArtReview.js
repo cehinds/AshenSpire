@@ -5,6 +5,7 @@ import {renderCard} from '../components/card.js';
 import {cardArtLayersHtml} from '../cardArtLayers.js';
 import {cardCutoutUrl} from '../layeredCardArt.js';
 import {gameRootURL} from './cardArtReviewUrl.js';
+import {containRect} from './cardArtReviewGeometry.js';
 const reg=createRegistries(contentBundle), original=structuredClone(catalog.records), checked=new Set();
 const $=id=>document.getElementById(id), records=Object.values(catalog.records);
 let selected=Object.keys(catalog.records)[0];
@@ -52,7 +53,7 @@ $('export').onclick=()=>download(new Blob([JSON.stringify({schema:1,checked:[...
 $('png').onclick=async()=>{
   try{
     const canvas=document.createElement('canvas');canvas.width=512;canvas.height=640;const ctx=canvas.getContext('2d');
-    for(const sprite of catalog.records[selected].sprites){const img=new Image();img.src=imageURL(sprite.path);await img.decode();const t=sprite.transform;ctx.save();ctx.translate(t.x,t.y);ctx.transform(...sprite.affine,0,0);ctx.globalAlpha=t.opacity;ctx.globalCompositeOperation=t.blendMode==='normal'?'source-over':t.blendMode;ctx.drawImage(img,-t.width/2,-t.height/2,t.width,t.height);ctx.restore();}
+    for(const sprite of catalog.records[selected].sprites){const img=new Image();img.src=imageURL(sprite.path);await img.decode();const t=sprite.transform;ctx.save();ctx.translate(t.x,t.y);ctx.transform(...sprite.affine,0,0);ctx.globalAlpha=t.opacity;ctx.globalCompositeOperation=t.blendMode==='normal'?'source-over':t.blendMode;const d=containRect(t.width,t.height,img.naturalWidth,img.naturalHeight);ctx.drawImage(img,d.x,d.y,d.width,d.height);ctx.restore();}
     canvas.toBlob(blob=>{if(blob)download(blob,`${selected}-art.png`);},'image/png');
   }catch(error){$('status').textContent=`Could not export art: ${error.message}`;}
 };
