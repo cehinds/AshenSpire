@@ -404,3 +404,30 @@ Rider rules: once per committed root action and target; status riders need posit
 - [ ] `contest:` cards (feature/InsightContest): see section 1.
 - [ ] Enemy weaknesses (feature/EnemyWeaknesses): see section 1.
 - [ ] Own-element x1.25 and armament affinity tags: see section 2.
+
+## Suggested order of implementation
+
+1. [ ] Reflect status: -30% incoming, 30% reflected per stack (extends `base.reflect`, P:175).
+2. [ ] Counter stacked badge: stacks x10% returned plus card base (reuses combatMatchups.js:618-698).
+3. [ ] Damp status (data only): -1 Evasion, +1 Lightning stack, Frost +1, Burn -1 per stack.
+4. [ ] Earth stacks (rename first): absorb Lightning stacks, +1 Block at turn start.
+5. [ ] Lightning vs metal gear: +1 Precision, caster disadvantage, nat-1 self-damage.
+6. [ ] Shocked status and contest roll (needs InsightContest merged; `contest.js`).
+7. [ ] Precision stacks that decay with a visible badge (SPEC :3347; locked).
+8. [ ] Per-stack damage riders for Burn/Frost/Venom/Confused types (section 3 proposals; data in `combatExpansionMatchups.json`).
+9. [ ] Own-element x1.25 bonus and armament affinity tags (locked: formulas.js).
+10. [ ] Enemy weakness stacking (+5% per repeated hit, cap 25%) after EnemyWeaknesses merges.
+
+## Appendix: non-combat tags (current effects only)
+
+- [x] `camp:physical` / `camp:spell`: select Guard/Block vs Ward/Barrier rules (nodes.csv:454-455); damage types set magic share (R:9-24).
+- [x] `classification.attack|strike|guard|weaponArt|skill|power|curse|statusCard`: primary card type, no combat rider of their own (nodes.csv:260-267).
+- [x] `classification.class|relic|flask|keepsake|event|encounter|enemy|armament|armour|slot|startingKit|unlock|companion|sigil|feat`: internal object kinds (nodes.csv:320-387).
+- [x] `classification.enemyMove`: scoped enemy move (nodes.csv:474).
+- [x] `value:*`: no rows in nodes.csv at this commit; nothing to list.
+- [x] `rank.cantrip`: basic spell eligible for Magic Adept deck copies (nodes.csv:59).
+- [x] `exhaust`: removed from the deck for the rest of the combat (keywords.json).
+- [x] `ethereal`: exhausts if in hand at end of turn (keywords.json).
+- [x] `innate`: starts on top of the draw pile (keywords.json).
+- [x] `retain`: stays in hand at end of turn (keywords.json).
+- [x] `unplayable`: cannot be played (keywords.json; `internal.unplayable` nodes.csv:318).
