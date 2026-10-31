@@ -116,7 +116,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
   // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
   const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, { label: 'stat mix', value: statMix }, { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
-    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', proposal.accuracyDelta / 5], ['range', rangeContact?.precisionDelta || 0]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
+    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
     ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
