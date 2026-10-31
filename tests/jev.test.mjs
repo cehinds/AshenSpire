@@ -7,10 +7,12 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { triage, loadRules, severityOf, runChecks, FAST_CHECKS } from '../tools/jev.mjs';
+import { sparseLocal, triage, loadRules, severityOf, runChecks, FAST_CHECKS } from '../tools/jev.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const JEV = resolve(ROOT, 'tools/jev.mjs');
+
+const SPARSE = { 'sparse-local': () => true };
 
 // One fixture log line per rule: [rule id, line, deterministic, action].
 const FIXTURES = [
@@ -39,7 +41,7 @@ test('every rule in the table has a fixture', () => {
 
 for (const [id, line, deterministic, action] of FIXTURES) {
   test(`rule ${id} matches: ${line.slice(0, 50)}`, () => {
-    const r = triage(`prefix noise\n${line}\nsuffix noise`);
+    const r = triage(`prefix noise\n${line}\nsuffix noise`, loadRules(), SPARSE);
     const m = r.matches.find(x => x.id === id);
     assert.ok(m, `expected ${id}, got ${r.matches.map(x => x.id).join(',') || 'none'}`);
     assert.equal(m.deterministic, deterministic);
@@ -230,4 +232,23 @@ test('changelog-order keys on about-changelog failure output, not the echoed --c
   assert.ok(!r.matches.some(m => m.id === 'changelog-order'));
   const real = triage(`${header}Error: check-order: build rises within 2026-10-31: #1 cites x\n`);
   assert.deepEqual(real.matches.map(m => m.id), ['changelog-order']);
+});
+
+test('sparse-missing-file only applies in a local sparse checkout, never under CI', () => {
+  const log = "Error: ENOENT: no such file or directory, open 'docs/component-catalog.html'\n";
+  assert.equal(triage(log, loadRules(), SPARSE).exit, 0);
+  const none = triage(log, loadRules(), { 'sparse-local': () => false });
+  assert.deepEqual([none.exit, none.matches.length], [2, 0]);
+  const sparseGit = args => ({ out: args[0] === 'config' ? 'true\n' : '' });
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: { CI: 'true' }, git: sparseGit }), false);
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: sparseGit }), true);
+  assert.equal(sparseLocal('ENOENT elsewhere.txt', { env: {}, git: () => ({ out: '' }) }), false);
+  const missing = args => ({ out: args[0] === 'ls-files' ? 'docs/component-catalog.html\n' : '' });
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, cwd: '/nonexistent-jev', git: missing }), true);
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: { CI: '1' }, cwd: '/nonexistent-jev', git: missing }), false);
+});
+
+test('CLI under CI: a sparse-missing-file log exits 2', () => {
+  const r = spawnSync(process.execPath, [JEV, 'triage', '-'], { input: "Error: ENOENT: no such file or directory, open 'docs/component-catalog.html'\n", encoding: 'utf8', env: { ...process.env, CI: 'true' } });
+  assert.equal(r.status, 2);
 });

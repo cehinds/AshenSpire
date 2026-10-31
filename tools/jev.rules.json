@@ -55,6 +55,7 @@
       "id": "sparse-missing-file",
       "regex": "ENOENT[^\\n]*(component-catalog\\.html|attack-source-audit\\.csv|sparse)|(component-catalog\\.html|attack-source-audit\\.csv)[^\\n]*(ENOENT|no such file|not found|missing)",
       "flags": "i",
+      "requires": "sparse-local",
       "category": "environmental",
       "deterministic": true,
       "action": "ignore-local",

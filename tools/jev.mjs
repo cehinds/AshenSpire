@@ -59,11 +59,24 @@ export function severityOf(matches) {
   return sev;
 }
 
-export function triage(text, rules = loadRules()) {
+// Rule f (a file missing from a sparse checkout) only holds locally: when CI is set
+// the checkout is the full one, so a missing file is a real failure. Injectable.
+export function sparseLocal(line, { env = process.env, cwd = ROOT, git: g = (args) => run('git', args, { cwd }) } = {}) {
+  if (env.CI) return false;
+  if (g(['config', '--get', 'core.sparseCheckout']).out.trim() === 'true') return true;
+  const file = (String(line).match(/(component-catalog\.html|attack-source-audit\.csv)/) || [])[1];
+  if (!file) return false;
+  const tracked = g(['ls-files', '--', `**/${file}`, file]).out.split('\n').filter(Boolean);
+  return tracked.length > 0 && tracked.every(f => !existsSync(resolve(cwd, f)));
+}
+const DEFAULT_CTX = { 'sparse-local': line => sparseLocal(line) };
+
+export function triage(text, rules = loadRules(), ctx = DEFAULT_CTX) {
   const lines = String(text).split(/\r?\n/);
   const matches = [];
   for (const rule of rules) {
-    const line = lines.find(l => rule.re.test(l));
+    const hit = l => rule.re.test(l) && (!rule.requires || (ctx[rule.requires] ? ctx[rule.requires](l) : false));
+    const line = lines.find(hit);
     if (line === undefined) continue;
     matches.push({
       id: rule.id, category: rule.category, deterministic: rule.deterministic,
@@ -76,7 +89,7 @@ export function triage(text, rules = loadRules()) {
     // A matched rule only vouches for the lines it matches; any other failure line
     // is unexplained and forces a model (a safe fix must never hide a real failure).
     const matched = rules.filter(r => matches.some(m => m.id === r.id));
-    const uncovered = failing.filter(l => !matched.some(r => r.re.test(l) || (r.covers && r.covers.test(l))));
+    const uncovered = failing.filter(l => !matched.some(r => (r.re.test(l) && (!r.requires || (ctx[r.requires] ? ctx[r.requires](l) : false))) || (r.covers && r.covers.test(l))));
     if (uncovered.length) {
       matches.push({
         id: 'unmatched', category: 'unknown', deterministic: false, action: 'model', command: '',
@@ -139,16 +152,16 @@ export const FAST_CHECKS = [
 
 // A failed check is never "resolved", so its severity is at least 1; triage can
 // raise it to 2. The exit of the whole run is the maximum.
-export function runChecks(list, runner, rules = loadRules()) {
+export function runChecks(list, runner, rules = loadRules(), ctx = DEFAULT_CTX) {
   const results = [];
   for (const check of list) {
     const started = Date.now();
     const { status, out } = runner(check);
     const ms = Date.now() - started;
     if (status === 0) { results.push({ id: check.id, status: 'pass', exit: 0, ms }); continue; }
-    const t = triage(out, rules);
+    const t = triage(out, rules, ctx);
     // Tag the check name onto the text so a rule keyed on the tool name can see it.
-    const tagged = t.matches.length ? t : triage(`${check.id}: ${out}`, rules);
+    const tagged = t.matches.length ? t : triage(`${check.id}: ${out}`, rules, ctx);
     // No rule explains it: a nonzero exit with nothing recognised needs a model, never "explained".
     const exit = tagged.matches.length ? Math.max(1, tagged.exit) : 2;
     results.push({
