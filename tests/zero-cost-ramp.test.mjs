@@ -8,6 +8,7 @@ import { stanceStaminaCost } from '../src/model/stanceRules.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { upgradeBasic } from '../src/model/cardUpgradeLimits.js';
+import { validateContent } from '../src/model/validate.js';
 import { validateRunShape } from '../src/model/state.js';
 import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
 import { makeAuditCombat } from '../tools/combat-audit/fixtures.mjs';
@@ -128,4 +129,20 @@ test('playsEver is a saved, validated deck field', () => {
   assert.equal(restored.deck[0].playsEver, 4, 'survives a save round trip');
   run.deck[0].playsEver = -1;
   assert.ok(validateRunShape(run).some(problem => /playsEver/.test(problem)));
+});
+
+test('validation refuses a ramp on a multi-hit effect, a bad per, and a stat the card lacks', () => {
+  const strike = contentBundle.cards.find(card => card.effects?.some(effect => effect.op === 'damage' && Number.isFinite(effect.amount)));
+  const messages = ramp => {
+    const card = structuredClone({ ...strike, id: 'rampProbe', ramp });
+    const bundle = { ...contentBundle, cards: [...contentBundle.cards, card] };
+    return validateContent(bundle).errors.filter(error => /rampProbe/.test(error.path)).map(error => `${error.path}: ${error.msg}`);
+  };
+  assert.deepEqual(messages({ scope: 'combat', stat: 'damage', per: 1 }).filter(m => /rampProbe\.ramp/.test(m)), []);
+  const multi = structuredClone({ ...strike, id: 'rampProbe', ramp: { scope: 'combat', stat: 'damage', per: 1 } });
+  multi.effects = multi.effects.map(effect => effect.op === 'damage' ? { ...effect, hits: 2 } : effect);
+  const hitsErrors = validateContent({ ...contentBundle, cards: [...contentBundle.cards, multi] }).errors.filter(error => /rampProbe\.ramp/.test(error.path));
+  assert.ok(hitsErrors.some(error => /hits more than once/.test(error.msg)), JSON.stringify(hitsErrors));
+  assert.ok(messages({ scope: 'combat', stat: 'damage', per: 4 }).some(m => /ramp\.per.*1 to 3/.test(m)));
+  assert.ok(messages({ scope: 'run', stat: 'block', per: 1 }).some(m => /ramp\.stat.*no 'block' effect/.test(m)));
 });

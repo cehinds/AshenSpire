@@ -2915,6 +2915,7 @@ function validateCardRamp(card, path, err) {
     const hit = (Array.isArray(effects) ? effects : []).find(effect => effect && effect.op === ramp.stat);
     if (!hit) err(`${at}.stat`, `no '${ramp.stat}' effect to ramp`);
     else if (!Number.isFinite(hit.amount)) err(`${at}.stat`, `the '${ramp.stat}' effect's amount must be a plain number to ramp`);
+    else if (hit.hits !== undefined && hit.hits !== 1) err(`${at}.stat`, `the '${ramp.stat}' effect hits more than once; a ramp grows a single-hit effect only`);
   }
 }
 
