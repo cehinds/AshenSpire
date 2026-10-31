@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -9,10 +8,8 @@ import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat, runCombatPlayer } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight.js';
-import { resolvePlayedCombatCard, resolveCoopPlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
+import { resolvePlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
 
 const registries = createRegistries(contentBundle);
 function mounted(version, seed = 11) {
@@ -104,43 +101,3 @@ test('legacy kind priority and ordinary Power preparation stay unchanged', () =>
   assert.equal(resolveCombatAnimation(power).technique, 'power');
 });
 
-function convert(combat, owner) {
-  const result = payAshenBlight({ combatExpansionVersion: 2, draw: () => .99 }, owner,
-    { amount: 100, receiptId: `visual-conversion-${owner.id}`, combatKey: combat.combatKey });
-  assert.equal(result.converted, true);
-  for (const threshold of [25, 50, 75]) chooseAshenBlightFeat(combat, owner, { threshold, path: 'martial' });
-}
-
-for (const convertedSeat of ['p1', 'p2']) test(`co-op p2 visual receipt uses its owner when ${convertedSeat} alone is Blighted`, { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const rows = ['p1', 'p2'].map((id, index) => ({ id, ...mounted(2, index + 41) }));
-  const attribute = registries.attributes.ids()[0];
-  rows[0].run.attributes[attribute] += 7;
-  const combat = createCoopCombat({ registries, rng: createRng(42), combatExpansionVersion: 2,
-    breakMeterVersion: 2, enemyIds: ['wanderingSoldier'],
-    players: rows.map(({ id, run }) => ({ ...runCombatPlayer(run), id, combatExpansionVersion: 2, orderedDraw: true })) });
-  convert(combat, combat.players.get(convertedSeat).entity);
-  const owner = combat.players.get('p2');
-  const other = combat.players.get('p1');
-  assert.notDeepEqual(owner.entity.attributes, other.entity.attributes);
-  const instance = owner.piles.hand.find(card => card.cardId === 'shieldBash');
-  assert.ok(instance);
-  owner.entity.energy = owner.entity.stamina = owner.entity.mana = 20;
-  const context = { ...combat, player: owner.entity, combatExpansionVersion: 2 };
-  const expected = resolveCombatCard(context, instance, { upcastTier: 2 });
-  const hp = combat.enemies[0].hp;
-  playCard(combat, 'p2', instance.instanceId, 'p2', undefined, 2);
-  const receipt = combat.eventLog.find(event => event.type === 'cardPlayed' && event.playerId === 'p2');
-  assert.equal(receipt.upcastTier, 2);
-  // Production wire shape: the previously active/viewed p1 remains unrelated.
-  const snapshot = { party: rows.map(({ id, run }) => ({ ...run, id, classId: run.class })),
-    scene: { breakMeterVersion: 2, players: [...combat.players].map(([id, seat]) => ({ ...seat.entity, id, hand: seat.piles.hand })) } };
-  const definition = resolveCoopPlayedCombatCard(registries, snapshot, receipt);
-  assert.deepEqual(definition.effects, expected.effects);
-  assert.deepEqual(definition.counterPayload, expected.counterPayload);
-  assert.equal(Boolean(definition.ashenBlightConverted), convertedSeat === 'p2');
-  assert.deepEqual(definition.cardTags, receipt.cardTags);
-  assert.equal(definition.sourceArmamentId, instance.sourceArmamentId);
-  const plan = route(definition, rows[1].run, 2);
-  assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'guard', 'guard']);
-  assert.equal(combat.enemies[0].hp, hp);
-});

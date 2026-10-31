@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 // Replay the original route fixtures; modern character setup has separate tests.
 import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
@@ -8,7 +7,6 @@ import { createRng } from '../src/engine/rng.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { litNodes } from '../src/model/map/mapknowledge.js';
-import { createSession, restoreSession } from '../tools/session.mjs';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRunState } from '../src/model/state.js';
 import { defaultSeatOrder } from '../src/model/seats.js';
@@ -106,23 +104,6 @@ test('invalid new destination identities fail instead of silently rerolling', ()
   assert.throws(() => bossEncounterForNode(expanded, graph, graph.startIds[0], { seat: 'weald', tier: 1 }), /not a boss/);
 });
 
-test('live LAN host enters the selected terminal encounter and transports all choices', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const session = createSession({ registries: expanded, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
-  session.addMember({ id: 'p1', name: 'Route tester', classId: 'reaver' });
-  session.start();
-  const graph = session.session.mapGraph;
-  const id = graph.bossIds.find((id) => graph.nodes[id].encounterId !== LEGACY_ACT_BOSSES[1]);
-  const destination = graph.nodes[id];
-  const snapshot = session.snapshot();
-  assert.deepEqual(snapshot.map.bossIds, graph.bossIds);
-  assert.equal(snapshot.map.nodes.find((node) => node.id === id).destinationLabel, destination.destinationLabel);
-  session.session.reachableIds = [...graph.bossIds];
-  session.chooseNode('p1', id);
-  assert.equal(session.session.cursorId, id);
-  assert.equal(session.scene.kind, 'combat');
-  assert.deepEqual(session.live.combat.enemies.map((enemy) => enemy.enemyId), expanded.encounters.get(destination.encounterId).enemies);
-});
-
 test('real save loading preserves new and legacy topology and selected encounter without RNG changes', () => {
   for (const legacy of [false, true]) {
     const run = createRunState({ seed: 71, classId: 'reaver', registries: expanded });
@@ -154,26 +135,6 @@ test('solo load archives invalid persisted boss IDs even without a content-versi
     const status = saves.runStatus(); assert.equal(status.state, 'archived');
     assert.match(status.reason, /Saved boss destination.*invalid encounter/);
     assert.equal(JSON.stringify(JSON.parse(saves.getArchive(status.archiveId).save).mapGraph), graph);
-  }
-});
-
-test('LAN restore refuses dangling, wrong-pool, wrong-act and missing new boss IDs without altering saved data', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const host = createSession({ registries: expanded, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
-  host.addMember({ id: 'p1', name: 'Route tester', classId: 'reaver' }); host.start();
-  for (const invalid of ['removedBoss', 'loneSoldier', LEGACY_ACT_BOSSES[2], undefined]) {
-    const saved = structuredClone(host.serialize()); const id = saved.mapGraph.bossIds.at(-1);
-    if (invalid === undefined) delete saved.mapGraph.nodes[id].encounterId;
-    else saved.mapGraph.nodes[id].encounterId = invalid;
-    const before = JSON.stringify(saved);
-    assert.throws(() => restoreSession(expanded, saved), /Saved boss destination.*invalid encounter/);
-    assert.equal(JSON.stringify(saved), before);
-  }
-  for (const legacy of [false, true]) {
-    const saved = structuredClone(host.serialize());
-    if (legacy) saved.mapGraph = generateActMap({ config: single.mapConfig(1), rng: createRng(91) });
-    const before = JSON.stringify({ graph: saved.mapGraph, rng: saved.rng });
-    const restored = restoreSession(expanded, saved).serialize();
-    assert.equal(JSON.stringify({ graph: restored.mapGraph, rng: restored.rng }), before);
   }
 });
 

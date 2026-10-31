@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -11,7 +10,6 @@ import {createClassRespecDraft,previewClassRespec,applyClassRespec,cancelClassRe
 import {removeOwnedRelic} from '../src/model/classRewardProvenance.js';
 import {removeDeckCard} from '../src/model/cardRemoval.js';
 import {armamentSalePlan,commitArmamentSale} from '../src/model/armamentTrading.js';
-import {createSession,restoreSession} from '../tools/session.mjs';
 import {itemUpgradeTiers} from '../src/model/itemUpgrades.js';
 import {mountRows} from '../src/model/cardExtraction.js';
 import {createRng} from '../src/engine/rng.js';
@@ -148,25 +146,6 @@ test('original earned card grades and INT offers cannot reroll or raise after IN
   assert.deepEqual(run.classMilestoneOffers[slotId],stored);
 });
 
-test('host-owned respec persists a single seat atomically without changing another seat or shared RNG', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
-  const S=createSession({registries:root,seedString:'RESPEC'});
-  for(const id of ['a','b'])S.addMember({id,name:id,classId:'reaver',classMastery:{}});
-  S.start();
-  const builtSeat=built(12);Object.assign(S.session.members.get('a').run,builtSeat.run);
-  const before=structuredClone(S.serialize()),other=structuredClone(S.session.members.get('b').run);
-  const opened=S.previewMemberClassRespec('a');assert.equal(opened.ok,true);
-  const view=opened.view;assert.equal(view.draft.cost.label,'Free');assert.equal(view.draft.baseKey,undefined);assert.equal(view.candidate,undefined);
-  assert.equal(S.applyMemberClassRespec('b',view.draftId,{saveSession:()=>true}).ok,false);
-  assert.equal(S.applyMemberClassRespec('a',view.draftId,{saveSession:()=>false}).ok,false);
-  assert.deepEqual(S.serialize(),before);
-  let saved=null;
-  assert.equal(S.applyMemberClassRespec('a',view.draftId,{saveSession:data=>{saved=structuredClone(data);return true;}}).ok,true);
-  assert.deepEqual(S.session.members.get('b').run,other);assert.deepEqual(S.serialize().rng,before.rng);
-  const restored=restoreSession(root,saved);assert.equal(restored.refusedMembers().length,0);assert.equal(restored.session.members.get('a').run.classRespecReceipts.length,1);
-  assert.equal(S.applyMemberClassRespec('a',view.draftId,{saveSession:()=>true}).ok,false);
-  const next=S.previewMemberClassRespec('a');assert.equal(S.cancelMemberClassRespec('a',next.view.draftId).ok,true);assert.equal(S.snapshot().party.find(row=>row.id==='a').classRespec,undefined);
-});
-
 test('attribute rebuild displaces unusable independent equipment without losing it or healing',()=>{
   const {run,reg}=built(12);
   const slot=Object.keys(run.loadout.sets).find(id=>id!=='armor'&&run.loadout.sets[id].some(Boolean));
@@ -260,7 +239,6 @@ test('the initial class tree can rebuild before the first mastery level without 
   assert.equal(applyClassRespec(reg,run,preview,{saveCandidate:candidate=>{candidate.savedAt='2026-10-06T12:00:00.000Z';return true;}}).ok,true);
   assert.equal(run.savedAt,'2026-10-06T12:00:00.000Z');assert.deepEqual(validateRunShape(deserializeRun(serializeRun(run))),[]);
 });
-
 
 test('replacing an earned card adopts its own carrier while retaining identity and reviewed upgrade',()=>{
   const {run,reg}=built(12);

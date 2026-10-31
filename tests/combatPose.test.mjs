@@ -1,11 +1,7 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../src/model/combatPose.js';
 import { combatRestAfterEvent } from '../src/model/combatAnimation.js';
-import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
-import { createRegistries } from '../src/model/registries.js';
-import { createSession } from '../tools/session.mjs';
 const live = (...ids) => ({ hp:30, statuses:Object.fromEntries(ids.map(id=>[id,{stacks:1}])) });
 
 test('stance, latest live readiness, guarded rest, idle; death overrides all',()=>{
@@ -67,19 +63,4 @@ test('Herald red payment and gold healing respect receipt ownership and actual a
     assert.equal(bloodRiteReaction(p,e,'p2'),null);
     assert.equal(bloodRiteReaction(p,{...e,amount:0},'p1'),null);
   }
-});
-test('real co-op status receipts and snapshots select per-seat poses and consume Prepared', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
-  const reg=createRegistries(contentBundle),host=createSession({registries:reg,seedString:'READINESS'});
-  host.addMember({id:'p1',name:'Rogue',classId:'rogue'});host.addMember({id:'p2',name:'Herald',classId:'herald'});
-  host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
-  const play=(id,cardId,target)=>{const p=host.live.combat.players.get(id);p.entity.energy=99;p.entity.mana=99;p.entity.stamina=99;
-    p.piles.hand.push({instanceId:cardId,cardId,upgraded:false});const r=host.combatPlay(id,cardId,target);assert.ok(r.ok,r.error);return host.snapshot().scene;};
-  let scene=play('p1','smokePellet');
-  assert.equal(resolveCombatPose(scene.players.find(p=>p.id==='p1')),'prepared');
-  assert.equal(resolveCombatPose(scene.players.find(p=>p.id==='p2')),'idle');
-  assert.ok(scene.events.some(e=>e.type==='statusApplied'&&e.status==='prepared'&&e.targetId==='player'&&e.playerId==='p1'&&e.total===1));
-  scene=play('p2','stigmataCard');assert.equal(resolveCombatPose(scene.players.find(p=>p.id==='p2')),'bloodRite');
-  scene=play('p1','quickCut',scene.enemies.find(e=>e.alive).id);
-  assert.equal(resolveCombatPose(scene.players.find(p=>p.id==='p1')),'idle');
-  assert.equal(resolveCombatPose(scene.players.find(p=>p.id==='p2')),'bloodRite');
 });

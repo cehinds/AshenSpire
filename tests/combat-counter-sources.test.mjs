@@ -1,5 +1,3 @@
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -8,7 +6,6 @@ import { createRegistries } from '../src/model/registries.js';
 import { enemyPoolOf } from '../src/model/actionCosts.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
 import { cardSourceSnapshots } from '../src/engine/combatRules.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
@@ -16,7 +13,7 @@ const prepared = { id: 'prepared-weapon', sourceType: 'weapon', family: 'blade',
   grip: 'oneHand', damageType: 'slashing', tags: ['theme:blood'], buildup: [{ status: 'bleed', amount: 1 }] };
 const replacement = { ...prepared, id: 'replacement-weapon', damageType: 'fire', tags: [], buildup: [] };
 
-function fight(cardId, coop) {
+function fight(cardId) {
   const enemyId = cardId === 'nockAndWait' ? 'chainScavenger' : 'wanderingSoldier';
   const moveId = cardId === 'nockAndWait' ? 'hookCast' : 'slash';
   const registries = createRegistries({ ...contentBundle,
@@ -26,22 +23,21 @@ function fight(cardId, coop) {
   });
   const player = { classId: cardId === 'nockAndWait' ? 'rogue' : 'reaver', hp: 200, maxHp: 200,
     energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'counter1', cardId }], relicIds: [] };
-  const actorId = coop ? 'p1' : 'player';
+  const actorId = 'player';
   const options = { registries, rng: createRng(50), enemyIds: [enemyId], ruleset: combatRules, ratingsRules: null,
     combatProfiles: { [actorId]: { sources: { mainHand: prepared } },
       e1: { resistances: { slashing: 0.5 }, immunities: ['fire'] } } };
-  const c = coop ? createCoopCombat({ ...options, players: [{ ...player, id: actorId }] })
-    : createCombat({ ...options, player });
+  const c = createCombat({ ...options, player });
   return { c, actorId, registries,
-    actor: () => coop ? c.players.get(actorId).entity : c.player,
-    play: () => coop ? playCard(c, actorId, 'counter1') : dispatch(c, { type: 'playCard', cardInstanceId: 'counter1' }),
-    end: () => coop ? endTurn(c, actorId) : dispatch(c, { type: 'endTurn' }) };
+    actor: () => c.player,
+    play: () => dispatch(c, { type: 'playCard', cardInstanceId: 'counter1' }),
+    end: () => dispatch(c, { type: 'endTurn' }) };
 }
 
-for (const coop of COOP_MODES) for (const cardId of ['rondelParry', 'nockAndWait']) {
+for (const cardId of ['rondelParry', 'nockAndWait']) {
   for (const eventType of ['cardPreparing', 'energySpent']) {
-    test(`${coop ? 'co-op' : 'solo'} ${cardId} captures default reply source before ${eventType} changes it`, () => {
-      const { c, actorId, actor, play, end } = fight(cardId, coop);
+    test(`solo ${cardId} captures default reply source before ${eventType} changes it`, () => {
+      const { c, actorId, actor, play, end } = fight(cardId);
       const emit = c._emitEvent;
       c._emitEvent = (candidate, type, payload) => {
         if (type === eventType) candidate.foundation.profiles[actorId].sources.mainHand = structuredClone(replacement);
@@ -59,9 +55,9 @@ for (const coop of COOP_MODES) for (const cardId of ['rondelParry', 'nockAndWait
       assert.equal(hit.sourceInstanceId, prepared.id);
       assert.deepEqual(hit.components, [{ type: 'slashing', amount: 7 }], 'original type uses its resistance, not later fire immunity');
       // Solo nockAndWait: the scavenger spends its stat pool (SPEC §4.6a), so each planned hookCast after the first lands
-      // for 2 (200 before the pool). Co-op enemies keep one move a turn: co-op is set aside on dev (#1881).
+      // for 2 (200 before the pool).
       const pool = enemyPoolOf(c.registries.enemies.get('chainScavenger'));
-      assert.equal(actor().hp, cardId === 'nockAndWait' && !coop ? 200 - 2 * (pool - 1) : 200);
+      assert.equal(actor().hp, cardId === 'nockAndWait' ? 200 - 2 * (pool - 1) : 200);
     });
   }
 }

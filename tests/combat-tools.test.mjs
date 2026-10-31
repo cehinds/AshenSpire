@@ -45,9 +45,6 @@ test('log says why no reaction was offered and when a Smash breaks Guard', () =>
     'No reaction: Soldier is staggered.',
     "One reaction per attack: the rest of this attack can't be answered.",
     "Reaver's attack broke Soldier's Guard! (+3 Poise pressure)"]);
-  const coopRows = combatLogEntries([{ ...why('switchOff'), ownerId: 'p1' }],
-    { registries, players: [{ id: 'p1', name: 'Reaver' }, { id: 'p2', name: 'Herald' }] });
-  assert.equal(coopRows[0].text, 'Reaver: No reaction: Reactions are off.');
 });
 
 test('three log heights use physical card, visible viewport and actual menu clearance', () => {
@@ -93,18 +90,13 @@ test('unsupported historical combat has a disabled switch and immutable public l
   assert.equal(childModel(model, UI.combatLogDrawer).properties.entries[0].text, 'A public action.');
 });
 
-test('the combat log opens at Medium, and both screens start from that default', () => {
+test('the combat log opens at Medium, and the screen starts from that default', () => {
   assert.equal(COMBAT_LOG_DEFAULT_SIZE, 'Medium');
   assert.equal(childModel(combatToolsModel({ supported: true, enabled: true }), UI.combatLogDrawer).properties.size, 'Medium');
-  for (const file of ['src/ui/screens/combat.js', 'src/ui/screens/coop.js']) {
-    assert.match(readFileSync(file, 'utf8'), /combatToolsState = \{ open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true \}/, file);
-  }
+  assert.match(readFileSync('src/ui/screens/combat.js', 'utf8'), /combatToolsState = \{ open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true \}/);
 });
 
-test('both combat screens close the full log when the fight ends or the screen leaves', () => {
-  const coop = readFileSync('src/ui/screens/coop.js', 'utf8');
-  assert.match(coop, /closeCombatFullLog\(combatToolsState\);\s*if \(combatTools\) \{ combatTools\.release\(\)/, 'coop teardown closes it before release');
-  assert.match(coop, /combatLayoutState = \{\};\s*\/\/[^\n]*\n\s*closeCombatFullLog\(combatToolsState\);/, 'coop closes it when the scene leaves combat');
+test('the combat screen closes the full log when the fight ends or the screen leaves', () => {
   const solo = readFileSync('src/ui/screens/combat.js', 'utf8');
   assert.match(solo, /closeCombatFullLog\(combatToolsState\);\s*combatTools\.release\(\);/, 'solo leave closes it before release');
 });
@@ -409,19 +401,6 @@ test('announceSettingsSettled dispatches on window, and combat repaints the foot
     if (had) Object.defineProperty(globalThis, 'window', had); else delete globalThis.window;
   }
   assert.doesNotThrow(() => announceSettingsSettled(), 'no window: a no-op, not a throw');
-});
-
-test('co-op mounts the tools without an Auto switch', () => {
-  withToolsDom((dom) => {
-    resetModalState();
-    const combatEl = dom.document.createElement('section');
-    dom.document.body.appendChild(combatEl);
-    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {} });
-    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
-    assert.equal(combatEl.querySelector('[data-combat-tool="auto"]'), null);
-    assert.ok(combatEl.querySelector('[data-combat-tool="reaction"]'));
-    tools.release();
-  });
 });
 
 test('the log palette follows saved settings and refreshes while the modal is open', () => {

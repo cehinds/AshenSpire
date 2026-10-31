@@ -1,11 +1,9 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, cardNeedsEnemyTargetNow } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, cardNeedsEnemyTargetForPlayer } from '../src/engine/coopCombat.js';
 import { emitEvent, hasEventTriggers, triggerOwnerKey } from '../src/engine/triggers.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 import { getStacks } from '../src/engine/statuses.js';
@@ -19,15 +17,13 @@ import { cardChoicePlan } from '../src/engine/combat.js';
 const base = createRegistries(contentBundle);
 const charge = { op: 'grantCardCharge', target: 'self', key: 'target-probe', buildupStatus: 'frost', buildup: 2 };
 const mount = triggers => ({ kind: 'feat', id: 'target-probe', rules: [{ tag: 'probe', triggers }] });
-function fixture(coop = false) {
+function fixture() {
   const def = { ...base.cards.get('defend'), gradeProfiles: undefined, legacyFace: undefined, cost: 1, manaCost: 0,
     effects: [{ op: 'block', target: 'self', amount: 4 }], upgrade: {} };
   const registries = { ...base, cards: { ...base.cards, get: id => id === 'defend' ? def : base.cards.get(id) } };
   const player = id => ({ id, classId: 'reaver', hp: 80, maxHp: 80, energyMax: 20, maxStamina: 20,
     stamina: 20, drawPerTurn: 3, relicIds: [], deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: id + i, cardId: 'defend', upgraded: false })) });
-  const combat = coop
-    ? createCoopCombat({ registries, rng: createRng(91), players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] })
-    : createCombat({ registries, rng: createRng(91), player: player('a'), enemyIds: ['wanderingSoldier'] });
+  const combat = createCombat({ registries, rng: createRng(91), player: player('a'), enemyIds: ['wanderingSoldier'] });
   combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
   // Every class mount carries the Oath rule, which listens to cardPreparing.
   // These tests are about a bus nobody listens on, so drop class mounts.
@@ -61,26 +57,25 @@ function assertPreviewParity(combat, expectedClones) {
   return actual.value;
 }
 
-for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) test(`an ordinary friendly play retains only its real transaction clone, coop=${coop}`, () => {
-  const combat = fixture(coop), id = combat.piles.hand[0].instanceId, owner = combat.playerKey;
+test(`an ordinary friendly play retains only its real transaction clone`, () => {
+  const combat = fixture(), id = combat.piles.hand[0].instanceId, owner = combat.playerKey;
   assert.equal(hasEventTriggers(combat, 'cardPreparing'), false);
   assert.equal(assertPreviewParity(combat, 0), false);
   const target = countFullClones(() => botCardTargetId(combat.registries, combat, combat.piles.hand[0], 'e1', owner));
   assert.equal(target.value, undefined);
-  assert.equal(target.fullClones, coop ? 1 : 0, 'co-op owner binding needs one detached graph; solo needs none');
-  const actual = countFullClones(() => coop ? playCard(combat, owner, id) : dispatch(combat, { type: 'playCard', cardInstanceId: id }));
+  assert.equal(target.fullClones, 0, 'solo needs no detached graph');
+  const actual = countFullClones(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }));
   assert.equal(actual.fullClones, 1, 'actual play remains atomic; the target guard adds no nested preview');
   assert.ok(combat.player.block > 0);
 });
 
-for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) test(`live buildup keeps hostile targeting, atomic refusal and one-use consumption, coop=${coop}`, () => {
-  const combat = fixture(coop), owner = combat.playerKey, id = combat.piles.hand[0].instanceId;
+test(`live buildup keeps hostile targeting, atomic refusal and one-use consumption`, () => {
+  const combat = fixture(), owner = combat.playerKey, id = combat.piles.hand[0].instanceId;
   grantAbilityCharge(combat.player, charge);
   assert.equal(assertPreviewParity(combat, 0), true);
   const before = data(combat), rng = combat.rng.getCounters();
-  const playAt = targetId => coop ? playCard(combat, owner, id, targetId)
-    : dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId });
-  assert.throws(() => playAt(coop ? owner : combat.player.id), /Invalid enemy target/);
+  const playAt = targetId => dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId });
+  assert.throws(() => playAt(combat.player.id), /Invalid enemy target/);
   assert.deepEqual(data(combat), before);
   assert.deepEqual(combat.rng.getCounters(), rng);
   assert.equal(countFullClones(() => playAt('e1')).fullClones, 1);
@@ -109,18 +104,6 @@ test('preparing properties, statuses, stances and enemy phases retain the detach
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: 'e1' });
   assert.equal(getStacks(combat.enemies[0], 'frost'), 2, 'the actual preparing charge resolves on the selected enemy');
   assert.deepEqual(combat.player.abilityRiders.charges, {});
-});
-
-test('an inactive co-op preparing listener conservatively preserves detached target inspection', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const combat = fixture(true), inactive = [...combat.players.keys()].find(id => id !== combat.playerKey);
-  combat.propertyMounts[inactive] ||= {};
-  combat.propertyMounts[inactive].probe = mount([{ on: 'cardPreparing', do: [charge] }]);
-  assert.equal(hasEventTriggers(combat, 'cardPreparing'), true);
-  assertPreviewParity(combat, 1);
-  const before = data(combat), rng = combat.rng.getCounters(), id = combat.piles.hand[0].instanceId;
-  const target = countFullClones(() => cardNeedsEnemyTargetForPlayer(combat, combat.playerKey, id));
-  assert.equal(target.fullClones, 2, 'owner binding plus the uncertain preparing bus both remain detached');
-  assert.deepEqual(data(combat), before); assert.deepEqual(combat.rng.getCounters(), rng);
 });
 
 test('queued charges, paused selection and custom emitters retain exact preview semantics and purity', () => {
