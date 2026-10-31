@@ -252,3 +252,19 @@ test('CLI under CI: a sparse-missing-file log exits 2', () => {
   const r = spawnSync(process.execPath, [JEV, 'triage', '-'], { input: "Error: ENOENT: no such file or directory, open 'docs/component-catalog.html'\n", encoding: 'utf8', env: { ...process.env, CI: 'true' } });
   assert.equal(r.status, 2);
 });
+
+test('resolveChangelogConflict drops the diff3 base section', () => {
+  const text = [
+    '## 2026-10-31', '',
+    '<<<<<<< HEAD',
+    '- **Mine** (#1, `0.7.2.60`).',
+    '||||||| merged common ancestors',
+    '- **Base** (#9, `0.7.2.40`).',
+    '=======',
+    '- **Theirs** (#3, `0.7.2.70`).',
+    '>>>>>>> origin/dev',
+    '- **Tail** (#4, `0.7.2.50`).', '',
+  ].join('\n');
+  const r = resolveChangelogConflict(text);
+  assert.deepEqual(r.split('\n'), ['## 2026-10-31', '', '- **Mine** (#1, `0.7.2.60`).', '- **Theirs** (#3, `0.7.2.70`).', '- **Tail** (#4, `0.7.2.50`).', '']);
+});

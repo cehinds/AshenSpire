@@ -321,7 +321,8 @@ export function classifyConflicts(paths) {
 // Pure: resolve every conflict block in CHANGELOG.md text. Ours (HEAD) receipt
 // block first, then theirs; a non-blank line of ours that theirs already holds is dropped.
 export function resolveChangelogConflict(text) {
-  const re = /^<{7}[^\n]*\n([\s\S]*?)^={7}\n([\s\S]*?)^>{7}[^\n]*\n?/gm;
+  // diff3/zdiff3 add a `||||||| base` section between ours and `=======`; it is dropped.
+  const re = /^<{7}[^\n]*\n([\s\S]*?)(?:^\|{7}[^\n]*\n[\s\S]*?)?^={7}\n([\s\S]*?)^>{7}[^\n]*\n?/gm;
   return text.replace(re, (_all, ours, theirs) => {
     const have = new Set(theirs.split('\n').filter(l => l.trim()));
     const kept = ours.split('\n').filter(l => !l.trim() || !have.has(l));
