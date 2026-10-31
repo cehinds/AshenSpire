@@ -378,7 +378,7 @@ export function renderCard(registries, ref, opts = {}) {
     // The bounded projection selects whole qualified clauses after the live
     // model has suppressed benefits already represented by exact tag values.
     faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
-      ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
+      ? allFaceLines.slice(0, faceRules?.faceMaxLines ?? Infinity) : allFaceLines;
     if (faceLines && def.weightClassPriced) {
       const pricingNote = { kind: 'detail', html: 'Cost reflects your current weight' };
       faceLines.push(pricingNote);
