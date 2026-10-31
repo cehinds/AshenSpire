@@ -1,6 +1,7 @@
 import { configuredCharacterLevels } from '../../model/gameProfileProgression.js';
 import { gameContent } from '../../model/gameProfile.js';
 import { previewGameProfileRest, restServiceSpent, restServicesAll, restSmithFree } from '../../model/gameProfileRest.js';
+import { restSmithMaxTier } from '../../model/blacksmithConfig.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from './SmithSelectionModel.js';
 import { cardUpgradeModel } from './CardUpgradeModel.js';
@@ -15,7 +16,7 @@ export function gameProfileRestModel(registries, run, visit) {
     try { return { available: true, reason: '', preview: previewGameProfileRest(registries, run, service, payload).run }; }
     catch (error) { return { available: false, reason: error.message }; }
   };
-  const smith = smithingPlan(registries, run, undefined, { free: restSmithFree(run) });
+  const smith = smithingPlan(registries, run, undefined, { free: restSmithFree(run), maxTier: restSmithMaxTier(run) });
   const smithPreviews = new Map(smith.candidates.map(candidate => [candidate.itemRef, attempt('smith', { itemRef: candidate.itemRef })]));
   // Core card upgrade: each deck card previews the same transaction its confirmation commits, quote included.
   const cardUpgrade = rules.services.includes('upgradeCard') ? cardUpgradeModel(registries, run) : { rows: [] };
