@@ -89,6 +89,13 @@ export function frameHoldMs({ reduced = false } = {}) {
   const hold = combatPacing.animationMs * COMBAT_TIMING.frameHoldShare / combatPacing.speed;
   return Math.round(Math.min(COMBAT_TIMING.frameHoldMaxMs, Math.max(COMBAT_TIMING.frameHoldMinMs, hold)));
 }
+// The sprite services' timing object: every entry scaled, then the lunge and the reaction (the two a single
+// frame is shown for) lifted to the frame hold, so a recoil or hurt pose is never a flicker.
+function spriteSpeedFor(pace, spriteScale, minFrameMs) {
+  const speed = Object.fromEntries(Object.entries(pace).map(([key, value]) => [key, value * spriteScale]));
+  if (minFrameMs > 0) for (const key of ['lungeMs', 'reactionMs']) speed[key] = Math.max(speed[key], minFrameMs);
+  return { ...speed, minFrameMs };
+}
 export function actionPacing({ reduced = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
@@ -103,8 +110,7 @@ export function actionPacing({ reduced = false } = {}) {
     gapMs, intentMs: 0, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
-    spriteSpeed: { ...Object.fromEntries(Object.entries(pace || ANIM_SPEEDS.normal).map(([key, value]) => [key, value * spriteScale])),
-      minFrameMs: frameHoldMs({ reduced }) },
+    spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced })),
     scale,
   };
 }

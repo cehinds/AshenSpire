@@ -45,3 +45,14 @@ test('the Reaver painting holds each of its distinct images, and impact precedes
   assert.equal(plain.runMs, undefined, 'without a hold the step-by-step timing is unchanged');
   setAnimSpeed('normal'); setCombatPacing();
 });
+
+test('the sprite lunge and reaction are never shorter than one held frame', () => {
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25 });
+  const speed = actionPacing().spriteSpeed;
+  assert.ok(speed.reactionMs >= speed.minFrameMs && speed.lungeMs >= speed.minFrameMs, JSON.stringify(speed));
+  assert.equal(speed.minFrameMs, frameHoldMs());
+  setAnimSpeed('instant');
+  const instant = actionPacing().spriteSpeed;
+  assert.equal(instant.minFrameMs, 0); assert.equal(instant.reactionMs, 0);
+  setAnimSpeed('normal'); setCombatPacing();
+});
