@@ -47,7 +47,18 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage",
+        "amount": 50
+      },
+      {
+        "to": "burn",
+        "effect": "tick"
+      }
+    ]
   },
   {
     "id": "emberStarvedPilgrim",
@@ -102,7 +113,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "stacks"
+      }
+    ]
   },
   {
     "id": "valkyrieShade",
@@ -148,7 +169,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage"
+      },
+      {
+        "to": "magic",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "charredColossus",
@@ -205,7 +236,19 @@
         "weight": 25,
         "maxConsecutive": 1
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      },
+      {
+        "to": "frost",
+        "effect": "damage",
+        "amount": 50
+      }
+    ]
   },
   {
     "id": "wyrmLord",
@@ -278,7 +321,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "piercing",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "blightedValkyrie",
@@ -394,6 +447,12 @@
           "scarletDance"
         ]
       }
+    ],
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage"
+      }
     ]
   },
   {
@@ -445,7 +504,21 @@
         "weight": 15,
         "maxConsecutive": 1
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "slashing",
+        "effect": "damage"
+      },
+      {
+        "to": "frost",
+        "effect": "stacks"
+      }
+    ]
   },
   {
     "id": "eclipseCantor",
@@ -501,7 +574,21 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "piercing",
+        "effect": "damage"
+      },
+      {
+        "to": "paralysis",
+        "effect": "stacks"
+      },
+      {
+        "to": "magic",
+        "effect": "mana"
+      }
+    ]
   },
   {
     "id": "furnaceSaint",
@@ -565,6 +652,12 @@
             "stacks": 8
           }
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
       }
     ]
   },
@@ -649,6 +742,13 @@
         "unlockMoves": [
           "fallingHeavens"
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "magic",
+        "effect": "mana",
+        "amount": 2
       }
     ]
   },
@@ -739,6 +839,12 @@
         "unlockMoves": [
           "ashBreath"
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "damage"
       }
     ]
   }

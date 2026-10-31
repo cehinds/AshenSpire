@@ -19,6 +19,7 @@ import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 import { handRulesDefaults } from '../content/handRules.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems } from './combatTacticsRules.js';
 import { enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
+import { weaknessProblems } from './enemyWeaknessRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -1413,6 +1414,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     } else if (cfg && cfg.mode === 'immune') {
       for (const field of Object.keys(cfg)) if (field !== 'mode') err(`${base}.arcaneExposure.${field}`, `immune policy may not author '${field}'`);
     }
+    if (enemy && enemy.weaknesses !== undefined) for (const problem of weaknessProblems(enemy.weaknesses)) err(`${base}.weaknesses`, problem);
     for (const [school, percent] of Object.entries((enemy && enemy.damageResistanceBySchool) || {})) {
       if (!DAMAGE_SCHOOLS.includes(school)) err(`${base}.damageResistanceBySchool.${school}`, `unknown damage school '${school}'`);
       if (!Number.isFinite(percent) || percent < 0 || percent > 100) err(`${base}.damageResistanceBySchool.${school}`, 'must be a finite percent from 0 to 100');
