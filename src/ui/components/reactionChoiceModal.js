@@ -1,7 +1,8 @@
 import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { openModal, button, el } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
-import { cardOptionGrid, markCardOptions } from './cardOptionGrid.js';
+import { optionRowList, markOptionRows } from './optionRowList.js';
+import { playingCardArtwork } from '../cardArtwork.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
 // `stack` is the already-committed entries of this root, top first, each
@@ -32,8 +33,8 @@ export function reactionStackEntryName(entry, registries) {
 export const stackedCardIds = (reactionStack, ownerId = null) => new Set((reactionStack?.entries || [])
   .filter(entry => entry.side !== 'enemy' && (ownerId == null || entry.ownerId === ownerId)).map(entry => entry.cardInstanceId));
 
-// `summarize(option)` returns the tile summary (summarizeCardOption with the caller's readers: the
-// engine in solo, the seat snapshot in co-op); without it a tile shows the name and costs only.
+// `summarize(option)` returns the row summary (summarizeCardOption with the caller's readers: the
+// engine in solo, the seat snapshot in co-op); without it a row shows the name and costs only.
 export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null }) {
   const stacked = Array.isArray(stack) && stack.length > 0;
   let selected = null;
@@ -61,11 +62,11 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
       const summaries = pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return summary || summarizeCardOption(null, null, option);
+        return { ...(summary || summarizeCardOption(null, null, option)), artAsset: playingCardArtwork({ cardId: option.cardId }), chip: t('combat.reactions.label') };
       });
-      const grid = cardOptionGrid(summaries, { idAttr: 'data-reaction-option', onSelect: id => {
+      const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: id => {
         selected = id;
-        markCardOptions(grid, 'data-reaction-option', [id]);
+        markOptionRows(grid, 'data-reaction-option', [id]);
         play.disabled = false;
       } });
       host.append(grid);

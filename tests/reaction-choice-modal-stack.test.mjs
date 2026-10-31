@@ -141,6 +141,8 @@ class FakeDocument extends FakeNode {
 
   createElement(tagName) { return new FakeNode(tagName, this); }
 
+  createTextNode(text) { return new FakeNode('#text', this, String(text)); }
+
   addEventListener(type, listener) { this.docListeners.set(type, [...(this.docListeners.get(type) || []), listener]); }
 
   removeEventListener(type, listener) { this.docListeners.set(type, (this.docListeners.get(type) || []).filter((c) => c !== listener)); }
@@ -256,7 +258,7 @@ test('Resolve still answers with no option chosen', async () => {
   }
 });
 
-test('options render as uniform tiles with the card name, effect line and direction', async () => {
+test('options render as vertical rows with the card name, effect line and direction', async () => {
   const summaries = {
     'opt-a': { id: 'opt-a', name: 'Counter', costs: ['1 SP'], line: [
       { label: 'Def', before: 'Def ', after: '', value: 9, base: 7, dir: 'up' },
@@ -266,8 +268,12 @@ test('options render as uniform tiles with the card name, effect line and direct
   const opened = await openWith({ summarize: option => summaries[option.id] });
   try {
     const tile = opened.shell.body.querySelector('[data-reaction-option="opt-a"]');
-    assert.ok(tile.classes.has('card-option'));
-    assert.equal(tile.querySelector('.co-name').textContent, 'Counter');
+    assert.ok(tile.classes.has('option-row'));
+    assert.ok(tile.parentNode.classes.has('option-row-list'), 'rows sit in one vertical list');
+    assert.equal(tile.tagName, 'BUTTON');
+    assert.equal(tile.querySelector('.option-row-name').textContent, 'Counter');
+    assert.equal(tile.querySelector('.option-row-chip').textContent, 'Reaction');
+    assert.ok(tile.querySelector('.option-row-art'), 'an art well leads the row');
     assert.equal(tile.querySelector('.co-effect').textContent, 'Def 9\u25b2 raised · Return 2\u25bc lowered · Dmg 5', 'changed numbers carry an arrow and words, not colour alone');
     assert.deepEqual(tile.querySelectorAll('.co-arrow').map(node => node.textContent), ['\u25b2', '\u25bc']);
     assert.deepEqual(tile.querySelectorAll('.co-sr').map(node => node.textContent.trim()), ['raised', 'lowered']);
@@ -308,6 +314,27 @@ test('without a frame scheduler focus lands on the first option at once', async 
   const opened = await openWith({});
   try {
     assert.equal(opened.document.activeElement, opened.shell.body.querySelector('[data-reaction-option]'));
+  } finally {
+    opened.restore();
+  }
+});
+
+test('several options are rows of one list; arrows move focus, selecting enables Play, Back answers null', async () => {
+  const opened = await openWith({ pending: { id: 'root:e1:0', options: [
+    { id: 'a', name: 'Riposte', play: {} }, { id: 'b', name: 'Parry', play: {} }, { id: 'c', name: 'Dodge', play: {} }] } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    assert.deepEqual(rows.map(row => row.getAttribute('data-reaction-option')), ['a', 'b', 'c']);
+    assert.ok(rows.every(row => row.classes.has('option-row') && row.parentNode === rows[0].parentNode));
+    const list = rows[0].parentNode;
+    list.listeners.get('keydown')[0]({ key: 'ArrowDown', target: rows[0], preventDefault() {} });
+    assert.equal(opened.document.activeElement, rows[1], 'ArrowDown moves to the next row');
+    rows[1].click();
+    assert.deepEqual(rows.map(row => row.getAttribute('aria-pressed')), ['false', 'true', 'false']);
+    const play = opened.document.querySelectorAll('button').find(node => node.textContent === 'Play');
+    assert.equal(play.disabled, false);
+    opened.document.querySelectorAll('button').find(node => node.textContent === 'Back').click();
+    assert.deepEqual(opened.answers, [{ offerId: 'root:e1:0', optionId: null }], 'Back answers null even with a row selected');
   } finally {
     opened.restore();
   }
