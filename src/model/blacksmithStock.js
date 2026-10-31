@@ -65,15 +65,15 @@ export function coreBlacksmithShelves(registries, rng, run) {
   return { armaments, weaponArts };
 }
 
-const cinders = (n, priceMult) => (priceMult === 1 ? n : Math.ceil(n * priceMult));
 const revisionOf = (run) => run.shopStock?.tradeRevision || 0;
 const sells = (run, shelf) => !!run.shopStock && run.shopStock.kind === 'blacksmith' && (run.shopStock.offerings || []).includes(shelf);
 
-/** coreArmamentPlan(registries, run, id, { priceMult }) → the quote for buying the rack's piece `id`. */
-export function coreArmamentPlan(registries, run, id, { priceMult = 1 } = {}) {
+/** coreArmamentPlan(registries, run, id) → the quote for buying the rack's piece `id`. */
+export function coreArmamentPlan(registries, run, id) {
   const item = (run.shopStock?.armaments || []).find((row) => row.id === id) || null;
   const def = item && (registries.equipment.armaments || []).find((piece) => piece.id === id);
-  const price = item ? cinders(item.cost ?? 0, priceMult) : 0;
+  // The shelf cost is already scaled by the run's price multiplier (blacksmithVisitStock, applyShopPriceMult): read it as is.
+  const price = item ? (item.cost ?? 0) : 0;
   let reason = '';
   if (!sells(run, 'armaments')) reason = say('blacksmith.refuse.notOffered');
   else if (!item || !def) reason = say('shop.refuse.gone');
@@ -83,11 +83,11 @@ export function coreArmamentPlan(registries, run, id, { priceMult = 1 } = {}) {
 }
 
 /**
- * commitCoreArmament(registries, run, quote, { priceMult }) → { id, tier, spent }. The piece lands in storage; its tier is
+ * commitCoreArmament(registries, run, quote) → { id, tier, spent }. The piece lands in storage; its tier is
  * written to `run.itemUpgradeLevels` and NEVER lowers a tier the run already holds for that item.
  */
-export function commitCoreArmament(registries, run, quote, { priceMult = 1 } = {}) {
-  const plan = coreArmamentPlan(registries, run, quote.id, { priceMult });
+export function commitCoreArmament(registries, run, quote) {
+  const plan = coreArmamentPlan(registries, run, quote.id);
   if (!plan.ok) throw new Error(plan.reason);
   if (quote.cost !== plan.cost || quote.revision !== plan.revision || quote.tier !== plan.tier) throw new Error(say('shop.refuse.stale'));
   const itemRef = itemRefOf(plan.id);
@@ -103,11 +103,11 @@ export function commitCoreArmament(registries, run, quote, { priceMult = 1 } = {
   return { id: plan.id, tier: plan.tier, spent: plan.cost };
 }
 
-/** coreWeaponArtPlan(registries, run, id, { priceMult }) → the quote for the shelf's weapon art `id`. */
-export function coreWeaponArtPlan(registries, run, id, { priceMult = 1 } = {}) {
+/** coreWeaponArtPlan(registries, run, id) → the quote for the shelf's weapon art `id`. */
+export function coreWeaponArtPlan(registries, run, id) {
   const item = (run.shopStock?.weaponArts || []).find((row) => row.id === id) || null;
   const def = item && registries.cards.has(id) ? registries.cards.get(id) : null;
-  const price = item ? cinders(item.cost, priceMult) : 0;
+  const price = item ? item.cost : 0;
   let reason = '';
   if (!sells(run, 'weaponArts')) reason = say('blacksmith.refuse.notOffered');
   else if (!item || !def) reason = say('shop.refuse.gone');
@@ -116,8 +116,8 @@ export function coreWeaponArtPlan(registries, run, id, { priceMult = 1 } = {}) {
 }
 
 /** The art joins the sideboard as `shop-art:<n>:<cardId>`, like any bought card; the shelf is not restocked. */
-export function commitCoreWeaponArt(registries, run, quote, { priceMult = 1 } = {}) {
-  const plan = coreWeaponArtPlan(registries, run, quote.id, { priceMult });
+export function commitCoreWeaponArt(registries, run, quote) {
+  const plan = coreWeaponArtPlan(registries, run, quote.id);
   if (!plan.ok) throw new Error(plan.reason);
   if (quote.cost !== plan.cost || quote.revision !== plan.revision) throw new Error(say('shop.refuse.stale'));
   const taken = new Set([...(run.deck || []), ...(run.sideboard || [])].map((card) => card.instanceId));

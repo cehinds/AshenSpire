@@ -9,7 +9,7 @@ import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
+import { buildBlacksmithStock, blacksmithVisitStock } from '../src/engine/shopKinds.js';
 import { blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../src/model/blacksmith.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt, rollTier } from '../src/model/blacksmithStock.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
@@ -261,4 +261,23 @@ test('save: a Core Blacksmith stock passes validateRunShape and survives a JSON 
   const bad = structuredClone(run);
   bad.shopStock.armaments[0].tier = -1; bad.shopStock.weaponArts[0].cost = 0;
   assert.ok(validateRunShape(bad).some((p) => /tier/.test(p)) && validateRunShape(bad).some((p) => /weaponArts/.test(p)));
+});
+
+test('price multiplier 2 scales each shelf price once (visit door), and a purchase charges exactly the shelf price', () => {
+  const base = smithRun(coreOut, { seed: 14 });
+  const run = smithRun(coreOut, { seed: 14 });
+  run.shopStock = blacksmithVisitStock(coreOut, createRng(14), run, { priceMult: 2 });
+  run.shopStock = JSON.parse(JSON.stringify(run.shopStock));
+  base.shopStock.armaments.forEach((row, i) => assert.equal(run.shopStock.armaments[i].cost, row.cost * 2));
+  const row = run.shopStock.armaments[0];
+  const plan = coreArmamentPlan(coreOut, run, row.id);
+  assert.equal(plan.cost, row.cost, 'the plan reads the scaled shelf cost, never scales it again');
+  const before = run.cinders;
+  commitCoreArmament(coreOut, run, plan);
+  assert.equal(before - run.cinders, row.cost);
+  const art = run.shopStock.weaponArts[0];
+  assert.equal(coreWeaponArtPlan(coreOut, run, art.id).cost, art.cost);
+  assert.equal(art.cost, base.shopStock.weaponArts[0].cost * 2);
+  // Services still scale at the quote.
+  assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId, { priceMult: 2 }).cost, 240);
 });

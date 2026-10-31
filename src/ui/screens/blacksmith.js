@@ -98,11 +98,11 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       // Core: the rack is tiered (each piece is sold at the tier it shows) and bought with the Core model's quote.
       if (coreCardUpgrades(run)) {
         for (const item of stock.armaments || []) {
-          const plan = coreArmamentPlan(registries, run, item.id, { priceMult });
+          const plan = coreArmamentPlan(registries, run, item.id);
           if (!plan.def) continue;
           const host = tile(GLYPH.armaments, plan.name, t('blacksmith.armament.lineTier', { tier: plan.tier, cost: plan.cost }));
           host.dataset.armamentTier = String(plan.tier);
-          actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan, { priceMult }).id) });
+          actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan).id) });
           shelf.append(host);
         }
         return;
@@ -120,10 +120,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     },
     weaponArts(shelf) {
       for (const item of stock.weaponArts || []) {
-        const plan = coreWeaponArtPlan(registries, run, item.id, { priceMult });
+        const plan = coreWeaponArtPlan(registries, run, item.id);
         if (!plan.name) continue;
         const host = tile(GLYPH.weaponArts, plan.name, t('blacksmith.weaponArt.line', { cost: plan.cost }));
-        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => commitCoreWeaponArt(registries, run, plan, { priceMult }) });
+        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => commitCoreWeaponArt(registries, run, plan) });
         shelf.append(host);
       }
     },
