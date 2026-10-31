@@ -34,5 +34,5 @@ test('a run snapshot (opts.rules.gameProfile) wins over the current registries p
   assert.match(text, /\b5\b/, text);
   assert.notEqual(text, current, 'the registries default profile is not what is shown');
   // Entry Precision follows the run's profile, not the registries' current one.
-  assert.match(cardPlainText(reg, { cardId: 'core.strike' }, { rules: { combatExpansionVersion: 2, gameProfile: profile } }), /Entry: \+1 \+ stat mix Precision/);
+  assert.match(cardPlainText(reg, { cardId: 'core.strike' }, { rules: { combatExpansionVersion: 2, gameProfile: profile } }), /Entry: \+1 Precision/); // Rule: the entry grant is exactly 1 stack, no stat mix (owner, 2026-10-31));
 });

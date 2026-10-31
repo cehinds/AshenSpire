@@ -70,16 +70,16 @@ test('fixed Evasion preview matches every attacker outcome and uses no defender 
   ctx.rng={int:()=>{throw new Error('preview consumed RNG');}};
   const preview=attackHitPreview(ctx,source,enemy,carrier);
   assert.equal(JSON.stringify({enemy,source}),before);
-  assert.equal(preview.accuracy,11);assert.equal(preview.evasion,20);assert.equal(preview.opposed,false);assert.equal(preview.fixedDefense,true);
+  /* Rule: Precision = 1 + mix + stacks (3 + 2 + smash 1 + 1 = 7); Evasion = 8 + DEX + 2 per Evade stack (owner, 2026-10-31). */assert.equal(preview.accuracy,7);assert.equal(preview.evasion,18);assert.equal(preview.opposed,false);assert.equal(preview.fixedDefense,true);
   let hits=0,outcomes=0;
   for(let a=1;a<=20;a++) for(let b=1;b<=(mode==='normal'?1:20);b++) {
    const die=mode==='normal'?a:mode==='advantage'?Math.max(a,b):Math.min(a,b);
-   const want=die===20||die!==1&&die+11>=20;
+   const want=die===20||die!==1&&die+7>=18;
    const queue=mode==='normal'?[a]:[a,b];let draws=0;
    ctx.rng={int:(stream,min,max)=>{assert.equal(stream,'combatAvoidance');assert.equal(min,1);assert.equal(max,20);draws++;assert.ok(queue.length,'extra RNG draw');return queue.shift();}};
    const result=resolveAttackHit(ctx,source,{...enemy,statuses:structuredClone(enemy.statuses)},carrier);
    assert.equal(result.hit,want,`${mode}: ${a},${b}`);assert.equal(draws,mode==='normal'?1:2);
-   assert.equal(result.attackTotal,die+11);assert.equal(result.evasionTotal,20);assert.equal(result.evasionDie,undefined);
+   assert.equal(result.attackTotal,die+7);assert.equal(result.evasionTotal,18);assert.equal(result.evasionDie,undefined);
    if(result.hit)hits++;outcomes++;
   }
   assert.equal(preview.hitChance,Math.floor(100*hits/outcomes));
@@ -93,14 +93,15 @@ test('fixed Evasion preview matches every attacker outcome and uses no defender 
 test('fixed Evasion retains DEX at zero stacks and applies gear once',()=>{
  const {ctx}=setup();const defender={...ctx.enemies[0],attributes:{dexterity:2},statuses:{}};
  const evasion=stacks=>{defender.statuses={evade:{stacks}};return effectiveEvasion(ctx,defender);};
- assert.equal(evasion(0),3);assert.equal(evasion(1),6);assert.equal(evasion(2),9);
+ // Rule (owner, 2026-10-31): Evasion = 8 + DEX + gear + 2 x Evade stacks + prepared bonus.
+ assert.equal(evasion(0),10);assert.equal(evasion(1),12);assert.equal(evasion(2),14);
  defender.baseEvasionBonus=2;
- assert.equal(evasion(0),5);assert.equal(evasion(1),8);assert.equal(evasion(2),11);
- defender.combatEvade={charges:1,bonus:4};assert.equal(evasion(2),15);
- assert.equal(effectiveEvasion(ctx,defender,{evadeDisabled:true}),5,'only stacks and prepared bonus are suppressed');
- defender.combatEvade.charges=0;assert.equal(evasion(2),11,'spent preparation contributes no bonus');
+ assert.equal(evasion(0),12);assert.equal(evasion(1),14);assert.equal(evasion(2),16);
+ defender.combatEvade={charges:1,bonus:4};assert.equal(evasion(2),20);
+ assert.equal(effectiveEvasion(ctx,defender,{evadeDisabled:true}),12,'only stacks and prepared bonus are suppressed');
+ defender.combatEvade.charges=0;assert.equal(evasion(2),16,'spent preparation contributes no bonus');
  ctx.fixCoreRules.accuracy.baseAC=2;ctx.fixCoreRules.accuracy.evasionBase=4;
- assert.equal(evasion(2),16,'configured base and per-stack base stay data driven');
+ assert.equal(evasion(2),16,'the locked FixCore evasionBase/baseAC no longer feed Evasion; the editable accuracy block in mechanics.json does');
 });
 test('shipped Evade grants exactly three stacks for every DEX value (owner, 2026-10-25)',()=>{
  const {ctx}=setup();
@@ -108,12 +109,12 @@ test('shipped Evade grants exactly three stacks for every DEX value (owner, 2026
   ctx.player.attributes={dexterity};assert.equal(evadeStackGain(ctx,ctx.player),3);
  }
 });
-test('Precision entry remains 1 + stat mix; DEX 2, level 1 gives 3 stacks and Precision 9 (owner, 2026-10-19)',()=>{
+test('Precision entry grants exactly 1 stack; DEX 2, level 1 gives mix 2 and Precision 1 + 2 + 1 = 4 (owner, 2026-10-31)',()=>{
  const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
  assert.equal(precisionStatMix(ctx,ctx.player),2);
- const grant=precisionEntryGrant(ctx,ctx.player,1);assert.equal(grant,3);assert.equal(precisionEntryGrant(ctx,ctx.player,0),0);
+ const grant=precisionEntryGrant(ctx,ctx.player,1);assert.equal(grant,1);assert.equal(precisionEntryGrant(ctx,ctx.player,0),0);
  ctx.player.statuses.precision={stacks:grant};
- assert.equal(attackHitPreview(ctx,ctx.player,enemy,{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}}).accuracy,1+2*4);
+ assert.equal(attackHitPreview(ctx,ctx.player,enemy,{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}}).accuracy,1+2+1);
 });
 test('a card-scoped precisionWeights override changes the stat mix, grant and Precision',()=>{
  const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
@@ -121,7 +122,7 @@ test('a card-scoped precisionWeights override changes the stat mix, grant and Pr
   mechanicBindings:[{tag:'combat:accuracy',parameters:{precisionWeights:{dex:1,str:0,wis:0,int:0,level:0}}}]};
  assert.equal(precisionStatMix(ctx,ctx.player),2);assert.equal(precisionStatMix(ctx,ctx.player,carrier),2);
  carrier.mechanicBindings[0].parameters.precisionWeights.dex=2; // 2 x DEX 2 = 4, level ignored
- assert.equal(precisionStatMix(ctx,ctx.player,carrier),4);assert.equal(precisionEntryGrant(ctx,ctx.player,1,carrier),5);
+ assert.equal(precisionStatMix(ctx,ctx.player,carrier),4);assert.equal(precisionEntryGrant(ctx,ctx.player,1,carrier),1);
  assert.equal(attackHitPreview(ctx,ctx.player,enemy,carrier).accuracy,1+4);
 });
 test('an enemy without a level profile counts as level 0 in the Precision mix; one with a profile uses its level',()=>{
