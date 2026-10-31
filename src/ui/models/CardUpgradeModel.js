@@ -4,6 +4,8 @@
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
 import { upgradeCount } from '../../model/cardUpgrade.js';
 import { cardRank } from '../../model/cardRank.js';
+import { staticTokens } from '../components/card.js';
+import { playingCardArtwork } from '../cardArtwork.js';
 import { t } from '../strings.js';
 
 const freeze = (value) => Object.freeze(value);
@@ -13,26 +15,74 @@ const HIDDEN_CODES = freeze(['armament', 'missing', 'maxed', 'cap']);
 const row_upgrades = (instance) => (upgradeCount(instance) === 1 ? 'cardUpgrade.row.chipOne' : 'cardUpgrade.row.chip');
 const costLabel = (plan) => (plan.cost === 0 ? t('cardUpgrade.free') : t('cardUpgrade.stone', { n: plan.cost }));
 
+const num = (value) => (Number.isFinite(value) ? value : 0);
+const hitsOf = (def) => (def?.effects || []).reduce((most, e) => (e.op === 'damage' && Number.isInteger(e.hits) && e.hits > 1 ? Math.max(most, e.hits) : most), 1);
+/** Total stacks of each plain status a card applies, by status id. */
+const statusStacks = (def) => {
+  const found = new Map();
+  for (const e of def?.effects || []) if (e.status && Number.isFinite(e.stacks)) found.set(e.status, (found.get(e.status) || 0) + e.stacks);
+  return found;
+};
+const statusName = (registries, id) => registries.frameworkTerms?.statusDisplay?.(id)?.name || String(id);
+const statusText = (registries, stacks) => (stacks.size
+  ? [...stacks].map(([id, n]) => `${statusName(registries, id)} ${n}`).join(', ') : 'none');
+const cap = (word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : '');
+
+/** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
+export function cardUpgradeChanges(registries, before, after) {
+  if (!before || !after) return [];
+  const out = [];
+  const a = staticTokens(before, registries), b = staticTokens(after, registries);
+  const push = (label, from, to) => { if (String(from) !== String(to)) out.push(freeze({ label, before: String(from), after: String(to) })); };
+  push('DAMAGE', num(a.damage), num(b.damage));
+  push('GUARD', num(a.block), num(b.block));
+  push('HITS', hitsOf(before), hitsOf(after));
+  push('STAMINA', num(before.staminaCost), num(after.staminaCost));
+  push('MANA', num(before.manaCost), num(after.manaCost));
+  const from = statusStacks(before), to = statusStacks(after);
+  if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: 'STATUS', before: statusText(registries, from), after: statusText(registries, to) }));
+  return freeze(out);
+}
+
+/** Card type, rarity and keyword words, as the face shows them. */
+const cardTags = (registries, def, rarity) => freeze([
+  cap(def?.type), cap(rarity),
+  ...(def?.keywords || []).map((kw) => registries.framework?.keywordDisplay?.(kw)?.name || cap(kw)),
+].filter(Boolean));
+
 export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '' } = {}) {
   const stones = Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0;
+  const groups = new Map();
   const rows = [];
   for (const instance of run.deck || []) {
     const plan = planCardUpgrade(run, registries, instance.instanceId);
     if (HIDDEN_CODES.includes(plan.code)) continue;
+    // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
+    const key = JSON.stringify([instance.cardId, instance.upgradeSteps || [], cardRank(instance)]);
+    if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
     const base = registries.cards.get(instance.cardId);
-    rows.push(freeze({
-      instanceId: instance.instanceId, cardId: instance.cardId, name: plan.before?.name || base.name, rarity: base.rarity || 'common',
+    const rarity = base.rarity || 'common';
+    const row = {
+      instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, cardId: instance.cardId,
+      name: plan.before?.name || base.name, rarity,
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
       spent: false, disabled: !plan.ok || !!blockedReason, cost: plan.cost, costLabel: costLabel(plan),
       blockedReason: plan.reason || blockedReason,
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
-    }));
+      levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
+      changes: cardUpgradeChanges(registries, plan.before, plan.after),
+      tags: cardTags(registries, plan.before || base, rarity),
+      artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',
+    };
+    groups.set(key, row);
+    rows.push(row);
   }
+  for (let i = 0; i < rows.length; i += 1) rows[i] = freeze({ ...rows[i], instanceIds: freeze(rows[i].instanceIds) });
   // Stable sorting keeps deck order within each group. An existing selection
   // can keep its preview after a purse/service change, with Confirm disabled.
   rows.sort((a, b) => Number(a.disabled) - Number(b.disabled));
-  const selected = rows.find((row) => row.instanceId === selectedInstanceId) || null;
+  const selected = rows.find((row) => row.instanceIds.includes(selectedInstanceId)) || null;
   const affordable = !!selected && selected.plan.ok;
   return freeze({
     rows: freeze(rows), selected, stones, affordable,

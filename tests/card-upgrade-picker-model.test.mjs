@@ -58,8 +58,11 @@ test('rows: a short purse disables and moves paid cards after free cards while p
   assert.equal(model.selected.blockedReason, model.blockedReasons[0]);
   assert.equal(model.rows.at(-1).instanceId, card.instanceId);
   assert.deepEqual(model.rows.filter(row => !row.disabled).map(row => row.instanceId),
-    run.deck.filter(instance => instance.instanceId !== card.instanceId
-      && planCardUpgrade(run, registries, instance.instanceId).ok).map(instance => instance.instanceId));
+    run.deck.filter((instance, i, deck) => instance.instanceId !== card.instanceId
+      && planCardUpgrade(run, registries, instance.instanceId).ok
+      // identical copies share the first copy's row
+      && deck.findIndex(other => other.cardId === instance.cardId && !(other.upgradeSteps || []).length === !(instance.upgradeSteps || []).length) === i)
+      .map(instance => instance.instanceId));
   run.smithingStones = 1;
   const replenished = cardUpgradeModel(registries, run, card.instanceId);
   assert.equal(replenished.rows[0].instanceId, card.instanceId, 'affordable cards return to deck order');
@@ -266,4 +269,30 @@ test('compact host: picking a row closes the list so the pane is not hidden', as
     door.close();
     if (savedStyle) globalThis.getComputedStyle = savedStyle; else delete globalThis.getComputedStyle;
   });
+});
+
+test('identical copies collapse into one row that selects the first instance', () => {
+  const run = newRun();
+  const strikes = run.deck.filter(c => c.cardId === 'core.strike');
+  assert.ok(strikes.length > 1);
+  const model = cardUpgradeModel(registries, run, strikes[1].instanceId);
+  const rows = model.rows.filter(r => r.cardId === 'core.strike');
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].instanceId, strikes[0].instanceId);
+  assert.equal(rows[0].copies, strikes.length);
+  assert.equal(model.selected, rows[0], 'any copy resolves to the collapsed row');
+  strikes[0].upgraded = true; strikes[0].upgradeSteps = [{ k: 'authored' }];
+  assert.equal(cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike').length, 2, 'a differently upgraded copy is its own row');
+});
+
+test('rows carry levels, tags, art and the changed face numbers', () => {
+  const run = newRun();
+  const row = cardUpgradeModel(registries, run).rows.find(r => r.cardId === 'core.strike');
+  assert.deepEqual([row.levelFrom, row.levelTo], [0, 1]);
+  assert.ok(row.tags.includes('Attack'));
+  assert.ok(row.artGlyph);
+  const dmg = row.changes.find(c => c.label === 'DAMAGE');
+  if (row.plan.step.k === 'dmg') assert.equal(Number(dmg.after), Number(dmg.before) + row.plan.step.n);
+  assert.ok(row.changes.length >= 1, 'an upgrade changes at least one face number');
+  for (const change of row.changes) assert.notEqual(change.before, change.after);
 });
