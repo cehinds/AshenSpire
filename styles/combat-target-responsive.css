@@ -178,7 +178,7 @@
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
-  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) .combat-health-badge-value {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
     width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
   }
 }
@@ -207,12 +207,20 @@
 
 /* Counter / Reflect stack badges (owner 2026-10-31): with up to five badges (shield, precision, counter, reflect, poise) the row
    wraps instead of overlapping; the HP trough takes the remaining width of its own line. Badge sizes are untouched. */
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect) {
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
   flex-wrap: wrap; row-gap: calc(2px / var(--ui-zoom, 1)); column-gap: calc(3px / var(--ui-zoom, 1));
 }
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect) > .combat-health-meter {
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) > .combat-health-meter {
   flex: 1 1 calc(72px / var(--ui-zoom, 1)); order: 1;
 }
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect) > .combat-health-badge {
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) > .combat-health-badge {
   order: 0; flex: 0 0 calc(22px / var(--ui-zoom, 1)); min-width: calc(22px / var(--ui-zoom, 1));
 }
+
+/* Stance badge: same plate as the others, tinted by maneuver. */
+:root .combat .combat-health-stance { color: #fff; }
+:root .combat .combat-health-stance[data-stance='attack'], :root .combat .combat-health-stance[data-stance='smash'], :root .combat .combat-health-stance[data-stance='sweep'] { color: #f08a7a; }
+:root .combat .combat-health-stance[data-stance='counter'] { color: #f0d27a; }
+:root .combat .combat-health-stance[data-stance='defend'] { color: #d8dde3; }
+:root .combat .combat-health-stance[data-stance='evade'] { color: #8fd9a8; }
+:root .combat .combat-health-stance[data-stance='casting'], :root .combat .combat-health-stance[data-stance='prepared'] { color: #b9a4f0; }

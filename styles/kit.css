@@ -6542,9 +6542,9 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
 
 /* Defense order is shared by player, enemy and co-op health rows. */
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) { color: #fff; gap: .08em; }
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect)::before { border-radius: 50%; background: #20242a; }
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) { font-size: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) { color: #fff; gap: .08em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance)::before { border-radius: 50%; background: #20242a; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) { font-size: .8em; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
@@ -6558,19 +6558,19 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 0 -2px 0 black, 0 2px 0 black, -2px 0 0 black, 2px 0 0 black;
 }
 
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) svg { width: .85em; height: .85em; display: block; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) svg { width: .85em; height: .85em; display: block; }
 
 :root .combat .combatant .combat-health-meter .m-value,
 :root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 
 /* Keep the Evade icon inside the same compact badge geometry as defenses. */
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) {
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) {
   flex: 0 0 calc(22px / var(--ui-zoom, 1)); width: calc(22px / var(--ui-zoom, 1));
   min-width: 0; max-width: calc(22px / var(--ui-zoom, 1)); height: calc(22px / var(--ui-zoom, 1));
   aspect-ratio: 1; grid-template-columns: .8em 1fr; padding: 0 .15em; overflow: hidden;
 }
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) { min-width: 0; width: .8em; height: .8em; }
-:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) svg { width: 100%; height: 100%; max-width: 100%; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) { min-width: 0; width: .8em; height: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) svg { width: 100%; height: 100%; max-width: 100%; }
 
 /* Selected-card odds share the engine preview and observer gate with the HUD. */
 .combat .hand .card .card-hit-chances { position: absolute; z-index: 8; inset-inline: 0; bottom: calc(100% + .35rem); display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .5rem; padding: .35rem; background: #15120fed; border: 1px solid #a58a4f; border-radius: .3rem; font: 700 1.1rem/1.2 var(--font-body); pointer-events: none; }

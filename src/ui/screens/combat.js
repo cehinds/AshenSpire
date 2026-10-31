@@ -129,6 +129,7 @@ import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow } from '../components/combatHealth.js';
+import { stanceBadgeFor } from '../models/CombatHealthModel.js';
 import { protectionPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -2140,6 +2141,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp'));
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
+        stance: entity.kind === 'player' && fixCoreEnabled(combat) ? stanceBadgeFor(entity, { registries, combatExpansionVersion: combat.combatExpansionVersion, stanceRules: registries.balance?.stanceRules }) : null,
         counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
