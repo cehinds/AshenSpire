@@ -1,4 +1,5 @@
 import { t, tFull } from '../strings.js';
+import { mechanics } from '../../framework/data/mechanics.js';
 import { reflectReduceFraction, reflectReturnFraction } from '../../engine/guardStacks.js';
 import { healthGuardTone } from '../../model/blockPresentation.js';
 // Presentation only: callers supply the live protection values. HP fill
@@ -28,7 +29,7 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', label: t('combat.protection.counter'), value: count(counterStacks),
-        help: tFull('combat.protection.counter', { stacks: count(counterStacks) }) }] : []),
+        help: tFull('combat.protection.counter', { stacks: count(counterStacks), decay: mechanics.counter.decayPerTurn }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
         help: tFull('combat.protection.reflect', { reduce: Math.round(100 * reflectReduceFraction(count(reflectStacks))), back: Math.round(100 * reflectReturnFraction(count(reflectStacks))) }) }] : []),
       ...(poised > 0 ? [{ kind: 'poise', label: t('combat.protection.poise'), value: poised }] : []),

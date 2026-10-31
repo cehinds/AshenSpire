@@ -47,6 +47,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     if (badge.barrier > 0) node.dataset.barrier = String(badge.barrier);
     node.dataset.defenseKind = badge.kind;
     node.setAttribute('aria-label', `${badge.label} ${badge.value}`);
+    if (badge.help) node.title = badge.help; // native hover help for the stack badges, same text as the tooltip
     const value = document.createElement('span');
     value.className = 'combat-health-badge-value';
     value.textContent = String(badge.value);
