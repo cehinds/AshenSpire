@@ -1,0 +1,105 @@
+{
+  "_": "Ordered rule table for tools/jev.mjs triage. Add a rule here and a fixture line in tests/jev.test.mjs.",
+  "rules": [
+    {
+      "id": "generated-stale",
+      "regex": "(content-build|build-game|framework-data-build|game-config|config-build)[^\\n]*(stale|out of date)|build\\.summary\\.json[^\\n]*(stale|out of date)|(stale|out of date)[^\\n]*build\\.summary\\.json",
+      "flags": "i",
+      "category": "generated",
+      "deterministic": true,
+      "action": "regen",
+      "command": "node tools/jev.mjs regen",
+      "note": "A generated file is behind its source. Regenerate, commit the output."
+    },
+    {
+      "id": "conflict-markers-generated",
+      "regex": "(src\\/content\\/generated\\/|build\\.summary\\.json|game\\.lock\\.json|changelog\\.generated\\.js|src\\/framework\\/data\\/)[^\\n]*<{7}|<{7}[^\\n]*(src\\/content\\/generated\\/|build\\.summary\\.json|game\\.lock\\.json|changelog\\.generated\\.js|src\\/framework\\/data\\/)",
+      "flags": "",
+      "category": "merge",
+      "deterministic": true,
+      "action": "regen",
+      "command": "git checkout --theirs <file> && node tools/jev.mjs regen",
+      "note": "Conflict markers in a generated file: take theirs (dev), then regenerate. `jev devmerge` does this."
+    },
+    {
+      "id": "changelog-order",
+      "regex": "--check-order|check-order:|build rises|rises? within (a )?date",
+      "flags": "i",
+      "category": "receipts",
+      "deterministic": true,
+      "action": "restamp",
+      "command": "node tools/jev.mjs restamp",
+      "note": "Receipt order or stamp is wrong. Restamp to the current buildordinal.json."
+    },
+    {
+      "id": "golden-hash-mismatch",
+      "regex": "(engine-transaction-determinism|combat-rounds-[\\w-]*)[^\\n]*(hash|golden|mismatch|expected)|(hash|golden)[^\\n]*(mismatch|differs?)[^\\n]*(engine-transaction-determinism|combat-rounds-)",
+      "flags": "i",
+      "category": "determinism",
+      "deterministic": false,
+      "action": "model",
+      "command": "",
+      "note": "Golden hash mismatch. Re-record only when this PR's rule change moves a seeded fight; a model must name the cause."
+    },
+    {
+      "id": "coop-census-count",
+      "regex": "census[^\\n]*(count|expected|mismatch|!==|actual)|(count|expected|mismatch)[^\\n]*census",
+      "flags": "i",
+      "category": "determinism",
+      "deterministic": false,
+      "action": "model",
+      "command": "",
+      "note": "Co-op census count mismatch in tests/run-node-lanes.test.mjs. A model must decide whether the lane list or the count is wrong."
+    },
+    {
+      "id": "sparse-missing-file",
+      "regex": "ENOENT[^\\n]*(component-catalog\\.html|attack-source-audit\\.csv|sparse)|(component-catalog\\.html|attack-source-audit\\.csv)[^\\n]*(ENOENT|no such file|not found|missing)",
+      "flags": "i",
+      "category": "environmental",
+      "deterministic": true,
+      "action": "ignore-local",
+      "command": "",
+      "note": "A tracked file is absent from this sparse checkout. CI has a full checkout; ignore locally."
+    },
+    {
+      "id": "infra-flake",
+      "regex": "The operation was canceled|runner (has )?(lost|received a shutdown)|lost communication with the server|npm (ERR!|error) (network|code E?(CONNRESET|TIMEDOUT))|ECONNRESET|ETIMEDOUT|fatal: unable to access|RPC failed|early EOF|Unable to (resolve|download) action|actions\\/checkout[^\\n]*(fail|error)",
+      "flags": "i",
+      "category": "environmental",
+      "deterministic": true,
+      "action": "rerun-once",
+      "command": "gh run rerun <run-id> --failed",
+      "note": "Runner, checkout, install or network loss before any test body. Rerun once; if it repeats, escalate."
+    },
+    {
+      "id": "uistrings-shadow",
+      "regex": "uistrings[^\\n]*(shadow|literal)|shadow literal",
+      "flags": "i",
+      "category": "uistrings",
+      "deterministic": false,
+      "action": "model",
+      "command": "",
+      "note": "A string literal shadows a uiStrings.csv entry. Replace the literal with the string key, or add the key to content/source/uiStrings.csv."
+    },
+    {
+      "id": "mechanics-generate-drift",
+      "regex": "mechanics-generate[^\\n]*(would change|reports? changes|changed|differs?|drift|stale)",
+      "flags": "i",
+      "category": "mechanics",
+      "deterministic": false,
+      "action": "model",
+      "command": "",
+      "note": "A quoted full-tag literal in src/engine or src/model; split the string."
+    },
+    {
+      "id": "ops-json-case-name",
+      "regex": "ops\\.json[^\\n]*(case|name)|case[- ]name[^\\n]*ops\\.json",
+      "flags": "i",
+      "category": "engine",
+      "deterministic": true,
+      "action": "manual",
+      "command": "",
+      "note": "Dispatch new host ops outside the runOpcode switch (see runGuardStackOpcode)."
+    }
+  ]
+}
