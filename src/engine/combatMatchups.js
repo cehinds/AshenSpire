@@ -306,10 +306,10 @@ function restrictions(ctx, entity, options = {}) {
 
 // Auto-Counter (owner 2026-10-31, SPEC §17): standing in Counter stance, an enemy hit the stance covers may be answered with no
 // card at all for `mechanics.counter.autoCounterStamina` SP. It arms a Counter with base damage 0, so its return is the stacks' share only.
-const AUTO_COUNTER_TAGS = Object.freeze(['camp:physical', 'maneuver:counter', 'counter:melee', 'range:melee', 'targeting:single', 'trait:reaction']);
+const autoCounterTags = () => mechanics.counter.autoCounterTags;
 /** The card-less carrier an auto-Counter arms with (the melee default coverage, no authored payload). */
 export const autoCounterCarrier = () => ({ instanceId: 'autoCounter', cardId: 'autoCounter', name: 'Counter', type: 'skill',
-  tags: [...AUTO_COUNTER_TAGS], cardTags: [...AUTO_COUNTER_TAGS], autoCounter: true, skipRatingBonus: true, combatRiderTargets: [],
+  tags: [...autoCounterTags()], cardTags: [...autoCounterTags()], autoCounter: true, skipRatingBonus: true, combatRiderTargets: [],
   combatProfile: { camp: 'physical', maneuver: 'counter', school: null, damageType: 'blunt', counterMode: 'melee', range: 'melee', targeting: 'single', traits: [] } });
 export const autoCounterCost = () => Math.max(0, Math.floor(mechanics.counter.autoCounterStamina));
 /** True when `entity` may answer a hit with an auto-Counter right now: Core, Counter stance, nothing armed or spent, SP in hand. */

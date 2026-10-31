@@ -13,6 +13,7 @@ import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js'
 // a missing/current profile leaves the existing interpreter untouched.
 import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
+import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
@@ -66,7 +67,7 @@ function hasPoise(target) {
 function reflectApplies(target, source, carrier, profile) {
   if (!(reflectStackCount(target) > 0) || !source || source === target) return false;
   if (carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return false;
-  return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes('trait:unreflectable'));
+  return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes(mechanics.reflect.unreflectableTag));
 }
 export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null, proposal = true } = {}) {
   const effects = configuredModule(ctx, 'effects');
