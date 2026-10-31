@@ -2230,6 +2230,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .card-upgrade-modal .smith-confirm { margin-top: auto; flex-shrink: 0; }
 /* The fold holds two small cards (current, upgraded) side by side; on a phone they wrap rather than scroll sideways. */
 .card-upgrade-modal .smith-fold-detail { grid-template-columns: minmax(0, 1fr); }
+/* Unscoped on purpose: the same two faces are drawn inside the hold-to-confirm decision dialog, outside the modal. */
 .card-upgrade-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem 1.2rem; min-width: 0; }
 .card-upgrade-face { min-width: 0; padding: 1rem 0.4rem 0 0.4rem; }
 .card-upgrade-face .card { transform: none !important; }
