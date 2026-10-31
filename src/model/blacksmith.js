@@ -110,9 +110,9 @@ const isTechnique = (registries, cardId) => tagsOf(registries, cardId).some((tag
 export const coreCardUpgrades = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true;
 const upgradeablePlan = (plan) => plan.ok || plan.code === 'stones';
 
-/** The loose weapon-art instances an art upgrade could take now. In Core: every deck card with a next upgrade (a short purse still lists it). */
+/** The loose weapon-art instances an art upgrade could take now. In Core: every owned card with a next upgrade (a short purse still lists it). */
 export function upgradeableArts(registries, run) {
-  if (coreCardUpgrades(run)) return (run.deck || []).filter((card) => card && upgradeablePlan(planCardUpgrade(run, registries, card.instanceId)));
+  if (coreCardUpgrades(run)) return owned(run).filter((card) => card && upgradeablePlan(planCardUpgrade(run, registries, card.instanceId)));
   return owned(run).filter((card) => isLooseCard(card) && isArt(registries, card.cardId) && card.upgraded !== true && !!registries.cards.get(card.cardId)?.upgrade);
 }
 
@@ -331,7 +331,7 @@ export function commitBlacksmithInstall(registries, run, quote) {
 }
 
 function coreUpgradeArtPlan(registries, run, instanceId) {
-  const card = (run.deck || []).find((row) => row && row.instanceId === instanceId) || null;
+  const card = owned(run).find((row) => row.instanceId === instanceId) || null;
   const verdict = card ? planCardUpgrade(run, registries, instanceId) : null;
   let reason = '';
   if (!blacksmithOffers(run, 'upgradeArt')) reason = say('blacksmith.refuse.notOffered');
