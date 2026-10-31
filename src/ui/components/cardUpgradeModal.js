@@ -7,6 +7,9 @@ import {
   blocker, glyph, railItem, railed, statusText, categoryNav, stampModalSize, landControl,
 } from '../kit/index.js';
 import { upgradePreviewHtml } from './card.js';
+import { assetUrl } from '../assetmap.js';
+import { hideOnError } from '../artFallback.js';
+import { attachTooltip, esc } from './tooltip.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
 import { reasonWhenDisabled } from './refusal.js';
@@ -18,8 +21,17 @@ const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [role="option"][tabindex="0"], [tabindex]:not([tabindex="-1"])',
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
+/** The card's art as a small ArtWell: its painted asset, or its type glyph. */
+const cardArt = (row, { small = false } = {}) => {
+  const well = row.artAsset
+    ? artWell({ src: assetUrl(row.artAsset), alt: '', small, attrs: { class: 'smith-weapon-art' } })
+    : artWell({ glyph: row.artGlyph, small, attrs: { class: 'smith-weapon-art' } });
+  hideOnError(well.querySelector('img'));
+  return well;
+};
+
 export function mountCardUpgradeModal(host, initialModel, {
-  registries, meta, title = t('cardUpgrade.title'), consequence = '', decisionConsequence = '',
+  registries, meta, title = t('cardUpgrade.title'), backLabel = t('common.back'), consequence = '', decisionConsequence = '',
   servicePreviewHtml = () => '', onSelect, onBack, onConfirm, returnFocusElement,
 }) {
   const returnFocus = returnFocusElement instanceof HTMLElement ? returnFocusElement : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
@@ -37,7 +49,7 @@ export function mountCardUpgradeModal(host, initialModel, {
   workspaceFrame(modal, smithWorkspaceVars());
   markUiComponent(modal, UI.smithUpgradeModal, 'cards');
   const purse = statusText('', { class: 'smith-header-stones', role: 'status' });
-  const head = modalHead({ title, titleId: 'card-upgrade-title', closeLabel: t('common.back'), extras: purse });
+  const head = modalHead({ title, titleId: 'card-upgrade-title', closeLabel: backLabel, extras: purse });
 
   let currentModel = initialModel;
   let closed = false;
@@ -53,15 +65,21 @@ export function mountCardUpgradeModal(host, initialModel, {
     item.dataset.instanceId = row.instanceId;
     item.dataset.cardId = row.cardId;
     item.dataset.upgradeState = row.disabled ? 'blocked' : row.cost === 0 ? 'free' : 'stone';
+    const upgrade = t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel });
     item.replaceChildren(
+      cardArt(row, { small: true }),
       el('span', { class: 'smith-row-text' }, [
         el('strong', { class: 'smith-weapon-name', text: row.name }),
-        statusText(row.costLabel, { class: 'smith-row-status card-upgrade-cost' }),
+        statusText(upgrade, { class: 'smith-row-status card-upgrade-cost' }),
         row.blockedReason ? statusText(row.blockedReason, { class: 'smith-row-status card-upgrade-reason' }) : null,
       ]),
-      pill({ label: row.chipLabel, attrs: { class: 'smith-weapon-count', 'aria-label': t('cardUpgrade.row.count', { n: row.upgrades }) } }),
+      pill({ label: t('cardUpgrade.row.copies', { n: row.copies }), attrs: { class: 'smith-weapon-count', 'aria-label': t('cardUpgrade.row.copiesLabel', { n: row.copies }) } }),
     );
-    item.setAttribute('aria-label', [row.name, row.costLabel, row.blockedReason].filter(Boolean).join(', '));
+    const typeText = row.tags[0] || '';
+    item.setAttribute('aria-label', [t('cardUpgrade.row.aria', { name: row.name, type: typeText, n: row.copies, from: row.levelFrom, to: row.levelTo, cost: row.costLabel }), row.blockedReason].filter(Boolean).join(' '));
+    attachTooltip(item, () => `<div class="tt-title">${esc(row.name)} · ${esc(t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel }))}</div>`
+      + `<div>${esc(row.tags.join(', '))}.</div>`
+      + (row.blockedReason ? `<div>${esc(row.blockedReason)}</div>` : ''));
     markUiComponent(item, UI.smithCandidateCard, 'available');
     item.addEventListener('keydown', (event) => {
       if (event.target !== item || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -84,7 +102,7 @@ export function mountCardUpgradeModal(host, initialModel, {
   const consequenceNode = el('p', { class: 'as-flavor smith-consequence', id: 'card-upgrade-consequence', text: consequence });
   const previewRegion = el('section', { class: 'as-pane smith-preview-region', id: 'card-upgrade-preview-region', 'aria-live': 'polite', 'aria-label': t('cardUpgrade.preview.label') }, [previewHost, consequenceNode]);
   const body = el('div', { class: 'modal-body smith-modal-body' }, railed(nav, previewRegion, { class: 'smith-candidate-region' }));
-  const backBtn = button({ label: t('common.back'), role: 'exit', className: 'subtle smith-back' });
+  const backBtn = button({ label: backLabel, role: 'exit', className: 'subtle smith-back' });
   const confirmBtn = button({ label: '', weight: 'primary', className: 'smith-confirm' });
   previewRegion.append(confirmBtn);
   modal.append(head, body, modalFooter({ primary: backBtn, className: 'smith-modal-footer', size: 'fill' }));

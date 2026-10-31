@@ -40,7 +40,7 @@ export function cardUpgradeChanges(registries, before, after) {
   push('STAMINA', num(before.staminaCost), num(after.staminaCost));
   push('MANA', num(before.manaCost), num(after.manaCost));
   const from = statusStacks(before), to = statusStacks(after);
-  if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: 'STATUS', before: statusText(registries, from), after: statusText(registries, to) }));
+  if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: t('cardUpgrade.change.status'), before: statusText(registries, from), after: statusText(registries, to) }));
   return freeze(out);
 }
 
