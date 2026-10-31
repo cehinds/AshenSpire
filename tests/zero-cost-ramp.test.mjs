@@ -68,10 +68,10 @@ test('the same-stance SP bonus never touches a zero-cost card, in any stance', (
 test('Momentum: an upgraded Flick adds 1 per earlier play this fight, and the tag arrives with the upgrade', () => {
   const base = play('core.flick').rows;
   assert.deepEqual(base.map(row => row.base), [3, 3], 'the plain Flick does not ramp');
-  assert.equal((base[0].tags || []).includes('trait:momentum'), false);
+  assert.equal((base[0].tags || []).includes('ramp.momentum'), false);
   const up = play('core.flick', { upgraded: true, plays: 3 }).rows;
   assert.deepEqual(up.map(row => row.base), [3, 4, 5]);
-  assert.ok(up[0].tags.includes('trait:momentum'));
+  assert.ok(up[0].tags.includes('ramp.momentum'));
   assert.equal(up[0].name, 'Flick+');
 });
 
@@ -85,12 +85,12 @@ test('Momentum: Brace+ ramps Block by 1 per play', () => {
 test('Honed: playsEver 3 adds 3 on the first play of a fight and 1 more on the second', () => {
   const nick = play('core.whetstoneNick', { playsEver: 3 }).rows;
   assert.deepEqual(nick.map(row => row.base), [5, 6]);
-  assert.ok(nick[0].tags.includes('trait:honed'));
+  assert.ok(nick[0].tags.includes('ramp.honed'));
   assert.deepEqual(play('core.whetstoneNick', { playsEver: 0 }).rows.map(row => row.base), [2, 3], 'a fresh copy starts at its base');
   assert.deepEqual(play('core.whetstoneNick', { upgraded: true, playsEver: 3 }).rows.map(row => row.base), [6, 7]);
   const edge = play('core.temperedEdge', { upgraded: true, playsEver: 3 }).rows;
   assert.deepEqual(edge.map(row => row.base), [7, 9], 'per 2: 1 + 3x2, then +2');
-  assert.ok(edge[0].tags.includes('trait:honed'), 'the upgrade that adds the ramp adds the tag');
+  assert.ok(edge[0].tags.includes('ramp.honed'), 'the upgrade that adds the ramp adds the tag');
   assert.deepEqual(play('core.temperedEdge', { playsEver: 3 }).rows.map(row => row.base), [1, 1], 'the plain Tempered Edge never ramps');
 });
 

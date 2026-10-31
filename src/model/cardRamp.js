@@ -3,7 +3,7 @@
 // Pure and shared by both ways a card face is built: the legacy resolver (model/registries.js) and the
 // game-profile projector (model/gameProfile.js projectGameCard).
 
-export const RAMP_TAGS = Object.freeze({ combat: 'trait:momentum', run: 'trait:honed' });
+export const RAMP_TAGS = Object.freeze({ combat: 'ramp.momentum', run: 'ramp.honed' });
 
 /** The whole plays-ever count a card instance carries, or 0. */
 export const playsEverOf = (instance) => (Number.isInteger(instance?.playsEver) && instance.playsEver > 0 ? instance.playsEver : 0);
