@@ -118,11 +118,16 @@ export function diffRunSnapshots(before, after, registries) {
     rows.push(freeze({ kind: 'armament', label: armamentName(registries, id), before: `TIER ${a}`, after: `TIER ${b}`, delta: b - a, armamentId: id, itemRef: ref, change: 'tier', tierBefore: a, tierAfter: b }));
   }
 
+  const slotBase = registries?.shops?.blacksmith?.offerings?.find?.((o) => o.id === 'sigilSlots')?.sigilSlots?.base ?? 0;
   // Sigil work: a slot that now holds a different sigil is "installed X on Y" or "removed X from Y".
   const sigilName = (id) => (registries?.sigils?.has?.(id) ? registries.sigils.get(id).name : String(id));
   for (const ref of new Set([...Object.keys(before.sigilSlots), ...Object.keys(after.sigilSlots)])) {
     const a = before.sigilSlots[ref] || [], b = after.sigilSlots[ref] || [];
     const piece = armamentName(registries, ref.includes('/') ? ref.slice(ref.indexOf('/') + 1) : ref);
+    // A cut slot appends an empty one. An item with no record yet has the authored base number of slots.
+    const countOf = (list, hasRecord) => (hasRecord ? list.length : slotBase);
+    const nA = countOf(a, ref in before.sigilSlots), nB = countOf(b, ref in after.sigilSlots);
+    if (nA !== nB) rows.push(stat(`${piece} · SIGIL SLOTS`, nA, nB, 'sigil'));
     for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
       if ((a[i] ?? null) === (b[i] ?? null)) continue;
       if (a[i]) rows.push(freeze({ kind: 'sigil', label: sigilName(a[i]), before: 'removed', after: '', change: 'removed', sigilId: a[i], itemRef: ref, pieceName: piece }));

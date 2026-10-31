@@ -610,3 +610,19 @@ for (const service of ['extract', 'install']) {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// The what-changed receipt on the legacy Blacksmith (SPEC §14.4)
+// ---------------------------------------------------------------------------
+test('what-changed: a cut sigil slot diffs to a slot-capacity row naming the item', async () => {
+  const { snapshotRunForDiff, diffRunSnapshots } = await import('../src/model/runChangeReceipt.js');
+  const { run } = smithRun(OUT, { cinders: 5000 });
+  const before = snapshotRunForDiff(run);
+  const slots = offeringOf(OUT, 'sigilSlots').sigilSlots;
+  commitSigilSlot(OUT, run, sigilSlotPlan(OUT, run, SWORD));
+  const diff = diffRunSnapshots(before, snapshotRunForDiff(run), OUT);
+  const row = diff.rows.find((r) => /SIGIL SLOTS/.test(r.label));
+  assert.ok(row, 'a slot row');
+  assert.equal(row.before, String(slots.base)); assert.equal(row.after, String(slots.base + 1));
+  assert.match(row.label, /Straight Sword|straightSword/i);
+});
