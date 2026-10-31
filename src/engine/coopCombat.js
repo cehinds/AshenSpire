@@ -1260,7 +1260,7 @@ function enemyPhase(C) {
     beginEnemyBurdens(C,enemy,Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId)));
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
-    if (C.rangeState) { enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0)); enemy.stamina = enemy.fixCoreStaminaRemaining; delete enemy.pendingStaminaLoss; }
+    if (C.rangeState || fixCoreEnabled(C)) { enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0)); enemy.stamina = enemy.fixCoreStaminaRemaining; delete enemy.pendingStaminaLoss; }
     let tacticalProtection = { block: 0, barrier: 0 };
     if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; enemy.barrier = 0; tacticalProtection = startTacticalTurn(C, enemy); }
     proposalTurn(C,enemy,'start');
