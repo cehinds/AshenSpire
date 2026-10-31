@@ -1,4 +1,5 @@
 import { fixCoreEnabled, fixCoreStatusDefinition } from './fixCoreMechanics.js';
+import { mechanics } from '../framework/data/mechanics.js';
 import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js';
 
 // UI wording is separate from the versioned mechanic source: changing a label
@@ -9,7 +10,16 @@ const LEGACY_TOOLTIPS = Object.freeze({
   crimsonBlight: 'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
 });
 function present(ctx, id, definition, holder) {
-  const resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
+  let resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
+  // Core 2 accuracy (owner, 2026-10-31): the locked FixCore override still words Precision/Evade by the old multiplier formulas, so the badge shows the
+  // statuses.json Precision tooltip and a tooltip built from the editable accuracy constants for Evade.
+  if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
+    if (id === 'precision' && definition.tooltip) resolved = { ...resolved, tooltip: definition.tooltip, description: definition.tooltip };
+    else if (id === 'evade') {
+      const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
+      resolved = { ...resolved, tooltip: text, description: text };
+    }
+  }
   return presentationWording(ctx, id, resolved, fixCoreEnabled(ctx), resolved !== definition);
 }
 function presentationWording(ctx, id, resolved, core, changedDefinition = false) {
@@ -122,10 +132,8 @@ export function resolveStatusPresentationDefinition(def, context = {}) {
     ? statusPresentationDefinition(context, def.id, def, context.statusHolder ?? null) : def;
 }
 
-// These are the two clock exceptions in engine/statuses.js: Precision clears
-// its temporary part at owner turn end, and Evade decays at owner turn start.
-const clockFor = def => def.id === 'precision' ? 'temporaryOwnerTurnEnd'
-  : def.decay === 'perTurnEnd' || def.id === 'evade' ? 'stackOwnerTurnStart'
+// Evade and (Core 2, owner 2026-10-31) Precision lose stacks at owner turn start.
+const clockFor = def => def.decay === 'perTurnEnd' || def.id === 'evade' || def.id === 'precision' ? 'stackOwnerTurnStart'
     : typeof def.decay === 'object' && Number.isFinite(def.decay?.duration) ? 'timerOwnerTurnStart' : null;
 
 export function coreStatusLifecycle(def, context = {}) {

@@ -4,8 +4,8 @@
     "name": "Precision",
     "icon": "target",
     "stackMode": "add",
-    "decay": "none",
-    "tooltip": "Each stack adds 1 Accuracy."
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack adds 1 Precision. Loses 1 stack at the start of your turn."
   },
   {
     "id": "evade",

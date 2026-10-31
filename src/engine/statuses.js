@@ -1,5 +1,6 @@
 import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
+import { mechanics } from '../framework/data/mechanics.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
 //
 // Statuses are CONTENT, not code: this module interprets stackMode, decay
@@ -270,18 +271,13 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
  *   'none' / 'onConsume' → untouched
  */
 export function decayAtTurnEnd(ctx, entity) {
-  if (fixCoreEnabled(ctx)) {
-    const precision = entity.statuses?.precision;
-    const temporary = precision ? Math.max(0, precision.stacks - (precision.persistentStacks || 0)) : 0;
-    // Precision only changes Accuracy; its expiry cannot resize/refill defenses.
-    if (temporary > 0) removeStatusRaw(ctx, entity, 'precision', {
-      amount: temporary, reason: 'ownerTurnEnd'
-    });
-    return;
-  }
+  // Core 2 (owner, 2026-10-31): Precision no longer clears wholesale at owner turn end; it loses a stack at turn start like Evade.
+  if (fixCoreEnabled(ctx)) return;
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
     const def = statusDefinition(ctx, statusId);
+    // The statuses.json Precision row decays per turn for Core 2 only; legacy Precision keeps its old (non-decaying) behaviour.
+    if (statusId === 'precision') continue;
     if (ctx.foundation && def.stacking) continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
@@ -415,7 +411,12 @@ export function decayAtTurnStart(ctx, entity) {
   const amount = fixCoreRules(ctx, entity).statuses.decayAmount;
   for (const id of Object.keys(entity.statuses || {})) {
     const inst = entity.statuses[id], def = statusDefinition(ctx, id);
-    if (id !== 'precision' && (def.decay === 'perTurnEnd' || id === 'evade')) {
+    if (id === 'precision') {
+      // Persistent stacks are exempt; the decay amount is the Core 2 accuracy constant, not statuses.decayAmount.
+      const temporary = Math.max(0, inst.stacks - (inst.persistentStacks || 0));
+      const lost = Math.min(temporary, mechanics.accuracy.precisionDecayPerTurn);
+      if (lost > 0) removeStatus(ctx, entity, id, { amount: lost, reason: 'ownerTurnStart' });
+    } else if (def.decay === 'perTurnEnd' || id === 'evade') {
       removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
     } else if (isDurationDecay(def.decay)) {
       inst.duration -= 1;
