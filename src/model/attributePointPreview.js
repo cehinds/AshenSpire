@@ -28,7 +28,7 @@ const LABEL_KEYS = Object.freeze({
   energy: 'progression.gain.label.energy', hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
   ar: 'progression.gain.label.ar', dr: 'progression.gain.label.dr', pr: 'progression.gain.label.pr',
   openingHand: 'progression.gain.label.openingHand', handSize: 'progression.gain.label.handSize', draw: 'progression.gain.label.draw', poise: 'progression.gain.label.poise',
-  ward: 'progression.gain.label.ward', evasion: 'progression.gain.label.evasion', precision: 'progression.gain.label.precision',
+  evasion: 'progression.gain.label.evasion', precision: 'progression.gain.label.precision',
   perception: 'progression.gain.label.perception',
 });
 const round = (n) => Math.round(n * 100) / 100;
@@ -56,7 +56,8 @@ export function attributePointGains(registries, run, attributeId, { settings = {
   const push = (statId, before, after) => {
     const delta = round(after - before);
     if (!delta) return;
-    const label = t(LABEL_KEYS[statId]);
+    // Ward's word is the stat table's own presentation label (no second copy of it in uiStrings).
+    const label = LABEL_KEYS[statId] ? t(LABEL_KEYS[statId]) : registries.derivedStatRules?.presentation?.[statId]?.label || statId;
     gains.push({ statId, label, before: round(before), after: round(after), delta,
       text: t('progression.gain.item', { amount: `${delta > 0 ? '+' : ''}${delta}`, label }) });
   };
