@@ -117,3 +117,62 @@ test('a card with an authored upgrade takes it as step 1; one without rolls', ()
   assert.notEqual(planCardUpgrade(run, registries, defend.instanceId).step.k, 'authored');
   assert.equal(damage(planCardUpgrade(run, registries, 'p').after) > damage(planCardUpgrade(run, registries, 'p').before), true);
 });
+
+// ---- Owner ask 2026-10-31: the blacksmith's choice of options ----
+test('choices: 1 is the plain quote; 2 or 3 list distinct options, the first being the single roll', () => {
+  const run = newRun(); run.smithingStones = 3;
+  const id = strikeOf(run).instanceId;
+  const one = planCardUpgrade(run, registries, id);
+  assert.equal(one.options, undefined);
+  for (const choices of [2, 3]) {
+    const quote = planCardUpgrade(run, registries, id, { choices });
+    assert.equal(quote.options.length, choices);
+    assert.equal(quote.choices, choices);
+    assert.equal(new Set(quote.options.map((o) => JSON.stringify(o.step))).size, choices, 'distinct');
+    assert.deepEqual(quote.step, one.step);
+    assert.deepEqual(quote.step, quote.options[0].step);
+    assert.deepEqual(quote.after, quote.options[0].after);
+    assert.ok(quote.options.every((o) => o.after && o.after.upgraded === true));
+  }
+});
+
+test('commit accepts any listed option, appends exactly that step, and refuses one that is not listed', () => {
+  for (let pick = 0; pick < 3; pick += 1) {
+    const run = newRun(); run.smithingStones = 2;
+    const card = strikeOf(run);
+    const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
+    const chosen = { ...quote, step: quote.options[pick].step, after: quote.options[pick].after };
+    const receipt = commitCardUpgrade(run, registries, chosen);
+    assert.deepEqual(receipt.step, quote.options[pick].step);
+    assert.deepEqual(card.upgradeSteps, [quote.options[pick].step]);
+    assert.deepEqual(JSON.parse(JSON.stringify(projectGameCard(run, card))), JSON.parse(JSON.stringify(quote.options[pick].after)));
+  }
+  const run = newRun(); run.smithingStones = 2;
+  const card = strikeOf(run);
+  const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
+  const before = JSON.stringify(run);
+  assert.throws(() => commitCardUpgrade(run, registries, { ...quote, step: { k: 'dmg', n: 99 } }), /out of date/);
+  assert.throws(() => commitCardUpgrade(run, registries, { ...quote, step: { k: 'tag', tag: 'range:ranged' }, choices: 3, n: 5 }), /out of date/);
+  assert.equal(JSON.stringify(run), before, 'a refused commit changes nothing');
+});
+
+test('an authored first upgrade stays one option, plus one rolled alternative', () => {
+  const run = newRun();
+  const authored = { instanceId: 't-jab', cardId: 'core.jab' };
+  assert.ok(registries.cards.get('core.jab').upgrade, 'jab has an authored upgrade block');
+  run.deck.push(authored);
+  const quote = planCardUpgrade(run, registries, authored.instanceId, { choices: 3 });
+  assert.deepEqual(quote.options[0].step, { k: 'authored' });
+  assert.equal(quote.options.length, 2);
+  assert.notEqual(quote.options[1].step.k, 'authored');
+});
+
+test('upgradeChoiceCount: 2 for a Basic card and 3 for a ranked one at a blacksmith, 1 elsewhere', async () => {
+  const { upgradeChoiceCount } = await import('../src/model/cardUpgradeLimits.js');
+  const basic = { id: 'a', rarity: 'common', tags: ['camp:physical'] };
+  const ranked = { id: 'b', rarity: 'rare', tags: ['camp:physical'] };
+  assert.equal(upgradeChoiceCount(basic, {}, { blacksmith: true }), 2);
+  assert.equal(upgradeChoiceCount(ranked, {}, { blacksmith: true }), 3);
+  assert.equal(upgradeChoiceCount(ranked, {}), 1);
+  assert.equal(upgradeChoiceCount(ranked, { upgradeSteps: [{ k: 'tag', tag: 'rank.cantrip' }], upgraded: true }, { blacksmith: true }), 2, 'a rank-down makes the card Basic');
+});

@@ -3,7 +3,7 @@
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardRank } from './cardRank.js';
 import { upgradeCount, upgradeStepsOf, MAX_CARD_UPGRADES } from './cardUpgrade.js';
-import { rollUpgradeStep, upgradeStepRng } from './cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng } from './cardUpgradeSteps.js';
 
 /**
  * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
@@ -12,9 +12,11 @@ import { rollUpgradeStep, upgradeStepRng } from './cardUpgradeSteps.js';
  * deliberately not the Martial Adept training rule (model/basicCardRule.js),
  * which marks almost every martial card Basic.
  */
-export function upgradeBasic(def) {
+export function upgradeBasic(def, instance = null) {
   const tags = (def && def.tags) || [];
   if (tags.includes('rank.cantrip')) return true;
+  // A rank-down upgrade step (tag rank.cantrip) makes this copy count as a cantrip.
+  if (upgradeStepsOf(instance || {}).some((step) => step.k === 'tag' && step.tag === 'rank.cantrip')) return true;
   const spell = tags.includes('source:spell') || tags.includes('camp:spell');
   return !!def && def.rarity === 'common' && !spell;
 }
@@ -26,8 +28,34 @@ export function upgradeBasic(def) {
  */
 export function freeAllowance(instance, def) {
   if (!def) return 0;
-  if (upgradeBasic(def)) return 1;
+  if (upgradeBasic(def, instance)) return 1;
   return Math.min(MAX_CARD_UPGRADES, cardRank(instance));
+}
+
+/**
+ * upgradeChoiceCount(def, instance, { blacksmith }) → how many options a player picks from (owner, 2026-10-31):
+ * a blacksmith offers 2 on a Basic card and 3 on a ranked (not Basic) card; a rest-site upgrade, an event
+ * reward and co-op keep the single roll (1).
+ */
+export function upgradeChoiceCount(def, instance, { blacksmith = false } = {}) {
+  if (!blacksmith) return 1;
+  return upgradeBasic(def, instance) ? 2 : 3;
+}
+
+/**
+ * nextUpgradeOptions(run, instance, base, registries, count) → up to `count` distinct steps the next upgrade could
+ * add, [] when the card is maxed. A first upgrade of a card with an upgrade block lists `authored` (the card's
+ * designed upgrade) first, then one rolled alternative when count > 1; otherwise the seeded roll's options.
+ * The first entry is always what nextUpgradeStep returns. Stateless.
+ */
+export function nextUpgradeOptions(run, instance, base, registries, count = 1) {
+  const applied = upgradeStepsOf(instance);
+  const mana = (registries && registries.balance && registries.balance.mana) || {};
+  // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
+  const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
+  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), { ...mana, rank }, n);
+  if (applied.length === 0 && base.upgrade) return count > 1 ? [{ k: 'authored' }, ...roll(1)] : [{ k: 'authored' }];
+  return roll(count);
 }
 
 /**
@@ -37,12 +65,7 @@ export function freeAllowance(instance, def) {
  * Stateless: the same run, instance and count always give the same step.
  */
 export function nextUpgradeStep(run, instance, base, registries) {
-  const applied = upgradeStepsOf(instance);
-  if (applied.length === 0 && base.upgrade) return { k: 'authored' };
-  const mana = (registries && registries.balance && registries.balance.mana) || {};
-  // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
-  const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
-  return rollUpgradeStep(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), { ...mana, rank });
+  return nextUpgradeOptions(run, instance, base, registries, 1)[0] || null;
 }
 
 /**
