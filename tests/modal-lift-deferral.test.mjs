@@ -99,3 +99,20 @@ test('deferLift without deferFocus still locks the page, a few frames after the 
     assert.equal(modalOpen(), false);
   });
 });
+
+test('deferLift: close({ liftNow }) leaves the page live and focus on the opener before a follow-up action', () => {
+  page(({ document, screen, opener, frame }) => {
+    const shell = open(document, opener, { deferLift: true });
+    frame(); frame();
+    assert.equal(screen.hasAttribute('inert'), true);
+    let seen = null;
+    shell.close({ liftNow: true });
+    seen = { inert: screen.hasAttribute('inert'), focus: document.activeElement }; // what the command finds
+    assert.equal(seen.inert, false, 'the screen is not inert when the action runs');
+    assert.equal(seen.focus, opener);
+    assert.equal(shell.veil.isConnected, false);
+    assert.equal(modalOpen(), false);
+    frame(); frame();
+    assert.equal(screen.hasAttribute('inert'), false);
+  });
+});

@@ -333,7 +333,8 @@ export function openCardInspection({ title, card, details, opener, actions = nul
         return;
       }
       button.disabled = true;
-      shell.close();
+      // The command may move focus (targeting): lift the page lock now, not a frame later, so its target is focusable.
+      shell.close({ liftNow: true });
       commit();
     });
   }

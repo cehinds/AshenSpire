@@ -548,7 +548,9 @@ export function openModal({
 
   let release = null;
   let unregisterModal = null;
-  const close = () => {
+  // close({ liftNow: true }) is for a caller that acts the moment the door closes (a command that moves focus):
+  // the page lock lifts and focus returns to the opener synchronously, so that command finds the page live.
+  const close = (options) => {
     // Every close path comes through here. Keep the registry entry until focus
     // has returned and the veil is gone: releasing the last modal synchronously
     // runs whenNoOverlay() waiters, and one of those may replace the opener.
@@ -562,7 +564,7 @@ export function openModal({
     const unregister = unregisterModal;
     release = null;
     unregisterModal = null;
-    if (deferLift && typeof requestAnimationFrame === 'function') {
+    if (deferLift && options?.liftNow !== true && typeof requestAnimationFrame === 'function') {
       // The veil leaves in this frame. Lifting inert restyles the whole app
       // behind it, so the lift, the focus restore and the registry release
       // wait for a later frame (inert has no rendering: pixels are identical,
