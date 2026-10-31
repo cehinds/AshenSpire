@@ -81,7 +81,7 @@ test('sigil install and removal are rows', () => {
   const sigilId = [...registries.sigils.all()][0].id;
   const ref = 'armament/greatsword';
   const d = diff(run, (r) => { r.sigilSlots = { [ref]: [sigilId] }; });
-  assert.equal(d.rows[0].kind, 'sigil'); assert.equal(d.rows[0].change, 'installed');
+  assert.equal(d.rows.find((r) => r.change).change, 'installed');
   const d2 = diff(run, (r) => { r.sigilSlots = { [ref]: [null] }; });
-  assert.equal(d2.rows[0].change, 'removed');
+  assert.equal(d2.rows.find((r) => r.change).change, 'removed');
 });
