@@ -1212,7 +1212,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const owner = snap.scene.enemyKnowledge?.owners?.[me];
       const moveCardOptions = { registries, combatMatchupRules: snap.scene.combatMatchupRules,
         combatExpansionVersion: snap.scene.combatExpansionVersion, stanceRules: snap.scene.stanceRules };
-      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: registries.balance?.combatRatings || null }) : null;
+      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: registries.balance?.combatRatings || null, weaknesses: entity.weaknesses }) : null;
       const moveCards = learning ? learning.moveCards : def ? enemyMoveCards(def, { ...moveCardOptions, enemy: entity, preview: intent }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the

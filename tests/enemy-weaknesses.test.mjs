@@ -315,6 +315,11 @@ test('a legacy (no profile) combat carries no weaknesses: 1 burn stack, x1 ticks
   moth.weaknesses = [{ to: 'burn', effect: 'stacks' }]; brute.weaknesses = [{ to: 'burn', effect: 'tick' }];
   moth.statuses = {}; applyStatus(combat, moth, 'burn', 1, combat.player);
   assert.equal(moth.statuses.burn.stacks, 1);
+  // The inspector and bestiary read the live enemy's list (undefined outside Core), so a legacy fight shows no Weak-to rows.
+  const record = { target: 30, receipts: Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`r${i}`, { bonus: 0 }])) };
+  const def = registries.enemies.get('lanternMoth');
+  assert.ok(!projectEnemyKnowledge(def, record, { registries, weaknesses: undefined }).traits.some(row => row.name.startsWith('Weak to')));
+  assert.ok(projectEnemyKnowledge(def, record, { registries }).traits.some(row => row.name.startsWith('Weak to')), 'the bestiary still reads the definition');
 });
 
 // ---- co-op ----
