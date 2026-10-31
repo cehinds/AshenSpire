@@ -262,3 +262,19 @@ test('school change is offered to any spell-camp card, damaging or not, and neve
   assert.ok(!schoolSeen(byId('core.strike')), 'a physical card gets none');
   assert.ok(!schoolSeen(dmg(6, { tags: ['camp:physical'] })));
 });
+
+test('a counter card never gets a range or targeting option; Strike still does', () => {
+  const counters = [byId('core.counter'), { ...dmg(6), id: 'guardCounter', tags: ['camp:physical', 'maneuver:counter'] }];
+  assert.ok(counters[0], 'core.counter exists');
+  const seen = (card) => {
+    const kinds = new Set();
+    for (let i = 0; i < 400; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 20)) kinds.add(s.retarget ? 'targeting' : s.tag?.startsWith('range:') ? 'range' : s.k);
+    return kinds;
+  };
+  for (const card of counters) {
+    const kinds = seen(card);
+    assert.ok(!kinds.has('targeting') && !kinds.has('range'), `${card.id} offers neither area nor range`);
+  }
+  const strike = seen(byId('core.strike'));
+  assert.ok(strike.has('targeting') && strike.has('range'), 'core.strike still gets both');
+});

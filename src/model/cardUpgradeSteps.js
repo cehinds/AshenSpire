@@ -146,6 +146,9 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}) {
   const hitsEnemy = dmgIndex >= 0 && (effects[dmgIndex].target === 'enemy' || effects[dmgIndex].target === 'allEnemies');
   const attacking = hitsEnemy && (['attack', 'smash', 'sweep', 'ranged', 'counter'].includes(maneuver) || spell);
   const tagged = (predicate) => applied.some((s) => s.k === 'tag' && predicate(s));
+  // prepareTacticalCard turns a counter card's damage into a return payload aimed at the one attacker it answers
+  // (the same `maneuver` test it makes), so a range or area face could never be honoured: no such option is offered.
+  const counterReturn = maneuver === 'counter';
 
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
   if (poiseIndex >= 0) {
@@ -153,12 +156,12 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}) {
     const n = Math.max(1, Math.ceil(baseTotal * 0.2));
     if (effects[poiseIndex].amount + n - baseTotal <= baseTotal) found.poise = { n };
   }
-  if (attacking) {
+  if (attacking && !counterReturn) {
     const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
     const next = { melee: 'reach', reach: 'ranged' }[raw];
     if (next) found.range = { tag: `range:${next}` };
   }
-  if (hitsEnemy && maneuver !== 'sweep' && !tagged((s) => s.retarget)) {
+  if (hitsEnemy && maneuver !== 'sweep' && !counterReturn && !tagged((s) => s.retarget)) {
     const [SINGLE, AREA] = TARGETING;
     const area = familyValue(tags, 'targeting:') ? familyValue(tags, 'targeting:') === AREA : effects[dmgIndex].target === 'allEnemies';
     // Single-target hits harder (x1.25 up): it stays inside the same +100% guard a damage step keeps.
