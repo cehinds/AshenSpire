@@ -44,6 +44,22 @@ export function reactionOptionArt(option, registries = null) {
   } catch { return null; }
 }
 
+// Two hand instances that read as the same option (same card, same grade, same numbers, same play)
+// show once, with a count. Options carry no upgrade field, so the grade is read off the summary the
+// caller built from the live instance: its name and rendered numbers differ between Counter and
+// Counter+. The first instance stays the option that is played; the model's options are untouched.
+const optionKey = ({ option, row }) => JSON.stringify([option.cardId, row.name, row.costs || [], (row.line || []).map(part => [part.label, part.value]),
+  row.text ?? null, row.html ?? null, option.choiceName ?? null, option.play?.upcastTier ?? null, option.play?.rangeRoute ?? null, option.play?.targetId ?? null, option.sourceId ?? null]);
+export function collapseIdenticalOptions(entries) {
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = optionKey(entry);
+    const group = groups.get(key);
+    if (group) group.count += 1; else groups.set(key, { row: entry.row, count: 1 });
+  }
+  return [...groups.values()].map(({ row, count }) => (count > 1 ? { ...row, count: `\u00d7${count}` } : row));
+}
+
 export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null, registries = null }) {
   const stacked = Array.isArray(stack) && stack.length > 0;
   let selected = null;
@@ -68,11 +84,11 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
         for (const entry of stack) list.append(el('li', { text: String(entry.name), 'data-reaction-stack-entry': '' }));
         host.append(list);
       }
-      const summaries = pending.options.map(option => {
+      const summaries = collapseIdenticalOptions(pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return { ...(summary || summarizeCardOption(null, null, option)), artAsset: reactionOptionArt(option, registries), chip: t('combat.reactions.label') };
-      });
+        return { option, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), chip: t('combat.reactions.label') } };
+      }));
       const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
         selected = id;
         row?.focus?.({ preventScroll: true });

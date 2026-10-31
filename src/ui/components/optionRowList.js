@@ -32,7 +32,7 @@ function rowArt(row) {
 
 /**
  * optionRowList(rows, { idAttr, onSelect, selectedId }) -> the list element.
- * `rows`: { id, name, line?, html?, text?, costs?, artAsset?, artGlyph?, chip?, disabled?, className? }
+ * `rows`: { id, name, line?, html?, text?, costs?, artAsset?, artGlyph?, chip?, count? (a "×N" chip for identical options shown once), disabled?, className? }
  * (a summarizeCardOption result plus the art and chip the caller adds).
  */
 export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr = 'data-option' } = {}) {
@@ -49,6 +49,7 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
         el('strong', { class: 'option-row-name', text: row.name }),
         el('span', { class: 'option-row-status' }, [costs, effectLine(row)]),
       ]),
+      row.count ? el('span', { class: 'option-row-chip option-row-count', text: row.count }) : null,
       row.chip ? el('span', { class: 'option-row-chip', text: row.chip }) : null,
     ]);
     if (row.disabled) { item.disabled = true; item.setAttribute('aria-disabled', 'true'); }

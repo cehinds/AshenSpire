@@ -403,3 +403,31 @@ test('four options form a 2-column grid; ArrowDown moves a row, ArrowRight one t
     opened.restore();
   }
 });
+
+test('identical options show once with a count; different grades stay separate', async () => {
+  const play = id => ({ cardInstanceId: id });
+  const options = [
+    { id: 'dA:0:default', cardId: 'core.defend', name: 'Defend', play: play('dA') },
+    { id: 'dB:0:default', cardId: 'core.defend', name: 'Defend', play: play('dB') },
+    { id: 'c1:0:default', cardId: 'core.counter', name: 'Counter', play: play('c1') },
+    { id: 'c2:0:default', cardId: 'core.counter', name: 'Counter', play: play('c2') },
+  ];
+  const summaries = {
+    'dA:0:default': { name: 'Defend', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 5, base: 5, dir: null }] },
+    'dB:0:default': { name: 'Defend', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 5, base: 5, dir: null }] },
+    'c1:0:default': { name: 'Counter', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 7, base: 7, dir: null }] },
+    'c2:0:default': { name: 'Counter+', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 9, base: 7, dir: 'up' }] },
+  };
+  const opened = await openWith({ pending: { id: 'r', options }, summarize: option => summaries[option.id] });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    assert.deepEqual(rows.map(row => row.getAttribute('data-reaction-option')), ['dA:0:default', 'c1:0:default', 'c2:0:default']);
+    assert.deepEqual(rows.map(row => row.querySelectorAll('.option-row-count').map(node => node.textContent)), [['\u00d72'], [], []]);
+    assert.equal(rows[0].parentNode.getAttribute('data-columns'), '1', 'the layout counts the collapsed rows');
+    rows[0].click();
+    opened.document.querySelectorAll('button').find(node => node.textContent === 'Play').click();
+    assert.deepEqual(opened.answers, [{ offerId: 'r', optionId: 'dA:0:default' }], 'the first instance is the one played');
+  } finally {
+    opened.restore();
+  }
+});
