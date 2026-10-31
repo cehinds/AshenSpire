@@ -1,5 +1,5 @@
 import { combatProfileFor } from '../model/combatCardProfile.js';
-import { canonicalDamageType, magicDamageTypeOf } from '../model/combatRatings.js';
+import { canonicalDamageType, magicDamageTypeOf, isPhysicalDamageType } from '../model/combatRatings.js';
 import * as Plans from '../model/proposalStatusRules.js';
 export function proposalContext(ctx) {
  const profile=ctx.gameProfile;
@@ -11,7 +11,8 @@ export function proposalAllies(ctx,actor) {return proposalActors(ctx).filter(row
 // A typed rider (Elemental Weapon's fire) is its own hit: its profile carries the rider's element and school only, never the
 // weapon's physical type or components, so it meets the element's protections and weaknesses, not the weapon's.
 function riderCombatProfile(card,damageType,camp) {
- if(!damageType)return null;
+ // A physical rider (Auto Counter, Auto Sweep: blunt, slashing, piercing) keeps the card's own profile and stays physical.
+ if(!damageType || isPhysicalDamageType(canonicalDamageType(damageType)))return null;
  const {damageComponents,physicalDamageType,magicShare,tags,...rest}=card?.combatProfile || {};
  return {...rest,camp:camp || 'spell',damageType,school:damageType,magicShare:1};
 }

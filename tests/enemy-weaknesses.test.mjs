@@ -16,7 +16,7 @@ import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { proposalContext } from '../src/engine/proposalStatusRuntime.js';
+import { proposalContext, applyProposalPlan } from '../src/engine/proposalStatusRuntime.js';
 import { proposalRuleEnabled } from '../src/model/proposalStatusRules.js';
 import { hitWeaknessTriggers } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
@@ -272,4 +272,24 @@ test('an enemy restored from a snapshot saved before weaknesses takes its defini
   delete snapshot.enemies[0].weaknesses;
   const restored = restoreCombatSnapshot({ registries: reg, rng: createRng(511), snapshot, expectedGameProfile: combat.gameProfile });
   assert.deepEqual(restored.enemies[0].weaknesses, reg.enemies.get('huskBrute').weaknesses);
+});
+
+test('riders keep their own damage type: Auto Counter stays physical, Elemental Weapon fire stays magical', () => {
+  const { combat, target } = liveCore('blightHound');
+  target.hp = target.maxHp = 500;
+  const queue = (damageType) => {
+    combat.queue.length = 0;
+    applyProposalPlan(combat, { effects: [{ op: 'damage', amount: 6, damageType, camp: 'physical', proposalReactive: true, direct: false, sourceId: combat.player.id, targetId: target.id }] }, combat.player, target, { combatProfile: { camp: 'physical', damageType: 'blunt' } });
+    return combat.queue[0];
+  };
+  const blow = queue('blunt'), fire = queue('fire');
+  assert.equal(blow.card.combatProfile.magicShare, undefined);
+  assert.equal(blow.card.combatProfile.school, undefined);
+  assert.equal(fire.card.combatProfile.magicShare, 1);
+  assert.equal(fire.card.combatProfile.school, 'fire');
+  combat.queue.length = 0;
+  primeAccuracyRolls(combat, { die: 20 });
+  executeAction(combat, blow);
+  const hit = combat.eventLog.filter(e => e.type === 'damageDealt').at(-1).damageReceipt.hits[0];
+  assert.ok(hit.physical > 0 && hit.magical === 0, `physical ${hit.physical}, magical ${hit.magical}`);
 });
