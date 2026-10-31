@@ -1768,7 +1768,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     decorateCombatRoundsScreen(combatEl, combat, { armedCardId: selected || null, targetedId: targetedEnemyId(combat, lastTargetId), memo: previewMemo.memo });
   }
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
-    window.__renderCombatForShot = render;
+    // Shot probes edit the fight directly (a seeded hand, a forced intent) and then render: no dispatch
+    // ran, so the memoised previews and knowledge view are dropped here, or the render would read the
+    // fight as it was before the edit and refuse the seeded cards.
+    window.__renderCombatForShot = () => { previewMemo.invalidate(); return render(); };
     window.__combatRunForShot = run;
   }
 
@@ -2706,7 +2709,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!inst) return unavailable('This card is no longer in your hand.');
     const reason = unplayableReason(inst);
     if (reason) return unavailable(reason);
-    const pv = previewCard(combat, instanceId, undefined, upcastRanksByCard.get(instanceId));
+    // The hand render already treats a card the engine cannot resolve (stranded by a combat-ending play,
+    // or a snapshot older than the fight) as inert; its availability sentence must not throw instead.
+    let pv;
+    try { pv = previewCard(combat, instanceId, undefined, upcastRanksByCard.get(instanceId)); }
+    catch (e) { console.warn('[combat] card not previewable for availability:', instanceId); return unavailable('This card cannot be played right now.'); }
     if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
       return unavailable('Not enough resources to play this card.');
     }
