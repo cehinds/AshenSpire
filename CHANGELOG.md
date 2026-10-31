@@ -34,10 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-31
 
-- **Layered art fills the remaining card library** ([#2384](https://github.com/cehinds/AshenSpire/pull/2384), `0.7.2.11`). All 156 cards without dedicated illustrations use reviewed background, object and effect cutouts in Simple mode. The art-review page shows each component and the actual game card, with placement controls and JSON/PNG export. Existing custom-art routing and Legacy mode stay available.
+- **Layered art fills the remaining card library** ([#2384](https://github.com/cehinds/AshenSpire/pull/2384), `0.7.2.13`). All 156 cards without dedicated illustrations use reviewed background, object and effect cutouts in Simple mode. The art-review page shows each component and the actual game card, with placement controls and JSON/PNG export. Existing custom-art routing and Legacy mode stay available.
 
 ## 2026-10-30
 
+- **Elites drop a Smithing Stone in Core** ([#2392](https://github.com/cehinds/AshenSpire/pull/2392), `0.7.2.13`). Core runs now pay the same Smithing Stone as the other modes when an elite or boss falls (one stone each; ordinary fights and chests none), and the victory receipt shows it. The stone is claimed once, so reloading a victory never pays it twice.
 - **Tutorial probe sees a seeded hand again** ([#2390](https://github.com/cehinds/AshenSpire/pull/2390), `0.7.2.11`). A screenshot or probe that edits the fight directly and re-renders now sees its edit (the preview memo from #2388 is dropped first), and a hand card the engine cannot resolve reads as unplayable instead of stalling the hand. Nothing changes in ordinary play.
 - **Smoother combat on phones** ([#2388](https://github.com/cehinds/AshenSpire/pull/2388), `0.7.2.9`). Combat plays feel smoother on phones: the hand updates in place instead of rebuilding every card, the screen redraws less after each play, and the combat log, targeting and card-reading panels no longer stall the frame. Nothing looks different; measured on a throttled phone profile, time blocked per fight fell by about 40% and the worst frame roughly halved.
 - **No action flash with Effects off** ([#2387](https://github.com/cehinds/AshenSpire/pull/2387), `0.7.2.7`). With Effects off, fighters no longer flash or glow when they attack, cast or guard; they still lunge and step as before, under the Attack lunge switch.
