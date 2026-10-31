@@ -121,7 +121,7 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, zoom = 1 }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, floorTop, zoom = 1 }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   if (backdrop) {
     delete backdrop.dataset.mobileFloorPaintTop;
@@ -158,7 +158,10 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
       const paintStart = floor.paintStarts[layer.id];
       if (paintStart) {
         group.style.transform = '';
-        const maximumPaintTop = (floorShadowTop - top - floor.shadowClearancePx / zoom) / scale;
+        // The ground never starts below the back rank's cell top (`floorTop`, owner 2026-10-31): the grid's back edge
+        // stands on painted ground, not in the sky. The shadow rule still wins where the shadows rise higher.
+        const paintCeiling = Number.isFinite(floorTop) ? Math.min(floorShadowTop - floor.shadowClearancePx / zoom, floorTop) : floorShadowTop - floor.shadowClearancePx / zoom;
+        const maximumPaintTop = (paintCeiling - top) / scale;
         // Continue only the authored ground behind the hand to the footer;
         // its painted horizon remains constrained by the back-row shadows.
         const minimumBottom = (combat.clientHeight - top) / scale;
