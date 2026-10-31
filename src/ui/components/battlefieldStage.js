@@ -329,17 +329,22 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // the reset that made every intent read a forced layout.
   let racksKey = '', racksIntents = [], racksShifts = [];
   const shiftOf = intent => intent.style.getPropertyValue('--combat-intent-shift');
-  function separateRackedIntents(racked, zoom) {
+  // `reads` are the boxes centerTargetOverheads took BEFORE its placement writes
+  // ({ fieldBox, rows: [{ frameBox, intentBox, rackBox }] by racked index): the key
+  // is built from them so a pass that will skip pays no forced style recalc. The
+  // placement variables the writes change are in the key as strings, so a pass
+  // whose writes moved an intent still differs and still reads after the reset.
+  function separateRackedIntents(racked, zoom, reads) {
     const rows = racked.filter(row => row.intent);
     if (rows.length < 2) {
       racksKey = '';
       for (const { intent } of rows) if (shiftOf(intent)) intent.style.removeProperty('--combat-intent-shift');
       return;
     }
-    const fieldBox = field.getBoundingClientRect();
-    const key = [fieldBox.left, fieldBox.right, zoom, ...rows.map(({ frame, intent }) => {
-      const frameBox = frame.getBoundingClientRect(), box = intent.getBoundingClientRect(), style = frame.style;
-      const rack = intent.parentElement.getBoundingClientRect();
+    const fieldBox = reads?.fieldBox || field.getBoundingClientRect();
+    const key = [fieldBox.left, fieldBox.right, zoom, ...rows.map(({ frame, intent, read }) => {
+      const frameBox = read?.frameBox || frame.getBoundingClientRect(), box = read?.intentBox || intent.getBoundingClientRect(), style = frame.style;
+      const rack = read?.rackBox || intent.parentElement.getBoundingClientRect();
       return [frameBox.left, frameBox.top, frameBox.width, rack.left, rack.width, box.width, box.height, box.top, intent.className, intent.textContent,
         style.getPropertyValue('--combat-mini-hud-top'), style.getPropertyValue('--combat-selected-intent-top'),
         style.getPropertyValue('--combat-selected-intent-center')].join('|');
@@ -370,14 +375,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
       if (rack) {
         const body = currentSpriteBodyBounds(sprite, schedule);
-        const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        racked.push({ frame, body, intent: rack.querySelector(':scope > :is(.intent,.player-action-intent)'), placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+        const intent = rack.querySelector(':scope > :is(.intent,.player-action-intent)');
+        const intentBox = intent?.getBoundingClientRect(), frameBox = frame.getBoundingClientRect();
+        const intentHeight = intentBox?.height || 37;
+        // The rack's own box is the skip key's, read here with the rest of the reads.
+        const read = intent ? { frameBox, intentBox, rackBox: rack.getBoundingClientRect() } : null;
+        racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
           groupHeight: miniHudGroupHeight(config), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
       // legacy overhead here would make the controls jump between beats.
       } else if (field.closest('.combat')?.dataset.targetHud !== 'true') plain.push({ frame, sprite, leading });
     }
+    const readsFieldBox = racked.length > 1 ? field.getBoundingClientRect() : null;
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     for (const { frame, body, placement } of racked) {
@@ -395,14 +405,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
     }
-    if (!plain.length) { separateRackedIntents(racked, zoom); return; }
+    if (!plain.length) { separateRackedIntents(racked, zoom, { fieldBox: readsFieldBox }); return; }
     const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
     const placements = plain.map(({ frame, sprite, leading }) => {
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
-    separateRackedIntents(racked, zoom);
+    separateRackedIntents(racked, zoom, { fieldBox: readsFieldBox });
   }
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {

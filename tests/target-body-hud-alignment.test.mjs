@@ -18,7 +18,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const leading = {};
     const sprite = {};
     const frameRect = { left: 12, top: 75 };
-    const rack = { querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }) };
+    const rack = { getBoundingClientRect: () => ({}), querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }) };
     const frame = { dataset: {}, style: { getPropertyValue: name => values.get(name), setProperty: (name, value) => values.set(name, value) },
       getBoundingClientRect: () => frameRect,
       querySelector: selector => selector === '.sprite' ? sprite : selector === '.combatant-leading' ? leading : rack };
@@ -93,13 +93,14 @@ test('every target body is measured before inherited HUD coordinates are written
     style: { getPropertyValue: () => '', setProperty: () => operations.push(`write:${id}`) },
     getBoundingClientRect: () => { operations.push(`read:${id}`); return { left: 0, top: 0 }; },
     querySelector: selector => selector === '.sprite' ? { id } : selector === '.combatant-leading' ? {} : {
+      getBoundingClientRect: () => ({}),
       querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }),
     },
   }));
   // A partially mounted combatant has no sprite yet and must stay untouched.
   frames.push({ querySelector: () => null });
   const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-    uiZoom: () => 1.25, field: { querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
+    uiZoom: () => 1.25, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
     schedule() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {}, miniHudGroupHeight: grid => grid.miniHudGroupHeightPx,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),
