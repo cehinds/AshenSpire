@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { renderCard } from '../src/ui/components/card.js';
+import { renderCard, cardDetailHtml, setHandFaceBudget } from '../src/ui/components/card.js';
 import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-// Every card view reads one face text: the shared cardFaceLines model, one <span class="face-line"> per line.
+// Every ordinary face uses the same bounded projection; Information stays complete.
 const reg = createRegistries(contentBundle);
 const previewOf = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
   // The card the engine plays: resolved (action costs derived, SPEC §4.3a), then projected for combat.
@@ -25,6 +26,15 @@ function faceLinesOf(html) {
 }
 const textOf = line => line.html.replace(/<[^>]+>/g, '');
 
+test('bounded clauses override the expanded-combat block rule and collapse separator whitespace', () => {
+  const css = readFileSync(new URL('../styles/illustrated-cards.css', import.meta.url), 'utf8');
+  // The old generic .face-line selector lost to kit.css's expanded-card
+  // selector. These bounded selectors carry both attributes and the root,
+  // so they win even when kit.css loads later. Browser QA measures wrapping.
+  assert.match(css, /:root \.illustrated-card \.ic-text\[data-face-lines="true"\]\[data-card-binding="rules"\] \{white-space:normal;\}/);
+  assert.match(css, /:root \.illustrated-card \.ic-text\[data-face-lines="true"\]\[data-card-binding="rules"\] \.face-line \{display:inline;white-space:normal;\}/);
+});
+
 // Records the markup each element is given, the way the other renderCard tests do.
 function trackInnerHtml(dom) {
   const prototype = Object.getPrototypeOf(dom.document.body);
@@ -35,12 +45,16 @@ function trackInnerHtml(dom) {
   return markup;
 }
 
-test('a card without a preview renders face lines starting with Inflict', () => withKitDom(dom => {
+test('a card without a preview renders whole clauses starting with Deal', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const el = renderCard(reg, { cardId: 'bashingBlow' }, { inspection: false });
   const lines = faceLinesOf(markup.get(el));
   assert.ok(lines.length >= 1, 'at least one .face-line');
-  assert.match(textOf(lines[0]), /^Inflict /);
+  assert.match(textOf(lines[0]), /^Deal /);
+  assert.match(markup.get(el), /<span data-face-fallback style="display:none">Inspect full effect\.<\/span>/,
+    'the fitter has a localized whole-rule alternative at narrow sizes');
+  assert.ok(lines.every(line => !textOf(line).startsWith(';')), 'separators never lead a wrapped clause');
+  assert.ok(lines.every(line => textOf(line).trimEnd().endsWith('.')), 'periods stay attached to the preceding clause');
 }));
 
 test('every printed surface moves automatic bonuses to tags and retains distinct authored Precision', () => withKitDom(dom => {
@@ -54,7 +68,7 @@ test('every printed surface moves automatic bonuses to tags and retains distinct
   const hand = face('combat', 'glance');
   assert.doesNotMatch(hand, /Entry:/);
   assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
-  assert.match(hand, /Inflict/, 'the attack still explains its damage');
+  assert.match(hand, /Deal/, 'the attack still explains its damage');
   for (const [surface, level] of [['combat', 'inspect'], ['reward', 'glance']]) {
     assert.doesNotMatch(face(surface, level), /Entry:/);
     assert.match(face(surface, level), /Precision 2/, 'a distinct authored grant remains explicit');
@@ -83,46 +97,23 @@ test('the shared title fade appears on a base face without adding a sigil footer
   assert.doesNotMatch(html, /class="card-footer-backdrop"/);
 });
 
-test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data-face-extra', () => withKitDom(dom => {
+test('all authored faces keep at most two clauses even with a legacy hand limit', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const cardId = reg.cards.all().map(card => card.id).find(id => {
-    const el = renderCard(reg, { cardId: id }, { inspection: false });
-    return faceLinesOf(markup.get(el)).length > 3;
-  });
-  assert.ok(cardId, 'a card with more than three face lines exists in content');
-  const lines = faceLinesOf(markup.get(renderCard(reg, { cardId }, { inspection: false, faceLineLimit: 3 })));
-  assert.ok(lines.length > 3);
-  lines.forEach((line, i) => {
-    if (i < 3) assert.doesNotMatch(line.attrs, /data-face-extra/, `line ${i + 1} stays visible`);
-    else assert.match(line.attrs, /data-face-extra="true"/, `line ${i + 1} is marked extra`);
-  });
+  for (const card of reg.cards.all()) {
+    const html = markup.get(renderCard(reg, { cardId: card.id }, { inspection: false, faceLineLimit: 3 }));
+    const lines = faceLinesOf(html);
+    assert.ok(lines.length >= 1 && lines.length <= 2, card.id);
+    assert.doesNotMatch(html, /data-face-extra/, card.id);
+    assert.match(html, /data-max-lines="3" data-face-lines="true"/, card.id);
+  }
 }));
 
-test('a compact face keeps at most three rule lines visible and inspection retains every line', () => withKitDom(dom => {
-  const markup = trackInnerHtml(dom);
-  const cardId = reg.cards.all().map(card => card.id).find(id => {
-    const face = renderCard(reg, { cardId: id }, { inspection: false, level: 'glance' });
-    return faceLinesOf(markup.get(face)).length > 3;
-  });
-  assert.ok(cardId, 'a card with more than three face lines exists');
-  const compact = markup.get(renderCard(reg, { cardId }, { inspection: false, level: 'glance' }));
-  const full = markup.get(renderCard(reg, { cardId }, { inspection: false, level: 'inspect' }));
-  assert.match(compact, /data-rules-overflow="true"/);
-  assert.match(compact, /data-face-overflow="true"/);
-  assert.match(compact, /card-rules-inspect-cue/);
-  assert.doesNotMatch(full, /data-face-overflow="true"/);
-  assert.match(full, /card-rules-inspect-cue/, 'inspection can explain a residual geometric overflow too');
-  assert.equal(faceLinesOf(full).length, faceLinesOf(compact).length, 'inspection preserves the full compact-face source text');
-}));
-
-test('the hand hides detail lines until the card is selected; other views show them', () => withKitDom(dom => {
+test('hand and catalogue share the same concise clauses; secondary details remain in Information', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const lines = opts => faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, ...opts })));
-  const detail = list => list.filter(line => /data-face-kind="detail"/.test(line.attrs));
-  assert.ok(detail(lines({})).length && detail(lines({})).every(line => !/data-face-extra/.test(line.attrs)), 'a non-hand view shows Usable through');
-  const hand = detail(lines({ faceLineLimit: 3 }));
-  assert.ok(hand.length, 'the hand keeps the detail line for selection');
-  assert.ok(hand.every(line => /data-face-extra="true"/.test(line.attrs)), 'and hides it at rest');
+  assert.deepEqual(lines({}).map(textOf), lines({ faceLineLimit: 3 }).map(textOf));
+  assert.ok(lines({}).every(line => !/Usable through/.test(textOf(line))));
+  assert.match(cardDetailHtml(reg, { cardId: 'sanctuaryCleanse' }), /Sleep/);
 }));
 
 test('a hit that is magic with a physical tag names only its leading type on the face', () => withKitDom(dom => {
@@ -131,18 +122,21 @@ test('a hit that is magic with a physical tag names only its leading type on the
   assert.doesNotMatch(textOf(lines[0]), /·/);
 }));
 
-test('inspecting a hand card shows the full face, detail lines included', () => withKitDom(dom => {
+test('enlarged faces retain the same budget and selection never permits five lines', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const src = renderCard.toString();
-  assert.match(src, /level: 'inspect', faceLineLimit: undefined/, 'the inspect face does not inherit the hand limit');
-  const kinds = faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, level: 'inspect' })))
-    .map(line => /data-face-kind="(\w+)"/.exec(line.attrs)[1]);
-  assert.ok(kinds.includes('detail'));
+  const ref = { cardId: 'sanctuaryCleanse' };
+  const normal = renderCard(reg, ref, { inspection: false });
+  const enlarged = renderCard(reg, ref, { inspection: false, level: 'inspect' });
+  assert.deepEqual(faceLinesOf(markup.get(normal)).map(textOf), faceLinesOf(markup.get(enlarged)).map(textOf));
+  const rules = { dataset: {} }, host = { querySelector: () => rules };
+  setHandFaceBudget(host, false); assert.equal(rules.dataset.maxLines, '3');
+  setHandFaceBudget(host, true); assert.equal(rules.dataset.maxLines, '3');
 }));
 
-test('a combat face the shared model refuses shows the authored rules, not the looser summary', () => withKitDom(dom => {
+test('complex fallback cards also use bounded whole authored clauses', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const html = markup.get(renderCard(reg, { cardId: 'shieldGuardian' }, { inspection: false, preview: previewOf('shieldGuardian') }));
-  assert.doesNotMatch(html, /class="face-line"/);
+  assert.match(html, /class="face-line"/);
+  assert.ok(faceLinesOf(html).length <= 2);
   assert.doesNotMatch(html, /Add 1 Enter: Bulwark to hand/);
 }));

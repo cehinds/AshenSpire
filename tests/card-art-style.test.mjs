@@ -22,7 +22,7 @@ test('card artwork defaults to Simple and refreshes mounted surfaces only when s
 
 test('Legacy survives save reload and a settings reset returns to Simple', () => {
   const row = settingsRows().find(row => row.key === 'cardArtStyle');
-  assert.deepEqual(row.choices, ['Simple','Legacy']);
+  assert.deepEqual(row.choices, ['Simple','Reviewed','Legacy']);
   assert.equal(row.def, 'Simple');
   const saves = createSaveManager(createMemoryStorage());
   const meta = saves.loadMeta();

@@ -473,6 +473,22 @@ Damage entries include `perTarget: { enemyInstanceId: dmg }` for every living
 enemy. `randomEnemy` previews against the first living enemy **without
 consuming RNG**. Substitute `tokens` into the card's `textTemplate` for display.
 
+The preview also carries `combatExpansionVersion`, `foundation` and a detached
+`combatStatusRules` copy for status explanations in Information. Status rules
+use the engine's precedence: `combat.combatStatusRules`, then
+`combat.combatExpansionRules.statuses`, then the shipped defaults. UI readers
+can therefore describe a custom saved cap from the preview alone; modifying
+this presentation copy cannot mutate the combat snapshot or its calculations.
+
+Core previews additionally carry `coreStatusAuthority`: detached definitions
+for the card's direct/nested status applications and buildup, overridden status
+IDs, the configured stack-decay amount, and each relevant status's clock. This
+small presentation receipt preserves Core overrides before expansion caps,
+owner-turn-start decay and Precision's temporary owner-turn-end expiry. It
+does not copy the whole Core rules snapshot or change status execution.
+Every preview explicitly stamps `coreStatusAuthority.enabled`; `false` prevents
+registry-profile defaults from replacing the combat's disabled Core mode.
+
 ### `previewIntent(combat, enemyInstanceId)`
 
 `{ kind, moveId, damage, hits, totalDamage, block, delayed, pending }` —

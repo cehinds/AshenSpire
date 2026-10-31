@@ -16,7 +16,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -45,6 +45,7 @@ import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '..
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
@@ -236,7 +237,7 @@ export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
   // Everything below that reads the opts is derived here, so refreshCard can re-derive it for a card kept in place
   // (a hand card whose preview or affordability moved). The door's closure reads these names when it opens.
-  let def, rawModel, combatProfile, combatTags, expanded, model, fallbackDamageLabel, damageWords, accessibleLabel;
+  let def, rawModel, combatProfile, combatTags, expanded, model, damageWords, accessibleLabel;
   const deriveModel = () => {
     def = playingCardDefinition(registries, ref, opts);
     // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
@@ -254,12 +255,6 @@ export function renderCard(registries, ref, opts = {}) {
     model.sideTags = cardSideTags(model, def, registries, opts.preview || null, opts.rules || null);
     // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
     model.range = opts.range ? combatCardRange(def) : null;
-    // When the shared face model refuses a card, the authored clauses (family
-    // limits, charge and payment constraints) stay complete on the face, led by
-    // the damage label in an expanded combat view.
-    fallbackDamageLabel = expanded
-      && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
-      ? combatCardDamageLabel(def, opts.preview, registries) : '';
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
     accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
@@ -371,7 +366,7 @@ export function renderCard(registries, ref, opts = {}) {
   let drawn = levelNow();
   // Every printed surface uses the same compact benefits. A visible tag keeps
   // the exact amount and condition available without repeating it in the body.
-  let faceRules, wardPoise, allFaceLines, faceLines, faceLineLimit;
+  let faceRules, wardPoise, allFaceLines, faceLines;
   const deriveFace = () => {
     faceRules = gameModule(registries, 'cards');
     wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
@@ -380,6 +375,8 @@ export function renderCard(registries, ref, opts = {}) {
     const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
     allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
       { stanceEntry: false, representedEffects, representedEntry, representedRules });
+    // The bounded projection selects whole qualified clauses after the live
+    // model has suppressed benefits already represented by exact tag values.
     faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
       ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
     if (faceLines && def.weightClassPriced) {
@@ -387,37 +384,36 @@ export function renderCard(registries, ref, opts = {}) {
       faceLines.push(pricingNote);
       if (allFaceLines !== faceLines) allFaceLines?.push(pricingNote);
     }
-    // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
-    faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   };
   deriveFace();
-  // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
-  const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   let reuseFrom = reuseFace || null;
   const paint = (at) => {
     const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
     const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
-      definition:def,registries});
+      definition:def,registries,style:opts.artStyle});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
-    const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
-    const rulesHtml = visibleLines
-      ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
-      // A face the shared model refused keeps the authored rules, never the looser summary.
-      : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
-    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
+    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, registries,
+      effects: opts.preview?.chargedEffects || def.effects || [] });
+    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '))
+      + `<span data-face-fallback style="display:none">${esc(t('card.face.inspectEffect'))}.</span>`
+      + `<span data-face-fallback-short style="display:none" aria-label="${esc(t('card.face.inspectEffect'))}">${esc(t('deckEditor.inspect'))}.</span>`;
+    el.dataset.faceLines = String(projection.clauses.length);
+    el.dataset.faceOmitted = String(projection.omitted);
     const faceHtml = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
-      painting:artwork?.path,
+      painting:artwork===null?null:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
       artworkComposition:artwork,
-      completeRules: at === 'inspect',
-      rulesOverflow: at !== 'inspect' && Boolean(allFaceLines?.length > (faceLines?.length ?? 0)),
+      // Enlarging the face never enlarges its effect budget; the adjacent
+      // Information reading carries every authored rule and damage receipt.
+      completeRules: false,
+      rulesOverflow: projection.omitted,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     // The numbers on the face come from a preview, and a hand's previews move
@@ -522,7 +518,9 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
+      const reading = cardStatusContext(def, opts, registries);
+      details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() + cardStatusDetailsHtml(registries, def, reading)
+        : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading);
       const receipt = cardDamageReceipt(opts.preview);
       if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName, expanded: true }));
       decorateKeywords(details);
@@ -613,13 +611,11 @@ export function refreshCard(el, opts) {
 const pendingFits = new Set();
 let fitFrame = 0;
 
-// The combat hand shows three face lines at rest and five when selected.
+// Selection changes the card's size, never the ordinary effect budget.
 export function setHandFaceBudget(el, selected) {
   const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
   if (!rules) return;
-  const lines = selected ? '5' : '3';
-  // The hand calls this for every card on every render; a budget that did not
-  // change leaves the fit it has (a new face is fitted by its own render).
+  const lines = String(FACE_EFFECT_LINES);
   if (rules.dataset.maxLines === lines) return;
   rules.dataset.maxLines = lines;
   scheduleCardFits([el]);
@@ -807,7 +803,7 @@ export function upgradePreviewHtml(registries, ref, faces = null) {
  * is reachable we substitute against it; when it is not, we fall back to the
  * words-only display, which is exactly the behavior this file had before.
  */
-function glossaryEntry(registries, kind, id) {
+function glossaryEntry(registries, kind, id, context = {}) {
   if (id == null) return null;
   const source = kind === 'status' ? registries.statuses : registries.stances;
   // A maneuver ('attack'/'defend') is a stance word with no stance row: the
@@ -819,8 +815,46 @@ function glossaryEntry(registries, kind, id) {
   const display = row && typeof withWords === 'function'
     ? withWords(row)
     : (kind === 'status' ? registries.frameworkTerms.statusDisplay(id) : registries.frameworkTerms.stanceDisplay(id));
-  if (!display || !display.tooltip) return null;
-  return { name: display.name, tooltip: statusTooltipText(display) };
+  if (!display) return null;
+  const tooltip = statusTooltipText(display, context);
+  return tooltip ? { name: display.name, tooltip } : null;
+}
+
+// Carry the actual run/preview rules into every status reading. A definition
+// stamped v2 is evidence too; a definition with no version keeps the shared
+// helper's explicitly labelled Classic/Expanded reading.
+function cardStatusContext(def, { preview = null, rules = null } = {}, registries = null) {
+  return {
+    combatExpansionVersion: preview?.combatExpansionVersion ?? rules?.combatExpansionVersion
+      ?? (def.minCombatExpansionVersion === 2 || def.defenseRulesVersion === 2 ? 2 : undefined),
+    combatStatusRules: preview?.combatStatusRules ?? rules?.combatStatusRules,
+    combatExpansionRules: preview?.combatExpansionRules ?? rules?.combatExpansionRules,
+    foundation: preview?.foundation ?? rules?.foundation,
+    coreStatusAuthority: preview?.coreStatusAuthority,
+    fixCoreRules: preview?.coreStatusAuthority?.enabled === false ? undefined : rules?.fixCoreRules,
+    gameProfile: preview?.coreStatusAuthority?.enabled === false ? undefined : rules?.gameProfile ?? registries?.gameProfile,
+    chargedEffects: preview?.chargedEffects,
+  };
+}
+
+// Information has no three-status cap. Every registered application, including
+// nested counter/upcast riders, gets one visible complete reading. Tooltips
+// remain useful, but duration and stacking never require another hover.
+function cardStatusDetailsHtml(registries, def, context) {
+  const ids = new Set(), visited = new Set();
+  const walk = (value, depth = 0) => {
+    if (!value || typeof value !== 'object' || depth > 12 || visited.has(value)) return;
+    visited.add(value);
+    if (['applyStatus', 'buildup'].includes(value.op) && registries.statuses?.has?.(value.status)) ids.add(value.status);
+    for (const child of Object.values(value)) if (child && typeof child === 'object') walk(child, depth + 1);
+  };
+  for (const key of ['effects', 'counterPayload', 'upcast', 'schoolEffect']) walk(def[key]);
+  walk(context.chargedEffects);
+  const rows = [...ids].map(id => {
+    const entry = glossaryEntry(registries, 'status', id, context);
+    return entry ? `<div class="combat-rule-hint" data-inspection-status="${esc(id)}"><strong>${esc(entry.name)}:</strong> ${esc(entry.tooltip)}</div>` : '';
+  }).join('');
+  return rows ? `<section class="inspection-status-details">${rows}</section>` : '';
 }
 
 /** W1h: the read-only reading a pile viewer shows beside its collection —
@@ -828,10 +862,10 @@ function glossaryEntry(registries, kind, id) {
 export function cardDetailHtml(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = playingCardModel(registries, ref, { ...opts, definition: def });
-  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences);
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts, registries));
 }
 
-function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
+function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
@@ -890,6 +924,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
+  html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
@@ -918,14 +953,14 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // the mechanics ride through, "for a display site that needs the whole def
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
-      const s = glossaryEntry(registries, 'status', eff.status);
+      const s = glossaryEntry(registries, 'status', eff.status, statusContext);
       if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
     if (eff.op === 'enterStance') {
       // A chosen stance (Warrior's Vow) explains every stance it can offer.
       const ids = eff.choose ? (cardChoice(registries, def, def.class)?.options || []).map((o) => o.id) : [eff.stance];
       for (const id of ids) {
-        const s = glossaryEntry(registries, 'stance', id);
+        const s = glossaryEntry(registries, 'stance', id, statusContext);
         if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
       }
     }

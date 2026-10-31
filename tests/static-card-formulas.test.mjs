@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { constantFormulaValue, describeFormula, evaluate } from '../src/model/formulas.js';
 import { staticCardTokens, combatCardSummary, playingCardModel } from '../src/model/playingCard.js';
-import { renderCard } from '../src/ui/components/card.js';
+import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const reg = createRegistries(contentBundle);
@@ -116,10 +116,16 @@ test('symbolic authored quantities are escaped and live numeric tokens replace t
       amount: { f: 'stacks', status: 'x</span><img src=x onerror=bad>', of: 'allEnemies', per: 2, max: 5 } }] };
   const custom = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, def] });
   const ref = { cardId: def.id }, authored = cardMarkup(custom, ref);
-  assert.match(authored, /&lt;\/span&gt;&lt;img src=x onerror=bad&gt;/);
+  assert.match(authored, /Inspect full effect/,'the oversized symbolic clause moves wholly to Information');
+  assert.match(authored, /data-max-lines="3" data-face-lines="true"/);
   assert.doesNotMatch(authored, /<img src=x onerror=bad>/);
   assert.doesNotMatch(authored, /class="val (?:up|down)"/);
+  const inspection = cardDetailHtml(custom, ref);
+  assert.match(inspection, /&lt;\/span&gt;&lt;img src=x onerror=bad&gt;/);
+  assert.match(inspection.replace(/<[^>]*>/g, ''), /1 per 2 .* stacks across all enemies \(whole groups\) \(maximum 5\)/);
+  assert.doesNotMatch(inspection, /<img src=x onerror=bad>/,'full Information escapes the complete symbolic quantity');
   const preview = { tokens: { heal: 3 }, values: [{ op: 'heal', value: 3 }], cost: 1, manaCost: 0 };
   assert.equal(playingCardModel(custom, ref, { preview }).tokens.heal, 3);
   assert.match(cardMarkup(custom, ref, { preview }), /class="val">3<\/span>/);
+  assert.match(cardDetailHtml(custom, ref, { preview }), /class="val">3<\/span>/);
 });
