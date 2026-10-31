@@ -3,7 +3,12 @@ import { rewardDom } from './reward-dom.mjs';
 export function withModalDom(fn) {
   const dom = rewardDom();
   const proto = Object.getPrototypeOf(dom.document.body);
-  proto.focus = function focus() { dom.document.activeElement = this; this.dispatchEvent(new dom.Event('focus')); };
+  proto.focus = function focus() {
+    dom.document.activeElement = this;
+    this.dispatchEvent(new dom.Event('focus'));
+    // focusin reaches the document in capture order, as in a browser.
+    for (const listener of docListeners.get('focusin') || []) listener({ type: 'focusin', target: this });
+  };
   proto.replaceChildren = function replaceChildren(...nodes) { this.innerHTML = ''; this.append(...nodes); };
   // Native <details>.open reflects its boolean attribute. The layout-free
   // fixture needs that reflection to exercise collapsed-group focus routing.
@@ -47,6 +52,11 @@ export function withModalDom(fn) {
       return `<${open}>${this.textContent || ''}${this.children.map((c) => c.outerHTML).join('')}</${this.tagName.toLowerCase()}>`;
     },
   });
+  const { removeAttribute } = proto;
+  proto.removeAttribute = function removeIt(key) {
+    removeAttribute.call(this, key);
+    if (key.startsWith('data-')) delete this.dataset[dataKey(key)];
+  };
   proto.hasAttribute = function hasIt(key) {
     return hasAttribute.call(this, key) || (key.startsWith('data-') && this.dataset[dataKey(key)] !== undefined);
   };
