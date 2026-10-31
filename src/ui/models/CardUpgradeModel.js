@@ -54,7 +54,11 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   const stones = Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0;
   const groups = new Map();
   const rows = [];
-  for (const instance of run.deck || []) {
+  // Every owned card: deck first (deck order), then the sideboard. Deck and sideboard copies are separate instances,
+  // so they never share a row (inDeck is part of the group key).
+  const owned = [...(run.deck || []).map((instance) => ({ instance, inDeck: true })), ...(run.sideboard || []).map((instance) => ({ instance, inDeck: false }))];
+  for (const { instance, inDeck } of owned) {
+    if (!instance || !registries.cards.has(instance.cardId)) continue;
     const plan = planCardUpgrade(run, registries, instance.instanceId);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
@@ -62,12 +66,12 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // never shares a row with fresh copies of the same card.
     // The next step is rolled per instance id, so copies whose next upgrade differs stay separate rows: each
     // distinct outcome stays previewable and purchasable.
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.step]);
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.step, inDeck]);
     if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
     const base = registries.cards.get(instance.cardId);
     const rarity = base.rarity || 'common';
     const row = {
-      instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, cardId: instance.cardId,
+      instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, inDeck, cardId: instance.cardId,
       name: plan.before?.name || base.name, rarity,
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
       spent: false, disabled: !plan.ok || !!blockedReason, cost: plan.cost, costLabel: costLabel(plan),

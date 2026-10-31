@@ -11,7 +11,7 @@ import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfil
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
-import { upgradeArtPlan, commitUpgradeArt, upgradeableArts, serviceIdleReason } from '../src/model/blacksmith.js';
+import { upgradeArtPlan, commitUpgradeArt, upgradeableArts, serviceIdleReason, serviceCandidates } from '../src/model/blacksmith.js';
 import { upgradeCount } from '../src/model/cardUpgrade.js';
 import { configuredShopIsBlacksmith, configuredShopBlacksmithChance } from '../src/model/gameProfileShopKind.js';
 import '../src/engine/runCombat.js';
@@ -153,4 +153,18 @@ test('a Core Blacksmith offers no extract or install service, and the commits re
   // Legacy keeps both services.
   const legacy = smithRun(legacyOut, 3);
   assert.ok(shopStockOfferings(legacy.shopStock).includes('extractArt'));
+});
+
+test('Core Blacksmith: a sideboard card plans and commits an upgrade, and a sideboard-only candidate counts', () => {
+  const run = smithRun(coreOut, 3);
+  const [moved] = run.deck.splice(run.deck.findIndex((c) => c.cardId === 'core.strike'), 1);
+  run.sideboard = [moved];
+  assert.ok(upgradeableArts(coreOut, run).some((c) => c.instanceId === moved.instanceId), 'sideboard card is an upgrade candidate');
+  upgrade(run, moved.instanceId);
+  assert.equal(upgradeCount(run.sideboard[0]), 1);
+  // Only sideboard cards upgradable: empty the deck of candidates by moving every card across.
+  run.sideboard = [...run.sideboard, ...run.deck.splice(0)];
+  assert.equal(run.deck.length, 0);
+  assert.ok(upgradeableArts(coreOut, run).length > 0);
+  assert.ok(serviceCandidates(coreOut, run, "upgradeArt").length > 0, "the Blacksmith button counts sideboard-only candidates");
 });
