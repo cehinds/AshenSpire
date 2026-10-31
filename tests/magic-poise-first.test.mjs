@@ -114,3 +114,13 @@ test('the log reports the whole hit when a spell is absorbed by Poise (10 -> "fo
   const full = hit(spell, { poise: 20 });
   assert.match(text(ev(full)), /for 10/);
 });
+
+test('the Poise tooltip composes the locked physical text with the spell sentence under Core with Ward off', async () => {
+  const { poiseHelpText } = await import('../src/ui/poiseHelp.js');
+  const { fixCoreProtectionDescription } = await import('../src/model/fixCoreMechanics.js');
+  const combat = liveCore(), enemy = combat.enemies[0];
+  enemy.persistentPoise = { value: 5, max: 10 };
+  const text = poiseHelpText(combat, enemy);
+  assert.ok(text.startsWith(fixCoreProtectionDescription(combat, enemy, 'poise')), 'keeps the physical description');
+  assert.match(text, /Spells spend Poise one for one before Block\./);
+});
