@@ -58,7 +58,7 @@ function fixture(document) {
     mountCombatRangeAction: (card, quote, actions) => {
       quotes.push({ card, quote, actions }); return () => calls.push('release-range');
     },
-    handStrip: { render({ cards }) {
+    handStrip: { primeStripBox() {}, render({ cards }) {
       rendered.push(cards);
       hand.replaceChildren();
       for (const entry of cards) {

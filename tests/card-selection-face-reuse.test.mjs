@@ -63,7 +63,7 @@ test('inspection prints a complete face and explicit artwork refresh still repai
   applyCardArtStyle({});
 }));
 
-test('hand preview changes replace the reused card with fresh values and inputs', () => withModalDom(() => {
+test('hand preview changes replace the card, keep its face nodes and print the fresh values', () => withModalDom(() => {
   clearSelection();
   document.documentElement = document.body;
   // The fixture parses elements but drops text nodes; retain the actual markup
@@ -90,9 +90,10 @@ test('hand preview changes replace the reused card with fresh values and inputs'
   strip.render({ cards: [{ ...entry, preview: { ...entry.preview, cost: 3, tokens: { damage: 42 } } }] });
   const after = hand.children[0];
   assert.notEqual(after, before, 'a different live preview still replaces the hand record');
-  assert.notEqual(after.querySelector('.illustrated-card-face'), oldFace);
+  // The card (its inputs, its door) is new; its face is the old one with the changed rows rewritten.
+  assert.equal(after.querySelector('.illustrated-card-face'), oldFace);
   assert.equal(released, 1, 'old play input is released exactly once');
-  assert.match(markup.get(after).replace(/<[^>]*>/g, ''), /Inflict 42 Blunt/,
-    'updated damage reaches fresh face markup');
+  assert.match(markup.get(after.querySelector('.ic-text[data-card-binding="rules"]')).replace(/<[^>]*>/g, ''), /Inflict 42 Blunt/,
+    'updated damage reaches the rewritten rules row');
   strip.teardown();
 }));

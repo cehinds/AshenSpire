@@ -2,6 +2,7 @@ import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { assetUrl } from './assetmap.js';
 import { ENEMY_STATE_SCALE } from '../content/enemyStateArt.js';
 import { ENEMY_STATE_POSES, enemyPresentation, enemyAuraFilter } from './enemyStates.js';
+import { warmImageBoundsWhenIdle } from './artBounds.js';
 
 export function createEnemyPoseStage(host, facing, idle, id, entity) {
   host.classList.add('enemy-pose-stage');
@@ -24,7 +25,7 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     frame.alt = ''; frame.setAttribute('aria-hidden', 'true');
     Object.assign(frame.style, { position: 'absolute', bottom: '0', visibility: 'hidden', pointerEvents: 'none' });
     frame.style.height = `${100 * (pose === 'defeated' ? DEFEATED_ART[id]?.scale || 1 : ENEMY_STATE_SCALE[id] || 1) * (pose === 'projectile' ? 1.05 : 1)}%`;
-    frame.addEventListener('load', () => { frame.dataset.ready = 'true'; draw(); });
+    frame.addEventListener('load', () => { frame.dataset.ready = 'true'; draw(); warmImageBoundsWhenIdle(frame); });
     frame.addEventListener('error', () => { delete frame.dataset.ready; draw(); });
     frames.set(pose, frame); facing.appendChild(frame);
     frame.removeAttribute('src');

@@ -1,4 +1,5 @@
-import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceStaminaCost } from './stanceRules.js';
 // src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a, §4.11).
 //

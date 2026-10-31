@@ -92,7 +92,7 @@ test('idle motion off stops resting swaps but lets every action pose through', a
   const { createPoseStage } = await import('../src/ui/services/PoseAnimator.js');
   const dom = (await import('./helpers/reward-dom.mjs')).rewardDom();
   const saved = { document: globalThis.document, Image: globalThis.Image };
-  globalThis.document = dom.document; globalThis.Image = class { set src(v) { this._s = v; } };
+  globalThis.document = dom.document; globalThis.Image = class { set src(v) { this._s = v; } addEventListener() {} };
   dom.document.body.classList.add('motion-idle-off');
   try {
     const stage = createPoseStage('reaver', 'gold');

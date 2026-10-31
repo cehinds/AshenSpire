@@ -2532,15 +2532,22 @@ export function getEntity(combat, id) {
  * defender mults when a target is given); block through computeBlockGain.
  * perTarget maps every living enemy's instance id → the damage it would take.
  */
-export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { rangeRoute = 'advance', rawFace = false } = {}) {
+export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { rangeRoute = 'advance', rawFace = false, knowledgeView = null } = {}) {
   if (combat.enemyKnowledge && !combat._knowledgePreview) {
-    const visible = F.candidateState(combat, { detached: true });
-    visible._knowledgePreview = true;
-    for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
-      enemy.intent = { kind: 'unknown', moveId: null };
-      delete enemy.combatStance;
-      delete enemy.combatCounter;
-      delete enemy.pendingMove;
+    // The player's view of the fight is the same for every card on one unchanged
+    // fight, and it is only read from here on (each preview clones it again), so
+    // a caller that knows the fight has not moved may hand in a holder to share it.
+    let visible = knowledgeView?.visible;
+    if (!visible) {
+      visible = F.candidateState(combat, { detached: true });
+      visible._knowledgePreview = true;
+      for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
+        enemy.intent = { kind: 'unknown', moveId: null };
+        delete enemy.combatStance;
+        delete enemy.combatCounter;
+        delete enemy.pendingMove;
+      }
+      if (knowledgeView) knowledgeView.visible = visible;
     }
     return previewCard(visible, cardInstanceId, targetId, upcastRanks, { rangeRoute, rawFace });
   }

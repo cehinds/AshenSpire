@@ -23,6 +23,11 @@ export function alternativeAuraLayers(filter) {
   return shadows.length ? { shadows, brightness: light } : null;
 }
 
+// Assigning a canvas filter makes the browser resolve the canvas element's style first, a forced
+// style and layout flush after the caller's DOM writes. A context whose filter already reads back
+// as the requested value keeps its pixels the same, so the assignment is skipped then.
+function setFilter(context, value) { if (context.filter !== value) context.filter = value; }
+
 const STILL_LIMIT = 12;
 
 export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
@@ -48,7 +53,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
         if (!plan || !plan.shadows.length) {
           // Unknown future filter grammar preserves its original rendering rather
           // than silently discarding effects. Authored filters use the fast path.
-          context.filter = filter; context.drawImage(image, x, y, width, height);
+          setFilter(context, filter); context.drawImage(image, x, y, width, height);
         } else {
           // Hit-stop and contact holds can request the same immutable bitmap at
           // the same placement on successive frames. The work surface already
@@ -74,7 +79,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
               stills.push(entry);
               if (stills.length > STILL_LIMIT) { const oldest = stills.shift().surface; oldest.width = oldest.height = 0; }
             }
-            context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
+            setFilter(context, plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`);
             context.drawImage(entry.surface, x - entry.x, y - entry.y);
             return true;
           }
@@ -82,7 +87,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             && entry.x === x && entry.y === y && entry.width === width && entry.height === height;
           const cached = (reuse && rendered.find(matches)) || (immutable && matches(current) && current);
           if (cached) {
-            context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
+            setFilter(context, plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`);
             context.drawImage(cached.surface, 0, 0);
             if (materialize) context.getImageData(0, 0, 1, 1);
             return true;
@@ -112,7 +117,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             rendered.push({image,filter,x,y,width,height,surface:copy});
             if (rendered.length > 4) { const oldest = rendered.shift().surface; oldest.width = oldest.height = 0; }
           }
-          context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
+          setFilter(context, plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`);
           context.drawImage(surface, 0, 0);
         }
         if (materialize) context.getImageData(0, 0, 1, 1);
