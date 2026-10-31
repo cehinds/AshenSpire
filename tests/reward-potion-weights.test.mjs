@@ -22,8 +22,9 @@ const HELD = 'flaskOfStone';
 // Count potion picks per id over many seeded shop stocks (one potion shelf each).
 function shopPotionCounts(registries, held, n = 1000) {
   const counts = new Map();
+  const run = fresh(registries, 1, held);
   for (let i = 0; i < n; i++) {
-    const run = fresh(registries, i + 1, held);
+    delete run.gameProfileRewardOffers;
     for (const option of gameProfileShopStock(registries, run, createRng(900 + i), { shopId: 'm' }).options) if (option.kind === 'potions') counts.set(option.id, (counts.get(option.id) || 0) + 1);
   }
   return counts;
@@ -48,8 +49,9 @@ test('chests and combat rewards use the same weighting', () => {
   const registries = build({ 'reward-ranks': { stanceCoverage: { enabled: false, reservedSlots: 0, preferTiers: ['basic'], excludePools: ['special'] } }, rewards: { offerCount: 1 } });
   for (const source of ['treasure', 'combat']) {
     let held = 0, other = 0;
+    const run = fresh(registries, 1, [HELD]);
     for (let i = 0; i < 2000; i++) {
-      const run = fresh(registries, i + 1, [HELD]);
+      delete run.gameProfileRewardOffers;
       for (const option of gameProfileRewardOffers(registries, run, createRng(40 + i), { offerId: 'o', source }).options) if (option.kind === 'potions') (option.id === HELD ? held++ : other++);
     }
     assert.ok(other > 100, `${source}: potion offers happen (${other})`);
