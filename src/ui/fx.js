@@ -34,7 +34,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { actionPacing, floaterLifeMs } from './animationPace.js';
+import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -370,6 +370,68 @@ export function combatReadoutLayer(layer, create = true) {
   return host;
 }
 
+// Per anchor: the floaters still showing, each with its lane and the lift that lane earned.
+// Lane 0 is the spawn point; a higher lane lifts its number above the numbers still in its way.
+// A number rises as it ages (num-life in styles/combat.css: 3 px by 12% of its life, 30 px by
+// 66.6%, 52 px at the end; nothing under Reduced motion), so an older number that has already
+// risen past its own height is out of the newcomer's way and the newcomer starts at lane 0 below
+// it, as it would have without lanes. Only numbers that have not cleared their own height block,
+// and a blocked newcomer is lifted to clear the highest current top among them. Three lanes, then
+// the lane freeing soonest is reused.
+const FLOAT_LANES = 3;
+const floaterLanes = new WeakMap();
+function floaterRise(entry, now) {
+  if (reducedMotionRequested()) return 0;
+  const f = Math.max(0, Math.min(1, (now - entry.start) / Math.max(1, entry.until - entry.start)));
+  if (f < 0.12) return f < 0.04 ? 0 : (f - 0.04) / 0.08 * 3;
+  if (f < 0.666) return 3 + (f - 0.12) / 0.546 * 27;
+  return 30 + (f - 0.666) / 0.334 * 22;
+}
+function floaterBlocks(entry, now) {
+  return !entry.height || floaterRise(entry, now) < entry.height * 1.1;
+}
+function floaterLaneFor(anchor, lifeMs) {
+  const now = Date.now();
+  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
+  const blocking = live.filter((entry) => floaterBlocks(entry, now));
+  let lane = -1;
+  for (let i = 0; i < FLOAT_LANES && lane < 0; i++) if (!blocking.some((entry) => entry.lane === i)) lane = i;
+  if (lane < 0) {
+    const soonest = blocking.reduce((a, b) => (b.until < a.until ? b : a));
+    lane = soonest.lane;
+    live.splice(live.indexOf(soonest), 1);
+  }
+  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, el: null };
+  live.push(entry);
+  floaterLanes.set(anchor, live);
+  return entry;
+}
+// Floaters share one top edge, so a lane's lift must put the number's bottom above the current
+// top of every live number in a lower lane: that number's lift plus how far it has risen, less
+// how far this one has risen itself, plus this one's own height. Every live lower number counts
+// here, cleared or not (the blocking test picks lanes only): a re-lift that skipped a cleared
+// middle number would drop the one above it onto that number. Lane 0 never lifts.
+function floaterLaneLift(anchor, entry, now) {
+  if (entry.lane === 0) return 0;
+  let clear = -Infinity;
+  for (const other of floaterLanes.get(anchor) || []) {
+    if (other.lane >= entry.lane || other.until <= now) continue;
+    clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
+  }
+  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
+}
+// A newcomer in a reused lower lane may be taller than the number it replaced, and the numbers
+// below it keep rising, so every live floater at the anchor is re-lifted, lane by lane, from the
+// lanes as they stand now, not as they were when it spawned.
+function reliftFloaterLanes(anchor) {
+  const now = Date.now();
+  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now).sort((a, b) => a.lane - b.lane);
+  for (const entry of live) {
+    entry.lift = floaterLaneLift(anchor, entry, now);
+    if (entry.el && entry.lane > 0) entry.el.style.setProperty('--float-lane', `${Math.round(entry.lift)}px`);
+  }
+}
+
 /**
  * Spawn a floating number over an anchor element.
  *
@@ -413,6 +475,12 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   el.style.top = `${top}px`;
   const life = floaterLifeMs();
   el.style.setProperty('--float-ms', `${life}ms`);
+  // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
+  // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
+  // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
+  const entry = placement.lane === false ? null : floaterLaneFor(anchor, life);
+  const lane = entry?.lane ?? 0;
+  el.dataset.floatLane = String(lane);
   layer.appendChild(el);
   // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
   // layout rather than guessed from the string. offsetWidth is the untransformed
@@ -425,7 +493,11 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
     const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    return () => { el.style.left = `${at.left + half}px`; };
+    if (entry) { entry.height = height; entry.el = el; }
+    return () => {
+      el.style.left = `${at.left + half}px`;
+      if (entry) reliftFloaterLanes(anchor);
+    };
   });
   setTimeout(() => el.remove(), life + 60);
   return el;
@@ -461,8 +533,8 @@ export const CALLOUT_KINDS = {
   blocked: { string: 'combat.callout.blocked', tone: 'block' },
   immune: { string: 'combat.callout.immune', tone: 'immune' },
 };
-export const CALLOUT_MS = 900;
-export const CALLOUT_INSTANT_MS = 500;
+export const CALLOUT_MS = 900; // legacy base; live words use calloutLifeMs() (animationPace.js)
+export const CALLOUT_INSTANT_MS = COMBAT_TIMING.calloutInstantMs;
 // The words over one fighter (owner, 2026-10-12): at most three show at once, in three
 // lanes (lane 0 is the top). Words start one step apart in priority order; a fourth waits
 // for the earliest visible one to finish, and nothing is dropped.
@@ -516,7 +588,7 @@ export function stackPriority(kind = '') {
  * `lanes` are how long each lane is still busy, from now. Returns [{ id, start, lane }],
  * start in ms from now, in priority order (ties keep arrival order).
  */
-export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = CALLOUT_MS, after = null } = {}) {
+export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = calloutLifeMs(), after = null } = {}) {
   const sorted = items.map((item, arrival) => ({ ...item, arrival, rank: stackPriority(item.kind) }))
     .sort((a, b) => b.rank - a.rank || a.arrival - b.arrival);
   const free = [...lanes];
@@ -550,7 +622,7 @@ function queueFor(layer, forId) {
  * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
  * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
  */
-function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
+function layoutCallouts(layer, anchor, q, now, lifeMs = calloutLifeMs()) {
   const active = q.items.filter((it) => it.start <= now);
   const pending = q.items.filter((it) => it.start > now);
   const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
@@ -653,7 +725,7 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   el.textContent = def.word || t(def.string);
   if (kind.startsWith('buff:')) el.style.visibility = 'hidden';
   if (def.colour) el.style.color = def.colour;
-  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS * (actionPacing().scale || 1);
+  const ms = calloutLifeMs();
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // Not started yet: the layout plans it (start Infinity until then).
   const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
@@ -669,7 +741,8 @@ export function clearCallouts(layer) {
   const queues = layer && calloutQueues.get(layer);
   for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
-  // The waiting queue goes with the visible words.
+  // The waiting queue goes with the visible words. Numbers keep their lifetime through a skip
+  // (combat-readout-layer test), so their lane records stay with them until they expire.
   if (layer) calloutQueues.delete(layer);
 }
 
@@ -2030,19 +2103,21 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           if (outcome) return;
           const anchor = ctx.anchorFor(e.targetId);
-          // Barrier and Ward stack above the Block / Health pair.
-          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
-          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
-          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false });
-          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
+          // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
+          // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
+          const lane = parts.barrier || parts.ward || parts.poise || parts.pierced || parts.immune || paired ? false : undefined;
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
+          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false });
+            { x: paired ? -26 : 0, jitter: false, lane });
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
             floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
-              { x: paired ? 26 : 0, jitter: !paired });
+              { x: paired ? 26 : 0, jitter: !paired, lane });
           }
         },
       };
