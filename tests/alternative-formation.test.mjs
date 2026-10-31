@@ -305,3 +305,22 @@ test('narrow phone strips keep sprite width and stay above the parent short prof
     assert.ok(cell.width - 2 * cell.skew * cell.height >= grid.minArtLaneFraction * width * (grid.right - grid.left) / 3 - 1e-6, `${width}x${height}: artwork keeps under ${grid.minArtLaneFraction} of the unsheared lane`);
   }
 });
+
+// Owner 2026-10-31: the battle grid sits lower so the back rank stands on the painted ground and the player's rank
+// ends above the hand. Measured in Chromium at 1280x800, 1200x730 and 390x844 (back rank top = ground paint top,
+// rank D bottom <= hand top). Desktop was top .3 / rowHeight .17, mobile .32 / .16; each profile still validates
+// (top + 4 * rowHeight <= 1) and keeps a clear margin for the hand under rank D.
+test('desktop and phone profiles stand the back rank lower and keep rank D above the hand', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.4, 0.13]);
+  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.43, 0.14]);
+  for (const key of ['desktop', 'mobile']) {
+    const p = grid.profiles[key];
+    assert.ok(p.top >= 0.4, `${key}: the back rank starts at or below 40% of the field`);
+    // The hand reaches up to 94% of the desktop field and to the field's bottom edge on a phone (measured).
+    assert.ok(p.top + 4 * p.rowHeight <= (key === 'desktop' ? 0.94 : 1), `${key}: rank D ends above the hand`);
+  }
+  const formation = alternativeFormation(plan(3), 1280, 516, false, { formFactor: 'desktop' });
+  const [back] = formation.visualBands;
+  assert.ok(Math.abs(back.top - 516 * 0.4) < 1e-6 && Math.abs(back.height - 516 * 0.13) < 1e-6);
+});
