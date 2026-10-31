@@ -28,7 +28,7 @@ function rowNode(registries, row) {
   const word = !delta && row.kind !== 'armament' && row.kind !== 'sigil'
     ? el('span', { class: 'sp-v', text: row.kind === 'relic' ? t(row.gained ? 'whatChanged.gained' : 'whatChanged.lost') : (row.after || row.before) }) : null;
   // "Added to deck" is for cards only; gear that arrives or leaves reads Gained or Lost.
-  const hint = row.kind === 'sigil' ? t(row.change === 'installed' ? 'whatChanged.sigil.installed' : 'whatChanged.sigil.removed', { piece: row.pieceName })
+  const hint = row.kind === 'sigil' ? (row.change && row.pieceName ? t(row.change === 'installed' ? 'whatChanged.sigil.installed' : 'whatChanged.sigil.removed', { piece: row.pieceName }) : '')
     : row.kind === 'armament' && (row.change === 'added' || row.change === 'removed') ? t(row.change === 'added' ? 'whatChanged.gained' : 'whatChanged.lost')
     : CHANGE_WORD[row.change] ? t(CHANGE_WORD[row.change]) : '';
   const wrap = el('div', { class: 'what-changed-row', dataset: { whatChangedKind: row.kind, ...(row.change ? { whatChangedChange: row.change } : {}) } });

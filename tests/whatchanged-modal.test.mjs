@@ -48,3 +48,14 @@ test('closing the receipt lands focus inside the screen when its opener was redr
     assert.notEqual(dom.document.activeElement, hud, 'not the HUD button');
   });
 });
+
+test('a cut sigil slot row shows the slot count only, never "Removed from"', () => {
+  withKitDom((dom) => {
+    const rows = [Object.freeze({ kind: 'sigil', label: 'Straight Sword · SIGIL SLOTS', before: '1', after: '2', delta: 1 })];
+    openWhatChangedModal({ title: 'The Anvil', lead: '', rows, registries, onClose: () => {} });
+    const panel = dom.document.body.querySelector('.what-changed-modal');
+    assert.ok(panel.querySelector('[data-what-changed-kind="sigil"]'));
+    assert.doesNotMatch(panel.outerHTML, /Removed from|Installed on|undefined/);
+    assert.match(panel.outerHTML, /SIGIL SLOTS/);
+  });
+});
