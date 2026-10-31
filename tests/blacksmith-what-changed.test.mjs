@@ -83,7 +83,7 @@ test('a refused purchase opens no receipt and keeps the inline refusal', () => {
 test('ranking up a card opens a receipt with the card row', () => {
   withKitDom((dom) => {
     const run = smithRun(coreOut, { cinders: 5000, stones: 10 });
-    if (!run.shopStock.offerings.includes('rankUp')) return;
+    if (!run.shopStock.offerings.includes('rankUp')) run.shopStock.offerings.push('rankUp'); // always run the rank-up case
     const app = mount(dom, run);
     const go = [...app.querySelectorAll('button')].find((b) => b.textContent === 'Rank up' && !b.disabled);
     assert.ok(go, 'a rank-up action is drawn');
