@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-31
 
+- **Mana refills to full when a fight ends** ([#2424](https://github.com/cehinds/AshenSpire/pull/2424), `0.7.2.53`). Every fight now ends with your Mana restored, in solo and co-op, instead of carrying what was left to the next one; the Mana "After a won fight" recovery setting is hidden since it no longer matters.
 - **Six zero-cost cards with Momentum and Honed ramp upgrades** ([#2421](https://github.com/cehinds/AshenSpire/pull/2421), `0.7.2.53`). Flick, Pebble Throw, Brace, Quick Guard, Whetstone Nick and Tempered Edge cost nothing and get no stance Stamina bonus; upgrades raise their numbers or add Momentum (grows per play this combat) or Honed (grows per play across the run, on Exhaust cards).
 - **Hand cards shrink their text to two lines before asking you to Inspect, and the (i) badge sits on its card** ([#2420](https://github.com/cehinds/AshenSpire/pull/2420), `0.7.2.51`). Rules text shrinks first; one or two lines show on the card and only three or more fall back to "Inspect card." The info badge over the selected card is centred on it again.
 - **The selected enemy's card sits left of a lone enemy and under the chosen one in a crowd** ([#2419](https://github.com/cehinds/AshenSpire/pull/2419), `0.7.2.49`). With one enemy alive its detail card now appears to its left instead of below; with several it sits under the selected enemy and shifts in from the screen edge so it is never cut off.
