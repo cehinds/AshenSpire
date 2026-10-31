@@ -2102,7 +2102,6 @@ body.reduce-motion .target-hud-detail { transition: none; }
 @media (hover: none) {
   :root .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { filter: none; box-shadow: none; background: var(--panel); border-color: var(--line); }
 }
-.option-row:disabled { opacity: 0.55; }
 
 /* Debug mode's Console button (combatDebugButton.js): fixed, above every combat layer, tiny. */
 .combat-debug-console {
