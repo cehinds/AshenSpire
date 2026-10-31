@@ -84,3 +84,23 @@ test('the same seed rolls the same contest', () => {
   const roll = () => { const c = fight('wanderingSoldier', 77); play(c); return c.eventLog.find(row => row.type.startsWith('contest')).roll; };
   assert.equal(roll(), roll());
 });
+
+// ---- log and callouts ---------------------------------------------------------------------------------------------
+import { combatLogEntries } from '../src/model/combatLog.js';
+import { calloutForEvent, CALLOUT_KINDS } from '../src/ui/fx.js';
+import { t } from '../src/ui/strings.js';
+test("the combat log shows the owner's example contest line", () => {
+  const result = rollContest({ rng: stub(5), caster, target: enemy, kind: 'mental', rank: 1, ctx });
+  const event = { type: 'contestPassed', sourceId: 'player', targetId: 'e1', contest: result, ...result };
+  const [entry] = combatLogEntries([event], { registries: reg, players: [], enemies: [] });
+  assert.match(JSON.stringify(entry), /Contest: d20 \[5\] \+ INT 1 \+ WIS 2 \+ rank 1 = 9 vs Poise 7 \+ WIS 1 \+ level 1 = 9 · success/);
+  const failed = rollContest({ rng: stub(4), caster, target: enemy, kind: 'mental', rank: 1, ctx });
+  const [no] = combatLogEntries([{ type: 'contestFailed', sourceId: 'player', targetId: 'e1', contest: failed, ...failed }], { registries: reg, players: [], enemies: [] });
+  assert.match(JSON.stringify(no), /= 8 vs Poise 7 \+ WIS 1 \+ level 1 = 9 · failure/);
+});
+test('callouts: Read when it passes, Resisted when it fails', () => {
+  assert.deepEqual(calloutForEvent({ type: 'contestPassed', targetId: 'e1' }), { kind: 'contestPassed', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'contestFailed', targetId: 'e1' }), { kind: 'contestFailed', targetId: 'e1' });
+  assert.equal(t(CALLOUT_KINDS.contestPassed.string), 'Read');
+  assert.equal(t(CALLOUT_KINDS.contestFailed.string), 'Resisted');
+});
