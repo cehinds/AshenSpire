@@ -432,7 +432,11 @@ function heldBackInCard(el) {
  * the held-back gate (heldBackInCard) and everything else keeps tap-to-select, tap-again-to-explain.
  */
 function oneClickContext(el) {
-  return !!el?.closest?.('.card-inspection-modal, .card-inspection-layout, .card.selected, .card.inspection-selected');
+  if (el?.closest?.('.card-inspection-modal, .card-inspection-layout')) return true;
+  const card = el?.closest?.('.card.selected, .card.inspection-selected');
+  // A hold or press selects the card at pointerdown, before the click: a hand card pressed while it was NOT
+  // selected (`data-pressed-selected="0"`, stamped below) is still on its first tap, which selects only.
+  return !!card && !(card.closest('.hand') && card.dataset.pressedSelected === '0');
 }
 
 const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
@@ -731,6 +735,8 @@ function wireTitles() {
     return null;
   };
   document.addEventListener('pointerdown', ev => {
+    const pressed = ev.target?.closest?.('.hand .card');
+    if (pressed) pressed.dataset.pressedSelected = pressed.matches('.selected, .inspection-selected') ? '1' : '0';
     // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection,
     // and it does not reach the hand, whose press handling would re-render the lane under the finger.
     if (symbolUnderLane(ev)) ev.stopPropagation();
