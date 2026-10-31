@@ -2104,7 +2104,11 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: (ctx) => {
           if (sequential && !outcome) hitSounds();
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
-          if (outcome) return;
+          // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
+          if (outcome) {
+            if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: -34, jitter: false, lane: false });
+            return;
+          }
           const anchor = ctx.anchorFor(e.targetId);
           // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
           // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
