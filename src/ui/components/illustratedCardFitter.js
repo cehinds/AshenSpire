@@ -53,8 +53,8 @@ export function fitIllustratedCards(cards) {
       const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:bounded?1.25:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
-        lines:bounded?3:rules?Infinity:Number(text.dataset.maxLines)||1,
+      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+        lines:bounded?GLANCE_LINES:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesHidden==='true'};
       // A glance face shows its rules in one or two rendered lines; the font
