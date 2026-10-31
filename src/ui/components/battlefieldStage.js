@@ -1535,7 +1535,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
       standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      coverFloor: true, zoom, floorShadowTop: holdFloorShadowTop(layoutState, Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined) });
+      coverFloor: true, zoom, floorTop: plan.visualBands?.length ? fieldTop + plan.visualBands[0].top / zoom : undefined, floorShadowTop: holdFloorShadowTop(layoutState, Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined) });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
