@@ -23,3 +23,12 @@ test('no stance, or a rules version without stances, shows no stance badge', () 
   assert.equal(stanceBadgeFor(entity('counter'), { combatExpansionVersion: 1 }), null);
   assert.equal(combatHealthModel({ defense: 5, stance: null }).badges.some(b => b.kind === 'stance'), false);
 });
+
+test('the Counter badge has its own glyph, distinct from every stance sigil', () => {
+  const model = combatHealthModel({ counterStacks: 9, reflectStacks: 2, stance: stanceBadgeFor(entity('counter'), ctx) });
+  const glyphs = Object.fromEntries(model.badges.map(b => [b.kind, b.glyph || b.kind]));
+  assert.equal(glyphs.counter, 'riposte');
+  assert.notEqual(glyphs.counter, glyphs.stance);
+  assert.equal(model.badges.find(b => b.kind === 'counter').value, 9);
+  assert.equal(model.badges.find(b => b.kind === 'reflect').value, 2);
+});

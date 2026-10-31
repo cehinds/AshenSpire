@@ -33,7 +33,7 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
       ...(Number.isFinite(evasion) && count(evasion) > 0 ? [{ kind: 'evade', label: t('card.tags.evade'), value: count(evasion) }] : []),
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
-      ...(count(counterStacks) > 0 ? [{ kind: 'counter', label: t('combat.protection.counter'), value: count(counterStacks),
+      ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
         help: tFull('combat.protection.counter', { stacks: count(counterStacks), decay: mechanics.counter.decayPerTurn }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
         help: tFull('combat.protection.reflect', { reduce: Math.round(100 * reflectReduceFraction(count(reflectStacks))), back: Math.round(100 * reflectReturnFraction(count(reflectStacks))) }) }] : []),

@@ -119,7 +119,7 @@
 }
 
 /* Mini HUD Evade badge: the symbol is 15.3px centered in its 22px box, with
-   the 7px value beginning one pixel past the symbol's lower-right edge. */
+   the count inside the badge's lower-right corner (owner 2026-10-31: every count renders inside, like Block and Poise). */
 :root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) {
   position: relative;
   display: block;
@@ -150,14 +150,14 @@
 }
 :root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
   position: absolute;
-  left: calc(19.65px / var(--ui-zoom, 1));
-  top: calc(19.65px / var(--ui-zoom, 1));
+  left: calc(11.5px / var(--ui-zoom, 1));
+  top: calc(11.5px / var(--ui-zoom, 1));
   display: grid;
   place-items: center;
-  width: calc(7px / var(--ui-zoom, 1));
-  height: calc(7px / var(--ui-zoom, 1));
+  width: calc(10px / var(--ui-zoom, 1));
+  height: calc(10px / var(--ui-zoom, 1));
   transform: none;
-  font-size: calc(7px / var(--ui-zoom, 1));
+  font-size: calc(9px / var(--ui-zoom, 1));
   line-height: 1;
   overflow: visible;
 }

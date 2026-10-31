@@ -224,3 +224,8 @@
 :root .combat .combat-health-stance[data-stance='defend'] { color: var(--block-silver, silver); }
 :root .combat .combat-health-stance[data-stance='evade'] { color: mediumseagreen; }
 :root .combat .combat-health-stance[data-stance='casting'], :root .combat .combat-health-stance[data-stance='prepared'] { color: mediumpurple; }
+
+/* A wrapped badge row sizes to its children so nothing below overlaps it (the fixed desktop row heights above are minimums here). */
+:root .combat.combat.combat[data-layout='formation'] .combatant :is(.target-hud-overhead-meters, .combatant-mini-hud, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
+  height: auto !important;
+}
