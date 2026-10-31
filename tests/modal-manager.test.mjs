@@ -553,7 +553,7 @@ test('a background/resume cycle changes nothing about the chrome lock and adds n
       ];
       for (const [where, type] of cycle) (where === 'document' ? document : win).dispatchEvent?.({ type });
       assert.deepEqual(screenState(), before);
-      assert.deepEqual(seen.filter((entry) => !/ keydown$/.test(entry)), [], 'the manager adds only keydown, never a lifecycle listener');
+      assert.deepEqual(seen.filter((entry) => !/ (keydown|focusin)$/.test(entry)), [], 'the manager adds only keydown and focusin (the page lock), never a lifecycle listener');
       releaseDoor();
       assert.equal(strip.hasAttribute('data-page-locked'), false);
     } finally {

@@ -39,6 +39,7 @@ import { planButtonGroup } from '../models/ButtonSizeModel.js';
 import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
 import { registerModal } from '../modalState.js';
+import { focusableControls } from '../modalManager.js';
 
 /** The shared close icon uses its named asset, with a plain-text fallback. */
 export const MODAL_CLOSE_GLYPH = 'close';
@@ -186,9 +187,7 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
     if (event.key === 'Tab') {
       const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
       if (top !== panel) return;
-      const controls = [...panel.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
-        .filter(el => el.tabIndex >= 0 && !el.matches(':disabled') && !el.closest('[inert]')
-          && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+      const controls = focusableControls(panel);
       const first = controls[0], last = controls.at(-1);
       const active = document.activeElement;
       if (!first || !panel.contains(active) || active === panel

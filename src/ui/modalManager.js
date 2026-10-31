@@ -129,6 +129,35 @@ function holds(a, b) {
   try { return typeof a.contains === 'function' && a.contains(b); } catch { return false; }
 }
 
+// The index (in `live`) of the entry holding the page lock, or -1.
+function lockIndex(live) {
+  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element && !live[i].unarmed) return i;
+  return -1;
+}
+
+// The elements the page lock leaves live, lowest first (the lock entry's element
+// and every entry above it), or null when no lock stands. The last is the top.
+function keptElements() {
+  const live = stack.filter((entry) => !entry.closing);
+  const lockAt = lockIndex(live);
+  if (lockAt < 0) return null;
+  const above = live.slice(lockAt + 1);
+  if (!above.every((entry) => entry.element)) return null;
+  const kept = [live[lockAt].element, ...above.map((entry) => entry.element)];
+  return kept.every((el) => el.isConnected !== false) ? kept : null;
+}
+
+/**
+ * The controls a Tab can reach inside `root`: the one definition of "focusable"
+ * the shell's own trap and the manager's page lock share.
+ */
+export function focusableControls(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return [];
+  return [...root.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
+    .filter((el) => el.tabIndex >= 0 && !el.matches(':disabled') && !el.closest('[inert]')
+      && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+}
+
 /**
  * The page-level effects of the stack, recomputed on every push and pop:
  *   - `data-modal-depth` on <html> (CSS locks the body scroll off it);
@@ -157,8 +186,7 @@ function syncPage() {
   // place — the page beneath must not wake while the lower dialog still stands —
   // and is itself left live along with everything that holds it. An entry above
   // the lock with no element cannot be exempted, so the lock lifts, as before.
-  let lockAt = -1;
-  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element && !live[i].unarmed) { lockAt = i; break; }
+  const lockAt = lockIndex(live);
   const above = lockAt >= 0 ? live.slice(lockAt + 1) : [];
   const want = new Set();
   if (lockAt >= 0 && above.every((entry) => entry.element)) {
@@ -233,6 +261,58 @@ function ensureEscape() {
   document.addEventListener('keydown', onEscape, true);
 }
 
+// KEYBOARD CONTAINMENT. `inert` used to keep Tab and programmatic focus out of
+// the page behind a dialog; the lock now does it with two document listeners,
+// installed with the first lock (and again if the document object changes).
+// Tab from outside the kept elements, or off either end of the top one, wraps
+// into the top one. Focus that lands outside them (background code calling
+// .focus() while a dialog is open) is bounced back to where it last was.
+let focusLockOn = null;
+let lastFocus = null;
+
+function onLockTab(event) {
+  if (event.key !== 'Tab' || event.defaultPrevented) return;
+  const kept = keptElements();
+  if (!kept) return;
+  const top = kept[kept.length - 1];
+  const active = document.activeElement;
+  const controls = focusableControls(top);
+  const first = controls[0], last = controls.at(-1);
+  const inTop = holds(top, active);
+  if (!inTop && kept.some((el) => holds(el, active))) return; // walking a lower kept dialog
+  if (inTop && active !== top && first && (event.shiftKey ? active !== first : active !== last)) return;
+  event.preventDefault();
+  const to = event.shiftKey ? last : first;
+  if (to) to.focus?.(); else focusInto(top);
+}
+
+function focusInto(top) {
+  const last = lastFocus;
+  if (last && last.isConnected !== false && holds(top, last) && last !== top) { last.focus?.({ preventScroll: true }); return; }
+  const first = focusableControls(top)[0];
+  if (first) { first.focus?.({ preventScroll: true }); return; }
+  if (!top.hasAttribute?.('tabindex')) top.setAttribute?.('tabindex', '-1');
+  top.focus?.({ preventScroll: true });
+}
+
+function onLockFocusin(event) {
+  const kept = keptElements();
+  const target = event.target;
+  if (!kept || !target || target === document || target === document.body) {
+    return;
+  }
+  if (kept.some((el) => holds(el, target))) { lastFocus = target; return; }
+  focusInto(kept[kept.length - 1]);
+}
+
+function ensureFocusLock() {
+  if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+  if (focusLockOn === document) return;
+  focusLockOn = document;
+  document.addEventListener('keydown', onLockTab, true);
+  document.addEventListener('focusin', onLockFocusin, true);
+}
+
 /**
  * registerModal(name, element, opts = {}) → release()
  *
@@ -264,6 +344,7 @@ export function registerModal(name, element, opts = {}) {
   };
   stack.push(entry);
   if (entry.dismiss) ensureEscape();
+  if (entry.inert && element) ensureFocusLock();
   enterHistory(entry);
   syncPage();
   let released = false;
