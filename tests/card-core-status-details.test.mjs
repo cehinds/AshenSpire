@@ -14,7 +14,7 @@ import { createFoundation } from '../src/engine/combatRules.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatusPresentationModel.js';
 import { activeCombatAbilities } from '../src/ui/components/combatAbilities.js';
-import { coreStatusPresentation } from '../src/model/statusPresentation.js';
+import { coreStatusPresentation, statusPresentationDefinition } from '../src/model/statusPresentation.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -83,7 +83,8 @@ test('Burn tooltip keeps its damage rule and describes the actual custom, defaul
     assert.equal(combat.player.statuses.burn.stacks, 3);
     const text = statusTooltipText(reg.statuses.get('burn'), combat);
     assert.match(text, /loses HP equal to Burn stacks \(ignores Block\)/);
-    assert.doesNotMatch(text, /One stack burns out each turn/);
+    if (enabled) assert.doesNotMatch(text, /One stack burns out each turn/);
+    else assert.match(text, /One stack burns out each turn/, 'legacy source prose remains unchanged');
     assert.match(text, new RegExp(`decreases by ${amount} at the ${clock} of ${enabled ? 'the' : 'its'} owner's turn`));
     if (enabled) {
       decayAtTurnEnd(combat, combat.player);
@@ -96,6 +97,44 @@ test('Burn tooltip keeps its damage rule and describes the actual custom, defaul
     }
     assert.equal(combat.player.statuses.burn.stacks, 3 - amount);
   }
+});
+
+test('Core-only status wording adapts custom timers without changing versioned definitions or custom tooltips', () => {
+  const { combat, reg } = fixture({ amount: 2 });
+  const original = reg.statuses.get('crimsonBlight');
+  const custom = { ...original, decay: { ...original.decay, duration: 5 } };
+  const before = structuredClone(custom);
+  combat.registries = { ...reg, statuses: { ...reg.statuses,
+    get: id => id === 'crimsonBlight' ? custom : reg.statuses.get(id) } };
+  applyStatus(combat, combat.player, 'crimsonBlight', 2);
+  assert.equal(combat.player.statuses.crimsonBlight.duration, 5);
+  const text = statusTooltipText(custom, combat);
+  assert.match(text, /expires entirely after 5 turns/);
+  assert.match(text, /5 ticks at the start/);
+  assert.doesNotMatch(text, /after 3 turns|Re-applying adds stacks and refreshes/);
+  combat.turn++; decayAtTurnStart(combat, combat.player);
+  assert.equal(combat.player.statuses.crimsonBlight.duration, 4);
+  assert.deepEqual(custom, before, 'presentation never edits the versioned definition');
+  const authored = { ...custom, tooltip: 'Custom 3-turn wording and a bespoke application rule.',
+    description: 'Independent custom description: three turns, with authored stacking.' };
+  assert.equal(statusPresentationDefinition(combat, 'crimsonBlight', authored).tooltip, authored.tooltip);
+  assert.equal(statusPresentationDefinition(combat, 'crimsonBlight', authored).description, authored.description);
+  assert.equal(statusPresentationDefinition(combat, 'crimsonBlight', { ...custom, description: authored.description }).description,
+    authored.description, 'normalizing a known tooltip does not replace a custom description');
+  const customBurn = { ...reg.statuses.get('burn'), tooltip: 'Burn from a custom source lasts three turns.' };
+  assert.equal(statusPresentationDefinition(combat, 'burn', customBurn).tooltip, customBurn.tooltip);
+  const projected = statusPresentationDefinition(combat, 'crimsonBlight', custom);
+  assert.equal(statusTooltipText(projected, { coreStatusAuthority: { enabled: false } }), statusTooltipText(custom),
+    'explicit off restores the original legacy definition before presentation');
+  const expandedOff = statusTooltipText(projected, { combatExpansionVersion: 2, coreStatusAuthority: { enabled: false } });
+  assert.match(expandedOff, /expires entirely after 5 turns/);
+  assert.match(expandedOff, /at the cap leaves the timer unchanged/);
+  assert.doesNotMatch(expandedOff, /Re-applying adds stacks and refreshes|at the start of the owner's turn/);
+  const off = { ...combat, fixCoreRules: { ...combat.fixCoreRules, enabled: false } };
+  assert.doesNotMatch(statusPresentationDefinition(off, 'crimsonBlight', custom).tooltip, /Re-applying adds stacks and refreshes/);
+  assert.strictEqual(statusPresentationDefinition({ ...off, combatExpansionVersion: 1 }, 'crimsonBlight', custom), custom);
+  assert.strictEqual(statusPresentationDefinition(off, 'burn', reg.statuses.get('burn')), reg.statuses.get('burn'));
+  assert.match(original.tooltip, /after 3 turns\. Re-applying adds stacks and refreshes/);
 });
 
 test('Core foundation stacking keeps its application cap/clock together with Core decay', () => {
