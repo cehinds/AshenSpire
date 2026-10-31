@@ -150,6 +150,110 @@ COMMANDS.checks = async (args) => {
   return r.exit;
 };
 
+// ---- regen ----
+
+export const REGEN_STEPS = [
+  ['tools/about-changelog.mjs', '--write'],
+  ['tools/content-build.mjs'],
+  ['tools/framework-data-build.mjs'],
+  ['tools/game-config.mjs', 'build'],
+  ['tools/build-game.mjs'],
+];
+
+// Returns { exit, steps:[{cmd,status}], failed? }. Stops at the first failing step.
+export function regen(cwd = ROOT) {
+  const steps = [];
+  for (const args of REGEN_STEPS) {
+    const r = node(args, { cwd });
+    steps.push({ cmd: `node ${args.join(' ')}`, status: r.status });
+    if (r.status !== 0) {
+      const t = triage(r.out);
+      return { exit: Math.max(1, t.exit), steps, failed: args[0], tail: r.out.trim().split('\n').slice(-8).join('\n') };
+    }
+  }
+  return { exit: 0, steps };
+}
+
+COMMANDS.regen = async (args) => {
+  const r = regen();
+  emit({ cmd: 'regen', verdict: r.exit === 0 ? 'regenerated' : 'failed', ...r }, args.includes('--human'),
+    o => [`jev regen: ${o.verdict}`, ...o.steps.map(s => `  ${s.status === 0 ? 'ok  ' : 'FAIL'} ${s.cmd}`), o.tail || ''].join('\n').trim());
+  return r.exit;
+};
+
+// ---- restamp ----
+
+const STAMP_RE = /`\d+\.\d+\.\d+\.\d+`/;
+const DATE_HEADING = /^## \d{4}-\d{2}-\d{2}\b/;
+
+// Pure. Sets the first receipt under the newest date heading that names PR #pr to
+// `build`, and drops repeated identical receipt lines under that heading.
+export function restampChangelog(text, { pr, build }) {
+  const lines = text.split('\n');
+  const start = lines.findIndex(l => DATE_HEADING.test(l));
+  if (start < 0) throw new Error('CHANGELOG.md has no "## <date>" heading');
+  let end = lines.findIndex((l, i) => i > start && /^## /.test(l));
+  if (end < 0) end = lines.length;
+  const seen = new Set();
+  const kept = [];
+  let deduped = 0;
+  for (let i = start + 1; i < end; i++) {
+    const line = lines[i];
+    if (/^- /.test(line)) {
+      if (seen.has(line)) { deduped++; continue; }
+      seen.add(line);
+    }
+    kept.push(line);
+  }
+  const named = new RegExp(`/pull/${pr}\\)|\\(#${pr}\\b|\\[#${pr}\\]`);
+  const at = kept.findIndex(l => /^- /.test(l) && named.test(l));
+  if (at < 0) throw new Error(`no receipt under the newest date heading names PR #${pr}`);
+  if (!STAMP_RE.test(kept[at])) throw new Error(`the receipt for PR #${pr} carries no \`<release>.<ordinal>\` stamp to replace`);
+  const before = kept[at];
+  kept[at] = before.replace(STAMP_RE, `\`${build}\``);
+  const out = [...lines.slice(0, start + 1), ...kept, ...lines.slice(end)].join('\n');
+  return { text: out, deduped, restamped: kept[at] !== before, from: (before.match(STAMP_RE) || [''])[0].replace(/`/g, ''), to: build };
+}
+
+export function currentBuild(root = ROOT) {
+  const b = JSON.parse(readFileSync(resolve(root, 'buildordinal.json'), 'utf8'));
+  return `${b.release}.${b.ordinal}`;
+}
+
+// The PR this branch carries: --pr, else the branch's open PR via gh when present.
+export function detectPr(args, cwd = ROOT) {
+  const at = args.indexOf('--pr');
+  if (at >= 0) return Number(args[at + 1]);
+  const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd }).out.trim();
+  const r = run('gh', ['pr', 'list', '--head', branch, '--json', 'number', '-q', '.[0].number'], { cwd });
+  const n = Number(r.out.trim());
+  return r.status === 0 && n > 0 ? n : null;
+}
+
+// Rewrites CHANGELOG.md in root, then (unless noRegen) projects it and checks order.
+export function restamp({ root = ROOT, pr, noRegen = false }) {
+  const path = resolve(root, 'CHANGELOG.md');
+  const r = restampChangelog(readFileSync(path, 'utf8'), { pr, build: currentBuild(root) });
+  writeFileSync(path, r.text);
+  const info = { pr, from: r.from, to: r.to, deduped: r.deduped, restamped: r.restamped };
+  if (noRegen) return { exit: 0, ...info };
+  const w = node(['tools/about-changelog.mjs', '--write'], { cwd: root });
+  if (w.status !== 0) return { exit: 1, ...info, failed: 'about-changelog --write', tail: w.out.trim().split('\n').slice(-6).join('\n') };
+  const c = node(['tools/about-changelog.mjs', '--check-order', '--pending', String(pr)], { cwd: root });
+  if (c.status !== 0) return { exit: Math.max(1, triage(c.out).exit), ...info, failed: 'about-changelog --check-order', tail: c.out.trim().split('\n').slice(-6).join('\n') };
+  return { exit: 0, ...info };
+}
+
+COMMANDS.restamp = async (args) => {
+  const pr = detectPr(args);
+  if (!pr) throw new Error('cannot tell which PR this branch carries; pass --pr N');
+  const rootAt = args.indexOf('--root');
+  const r = restamp({ pr, root: rootAt >= 0 ? resolve(args[rootAt + 1]) : ROOT, noRegen: args.includes('--no-regen') });
+  emit({ cmd: 'restamp', verdict: r.exit === 0 ? 'restamped' : 'failed', ...r }, args.includes('--human'),
+    o => `jev restamp: ${o.verdict} PR #${o.pr} ${o.from} -> ${o.to}, ${o.deduped} duplicate line(s) dropped${o.tail ? `\n${o.tail}` : ''}`);
+  return r.exit;
+};
+
 // ---- entry ----
 
 async function main(argv) {

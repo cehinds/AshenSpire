@@ -94,3 +94,44 @@ test('runChecks: pass is 0, an auto-fixable failure is 1, an unmatched one is 2;
   assert.equal(r.exit, 2);
   assert.equal(runChecks([{ id: 'style-lint' }], () => ({ status: 0, out: '' })).exit, 0);
 });
+
+// ---- restamp ----
+import { restampChangelog } from '../tools/jev.mjs';
+
+const CHANGELOG = [
+  '# Changelog', '', '## 2026-10-31', '',
+  '- **Newest** ([#2436](https://github.com/cehinds/AshenSpire/pull/2436), `0.7.2.71`). Text A.',
+  '- **Mine** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.2.60`). Text B.',
+  '- **Mine** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.2.60`). Text B.',
+  '- **Old** ([#2432](https://github.com/cehinds/AshenSpire/pull/2432), `0.7.2.69`). Text C.',
+  '', '## 2026-10-30', '',
+  '- **Older** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.2.10`). Do not touch.', '',
+].join('\n');
+
+test('restampChangelog sets the first matching receipt and dedupes under the newest heading only', () => {
+  const r = restampChangelog(CHANGELOG, { pr: 2500, build: '0.7.2.72' });
+  assert.equal(r.deduped, 1);
+  assert.equal(r.from, '0.7.2.60');
+  const lines = r.text.split('\n');
+  assert.equal(lines.filter(l => l.includes('#2500') && l.includes('Text B')).length, 1);
+  assert.ok(lines.some(l => l.includes('Text B') && l.includes('`0.7.2.72`')));
+  assert.ok(lines.some(l => l.includes('Do not touch') && l.includes('`0.7.2.10`')), 'older heading is untouched');
+  assert.ok(lines.some(l => l.includes('Text A') && l.includes('`0.7.2.71`')), 'other PRs are untouched');
+});
+
+test('restampChangelog refuses a PR with no receipt under the newest heading', () => {
+  assert.throws(() => restampChangelog(CHANGELOG, { pr: 9999, build: '0.7.2.72' }), /names PR #9999/);
+});
+
+test('CLI restamp on a temp root reads the build from buildordinal.json', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'jev-rs-'));
+  try {
+    writeFileSync(join(dir, 'CHANGELOG.md'), CHANGELOG);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify({ release: '0.7.2', ordinal: 88 }));
+    const r = spawnSync(process.execPath, [JEV, 'restamp', '--pr', '2500', '--root', dir, '--no-regen'], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(readFileSync(join(dir, 'CHANGELOG.md'), 'utf8'), /Text B\./);
+    assert.match(readFileSync(join(dir, 'CHANGELOG.md'), 'utf8'), /pull\/2500\), `0\.7\.2\.88`\)/);
+    assert.equal(JSON.parse(r.stdout.trim()).to, '0.7.2.88');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
