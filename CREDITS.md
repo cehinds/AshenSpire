@@ -870,3 +870,7 @@ reference and SHA-256; the proposal manifest records the original generation
 and extraction provenance. The implementation adds no third-party artwork
 and claims no third-party license. Scepters, ethereal outlines, objects,
 backgrounds and effects remain separate components.
+
+### Reviewed card-art cutouts (2026-10-30)
+
+The 73 additional status/mineral cutouts reuse existing project proposal PNGs byte-for-byte. Source URLs, SHA-256 hashes and original component labels are recorded in `asset-data/card-art/reviewed-library.json` and [AI-Art provenance](https://github.com/cehinds/AI-Art/blob/ashenspire-hd-assets-v25/provenance/AshenSpire/reviewed-card-cutouts.json). Existing authorship and unresolved provenance remain unchanged; reuse does not establish a new license.
