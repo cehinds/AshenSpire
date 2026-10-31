@@ -1609,7 +1609,25 @@ function plannedStatusTargets(ctx, action, eff) {
     && !action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
 }
 
+// Counter and Reflect stacks (owner 2026-10-31, SPEC §17) are host ops outside the portable opcode catalogue
+// (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
+function runGuardStackOpcode(ctx, action, eff) {
+  if (eff.op === 'gainCounterStacks') {
+    if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
+    // A Counter card adds the Block it stands behind, after its own Block grant.
+    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
+    return true;
+  }
+  if (eff.op === 'applyReflect') {
+    if (!fixCoreEnabled(ctx)) return true;
+    for (const t of resolveTargets(ctx, action, eff.target)) gainReflectStacks(ctx, t, evalNum(ctx, action, eff.amount, 1, t));
+    return true;
+  }
+  return false;
+}
+
 function runOpcode(ctx, action, eff) {
+  if (runGuardStackOpcode(ctx, action, eff)) return;
   if(eff.op==='addCinders' && ctx.player && !ctx.run) {
     const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;if(ctx.playerKey){ctx.proposalRewards.byPlayer ||= {};ctx.proposalRewards.byPlayer[ctx.playerKey]=(ctx.proposalRewards.byPlayer[ctx.playerKey] || 0)+amount;}ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
   }
@@ -1733,17 +1751,6 @@ function runOpcode(ctx, action, eff) {
           gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), { ...action.card, cardId: null, syntheticDefense: true }, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
-      break;
-    }
-    // Counter stacks (owner 2026-10-31): a Counter card adds the Block it stands behind, after its own Block grant.
-    case 'gainCounterStacks': {
-      if (!fixCoreEnabled(ctx)) break; // Core 2 only (SPEC §17)
-      for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
-      break;
-    }
-    case 'applyReflect': {
-      if (!fixCoreEnabled(ctx)) break; // Core 2 only (SPEC §17)
-      for (const t of resolveTargets(ctx, action, eff.target)) gainReflectStacks(ctx, t, evalNum(ctx, action, eff.amount, 1, t));
       break;
     }
     case 'gainBarrier': {
