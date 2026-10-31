@@ -98,11 +98,11 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       // Core: the rack is tiered (each piece is sold at the tier it shows) and bought with the Core model's quote.
       if (coreCardUpgrades(run)) {
         for (const item of stock.armaments || []) {
-          const plan = coreArmamentPlan(registries, run, item.id, { priceMult });
+          const plan = coreArmamentPlan(registries, run, item.id);
           if (!plan.def) continue;
           const host = tile(GLYPH.armaments, plan.name, t('blacksmith.armament.lineTier', { tier: plan.tier, cost: plan.cost }));
           host.dataset.armamentTier = String(plan.tier);
-          actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan, { priceMult }).id) });
+          actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan).id) });
           shelf.append(host);
         }
         return;
@@ -120,10 +120,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     },
     weaponArts(shelf) {
       for (const item of stock.weaponArts || []) {
-        const plan = coreWeaponArtPlan(registries, run, item.id, { priceMult });
+        const plan = coreWeaponArtPlan(registries, run, item.id);
         if (!plan.name) continue;
         const host = tile(GLYPH.weaponArts, plan.name, t('blacksmith.weaponArt.line', { cost: plan.cost }));
-        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => commitCoreWeaponArt(registries, run, plan, { priceMult }) });
+        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => commitCoreWeaponArt(registries, run, plan) });
         shelf.append(host);
       }
     },
@@ -258,7 +258,16 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     let displayedQuote;
     const model = () => {
       displayedQuote = blacksmithUpgradePlan(registries, run, selection, { purse: 'stones', priceMult });
-      return smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true });
+      const base = smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true });
+      // The stone-priced model knows nothing of cinders: route the Blacksmith's own quote (its cinder price and whether the
+      // purse can pay it) into the per-selection model, so confirm is blocked, with the reason, when cinders are short.
+      const blocked = base.properties.selected && !displayedQuote.ok;
+      return { ...base, properties: { ...base.properties,
+        ...(coreCardUpgrades(run) ? { purseLabel: `${base.properties.purseLabel} · ${t('blacksmith.modal.cinders', { cinders: run.cinders })}` } : {}),
+        ...(base.properties.selected && displayedQuote.cost ? { consequence: `${t('blacksmith.modal.price', { cinders: displayedQuote.cost })} ${base.properties.consequence}` } : {}),
+        canConfirm: base.properties.canConfirm && !blocked,
+        blockedReasons: blocked && base.properties.canConfirm ? [displayedQuote.reason] : base.properties.blockedReasons,
+      } };
     };
     const modal = mountSmithUpgradeModal(app, model(), {
       registries, meta, returnFocusElement,

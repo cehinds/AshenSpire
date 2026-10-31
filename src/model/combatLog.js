@@ -6,6 +6,7 @@
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
 import { t } from '../ui/strings.js';
+import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -169,6 +170,16 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
         break;
       }
+      // SPEC §17 Contests: "Contest: d20 [5] + INT 1 + WIS 2 + rank 1 = 9 vs Poise 7 + WIS 1 + level 1 = 9 · success".
+      case 'contestPassed': case 'contestFailed': {
+        const c = event.contest || event;
+        const short = id => ATTRIBUTES.find(row => row.id === id)?.shortLabel || word(id);
+        const mine = (c.parts || []).map(part => `${short(part.id)} ${part.value}`).join(' + ');
+        const theirs = (c.dcParts || []).map(part => `${part.id === 'poise' ? 'Poise' : part.id === 'level' ? 'level' : short(part.id)} ${part.value}`).join(' + ');
+        text = t(event.type === 'contestPassed' ? 'combat.log.contestPassed' : 'combat.log.contestFailed', {
+          source, target, roll: c.roll, mine, rank: c.rank ?? 1, total: c.total, theirs, dc: c.dc });
+        break;
+      }
       case 'attackHit': case 'attackMissed': {
         const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
         const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
@@ -186,11 +197,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const hit = `${attackText()} hit ${target}`;
         // Silenced: a hit that is all Force is negated whole.
         if (event.silencedImmune) { text = `${hit}: ${target} is immune to Force (Silenced).`; break; }
-        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0, poiseDamage = event.poiseDamage || 0;
+        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, magicPoise = event.magicPoise || 0, poise = Math.max(0, (event.poiseAbsorbed || 0) - magicPoise), poiseDamage = event.poiseDamage || 0;
         const blocked = event.blocked || 0;
         const hp = Math.max(0, event.amount - blocked);
         // What reached the layers (Barrier, Ward, Block, Poise, then HP), after typed resistance or weakness.
-        const layered = event.amount + barrier + ward + poise;
+        const layered = event.amount + barrier + ward + poise + magicPoise;
         // The hit as it arrived. Newer events say so (`incoming`); an older one's typed reduction is
         // the whole protection before Block (`resisted`) less what Barrier and Ward took.
         const incoming = Number.isFinite(event.incoming) ? event.incoming
@@ -209,6 +220,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           // A piercing hit: the part that went past Block, and how much of it Poise took 1:1 first.
           ...(event.pierced > 0 ? [t(event.piercePoise > 0 ? 'combat.receipt.piercedPoise' : 'combat.receipt.pierced', { n: event.pierced, poise: event.piercePoise || 0 })] : []),
           ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked + (event.pierced || 0)} → ${event.blockRemaining || 0})`] : []),
+          // Magic hits Poise first, 1:1 (owner, 2026-10-31), before the Block it leaves.
+          ...(magicPoise ? [t('combat.receipt.magicPoise', { n: magicPoise }) + ` (${(event.poiseRemaining || 0) + magicPoise + poise} → ${(event.poiseRemaining || 0) + poise})`] : []),
           ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           // Smash vs a defensive stance: the Poise pool loses a share of the hit; none of the hit is absorbed by it.
           ...(poiseDamage ? [`Poise damage ${poiseDamage} (${(event.poiseRemaining || 0) + poiseDamage} → ${event.poiseRemaining || 0})`] : []),

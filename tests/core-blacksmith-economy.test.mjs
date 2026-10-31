@@ -9,7 +9,7 @@ import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
+import { buildBlacksmithStock, blacksmithVisitStock } from '../src/engine/shopKinds.js';
 import { blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../src/model/blacksmith.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt, rollTier } from '../src/model/blacksmithStock.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
@@ -261,4 +261,60 @@ test('save: a Core Blacksmith stock passes validateRunShape and survives a JSON 
   const bad = structuredClone(run);
   bad.shopStock.armaments[0].tier = -1; bad.shopStock.weaponArts[0].cost = 0;
   assert.ok(validateRunShape(bad).some((p) => /tier/.test(p)) && validateRunShape(bad).some((p) => /weaponArts/.test(p)));
+});
+
+test('price multiplier 2 scales each shelf price once (visit door), and a purchase charges exactly the shelf price', () => {
+  const base = smithRun(coreOut, { seed: 14 });
+  const run = smithRun(coreOut, { seed: 14 });
+  run.shopStock = blacksmithVisitStock(coreOut, createRng(14), run, { priceMult: 2 });
+  run.shopStock = JSON.parse(JSON.stringify(run.shopStock));
+  base.shopStock.armaments.forEach((row, i) => assert.equal(run.shopStock.armaments[i].cost, row.cost * 2));
+  const row = run.shopStock.armaments[0];
+  const plan = coreArmamentPlan(coreOut, run, row.id);
+  assert.equal(plan.cost, row.cost, 'the plan reads the scaled shelf cost, never scales it again');
+  const before = run.cinders;
+  commitCoreArmament(coreOut, run, plan);
+  assert.equal(before - run.cinders, row.cost);
+  const art = run.shopStock.weaponArts[0];
+  assert.equal(coreWeaponArtPlan(coreOut, run, art.id).cost, art.cost);
+  assert.equal(art.cost, base.shopStock.weaponArts[0].cost * 2);
+  // Services still scale at the quote.
+  assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId, { priceMult: 2 }).cost, 240);
+});
+
+test('armament purchase: a rack piece the run has since acquired is refused and charges nothing', () => {
+  const run = smithRun(coreOut);
+  const row = run.shopStock.armaments[0];
+  run.loadout.storage = [...run.loadout.storage, row.id];
+  const plan = coreArmamentPlan(coreOut, run, row.id);
+  assert.equal(plan.ok, false);
+  assert.match(plan.reason, /already own/i);
+  const cinders = run.cinders, storage = [...run.loadout.storage];
+  assert.throws(() => commitCoreArmament(coreOut, run, plan), /already own/i);
+  assert.deepEqual([run.cinders, run.loadout.storage], [cinders, storage]);
+  assert.ok(run.shopStock.armaments.some((r) => r.id === row.id), 'the piece stays on the rack');
+  // An equipped piece counts too.
+  const other = run.shopStock.armaments[1];
+  run.loadout.sets = { ...run.loadout.sets, extra: [other.id] };
+  assert.equal(coreArmamentPlan(coreOut, run, other.id).ok, false);
+});
+
+test('picker: under a cinder quote the selected row, confirm and blockers read cinders, never "0 stones" or a stone shortfall', () => {
+  const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  const card = strike(run);
+  commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
+  const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
+  // The card is past its free allowance and no stones are held: the service's own code is 'stones', the Blacksmith's verdict is ok.
+  const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
+  assert.equal(model.selected.plan.code, 'stones');
+  assert.deepEqual([model.selected.cinders, model.selected.cost, model.selected.shortStones, model.selected.ok], [40, 0, false, true]);
+  assert.deepEqual([model.canConfirm, model.blockedReasons.length], [true, 0]);
+  // Cinders short: blocked with the cinder reason, and the stone purse is not named as the blocker.
+  run.cinders = 10;
+  const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
+  assert.deepEqual([poor.canConfirm, poor.selected.shortStones, poor.selected.cinders], [false, false, 40]);
+  assert.match(poor.blockedReasons[0], /cinders/i);
+  // Rest path unchanged: no quote, the stone code decides, no cinders.
+  const rest = cardUpgradeModel(coreOut, run, card.instanceId);
+  assert.deepEqual([rest.selected.cinders, rest.selected.shortStones], [0, true]);
 });
