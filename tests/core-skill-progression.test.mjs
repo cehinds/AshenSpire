@@ -21,6 +21,7 @@ import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { grantSmithingReward, smithingRewardId } from '../src/model/smithing.js';
 import { readFileSync } from 'node:fs';
 import { runCombatEnd } from '../src/engine/runCombat.js';
+import { foldCombatPlaysEver } from '../src/model/playsEver.js';
 import { isConfiguredRun } from '../src/model/gameProfileRun.js';
 import { gameModule } from '../src/model/gameProfile.js';
 import { skillKindOf, coreCardRanks, pendingRankUpRows } from '../src/model/skills.js';
@@ -327,7 +328,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   combat.player.hp = 0;
   run.combatPendingOutcome = { result: 'defeat' };
   const saves = createSaveManager(createMemoryStorage());
-  const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
+  const screens = [], notices = [], deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
@@ -347,7 +348,11 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
       emptyDefeat: () => beginGameProfileReward({ after: 'defeat', noticeOnly: true }) };
   `)(deps, run, combat, reg, saves, screens, notices);
   const main = make(run);
+  const playedId = Object.keys(combat.player.abilityRiders.instanceUsesCombat)[0];
+  assert.ok(playedId, 'fixture: a deck card was played');
+  assert.equal(run.deck.find(card => card.instanceId === playedId)?.playsEver, undefined, 'fixture: nothing is folded before the fight ends');
   await main.settle();
+  assert.equal(run.deck.find(card => card.instanceId === playedId)?.playsEver, 1, 'the real onCombatEnd folds the fight\'s plays into the deck copy (playsEver)');
   assert.equal(run.skills['item:blade'].level, 1);
   assert.equal(run.skills['class:reaver']?.level || 0, 0, 'loss does not invent class XP');
   assert.deepEqual(run.gameProfilePendingReward.progression[0].effects.changes, [], 'the real settlement persists the actual lack of a stat gain');
@@ -585,7 +590,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   recordSkillXp(combat, { type: 'combatEnd', victory: true });
   const saves = createSaveManager(createMemoryStorage());
   const receipts = [], offers = [];
-  const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
+  const deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
     acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows,
@@ -654,4 +659,13 @@ test('Core pays character XP at the authored 1.5 rate and a snapshot without the
   assert.equal(configuredCharacterXpMultiplier({ gameProfile: { modules: { progression: { characterXpMultiplier: 99 } } } }), 10);
   assert.equal(gameModule(profile, 'progression').classXpMultiplier, 1);
   assert.equal(gameModule(profile, 'progression').weaponXpMultiplier, 1);
+});
+
+test('main.js stamps playsEver when a fight opens and folds it when the fight ends', () => {
+  const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const open = source.indexOf('const combat = savedSnapshot ? restoreCombatSnapshot');
+  assert.ok(open > 0 && source.indexOf('stampCombatPlaysEver(run, combat)', open) > open, 'a fight opened or restored in main.js is stamped');
+  assert.ok(source.indexOf('stampCombatPlaysEver(run, combat)', open) < source.indexOf('if (combat.combatExpansionVersion === 2) {', open), 'the stamp lands before the fight is used');
+  const end = source.indexOf('async function onCombatEnd(');
+  assert.ok(source.indexOf('foldCombatPlaysEver(run, combat)', end) > source.indexOf('runCombatEnd(run, combat)', end), 'the fold follows runCombatEnd');
 });

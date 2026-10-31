@@ -142,6 +142,8 @@ export const EVENTS = Object.freeze([
   'combatReactionUnavailable', 'combatGuardBroken',
   'proposalHitAvoided',
   'enemyBurdenAdded','enemyBurdenDrawn','enemyBurdenBlocked','intentRevealed',
+  // SPEC §17 Contests: an insight contest (d20 + attributes + rank vs Poise + attributes + level) passed or failed.
+  'contestPassed','contestFailed',
   'cardModified',
   'cardMoved',
   'cardDrawn',
@@ -758,6 +760,7 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 
 // Optional authored behavior attachments. The shared compiler validates tag
 // registration, attachment eligibility and parameter schemas at the boot door.
+const rampNode = obj({ scope: en('combat', 'run'), stat: en('damage', 'block'), per: int });
 const mechanicAttachmentFields = {
   mechanicTags: opt(arr(str)),
   mechanicBindings: opt(arr(obj({tag: str, enabled: opt(bool), parameters: opt(mapOf(any)), upgradeParameters: opt(mapOf(any))}))),
@@ -831,6 +834,8 @@ export const SCHEMAS = Object.freeze({
     minCombatExpansionVersion: opt(int),
     // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
     costRule: opt(str),
+    // Ramp (SPEC §4.3): the card's damage or block grows with its uses; `scope` 'combat' counts plays this fight, 'run' adds plays across the whole run.
+    ramp: opt(rampNode),
     corrupted: opt(bool),
     ashenBlightCost: opt(int),
     counterCoverage: opt(any),
@@ -845,6 +850,8 @@ export const SCHEMAS = Object.freeze({
     comboHook: opt(any),
     schoolEffect: opt(str),
     breakPoiseBonus: opt(num),
+    // Insight contest (SPEC §17): 'mental' (INT + WIS) or 'physical' (DEX + CON); replaces the hit roll and range for this card's enemy effects.
+    contest: opt(str),
     range: opt(str),
     defenseRange: opt(str),
     targeting: opt(str),
@@ -897,6 +904,8 @@ export const SCHEMAS = Object.freeze({
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
+        ramp: opt(rampNode),
+        contest: opt(str),
       })
     ),
     icon: opt(str),

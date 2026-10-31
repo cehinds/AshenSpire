@@ -3,6 +3,7 @@ import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { poiseHelpText } from '../poiseHelp.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
@@ -901,7 +902,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const active = selected || selfArm;
     // applyTargetLayer below updates the HUD once with the final legal targets.
     if (active) selectCombatant(null, { updateHud: false });
-    if (!active) combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => { card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current'); });
+    // A stale inspection mark never outlives its card's turn at the front: with nothing armed, or another card armed,
+    // only the armed card keeps it (owner, 2026-10-31: the hand shows one select state).
+    combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => {
+      if (active && card.dataset.instanceId === active) return;
+      card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current');
+    });
     combatEl.querySelectorAll('.hand .card').forEach(card => {
       const on = card.dataset.instanceId === active;
       card.classList.toggle('selected', on);
@@ -2060,6 +2066,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
       preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
+    // An insight contest has no hit chance and no range: the badge prices the DC the d20 + attributes + rank must reach.
     const label = rangeHitLabel(preview, { targetId: enemy.id });
     if (!label) return null;
     const node = document.createElement('span');
@@ -2067,7 +2074,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (label.length > 6) node.dataset.rangeDetail = 'true';
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
     node.textContent = label;
-    node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
+    node.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + node.textContent);
     return node;
   }
 
@@ -2139,7 +2146,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
-      poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
+      poiseHelp: poiseHelpText(combat, v),
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;

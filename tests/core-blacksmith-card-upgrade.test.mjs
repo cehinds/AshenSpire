@@ -1,5 +1,5 @@
 // Card upgrades UI 3/5: in a Core run the Blacksmith's upgradeArt service upgrades any deck card through the card-upgrade
-// service (Free, then 1 Smithing Stone; no per-visit limit), and ~25% of Core shop nodes are a Blacksmith.
+// service (no stones at the Blacksmith, 40 cinders each; no per-visit limit), and ~25% of Core shop nodes are a Blacksmith.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -21,9 +21,10 @@ const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) 
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
 const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 
-function smithRun(registries, stones, seed = 31) {
+function smithRun(registries, stones, seed = 31, cinders = 2000) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-cards' });
   run.smithingStones = stones;
+  run.cinders = cinders;
   run.seenEvents = [];
   run.shopStock = buildBlacksmithStock(registries, createRng(seed), run);
   return run;
@@ -35,32 +36,31 @@ const upgrade = (run, instanceId) => {
   return commitUpgradeArt(coreOut, run, plan);
 };
 
-test('Core Blacksmith: any deck card upgrades; the first upgrade is free, the second costs a stone', () => {
-  const run = smithRun(coreOut, 1);
+test('Core Blacksmith: any deck card upgrades for cinders and no stones, even past the free allowance', () => {
+  const run = smithRun(coreOut, 0);
   const card = strikes(run)[0];
   const first = upgrade(run, card.instanceId);
-  assert.deepEqual([first.n, first.spentStones, run.smithingStones], [1, 0, 1]);
+  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1960]);
+  // A rest site charges 1 stone for this second upgrade; the Blacksmith takes one stone off, so 0.
   const second = upgrade(run, card.instanceId);
-  assert.deepEqual([second.n, second.spentStones, run.smithingStones], [2, 1, 0]);
+  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1920]);
   assert.equal(upgradeCount(card), 2);
   assert.deepEqual(card.upgradeSteps, [first.step, second.step]);
 });
 
-test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay, and a short purse is refused', () => {
-  const run = smithRun(coreOut, 3);
+test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay cinders, and a short purse is refused', () => {
+  const run = smithRun(coreOut, 3, 31, 200);
   const [a, b, c] = strikes(run);
   for (const card of [a, b, c, a, a]) upgrade(run, card.instanceId);
-  assert.equal(run.smithingStones, 1, 'three free first upgrades, then one stone for each of a\'s next two');
+  assert.equal(run.smithingStones, 3, 'the stones are never touched');
+  assert.equal(run.cinders, 0, 'five upgrades at 40 cinders');
   assert.equal(upgradeCount(a), 3);
-  const poor = smithRun(coreOut, 0);
-  const x = strikes(poor)[0];
-  upgrade(poor, x.instanceId);
-  const refused = upgradeArtPlan(coreOut, poor, x.instanceId);
+  const refused = upgradeArtPlan(coreOut, run, a.instanceId);
   assert.equal(refused.ok, false);
-  assert.match(refused.reason, /Smithing Stone/);
-  assert.throws(() => commitUpgradeArt(coreOut, poor, refused));
-  assert.equal(upgradeCount(x), 1);
-  assert.equal(poor.smithingStones, 0);
+  assert.match(refused.reason, /cinders/i);
+  assert.throws(() => commitUpgradeArt(coreOut, run, refused));
+  assert.equal(upgradeCount(a), 3);
+  assert.equal(run.cinders, 0);
 });
 
 test('Core Blacksmith: the 10-upgrade cap refuses and the card drops out of the list', () => {
@@ -80,6 +80,7 @@ test('Core Blacksmith: a stale quote (changed roll) is refused and spends nothin
   assert.throws(() => commitUpgradeArt(coreOut, run, stale), /out of date/);
   assert.equal(upgradeCount(card), 0);
   assert.equal(run.smithingStones, 2);
+  assert.equal(run.cinders, 2000);
 });
 
 test('Core Blacksmith: the idle line is the card one when nothing can be upgraded', () => {

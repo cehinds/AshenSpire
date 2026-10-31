@@ -87,10 +87,13 @@ export function turnRecovery({ rules, pool, round, idleStreak, current, max }) {
 // (mechanics.stamina.combatStartRefill 'full'): Settings shows no rows for it,
 // and a stored value (an import, an older profile) restores nothing, so the
 // Rest preview, which reports HP and Mana, never omits a gain the Rest gives.
+// Likewise Mana's after-combat percent is inert while a fight's end refills it
+// (mechanics.mana.combatEndRefill 'full'; owner 2026-10-31).
 function percents(settings, field) {
   const all = resolvedRecovery(settings);
   return Object.fromEntries(RECOVERY_POOLS.map((pool) => [pool,
-    pool === 'stamina' && mechanics.stamina.combatStartRefill === 'full' ? 0 : all[pool][field]]));
+    (pool === 'stamina' && mechanics.stamina.combatStartRefill === 'full')
+      || (pool === 'mana' && field === 'afterCombat' && mechanics.mana.combatEndRefill === 'full') ? 0 : all[pool][field]]));
 }
 
 /**

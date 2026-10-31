@@ -4,13 +4,15 @@
     "wisdomWeight": 1,
     "intelligenceWeight": 0.5,
     "naturalRecoveryPerTurn": 0,
-    "restSpotRefill": "full"
+    "restSpotRefill": "full",
+    "combatEndRefill": "full",
+    "combatEndRefillNote": "Owner's call, 2026-10-31: Mana refills to its maximum when a fight ends ('full'); 'carry' keeps what the fight left, the 2026-09-24 plan A2 rule. The Mana A/B baseline numbers in stamina.combatStartRefillNote were measured under carry."
   },
   "stamina": {
     "idleRecoveryPerTurn": 1,
     "refundErasesSpend": false,
     "combatStartRefill": "full",
-    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana still carries between fights and only rests, flasks and effects restore it. Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
+    "combatStartRefillNote": "Owner's call, 2026-09-24 (plan A2): every fight opens with Stamina at its maximum ('full'); 'carry' opens it where the last fight left it. Mana is governed separately by mana.combatEndRefill (refilled when a fight ends). Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run, 120 runs a class): full gives Reaver 51, Starseer 51, Rogue 69, Herald 66 wins; carry gives Reaver 35, Starseer 28, Rogue 43, Herald 75."
   },
   "weight": {
     "capacityBase": 0,
@@ -60,7 +62,10 @@
     "die": 20,
     "baseDifficulty": 10,
     "dexterityCentre": 10,
-    "dexterityCentreByMode": { "lean": 3, "assign": 3 },
+    "dexterityCentreByMode": {
+      "lean": 3,
+      "assign": 3
+    },
     "dexterityPerModifier": 2,
     "temporaryGuardBase": 3,
     "retuneNote": "Plan A3, 2026-09-24. The Dexterity term was floor((DEX - 10) / 2), a d20-scale habit: on the lean scale (1 at baseline, 4 at the creation ceiling) it read -3 to -5 for every creatable character (-4 or -5 for every class preset), so a preset's guard 3 + term + class guard was 2 at best when Light, 0 when Medium and negative when Heavy, and a landed dodge usually granted nothing. The term is now floor((DEX - dexterityCentre) / dexterityPerModifier) = floor((DEX - 3) / 2) for a run made on the lean scale (dexterityCentreByMode.lean): 0 at a class's primary 3, -1 at the baseline 1, +1 at 5, +2 at 7. With the Dexterity minimum of 1 a landed dodge now guards at least 2 (Heavy at DEX 1), so no floor row is needed. Measured with node tools/runsim.mjs 240 --seeded-seats --deep (class presets): dodges landed 35-44% of plays for 0.6 (Reaver) to 2.0 (Rogue) guard each before, 57-65% for 4.4-6.0 after; wins went Reaver 105 -> 112, Starseer 103 -> 104, Rogue 135 -> 141, Herald 135 -> 136 of 240 with the Medium price row, spread 13.3 -> 15.4 points. A run made under an older creation mode (tuned2, tuned, standard, pointbuy, an admitted in-flight save) keeps the d20-scale centre dexterityCentre 10, so an update never moves its dodge. The assign creation mode (#1294) opens on the same all-1s baseline, so it shares the lean centre 3 (dexterityCentreByMode.assign): DEX 1 reads -1 and DEX 3 reads 0, as on lean."
@@ -82,5 +87,32 @@
     "RELIC",
     "PROPERTY_DEFAULT",
     "SYSTEM_FALLBACK"
-  ]
+  ],
+  "contest": {
+    "comment": "Insight contests (owner, 2026-10-31): d20 + caster attributes + card rank vs DC = target's CURRENT Poise + target attributes + target level; a tie succeeds. Read Intent and kindred status spells use it instead of a hit chance and range.",
+    "mental": {
+      "attacker": [
+        "intelligence",
+        "wisdom"
+      ],
+      "defender": [
+        "wisdom"
+      ]
+    },
+    "physical": {
+      "attacker": [
+        "dexterity",
+        "constitution"
+      ],
+      "defender": [
+        "constitution"
+      ]
+    },
+    "dc": [
+      "poise",
+      "level"
+    ],
+    "tieSucceeds": true,
+    "rankBonus": true
+  }
 }

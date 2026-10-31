@@ -85,3 +85,8 @@ test('One-tap play reads the setting live, so a mid-combat toggle changes the ne
   assert.match(wire, /if \(oneTapPlays\(\)\) \{ play\(\); return; \}/, 'each tap re-evaluates the setting');
   assert.match(combat, /readSettings = \(\) => meta\.settings \|\| \{\}/, 'mountCombat falls back to meta when no reader is passed');
 });
+
+test('the hand info portal keeps its centring transform in combat', () => {
+  assert.doesNotMatch(css, /\.hand-info-portal\s*\{[^}]*transform:\s*none/);
+  assert.match(read('../styles/kit.css'), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
+});

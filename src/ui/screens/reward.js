@@ -1,4 +1,5 @@
 import { uiIconText } from '../../content/uiIcons.js';
+import { attributePointGains, largestAttributeGain, attributeGainSummary } from '../../model/attributePointPreview.js';
 import { engravedIcon, engravedIconHtml } from '../components/engravedIcon.js';
 import { mountRewardDoor } from '../components/rewardDoor.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
@@ -763,6 +764,12 @@ export function mountRewards(app, {
     const draw = () => {
       const points = run.level?.unspentPoints || 0;
       const attrs = levelUpPlan(registries, run).attributes;
+      // The largest thing one more point buys, from the live formulas (model/attributePointPreview.js).
+      const gainChip = (attrId) => {
+        const gains = attributePointGains(registries, run, attrId, { settings });
+        const top = largestAttributeGain(registries, run, attrId, { settings });
+        return top ? el('span', { class: 'reward-stat-gain', text: top.text, title: attributeGainSummary(gains) }) : null;
+      };
       host.replaceChildren(
         el('h3', { text: `Assign stats · ${points} point${points === 1 ? '' : 's'} available` }),
         ...attrs.map((attr) => {
@@ -776,7 +783,7 @@ export function mountRewards(app, {
             draw();
           });
           return el('div', { class: 'reward-stat-row' }, [
-            el('span', { text: attr.label }),
+            el('span', { class: 'reward-stat-name' }, [attr.label, gainChip(attr.id)]),
             el('span', { text: String(run.attributes?.[id] ?? 0) }),
             add,
           ]);

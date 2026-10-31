@@ -29,6 +29,8 @@ const fail = () => { throw UNPHRASEABLE; };
 
 // Conditional riders follow the statuses they extend, ahead of gains (owner: damage and status first).
 // An up-front HP payment leads: effects run in order and a lethal payment stops the rest.
+// Fragments flagged `tag` are the rules a card's tags add (Smash, Prone, Entry). Information keeps them in the line's `html`;
+// the line's `faceHtml` is the same line without them, and the face reads that (owner, 2026-10-31).
 const LINE_ORDER = ['cost', 'damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
 // Play restrictions first. A keyword outside this list keeps the authored text.
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
@@ -71,9 +73,21 @@ export function cardFaceLines(def, preview = null, registries = null, rules = nu
   }
 }
 
+// Ramp (SPEC §4.3): the face shows the number the card deals now and says what grows it, so the per-play formula
+// the engine evaluates is read back as its plain amount here.
+const isRampedAmount = amount => amount?.f === 'add' && amount.args?.[1]?.f === 'metric' && amount.args[1].metric === 'sameCardPlays';
+function rampFace(def) {
+  if (!def.ramp || !def.effects?.some(effect => isRampedAmount(effect.amount))) return { def, line: null };
+  const { scope, stat, per } = def.ramp;
+  const plain = { ...def, effects: def.effects.map(effect => isRampedAmount(effect.amount) ? { ...effect, amount: effect.amount.args[0] } : effect) };
+  return { def: plain, line: `+<span class="val">${per}</span> ${stat === 'block' ? 'Block' : 'damage'} per play this ${scope === 'run' ? 'run' : 'combat'}` };
+}
+
 function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
+  const ramped = rampFace(def);
+  def = ramped.def;
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
@@ -283,13 +297,13 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const joinList = parts => parts.map((part, i) => i < parts.length - 1 ? part.replace(/\.$/, '') : part).join(', ');
 
   // The line a set of fragments reads as, one segment per kind, in fixed order.
-  const segmentsOf = (fragments, extraBonus = []) => {
+  const segmentsOf = (fragments, extraBonus = [], isUnconditional = fragments === unconditional) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
     if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
-    else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
+    else if (counter && isUnconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
@@ -367,13 +381,13 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     }
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
     // Beating the revealed hit also adds Block before it lands.
-    if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
+    if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(preview.counterReturn.block)} Block against it` });
   }
-  if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries);
-  if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
-  if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
+  if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', tag: true, text: esc(smashClause) });
+  if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
   // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
@@ -383,7 +397,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const versioned = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
   if (stanceEntry && !versioned && coreProfile) {
     const precision = stanceEntryBonuses(def, entryCtx).precision;
-    if (precision > 0 && !representedEntry.includes('precision')) unconditional.push({ cat: 'bonus', text: esc(entryLabel) + ': ' + entryPrecisionText(precision, preview) + ' Precision' });
+    if (precision > 0 && !representedEntry.includes('precision')) unconditional.push({ cat: 'bonus', tag: true, text: esc(entryLabel) + ': ' + entryPrecisionText(precision, preview) + ' Precision' });
   }
   if (versioned) {
     const ctx = entryCtx;
@@ -393,7 +407,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const grants = Object.entries(entry).filter(([id, amount]) => amount > 0 && !representedEntry.includes(id)).map(([id, amount]) => (id === 'precision' && statMixGrant
       ? entryPrecisionText(amount, preview)
       : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
-    if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', text: esc(entryLabel) + ': ' + grants.join(', ') });
+    if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', tag: true, text: esc(entryLabel) + ': ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
       unconditional.push({ cat: 'defenseRestore', text: 'Restore ' + restore + ' Poise/Ward' });
@@ -413,7 +427,17 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if ((def.keywords || []).some(keyword => !KEYWORDS.includes(keyword))) return null;
   const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
   const byKind = { cost: [], damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
-  for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
+  const faceText = new Map();
+  const faceSegments = segmentsOf(unconditional.filter(f => !f.tag), keywords, true);
+  for (const segment of segmentsOf(unconditional, keywords)) {
+    byKind[segment.kind].push(segment.text);
+    // Only a damage or bonus line can carry a tag rider; its face reading is the same kind without the rider.
+    if (['damage', 'bonus'].includes(segment.kind)) {
+      const face = faceSegments.find(row => row.kind === segment.kind)?.text ?? '';
+      if (face !== segment.text) faceText.set(segment.text, face);
+    }
+  }
+  if (ramped.line) byKind.detail.push(ramped.line);
   for (const group of groups.values()) {
     // Only damage wakes a sleeper; a rider keyed on Sleep that deals none says so, as its authored text does.
     const wakes = group.fragments.some(f => f.cat === 'damage');
@@ -426,7 +450,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
 
   const lines = [];
-  for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
+  for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push(faceText.has(html) ? { kind, html, faceHtml: faceText.get(html) } : { kind, html });
   // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
   return lines.length || representedEffects.length ? lines : null;
 }

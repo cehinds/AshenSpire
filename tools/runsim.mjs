@@ -46,6 +46,7 @@ import { configuredContentBundle, advancedConfigSnapshot } from '../src/model/ad
 import { createRegistries } from '../src/model/registries.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
+import { stampCombatPlaysEver, foldCombatPlaysEver } from '../src/model/playsEver.js';
 import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, botControlAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
 import { createRunLoop, payFightXp, SoftLock, fleetSeed } from './simrun.mjs';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
@@ -361,6 +362,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
+  stampCombatPlaysEver(run, combat);
   if (SINGLE_BREAK && (combat.breakMeterVersion !== 1 || !combat.ratingsRules || combat.player.wardMeter || combat.enemies.some(e => e.wardMeter || e.arcaneExposure))) {
     throw new Error('single-break-meter fleet reached a fight outside its stamped rules');
   }
@@ -454,8 +456,9 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
   // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
-  // the first thing main.js onCombatEnd does): HP, Mana and Stamina carry to
-  // the next fight, as they do for a player. Only HP used to, so every fight
+  // the first thing main.js onCombatEnd does): HP and Stamina carry to
+  // the next fight, as they do for a player; Mana is refilled by runCombatEnd
+  // (mechanics.mana.combatEndRefill, 2026-10-31). Only HP used to, so every fight
   // opened on full pools and cross-fight starvation was invisible here.
   //
   // Flask charges, the reason this write-back first existed (src/main.js:1335), and without
@@ -466,6 +469,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // unlimited flasks, which is not this game. Charges are spent here, refilled
   // at a grace, and scarce in between: that is the loop being measured.
   runCombatEnd(run, combat);
+  foldCombatPlaysEver(run, combat);
   // A waived arm may have lifted the pool past its maximum; the run keeps no
   // more than it could hold.
   if (!MANA_ON && run.mana > run.maxMana) run.mana = run.maxMana;

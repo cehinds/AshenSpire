@@ -39,12 +39,13 @@ test('Strike against a Poise enemy: the face is 9 (12 x 0.75) and the hit does 9
   assert.equal(500 - enemy.hp, 9);
 });
 
-test('Arcane Spark: face 8 (11 x 0.75) against a Poise enemy', () => {
-  const { combat, id } = fight({ classId: 'starseer', cardId: 'starSpark', enemies: [{ poise: 10 }] });
+// Magic hits Poise first, 1:1 (owner, 2026-10-31): the face is the raw number less the Poise it meets, not x0.75.
+test('Arcane Spark: face 7 (11 less 4 Poise) against a Poise enemy', () => {
+  const { combat, id } = fight({ classId: 'starseer', cardId: 'starSpark', enemies: [{ poise: 4 }] });
   combat.player.ratings = { ...combat.player.ratings, pr: (combat.player.ratings?.pr || 0) + 1 }; // lifts the raw face from 10 to 11
   const raw = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage').faceValue;
   assert.equal(raw, 11);
-  assert.equal(damageRow(combat, id).faceValue, 8);
+  assert.equal(damageRow(combat, id).faceValue, 7);
 });
 
 test('no Poise and no defence: the face is the raw number', () => {
@@ -109,7 +110,7 @@ test('an X-hit card with no energy still faces the after-Poise number', () => {
   const row = previewCard(combat, id).values.find(v => v.op === 'damage');
   const raw = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage').faceValue;
   assert.equal(row.hits, 0, 'zero hits');
-  assert.equal(row.faceValue, Math.floor(raw * 0.75));
+  assert.equal(row.faceValue, Math.max(0, raw - 10), 'a spell meets Poise 1:1');
 });
 
 test('an aimed enemy that died falls back to the frontmost living enemy', () => {
