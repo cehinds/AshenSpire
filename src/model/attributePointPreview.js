@@ -13,6 +13,7 @@ import { statRowValue } from './derivedStats.js';
 import { statRow } from './statRows.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
+import { configuredCombat, profileHandSize } from '../engine/gameProfileCombat.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { runHandRules, handSizeReceipts } from './handRules.js';
@@ -73,15 +74,22 @@ export function attributePointGains(registries, run, attributeId, { settings = {
     const value = (attributes) => statRowValue(rule, { attributes, classDef, level, statId, lenientAttributes: true }).value;
     push(statId, value(current), value(raised));
   }
-  // THE HAND IS WHAT IS DEALT, NOT WHAT THE ROWS SAY: handDrawCount caps the opening hand and the turn draw
-  // at hand capacity (and fill mode draws up to capacity), so these three go through the same receipts
-  // the fight reads, before and after, and show only cards the player will actually receive.
-  const hand = runHandRules(registries, run, settings);
-  const handBefore = handSizeReceipts(hand, current, level), handAfter = handSizeReceipts(hand, raised, level);
-  push('draw', handBefore.turn.value, handAfter.turn.value);
-  push('openingHand', handBefore.opening.value, handAfter.opening.value);
-  push('handSize', handBefore.capacity.value, handAfter.capacity.value);
   const after = previewContext(registries, run, raised);
+  if (configuredCombat(ctx)) {
+    // A configured (Core 2) fight deals handBase + INT for the opening hand, every turn draw and the capacity
+    // (turnDrawCount -> profileHandSize); the hand rows below are not read. Call the engine's own function.
+    const dealt = [profileHandSize(ctx), profileHandSize(after.ctx)];
+    for (const statId of ['draw', 'openingHand', 'handSize']) push(statId, dealt[0], dealt[1]);
+  } else {
+    // THE HAND IS WHAT IS DEALT, NOT WHAT THE ROWS SAY: handDrawCount caps the opening hand and the turn draw
+    // at hand capacity (and fill mode draws up to capacity), so these three go through the same receipts
+    // the fight reads, before and after, and show only cards the player will actually receive.
+    const hand = runHandRules(registries, run, settings);
+    const handBefore = handSizeReceipts(hand, current, level), handAfter = handSizeReceipts(hand, raised, level);
+    push('draw', handBefore.turn.value, handAfter.turn.value);
+    push('openingHand', handBefore.opening.value, handAfter.opening.value);
+    push('handSize', handBefore.capacity.value, handAfter.capacity.value);
+  }
   push('evasion', effectiveEvasion(ctx, entity), effectiveEvasion(after.ctx, after.entity));
   if (fixCore) {
     push('precision', precisionStatMix(ctx, entity), precisionStatMix(after.ctx, after.entity));

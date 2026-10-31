@@ -115,8 +115,21 @@ test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', (
   assert.equal(predicted?.text, '+1 Energy');
 });
 
-test('Draw and Opening hand show only cards that will be dealt: hand capacity caps them', () => {
+test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4 deals one more card', () => {
   const { registries, run } = build();
+  run.attributes.intelligence = 3;
+  const gains = attributePointGains(registries, run, 'intelligence');
+  for (const id of ['draw', 'openingHand', 'handSize']) assert.equal(gains.find(g => g.statId === id)?.delta, 1, `${id} +1`);
+  assert.equal(gains.find(g => g.statId === 'draw').before, 7);
+  assert.equal(gains.find(g => g.statId === 'draw').after, 8);
+  assert.ok(gains.some(g => g.statId === 'pr' && g.delta === 1));
+  assert.equal(largestAttributeGain(registries, run, 'intelligence').statId, 'pr', 'tie-break keeps PR as mainGain');
+});
+
+test('a legacy run still counts Draw and Opening hand through the hand rows: capacity caps them', () => {
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ seed: 4242, classId: 'rogue', registries });
+  run.combatExpansionVersion = 1;
   const ids = (int) => { run.attributes.intelligence = int; return attributePointGains(registries, run, 'intelligence').map(g => g.statId); };
   const capped = ids(3);
   assert.ok(!capped.includes('draw') && !capped.includes('openingHand'), 'INT 3 -> 4 deals no extra card, so shows none');
