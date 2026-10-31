@@ -116,3 +116,41 @@ test('a lane lifts by the measured heights of the lanes below it', (t) => {
     assert.equal(smallOver.props['--float-lane'], '88px', 'lane 2 sits above the crit (66 + 22)');
   });
 });
+
+test('a taller number reusing a lower lane re-lifts the live floaters above it', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    let nextHeight = 20;
+    document.createElement = (name) => {
+      const node = Object.assign(create(name), { offsetWidth: 40, offsetHeight: nextHeight });
+      const props = node.props = {};
+      const set = node.style.setProperty?.bind(node.style);
+      node.style.setProperty = (key, value) => { props[key] = value; return set?.(key, value); };
+      return node;
+    };
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    const a = document.createElement('div'); a.box = { left: 100, top: 100, width: 80, height: 120 };
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const opts = { jitter: false };
+    const life = floaterLifeMs();
+    const step = Math.floor(life / 4);
+    floatNum(fx, a, '-1', 'dmg small', null, opts);
+    t.mock.timers.tick(step);
+    floatNum(fx, a, '-2', 'dmg small', null, opts);
+    t.mock.timers.tick(step);
+    const upper = floatNum(fx, a, '-3', 'dmg small', null, opts);
+    flushMeasureJobs();
+    assert.equal(upper.dataset.floatLane, '2');
+    assert.equal(upper.props['--float-lane'], '44px');
+    // Lanes 0 and 1 expire; lane 2 is still showing. A small number takes lane 0, a crit lane 1.
+    t.mock.timers.tick(life - step + 1);
+    floatNum(fx, a, '-4', 'dmg small', null, opts);
+    nextHeight = 60; const crit = floatNum(fx, a, '-40', 'dmg crit', null, opts);
+    flushMeasureJobs();
+    assert.equal(crit.dataset.floatLane, '1');
+    assert.equal(crit.props['--float-lane'], '66px');
+    assert.equal(upper.props['--float-lane'], '88px', 'the surviving lane-2 number rises above the taller crit (66 + 22)');
+  });
+});

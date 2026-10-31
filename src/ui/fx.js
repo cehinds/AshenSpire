@@ -386,7 +386,7 @@ function floaterLaneFor(anchor, lifeMs) {
     lane = soonest.lane;
     live.splice(live.indexOf(soonest), 1);
   }
-  const entry = { lane, until: now + lifeMs, height: 0 };
+  const entry = { lane, until: now + lifeMs, height: 0, el: null };
   live.push(entry);
   floaterLanes.set(anchor, live);
   return entry;
@@ -399,6 +399,13 @@ function floaterLaneLift(anchor, entry) {
   let lift = 0;
   for (const other of floaterLanes.get(anchor) || []) if (other.lane > 0 && other.lane <= entry.lane) lift += (other.height || 22) * 1.1;
   return lift;
+}
+// A newcomer in a reused lower lane may be taller than the number it replaced, so every live
+// floater above it is re-lifted from the lanes as they stand now, not as they were when it spawned.
+function reliftFloaterLanes(anchor) {
+  for (const entry of floaterLanes.get(anchor) || []) {
+    if (entry.lane > 0 && entry.el) entry.el.style.setProperty('--float-lane', `${Math.round(floaterLaneLift(anchor, entry))}px`);
+  }
 }
 
 /**
@@ -462,10 +469,10 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
     const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    if (entry) entry.height = height;
+    if (entry) { entry.height = height; entry.el = el; }
     return () => {
       el.style.left = `${at.left + half}px`;
-      if (lane > 0) el.style.setProperty('--float-lane', `${Math.round(floaterLaneLift(anchor, entry))}px`);
+      if (entry) reliftFloaterLanes(anchor);
     };
   });
   setTimeout(() => el.remove(), life + 60);
