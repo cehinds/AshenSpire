@@ -177,3 +177,230 @@ Design only. Nothing here is built by this file. Sources read-only; line numbers
 #### Enemy weaknesses (in progress, PR # feature/EnemyWeaknesses)
 - [x] branch adds enemy weakness tests and enables the Fire element in Core for Elemental Weapon (feature/EnemyWeaknesses, `tests/enemy-weaknesses.test.mjs`).
 - [ ] per hit of the weak type on one target in one turn: +5% damage, cap +25% (locked if in formulas.js)
+
+## 2. Element / school tags
+
+School counter edges: `schoolStrongMultiplier` 1.25 / `schoolWeakMultiplier` 0.75 on Counter returns (M:57, combatMatchups.js:618-629). Magic share per school in R:32-37.
+
+### school:fire
+- [x] flat: strong vs frost cards, weak vs blunt (M:60-65). Magic share 1 (R:34).
+- [x] flat: blurb "Burn buildup keeps pressure between turns" (nodes.csv:463); Burn per stack S:304.
+- [ ] per Burn stack on target: +3% fire damage dealt to it, cap 15%
+- [ ] per stack: a Fire hit consumes 1 Damp for +1 damage (see Damp)
+- [ ] own-element bonus: fire card x1.25 when the caster is on a Burn-immune or fire-affinity armament (locked if in formulas.js)
+
+### school:frost
+- [x] flat: strong vs melee range, weak vs fire, weak to shattering (M:66-73).
+- [x] build-up: Frost gauge 6/4 cap 3 (G:15); Frozen denies 1 Action per stack (G:40).
+- [ ] per Frost build-up point on target: -1% its damage dealt, cap 10%
+- [ ] per Chilled stack: next Blunt +25% already; add +1 Poise damage
+
+### school:lightning
+- [x] flat: strong vs conductive, weak vs grounded (M:79-85; combatMatchups.js:597 Grounded blocks it).
+- [x] build-up: Paralysis gauge 6/4 cap 3, locks cards and Counter (G:20, G:43).
+- [ ] +1 Precision vs targets with metal gear (conductive armament tag)
+- [ ] Shocked contest (see Statuses): 1d20 + stacks x (INT + WIS + rank) vs Poise + STR + DEX + CON + level
+- [ ] Damp on target: contest advantage; Earth stacks on target absorb the Lightning stacks
+- [ ] metal-gear caster: disadvantage on the Shocked contest; natural 1 deals 2 damage to caster
+- [ ] per Shocked stack: chain 1 damage to an adjacent enemy
+
+### school:force
+- [x] flat: strong vs projectile, weak vs mental/statusOnly (M:86-97). Magic share 0.5, physical part blunt (R:33).
+- [x] flat: Force strips 2 Ward once per action; bypasses melee Counter (nodes.csv:122).
+- [ ] per 2 Barrier on target: +1 damage (shatters shields)
+
+### school:alteration
+- [x] flat: magic share 0, damage is all physical (R:34); answers ranged pressure (nodes.csv:466).
+- [x] flat: Alteration combat cap on restoration, 1 (G:33).
+- [ ] per stack of a self buff applied by an Alteration card: +1 duration turn at 3 stacks
+
+### school:illusion
+- [x] flat: strong vs single targeting, weak vs area, weak to reveal and mindless (M:98-113).
+- [x] flat: Concealed, Decoy statuses clear on Sweep/Holy (G:49-50).
+- [ ] per Concealed turn remaining: +1 Evasion
+- [ ] per Confused stack on the target: +5% Psychic damage
+
+### school:divine
+- [x] flat: strong vs decay, weak vs blunt (M:114-121). Cleanses via Holy rider (M:207).
+- [ ] per hostile debuff removed from the caster: heal 1 HP
+
+### school:decay
+- [x] flat: strong vs healing and protective traits (M:122). Necrotic Blight applies per hit (M:201).
+- [ ] per Blight stack on target: +1 HP healed to caster per Decay hit
+
+### school:earth
+- [x] flat: no matchup edges authored (`"earth": {}` M:123). Magic share 0, physical type earth (R:36).
+- [x] flat: Earth hit applies Slowed build-up 4 (M:223); Stoneskin keeps Block (S:1317).
+- [ ] per Earth stack (see Statuses): +1 Block at turn start
+- [ ] strong vs lightning cards (absorbs them); weak vs force
+- [ ] own-element bonus: Earth card x1.25 while Earth stacks >= 3
+
+### Own-element bonus (proposal, owner request)
+- [ ] a school card x1.25 damage when the caster's armament carries that element's affinity tag (locked: `src/model/formulas.js`)
+- [ ] armament affinity tags: `affinity:fire|frost|lightning|earth|...` on weapons and focuses; each gives +1 own-element Precision
+- [ ] affinity does not stack with the 1.25 more than once per hit
+
+## 3. Damage-type tags
+
+Rider rules: once per committed root action and target; status riders need positive HP loss; a printed matching status suppresses the auto rider (SPEC §4.7 :1105-1159; M:170-240).
+
+### damage:slashing
+- [x] flat: 4 Bleed build-up on a Health hit (v2) / 1 Bleed (v1) (M:177; nodes.csv:116).
+- [ ] per Bleeding stack on target: +1 damage from slashing hits
+
+### damage:piercing
+- [x] flat: bypass up to 2 Guard; bypasses melee Counter (M:174; nodes.csv:117). Core 2: bypass floor(0.2 x damage) of Block (SPEC :3339, `fixCoreMechanics.json:30`).
+- [ ] per Precision stack: +1 guard bypass, cap 4 (locked)
+
+### damage:blunt
+- [x] flat: +2 Poise damage once per action per target (M:171; nodes.csv:118).
+- [x] flat: shatters Frozen; Chilled gives +25% (G:40-41).
+- [ ] per Earth stack: +1 Poise damage
+
+### damage:fire
+- [x] flat: 4 Burn build-up (v2) / 1 Burn (v1) (M:189; nodes.csv:119). Thaws Frozen.
+- [ ] per Damp stack on target: +1 damage, remove the stack (steam)
+
+### damage:frost
+- [x] flat: 3 Frost build-up (M:183; nodes.csv:120). Alias `frost` to `cold` (M:163).
+- [ ] per Damp stack on target: +1 Frost damage
+
+### damage:lightning
+- [x] flat: 3 Paralysis build-up (v2) (M:195); v1 text says 1 Weak (Sap) (nodes.csv:121).
+- [ ] per Damp stack on target: +1 Lightning stack applied
+- [ ] per Earth stack on target: absorb 1 Lightning stack
+
+### damage:arcane (Force)
+- [x] flat: strips 2 Ward once per action; bypasses melee Counter (nodes.csv:122).
+- [ ] per 2 Ward stripped: +1 Poise damage
+
+### damage:sacred (Holy)
+- [x] flat: cleanse 1 hostile debuff from the attacker after a Health hit (M:207, cleanse list M:244).
+- [ ] per undead/Blight stack on the target: +1 damage
+
+### damage:decay (Necrotic)
+- [x] flat: 4 Necrotic Blight build-up (M:201). No armour class reduction (R:20).
+- [ ] per Blight stack: +1 damage
+
+### damage:poison
+- [x] flat: 4 Venom build-up (M:211); not reduced by armour class; constructs immune/undead halve (design: elements-and-tag-mechanics.md section 1; R:19).
+- [ ] per Venom stack: +1 damage from poison hits, cap 5
+
+### damage:psychic
+- [x] flat: 3 Confused build-up (M:217); mindless enemies immune (design doc section 2).
+- [ ] per Confused stack: +5% damage, cap 25%
+
+### damage:earth
+- [x] flat: 4 Slowed build-up; magicShare 0, meets Block then Poise (M:223; R:21-24); absorbed by Ward (nodes.csv:127).
+- [ ] per Slowed stack on target: +1 Poise damage
+
+## 4. Trait tags (mechanic-bound in `engine/mechanics/index.json`, `trait_*`)
+
+### trait:impact
+- [x] per N: on hit, N Poise damage, or double the card's own Poise damage (nodes.csv:490; combatCardProfile.js:119).
+- [ ] per Weak stack on target: +1 Poise damage
+
+### trait:flux
+- [x] per N: N Ward damage, or double the card's Ward damage (nodes.csv:487; combatCardProfile.js:119).
+- [ ] per Barrier point on target: +1 Barrier damage (Core has no Ward)
+
+### trait:counterstrike
+- [x] flat: +50% effectiveness; +75% when the stance has advantage (nodes.csv:486).
+- [ ] per Counter stack: +5% effectiveness
+
+### trait:reaction
+- [x] flat: playable from hand in the opponent's turn before the action resolves (nodes.csv:496; stanceRules.js:66).
+- [ ] per Foresight stack: reaction costs 1 less SP, min 0
+
+### trait:persistent
+- [x] flat: granted Precision survives turn end (nodes.csv:495).
+- [ ] per Precision stack kept: -1 stack at next turn start
+
+### trait:unavoidable
+- [x] flat: cannot be Evaded or dodged (combatAvoidance.js:52, :67-68).
+- [ ] per Precision stack: no extra effect (keep it binary)
+
+### trait:closing / trait:adequateReach
+- [x] flat: Closing and Adequate Reach strikes skip the Evade range penalty (combatAvoidance.js:67-68).
+- [ ] closing: per range step closed, +1 Precision
+
+### trait:unreflectable
+- [x] flat: ignores Reflect and counter returns (combatMatchups.js:691).
+- [ ] per Reflect stack: no effect (binary)
+
+### trait:conductive / trait:insulated / trait:grounded
+- [x] conductive: strong target of Lightning cards (M:79-85). Grounded: weak to Lightning, blocks Paralysis and backlash (combatMatchups.js:597; G:47).
+- [x] insulated: tag exists, no authored rule yet (nodes.csv:491).
+- [ ] insulated: per piece worn, -1 Lightning stack taken
+- [ ] conductive: per metal piece worn, +1 Precision for the attacker against it
+
+### trait:shattering
+- [x] flat: Frost is weak to shattering cards (M:71); Blunt shatters Frozen (G:40).
+- [ ] per Frozen stack: +3 damage, consumes the stack
+
+### trait:projectile / trait:mental / trait:reveal
+- [x] projectile: Force strong vs projectile (M:86); ranged Counter covers projectiles (combatMatchups.js:37).
+- [x] mental: Force weak vs mental (M:92). reveal: Illusion weak to reveal (M:111).
+- [ ] projectile: per range step beyond reach, +1 Precision
+
+## 5. Maneuver / range / targeting tags
+
+### maneuver:attack
+- [x] flat: fast strike; x1.5 Poise damage vs prepared Smash/casting (M:127-128; nodes.csv:456).
+- [ ] per Precision stack: +1 Poise damage
+
+### maneuver:defend
+- [x] flat: grants the printed Block; Sweep does x0.75 into it (M:135); +1 turn-start protection.
+- [ ] per Block held at turn start: +1 Poise guard, cap 3
+
+### maneuver:counter
+- [x] flat: halves one covered hit; reply on full absorption, Core 2 on any covered hit (M:3; SPEC :3353).
+- [ ] per Counter stack: reply +10% of incoming damage (see Statuses)
+
+### maneuver:sweep
+- [x] flat: bypasses melee Counter; Reaction at rank 2+ (nodes.csv:459; cardTagExplanation.js).
+- [ ] per target hit: +1 Poise damage to each, cap 3
+
+### maneuver:ranged
+- [x] flat: ranged delivery avoids melee replies (nodes.csv:460). Distance chances 20/35, max 50 (M:150).
+- [ ] per Precision stack: +2% hit chance at Far range
+
+### maneuver:smash
+- [x] flat: x1.25 vs Guard, x1.5 vs defended, +3 Poise on Guard break (M:127,131-132; SPEC :3341).
+- [ ] per Earth stack: +1 Guard damage
+
+### maneuver:casting
+- [x] flat: spell stance; Counter coverage by school and delivery (nodes.csv:477).
+- [ ] per Silenced stack on the caster: casting costs 1 more MP (S:1303 gives SP)
+
+### range:melee / reach / ranged
+- [x] range sets Evade DC by +0/+2/+4 area difficulty (M: `areaDifficulty`); Prone gives +2/+4 Evade (G:30).
+- [ ] melee: per Prone stack on target: +1 damage
+
+### targeting:single / targeting:area
+- [x] single: Illusion strong; area: Illusion weak, most Counters do not cover it (nodes.csv:482; M:98-113).
+- [ ] area: per extra target hit, -5% damage (cap -20%) to keep it fair
+
+### targeting.self / enemy / allEnemies / randomEnemy / ally / allAllies
+- [x] choose who an effect applies to; no standalone effect (nodes.csv:311-316).
+- [ ] none proposed
+
+## 6. Ramp tags
+
+### ramp.momentum (merged, #2421)
+- [x] per earlier play this combat: +N damage or Block (nodes.csv:492; `src/model/validate.js:2914` `ramp.per` 1..3).
+- [ ] per stack of Momentum: also +1 Poise damage at 3+ plays
+
+### ramp.honed (merged, #2421)
+- [x] per play this run: +N damage, count persists across fights (nodes.csv:489).
+- [ ] per 10 plays: card gains Precision 1
+
+### Combined proposals
+- [ ] Momentum resets when Frozen; Honed never resets
+
+## 7. New combat tags (summary)
+
+- [ ] Counter stacked badge, Reflect, Precision decay, Shocked, Damp, Earth stacks: see section 1.
+- [ ] `contest:` cards (feature/InsightContest): see section 1.
+- [ ] Enemy weaknesses (feature/EnemyWeaknesses): see section 1.
+- [ ] Own-element x1.25 and armament affinity tags: see section 2.
