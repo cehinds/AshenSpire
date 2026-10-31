@@ -71,9 +71,21 @@ export function cardFaceLines(def, preview = null, registries = null, rules = nu
   }
 }
 
+// Ramp (SPEC §4.3): the face shows the number the card deals now and says what grows it, so the per-play formula
+// the engine evaluates is read back as its plain amount here.
+const isRampedAmount = amount => amount?.f === 'add' && amount.args?.[1]?.f === 'metric' && amount.args[1].metric === 'sameCardPlays';
+function rampFace(def) {
+  if (!def.ramp || !def.effects?.some(effect => isRampedAmount(effect.amount))) return { def, line: null };
+  const { scope, stat, per } = def.ramp;
+  const plain = { ...def, effects: def.effects.map(effect => isRampedAmount(effect.amount) ? { ...effect, amount: effect.amount.args[0] } : effect) };
+  return { def: plain, line: `+<span class="val">${per}</span> ${stat === 'block' ? 'Block' : 'damage'} per play this ${scope === 'run' ? 'run' : 'combat'}` };
+}
+
 function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
+  const ramped = rampFace(def);
+  def = ramped.def;
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
@@ -414,6 +426,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
   const byKind = { cost: [], damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
   for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
+  if (ramped.line) byKind.detail.push(ramped.line);
   for (const group of groups.values()) {
     // Only damage wakes a sleeper; a rider keyed on Sleep that deals none says so, as its authored text does.
     const wakes = group.fragments.some(f => f.cat === 'damage');
