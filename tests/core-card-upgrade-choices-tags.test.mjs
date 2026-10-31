@@ -80,3 +80,13 @@ test('a save with the new steps validates, and a bad tag step is refused', () =>
   card.upgradeSteps = [{ k: 'tag', tag: 'range:far' }];
   assert.ok(JSON.stringify(problems(run)).includes('upgradeSteps'), 'a tag outside the vocabulary is a problem');
 });
+
+test('a school change on a non-damaging spell projects a valid face and profile', () => {
+  for (const id of ['core.mendingTouch', 'core.hexmark']) {
+    const before = plain(id);
+    const after = face(id, [{ k: 'tag', tag: 'school:divine' }]);
+    assert.equal(combatProfileFor(after).school, 'divine');
+    assert.equal(combatProfileFor(after).camp, 'spell');
+    assert.deepEqual(after.effects, before.effects, 'school changes typing only');
+  }
+});

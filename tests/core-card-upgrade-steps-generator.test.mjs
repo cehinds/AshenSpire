@@ -247,3 +247,18 @@ test('the tag vocabulary a step writes is the one combatCardProfile reads', asyn
   const { upgradeBasic } = await import('../src/model/cardUpgradeLimits.js');
   for (const card of cards) assert.equal(rollUpgradeOptions(card, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.tag === 'rank.cantrip') && upgradeBasic(card), false, card.id);
 });
+
+test('school change is offered to any spell-camp card, damaging or not, and never to a non-spell', () => {
+  const schoolSeen = (card) => [...tagsFor(card)].some((k) => k.includes('"tag":"school:'));
+  for (const id of ['core.mendingTouch', 'core.hexmark']) {
+    const card = byId(id);
+    assert.ok(card.tags.includes('camp:spell'), id);
+    assert.ok(schoolSeen(card), `${id} offers a school change`);
+    // The face stays valid: the school tag is read as the profile's school, nothing else moves.
+    const face = applyUpgradeSteps(card, [{ k: 'tag', tag: 'school:frost' }]);
+    assert.deepEqual(face.effects, card.effects);
+    assert.ok(face.tags.includes('school:frost'));
+  }
+  assert.ok(!schoolSeen(byId('core.strike')), 'a physical card gets none');
+  assert.ok(!schoolSeen(dmg(6, { tags: ['camp:physical'] })));
+});
