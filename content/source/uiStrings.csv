@@ -1867,6 +1867,7 @@ status.lifecycle.coreDecay,,,The {value} decreases by {amount} at the {clock}; r
 status.lifecycle.coreTimer,,,Turn timer: {duration} ticks at the {clock}. Successful reapplication resets the timer.,
 status.lifecycle.corePrecision,,,Temporary stacks expire at the end of the owner's turn; Persistent stacks remain.,
 cardArtBuilder.modeReviewed,,Reviewed,,
+cardArtBuilder.reviewedCard,,,Reviewed {name},
 cardArtBuilder.modeLabel,,Card art workflow,,
 cardArtBuilder.headerIntro,,Build procedural art or review approved placements using the same game renderer.,,
 cardArtBuilder.modeProcedural,,Procedural,,

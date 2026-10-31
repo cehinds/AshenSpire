@@ -21,6 +21,11 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 const run = createRunState({ registries, classId: 'reaver', seed: 73031 });
 const previewText = { name: t('cardArtBuilder.previewName'), text: tFull('cardArtBuilder.previewOnly') };
 
+test('reviewed-card accessibility copy fills its authored name token through the strings API', () => {
+  assert.equal(tFull('cardArtBuilder.reviewedCard', { name: 'Example card' }), 'Reviewed Example card');
+  assert.throws(() => tFull('cardArtBuilder.reviewedCard'), /wants \{name\}/);
+});
+
 test('builder exports only canonical type, tags and one-based bounded rank', () => {
   const input = builderInputFromControls({ type: 'counter', category: 'spell', element: 'earth', delivery: 'projectile',
     statuses: ['burn', 'weak'], extraTags: 'status:burn, future:cue\nfuture:cue', rank: 3 });
