@@ -49,7 +49,7 @@ export const counterStacksAfterCard = (entity, block) => Math.min(mechanics.coun
 
 /** The return of an executed action: the sum over the contacts the Counter covered. `base` is the card's own damage, paid on the first. */
 export function counterReturnForReceipt(ctx, receipt, { stacks = 0, base = 0 } = {}) {
-  const total = { hp: 0, poise: 0, block: 0 };
+  const total = { hp: 0, poise: 0, block: 0, incoming: 0, stackShare: 0 };
   let basePaid = false;
   (receipt.covered || []).forEach((covered, index) => {
     if (!covered) return;
@@ -57,6 +57,7 @@ export function counterReturnForReceipt(ctx, receipt, { stacks = 0, base = 0 } =
     const row = counterReturn(ctx, incoming, counterBeats(ctx, receipt.profiles?.[index]?.maneuver), { stacks, base: basePaid ? 0 : base });
     if (row.hp > 0 || incoming > 0) basePaid = true;
     total.hp += row.hp; total.poise += row.poise; total.block += row.block;
+    total.incoming += Math.max(0, Math.floor(Number(incoming) || 0)); total.stackShare += row.hp > 0 || incoming > 0 ? counterStackReturn(stacks, incoming) : 0;
   });
   return total;
 }

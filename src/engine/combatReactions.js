@@ -199,6 +199,13 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
       }
     }
   }
+  // Auto-Counter (owner 2026-10-31): in Counter stance a covered hit may be answered with no card, for the data-set SP.
+  const owner = ctx.players ? ctx.players.get(seat)?.entity : ctx.player;
+  if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner)
+    && threats.some(threat => threat.row.contacts.some(contact => counterCoversAttack(ctx, Matchups.autoCounterCarrier(), contact, contact.effect || 'damage')))) {
+    options.push({ id: 'autoCounter', name: 'Counter', cardId: null, autoCounter: true, play: { autoCounter: true },
+      staminaCost: Matchups.autoCounterCost(), manaCost: 0, choiceName: null, ...(captureIncoming ? { incoming: {} } : {}) });
+  }
   return options;
 }
 
@@ -540,6 +547,16 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
       || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost
       || canonical.manaCost !== option.manaCost) throw new Error('That reaction card is no longer playable');
     option = canonical;
+  }
+  // The card-less auto-Counter pays and arms at once; it never stacks (nothing to re-offer or answer).
+  if (option?.autoCounter) {
+    Matchups.armAutoCounter(ctx, ctx.player);
+    (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
+    (group.reactionAnswered ||= []).push(ownerId);
+    delete ctx.pendingReaction;
+    ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: null, autoCounter: true });
+    reportRestOfRoot(ctx, group, ownerId, hooks);
+    return;
   }
   if (option && stackedReactions(ctx)) {
     const instance = (ctx.players ? ctx.players.get(ownerId)?.piles.hand : ctx.piles.hand)?.find(inst => inst.instanceId === option.play.cardInstanceId);

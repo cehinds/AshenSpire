@@ -2,6 +2,7 @@ import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
 import * as CounterRule from './counterRule.js';
+import { mechanics } from '../framework/data/mechanics.js';
 const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
 const counterReturnForReceipt = (ctx, receipt, options) => CounterRule.counterReturnForReceipt(ctx, receipt, options);
 import { stanceMitigation } from './stanceMitigation.js';
@@ -300,6 +301,33 @@ function restrictions(ctx, entity, options = {}) {
   return options.restrictions || ctx.combatControlRestrictions?.(entity) || {
     counterDisabled: false, evadeDisabled: false,
   };
+}
+
+// Auto-Counter (owner 2026-10-31, SPEC §17): standing in Counter stance, an enemy hit the stance covers may be answered with no
+// card at all for `mechanics.counter.autoCounterStamina` SP. It arms a Counter with base damage 0, so its return is the stacks' share only.
+const AUTO_COUNTER_TAGS = Object.freeze(['camp:physical', 'maneuver:counter', 'counter:melee', 'range:melee', 'targeting:single', 'trait:reaction']);
+/** The card-less carrier an auto-Counter arms with (the melee default coverage, no authored payload). */
+export const autoCounterCarrier = () => ({ instanceId: 'autoCounter', cardId: 'autoCounter', name: 'Counter', type: 'skill',
+  tags: [...AUTO_COUNTER_TAGS], cardTags: [...AUTO_COUNTER_TAGS], autoCounter: true, skipRatingBonus: true, combatRiderTargets: [],
+  combatProfile: { camp: 'physical', maneuver: 'counter', school: null, damageType: 'blunt', counterMode: 'melee', range: 'melee', targeting: 'single', traits: [] } });
+export const autoCounterCost = () => Math.max(0, Math.floor(mechanics.counter.autoCounterStamina));
+/** True when `entity` may answer a hit with an auto-Counter right now: Core, Counter stance, nothing armed or spent, SP in hand. */
+export function autoCounterAvailable(ctx, entity) {
+  if (!counterRuleActive(ctx) || !combatExpansionEnabled(ctx) || entity?.kind !== 'player' || !entity.alive) return false;
+  if (entity.combatStance?.maneuver !== 'counter' || entity.combatCounter?.charges > 0) return false;
+  if (CounterRule.counterReturnSpent(entity) || restrictions(ctx, entity).counterDisabled) return false;
+  return (entity.energy ?? 0) >= autoCounterCost();
+}
+/** Pays the auto-Counter's SP (as a card play pays it) and arms it; returns the armed counter. */
+export function armAutoCounter(ctx, entity) {
+  const cost = autoCounterCost();
+  entity.energy -= cost;
+  if (cost > 0) {
+    entity.counters.staminaSpentThisTurn = (entity.counters.staminaSpentThisTurn || 0) + cost;
+    ctx.emit?.('energySpent', { amount: cost });
+    ctx.emit?.('staminaSpent', { amount: cost });
+  }
+  return armCombatCounter(ctx, entity, autoCounterCarrier(), { payload: { hp: 0, poise: 0, ward: 0 }, mode: 'melee' });
 }
 
 /** Called only for an accepted play/telegraph; support preserves posture. */
@@ -730,10 +758,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   }
   // Core 2 (SPEC §17, owner 2026-10-31): the return is the card's authored damage plus the owner's Counter stacks x 10% of
   // the incoming hit (stacks persist across turns; a card-less auto-Counter has base 0), not a fraction of that hit alone.
+  let counterBreakdown = null;
   if (counterRuleActive(ctx)) {
     const core = counterReturnForReceipt(ctx, receipt, { stacks: target.counterStacks || 0, base: number(counter.payload.hp) });
     // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
     payload.hp = core.hp; payload.poise = core.poise;
+    counterBreakdown = { counterBase: number(counter.payload.hp), counterStacks: target.counterStacks || 0, counterIncoming: core.incoming, counterStackShare: core.stackShare };
     if (isSpellCounter(counter.carrier)) payload.ward = 0;
   }
   const magical = isSpell(counter.carrier.combatProfile);
@@ -757,7 +787,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   }
   if (!(coreFixed && isSpellCounter(counter.carrier)) && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
-    sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
+    sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0, ...(counterBreakdown || {}) };
   if (deferredRangeReturn) {
     // No offensive action exists after rounding: do not reserve hypothetical
     // rider targets or spend its cycle. The interception is already resolved.
