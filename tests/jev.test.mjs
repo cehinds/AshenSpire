@@ -121,6 +121,24 @@ test('restampChangelog sets the first matching receipt and dedupes under the new
   assert.ok(lines.some(l => l.includes('Text A') && l.includes('`0.7.2.71`')), 'other PRs are untouched');
 });
 
+test('generated-stale matches each generator\'s real diagnostic (tool name after the failure)', () => {
+  // Copied from the generators' own messages.
+  for (const line of [
+    'STALE: src/config/generated/ui.js does not match content/config/ — run node tools/config-build.mjs',
+    'STALE: src/framework/data/mechanics.js does not match mechanics.json — run node tools/framework-data-build.mjs',
+    'Error: Stale generated game configuration: games/ashenspire/game.lock.json; run node tools/game-config.mjs build',
+    '3 generated file(s) are out of date — run: node tools/content-build.mjs',
+    'error: games/ashenspire/build.summary.json is stale; run node tools/build-game.mjs and commit it',
+  ]) {
+    const r = triage(line + '\n');
+    assert.deepEqual(r.matches.map(m => m.id), ['generated-stale'], line);
+    assert.equal(r.exit, 0, line);
+  }
+  // An orphaned generated file is not something regen fixes.
+  const o = triage('  ORPHANED src/content/generated/old.js — no source file produces it; it ships stale\n');
+  assert.ok(!o.matches.some(m => m.id === 'generated-stale'));
+});
+
 test('restampChangelog moves the restamped receipt to the top of its date group', () => {
   const r = restampChangelog(CHANGELOG, { pr: 2500, build: '0.7.2.72' });
   assert.equal(r.moved, true);

@@ -3,7 +3,7 @@
   "rules": [
     {
       "id": "generated-stale",
-      "regex": "(content-build|build-game|framework-data-build|game-config|config-build)[^\\n]*(stale|out of date)|build\\.summary\\.json[^\\n]*(stale|out of date)|(stale|out of date)[^\\n]*build\\.summary\\.json",
+      "regex": "(content-build|build-game|framework-data-build|game-config|config-build)[^\\n]*(stale|out of date)|(stale|out of date|does not match)[^\\n]*run:? node tools/(content-build|build-game|framework-data-build|game-config|config-build)\\.mjs|build\\.summary\\.json[^\\n]*(stale|out of date)|(stale|out of date)[^\\n]*build\\.summary\\.json",
       "flags": "i",
       "category": "generated",
       "deterministic": true,
