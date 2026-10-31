@@ -29,3 +29,11 @@ test('co-op seats and enemies lose one Precision stack at their next turn start;
   // The enemy may regain an entry stack after its decay, so read the decay receipt rather than the final count.
   assert.ok(combat.eventLog.some(e => e.type === 'statusRemoved' && e.targetId === enemy.id && e.status === 'precision' && e.reason === 'ownerTurnStart' && e.amount === 1), 'the enemy lost one stack at its own turn start');
 });
+
+test('Core 2 co-op Evade decays exactly once per round at its owner turn start', () => {
+  const combat = fixture(), seat = combat.players.get('p1').entity;
+  seat.statuses.evade = { stacks: 5 };
+  endTurn(combat, 'p1'); endTurn(combat, 'p2');
+  assert.equal(combat.phase, 'player');
+  assert.equal(seat.statuses.evade?.stacks, 4, 'one stack, not the legacy round-start decay on top');
+});

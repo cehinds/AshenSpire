@@ -624,7 +624,7 @@ function finish(C, result) {
 // ---- player phase -----------------------------------------------------------
 function startPlayerPhase(C) {
   C.turn += 1;
-  decayStanceRoundStart(C);
+  if (!fixCoreEnabled(C)) decayStanceRoundStart(C); // Core 2 decays Evade once, at the owner turn start (decayAtTurnStart), as solo does
   clearEnemyReactionRolls(C);
   C.phase = 'player';
   for (const P of livingPlayers(C)) {
