@@ -49,6 +49,24 @@ import { allocateAttributePoint } from '../src/model/levelup.js';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 
+test('the Victory receipt shows the largest gain on every attribute row, with all gains in the title', () => {
+  const { registries, run } = build();
+  run.level.unspentPoints = 1;
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    mountRewards(app, { registries, run, receiptOnly: true, onDone() {}, onPersist() {},
+      onAllocateStat: id => allocateAttributePoint(registries, run, id),
+      rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
+    const chips = [...app.querySelectorAll('.reward-stat-row .reward-stat-gain')];
+    assert.equal(chips.length, 5);
+    assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
+    const hp = chips.find(c => c.textContent === '+10 HP');
+    assert.match(hp.getAttribute('title'), /^\+10 HP, /);
+  });
+});
+
 test('the Armoury allocation modal shows the same span, and the Rest card model carries mainGain', () => {
   const { registries, run } = build();
   run.level.unspentPoints = 1;
