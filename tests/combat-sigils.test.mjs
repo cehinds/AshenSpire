@@ -197,8 +197,9 @@ test('a press on a tag symbol through the hand lane explains it and never reache
   // redirects that click to the symbol, stops it there, and re-dispatches it to the symbol.
   assert.match(tooltip, /const symbolUnderLane = ev => \{[\s\S]*?closest\?\.\('\.hand-hit-lane'\)/);
   assert.match(tooltip, /if \(ev\.type === 'click'\) \{\s*const sym = symbolUnderLane\(ev\);[\s\S]*?ev\.stopPropagation\(\); ev\.preventDefault\(\);\s*sym\.dispatchEvent\(new MouseEvent\('click'/);
-  // One press explains a tag symbol: the symbol skips the select-then-explain step.
-  assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
+  // One press explains a tag symbol, and (owner 2026-10-31) any term whose card is selected or inspected or that sits in
+  // the inspection modal (oneClickContext): those skip the select-then-explain step.
+  assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\) \|\| oneClickContext\(term\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
   assert.doesNotMatch(tooltip, /for \(const type of \['pointerdown'/, 'no computed-type page listener');
 });
 
