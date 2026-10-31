@@ -71,7 +71,7 @@
   --combat-symbol-trim: var(--combat-symbol-red-trim);
 }
 :root .intent-icon.intent-icon[data-intent='evade'],
-:root .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg,
+:root .combat :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg,
 :root .card-tag-symbol[data-tag-id$=':evade'] svg {
   color: var(--combat-symbol-white);
   --combat-symbol-trim: var(--combat-symbol-evade-trim);
@@ -85,10 +85,10 @@
 
 /* Hard layers preserve the authored SVG paths. Solid marks get an actual dark
    stroke; sharp, offset shadows form the outside trim without a soft glow. */
-:root :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg)[data-solid='true'],
+:root :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg)[data-solid='true'],
 :root .card-sigil-band .card-action-icon svg[fill='currentColor'],
 :root .card-tag-symbol[data-tag-id] svg[fill='currentColor'],
-:root .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg[fill='currentColor'] {
+:root .combat :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg[fill='currentColor'] {
   stroke: var(--combat-symbol-outline) !important;
   stroke-width: 1.5px !important;
   paint-order: stroke fill;
@@ -119,8 +119,8 @@
 }
 
 /* Mini HUD Evade badge: the symbol is 15.3px centered in its 22px box, with
-   the 7px value beginning one pixel past the symbol's lower-right edge. */
-:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision) {
+   the count inside the badge's lower-right corner (owner 2026-10-31: every count renders inside, like Block and Poise). */
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) {
   position: relative;
   display: block;
   box-sizing: border-box;
@@ -134,7 +134,7 @@
   padding: 0;
   overflow: visible;
 }
-:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) {
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) {
   position: absolute;
   left: calc(3.35px / var(--ui-zoom, 1));
   top: calc(3.35px / var(--ui-zoom, 1));
@@ -142,22 +142,22 @@
   height: calc(15.3px / var(--ui-zoom, 1));
   font-size: 0;
 }
-:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg {
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg {
   display: block;
   width: 100% !important;
   height: 100% !important;
   max-width: 100%;
 }
-:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
   position: absolute;
-  left: calc(19.65px / var(--ui-zoom, 1));
-  top: calc(19.65px / var(--ui-zoom, 1));
+  left: calc(11.5px / var(--ui-zoom, 1));
+  top: calc(11.5px / var(--ui-zoom, 1));
   display: grid;
   place-items: center;
-  width: calc(7px / var(--ui-zoom, 1));
-  height: calc(7px / var(--ui-zoom, 1));
+  width: calc(10px / var(--ui-zoom, 1));
+  height: calc(10px / var(--ui-zoom, 1));
   transform: none;
-  font-size: calc(7px / var(--ui-zoom, 1));
+  font-size: calc(9px / var(--ui-zoom, 1));
   line-height: 1;
   overflow: visible;
 }
@@ -245,10 +245,10 @@
 
 /* Lite: collapse the 4-8 stacked drop-shadow passes per glyph. Solid marks already carry a real stroke, so they drop the
    filter; outline marks keep one soft outline pass. */
-:root[data-performance='lite'] :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg)[data-solid='true'],
+:root[data-performance='lite'] :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg)[data-solid='true'],
 :root[data-performance='lite'] .card-sigil-band .card-action-icon svg[fill='currentColor'],
 :root[data-performance='lite'] .card-tag-symbol[data-tag-id] svg[fill='currentColor'],
-:root[data-performance='lite'] .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg[fill='currentColor'] {
+:root[data-performance='lite'] .combat :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg[fill='currentColor'] {
   filter: none;
 }
 :root[data-performance='lite'] .intent-icon.intent-icon[data-intent]:not([data-solid='true']),

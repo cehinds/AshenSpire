@@ -2652,7 +2652,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const counterDefenseProjection = () => {
     if (counterProjection !== undefined) return counterProjection;
     const sim = F.candidateState(combat, { detached: true });
-    for (const effect of chargedEffects) {
+    // The prepared effects, not the printed ones: Counterstrike scales the Block the stacks are read from (SPEC §17).
+    for (const effect of preparedEffects) {
       if (effect.op === 'damage' || effect.target !== 'self') continue;
       sim.queue.push({ effect, source: sim.player, owner: sim.player, target: sim.player, card: action.card, meta: { energySpent: shownCost } });
     }
@@ -2662,11 +2663,15 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   // Core 2: the whole HP/Poise return is one computed figure; the authored poiseDamage rows of a Counter never resolve live.
   const coreCounterCard = configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter';
   let coreCounterRead;
+  // The card's own damage: what the armed Counter holds as its base return (live: payload.hp), plus any charged bonus.
+  const counterBaseHp = resolvedTarget => chargedEffects.reduce((sum, effect) => sum + (effect.op === 'damage'
+    ? counterEffectPreview(combat, p, resolvedTarget, action.card, effect, { energySpent: shownCost })?.total || 0 : 0), 0)
+    + Math.max(0, charges.damage + charges.damageEffect);
   const coreCounterReturnRead = () => {
     if (coreCounterRead !== undefined) return coreCounterRead;
     const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
     return (coreCounterRead = enemyTarget
-      ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection()) : null);
+      ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection(), counterBaseHp(enemyTarget)) : null);
   };
   // The return the card will deal: null when the attack is hidden/unknown (the face keeps the printed amount) or uncovered (no return).
   const coreCounterReturn = () => { const read = coreCounterReturnRead(); return read?.uncovered ? null : read; };
@@ -2692,7 +2697,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
           coreRead ??= reply && resolvedTarget?.kind === 'enemy'
-            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection()) : null;
+            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection(), counterBaseHp(resolvedTarget)) : null;
           const read = effectIndex === bonusIndex ? coreRead : null;
           // Live replaces the card's whole HP payload with the one computed return (SPEC §17), so every other damage row of a
           // Counter with a known read deals nothing here: the return sits in exactly one row.
@@ -2861,6 +2866,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       case 'gainEnergy':
       case 'restoreMana':
       case 'restoreStamina':
+      case 'applyReflect':
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);

@@ -109,6 +109,8 @@ import { resourceBars } from '../components/resbars.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { characterLevel } from '../../model/levelup.js';
 import { combatHealthRow } from '../components/combatHealth.js';
+import { stanceBadgeFor } from '../models/CombatHealthModel.js';
+import { fixCoreEnabled } from '../../model/fixCoreMechanics.js';
 import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
@@ -1158,7 +1160,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (hp) {
       const next = hp.nextSibling;
       const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
-      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null, precision: ent.combatExpansionVersion === 2 && known ? (ent.statuses?.precision?.stacks || 0) : null });
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null, precision: ent.combatExpansionVersion === 2 && known ? (ent.statuses?.precision?.stacks || 0) : null, stance: !isEnemy && fixCoreEnabled({ combatExpansionVersion: ent.combatExpansionVersion, gameProfile: registries.gameProfile, fixCoreRules: snap.scene?.fixCoreRules }) ? stanceBadgeFor(ent, { registries, combatExpansionVersion: 2, stanceRules: registries.balance?.stanceRules }) : null, counterStacks: ent.counterStacks || 0, reflectStacks: ent.reflectStacks || 0 });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');

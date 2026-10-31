@@ -226,6 +226,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
+      case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
       case 'restoreStamina':
       case 'gainEnergy': return frag('gain', `${num(n, base)} SP`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);

@@ -1523,6 +1523,44 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
   {
+    "id": "core.mirrorGuard",
+    "name": "Mirror Guard",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyReflect",
+        "target": "self",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "school:alteration",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {applyReflect} Reflect.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyReflect",
+          "target": "self",
+          "amount": 2
+        }
+      ]
+    }
+  },
+  {
     "id": "core.starfall",
     "name": "Starfall",
     "class": "starseer",

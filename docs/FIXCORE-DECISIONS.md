@@ -67,6 +67,25 @@ JSON default and the fallback for a missing `smashVsDefensive` block must agree.
 Persisted explicit rule values remain snapshots; this does not rewrite custom
 configuration or historical non-Core profiles.
 
+## Counter stacks (2026-10-31)
+
+Owner: Counter becomes a stack badge. Playing a Counter adds the Block you hold
+as `counterStacks` (owner, later 2026-10-31: no cap; they fade by 2 at each owner turn start, never below 0, and clear at fight end). A covered hit returns the
+card's own damage plus 10% of the incoming hit per stack, replacing the old
+floor(0.5 x incoming) share (the stance-advantage share and Block are unchanged).
+In Counter stance a card-less auto-Counter answers a covered hit for 1 SP with
+base 0, and a Counter reaction from that stance costs one less SP regardless of
+the Adept gate. Reflect (see SPEC.md section 17) is a separate stack count.
+
+## Reflect stacks (2026-10-31)
+
+Owner: Reflect is its own stack count, `reflectStacks` (cap 10, cleared at fight
+end), granted by the new Mirror Guard card (`applyReflect`). Each stack cuts an
+incoming hit by 30% before Block (cap 90%, rounded down) and, once the hit lands,
+sends 30% of the original incoming damage back as a flagged hit that cannot reflect
+or counter again, costing one stack. Counter returns, reflected returns and
+`unreflectable` hits are untouched. Values: `reflect` in `content/framework/mechanics.json`.
+
 ## Magic hits Poise first (owner, 2026-10-31)
 
 - D17: "Magic damage hits Poise first and then Block; physical damage hits Block first and then Poise." Core (Ward off): the magic part of a hit meets Poise 1:1 (full amount as Poise damage), then the Block left after the physical part, then Barrier, then HP, with no further Poise absorb; the physical part is unchanged (Block, then the 75/25 Poise absorb). A mixed hit resolves physical first, then magic, on one shared Poise pool. Amends the 2026-10-25 Block-soaks-whole-hit order (SPEC §17) for magic; D3/D4/D13 are otherwise unchanged. Tested by `tests/magic-poise-first.test.mjs`.

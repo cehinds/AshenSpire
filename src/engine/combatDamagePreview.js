@@ -5,6 +5,7 @@ import * as Actions from './actions.js';
 // roots. Read cyclic engine exports when invoked, never during initialization.
 import * as Matchups from './combatMatchups.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
+import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 
@@ -69,6 +70,8 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  */
 export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   defender.block = receipt.blockRemaining;
+  // A reflected hit spends one Reflect stack, as live does (SPEC §17).
+  if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
   if (!fixCoreEnabled(ctx)) return;
   defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
@@ -79,6 +82,31 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   }
 }
 
+/** A detached copy of an attacker whose HP and defenses a previewed reflected return may spend. */
+export function cloneDetachedAttacker(entity) {
+  return entity && { ...entity, persistentWard: entity.persistentWard && { ...entity.persistentWard },
+    persistentPoise: entity.persistentPoise && { ...entity.persistentPoise } };
+}
+
+/**
+ * Applies a landed hit's Reflect return to the detached attacker, mirroring actions.js reflectBack (SPEC §17): the return is a
+ * flagged reaction hit that needs no hit roll. Returns true when it kills the attacker, so later hits of the same action are
+ * forecast as cancelled, as live does. Detached only; no events, no rng.
+ */
+export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
+  if (!receipt?.reflect || !attacker || attacker === holder || !(attacker.hp > 0)) return false;
+  const amount = reflectReturned(receipt.reflect.original, receipt.reflect.stacks);
+  if (!(amount > 0)) return false;
+  const back = ProfileCombat.profileDamageReceipt(ctx, holder, attacker, amount,
+    { ...carrier, combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+      combatProfile: { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true }, combatRiderTargets: [] });
+  applyReceiptToPreviewTarget(ctx, attacker, { ...back, reflect: null });
+  attacker.hp -= fixCoreEnabled(ctx) ? back.hpLoss : back.amount;
+  if (attacker.hp > 0) return false;
+  attacker.hp = 0;
+  return true;
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
@@ -86,10 +114,13 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
   if (ProfileCombat.configuredCombat(ctx)) {
     const receipts = [];
+    const attacker = cloneDetachedAttacker(source);
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, source, defender, base, carrier);
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
       receipts.push(receipt);
       if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
+      // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
+      if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }
     return { damageReceipt: damageReceipt(target?.id, receipts.flatMap(row => row.damageReceipt?.hits || [])),
       damage: (fixCoreEnabled(ctx) ? receipts[0]?.hpLoss : receipts[0]?.amount) || 0, hits: receipts.length,
