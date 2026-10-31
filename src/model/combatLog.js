@@ -6,6 +6,7 @@
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
 import { t } from '../ui/strings.js';
+import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -167,6 +168,16 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'combatCounterTriggered': {
         const { label } = causeOf();
         text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
+        break;
+      }
+      // SPEC §17 Contests: "Contest: d20 [5] + INT 1 + WIS 2 + rank 1 = 9 vs Poise 7 + WIS 1 + level 1 = 9 · success".
+      case 'contestPassed': case 'contestFailed': {
+        const c = event.contest || event;
+        const short = id => ATTRIBUTES.find(row => row.id === id)?.shortLabel || word(id);
+        const mine = (c.parts || []).map(part => `${short(part.id)} ${part.value}`).join(' + ');
+        const theirs = (c.dcParts || []).map(part => `${part.id === 'poise' ? 'Poise' : part.id === 'level' ? 'level' : short(part.id)} ${part.value}`).join(' + ');
+        text = t(event.type === 'contestPassed' ? 'combat.log.contestPassed' : 'combat.log.contestFailed', {
+          source, target, roll: c.roll, mine, rank: c.rank ?? 1, total: c.total, theirs, dc: c.dc });
         break;
       }
       case 'attackHit': case 'attackMissed': {

@@ -70,3 +70,19 @@ configuration or historical non-Core profiles.
 ## Magic hits Poise first (owner, 2026-10-31)
 
 - D17: "Magic damage hits Poise first and then Block; physical damage hits Block first and then Poise." Core (Ward off): the magic part of a hit meets Poise 1:1 (full amount as Poise damage), then the Block left after the physical part, then Barrier, then HP, with no further Poise absorb; the physical part is unchanged (Block, then the 75/25 Poise absorb). A mixed hit resolves physical first, then magic, on one shared Poise pool. Amends the 2026-10-25 Block-soaks-whole-hit order (SPEC §17) for magic; D3/D4/D13 are otherwise unchanged. Tested by `tests/magic-poise-first.test.mjs`.
+
+## Insight contests (2026-10-31)
+
+Owner: "Read Intent, Foresight and that kind of spell should not need a hit chance or care about range."
+They resolve a contest: d20 + caster INT + WIS + card rank against DC = the target's current Poise +
+target WIS + target level; a tie succeeds. Example: rank 1, INT 1, WIS 2, roll 5 gives 9 against Poise 7 +
+WIS 1 + level 1 = 9, a success; a roll of 4 fails. More status-inflicting spells work this way, with
+attributes by school: physical effects use DEX + CON (against CON), mental effects INT + WIS (against WIS),
+and every DC includes current Poise first.
+
+Implemented as an authored card field `contest: 'mental' | 'physical'`, constants in
+`content/framework/mechanics.json`, a new last RNG stream `combatContest`, and `src/engine/contest.js`.
+Foresight targets only the caster, so it carries no contest. The cards converted are listed in SPEC §17
+Contests. Rallying Roar and Smoke Veil (physical-camp Core skills that apply Weak) and Restrained
+(which also adds a burden card) were left on the Accuracy roll.
+The contest applies in Core 2 only; Current/v2 combats ignore the `contest` field (D1).

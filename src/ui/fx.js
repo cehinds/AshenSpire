@@ -514,6 +514,9 @@ export const CALLOUT_KINDS = {
   hit: { string: 'combat.callout.hit', tone: 'white' },
   evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
   missed: { string: 'combat.callout.missed', tone: 'white' },
+  // Insight contests (SPEC §17 Contests): the word over the target a Read Intent style spell read or failed to read.
+  contestPassed: { string: 'combat.callout.contestPassed', tone: 'white' },
+  contestFailed: { string: 'combat.callout.contestFailed', tone: 'white' },
   outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
   dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
@@ -1217,7 +1220,8 @@ export function playTimeline(events, ctx, done) {
       const saidTargets = new Set();
       for (const event of beat.events) {
         const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
-          || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed' : null;
+          || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed'
+          : event.type === 'contestPassed' || event.type === 'contestFailed' ? event.type : null;
         if (!kind || saidTargets.has(event.targetId)) continue;
         visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, kind));
         saidTargets.add(event.targetId);
@@ -1987,6 +1991,8 @@ export function calloutForEvent(e = {}) {
   switch (e.type) {
     case 'attackHit': kind = e.evadeActive && !e.bypass ? 'evadeFailed' : 'hit'; break;
     case 'attackMissed': kind = 'missed'; break;
+    case 'contestPassed': kind = 'contestPassed'; break;
+    case 'contestFailed': kind = 'contestFailed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
     case 'enemyStaggered': if (!e.cause || e.cause === 'weakness') kind = 'staggered'; break;

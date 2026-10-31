@@ -119,12 +119,24 @@ export function mountCardUpgradeModal(host, initialModel, {
   const shortBlocker = (model) => blocker(
     t(shortfallOf(model) === 1 ? 'cardUpgrade.short.one' : 'cardUpgrade.short.many', { n: shortfallOf(model) }),
     { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } });
+  // The price a row asks: Smithing Stones (the rest site's), plus cinders when a quote names them (the Blacksmith's).
+  const priceNode = (model) => {
+    const { selected } = model;
+    if (!(selected.cinders > 0)) return economyNode({ cost: selected.cost, stones: model.stones });
+    return el('span', { class: 'card-upgrade-cinders' }, [
+      selected.cost > 0 ? economyNode({ cost: selected.cost, stones: model.stones }) : null,
+      el('b', { text: t('cardUpgrade.cinders', { n: selected.cinders }) }),
+    ].filter(Boolean));
+  };
+  const confirmText = (selected) => (selected.cinders > 0 ? t('cardUpgrade.confirmCinders', { n: selected.cinders }) : t('smith.upgrade.confirm', { cost: selected.cost }));
   const costStrip = (model) => {
     const { selected } = model;
-    const short = selected.plan.code === 'stones';
+    const short = selected.shortStones ?? selected.plan.code === 'stones';
+    // A quote (the Blacksmith's) can block on something other than stones, so its reason is shown as it stands.
+    const unaffordable = short || !selected.ok;
     return el('div', { class: 'smith-cost-strip' }, [
-      el('div', { class: `smith-summary-cell smith-preview-economy ${short ? 'unaffordable' : 'affordable'}` }, economyNode({ cost: selected.cost, stones: model.stones })),
-      short ? shortBlocker(model) : null,
+      el('div', { class: `smith-summary-cell smith-preview-economy ${unaffordable ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
+      short && shortfallOf(model) > 0 ? shortBlocker(model) : !selected.ok && selected.blockedReason ? blocker(selected.blockedReason, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }) : null,
     ]);
   };
   /** The plan's own before and after faces as small cards, side by side. */
@@ -170,7 +182,7 @@ export function mountCardUpgradeModal(host, initialModel, {
 
   /** The decision door's details: cost, the same change rows, and both faces. */
   const confirmationDetails = (model) => html([
-    el('div', { class: `confirmation-cost as-statrow flat ${model.selected.plan.code === 'stones' ? 'unaffordable' : 'affordable'}` }, economyNode({ cost: model.selected.cost, stones: model.stones })),
+    el('div', { class: `confirmation-cost as-statrow flat ${(model.selected.shortStones ?? model.selected.plan.code === 'stones') || !model.selected.ok ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
     el('div', { class: 'confirmation-change-list' }, model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) }))),
     model.faces ? facesNode(model) : null,
   ].filter(Boolean));
@@ -217,7 +229,7 @@ export function mountCardUpgradeModal(host, initialModel, {
     disarmDecision = null;
     confirmBtn.disabled = !model.canConfirm;
     confirmBtn.hidden = !selected;
-    confirmBtn.textContent = selected ? t('smith.upgrade.confirm', { cost: selected.cost }) : '';
+    confirmBtn.textContent = selected ? confirmText(selected) : '';
     confirmBtn.setAttribute('aria-disabled', String(!model.canConfirm));
     confirmBlocked = selected ? model.blockedReasons.join(' ') : '';
     confirmReason();
@@ -231,7 +243,7 @@ export function mountCardUpgradeModal(host, initialModel, {
         message: t('cardUpgrade.decision.message', { from: selected.levelFrom, to: selected.levelTo, then: decisionConsequence }),
         consequence: t('cardUpgrade.permanent'),
         detailsHtml: details,
-        confirmLabel: t('smith.upgrade.confirm', { cost: selected.cost }),
+        confirmLabel: confirmText(selected),
         cancelLabel: t('common.back'),
         onCommit: commitSelected,
         canCommit: () => Boolean(currentModel.canConfirm),
