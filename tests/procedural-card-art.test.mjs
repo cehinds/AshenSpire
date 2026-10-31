@@ -126,6 +126,60 @@ test('rank changes rendered decorative intensity without changing weapon geometr
   }
   for (const rank of [undefined, null, 0, -1, 2.5, NaN, Infinity, '3']) assert.equal(recipe('attack', ['camp:physical'], rank).rank, 1);
 });
+test('physical Sweep rotates only its separate slash arc along the fixed scythe blade', () => {
+  const physical = recipe('sweep'), magical = recipe('sweep', ['camp:spell'], 5);
+  const source = base.compositions.L40.layers;
+  const scythe = physical.componentArt.sprites.find(row => row.id === 'object');
+  assert.deepEqual(scythe.transform, source.find(row => row.id === 'object').transform);
+  const arcs = physical.componentArt.sprites.filter(row => row.assetId === 'C.effect.0');
+  assert.equal(arcs.length, 2);
+  for (const arc of arcs) {
+    assert.equal(arc.transform.rotationDeg, 90);
+    assert.deepEqual(arc.affine, [0, 1, -1, 0]);
+    assert.match(arc.css.transform, /rotate\(90deg\)/);
+  }
+  assert.equal(magical.componentArt.sprites.some(row => row.assetId === 'C.effect.0'), false);
+  assert.deepEqual(magical.componentArt.sprites.find(row => row.id === 'foreground').transform,
+    base.compositions.Y02.layers.find(row => row.id === 'foreground').transform);
+});
+
+test('all procedural objects receive one thin outline while effect PNGs keep their filters', () => {
+  const outline = 'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))';
+  for (const camp of ['physical', 'spell']) for (const type of ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend', 'skill']) {
+    const art = recipe(type, [`camp:${camp}`, 'status:burn']);
+    for (const sprite of art.componentArt.sprites) {
+      const count = (sprite.css.filter || '').split(outline).length - 1;
+      assert.equal(count, /^(object|secondaryObject)(-|$)/.test(sprite.id) ? 1 : 0, `${camp}/${type}/${sprite.id}`);
+    }
+  }
+});
+
+test('status PNG overlays paint above weapons with a bounded boost and preserve rank scaling', () => {
+  const catalogBefore = JSON.stringify(reviewed);
+  const sources = new Map(Object.values(reviewed.records).flatMap(row => row.sprites.map(sprite => [sprite.assetId, sprite])));
+  for (const camp of ['physical', 'spell']) for (const type of ['attack', 'counter', 'defend']) {
+    const rows = [1, 3, 5].map(rank => recipe(type, [`camp:${camp}`, 'element:fire', 'status:burn', 'status:weak'], rank));
+    for (let index = 0; index < rows.length; index++) {
+      const sprites = rows[index].componentArt.sprites, status = sprites.filter(row => row.id.startsWith('status-'));
+      const objects = sprites.filter(row => /^(object|secondaryObject)/.test(row.id));
+      const intensity = [0.55, 0.775, 1][index];
+      assert.equal(status.length, 4);
+      for (const cue of status) {
+        assert.ok(Number(cue.css.zIndex) > Math.max(...objects.map(row => Number(row.css.zIndex))));
+        assert.equal(Number(cue.css.zIndex), cue.zIndex);
+        const original = sources.get(cue.assetId);
+        const expected = Number((Math.min(0.65, Number(original.css.opacity ?? 1) * 1.3) * intensity).toFixed(4));
+        assert.equal(Number(cue.css.opacity), expected);
+        assert.equal(cue.transform.opacity, expected);
+        assert.ok(expected <= 0.65);
+      }
+      assert.deepEqual(objects, rows[0].componentArt.sprites.filter(row => /^(object|secondaryObject)/.test(row.id)));
+    }
+    assert.equal(new Set(rows.map(row => row.componentArt.sprites.find(sprite => sprite.id === 'status-burn-mark').css.opacity)).size, 3);
+  }
+  assert.equal(JSON.stringify(reviewed), catalogBefore, 'Reviewed catalog remains unchanged');
+});
+
 test('elements, spell delivery, bounded status PNGs and unknown registry statuses are semantic', () => {
   for (const element of ['force', 'fire', 'lightning', 'earth', 'frost', 'psychic', 'alteration', 'divine', 'necrotic', 'wind']) {
     const art = recipe('attack', ['camp:spell', `element:${element}`, 'delivery:projectile']);

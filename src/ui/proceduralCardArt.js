@@ -157,12 +157,23 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     hammer.affine = [-1, 0, 0, -1];
     Object.assign(hammer.css, { left: '54.6875%', top: '48.4375%', width: '66.40625%', height: '66.40625%',
       transform: 'translate(-50%, -50%) rotate(180deg) scale(1, 1)', zIndex: String(hammer.zIndex) });
-    hammer.css.filter = [hammer.css.filter === 'none' ? '' : hammer.css.filter,
-      'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))'].filter(Boolean).join(' ');
   }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
   if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
     art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
+  }
+  for (const sprite of art.sprites.filter(sprite => /^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
+    sprite.css.filter = [sprite.css.filter === 'none' ? '' : sprite.css.filter,
+      'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))'].filter(Boolean).join(' ');
+  }
+  // Physical Sweep has independent slash PNGs. Align their curve with the
+  // scythe blade without rotating its object or the combined magical blade.
+  if (maneuver === 'sweep' && category === 'physical') {
+    for (const sprite of art.sprites.filter(sprite => sprite.assetId === 'C.effect.0')) {
+      sprite.transform.rotationDeg = 90;
+      sprite.affine = [0, 1, -1, 0];
+      sprite.css.transform = 'translate(-50%, -50%) rotate(90deg) scale(1, 1)';
+    }
   }
   const cueSprites = [];
   // A projectile already carries its element. Every other action retains its
@@ -175,9 +186,19 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     cueSprites.push({ ...clone(source), id: cueElements.length === 1 ? 'element-cue' : `element-cue-${selected}`,
       path: base.assets[source.assetId].path, css: { ...source.css, opacity: String(0.23 / Math.min(cueElements.length, 2)) } });
   }
+  // Status overlays must paint over the complete weapon/shield assembly.
+  // Boost the cloned cue only; keep the approved catalog and rank scale intact.
+  let statusZ = Math.max(0, ...[...art.sprites, ...cueSprites].map(sprite => Number(sprite.css.zIndex ?? sprite.zIndex ?? 0))) + 1;
   for (const id of statuses) {
     const cues = statusesById.get(statusCueId(id)) || statusesById.get('prepared');
-    for (const source of cues || []) cueSprites.push({ ...clone(source), id: `status-${id}-${source.assetId.endsWith('.mark') ? 'mark' : 'glow'}` });
+    for (const source of cues || []) {
+      const cue = clone(source), opacity = Math.min(0.65, Number(cue.css.opacity ?? 1) * 1.3);
+      cue.id = `status-${id}-${source.assetId.endsWith('.mark') ? 'mark' : 'glow'}`;
+      cue.zIndex = statusZ++;
+      Object.assign(cue.css, { zIndex: String(cue.zIndex), opacity: String(opacity) });
+      if (cue.transform) cue.transform.opacity = opacity;
+      cueSprites.push(cue);
+    }
   }
   const intensity = 0.55 + (Math.min(rank, 5) - 1) * 0.1125;
   art.sprites = [...art.sprites, ...cueSprites].map(sprite => {
