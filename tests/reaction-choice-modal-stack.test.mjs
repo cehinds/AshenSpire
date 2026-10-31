@@ -141,6 +141,8 @@ class FakeDocument extends FakeNode {
 
   createElement(tagName) { return new FakeNode(tagName, this); }
 
+  createTextNode(text) { return new FakeNode('#text', this, String(text)); }
+
   addEventListener(type, listener) { this.docListeners.set(type, [...(this.docListeners.get(type) || []), listener]); }
 
   removeEventListener(type, listener) { this.docListeners.set(type, (this.docListeners.get(type) || []).filter((c) => c !== listener)); }
@@ -256,7 +258,7 @@ test('Resolve still answers with no option chosen', async () => {
   }
 });
 
-test('options render as uniform tiles with the card name, effect line and direction', async () => {
+test('options render as vertical rows with the card name, effect line and direction', async () => {
   const summaries = {
     'opt-a': { id: 'opt-a', name: 'Counter', costs: ['1 SP'], line: [
       { label: 'Def', before: 'Def ', after: '', value: 9, base: 7, dir: 'up' },
@@ -266,8 +268,13 @@ test('options render as uniform tiles with the card name, effect line and direct
   const opened = await openWith({ summarize: option => summaries[option.id] });
   try {
     const tile = opened.shell.body.querySelector('[data-reaction-option="opt-a"]');
-    assert.ok(tile.classes.has('card-option'));
-    assert.equal(tile.querySelector('.co-name').textContent, 'Counter');
+    assert.ok(tile.classes.has('option-row'));
+    assert.ok(tile.parentNode.classes.has('option-row-list'), 'rows sit in one vertical list');
+    assert.equal(tile.tagName, 'BUTTON');
+    assert.equal(tile.querySelector('.option-row-name').textContent, 'Counter');
+    assert.equal(tile.querySelector('.option-row-chip').textContent, 'Reaction');
+    assert.equal(tile.querySelector('.option-row-art'), null, 'no resolvable art: no art cell and no placeholder text');
+    assert.ok(!tile.textContent.includes('cards'), 'no placeholder glyph text');
     assert.equal(tile.querySelector('.co-effect').textContent, 'Def 9\u25b2 raised · Return 2\u25bc lowered · Dmg 5', 'changed numbers carry an arrow and words, not colour alone');
     assert.deepEqual(tile.querySelectorAll('.co-arrow').map(node => node.textContent), ['\u25b2', '\u25bc']);
     assert.deepEqual(tile.querySelectorAll('.co-sr').map(node => node.textContent.trim()), ['raised', 'lowered']);
@@ -308,6 +315,133 @@ test('without a frame scheduler focus lands on the first option at once', async 
   const opened = await openWith({});
   try {
     assert.equal(opened.document.activeElement, opened.shell.body.querySelector('[data-reaction-option]'));
+  } finally {
+    opened.restore();
+  }
+});
+
+test('several options are rows of one list; arrows move focus, selecting enables Play, Back answers null', async () => {
+  const opened = await openWith({ pending: { id: 'root:e1:0', options: [
+    { id: 'a', name: 'Riposte', play: {} }, { id: 'b', name: 'Parry', play: {} }, { id: 'c', name: 'Dodge', play: {} }] } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    assert.deepEqual(rows.map(row => row.getAttribute('data-reaction-option')), ['a', 'b', 'c']);
+    assert.ok(rows.every(row => row.classes.has('option-row') && row.parentNode === rows[0].parentNode));
+    const list = rows[0].parentNode;
+    list.listeners.get('keydown')[0]({ key: 'ArrowDown', target: rows[0], preventDefault() {} });
+    assert.equal(opened.document.activeElement, rows[1], 'ArrowDown moves to the next row');
+    rows[1].click();
+    assert.deepEqual(rows.map(row => row.getAttribute('aria-pressed')), ['false', 'true', 'false']);
+    const play = opened.document.querySelectorAll('button').find(node => node.textContent === 'Play');
+    assert.equal(play.disabled, false);
+    opened.document.querySelectorAll('button').find(node => node.textContent === 'Back').click();
+    assert.deepEqual(opened.answers, [{ offerId: 'root:e1:0', optionId: null }], 'Back answers null even with a row selected');
+  } finally {
+    opened.restore();
+  }
+});
+
+test('an option with a Core card id takes its art from the card-face resolver', async () => {
+  const registries = { cards: new Map([['core.counter', { id: 'core.counter', name: 'Counter', type: 'skill', tags: [] }]]) };
+  const opened = await openWith({ registries, pending: { id: 'r', options: [{ id: 'o', cardId: 'core.counter', name: 'Counter', play: {} }] } });
+  try {
+    const { reactionOptionArt } = await import('../src/ui/components/reactionChoiceModal.js');
+    const path = reactionOptionArt({ cardId: 'core.counter' }, registries);
+    assert.equal(typeof path, 'string', 'the resolver yields an image path');
+    const tile = opened.shell.body.querySelector('[data-reaction-option="o"]');
+    const art = tile.querySelector('.option-row-art');
+    assert.ok(art, 'an art well leads the row');
+    assert.ok(art.querySelector('img'), 'the well holds an image, not the placeholder glyph');
+  } finally {
+    opened.restore();
+  }
+});
+
+test('selecting a row marks it pressed and leaves focus on it', async () => {
+  const opened = await openWith({ pending: { id: 'r', options: [{ id: 'a', name: 'A', play: {} }, { id: 'b', name: 'B', play: {} }] } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    rows[1].click();
+    assert.equal(rows[1].getAttribute('aria-pressed'), 'true');
+    assert.equal(opened.document.activeElement, rows[1], 'the tapped row holds focus');
+    rows[0].click();
+    assert.deepEqual(rows.map(row => row.getAttribute('aria-pressed')), ['true', 'false']);
+    assert.equal(opened.document.activeElement, rows[0]);
+  } finally {
+    opened.restore();
+  }
+});
+
+test('optionColumns: a list up to 3, then ceil(sqrt(n)) columns', async () => {
+  const { restore } = installDom();
+  try {
+    const { optionColumns } = await import('../src/ui/components/optionRowList.js');
+    const expected = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4, 11: 4, 12: 4, 13: 4, 14: 4, 15: 4, 16: 4, 17: 5 };
+    for (const [count, columns] of Object.entries(expected)) assert.equal(optionColumns(Number(count)), columns, `${count} options`);
+  } finally {
+    restore();
+  }
+});
+
+test('four options form a 2-column grid; ArrowDown moves a row, ArrowRight one tile, both wrap', async () => {
+  const options = ['a', 'b', 'c', 'd'].map(id => ({ id, name: id.toUpperCase(), play: {} }));
+  const opened = await openWith({ pending: { id: 'r', options } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    const list = rows[0].parentNode;
+    assert.equal(list.getAttribute('data-columns'), '2');
+    const key = (key, from) => list.listeners.get('keydown')[0]({ key, target: from, preventDefault() {} });
+    const scrolled = [];
+    rows[2].scrollIntoView = arg => scrolled.push(arg);
+    key('ArrowDown', rows[0]);
+    assert.equal(opened.document.activeElement, rows[2], 'ArrowDown from row 0 lands on row 2');
+    assert.deepEqual(scrolled, [{ block: 'nearest' }], 'the focused tile is scrolled into the list view');
+    key('ArrowRight', rows[2]);
+    assert.equal(opened.document.activeElement, rows[3]);
+    key('ArrowDown', rows[3]);
+    assert.equal(opened.document.activeElement, rows[1], 'Down from the last row wraps within its column');
+    key('ArrowLeft', rows[0]);
+    assert.equal(opened.document.activeElement, rows[3], 'Left from the first tile wraps to the last');
+  } finally {
+    opened.restore();
+  }
+});
+
+test('identical options show once with a count; different grades stay separate', async () => {
+  const play = id => ({ cardInstanceId: id });
+  const options = [
+    { id: 'dA:0:default', cardId: 'core.defend', name: 'Defend', play: play('dA') },
+    { id: 'dB:0:default', cardId: 'core.defend', name: 'Defend', play: play('dB') },
+    { id: 'c1:0:default', cardId: 'core.counter', name: 'Counter', play: play('c1') },
+    { id: 'c2:0:default', cardId: 'core.counter', name: 'Counter', play: play('c2') },
+  ];
+  const summaries = {
+    'dA:0:default': { name: 'Defend', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 5, base: 5, dir: null }] },
+    'dB:0:default': { name: 'Defend', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 5, base: 5, dir: null }] },
+    'c1:0:default': { name: 'Counter', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 7, base: 7, dir: null }] },
+    'c2:0:default': { name: 'Counter+', costs: ['1 SP'], line: [{ label: 'Def', before: 'Def ', after: '', value: 9, base: 7, dir: 'up' }] },
+  };
+  const opened = await openWith({ pending: { id: 'r', options }, summarize: option => summaries[option.id] });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    assert.deepEqual(rows.map(row => row.getAttribute('data-reaction-option')), ['dA:0:default', 'c1:0:default', 'c2:0:default']);
+    assert.deepEqual(rows.map(row => row.querySelectorAll('.option-row-count').map(node => node.textContent)), [['\u00d72'], [], []]);
+    assert.equal(rows[0].parentNode.getAttribute('data-columns'), '1', 'the layout counts the collapsed rows');
+    rows[0].click();
+    opened.document.querySelectorAll('button').find(node => node.textContent === 'Play').click();
+    assert.deepEqual(opened.answers, [{ offerId: 'r', optionId: 'dA:0:default' }], 'the first instance is the one played');
+  } finally {
+    opened.restore();
+  }
+});
+
+test('options whose summary failed are never collapsed, even with the same name and costs', async () => {
+  const options = ['c1', 'c2'].map(id => ({ id: id + ':0:default', cardId: 'core.counter', name: 'Counter', play: { cardInstanceId: id } }));
+  const opened = await openWith({ pending: { id: 'r', options }, summarize: () => { throw new Error('no snapshot'); } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    assert.equal(rows.length, 2, 'two rows, so an upgraded copy is never hidden behind a plain one');
+    assert.equal(opened.shell.body.querySelectorAll('.option-row-count').length, 0);
   } finally {
     opened.restore();
   }

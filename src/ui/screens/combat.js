@@ -3535,7 +3535,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
         target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
     });
-    reactionShell = openReactionChoiceModal({ pending, stack, summarize,
+    reactionShell = openReactionChoiceModal({ pending, stack, summarize, registries,
       onClosed: () => { reactionShell = null; },
       onAnswer: intent => answerReaction(intent, true),
     });
