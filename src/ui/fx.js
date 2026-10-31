@@ -370,6 +370,19 @@ export function combatReadoutLayer(layer, create = true) {
   return host;
 }
 
+// Per anchor: the floaters still showing, so a new one takes the next free lane (0 is the spawn point,
+// each lane lifts it one line higher). Three lanes, then lane 0 is reused.
+const FLOAT_LANES = 3;
+const floaterLanes = new WeakMap();
+function floaterLaneFor(anchor, lifeMs) {
+  const now = Date.now();
+  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
+  const lane = live.length >= FLOAT_LANES ? 0 : live.length;
+  live.push({ until: now + lifeMs });
+  floaterLanes.set(anchor, live);
+  return lane;
+}
+
 /**
  * Spawn a floating number over an anchor element.
  *
@@ -413,6 +426,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   el.style.top = `${top}px`;
   const life = floaterLifeMs();
   el.style.setProperty('--float-ms', `${life}ms`);
+  // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
+  const lane = floaterLaneFor(anchor, life);
+  el.dataset.floatLane = String(lane);
   layer.appendChild(el);
   // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
   // layout rather than guessed from the string. offsetWidth is the untransformed
@@ -425,7 +441,10 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
     const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    return () => { el.style.left = `${at.left + half}px`; };
+    return () => {
+      el.style.left = `${at.left + half}px`;
+      if (lane > 0) el.style.setProperty('--float-lane', `${Math.round(lane * (height || 22) * 1.1)}px`);
+    };
   });
   setTimeout(() => el.remove(), life + 60);
   return el;
