@@ -85,3 +85,7 @@ incoming hit by 30% before Block (cap 90%, rounded down) and, once the hit lands
 sends 30% of the original incoming damage back as a flagged hit that cannot reflect
 or counter again, costing one stack. Counter returns, reflected returns and
 `unreflectable` hits are untouched. Values: `reflect` in `content/framework/mechanics.json`.
+
+## Magic hits Poise first (owner, 2026-10-31)
+
+- D17: "Magic damage hits Poise first and then Block; physical damage hits Block first and then Poise." Core (Ward off): the magic part of a hit meets Poise 1:1 (full amount as Poise damage), then the Block left after the physical part, then Barrier, then HP, with no further Poise absorb; the physical part is unchanged (Block, then the 75/25 Poise absorb). A mixed hit resolves physical first, then magic, on one shared Poise pool. Amends the 2026-10-25 Block-soaks-whole-hit order (SPEC §17) for magic; D3/D4/D13 are otherwise unchanged. Tested by `tests/magic-poise-first.test.mjs`.
