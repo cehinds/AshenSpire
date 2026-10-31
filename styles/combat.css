@@ -1898,7 +1898,10 @@
 :root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .footer-art-face {
   position:absolute; width:var(--desktop-end-art-width); height:var(--desktop-end-art-height); left:50%; top:auto; bottom:0; transform:translateX(-50%);
 }
-:root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .hold-hint { position:absolute; bottom:0; left:0; right:0; }
+/* Desktop: the shrunk plate has no spare row for HOLD between its word and its key, so the hint hangs from the
+   button's bottom edge (top:100%) instead of sitting on the key line. It stays the button's own child, so the
+   hold gesture and hit area are unchanged. */
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .hold-hint { position:absolute; top:100%; bottom:auto; left:0; right:0; }
 
 /* The enabled purse stays inside the existing floating header; it must not
    create an implicit grid row and push the battlefield down. */
