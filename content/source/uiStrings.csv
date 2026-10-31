@@ -47,6 +47,8 @@ combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward b
 combat.protection.wardBlock,,Warded Block,"The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",Warded Block
 # ---- optional defensive reactions and public combat receipts --------------
 combat.log.title,,Combat log,,
+combat.log.contestPassed,,"{source} vs {target}. Contest: d20 [{roll}] + {mine} + rank {rank} = {total} vs {theirs} = {dc} · success",,
+combat.log.contestFailed,,"{source} vs {target}. Contest: d20 [{roll}] + {mine} + rank {rank} = {total} vs {theirs} = {dc} · failure",,
 combat.log.sizeLabel,,Log size,,
 combat.log.size.small,,Small,,
 combat.log.size.medium,,Medium,,
@@ -1595,6 +1597,9 @@ creation.feats.summary.vitalRenewal,,Recover HP after victory.,,
 combat.callout.hit,,Hit,,
 combat.callout.evadeFailed,,Hit — Evade Failed,,
 combat.callout.missed,,Missed,,
+combat.contest.dc,,DC {dc},,
+combat.callout.contestPassed,,Read,,
+combat.callout.contestFailed,,Resisted,,
 
 status.lifecycle.stackTotal,,stack total,,
 status.lifecycle.buildup,,build-up,,

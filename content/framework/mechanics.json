@@ -98,5 +98,32 @@
     "RELIC",
     "PROPERTY_DEFAULT",
     "SYSTEM_FALLBACK"
-  ]
+  ],
+  "contest": {
+    "comment": "Insight contests (owner, 2026-10-31): d20 + caster attributes + card rank vs DC = target's CURRENT Poise + target attributes + target level; a tie succeeds. Read Intent and kindred status spells use it instead of a hit chance and range.",
+    "mental": {
+      "attacker": [
+        "intelligence",
+        "wisdom"
+      ],
+      "defender": [
+        "wisdom"
+      ]
+    },
+    "physical": {
+      "attacker": [
+        "dexterity",
+        "constitution"
+      ],
+      "defender": [
+        "constitution"
+      ]
+    },
+    "dc": [
+      "poise",
+      "level"
+    ],
+    "tieSucceeds": true,
+    "rankBonus": true
+  }
 }

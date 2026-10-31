@@ -587,6 +587,21 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   if (options.receipt?.begun) return options.receipt;
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
+  // An insight contest replaces the hit roll (SPEC §17 Contests): one seeded contest per target per card play.
+  const contest = Hit.rollContestFor(ctx, source, target, carrier);
+  if (contest) {
+    receipt.contest = contest;
+    receipt.avoided = !contest.passed;
+    receipt.connected = contest.passed;
+    ctx.emit?.(contest.passed ? 'contestPassed' : 'contestFailed', { sourceId: source?.id, targetId: target?.id, cardId: carrier?.cardId,
+      ...seats(ctx, source, target), contest, contestKind: contest.kind, roll: contest.roll, total: contest.total, dc: contest.dc, passed: contest.passed });
+    if (receipt.counterEligible && !receipt.avoided) {
+      target.combatCounter.charges = 0;
+      ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier), ...seats(ctx, target, source),
+        sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
+    }
+    return receipt;
+  }
   if (configuredCombat(ctx)) {
     if (fixCoreEnabled(ctx)) {
       const hit = Hit.resolveAttackHit(ctx, source, target, carrier);
