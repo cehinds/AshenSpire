@@ -52,14 +52,27 @@ test('the first offer is byte-identical with and without the setting; the histor
   });
   assert.equal(offers[0], offers[1]); assert.equal(offers[1], offers[2]);
 });
-test('Core 1 pins the weight to 1: the second offer is the old draw', () => {
+// Builds a first level offer (Core 1 combat rewards show no cards, its level offers do), so the history holds its cards, drops that
+// cached offer, then builds a second one on the same rng seed. With keepHistory false the history is cleared first, so the two
+// calls differ only by the history.
+const secondOffer = (registries, seed, keepHistory) => {
+  const run = createRunState({ seed: 3, classId: 'reaver', registries });
+  gameProfileRewardOffers(registries, run, createRng(seed + 1000), { offerId: 'a', source: 'level' });
+  assert.ok(Object.keys(run.rewardOfferHistory.cards).length > 0, 'the first offer was recorded');
+  delete run.gameProfileRewardOffers;
+  if (!keepHistory) delete run.rewardOfferHistory;
+  return gameProfileRewardOffers(registries, run, createRng(seed), { offerId: 'b', source: 'level' }).options;
+};
+const SEEDS_20 = Array.from({ length: 20 }, (_, i) => i + 1);
+test('Core 1 pins the weight to 1: a history changes no second offer', () => {
   const core1 = build(undefined, 'ashen.core@1.0.0');
-  const run = createRunState({ seed: 3, classId: 'reaver', registries: core1 });
-  const a = gameProfileRewardOffers(core1, run, createRng(5), { offerId: 'a', source: 'combat' });
-  const run2 = createRunState({ seed: 3, classId: 'reaver', registries: core1 });
-  const a2 = gameProfileRewardOffers(core1, run2, createRng(5), { offerId: 'a', source: 'combat' });
-  assert.equal(JSON.stringify(a), JSON.stringify(a2));
-  assert.ok(Object.keys(run.rewardOfferHistory?.cards || {}).length >= 0);
+  for (const seed of SEEDS_20)
+    assert.equal(JSON.stringify(secondOffer(core1, seed, true)), JSON.stringify(secondOffer(core1, seed, false)), `seed ${seed}`);
+});
+test('Core 2 (weight 0.25) changes at least one second offer over seeds 1..20 when the history is present', () => {
+  const core2 = build();
+  const differs = SEEDS_20.filter(seed => JSON.stringify(secondOffer(core2, seed, true)) !== JSON.stringify(secondOffer(core2, seed, false)));
+  assert.ok(differs.length >= 1, 'no seed in 1..20 differed');
 });
 test('shop card stock is weighted by the same history', () => {
   const count = registries => {
