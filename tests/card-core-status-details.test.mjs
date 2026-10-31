@@ -70,6 +70,34 @@ test('saved Core overrides retain their stack mode, multiplier and custom decay 
   assert.equal(combat.player.statuses.weak.stacks, 3);
 });
 
+test('Burn tooltip keeps its damage rule and describes the actual custom, default Core and legacy decay', () => {
+  for (const { amount, enabled, clock } of [
+    { amount: 2, enabled: true, clock: 'start' },
+    { amount: 1, enabled: true, clock: 'start' },
+    { amount: 1, enabled: false, clock: 'end' },
+  ]) {
+    const { combat, reg } = fixture({ amount });
+    combat.fixCoreRules.enabled = enabled;
+    if (!enabled) combat.combatExpansionVersion = 1;
+    applyStatus(combat, combat.player, 'burn', 3);
+    assert.equal(combat.player.statuses.burn.stacks, 3);
+    const text = statusTooltipText(reg.statuses.get('burn'), combat);
+    assert.match(text, /loses HP equal to Burn stacks \(ignores Block\)/);
+    assert.doesNotMatch(text, /One stack burns out each turn/);
+    assert.match(text, new RegExp(`decreases by ${amount} at the ${clock} of ${enabled ? 'the' : 'its'} owner's turn`));
+    if (enabled) {
+      decayAtTurnEnd(combat, combat.player);
+      assert.equal(combat.player.statuses.burn.stacks, 3, 'Core Burn waits for owner turn start');
+      combat.turn++; decayAtTurnStart(combat, combat.player);
+    } else {
+      combat.turn++; decayAtTurnStart(combat, combat.player);
+      assert.equal(combat.player.statuses.burn.stacks, 3, 'legacy Burn waits for owner turn end');
+      decayAtTurnEnd(combat, combat.player);
+    }
+    assert.equal(combat.player.statuses.burn.stacks, 3 - amount);
+  }
+});
+
 test('Core foundation stacking keeps its application cap/clock together with Core decay', () => {
   const { combat, reg, inst } = fixture({ amount: 2, mode: 'unique',
     stacking: { mode: 'add', cap: 7, duration: 2, clock: 'ownerTurnEnd' } });
