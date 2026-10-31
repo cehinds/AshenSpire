@@ -258,7 +258,16 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     let displayedQuote;
     const model = () => {
       displayedQuote = blacksmithUpgradePlan(registries, run, selection, { purse: 'stones', priceMult });
-      return smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true });
+      const base = smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true });
+      // The stone-priced model knows nothing of cinders: route the Blacksmith's own quote (its cinder price and whether the
+      // purse can pay it) into the per-selection model, so confirm is blocked, with the reason, when cinders are short.
+      const blocked = base.properties.selected && !displayedQuote.ok;
+      return { ...base, properties: { ...base.properties,
+        ...(coreCardUpgrades(run) ? { purseLabel: `${base.properties.purseLabel} · ${t('blacksmith.modal.cinders', { cinders: run.cinders })}` } : {}),
+        ...(base.properties.selected && displayedQuote.cost ? { consequence: `${t('blacksmith.modal.price', { cinders: displayedQuote.cost })} ${base.properties.consequence}` } : {}),
+        canConfirm: base.properties.canConfirm && !blocked,
+        blockedReasons: blocked && base.properties.canConfirm ? [displayedQuote.reason] : base.properties.blockedReasons,
+      } };
     };
     const modal = mountSmithUpgradeModal(app, model(), {
       registries, meta, returnFocusElement,
