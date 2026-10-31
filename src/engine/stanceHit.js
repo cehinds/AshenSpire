@@ -104,7 +104,11 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const sweep = maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   // Under FixCore, Precision and fixed Evasion are whole numbers, rounded down.
-  const precisionMultiplier = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) + precision * accuracyRules().precisionStackValue : 0;
+  const statMix = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) : 0;
+  const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
+  // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
+  const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, { label: 'stat mix', value: statMix }, { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
+    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', proposal.accuracyDelta / 5], ['range', rangeContact?.precisionDelta || 0]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
     ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
@@ -121,7 +125,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   // Under FixCore a shown percentage is whole, rounded down (owner, 2026-10-18); advantage and disadvantage give quarters.
   const hitChance = fixCoreEnabled(ctx) ? Math.floor(100 * hits / outcomes) : 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
-  return { range, requiredRange, inRange, accuracy, evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
+  return { range, requiredRange, inRange, accuracy, ...(precisionParts ? { precisionParts } : {}), evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };
 }
 
