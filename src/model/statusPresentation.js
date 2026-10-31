@@ -9,6 +9,7 @@ function present(ctx, id, definition, holder) {
   return presentationWording(ctx, id, resolved, fixCoreEnabled(ctx), resolved !== definition);
 }
 function presentationWording(ctx, id, resolved, core, changedDefinition = false) {
+  if (!resolved || typeof resolved !== 'object') return resolved;
   const display = text => {
     if (typeof text !== 'string') return text;
     if (id === 'evade' && core && changedDefinition) return text.replace(/\bfixed Evasion\b/g, 'Evasion');

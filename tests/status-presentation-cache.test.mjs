@@ -22,6 +22,12 @@ const uncached = (ctx, id, definition, holder = null) => {
 };
 const agree = (ctx, id, definition, holder) => assert.deepEqual(cached(ctx, id, definition, holder), uncached(ctx, id, definition, holder));
 
+test('missing status definitions retain their null-safe fallback with Core off or on', () => {
+  for (const context of [{}, ctxWith()]) for (const definition of [undefined, null]) {
+    assert.equal(cached(context, 'missing', definition), uncached(context, 'missing', definition));
+  }
+});
+
 test('cached presentation equals the uncached one for each status and holder, on a miss and on a hit', () => {
   clearStatusPresentationCache();
   const ctx = ctxWith();
