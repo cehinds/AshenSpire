@@ -138,6 +138,13 @@ function applyStep(card, step) {
         const keep = (tag) => tag !== step.tag && !(family && (tag.startsWith(family) || (family === 'range:' && tag.startsWith('reach:'))));
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
         for (const key of keys.length ? keys : ['tags']) out[key] = [...(card[key] || []).filter(keep), step.tag];
+        // combatProfileFor lets an explicit `range` / `reach` / `targeting` field beat the tag, so those follow the step.
+        const value = family ? step.tag.slice(family.length) : '';
+        if (family === 'range:') {
+          if (card.range !== undefined) out.range = value;
+          if (typeof card.reach === 'string') out.reach = value;
+        }
+        if (family === 'targeting:' && card.targeting !== undefined) out.targeting = value;
       }
       if (step.retarget) {
         const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));

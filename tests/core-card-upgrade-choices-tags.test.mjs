@@ -7,7 +7,7 @@ import { createRunState, validateRunShape } from '../src/model/state.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
 import { combatProfileFor, combatCardRange } from '../src/model/combatCardProfile.js';
 import { upgradeBasic } from '../src/model/cardUpgradeLimits.js';
-import { upgradeSignature } from '../src/model/cardUpgrade.js';
+import { upgradeSignature, applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 
 const subject = { gameProfile: profile };
 const face = (cardId, steps) => projectGameCard(subject, { instanceId: 'i', cardId, upgraded: true, upgradeSteps: steps });
@@ -108,4 +108,18 @@ test('an element step carries the exposure an authored card of that school build
   assert.equal(stepped.damageSchool, element[0].damageSchool);
   assert.equal(stepped.exposureBuildupPerHit, floor);
   assert.equal(plain('core.strike').exposureBuildupPerHit, 0, 'the base is untouched');
+});
+
+test('an explicit range / targeting field follows the identity step (rimeNeedle)', () => {
+  const id = [...registries.cards.ids()].find((c) => /rimeNeedle/i.test(c));
+  const base = registries.cards.get(id);
+  assert.ok(base.range !== undefined && base.targeting !== undefined, 'rimeNeedle carries explicit fields');
+  const stepped = (steps) => projectGameCard(subject, { instanceId: 'i', cardId: id, upgraded: true, upgradeSteps: steps }) || applyUpgradeSteps(base, steps);
+  const ranged = stepped([{ k: 'tag', tag: 'range:ranged' }]);
+  assert.equal(combatProfileFor(ranged).range, 'ranged');
+  const area = stepped([{ k: 'tag', tag: 'targeting:area', retarget: 'area' }]);
+  assert.equal(combatProfileFor(area).targeting, 'area');
+  assert.equal(area.effects.find((e) => e.op === 'damage').target, 'allEnemies');
+  const back = applyUpgradeSteps(area, [{ k: 'tag', tag: 'targeting:single', retarget: 'single' }]);
+  assert.equal(combatProfileFor(back).targeting, 'single');
 });
