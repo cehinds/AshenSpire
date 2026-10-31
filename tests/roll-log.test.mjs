@@ -81,3 +81,4 @@ test('rollCrit emits critRolled and keeps its single combatProcs draw', () => {
   assert.equal(rollCrit(ctx, source, ['spell']), 0, 'no matching rule: no draw, no event');
   assert.equal(events.length, 2);
 });
+

@@ -59,6 +59,13 @@ function newKnowledgeOwner(state, profile = emptyEnemyKnowledge()) {
   }
   return owner;
 }
+// The perception check, logged as total vs DC (owner, 2026-10-31). Presentation only: it draws nothing.
+function announceRead(combat, ownerId, enemy, read, serial) {
+  const p = read?.perception;
+  if (!p) return;
+  combat.emit?.('perceptionRolled', { ownerId, enemyInstanceId: enemy.id, actionSerial: serial, roll: p.roll, wisdom: p.wisdom,
+    dcParts: p.dcParts, dc: p.dc, total: p.total, passed: p.passed });
+}
 function storeReadCounters(state, rng) {
   if (!Object.hasOwn(state, 'privateSeed')) return;
   const counters = rng.getCounters();
@@ -80,6 +87,7 @@ export function addKnowledgeObserver(combat, ownerId, profile = emptyEnemyKnowle
     .sort((a, b) => a.knowledgeAction.serial - b.knowledgeAction.serial);
   for (const enemy of selected) if (!Object.hasOwn(enemy.knowledgeAction.reads, ownerId)) {
     enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, enemy.knowledgeAction.category, { ctx: combat, target: enemy });
+    announceRead(combat, ownerId, enemy, enemy.knowledgeAction.reads[ownerId], enemy.knowledgeAction.serial);
   }
   storeReadCounters(state, rng);
   return state.owners[ownerId];
@@ -105,6 +113,7 @@ export function rollEnemyKnowledge(combat, enemy, { charging = false } = {}) {
   for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) {
     if (!Object.hasOwn(state.owners, owner.id)) state.owners[owner.id] = newKnowledgeOwner(state);
     action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, category, { ctx: combat, target: enemy });
+    announceRead(combat, owner.id, enemy, action.reads[owner.id], action.serial);
   }
   storeReadCounters(state, rng);
   enemy.knowledgeAction = action;

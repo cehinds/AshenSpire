@@ -40,6 +40,14 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
  assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+combat.player.attributes.dexterity+gear.totals.evasion+2*(1+combat.player.attributes.dexterity));
  const read=rollKnowledgeRead({float:()=>.2},enemyKnowledge,{attributes:combat.player.attributes},'Attack',{ctx:combat,target});
  assert.equal(read.perception.total,5+combat.player.attributes.wisdom);
+ // The DC is itemised for the combat log (perceptionRolled): its parts sum to the DC.
+ assert.equal(read.perception.dcParts.reduce((sum,part)=>sum+part.value,0),read.perception.dc);
+});
+test('a live Core 2 combat logs each perception read as perceptionRolled (roll + WIS vs the itemised DC)',()=>{
+ const {combat}=live('starseer');
+ const rolled=combat.eventLog.filter(event=>event.type==='perceptionRolled');
+ assert.ok(rolled.length>0,'the opening reads were announced');
+ for(const event of rolled){assert.equal(event.total,event.roll+event.wisdom);assert.equal(event.dcParts.reduce((sum,part)=>sum+part.value,0),event.dc);assert.equal(event.passed,event.total>=event.dc);}
 });
 test('actual card dispatch matches selected target receipt and card face after equipped AR, Block and Poise',()=>{
  const {combat,target}=live();target.block=3;
