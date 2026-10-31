@@ -2,7 +2,7 @@
 // piece rolled at a tier (usually above the default), and weapon arts. Headless. The numbers are the profile's
 // `shops.blacksmith` block (blacksmithConfig.js); the pools are the Core reward pools (gameProfileRewards.js).
 //
-//   stock.armaments  [{ id, tier, price }]   stock.weaponArts  [{ id, price }]
+//   stock.armaments  [{ id, tier, cost }]   stock.weaponArts  [{ id, cost }]
 //
 // Every draw is on `shopOffers` (as the legacy Blacksmith's are), so no merchant shelf moves. A purchase is a plan and a
 // commit pair: the plan is inert and names its refusal; the commit re-plans, refuses a quote whose revision, price or
@@ -59,9 +59,9 @@ export function coreBlacksmithShelves(registries, rng, run) {
   const armaments = pickSome(rng, pools.weapons.filter((id) => defs.has(id)), rules.armamentStock ?? 0).map((id) => {
     const tier = rollTier(rules.tierWeights, rng, tierCeiling(registries, run, id));
     const base = rng.int(STREAM, ...rangeFor(table, 'armament', defs.get(id).rarity));
-    return { id, tier, price: Math.max(1, Math.round(base * (Number.isFinite(mult[tier]) ? mult[tier] : 1))) };
+    return { id, tier, cost: Math.max(1, Math.round(base * (Number.isFinite(mult[tier]) ? mult[tier] : 1))) };
   });
-  const weaponArts = pools.weaponArts.map((id) => ({ id, price: rng.int(STREAM, ...rangeFor(table, 'weaponArt', null)) }));
+  const weaponArts = pools.weaponArts.map((id) => ({ id, cost: rng.int(STREAM, ...rangeFor(table, 'weaponArt', null)) }));
   return { armaments, weaponArts };
 }
 
@@ -73,7 +73,7 @@ const sells = (run, shelf) => !!run.shopStock && run.shopStock.kind === 'blacksm
 export function coreArmamentPlan(registries, run, id, { priceMult = 1 } = {}) {
   const item = (run.shopStock?.armaments || []).find((row) => row.id === id) || null;
   const def = item && (registries.equipment.armaments || []).find((piece) => piece.id === id);
-  const price = item ? cinders(item.price ?? item.cost ?? 0, priceMult) : 0;
+  const price = item ? cinders(item.cost ?? 0, priceMult) : 0;
   let reason = '';
   if (!sells(run, 'armaments')) reason = say('blacksmith.refuse.notOffered');
   else if (!item || !def) reason = say('shop.refuse.gone');
@@ -107,7 +107,7 @@ export function commitCoreArmament(registries, run, quote, { priceMult = 1 } = {
 export function coreWeaponArtPlan(registries, run, id, { priceMult = 1 } = {}) {
   const item = (run.shopStock?.weaponArts || []).find((row) => row.id === id) || null;
   const def = item && registries.cards.has(id) ? registries.cards.get(id) : null;
-  const price = item ? cinders(item.price, priceMult) : 0;
+  const price = item ? cinders(item.cost, priceMult) : 0;
   let reason = '';
   if (!sells(run, 'weaponArts')) reason = say('blacksmith.refuse.notOffered');
   else if (!item || !def) reason = say('shop.refuse.gone');

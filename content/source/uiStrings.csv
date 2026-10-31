@@ -1837,6 +1837,7 @@ cardUpgrade.instruction,,Choose a card to see what its next upgrade does.,Choose
 cardUpgrade.selected,,Selected card,Selected card,
 cardUpgrade.free,,No charge,No charge,
 cardUpgrade.stone,,{n} Smithing Stone,{n} Smithing Stone,
+cardUpgrade.cinders,,{n} cinders,{n} cinders,
 cardUpgrade.maxed,,Fully upgraded,Fully upgraded,
 cardUpgrade.row.next,,Step {n},Step {n},
 cardUpgrade.row.count,,{n} upgrades,{n} upgrades,

@@ -270,7 +270,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function openCardUpgradeModal(returnFocusElement, host) {
     let selection = null;
-    const model = () => cardUpgradeModel(registries, run, selection);
+    // The rows are priced as the Blacksmith charges (cinders, no stones), not as a rest site does.
+    const quote = (instanceId) => { const p = upgradeArtPlan(registries, run, instanceId, { priceMult }); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
+    const model = () => cardUpgradeModel(registries, run, selection, { quote });
     const modal = mountCardUpgradeModal(app, model(), {
       registries, meta, returnFocusElement, backLabel: t('smith.back.shrine'),
       consequence: t('blacksmith.cardUpgrade.consequence'), decisionConsequence: t('blacksmith.cardUpgrade.decision'),

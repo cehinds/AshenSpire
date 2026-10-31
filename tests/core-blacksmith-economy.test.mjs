@@ -15,6 +15,11 @@ import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeap
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { buildActMap } from '../src/engine/actmap.js';
+import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
+import { upgradeArtPlan, commitUpgradeArt } from '../src/model/blacksmith.js';
+import { validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
+import { shopStockProblems } from '../src/model/shopKinds.js';
+import { pruneUnknownAdditionOffers } from '../src/model/marketStock.js';
 import { rankUpPlan, commitRankUp, rankUpCards, serviceCandidates } from '../src/model/blacksmith.js';
 import '../src/engine/runCombat.js';
 
@@ -101,7 +106,7 @@ test('stock: six distinct armaments, tiers within the authored weights, prices s
       tally[row.tier]++; n++;
       const rarity = coreOut.equipment.armaments.find((piece) => piece.id === row.id).rarity;
       const [lo, hi] = RARITY_RANGE[rarity] || RARITY_RANGE.common;
-      assert.ok(row.price >= Math.round(lo * MULT[row.tier]) && row.price <= Math.round(hi * MULT[row.tier]), `${row.id} tier ${row.tier} price ${row.price} outside ${lo}-${hi} x ${MULT[row.tier]}`);
+      assert.ok(row.cost >= Math.round(lo * MULT[row.tier]) && row.cost <= Math.round(hi * MULT[row.tier]), `${row.id} tier ${row.tier} price ${row.cost} outside ${lo}-${hi} x ${MULT[row.tier]}`);
     }
   }
   // 20/40/30/10 with 720 draws: each tier within 8 points of its weight, and "usually higher than default".
@@ -123,18 +128,18 @@ test('armament purchase: lands in storage, writes the tier, charges the price, l
   const ref = `armament/${row.id}`;
   const plan = coreArmamentPlan(coreOut, run, row.id);
   assert.equal(plan.ok, true, plan.reason);
-  assert.equal(plan.cost, row.price);
+  assert.equal(plan.cost, row.cost);
   const before = run.cinders;
   const receipt = commitCoreArmament(coreOut, run, plan);
   assert.equal(receipt.tier, row.tier);
   assert.ok(run.loadout.storage.includes(row.id));
   assert.equal(run.itemUpgradeLevels[ref], row.tier);
-  assert.equal(run.cinders, before - row.price);
+  assert.equal(run.cinders, before - row.cost);
   assert.ok(!run.shopStock.armaments.some((r) => r.id === row.id));
   // A second copy at a lower tier never lowers the record.
   run.itemUpgradeLevels[ref] = 3;
   run.loadout.storage = run.loadout.storage.filter((id) => id !== row.id);
-  run.shopStock.armaments.push({ id: row.id, tier: 1, price: 70 });
+  run.shopStock.armaments.push({ id: row.id, tier: 1, cost: 70 });
   commitCoreArmament(coreOut, run, coreArmamentPlan(coreOut, run, row.id));
   assert.equal(run.itemUpgradeLevels[ref], 3);
   // A tier 0 piece writes no record.
@@ -167,10 +172,10 @@ test('weapon-art shelf: the Core art is sold at the weaponArt price, once, into 
   const run = smithRun(coreOut);
   assert.deepEqual(run.shopStock.weaponArts.map((row) => row.id), ['core.reaverSpecial']);
   const row = run.shopStock.weaponArts[0];
-  assert.ok(row.price >= 68 && row.price <= 90);
+  assert.ok(row.cost >= 68 && row.cost <= 90);
   const before = run.cinders;
   const receipt = commitCoreWeaponArt(coreOut, run, coreWeaponArtPlan(coreOut, run, row.id));
-  assert.equal(run.cinders, before - row.price);
+  assert.equal(run.cinders, before - row.cost);
   assert.ok(run.sideboard.some((card) => card.instanceId === receipt.instance.instanceId && card.cardId === 'core.reaverSpecial'));
   assert.equal(run.shopStock.weaponArts.length, 0);
   assert.equal(coreWeaponArtPlan(coreOut, run, row.id).ok, false);
@@ -211,4 +216,49 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
   commitBlacksmithUpgrade(coreOut, smith, plan);
   assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 3);
   assert.equal(smithingPlan(coreReg, smith).candidates.find((c) => c.itemRef === 'armament/greatsword'), undefined, 'no tier 4');
+});
+
+test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 40 cinders', () => {
+  const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  const card = strike(run);
+  commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
+  assert.equal(run.cinders, 60);
+  // Rest pricing disables the row (1 stone, none held); the Blacksmith's quote enables it.
+  const restRow = cardUpgradeModel(coreOut, run).rows.find((r) => r.instanceId === card.instanceId);
+  assert.equal(restRow.disabled, true);
+  const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
+  const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
+  const row = model.rows.find((r) => r.instanceId === card.instanceId);
+  assert.deepEqual([row.disabled, row.cost, row.costLabel], [false, 0, '40 cinders']);
+  assert.equal(model.canConfirm, true);
+  // The modal's confirm hands the row's plan to the screen, which commits it.
+  const receipt = commitUpgradeArt(coreOut, run, { ...upgradeArtPlan(coreOut, run, card.instanceId), cardQuote: model.selected.plan });
+  assert.deepEqual([receipt.n, receipt.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 20]);
+  // 20 cinders cannot pay 40: the row is disabled with the cinder reason.
+  const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote }).rows.find((r) => r.instanceId === card.instanceId);
+  assert.equal(poor.disabled, true);
+  assert.match(poor.blockedReason, /cinders/i);
+});
+
+test('save: a Core Blacksmith stock passes validateRunShape and survives a JSON save/load and the load-door prune', () => {
+  const run = smithRun(coreOut);
+  assert.deepEqual(validateRunShape(run), []);
+  assert.deepEqual(shopStockProblems(run.shopStock), []);
+  // The real save door: serializeRun -> deserializeRun refuses a malformed run.
+  const restored = deserializeRun(serializeRun(run));
+  assert.deepEqual(restored.shopStock, run.shopStock);
+  const loaded = JSON.parse(JSON.stringify(run));
+  assert.deepEqual(validateRunShape(loaded), []);
+  assert.deepEqual(loaded.shopStock, run.shopStock);
+  assert.ok(loaded.shopStock.armaments.every((row) => Number.isSafeInteger(row.cost) && row.cost > 0 && Number.isInteger(row.tier)));
+  assert.deepEqual(pruneUnknownAdditionOffers(loaded.shopStock, { sigilKnown: () => true, armourKnown: () => true }), []);
+  // A dropped weapon art or armament is pruned, never an archive.
+  const removed = pruneUnknownAdditionOffers(loaded.shopStock, { sigilKnown: () => true, armourKnown: () => true, cardKnown: () => false, armamentKnown: (id) => id !== loaded.shopStock.armaments[0].id });
+  assert.ok(removed.some((r) => r.shelf === 'weaponArts') && removed.some((r) => r.shelf === 'armaments'));
+  assert.ok(!loaded.shopStock.offerings.includes('weaponArts'));
+  assert.deepEqual(validateRunShape(loaded), []);
+  // A bad cost or tier is still refused by name.
+  const bad = structuredClone(run);
+  bad.shopStock.armaments[0].tier = -1; bad.shopStock.weaponArts[0].cost = 0;
+  assert.ok(validateRunShape(bad).some((p) => /tier/.test(p)) && validateRunShape(bad).some((p) => /weaponArts/.test(p)));
 });
