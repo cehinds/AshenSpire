@@ -101,3 +101,14 @@ test('a ramped card upgraded after plays shows the faces the live resolver gives
   const amount = (face) => JSON.stringify(face.effects[0].amount);
   assert.match(amount(row.faces.before), /7/, 'the base 2 plus five plays is in the face');
 });
+
+test('an acquired upgraded card carries the face of the owned instance, not the base definition', async () => {
+  const { projectGameCard } = await import('../src/model/gameProfile.js');
+  const run = newRun();
+  const probe = run.deck.find((c) => c.cardId === 'core.strike');
+  const got = { instanceId: 'got1', cardId: 'core.strike', upgraded: true, upgradeSteps: [nextUpgradeStep(run, probe, registries.cards.get('core.strike'), registries)] };
+  const d = diff(run, (r) => { r.deck.push(got); });
+  const row = d.rows.find((r) => r.instanceId === 'got1');
+  assert.deepEqual(JSON.parse(JSON.stringify(row.face)), JSON.parse(JSON.stringify(projectGameCard(run, structuredClone(got)))));
+  assert.notDeepEqual(JSON.parse(JSON.stringify(row.face.effects)), JSON.parse(JSON.stringify(registries.cards.get('core.strike').effects)), 'not the base card');
+});

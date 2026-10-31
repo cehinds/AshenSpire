@@ -19,7 +19,7 @@ const facesNode = (registries, row) => el('div', { class: 'card-upgrade-faces', 
 
 const cardFace = (registries, row) => el('div', { class: 'card-upgrade-faces', dataset: { whatChangedFaces: row.instanceId || row.cardId } },
   el('div', { class: 'card-upgrade-face after', dataset: { cardUpgradeFace: 'after' } },
-    renderCard(registries, { cardId: row.cardId }, { small: true, tooltip: false, inspectReadOnly: true })));
+    renderCard(registries, { cardId: row.cardId }, { small: true, tooltip: false, inspectReadOnly: true, ...(row.face ? { definition: row.face } : {}) })));
 
 /** One row: the label and kind on the left, the delta (or the state word) on the right, optional faces/stats below. */
 function rowNode(registries, row) {

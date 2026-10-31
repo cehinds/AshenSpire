@@ -85,7 +85,9 @@ export function diffRunSnapshots(before, after, registries) {
     const prev = beforeById.get(card.instanceId);
     const name = cardName(registries, card.cardId);
     if (!prev) {
-      rows.push(freeze({ kind: 'card', label: name, before: '', after: card.zone === 'sideboard' ? 'gained' : 'added', cardId: card.cardId, instanceId: card.instanceId, change: card.zone === 'sideboard' ? 'gained' : 'added' }));
+      rows.push(freeze({ kind: 'card', label: name, before: '', after: card.zone === 'sideboard' ? 'gained' : 'added', cardId: card.cardId, instanceId: card.instanceId, change: card.zone === 'sideboard' ? 'gained' : 'added',
+        // The owned instance as the game resolves it (upgrades, rank, ramp), not the base definition.
+        ...(registries?.cards?.has?.(card.cardId) ? { face: faceOf(registries, after, card.instance) } : {}) }));
       continue;
     }
     const stepsChanged = JSON.stringify(prev.steps) !== JSON.stringify(card.steps);
