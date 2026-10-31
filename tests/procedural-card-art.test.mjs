@@ -14,6 +14,9 @@ import { createRegistries } from '../src/model/registries.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 import { readFileSync } from 'node:fs';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { playingCardDefinition } from '../src/model/playingCard.js';
 
 const recipe = (type = 'attack', tags = ['camp:physical'], rank = 1) => proceduralCardArt({ type, tags, rank });
 test('pure art depends only on canonical tags, type and rank, never identity or optional mechanics', () => {
@@ -137,6 +140,38 @@ test('legacy adapter infers declared utility/status facts only when explicit car
   const healing = proceduralDefinitionArt({ type: 'skill', tags: ['camp:spell'], effects: [{ op: 'heal', amount: 8 }, { op: 'retain' }] });
   assert.ok(healing.componentArt.sprites.some(sprite => sprite.assetId === 'G.object.0'), 'healing plus Retain keeps the healing leaf; retaining a card is not drawing');
   assert.ok(!healing.componentArt.sprites.some(sprite => sprite.assetId === 'F.object.0'));
+});
+test('explicit utility identities outrank generic aliases in every tag order', () => {
+  for (const tags of [
+    ['camp:spell', 'effect:heal', 'retain'],
+    ['retain', 'effect:heal', 'camp:spell'],
+    ['reshuffle', 'camp:physical', 'effect:heal'],
+    ['effect:heal', 'camp:physical', 'reshuffle'],
+    ['fx:heal', 'camp:spell', 'retain'],
+    ['retain', 'camp:spell', 'fx:heal'],
+  ]) {
+    const art = recipe('skill', tags);
+    assert.ok(art.componentArt.sprites.some(sprite => sprite.assetId === 'G.object.0'));
+    assert.ok(!art.componentArt.sprites.some(sprite => sprite.assetId === 'F.object.0'));
+  }
+  for (const tags of [['effect:heal', 'effect:draw'], ['effect:draw', 'effect:heal']]) {
+    assert.ok(recipe('skill', ['camp:spell', ...tags]).componentArt.sprites.some(sprite => sprite.assetId === 'F.object.0'), 'multiple explicit effects use the existing catalog order');
+  }
+});
+test('actual Core-bound projected tags remain authoritative when they omit a healing art cue', () => {
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries: reg, classId: 'herald', seed: 5,
+    profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const ref = run.deck.find(card => card.cardId === 'urgentHeal') || { cardId: 'urgentHeal' };
+  const definition = playingCardDefinition(reg, ref, { rules: run });
+  assert.ok(definition.keywords.includes('retain'), 'exercise the actual Core-bound Retain card');
+  assert.ok(definition.effects.some(effect => effect.op === 'heal'));
+  const art = playingCardArt(ref, { definition, registries: reg, style: 'Simple' });
+  const expected = proceduralCardArt({ type: definition.type, tags: definition.cardTags, rank: definition.rank }, { registries: reg });
+  assert.strictEqual(art, expected, 'no hidden DSL effect repairs the explicit projected tags');
+  assert.ok(art.componentArt.sprites.some(sprite => sprite.assetId === 'I.object.0'));
+  assert.ok(!art.componentArt.sprites.some(sprite => sprite.assetId === 'G.object.0'));
 });
 test('live definition rank wins canonical visual refs, ability rank zero is an explicit first visual rank', () => {
   const def = { id: 'future', type: 'attack', cardTags: ['camp:physical'], rank: 5 };

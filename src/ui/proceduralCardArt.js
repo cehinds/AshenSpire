@@ -37,7 +37,8 @@ const statusAliases = { bleeding: 'bleed', burning: 'burn', frozen: 'frost', chi
 const statusCueId = id => Object.hasOwn(statusAliases, id) ? statusAliases[id] : id;
 const globalCache = new Map(), registryCaches = new WeakMap();
 const canonicalTags = tags => [...new Set((Array.isArray(tags) ? tags : []).map(tag => typeof tag === 'string' ? tag : tag?.id)
-  .filter(tag => typeof tag === 'string' && tag.length <= 100 && /^[\w:.-]+$/.test(tag)))].sort();
+  .filter(tag => typeof tag === 'string' && tag.length <= 100 && /^[\w:.-]+$/.test(tag))
+  .map(tag => ['fx:heal', 'fx:draw', 'fx:cleanse'].includes(tag) ? `effect:${tag.slice(3)}` : tag))].sort();
 const identity = (tags, prefix) => {
   const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => tag.slice(prefix.length)))];
   return values.length === 1 ? values[0] : null;
@@ -91,7 +92,10 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   rank = cardRank({ rank });
   const statuses = tags.filter(tag => tag.startsWith('status:')).map(tag => tag.slice(7))
     .filter(id => statusExists(registries, id)).slice(0, element ? 2 : 3);
-  const utility = base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
+  // Explicit effect identities outrank compatibility aliases such as Retain.
+  // Multiple explicit effects retain the approved catalog's deterministic order.
+  const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
+    || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
   const key = JSON.stringify([category, maneuver, element, projectile, utility?.code, statuses, rank]);
   let cache = globalCache;
   if (registries && typeof registries === 'object') {
@@ -99,7 +103,10 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     cache = registryCaches.get(registries);
   }
   if (cache.has(key)) return cache.get(key);
-  const selectionTags = projectile ? [...tags, 'delivery:projectile'] : tags.filter(tag => !base.selection.projectileTags.includes(tag));
+  const deliveryTags = projectile ? [...tags, 'delivery:projectile'] : tags.filter(tag => !base.selection.projectileTags.includes(tag));
+  // Pass the chosen cue alone so the lower-level compatibility selector cannot
+  // restore a generic alias's priority over the explicit semantic choice.
+  const selectionTags = maneuver === 'skill' ? utility?.tags.filter(tag => tag.startsWith('effect:')) || [] : deliveryTags;
   let art = approvedCardArt({ category, maneuver, element, tags: selectionTags, def: {} });
   if (maneuver === 'counter') art = approvedCardArt({ category: 'physical', maneuver, element, tags: [], def: {} });
   if (maneuver === 'skill' && !art) art = approvedCardArt({ category: 'magical', maneuver, element, tags: selectionTags, def: {} });
