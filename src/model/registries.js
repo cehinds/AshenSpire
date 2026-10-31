@@ -15,6 +15,7 @@ import { applyActionCosts } from './actionCosts.js';
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
 import { tagService } from './tagService.js';
+import { applyRamp, mayRamp, rampsByRun, playsEverOf } from './cardRamp.js';
 import { nodeTree } from './tree.js';
 import { configuredPropertyRules } from './propertyRuleBindings.js';
 import { itemTypeLabel } from '../content/equipment.js';
@@ -632,8 +633,8 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
   // Ramp (SPEC §4.3): a card whose base or upgrade grows with its uses; the run-wide count rides on the instance.
-  const hasRamp = !!(definition.ramp || definition.upgrade?.ramp);
-  const playsEver = hasRamp && Number.isInteger(instanceOrRef.playsEver) && instanceOrRef.playsEver > 0 ? instanceOrRef.playsEver : 0;
+  const hasRamp = mayRamp(definition);
+  const playsEver = rampsByRun(definition) ? playsEverOf(instanceOrRef) : 0;
   if (!hasRamp && !upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
@@ -699,7 +700,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
   if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
   // Ramp lands last, after rank and upgrade growth, so the base amount it wraps is still a plain number.
-  if (result.ramp) result = applyRamp(registries, result, playsEver);
+  if (result.ramp) result = deepFreeze(applyRamp(result, playsEver, tagService(registries).idsOf('card', result)));
   cache.set(key, result);
   return result;
 }
@@ -752,26 +753,6 @@ export function applyCardRank(card, rank, skillBonus = 0) {
   const steps = Math.max(0, cardRank({ rank }) - 1) + cardSkillBonus({ skillBonus });
   const effects = rankedEffects(card, steps);
   return deepFreeze({ ...card, effects, rank: cardRank({ rank }) });
-}
-
-/**
- * applyRamp(registries, card, playsEver) -> the card with its ramped amount (SPEC §4.3 Zero-cost cards and ramp).
- * The first effect whose op is `ramp.stat` becomes base (+ plays-ever x per for the 'run' scope) + `per` for each
- * earlier play of this card this combat. The matching tag (Momentum / Honed) joins the card's face tags.
- */
-export function applyRamp(registries, card, playsEver = 0) {
-  const ramp = card.ramp;
-  const index = card.effects.findIndex(effect => effect.op === ramp.stat && Number.isFinite(effect.amount));
-  if (index < 0) return card;
-  const run = ramp.scope === 'run';
-  const effects = card.effects.map((effect, i) => i !== index ? effect : {
-    ...effect,
-    amount: { f: 'add', args: [effect.amount + (run ? playsEver * ramp.per : 0), { f: 'metric', metric: 'sameCardPlays', of: 'self', per: ramp.per }] },
-  });
-  const tag = run ? 'trait:honed' : 'trait:momentum';
-  const own = card.cardTags ?? card.tags ?? tagService(registries).idsOf('card', card);
-  const cardTags = own.includes(tag) ? own : [...own, tag];
-  return deepFreeze({ ...card, effects, cardTags });
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */
