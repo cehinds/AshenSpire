@@ -10,6 +10,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { applyAttackDamage } from '../src/engine/actions.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { gainReflectStacks, reflectReduceFraction, reflectReturnFraction } from '../src/engine/guardStacks.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -154,4 +155,17 @@ test('a lethal hit on the Reflect holder still returns damage and spends the sta
   assert.ok(reflected, 'the reflection resolved');
   assert.equal(back.damageReceipt.hits[0].incoming, reflected.amount);
   assert.equal(combat.player.reflectStacks ?? 0, 0, 'the stack was spent');
+});
+
+test('a reflected hit keeps the incoming carrier\'s magicShare split (fully magical return is absorbed by Poise)', () => {
+  const { combat, enemy } = live();
+  combat.player.reflectStacks = 1;
+  enemy.persistentPoise = { value: 20, max: 20 };
+  const carrier = { magicShare: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', range: 'melee', targeting: 'single', traits: [] } };
+  const hp = enemy.hp;
+  applyAttackDamage(combat, enemy, combat.player, 20, [], carrier);
+  const back = combat.eventLog.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id).at(-1);
+  assert.ok(back, 'the return landed');
+  assert.equal(back.hpLoss, 0, 'all absorbed by the 20 Poise');
+  assert.equal(enemy.hp, hp);
 });

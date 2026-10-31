@@ -436,7 +436,11 @@ function reflectBack(ctx, source, target, carrier, reflect) {
   if (amount <= 0) return;
   const profile = { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true };
   applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
-    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [] });
+    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [],
+    // The incoming hit's damage-routing overrides ride along so the return keeps its physical/magical split (SPEC §17).
+    ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}),
+    ...(carrier?.physicalDamageType ? { physicalDamageType: carrier.physicalDamageType } : {}),
+    ...(carrier?.attack ? { attack: carrier.attack } : {}) });
 }
 
 /**
