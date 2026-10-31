@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Element backgrounds
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/Feature/NewCardArt/latest/)
+
+Elements choose background colors above magic and physical defaults. Fire + Frost blends purple; Lightning + Alteration blends lime. Main objects carry fine warm gold outlines. Status cues layer above weapons with a modest opacity increase, and the physical Sweep trail follows its scythe blade. [Capture record](docs/preview/features/element-backgrounds-2433/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile mixed-element Counter builder](docs/preview/features/element-backgrounds-2433/mobile.png) | ![Desktop mixed-element Counter builder](docs/preview/features/element-backgrounds-2433/desktop.png) | ![Wide mixed-element Counter builder](docs/preview/features/element-backgrounds-2433/wide.png) | ![Tablet mixed-element Counter builder](docs/preview/features/element-backgrounds-2433/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
