@@ -20,7 +20,8 @@ Design only. Nothing here is built by this file. Sources read-only; line numbers
 - [x] per stack: +1 Accuracy (S:3, `precision`, no decay). Core 2: Precision = 1 + floor(...) x (stacks + 1) (SPEC §17 :3347).
 - [x] flat: `trait:persistent` keeps granted Precision past turn end (nodes.csv:495).
 - [x] flat: the `precision` card tag gives guard bypass 4 in expanded combat (M:231); Core 2 removes it (combatMatchups.js:112).
-- [ ] per stack: decays 1 at owner turn start (Core 2 note: decay already in SPEC :3347; make it visible on the badge) (locked)
+- [x] flat: Core 2 expires every non-persistent Precision stack at the owner's turn end; `trait:persistent` stacks survive (src/engine/statuses.js:272-283, tooltip src/model/fixCoreMechanics.js:179-181).
+- [ ] rules change, not badge-only: one stack = +1 Precision (replace mix x (stacks + 1) at src/engine/stanceHit.js:105); stacks decay 1 at owner turn start instead of expiring at turn end; persistent stacks keep ignoring decay. Needs a SPEC §17 amendment; the tooltip is (locked).
 - [ ] per stack: +2% crit chance, cap 20%
 - [ ] per stack: ignore 1 point of target Evade stacks per hit, cap 3
 - [ ] at 5+ stacks: next hit cannot be Evaded, consumes all stacks
