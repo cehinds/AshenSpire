@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:a099ed9d8597ae42cfdc5b37455eb2d12a2295a7808938a823b4b848f4246989",
+      "hash": "sha256:69d0b1ab7c91fff40dd23ff7ca032746564a645f7aafdb5403b6da89c9e2b953",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -634,7 +634,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:59d1cc9658ae3ccd187fbed67d042f487632c924a4e0ce4764964b4ed49ebc65"
+          "hash": "sha256:510ff14824f7b9545d929cd3a4d4f2ffb9dd9113ba47c4799184cba57fbe44c8"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:90750818d2d5e94ed699a58f54765513a378302e22337b4d0ee6d1bdddd9a9c9"
     },
     "core": {
-      "hash": "sha256:a099ed9d8597ae42cfdc5b37455eb2d12a2295a7808938a823b4b848f4246989",
+      "hash": "sha256:69d0b1ab7c91fff40dd23ff7ca032746564a645f7aafdb5403b6da89c9e2b953",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1358,7 +1358,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:59d1cc9658ae3ccd187fbed67d042f487632c924a4e0ce4764964b4ed49ebc65"
+          "hash": "sha256:510ff14824f7b9545d929cd3a4d4f2ffb9dd9113ba47c4799184cba57fbe44c8"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
