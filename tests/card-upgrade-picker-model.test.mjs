@@ -337,3 +337,46 @@ test('the pane reads like the item pane: head, stats deltas, faces fold, cost st
     door.close();
   });
 });
+
+// ---- Owner ask 2026-10-31: the blacksmith's choice ----
+test('blacksmith rows list 2 options for a Basic card and 3 for a ranked one; the rest-site model stays at one', () => {
+  const run = newRun(); run.smithingStones = 3;
+  const smith = cardUpgradeModel(registries, run, null, { blacksmith: true });
+  const plain = cardUpgradeModel(registries, run);
+  assert.ok(plain.rows.every(r => r.options.length === 1 && r.plan.options === undefined));
+  const strikeRow = smith.rows.find(r => r.cardId === 'core.strike');
+  assert.equal(strikeRow.options.length, 2, 'Strike is Basic');
+  assert.equal(strikeRow.plan.options.length, 2);
+  assert.deepEqual(strikeRow.options[0].step, plain.rows.find(r => r.cardId === 'core.strike').plan.step);
+  const ranked = smith.rows.find(r => r.cardId === 'core.ironbreaker' || r.cardId === 'core.reaverSpecial');
+  if (ranked) assert.equal(ranked.options.length, 3);
+  for (const row of smith.rows) for (const option of row.options) assert.ok(option.changes.length >= 1, `${row.cardId} option changes something`);
+});
+
+test('the choice dialog shows every option and highlights the picked one', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(async dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const card = strike(run);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const options = [...host.querySelectorAll('.card-upgrade-option')];
+    assert.equal(options.length, 2);
+    assert.deepEqual(options.map(o => o.getAttribute('aria-checked')), ['true', 'false']);
+    options[1].click();
+    const after = [...host.querySelectorAll('.card-upgrade-option')];
+    assert.deepEqual(after.map(o => o.getAttribute('aria-checked')), ['false', 'true']);
+    assert.ok(after[1].classList.contains('selected'));
+    door.close();
+  });
+});
+
+test('a chosen option commits exactly that step', () => {
+  const run = newRun(); run.smithingStones = 3;
+  const card = strike(run);
+  const row = cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true }).selected;
+  const quote = { ...row.plan, step: row.options[1].step, after: row.options[1].after };
+  commitCardUpgrade(run, registries, quote);
+  assert.deepEqual(card.upgradeSteps, [row.options[1].step]);
+});
