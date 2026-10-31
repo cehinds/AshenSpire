@@ -177,8 +177,8 @@ test('Core duration clocks tick once at owner turn start and retain non-overridd
   assert.equal(combat.player.statuses.crimsonBlight.duration, 2, 'duration ignores the two-stack decay amount');
 });
 
-// Rule (owner, 2026-10-31): Precision loses a stack at owner turn start; Persistent stacks are exempt; the badge shows the statuses.json tooltip.
-test('Core Precision loses a stack at owner turn start, preserves Persistent grants, and shows the statuses.json tooltip', () => {
+// Rule (owner, 2026-10-31): Precision loses a stack at owner turn start; Persistent stacks are exempt; the badge shows the accuracy.precisionTooltip text.
+test('Core Precision loses a stack at owner turn start, preserves Persistent grants, and shows the accuracy tooltip', () => {
   const { combat } = fixture();
   delete combat.player.statuses.precision;
   applyStatus(combat, combat.player, 'precision', 2, combat.player, { tags: ['trait:persistent'] });

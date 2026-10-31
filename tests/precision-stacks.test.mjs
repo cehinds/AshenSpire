@@ -28,7 +28,7 @@ function live(enemyId = 'wanderingSoldier') {
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, ''));
 
 test('constants live in the editable accuracy block of mechanics.json', () => {
-  assert.deepEqual({ ...mechanics.accuracy, note: undefined }, { evasionBase: 8, evadePerStack: 2, precisionStackValue: 1, precisionDecayPerTurn: 1, note: undefined });
+  assert.deepEqual({ ...mechanics.accuracy, note: undefined, precisionTooltip: undefined }, { evasionBase: 8, evadePerStack: 2, precisionStackValue: 1, precisionDecayPerTurn: 1, note: undefined, precisionTooltip: undefined });
 });
 
 test('Precision = 1 + statMix + stacks and Evasion = 8 + DEX + 2 per Evade stack', () => {

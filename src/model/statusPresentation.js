@@ -12,9 +12,9 @@ const LEGACY_TOOLTIPS = Object.freeze({
 function present(ctx, id, definition, holder) {
   let resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
   // Core 2 accuracy (owner, 2026-10-31): the locked FixCore override still words Precision/Evade by the old multiplier formulas, so the badge shows the
-  // statuses.json Precision tooltip and a tooltip built from the editable accuracy constants for Evade.
+  // accuracy.precisionTooltip text (mechanics.json; the statuses.json row feeds a locked manifest and stays as is) and a tooltip built from the editable accuracy constants for Evade.
   if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
-    if (id === 'precision' && definition.tooltip) resolved = { ...resolved, tooltip: definition.tooltip, description: definition.tooltip };
+    if (id === 'precision') resolved = { ...resolved, tooltip: mechanics.accuracy.precisionTooltip, description: mechanics.accuracy.precisionTooltip };
     else if (id === 'evade') {
       const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
       resolved = { ...resolved, tooltip: text, description: text };

@@ -73,7 +73,7 @@ configuration or historical non-Core profiles.
 
 ## Precision as stacks, Evasion base 8 (owner, 2026-10-31)
 
-- Owner decision: enemies hit too easily (any Precision of 1 or more hit 95% because the miss threshold was Evasion 1 + DEX). Core 2 only. Precision = 1 + statMix + stacks (was 1 + mix × (stacks + 1)); Evasion = 8 + DEX + gear + 2 × Evade stacks (was 1 + DEX + (1 + DEX) × stacks). The constants live in the `accuracy` block of `content/framework/mechanics.json` (`evasionBase` 8, `evadePerStack` 2, `precisionStackValue` 1, `precisionDecayPerTurn` 1), read in `src/engine/stanceHit.js`, because the locked `fixCoreMechanics.json` cannot change. A stance entry grants exactly 1 stack; Precision loses 1 stack at the owner's turn start (Persistent exempt) and the badge tooltip is the `statuses.json` text. SPEC §17 Accuracy paragraph amended.
+- Owner decision: enemies hit too easily (any Precision of 1 or more hit 95% because the miss threshold was Evasion 1 + DEX). Core 2 only. Precision = 1 + statMix + stacks (was 1 + mix × (stacks + 1)); Evasion = 8 + DEX + gear + 2 × Evade stacks (was 1 + DEX + (1 + DEX) × stacks). The constants live in the `accuracy` block of `content/framework/mechanics.json` (`evasionBase` 8, `evadePerStack` 2, `precisionStackValue` 1, `precisionDecayPerTurn` 1), read in `src/engine/stanceHit.js`, because the locked `fixCoreMechanics.json` cannot change. A stance entry grants exactly 1 stack; Precision loses 1 stack at the owner's turn start (Persistent exempt) and the badge tooltip is `accuracy.precisionTooltip` (the `statuses.json` Precision row feeds a locked mechanic manifest and is unchanged). SPEC §17 Accuracy paragraph amended.
 
 ## Insight contests (2026-10-31)
 

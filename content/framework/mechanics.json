@@ -75,6 +75,7 @@
     "evadePerStack": 2,
     "precisionStackValue": 1,
     "precisionDecayPerTurn": 1,
+    "precisionTooltip": "Each stack adds 1 Precision. Loses 1 stack at the start of your turn.",
     "note": "Owner's call, 2026-10-31 (Core 2 only): Precision = 1 + statMix + stacks x precisionStackValue; Evasion = evasionBase + DEX + gear + evadePerStack x Evade stacks. Replaces mix x (stacks + 1) and (1 + DEX) x stacks, which put every Precision >= 1 at a 95% hit chance. Precision stacks lose precisionDecayPerTurn at the owner's turn start."
   },
   "unarmedPackage": {

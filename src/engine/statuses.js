@@ -276,7 +276,7 @@ export function decayAtTurnEnd(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
     const def = statusDefinition(ctx, statusId);
-    // The statuses.json Precision row decays per turn for Core 2 only; legacy Precision keeps its old (non-decaying) behaviour.
+    // Precision decays only under Core 2, at turn start (decayAtTurnStart); legacy Precision never decays.
     if (statusId === 'precision') continue;
     if (ctx.foundation && def.stacking) continue;
     if (def.decay === 'perTurnEnd') {
