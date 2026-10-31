@@ -66,3 +66,13 @@ advantage multiplier; do not apply both. Keep the 25% current-Block contribution
 JSON default and the fallback for a missing `smashVsDefensive` block must agree.
 Persisted explicit rule values remain snapshots; this does not rewrite custom
 configuration or historical non-Core profiles.
+
+## Counter stacks (2026-10-31)
+
+Owner: Counter becomes a stack badge. Playing a Counter adds the Block you hold
+as `counterStacks` (cap 20, kept until the fight ends). A covered hit returns the
+card's own damage plus 10% of the incoming hit per stack, replacing the old
+floor(0.5 x incoming) share (the stance-advantage share and Block are unchanged).
+In Counter stance a card-less auto-Counter answers a covered hit for 1 SP with
+base 0, and a Counter reaction from that stance costs one less SP regardless of
+the Adept gate. Reflect (see SPEC.md section 17) is a separate stack count.
