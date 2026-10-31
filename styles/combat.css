@@ -2068,7 +2068,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 
 /* optionRowList.js: card choices as full-width rows (art, name, status line, chip), like the card-upgrade picker. */
 .option-row-list { display: flex; flex-direction: column; gap: 4px; max-height: min(52vh, 21rem); overflow-y: auto; overscroll-behavior: contain; }
-.option-row { display: flex; align-items: center; gap: 0.6rem; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0.35rem 0.6rem; text-align: left; white-space: normal; flex: 0 0 auto; }
+.option-row.as-railitem { display: flex; align-items: center; gap: 0.6rem; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0.35rem 0.6rem; text-align: left; white-space: normal; flex: 0 0 auto; }
 .option-row > .option-row-art { flex: 0 0 auto; width: 3rem; height: 3rem; font-size: 1.4rem; overflow: hidden; }
 .option-row > .option-row-art > img { width: 100%; height: 100%; object-fit: contain; }
 .option-row-text { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
