@@ -178,7 +178,7 @@
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
-  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) .combat-health-badge-value {
     width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
   }
 }

@@ -166,7 +166,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'combatCounterTriggered': {
         const { label } = causeOf();
-        text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
+        // Core (SPEC §17, 2026-10-31): the return is the card's base damage plus stacks x 10% of the incoming hit (plus the stance-advantage share).
+        if (event.counterStacks !== undefined && event.amount > 0) {
+          const advantage = Math.max(0, event.amount - (event.counterBase || 0) - (event.counterStackShare || 0));
+          text = `${source} countered ${target}${label ? ` with ${label}` : ''} for ${event.amount} (base ${event.counterBase || 0} + stacks ${event.counterStacks}×10% of ${event.counterIncoming || 0}${advantage ? ` + advantage ${advantage}` : ''}).`;
+        } else text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
         break;
       }
       case 'attackHit': case 'attackMissed': {
@@ -291,7 +295,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       }
       case 'playerDowned': text = `${name(event.playerId || 'player')} was downed${event.reason ? ` (${word(event.reason)})` : ''}.`; break;
-      case 'combatReactionChosen': if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
+      case 'combatReactionChosen': if (event.autoCounter) text = `${name(event.ownerId)} answered with a Counter and no card.`; else if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
       case 'combatRangeReturnUnavailable': {
         const why = rangeReturnUnavailableText(event);
         text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;

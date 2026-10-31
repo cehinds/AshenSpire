@@ -9,7 +9,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 // Poise has a gold numeric badge and retains the HP trim, tooltip and aria-label.
 /** The badge tooltip's HTML; the Evade badge shows the holder's own Evade text when given, else the generic line. */
 export function badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp = null }) {
-  return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
+  return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.help ? badge.help : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
 }
 export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward'), poiseHelp = tFull('combat.protection.poise'), evadeHelp = null } = {}) {
   if (!hp) return null;
@@ -50,7 +50,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     const value = document.createElement('span');
     value.className = 'combat-health-badge-value';
     value.textContent = String(badge.value);
-    if (badge.kind === 'evade' || badge.kind === 'precision') {
+    if (['evade', 'precision', 'counter', 'reflect'].includes(badge.kind)) {
       const icon = document.createElement('span');
       icon.className = `combat-health-${badge.kind}-icon`;
       icon.setAttribute('aria-hidden', 'true');

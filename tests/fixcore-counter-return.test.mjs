@@ -259,11 +259,11 @@ test('the Counter preview carries the return\'s Poise damage and the Block it ad
 
 import { cardDetailHtml } from '../src/ui/components/card.js';
 import { t } from '../src/ui/strings.js';
-test('the Counter help is profile-aware: Core 2 says half the incoming hit, legacy keeps Guard or Ward absorption', () => {
+test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per Counter stack, legacy keeps Guard or Ward absorption', () => {
   const core = cardDetailHtml(reg, { cardId: 'core.counter' });
   assert.ok(core.includes(t('card.counter.help.core')) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
   assert.doesNotMatch(core, /after full Guard or Ward absorption/);
-  assert.match(t('card.counter.help.core'), /half its incoming damage/);
+  assert.match(t('card.counter.help.core'), /10% of the incoming damage per Counter stack/);
   assert.match(t('card.counter.help.legacy'), /after full Guard or Ward absorption/);
   const legacyReg = createRegistries(contentBundle);
   const legacyCounter = contentBundle.cards.find(c => c.combatProfile?.maneuver === 'counter' && !c.counterCoverage);
@@ -453,8 +453,8 @@ test('Counters with authored coverage get eligibility-aware help and keep the co
   const html = cardDetailHtml(regs.wanderingSoldier, { cardId: 'frostCounter' });
   assert.match(html, /Counter coverage:/);
   // frostCounter is a spell Counter that arms in Core (owner 2026-10-19), so the help promises the Core return.
-  assert.match(html, /half its incoming damage/);
-  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /half its incoming damage/);
+  assert.match(html, /10% of the incoming damage per Counter stack/);
+  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /10% of the incoming damage per Counter stack/);
   assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
 });
 

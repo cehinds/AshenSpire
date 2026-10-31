@@ -29,6 +29,8 @@ const SHAPES = Object.freeze({
   // Flux (Ward) shares the diamond-and-dot glyph with Force; Impact reuses the blunt Poise hammer.
   flux: FORCE_SHAPE,
   impact: SHAPES_BLUNT,
+  // The Reflect badge's mirror: a diamond frame with a glint (owner 2026-10-31).
+  reflect: '<path d="M16 1 29 16 16 31 3 16Zm0 6L8 16l8 9 8-9Z"/><path d="m12 15 3-3 2 2-3 3Z"/>',
   reaction: '<path d="M16 4a12 12 0 1 0 12 12h-4a8 8 0 1 1-8-8Z"/>',
   counterstrike: COUNTER_SHAPE,
   alteration: SCHOOL_SIGILS.alteration.shape,

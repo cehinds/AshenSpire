@@ -1543,6 +1543,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // its own manual picks; another seat's prompt is never answered here.
   const ownSeat = () => combat.playerKey || 'player';
   const reactionKind = option => {
+    if (option.autoCounter) return 'counter'; // the card-less Counter (owner 2026-10-31)
     const inst = findInst(option.play?.cardInstanceId);
     // The card's combat profile names its maneuver for every card family (counters and prepared
     // spells included); kindForCard is the at-rest glyph classifier and returns null for those.
@@ -2136,7 +2137,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const expanded = combat.combatExpansionVersion === 2;
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp'));
     const hp = {
-      hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null },
+      hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
+        counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
       poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),

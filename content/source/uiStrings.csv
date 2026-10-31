@@ -39,6 +39,8 @@ combat.card.splitBlock,,"{verb} {block} Block and {ward} Ward",,
 combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
 combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
 combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
+combat.protection.counter,,Counter,"Returns {stacks}×10% of the incoming damage when a covered hit lands. Stacks last until the fight ends.",Counter
+combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}% of it back at the attacker; every reflected hit costs one stack. Stacks last until the fight ends.",Reflect
 combat.protection.barrier,,Barrier,"Barrier is blue, the layer above Ward. Magic sources and cards that add Ward refill Ward first and the rest becomes Barrier; other sources add Barrier directly. Barrier soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",Barrier
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
@@ -68,6 +70,7 @@ combat.reaction.help,,,Choose a card to play before this action resolves. Back s
 combat.reaction.play,,Play,,
 combat.reaction.upcast,,Upcast {tier},,
 combat.reaction.sp,,{amount} SP,,
+combat.reaction.autoCounter,,Counter (no card),,
 combat.reaction.mp,,{amount} MP,,
 combat.reaction.stack,,On the stack,,
 combat.reaction.resolve,,Resolve,,
@@ -892,7 +895,7 @@ deckEditor.rank,,Rank {rank},Card rank {rank}.,
 deckEditor.rank.cantrip,,Cantrip,"Rank 0 spell, a cantrip.",
 deckEditor.rank.basic,,Basic,Rank 0 combat maneuver.,
 card.counter.help.legacy,,Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.,Legacy Counter help.,
-card.counter.help.core,,Prepare counter until next player turn. A covered hit returns half its incoming damage (more with stance advantage) plus Poise damage; card support effects resolve when played.,Core Counter help.,
+card.counter.help.core,,"Prepare counter until next player turn. A covered hit returns the card's damage plus 10% of the incoming damage per Counter stack (more with stance advantage), plus Poise damage; the Block you hold becomes Counter stacks.",Core Counter help.,
 card.counter.face.core,,Return half incoming damage and Poise,Core Counter face line while no attack is revealed.,
 deckEditor.range.melee,,Melee,Melee range: reaches the enemy in front.,
 deckEditor.range.reach,,Reach,Reach range: reaches past the front enemy.,
