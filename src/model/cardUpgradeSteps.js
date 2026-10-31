@@ -166,12 +166,12 @@ function addTagOptions(base, current, applied, found, dmgIndex) {
     if (!area) found.targeting = { tag: 'targeting:area', retarget: 'area' };
     else if (grown - baseTotal <= baseTotal) found.targeting = { tag: 'targeting:single', retarget: 'single' };
   }
-  if (hitsEnemy && !spell && ATTACK_MANEUVERS.includes(maneuver)) {
+  if (hitsEnemy && !spell && ATTACK_MANEUVERS.includes(maneuver) && !tagged((t) => t.tag?.startsWith('maneuver:'))) {
     const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
     const tags2 = ATTACK_MANEUVERS.filter((m) => m !== maneuver && (m !== 'smash' || sp >= 2));
     if (tags2.length) found.maneuver = { tags: tags2.map((m) => `maneuver:${m}`) };
   }
-  if (hitsEnemy && camp === 'spell') {
+  if (hitsEnemy && camp === 'spell' && !tagged((t) => t.tag?.startsWith('school:'))) {
     const own = familyValue(tags, 'school:');
     const schools = TAG_FAMILIES['school:'].filter((school) => school !== own);
     if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };

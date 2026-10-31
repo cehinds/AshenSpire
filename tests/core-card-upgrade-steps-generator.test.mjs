@@ -192,12 +192,14 @@ test('targeting flips single and area, the amount x0.75 up or x1.25 up, once per
   assert.ok(![...sweep].some((k) => k.includes('targeting:')), 'a sweep stays area');
 });
 
-test('maneuver swaps within attack / smash / ranged; smash needs 2 SP; spells and others never', () => {
+test('maneuver swaps within attack / smash / ranged once; smash needs 2 SP; spells and others never', () => {
   const seen = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack'] }));
   assert.ok(seen.has('{"k":"tag","tag":"maneuver:smash"}') && seen.has('{"k":"tag","tag":"maneuver:ranged"}'));
   const cheap = tagsFor(withPoise({ cost: 1, staminaCost: 1, tags: ['camp:physical', 'maneuver:attack'] }));
   assert.ok(!cheap.has('{"k":"tag","tag":"maneuver:smash"}'));
   assert.ok(![...tagsFor(withPoise({ tags: ['camp:spell', 'maneuver:casting'], damageSchool: 'magic' }))].some((k) => k.includes('maneuver:')));
+  const swapped = rollUpgradeOptions(withPoise({ tags: ['camp:physical', 'maneuver:attack'] }), [{ k: 'tag', tag: 'maneuver:smash' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!swapped.some((s) => s.tag?.startsWith('maneuver:')), 'a stance changes once per card');
   assert.ok(![...tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:sweep'] }))].some((k) => k.includes('maneuver:')));
 });
 
@@ -209,6 +211,8 @@ test('school: spells only, any school but the current; element: physical to magi
   assert.ok(![...seen].some((k) => k.includes('damageSchool')), 'a magic card gets no element');
   const elements = new Set([...tagsFor(withPoise())].filter((k) => k.includes('damageSchool')).map((k) => JSON.parse(k).damageSchool));
   assert.deepEqual([...elements].sort(), ['arcane', 'fire', 'holy', 'magic']);
+  const spellTwice = rollUpgradeOptions(spell, [{ k: 'tag', tag: 'school:frost' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!spellTwice.some((s) => s.tag?.startsWith('school:')), 'a school changes once per card');
   const again = rollUpgradeOptions(withPoise(), [{ k: 'tag', damageSchool: 'fire' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
   assert.ok(!again.some((s) => s.damageSchool), 'element once per card');
 });
