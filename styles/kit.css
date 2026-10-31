@@ -2290,6 +2290,13 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
 .smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
 .confirmation-change-list { display: flex; flex-direction: column; }
+.what-changed-body { display: flex; flex-direction: column; gap: 1.2rem; padding: 1.8rem 2.1rem; min-width: 0; }
+.what-changed-body .what-changed-lead { margin: 0; font-style: italic; color: var(--muted); }
+.what-changed-row { display: flex; flex-direction: column; gap: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--line); }
+.what-changed-row .as-statrow { padding-left: 0; padding-right: 0; }
+.what-changed-cost { margin-top: 0.4rem; }
+.modal.what-changed-modal .as-statrow .sr-name { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: break-word; }
+.what-changed-cost .smith-summary-cell { padding: 0.8rem 1.2rem; }
 .smith-upgrade-folds { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.6rem; }
 .smith-upgrade-fold { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--bg-raise); }
 .smith-upgrade-fold > summary { list-style: none; cursor: pointer; }
