@@ -11,7 +11,7 @@ import { t } from '../strings.js';
 import { coreSmithingStats } from '../../model/smithingCore.js';
 import { diffRunSnapshots, snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 
-const CHANGE_WORD = { added: 'whatChanged.added', removed: 'whatChanged.removed', upgraded: 'whatChanged.upgraded', ranked: 'whatChanged.ranked', tier: 'whatChanged.tier' };
+const CHANGE_WORD = { gained: 'whatChanged.gained', installed: 'whatChanged.sigil.installed',  added: 'whatChanged.added', removed: 'whatChanged.removed', upgraded: 'whatChanged.upgraded', ranked: 'whatChanged.ranked', tier: 'whatChanged.tier' };
 
 const facesNode = (registries, row) => el('div', { class: 'card-upgrade-faces', dataset: { whatChangedFaces: row.instanceId || row.cardId } },
   ['before', 'after'].map((which) => el('div', { class: `card-upgrade-face ${which}`, dataset: { cardUpgradeFace: which } },
@@ -25,17 +25,18 @@ const cardFace = (registries, row) => el('div', { class: 'card-upgrade-faces', d
 function rowNode(registries, row) {
   const delta = row.before !== '' && row.after !== '' && row.kind !== 'relic'
     ? deltaNode(row.before, row.after) : null;
-  const word = !delta && row.kind !== 'armament'
+  const word = !delta && row.kind !== 'armament' && row.kind !== 'sigil'
     ? el('span', { class: 'sp-v', text: row.kind === 'relic' ? t(row.gained ? 'whatChanged.gained' : 'whatChanged.lost') : (row.after || row.before) }) : null;
   // "Added to deck" is for cards only; gear that arrives or leaves reads Gained or Lost.
-  const hint = row.kind === 'armament' && (row.change === 'added' || row.change === 'removed') ? t(row.change === 'added' ? 'whatChanged.gained' : 'whatChanged.lost')
+  const hint = row.kind === 'sigil' ? t(row.change === 'installed' ? 'whatChanged.sigil.installed' : 'whatChanged.sigil.removed', { piece: row.pieceName })
+    : row.kind === 'armament' && (row.change === 'added' || row.change === 'removed') ? t(row.change === 'added' ? 'whatChanged.gained' : 'whatChanged.lost')
     : CHANGE_WORD[row.change] ? t(CHANGE_WORD[row.change]) : '';
   const wrap = el('div', { class: 'what-changed-row', dataset: { whatChangedKind: row.kind, ...(row.change ? { whatChangedChange: row.change } : {}) } });
   wrap.appendChild(statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.label }), hint, values: [delta || word] }));
   if (row.stats?.length) wrap.appendChild(el('div', { class: 'confirmation-change-list' }, row.stats.map((s) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: s.label }), values: deltaNode(String(s.before), String(s.after)) }))));
   if (registries && row.kind === 'card') {
     if (row.faces) wrap.appendChild(facesNode(registries, row));
-    else if (row.change === 'added') wrap.appendChild(cardFace(registries, row));
+    else if (row.change === 'added' || row.change === 'gained') wrap.appendChild(cardFace(registries, row));
   }
   return wrap;
 }

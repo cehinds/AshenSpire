@@ -3,7 +3,7 @@
 // draws the rows. Card upgrades carry the instance's before and after faces, resolved with the same
 // applyUpgradeSteps the card-upgrade picker uses.
 import { applyUpgradeSteps, upgradeStepsOf } from './cardUpgrade.js';
-import { cardRank } from './cardRank.js';
+import { cardRank, rankedEffectsCapped } from './cardRank.js';
 
 const freeze = Object.freeze;
 const num = (v) => (Number.isFinite(v) ? v : 0);
@@ -26,8 +26,8 @@ export function snapshotRunForDiff(run) {
     smithingStones: num(run?.smithingStones),
     smithingStonesRefined: num(run?.smithingStonesRefined),
     relics: freeze([...(run?.relics || [])]),
-    deck: freeze((run?.deck || []).map((card) => freeze({
-      instanceId: card.instanceId, cardId: card.cardId,
+    deck: freeze([...(run?.deck || []).map((c) => [c, 'deck']), ...(run?.sideboard || []).map((c) => [c, 'sideboard'])].map(([card, zone]) => freeze({
+      instanceId: card.instanceId, cardId: card.cardId, zone,
       steps: freeze(upgradeStepsOf(card).map((s) => ({ ...s }))), rank: cardRank(card),
     }))),
     armaments: freeze([...new Set([...sets, ...flatIds(loadout.storage || [])])]),
@@ -36,8 +36,15 @@ export function snapshotRunForDiff(run) {
     classId: run?.class ?? null,
     flasks: freeze([...(run?.flasks || [])]),
     potions: freeze({ ...(run?.consumables || {}) }),
+    sigilSlots: freeze(Object.fromEntries(Object.entries(run?.sigilSlots || {}).map(([ref, slots]) => [ref, freeze([...(slots || [])])]))),
   });
 }
+
+// A card face at some upgrade steps and rank: the steps first, then the rank bonus as gameProfile.js resolves it.
+const faceAt = (base, steps, rank) => {
+  const face = applyUpgradeSteps(base, steps);
+  return rank > 1 ? { ...face, effects: rankedEffectsCapped(face, rank - 1), rank } : face;
+};
 
 const stat = (label, before, after, kind = 'stat') => freeze({ kind, label, before: String(before), after: String(after), delta: after - before });
 
@@ -75,13 +82,13 @@ export function diffRunSnapshots(before, after, registries) {
     const prev = beforeById.get(card.instanceId);
     const name = cardName(registries, card.cardId);
     if (!prev) {
-      rows.push(freeze({ kind: 'card', label: name, before: '', after: 'added', cardId: card.cardId, instanceId: card.instanceId, change: 'added' }));
+      rows.push(freeze({ kind: 'card', label: name, before: '', after: card.zone === 'sideboard' ? 'gained' : 'added', cardId: card.cardId, instanceId: card.instanceId, change: card.zone === 'sideboard' ? 'gained' : 'added' }));
       continue;
     }
     const stepsChanged = JSON.stringify(prev.steps) !== JSON.stringify(card.steps);
     if (!stepsChanged && prev.rank === card.rank) continue;
     const base = registries?.cards?.has?.(card.cardId) ? registries.cards.get(card.cardId) : null;
-    const faces = base ? freeze({ before: applyUpgradeSteps(base, prev.steps), after: applyUpgradeSteps(base, card.steps) }) : undefined;
+    const faces = base ? freeze({ before: faceAt(base, prev.steps, prev.rank), after: faceAt(base, card.steps, card.rank) }) : undefined;
     const row = { kind: 'card', label: name, cardId: card.cardId, instanceId: card.instanceId, change: stepsChanged ? 'upgraded' : 'ranked' };
     if (stepsChanged) Object.assign(row, { before: `+${prev.steps.length}`, after: `+${card.steps.length}`, delta: card.steps.length - prev.steps.length });
     else Object.assign(row, { before: `RANK ${prev.rank}`, after: `RANK ${card.rank}`, delta: card.rank - prev.rank });
@@ -108,6 +115,18 @@ export function diffRunSnapshots(before, after, registries) {
     // A piece bought at a tier is one "gained" row (the receipt reads its tier stats), not also a tier-up.
     if (!before.armaments.includes(id) && after.armaments.includes(id)) continue;
     rows.push(freeze({ kind: 'armament', label: armamentName(registries, id), before: `TIER ${a}`, after: `TIER ${b}`, delta: b - a, armamentId: id, itemRef: ref, change: 'tier', tierBefore: a, tierAfter: b }));
+  }
+
+  // Sigil work: a slot that now holds a different sigil is "installed X on Y" or "removed X from Y".
+  const sigilName = (id) => (registries?.sigils?.has?.(id) ? registries.sigils.get(id).name : String(id));
+  for (const ref of new Set([...Object.keys(before.sigilSlots), ...Object.keys(after.sigilSlots)])) {
+    const a = before.sigilSlots[ref] || [], b = after.sigilSlots[ref] || [];
+    const piece = armamentName(registries, ref.includes('/') ? ref.slice(ref.indexOf('/') + 1) : ref);
+    for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+      if ((a[i] ?? null) === (b[i] ?? null)) continue;
+      if (a[i]) rows.push(freeze({ kind: 'sigil', label: sigilName(a[i]), before: 'removed', after: '', change: 'removed', sigilId: a[i], itemRef: ref, pieceName: piece }));
+      if (b[i]) rows.push(freeze({ kind: 'sigil', label: sigilName(b[i]), before: '', after: 'installed', change: 'installed', sigilId: b[i], itemRef: ref, pieceName: piece }));
+    }
   }
 
   if (before.classId !== after.classId) {

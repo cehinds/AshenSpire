@@ -57,3 +57,29 @@ test('class swap and flask rows', () => {
   assert.equal(cls.before, registries.classes.get('reaver').name);
   assert.ok(d.rows.some((r) => r.kind === 'resource' && /FLASK/.test(r.label)));
 });
+
+test('a weapon art lands in the sideboard: a gained card row with its face', () => {
+  const run = newRun();
+  const d = diff(run, (r) => { r.sideboard = [...(r.sideboard || []), { instanceId: 'shop-art:1:core.strike', cardId: 'core.strike', upgraded: false }]; });
+  const row = d.rows.find((r) => r.instanceId === 'shop-art:1:core.strike');
+  assert.equal(row.kind, 'card'); assert.equal(row.change, 'gained');
+});
+test('a rank-up shows two different faces, and an already-ranked card keeps its rank bonus', () => {
+  const run = newRun();
+  const card = run.deck.find((c) => c.cardId === 'core.strike');
+  const d = diff(run, () => { card.rank = 2; });
+  const row = d.rows.find((r) => r.change === 'ranked');
+  assert.notDeepEqual(row.faces.before.effects, row.faces.after.effects);
+  const d2 = diff(run, () => { card.rank = 3; });
+  const face2 = d2.rows.find((r) => r.change === 'ranked').faces;
+  assert.notDeepEqual(face2.before.effects, row.faces.before.effects, 'rank 2 face carries its bonus');
+});
+test('sigil install and removal are rows', () => {
+  const run = newRun();
+  const sigilId = [...registries.sigils.all()][0].id;
+  const ref = 'armament/greatsword';
+  const d = diff(run, (r) => { r.sigilSlots = { [ref]: [sigilId] }; });
+  assert.equal(d.rows[0].kind, 'sigil'); assert.equal(d.rows[0].change, 'installed');
+  const d2 = diff(run, (r) => { r.sigilSlots = { [ref]: [null] }; });
+  assert.equal(d2.rows[0].change, 'removed');
+});
