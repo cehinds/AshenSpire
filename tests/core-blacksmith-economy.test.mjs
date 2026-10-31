@@ -298,3 +298,23 @@ test('armament purchase: a rack piece the run has since acquired is refused and 
   run.loadout.sets = { ...run.loadout.sets, extra: [other.id] };
   assert.equal(coreArmamentPlan(coreOut, run, other.id).ok, false);
 });
+
+test('picker: under a cinder quote the selected row, confirm and blockers read cinders, never "0 stones" or a stone shortfall', () => {
+  const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  const card = strike(run);
+  commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
+  const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
+  // The card is past its free allowance and no stones are held: the service's own code is 'stones', the Blacksmith's verdict is ok.
+  const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
+  assert.equal(model.selected.plan.code, 'stones');
+  assert.deepEqual([model.selected.cinders, model.selected.cost, model.selected.shortStones, model.selected.ok], [40, 0, false, true]);
+  assert.deepEqual([model.canConfirm, model.blockedReasons.length], [true, 0]);
+  // Cinders short: blocked with the cinder reason, and the stone purse is not named as the blocker.
+  run.cinders = 10;
+  const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
+  assert.deepEqual([poor.canConfirm, poor.selected.shortStones, poor.selected.cinders], [false, false, 40]);
+  assert.match(poor.blockedReasons[0], /cinders/i);
+  // Rest path unchanged: no quote, the stone code decides, no cinders.
+  const rest = cardUpgradeModel(coreOut, run, card.instanceId);
+  assert.deepEqual([rest.selected.cinders, rest.selected.shortStones], [0, true]);
+});

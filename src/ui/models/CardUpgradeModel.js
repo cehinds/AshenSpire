@@ -81,7 +81,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, inDeck, cardId: instance.cardId,
       name: plan.before?.name || base.name, rarity,
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
-      spent: false, ok, disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
+      spent: false, ok, cinders: priced?.cinders > 0 ? priced.cinders : 0,
+      // Is the Smithing Stone purse the blocker? (a quote's own verdict, else the service plan's stone code)
+      shortStones: priced ? priced.cost > stones : plan.code === 'stones', disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
       costLabel: priced?.cinders > 0 ? t('cardUpgrade.cinders', { n: priced.cinders }) : costLabel(priced ? { cost: priced.cost } : plan),
       blockedReason: (priced ? priced.reason : plan.reason) || blockedReason,
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
