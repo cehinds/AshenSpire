@@ -114,3 +114,9 @@ export function actionPacing({ reduced = false } = {}) {
     scale,
   };
 }
+
+// How long a sprite reaction plays: the same paced sprite speed (frame hold included) the timeline reserves
+// the beat with, so playback and reservation never disagree. `stage` is a sprite stage service.
+export function reactionPlayMs(stage, kind, { reduced = false, fallbackMs = 280 } = {}) {
+  return stage?.reactionTiming?.(kind, actionPacing({ reduced }).spriteSpeed)?.totalMs || fallbackMs;
+}
