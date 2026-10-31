@@ -6,6 +6,7 @@ import { proposalTargetPlan } from './proposalStatusRuntime.js';
 // One seeded Accuracy decision gates an entire committed hostile action.
 import { attackAccuracy, counterBaseEvasion, attributesOf, levelOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
+import { previewCarrierContest } from './contest.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
@@ -82,6 +83,10 @@ export function previewTargetFor(target, observerId = 'player', reveal = {}) {
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   if (ctx.combatExpansionVersion !== 2 || !source || !target || source === target || source.kind === target.kind) return null;
   const profile = carrier?.combatProfile || {};
+  // An insight contest card never rolls Accuracy and never cares about range (SPEC §17 Contests): it prices a DC, not a hit chance.
+  const contest = previewCarrierContest(ctx, source, target, carrier);
+  if (contest) return { range: profile.range || 'melee', requiredRange: 'melee', inRange: true, accuracy: 0, evasion: 0, need: 0, bypass: true, opposed: false,
+    mode: 'normal', advantage: false, disadvantage: false, evadeStacks: 0, evadeActive: false, evadeAttempted: false, hitChance: 100, chance: 100, contest };
   const tags = carrier?.authoredTags || carrier?.tags || [];
   const spell = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp);
   // Explicit Target identity is different from an effect's target selector.
@@ -126,6 +131,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
 export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   const preview = attackHitPreview(ctx, source, target, carrier, options);
   if (!preview) return null;
+  // A contest is rolled by the contest helper (combatMatchups.beginTacticalAction); this path only reports it as unavoidable.
+  if (preview.contest) return { ...preview, d20: null, dice: [], hit: true };
   const d20 = preview.inRange && !preview.bypass ? (typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20)) : null;
   const dice = d20 == null ? [] : [d20];
   if (dice.length && preview.mode !== 'normal') dice.push(typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20));

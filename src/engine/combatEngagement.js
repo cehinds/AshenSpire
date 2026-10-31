@@ -1,5 +1,6 @@
 import * as Lineage from './combatRangeLineage.js';
 import { createRng } from './rng.js';
+import { contestKindOf } from './contest.js';
 // Runtime adapter around the pure engagement planner. No pricing or distance is
 // inferred from a stance, screen coordinates, or another held weapon.
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
@@ -76,14 +77,16 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
     bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
 }
-const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','wardDamage','loseHp','stagger','arcaneBuildup']);
+const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','wardDamage','loseHp','stagger','arcaneBuildup','revealIntent']);
 export function quoteRangeActions(ctx, source, actions, { route = 'advance', context = ctx._rangeContext, preview = false } = {}) {
   if (!ctx.rangeState) return null;
   const contacts = [];
+  // An insight contest card plans no range row: it never advances, never misses for distance (SPEC §17 Contests).
+  const contestCard = contestKindOf(actions[0]?.card);
   if (preview) actions = actions.map(action => ({...action,meta:{...action.meta}}));
   const planningCtx = preview ? { ...ctx, rng: createRng(ctx.rng.seed,ctx.rng.getCounters()) } : ctx;
   for (const [index, action] of actions.entries()) {
-    if (!hostileOps.has(action.effect.op)) continue;
+    if (!hostileOps.has(action.effect.op) || contestCard) continue;
     const eff = action.effect;
     const repeats = Math.max(0, Math.floor(evaluate(eff.repeat ?? 1, Actions.formulaCtxFor(ctx, action, action.target))));
     const hits = eff.op === 'damage' ? Math.max(0, Math.floor(evaluate(eff.hits ?? 1, Actions.formulaCtxFor(ctx, action, action.target)))) : 1;

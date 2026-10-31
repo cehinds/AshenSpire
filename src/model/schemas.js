@@ -142,6 +142,8 @@ export const EVENTS = Object.freeze([
   'combatReactionUnavailable', 'combatGuardBroken',
   'proposalHitAvoided',
   'enemyBurdenAdded','enemyBurdenDrawn','enemyBurdenBlocked','intentRevealed',
+  // SPEC §17 Contests: an insight contest (d20 + attributes + rank vs Poise + attributes + level) passed or failed.
+  'contestPassed','contestFailed',
   'cardModified',
   'cardMoved',
   'cardDrawn',
@@ -848,6 +850,8 @@ export const SCHEMAS = Object.freeze({
     comboHook: opt(any),
     schoolEffect: opt(str),
     breakPoiseBonus: opt(num),
+    // Insight contest (SPEC §17): 'mental' (INT + WIS) or 'physical' (DEX + CON); replaces the hit roll and range for this card's enemy effects.
+    contest: opt(str),
     range: opt(str),
     defenseRange: opt(str),
     targeting: opt(str),
@@ -901,6 +905,7 @@ export const SCHEMAS = Object.freeze({
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
         ramp: opt(rampNode),
+        contest: opt(str),
       })
     ),
     icon: opt(str),
