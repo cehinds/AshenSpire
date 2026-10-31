@@ -47,7 +47,7 @@ Design only. Nothing here is built by this file. Sources read-only; line numbers
 ### Reflect (proposal, owner request)
 - [x] flat: `base.reflect` returns half of actual HP damage from direct hits, never reflects again (P:175-180).
 - [x] flat: `trait:unreflectable` hits skip reflection (combatMatchups.js:691).
-- [ ] per stack: take 10% less incoming damage, cap 30% at 3 stacks
+- [ ] per stack: take 30% less incoming damage, cap 90% at 3 stacks (owner's number, 2026-10-31)
 - [ ] per stack: reflect 30% of incoming damage to the attacker, cap 90% at 3 stacks
 - [ ] lose 1 stack when a hit is reflected (not per turn)
 
