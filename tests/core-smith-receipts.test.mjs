@@ -294,3 +294,17 @@ test('serializing a Core Smith plan again (or a fresh plan of the same run) runs
   JSON.stringify(plan); JSON.stringify(plan); JSON.stringify(smithingPlan(reg, run));
   assert.equal(coreCardSimulationCount(), fights, 'the memo holds every candidate of one snapshot');
 });
+
+test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nick, playsEver 8)', async () => {
+  const { coreSmithingCards } = await import('../src/model/smithingCore.js');
+  const nick = (playsEver) => {
+    const run = fresh();
+    run.deck.push({ ...createCardInstance('core.whetstoneNick', false, () => `nick-${playsEver}`), ...(playsEver ? { playsEver } : {}) });
+    const row = coreSmithingCards(reg, run, 'armament/greatsword', 0, 1).find((card) => card.cardId === 'core.whetstoneNick' && card.op === 'damage');
+    assert.ok(row, 'the Smith lists Whetstone Nick among the cards the tier changes');
+    return row;
+  };
+  const fresh0 = nick(0), honed = nick(8);
+  assert.equal(honed.before - fresh0.before, 8, 'before: base 2 + 8 plays, not the fresh base');
+  assert.equal(honed.after - fresh0.after, 8, 'after: the same 8');
+});
