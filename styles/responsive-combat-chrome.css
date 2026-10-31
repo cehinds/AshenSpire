@@ -96,6 +96,20 @@
   top: 50%; transform: translate(-50%, -50%);
 }
 
+/* Desktop and widescreen only (the desktop footer layout; owner, 2026-10-31): the top
+   HUD reads 20% smaller. The band is desktopHeader.splitHeightPx (0.8 x heightPx); the
+   content takes CSS zoom 0.8, and the left-half cap is divided by it so the bar still
+   stops short of the turn ribbon. Tablet and landscape phone keep the full header. */
+.combat[data-layout='formation'][data-desktop-footer='true'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
+  zoom: 0.8;
+}
+.combat[data-layout='formation'][data-desktop-footer='true'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] :is(.hud-vitals-panel,.hud-bottom) {
+  max-width: calc(var(--desktop-header-left-width, 100%) / 0.8);
+}
+:root[data-display-appearance='alternative'] .combat[data-desktop-footer='true'][data-desktop-header='true'][data-header-row='single'] > .combat-hud.shared-hud > .turn-ribbon {
+  zoom: 0.8;
+}
+
 /* Portrait phone header (data-header-row='stacked'): the turn ribbon keeps its
    own 20px line above, and HP, relics, Cinders and the quick controls share one
    44px row below it (was a 100px stack with Cinders under the buttons). The

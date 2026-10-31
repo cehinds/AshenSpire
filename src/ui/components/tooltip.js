@@ -415,6 +415,38 @@ function adoptTitle(el) {
   el.removeAttribute('title');
 }
 
+/**
+ * A tooltip trigger inside a hand card (keyword, tag symbol, inspection tag, any detail on the face)
+ * explains only once that card is selected or in inspect mode (owner, 2026-10-31); until then the
+ * card's own tap selects it and the trigger stays quiet. The card's own tooltip and triggers anywhere
+ * else (inspector, rewards, shop, deck view) are not held back.
+ */
+function heldBackInCard(el) {
+  const card = el?.closest?.('.hand .card');
+  return !!card && card !== el && !card.matches('.selected, .inspection-selected');
+}
+
+const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
+/**
+ * syncHeldTriggers(root) — triggers held back inside an unselected hand card leave the tab order
+ * (tabindex -1, so DOM focus and Enter never reach a control that does nothing); they get tabindex 0
+ * back once the card is selected or inspected.
+ */
+export function syncHeldTriggers(root) {
+  for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
+    if (heldBackInCard(el)) { el.tabIndex = -1; el.dataset.heldBack = 'true'; }
+    else if (el.dataset.heldBack === 'true') { el.tabIndex = 0; delete el.dataset.heldBack; }
+  }
+}
+/** Keep a hand's triggers in step with its cards' selection classes. Returns the stop function. */
+export function watchHeldTriggers(handEl) {
+  syncHeldTriggers(handEl);
+  if (typeof MutationObserver === 'undefined') return () => {};
+  const observer = new MutationObserver(() => syncHeldTriggers(handEl));
+  observer.observe(handEl, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
+  return () => observer.disconnect();
+}
+
 // ---- attaching --------------------------------------------------------------
 /**
  * attachTooltip(el, contentFn, options) — contentFn() → HTML string (computed at
@@ -434,7 +466,7 @@ export function attachTooltip(el, contentFn, {
   el.dataset.tipAttached = 'true';
   const show = () => {
     pending = null;
-    if (!el.isConnected || el.closest('[inert], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
+    if (!el.isConnected || heldBackInCard(el) || el.closest('[inert], [data-page-locked], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
     const information = el.querySelector('.card-info-button');
     const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
     return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
@@ -654,6 +686,7 @@ function wireTitles() {
     }
     const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .card-tag-symbol[data-tip], .as-tip [data-tip][role="button"]');
     if (!term || panels[1]?.contains(term)) return;
+    if (heldBackInCard(term)) return; // not swallowed: the card's own tap still selects it
     if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
     ev.preventDefault(); ev.stopPropagation();
     if (panels[0]?.contains(term)) { cancelNested(); showNested(term); return; }
@@ -679,7 +712,7 @@ function wireTitles() {
     if (!lane || !lane.parentElement) return null;
     for (const sym of lane.parentElement.querySelectorAll('.card-tag-symbol[data-tip]')) {
       const r = sym.getBoundingClientRect();
-      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) return sym;
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) return heldBackInCard(sym) ? null : sym;
     }
     return null;
   };

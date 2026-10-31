@@ -965,6 +965,8 @@
           "enabled": false
         },
         "ownedCopyWeight": 1,
+        "ownedPotionWeight": 1,
+        "offeredCopyWeight": 1,
         "recentOfferWindow": 0,
         "recentOfferWeight": 1,
         "depthBias": {

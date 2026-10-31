@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,26 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/cardArtStyle.js', 'Reviewed', 'persisted CARD_ART_REVIEWED style identifier; the authoring tab and review checkbox read their own uiStrings rows'],
+  ['src/ui/components/combatActionRow.js', 'Draw', 'opens the Draw pile; not the procedural builder draw-effect art cue'],
+  ['src/ui/components/creationCards.js', 'Draw', 'character resource stat label for cards drawn per turn; not the builder draw-effect art cue'],
+  ['src/ui/models/ProgressionInspectionModel.js', 'Draw', 'progression resource stat label for cards drawn per turn; not the builder draw-effect art cue'],
+  ['src/ui/models/SmithSelectionModel.js', 'Draw', 'card upgrade draw-amount stat label; not the builder draw-effect art cue'],
+  ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
+  ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
+  ['src/ui/screens/settings.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
+  ['src/ui/screens/coop.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
+  ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
+  // The status decay row starts with The {value}; these bounded matches share
+  // only its article, not its lifecycle sentence or meaning.
+  ['src/ui/components/overlay.js', 'The', 'declared-tab diagnostic sentence; not a status value decay sentence'],
+  ['src/ui/models/LocalServiceModel.js', 'The', 'relic-denied rest service sentence; not a status value decay sentence'],
+  ['src/ui/models/PossessionVariantModel.js', 'The', 'missing resource-tier authoring diagnostic; not a status value decay sentence'],
+  ['src/ui/screens/coop.js', 'The', 'scene spoils fallback article and relic-denied rest sentence; neither describes status value decay'],
+  ['src/ui/screens/equipment.js', 'The', 'declared-view layout diagnostic sentence; not a status value decay sentence'],
+  ['src/ui/screens/rest.js', 'The', 'relic-denied rest sentence; not a status value decay sentence'],
+  ['src/ui/screens/settings.js', 'The', 'settings section tooltip fallback sentence; not a status value decay sentence'],
+  ['src/ui/screens/equipment.js', 'Effects', 'the equipment detail fact name for authored item modifiers, a different meaning from the Effects settings switch'],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Export', 'stable advanced-section key compared for topic routing; its displayed heading reads settings.group.Export'],
   ['src/ui/screens/settings.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
@@ -318,6 +338,36 @@ test('all Console copy remains protected after its branch delta disappears', () 
   assert.ok(texts.get('Console')?.includes('debugChrome.console.short'));
   assert.ok(texts.get('Export')?.includes('common.export.short'));
   assert.ok(texts.get('Text selected. Touch and hold to copy, or use your copy shortcut. Live updates are paused until you reopen Console.')?.includes('debugChrome.consoleManualCopy.full'));
+});
+
+test('builder and lifecycle copy retain migration coverage without a branch delta', () => {
+  const ids = frozenMigrationIds('card-art-builder-lifecycle'), permanent = permanentMigratedIds();
+  assert.equal(ids.length, 73); assert.equal(new Set(ids).size, 73);
+  for (const id of ids) {
+    assert.ok(permanent.has(id), id);
+    assert.ok(uiStrings.some(row => row.id === id), id);
+  }
+  const texts = migratedTexts(permanent);
+  assert.ok(texts.get('Reviewed')?.includes('cardArtBuilder.modeReviewed.short'));
+  assert.ok(texts.get('Reviewed')?.includes('cardArtBuilder.reviewedCard.full'));
+  assert.ok(texts.get('The')?.includes('status.lifecycle.perTurnEnd.full'));
+  const renderer = stripComments(readFileSync(join(ROOT, 'src/ui/tools/cardArtReview.js'), 'utf8'));
+  assert.ok(renderer.includes("tFull('cardArtBuilder.reviewedCard'"), 'review checkbox accessibility copy uses the authored row');
+});
+
+test('Reviewed allowance permits only the persisted style enum and rejects displayed copy', () => {
+  const file = 'src/ui/cardArtStyle.js';
+  const assertSemanticOnly = source => {
+    const remaining = stripComments(source).replace(/export const CARD_ART_REVIEWED = 'Reviewed';/, '');
+    assert.deepEqual(remaining.match(/(?<=['"`>])Reviewed(?=['"`<]| ?\$\{| ['"`])/g) || [], [],
+      'Reviewed is allowed only as the persisted artwork-style identifier');
+  };
+  const source = readFileSync(join(ROOT, file), 'utf8');
+  assertSemanticOnly(source);
+  for (const regression of ["const label = 'Reviewed';", "const markup = '<button>Reviewed</button>';", 'const aria = `Reviewed ${name}`;']) {
+    assert.throws(() => assertSemanticOnly(source + '\n' + regression), /Reviewed is allowed only as/,
+      'visible review copy must remain in uiStrings');
+  }
 });
 
 

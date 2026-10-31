@@ -168,8 +168,6 @@
 :root .combat[data-layout='formation'] .combatant.player .combatant-leading {
   --player-hud-gap: 10px; flex-direction: column; bottom: auto;
 }
-.reaction-choice [data-reaction-option] { min-height: 44px; width: 100%; margin-block: 4px; }
-.reaction-choice [data-reaction-option][aria-pressed='true'] { outline: var(--focus-ring); }
 .combatant-card {
   position: absolute;
   top: var(--combatant-card-offset, 0);
@@ -416,13 +414,17 @@
      width is never a number anyone maintains (#69). Standalone `translate`
      rather than `transform`, because num-pop animates transform and the two
      must compose. */
-  translate: -50% 0;
+  translate: -50% calc(var(--float-lane, 0px) * -1); /* --float-lane lifts a stacked floater one lane (ui/fx.js floatNum) */
   position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem;
   color: var(--parchment);
   /* A 1px dark outline keeps numbers legible over any sprite. */
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
   transform-origin: center bottom;
-  animation: num-pop 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Two animations, so the pop stays snappy while the life follows the Combat
+     speed: `scale` pops in over 380 ms; `num-life` holds the number for the first
+     two thirds of --float-ms (set by ui/fx.js floatNum), then fades in the last third. */
+  animation: num-pop 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    num-life var(--float-ms, 1650ms) linear forwards;
 }
 .float-num.dmg { color: #ff4a4a; }
 .float-num.small { font-size: 2rem; }
@@ -443,7 +445,7 @@
 .float-num.heal { color: var(--green); }
 .float-num.burst { color: var(--ember); font-size: 3.6rem; }
 /* Reduced motion: a plain rise, no bounce/overshoot. */
-.reduced-motion .float-num { animation: float-up 260ms ease-out forwards; }
+.reduced-motion .float-num { animation: num-life-still var(--float-ms, 1650ms) linear forwards; }
 /* On-character callouts (ui/fx.js callout): one word rising from above a
    fighter's head. `left` is the centre and `top` the bottom edge; the HUD
    text shadow keeps it legible, the glow pulse is the flash Reduce flashes
@@ -747,12 +749,18 @@
 @keyframes float-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-42px); } }
 /* Punchy number: snap in with an overshoot, settle, then rise and fade. */
 @keyframes num-pop {
-  0% { opacity: 0; transform: translateY(8px) scale(0.4); }
-  14% { opacity: 1; transform: translateY(0) scale(var(--pop, 1.3)); }
-  30% { transform: translateY(-3px) scale(1); }
-  72% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-52px) scale(1); }
+  0% { scale: 0.4; }
+  40% { scale: var(--pop, 1.3); }
+  100% { scale: 1; }
 }
+@keyframes num-life {
+  0% { opacity: 0; transform: translateY(8px); }
+  4% { opacity: 1; transform: translateY(0); }
+  12% { transform: translateY(-3px); }
+  66.6% { opacity: 1; transform: translateY(-30px); }
+  100% { opacity: 0; transform: translateY(-52px); }
+}
+@keyframes num-life-still { 0% { opacity: 0; } 4% { opacity: 1; } 66.6% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
 /* --shake-px is the hit's amplitude (ui/fx.js shake, content/combatFeel.js); 4px is the old fixed shake. */
 @keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(var(--shake-px, 4px), calc(var(--shake-px, 4px) * -0.75)); } 50% { transform: translate(calc(var(--shake-px, 4px) * -1), calc(var(--shake-px, 4px) * 0.5)); } 75% { transform: translate(calc(var(--shake-px, 4px) * 0.75), calc(var(--shake-px, 4px) * 0.75)); } }
@@ -1549,8 +1557,10 @@
 }
 /* Lite also stops the backdrop ambient layer; resting figures stay still in all modes. */
 :root[data-performance='lite'] .backdrop::after { animation: none; }
-:root[data-performance='lite'] .sprite img,
-:root[data-performance='lite'] .sprite .facing { filter: none !important; }
+/* Effects off keeps the held stance glow on image figures (ui/paintedOutfits.js sets it once per pose
+   change) but nothing on those layers tweens (the reaction animations are governed by the motion options). */
+:root[data-effects='off'] .sprite img,
+:root[data-effects='off'] .sprite .facing { transition: none; } /* no `animation` here: the recoil/wobble timing on `.facing` must survive */
 
 /* Grid geometry and actor placement share the formation model. */
 .formation-grid {
@@ -2066,6 +2076,43 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option .co-part[data-dir='down'] .co-arrow { color: var(--ember); }
 .card-option .co-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+/* optionRowList.js: card choices as full-width rows (art, name, status line, chip), like the card-upgrade picker. */
+.option-row-list { display: flex; flex-direction: column; gap: 4px; max-height: min(60vh, 26rem); overflow-y: auto; overscroll-behavior: contain; }
+.option-row.as-railitem { display: flex; align-items: center; gap: 0.6rem; box-sizing: border-box; width: 100%; min-height: 44px; padding: 0.35rem 0.6rem; text-align: left; white-space: normal; flex: 0 0 auto; }
+.option-row > .option-row-art { flex: 0 0 auto; width: 3rem; height: 3rem; font-size: 1.4rem; overflow: hidden; }
+.option-row > .option-row-art > img { width: 100%; height: 100%; object-fit: contain; }
+/* More than 3 options: the same tiles in a grid (columns = ceil(sqrt(n)), set by optionRowList), row-major. */
+.option-row-list[data-columns]:not([data-columns='1']) { display: grid; grid-template-columns: repeat(var(--option-columns), minmax(0, 1fr)); }
+.option-row-list[data-columns]:not([data-columns='1']) > .option-row.as-railitem { min-width: 0; }
+@media (max-width: 480px) {
+  /* Three or more columns: art above the text so three tiles fit a phone. */
+  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) > .option-row.as-railitem { flex-direction: column; justify-content: flex-start; text-align: center; gap: 0.3rem; padding: 0.4rem 0.3rem; }
+  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-text { align-items: center; flex: 0 1 auto; width: 100%; }
+  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-name { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
+  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-status { justify-content: center; }
+}
+.option-row-text { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
+.option-row-name { color: var(--parchment); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.option-row-status { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; font-size: 0.92em; }
+.option-row-chip { flex: 0 0 auto; padding: 0 0.5rem; border: 1px solid var(--line-soft); border-radius: 999px; font-size: 0.75em; white-space: nowrap; }
+.option-row .co-costs { display: flex; gap: 0.3rem; }
+.option-row .co-chip { padding: 0 0.4rem; border: 1px solid var(--line-soft); border-radius: 999px; font-size: 0.75em; white-space: nowrap; }
+.option-row .val.up, .option-row .co-part[data-dir='up'] .co-arrow { color: var(--green); font-weight: 700; }
+.option-row .val.down, .option-row .co-part[data-dir='down'] .co-arrow { color: var(--ember); font-weight: 700; }
+.option-row .co-arrow { font-size: 0.6em; margin-left: 0.15em; vertical-align: 0.15em; }
+.option-row .co-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Selected: gold border, inset gold edge and a soft glow, so it still reads over a stale touch :hover
+   (player-polish.css paints a gold inset on any hovered railitem) and when --ui-zoom thins the 2px outline. */
+:root .option-row.as-railitem[aria-pressed='true']:not(:disabled) {
+  outline: var(--focus-ring); outline-offset: -2px; border-color: var(--gold);
+  background: rgba(var(--accent-rgb), 0.14); color: var(--gold);
+  box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px rgba(var(--accent-rgb), 0.3);
+}
+/* On touch there is no pointer to hover with: an unselected row never keeps a hover look. */
+@media (hover: none) {
+  :root .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { filter: none; box-shadow: none; background: var(--panel); border-color: var(--line); }
+}
+
 /* Debug mode's Console button (combatDebugButton.js): fixed, above every combat layer, tiny. */
 .combat-debug-console {
   position: fixed; top: calc(env(safe-area-inset-top, 0px) + 99px); right: 8px; z-index: var(--layer-tooltip);
@@ -2074,3 +2121,85 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: var(--bg-raise); color: var(--parchment);
   touch-action: manipulation; pointer-events: auto;
 }
+
+/* ---------- Effects off and the fighter-motion options (owner, 2026-10-30) ----------
+   `data-effects="off"` is the default (main.js, ui/performance.js; `data-performance="lite"` is its
+   older twin, and the lite rules above already cover the stance glow, backdrop bloom, weather and
+   sprite filters). These rules add what lite left animated or soft. They sit in their own rules
+   so the reduced-motion rules above stay as they are. Damage numbers, callouts, intents, statuses
+   and card text are never touched here. */
+:root[data-effects='off'] .hand .card.card-drawn,
+:root[data-effects='off'] .combat .pile.spent.pile-received { animation: none; }
+:root[data-effects='off'] .hand .card,
+:root[data-effects='off'] .hand .card.selected,
+:root[data-effects='off'] .hand .card[data-selected="true"] { transition: none; }
+/* Blurred glows go flat; the dark outline that keeps HUD text, stance names and numbers legible stays. */
+:root[data-effects='off'] .combat :is(.fx-banner, .fx-glyph, .fx-spark, .fx-banner.turn) { text-shadow: none; }
+:root[data-effects='off'] .combat .intent-icon { filter: none; }
+:root[data-effects='off'] .combat-pose-aura,
+:root[data-effects='off'] .pose-stage[data-pose-reaction] .combat-pose-aura { filter: none; }
+:root[data-effects='off'] .backdrop::after { animation: none; opacity: 0.7; }
+:root[data-effects='off'] .layered-particles { animation: none; will-change: auto; }
+:root[data-effects='off'] .combat-pose-aura svg { animation: none; }
+/* Attack lunge: the figure stays put; the attack pose, the number and the intent still say who struck. */
+body.motion-attack-off .sprite.act-attack,
+body.motion-attack-off .sprite.act-move,
+body.motion-attack-off .sprite[data-action-motion].act-attack,
+body.motion-attack-off .sprite[data-action-motion].act-move { animation: none; }
+/* Hit recoil and stagger wobble: the number, the health bar and the hit class remain. */
+body.motion-hit-off .sprite.hitflash > :first-child,
+body.motion-hit-off .sprite.hitflash.hit-heavy > :first-child,
+body.motion-hit-off .sprite.wobble > :first-child { animation: none; }
+/* Defeat fall: the defeated frame and the dead class appear at once, with no dissolve. */
+body.motion-defeat-off .combatant.dead .sprite > img,
+body.motion-defeat-off .combatant.down .sprite > img,
+body.motion-defeat-off .combatant.dead,
+body.motion-defeat-off .combatant.down { transition: none; animation: none; }
+/* Idle motion: the pose aura holds still too (pose swaps are gated in ui/services/PoseAnimator.js). */
+body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
+/* Effects off keeps the recoil (motionHit) and drops the red tint the same keyframes carry. */
+@keyframes hitflash-notint { 0%, 100% { transform: none; } 30% { transform: translateX(4px); } }
+@keyframes hit-enemy-notint { 0% { transform: none; } 20%, 45% { transform: translateX(22px); } 100% { transform: none; } }
+@keyframes hit-player-notint { 0%, 100% { transform: none; } 30% { transform: translateX(-13px); } }
+@keyframes hit-enemy-heavy-notint { 0% { transform: none; } 20%, 45% { transform: translateX(34px); } 100% { transform: none; } }
+@keyframes hit-player-heavy-notint { 0%, 100% { transform: none; } 30% { transform: translateX(-26px); } }
+:root[data-effects='off'] .sprite.hitflash > :first-child { animation-name: hitflash-notint; }
+:root[data-effects='off'] .enemy .sprite.hitflash > :first-child { animation-name: hit-enemy-notint; }
+:root[data-effects='off'] .player .sprite.hitflash > :first-child { animation-name: hit-player-notint; }
+:root[data-effects='off'] .enemy .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-enemy-heavy-notint; }
+:root[data-effects='off'] .player .sprite.hitflash.hit-heavy > :first-child { animation-name: hit-player-heavy-notint; }
+:root[data-effects='off'] .player .sprite.wobble:not(.hitflash) > .alternative-card-stage:first-child,
+:root[data-effects='off'] .player .sprite.hitflash > .alternative-card-stage[data-still]:first-child,
+:root[data-effects='off'] .player .sprite.hitflash.hit-heavy > .alternative-card-stage[data-still]:first-child { animation-name: none; }
+:root[data-effects='off'] body.motion-hit-off .sprite.hitflash > :first-child,
+:root[data-effects='off'] body.motion-hit-off .sprite.hitflash.hit-heavy > :first-child { animation: none; }
+/* The canvas stage recoils itself (hitRecoilX in alternativeCardStage.js): repeat its no-animation rule after the overrides above. */
+:root[data-effects='off'] .player .sprite.hitflash > .alternative-card-stage:not([data-still]):first-child,
+:root[data-effects='off'] .player .sprite.hitflash.hit-heavy > .alternative-card-stage:not([data-still]):first-child { animation-name: none; }
+/* Effects off: the action keyframes keep their travel (motionAttack) and drop the brightness / drop-shadow
+   flash they also animate on the sprite host. Filter-only families (release, cast, brace) have nothing left to play; the sidestep's opacity dip stays. */
+@keyframes lunge-left-nofx { 0%, 100% { translate: 0 0; } 35% { translate: -26px 0; } }
+@keyframes lunge-right-nofx { 0%, 100% { translate: 0 0; } 35% { translate: 26px 0; } }
+@keyframes family-slash-nofx { 0%, 100% { translate: 0 0; } 22% { translate: var(--action-recoil, -12px) 0; } 55% { translate: var(--action-travel, 26px) 0; } }
+@keyframes family-thrust-nofx { 0%, 100% { translate: 0 0; } 30% { translate: var(--action-recoil, -12px) 0; } 55%, 65% { translate: var(--action-travel, 26px) 0; } }
+@keyframes family-strike-nofx { 0%, 100% { translate: 0 0; } 30% { translate: var(--action-recoil, -12px) 0; } 55% { translate: var(--action-travel, 26px) 0; } }
+:root[data-effects='off'] .enemy .sprite.act-attack { animation-name: lunge-left-nofx; }
+:root[data-effects='off'] .player .sprite.act-attack { animation-name: lunge-right-nofx; }
+:root[data-effects='off'] .sprite.act-move:not([data-action-motion]) { animation-name: none; }
+:root[data-effects='off'] .sprite.act-attack[data-action-motion="sweep"] { animation-name: family-slash-nofx; }
+:root[data-effects='off'] .sprite.act-attack[data-action-motion="lunge"] { animation-name: family-thrust-nofx; }
+:root[data-effects='off'] .sprite.act-attack[data-action-motion="impact"] { animation-name: family-strike-nofx; }
+:root[data-effects='off'] .sprite.act-attack[data-action-motion="release"] { animation-name: none; }
+:root[data-effects='off'] .sprite.act-move[data-action-motion="cast"],
+:root[data-effects='off'] .sprite.act-move[data-action-motion="brace"] { animation-name: none; }
+/* family-dodge only dips opacity (no filter), so the sidestep keeps it: it still reads as "dodged". */
+/* Attack lunge off still wins over the overrides above. */
+:root[data-effects='off'] body.motion-attack-off .sprite.act-attack,
+:root[data-effects='off'] body.motion-attack-off .sprite.act-move,
+:root[data-effects='off'] body.motion-attack-off .sprite[data-action-motion].act-attack,
+:root[data-effects='off'] body.motion-attack-off .sprite[data-action-motion].act-move { animation: none; }
+/* Reduced motion still wins over every override above: repeat the full shorthand so the duration resets too. */
+:root[data-effects='off'] .reduced-motion .sprite.act-attack,
+:root[data-effects='off'] .reduced-motion .sprite.act-move,
+:root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-attack,
+:root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-move { animation: none; }

@@ -7,6 +7,8 @@ export function cardCutoutAssets(root, opts = {}) {
   const file = resolve(root, 'asset-data/card-art/layered-runtime.json');
   if (!existsSync(file)) return [];
   const catalog = JSON.parse(readFileSync(file, 'utf8'));
+  const reviewedFile = resolve(root, 'asset-data/card-art/reviewed-assets.json');
+  if (existsSync(reviewedFile)) Object.assign(catalog.assets, JSON.parse(readFileSync(reviewedFile, 'utf8')).assets);
   return Object.values(catalog.assets).map(asset => {
     if (!/^assets-display\/card-cutouts\/[A-Za-z0-9.]+\.png$/.test(asset.path)) throw Error(`Invalid cutout path: ${asset.path}`);
     const bytes = readFileSync(artPath(asset.path, { ...opts, root }));

@@ -5,9 +5,13 @@
 // (every float, word and overhead read what the previous one just changed).
 // Two tools stop that:
 //
-//   measure(el)               one getBoundingClientRect per element until the
-//                             task (and its microtasks) ends or the owner of a
-//                             geometry write calls invalidateMeasures().
+//   measure(el)               one getBoundingClientRect per element for the whole
+//                             frame (the animation timeline's frame time, 20 ms at
+//                             most), until the owner of a geometry write calls
+//                             invalidateMeasures(). A resize, scroll or input
+//                             arrives with the next frame, which starts a fresh
+//                             cache. Where there is no timeline it lasts until
+//                             the task's microtasks end.
 //   measureThenMutate(k, fn)  runs fn at the start of the next animation frame
 //                             (a microtask where there is no rAF) with every
 //                             other queued job: all the reads first (fn returns
@@ -20,17 +24,29 @@
 // Headless-safe: nothing here touches the DOM beyond the element it is given.
 const rects = new Map();
 let rectsLive = false;
+let rectsFrame = null;
+let rectsAt = 0;
 
 const snapshot = (live) => ({ left: live.left, top: live.top, width: live.width, height: live.height, right: live.right, bottom: live.bottom });
 
 export function invalidateMeasures() { rects.clear(); }
 
+// The frame the page is in: constant across every rAF callback and task until
+// the next frame starts, so a box read in one stays good for the rest of it.
+const frameTime = () => (typeof document !== 'undefined' ? document.timeline?.currentTime ?? null : null);
+const now = () => (typeof performance !== 'undefined' ? performance.now() : 0);
+// A frame is 16.7 ms; a page that stops producing frames must not keep serving old boxes.
+const FRAME_LIFE_MS = 20;
+
 export function measure(el) {
+  const frame = frameTime();
+  if (frame !== null && (frame !== rectsFrame || now() - rectsAt > FRAME_LIFE_MS)) rects.clear();
   let rect = rects.get(el);
   if (!rect) {
     rect = snapshot(el.getBoundingClientRect());
+    if (!rects.size) { rectsFrame = frame; rectsAt = now(); }
     rects.set(el, rect);
-    if (!rectsLive) { rectsLive = true; queueMicrotask(() => { rectsLive = false; rects.clear(); }); }
+    if (frame === null && !rectsLive) { rectsLive = true; queueMicrotask(() => { rectsLive = false; rects.clear(); }); }
   }
   return rect;
 }

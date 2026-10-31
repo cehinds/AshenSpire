@@ -1,4 +1,6 @@
+import { floaterLifeMs } from '../animationPace.js';
 import { coopRangePreview } from '../models/CoopRangePreviewModel.js';
+import { combatStatRows } from '../models/CombatantStatRows.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
@@ -304,6 +306,32 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer, maxHpFor }); }
   else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer, maxHpFor });
   return seq;
+}
+
+// Peak scale an element's running animations reach, so stacked receipt
+// numbers reserve their popped height. Reads both the `transform` matrix and
+// the standalone `scale` property (num-pop animates `scale`); they multiply.
+export function coopMaxAnimationScale(el) {
+  let scale = 1;
+  if (typeof el?.getAnimations !== 'function') return scale;
+  for (const animation of el.getAnimations()) {
+    for (const frame of animation.effect?.getKeyframes?.() || []) {
+      let own = 1;
+      if (frame.transform && frame.transform !== 'none') {
+        try {
+          const matrix = new DOMMatrixReadOnly(frame.transform);
+          own = Math.max(Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
+        } catch { /* an unparseable transform cannot reduce the measured box */ }
+      }
+      const raw = frame.scale;
+      if (raw != null && raw !== 'none') {
+        const parts = String(raw).trim().split(/\s+/).map(Number).filter(Number.isFinite);
+        if (parts.length) own *= Math.max(...parts);
+      }
+      scale = Math.max(scale, own);
+    }
+  }
+  return scale;
 }
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettings = null, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
@@ -1174,6 +1202,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
           ...(entity.combatExpansionVersion === 2 && !((entity.persistentWard?.max || 0) > 0) ? [] : [{ label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward }]),
           ...(entity.combatExpansionVersion === 2 ? [...((entity.persistentWard?.max || 0) > 0 ? [{ label: 'Ward pool', value: entity.persistentWard.value || 0, max: entity.persistentWard.max }] : []), { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
+        ...combatStatRows({ statuses: entity.statuses, critRules: entity.critRules, evade: entity.evade, attributes: entity.attributes || snap.scene?.attributes, kind: def ? 'enemy' : 'player' }, t),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
@@ -1310,7 +1339,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         return cardDef(inst)?.combatPreview ?? null;
       },
     });
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize,
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize, registries,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
@@ -2526,6 +2555,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
+      const life = floaterLifeMs();
+      el.style.setProperty('--float-ms', `${life}ms`);
       const centre = b.left + b.width / 2 + dx;
       const top = b.top + b.height * dy;
       el.style.left = `${centre}px`;
@@ -2544,21 +2575,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       } else {
         el.style.top = `${at.top}px`;
       }
-      setTimeout(() => el.remove(), 1100);
+      setTimeout(() => el.remove(), life + 60);
       return el;
-    };
-    const maxAnimationScale = (el) => {
-      let scale = 1;
-      for (const animation of el.getAnimations()) {
-        for (const frame of animation.effect?.getKeyframes?.() || []) {
-          if (!frame.transform || frame.transform === 'none') continue;
-          try {
-            const matrix = new DOMMatrixReadOnly(frame.transform);
-            scale = Math.max(scale, Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
-          } catch { /* an unparseable transform cannot reduce the measured box */ }
-        }
-      }
-      return scale;
     };
     const layoutReceiptRows = (rowsByTarget) => {
       const view = anchorLocalBox(layer, layer);
@@ -2566,7 +2584,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         const all = rows.flatMap((row) => row.items);
         const gap = Math.max(2, ...all.map((el) => (parseFloat(getComputedStyle(el).fontSize) || 0) * 0.12));
         for (const row of rows) {
-          row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));
+          row.height = Math.max(...row.items.map((el) => el.offsetHeight * coopMaxAnimationScale(el)));
         }
         const height = rows.reduce((sum, row) => sum + row.height, 0) + gap * Math.max(0, rows.length - 1);
         let cursor = clampBox(

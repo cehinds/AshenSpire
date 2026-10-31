@@ -457,18 +457,23 @@
 }
 :root .combat .combatant:not(.context-selected) .combat-expansion-protection { display: none; }
 
-/* Desktop only (1280-1920 wide): the tools row reads at the approved phone size.
-   Physical px: a 14px label on a 36px row, a 12px reaction value, and the switch
-   scaled with it. Phone, tablet and widescreen keep the rules above. */
-:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools > button {
-  min-height: calc(36px / var(--ui-zoom,1)); height: calc(36px / var(--ui-zoom,1));
-  font-size: calc(14px / var(--ui-zoom,1));
+/* Desktop and widescreen (1280 wide and up): the tools row reads at 0.7x the approved phone
+   size (owner, 2026-10-31: End Turn, Reaction and Auto 30% smaller; widescreen too, so the
+   row matches its End Turn). Physical px: a 9.8px label on a 25px row, an 8.4px reaction
+   value, and the switch scaled with it. Phone and tablet keep the rules above. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools > button,
+:root[data-form-factor='widescreen'] .combat[data-layout='formation'] .combat-tools > button {
+  min-height: calc(25.2px / var(--ui-zoom,1)); height: calc(25.2px / var(--ui-zoom,1));
+  font-size: calc(9.8px / var(--ui-zoom,1));
 }
-:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
-  width: calc(84px / var(--ui-zoom,1)); height: calc(23px / var(--ui-zoom,1));
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track,
+:root[data-form-factor='widescreen'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
+  width: calc(58.8px / var(--ui-zoom,1)); height: calc(16.1px / var(--ui-zoom,1));
 }
-:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(12px / var(--ui-zoom,1)); }
-:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(17px / var(--ui-zoom,1)); height: calc(17px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value,
+:root[data-form-factor='widescreen'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(8.4px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb,
+:root[data-form-factor='widescreen'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(11.9px / var(--ui-zoom,1)); height: calc(11.9px / var(--ui-zoom,1)); }
 /* Desktop only: intent badges, their value and glyph, and the player's stance
    chip read about 1.25x larger. The stance glyph is the enemy intent glyph's size
    (26 px physical), so the two marks match. Phone, tablet and widescreen are unchanged. */

@@ -1,4 +1,4 @@
-import { desktopFooterEnabled, desktopFooterLayout } from '../models/DesktopCombatFooter.js';
+import { desktopFooterEnabled, desktopFooterLayout, desktopFieldBottom } from '../models/DesktopCombatFooter.js';
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { footerSizing } from '../../content/footerLayout.js';
@@ -130,7 +130,10 @@ export function wireCombatLayout(combatEl) {
     const headerRow = !alternative || !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
     if (combatEl.dataset.headerRow !== headerRow) combatEl.dataset.headerRow = headerRow;
     const hudBand = headerRow
-      ? Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom)
+      // Desktop (owner, 2026-10-31): the header band is its own height, not floored at the 6% share,
+      // so a tall host does not keep an empty strip under the smaller header.
+      ? (split && headerRow === 'single' ? headerSizing.splitHeightPx / zoom
+        : Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom))
       : Math.max(combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo),
         alternative ? (clientHeight * zoom <= headerSizing.coopShortHostMaxPx ? headerSizing.coopHeightPx : headerSizing.coopTallHeightPx) / zoom : 0);
     combatEl.dataset.compactCombat = String(compact);
@@ -141,9 +144,13 @@ export function wireCombatLayout(combatEl) {
       const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / zoom || 0;
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
     }
+    // Desktop (owner, 2026-10-31): the hand band shrinks to what the smaller, lower fan needs;
+    // the battlefield takes the rest. Every other form factor keeps the allocated band.
+    let handBand = bands.hand;
     if (split && row && handArea) {
       const plan = desktopFooterLayout({ width: clientWidth, height: clientHeight, zoom });
-      const areaTop = (handArea.getBoundingClientRect().top - combatEl.getBoundingClientRect().top) / zoom;
+      handBand = Math.min(bands.hand, Math.max(0, clientHeight - desktopFieldBottom(plan, { width: clientWidth, zoom, rem, formFactor }) - bands.footer));
+      const areaTop = clientHeight - (handBand + bands.footer);
       for (const [name, value] of Object.entries({ 'area-top': areaTop, 'hand-top': plan.handTop - areaTop, 'hand-height': plan.handHeight, 'background-top': plan.backgroundTop - areaTop, 'background-fade-height': plan.backgroundFadeHeight, 'tools-top': plan.toolsTop, 'corner-inset': plan.corner, 'end-art-width': plan.endArtWidth, 'end-art-height': plan.endArtHeight })) combatEl.style.setProperty('--desktop-' + name, value + 'px');
       const selectors = { sp: '.energy-orb', draw: '.draw', end: '.end-turn', discard: '.spent', potions: '.combat-potions' };
       for (const [role, box] of Object.entries(plan.controls)) {
@@ -155,7 +162,7 @@ export function wireCombatLayout(combatEl) {
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.
     combatEl.style.setProperty('--w4-band-hud', hudBand + 'px');
-    combatEl.style.setProperty('--w4-band-context', bands.hand + 'px');
+    combatEl.style.setProperty('--w4-band-context', handBand + 'px');
     combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
     // WCM0: every combatant's meter rows share one geometry.

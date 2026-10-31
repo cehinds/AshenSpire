@@ -1,7 +1,8 @@
 import { EXTENDED_CARD_ART } from './extendedCardArtwork.js';
 import { defaultCardArtwork, defaultCardArtFallbacks } from './defaultCardArtwork.js';
-import { simpleCardArt } from './cardArtComposition.js';
-import { cardArtStyle, CARD_ART_LEGACY } from './cardArtStyle.js';
+import { simpleCardArt, proceduralDefinitionArt } from './cardArtComposition.js';
+import { reviewedCardArt } from './reviewedCardArt.js';
+import { cardArtStyle, CARD_ART_LEGACY, CARD_ART_REVIEWED } from './cardArtStyle.js';
 export { defaultCardArtFallbacks };
 
 // A small reviewed illustration set. Equipment profiles take priority over
@@ -35,7 +36,18 @@ export function playingCardArtwork(ref, { large = false, extended = EXTENDED_CAR
 
 /** Resolve the visual style without changing the legacy artwork catalog. */
 export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART, definition, registries, style = cardArtStyle() } = {}) {
-  if (style !== CARD_ART_LEGACY && definition) {
+  if (style !== CARD_ART_LEGACY && style !== CARD_ART_REVIEWED && definition) {
+    const procedural = proceduralDefinitionArt(definition, { ref, registries });
+    if (procedural || Object.hasOwn(definition, 'cardTags')) return procedural;
+  }
+  if (style === CARD_ART_REVIEWED && definition) {
+    // renderCard may pass a canonical visual reference (base.poison -> ironSkin); the
+    // dedicated-art guard is about the reviewed card itself, so key it on the definition's ID.
+    const own = definition.id && !ref?.profileId ? { ...ref, cardId: definition.id } : ref;
+    if (!playingCardArtwork(own, {large, extended})) {
+      const reviewed = reviewedCardArt(ref, definition);
+      if (reviewed) return reviewed;
+    }
     const simple = simpleCardArt(definition, { ref, registries, large });
     if (simple) return simple;
   }

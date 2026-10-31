@@ -44,6 +44,7 @@ import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
 import { t, tFull } from '../strings.js';
+import { registerModal, pageLockHeld } from '../modalManager.js';
 
 // The player's presentation choice, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -87,12 +88,16 @@ let openVeil = null;
 let openAnchor = null;
 let escHandler = null;
 let fullscreenSync = null;
+// The list's entry on the modal stack, held only while a page lock stands (the
+// in-run Menu): the lock must treat the list as a kept surface, not background.
+let releaseModalEntry = null;
 
 export function closeQuickNav({ restoreFocus = true } = {}) {
   const anchor = openAnchor;
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
+    if (releaseModalEntry) { releaseModalEntry(); releaseModalEntry = null; }
     hideTooltip();
   }
   if (anchor) anchor.setAttribute('aria-expanded', 'false');
@@ -189,6 +194,10 @@ export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, c
   });
   document.body.appendChild(veil);
   openVeil = veil;
+  // Above a held page lock (the Menu's Go to...) the list joins the kept elements so
+  // Tab and focus stay in it. No dismiss: its own Escape handler and veil click close it.
+  // Registered only under a lock, so map/combat modalOpen() consumers are unchanged.
+  if (pageLockHeld()) releaseModalEntry = registerModal('quicknav', veil, { inert: false });
   openAnchor = anchorEl;
   anchorEl.setAttribute('aria-haspopup', 'menu');
   anchorEl.setAttribute('aria-expanded', 'true');

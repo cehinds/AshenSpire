@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { renderCard, setHandFaceBudget } from '../src/ui/components/card.js';
+import { renderCard, setHandFaceBudget, cardDetailHtml } from '../src/ui/components/card.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { mountHand } from '../src/ui/components/hand.js';
 import { applyCardArtStyle } from '../src/ui/cardArtStyle.js';
@@ -28,7 +28,8 @@ test('selecting and dousing retain face, artwork, tag and input nodes while upda
   card.dispatchEvent(new CustomEvent('cardholdstart'));
   setHandFaceBudget(card, true);
   assert.equal(card.dataset.level, 'focus');
-  assert.equal(rules.dataset.maxLines, '5');
+  assert.equal(rules.dataset.maxLines, '3', 'selected ordinary effects keep the same physical line budget');
+  assert.ok(rules.querySelectorAll('.face-line').length <= 2);
   assert.equal(card.querySelector('.illustrated-card-face'), face);
   assert.equal(card.querySelector('.playing-card-art'), art);
   assert.equal(card.querySelector('[data-tag-id]'), tag);
@@ -47,23 +48,26 @@ test('selecting and dousing retain face, artwork, tag and input nodes while upda
   assert.equal(presses, 2);
 }));
 
-test('inspection prints a complete face and explicit artwork refresh still repaints', () => withModalDom(() => {
+test('inspection keeps the bounded face and complete Information while artwork refresh still repaints', () => withModalDom(() => {
   clearSelection();
   applyCardArtStyle({});
   const card = renderCard(registries, { cardId: 'bashingBlow' }, { faceLineLimit: 3 });
   const full = renderCard(registries, { cardId: 'bashingBlow' }, { inspection: false, level: 'inspect' });
   document.body.append(card, full);
   assert.equal(card.querySelector('.illustrated-card-face').dataset.fullRules, 'false');
-  assert.equal(full.querySelector('.illustrated-card-face').dataset.fullRules, 'true');
+  assert.equal(full.querySelector('.illustrated-card-face').dataset.fullRules, 'false');
   assert.equal(full.dataset.level, 'inspect');
-  assert.ok(full.querySelectorAll('.face-line').length >= card.querySelectorAll('.face-line').length);
+  assert.equal(full.querySelector('.ic-text[data-face-lines="true"]').dataset.maxLines, '3');
+  assert.equal(full.querySelectorAll('.face-line').length, card.querySelectorAll('.face-line').length);
+  assert.ok(full.querySelectorAll('.face-line').length <= 2);
+  assert.match(cardDetailHtml(registries, { cardId: 'bashingBlow' }).replace(/<[^>]*>/g, ''), /Deal 13 damage and 7 Poise damage\./, 'Information retains the full authored effect');
   const oldFace = card.querySelector('.illustrated-card-face');
   applyCardArtStyle({ cardArtStyle: 'Legacy' });
   assert.notEqual(card.querySelector('.illustrated-card-face'), oldFace);
   applyCardArtStyle({});
 }));
 
-test('hand preview changes replace the reused card with fresh values and inputs', () => withModalDom(() => {
+test('hand preview changes replace the card, keep its face nodes and print the fresh values', () => withModalDom(() => {
   clearSelection();
   document.documentElement = document.body;
   // The fixture parses elements but drops text nodes; retain the actual markup
@@ -84,15 +88,16 @@ test('hand preview changes replace the reused card with fresh values and inputs'
   strip.render({ cards: [entry] });
   const before = hand.children[0];
   const oldFace = before.querySelector('.illustrated-card-face');
-  assert.match(markup.get(before).replace(/<[^>]*>/g, ''), /Inflict 4 Blunt/);
+  assert.match(markup.get(before).replace(/<[^>]*>/g, ''), /Deal 4 Blunt damage/);
   strip.render({ cards: [{ ...entry, selected: true }] });
   assert.equal(hand.children[0], before, 'selection alone retains the mounted hand card');
   strip.render({ cards: [{ ...entry, preview: { ...entry.preview, cost: 3, tokens: { damage: 42 } } }] });
   const after = hand.children[0];
   assert.notEqual(after, before, 'a different live preview still replaces the hand record');
-  assert.notEqual(after.querySelector('.illustrated-card-face'), oldFace);
+  // The card (its inputs, its door) is new; its face is the old one with the changed rows rewritten.
+  assert.equal(after.querySelector('.illustrated-card-face'), oldFace);
   assert.equal(released, 1, 'old play input is released exactly once');
-  assert.match(markup.get(after).replace(/<[^>]*>/g, ''), /Inflict 42 Blunt/,
-    'updated damage reaches fresh face markup');
+  assert.match(markup.get(after.querySelector('.ic-text[data-card-binding="rules"]')).replace(/<[^>]*>/g, ''), /Deal 42 Blunt damage/,
+    'updated damage reaches the rewritten rules row');
   strip.teardown();
 }));

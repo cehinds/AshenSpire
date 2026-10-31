@@ -452,6 +452,7 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 .atlas-footer > .modal-btnrow { width:100%; }
 .atlas-dialog { position:fixed; inset:0; margin:auto; padding:0; width:min(1080px,calc(calc(100 * var(--view-vw, 1vw)) - 32px)); max-width:none; max-height:calc(calc(100 * var(--view-vh, 1dvh)) - 32px); border:1px solid #947548; color:#dbc9a4; background:#1b1813; box-shadow:0 30px 90px #000b; z-index:500; overflow:auto; }
 .atlas-dialog::backdrop { background:#080808bc; backdrop-filter:blur(4px); }
+:root[data-effects='off'] .atlas-dialog::backdrop { backdrop-filter:none; background:rgb(8 8 8 / 88%); }
 .atlas-dialog-head,.atlas-dialog-foot { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:18px 24px; background:#211b14; }
 .atlas-dialog-head { border-bottom:1px solid #655034; }
 .atlas-dialog h2 { margin:7px 0 0; font:29px Georgia,serif; color:#f0dfb7; }

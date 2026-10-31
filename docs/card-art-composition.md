@@ -1,5 +1,78 @@
 # Simple card art composition
 
+## Procedural Simple mode
+
+Simple is the default, including existing saved Simple preferences. Its pure
+`proceduralCardArt({type, tags, rank}, {registries})` factory selects only from
+the shipped 28 compositions, 44 base PNGs and 108 reviewed PNG/template pool.
+It never routes by card ID, name, equipment profile, costs or effects. Semantic
+templates are indexed once; a bounded cache uses canonical sorted/deduplicated
+tags, type and rank. Returned recipes and their nested transforms are frozen.
+
+An explicit physical/spell camp is required. Maneuver tags override type;
+attack, smash, counter, evade, sweep, defend, skill and power are supported,
+including defense/evasion aliases. Explicit element wins over school and then
+singleton damage tags; existing element aliases and wind are supported.
+Cast/projectile delivery selects approved elemental projectiles; explicit melee
+retains the ethereal weapon. Counter uses the separate sword and shield; Evade
+uses the approved feather. Utility effect tags select healing, draw and cleanse
+objects. Status tags select approved PNG marks/glows (a restrained approved
+generic cue for other registered statuses). Action plus element and statuses
+never exceeds four visual identities.
+
+Ranks 1, 3 and 5 change actual decorative PNG opacity without changing weapon
+geometry or recoloring art. Higher ranks retain rank-5 decorative intensity.
+Invalid ranks become 1. The definition adapter prefers live resolved rank,
+then zero-based abilityRank plus one, before reference rank; abilityRank 0 is
+explicitly the first visual rank. This affects presentation only.
+
+`proceduralDefinitionArt` adapts older definitions that lack explicit cardTags:
+it can read their declared utility/status effects and attack damage. Explicit
+cardTags, including an empty list, suppress this compatibility inference. Thus
+new tags-only definitions work and optional unrelated effects cannot alter
+their art. Simple resolves before dedicated or curated ID-based art. Reviewed
+retains the earlier curated ID snapshots and compatibility formula; Legacy
+retains the original illustrations and outline chain. Custom component
+appearance overrides still apply afterward. Any failed component abandons
+the whole assembly and follows the existing Legacy/outline fallback.
+
+## Applied card-art review
+
+The approved review assigns layered art to all 156 current card IDs without a
+dedicated illustration. `asset-data/card-art/reviewed-library.json` is the
+editable approval snapshot: it retains the source combat tags, chosen rule,
+up to four visual cues, source references and every independent layer transform.
+`node tools/export-reviewed-card-art.mjs` compiles it into the runtime module;
+`--check` verifies reproducibility. These are approved results of the tag formula,
+not new combat rules. New cards still use the live formula below until reviewed.
+Rank variants share their approved base artwork.
+
+`playingCardArt` selects these recipes only in Reviewed mode, for reviewed cards
+without dedicated art and without equipment profiles. Existing dedicated-art
+routing and Legacy mode retain their previous behavior. Approved compositions
+already contain their effect PNGs, so the renderer does not add duplicate motifs.
+The cutouts include cleansing fire, floating spell projectiles, the earth pebble,
+separate counter sword/shield, and status objects with independent marks/glows.
+Some status symbols intentionally reuse an existing visual proxy; this does not
+alias the corresponding gameplay statuses.
+
+Open [Card art review](card-art-review.html) through `tools/serve.mjs` to see the
+checkbox list, standalone art, linked component PNGs and the actual game card.
+Position, size, rotation and opacity controls update both previews. JSON export
+includes edits and the checklist; PNG export composites the selected artwork.
+Changes stay in the browser session until exported. The exported runtime catalog
+contains numeric transforms, affine matrices and CSS for each component; the
+authoring snapshot remains the reviewed source of truth.
+To apply a downloaded placement edit, run
+`node tools/export-reviewed-card-art.mjs --import <exported-json-path>`.
+The importer preserves component identities and rejects invalid transforms.
+
+The 73 additional PNGs are byte-identical exports of existing proposal assets in
+AI-Art. Their original URLs and hashes remain in the source JSON and the art
+repository's `provenance/AshenSpire/reviewed-card-cutouts.json`.
+
+## Original general-purpose formula
+
 Simple artwork now renders the approved revision-14 cutouts as independent PNG layers. Card frames, titles, rules, combat definitions and Legacy artwork are unchanged. Full cards and deck-editor thumbnails use the same composition resolver.
 
 ## Authoring and runtime data

@@ -196,7 +196,7 @@
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,
-      "digest": "24624c63c8967959"
+      "digest": "a935e3c0071a13d9"
     },
     "tools/hand-side-probe.mjs": {
       "count": 5,
@@ -216,7 +216,7 @@
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "cad487a122fd21dc"
+      "digest": "e941179d534747bd"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -228,7 +228,7 @@
     },
     "tools/motion-probe.mjs": {
       "count": 23,
-      "digest": "f9a275f7978b5ad2"
+      "digest": "ce41eba87917728a"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,

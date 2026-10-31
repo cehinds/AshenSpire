@@ -28,6 +28,7 @@ import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from 
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
+import { effectsOff } from '../performance.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 import { separateOverheadIntents } from './overheadIntentSeparation.js';
 // The overhead group's height above a head: config only, never a DOM measurement. A measured height changes with
@@ -320,11 +321,36 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // combatant per tracked frame.
   // Reads the settled intents after the rack writes above, then writes one
   // sideways offset per intent (a CSS variable the stylesheet applies).
-  function separateRackedIntents(racked, zoom) {
+  // The shifts are a pure function of where the intents rest unshifted, which
+  // follows from the frame's box, the intent's size and the placement variables
+  // written just before (a shift moves only an intent's `left`, never its size
+  // or its frame). A pass that finds all of those as the last pass did, on the
+  // same intent elements still holding the shifts written, keeps them and skips
+  // the reset that made every intent read a forced layout.
+  let racksKey = '', racksIntents = [], racksShifts = [];
+  const shiftOf = intent => intent.style.getPropertyValue('--combat-intent-shift');
+  // `reads` are the boxes centerTargetOverheads took BEFORE its placement writes
+  // ({ fieldBox, rows: [{ frameBox, intentBox, rackBox }] by racked index): the key
+  // is built from them so a pass that will skip pays no forced style recalc. The
+  // placement variables the writes change are in the key as strings, so a pass
+  // whose writes moved an intent still differs and still reads after the reset.
+  function separateRackedIntents(racked, zoom, reads) {
     const rows = racked.filter(row => row.intent);
-    for (const { intent } of rows) if (intent.style.getPropertyValue('--combat-intent-shift')) intent.style.removeProperty('--combat-intent-shift');
-    if (rows.length < 2) return;
-    const fieldBox = field.getBoundingClientRect();
+    if (rows.length < 2) {
+      racksKey = '';
+      for (const { intent } of rows) if (shiftOf(intent)) intent.style.removeProperty('--combat-intent-shift');
+      return;
+    }
+    const fieldBox = reads?.fieldBox || field.getBoundingClientRect();
+    const key = [fieldBox.left, fieldBox.right, zoom, ...rows.map(({ frame, intent, read }) => {
+      const frameBox = read?.frameBox || frame.getBoundingClientRect(), box = read?.intentBox || intent.getBoundingClientRect(), style = frame.style;
+      const rack = read?.rackBox || intent.parentElement.getBoundingClientRect();
+      return [frameBox.left, frameBox.top, frameBox.width, rack.left, rack.width, box.width, box.height, box.top, intent.className, intent.textContent,
+        style.getPropertyValue('--combat-mini-hud-top'), style.getPropertyValue('--combat-selected-intent-top'),
+        style.getPropertyValue('--combat-selected-intent-center')].join('|');
+    })].join('\n');
+    if (key === racksKey && rows.every(({ intent }, i) => intent === racksIntents[i] && shiftOf(intent) === racksShifts[i])) return;
+    for (const { intent } of rows) if (shiftOf(intent)) intent.style.removeProperty('--combat-intent-shift');
     const items = rows.map(({ frame, intent }, id) => {
       const box = intent.getBoundingClientRect();
       return { id, left: box.left, right: box.right, top: box.top, bottom: box.bottom,
@@ -332,8 +358,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }).filter(item => item.visible);
     const shifts = separateOverheadIntents(items, { left: fieldBox.left, right: fieldBox.right }, 4 * zoom);
     for (const [id, dx] of shifts) if (dx) rows[id].intent.style.setProperty('--combat-intent-shift', `${dx / zoom}px`);
+    racksKey = key;
+    racksIntents = rows.map(row => row.intent);
+    racksShifts = rows.map(row => shiftOf(row.intent));
   }
   function centerTargetOverheads() {
+    globalThis.__perfCount?.('hudPass');
     invalidateSpriteRects();
     const zoom = uiZoom();
     const commitBadges = readHitBadges();
@@ -345,14 +375,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
       if (rack) {
         const body = currentSpriteBodyBounds(sprite, schedule);
-        const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        racked.push({ frame, body, intent: rack.querySelector(':scope > :is(.intent,.player-action-intent)'), placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+        const intent = rack.querySelector(':scope > :is(.intent,.player-action-intent)');
+        const intentBox = intent?.getBoundingClientRect(), frameBox = frame.getBoundingClientRect();
+        const intentHeight = intentBox?.height || 37;
+        // The rack's own box is the skip key's, read here with the rest of the reads.
+        const read = intent ? { frameBox, intentBox, rackBox: rack.getBoundingClientRect() } : null;
+        racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
           groupHeight: miniHudGroupHeight(config), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
       // legacy overhead here would make the controls jump between beats.
       } else if (field.closest('.combat')?.dataset.targetHud !== 'true') plain.push({ frame, sprite, leading });
     }
+    const readsFieldBox = racked.length > 1 ? field.getBoundingClientRect() : null;
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     for (const { frame, body, placement } of racked) {
@@ -370,14 +405,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
     }
-    if (!plain.length) { separateRackedIntents(racked, zoom); return; }
+    if (!plain.length) { separateRackedIntents(racked, zoom, { fieldBox: readsFieldBox }); return; }
     const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
     const placements = plain.map(({ frame, sprite, leading }) => {
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
-    separateRackedIntents(racked, zoom);
+    separateRackedIntents(racked, zoom, { fieldBox: readsFieldBox });
   }
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
@@ -592,6 +627,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // frames in a row end the window. Lite samples every second frame, except the one that closes the window.
   let trackFresh = true, trackStable = 0, trackTick = 0, trackBodies = null;
   const lite = () => document.documentElement.dataset.performance === 'lite';
+  // Effects off settles the HUD at the start and end of a move, exactly as reduced motion does.
+  const stillHud = () => reducedMotionRequested() || effectsOff();
   // Classic figures report no `busy`: their actions are finite CSS animations (a hit holds its displaced pose
   // mid-way, then recovers with no attribute change), so a running one counts as busy. The idle bob loops forever
   // and does not.
@@ -609,10 +646,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const sameBodies = (a, b) => !!a && !!b && a.length === b.length
     && a.every((value, i) => value === b[i] || Math.abs(value - b[i]) <= .5 || (Number.isNaN(value) && Number.isNaN(b[i])));
   function trackPlayerHud() {
+    globalThis.__perfCount?.('hudTrack');
     invalidateSpriteRects();
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
     if (reducedMotionRequested()) { trackingRequest = 0; return; }
+    if (effectsOff()) { trackingRequest = 0; return; } // Effects off settles at the start and end of a move
     const open = field.isConnected && field.querySelector('.combatant.player') && performance.now() < trackUntil;
     if (open && lite() && trackTick++ % 2 === 1) { trackingRequest = requestAnimationFrame(trackPlayerHud); return; }
     const bodies = trackedBodies();
@@ -935,7 +974,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Offsets and edge clamping must not resize the reference tiles.
       const gridCells = plan.visualCells || plan.cells;
       const activeCells = new Set(gridCells.map(cell => cell.cell));
-      for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
+      for (const tile of grid.querySelectorAll('[data-cell]')) { const hide = !activeCells.has(tile.dataset.cell); if (tile.hidden !== hide) tile.hidden = hide; }
       for (const cell of gridCells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
@@ -968,8 +1007,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.dataset.visualBand = cell.visualBand || '';
         tile.dataset.visualOnly = String(!!cell.visualOnly);
         // Each shared edge is painted once, so translucent seams stay thin.
-        tile.querySelector('[data-perspective-outline]')?.setAttribute('d',
-          perspectiveCellOutlinePath(cell, plan.rows));
+        const outline = tile.querySelector('[data-perspective-outline]');
+        if (outline) {
+          const path = perspectiveCellOutlinePath(cell, plan.rows);
+          if (outline.getAttribute('d') !== path) outline.setAttribute('d', path);
+        }
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
@@ -1575,6 +1617,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
       return;
     }
+    // Effects off: the same one-shot settle, no frame loop.
+    if (effectsOff()) {
+      if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
+      return;
+    }
     // Genuine body motion still follows the complete stance/action transition.
     extendTracking();
     if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
@@ -1584,10 +1631,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
   // enabled again; otherwise the HUD can retain the last idle-frame offset.
-  let reduced = reducedMotionRequested();
+  let reduced = stillHud();
   const reducedMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   const reconcileReducedMotion = () => {
-    const next = reducedMotionRequested();
+    const next = stillHud();
     if (next === reduced) return;
     reduced = next;
     trackFresh = true; trackStable = 0;
@@ -1599,6 +1646,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   reducedMedia?.addEventListener('change', reconcileReducedMotion);
   const reducedSettingObserver = new MutationObserver(reconcileReducedMotion);
   reducedSettingObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  // Effects is a root attribute: a toggle in play settles or resumes tracking without a reload.
+  reducedSettingObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-effects'] });
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });

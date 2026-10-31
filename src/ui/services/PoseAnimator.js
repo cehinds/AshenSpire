@@ -22,6 +22,8 @@
 import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/poseSprites.js';
 import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
+import { motionOff } from '../performance.js';
+import { frameHoldMs } from '../animationPace.js';
 import { hintImage } from '../imageHints.js';
 import { preloadPoses } from './posePreloads.js';
 
@@ -145,6 +147,9 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
     /** Hold `pose` for ms, then return to idle. Reduced motion holds nothing. */
     play(pose, ms = POSE_MOTION.defaultPlayMs) {
       if (reducedMotionRequested()) return false;
+      // Idle motion off: no resting swaps (idle, breathe, sway). Action poses (attack, guard, guardHit,
+      // hit, defeated, cast, power: what fx.js and co-op ask for) always play.
+      if (motionOff('idle') && ['idle', 'ready', 'rest', 'breathe', 'sway'].includes(pose)) return false;
       // Decide what would be shown BEFORE cancelling the hold already running. A
       // pose this build does not carry used to clear the settle timer and then
       // bail, which left whatever was on screen — a lunge, mid-swing — frozen
@@ -153,7 +158,8 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
       if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
       setPose(target);
-      const duration = Math.max(POSE_MOTION.minimumPlayMs, ms);
+      // A pose is one frame: hold it at least the sprite frame floor (Animation step duration) so it can be seen.
+      const duration = Math.max(POSE_MOTION.minimumPlayMs, frameHoldMs(), ms);
       due = Date.now() + duration;
       timer = setTimeout(settle, duration);
       return true;

@@ -2,6 +2,7 @@ import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
+import { effectsOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
@@ -33,7 +34,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { actionPacing } from './animationPace.js';
+import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -369,6 +370,68 @@ export function combatReadoutLayer(layer, create = true) {
   return host;
 }
 
+// Per anchor: the floaters still showing, each with its lane and the lift that lane earned.
+// Lane 0 is the spawn point; a higher lane lifts its number above the numbers still in its way.
+// A number rises as it ages (num-life in styles/combat.css: 3 px by 12% of its life, 30 px by
+// 66.6%, 52 px at the end; nothing under Reduced motion), so an older number that has already
+// risen past its own height is out of the newcomer's way and the newcomer starts at lane 0 below
+// it, as it would have without lanes. Only numbers that have not cleared their own height block,
+// and a blocked newcomer is lifted to clear the highest current top among them. Three lanes, then
+// the lane freeing soonest is reused.
+const FLOAT_LANES = 3;
+const floaterLanes = new WeakMap();
+function floaterRise(entry, now) {
+  if (reducedMotionRequested()) return 0;
+  const f = Math.max(0, Math.min(1, (now - entry.start) / Math.max(1, entry.until - entry.start)));
+  if (f < 0.12) return f < 0.04 ? 0 : (f - 0.04) / 0.08 * 3;
+  if (f < 0.666) return 3 + (f - 0.12) / 0.546 * 27;
+  return 30 + (f - 0.666) / 0.334 * 22;
+}
+function floaterBlocks(entry, now) {
+  return !entry.height || floaterRise(entry, now) < entry.height * 1.1;
+}
+function floaterLaneFor(anchor, lifeMs) {
+  const now = Date.now();
+  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
+  const blocking = live.filter((entry) => floaterBlocks(entry, now));
+  let lane = -1;
+  for (let i = 0; i < FLOAT_LANES && lane < 0; i++) if (!blocking.some((entry) => entry.lane === i)) lane = i;
+  if (lane < 0) {
+    const soonest = blocking.reduce((a, b) => (b.until < a.until ? b : a));
+    lane = soonest.lane;
+    live.splice(live.indexOf(soonest), 1);
+  }
+  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, el: null };
+  live.push(entry);
+  floaterLanes.set(anchor, live);
+  return entry;
+}
+// Floaters share one top edge, so a lane's lift must put the number's bottom above the current
+// top of every live number in a lower lane: that number's lift plus how far it has risen, less
+// how far this one has risen itself, plus this one's own height. Every live lower number counts
+// here, cleared or not (the blocking test picks lanes only): a re-lift that skipped a cleared
+// middle number would drop the one above it onto that number. Lane 0 never lifts.
+function floaterLaneLift(anchor, entry, now) {
+  if (entry.lane === 0) return 0;
+  let clear = -Infinity;
+  for (const other of floaterLanes.get(anchor) || []) {
+    if (other.lane >= entry.lane || other.until <= now) continue;
+    clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
+  }
+  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
+}
+// A newcomer in a reused lower lane may be taller than the number it replaced, and the numbers
+// below it keep rising, so every live floater at the anchor is re-lifted, lane by lane, from the
+// lanes as they stand now, not as they were when it spawned.
+function reliftFloaterLanes(anchor) {
+  const now = Date.now();
+  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now).sort((a, b) => a.lane - b.lane);
+  for (const entry of live) {
+    entry.lift = floaterLaneLift(anchor, entry, now);
+    if (entry.el && entry.lane > 0) entry.el.style.setProperty('--float-lane', `${Math.round(entry.lift)}px`);
+  }
+}
+
 /**
  * Spawn a floating number over an anchor element.
  *
@@ -410,6 +473,14 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const top = b.top + b.height * 0.25 + y;
   el.style.left = `${centre}px`;
   el.style.top = `${top}px`;
+  const life = floaterLifeMs();
+  el.style.setProperty('--float-ms', `${life}ms`);
+  // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
+  // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
+  // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
+  const entry = placement.lane === false ? null : floaterLaneFor(anchor, life);
+  const lane = entry?.lane ?? 0;
+  el.dataset.floatLane = String(lane);
   layer.appendChild(el);
   // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
   // layout rather than guessed from the string. offsetWidth is the untransformed
@@ -422,9 +493,13 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
     const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    return () => { el.style.left = `${at.left + half}px`; };
+    if (entry) { entry.height = height; entry.el = el; }
+    return () => {
+      el.style.left = `${at.left + half}px`;
+      if (entry) reliftFloaterLanes(anchor);
+    };
   });
-  setTimeout(() => el.remove(), 600);
+  setTimeout(() => el.remove(), life + 60);
   return el;
 }
 
@@ -458,8 +533,8 @@ export const CALLOUT_KINDS = {
   blocked: { string: 'combat.callout.blocked', tone: 'block' },
   immune: { string: 'combat.callout.immune', tone: 'immune' },
 };
-export const CALLOUT_MS = 900;
-export const CALLOUT_INSTANT_MS = 500;
+export const CALLOUT_MS = 900; // legacy base; live words use calloutLifeMs() (animationPace.js)
+export const CALLOUT_INSTANT_MS = COMBAT_TIMING.calloutInstantMs;
 // The words over one fighter (owner, 2026-10-12): at most three show at once, in three
 // lanes (lane 0 is the top). Words start one step apart in priority order; a fourth waits
 // for the earliest visible one to finish, and nothing is dropped.
@@ -513,7 +588,7 @@ export function stackPriority(kind = '') {
  * `lanes` are how long each lane is still busy, from now. Returns [{ id, start, lane }],
  * start in ms from now, in priority order (ties keep arrival order).
  */
-export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = CALLOUT_MS, after = null } = {}) {
+export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = calloutLifeMs(), after = null } = {}) {
   const sorted = items.map((item, arrival) => ({ ...item, arrival, rank: stackPriority(item.kind) }))
     .sort((a, b) => b.rank - a.rank || a.arrival - b.arrival);
   const free = [...lanes];
@@ -547,7 +622,7 @@ function queueFor(layer, forId) {
  * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
  * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
  */
-function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
+function layoutCallouts(layer, anchor, q, now, lifeMs = calloutLifeMs()) {
   const active = q.items.filter((it) => it.start <= now);
   const pending = q.items.filter((it) => it.start > now);
   const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
@@ -650,7 +725,7 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   el.textContent = def.word || t(def.string);
   if (kind.startsWith('buff:')) el.style.visibility = 'hidden';
   if (def.colour) el.style.color = def.colour;
-  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS * (actionPacing().scale || 1);
+  const ms = calloutLifeMs();
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // Not started yet: the layout plans it (start Infinity until then).
   const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
@@ -666,7 +741,8 @@ export function clearCallouts(layer) {
   const queues = layer && calloutQueues.get(layer);
   for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
-  // The waiting queue goes with the visible words.
+  // The waiting queue goes with the visible words. Numbers keep their lifetime through a skip
+  // (combat-readout-layer test), so their lane records stay with them until they expire.
   if (layer) calloutQueues.delete(layer);
 }
 
@@ -719,7 +795,7 @@ export function dmgClass(amount, targetMaxHp = 0) {
 
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
 function spawnFx(layer, anchor, cls, ms, text) {
-  if (!layer || !anchor) return;
+  if (!layer || !anchor || effectsOff()) return; // Effects off: no sparks, slashes or glyphs (numbers and callouts stay)
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = cls;
@@ -749,7 +825,7 @@ export function banner(layer, text, cls = '', lifeMs = null) {
 let hitStop = 0;
 const heldFigures = new Map();
 function hold(el, ms) {
-  if (!el || !(ms > 0)) return;
+  if (!el || !(ms > 0) || effectsOff()) return;
   const swing = flashTimers.get(el)?.get('act-attack');
   if (swing) {
     clearTimeout(swing.id); swing.due += ms;
@@ -780,7 +856,7 @@ const SHAKE_MS = 200;
 const shakeStates = new WeakMap();
 const FIXED_SHAKE_PX = 4; // a stagger's shake: the old fixed amplitude, not scaled by a hit
 function shake(combatEl, px = FIXED_SHAKE_PX) {
-  if (!combatEl || !(px > 0)) return;
+  if (!combatEl || !(px > 0) || effectsOff()) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
   const now = Date.now();
@@ -807,8 +883,12 @@ function shake(combatEl, px = FIXED_SHAKE_PX) {
 
 // Add a short-lived CSS class (restarting its animation if already present).
 const flashTimers = new WeakMap();
+// Fighter motion (lunge, hit recoil, stagger wobble) rides this same helper but is
+// governed by its own motion options in CSS, not by Effects.
+const MOTION_FLASH = new Set(['act-attack', 'act-move', 'hitflash', 'hit-heavy', 'wobble']);
 function flash(el, cls, ms = 300, pauseMs = 0) {
   if (!el) return;
+  if (effectsOff() && !MOTION_FLASH.has(cls)) return; // relic proc / orb pulse flashes
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
   if (document.body.classList.contains('reduce-flashes')) return;
@@ -833,7 +913,7 @@ function flash(el, cls, ms = 300, pauseMs = 0) {
 
 // Radial flare over an anchor (stance entries, big procs).
 function flare(layer, anchor, color) {
-  if (!layer || !anchor) return;
+  if (!layer || !anchor || effectsOff()) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = 'stance-flare';
@@ -1111,7 +1191,7 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
+      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
       if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
@@ -1195,6 +1275,8 @@ function playLegacyTimeline(events, ctx, done) {
   const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
+  // Reaction reservations use the paced sprite speed (frame hold included), as the sequential path does.
+  const paced = actionPacing({ reduced }).spriteSpeed;
   const beatOrder = ctx.beatOrder || getBeatOrder();
   if (!speed || reduced) {
     // No added waits. 'sequential' still updates the bars after the
@@ -1303,9 +1385,14 @@ function playLegacyTimeline(events, ctx, done) {
   // hold and a step after the swing.
   const sequentialMs = beatOrder === 'sequential'
     ? beats.filter((beat) => beat.kind === 'attack')
-      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,speed), speed.reactionMs) + speed.stepMs,0), 0)
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,paced), speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
-  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  // Impact order plays each sprite reaction with its contact and holds the beat for the paced total, so the
+  // watchdog must outlast those reservations too.
+  const impactReactionMs = beatOrder === 'sequential' ? 0
+    : beats.reduce((ms, beat) => ms + beat.events.reduce((total, event) => total
+      + (ctx.reactionForReceipt?.(event) ? budgetRead(() => ctx.reactionTimingForReceipt?.(event, paced), speed.reactionMs) : 0), 0), 0);
+  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + impactReactionMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -1465,6 +1552,7 @@ function playLegacyTimeline(events, ctx, done) {
       // A beat with nothing to draw at impact still reaches its impact frame.
       if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
+      let reactionEndAt = 0;
       const stepV = () => {
         if (finished) return;
         if (flushed) {
@@ -1487,6 +1575,9 @@ function playLegacyTimeline(events, ctx, done) {
           if (held) {
             safe(() => actorEl && hold(actorEl, holdMs));
             safe(() => {
+              // Effects off: the timeline still spends the hit-stop time (the feel contract's spacing is
+              // unchanged) but the figure is not frozen.
+              if (effectsOff()) return;
               if (activeActorAnimation?.hold) activeActorAnimation.hold(holdMs);
               else if (ctx.figureAnimations !== false) stageFor(actorEl)?.hold?.(holdMs);
             });
@@ -1494,6 +1585,10 @@ function playLegacyTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
+          // Impact order plays the sprite reaction with the contact; the beat must outlast its paced total so
+          // the next beat's action is not painted over it.
+          if (!sequential && ctx.reactionForReceipt?.(event))
+            reactionEndAt = Math.max(reactionEndAt, Date.now() + (Number(ctx.reactionTimingForReceipt?.(event, paced)) || 0));
           markContact(event.type);
           // Sequential: the damage buzz waits for the number (below).
           if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
@@ -1508,7 +1603,6 @@ function playLegacyTimeline(events, ctx, done) {
           schedule(stepV, Math.max(stepGap, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
-        let reactionEndAt = 0;
         const applyBeat = () => {
           cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(beatIndex) }));
@@ -1586,7 +1680,7 @@ function playLegacyTimeline(events, ctx, done) {
             traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
             said();
-            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs));
+            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,paced)) || speed.reactionMs));
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
               else schedule(stepR, Math.max(speed.reactionMs,reactionEndAt-Date.now()));
@@ -2009,19 +2103,21 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           if (outcome) return;
           const anchor = ctx.anchorFor(e.targetId);
-          // Barrier and Ward stack above the Block / Health pair.
-          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
-          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
-          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false });
-          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
+          // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
+          // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
+          const lane = parts.barrier || parts.ward || parts.poise || parts.pierced || parts.immune || paired ? false : undefined;
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
+          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false });
+            { x: paired ? -26 : 0, jitter: false, lane });
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
             floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
-              { x: paired ? 26 : 0, jitter: !paired });
+              { x: paired ? 26 : 0, jitter: !paired, lane });
           }
         },
       };

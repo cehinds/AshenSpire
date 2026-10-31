@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatCardDamageLabel, combatCardSummary } from '../src/model/playingCard.js';
-import { renderCard } from '../src/ui/components/card.js';
+import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const reg = createRegistries(contentBundle);
@@ -69,7 +69,7 @@ test('paid-tier Counter HP keeps its type while Poise and Ward remain distinct',
   assert.equal(combatCardSummary(def, preview, reg), 'Return 17 Piercing damage + 5 Poise + 7 Ward.');
 });
 
-test('expanded complex card faces expose damage words and preserve v1 authored text', () => withKitDom(dom => {
+test('expanded complex cards keep bounded whole clauses and complete authored inspection', () => withKitDom(dom => {
   const prototype = Object.getPrototypeOf(dom.document.body);
   const descriptor = Object.getOwnPropertyDescriptor(prototype, 'innerHTML');
   const markup = new WeakMap();
@@ -81,8 +81,14 @@ test('expanded complex card faces expose damage words and preserve v1 authored t
   const preview = { combatExpansionVersion: 2, resolvedDefinition: def,
     cost: 1, manaCost: 0, tokens: {}, values: [] };
   const expanded = renderCard(reg, ref, { preview, inspection: false });
-  assert.match(markup.get(expanded), /Slashing: /);
+  assert.match(markup.get(expanded), /data-max-lines="3" data-face-lines="true"/);
+  assert.equal(expanded.querySelectorAll('.face-line').length, 1);
+  assert.match(markup.get(expanded).replace(/<[^>]*>/g, ''), /Deal 6 damage\./);
+  assert.doesNotMatch(markup.get(expanded), /Slashing: /, 'a damage-type prefix is not an extra face clause');
   assert.match(markup.get(expanded), /card-type-name"[^>]*>Attack/);
+  const full = cardDetailHtml(reg, ref, { preview }).replace(/<[^>]*>/g, '');
+  assert.match(full, /Deal 6 damage\./, 'the complete authored rule stays in Information');
+  assert.match(full, /Slashing/, 'the registered damage identity stays inspectable');
   const v1 = renderCard(reg, ref, { inspection: false });
   assert.doesNotMatch(markup.get(v1), /Slashing: /);
   assert.equal(reg.cards.get('strike'), legacy);

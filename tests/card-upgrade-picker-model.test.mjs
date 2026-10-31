@@ -58,8 +58,11 @@ test('rows: a short purse disables and moves paid cards after free cards while p
   assert.equal(model.selected.blockedReason, model.blockedReasons[0]);
   assert.equal(model.rows.at(-1).instanceId, card.instanceId);
   assert.deepEqual(model.rows.filter(row => !row.disabled).map(row => row.instanceId),
-    run.deck.filter(instance => instance.instanceId !== card.instanceId
-      && planCardUpgrade(run, registries, instance.instanceId).ok).map(instance => instance.instanceId));
+    run.deck.filter((instance, i, deck) => instance.instanceId !== card.instanceId
+      && planCardUpgrade(run, registries, instance.instanceId).ok
+      // identical copies share the first copy's row
+      && deck.findIndex(other => other.cardId === instance.cardId && !(other.upgradeSteps || []).length === !(instance.upgradeSteps || []).length) === i)
+      .map(instance => instance.instanceId));
   run.smithingStones = 1;
   const replenished = cardUpgradeModel(registries, run, card.instanceId);
   assert.equal(replenished.rows[0].instanceId, card.instanceId, 'affordable cards return to deck order');
@@ -141,7 +144,7 @@ test('the picker omits capped cards and draws available cards with their upgrade
     assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
     assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
     assert.equal(host.querySelector('.card-upgrade-preview').dataset.cardUpgradePreview, fresh.instanceId);
-    assert.match(host.querySelector('.smith-confirm').outerHTML, /Buy upgrade · No charge/);
+    assert.match(host.querySelector('.smith-confirm').outerHTML, /Upgrade \(0\)/);
     door.close();
   });
 });
@@ -241,4 +244,95 @@ test('the preview shows the card\'s main lines only: no Entry bonus line, no rec
   const rest = readFileSync(new URL('../src/ui/components/gameProfileRest.js', import.meta.url), 'utf8');
   const open = rest.slice(rest.indexOf('const openUpgradeCard'), rest.indexOf('const openLevel'));
   assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
+});
+
+test('compact host: picking a row closes the list so the pane is not hidden', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    // The fixture has no layout: the player's own wireframe choice forces the compact selector.
+    dom.document.documentElement = { dataset: { wireframeMenuNav: 'selector' }, style: {}, getBoundingClientRect: () => ({ width: 390, height: 844 }) };
+    const savedStyle = globalThis.getComputedStyle;
+    globalThis.getComputedStyle = () => ({ fontSize: '16px', minHeight: '44px', getPropertyValue: () => '' });
+    const run = newRun(); run.smithingStones = 1;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    let door;
+    const pick = id => door.update(cardUpgradeModel(registries, run, id));
+    door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: pick, onBack() {}, onConfirm() {} });
+    const railed = () => host.querySelector('.as-railed');
+    assert.equal(railed().dataset.catNav, 'selector');
+    assert.equal(railed().dataset.catOpen, 'true', 'nothing chosen: the list is open');
+    host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).click();
+    assert.equal(railed().dataset.catOpen, 'false', 'a chosen card closes the list');
+    assert.ok(host.querySelector('#card-upgrade-preview-region'), 'the preview region is drawn');
+    assert.equal(host.querySelector('.smith-confirm').hidden, false);
+    door.close();
+    if (savedStyle) globalThis.getComputedStyle = savedStyle; else delete globalThis.getComputedStyle;
+  });
+});
+
+test('identical copies collapse into one row that selects the first instance', () => {
+  const run = newRun();
+  const strikes = run.deck.filter(c => c.cardId === 'core.strike');
+  assert.ok(strikes.length > 1);
+  const model = cardUpgradeModel(registries, run, strikes[1].instanceId);
+  const rows = model.rows.filter(r => r.cardId === 'core.strike');
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].instanceId, strikes[0].instanceId);
+  assert.equal(rows[0].copies, strikes.length);
+  assert.equal(model.selected, rows[0], 'any copy resolves to the collapsed row');
+  strikes[0].upgraded = true; strikes[0].upgradeSteps = [{ k: 'authored' }];
+  assert.equal(cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike').length, 2, 'a differently upgraded copy is its own row');
+  // An old save marks an upgrade with the flag alone; upgradeStepsOf reads it as the authored step, so it is not a fresh copy.
+  delete strikes[0].upgradeSteps;
+  const legacyRows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike');
+  assert.equal(legacyRows.length, 2, 'an old-style upgraded copy is its own row');
+  assert.equal(legacyRows.find(r => r.instanceId === strikes[1].instanceId)?.copies, strikes.length - 1, 'the fresh copies stay free and selectable');
+});
+
+test('copies whose next upgrade rolls differently stay separate rows, each with its own preview', () => {
+  const run = newRun();
+  const strikes = run.deck.filter(c => c.cardId === 'core.strike');
+  for (const s of strikes) { s.upgraded = true; s.upgradeSteps = [{ k: 'authored' }]; }
+  run.smithingStones = 4;
+  const rows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike');
+  const steps = new Set(strikes.map(s => JSON.stringify(planCardUpgrade(run, registries, s.instanceId).step)));
+  assert.equal(rows.length, steps.size, 'one row per distinct next step');
+  assert.equal(rows.reduce((n, r) => n + r.copies, 0), strikes.length, 'every copy is counted once');
+  for (const row of rows) assert.ok(row.instanceIds.every(id => JSON.stringify(planCardUpgrade(run, registries, id).step) === JSON.stringify(row.plan.step)), 'a row only groups copies with its own next step');
+});
+
+test('rows carry levels, tags, art and the changed face numbers', () => {
+  const run = newRun();
+  const row = cardUpgradeModel(registries, run).rows.find(r => r.cardId === 'core.strike');
+  assert.deepEqual([row.levelFrom, row.levelTo], [0, 1]);
+  assert.ok(row.tags.includes('Attack'));
+  assert.ok(row.artGlyph);
+  const dmg = row.changes.find(c => c.label === 'DAMAGE');
+  if (row.plan.step.k === 'dmg') assert.equal(Number(dmg.after), Number(dmg.before) + row.plan.step.n);
+  assert.ok(row.changes.length >= 1, 'an upgrade changes at least one face number');
+  for (const change of row.changes) assert.notEqual(change.before, change.after);
+});
+
+test('the pane reads like the item pane: head, stats deltas, faces fold, cost strip, Upgrade (N)', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 0;
+    const card = strike(run);
+    card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const html = host.querySelector('.smith-preview-card').outerHTML;
+    assert.match(html, /Selected card/);
+    assert.match(html, /Card Stats/);
+    assert.match(html, /d-from/);
+    assert.match(html, /Smithing Stone Cost/);
+    assert.match(html, /smith-cost-required/);
+    assert.match(html, /Short by 1 Smithing Stone\./);
+    assert.equal(host.querySelectorAll('[data-card-upgrade-face]').length, 2, 'before and after faces');
+    assert.match(host.querySelector('.smith-confirm').textContent, /^Upgrade \(1\)$/);
+    assert.equal(host.querySelector('.smith-confirm').getAttribute('aria-label'), `Upgrade ${cardUpgradeModel(registries, run, card.instanceId).selected.name} for 1 Smithing Stone`);
+    door.close();
+  });
 });

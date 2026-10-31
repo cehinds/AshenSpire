@@ -53,7 +53,7 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   // subject that lists its effects as abilities shows them there instead.
   const state = [
     ...resources
-    .filter((r) => r.label !== 'HP' && r.label !== t('combat.protection.block') && (r.max == null ? r.value > 0 : r.max > 0))
+    .filter((r) => r.label !== 'HP' && r.label !== t('combat.protection.block') && (r.always || (r.max == null ? r.value > 0 : r.max > 0)))
       .map((r) => ({ label: r.label, value: r.max == null ? String(r.value) : `${r.value} / ${r.max}` })),
     ...(subject.abilities ? [] : (subject.statuses || []).map((s) => ({ label: s.name, detail: s.detail || '' }))),
   ];

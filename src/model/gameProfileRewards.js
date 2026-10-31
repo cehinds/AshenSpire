@@ -97,8 +97,10 @@ function weightedCardPick(registries,run,rule,rng,stream,ids) {
   for(const card of [...(run.deck||[]),...(run.sideboard||[])]){const id=card?.cardId??card?.id??card;owned.set(id,(owned.get(id)||0)+1);}
   const rules=gameContent(run,'rewards'),recent=recentOfferedIds(run,rule),recentWeight=rule?.recentOfferWeight??1,depth=run.floor||0;
   const isBasic=rule?.depthBias?basicOrCantripMatcher(registries,run):()=>false;
+  // Owner 2026-10-31: a card already shown (taken or not) is drawn at rule.offeredCopyWeight per earlier showing; absent/1 is neutral.
+  const offered=run.rewardOfferHistory?.cards||{},offeredWeight=Number.isFinite(rule?.offeredCopyWeight)?rule.offeredCopyWeight:1;
   const weights=ids.map(id=>{const card=defs.get(id);
-    return cardPickWeight(rule,card,owned.get(id)||0)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1);}),total=weights.reduce((sum,weight)=>sum+weight,0);
+    return cardPickWeight(rule,card,owned.get(id)||0)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
@@ -110,6 +112,18 @@ function weightedRelicPick(weights,rng,stream,ids) {
   if(!weights||ids.length<2||!(total>0)||list.every(weight=>weight===list[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=list[index];if(roll<0)return id;}
+  return ids.at(-1);
+}
+// Owner 2026-10-31: a potion already in the belt is offered at rule.ownedPotionWeight per held copy (a much lower chance, never a
+// forced skip), in combat rewards, chests and shops alike. One float roll on the offer's stream; when every weight is equal (nothing
+// held, or the setting absent/1 as in Core 1) the draw is the old uniform rng.pick, so existing seeds are unchanged.
+function weightedPotionPick(rule,run,rng,stream,ids) {
+  const base=Number.isFinite(rule?.ownedPotionWeight)?rule.ownedPotionWeight:1,held=new Map();
+  for(const flask of run.flasks||[])if(flask?.flaskId)held.set(flask.flaskId,(held.get(flask.flaskId)||0)+1);
+  const weights=ids.map(id=>Math.pow(base,held.get(id)||0)),total=weights.reduce((sum,weight)=>sum+weight,0);
+  if(ids.length<2||!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
+  let roll=rng.float(stream)*total;
+  for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
   return ids.at(-1);
 }
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[]}) {
@@ -157,7 +171,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
@@ -167,6 +181,12 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     if(option.kind!=='combatCards')continue;
     const rank=rollDraftRank(registries,rng,cardTrackLevel(registries,run,registries.cards.get(option.id)));
     if(rank>1)option.rank=rank;
+  }
+  // Owner 2026-10-31: remember every card shown (offers are cached per offerId, so a reload never counts twice).
+  const shown=options.filter(option=>option.kind==='combatCards'||option.kind==='weaponArts');
+  if(shown.length){
+    const history=run.rewardOfferHistory||={cards:{}};history.cards||={};
+    for(const option of shown)history.cards[option.id]=(history.cards[option.id]||0)+1;
   }
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};

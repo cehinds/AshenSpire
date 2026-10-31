@@ -19,6 +19,26 @@ export const COMBAT_TIMING = Object.freeze({
   castGlyphMs: 450,        // life of a non-attack actor's cast glyph
   watchdogBaseMs: 2000,    // fixed slack added to a timeline's watchdog budget
   fightEndDelayMs: 210,    // pause between the last hit and the spoils screen
+  // Damage / heal / guard numbers (ui/fx.js floatNum). Total life at combat speed 1: two thirds held
+  // (1100 ms, long enough to read on a phone) then the last third fades. Scales with the Combat speed
+  // multiplier only, NOT with the Fast/Slow animation pace, so a phone's Auto-Fast pace does not
+  // shrink the number below readability (owner, 2026-10-31).
+  floaterLifeMs: 1650,
+  floaterMinLifeMs: 400,   // the floor at the highest speed multiplier
+  floaterInstantMs: 480,   // the Instant pace keeps the classic short number
+  floaterFadeFraction: 1 / 3,
+  // Callout words (STAGGERED, EVADED, action words): life at combat speed 1, divided by the Combat speed
+  // only (like the numbers), never by the Fast/Slow animation pace (owner, 2026-10-31).
+  calloutLifeMs: 1400,
+  calloutMinLifeMs: 700,
+  calloutInstantMs: 500,   // the Instant pace keeps the classic short word
+  // Sprite frames: each pose frame is held at least this share of the Animation step duration
+  // (390 ms by default -> 109 ms at Combat speed 1), divided by the Combat speed, clamped below.
+  // Mobile fast (195 ms) therefore holds ~55 ms. Instant and Reduced motion hold nothing.
+  frameHoldShare: 0.28,
+  frameHoldMinMs: 40,
+  frameHoldMaxMs: 160,
+  reaverRunHoldShare: 0.6, // the 60-step Reaver painting changes image 18 times; each change holds this share of the floor
 });
 
 // The wait a timeline holds after a turn-banner beat. The banner's own display
@@ -62,6 +82,30 @@ function resolvePacing(settings = {}) {
 }
 let combatPacing = resolvePacing();
 export function setCombatPacing(settings = {}) { combatPacing = resolvePacing(settings); }
+// How long a damage/heal/guard number stays on screen, in ms. Reduced motion keeps the same life (it only
+// drops the bounce), so a number is never unreadable for lack of motion.
+export function floaterLifeMs() {
+  if (getAnimSpeed() === 'instant') return COMBAT_TIMING.floaterInstantMs;
+  return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / combatPacing.speed));
+}
+// How long a callout word stays on screen, in ms. Presentation only: no beat waits on it.
+export function calloutLifeMs() {
+  if (getAnimSpeed() === 'instant') return COMBAT_TIMING.calloutInstantMs;
+  return Math.round(Math.max(COMBAT_TIMING.calloutMinLifeMs, COMBAT_TIMING.calloutLifeMs / combatPacing.speed));
+}
+// The shortest time one sprite frame is shown, in ms (0 on Instant and Reduced motion).
+export function frameHoldMs({ reduced = false } = {}) {
+  if (reduced || !ANIM_SPEEDS[getAnimSpeed()]) return 0;
+  const hold = combatPacing.animationMs * COMBAT_TIMING.frameHoldShare / combatPacing.speed;
+  return Math.round(Math.min(COMBAT_TIMING.frameHoldMaxMs, Math.max(COMBAT_TIMING.frameHoldMinMs, hold)));
+}
+// The sprite services' timing object: every entry scaled, then the lunge and the reaction (the two a single
+// frame is shown for) lifted to the frame hold, so a recoil or hurt pose is never a flicker.
+function spriteSpeedFor(pace, spriteScale, minFrameMs) {
+  const speed = Object.fromEntries(Object.entries(pace).map(([key, value]) => [key, value * spriteScale]));
+  if (minFrameMs > 0) for (const key of ['lungeMs', 'reactionMs']) speed[key] = Math.max(speed[key], minFrameMs);
+  return { ...speed, minFrameMs };
+}
 export function actionPacing({ reduced = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
@@ -76,7 +120,13 @@ export function actionPacing({ reduced = false } = {}) {
     gapMs, intentMs: 0, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
-    spriteSpeed: Object.fromEntries(Object.entries(pace || ANIM_SPEEDS.normal).map(([key, value]) => [key, value * spriteScale])),
+    spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced })),
     scale,
   };
+}
+
+// How long a sprite reaction plays: the same paced sprite speed (frame hold included) the timeline reserves
+// the beat with, so playback and reservation never disagree. `stage` is a sprite stage service.
+export function reactionPlayMs(stage, kind, { reduced = false, fallbackMs = 280 } = {}) {
+  return stage?.reactionTiming?.(kind, actionPacing({ reduced }).spriteSpeed)?.totalMs || fallbackMs;
 }

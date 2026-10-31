@@ -225,6 +225,29 @@ test('beatOrder impact keeps the older order: reaction and number at impact, bar
   });
 });
 
+test('impact-order beats wait for the paced receipt reaction before the next swing', (t) => {
+  drive(t, ({ trace, run, finish }) => {
+    const seen = [];
+    const mark = (what) => trace.push({ what, at: Date.now() });
+    const beat = (id, amount) => [
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: id, targetId: 'e1' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount, blocked: 0 },
+    ];
+    run([...beat('c1', 4), ...beat('c2', 5)], {
+      beatOrder: 'impact',
+      reactionForReceipt: e => e.type === 'damageDealt' ? () => mark('pilot') : null,
+      reactionTimingForReceipt: (e, s) => { seen.push(s); return 900; },
+    });
+    finish();
+    const swings = trace.filter(e => e.what === 'swing').map(e => e.at);
+    const pilots = trace.filter(e => e.what === 'pilot').map(e => e.at);
+    assert.equal(swings.length, 2, 'two beats swing');
+    assert.ok(pilots.length > 0, 'the paced reaction plays');
+    assert.ok(swings[1] >= pilots[0] + 900, `second swing at ${swings[1]} waits for the 900 ms reaction from ${pilots[0]}`);
+    assert.ok(seen.length > 0 && seen.every(s => 'minFrameMs' in s), 'the reaction is timed with the paced speed');
+  });
+});
+
 test('a counter beat uses ordered reaction, damage and HUD stages', (t) => {
   drive(t, ({ trace, run, finish }) => {
     run([{ type: 'combatCounterTriggered', sourceId: 'e1', sourceKind: 'enemy', targetId: 'player' },

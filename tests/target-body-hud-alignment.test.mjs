@@ -18,7 +18,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const leading = {};
     const sprite = {};
     const frameRect = { left: 12, top: 75 };
-    const rack = { querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }) };
+    const rack = { getBoundingClientRect: () => ({}), querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }) };
     const frame = { dataset: {}, style: { getPropertyValue: name => values.get(name), setProperty: (name, value) => values.set(name, value) },
       getBoundingClientRect: () => frameRect,
       querySelector: selector => selector === '.sprite' ? sprite : selector === '.combatant-leading' ? leading : rack };
@@ -49,7 +49,7 @@ test('reduced motion settles a deliberate pose once without starting an idle tra
   const begin = source.indexOf('  const poseObserver = new MutationObserver(');
   const finish = source.indexOf('\n  poseObserver.observe(', begin);
   let callback, settled = 0, requested = 0;
-  const context = { MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => true,
+  const context = { MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => true, effectsOff: () => false,
     combatantBodyMutation, combatHost: { dataset: { targetHud: 'true' } },
     field: { closest: () => ({ dataset: { targetHud: 'true' } }) }, centerTargetOverheads: () => settled++,
     trackingRequest: 0, requestAnimationFrame: () => requested++, trackPlayerHud() {} };
@@ -69,7 +69,7 @@ test('pose tracking ignores render no-ops but follows real sprite and combatant 
   const finish = source.indexOf('\n  poseObserver.observe(', begin);
   let callback, windows = 0, requested = 0;
   runInNewContext(source.slice(begin, finish), {
-    MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => false,
+    MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => false, effectsOff: () => false,
     combatantBodyMutation, combatHost: { dataset: { targetHud: 'true' } },
     extendTracking: () => windows++, trackingRequest: 0,
     requestAnimationFrame: () => ++requested, trackPlayerHud() {},
@@ -93,21 +93,23 @@ test('every target body is measured before inherited HUD coordinates are written
     style: { getPropertyValue: () => '', setProperty: () => operations.push(`write:${id}`) },
     getBoundingClientRect: () => { operations.push(`read:${id}`); return { left: 0, top: 0 }; },
     querySelector: selector => selector === '.sprite' ? { id } : selector === '.combatant-leading' ? {} : {
+      getBoundingClientRect: () => { operations.push(`read:rack${id}`); return {}; },
       querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }),
     },
   }));
   // A partially mounted combatant has no sprite yet and must stay untouched.
   frames.push({ querySelector: () => null });
   const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-    uiZoom: () => 1.25, field: { querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
+    uiZoom: () => 1.25, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
     schedule() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {}, miniHudGroupHeight: grid => grid.miniHudGroupHeightPx,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),
   });
   align();
-  assert.equal(operations.filter(op => op.startsWith('read:')).length, 3);
+  assert.equal(operations.filter(op => /^read:\d$/.test(op)).length, 3);
+  assert.equal(operations.filter(op => op.startsWith('read:rack')).length, 3, 'each rack box is read once');
   const firstWrite = operations.findIndex(op => op.startsWith('write:'));
-  assert.ok(firstWrite > operations.lastIndexOf('read:3'), 'all targets read before the first style invalidation');
+  assert.ok(firstWrite > Math.max(...operations.map((op, i) => op.startsWith('read:') ? i : -1)), 'all targets and racks read before the first style invalidation');
   assert.ok(operations.slice(firstWrite).every(op => op.startsWith('write:')), 'no later target forces layout after a coordinate write');
   for (const frame of frames.slice(0, 3)) assert.equal(frame.dataset.miniHudHeadY, '400');
 });
