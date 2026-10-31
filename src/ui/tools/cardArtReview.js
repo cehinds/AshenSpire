@@ -1,12 +1,19 @@
 import {reviewedCardArtCatalog as catalog} from '../../content/reviewedCardArt.generated.js';
 import {contentBundle} from '../../content/index.js';
 import {createRegistries} from '../../model/registries.js';
+import {resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries} from '../../model/gameProfile.js';
+import {createRunState} from '../../model/state.js';
 import {renderCard} from '../components/card.js';
 import {cardArtLayersHtml} from '../cardArtLayers.js';
 import {cardCutoutUrl} from '../layeredCardArt.js';
 import {gameRootURL} from './cardArtReviewUrl.js';
 import {containRect} from './cardArtReviewGeometry.js';
-const reg=createRegistries(contentBundle), original=structuredClone(catalog.records), checked=new Set();
+import {mountProceduralBuilder} from './cardArtProceduralBuilder.js';
+import {t} from '../strings.js';
+const profile=resolveGameProfile('default');
+const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
+const run=createRunState({registries:reg,classId:'reaver',seed:73031});
+const original=structuredClone(catalog.records), checked=new Set();
 const $=id=>document.getElementById(id), records=Object.values(catalog.records);
 let selected=Object.keys(catalog.records)[0];
 // Asset IDs are rooted at the game (this module is src/ui/tools/), keeping any deployment prefix.
@@ -28,7 +35,7 @@ function summary(){$('summary').textContent=`${records.length} cards · ${checke
 function preview(){
   const art=catalog.records[selected],base=element('img');base.src=imageURL(art.path);base.alt='';
   $('art').replaceChildren(base);$('art').insertAdjacentHTML('beforeend',cardArtLayersHtml({kind:'simple',componentArt:art,layers:[]}));
-  $('native').replaceChildren(renderCard(reg,{cardId:selected},{inspection:false}));
+  $('native').replaceChildren(renderCard(reg,{cardId:selected},{inspection:false,rules:run,artStyle:'Reviewed'}));
   for(const img of document.querySelectorAll('#art img,#native img')){
     const raw=img.getAttribute('src');if(raw&&!/^(data:|https?:|blob:)/.test(raw))img.src=new URL(raw,rootURL).href;
   }
@@ -57,4 +64,19 @@ $('png').onclick=async()=>{
     canvas.toBlob(blob=>{if(blob)download(blob,`${selected}-art.png`);},'image/png');
   }catch(error){$('status').textContent=`Could not export art: ${error.message}`;}
 };
+for(const item of document.querySelectorAll('[data-copy]'))item.textContent=t(item.dataset.copy);
+document.querySelector('.art-modes').setAttribute('aria-label',t('cardArtBuilder.modeLabel'));
+const builder=mountProceduralBuilder({registries:reg,run,imageURL,download,rootURL});
+const modes=['reviewed','procedural'];
+function mode(value){
+  for(const name of modes){const active=name===value;$(name+'-panel').hidden=!active;$(name+'-tab').setAttribute('aria-selected',String(active));$(name+'-tab').tabIndex=active?0:-1;}
+  for(const id of ['reviewed-actions','summary','status'])$(id).hidden=value!=='reviewed';
+  if(value==='procedural')builder.refresh();
+}
+for(const name of modes)$(name+'-tab').onclick=()=>mode(name);
+document.querySelector('.art-modes').addEventListener('keydown',event=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  event.preventDefault();const current=modes.findIndex(name=>$(name+'-tab').getAttribute('aria-selected')==='true');
+  const index=event.key==='Home'?0:event.key==='End'?1:(current+1)%2;mode(modes[index]);$(modes[index]+'-tab').focus();
+});
 summary();queue();show();
