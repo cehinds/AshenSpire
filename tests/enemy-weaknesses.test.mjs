@@ -264,3 +264,12 @@ test('the queued Elemental Weapon rider executes as fire, not as the weapon\'s b
   assert.equal(target.mana, 4, 'the rider does not trigger the blunt weakness again');
   assert.deepEqual(hitWeaknessTriggers(combat, combat.player, { damageType: 'fire', combatProfile: { camp: 'physical', damageType: 'blunt' } }).sort(), ['blunt', 'fire']);
 });
+
+test('an enemy restored from a snapshot saved before weaknesses takes its definition\'s', () => {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['huskBrute'] });
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  delete snapshot.enemies[0].weaknesses;
+  const restored = restoreCombatSnapshot({ registries: reg, rng: createRng(511), snapshot, expectedGameProfile: combat.gameProfile });
+  assert.deepEqual(restored.enemies[0].weaknesses, reg.enemies.get('huskBrute').weaknesses);
+});

@@ -1117,7 +1117,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
-      traits: learning ? learning.traits : [...weaknessTraitRows(entity.weaknesses || def.weaknesses), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
+      traits: learning ? learning.traits : [...weaknessTraitRows(entity.weaknesses), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
       // No authored lore exists for enemies yet; unknown, not none.
       lore: learning ? learning.lore : null,
     };

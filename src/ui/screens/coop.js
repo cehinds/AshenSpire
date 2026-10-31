@@ -1230,7 +1230,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         })
         : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards, history, traits: learning ? learning.traits : weaknessTraitRows(entity.weaknesses || def.weaknesses), ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
+        ? { moveCards, history, traits: learning ? learning.traits : weaknessTraitRows(entity.weaknesses), ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
           prediction: entity.intentPredictions?.[me], onPredict: (actionSerial, maneuver) => {
             conn.send({ t: 'predictIntent', as: me, enemyInstanceId: entity.id, actionSerial, maneuver });
             return { accepted: false };
