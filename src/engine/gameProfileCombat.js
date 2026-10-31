@@ -138,27 +138,32 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const incoming = amount;
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
-  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, blockSpent = null;
+  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null;
   if (modern) {
     // Owner: Block soaks the whole hit (physical first, then magic); the magic Block leaves meets Barrier, then Ward.
     // Block is spent exactly as the same hit without pierce would spend it (so the invariant holds over a whole action). A pierce hit then
     // lets up to floor(fraction x its damage) of what Block soaked go through instead (owner, 2026-10-26); a reaction carries none.
     const blockPool = Math.max(0,target?.block || 0);
+    // Owner, 2026-10-31: with Ward off, magic hits Poise FIRST (1:1) and then Block; physical keeps Block first, then Poise.
+    const poiseMeetsMagic = fixCoreWardDisabled(ctx);
     const plainPhysicalBlocked = Math.min(blockPool,physical);
-    const plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
+    // Ward off: the magic part meets Poise before Block, so what Block soaks of it is decided after Poise (below); Ward on keeps Block-first.
+    // Block is spent as the same hit without pierce would spend it, so the Ward-off magic lane reads the non-piercing resolution
+    // (physical Block, physical Poise, magic Poise, then magic Block), never the pool a pierce left.
+    let plainMagicBlocked;
+    if (poiseMeetsMagic) {
+      const poisePoolFull = Math.max(0,target?.persistentPoise?.value || 0);
+      const plainPoise = smashRule ? {reduced:0} : protectionReceipt(ctx,target,'physical',physical-plainPhysicalBlocked);
+      const plainMagicPoise = smashRule ? 0 : Math.min(magical,Math.max(0,poisePoolFull-plainPoise.reduced));
+      plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
+    } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
     const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
-    const magicBlocked = plainMagicBlocked-(pierceBypassed-piercedPhysicalPart);
-    blocked = physicalBlocked+magicBlocked;
-    const magicAfterBlock = magical-magicBlocked;
-    barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);
-    transition('block','Block',physical+magical,physical+magical-blocked,'mitigation');
-    transition('barrier','Barrier',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
-    // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
-    const poiseMeetsMagic = fixCoreWardDisabled(ctx);
+    const magicBypass = pierceBypassed-piercedPhysicalPart;
+    let magicBlocked = plainMagicBlocked-magicBypass;
     // The pierced physical amount meets Poise first, 1:1 (owner, 2026-10-26): Poise loses up to that much and only the rest reaches HP.
     // The remainder Block left then meets the ordinary Poise rule against what the pierce left of the pool, so Poise never counts the pierce twice.
     const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
@@ -167,15 +172,35 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     piercePoise = Math.min(piercePhysical,poisePool);
     const pierceToHp = piercePhysical-piercePoise;
     const afterPierce = piercePoise > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:poisePool-piercePoise}} : target;
-    const poiseIn = physical-piercePhysical-physicalBlocked+(poiseMeetsMagic ? magicAfterBlock-barrierMitigated : 0);
+    const poiseIn = physical-piercePhysical-physicalBlocked;
     // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
     const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,afterPierce,'physical',poiseIn);
+    // Magic after the physical part: Poise first (1:1, the pool the physical part left), then the Block the physical part left, then Barrier, then HP.
+    magicPoise = poiseMeetsMagic && !smashRule ? Math.min(magical,Math.max(0,poisePool-piercePoise-poise.reduced)) : 0;
+    const magicAfterPoise = magical-magicPoise;
+    // What Poise left of the magic part meets the Block the plan set aside for it; Block itself is spent as planned (blockSpent).
+    if (poiseMeetsMagic) magicBlocked = Math.min(magicBlocked,magicAfterPoise);
+    blocked = physicalBlocked+magicBlocked;
+    const magicAfterBlock = magicAfterPoise-magicBlocked;
+    barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);
+    const magicToHp = poiseMeetsMagic ? magicAfterBlock-barrierMitigated : 0;
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magicAfterBlock-barrierMitigated);
     // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
     poiseDrain=smashRule && !evaded ? Math.min(poisePool-piercePoise,Math.floor(smashRule.poiseFraction*incoming)) : 0;
-    poiseMitigated=poise.reduced+piercePoise;wardMitigated=ward.reduced;
-    sources.push(...poise.sources,...ward.sources);
-    amount=poise.amount+ward.amount+pierceToHp;
+    poiseMitigated=poise.reduced+piercePoise+magicPoise;wardMitigated=ward.reduced;
+    if (poiseMeetsMagic) {
+      transition('block','Block',physical,physical-physicalBlocked,'mitigation');
+      sources.push(...poise.sources);
+      if (magicPoise > 0) sources.push({id:'poise-magic',label:'Poise meets the spell',amount:-magicPoise,requested:magical,effective:magicAfterPoise,stage:'mitigation',operation:'add'});
+      if (magicBlocked > 0) sources.push({id:'block-magic',label:'Block (after Poise)',amount:-magicBlocked,requested:magicAfterPoise,effective:magicAfterBlock,stage:'mitigation',operation:'add'});
+      transition('barrier','Barrier',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
+    } else {
+      transition('block','Block',physical+magical,physical+magical-blocked,'mitigation');
+      transition('barrier','Barrier',magicAfterBlock,magicAfterBlock-barrierMitigated,'mitigation');
+      sources.push(...poise.sources);
+    }
+    sources.push(...ward.sources);
+    amount=poise.amount+ward.amount+pierceToHp+magicToHp;
   }
   for (const stage of fixCoreEnabled(ctx) ? [] : defenses?.order || []) {
     if (!defenses.include?.includes(stage)) continue;
@@ -189,8 +214,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       poiseMitigated += amount - mitigated; amount = mitigated;
     }
   }
-  return { raw, pierceBypassed, piercePoise, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
+  return { raw, pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
