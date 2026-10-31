@@ -115,3 +115,14 @@ test('snapshots round-trip reflectStacks, load without it, and refuse a count ov
   old.player.reflectStacks = mechanics.reflect.stackCap + 1;
   assert.ok(combatSnapshotProblems(old).some(problem => problem.includes('reflectStacks')));
 });
+
+test('multi-hit previews spend one Reflect stack per landed hit, as live does', async () => {
+  const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
+  const { combat, enemy } = live();
+  combat.player.reflectStacks = 1;
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
+  const view = previewDamageHits(combat, enemy, combat.player, 20, [], carrier, 2);
+  const [first, second] = view.damageReceipt.hits.map(hit => hit.incoming);
+  assert.equal(first, Math.floor(second * 0.7), 'only the first hit is cut (1 stack = 30%)');
+  assert.equal(combat.player.reflectStacks, 1, 'the preview works on a detached copy');
+});

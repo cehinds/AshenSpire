@@ -48,7 +48,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
     // A miss preserves the target's defenses for the next hit. Enumerate/merge the reachable
     // target states (Block, pools, stance, statuses) rather than multiply all-landed damage by hit probability.
     // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's defensive-stance bonus.
-    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses]);
+    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses, row.reflectStacks]);
     const prepared = enemyIntentDamageState(ctx, source, carrier, base, action);
     let states = [{ target: prepared.defender, key: targetKey(prepared.defender), loss: 0, probability: 1 }];
     for (let hit = 0; hit < hits; hit++) {
