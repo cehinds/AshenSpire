@@ -26,7 +26,7 @@ const FIXTURES = [
   ['coop-census-count', 'tests/run-node-lanes.test.mjs: co-op census count expected 14 got 15', false, 'model'],
   ['sparse-missing-file', "Error: ENOENT: no such file or directory, open 'docs/component-catalog.html'", true, 'ignore-local'],
   ['sparse-missing-file', 'tools/attack-source-audit.csv: no such file', true, 'ignore-local'],
-  ['infra-flake', 'Error: The operation was canceled.', true, 'rerun-once'],
+  ['infra-flake', 'Error: The runner has received a shutdown signal.', true, 'rerun-once'],
   ['infra-flake', 'npm error code ECONNRESET', true, 'rerun-once'],
   ['infra-flake', 'fatal: unable to access https://github.com/x/y.git: network reset', true, 'rerun-once'],
   ['uistrings-shadow', 'uistrings.mjs --check: shadow literal "Attack" in src/ui/x.js', false, 'model'],
@@ -74,7 +74,7 @@ test('CLI: stale line plus golden mismatch prints both matches and exits 2', () 
 });
 
 test('CLI: stdin triage and --human', () => {
-  const r = spawnSync(process.execPath, [JEV, 'triage', '-', '--human'], { input: 'Error: The operation was canceled.\n', encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [JEV, 'triage', '-', '--human'], { input: 'Error: The runner has received a shutdown signal.\n', encoding: 'utf8' });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /infra-flake -> rerun-once/);
 });
@@ -232,6 +232,23 @@ test('changelog-order keys on about-changelog failure output, not the echoed --c
   assert.ok(!r.matches.some(m => m.id === 'changelog-order'));
   const real = triage(`${header}Error: check-order: build rises within 2026-10-31: #1 cites x\n`);
   assert.deepEqual(real.matches.map(m => m.id), ['changelog-order']);
+});
+
+test('a non-stamp check-order error (heading order, bullet shape) is not restampable and exits 2', () => {
+  for (const line of [
+    "Error: check-order: heading '## 2026-10-30' sits below '## 2026-10-29' but is newer",
+    "Error: check-order: line 'x' carries a receipt but is not a top-level '- ' bullet",
+  ]) {
+    const r = triage(line + '\n');
+    assert.ok(!r.matches.some(m => m.id === 'changelog-order'), line);
+    assert.equal(r.exit, 2, line);
+  }
+});
+
+test('a bare "The operation was canceled." (also printed on a step timeout) is not a runner flake', () => {
+  const r = triage('Error: The operation was canceled.\n');
+  assert.ok(!r.matches.some(m => m.id === 'infra-flake'));
+  assert.equal(r.exit, 2);
 });
 
 test('sparse-missing-file only applies in a local sparse checkout, never under CI', () => {
