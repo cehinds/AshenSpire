@@ -30,6 +30,7 @@ test('the full list names every non-zero gain and skips Ward while Core switches
   assert.ok(con.some(g => g.statId === 'hp' && g.delta === 10));
   assert.ok(con.every(g => g.delta !== 0 && g.statId !== 'ward'));
   assert.match(attributeGainSummary(con), /^\+10 HP, /);
+  assert.ok(attributePointGains(registries, run, 'intelligence').some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
   assert.ok(attributePointGains(registries, run, 'dexterity').some(g => g.statId === 'evasion' && g.delta === 1));
 });
 

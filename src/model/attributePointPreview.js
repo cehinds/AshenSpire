@@ -21,12 +21,12 @@ import { t } from '../ui/strings.js';
 export const POOL_SCALE = 10;
 const POOLS = new Set(['hp', 'mana', 'stamina']);
 // Tie-break order, best first (owner: Perception ahead of MP so WIS reads "+1 Perception").
-export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'ar', 'dr', 'pr', 'draw', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
-const ROW_IDS = Object.freeze(['hp', 'stamina', 'mana', 'ar', 'pr', 'dr', 'handSize', 'draw', 'poise', 'ward']);
+export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
+const ROW_IDS = Object.freeze(['hp', 'stamina', 'mana', 'ar', 'pr', 'dr', 'openingHand', 'handSize', 'draw', 'poise', 'ward']);
 const LABEL_KEYS = Object.freeze({
   hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
   ar: 'progression.gain.label.ar', dr: 'progression.gain.label.dr', pr: 'progression.gain.label.pr',
-  handSize: 'progression.gain.label.handSize', draw: 'progression.gain.label.draw', poise: 'progression.gain.label.poise',
+  openingHand: 'progression.gain.label.openingHand', handSize: 'progression.gain.label.handSize', draw: 'progression.gain.label.draw', poise: 'progression.gain.label.poise',
   ward: 'progression.gain.label.ward', evasion: 'progression.gain.label.evasion', precision: 'progression.gain.label.precision',
   perception: 'progression.gain.label.perception',
 });
