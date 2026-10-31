@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Crimson Blight",
-  "description": "At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after {decay.duration} turns.",
+  "description": "At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.",
   "attaches": [
     "status"
   ],

@@ -2,12 +2,24 @@ import { fixCoreEnabled, fixCoreStatusDefinition } from './fixCoreMechanics.js';
 import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js';
 
 // UI wording is separate from the versioned mechanic source: changing a label
-// must not invalidate saved rules. Keep all configured numeric prose intact.
+// must not invalidate saved rules. Adapt only known legacy wording here, never
+// the versioned mechanic definitions (whose prose is part of old-save pins).
 function present(ctx, id, definition, holder) {
   const resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
-  if (id !== 'evade' || resolved === definition) return resolved;
-  const display = text => typeof text === 'string' ? text.replace(/\bfixed Evasion\b/g, 'Evasion') : text;
-  return { ...resolved, tooltip: display(resolved.tooltip), description: display(resolved.description) };
+  return presentationWording(ctx, id, resolved, fixCoreEnabled(ctx), resolved !== definition);
+}
+function presentationWording(ctx, id, resolved, core, changedDefinition = false) {
+  const display = text => {
+    if (typeof text !== 'string') return text;
+    if (id === 'evade' && core && changedDefinition) return text.replace(/\bfixed Evasion\b/g, 'Evasion');
+    if (id === 'burn' && core) return text.replace(' One stack burns out each turn.', '');
+    if (id === 'crimsonBlight' && (core || ctx?.combatExpansionVersion >= 2)) return text.replace(
+      'the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
+      'the Blight expires entirely after {decay.duration} turns.');
+    return text;
+  };
+  const tooltip = display(resolved.tooltip), description = display(resolved.description);
+  return tooltip === resolved.tooltip && description === resolved.description ? resolved : { ...resolved, tooltip, description };
 }
 
 // Memoised front, same discipline as fixCoreRulesCache. The answer is a pure
@@ -97,11 +109,12 @@ export function resolveStatusPresentationDefinition(def, context = {}) {
   context = statusPresentationContext(def, context);
   if (context.coreStatusAuthority?.enabled === false) {
     const original = presentationContexts.get(def)?.definition;
-    return original ? { ...original, name: def.name } : def;
+    return presentationWording(context, def.id, original ? { ...original, name: def.name } : def, false);
   }
   const saved = context.coreStatusAuthority?.definitions?.[def.id];
   if (saved) return { ...def, ...saved, name: def.name };
-  return fixCoreEnabled(context) ? statusPresentationDefinition(context, def.id, def, context.statusHolder ?? null) : def;
+  return fixCoreEnabled(context) || context.combatExpansionVersion >= 2
+    ? statusPresentationDefinition(context, def.id, def, context.statusHolder ?? null) : def;
 }
 
 // These are the two clock exceptions in engine/statuses.js: Precision clears

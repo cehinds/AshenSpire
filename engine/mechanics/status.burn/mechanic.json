@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Burn",
-  "description": "At the start of its turn, loses HP equal to Burn stacks (ignores Block).",
+  "description": "At the start of its turn, loses HP equal to Burn stacks (ignores Block). One stack burns out each turn.",
   "attaches": [
     "status"
   ],
