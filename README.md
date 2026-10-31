@@ -63,28 +63,28 @@ for a red `deploy` job. Publication can lag source changes. For ZIPs, open a suc
 
 ## Screenshots
 
-Latest published Release candidate **0.7.1.1920**, captured 2026-10-31 UTC.
-[Play this exact build](https://cehinds.github.io/AshenSpire/release/1920/) · [Capture details](docs/preview/releases/0.7.1.1920/README.md).
+Latest published Release candidate **0.7.2.47**, captured 2026-10-31 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/47/) · [Capture details](docs/preview/releases/0.7.2.47/README.md).
 Captures use the actual published Release and its native showcase states.
 Dev/Test can contain newer features. Select an image to view its full size.
 
 | Create a character | Explore a route |
 | --- | --- |
-| ![Release 0.7.1.1920 creation with two class choices, one locked](docs/preview/releases/0.7.1.1920/creation.png) | ![Release 0.7.1.1920 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1920/map.png) |
+| ![Release 0.7.2.47 creation with two class choices, one locked](docs/preview/releases/0.7.2.47/creation.png) | ![Release 0.7.2.47 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.2.47/map.png) |
 | **Fight with cards** | **Visit shops and improve equipment** |
-| ![Release 0.7.1.1920 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1920/combat.png) | ![Release 0.7.1.1920 configured shop offers, costs and services](docs/preview/releases/0.7.1.1920/shop.png) |
+| ![Release 0.7.2.47 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.2.47/combat.png) | ![Release 0.7.2.47 configured shop offers, costs and services](docs/preview/releases/0.7.2.47/shop.png) |
 
 <details>
 <summary>Title screen</summary>
 
-![Release 0.7.1.1920 title after native Enter](docs/preview/releases/0.7.1.1920/title.png)
+![Release 0.7.2.47 title after native Enter](docs/preview/releases/0.7.2.47/title.png)
 
 </details>
 
 <details>
 <summary>Phone combat — 390 × 844</summary>
 
-![Release 0.7.1.1920 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1920/combat-phone.png)
+![Release 0.7.2.47 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.2.47/combat-phone.png)
 
 </details>
 
