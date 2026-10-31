@@ -2,7 +2,8 @@ import { statusPresentationDefinition } from './statusPresentation.js';
 import { cardSummaryContext } from './playingCard.js';
 import { withChargedEffects } from './cardFaceText.js';
 import { stanceEntryBonuses } from './stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, evadeGrantOnlyCard } from './fixCoreMechanics.js';
+import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 
 // Quantified self benefits belong to the shared tag rail. Keep separate grants
 // separate in their explanation: a stance-change grant is not added to an

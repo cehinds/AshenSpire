@@ -164,7 +164,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       classic: classicAppearance(), layout: combat.dataset.layout || 'formation' }, config);
     enabled = next;
     if (combat.dataset.targetHud !== String(next)) combat.dataset.targetHud = String(next);
-    layer.hidden = cells.hidden = !next;
+    if (layer.hidden === next) layer.hidden = !next;
+    if (cells.hidden === next) cells.hidden = !next;
     for (const frame of field.querySelectorAll('.combatant')) setCombatantTargetHud(frame, next);
     if (!next) { cancelHold(); lastTap = null; hover = null; shown = []; dwell.reset(); clearPanels(); }
     refreshDesired();
@@ -365,7 +366,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     // Phase 5: the tint cells, rebuilt only when what they draw changed (replacing
     // them dirtied layout, so the next run's first read was a forced layout).
-    cells.setAttribute('viewBox', `0 0 ${fieldBox.width} ${fieldBox.height}`);
+    const viewBox = `0 0 ${fieldBox.width} ${fieldBox.height}`;
+    if (cells.getAttribute('viewBox') !== viewBox) cells.setAttribute('viewBox', viewBox);
     const drawn = [];
     for (const id of new Set([...shown, ...eligible, focused].filter(Boolean))) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;

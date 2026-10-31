@@ -44,7 +44,7 @@ test('a saved explicit Full quality migrates once to Effects on; everything else
 
 test('pose preloads deduplicate images and reuse a bounded recent working set', () => {
   let allocated = 0;
-  globalThis.Image = class { constructor() { allocated++; } };
+  globalThis.Image = class { constructor() { allocated++; } addEventListener() {} };
   try {
     clearPosePreloads();
     const first = preloadPoses('first', ['one.webp', 'one.webp', 'two.webp']);

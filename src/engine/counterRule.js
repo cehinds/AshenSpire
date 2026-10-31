@@ -4,7 +4,8 @@
 // "Incoming damage" is the attack's damage after the attacker's whole chain and its single floor, before Block,
 // Barrier, Ward or Poise take anything: the `incoming` figure of the damage receipt (gameProfileCombat.js).
 // Pure: no state, no RNG. The fractions are data (content/source/fixCoreMechanics.json `counter`).
-import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { configuredModule, armsAsCoreCounter, isSpellCounter, configuredStance, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 // Tactics reaches Counter through Matchups; bundled named imports snapshot

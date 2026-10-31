@@ -4,7 +4,8 @@
 // Under a Core profile a Smash into Defend or Prepared deals damageMultiplier x its damage plus blockFraction of the
 // target's Block, poiseFraction of that to Poise (smashVsDefensive in fixCoreMechanics.json). The words are read from the
 // same rules combat uses, so a profile with other numbers says them; other profiles keep the legacy wording.
-import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreSmashVsDefensiveRules } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 import { configuredModule } from './profileModule.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 

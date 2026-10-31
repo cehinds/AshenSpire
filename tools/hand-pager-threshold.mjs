@@ -51,8 +51,8 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
     }, {
       name: 'hidden pager retains AX focus after 8-to-7',
       file: 'src/ui/screens/combat.js',
-      find: '    handPages.forEach((page) => { page.hidden = !paging; });',
-      replace: "    handPages.forEach((page) => { page.hidden = !paging; });\n    if (!paging) handPages[0].classList.add('gp-focus');",
+      find: '    handPages.forEach((page) => { if (page.hidden === paging) page.hidden = !paging; });',
+      replace: "    handPages.forEach((page) => { if (page.hidden === paging) page.hidden = !paging; });\n    if (!paging) handPages[0].classList.add('gp-focus');",
       expectRed: /FAIL dynamic 8-to-7 returns pager focus to the remembered surviving card/,
     }, {
       name: 'standing veil leaves the long-hand pager active',

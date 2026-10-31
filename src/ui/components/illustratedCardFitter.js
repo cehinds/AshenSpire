@@ -7,6 +7,13 @@ const ruleGeometry = new WeakMap();
 // fit again with the same inputs keeps the result it has (the hand refits every
 // card on each render, and almost none of them changed).
 const fitSignatures = new WeakMap();
+// The font size a text row settled on, by everything the search read: the face's
+// signature (width, text, fonts, scale), the row's place in the face, its box and
+// its bounds. A hand re-render rebuilds a card's face whenever its preview or
+// affordability moves, with the same text at the same size, and the 7-pass
+// search (a forced layout per pass) found the same answer each time.
+const fitResults = new Map();
+const FIT_RESULTS_MAX = 800;
 let fontEpoch = 0, fontsWatched = false;
 function watchFonts() {
   if (fontsWatched || typeof document === 'undefined' || !document.fonts?.addEventListener) return;
@@ -37,6 +44,7 @@ export function fitIllustratedCards(cards) {
     if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
     resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
+    let textIndex=0;
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
@@ -44,7 +52,7 @@ export function fitIllustratedCards(cards) {
       // the same authored rules bay.
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+      const row={face,text,layer,scale,rules,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
         // Semantic effect lines can wrap over multiple printed rows.
         lines:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
@@ -92,21 +100,30 @@ export function fitIllustratedCards(cards) {
     row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
   }
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
+  for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset].join('\u0002');
+  // A face is taken from the cache only whole: its rows then all keep their old answer.
+  const unknownFaces=new Set(texts.filter(row=>!fitResults.has(row.fitKey)).map(row=>row.face));
+  for(const row of texts)if(!unknownFaces.has(row.face))row.result=fitResults.get(row.fitKey);
+  const measured=texts.filter(row=>unknownFaces.has(row.face));
   const rules=texts.filter(row=>row.rules);
   for(const row of rules)row.face.dataset.rulesDense='false';
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
     return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*row.lineHeight*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
   };
-  const atHigh=probe(texts,row=>row.high);
+  const atHigh=probe(measured,row=>row.high);
   const search=[];
-  texts.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
+  measured.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
   for(let pass=0;pass<7&&search.length;pass++){
     const mid=row=>(row.lo+row.hi)/2;
     const fits=probe(search,mid);
     search.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of search)row.result=row.lo;
+  for(const row of measured){
+    if(fitResults.size>=FIT_RESULTS_MAX)fitResults.delete(fitResults.keys().next().value);
+    fitResults.set(row.fitKey,row.result);
+  }
   for(const row of texts){
     row.text.style.fontSize=row.result+'px';
     row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines);

@@ -1006,7 +1006,7 @@ function selftest() {
     ['detach configured Rest from the shared room frame', 'C3 ', (r) => ({ ...r, configuredRest: r.configuredRest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['give the shared Rest frame its own HUD', 'C3 ', (r) => ({ ...r, restFrame: r.restFrame.replace('wireRunHud(app, {', 'wireRestBand(app, {') })],
     ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
-    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
+    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? record.box : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['import run state into the Armoury models beside their art resolvers', 'C5 ', (r) => ({ ...r, armouryModels: `import { resourceBarPlan } from '../../model/resources.js';\n${r.armouryModels}` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],

@@ -1,4 +1,5 @@
-import { fixCoreEnabled, fixCoreRules, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';

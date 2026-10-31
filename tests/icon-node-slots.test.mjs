@@ -50,7 +50,7 @@ test('Chip preserves ordinary key/value text and mounts an explicit key node wit
 
 test('the retained nonexpanded proc-meter caller supplies icon art through the explicit node slot', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  const begin = source.indexOf('for (const sid of combat.combatExpansionVersion === 2 ? [] : plan.bars)');
+  const begin = source.indexOf('for (const { sid, resisted } of procs)');
   const end = source.indexOf('meterEl.dataset.status', begin);
   assert.ok(begin >= 0 && end > begin);
   const proc = source.slice(begin, end);

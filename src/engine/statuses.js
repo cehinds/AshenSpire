@@ -1,4 +1,5 @@
-import { fixCoreEnabled, fixCoreRules, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
 //
 // Statuses are CONTENT, not code: this module interprets stackMode, decay

@@ -48,6 +48,77 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   return frame;
 }
 
+// The slot-level counterpart of updateCombatantFrame: replace only the slots
+// passed (`leading`, `name`, `meters`, `statuses`, `chips`; `classNames`
+// reconciles the frame's classes) and leave every other node in place. The
+// nodes land exactly where a full update puts them, so the frame's outerHTML
+// matches a fresh combatantFrame() built from the same slots. Returns false,
+// touching nothing, when a node slot is asked for while the target-HUD
+// overhead rack holds the meters and intent; the caller then does the full
+// update, which discards the rack as it always has.
+export function updateCombatantSlots(frame, { classNames, leading, name, meters, statuses, chips } = {}) {
+  const wantsNodes = leading !== undefined || name !== undefined || meters !== undefined
+    || statuses !== undefined || chips !== undefined;
+  if (wantsNodes && [...frame.children].some(node => node.classList?.contains('target-hud-overhead-meters'))) return false;
+  if (classNames) {
+    const next = classNames.filter(Boolean);
+    for (const value of ownedClasses.get(frame) || []) if (!next.includes(value)) frame.classList.remove(value);
+    for (const value of next) frame.classList.add(value);
+    ownedClasses.set(frame, next);
+  }
+  if (!wantsNodes) return true;
+  const isPlayer = frame.classList.contains('player');
+  const leadingHost = frame.querySelector('.combatant-leading');
+  const card = frame.querySelector('.combatant-card');
+  const spriteHost = [...card.children].find(node => node.classList.contains('sprite'));
+  const widget = isPlayer ? [...leadingHost.children].find(node => node.classList.contains('combatant-mini-hud')) : card;
+  const statusHost = !isPlayer && !classicAppearance() ? leadingHost : widget;
+  const isStatuses = (node) => node.classList?.contains('statuses');
+  const isAction = (node) => node.classList?.contains('player-action-intent');
+  const isName = (node) => node.dataset?.identityPart === 'name';
+  const isMeters = (node) => node.classList?.contains('meters');
+  const kids = (host) => [...host.children];
+  const find = (host, test) => kids(host).find(test) || null;
+  const isLeading = (node) => node !== widget && !isStatuses(node) && !isAction(node);
+  if (leading !== undefined) {
+    for (const node of kids(leadingHost)) if (isLeading(node)) node.remove();
+    leadingHost.prepend(...leading.filter(Boolean));
+  }
+  if (name !== undefined) {
+    find(widget, isName)?.remove();
+    if (name) {
+      markName(name, isPlayer ? 'player' : 'enemy');
+      widget.insertBefore(name, isPlayer ? widget.firstChild : spriteHost.nextSibling);
+    }
+  }
+  if (meters !== undefined) {
+    find(widget, isMeters)?.remove();
+    if (meters) {
+      const anchor = find(widget, isName);
+      widget.insertBefore(meters, anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling));
+    }
+  }
+  if (statuses !== undefined) {
+    for (const node of kids(statusHost)) if (isStatuses(node)) node.remove();
+    const list = statuses ? [].concat(statuses).filter(Boolean) : [];
+    if (statusHost === leadingHost) {
+      const action = find(leadingHost, isAction);
+      for (const node of list) leadingHost.insertBefore(node, action);
+    } else {
+      const anchor = find(widget, isMeters) || find(widget, isName);
+      const before = anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
+      for (const node of list) widget.insertBefore(node, before);
+    }
+  }
+  if (chips !== undefined) {
+    for (const node of kids(widget)) {
+      if (node !== spriteHost && !isName(node) && !isMeters(node) && !isStatuses(node)) node.remove();
+    }
+    appendAll(widget, [].concat(chips || []).filter(Boolean));
+  }
+  return true;
+}
+
 function appendAll(parent, nodes) {
   for (const node of nodes || []) if (node) parent.appendChild(node);
 }
