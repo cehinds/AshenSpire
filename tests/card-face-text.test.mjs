@@ -38,7 +38,7 @@ test('a consumed prerequisite reads after the conditional payoff that uses it', 
 
 test('an area damage card names its area on the damage line', () => {
   const [first] = text('cleavingBlow');
-  assert.match(first, /to all enemies$/);
+  assert.match(first, /to all enemies$/); // cardFaceLines keeps the full words; the face projection shortens to "to all"
 });
 
 test('a preview above the static base marks the number up, below it marks down', () => {
@@ -53,7 +53,8 @@ test('without a preview no number is marked up or down', () => {
 });
 
 test('a Defend card labels per-play gains separately from its Entry clause', () => {
-  assert.deepEqual(text('crystalBarrier'), ['Gain 2 Block, 1 Ward', 'Entry: +1 Precision, Retain']);
+  // Owner 2026-10-31: the Entry rider is a `tag` line, Information-only; the keyword stays its own bonus line.
+  assert.deepEqual(text('crystalBarrier'), ['Gain 2 Block, 1 Ward', 'Retain', 'Entry: +1 Precision']);
 });
 
 test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
@@ -126,7 +127,10 @@ test('a missing self status reads as "No <status>:"', () => {
 
 test('a combat counter reads as prepared, naming its mode and Smash bonus', () => {
   const x = id => (cardFaceLines(applyCombatExpansionCard(card(id)), null, reg) || []).map(line => line.html.replace(/<[^>]+>/g, ''));
-  assert.match(x('shieldBash')[0], /^Return \d+ Poise damage, \+\d+ Poise against Smash$/);
+  // The Smash rider is a `tag` line (Information-only), no longer joined to the Return line.
+  assert.match(x('shieldBash')[0], /^Return \d+ Poise damage$/);
+  assert.ok(x('shieldBash').some(line => /^\+\d+ Poise against Smash$/.test(line)), JSON.stringify(x('shieldBash')));
+  assert.ok(cardFaceLines(applyCombatExpansionCard(card('shieldBash')), null, reg).some(line => line.kind === 'tag'));
   assert.match(x('nockAndWait')[0], /^Return /);
 });
 

@@ -4,21 +4,40 @@
 import { uiStrings } from '../content/generated/uiStrings.js';
 
 export const FACE_EFFECT_LINES = 3;
-export const FACE_EFFECT_CLAUSES = 2;
+// Owner, 2026-10-31: one to three lines, at most five words per line. A line
+// that cannot be said in five words stays whole in Information.
+export const FACE_EFFECT_CLAUSES = 3;
 export const FACE_EFFECT_CHARACTERS = 90;
+export const FACE_CLAUSE_WORDS = 5;
 
 const plain = html => html.replace(/<[^>]*>/g, '').replace(/&(?:amp|lt|gt|quot|#39);/g, 'x');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const shorten = html => html.replace(/At the start of your turn, /g, 'Turn start: ')
   .replace(/At the end of your turn, /g, 'Turn end: ')
   .replace(/Whenever /g, 'When ').replace(/to the selected enemy/g, 'to target')
-  .replace(/to ALL enemies/g, 'to all enemies').replace(/to a random enemy/g, 'to random enemy')
+  .replace(/to ALL enemies/g, 'to all').replace(/to all enemies/g, 'to all').replace(/to a random enemy/g, 'to random enemy')
+  .replace(/\b(Retreat|Close) (<span[^>]*>\d+<\/span>|\d+) bands? (?:away from|toward) (?:target|attacker)/g, '$1 $2 band')
   .replace(/for every /g, 'per ')
   .replace(/In expanded combat, stops at (\d+) stacks each/g, 'Expanded: cap $1 stacks each')
   .replace(/(\d+) per (\d+) of \((.+?) stacks across all enemies plus (.+?) stacks across all enemies\) \(whole groups\)/g, '$1 per $2 total $3 + $4 on all enemies')
   .replace(/\bInflict (?=(?:<[^>]*>)*\d)/g, 'Deal ').replace(/\bInflict /g, 'Apply ')
-  .replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
-const clauseCount = html => plain(html).split(/[.;]\s+(?=[A-Z(])|,\s+(?=(?:Draw|Discard|Choose|Heal|Gain|Remove|Apply|Add|Enter|Prepare|Next|Pay|Offer|Retain|Restore)\b)| and (?=(?:draw|take|gain|heal|apply|retain|discard)\b)/).length;
+  .replace(/\(leave at least 1 HP\)/g, '(min 1)').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
+const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
+// A line of five words or fewer is one clause. A longer list of complete
+// phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
+// clause each; a longer conditional or sentence returns null and stays whole in
+// Information rather than being cut mid-condition.
+function clausesOf(line) {
+  if (wordCount(line.html) <= FACE_CLAUSE_WORDS) return [line];
+  if (/:/.test(plain(line.html))) return null;
+  const parts = [];
+  for (const piece of line.html.split(/,\s+/)) {
+    if (parts.length && (parts[parts.length - 1].split('(').length !== parts[parts.length - 1].split(')').length)) parts[parts.length - 1] += ', ' + piece;
+    else parts.push(piece);
+  }
+  if (parts.length < 2 || parts.some(part => wordCount(part) > FACE_CLAUSE_WORDS)) return null;
+  return parts.map(html => ({ ...line, html }));
+}
 
 // Split only complete authored sentences. A following qualification belongs
 // to the preceding sentence (caps, generated-card costs and pronoun riders).
@@ -38,7 +57,8 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
     // the ordinary effect budget. Their complete reading stays in Information.
     html: line.html.replace(/^Restore .*?Poise\/Ward\.\s*/, '').replace(/(?:, |\. )?Entry:.*$/, '').trim(),
   })).filter(line => line.html && !/^(?:Entry:|Restore .*Poise\/Ward)/.test(plain(line.html))
-    && !['detail'].includes(line.kind))
+    // `tag` lines (Smash, Prone, Entry riders) and `detail` lines are Information-only.
+    && !['detail', 'tag'].includes(line.kind))
     : authoredClauses(authoredHtml);
   if (!candidates.length) candidates = authoredClauses(authoredHtml);
   const keywordOnly = line => /^(?:Exhaust|Retain|Ethereal|Innate|Unplayable)(?:, (?:Exhaust|Retain|Ethereal|Innate|Unplayable))*$/.test(plain(line.html));
@@ -75,15 +95,16 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   }
   candidates = [...payments, ...candidates.filter(line => !payments.some(payment => payment.html === line.html))];
   const clauses = [];
-  const requiredPayments = payments.reduce((sum, line) => sum + plain(line.html).length + 2, 0);
-  const requiredPaymentClauses = payments.reduce((sum, line) => sum + clauseCount(line.html), 0);
-  for (const line of candidates) {
-    const size = plain(line.html).length;
+  let shown = 0;
+  const fitted = candidates.map(line => ({ line, parts: clausesOf(line) }));
+  const paymentParts = fitted.filter(entry => payments.includes(entry.line));
+  const requiredPayments = paymentParts.every(entry => entry.parts) ? paymentParts.reduce((sum, entry) => sum + entry.parts.length, 0) : Infinity;
+  for (const { line, parts } of fitted) {
     const used = clauses.reduce((sum, clause) => sum + plain(clause.html).length + 2, 0);
-    const count = clauses.reduce((sum, clause) => sum + clauseCount(clause.html), 0);
-    if (requiredPayments > FACE_EFFECT_CHARACTERS || requiredPaymentClauses > FACE_EFFECT_CLAUSES
-      || !size || used + size > FACE_EFFECT_CHARACTERS || count + clauseCount(line.html) > FACE_EFFECT_CLAUSES) continue;
-    clauses.push(line);
+    if (requiredPayments > FACE_EFFECT_CLAUSES || !parts || !plain(line.html).length
+      || used + plain(line.html).length > FACE_EFFECT_CHARACTERS || clauses.length + parts.length > FACE_EFFECT_CLAUSES) continue;
+    clauses.push(...parts);
+    shown++;
     if (clauses.length === FACE_EFFECT_CLAUSES) break;
   }
   // An unfamiliar long rule is named, never shortened mid-condition. Current
@@ -91,5 +112,5 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   // forward-compatible reading for future mechanics rather than false prose.
   if (!clauses.length) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
   return { clauses, maxLines: FACE_EFFECT_LINES,
-    omitted: !lines || clauses.length < lines.length || candidates.length > clauses.length };
+    omitted: !lines || shown < lines.length || candidates.length > shown };
 }

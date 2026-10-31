@@ -28,14 +28,17 @@ test('every authored base, upgrade and rank projects whole short clauses without
   for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }, { abilityRank: 1 }, { abilityRank: 5 }]) {
     const def = defOf(card.id, extra), before = JSON.stringify(def), projection = project(def);
     assert.equal(projection.maxLines, 3);
-    assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 2, card.id);
+    assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 3, card.id);
+    // Owner 2026-10-31: every clause is at most five words, else the face says the Inspect cue.
+    const inspectCue = projection.clauses.length === 1 && plain(projection.clauses[0].html) === 'Inspect full effect';
+    assert.ok(inspectCue || projection.clauses.every(line => plain(line.html).split(/\s+/).filter(Boolean).length <= 5), `${card.id}: ${plain(projection.clauses.map(line => line.html).join('; '))}`);
     const text = projection.clauses.map(line => plain(line.html)).join('; ');
     assert.ok(text.length <= FACE_EFFECT_CHARACTERS, `${card.id}: ${text}`);
     if (longFormulaReadings.has(card.id)) {
       assert.equal(text, 'Inspect full effect', 'a long formula moves whole to Information');
       const detail = plain(cardDetailHtml(reg, { cardId: card.id, ...extra }, { rules }));
       assert.ok(detail.includes(longFormulaReadings.get(card.id)), `${card.id}: full formula remains in Information`);
-    } else assert.doesNotMatch(text, /Inspect full effect|\{|\.\.\.|…/, card.id);
+    } else assert.doesNotMatch(text, /\{|\.\.\.|…/, card.id);
     assert.equal(JSON.stringify(def), before);
     checked++;
   }
@@ -54,7 +57,7 @@ test('all equipment basic profiles share the bounded projection at every authore
   for (const profile of reg.equipment.basicCardProfiles) for (const abilityRank of [0, 1, 5]) {
     const def = playingCardDefinition(reg, { cardId: profile.baseCardId, profileId: profile.id, abilityRank }, { rules });
     const projection = project(def), text = projection.clauses.map(line => plain(line.html)).join('; ');
-    assert.ok(projection.clauses.length <= 2, profile.id);
+    assert.ok(projection.clauses.length <= 3, profile.id);
     assert.ok(text.length <= FACE_EFFECT_CHARACTERS, `${profile.id}: ${text}`);
     assert.doesNotMatch(text, /Inspect full effect|\{/, profile.id);
   }
@@ -63,10 +66,10 @@ test('all equipment basic profiles share the bounded projection at every authore
 test('a chosen conditional status keeps its probability attached', () => {
   const def = { type: 'skill', effects: [{ op: 'buildup', status: 'burn', chance: 40 }] };
   const projection = cardFaceProjection(def, { lines: [
-    { kind: 'condition', html: 'If target has Block: Inflict Burn 4' },
+    { kind: 'status', html: 'Inflict Burn 4' },
     { kind: 'detail', html: 'Burn: 40% chance' },
   ], registries: reg });
-  assert.equal(projection.clauses[0].html, 'If target has Block: Apply Burn 4 (40% chance)');
+  assert.equal(projection.clauses[0].html, 'Apply Burn 4 (40% chance)');
 });
 
 test('a standalone once-per-turn qualifier stays with Clear Head’s conditional bonus', () => {
@@ -79,7 +82,8 @@ test('a standalone once-per-turn qualifier stays with Clear Head’s conditional
 
 test('Waking Nightmare’s chance qualifies Sleep only; Confused remains guaranteed', () => {
   const text = project(defOf('wakingNightmare')).clauses.map(line => plain(line.html)).join('; ');
-  assert.match(text, /Confused 3, Sleep 4 \(50% chance\)/);
+  // Each status is its own clause now (five words at most): Confused stays guaranteed, only Sleep carries the chance.
+  assert.match(text, /Confused 3; Sleep 4 \(50% chance\)/);
   assert.doesNotMatch(text, /Confused 3 \(50%/);
 });
 
@@ -111,15 +115,16 @@ test('a payment requiring more than two clauses never leaves a free-looking payo
   assert.deepEqual(projection.clauses.map(line => line.html), ['Inspect full effect']);
 });
 
-test('authored fallback keeps trigger, cap and generated-card costs together', () => {
-  assert.match(project(defOf('rallyingStandard')).clauses[0].html, /^Turn start: gain 1 Strength and take 1 damage$/);
-  const bloom = project(defOf('blightBloom')).clauses.map(line => line.html).join('; ');
-  assert.match(bloom, /Double.*Blight/); assert.match(bloom, /cap 3 stacks each/);
+test('authored fallback clauses over five words move whole to Information', () => {
+  // Owner 2026-10-31: no clause is cut mid-condition; one that cannot be said in five words is the Inspect cue.
+  for (const id of ['rallyingStandard', 'blightBloom']) {
+    assert.equal(plain(project(defOf(id)).clauses[0].html), 'Inspect full effect', id);
+  }
+  assert.match(plain(cardDetailHtml(reg, { cardId: 'rallyingStandard' }, { rules })), /Turn start: gain 1 Strength and take 1 damage|start of your turn/i);
+  assert.match(cardDetailHtml(reg, { cardId: 'blightBloom' }, { rules }), /3 stacks each/);
   const guardian = project(defOf('shieldGuardian')).clauses.map(line => line.html).join('; ');
-  // The generated card's cost and Exhaust must stay with its grant; this long
-  // complete clause is omitted, while its readable Block effect remains.
   assert.doesNotMatch(guardian, /Add a temporary/);
-  assert.match(guardian, /Gain.*Block/);
+  assert.match(guardian, /Gain.*Block|Inspect full effect/);
 });
 
 test('stance entry details do not spend the ordinary effect budget', () => {
@@ -136,4 +141,46 @@ test('full plain reading and Information preserve facts omitted from the face', 
   assert.match(cardPlainText(reg, { cardId: def.id }, { rules }), /Usable through/);
   assert.match(cardDetailHtml(reg, { cardId: 'shieldGuardian' }, { rules }), /costs 1 Stamina and Exhausts/);
   assert.match(cardDetailHtml(reg, { cardId: 'blightBloom' }, { rules }), /3 stacks each/);
+});
+
+test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core faces are 1-3 clauses of at most 5 words', async () => {
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const profile = resolveGameProfile('core');
+  const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const coreRules = { combatExpansionVersion: 2, gameProfile: profile };
+  const cards = profile.content.cards.filter(card => card.id.startsWith('core.'));
+  assert.ok(cards.length >= 62, 'every Core card is checked');
+  for (const card of cards) for (const upgraded of [false, true]) {
+    const def = playingCardDefinition(coreReg, { cardId: card.id, upgraded }, { rules: coreRules });
+    const tokens = staticCardTokens(def);
+    const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
+    const lines = cardFaceLines(def, null, coreReg, coreRules, { stanceEntry: false });
+    const projection = cardFaceProjection(def, { lines, authoredHtml, registries: coreReg, effects: def.effects });
+    const label = `${card.id}${upgraded ? '+' : ''}`;
+    assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 3, label);
+    const cue = projection.clauses.length === 1 && plain(projection.clauses[0].html) === 'Inspect full effect';
+    for (const clause of projection.clauses) {
+      assert.ok(cue || plain(clause.html).split(/\s+/).filter(Boolean).length <= 5, `${label}: ${plain(clause.html)}`);
+      assert.ok(!['tag', 'detail'].includes(clause.kind), label);
+      assert.doesNotMatch(plain(clause.html), /Smash|while Prone|Entry:|Usable through/, label);
+    }
+  }
+  // Whirlwind's two area figures are two short clauses; the long readings stay in Information.
+  const whirl = playingCardDefinition(coreReg, { cardId: 'core.whirlwind' }, { rules: coreRules });
+  const tokens = staticCardTokens(whirl);
+  const face = cardFaceProjection(whirl, { lines: cardFaceLines(whirl, null, coreReg, coreRules, { stanceEntry: false }),
+    authoredHtml: whirl.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match), registries: coreReg, effects: whirl.effects });
+  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all']);
+  const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
+  const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
+  assert.ok(backFace.clauses.some(line => plain(line.html) === 'Retreat 1 band'));
+});
+
+test('a Smash rider and an Entry rider are tag lines the projection drops', () => {
+  const projection = cardFaceProjection({}, { lines: [
+    { kind: 'damage', html: 'Inflict 8 damage' },
+    { kind: 'tag', html: 'Smash: +2 Poise' },
+    { kind: 'tag', html: 'Entry: +1 Precision' },
+  ] });
+  assert.deepEqual(projection.clauses.map(line => line.html), ['Deal 8 damage']);
 });
