@@ -289,7 +289,8 @@
   min-width: var(--inspect-box); min-height: var(--inspect-box);
   max-width: var(--inspect-box); max-height: var(--inspect-box);
 }
-:root .combat[data-layout='formation'] .hand-info-portal { transform: none; }
+/* The portal's left is the badge centre (handInfoPosition); kit.css centres it
+   with translateX(-50%), which this layout must not cancel. */
 
 /* Approved combat HUD: the actor owns every compact and expanded surface. */
 /* The legacy appearance adds a permanent faction-colored edge. Selection and
