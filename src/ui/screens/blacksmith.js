@@ -341,7 +341,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // Core offers two services: a compact switch at the top of the pane, like the card upgrade picker's own controls,
     // instead of a rail. Legacy keeps the category rail.
     const compact = coreCardUpgrades(run);
-    const labelOf = (key) => t(key === 'upgradeArt' && compact ? 'blacksmith.bar.upgradeCard' : `blacksmith.bar.${key}`);
+    // Core's five-way switch is narrow on a phone, so its tabs wear the one-word `blacksmith.tab.*` labels.
+    const labelOf = (key) => t(compact ? `blacksmith.tab.${key}` : `blacksmith.bar.${key}`);
     let railItems;
     if (compact) {
       const switchNode = segmented({
