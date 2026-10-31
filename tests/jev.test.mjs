@@ -7,7 +7,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { triage, loadRules, severityOf } from '../tools/jev.mjs';
+import { triage, loadRules, severityOf, runChecks, FAST_CHECKS } from '../tools/jev.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const JEV = resolve(ROOT, 'tools/jev.mjs');
@@ -75,4 +75,22 @@ test('CLI: stdin triage and --human', () => {
   const r = spawnSync(process.execPath, [JEV, 'triage', '-', '--human'], { input: 'Error: The operation was canceled.\n', encoding: 'utf8' });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /infra-flake -> rerun-once/);
+});
+
+test('fast-check list names every required check, in order', () => {
+  assert.deepEqual(FAST_CHECKS.map(c => c.id), ['style-lint', 'content-build', 'config-build', 'game-config', 'framework-data-build', 'build-game', 'bundle-cycles', 'mechanics-generate', 'uistrings', 'run-node', 'runsim']);
+});
+
+test('runChecks: pass is 0, an auto-fixable failure is 1, an unmatched one is 2; exit is the max', () => {
+  const outputs = {
+    'style-lint': { status: 0, out: '' },
+    'content-build': { status: 1, out: 'content-build: src/content/generated/cards.js is stale' },
+    'uistrings': { status: 1, out: 'boom\nFAIL something nobody has a rule for' },
+  };
+  const list = ['style-lint', 'content-build', 'uistrings'].map(id => ({ id }));
+  const r = runChecks(list, c => outputs[c.id]);
+  assert.deepEqual(r.results.map(x => [x.id, x.exit]), [['style-lint', 0], ['content-build', 1], ['uistrings', 2]]);
+  assert.deepEqual(r.results[1].matches, ['generated-stale']);
+  assert.equal(r.exit, 2);
+  assert.equal(runChecks([{ id: 'style-lint' }], () => ({ status: 0, out: '' })).exit, 0);
 });

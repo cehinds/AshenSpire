@@ -97,6 +97,59 @@ COMMANDS.triage = async (args) => {
   return r.exit;
 };
 
+// ---- checks: the fast-check list, run in order, every failure triaged ----
+
+export const FAST_CHECKS = [
+  { id: 'style-lint', args: ['tools/style-lint.mjs', '--check'] },
+  { id: 'content-build', args: ['tools/content-build.mjs', '--check'] },
+  { id: 'config-build', args: ['tools/config-build.mjs', '--check'] },
+  { id: 'game-config', args: ['tools/game-config.mjs', 'check'] },
+  { id: 'framework-data-build', args: ['tools/framework-data-build.mjs', '--check'] },
+  { id: 'build-game', args: ['tools/build-game.mjs', '--check'] },
+  { id: 'bundle-cycles', args: ['tools/bundle-cycles.mjs'] },
+  { id: 'mechanics-generate', args: ['tools/mechanics-generate.mjs', '--check'] },
+  { id: 'uistrings', args: ['tools/uistrings.mjs', '--check'] },
+  { id: 'run-node', args: ['tests/run-node.mjs', '--no-selftests', '--no-discovered'] },
+  { id: 'runsim', args: ['tools/runsim.mjs', '5'] },
+];
+
+// A failed check is never "resolved", so its severity is at least 1; triage can
+// raise it to 2. The exit of the whole run is the maximum.
+export function runChecks(list, runner, rules = loadRules()) {
+  const results = [];
+  for (const check of list) {
+    const started = Date.now();
+    const { status, out } = runner(check);
+    const ms = Date.now() - started;
+    if (status === 0) { results.push({ id: check.id, status: 'pass', exit: 0, ms }); continue; }
+    const t = triage(out, rules);
+    // Tag the check name onto the text so a rule keyed on the tool name can see it.
+    const tagged = t.matches.length ? t : triage(`${check.id}: ${out}`, rules);
+    const exit = Math.max(1, tagged.exit);
+    results.push({
+      id: check.id, status: 'fail', exit, ms, verdict: tagged.verdict,
+      matches: tagged.matches.map(m => m.id), fix: tagged.matches.map(m => m.command).filter(Boolean),
+      tail: out.trim().split('\n').slice(-6).join('\n').slice(0, 800),
+    });
+  }
+  return { results, exit: results.reduce((a, r) => Math.max(a, r.exit), 0) };
+}
+
+function checksText({ results, exit }) {
+  const rows = results.map(r => `  ${r.status === 'pass' ? 'PASS' : 'FAIL'}  ${r.id.padEnd(22)} ${String(r.ms).padStart(6)}ms${r.status === 'fail' ? `  exit ${r.exit}  ${r.matches.join(',') || 'no rule matched'}${r.fix.length ? `  fix: ${r.fix.join(' ; ')}` : ''}` : ''}`);
+  return [`jev checks: exit ${exit}`, ...rows].join('\n');
+}
+
+COMMANDS.checks = async (args) => {
+  const human = args.includes('--human');
+  const onlyAt = args.indexOf('--only');
+  const only = onlyAt >= 0 ? new Set(args[onlyAt + 1].split(',')) : null;
+  const list = FAST_CHECKS.filter(c => !only || only.has(c.id));
+  const r = runChecks(list, c => node(c.args));
+  emit({ cmd: 'checks', exit: r.exit, verdict: r.exit === 0 ? 'pass' : r.exit === 1 ? 'explained' : 'needs-model', results: r.results }, human, () => checksText(r));
+  return r.exit;
+};
+
 // ---- entry ----
 
 async function main(argv) {
