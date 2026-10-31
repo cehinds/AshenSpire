@@ -456,8 +456,9 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
   // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
-  // the first thing main.js onCombatEnd does): HP, Mana and Stamina carry to
-  // the next fight, as they do for a player. Only HP used to, so every fight
+  // the first thing main.js onCombatEnd does): HP and Stamina carry to
+  // the next fight, as they do for a player; Mana is refilled by runCombatEnd
+  // (mechanics.mana.combatEndRefill, 2026-10-31). Only HP used to, so every fight
   // opened on full pools and cross-fight starvation was invisible here.
   //
   // Flask charges, the reason this write-back first existed (src/main.js:1335), and without

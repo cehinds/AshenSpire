@@ -15,7 +15,9 @@ import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // runCombatEnd(run, combat) is the matching exit: the pools a fight leaves
 // behind (HP, Mana, Stamina and their maxima, flasks and their charges, the
 // equipment pool deficits) are written back to the run, as the live
-// onCombatEnd does, so the next fight opens where this one ended.
+// onCombatEnd does, so the next fight opens where this one ended, except that
+// Mana is refilled to its maximum as the fight ends (mechanics.mana.combatEndRefill,
+// owner 2026-10-31, superseding plan A2's Mana carry).
 
 import { createCombat, previewCard } from './combat.js';
 import { createRng } from './rng.js';
@@ -28,7 +30,7 @@ import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { isPoolDeckMode } from '../model/cardRemoval.js';
-import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
+import { staminaAtCombatStart, staminaDeficitAtCombatStart, manaAtCombatEnd, manaDeficitAtCombatEnd } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
 import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
@@ -54,7 +56,8 @@ export function enemyLevelsForFight(registries, run, enemyIds, encounter = null)
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
   // A fight opens with the Stamina the framework's entry rule gives
-  // (mechanics.stamina.combatStartRefill, plan A2); Mana carries as it is.
+  // (mechanics.stamina.combatStartRefill, plan A2); Mana was refilled when the
+  // last fight ended (runCombatEnd, mechanics.mana.combatEndRefill).
   // A refill also settles the Stamina deficit an equipment swap carried, so
   // the next swap cannot take the refilled points back.
   const stamina = staminaAtCombatStart({ currentStamina: run.stamina, maxStamina: run.maxStamina });
@@ -210,10 +213,12 @@ export function runCombatEnd(run, combat) {
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   for (const field of ['hp', 'mana', 'stamina']) {
     run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];
+    if (field === 'mana') run.mana = manaAtCombatEnd({ currentMana: combat.player.mana, maxMana: combat.player.maxMana });
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  run.equipmentPoolDeficits.mana = manaDeficitAtCombatEnd(run.equipmentPoolDeficits.mana ?? 0);
   // SPEC §14.3: a spent revive token stays spent, and every companion is one
   // fight closer to leaving, win or loss.
   settleFightConsumables(run, combat);

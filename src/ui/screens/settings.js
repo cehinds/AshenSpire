@@ -325,8 +325,8 @@ function recoverySettingRows() {
         note: `Points, or a percent of your maximum ${name} rounded down.` }),
       number('idleTurns', 'Only after unused turns', `A turn restores ${name} only after this many turns in a row in which ${use[pool]} (the enemies’ turn counts). 0: every turn.`),
       number('everyRounds', 'Only every N rounds', `Restore only on every Nth round of the fight. 1: every round.`),
-      ...(!betweenFights ? [] : [number('afterCombat', 'After a won fight', `Percent of your maximum ${name} restored when you win a fight.`),
-      number('atRest', 'At every Rest', `Percent of your maximum ${name} restored when you Rest, on top of what the place restores. The Rest preview includes it.`)]),
+      ...(!betweenFights || (pool === 'mana' && mechanics.mana.combatEndRefill === 'full') ? [] : [number('afterCombat', 'After a won fight', `Percent of your maximum ${name} restored when you win a fight.`)]),
+      ...(!betweenFights ? [] : [number('atRest', 'At every Rest', `Percent of your maximum ${name} restored when you Rest, on top of what the place restores. The Rest preview includes it.`)]),
     ];
   });
 }
