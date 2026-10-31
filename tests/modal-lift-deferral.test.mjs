@@ -86,3 +86,16 @@ test('without deferLift the door locks and releases synchronously, as before', (
     assert.equal(modalOpen(), false);
   });
 });
+
+test('deferLift without deferFocus still locks the page, a few frames after the mount', () => {
+  page(({ document, screen, opener, frame }) => {
+    const shell = openModal({ title: 'Door', opener, host: document.body, primary: null, deferLift: true });
+    assert.equal(screen.hasAttribute('inert'), false, 'the mounting frame restyles nothing behind the door');
+    frame(); frame();
+    assert.equal(screen.hasAttribute('inert'), true, 'the entry is armed although the door never deferred focus');
+    shell.close();
+    frame(); frame();
+    assert.equal(screen.hasAttribute('inert'), false);
+    assert.equal(modalOpen(), false);
+  });
+});

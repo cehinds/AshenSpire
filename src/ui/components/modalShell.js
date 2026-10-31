@@ -636,11 +636,12 @@ export function openModal({
       || panel.querySelector('.modal-close');
     first?.focus?.({ preventScroll: true });
   };
+  // The page lock (inert restyles everything behind the door) is armed a frame after mount whenever the door
+  // asked to defer it (deferLift), whether or not it also defers focus: an entry left unarmed locks nothing.
+  let armed = false;
+  const arm = () => { if (armed) return; armed = true; if (veil.isConnected) unregisterModal?.arm?.(); };
   if (deferFocus && typeof requestAnimationFrame === 'function') {
-    // Mount landed in the frame before this one; focus here, and the page lock
-    // (inert restyles everything behind the door) a frame later still.
-    let armed = false;
-    const arm = () => { if (armed) return; armed = true; if (veil.isConnected) unregisterModal?.arm?.(); };
+    // Mount landed in the frame before this one; focus here, and the page lock a frame later still.
     requestAnimationFrame(() => {
       if (veil.isConnected) focusFirst();
       requestAnimationFrame(arm);
@@ -648,6 +649,10 @@ export function openModal({
     setTimeout(arm, 250)?.unref?.();
   } else {
     focusFirst();
+    if (deferInert) {
+      requestAnimationFrame(() => requestAnimationFrame(arm));
+      setTimeout(arm, 250)?.unref?.();
+    }
   }
 
   return Object.freeze({ veil, panel, head, body: bodyEl, foot, close });
