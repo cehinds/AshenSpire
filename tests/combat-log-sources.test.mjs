@@ -232,6 +232,8 @@ test('Core automatic outcomes (Evasion bypassed, out of range) log without the r
 test('Core hit log shows one attacker roll against Evasion', () => {
   const [line] = log([{ type: 'attackHit', sourceId: 'player', targetId: 'e1', fixedDefense: true,
     dice: [8, 13], d20: 8, attackTotal: 17, accuracy: 4, evasion: 9, evasionTotal: 9, hitChance: 96, mode: 'advantage' }]);
-  assert.match(line, /d20 \[8, 13\] \+ Precision 4 = 17 vs Evasion 9 · advantage · 96% chance\.$/);
+  // Re-pinned (owner, 2026-10-31): the compact line is "<what>: <total> vs <DC> · lands"; the itemised
+  // "d20 [8, 13] + Precision 4 = 17 vs Evasion 9" lives in the row's rollReceipt (tests/roll-log.test.mjs).
+  assert.match(line, /: 17 vs 9 · lands$/);
   assert.doesNotMatch(line, /vs d20|stance/);
 });

@@ -144,6 +144,8 @@ export const EVENTS = Object.freeze([
   'enemyBurdenAdded','enemyBurdenDrawn','enemyBurdenBlocked','intentRevealed',
   // SPEC §17 Contests: an insight contest (d20 + attributes + rank vs Poise + attributes + level) passed or failed.
   'contestPassed','contestFailed',
+  // SPEC combat log (owner, 2026-10-31): the rolls that were silent now say total vs DC.
+  'critRolled', 'perceptionRolled', 'statusChanceRolled',
   'cardModified',
   'cardMoved',
   'cardDrawn',

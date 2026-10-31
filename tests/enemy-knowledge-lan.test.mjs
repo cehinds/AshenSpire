@@ -175,3 +175,14 @@ test('foreign postcombat progression history omits private Perception while pres
   assert.deepEqual(view.party[0].xpProgression, source.party[0].xpProgression);
   assert.ok(source.party[1].xpProgression.xpBefore.tracks.perception);
 });
+
+test('a foreign seat\'s perceptionRolled event is dropped from the LAN projection', () => {
+  const { host } = fixture();
+  const snapshot = host.snapshot();
+  snapshot.scene.events = [
+    { type: 'perceptionRolled', ownerId: 'p1', enemyInstanceId: 'e1', roll: 9, wisdom: 2, total: 11, dc: 8, passed: true },
+    { type: 'perceptionRolled', ownerId: 'p2', enemyInstanceId: 'e1', roll: 4, wisdom: 2, total: 6, dc: 8, passed: false },
+  ];
+  const events = projectLanSnapshot(snapshot, ['p1']).scene.events;
+  assert.deepEqual(events.map(event => event.ownerId), ['p1'], 'only the owner keeps the private roll, DC and verdict');
+});
