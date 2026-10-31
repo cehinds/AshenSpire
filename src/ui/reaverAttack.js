@@ -8,6 +8,7 @@ import { liteRendering } from './performance.js';
 import { hintImage } from './imageHints.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { thaw } from '../config/authored.js';
+import { COMBAT_TIMING } from './animationPace.js';
 
 const ATTACK = uiConfig.presentation.reaverAttack.components.attack;
 
@@ -90,6 +91,15 @@ export function reaverAttackTiming(speed) {
   if (capped) scale *= cap / impactAt;
   // Floored when capped, so many short frames cannot round past the cap.
   const frameMs = Math.max(1, (capped ? Math.floor : Math.round)(REAVER_ATTACK.frameMs * scale));
+  const hold = Math.round((Number(speed?.minFrameMs) || 0) * COMBAT_TIMING.reaverRunHoldShare);
+  if (hold > frameMs) {
+    // The sequence is 60 steps of 18 distinct images. Playing each step at the hold would take seconds, so
+    // each image (run) is held at least `hold`: runMs[i] is how long the i-th run shows.
+    const runMs = REAVER_ATTACK_RUNS.map(([, count]) => Math.max(hold, count * frameMs));
+    let before = 0, at = 0, impactMs = 0;
+    REAVER_ATTACK_RUNS.forEach(([, count], i) => { if (at <= REAVER_ATTACK.impactFrameIndex) impactMs = before; at += count; before += runMs[i]; });
+    return Object.freeze({ frameMs, runMs: Object.freeze(runMs), impactMs, totalMs: before });
+  }
   return Object.freeze({
     frameMs,
     impactMs: REAVER_ATTACK.impactFrameIndex * frameMs,
@@ -119,6 +129,10 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   actorEl.classList.add('reaver-attack-playing');
   actorEl.appendChild(image);
 
+  // With a per-image hold (timing.runMs) playback steps image by image, not step by step.
+  const runStarts = [];
+  { let at = 0; for (const [, count] of REAVER_ATTACK_RUNS) { runStarts.push(at); at += count; } }
+  let runIndex = 0;
   let frameIndex = 0;
   let timer = null;
   let due = 0;
@@ -129,13 +143,14 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
   };
   const advance = () => {
     if (cancelled) return;
-    frameIndex += 1;
+    if (timing.runMs) { runIndex += 1; frameIndex = runIndex < runStarts.length ? runStarts[runIndex] : REAVER_ATTACK_SEQUENCE.length; }
+    else frameIndex += 1;
     if (frameIndex >= REAVER_ATTACK_SEQUENCE.length) return;
     image.src = frameUrl(REAVER_ATTACK_SEQUENCE[frameIndex]);
     image.dataset.frameId = `P${String(frameIndex + 1).padStart(2, '0')}`;
-    schedule(timing.frameMs);
+    schedule(timing.runMs ? timing.runMs[runIndex] : timing.frameMs);
   };
-  schedule(timing.frameMs);
+  schedule(timing.runMs ? timing.runMs[0] : timing.frameMs);
 
   return {
     impactMs: timing.impactMs,
@@ -144,12 +159,13 @@ export function playReaverAttack(actorEl, timing = reaverAttackTiming()) {
     // consume the authored frames that have not played yet.
     remainingMs() {
       if (cancelled || frameIndex >= REAVER_ATTACK_SEQUENCE.length) return 0;
+      if (timing.runMs) return Math.max(0, due - Date.now()) + timing.runMs.slice(runIndex + 1).reduce((a, b) => a + b, 0);
       return Math.max(0, due - Date.now())
         + (REAVER_ATTACK_SEQUENCE.length - frameIndex - 1) * timing.frameMs;
     },
     // Hit-stop (SPEC §7.4): stay on the current frame for `ms` more.
     hold(ms) {
-      if (cancelled || !(ms > 0) || frameIndex >= REAVER_ATTACK_SEQUENCE.length - 1) return;
+      if (cancelled || !(ms > 0) || (timing.runMs ? runIndex >= runStarts.length - 1 : frameIndex >= REAVER_ATTACK_SEQUENCE.length - 1)) return;
       clearTimeout(timer);
       schedule(Math.max(0, due - Date.now()) + ms);
     },

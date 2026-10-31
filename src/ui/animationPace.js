@@ -27,6 +27,13 @@ export const COMBAT_TIMING = Object.freeze({
   floaterMinLifeMs: 400,   // the floor at the highest speed multiplier
   floaterInstantMs: 480,   // the Instant pace keeps the classic short number
   floaterFadeFraction: 1 / 3,
+  // Sprite frames: each pose frame is held at least this share of the Animation step duration
+  // (390 ms by default -> 109 ms at Combat speed 1), divided by the Combat speed, clamped below.
+  // Mobile fast (195 ms) therefore holds ~55 ms. Instant and Reduced motion hold nothing.
+  frameHoldShare: 0.28,
+  frameHoldMinMs: 40,
+  frameHoldMaxMs: 160,
+  reaverRunHoldShare: 0.6, // the 60-step Reaver painting changes image 18 times; each change holds this share of the floor
 });
 
 // The wait a timeline holds after a turn-banner beat. The banner's own display
@@ -76,6 +83,12 @@ export function floaterLifeMs() {
   if (getAnimSpeed() === 'instant') return COMBAT_TIMING.floaterInstantMs;
   return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / combatPacing.speed));
 }
+// The shortest time one sprite frame is shown, in ms (0 on Instant and Reduced motion).
+export function frameHoldMs({ reduced = false } = {}) {
+  if (reduced || !ANIM_SPEEDS[getAnimSpeed()]) return 0;
+  const hold = combatPacing.animationMs * COMBAT_TIMING.frameHoldShare / combatPacing.speed;
+  return Math.round(Math.min(COMBAT_TIMING.frameHoldMaxMs, Math.max(COMBAT_TIMING.frameHoldMinMs, hold)));
+}
 export function actionPacing({ reduced = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
@@ -90,7 +103,8 @@ export function actionPacing({ reduced = false } = {}) {
     gapMs, intentMs: 0, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
-    spriteSpeed: Object.fromEntries(Object.entries(pace || ANIM_SPEEDS.normal).map(([key, value]) => [key, value * spriteScale])),
+    spriteSpeed: { ...Object.fromEntries(Object.entries(pace || ANIM_SPEEDS.normal).map(([key, value]) => [key, value * spriteScale])),
+      minFrameMs: frameHoldMs({ reduced }) },
     scale,
   };
 }
