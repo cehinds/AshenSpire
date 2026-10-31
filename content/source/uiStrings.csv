@@ -1924,3 +1924,18 @@ cardArtBuilder.previewFailed,,,Could not render the preview: {reason},
 combat.stat.precision,,Precision,Each stack adds 1 Accuracy to your attacks.,Precision
 combat.stat.evasion,,Evasion,Each stack helps avoid incoming attacks.,Evasion
 combat.stat.critChance,,Crit,Crit chance: the best chance one of your attacks has to land a critical hit.,Crit chance
+whatChanged.eyebrow,,What changed,A receipt of what a choice or purchase changed.,
+whatChanged.continue,,Continue,Close the receipt and go on.,
+whatChanged.close,,Close receipt,Close the what-changed receipt.,
+whatChanged.cost,,Spent,What this cost.,
+whatChanged.cost.cinders,,{n} Cinders,,
+whatChanged.cost.stones,,{n} Smithing Stones,,
+whatChanged.gained,,Gained,,
+whatChanged.lost,,Lost,,
+whatChanged.added,,Added to deck,,
+whatChanged.removed,,Removed from deck,,
+whatChanged.upgraded,,Upgraded,,
+whatChanged.ranked,,Rank up,,
+whatChanged.tier,,Tier up,,
+whatChanged.before,,Before,,
+whatChanged.after,,After,,
