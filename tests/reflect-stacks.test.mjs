@@ -126,3 +126,14 @@ test('multi-hit previews spend one Reflect stack per landed hit, as live does', 
   assert.equal(first, Math.floor(second * 0.7), 'only the first hit is cut (1 stack = 30%)');
   assert.equal(combat.player.reflectStacks, 1, 'the preview works on a detached copy');
 });
+
+test('integer arithmetic: 10 incoming at 4 stacks leaves 1; 30 original at 3 stacks returns 27', async () => {
+  const { reflectCut, reflectReturned } = await import('../src/engine/guardStacks.js');
+  assert.equal(reflectCut(10, 4), 1); assert.equal(reflectCut(10, 3), 1);
+  assert.equal(reflectReturned(30, 3), 27); assert.equal(reflectReturned(30, 10), 27);
+  const { combat, enemy } = live();
+  combat.player.reflectStacks = 4;
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
+  const receipt = profileDamageReceipt(combat, enemy, combat.player, 10, carrier);
+  assert.equal(receipt.damageReceipt.hits[0].incoming, reflectCut(receipt.reflect.original, 4), 'preview receipt == helper == live path');
+});

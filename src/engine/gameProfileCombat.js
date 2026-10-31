@@ -13,7 +13,7 @@ import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js'
 // a missing/current profile leaves the existing interpreter untouched.
 import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
-import { reflectStackCount, reflectReduceFraction } from './guardStacks.js';
+import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
 // It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
@@ -145,10 +145,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // figure ride on the receipt so the landed hit can send its share back. A reflected, countered or unreflectable hit is not cut.
   let reflect = null;
   if (modern && amount > 0 && !evaded && reflectApplies(target, source, carrier, profile)) {
-    const stacks = reflectStackCount(target), keep = 1 - reflectReduceFraction(stacks);
+    const stacks = reflectStackCount(target);
     reflect = { stacks, original: amount };
-    amount = transition('reflect','Reflect',amount,Math.floor(amount*keep),'mitigation',keep);
-    amount = Math.floor(amount);
+    amount = transition('reflect','Reflect',amount,reflectCut(amount,stacks),'mitigation',(100-reflectReducePct(stacks))/100);
   }
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;

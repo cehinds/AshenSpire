@@ -50,3 +50,12 @@ export const counterStackReturn = (stacks, incoming) =>
 /** Reflect's fraction for `stacks`, capped: the share removed from a hit (reduce) or sent back (return). */
 export const reflectReduceFraction = stacks => Math.min(mechanics.reflect.reduceCap, whole(stacks) * mechanics.reflect.reducePerStack);
 export const reflectReturnFraction = stacks => Math.min(mechanics.reflect.reduceCap, whole(stacks) * mechanics.reflect.returnPerStack);
+
+// Integer arithmetic (percent points from the mechanics constants x 100), so 1 - 0.9 style float error cannot cost a point.
+const pct = value => Math.round(value * 100);
+export const reflectReducePct = stacks => Math.min(pct(mechanics.reflect.reduceCap), pct(mechanics.reflect.reducePerStack) * whole(stacks));
+export const reflectReturnPct = stacks => Math.min(pct(mechanics.reflect.reduceCap), pct(mechanics.reflect.returnPerStack) * whole(stacks));
+/** The hit left after Reflect cuts it: floor(incoming x (100 - cut%) / 100). */
+export const reflectCut = (incoming, stacks) => Math.floor(whole(incoming) * (100 - reflectReducePct(stacks)) / 100);
+/** What a reflected hit sends back: floor(original x return% / 100). */
+export const reflectReturned = (original, stacks) => Math.floor(whole(original) * reflectReturnPct(stacks) / 100);
