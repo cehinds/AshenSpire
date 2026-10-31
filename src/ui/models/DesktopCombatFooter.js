@@ -1,4 +1,5 @@
 import { uiConfig } from '../../config/generated/ui.js';
+import { responsiveHandLayout } from './HandLayout.js';
 
 // Physical desktop geometry; UI zoom changes the ruler, never the art's shape.
 export function desktopFooterEnabled({ formFactor, appearance, layout }) {
@@ -42,4 +43,13 @@ export function desktopHandLayout({ width, height, count, zoom = 1 }, config = u
   const restTop = Math.min(...cards.map(c => top + c.y + cardHeight / 2 - (Math.abs(Math.sin(c.angle * Math.PI / 180)) * cardWidth + Math.cos(c.angle * Math.PI / 180) * cardHeight) / 2), top);
   return { cardWidth, cardHeight, cards, capacity: Math.max(1, count), span, start, step, top, lift: 18 * unit,
     restLeft: start - 12 * unit, restTop, clearanceTop: -10 * unit, controlsReserve: 0 };
+}
+
+// The battlefield's bottom edge, in combat-root px: the fan's clearance line (its resting top
+// raised by the selection lift). The hand band is cut to this, so the band the lowered, smaller
+// fan no longer needs goes to the battlefield instead of an empty strip.
+export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor = 'desktop' }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
+  const input = { width, height: plan.handHeight, count: 5, rem, zoom, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor };
+  const fan = responsiveHandLayout(input, desktopHandLayout(input, config));
+  return plan.handTop + fan.clearanceTop;
 }
