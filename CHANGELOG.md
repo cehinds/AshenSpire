@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-31
+
+- **Layered art fills the remaining card library** ([#2384](https://github.com/cehinds/AshenSpire/pull/2384), `0.7.2.9`). All 156 cards without dedicated illustrations use reviewed background, object and effect cutouts in Simple mode. The art-review page shows each component and the actual game card, with placement controls and JSON/PNG export. Existing custom-art routing and Legacy mode stay available.
+
 ## 2026-10-30
 
-- **Layered art fills the remaining card library** ([#2384](https://github.com/cehinds/AshenSpire/pull/2384), `0.7.2.7`). All 156 cards without dedicated illustrations use reviewed background, object and effect cutouts in Simple mode. The art-review page shows each component and the actual game card, with placement controls and JSON/PNG export. Existing custom-art routing and Legacy mode stay available.
+- **Smoother combat on phones** ([#2388](https://github.com/cehinds/AshenSpire/pull/2388), `0.7.2.9`). Combat plays feel smoother on phones: the hand updates in place instead of rebuilding every card, the screen redraws less after each play, and the combat log, targeting and card-reading panels no longer stall the frame. Nothing looks different; measured on a throttled phone profile, time blocked per fight fell by about 40% and the worst frame roughly halved.
 - **No action flash with Effects off** ([#2387](https://github.com/cehinds/AshenSpire/pull/2387), `0.7.2.7`). With Effects off, fighters no longer flash or glow when they attack, cast or guard; they still lunge and step as before, under the Attack lunge switch.
 - **An Effects switch, off by default** ([#2385](https://github.com/cehinds/AshenSpire/pull/2385), `0.7.2.5`). Settings → General → Combat gains **Effects**. Off keeps every fight readable and light: a still stance glow, instant cards, flat panels, no sparks, flashes or shake, and health bars that settle once per move. On brings back the animated glow, hit sparks and flashes, card motion, blur and shadows, and live-tracking bars. Fighter motion has its own four switches (attack lunge, hit recoil, idle motion, defeat fall); idle motion is off on phones by default to save battery. The old Rendering quality setting folds into Effects.
 - **Changelog-order test survives a version reset** ([#2382](https://github.com/cehinds/AshenSpire/pull/2382), `0.7.2.3`). The test that proves a stale receipt is caught built its stale stamp as ten builds below the current one, which stopped being a real stamp once 0.7.2 restarted the build counter at 0. It now takes one build below the newest receipt of the current version, so it holds at any build number. Nothing changes in play.

@@ -52,7 +52,7 @@ import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // on flip; the same warning rides handAxis.js.
 
 import { reducedMotionRequested } from '../motion.js';
-import { renderCard, setHandFaceBudget } from './card.js';
+import { renderCard, refreshCard, setHandFaceBudget } from './card.js';
 import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
@@ -95,7 +95,11 @@ export function measureHandUpcastHeight(controls, { zoom, width, cache }) {
   return height;
 }
 
-export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false }) {
+export function mountHand(handEl, { registries, wireCard = null, animateArrival = false, fitFan = false, inspectHold = true, reuseCards = false,
+  // liveWiring: the host's wireCard reads a live record that updateCard refreshes, so a card whose preview,
+  // affordability or availability moved keeps its element and listeners (refreshCard). rebuildKey(entry) is a string
+  // that, when it moves, still forces a new card (the host's own controls on it, built from the preview).
+  liveWiring = false, updateCard = null, rebuildKey = null }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
   // value here would silently turn the gesture off.
@@ -137,6 +141,13 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const rect = handEl.getBoundingClientRect();
     return { rect, clientWidth: handEl.clientWidth, clientHeight: handEl.clientHeight, fontSize: layoutMetrics().fontSize };
   };
+  const stripReadable = () => fitFan && fanApplied && handEl.isConnected && handEl.dataset.wireframeHand === 'true';
+  // A full combat render writes the topbar, the stage and the controls before it
+  // reaches the hand, and none of those move the strip. The screen primes the
+  // strip's box at the top of the render, while layout is still clean, so the
+  // hand's own read is not the flush that pays for every write in between.
+  let primedBox = null;
+  const primeStripBox = (on = true) => { primedBox = on && stripReadable() ? readStripBox() : null; };
   function applyHandLayout(box = null) {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
@@ -320,11 +331,29 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     el.style.zIndex = i;
   }
 
+  // Returns what the pass did to the strip: `reshaped` (the fan plan was re-applied, so the hand's
+  // geometry may have moved) and `rebuilt` (how many card faces were built from scratch).
   function render(args) {
-    renderCards(args);
+    const result = renderCards(args);
     // `data-has-selection` stands in for `.hand:has(.selected)` in combat.css.
     const on = String(!!handEl.querySelector('.selected'));
     if (handEl.getAttribute('data-has-selection') !== on) handEl.setAttribute('data-has-selection', on);
+    return result;
+  }
+  // The options renderCard is given above, for refreshCard (tests/hand-keeps-cards-on-refresh.test.mjs holds the two equal).
+  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
+    surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
+  // A card that keeps its element while its look changes runs without transitions for the frame that paints the
+  // change, so it lands as a rebuilt card did. The second frame callback restores the stylesheet's own.
+  const quieted = new Set();
+  function quiet(el) {
+    if (!quieted.size) {
+      const restore = () => { for (const node of quieted) node.style.removeProperty('transition'); quieted.clear(); };
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(restore)); else restore();
+    }
+    if (quieted.has(el)) return;
+    quieted.add(el);
+    el.style.setProperty('transition', 'none');
   }
   function renderCards({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
@@ -336,12 +365,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // written): the layout pass at the end of this render then needs no read
     // and so forces no layout. Only once the strip is set up (first render
     // writes the wireframe attribute the box depends on) and attached.
-    const preBox = fitFan && fanApplied && handEl.isConnected && handEl.dataset.wireframeHand === 'true' ? readStripBox() : null;
+    const preBox = primedBox || (stripReadable() ? readStripBox() : null);
+    primedBox = null;
     const wanted = new Set(cards.map(entry => entry.inst.instanceId));
     // Whether this pass changed anything the fan plan reads: a card made or
     // dropped, or the order. A pure selection change keeps every element, so the
     // plan (and its forced layout) is the one already applied.
     let reshaped = !fanApplied || emptyHtml != null || n0 !== cards.length;
+    let rebuilt = 0;
     for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
       record.release?.(); record.el.remove(); renderedCards.delete(id); reshaped = true;
     }
@@ -357,7 +388,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml;
       observeCards();
       if (fitFan) applyHandLayout();
-      return;
+      return { reshaped: true, rebuilt: 0 };
     }
     const n = cards.length;
     // The legacy transform fan publishes its lift for CSS to reserve. The
@@ -378,11 +409,25 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // live combat by instance id when pressed, so a kept one is never stale,
       // and JSON.stringify would drop them anyway.
       const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability]);
+      // What a refresh cannot change: the instance, the viewer's reason and name, the surface, whether the card is wired
+      // at all (it has a preview), and the host's own controls.
+      const structure = liveWiring ? JSON.stringify([entry.inst, entry.reason, entry.name, entry.surface, !!entry.preview, rebuildKey ? rebuildKey(entry) : '']) : '';
       let record = renderedCards.get(id);
+      if (record && record.signature !== signature && liveWiring && !entry.reason && record.structure === structure
+          && refreshCard(record.el, cardOpts(entry))) {
+        updateCard?.(record.el, entry);
+        record.signature = signature;
+        // A rebuilt card appeared in place with no transition; the kept one must not animate the same change.
+        quiet(record.el);
+      }
       // A face rebuilt in place (its preview or affordability moved, same slot,
       // same count) keeps the fan plan already applied to its predecessor.
       let predecessor = null;
+      // The face of the card this one replaces (its preview or affordability moved): the new card takes
+      // it over when the markup is the same, or the same with other numbers in its text rows.
+      let donor = null;
       if (record && record.signature !== signature) {
+        donor = record.el;
         predecessor = fitFan && fanApplied && n0 === cards.length && handEl.children[i] === record.el ? record : null;
         if (predecessor) predecessor.controls = predecessor.el.querySelector('.card-upcast-controls');
         if (predecessor) predecessor.controlsHtml = predecessor.controls ? predecessor.controls.outerHTML : '';
@@ -407,9 +452,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // surface `none`, and the door that exists to offer `Play card` offered
       // nothing at all. Caught in review on the promotion, not by a test,
       // which is why tests/hand-forwards-surface.test.mjs now exists.
+      rebuilt++;
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
-          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
+          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3,
+          reuseFace: donor });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
       // sits on the strip's own baseline and nothing is pushed below it.
@@ -478,7 +525,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // every hand card as well.
       if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      renderedCards.set(id, { el, signature, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
+      renderedCards.set(id, { el, signature, structure, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
       handEl.insertBefore(el, handEl.children[i] || null);
       if (predecessor) {
         // Same controls (so the same reserved height): take over the placement
@@ -507,6 +554,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // which used to schedule another fan and battlefield fit after every render.
     observeCards();
     if (reshaped) { applyHandLayout(preBox); fanApplied = true; }
+    return { reshaped, rebuilt };
   }
 
   function teardown() {
@@ -529,5 +577,5 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     presentationOrder = moveHandInstance(presentationOrder, id, slot);
     if (lastRender) render(lastRender);
   }
-  return { render, teardown, reorderAt };
+  return { render, teardown, reorderAt, primeStripBox };
 }

@@ -1,6 +1,7 @@
+import { cloneRun } from './runClone.js';
 // Keep a mounted offer reference coherent when a claim replaces nested run data.
 export function persistRewardChange(run, offerId, change, persist) {
-  const before = structuredClone(run);
+  const before = cloneRun(run);
   const offer = run.gameProfileRewardOffers[offerId];
   const offerBefore = structuredClone(offer);
   try {

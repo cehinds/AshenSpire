@@ -1,5 +1,6 @@
 import { commitCombatSnapshot, serializeCombatSnapshot } from './combatSnapshot.js';
 import { reconcileCombatKnowledge } from './enemyKnowledge.js';
+import { cloneRun } from '../model/runClone.js';
 
 /** Irreversible changes are saved before adoption, animation or terminal presentation. */
 export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, saveCandidate }) {
@@ -18,7 +19,7 @@ export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, 
     && JSON.stringify(run.ashenBlight) === JSON.stringify(candidate.player.ashenBlight)) {
     return bankKnowledgeOnly({ run, candidate, saveCandidate });
   }
-  const next = structuredClone(run);
+  const next = cloneRun(run);
   reconcileCombatKnowledge(next, candidate);
   if (candidate.result) {
     next.ashenBlight = structuredClone(candidate.player.ashenBlight);
@@ -43,7 +44,7 @@ export function commitExpansionCandidate({ run, candidate, nodeId, encounterId, 
 // checkpoint snapshot and its saved RNG counters (no rng is passed) stay put.
 function bankKnowledgeOnly({ run, candidate, saveCandidate }) {
   if (!run.enemyKnowledgeState || !candidate.enemyKnowledge) return { ok: true, durable: false };
-  const next = structuredClone(run);
+  const next = cloneRun(run);
   reconcileCombatKnowledge(next, candidate);
   if (JSON.stringify(next.enemyKnowledgeState) === JSON.stringify(run.enemyKnowledgeState)
     && JSON.stringify(next.skills) === JSON.stringify(run.skills)) return { ok: true, durable: false };

@@ -171,14 +171,14 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   // and changes neither the drawer's open state nor its size. Its live handle
   // sits on the screen's `state`, so a remount keeps the same door open; only
   // the screen's teardown (closeCombatFullLog) or the reader's Close ends it.
-  let latestEntries = [];
+  let latestEntries = () => [];
   const readPalette = () => {
     const settings = readSettings() || {};
     return combatLogPalette(settings);
   };
   fullLog.addEventListener('click', () => {
     if (state.fullLog) return;
-    state.fullLog = openCombatLogModal({ entries: latestEntries, palette: readPalette(), showConsole: consoleOn(), opener: fullLog, onClose: () => { state.fullLog = null; } });
+    state.fullLog = openCombatLogModal({ entries: latestEntries(), palette: readPalette(), showConsole: consoleOn(), opener: fullLog, onClose: () => { state.fullLog = null; } });
   });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   // Like the Grid checkbox: wait for the write, block overlapping toggles, and repaint from the persisted
@@ -283,7 +283,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   formFactorObserver.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
   const gridObserver = new MutationObserver(syncGrid);
   gridObserver.observe(gridRoot, { attributes: true, attributeFilter: ['data-formation-grid'] });
-  function update(model, { auto: autoOn = false } = {}) {
+  // `entries` (a function) may stand in for the model's entries: the log is
+  // formatted only when a reader (drawer, full log) is open or opens, so a play
+  // with the log closed formats nothing. The model itself stays serializable.
+  function update(model, { auto: autoOn = false, entries: lazyEntries = null } = {}) {
     const toggle = childModel(model, UI.reactionToggle).properties;
     const log = childModel(model, UI.combatLogDrawer).properties;
     reaction.disabled = toggle.disabled;
@@ -304,25 +307,30 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     // Expanded reading uses the same body portal, focus/back handling and layer
     // as the full log, so battlefield stacking contexts cannot cover it.
     panel.hidden = true;
+    const readEntries = () => (typeof lazyEntries === 'function' ? lazyEntries() : log.entries);
     if (log.open && !state.drawerLog) state.drawerLog = openCombatLogModal({
-      entries: log.entries, palette: readPalette(), showConsole: consoleOn(), opener: logButton, detailed: false,
+      entries: readEntries(), palette: readPalette(), showConsole: consoleOn(), opener: logButton, detailed: false,
       onClose: () => { state.drawerLog = null; state.open = false; onViewChange(); },
     });
     if (!log.open && state.drawerLog) { const drawer = state.drawerLog; state.drawerLog = null; drawer.close(); }
     logButton.setAttribute('aria-expanded', String(log.open));
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
-    latestEntries = log.entries;
+    latestEntries = readEntries;
     const palette = readPalette();
     state.fullLog?.setConsoleEnabled(consoleOn());
     state.drawerLog?.setConsoleEnabled(consoleOn());
-    const key = JSON.stringify([log.entries, palette]);
+    // No reader, no entries: nothing is formatted or keyed until one opens.
+    const key = state.fullLog || state.drawerLog ? JSON.stringify([readEntries(), palette]) : '';
     if (key !== entryKey) {
       entryKey = key;
       // The legacy panel stays hidden; only the actual modal readers need DOM.
       // latestEntries above keeps a closed reader current without building a
       // second, inaccessible copy of the receipt history on every combat beat.
-      state.fullLog?.setEntries(log.entries, palette);
-      state.drawerLog?.setEntries(log.entries, palette);
+      if (key) {
+        const rows = readEntries();
+        state.fullLog?.setEntries(rows, palette);
+        state.drawerLog?.setEntries(rows, palette);
+      }
     }
     schedule();
   }
