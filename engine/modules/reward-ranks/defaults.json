@@ -21,6 +21,7 @@
     ]
   },
   "ownedCopyWeight": 0.05,
+  "ownedPotionWeight": 0.05,
   "tagWeights": {
     "maneuver:casting": 1,
     "maneuver:smash": 2,
