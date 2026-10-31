@@ -137,6 +137,8 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     hammer.affine = [-1, 0, 0, -1];
     Object.assign(hammer.css, { left: '54.6875%', top: '48.4375%', width: '66.40625%', height: '66.40625%',
       transform: 'translate(-50%, -50%) rotate(180deg) scale(1, 1)', zIndex: String(hammer.zIndex) });
+    hammer.css.filter = [hammer.css.filter === 'none' ? '' : hammer.css.filter,
+      'drop-shadow(0 0 0.8px rgba(225,230,235,0.85))'].filter(Boolean).join(' ');
   }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
   if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
