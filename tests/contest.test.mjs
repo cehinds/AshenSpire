@@ -2,6 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rollContest, contestPreview } from '../src/engine/contest.js';
+import { attributesOf, levelOf } from '../src/engine/counterReturn.js';
+const read = { attributesOf, levelOf };
 import { createRng } from '../src/engine/rng.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -17,25 +19,25 @@ const stub = roll => ({ int: (stream, lo, hi) => { assert.equal(stream, 'combatC
 const ctx = { attributesForEntity: entity => entity.attributes };
 
 test("owner's example: roll 5 + INT 1 + WIS 2 + rank 1 = 9 vs Poise 7 + WIS 1 + level 1 = 9 passes on the tie", () => {
-  const result = rollContest({ rng: stub(5), caster, target: enemy, kind: 'mental', rank: 1, ctx });
+  const result = rollContest({ rng: stub(5), caster, target: enemy, kind: 'mental', rank: 1, ctx, read });
   assert.equal(result.total, 9); assert.equal(result.dc, 9); assert.equal(result.passed, true);
   assert.deepEqual(result.parts, [{ id: 'intelligence', value: 1 }, { id: 'wisdom', value: 2 }]);
   assert.deepEqual(result.dcParts.map(part => part.id), ['poise', 'wisdom', 'level']);
 });
 test('a roll of 4 fails the same contest', () => {
-  assert.equal(rollContest({ rng: stub(4), caster, target: enemy, kind: 'mental', rank: 1, ctx }).passed, false);
+  assert.equal(rollContest({ rng: stub(4), caster, target: enemy, kind: 'mental', rank: 1, ctx, read }).passed, false);
 });
 test('the DC reads CURRENT Poise, not the maximum', () => {
   const broken = { ...enemy, persistentPoise: { max: 7, value: 0 } };
-  assert.equal(contestPreview({ caster, target: broken, kind: 'mental', rank: 1, ctx }).dc, 2);
-  assert.equal(rollContest({ rng: stub(1), caster, target: broken, kind: 'mental', rank: 1, ctx }).passed, true);
+  assert.equal(contestPreview({ caster, target: broken, kind: 'mental', rank: 1, ctx, read }).dc, 2);
+  assert.equal(rollContest({ rng: stub(1), caster, target: broken, kind: 'mental', rank: 1, ctx, read }).passed, true);
 });
 test('physical contests use DEX + CON against CON', () => {
-  const preview = contestPreview({ caster, target: enemy, kind: 'physical', rank: 2, ctx });
+  const preview = contestPreview({ caster, target: enemy, kind: 'physical', rank: 2, ctx, read });
   assert.equal(preview.bonus, 3 + 4 + 2); assert.equal(preview.dc, 7 + 2 + 1);
 });
 test('the roll is deterministic per seed', () => {
-  const roll = seed => rollContest({ rng: createRng(seed), caster, target: enemy, kind: 'mental', ctx }).roll;
+  const roll = seed => rollContest({ rng: createRng(seed), caster, target: enemy, kind: 'mental', ctx, read }).roll;
   assert.equal(roll(42), roll(42));
 });
 
@@ -90,11 +92,11 @@ import { combatLogEntries } from '../src/model/combatLog.js';
 import { calloutForEvent, CALLOUT_KINDS } from '../src/ui/fx.js';
 import { t } from '../src/ui/strings.js';
 test("the combat log shows the owner's example contest line", () => {
-  const result = rollContest({ rng: stub(5), caster, target: enemy, kind: 'mental', rank: 1, ctx });
+  const result = rollContest({ rng: stub(5), caster, target: enemy, kind: 'mental', rank: 1, ctx, read });
   const event = { type: 'contestPassed', sourceId: 'player', targetId: 'e1', contest: result, ...result };
   const [entry] = combatLogEntries([event], { registries: reg, players: [], enemies: [] });
   assert.match(JSON.stringify(entry), /Contest: d20 \[5\] \+ INT 1 \+ WIS 2 \+ rank 1 = 9 vs Poise 7 \+ WIS 1 \+ level 1 = 9 · success/);
-  const failed = rollContest({ rng: stub(4), caster, target: enemy, kind: 'mental', rank: 1, ctx });
+  const failed = rollContest({ rng: stub(4), caster, target: enemy, kind: 'mental', rank: 1, ctx, read });
   const [no] = combatLogEntries([{ type: 'contestFailed', sourceId: 'player', targetId: 'e1', contest: failed, ...failed }], { registries: reg, players: [], enemies: [] });
   assert.match(JSON.stringify(no), /= 8 vs Poise 7 \+ WIS 1 \+ level 1 = 9 · failure/);
 });

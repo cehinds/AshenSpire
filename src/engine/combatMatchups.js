@@ -14,7 +14,6 @@ import { syncWardMaximum } from './combatPools.js';
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Avoidance from './combatAvoidance.js';
 import * as Hit from './stanceHit.js';
-import * as Contest from './contest.js';
 import { RANGES } from '../model/combatRanges.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
@@ -557,7 +556,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
   // An insight contest replaces the hit roll (SPEC §17 Contests): one seeded contest per target per card play.
-  const contest = Contest.rollCarrierContest(ctx, source, target, carrier);
+  const contest = Hit.rollContestFor(ctx, source, target, carrier);
   if (contest) {
     receipt.contest = contest;
     receipt.avoided = !contest.passed;

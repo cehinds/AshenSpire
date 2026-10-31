@@ -6,7 +6,7 @@ import { proposalTargetPlan } from './proposalStatusRuntime.js';
 // One seeded Accuracy decision gates an entire committed hostile action.
 import { attackAccuracy, counterBaseEvasion, attributesOf, levelOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
-import { previewCarrierContest } from './contest.js';
+import * as Contest from './contest.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
@@ -80,11 +80,14 @@ export function previewTargetFor(target, observerId = 'player', reveal = {}) {
   return blind;
 }
 
+/** The seeded contest of an insight-contest card against one target (SPEC §17 Contests); null for any other card. */
+export const rollContestFor = (ctx, source, target, carrier) => Contest.rollCarrierContest(ctx, source, target, carrier, { attributesOf, levelOf });
+
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   if (ctx.combatExpansionVersion !== 2 || !source || !target || source === target || source.kind === target.kind) return null;
   const profile = carrier?.combatProfile || {};
   // An insight contest card never rolls Accuracy and never cares about range (SPEC §17 Contests): it prices a DC, not a hit chance.
-  const contest = previewCarrierContest(ctx, source, target, carrier);
+  const contest = Contest.previewCarrierContest(ctx, source, target, carrier, { attributesOf, levelOf });
   if (contest) return { range: profile.range || 'melee', requiredRange: 'melee', inRange: true, accuracy: 0, evasion: 0, need: 0, bypass: true, opposed: false,
     mode: 'normal', advantage: false, disadvantage: false, evadeStacks: 0, evadeActive: false, evadeAttempted: false, hitChance: 100, chance: 100, contest };
   const tags = carrier?.authoredTags || carrier?.tags || [];

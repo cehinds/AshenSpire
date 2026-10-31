@@ -3,7 +3,7 @@
 //   d20 + caster attributes (by school) + card rank  vs  DC = target's CURRENT Poise + target attributes + target level.
 // A tie succeeds. The constants are data (content/framework/mechanics.json `contest`).
 import { mechanics } from '../framework/data/mechanics.js';
-import { attributesOf, levelOf } from './counterReturn.js';
+// Pure on purpose: callers pass `read` ({ attributesOf, levelOf } from counterReturn.js) so this module adds no import cycle.
 
 export const CONTEST_KINDS = Object.freeze(['mental', 'physical']);
 export const contestRules = () => mechanics.contest;
@@ -20,33 +20,33 @@ const cardRankOf = carrier => {
 const parts = (attrs, ids) => ids.map(id => ({ id, value: whole(attrs?.[id]) }));
 
 /** The numbers of a contest without rolling: the caster's bonus and the target's DC. Used by the hit badge and the roll. */
-export function contestPreview({ caster, target, kind, rank = 1, ctx = null }) {
+export function contestPreview({ caster, target, kind, rank = 1, ctx = null, read }) {
   const rules = contestRules();
   const sides = rules[kind];
   if (!sides) throw Error(`Unknown contest kind '${kind}'`);
-  const casterParts = parts(attributesOf(ctx, caster) || {}, sides.attacker);
+  const casterParts = parts(read.attributesOf(ctx, caster) || {}, sides.attacker);
   const rankBonus = rules.rankBonus ? Math.max(1, rank) : 0;
   const dcParts = [{ id: 'poise', value: currentPoise(target) },
-    ...parts(attributesOf(ctx, target) || {}, sides.defender), { id: 'level', value: levelOf(ctx, target) }];
+    ...parts(read.attributesOf(ctx, target) || {}, sides.defender), { id: 'level', value: read.levelOf(ctx, target) }];
   return { kind, parts: casterParts, rank: rankBonus, bonus: casterParts.reduce((sum, part) => sum + part.value, 0) + rankBonus,
     dcParts, dc: dcParts.reduce((sum, part) => sum + part.value, 0) };
 }
 
 /** Rolls one contest on the `combatContest` stream. */
-export function rollContest({ rng, caster, target, kind, rank = 1, ctx = null }) {
-  const preview = contestPreview({ caster, target, kind, rank, ctx });
+export function rollContest({ rng, caster, target, kind, rank = 1, ctx = null, read }) {
+  const preview = contestPreview({ caster, target, kind, rank, ctx, read });
   const roll = typeof rng.int === 'function' ? rng.int('combatContest', 1, 20) : 1 + Math.floor(rng.float('combatContest') * 20);
   const total = roll + preview.bonus;
   return { ...preview, roll, total, passed: contestRules().tieSucceeds ? total >= preview.dc : total > preview.dc };
 }
 
 /** Rolls the contest for a carrier on the combat's rng; null when the card is not a contest card. */
-export function rollCarrierContest(ctx, source, target, carrier) {
+export function rollCarrierContest(ctx, source, target, carrier, read) {
   const kind = contestKindOf(carrier);
   if (!kind || !source || !target) return null;
-  return rollContest({ rng: ctx.rng, caster: source, target, kind, rank: cardRankOf(carrier), ctx });
+  return rollContest({ rng: ctx.rng, caster: source, target, kind, rank: cardRankOf(carrier), ctx, read });
 }
-export const previewCarrierContest = (ctx, source, target, carrier) => {
+export const previewCarrierContest = (ctx, source, target, carrier, read) => {
   const kind = contestKindOf(carrier);
-  return kind && source && target ? contestPreview({ caster: source, target, kind, rank: cardRankOf(carrier), ctx }) : null;
+  return kind && source && target ? contestPreview({ caster: source, target, kind, rank: cardRankOf(carrier), ctx, read }) : null;
 };
