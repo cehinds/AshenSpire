@@ -20,8 +20,10 @@ test('playLegacyTimeline reserves reactions with the paced speed (source-anchore
   const src = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   const body = src.slice(src.indexOf('function playLegacyTimeline'));
   assert.match(body, /const paced = actionPacing\(\{ reduced \}\)\.spriteSpeed/);
-  assert.equal((body.match(/reactionTimingForReceipt\?\.\(event, ?paced\)/g) || []).length, 3);
   assert.doesNotMatch(body, /reactionTimingForReceipt\?\.\(event,speed\)/);
   assert.match(body, /if \(!sequential && ctx\.reactionForReceipt\?\.\(event\)\)\s+reactionEndAt = Math\.max\(reactionEndAt, Date\.now\(\) \+ \(Number\(ctx\.reactionTimingForReceipt\?\.\(event, paced\)\)/);
   assert.equal((body.match(/let reactionEndAt = 0/g) || []).length, 1);
+  assert.match(body, /const impactReactionMs = beatOrder === 'sequential' \? 0/);
+  assert.match(body, /COMBAT_TIMING\.watchdogBaseMs \+ sequentialMs \+ impactReactionMs \+/);
+  assert.equal((body.match(/reactionTimingForReceipt\?\.\(event, ?paced\)/g) || []).length, 4);
 });

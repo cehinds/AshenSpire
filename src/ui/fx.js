@@ -1314,7 +1314,12 @@ function playLegacyTimeline(events, ctx, done) {
     ? beats.filter((beat) => beat.kind === 'attack')
       .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,paced), speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
-  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  // Impact order plays each sprite reaction with its contact and holds the beat for the paced total, so the
+  // watchdog must outlast those reservations too.
+  const impactReactionMs = beatOrder === 'sequential' ? 0
+    : beats.reduce((ms, beat) => ms + beat.events.reduce((total, event) => total
+      + (ctx.reactionForReceipt?.(event) ? budgetRead(() => ctx.reactionTimingForReceipt?.(event, paced), speed.reactionMs) : 0), 0), 0);
+  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + impactReactionMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
