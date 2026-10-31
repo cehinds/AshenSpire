@@ -44,18 +44,19 @@ test('every desktop HUD override is gated on the desktop form factor', () => {
   }
 });
 
+// Owner (2026-10-31): End Turn, Reaction and Auto 30% smaller on desktop, so the row reads at 0.7x the phone values.
 test('desktop tools row sets the approved label, row and reaction sizes', () => {
   const text = css('combat-layers.css');
   const row = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.combat-tools > button'));
   assert.ok(row, 'tools button rule');
-  assert.match(row.body, /min-height:\s*calc\(36px \/ var\(--ui-zoom,1\)\)/);
-  assert.match(row.body, /font-size:\s*calc\(14px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(row.body, /min-height:\s*calc\(25\.2px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(row.body, /font-size:\s*calc\(9\.8px \/ var\(--ui-zoom,1\)\)/);
   const value = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-value'));
   assert.ok(value, 'reaction value rule');
-  assert.match(value.body, /font-size:\s*calc\(12px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(value.body, /font-size:\s*calc\(8\.4px \/ var\(--ui-zoom,1\)\)/);
   const track = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-track'));
   assert.ok(track, 'reaction track rule');
-  assert.match(track.body, /width:\s*calc\(84px \/ var\(--ui-zoom,1\)\)/, 'track wide enough for the 12px value');
+  assert.match(track.body, /width:\s*calc\(58\.8px \/ var\(--ui-zoom,1\)\)/, 'track wide enough for the 8.4px value');
 });
 
 test('desktop intent badge and stance glyph are 1.25x and match each other', () => {
