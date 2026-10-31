@@ -4187,7 +4187,7 @@ function showShop() {
     // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
     // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
     if (configuredShopKind(run, shopId) === 'blacksmith') {
-      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = buildBlacksmithStock(registries, rng, run);
+      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
       persist(); audio.music('shop');
       return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
         onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),

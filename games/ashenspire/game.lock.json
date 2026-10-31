@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:223142f38bd65db0be3e7a69a10777a2280dbb3d98fe8a6f4ef686f0e17ae296",
+      "hash": "sha256:7314bd9d94bef2e3e0f4836098008ed13c5d3cc82f22214a0c8b932ff9f2248f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -592,7 +592,7 @@
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:b89e213b58e08a6aed0223c1cb0f5a6188d8c7d7456f9a80d049cba30690e16e"
+          "hash": "sha256:2c7e6643e82b372e2a7b9179355bb41f484dbc70052db8b8cee3f237e79f1602"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -634,7 +634,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:56f1493de1f73a42f54656abe0424b0ecf1ededaca199cab8a671b94d781028e"
+          "hash": "sha256:0b018ff2a7d68693562c9685fbffed2cf34ee623ff2db6ee4e6d345c29adb21c"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -706,7 +706,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:d1a5a4c1d08220f81167cc94d68e5aa14463f4f91cfe2d23a87f507b1f324ea5"
+          "hash": "sha256:e96ffeecb52fc9d0252a2803b0a6a94cd0591250fbf312e4863b8764e42ad683"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:90750818d2d5e94ed699a58f54765513a378302e22337b4d0ee6d1bdddd9a9c9"
     },
     "core": {
-      "hash": "sha256:223142f38bd65db0be3e7a69a10777a2280dbb3d98fe8a6f4ef686f0e17ae296",
+      "hash": "sha256:7314bd9d94bef2e3e0f4836098008ed13c5d3cc82f22214a0c8b932ff9f2248f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1316,7 +1316,7 @@
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:b89e213b58e08a6aed0223c1cb0f5a6188d8c7d7456f9a80d049cba30690e16e"
+          "hash": "sha256:2c7e6643e82b372e2a7b9179355bb41f484dbc70052db8b8cee3f237e79f1602"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -1358,7 +1358,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:56f1493de1f73a42f54656abe0424b0ecf1ededaca199cab8a671b94d781028e"
+          "hash": "sha256:0b018ff2a7d68693562c9685fbffed2cf34ee623ff2db6ee4e6d345c29adb21c"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -1430,7 +1430,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:d1a5a4c1d08220f81167cc94d68e5aa14463f4f91cfe2d23a87f507b1f324ea5"
+          "hash": "sha256:e96ffeecb52fc9d0252a2803b0a6a94cd0591250fbf312e4863b8764e42ad683"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -1450,7 +1450,7 @@
       "runtimeHash": "sha256:90750818d2d5e94ed699a58f54765513a378302e22337b4d0ee6d1bdddd9a9c9"
     },
     "current": {
-      "hash": "sha256:d1397474e97daeeefb9c6774224bce7140c6304c052c431154c3513458cc83f7",
+      "hash": "sha256:74fd4c3193002f2c4ba90ecd28cfc5c000cb63a44b459ac9d3d0a31a33ac65e1",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -2004,7 +2004,7 @@
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:b89e213b58e08a6aed0223c1cb0f5a6188d8c7d7456f9a80d049cba30690e16e"
+          "hash": "sha256:2c7e6643e82b372e2a7b9179355bb41f484dbc70052db8b8cee3f237e79f1602"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",

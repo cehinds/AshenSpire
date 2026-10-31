@@ -1991,6 +1991,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     }
     validateCardTemplates(card, path, err);
     validateCardRamp(card, path, err);
+    validateCardContest(card, path, err);
     if (card.burden) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
@@ -2916,6 +2917,13 @@ function validateCardRamp(card, path, err) {
     if (!hit) err(`${at}.stat`, `no '${ramp.stat}' effect to ramp`);
     else if (!Number.isFinite(hit.amount)) err(`${at}.stat`, `the '${ramp.stat}' effect's amount must be a plain number to ramp`);
     else if (hit.hits !== undefined && hit.hits !== 1) err(`${at}.stat`, `the '${ramp.stat}' effect hits more than once; a ramp grows a single-hit effect only`);
+  }
+}
+
+// A card's `contest` (SPEC §17 Contests): which attribute pair rolls it; the constants are data (mechanics.contest).
+function validateCardContest(card, path, err) {
+  for (const [at, value] of [[`${path}.contest`, card.contest], [`${path}.upgrade.contest`, card.upgrade?.contest]]) {
+    if (value !== undefined && !['mental', 'physical'].includes(value)) err(at, "must be 'mental' or 'physical'");
   }
 }
 

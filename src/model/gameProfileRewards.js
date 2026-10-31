@@ -33,6 +33,8 @@ function equipmentGroupMembers(registries, rules, category, family) {
   }
   return eligible;
 }
+/** The Core reward pools (weapons, weaponArts, armor, …) the shops and the Blacksmith draw from. */
+export const gameProfileRewardPools = (registries, run) => pools(registries, run);
 function pools(registries, run) {
   const definitions = gameContent(run,'cards') || [];
   const rules = gameContent(run,'rewards');

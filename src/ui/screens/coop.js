@@ -1127,7 +1127,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       if (label.length > 6) badge.dataset.rangeDetail = 'true';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = label;
-      badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
+      badge.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + badge.textContent);
       frame.append(badge);
       if (selectedCard) {
         const odds = badge.cloneNode(true);
