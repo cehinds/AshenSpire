@@ -12,10 +12,12 @@ import { effectLine } from './cardOptionGrid.js';
 
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
 
+// No art (no artAsset and no artGlyph): no art cell at all, the text takes the width.
 function rowArt(row) {
+  if (!row.artAsset && !row.artGlyph) return null;
   const well = row.artAsset
     ? artWell({ src: assetUrl(row.artAsset), alt: '', small: true, attrs: { class: 'option-row-art' } })
-    : artWell({ glyph: row.artGlyph || 'cards', small: true, attrs: { class: 'option-row-art' } });
+    : artWell({ glyph: row.artGlyph, small: true, attrs: { class: 'option-row-art' } });
   hideOnError(well.querySelector?.('img'));
   return well;
 }

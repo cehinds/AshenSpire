@@ -273,7 +273,8 @@ test('options render as vertical rows with the card name, effect line and direct
     assert.equal(tile.tagName, 'BUTTON');
     assert.equal(tile.querySelector('.option-row-name').textContent, 'Counter');
     assert.equal(tile.querySelector('.option-row-chip').textContent, 'Reaction');
-    assert.ok(tile.querySelector('.option-row-art'), 'an art well leads the row');
+    assert.equal(tile.querySelector('.option-row-art'), null, 'no resolvable art: no art cell and no placeholder text');
+    assert.ok(!tile.textContent.includes('cards'), 'no placeholder glyph text');
     assert.equal(tile.querySelector('.co-effect').textContent, 'Def 9\u25b2 raised · Return 2\u25bc lowered · Dmg 5', 'changed numbers carry an arrow and words, not colour alone');
     assert.deepEqual(tile.querySelectorAll('.co-arrow').map(node => node.textContent), ['\u25b2', '\u25bc']);
     assert.deepEqual(tile.querySelectorAll('.co-sr').map(node => node.textContent.trim()), ['raised', 'lowered']);
@@ -335,6 +336,22 @@ test('several options are rows of one list; arrows move focus, selecting enables
     assert.equal(play.disabled, false);
     opened.document.querySelectorAll('button').find(node => node.textContent === 'Back').click();
     assert.deepEqual(opened.answers, [{ offerId: 'root:e1:0', optionId: null }], 'Back answers null even with a row selected');
+  } finally {
+    opened.restore();
+  }
+});
+
+test('an option with a Core card id takes its art from the card-face resolver', async () => {
+  const registries = { cards: new Map([['core.counter', { id: 'core.counter', name: 'Counter', type: 'skill', tags: [] }]]) };
+  const opened = await openWith({ registries, pending: { id: 'r', options: [{ id: 'o', cardId: 'core.counter', name: 'Counter', play: {} }] } });
+  try {
+    const { reactionOptionArt } = await import('../src/ui/components/reactionChoiceModal.js');
+    const path = reactionOptionArt({ cardId: 'core.counter' }, registries);
+    assert.equal(typeof path, 'string', 'the resolver yields an image path');
+    const tile = opened.shell.body.querySelector('[data-reaction-option="o"]');
+    const art = tile.querySelector('.option-row-art');
+    assert.ok(art, 'an art well leads the row');
+    assert.ok(art.querySelector('img'), 'the well holds an image, not the placeholder glyph');
   } finally {
     opened.restore();
   }

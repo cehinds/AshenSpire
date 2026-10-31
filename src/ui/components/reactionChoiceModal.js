@@ -2,7 +2,7 @@ import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { openModal, button, el } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
 import { optionRowList, markOptionRows } from './optionRowList.js';
-import { playingCardArtwork } from '../cardArtwork.js';
+import { playingCardArt } from '../cardArtwork.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
 // `stack` is the already-committed entries of this root, top first, each
@@ -35,7 +35,16 @@ export const stackedCardIds = (reactionStack, ownerId = null) => new Set((reacti
 
 // `summarize(option)` returns the row summary (summarizeCardOption with the caller's readers: the
 // engine in solo, the seat snapshot in co-op); without it a row shows the name and costs only.
-export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null }) {
+// The art a row shows: the card face's own resolver (reviewed, simple, official, then outline art),
+// so Core cards without extended art still get an image. Null when nothing resolves.
+export function reactionOptionArt(option, registries = null) {
+  if (!option?.cardId) return null;
+  try {
+    return playingCardArt({ cardId: option.cardId }, { definition: registries?.cards?.get?.(option.cardId), registries })?.path || null;
+  } catch { return null; }
+}
+
+export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null, registries = null }) {
   const stacked = Array.isArray(stack) && stack.length > 0;
   let selected = null;
   let settled = false;
@@ -62,7 +71,7 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
       const summaries = pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return { ...(summary || summarizeCardOption(null, null, option)), artAsset: playingCardArtwork({ cardId: option.cardId }), chip: t('combat.reactions.label') };
+        return { ...(summary || summarizeCardOption(null, null, option)), artAsset: reactionOptionArt(option, registries), chip: t('combat.reactions.label') };
       });
       const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: id => {
         selected = id;
