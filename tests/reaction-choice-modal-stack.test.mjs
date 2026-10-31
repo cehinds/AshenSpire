@@ -356,3 +356,18 @@ test('an option with a Core card id takes its art from the card-face resolver', 
     opened.restore();
   }
 });
+
+test('selecting a row marks it pressed and leaves focus on it', async () => {
+  const opened = await openWith({ pending: { id: 'r', options: [{ id: 'a', name: 'A', play: {} }, { id: 'b', name: 'B', play: {} }] } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    rows[1].click();
+    assert.equal(rows[1].getAttribute('aria-pressed'), 'true');
+    assert.equal(opened.document.activeElement, rows[1], 'the tapped row holds focus');
+    rows[0].click();
+    assert.deepEqual(rows.map(row => row.getAttribute('aria-pressed')), ['true', 'false']);
+    assert.equal(opened.document.activeElement, rows[0]);
+  } finally {
+    opened.restore();
+  }
+});

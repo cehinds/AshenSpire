@@ -2081,7 +2081,17 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .option-row .val.down, .option-row .co-part[data-dir='down'] .co-arrow { color: var(--ember); font-weight: 700; }
 .option-row .co-arrow { font-size: 0.6em; margin-left: 0.15em; vertical-align: 0.15em; }
 .option-row .co-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.option-row[aria-pressed='true'] { outline: var(--focus-ring); }
+/* Selected: gold border, inset gold edge and a soft glow, so it still reads over a stale touch :hover
+   (player-polish.css paints a gold inset on any hovered railitem) and when --ui-zoom thins the 2px outline. */
+:root .option-row.as-railitem[aria-pressed='true']:not(:disabled) {
+  outline: var(--focus-ring); outline-offset: -2px; border-color: var(--gold);
+  background: rgba(var(--accent-rgb), 0.14); color: var(--gold);
+  box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px rgba(var(--accent-rgb), 0.3);
+}
+/* On touch there is no pointer to hover with: an unselected row never keeps a hover look. */
+@media (hover: none) {
+  :root .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { filter: none; box-shadow: none; background: var(--panel); border-color: var(--line); }
+}
 .option-row:disabled { opacity: 0.55; }
 
 /* Debug mode's Console button (combatDebugButton.js): fixed, above every combat layer, tiny. */

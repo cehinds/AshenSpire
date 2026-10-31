@@ -73,8 +73,9 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
         return { ...(summary || summarizeCardOption(null, null, option)), artAsset: reactionOptionArt(option, registries), chip: t('combat.reactions.label') };
       });
-      const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: id => {
+      const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
         selected = id;
+        row?.focus?.({ preventScroll: true });
         markOptionRows(grid, 'data-reaction-option', [id]);
         play.disabled = false;
       } });
