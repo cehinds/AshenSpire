@@ -26,6 +26,7 @@ const WEAPON = 'armament/greatsword';
 function smithRun(registries, stones) {
   const run = createRunState({ seed: 31, classId: 'reaver', registries, runId: 'smith-svc' });
   run.smithingStones = stones;
+  run.cinders = 2000;
   run.seenEvents = [];
   run.shopStock = buildBlacksmithStock(registries, createRng(31), run);
   return run;
@@ -36,22 +37,26 @@ const upgrade = (registries, run, ref = WEAPON) => {
   return commitBlacksmithUpgrade(registries, run, quote);
 };
 
-test('Core Blacksmith: tiers 1, 2, 3 cost 1, 2, 3 stones; a fourth is refused and keeps the stones', () => {
+test('Core Blacksmith: tiers 1, 2, 3 cost 0, 1, 2 stones and 60, 100, 150 cinders; a fourth is refused and keeps both purses', () => {
   const run = smithRun(coreOut, 7);
   const spent = [];
+  const paid = [];
   for (let tier = 1; tier <= 3; tier++) {
-    const before = run.smithingStones;
+    const before = run.smithingStones, purse = run.cinders;
     const receipt = upgrade(coreOut, run);
     assert.equal(receipt.afterLevel, tier);
     spent.push(before - run.smithingStones);
+    paid.push(purse - run.cinders);
   }
-  assert.deepEqual(spent, [1, 2, 3]);
+  assert.deepEqual(spent, [0, 1, 2]);
+  assert.deepEqual(paid, [60, 100, 150]);
   assert.equal(run.itemUpgradeLevels[WEAPON], 3);
-  const left = run.smithingStones;
+  const left = run.smithingStones, cinders = run.cinders;
   const quote = blacksmithUpgradePlan(coreOut, run, WEAPON);
   assert.equal(quote.ok, false);
   assert.throws(() => commitBlacksmithUpgrade(coreOut, run, quote));
   assert.equal(run.smithingStones, left);
+  assert.equal(run.cinders, cinders);
   assert.equal(run.itemUpgradeLevels[WEAPON], 3);
 });
 
@@ -87,6 +92,7 @@ test('Core Blacksmith and merchant upgrades re-derive the pools like the rest Sm
     const id = 'vigil'; // the first Reaver armour that is a Smith candidate (the starting 'default' is not)
     run.loadout.sets.armor = [id];
     run.smithingStones = 9;
+    run.cinders = 2000;
     run.seenEvents = [];
     run.shopStock = buildBlacksmithStock(registries, createRng(33), run);
     return { run, ref: `armor/${run.class}/${id}` };

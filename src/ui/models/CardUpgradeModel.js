@@ -50,7 +50,12 @@ const cardTags = (registries, def, rarity) => freeze([
   ...(def?.keywords || []).map((kw) => registries.framework?.keywordDisplay?.(kw)?.name || cap(kw)),
 ].filter(Boolean));
 
-export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '' } = {}) {
+/**
+ * `quote(instanceId) → { ok, cost, reason, cinders }` is an optional price override (the Blacksmith's): it replaces the
+ * rest-priced availability and stone cost of each row, and a `cinders` price is shown instead of Free / stones.
+ * The row's `plan` stays the service's own quote (the step the commit applies).
+ */
+export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '', quote = null } = {}) {
   const stones = Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0;
   const groups = new Map();
   const rows = [];
@@ -68,14 +73,19 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // distinct outcome stays previewable and purchasable.
     const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.step, inDeck]);
     if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
+    const priced = quote ? quote(instance.instanceId) : null;
+    const ok = priced ? !!priced.ok : plan.ok;
     const base = registries.cards.get(instance.cardId);
     const rarity = base.rarity || 'common';
     const row = {
       instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, inDeck, cardId: instance.cardId,
       name: plan.before?.name || base.name, rarity,
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
-      spent: false, disabled: !plan.ok || !!blockedReason, cost: plan.cost, costLabel: costLabel(plan),
-      blockedReason: plan.reason || blockedReason,
+      spent: false, ok, cinders: priced?.cinders > 0 ? priced.cinders : 0,
+      // Is the Smithing Stone purse the blocker? (a quote's own verdict, else the service plan's stone code)
+      shortStones: priced ? priced.cost > stones : plan.code === 'stones', disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
+      costLabel: priced?.cinders > 0 ? t('cardUpgrade.cinders', { n: priced.cinders }) : costLabel(priced ? { cost: priced.cost } : plan),
+      blockedReason: (priced ? priced.reason : plan.reason) || blockedReason,
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
@@ -91,11 +101,11 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   // can keep its preview after a purse/service change, with Confirm disabled.
   rows.sort((a, b) => Number(a.disabled) - Number(b.disabled));
   const selected = rows.find((row) => row.instanceIds.includes(selectedInstanceId)) || null;
-  const affordable = !!selected && selected.plan.ok;
+  const affordable = !!selected && selected.ok;
   return freeze({
     rows: freeze(rows), selected, stones, affordable,
     canConfirm: affordable && !blockedReason,
-    blockedReasons: freeze(selected && !selected.plan.ok ? [selected.plan.reason] : blockedReason ? [blockedReason] : []),
+    blockedReasons: freeze(selected && !selected.ok ? [selected.blockedReason] : blockedReason ? [blockedReason] : []),
     faces: selected && selected.plan.before && selected.plan.after ? freeze({ before: selected.plan.before, after: selected.plan.after }) : null,
   });
 }

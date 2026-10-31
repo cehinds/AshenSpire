@@ -15,7 +15,9 @@ import { innRestPlan, stale } from '../model/marketAdditions.js';
 import { ownedSigilIds } from '../model/sigils.js';
 import { hasRemovableCard } from '../model/cardRemoval.js';
 import { carriedIds } from '../model/loadout.js';
-import { BLACKSMITH_SERVICES, serviceCandidates, blacksmithWithholds } from '../model/blacksmith.js';
+import { BLACKSMITH_SERVICES, serviceCandidates, blacksmithWithholds, coreCardUpgrades } from '../model/blacksmith.js';
+import { blacksmithRules } from '../model/blacksmithConfig.js';
+import { coreBlacksmithStock } from '../model/blacksmithStock.js';
 import {
   MASTER_SERVICES, MASTER_SHELVES, masterOf, masterOffers, masterBookPool, masterArtPool, masterArmamentPool,
   masterServiceCandidates, masterSchools, lessonLevel, trackLabel,
@@ -342,6 +344,8 @@ function blacksmithArmamentPool(registries, run) {
  * Service prices are never stored: model/blacksmith.js reads them when quoted.
  */
 export function buildBlacksmithStock(registries, rng, run) {
+  // Core lays out its own fixed workshop (model/blacksmithStock.js); the weighted offering roll below is Legacy and Current.
+  if (blacksmithRules(run) && coreCardUpgrades(run)) return coreBlacksmithStock(registries, rng, run);
   // Core offers only CORE_BLACKSMITH_OFFERINGS (model/blacksmith.js blacksmithWithholds): the rest are never rolled or added by the guarantee.
   const shown = registries.shops.blacksmith;
   const kindDef = { ...shown, offerings: (shown.offerings || []).filter((offering) => !offering || !blacksmithWithholds(run, offering.id)) };
