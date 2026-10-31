@@ -112,6 +112,18 @@ function weightedRelicPick(weights,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=list[index];if(roll<0)return id;}
   return ids.at(-1);
 }
+// Owner 2026-10-31: a potion already in the belt is offered at rule.ownedPotionWeight per held copy (a much lower chance, never a
+// forced skip), in combat rewards, chests and shops alike. One float roll on the offer's stream; when every weight is equal (nothing
+// held, or the setting absent/1 as in Core 1) the draw is the old uniform rng.pick, so existing seeds are unchanged.
+function weightedPotionPick(rule,run,rng,stream,ids) {
+  const base=Number.isFinite(rule?.ownedPotionWeight)?rule.ownedPotionWeight:1,held=new Map();
+  for(const flask of run.flasks||[])if(flask?.flaskId)held.set(flask.flaskId,(held.get(flask.flaskId)||0)+1);
+  const weights=ids.map(id=>Math.pow(base,held.get(id)||0)),total=weights.reduce((sum,weight)=>sum+weight,0);
+  if(ids.length<2||!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
+  let roll=rng.float(stream)*total;
+  for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
+  return ids.at(-1);
+}
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[]}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
@@ -157,7 +169,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
