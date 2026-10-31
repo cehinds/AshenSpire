@@ -76,7 +76,8 @@ export function attributePointGains(registries, run, attributeId, { settings = {
   if (fixCore) {
     push('precision', precisionStatMix(ctx, entity), precisionStatMix(after.ctx, after.entity));
     // rollKnowledgeRead: the observer rolls d20 + own Wisdom, so a point of Wisdom is a point of Perception.
-    if (attributeId === 'wisdom') push('perception', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
+    // (push skips a zero delta, so only the +1 that raises Wisdom shows.)
+    push('perception', Number(current.wisdom) || 0, Number(raised.wisdom) || 0);
   }
   return gains;
 }
