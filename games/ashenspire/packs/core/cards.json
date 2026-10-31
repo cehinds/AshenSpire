@@ -2694,7 +2694,6 @@
       "camp:physical",
       "maneuver:attack",
       "classification.attack",
-      "trait:honed",
       "lifecycle.exhaust"
     ],
     "textTemplate": "Deal {damage} damage. Exhaust.",
