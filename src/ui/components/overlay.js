@@ -146,7 +146,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   const { veil, body } = renderMenuOverlay(model);
   document.body.appendChild(veil);
   openVeil = veil;
-  unregisterOverlay = registerModal('overlay', veil);
+  unregisterOverlay = registerModal('overlay', veil, { inert: true });
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a
