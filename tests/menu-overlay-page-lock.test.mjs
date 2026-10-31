@@ -38,11 +38,14 @@ test('a Menu-style registration locks the map, wraps Tab, and releases with focu
       tabs[1].focus();
       win.press('Tab', { cancelable: true });
       assert.equal(document.activeElement, tabs[0]);
+      opener.focus();
+      assert.notEqual(document.activeElement, opener, 'while the lock is held, focus on the page behind is bounced into the Menu');
+      assert.equal(veil.contains(document.activeElement), true);
       release();
       assert.equal(map.hasAttribute('aria-hidden'), false);
       assert.equal(map.hasAttribute('data-page-locked'), false);
       opener.focus();
-      assert.equal(document.activeElement, opener);
+      assert.equal(document.activeElement, opener, 'once released, focus on the opener is no longer bounced');
     } finally { resetModalState(); }
   });
 });
