@@ -3,6 +3,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rollContest, contestPreview } from '../src/engine/contest.js';
 import { createRng } from '../src/engine/rng.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { actorRangeKey, rangePairKey } from '../src/model/combatEngagement.js';
 
 const caster = { kind: 'player', attributes: { intelligence: 1, wisdom: 2, dexterity: 3, constitution: 4 }, level: { level: 1 } };
 const enemy = { kind: 'enemy', attributes: { wisdom: 1, constitution: 2 }, level: 1, persistentPoise: { max: 7, value: 7 } };
@@ -30,4 +37,50 @@ test('physical contests use DEX + CON against CON', () => {
 test('the roll is deterministic per seed', () => {
   const roll = seed => rollContest({ rng: createRng(seed), caster, target: enemy, kind: 'mental', ctx }).roll;
   assert.equal(roll(42), roll(42));
+});
+
+// ---- Read Intent played from hand in a Core 2 fight --------------------------------------------------------------
+const profile = resolveGameProfile('core');
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// The combat rolls on a committed candidate copy of its rng, so a stub cannot reach it: pick the seed whose first
+// `combatContest` roll is the wanted extreme instead (the stream is untouched until a contest card is played).
+const seedRolling = wanted => { for (let seed = 1; seed < 500; seed++) if (wanted(createRng(seed).int('combatContest', 1, 20))) return seed; throw Error('no seed'); };
+const LOW = seedRolling(roll => roll === 1), HIGH = seedRolling(roll => roll === 20);
+function fight(enemyId, seed, registries = reg) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] });
+  Object.assign(combat.player, { energy: 9, mana: 9, stamina: 9 });
+  return combat;
+}
+function play(combat) {
+  combat.piles.hand.push({ instanceId: 'ri', cardId: 'base.reveal-opponent-hand', upgraded: false });
+  const n = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'ri', targetId: combat.enemies[0].id });
+  return combat.eventLog.slice(n).map(event => event.type);
+}
+for (const enemyId of ['wanderingSoldier', 'graveWisp']) {
+  test(`Read Intent reveals the intent of ${enemyId} at any range and never rolls Accuracy`, () => {
+    const combat = fight(enemyId, HIGH), target = combat.enemies[0];
+    const band = combat.rangeState.engagements[rangePairKey(actorRangeKey(combat, combat.player), actorRangeKey(combat, target))];
+    const types = play(combat);
+    assert.ok(types.includes('contestPassed'), types.join());
+    assert.ok(!types.includes('attackMissed') && !types.includes('attackHit'), `no hit roll (band ${band}): ${types.join()}`);
+    assert.ok(!types.includes('engagementAdvanced'), 'no Advance planned');
+    assert.equal(combat.rangeState.engagements[rangePairKey(actorRangeKey(combat, combat.player), actorRangeKey(combat, target))], band, 'distance unchanged');
+    assert.ok(target.proposalIntentRevealedUntilByOwner?.player > 0, 'the intent is revealed');
+  });
+}
+test('a failed contest still applies the self status, resists the reveal and emits contestFailed', () => {
+  const combat = fight('wanderingSoldier', LOW), target = combat.enemies[0];
+  const types = play(combat);
+  assert.ok(types.includes('contestFailed'), types.join());
+  assert.ok(!types.includes('intentRevealed'));
+  assert.equal(target.proposalIntentRevealedUntilByOwner?.player, undefined);
+  assert.equal(combat.player.statuses['base.read-intent']?.stacks, 1, 'the self status still lands');
+  const event = combat.eventLog.find(row => row.type === 'contestFailed');
+  assert.equal(event.passed, false); assert.equal(event.roll, 1); assert.equal(event.cardId, 'base.reveal-opponent-hand'); assert.ok(event.dc > event.total);
+});
+test('the same seed rolls the same contest', () => {
+  const roll = () => { const c = fight('wanderingSoldier', 77); play(c); return c.eventLog.find(row => row.type.startsWith('contest')).roll; };
+  assert.equal(roll(), roll());
 });
