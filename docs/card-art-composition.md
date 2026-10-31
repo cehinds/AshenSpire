@@ -1,5 +1,42 @@
 # Simple card art composition
 
+## Applied card-art review
+
+The approved review assigns layered art to all 156 current card IDs without a
+dedicated illustration. `asset-data/card-art/reviewed-library.json` is the
+editable approval snapshot: it retains the source combat tags, chosen rule,
+up to four visual cues, source references and every independent layer transform.
+`node tools/export-reviewed-card-art.mjs` compiles it into the runtime module;
+`--check` verifies reproducibility. These are approved results of the tag formula,
+not new combat rules. New cards still use the live formula below until reviewed.
+Rank variants share their approved base artwork.
+
+`playingCardArt` selects these recipes only in Simple mode, for reviewed cards
+without dedicated art and without equipment profiles. Existing dedicated-art
+routing and Legacy mode retain their previous behavior. Approved compositions
+already contain their effect PNGs, so the renderer does not add duplicate motifs.
+The cutouts include cleansing fire, floating spell projectiles, the earth pebble,
+separate counter sword/shield, and status objects with independent marks/glows.
+Some status symbols intentionally reuse an existing visual proxy; this does not
+alias the corresponding gameplay statuses.
+
+Open [Card art review](card-art-review.html) through `tools/serve.mjs` to see the
+checkbox list, standalone art, linked component PNGs and the actual game card.
+Position, size, rotation and opacity controls update both previews. JSON export
+includes edits and the checklist; PNG export composites the selected artwork.
+Changes stay in the browser session until exported. The exported runtime catalog
+contains numeric transforms, affine matrices and CSS for each component; the
+authoring snapshot remains the reviewed source of truth.
+To apply a downloaded placement edit, run
+`node tools/export-reviewed-card-art.mjs --import <exported-json-path>`.
+The importer preserves component identities and rejects invalid transforms.
+
+The 73 additional PNGs are byte-identical exports of existing proposal assets in
+AI-Art. Their original URLs and hashes remain in the source JSON and the art
+repository's `provenance/AshenSpire/reviewed-card-cutouts.json`.
+
+## Original general-purpose formula
+
 Simple artwork now renders the approved revision-14 cutouts as independent PNG layers. Card frames, titles, rules, combat definitions and Legacy artwork are unchanged. Full cards and deck-editor thumbnails use the same composition resolver.
 
 ## Authoring and runtime data
