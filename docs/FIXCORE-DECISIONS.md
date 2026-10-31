@@ -76,3 +76,12 @@ floor(0.5 x incoming) share (the stance-advantage share and Block are unchanged)
 In Counter stance a card-less auto-Counter answers a covered hit for 1 SP with
 base 0, and a Counter reaction from that stance costs one less SP regardless of
 the Adept gate. Reflect (see SPEC.md section 17) is a separate stack count.
+
+## Reflect stacks (2026-10-31)
+
+Owner: Reflect is its own stack count, `reflectStacks` (cap 10, cleared at fight
+end), granted by the new Mirror Guard card (`applyReflect`). Each stack cuts an
+incoming hit by 30% before Block (cap 90%, rounded down) and, once the hit lands,
+sends 30% of the original incoming damage back as a flagged hit that cannot reflect
+or counter again, costing one stack. Counter returns, reflected returns and
+`unreflectable` hits are untouched. Values: `reflect` in `content/framework/mechanics.json`.

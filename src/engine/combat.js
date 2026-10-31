@@ -2866,6 +2866,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       case 'gainEnergy':
       case 'restoreMana':
       case 'restoreStamina':
+      case 'applyReflect':
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);

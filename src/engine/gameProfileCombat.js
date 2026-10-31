@@ -13,6 +13,7 @@ import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js'
 // a missing/current profile leaves the existing interpreter untouched.
 import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
+import { reflectStackCount, reflectReduceFraction } from './guardStacks.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
 // It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
@@ -61,6 +62,12 @@ function hasPoise(target) {
 
 // Pure probability/receipt math: execution supplies a transactional RNG roll. No RNG,
 // source mutation, legacy elemental/rank riders, or protection-pool depletion.
+// Reflect cuts and returns hits that come from another body and are neither reactive returns nor unreflectable.
+function reflectApplies(target, source, carrier, profile) {
+  if (!(reflectStackCount(target) > 0) || !source || source === target) return false;
+  if (carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return false;
+  return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes('trait:unreflectable'));
+}
 export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null, proposal = true } = {}) {
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
@@ -134,6 +141,15 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
     if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
   }
+  // Reflect (owner 2026-10-31, SPEC §17): the target's Reflect stacks cut this hit before Block; the stacks and the pre-cut
+  // figure ride on the receipt so the landed hit can send its share back. A reflected, countered or unreflectable hit is not cut.
+  let reflect = null;
+  if (modern && amount > 0 && !evaded && reflectApplies(target, source, carrier, profile)) {
+    const stacks = reflectStackCount(target), keep = 1 - reflectReduceFraction(stacks);
+    reflect = { stacks, original: amount };
+    amount = transition('reflect','Reflect',amount,Math.floor(amount*keep),'mitigation',keep);
+    amount = Math.floor(amount);
+  }
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
@@ -191,6 +207,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   }
   return { raw, pierceBypassed, piercePoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
+    ...(reflect ? { reflect } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,

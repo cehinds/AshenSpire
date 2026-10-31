@@ -164,6 +164,9 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = event.reaction ? `${source} reacts with ${move}.` : `${source} used ${move}.`;
         break;
       }
+      case 'reflectTriggered':
+        text = `${source} reflected ${event.amount} back at ${target} (${event.stacks} stack${event.stacks === 1 ? '' : 's'}).`;
+        break;
       case 'combatCounterTriggered': {
         const { label } = causeOf();
         // Core (SPEC §17, 2026-10-31): the return is the card's base damage plus stacks x 10% of the incoming hit (plus the stance-advantage share).

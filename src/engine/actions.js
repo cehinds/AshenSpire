@@ -12,7 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { gainCounterStacks, gainReflectStacks } from './guardStacks.js';
+import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturnFraction } from './guardStacks.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -362,7 +362,8 @@ export function drainFixCorePoise(ctx, source, target, amount) {
 
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
-  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
+  // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
+  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && !carrier?.reflectedHit && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
   // Automatic returns share the owner-cycle limit. A newly paid per-contact
@@ -419,7 +420,22 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
   afterHpChange(ctx, target, { sourceId: source?.id });
+  if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
   return receipt.amount;
+}
+
+// Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
+// same damage type and costs the reflector one stack. The return is flagged so it can neither reflect nor counter again.
+function reflectBack(ctx, source, target, carrier, reflect) {
+  if (!source?.alive || !target?.alive || source === target) return;
+  const amount = Math.floor(reflect.original * reflectReturnFraction(reflect.stacks));
+  const left = (spendReflectStacks(ctx, target, 1), target.reflectStacks || 0);
+  ctx.emit('reflectTriggered', { sourceId: target.id, targetId: source.id, amount, stacks: reflect.stacks, stacksLeft: left, original: reflect.original,
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(target) } : {}) });
+  if (amount <= 0) return;
+  const profile = { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true };
+  applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [] });
 }
 
 /**
