@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
-import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, RANK_DOWN_TAG } from './cardUpgrade.js';
+import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG } from './cardUpgrade.js';
 import { normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
@@ -204,7 +204,12 @@ const stepOf = (kind, option, choice) => {
     case 'range': case 'rankDown': return { k: 'tag', tag: option.tag };
     case 'targeting': return { k: 'tag', tag: option.tag, retarget: option.retarget };
     case 'maneuver': case 'school': return { k: 'tag', tag: pickOf(option.tags) };
-    case 'element': return { k: 'tag', damageSchool: pickOf(option.schools), ...(Number.isInteger(option.exposure) && option.exposure > 0 ? { exposureBuildupPerHit: option.exposure } : {}) };
+    case 'element': {
+      const damageSchool = pickOf(option.schools);
+      const identity = ELEMENT_IDENTITY[damageSchool];
+      return { k: 'tag', tag: `school:${identity.school}`, damage: identity.damage, damageSchool, magicShare: 1,
+        ...(Number.isInteger(option.exposure) && option.exposure > 0 ? { exposureBuildupPerHit: option.exposure } : {}) };
+    }
     default: {
       // Three hits only on the rarer roll; two otherwise.
       const hits = option.counts.includes(3) && choice >= 0.7 ? 3 : option.counts[0];

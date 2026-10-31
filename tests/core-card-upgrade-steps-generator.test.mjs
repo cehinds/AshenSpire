@@ -207,7 +207,7 @@ test('school: spells only, any school but the current; element: physical to magi
   const spell = dmg(6, { tags: ['camp:spell', 'maneuver:casting', 'school:fire'], damageSchool: 'magic', cost: 2, staminaCost: 1, manaCost: 2 });
   const seen = tagsFor(spell);
   assert.ok(seen.has('{"k":"tag","tag":"school:frost"}') && !seen.has('{"k":"tag","tag":"school:fire"}'));
-  assert.ok(![...tagsFor(withPoise())].some((k) => k.includes('school:')), 'a physical card gets no school tag');
+  assert.ok(![...tagsFor(withPoise())].some((k) => k.includes('school:') && !k.includes('damageSchool')), 'a physical card gets no school step (an element step carries its school tag)');
   assert.ok(![...seen].some((k) => k.includes('damageSchool')), 'a magic card gets no element');
   const elements = new Set([...tagsFor(withPoise())].filter((k) => k.includes('damageSchool')).map((k) => JSON.parse(k).damageSchool));
   assert.deepEqual([...elements].sort(), ['arcane', 'fire', 'holy', 'magic']);
@@ -249,7 +249,7 @@ test('the tag vocabulary a step writes is the one combatCardProfile reads', asyn
 });
 
 test('school change is offered to any spell-camp card, damaging or not, and never to a non-spell', () => {
-  const schoolSeen = (card) => [...tagsFor(card)].some((k) => k.includes('"tag":"school:'));
+  const schoolSeen = (card) => [...tagsFor(card)].some((k) => k.includes('"tag":"school:') && !k.includes('damageSchool'));
   for (const id of ['core.mendingTouch', 'core.hexmark']) {
     const card = byId(id);
     assert.ok(card.tags.includes('camp:spell'), id);

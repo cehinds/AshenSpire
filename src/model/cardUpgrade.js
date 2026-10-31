@@ -52,6 +52,17 @@ export const TAG_FAMILIES = Object.freeze({
   'school:': Object.freeze(words('frost fire lightning force alteration illusion divine decay earth')),
 });
 export const UPGRADE_ELEMENTS = Object.freeze(['magic', 'arcane', 'holy', 'fire']);
+// What an element step writes beside the card's damageSchool: the `school:` and `damage:` tags an authored
+// elemental card of that kind carries (frostNova: school:frost + damage:frost; the star spells: school:force +
+// damage:arcane; the divine spells: school:divine + damage:sacred), so the combat profile, its magic share and
+// the Ward lane all read the new element. `magic` is the generic school and, like the authored cards, shows as frost.
+const [FROST, FORCE, DIVINE, FIRE] = words('frost force divine fire');
+export const ELEMENT_IDENTITY = Object.freeze({
+  magic: Object.freeze({ school: FROST, damage: FROST }),
+  arcane: Object.freeze({ school: FORCE, damage: 'arcane' }),
+  holy: Object.freeze({ school: DIVINE, damage: 'sacred' }),
+  fire: Object.freeze({ school: FIRE, damage: FIRE }),
+});
 export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
 
@@ -155,7 +166,13 @@ function applyStep(card, step) {
         }
       }
       if (step.damageSchool) out.damageSchool = step.damageSchool;
+      if (step.damage) {
+        const keepType = (tag) => !tag.startsWith('damage:');
+        const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
+        for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
+      }
       if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
+      if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
       break;
     }
     default:
@@ -208,12 +225,14 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
     if (step.k === 'tag') {
       if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined) bad('tag');
+      if (step.damage !== undefined && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');
       if (step.tag !== undefined && step.tag !== RANK_DOWN_TAG) {
         const family = typeof step.tag === 'string' ? Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix)) : null;
         if (!family || !TAG_FAMILIES[family].includes(step.tag.slice(family.length))) bad('tag');
       }
       if (step.retarget !== undefined && !TARGETING.includes(step.retarget)) bad('retarget');
       if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
+      if (step.magicShare !== undefined && !(Number.isFinite(step.magicShare) && step.magicShare >= 0 && step.magicShare <= 1)) bad('magicShare');
       if (step.exposureBuildupPerHit !== undefined && !(Number.isInteger(step.exposureBuildupPerHit) && step.exposureBuildupPerHit >= 0 && step.exposureBuildupPerHit <= 99)) bad('exposureBuildupPerHit');
     }
   });

@@ -123,3 +123,46 @@ test('an explicit range / targeting field follows the identity step (rimeNeedle)
   const back = applyUpgradeSteps(area, [{ k: 'tag', tag: 'targeting:single', retarget: 'single' }]);
   assert.equal(combatProfileFor(back).targeting, 'single');
 });
+
+test('an element-stepped Strike with a slashing weapon resolves as fire magic in combat; an un-stepped one stays physical', async () => {
+  const { live } = await import('./helpers/fixcore-combat-rules.mjs');
+  const { tacticalCarrier } = await import('../src/engine/combatCardTactics.js');
+  const { magicShareOf, isMagicalHit } = await import('../src/model/combatRatings.js');
+  const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  // The step the generator really writes for fire.
+  let step = null;
+  for (let n = 0; n < 400 && !step; n += 1) {
+    step = nextUpgradeOptions({ seed: n, gameProfile: profile }, { instanceId: `f${n}`, cardId: 'core.strike' }, registries.cards.get('core.strike'), registries, 20).find((s) => s.damageSchool === 'fire');
+  }
+  assert.ok(step, 'a fire element step is rolled');
+  assert.deepEqual([step.tag, step.damage, step.magicShare], ['school:fire', 'fire', 1]);
+  const combat = live();
+  const carrierFor = (steps) => {
+    const f = projectGameCard(subject, { instanceId: 'i', cardId: 'core.strike', ...(steps ? { upgraded: true, upgradeSteps: steps } : {}) });
+    const ref = { cardId: 'core.strike', damageSchool: f.damageSchool, exposureBuildupPerHit: f.exposureBuildupPerHit, ...(Number.isFinite(f.magicShare) ? { magicShare: f.magicShare } : {}), sourceHand: 'right' };
+    return tacticalCarrier(f, ref, combat, combat.player);
+  };
+  const share = (c) => magicShareOf({ ...c.combatProfile, ...(Number.isFinite(c.magicShare) ? { magicShare: c.magicShare } : {}) });
+  const plainCarrier = carrierFor(null), fireCarrier = carrierFor([step]);
+  assert.equal(plainCarrier.combatProfile.damageType, 'slashing');
+  assert.equal(share(plainCarrier), 0);
+  assert.equal(isMagicalHit(combat, plainCarrier), false);
+  assert.equal(fireCarrier.combatProfile.damageType, 'fire');
+  assert.equal(fireCarrier.combatProfile.school, 'fire');
+  assert.equal(share(fireCarrier), 1);
+  assert.equal(isMagicalHit(combat, fireCarrier), true);
+  // Played: the same Strike, stepped, no longer hits for the weapon's physical damage.
+  const hpLost = (steps) => {
+    const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    for (const s of run.deck.filter((c) => c.cardId === 'core.strike')) if (steps) { s.upgraded = true; s.upgradeSteps = steps; }
+    const fight = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    for (const e of [fight.player, ...fight.enemies]) Object.assign(e, { hp: 100, maxHp: 100, block: 0, barrier: 0 });
+    const card = fight.piles.hand.find((c) => c.cardId === 'core.strike');
+    dispatch(fight, { type: 'playCard', cardInstanceId: card.instanceId, targetId: fight.enemies[0].id });
+    return 100 - fight.enemies[0].hp;
+  };
+  assert.notEqual(hpLost([step]), hpLost(null), 'the fire Strike routes through the magic lane');
+});
