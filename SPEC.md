@@ -1248,6 +1248,7 @@ Public actor-start revelation preserves original private prediction/learning
 receipts and cannot mark a cancelled action executed. Next planning intents
 refresh at player-turn start. The player mini HUD sits above visible artwork
 with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
+The selected enemy's detail card prefers the left of a lone living enemy and the space below the selected enemy when several live, and is kept inside the visible area.
 The reaction system has shipped (`src/engine/combatReactions.js`, reaction rules
 version 1).
 
