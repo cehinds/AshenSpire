@@ -22,7 +22,8 @@ export function builderInputFromControls({ type, category, element = '', utility
   if (element && !BUILDER_ELEMENTS.includes(element)) invalid('element');
   if (!['', 'heal', 'draw', 'cleanse'].includes(utility)) invalid('utility');
   if (!['melee', 'projectile'].includes(delivery)) invalid('delivery');
-  const tags = [`camp:${category}`, ...(type === 'skill' ? [] : [`maneuver:${type}`]),
+  // Evade is a type in the art API, not a registered combat maneuver tag.
+  const tags = [`camp:${category}`, ...(['skill', 'evade'].includes(type) ? [] : [`maneuver:${type}`]),
     ...(element ? [`element:${element}`] : []), ...(utility ? [`effect:${utility}`] : []),
     ...(category === 'spell' ? [`delivery:${delivery}`] : []), ...statuses.map(id => `status:${id}`),
     ...extraTags.split(/[\s,]+/).filter(Boolean)];
@@ -34,8 +35,9 @@ export function createBuilderPreview(registries, value, { name, text }) {
   const input = normalizeBuilderInput(value);
   const composition = proceduralCardArt(input, { registries });
   const definition = { id: BUILDER_PREVIEW_ID, name, textTemplate: text, rank: input.rank,
-    type: input.type === 'skill' ? 'skill' : 'attack', cardTags: [...input.tags], effects: [],
-    kindIds: [input.type === 'skill' ? 'classification.skill' : 'classification.attack'],
+    type: ['skill', 'evade'].includes(input.type) ? input.type : 'attack', cardTags: [...input.tags], effects: [],
+    ...(input.type === 'evade' ? { evade: true } : {}),
+    kindIds: [['skill', 'evade'].includes(input.type) ? 'classification.skill' : 'classification.attack'],
     cost: 0, staminaCost: 0, manaCost: 0, rarity: 'common', class: 'colorless' };
   return { input, composition, definition };
 }

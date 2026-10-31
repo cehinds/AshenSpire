@@ -48,6 +48,16 @@ test('every builder action, category, element and rank delegates to the producti
   }
 });
 
+test('Evade controls use the art type without inventing a native maneuver tag or changing composition', () => {
+  for (const category of ['physical', 'spell']) for (const rank of [1, 3, 5]) {
+    const input = builderInputFromControls({ type: 'evade', category, rank });
+    assert.ok(!input.tags.some(tag => tag.startsWith('maneuver:')));
+    const aliasInput = { ...input, tags: [...input.tags, 'maneuver:evasion'] };
+    assert.strictEqual(createBuilderPreview(registries, input, previewText).composition,
+      proceduralCardArt(aliasInput, { registries }));
+  }
+});
+
 test('utility and registry status choices retain all tags while the resolver bounds visible cues', () => {
   for (const [utility, assetId] of [['heal', 'G.object.0'], ['draw', 'F.object.0'], ['cleanse', 'H.object.0']]) {
     const input = builderInputFromControls({ type: 'skill', category: 'physical', utility, rank: 5,
@@ -76,16 +86,17 @@ test('builder does not register a card, mutate approved placements, or change it
   assert.deepEqual(input.tags, ['camp:physical', 'status:burn']);
 });
 
-test('native Core preview renders the same procedural recipe with complete zero-cost data and local style', () => withModalDom(() => {
+test('every builder type and category renders the same native Core recipe with complete costs and local style', () => withModalDom(() => {
   applyCardArtStyle({ cardArtStyle: 'Reviewed' });
   try {
-    for (const [type, category, element] of [['counter', 'physical', ''], ['sweep', 'spell', 'alteration'], ['skill', 'physical', 'earth']]) {
-      const input = builderInputFromControls({ type, category, element, rank: 5, utility: type === 'skill' ? 'heal' : '' });
+    for (const type of BUILDER_TYPES) for (const category of ['physical', 'spell']) for (const rank of [1, 3, 5]) {
+      const input = builderInputFromControls({ type, category, element: category === 'spell' ? 'alteration' : '', rank, utility: type === 'skill' ? 'heal' : '' });
       const preview = createBuilderPreview(registries, input, previewText);
       const face = renderCard(registries, { cardId: BUILDER_PREVIEW_ID, rank: input.rank },
         { definition: preview.definition, rules: run, inspection: false, level: 'inspect', artStyle: 'Simple' });
       const model = playingCardModel(registries, { cardId: BUILDER_PREVIEW_ID }, { definition: preview.definition, rules: run });
       assert.deepEqual(model.costs, { variable: false, action: 0, mana: 0, stamina: 0 });
+      if (type === 'evade' && category === 'physical') assert.equal(model.stanceType, 'evade');
       assert.equal(face.querySelector('[data-art-composition]').dataset.artComposition, preview.composition.componentArt.code);
       assert.equal(face.querySelector('.playing-card-art').dataset.cardArt, 'simple');
       assert.doesNotMatch(face.outerHTML, /undefined|NaN/);
