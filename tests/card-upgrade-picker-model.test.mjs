@@ -283,6 +283,11 @@ test('identical copies collapse into one row that selects the first instance', (
   assert.equal(model.selected, rows[0], 'any copy resolves to the collapsed row');
   strikes[0].upgraded = true; strikes[0].upgradeSteps = [{ k: 'authored' }];
   assert.equal(cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike').length, 2, 'a differently upgraded copy is its own row');
+  // An old save marks an upgrade with the flag alone; upgradeStepsOf reads it as the authored step, so it is not a fresh copy.
+  delete strikes[0].upgradeSteps;
+  const legacyRows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike');
+  assert.equal(legacyRows.length, 2, 'an old-style upgraded copy is its own row');
+  assert.equal(legacyRows.find(r => r.instanceId === strikes[1].instanceId)?.copies, strikes.length - 1, 'the fresh copies stay free and selectable');
 });
 
 test('rows carry levels, tags, art and the changed face numbers', () => {

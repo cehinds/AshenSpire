@@ -2,7 +2,7 @@
 // Every fact comes from planCardUpgrade, which is inert: the rolled step shown here
 // is the step commitCardUpgrade applies. Nothing here mutates the run.
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
-import { upgradeCount } from '../../model/cardUpgrade.js';
+import { upgradeCount, upgradeStepsOf } from '../../model/cardUpgrade.js';
 import { cardRank } from '../../model/cardRank.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
@@ -58,7 +58,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     const plan = planCardUpgrade(run, registries, instance.instanceId);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
-    const key = JSON.stringify([instance.cardId, instance.upgradeSteps || [], cardRank(instance)]);
+    // upgradeStepsOf normalises an old-style `upgraded: true` (no step list) to the authored step, so such a copy
+    // never shares a row with fresh copies of the same card.
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance)]);
     if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
     const base = registries.cards.get(instance.cardId);
     const rarity = base.rarity || 'common';
