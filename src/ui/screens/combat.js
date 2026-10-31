@@ -20,6 +20,7 @@ import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { previewEnemyAction } from '../../engine/enemyActionPreview.js';
+import { critChance } from '../../engine/actions.js';
 import { enemyDeckInspection } from '../models/EnemyDeckInspectionModel.js';
 import { editingLocked, markArmourySeen, noncombatEditing } from '../../model/armouryRules.js';
 import { syncArmouryNew } from '../components/runHud.js';
@@ -1052,6 +1053,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
           ...(entity.wardGuard > 0 ? [{ label: t('combat.protection.wardGuard'), tipId: 'wardGuard', value: entity.wardGuard }] : []),
           ...(entity.ratings ? (combat.breakMeterVersion === 1 ? ['ar', 'dr', 'pr', 'ward'] : ['ar', 'dr', 'pr']).map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
+          ...combatStatRows(v, entity, 'player'),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
         skillLabel: 'Active skills & stance',
@@ -1098,6 +1100,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
         ...(combat.breakMeterVersion === 1 && entity.ratings ? [{ label: t('combat.rating.ward'), value: ratingValue(combat, entity, 'ward') }] : []),
+        ...combatStatRows(v, entity, 'enemy'),
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: enemyIntentRead(combat, entity, { preview: intent, inspectedMoves,
@@ -2014,6 +2017,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function poiseTip(kind, entity = null) {
     return (bar) => {
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
       if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (combat.ratingsRules) {
@@ -3996,6 +4000,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       cinders: run.cinders, act: run.actNumber, floor: run.floor, turn: $('.turn-ribbon').textContent,
       instruction: helpText(combatEl.dataset.turn === 'player' ? 'playerTurn' : 'enemyTurn'),
     }))}`);
+  }
+
+  // Precision, Evasion and Crit chance for the inspector's Current state: always shown, 0 when absent.
+  // Crit chance is the engine's own critChance() on the entity's rules (only the player's attacks roll one);
+  // with several rules it is the best any single rule gives.
+  function combatStatRows(v, entity, kind) {
+    const rules = kind === 'player' && Array.isArray(entity.critRules) ? entity.critRules : [];
+    const best = Math.max(0, ...rules.map(rule => critChance([rule], combat.attributes, rule.tags).chance));
+    return [
+      { label: t('combat.stat.precision'), tipId: 'precision', always: true, value: v.statuses?.precision?.stacks || 0 },
+      { label: t('combat.stat.evasion'), tipId: 'evasion', always: true, value: v.statuses?.evade?.stacks || 0 },
+      { label: t('combat.stat.critChance'), tipId: 'critChance', always: true, value: `${Math.round(best * 100)}%` },
+    ];
   }
 
   function inspectorResources(rows, kind, entity) {
