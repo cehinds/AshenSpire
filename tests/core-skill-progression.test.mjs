@@ -21,6 +21,7 @@ import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { grantSmithingReward, smithingRewardId } from '../src/model/smithing.js';
 import { readFileSync } from 'node:fs';
 import { runCombatEnd } from '../src/engine/runCombat.js';
+import { foldCombatPlaysEver } from '../src/model/playsEver.js';
 import { isConfiguredRun } from '../src/model/gameProfileRun.js';
 import { gameModule } from '../src/model/gameProfile.js';
 import { skillKindOf, coreCardRanks, pendingRankUpRows } from '../src/model/skills.js';
@@ -327,7 +328,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   combat.player.hp = 0;
   run.combatPendingOutcome = { result: 'defeat' };
   const saves = createSaveManager(createMemoryStorage());
-  const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
+  const screens = [], notices = [], deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
@@ -585,7 +586,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   recordSkillXp(combat, { type: 'combatEnd', victory: true });
   const saves = createSaveManager(createMemoryStorage());
   const receipts = [], offers = [];
-  const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
+  const deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
     acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows,
