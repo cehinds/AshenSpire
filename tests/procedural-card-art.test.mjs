@@ -13,6 +13,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 import { readFileSync } from 'node:fs';
+import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 
 const recipe = (type = 'attack', tags = ['camp:physical'], rank = 1) => proceduralCardArt({ type, tags, rank });
 test('pure art depends only on canonical tags, type and rank, never identity or optional mechanics', () => {
@@ -133,6 +134,9 @@ test('legacy adapter infers declared utility/status facts only when explicit car
   assert.ok(first.componentArt.sprites.some(sprite => sprite.assetId === 'F.object.0'));
   assert.deepEqual(first.statuses, []);
   assert.equal(proceduralDefinitionArt({ ...def, cardTags: [] }), null);
+  const healing = proceduralDefinitionArt({ type: 'skill', tags: ['camp:spell'], effects: [{ op: 'heal', amount: 8 }, { op: 'retain' }] });
+  assert.ok(healing.componentArt.sprites.some(sprite => sprite.assetId === 'G.object.0'), 'healing plus Retain keeps the healing leaf; retaining a card is not drawing');
+  assert.ok(!healing.componentArt.sprites.some(sprite => sprite.assetId === 'F.object.0'));
 });
 test('live definition rank wins canonical visual refs, ability rank zero is an explicit first visual rank', () => {
   const def = { id: 'future', type: 'attack', cardTags: ['camp:physical'], rank: 5 };
@@ -159,4 +163,31 @@ test('review previews override artwork style locally without changing the saved 
   const simpleCard = renderCard(reg, { cardId: 'mindSpike' }, { inspection: false, artStyle: 'Simple' });
   assert.ok(reviewedCard.querySelector('[data-art-composition="C001"]'));
   assert.ok(simpleCard.querySelector('[data-art-composition^="procedural-"]'));
+}));
+test('invalid explicit Simple tags stay unresolved through the facade and mounted per-ID artwork layer', () => withModalDom(() => {
+  applyCardArtStyle({});
+  const reg = createRegistries(contentBundle);
+  for (const cardId of ['defend', 'gorefireSlash', 'strike']) {
+    const definition = { ...reg.cards.get(cardId), cardTags: ['camp:physical', 'camp:spell'] };
+    const options = { definition, registries: reg, style: 'Simple' };
+    assert.equal(illustratedArtwork({ cardId }, cardId, options), null);
+    const card = renderCard(reg, { cardId }, { definition: { ...definition, cardTags: [] }, inspection: false, artStyle: 'Simple' });
+    assert.equal(card.querySelector('.playing-card-art'), null, `${cardId}: no legacy painting repairs an invalid descriptor`);
+    assert.ok(card.querySelector('[data-component="art"] .ic-glyph'), 'safe generic placeholder remains');
+    assert.ok(illustratedArtwork({ cardId }, cardId, { ...options, style: 'Legacy' })?.path);
+    assert.ok(illustratedArtwork({ cardId }, cardId, { ...options, style: 'Reviewed' })?.path);
+  }
+}));
+test('an explicit custom artwork component still overrides the invalid Simple placeholder afterward', () => withModalDom(() => {
+  applyCardArtStyle({});
+  const reg = createRegistries(contentBundle), doc = CARD_COMPONENTS.cards.defend;
+  const saved = doc.components.art;
+  try {
+    doc.components.art = { href: 'assets/cards/shield-defend-512.webp', fit: 'contain' };
+    const definition = { ...reg.cards.get('defend'), cardTags: [] };
+    const card = renderCard(reg, { cardId: 'defend' }, { definition, inspection: false, artStyle: 'Simple' });
+    const custom = card.querySelector('[data-component="art"][data-custom-image="true"] img');
+    assert.ok(custom, 'the separately authored custom appearance is still applied');
+    assert.match(custom.src, /shield-defend-512\.webp$/);
+  } finally { if (saved === undefined) delete doc.components.art; else doc.components.art = saved; }
 }));

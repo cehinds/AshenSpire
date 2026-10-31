@@ -75,7 +75,7 @@ export function proceduralDefinitionArt(def, { ref, registries } = {}) {
       visited.add(value);
       if (['applyStatus', 'buildup'].includes(value.op) && typeof value.status === 'string') tags.push(`status:${value.status}`);
       if (value.op === 'heal') tags.push('effect:heal');
-      if (['draw', 'retain', 'shuffleDiscardIntoDraw'].includes(value.op)) tags.push('effect:draw');
+      if (['draw', 'shuffleDiscardIntoDraw'].includes(value.op)) tags.push('effect:draw');
       if (value.op === 'removeStatus' && value.target === 'self') tags.push('effect:cleanse');
       for (const child of Object.values(value)) if (child && typeof child === 'object') walk(child, depth + 1);
     };
