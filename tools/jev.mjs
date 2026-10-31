@@ -36,7 +36,16 @@ export function loadRules(path = RULES_PATH) {
 
 // ---- triage: ordered rules, each reported once (first matching line) ----
 
-const FAILURE_WORDS = /\b(fail(ed|ing|ure)?|error|fatal|not ok|stale|mismatch|ENOENT|FAIL)\b|✖|<{7}/;
+// Anything that looks like a failure, matched anywhere in a line and case-insensitively,
+// so TypeError, AssertionError, "Failed", "not ok", "# fail 2", "npm ERR!" and a
+// non-zero exit code all count. A false "pass" is the worst outcome, so this is broad.
+const FAILURE_WORDS = /fail|error|fatal|not ok|stale|mismatch|ENOENT|ERR!|assertion|exception|panic|traceback|✖|<{7}|\bexit(ed)?\s+(with\s+)?(status|code)\W{0,3}[1-9]|\bcode\s+[1-9]\d*\b[^\n]*\bexit|\bnon-?zero\b/i;
+// The one shape that names a failure word but reports none: "# fail 0" / "ℹ fail 0".
+const ZERO_FAIL = /^\W*(fail|failed|failures?)\s+0\W*$/i;
+
+export function failureLines(text) {
+  return String(text).split(/\r?\n/).filter(l => FAILURE_WORDS.test(l) && !ZERO_FAIL.test(l));
+}
 
 export function severityOf(matches) {
   let sev = 0;
@@ -59,11 +68,23 @@ export function triage(text, rules = loadRules()) {
       'evidence-line': line.trim().slice(0, 240),
     });
   }
+  const failing = failureLines(text);
   if (matches.length) {
+    // A matched rule only vouches for the lines it matches; any other failure line
+    // is unexplained and forces a model (a safe fix must never hide a real failure).
+    const matched = rules.filter(r => matches.some(m => m.id === r.id));
+    const uncovered = failing.filter(l => !matched.some(r => r.re.test(l)));
+    if (uncovered.length) {
+      matches.push({
+        id: 'unmatched', category: 'unknown', deterministic: false, action: 'model', command: '',
+        note: `${uncovered.length} failure line(s) no matched rule explains.`,
+        'evidence-line': uncovered[0].trim().slice(0, 240),
+      });
+    }
     const exit = severityOf(matches);
     return { matches, verdict: exit === 0 ? 'autofix' : exit === 1 ? 'explained' : 'needs-model', exit };
   }
-  if (!FAILURE_WORDS.test(text)) return { matches, verdict: 'pass', exit: 0 };
+  if (!failing.length) return { matches, verdict: 'pass', exit: 0 };
   return { matches, verdict: 'unmatched', exit: 2 };
 }
 

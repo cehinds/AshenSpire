@@ -187,3 +187,24 @@ test('devmerge refuses a dirty tree (exit 1) without touching it', () => {
     assert.equal(readFileSync(join(dir, 'a.txt'), 'utf8'), '2');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---- failure detection (a false "pass" is the worst outcome) ----
+
+test('a log of only a TypeError and stack is unmatched, exit 2', () => {
+  const r = triage("TypeError: Cannot read properties of undefined (reading 'x')\n    at foo (src/a.js:1:2)\n    at bar (src/b.js:3:4)\n");
+  assert.deepEqual([r.verdict, r.exit], ['unmatched', 2]);
+  for (const l of ['AssertionError [ERR_ASSERTION]: x', 'Failed to compile', 'npm ERR! code 1', '# fail 2', 'not ok 5 - x', 'Process completed with exit code 1.'])
+    assert.equal(triage(l).exit, 2, l);
+  assert.equal(triage('# tests 5\n# pass 5\n# fail 0\n').exit, 0);
+});
+
+test('a safe rule match never hides an unexplained failure line', () => {
+  const r = triage('content-build --check: src/content/generated/cards.js is stale\nnot ok 5 - tests/combat.test.mjs\n# fail 1\n');
+  assert.equal(r.exit, 2);
+  assert.equal(r.matches.at(-1).id, 'unmatched');
+});
+
+test('CLI: the TypeError-only log exits 2', () => {
+  const r = spawnSync(process.execPath, [JEV, 'triage', '-'], { input: 'TypeError: Cannot read properties of undefined\n    at x (a.js:1:1)\n', encoding: 'utf8' });
+  assert.equal(r.status, 2);
+});
