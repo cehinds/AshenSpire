@@ -250,7 +250,10 @@ export function restampChangelog(text, { pr, build }) {
     }
     kept.push(line);
   }
-  const named = new RegExp(`/pull/${pr}\\)|\\(#${pr}\\b|\\[#${pr}\\]`);
+  // The receipt's own structured prefix, `([#N](…/pull/N), \``, as tools/pr-restamp.mjs's
+  // isReceiptLine reads it, never a mention of #N in another receipt's prose.
+  const own = new RegExp(`^- \\*\\*.*\\(\\[#${pr}\\]\\([^)\\s]*/pull/${pr}\\), \``);
+  const named = { test: l => own.test(l) };
   let at = kept.findIndex(l => /^- /.test(l) && named.test(l));
   let relocatedFrom = null;
   let rest = lines.slice(end);

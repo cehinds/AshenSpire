@@ -174,6 +174,18 @@ test('restampChangelog takes a receipt left under an older date into the newest 
   assert.ok(older.some(l => l.includes('#2432') && l.includes('`0.7.2.69`')), 'other receipts untouched');
 });
 
+test('restampChangelog matches the receipt\'s own PR field, not a prose mention of the PR', () => {
+  const text = [
+    '# Changelog', '', '## 2026-10-31', '',
+    '- **Follow-up** ([#2600](https://github.com/cehinds/AshenSpire/pull/2600), `0.7.2.80`). Follows [#2501](https://github.com/cehinds/AshenSpire/pull/2501).',
+    '- **Mine** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.2.70`). The real one.', '',
+  ].join('\n');
+  const r = restampChangelog(text, { pr: 2501, build: '0.7.2.81' });
+  const lines = r.text.split('\n');
+  assert.ok(lines.some(l => l.includes('The real one') && l.includes('`0.7.2.81`')), '#2501 restamped');
+  assert.ok(lines.some(l => l.includes('Follow-up') && l.includes('`0.7.2.80`')), '#2600 untouched');
+});
+
 test('restampChangelog refuses a PR with no receipt under the newest heading', () => {
   assert.throws(() => restampChangelog(CHANGELOG, { pr: 9999, build: '0.7.2.72' }), /names PR #9999/);
 });
