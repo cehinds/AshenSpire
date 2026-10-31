@@ -870,7 +870,10 @@ pile (`shuffleHand: true`). Played cards and forced or chosen discards go to the
 discard pile and return with its next reshuffle. When the draw pile holds fewer
 cards than the next turn's draw, the whole discard pile joins the returned
 cards in that one shuffle (in deck order under Play in deck order), so a held
-hand never starves the discard of its reshuffle. Retain does not change a
+hand never starves the discard of its reshuffle. The cards already in the
+draw pile stay on top in their order; the shuffled returned cards and discard
+go beneath them, so a short draw pile is drawn before anything reshuffled.
+Retain does not change a
 played card's destination. The authored Herald and Starseer pools give Retain to
 selected healing, ward, setup and costly spells, including their upgrades.
 At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:

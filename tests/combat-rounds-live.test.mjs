@@ -333,6 +333,10 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   // playback also adds forecasts and enemyMoveEnded receipts. Validate those
   // additive shapes before filtering them, then keep the historical event log
   // and its end-state receipts pinned.
+  // Re-recorded for #2410 (the draw pile stays on top when the turn-end refresh reshuffles): compared entry by entry with
+  // origin/dev b506bf55, seeds 1 and 2 are byte-identical and seed 3 differs only in the last End Turn's four cardDrawn
+  // events (the three cards left in the draw pile are drawn before the reshuffled discard instead of after it). Every
+  // play, hit, outcome and end state matches.
   const previousTotals = [], endedMoves = [], projectedRanges = [];
   const forecastCounts = { actor: 0, move: 0, action: 0 };
   const legacy = logs.map(text => {
@@ -411,7 +415,7 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
     return counts;
   }, {}), { '0-7': 11, '0-9': 6 }, 'projected HP ranges are present only on the public attacking forecasts');
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
-    { sha256: 'be9793f5c2a4140c461f9d218d7334555ad276b67f71cb4c96111bdaf8ca85b0', length: 414756 });
+    { sha256: '7ae61b7bedb9ccad09e9f732ce0650c130d34c3f350eec866b1e7460546e80fe', length: 414757 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.
