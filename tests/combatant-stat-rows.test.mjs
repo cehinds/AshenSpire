@@ -21,3 +21,9 @@ test('the three rows stay listed at 0 when the statuses and crit rules are absen
     assert.deepEqual(stateRows(rows).map((r) => [r.label, r.value]), [['Precision', '0'], ['Evasion', '0'], ['Crit', '0%']]);
   }
 });
+
+test('rules sharing a tag add up, as an attack with those tags rolls them', () => {
+  const keen = { tags: ['blade'], base: 0.03, weights: {}, divisor: 100, cap: 0.5, multiplier: 1.5 };
+  const rows = combatStatRows({ statuses: {}, critRules: [keen, rule], attributes, kind: 'player' }, t);
+  assert.equal(rows[2].value, '13%'); // 3% + 10%, not the larger one alone
+});
