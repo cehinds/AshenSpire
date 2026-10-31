@@ -41,6 +41,7 @@ import { extractionPlan, extractionRefusal, installPlan, commitExtraction, commi
 import { deckRules } from '../content/deckRules.js';
 import { deckCopyLimit, ownedCopies } from './deckRules.js';
 import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
+import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice } from './blacksmithConfig.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 /** The `{plural}` token of the uiStrings rows: '' for exactly one, 's' otherwise. */
@@ -255,9 +256,11 @@ export function commitRefine(registries, run, quote, { priceMult = 1 } = {}) {
 // Item upgrade, from either purse
 // ---------------------------------------------------------------------------
 
-export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stones' } = {}) {
-  const candidate = smithingPlan(registries, run).candidates.find((row) => row.itemRef === itemRef) || null;
+export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stones', priceMult = 1 } = {}) {
+  // Core: stones come off by the blacksmith's discount, and the work costs cinders by the tier it reaches.
+  const candidate = smithingPlan(registries, run, undefined, { stoneDiscount: blacksmithStoneDiscount(run) }).candidates.find((row) => row.itemRef === itemRef) || null;
   const refinedPurse = purse === 'refined';
+  const cost = candidate && blacksmithRules(run) ? cinders(tierUpgradePrice(run, candidate.nextLevel), priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'upgrade')) reason = say('blacksmith.refuse.notOffered');
   else if (!SMITHING_PURSES.includes(purse)) reason = say('blacksmith.refuse.notOffered');
@@ -266,20 +269,22 @@ export function blacksmithUpgradePlan(registries, run, itemRef, { purse = 'stone
   else if (!candidate) reason = say('blacksmith.refuse.upgradeNone', { name: armamentName(registries, itemRef) });
   else if (refinedPurse && !candidate.refinedAffordable) reason = say('blacksmith.refuse.refined', { cost: candidate.refinedCost ?? '—', have: run.smithingStonesRefined || 0, plural: plural(candidate.refinedCost) });
   else if (!refinedPurse && !candidate.affordable) reason = say('blacksmith.refuse.stones', { cost: candidate.cost, have: stones(run), plural: plural(candidate.cost) });
+  else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return {
     ok: !reason, reason, itemRef, purse, candidate,
     stones: candidate && !refinedPurse ? candidate.cost : 0,
     refined: candidate && refinedPurse ? candidate.refinedCost : 0,
-    cost: 0, revision: blacksmithRevision(run),
+    cost, revision: blacksmithRevision(run),
   };
 }
 
-export function commitBlacksmithUpgrade(registries, run, quote) {
-  const plan = blacksmithUpgradePlan(registries, run, quote.itemRef, { purse: quote.purse });
+export function commitBlacksmithUpgrade(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = blacksmithUpgradePlan(registries, run, quote.itemRef, { purse: quote.purse, priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
-  // A Core run commits equipment upgrades only inside the Smith service; the stone price is still smithingPlan's.
-  const receipt = withSmithService(registries, run, () => commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse }));
+  // A Core run commits equipment upgrades only inside the Smith service; the stone price is smithingPlan's, less the discount.
+  const receipt = withSmithService(registries, run, () => commitItemUpgrade(registries, run, plan.itemRef, undefined, { purse: plan.purse, stoneDiscount: blacksmithStoneDiscount(run) }));
+  run.cinders -= plan.cost;
   bump(run, plan);
   return receipt;
 }
@@ -330,18 +335,23 @@ export function commitBlacksmithInstall(registries, run, quote) {
   return receipt;
 }
 
-function coreUpgradeArtPlan(registries, run, instanceId) {
+function coreUpgradeArtPlan(registries, run, instanceId, priceMult = 1) {
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
   const verdict = card ? planCardUpgrade(run, registries, instanceId) : null;
+  // The blacksmith takes its stone discount off the service's price (Free stays free; 1 stone becomes 0).
+  const due = verdict ? Math.max(0, (verdict.cost ?? 0) - blacksmithStoneDiscount(run)) : 0;
+  const payable = !!verdict && (verdict.ok || (verdict.code === 'stones' && stones(run) >= due));
+  const cost = blacksmithRules(run) ? cinders(blacksmithPrices(run).cardUpgrade, priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'upgradeArt')) reason = say('blacksmith.refuse.notOffered');
   else if (!card) reason = say('shop.refuse.gone');
-  else if (!verdict.ok) reason = verdict.reason;
-  return { ok: !reason, reason, instanceId, stones: verdict ? (verdict.cost ?? 0) : 0, cost: 0, revision: blacksmithRevision(run), cardQuote: verdict };
+  else if (!payable) reason = verdict.reason;
+  else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, instanceId, stones: due, cost, revision: blacksmithRevision(run), cardQuote: verdict };
 }
 
-export function upgradeArtPlan(registries, run, instanceId) {
-  if (coreCardUpgrades(run)) return coreUpgradeArtPlan(registries, run, instanceId);
+export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
+  if (coreCardUpgrades(run)) return coreUpgradeArtPlan(registries, run, instanceId, priceMult);
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
   const price = blacksmithOffering(registries, 'upgradeArt')?.stones ?? 0;
   const name = card ? cardName(registries, card.cardId) : '';
@@ -356,15 +366,22 @@ export function upgradeArtPlan(registries, run, instanceId) {
   return { ok: !reason, reason, instanceId, stones: price, cost: 0, revision: blacksmithRevision(run) };
 }
 
-export function commitUpgradeArt(registries, run, quote) {
-  const plan = upgradeArtPlan(registries, run, quote.instanceId);
+export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = upgradeArtPlan(registries, run, quote.instanceId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   if (coreCardUpgrades(run)) {
     // The service re-plans and refuses a quote whose rolled step, number or price changed; it spends the stones.
-    const receipt = commitCardUpgrade(run, registries, quote.cardQuote || plan.cardQuote);
+    // The service charges its own (rest) price, so the discount is lent to the purse for the call and the books
+    // balance after it: the player pays (service price - discount, min 0).
+    const lent = Math.min(blacksmithStoneDiscount(run), (plan.cardQuote?.cost ?? 0));
+    run.smithingStones = stones(run) + lent;
+    let receipt;
+    try { receipt = commitCardUpgrade(run, registries, quote.cardQuote || plan.cardQuote); }
+    catch (error) { run.smithingStones -= lent; throw error; }
+    run.cinders -= plan.cost;
     bump(run, plan);
-    return { instanceId: receipt.instanceId, spentStones: receipt.spentStones, step: receipt.step, n: receipt.n };
+    return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n };
   }
   owned(run).find((row) => row.instanceId === plan.instanceId).upgraded = true;
   run.smithingStones = stones(run) - plan.stones;

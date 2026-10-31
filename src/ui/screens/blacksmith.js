@@ -32,6 +32,7 @@ import { openMountService } from './smithServices.js';
 import { wireShopLayout } from './shop.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
 import { smithingPlan } from '../../model/smithing.js';
+import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { armamentPurchasePlan, commitArmamentPurchase } from '../../model/armamentTrading.js';
 import { smithStonePurchasePlan, commitSmithStonePurchase } from '../../model/marketAdditions.js';
 import {
@@ -53,6 +54,7 @@ const GLYPH = Object.freeze({
 
 export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
+  const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
   let layout = null;
 
@@ -111,19 +113,19 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     },
     upgrade(shelf) {
       // An item with no name of its own is a raw id; the screen never shows one.
-      for (const candidate of smithingPlan(registries, run).candidates.filter((row) => row.itemName)) {
+      for (const candidate of smithingPlan(registries, run, undefined, { stoneDiscount }).candidates.filter((row) => row.itemName)) {
         const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.line', { from: candidate.currentLevel, to: candidate.nextLevel }));
         // The stone purse opens the smith's own upgrade modal (SmithSelectionModel),
         // whose confirm commits the blacksmith's quote.
-        const stonesPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones' });
-        const control = button({ label: t('blacksmith.action.upgrade', { cost: candidate.cost, plural: plural(candidate.cost) }), weight: 'primary', disabled: !stonesPlan.ok });
+        const stonesPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones', priceMult });
+        const control = button({ label: t(!stonesPlan.cost ? 'blacksmith.action.upgrade' : candidate.cost ? 'blacksmith.action.upgradeCoin' : 'blacksmith.action.upgradeCinders', { cost: candidate.cost, plural: plural(candidate.cost), cinders: stonesPlan.cost }), weight: 'primary', disabled: !stonesPlan.ok });
         if (stonesPlan.ok) control.addEventListener('click', () => openUpgradeModal(candidate.itemRef, control));
         host.append(control);
         if (!stonesPlan.ok) host.append(statusText(stonesPlan.reason, { class: 'shop-offer-avail' }));
         // Core has no refining, so there is no refined purse to offer.
         if (candidate.refinedCost !== null && !blacksmithWithholds(run, 'refineStones')) {
           const refinedPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'refined' });
-          actionButton(host, { label: t('blacksmith.action.upgradeRefined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, refinedPlan) });
+          actionButton(host, { label: t('blacksmith.action.upgradeRefined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, refinedPlan, { priceMult }) });
         }
         shelf.append(host);
       }
@@ -181,7 +183,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const plan = upgradeArtPlan(registries, run, card.instanceId);
         const name = registries.cards.get(card.cardId)?.name || card.cardId;
         const host = tile(GLYPH.upgradeArt, name, t('blacksmith.art.line'));
-        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones, plural: plural(plan.stones) }), plan, commit: () => commitUpgradeArt(registries, run, plan) });
+        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones, plural: plural(plan.stones) }), plan, commit: () => commitUpgradeArt(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
@@ -223,14 +225,14 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     let selection = itemRef;
     let displayedQuote;
     const model = () => {
-      displayedQuote = blacksmithUpgradePlan(registries, run, selection, { purse: 'stones' });
-      return smithSelectionModel(registries, smithingPlan(registries, run), selection, { multiUse: true });
+      displayedQuote = blacksmithUpgradePlan(registries, run, selection, { purse: 'stones', priceMult });
+      return smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true });
     };
     const modal = mountSmithUpgradeModal(app, model(), {
       registries, meta, returnFocusElement,
       onSelect: (ref) => { selection = ref; modal.update(model()); },
       onBack: () => {},
-      onConfirm: () => act(returnFocusElement.parentNode, () => commitBlacksmithUpgrade(registries, run, displayedQuote)),
+      onConfirm: () => act(returnFocusElement.parentNode, () => commitBlacksmithUpgrade(registries, run, displayedQuote, { priceMult })),
     });
   }
 
@@ -243,7 +245,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       onSelect: (instanceId) => { selection = instanceId; modal.update(model()); },
       onBack: () => {},
       // The quote is the plan the modal showed (rolled step included); a stale one is refused by name.
-      onConfirm: (instanceId, cardQuote) => act(host, () => commitUpgradeArt(registries, run, { ...upgradeArtPlan(registries, run, instanceId), cardQuote })),
+      onConfirm: (instanceId, cardQuote) => act(host, () => commitUpgradeArt(registries, run, { ...upgradeArtPlan(registries, run, instanceId, { priceMult }), cardQuote }, { priceMult })),
     });
   }
 
