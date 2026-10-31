@@ -98,6 +98,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
+import { weaknessChips } from '../components/weaknessChips.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { haptic } from '../haptics.js';
 import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, callout, calloutForEvent, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
@@ -1545,6 +1546,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
       box.appendChild(statusRow(e.statuses, coopBadgedStatusIds(e, true, me)));
+      for (const chip of weaknessChips(e.weaknesses)) box.appendChild(chip);
       if (!dead) {
         wireCombatantContext(box, def.name);
         box.addEventListener('click', () => {
