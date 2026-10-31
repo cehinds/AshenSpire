@@ -87,16 +87,35 @@ test('builder does not register a card, mutate approved placements, or change it
 });
 
 test('every builder type and category renders the same native Core recipe with complete costs and local style', () => withModalDom(() => {
+  // Preserve the production HTML before the layout-free fixture drops text tokens.
+  let markup = '';
+  const createElement = document.createElement.bind(document);
+  document.createElement = tag => {
+    const element = createElement(tag);
+    const innerHTML = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), 'innerHTML');
+    Object.defineProperty(element, 'innerHTML', { set(value) {
+      if (String(value).includes('data-card-binding="rules"')) markup = String(value);
+      innerHTML.set.call(this, value);
+    } });
+    return element;
+  };
   applyCardArtStyle({ cardArtStyle: 'Reviewed' });
   try {
     for (const type of BUILDER_TYPES) for (const category of ['physical', 'spell']) for (const rank of [1, 3, 5]) {
       const input = builderInputFromControls({ type, category, element: category === 'spell' ? 'alteration' : '', rank, utility: type === 'skill' ? 'heal' : '' });
       const preview = createBuilderPreview(registries, input, previewText);
+      markup = '';
       const face = renderCard(registries, { cardId: BUILDER_PREVIEW_ID, rank: input.rank },
         { definition: preview.definition, rules: run, inspection: false, level: 'inspect', artStyle: 'Simple' });
       const model = playingCardModel(registries, { cardId: BUILDER_PREVIEW_ID }, { definition: preview.definition, rules: run });
       assert.deepEqual(model.costs, { variable: false, action: 0, mana: 0, stamina: 0 });
-      if (type === 'evade' && category === 'physical') assert.equal(model.stanceType, 'evade');
+      if (type === 'evade') {
+        if (category === 'physical') assert.equal(model.stanceType, 'evade');
+        assert.equal(preview.definition.evade, false);
+        assert.deepEqual(preview.definition.effects, []);
+        assert.doesNotMatch(markup, /Prepare one Evade/);
+        assert.match(markup, /data-card-binding="rules"[^>]*>[\s\S]*?Art preview only/);
+      }
       assert.equal(face.querySelector('[data-art-composition]').dataset.artComposition, preview.composition.componentArt.code);
       assert.equal(face.querySelector('.playing-card-art').dataset.cardArt, 'simple');
       assert.doesNotMatch(face.outerHTML, /undefined|NaN/);

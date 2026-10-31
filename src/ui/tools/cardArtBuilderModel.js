@@ -36,7 +36,8 @@ export function createBuilderPreview(registries, value, { name, text }) {
   const composition = proceduralCardArt(input, { registries });
   const definition = { id: BUILDER_PREVIEW_ID, name, textTemplate: text, rank: input.rank,
     type: ['skill', 'evade'].includes(input.type) ? input.type : 'attack', cardTags: [...input.tags], effects: [],
-    ...(input.type === 'evade' ? { evade: true } : {}),
+    // Presence classifies a physical Evade; false supplies no grant or gameplay prose.
+    ...(input.type === 'evade' ? { evade: false } : {}),
     kindIds: [['skill', 'evade'].includes(input.type) ? 'classification.skill' : 'classification.attack'],
     cost: 0, staminaCost: 0, manaCost: 0, rarity: 'common', class: 'colorless' };
   return { input, composition, definition };
