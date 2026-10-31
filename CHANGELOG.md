@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-31
 
+- **Spells strike Poise first, then Block** ([#2425](https://github.com/cehinds/AshenSpire/pull/2425), `0.7.2.55`). Magic damage now spends the target's Poise one for one before anything reaches Block or health, so spells break guards faster; physical hits still meet Block first and only then wear down Poise.
 - **The desktop End Turn HOLD hint no longer paints over its key label** ([#2423](https://github.com/cehinds/AshenSpire/pull/2423), `0.7.2.55`). The hint now hangs just below the End Turn plate at desktop sizes, and the release motion probe aims at the enemy figure itself when it looks for a tap target.
 - **Six zero-cost cards with Momentum and Honed ramp upgrades** ([#2421](https://github.com/cehinds/AshenSpire/pull/2421), `0.7.2.53`). Flick, Pebble Throw, Brace, Quick Guard, Whetstone Nick and Tempered Edge cost nothing and get no stance Stamina bonus; upgrades raise their numbers or add Momentum (grows per play this combat) or Honed (grows per play across the run, on Exhaust cards).
 - **Hand cards shrink their text to two lines before asking you to Inspect, and the (i) badge sits on its card** ([#2420](https://github.com/cehinds/AshenSpire/pull/2420), `0.7.2.51`). Rules text shrinks first; one or two lines show on the card and only three or more fall back to "Inspect card." The info badge over the selected card is centred on it again.
