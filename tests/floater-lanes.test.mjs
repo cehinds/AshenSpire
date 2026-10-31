@@ -65,3 +65,19 @@ test('a lane freed by an expired floater is reused before a lane still occupied'
     assert.equal(fifth.dataset.floatLane, '1');
   });
 });
+
+test('a floater placed in a fixed slot (lane: false) takes no lane and holds none', () => {
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    document.createElement = (name) => Object.assign(create(name), { offsetWidth: 40, offsetHeight: 20 });
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    const a = document.createElement('div'); a.box = { left: 100, top: 100, width: 80, height: 120 };
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const guard = floatNum(fx, a, '4', 'blk', null, { x: -26, jitter: false, lane: false });
+    const damage = floatNum(fx, a, '-7', 'dmg', null, { x: 26, jitter: false, lane: false });
+    const next = floatNum(fx, a, '-3', 'dmg', null, { jitter: false });
+    flushMeasureJobs();
+    assert.deepEqual([guard, damage, next].map((n) => n.dataset.floatLane), ['0', '0', '0']);
+  });
+});

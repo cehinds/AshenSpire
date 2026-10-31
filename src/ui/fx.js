@@ -375,7 +375,7 @@ export function combatReadoutLayer(layer, create = true) {
 // not counted: when the first of three expires the next floater takes lane 0, not lane 2 over a
 // floater still showing. With all three lanes taken, the lane freeing soonest is reused.
 const FLOAT_LANES = 3;
-const floaterLanes = new WeakMap();
+let floaterLanes = new WeakMap();
 function floaterLaneFor(anchor, lifeMs) {
   const now = Date.now();
   const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
@@ -435,7 +435,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const life = floaterLifeMs();
   el.style.setProperty('--float-ms', `${life}ms`);
   // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
-  const lane = floaterLaneFor(anchor, life);
+  // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
+  // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
+  const lane = placement.lane === false ? 0 : floaterLaneFor(anchor, life);
   el.dataset.floatLane = String(lane);
   layer.appendChild(el);
   // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
@@ -696,8 +698,10 @@ export function clearCallouts(layer) {
   const queues = layer && calloutQueues.get(layer);
   for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
-  // The waiting queue goes with the visible words.
+  // The waiting queue goes with the visible words, and so do the floater lanes: a skip takes the
+  // numbers off screen early, so the next number must not rise over a gap nothing fills.
   if (layer) calloutQueues.delete(layer);
+  floaterLanes = new WeakMap();
 }
 
 /**
@@ -2057,19 +2061,21 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           if (outcome) return;
           const anchor = ctx.anchorFor(e.targetId);
-          // Barrier and Ward stack above the Block / Health pair.
-          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
-          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
-          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false });
-          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
+          // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
+          // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
+          const lane = parts.barrier || parts.ward || parts.poise || parts.pierced || parts.immune || paired ? false : undefined;
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
+          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false });
+            { x: paired ? -26 : 0, jitter: false, lane });
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
             floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
-              { x: paired ? 26 : 0, jitter: !paired });
+              { x: paired ? 26 : 0, jitter: !paired, lane });
           }
         },
       };
