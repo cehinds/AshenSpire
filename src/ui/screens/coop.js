@@ -1,5 +1,6 @@
 import { floaterLifeMs } from '../animationPace.js';
 import { coopRangePreview } from '../models/CoopRangePreviewModel.js';
+import { combatStatRows } from '../models/CombatantStatRows.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
@@ -1121,7 +1122,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       if (label.length > 6) badge.dataset.rangeDetail = 'true';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = label;
-      badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
+      badge.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + badge.textContent);
       frame.append(badge);
       if (selectedCard) {
         const odds = badge.cloneNode(true);
@@ -1201,6 +1202,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
           ...(entity.combatExpansionVersion === 2 && !((entity.persistentWard?.max || 0) > 0) ? [] : [{ label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward }]),
           ...(entity.combatExpansionVersion === 2 ? [...((entity.persistentWard?.max || 0) > 0 ? [{ label: 'Ward pool', value: entity.persistentWard.value || 0, max: entity.persistentWard.max }] : []), { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
+        ...combatStatRows({ statuses: entity.statuses, critRules: entity.critRules, evade: entity.evade, attributes: entity.attributes || snap.scene?.attributes, kind: def ? 'enemy' : 'player' }, t),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);

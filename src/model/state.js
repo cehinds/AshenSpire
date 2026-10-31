@@ -1570,6 +1570,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       // The derived every-5th-level skill bonus (SPEC §13.4o), absent at 0.
       if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].skillBonus must be a whole number from 1 to ${MAX_CARD_RANK}`);
       if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].passiveBlock must be a whole number from 1 to ${MAX_CARD_RANK}`);
+      // Plays across earlier fights (SPEC §4.3 Zero-cost cards and ramp); Honed cards read it.
+      if (card.playsEver !== undefined && !(Number.isInteger(card.playsEver) && card.playsEver >= 0)) problems.push(`${pile}[${i}].playsEver must be a non-negative whole number`);
       // A set-aside attack basic's slot is retired; any other would make the
       // next restamp disagree with the allocation.
       if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined

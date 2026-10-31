@@ -105,7 +105,7 @@ const MUTATIONS = {
   rng: 'instrumentation stops being passive — burns one misc draw per combat',
   flask: 'flask threshold 0.55 → 0.75 (runsim drinks at 0.55)',
   path: 'shrine-preference gate 0.55 → 0.95 in the shared run loop, this tool only (map pathing diverges)',
-  shrine: 'shrine rest gate 0.60 → 0.20 in the shared run loop, this tool only (rest/smith decision diverges)',
+  shrine: 'shrine rest gate 0.60 → 1.00 in the shared run loop, this tool only (rest/smith decision diverges: the pilot rests at any missing HP)',
   manaFlask: 'the out-of-plays Azure charge is never drunk (runsim drinks it; same wins can hide it)',
 };
 const STAR_MUTATIONS = {
@@ -748,7 +748,10 @@ const runLoop = createRunLoop(REG, {
   get pilot() {
     return {
       ...(MUTATE === 'path' ? { pathHurtBelow: 0.95 } : {}),
-      ...(MUTATE === 'shrine' ? { restBelow: 0.2 } : {}),
+      // 1.0, not 0.2: after #2410 (the draw pile stays on top of a turn-end reshuffle) the greedy pilot's
+      // five seeded runs never reached a shrine between 20% and 60% HP, so a 0.2 gate changed no decision and
+      // the plant went uncaught (test promotion of 2026-10-31). Resting at any missing HP diverges on every class.
+      ...(MUTATE === 'shrine' ? { restBelow: 1 } : {}),
     };
   },
   hooks: {

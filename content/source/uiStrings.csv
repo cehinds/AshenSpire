@@ -45,6 +45,8 @@ combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward b
 combat.protection.wardBlock,,Warded Block,"The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",Warded Block
 # ---- optional defensive reactions and public combat receipts --------------
 combat.log.title,,Combat log,,
+combat.log.contestPassed,,"{source} vs {target}. Contest: d20 [{roll}] + {mine} + rank {rank} = {total} vs {theirs} = {dc} · success",,
+combat.log.contestFailed,,"{source} vs {target}. Contest: d20 [{roll}] + {mine} + rank {rank} = {total} vs {theirs} = {dc} · failure",,
 combat.log.sizeLabel,,Log size,,
 combat.log.size.small,,Small,,
 combat.log.size.medium,,Medium,,
@@ -1592,6 +1594,9 @@ creation.feats.summary.vitalRenewal,,Recover HP after victory.,,
 combat.callout.hit,,Hit,,
 combat.callout.evadeFailed,,Hit — Evade Failed,,
 combat.callout.missed,,Missed,,
+combat.contest.dc,,DC {dc},,
+combat.callout.contestPassed,,Read,,
+combat.callout.contestFailed,,Resisted,,
 
 status.lifecycle.stackTotal,,stack total,,
 status.lifecycle.buildup,,build-up,,
@@ -1747,6 +1752,8 @@ combat.deckEdit.deferred,,,Changes apply next encounter; current combat piles st
 combat.receipt.poiseAbsorbed,,Poise absorbed {n},,
 combat.receipt.pierced,,Pierced {n},,
 combat.receipt.piercedPoise,,Pierced {n} (Poise took {poise}),,
+combat.receipt.magicPoise,,Poise {n},,
+combat.tooltip.poiseMagic,,,Spells spend Poise one for one before Block.,
 combat.receipt.poiseDamage,,Poise damage {n},,
 card.smash.coreClause,,,"Against {stances}: {mult} damage, plus {block} of their Block; {poise} of it breaks Poise.",
 tag.smash.coreHelp,,,"Heavy strike. Against {stances}: {mult} damage, plus {block} of their Block; {poise} of it breaks Poise. Fast Attack and Counter answer it.",
@@ -1849,6 +1856,9 @@ cardUpgrade.row.status,,{from} → {to} upgrade · {cost},{from} → {to} upgrad
 cardUpgrade.row.copies,,×{n},×{n},
 cardUpgrade.row.aria,,"{name}, {type}, {n} in deck, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.","{name}, {type}, {n} in deck, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.",
 cardUpgrade.row.copiesLabel,,{n} in deck,{n} in deck,
+cardUpgrade.row.inDeck,,In deck,In deck,
+cardUpgrade.row.copiesLabelSide,,{n} in sideboard,{n} in sideboard,
+cardUpgrade.row.ariaSide,,"{name}, {type}, {n} in sideboard, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.","{name}, {type}, {n} in sideboard, upgrade {from} to {to}, costs {cost}. Select to review its exact changes.",
 smith.upgrade.confirm,,Upgrade ({cost}),Upgrade ({cost}),
 smith.upgrade.title,,Upgrade {name}?,Upgrade {name}?,
 smith.upgrade.aria.one,,Upgrade {name} for {cost} Smithing Stone,Upgrade {name} for {cost} Smithing Stone,
@@ -1911,3 +1921,6 @@ cardArtBuilder.noComposition,,,These tags do not identify a supported compositio
 cardArtBuilder.invalidRank,,,Choose a whole rank from 1 to {max}.,
 cardArtBuilder.invalidInput,,,Use a supported type and valid canonical tags.,
 cardArtBuilder.previewFailed,,,Could not render the preview: {reason},
+combat.stat.precision,,Precision,Each stack adds 1 Accuracy to your attacks.,Precision
+combat.stat.evasion,,Evasion,Each stack helps avoid incoming attacks.,Evasion
+combat.stat.critChance,,Crit,Crit chance: the best chance one of your attacks has to land a critical hit.,Crit chance

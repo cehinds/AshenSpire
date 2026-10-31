@@ -22,6 +22,8 @@
     "edgeInsetPx": 12,
     "topInsetPx": 4,
     "staggerStepPx": 36,
+    "loneEnemySide": "left",
+    "crowdedEnemySide": "below",
     "enemyLaneSides": [
       "left",
       "below",

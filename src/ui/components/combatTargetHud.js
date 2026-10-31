@@ -279,7 +279,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const hand = combat.querySelector('.hand'), handTop = hand?.getBoundingClientRect().top;
     const rootBox = combat.getBoundingClientRect();
     const bottom = Math.min(fieldBox.top + fieldBox.height, Number.isFinite(handTop) ? handTop - config.positioning.gapPx : rootBox.bottom);
-    const bounds = { ...fieldBox, height: Math.max(0, bottom - fieldBox.top) };
+    // Clamp against what is visible: the field, the combat root and the viewport, then the hand-top cut.
+    const vw = window.innerWidth || rootBox.right, vh = window.innerHeight || rootBox.bottom;
+    const visLeft = Math.max(fieldBox.left, rootBox.left, 0), visTop = Math.max(fieldBox.top, rootBox.top, 0);
+    const visRight = Math.min(fieldBox.left + fieldBox.width, rootBox.right, vw), visBottom = Math.min(bottom, rootBox.bottom, vh);
+    const bounds = { left: visLeft, top: visTop, width: Math.max(0, visRight - visLeft), height: Math.max(0, visBottom - visTop) };
     const frames = [...field.querySelectorAll('.combatant:not(.dead)')];
     const intents = frames.map(frame => {
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
@@ -338,7 +342,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     const requests = sizing.map(({ id, entry, panel, anchor, lane, width }) => ({ id, role: entry.role, lane, anchor, width: width + 25,
       height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }));
-    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config, tightTop: !isWideFormFactor(document.documentElement.dataset.formFactor) });
+    const enemyCount = [...entries.values()].filter(entry => entry.role === 'enemy').length;
+    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config, enemyCount, tightTop: !isWideFormFactor(document.documentElement.dataset.formFactor) });
     // Phase 4: panel positions, then each panel's box; then the Info buttons.
     const positioned = [];
     for (const box of placed) {

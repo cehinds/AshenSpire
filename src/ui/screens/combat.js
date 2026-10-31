@@ -3,6 +3,7 @@ import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { poiseHelpText } from '../poiseHelp.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
@@ -20,6 +21,7 @@ import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { previewEnemyAction } from '../../engine/enemyActionPreview.js';
+import { combatStatRows as statRows } from '../models/CombatantStatRows.js';
 import { enemyDeckInspection } from '../models/EnemyDeckInspectionModel.js';
 import { editingLocked, markArmourySeen, noncombatEditing } from '../../model/armouryRules.js';
 import { syncArmouryNew } from '../components/runHud.js';
@@ -1052,6 +1054,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
           ...(entity.wardGuard > 0 ? [{ label: t('combat.protection.wardGuard'), tipId: 'wardGuard', value: entity.wardGuard }] : []),
           ...(entity.ratings ? (combat.breakMeterVersion === 1 ? ['ar', 'dr', 'pr', 'ward'] : ['ar', 'dr', 'pr']).map(id => ({ label: id.toUpperCase(), value: ratingValue(combat, entity, id) })) : []),
+          ...combatStatRows(v, entity, 'player'),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
         skillLabel: 'Active skills & stance',
@@ -1098,6 +1101,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
         ...(combat.breakMeterVersion === 1 && entity.ratings ? [{ label: t('combat.rating.ward'), value: ratingValue(combat, entity, 'ward') }] : []),
+        ...combatStatRows(v, entity, 'enemy'),
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: enemyIntentRead(combat, entity, { preview: intent, inspectedMoves,
@@ -2014,6 +2018,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function poiseTip(kind, entity = null) {
     return (bar) => {
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
       if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
       if (combat.ratingsRules) {
@@ -2056,6 +2061,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
       preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
+    // An insight contest has no hit chance and no range: the badge prices the DC the d20 + attributes + rank must reach.
     const label = rangeHitLabel(preview, { targetId: enemy.id });
     if (!label) return null;
     const node = document.createElement('span');
@@ -2063,7 +2069,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (label.length > 6) node.dataset.rangeDetail = 'true';
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
     node.textContent = label;
-    node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
+    node.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + node.textContent);
     return node;
   }
 
@@ -2135,7 +2141,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
-      poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
+      poiseHelp: poiseHelpText(combat, v),
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
@@ -3997,6 +4003,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       instruction: helpText(combatEl.dataset.turn === 'player' ? 'playerTurn' : 'enemyTurn'),
     }))}`);
   }
+
+  // The tag sets of the player's attack cards (draw, hand, discard, exhaust), as the engine reads them for a crit.
+  const ownedAttackTagSets = () => Object.values(combat.piles).flat().flatMap((inst) => {
+    // The effective card: an equipment-bound attack's profile replaces the registry's damage tags.
+    let def = null;
+    try { def = resolveCard(registries, inst); } catch { return []; }
+    const tags = Array.isArray(def?.cardTags) && def.cardTags.length ? def.cardTags : def?.tags;
+    return def?.type === 'attack' && Array.isArray(tags) && tags.length ? [tags] : [];
+  });
+  const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, evade: entity.evade, attributes: combat.attributes, kind, attackTagSets: kind === 'player' ? ownedAttackTagSets() : null }, t);
 
   function inspectorResources(rows, kind, entity) {
     return rows.map(({ tipId, ...row }) => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: tipId || ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));

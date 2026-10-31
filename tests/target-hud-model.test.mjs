@@ -8,7 +8,10 @@ test('target details support every alternative formation form factor', () => {
   for (const formFactor of ['mobile', 'tablet', 'desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor, classic: false }, config), true);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: true }), false);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: false, layout: 'cards' }), false);
-  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right']);
+  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right'], 'no count: lane fallback');
+  assert.equal(targetHudSide('enemy', 2, undefined, 1), 'left');
+  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane, undefined, 3)), ['below', 'below', 'below']);
+  assert.equal(targetHudSide('player', 0, undefined, 1), 'right');
   assert.deepEqual([0, 1, 2].map(lane => targetHudSide('player', lane)), ['right', 'right', 'right']);
 });
 test('player panel stays right of the player in every lane, even when enemies crowd that side', () => {
@@ -19,6 +22,30 @@ test('player panel stays right of the player in every lane, even when enemies cr
     const obstacles = [{ left: 215, top: 250, width: 60, height: 60 }];
     const placed = placeTargetHudPanels({ bounds, panels: [...enemies, player], obstacles }).find(row => row.id === 'p');
     assert.ok(placed.left >= player.anchor.left + player.anchor.width - 1, `lane ${lane}: player HUD at ${placed.left} left of the player`);
+  }
+});
+test('a lone enemy gets its card left of it; a crowd gets it below, shifted in from the edge; the player stays right', () => {
+  const bounds = { left: 0, top: 0, width: 1000, height: 600 };
+  const lone = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 800, top: 200, width: 100, height: 140 }, width: 224, height: 110 };
+  const [one] = placeTargetHudPanels({ bounds, panels: [lone] });
+  assert.equal(one.side, 'left');
+  assert.ok(one.left + one.width <= lone.anchor.left && one.left >= bounds.left, 'entirely left of the sprite, inside bounds');
+  const edge = { id: 'c', role: 'enemy', lane: 2, anchor: { left: 880, top: 100, width: 100, height: 140 }, width: 224, height: 110 };
+  const others = [0, 1].map(i => ({ id: `o${i}`, role: 'enemy', lane: i, anchor: { left: 100 + i * 250, top: 100, width: 100, height: 140 }, width: 224, height: 110 }));
+  const crowd = placeTargetHudPanels({ bounds, panels: [...others, edge] }).find(row => row.id === 'c');
+  assert.equal(crowd.side, 'below');
+  assert.ok(crowd.top >= edge.anchor.top + edge.anchor.height, 'below the sprite');
+  assert.ok(crowd.left + crowd.width <= bounds.left + bounds.width, 'right edge inside bounds, shifted left');
+  const player = { id: 'p', role: 'player', lane: 0, anchor: { left: 200, top: 350, width: 90, height: 140 }, width: 224, height: 110 };
+  const placed = placeTargetHudPanels({ bounds, panels: [lone, player] }).find(row => row.id === 'p');
+  assert.equal(placed.side, 'right');
+  assert.ok(placed.left >= player.anchor.left + player.anchor.width);
+});
+test('a zero or tiny visible width still returns a clamped panel instead of hanging', () => {
+  for (const width of [0, 16]) {
+    const panel = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 0, top: 100, width: 80, height: 100 }, width: 224, height: 110 };
+    const [placed] = placeTargetHudPanels({ bounds: { left: 0, top: 0, width, height: 300 }, panels: [panel], obstacles: [{ left: 0, top: 100, width: 80, height: 100 }] });
+    assert.ok(placed && Number.isFinite(placed.left) && placed.width >= 0, `width ${width}`);
   }
 });
 function clock() {

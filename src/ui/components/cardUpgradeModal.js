@@ -72,13 +72,14 @@ export function mountCardUpgradeModal(host, initialModel, {
       cardArt(row, { small: true }),
       el('span', { class: 'smith-row-text' }, [
         el('strong', { class: 'smith-weapon-name', text: row.name }),
+        row.inDeck ? el('span', { class: 'as-tag card-upgrade-indeck', text: t('cardUpgrade.row.inDeck') }) : null,
         statusText(upgrade, { class: 'smith-row-status card-upgrade-cost' }),
         row.blockedReason ? statusText(row.blockedReason, { class: 'smith-row-status card-upgrade-reason' }) : null,
       ]),
-      pill({ label: t('cardUpgrade.row.copies', { n: row.copies }), attrs: { class: 'smith-weapon-count', 'aria-label': t('cardUpgrade.row.copiesLabel', { n: row.copies }) } }),
+      pill({ label: t('cardUpgrade.row.copies', { n: row.copies }), attrs: { class: 'smith-weapon-count', 'aria-label': t(row.inDeck ? 'cardUpgrade.row.copiesLabel' : 'cardUpgrade.row.copiesLabelSide', { n: row.copies }) } }),
     );
     const typeText = row.tags[0] || '';
-    item.setAttribute('aria-label', [t('cardUpgrade.row.aria', { name: row.name, type: typeText, n: row.copies, from: row.levelFrom, to: row.levelTo, cost: row.costLabel }), row.blockedReason].filter(Boolean).join(' '));
+    item.setAttribute('aria-label', [t(row.inDeck ? 'cardUpgrade.row.aria' : 'cardUpgrade.row.ariaSide', { name: row.name, type: typeText, n: row.copies, from: row.levelFrom, to: row.levelTo, cost: row.costLabel }), row.blockedReason].filter(Boolean).join(' '));
     attachTooltip(item, () => `<div class="tt-title">${esc(row.name)} · ${esc(t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel }))}</div>`
       + `<div>${esc(row.tags.join(', '))}.</div>`
       + (row.blockedReason ? `<div>${esc(row.blockedReason)}</div>` : ''));

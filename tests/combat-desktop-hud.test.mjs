@@ -34,28 +34,49 @@ function rules(text) {
   return out;
 }
 
+// Owner (2026-10-31): the tools row (End Turn, Reaction, Auto) shrinks on widescreen as well, so its
+// rules carry both gates in one selector list; every other override is desktop only.
+const WIDE_GATE = ":root[data-form-factor='widescreen']";
+const TOOLS_FRAGMENT = '.combat-tools';
+
 test('every desktop HUD override is gated on the desktop form factor', () => {
   for (const [file, fragment] of DESKTOP_RULES) {
     const hits = rules(css(file)).filter(r => r.selector.includes(fragment) && r.selector.includes('data-form-factor'));
     assert.ok(hits.length > 0, `${file}: no desktop override for ${fragment}`);
     for (const hit of hits) {
-      assert.ok(hit.selector.startsWith(GATE), `${file}: "${hit.selector.slice(0, 80)}" is not gated on ${GATE}`);
+      const gates = hit.selector.split(',').map(part => part.trim());
+      assert.ok(gates[0].startsWith(GATE), `${file}: "${hit.selector.slice(0, 80)}" is not gated on ${GATE}`);
+      for (const part of gates.slice(1)) {
+        if (!part.includes('data-form-factor') || part.startsWith(GATE)) continue;
+        assert.ok(fragment.includes(TOOLS_FRAGMENT) && part.startsWith(WIDE_GATE),
+          `${file}: "${part.slice(0, 80)}" widens a desktop-only override`);
+      }
     }
   }
 });
 
+test('the tools row overrides also apply on widescreen', () => {
+  const text = css('combat-layers.css');
+  for (const fragment of ['.combat-tools > button', '.combat-tools .reaction-switch-track', '.combat-tools .reaction-switch-value', '.combat-tools .reaction-switch-thumb']) {
+    const hit = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.includes(fragment));
+    assert.ok(hit, fragment);
+    assert.ok(hit.selector.includes(WIDE_GATE), `${fragment} is not gated on widescreen too`);
+  }
+});
+
+// Owner (2026-10-31): End Turn, Reaction and Auto 30% smaller on desktop, so the row reads at 0.7x the phone values.
 test('desktop tools row sets the approved label, row and reaction sizes', () => {
   const text = css('combat-layers.css');
   const row = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.combat-tools > button'));
   assert.ok(row, 'tools button rule');
-  assert.match(row.body, /min-height:\s*calc\(36px \/ var\(--ui-zoom,1\)\)/);
-  assert.match(row.body, /font-size:\s*calc\(14px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(row.body, /min-height:\s*calc\(25\.2px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(row.body, /font-size:\s*calc\(9\.8px \/ var\(--ui-zoom,1\)\)/);
   const value = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-value'));
   assert.ok(value, 'reaction value rule');
-  assert.match(value.body, /font-size:\s*calc\(12px \/ var\(--ui-zoom,1\)\)/);
+  assert.match(value.body, /font-size:\s*calc\(8\.4px \/ var\(--ui-zoom,1\)\)/);
   const track = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-track'));
   assert.ok(track, 'reaction track rule');
-  assert.match(track.body, /width:\s*calc\(84px \/ var\(--ui-zoom,1\)\)/, 'track wide enough for the 12px value');
+  assert.match(track.body, /width:\s*calc\(58\.8px \/ var\(--ui-zoom,1\)\)/, 'track wide enough for the 8.4px value');
 });
 
 test('desktop intent badge and stance glyph are 1.25x and match each other', () => {

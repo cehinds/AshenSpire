@@ -261,6 +261,8 @@ player's piles).
 | `trait:impact` | 1 | SP | Poise damage on hit: 1. As counterstrike, added after the cost is derived. |
 | `trait:flux` | 1 | SP | Ward damage on hit: 1. As counterstrike, added after the cost is derived. |
 | `trait:reaction` | 0 | SP | A timing rule (playable on the opponent's turn), not power. Enemy moves carry it; no card is priced by it. |
+| `ramp.momentum` | 0 | SP | Damage or Block grows per play this combat. Carried only by zero-cost `costRule: fixed` cards; it never reprices a card. |
+| `ramp.honed` | 0 | SP | Damage grows per play across the run. Carried only by zero-cost `costRule: fixed` cards; it never reprices a card. |
 
 ### Keywords
 
