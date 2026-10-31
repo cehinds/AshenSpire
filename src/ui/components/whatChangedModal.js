@@ -5,7 +5,7 @@
 import { el, button, statRow, prose, glyph } from '../kit/index.js';
 import { openModal } from './modalShell.js';
 import { renderCard } from './card.js';
-import { deltaNode, changeSummary } from './smithPaneParts.js';
+import { deltaNode } from './smithPaneParts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { t } from '../strings.js';
 import { coreSmithingStats } from '../../model/smithingCore.js';
@@ -32,7 +32,7 @@ function rowNode(registries, row) {
     : CHANGE_WORD[row.change] ? t(CHANGE_WORD[row.change]) : '';
   const wrap = el('div', { class: 'what-changed-row', dataset: { whatChangedKind: row.kind, ...(row.change ? { whatChangedChange: row.change } : {}) } });
   wrap.appendChild(statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.label }), hint, values: [delta || word] }));
-  if (row.stats?.length) wrap.appendChild(el('div', { class: 'confirmation-change-list' }, row.stats.map((s) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: s.label }), values: changeSummary({ values: [s] }) }))));
+  if (row.stats?.length) wrap.appendChild(el('div', { class: 'confirmation-change-list' }, row.stats.map((s) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: s.label }), values: deltaNode(String(s.before), String(s.after)) }))));
   if (registries && row.kind === 'card') {
     if (row.faces) wrap.appendChild(facesNode(registries, row));
     else if (row.change === 'added') wrap.appendChild(cardFace(registries, row));
