@@ -208,3 +208,17 @@ test('CLI: the TypeError-only log exits 2', () => {
   const r = spawnSync(process.execPath, [JEV, 'triage', '-'], { input: 'TypeError: Cannot read properties of undefined\n    at x (a.js:1:1)\n', encoding: 'utf8' });
   assert.equal(r.status, 2);
 });
+
+test('a retried ECONNRESET warning is not an infra flake; a real failure beside it exits 2', () => {
+  const log = 'npm warn retry ECONNRESET, retrying\nnot ok 5 - tests/combat.test.mjs\n# fail 1\n';
+  const r = triage(log);
+  assert.equal(r.exit, 2);
+  assert.ok(!r.matches.some(m => m.id === 'infra-flake'));
+  const lost = triage('npm error code ECONNRESET\nnpm error network request failed\nnpm error A complete log of this run can be found in x.log\n');
+  assert.deepEqual([lost.exit, lost.matches.map(m => m.id)], [0, ['infra-flake']]);
+});
+
+test('runChecks: a failing check no rule recognises is exit 2, never 1', () => {
+  const r = runChecks([{ id: 'x' }], () => ({ status: 1, out: 'quiet death' }));
+  assert.equal(r.exit, 2);
+});

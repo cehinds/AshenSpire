@@ -31,7 +31,10 @@ const SAFE_ACTIONS = new Set(['regen', 'restamp', 'rerun-once', 'ignore-local'])
 
 export function loadRules(path = RULES_PATH) {
   const doc = JSON.parse(readFileSync(path, 'utf8'));
-  return doc.rules.map(rule => ({ ...rule, re: new RegExp(rule.regex, rule.flags || '') }));
+  return doc.rules.map(rule => ({
+    ...rule, re: new RegExp(rule.regex, rule.flags || ''),
+    covers: rule.covers ? new RegExp(rule.covers, rule.flags || '') : null,
+  }));
 }
 
 // ---- triage: ordered rules, each reported once (first matching line) ----
@@ -73,7 +76,7 @@ export function triage(text, rules = loadRules()) {
     // A matched rule only vouches for the lines it matches; any other failure line
     // is unexplained and forces a model (a safe fix must never hide a real failure).
     const matched = rules.filter(r => matches.some(m => m.id === r.id));
-    const uncovered = failing.filter(l => !matched.some(r => r.re.test(l)));
+    const uncovered = failing.filter(l => !matched.some(r => r.re.test(l) || (r.covers && r.covers.test(l))));
     if (uncovered.length) {
       matches.push({
         id: 'unmatched', category: 'unknown', deterministic: false, action: 'model', command: '',
@@ -146,7 +149,8 @@ export function runChecks(list, runner, rules = loadRules()) {
     const t = triage(out, rules);
     // Tag the check name onto the text so a rule keyed on the tool name can see it.
     const tagged = t.matches.length ? t : triage(`${check.id}: ${out}`, rules);
-    const exit = Math.max(1, tagged.exit);
+    // No rule explains it: a nonzero exit with nothing recognised needs a model, never "explained".
+    const exit = tagged.matches.length ? Math.max(1, tagged.exit) : 2;
     results.push({
       id: check.id, status: 'fail', exit, ms, verdict: tagged.verdict,
       matches: tagged.matches.map(m => m.id), fix: tagged.matches.map(m => m.command).filter(Boolean),

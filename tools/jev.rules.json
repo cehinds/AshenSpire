@@ -63,7 +63,8 @@
     },
     {
       "id": "infra-flake",
-      "regex": "The operation was canceled|runner (has )?(lost|received a shutdown)|lost communication with the server|npm (ERR!|error) (network|code E?(CONNRESET|TIMEDOUT))|ECONNRESET|ETIMEDOUT|fatal: unable to access|RPC failed|early EOF|Unable to (resolve|download) action|actions\\/checkout[^\\n]*(fail|error)",
+      "regex": "The operation was canceled|runner (has )?(lost|received a shutdown)|lost communication with the server|npm (ERR!|error) (network|code E?(CONNRESET|TIMEDOUT))|fatal: unable to access|RPC failed|early EOF|Unable to (resolve|download) action|actions\\/checkout[^\\n]*(fail|error)",
+      "covers": "^\\s*npm (ERR!|error) (network|code|errno|syscall|path|A complete log)",
       "flags": "i",
       "category": "environmental",
       "deterministic": true,
