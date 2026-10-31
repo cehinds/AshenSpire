@@ -95,3 +95,29 @@ test('a lower dialog under a confirmation stays locked and the confirmation is r
     assert.equal(document.activeElement, upper.buttons[1]);
   });
 });
+
+test('focus taken before the lock arms is remembered: a background focus() bounces to it, not the first control', () => {
+  scene(({ document, back, dialog }) => {
+    const { panel, buttons } = dialog('one', 'two');
+    const release = registerModal('door', panel, { dismiss() {}, deferInert: true });
+    buttons[1].focus(); // like deferFocus: focus the primary, then arm a frame later
+    release.arm();
+    back.focus();
+    assert.equal(document.activeElement, buttons[1], 'the primary, not controls[0]');
+  });
+});
+
+test('after a confirmation closes, a bounce returns to the lower dialog\'s last-focused control', () => {
+  scene(({ document, back, dialog }) => {
+    const lower = dialog('a', 'b', 'c');
+    const upper = dialog('yes', 'no');
+    const releaseLower = registerModal('settings', lower.panel, { dismiss() {} });
+    lower.buttons[1].focus();
+    const releaseUpper = registerModal('confirm', upper.panel);
+    upper.buttons[1].focus();
+    releaseUpper();
+    back.focus();
+    assert.equal(document.activeElement, lower.buttons[1]);
+    releaseLower();
+  });
+});

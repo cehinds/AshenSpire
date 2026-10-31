@@ -268,7 +268,10 @@ function ensureEscape() {
 // into the top one. Focus that lands outside them (background code calling
 // .focus() while a dialog is open) is bounced back to where it last was.
 let focusLockOn = null;
-let lastFocus = null;
+// The control last focused inside each dialog's element, recorded for every live
+// entry (armed or not: a door focuses its primary one frame before it arms), so
+// a lower dialog's place survives a confirmation above it.
+const lastFocusIn = new WeakMap();
 
 function onLockTab(event) {
   if (event.key !== 'Tab' || event.defaultPrevented) return;
@@ -286,9 +289,10 @@ function onLockTab(event) {
   if (to) to.focus?.(); else focusInto(top);
 }
 
-function focusInto(top) {
-  const last = lastFocus;
+function focusInto(top, related) {
+  const last = lastFocusIn.get(top);
   if (last && last.isConnected !== false && holds(top, last) && last !== top) { last.focus?.({ preventScroll: true }); return; }
+  if (related && related !== top && related.isConnected !== false && holds(top, related)) { related.focus?.({ preventScroll: true }); return; }
   const first = focusableControls(top)[0];
   if (first) { first.focus?.({ preventScroll: true }); return; }
   if (!top.hasAttribute?.('tabindex')) top.setAttribute?.('tabindex', '-1');
@@ -296,13 +300,15 @@ function focusInto(top) {
 }
 
 function onLockFocusin(event) {
-  const kept = keptElements();
   const target = event.target;
-  if (!kept || !target || target === document || target === document.body) {
-    return;
+  if (!target || target === document || target === document.body) return;
+  for (const entry of stack) {
+    if (entry.element && !entry.closing && entry.element !== target && holds(entry.element, target)) lastFocusIn.set(entry.element, target);
   }
-  if (kept.some((el) => holds(el, target))) { lastFocus = target; return; }
-  focusInto(kept[kept.length - 1]);
+  const kept = keptElements();
+  if (!kept) return;
+  if (kept.some((el) => holds(el, target))) return;
+  focusInto(kept[kept.length - 1], event.relatedTarget);
 }
 
 function ensureFocusLock() {
@@ -353,6 +359,7 @@ export function registerModal(name, element, opts = {}) {
     released = true;
     const at = stack.indexOf(entry);
     if (at >= 0) stack.splice(at, 1);
+    if (element) lastFocusIn.delete(element);
     leaveHistory();
     syncPage();
     notifyIfEmpty();
