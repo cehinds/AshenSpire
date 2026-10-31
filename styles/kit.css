@@ -2224,9 +2224,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
    so the pinned strip sits flush on the card's foot. */
 .smith-preview-card { flex: 1 1 auto; min-height: 0; width: 100%; gap: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: 0; }
-/* The card-upgrade picker sizes its preview to its lines, so Confirm sits under them instead of under an empty box. */
-.card-upgrade-modal .smith-preview-host { flex: 0 1 auto; }
-.card-upgrade-modal .smith-preview-card { flex: 0 1 auto; padding-bottom: 0.6rem; }
 .card-upgrade-modal .smith-candidate-region > .as-rail { gap: .3rem; }
 .card-upgrade-modal .card-upgrade-row { padding: .35rem .6rem; gap: .6rem; }
 .card-upgrade-modal .smith-cost-strip { margin-top: .5rem; padding: .5rem 0; }
