@@ -50,8 +50,10 @@ export function digest(combat) {
 // Re-pinned 2026-10-31 after merging dev cf6417b4d9: the same fights on the dev tree
 // (no transaction caches) give these digests, so the rules moved, not the caches.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'eee368ba97f97147', state: '89938021e2dd2945', events: 184, turn: 6 }],
-  [[4242, 'reaver'], { log: 'f666484a313541df', state: 'd83928c1fe5a833b', events: 226, turn: 6 }],
+  // Re-recorded for enemy weaknesses (SPEC 5.3, 2026-10-31): the enemy entity gains `weaknesses` and blunt/fire weak enemies take the
+  // weakness damage stage, so the log and state digests change; event counts and turn are unchanged.
+  [['PERF1', 'reaver'], { log: '4291ad0e4e4bdd80', state: 'adfec8710da3cea3', events: 184, turn: 6 }],
+  [[4242, 'reaver'], { log: 'bd525116c03ba22e', state: '517c8160598af8b5', events: 226, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
