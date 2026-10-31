@@ -41,3 +41,26 @@ test('a changed authored gain changes the text: nothing is hard-coded', () => {
   });
   assert.equal(largestAttributeGain(registries, run, 'constitution').text, '+20 HP');
 });
+
+import { withKitDom } from './helpers/kit-dom.mjs';
+import { withModalDom } from './helpers/modal-dom.mjs';
+import { mountRewards } from '../src/ui/screens/reward.js';
+import { allocateAttributePoint } from '../src/model/levelup.js';
+import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
+import { attributeCardModels } from '../src/model/creationBrief.js';
+
+test('the Armoury allocation modal shows the same span, and the Rest card model carries mainGain', () => {
+  const { registries, run } = build();
+  run.level.unspentPoints = 1;
+  withModalDom(() => {
+    const sheet = openCharacterSheet({ registries, run, onChange() {} });
+    sheet.panel.querySelector('.progression-points').click();
+    const chips = [...document.querySelectorAll('.cc-stat-modal .se-gain')];
+    assert.ok(chips.length >= 5, 'one gain span per attribute row');
+    assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
+    sheet.close();
+  });
+  const cards = attributeCardModels(registries, run.attributes, { gainContext: { run } });
+  assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+10 HP');
+  assert.ok(cards.every(c => Array.isArray(c.gains)));
+});
