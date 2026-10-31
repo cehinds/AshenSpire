@@ -1752,7 +1752,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'buildup': {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure' }).success) continue;
+        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure', event: { status: eff.status, targetId: t.id, sourceId: action.source?.id } }).success) continue;
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
           { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;

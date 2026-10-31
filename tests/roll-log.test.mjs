@@ -82,3 +82,16 @@ test('rollCrit emits critRolled and keeps its single combatProcs draw', () => {
   assert.equal(events.length, 2);
 });
 
+
+import { rollStatusChance } from '../src/engine/combatStatusControl.js';
+test('rollStatusChance emits statusChanceRolled only when labelled, with the same draws', () => {
+  const make = () => { const events = [], draws = []; return { events, draws, ctx: { emit: (type, payload) => events.push({ type, ...payload }),
+    rng: { int: (stream, lo, hi) => { draws.push([stream, lo, hi]); return 34; } } } }; };
+  const quiet = make(), loud = make();
+  const a = rollStatusChance(quiet.ctx, 45, { stream: 'statusPressure' });
+  const b = rollStatusChance(loud.ctx, 45, { stream: 'statusPressure', event: { status: 'burn', targetId: 'e1' } });
+  assert.deepEqual(a, b);
+  assert.deepEqual(quiet.draws, loud.draws);
+  assert.equal(quiet.events.length, 0);
+  assert.deepEqual(loud.events, [{ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [34], roll: 34, chance: 45, effectiveChance: 45, success: true }]);
+});
