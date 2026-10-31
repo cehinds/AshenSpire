@@ -4,6 +4,8 @@
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
 import { upgradeCount, upgradeStepsOf } from '../../model/cardUpgrade.js';
 import { cardRank } from '../../model/cardRank.js';
+import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
+import { upgradeChoiceCount } from '../../model/cardUpgradeLimits.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
 import { t } from '../strings.js';
@@ -39,6 +41,16 @@ export function cardUpgradeChanges(registries, before, after) {
   push('HITS', hitsOf(before), hitsOf(after));
   push('STAMINA', num(before.staminaCost), num(after.staminaCost));
   push('MANA', num(before.manaCost), num(after.manaCost));
+  const poise = (def) => (def?.effects || []).filter((e) => e.op === 'poiseDamage' && Number.isFinite(e.amount)).reduce((sum, e) => sum + e.amount, 0);
+  push(t('cardUpgrade.change.poise'), poise(before), poise(after));
+  push(t('cardUpgrade.change.range'), cap(combatCardRange(before) || 'none'), cap(combatCardRange(after) || 'none'));
+  const targeting = (def) => t((def?.effects || []).find((e) => e.op === 'damage' && e.target === 'allEnemies') ? 'cardUpgrade.value.area' : 'cardUpgrade.value.single');
+  if ((before.effects || []).some((e) => e.op === 'damage')) push(t('cardUpgrade.change.target'), targeting(before), targeting(after));
+  push(t('cardUpgrade.change.stance'), cap(combatProfileFor(before).maneuver || 'none'), cap(combatProfileFor(after).maneuver || 'none'));
+  push(t('cardUpgrade.change.school'), cap(combatProfileFor(before).school || 'none'), cap(combatProfileFor(after).school || 'none'));
+  push(t('cardUpgrade.change.element'), cap(before.damageSchool || 'none'), cap(after.damageSchool || 'none'));
+  const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
+  push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   const from = statusStacks(before), to = statusStacks(after);
   if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: t('cardUpgrade.change.status'), before: statusText(registries, from), after: statusText(registries, to) }));
   return freeze(out);
@@ -51,11 +63,14 @@ const cardTags = (registries, def, rarity) => freeze([
 ].filter(Boolean));
 
 /**
+ * cardUpgradeModel(registries, run, selectedInstanceId, { blockedReason, blacksmith, quote }).
+ * `blacksmith` offers a choice (upgradeChoiceCount: 2 for a Basic card, 3 for a ranked one); each row then lists
+ * `options` [{ index, step, after, changes }] (a single entry otherwise) and its `plan` carries the same list.
  * `quote(instanceId) → { ok, cost, reason, cinders }` is an optional price override (the Blacksmith's): it replaces the
  * rest-priced availability and stone cost of each row, and a `cinders` price is shown instead of Free / stones.
  * The row's `plan` stays the service's own quote (the step the commit applies).
  */
-export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '', quote = null } = {}) {
+export function cardUpgradeModel(registries, run, selectedInstanceId = null, { blockedReason = '', blacksmith = false, quote = null } = {}) {
   const stones = Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0;
   const groups = new Map();
   const rows = [];
@@ -64,14 +79,15 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   const owned = [...(run.deck || []).map((instance) => ({ instance, inDeck: true })), ...(run.sideboard || []).map((instance) => ({ instance, inDeck: false }))];
   for (const { instance, inDeck } of owned) {
     if (!instance || !registries.cards.has(instance.cardId)) continue;
-    const plan = planCardUpgrade(run, registries, instance.instanceId);
+    const choices = blacksmith ? upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith }) : 1;
+    const plan = planCardUpgrade(run, registries, instance.instanceId, { choices });
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
     // upgradeStepsOf normalises an old-style `upgraded: true` (no step list) to the authored step, so such a copy
     // never shares a row with fresh copies of the same card.
     // The next step is rolled per instance id, so copies whose next upgrade differs stay separate rows: each
     // distinct outcome stays previewable and purchasable.
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.step, inDeck]);
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.options ? plan.options.map((o) => o.step) : plan.step, inDeck]);
     if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
     const priced = quote ? quote(instance.instanceId) : null;
     const ok = priced ? !!priced.ok : plan.ok;
@@ -90,6 +106,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
       changes: cardUpgradeChanges(registries, plan.before, plan.after),
+      options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
+        index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after),
+      }))),
       tags: cardTags(registries, plan.before || base, rarity),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',
     };

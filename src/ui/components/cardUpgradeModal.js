@@ -54,6 +54,9 @@ export function mountCardUpgradeModal(host, initialModel, {
   const head = modalHead({ title, titleId: 'card-upgrade-title', closeLabel: backLabel, extras: purse });
 
   let currentModel = initialModel;
+  // The option picked among several (blacksmith choice): the index into the selected row's `options`; it resets with the card.
+  let chosen = 0;
+  let chosenFor = null;
   let closed = false;
   let disarmDecision = null;
 
@@ -143,7 +146,53 @@ export function mountCardUpgradeModal(host, initialModel, {
   const facesNode = (model) => el('div', { class: 'card-upgrade-faces' }, ['before', 'after'].map((which) => el('div', { class: `card-upgrade-face ${which}`, dataset: { cardUpgradeFace: which } },
     renderCard(registries, { cardId: model.selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: model.faces[which] }))));
 
+  /** The row's chosen option (the first when there is no choice). */
+  const optionOf = (model) => model.selected.options?.[chosen] || model.selected.options?.[0] || null;
+  /** The model as the pane shows it: the chosen option's after face and change rows. */
+  const viewOf = (model) => {
+    const option = model.selected && model.faces ? optionOf(model) : null;
+    if (!option || model.selected.options.length < 2) return model;
+    return { ...model, selected: { ...model.selected, changes: option.changes }, faces: { before: model.faces.before, after: option.after } };
+  };
+  /** Two or three after-faces side by side (stacked on a phone); the picked one is highlighted. */
+  const optionsNode = (model) => {
+    const { selected } = model;
+    if (!(selected.options?.length > 1)) return null;
+    const group = el('div', { class: 'card-upgrade-options', role: 'radiogroup', 'aria-label': t('cardUpgrade.options.label'), dataset: { cardUpgradeOptions: String(selected.options.length) } }, [
+      eyebrow(t('cardUpgrade.options.label')),
+      el('div', { class: 'card-upgrade-option-list' }, selected.options.map((option) => {
+        const on = option.index === chosen;
+        const summary = option.changes.map((change) => `${change.label} ${change.before} to ${change.after}`).join(', ');
+        const button = el('button', {
+          type: 'button', class: `card-upgrade-option${on ? ' selected' : ''}`, role: 'radio', 'aria-checked': String(on), tabindex: on ? '0' : '-1',
+          'aria-label': t('cardUpgrade.option.aria', { n: option.index + 1, total: selected.options.length, summary }),
+          dataset: { cardUpgradeOption: String(option.index) },
+        }, el('span', { class: 'card-upgrade-option-body' }, [
+          el('b', { class: 'card-upgrade-option-title', text: t('cardUpgrade.option.n', { n: option.index + 1 }) }),
+          el('div', { class: 'card-upgrade-option-face' }, renderCard(registries, { cardId: selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: option.after })),
+          el('ul', { class: 'card-upgrade-option-changes' }, option.changes.map((change) => el('li', { text: `${change.label} ${change.before} → ${change.after}` }))),
+        ]));
+        button.addEventListener('click', () => pick(option.index));
+        return button;
+      })),
+    ]);
+    group.addEventListener('keydown', (event) => {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+      if (!step) return;
+      event.preventDefault(); event.stopPropagation();
+      pick((chosen + step + selected.options.length) % selected.options.length);
+    });
+    return group;
+  };
+  function pick(index) {
+    chosen = index;
+    draw(currentModel);
+    modal.querySelector(`[data-card-upgrade-option="${index}"]`)?.focus({ preventScroll: true });
+  }
+
   function previewCard(model) {
+    const options = optionsNode(model);
+    model = viewOf(model);
     const { selected } = model;
     const head = el('div', { class: 'smith-summary-grid' }, el('div', { class: 'smith-summary-cell smith-selected-head' }, [
       cardArt(selected),
@@ -176,22 +225,26 @@ export function mountCardUpgradeModal(host, initialModel, {
     const extra = servicePreviewHtml(model);
     return detailCard({
       attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
-      children: [head, stats, fold, extra ? el('div', { html: extra }) : null, costStrip(model)].filter(Boolean),
+      children: [head, options, stats, fold, extra ? el('div', { html: extra }) : null, costStrip(model)].filter(Boolean),
     });
   }
 
   /** The decision door's details: cost, the same change rows, and both faces. */
-  const confirmationDetails = (model) => html([
+  const confirmationDetails = (raw) => { const model = viewOf(raw); return html([
     el('div', { class: `confirmation-cost as-statrow flat ${(model.selected.shortStones ?? model.selected.plan.code === 'stones') || !model.selected.ok ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
     el('div', { class: 'confirmation-change-list' }, model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) }))),
     model.faces ? facesNode(model) : null,
-  ].filter(Boolean));
+  ].filter(Boolean)); };
 
   function commitSelected() {
     if (!currentModel.canConfirm) return;
     const { selected } = currentModel;
+    const option = selected.options?.length > 1 ? selected.options[chosen] : null;
+    // With a choice, a pick that no longer names an option commits nothing.
+    if (selected.options?.length > 1 && !option) return;
     close({ restoreFocus: false });
-    onConfirm(selected.instanceId, selected.plan);
+    // With a choice, the quote carries the picked step; the service re-plans the same list and checks it is on it.
+    onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan);
   }
 
   function draw(model) {
@@ -214,6 +267,9 @@ export function mountCardUpgradeModal(host, initialModel, {
     }
     currentModel = model;
     const { selected } = model;
+    if ((selected ? selected.instanceId : null) !== chosenFor) { chosenFor = selected ? selected.instanceId : null; chosen = 0; }
+    // The option list can shrink under a redraw (a changed quote); never leave `chosen` past its end.
+    if (selected?.options?.length) chosen = Math.min(Math.max(chosen, 0), selected.options.length - 1);
     markCurrent(cards, selected ? selected.instanceId : null);
     for (const card of cards) {
       const on = Boolean(selected) && card.dataset.instanceId === selected.instanceId;
@@ -227,7 +283,7 @@ export function mountCardUpgradeModal(host, initialModel, {
       : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [artWell({ glyph: 'smith', cool: true }), prose(t('cardUpgrade.instruction'))]));
     disarmDecision?.();
     disarmDecision = null;
-    confirmBtn.disabled = !model.canConfirm;
+    confirmBtn.disabled = !model.canConfirm || (selected?.options?.length > 1 && !selected.options[chosen]);
     confirmBtn.hidden = !selected;
     confirmBtn.textContent = selected ? confirmText(selected) : '';
     confirmBtn.setAttribute('aria-disabled', String(!model.canConfirm));
@@ -246,7 +302,7 @@ export function mountCardUpgradeModal(host, initialModel, {
         confirmLabel: confirmText(selected),
         cancelLabel: t('common.back'),
         onCommit: commitSelected,
-        canCommit: () => Boolean(currentModel.canConfirm),
+        canCommit: () => Boolean(currentModel.canConfirm) && (!(selected.options?.length > 1) || Boolean(selected.options[chosen])),
         blockedTitle: t('cardUpgrade.blocked', { name: selected.name }),
         blockedMessage: model.blockedReasons.join(' ') || t('cardUpgrade.unavailable'),
         blockedDetailsHtml: confirmationDetails(model),
