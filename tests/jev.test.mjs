@@ -156,6 +156,24 @@ test('restamp and devmerge never exempt the receipt with --pending', () => {
   assert.ok(!/'--pending'/.test(src), 'no --pending in jev.mjs');
 });
 
+test('restampChangelog takes a receipt left under an older date into the newest group', () => {
+  const text = [
+    '# Changelog', '', '## 2026-11-01', '',
+    '- **Dev today** ([#2600](https://github.com/cehinds/AshenSpire/pull/2600), `0.7.2.80`). New.',
+    '', '## 2026-10-31', '',
+    '- **Mine** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.2.70`). Opened yesterday.',
+    '- **Other** ([#2432](https://github.com/cehinds/AshenSpire/pull/2432), `0.7.2.69`). Stays.', '',
+  ].join('\n');
+  const r = restampChangelog(text, { pr: 2501, build: '0.7.2.81' });
+  assert.equal(r.relocatedFrom, '2026-10-31');
+  const lines = r.text.split('\n');
+  const newest = lines.slice(lines.indexOf('## 2026-11-01'), lines.indexOf('## 2026-10-31'));
+  assert.ok(newest.find(l => l.startsWith('- ')).includes('#2501') && newest.join('\n').includes('`0.7.2.81`'), 'moved to the top of the newest group, restamped');
+  const older = lines.slice(lines.indexOf('## 2026-10-31'));
+  assert.ok(!older.some(l => l.includes('#2501')), 'gone from the older group');
+  assert.ok(older.some(l => l.includes('#2432') && l.includes('`0.7.2.69`')), 'other receipts untouched');
+});
+
 test('restampChangelog refuses a PR with no receipt under the newest heading', () => {
   assert.throws(() => restampChangelog(CHANGELOG, { pr: 9999, build: '0.7.2.72' }), /names PR #9999/);
 });
@@ -291,13 +309,16 @@ test('sparse-missing-file only applies in a local sparse checkout, never under C
   assert.equal(triage(log, loadRules(), SPARSE).exit, 0);
   const none = triage(log, loadRules(), { 'sparse-local': () => false });
   assert.deepEqual([none.exit, none.matches.length], [2, 0]);
-  const sparseGit = args => ({ out: args[0] === 'config' ? 'true\n' : '' });
-  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: { CI: 'true' }, git: sparseGit }), false);
-  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: sparseGit }), true);
-  assert.equal(sparseLocal('ENOENT elsewhere.txt', { env: {}, git: () => ({ out: '' }) }), false);
-  const missing = args => ({ out: args[0] === 'ls-files' ? 'docs/component-catalog.html\n' : '' });
-  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, cwd: '/nonexistent-jev', git: missing }), true);
-  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: { CI: '1' }, cwd: '/nonexistent-jev', git: missing }), false);
+  // git stub: core.sparseCheckout value and `ls-files -t` rows ('S ' = skip-worktree).
+  const gitWith = (sparse, rows) => args => ({ out: args[0] === 'config' ? sparse : args[0] === 'ls-files' ? rows : '' });
+  const excluded = gitWith('true\n', 'S docs/component-catalog.html\n');
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: excluded }), true);
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: { CI: 'true' }, git: excluded }), false, 'never under CI');
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: gitWith('false\n', 'S docs/component-catalog.html\n') }), false, 'needs core.sparseCheckout');
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: gitWith('true\n', 'H docs/component-catalog.html\n') }), false, 'deleted but not sparse-excluded');
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: gitWith('', 'H docs/component-catalog.html\n') }), false, 'full checkout, plain deletion');
+  assert.equal(sparseLocal('ENOENT component-catalog.html', { env: {}, git: gitWith('true\n', '') }), false, 'untracked file');
+  assert.equal(sparseLocal('ENOENT elsewhere.txt', { env: {}, git: excluded }), false);
 });
 
 test('CLI under CI: a sparse-missing-file log exits 2', () => {

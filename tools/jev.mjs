@@ -59,15 +59,17 @@ export function severityOf(matches) {
   return sev;
 }
 
-// Rule f (a file missing from a sparse checkout) only holds locally: when CI is set
-// the checkout is the full one, so a missing file is a real failure. Injectable.
-export function sparseLocal(line, { env = process.env, cwd = ROOT, git: g = (args) => run('git', args, { cwd }) } = {}) {
+// Rule f (a file missing from a sparse checkout) only holds locally, and only with
+// evidence: core.sparseCheckout is on AND git marks every tracked copy of the named
+// file skip-worktree ('S' in `git ls-files -t`), i.e. sparse checkout excluded it.
+// A plain deletion in a full checkout is a real failure. Under CI, never. Injectable.
+export function sparseLocal(line, { env = process.env, git: g = (args) => run('git', args, { cwd: ROOT }) } = {}) {
   if (env.CI) return false;
-  if (g(['config', '--get', 'core.sparseCheckout']).out.trim() === 'true') return true;
+  if (g(['config', '--get', 'core.sparseCheckout']).out.trim() !== 'true') return false;
   const file = (String(line).match(/(component-catalog\.html|attack-source-audit\.csv)/) || [])[1];
   if (!file) return false;
-  const tracked = g(['ls-files', '--', `**/${file}`, file]).out.split('\n').filter(Boolean);
-  return tracked.length > 0 && tracked.every(f => !existsSync(resolve(cwd, f)));
+  const rows = g(['ls-files', '-t', '--', `**/${file}`, file]).out.split('\n').filter(Boolean);
+  return rows.length > 0 && rows.every(r => r.startsWith('S '));
 }
 const DEFAULT_CTX = { 'sparse-local': line => sparseLocal(line) };
 
@@ -249,8 +251,20 @@ export function restampChangelog(text, { pr, build }) {
     kept.push(line);
   }
   const named = new RegExp(`/pull/${pr}\\)|\\(#${pr}\\b|\\[#${pr}\\]`);
-  const at = kept.findIndex(l => /^- /.test(l) && named.test(l));
-  if (at < 0) throw new Error(`no receipt under the newest date heading names PR #${pr}`);
+  let at = kept.findIndex(l => /^- /.test(l) && named.test(l));
+  let relocatedFrom = null;
+  let rest = lines.slice(end);
+  if (at < 0) {
+    // A PR open across a date change: dev added a newer heading, so the receipt sits under an
+    // older one. Take it from there into the newest group (as tools/pr-restamp.mjs does).
+    let heading = null;
+    const idx = rest.findIndex(l => { if (DATE_HEADING.test(l)) heading = l; return /^- /.test(l) && named.test(l) && heading; });
+    if (idx < 0) throw new Error(`no receipt in CHANGELOG.md names PR #${pr}`);
+    relocatedFrom = heading.replace(/^## /, '').trim();
+    kept.splice(kept.findIndex(l => /^- /.test(l)) < 0 ? kept.length : kept.findIndex(l => /^- /.test(l)), 0, rest[idx]);
+    rest = [...rest.slice(0, idx), ...rest.slice(idx + 1)];
+    at = kept.findIndex(l => /^- /.test(l) && named.test(l));
+  }
   if (!STAMP_RE.test(kept[at])) throw new Error(`the receipt for PR #${pr} carries no \`<release>.<ordinal>\` stamp to replace`);
   const before = kept[at];
   const after = before.replace(STAMP_RE, `\`${build}\``);
@@ -260,8 +274,8 @@ export function restampChangelog(text, { pr, build }) {
   const moved = at !== first;
   kept.splice(at, 1);
   kept.splice(first, 0, after);
-  const out = [...lines.slice(0, start + 1), ...kept, ...lines.slice(end)].join('\n');
-  return { text: out, deduped, moved, restamped: after !== before, from: (before.match(STAMP_RE) || [''])[0].replace(/`/g, ''), to: build };
+  const out = [...lines.slice(0, start + 1), ...kept, ...rest].join('\n');
+  return { text: out, deduped, moved: moved || relocatedFrom !== null, relocatedFrom, restamped: after !== before, from: (before.match(STAMP_RE) || [''])[0].replace(/`/g, ''), to: build };
 }
 
 export function currentBuild(root = ROOT) {
@@ -284,7 +298,7 @@ export function restamp({ root = ROOT, pr, noRegen = false }) {
   const path = resolve(root, 'CHANGELOG.md');
   const r = restampChangelog(readFileSync(path, 'utf8'), { pr, build: currentBuild(root) });
   writeFileSync(path, r.text);
-  const info = { pr, from: r.from, to: r.to, deduped: r.deduped, moved: r.moved, restamped: r.restamped };
+  const info = { pr, from: r.from, to: r.to, deduped: r.deduped, moved: r.moved, relocatedFrom: r.relocatedFrom, restamped: r.restamped };
   if (noRegen) return { exit: 0, ...info };
   const w = node(['tools/about-changelog.mjs', '--write'], { cwd: root });
   if (w.status !== 0) return { exit: 1, ...info, failed: 'about-changelog --write', tail: w.out.trim().split('\n').slice(-6).join('\n') };
