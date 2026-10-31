@@ -135,3 +135,55 @@ test('CLI restamp on a temp root reads the build from buildordinal.json', () => 
     assert.equal(JSON.parse(r.stdout.trim()).to, '0.7.2.88');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---- devmerge ----
+import { classifyConflicts, resolveChangelogConflict } from '../tools/jev.mjs';
+
+test('classifyConflicts: generated files, changelog, everything else', () => {
+  const r = classifyConflicts([
+    'src/content/generated/cards.js', 'games/ashenspire/build.summary.json', 'games/ashenspire/game.lock.json',
+    'src/content/changelog.generated.js', 'src/framework/data/terms.js', 'CHANGELOG.md',
+    'src/model/combat.js', 'src/framework/data/sub/x.js', 'content/source/cards/a.json',
+  ]);
+  assert.deepEqual(r.generated, ['src/content/generated/cards.js', 'games/ashenspire/build.summary.json', 'games/ashenspire/game.lock.json', 'src/content/changelog.generated.js', 'src/framework/data/terms.js']);
+  assert.deepEqual(r.changelog, ['CHANGELOG.md']);
+  assert.deepEqual(r.other, ['src/model/combat.js', 'src/framework/data/sub/x.js', 'content/source/cards/a.json']);
+  assert.deepEqual(classifyConflicts([]), { generated: [], changelog: [], other: [] });
+});
+
+test('resolveChangelogConflict keeps ours first, then theirs, dropping lines theirs already has', () => {
+  const text = [
+    '## 2026-10-31', '',
+    '<<<<<<< HEAD',
+    '- **Mine** (#1, `0.7.2.60`).',
+    '- **Shared** (#2, `0.7.2.61`).',
+    '=======',
+    '- **Shared** (#2, `0.7.2.61`).',
+    '- **Theirs** (#3, `0.7.2.70`).',
+    '>>>>>>> origin/dev',
+    '- **Tail** (#4, `0.7.2.50`).', '',
+  ].join('\n');
+  const r = resolveChangelogConflict(text);
+  assert.deepEqual(r.split('\n'), [
+    '## 2026-10-31', '',
+    '- **Mine** (#1, `0.7.2.60`).',
+    '- **Shared** (#2, `0.7.2.61`).',
+    '- **Theirs** (#3, `0.7.2.70`).',
+    '- **Tail** (#4, `0.7.2.50`).', '',
+  ]);
+  assert.ok(!/<<<<<<<|=======|>>>>>>>/.test(r));
+});
+
+test('devmerge refuses a dirty tree (exit 1) without touching it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'jev-dm-'));
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
+  try {
+    g('init', '-q'); g('config', 'user.email', 'a@b.c'); g('config', 'user.name', 'x');
+    writeFileSync(join(dir, 'a.txt'), '1'); g('add', '.'); g('commit', '-qm', 'init');
+    writeFileSync(join(dir, 'a.txt'), '2');
+    const r = spawnSync(process.execPath, [JEV, 'devmerge'], { cwd: dir, encoding: 'utf8' });
+    assert.equal(r.status, 1);
+    assert.equal(JSON.parse(r.stdout.trim()).verdict, 'dirty-tree');
+    assert.equal(readFileSync(join(dir, 'a.txt'), 'utf8'), '2');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

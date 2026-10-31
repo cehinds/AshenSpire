@@ -254,6 +254,113 @@ COMMANDS.restamp = async (args) => {
   return r.exit;
 };
 
+// ---- devmerge ----
+
+// Derived files a dev merge may resolve by taking dev's side, then regenerating.
+// buildordinal.json is derived too (tools/bundle.mjs writes it), so it is taken the same way.
+const GENERATED_PATHS = [
+  /^src\/content\/generated\//,
+  /^games\/[^/]+\/(build\.summary\.json|game\.lock\.json)$/,
+  /^(.+\/)?game\.lock\.json$/,
+  /^src\/content\/changelog\.generated\.js$/,
+  /^src\/framework\/data\/[^/]+\.js$/,
+  /^buildordinal\.json$/,
+];
+
+// Pure: sort conflicted paths into generated (take theirs), changelog (merge by
+// rule) and other (a person or model must resolve; the merge is aborted).
+export function classifyConflicts(paths) {
+  const out = { generated: [], changelog: [], other: [] };
+  for (const raw of paths) {
+    const path = String(raw).replace(/\\/g, '/');
+    if (path === 'CHANGELOG.md') out.changelog.push(path);
+    else if (GENERATED_PATHS.some(re => re.test(path))) out.generated.push(path);
+    else out.other.push(path);
+  }
+  return out;
+}
+
+// Pure: resolve every conflict block in CHANGELOG.md text. Ours (HEAD) receipt
+// block first, then theirs; a non-blank line of ours that theirs already holds is dropped.
+export function resolveChangelogConflict(text) {
+  const re = /^<{7}[^\n]*\n([\s\S]*?)^={7}\n([\s\S]*?)^>{7}[^\n]*\n?/gm;
+  return text.replace(re, (_all, ours, theirs) => {
+    const have = new Set(theirs.split('\n').filter(l => l.trim()));
+    const kept = ours.split('\n').filter(l => !l.trim() || !have.has(l));
+    // blank separators from ours add nothing once its receipts are gone
+    const oursText = kept.join('\n').replace(/^\n+|\n+$/g, '');
+    return `${oursText ? `${oursText}\n` : ''}${theirs}`;
+  });
+}
+
+const git = (args, cwd) => run('git', args, { cwd });
+
+export function devmerge({ base = 'dev', pr = null, cwd = ROOT }) {
+  const top = git(['rev-parse', '--show-toplevel'], cwd).out.trim() || cwd;
+  const dirty = git(['status', '--porcelain', '--untracked-files=no'], top).out.trim();
+  if (dirty) return { exit: 1, verdict: 'dirty-tree', files: dirty.split('\n') };
+  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], top).out.trim();
+  const fetched = git(['fetch', '--filter=blob:none', 'origin', base], top);
+  if (fetched.status !== 0) return { exit: 2, verdict: 'fetch-failed', tail: fetched.out.trim().slice(-400) };
+  const merged = git(['merge', '--no-edit', '--no-ff', '--no-commit', `origin/${base}`], top);
+  if (merged.status === 0 && /Already up to date/i.test(merged.out)) return { exit: 0, verdict: 'up-to-date', branch };
+  const resolved = { generated: [], changelog: [] };
+  if (merged.status !== 0) {
+    const unmerged = git(['diff', '--name-only', '--diff-filter=U'], top).out.split('\n').filter(Boolean);
+    const cls = classifyConflicts(unmerged);
+    if (!unmerged.length || cls.other.length) {
+      git(['merge', '--abort'], top);
+      return { exit: 2, verdict: 'needs-model', reason: unmerged.length ? 'conflicts outside the derived files' : 'merge failed without a file conflict', files: cls.other.length ? cls.other : [], tail: unmerged.length ? '' : merged.out.trim().slice(-400) };
+    }
+    for (const f of cls.generated) {
+      const co = git(['checkout', '--theirs', '--', f], top);
+      if (co.status === 0) git(['add', '--', f], top); else git(['rm', '-f', '--', f], top);
+      resolved.generated.push(f);
+    }
+    for (const f of cls.changelog) {
+      const path = resolve(top, f);
+      writeFileSync(path, resolveChangelogConflict(readFileSync(path, 'utf8')));
+      git(['add', '--', f], top);
+      resolved.changelog.push(f);
+    }
+  }
+  const notes = [];
+  const g = regen(top);
+  if (g.exit !== 0) return { exit: g.exit, verdict: 'regen-failed', branch, resolved, failed: g.failed, tail: g.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
+  const prNumber = pr || detectPr([], top);
+  if (prNumber) {
+    try {
+      const r = restamp({ root: top, pr: prNumber });
+      if (r.exit !== 0) return { exit: r.exit, verdict: 'restamp-failed', branch, resolved, failed: r.failed, tail: r.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
+      notes.push(`restamped #${prNumber} ${r.from} -> ${r.to}`);
+    } catch (error) {
+      notes.push(`restamp skipped: ${error.message}`);
+    }
+  } else notes.push('restamp skipped: no PR known (pass --pr N)');
+  const pending = prNumber ? ['--pending', String(prNumber)] : [];
+  const verify = runChecks([
+    { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order', ...pending] },
+    ...FAST_CHECKS.filter(c => ['content-build', 'config-build', 'game-config', 'framework-data-build', 'build-game'].includes(c.id)),
+  ], c => node(c.args, { cwd: top }));
+  if (verify.exit !== 0) return { exit: verify.exit, verdict: 'checks-failed', branch, resolved, checks: verify.results.filter(r => r.status === 'fail'), hint: 'merge left uncommitted; `git merge --abort` to undo' };
+  git(['add', '-u'], top);
+  const fresh = git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean);
+  for (const f of classifyConflicts(fresh).generated) git(['add', '--', f], top);
+  const c = git(['commit', '--no-edit'], top);
+  if (c.status !== 0) return { exit: 2, verdict: 'commit-failed', tail: c.out.trim().slice(-400) };
+  const sha = git(['rev-parse', '--short', 'HEAD'], top).out.trim();
+  return { exit: 0, verdict: 'merged', branch, sha, resolved, notes, push: `git push origin ${branch}` };
+}
+
+COMMANDS.devmerge = async (args) => {
+  const baseAt = args.indexOf('--base');
+  const prAt = args.indexOf('--pr');
+  const r = devmerge({ base: baseAt >= 0 ? args[baseAt + 1] : 'dev', pr: prAt >= 0 ? Number(args[prAt + 1]) : null, cwd: process.cwd() });
+  emit({ cmd: 'devmerge', ...r }, args.includes('--human'),
+    o => [`jev devmerge: ${o.verdict} (exit ${o.exit})`, o.reason || '', ...(o.files || []).map(f => `  ${f}`), ...(o.notes || []), o.tail || '', o.hint || '', o.push ? `next (not run): ${o.push}` : ''].filter(Boolean).join('\n'));
+  return r.exit;
+};
+
 // ---- entry ----
 
 async function main(argv) {
