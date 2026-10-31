@@ -3031,6 +3031,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const clearDragTargeting = () => {
       cancelDropTarget();
+      geometryField?.removeEventListener('battlefieldgeometrychange', dropSpriteBounds);
+      geometryField = null;
+      spriteBounds = null;
       combatEl.classList.remove('drag-targeting');
       combatEl.removeAttribute('data-drop-state');
       app.querySelectorAll('[data-drop-state]').forEach((node) => node.removeAttribute('data-drop-state'));
@@ -3038,8 +3041,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       applyTargetLayer();
     };
 
+    // Sprite bounds do not move during a drag, so they are read once per drag
+    // (not once per plan) and dropped whenever the field refits its formation.
+    let spriteBounds = null;
+    let geometryField = null;
+    const dropSpriteBounds = () => { spriteBounds = null; };
+    const spriteBoundsOf = (frame) => {
+      if (!spriteBounds) spriteBounds = new Map();
+      const id = frame.dataset.eid;
+      if (!spriteBounds.has(id)) spriteBounds.set(id, frame.querySelector('.sprite')?.getBoundingClientRect());
+      return spriteBounds.get(id);
+    };
     const beginDragTargeting = () => {
       clearDragTargeting();
+      geometryField = combatEl.querySelector('.field');
+      geometryField?.addEventListener('battlefieldgeometrychange', dropSpriteBounds);
       combatEl.classList.add('drag-targeting');
       applyTargetLayer(inst.instanceId);
     };
@@ -3065,7 +3081,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const forbidden = forbiddenCardDrop(targetPlan, point, [...combatEl.querySelectorAll('.combatant')].map(frame => ({
         id: frame.dataset.eid,
         alive: !!getEntity(combat, frame.dataset.eid)?.alive,
-        bounds: frame.querySelector('.sprite')?.getBoundingClientRect(),
+        bounds: spriteBoundsOf(frame),
       })));
       if (forbidden && !directLegal) return { legal: false, enemies: [], flick };
       const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer;
@@ -3082,7 +3098,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const updateDropTarget = event => {
       if (!dragGhost) return;
+      // Reads first (viewport, ghost box, pointer, drop plan), writes after: the
+      // ghost's position and the plan's aims must not sit between two reads.
+      const view = viewportLocalBox();
+      const g = ghostBox ||= anchorLocalBox(VIEWPORT_ORIGIN, dragGhost);
+      const at = anchorLocalBox(VIEWPORT_ORIGIN, { left: event.clientX, top: event.clientY, width: 0, height: 0 });
       const plan = dropPlan(event);
+      // keep:40, not the whole box: a card dragged to the screen edge SHOULD hang
+      // over it, but must never leave entirely (it did at 1.48).
+      const ghostPlacement = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
+      dragGhost.style.left = `${ghostPlacement.left}px`;
+      dragGhost.style.top = `${ghostPlacement.top}px`;
       showDragAims(plan.enemies);
       if (selfOnlyTarget) showSelfAim(plan.legal);
       const state = plan.legal ? 'legal' : 'illegal';
@@ -3146,22 +3172,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           beginDragTargeting();
         }
         if (dragging && dragGhost) {
-          // Container: THE VIEWPORT. The ghost is `position: fixed` and tracks the
-          // pointer, so nothing smaller is its bound. EldenSpire#15: `clientX` is
-          // visual px and `style.left` is local px, so the ghost ran away from the
-          // hand at every zoom but 1.00 — at 1920×1080 it sat 247 local px
-          // down-right of the cursor and clipped off the bottom edge, on the exact
-          // affordance the first-run tutorial teaches. The grip (70, 100) is
-          // unchanged: it was always meant as local px, into a 140×196 card.
-          const view = viewportLocalBox();
-          const g = ghostBox ||= anchorLocalBox(VIEWPORT_ORIGIN, dragGhost);
-          const at = anchorLocalBox(VIEWPORT_ORIGIN, { left: mv.clientX, top: mv.clientY, width: 0, height: 0 });
-          // keep:40, not the whole box — a card dragged to the edge of the screen
-          // SHOULD hang over it, the way it does in the hand. What must never
-          // happen is the ghost leaving entirely, which is what it did at 1.48.
-          const ghostPlacement = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
-          dragGhost.style.left = `${ghostPlacement.left}px`;
-          dragGhost.style.top = `${ghostPlacement.top}px`;
+          // The ghost is `position: fixed` in THE VIEWPORT's local px (EldenSpire#15:
+          // clientX is visual px, style.left local px, so every zoom but 1.00 ran
+          // away from the hand). Its placement now lives in updateDropTarget, which
+          // reads before it writes, once per frame.
           queueDropTarget(mv);
         }
       };
