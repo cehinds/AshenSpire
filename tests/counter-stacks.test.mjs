@@ -147,3 +147,18 @@ test('snapshots round-trip counterStacks, load without it, and refuse a count ov
   old.player.counterStacks = -1;
   assert.ok(combatSnapshotProblems(old).some(problem => problem.includes('counterStacks')));
 });
+
+test('a paused fight offering the card-less auto-Counter saves and restores with the option intact', () => {
+  const { combat, enemy } = live();
+  Object.assign(enemy, { ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
+  combat.piles.hand.length = 0;
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  combat.player.energy = 2;
+  dispatch(combat, { type: 'endTurn' });
+  assert.ok(combat.pendingReaction?.options.some(row => row.autoCounter), 'the offer is open');
+  const snapshot = serializeCombatSnapshot(combat);
+  assert.deepEqual(combatSnapshotProblems(snapshot), []);
+  const loaded = restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot });
+  const option = loaded.pendingReaction.options.find(row => row.autoCounter);
+  assert.deepEqual([option.id, option.cardId, option.staminaCost], ['autoCounter', null, 1]);
+});
