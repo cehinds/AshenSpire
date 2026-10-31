@@ -1,3 +1,5 @@
+import { RANGES } from './combatRanges.js';
+
 // A card definition with its authored upgrade merged over the base. A leaf
 // module: gameProfile.js and registries.js both use it, and importing
 // registries.js from gameProfile.js would reorder the bundle's load cycle.
@@ -29,7 +31,23 @@ export function upgradedDefinition(base) {
 //   addStatus { status, stacks }   a new applyStatus on the enemy
 //   cost { pool: 'sp' | 'mp' }     -1 stamina (and action) cost, or -1 mana cost
 //   hits { hits, per }             the first damage effect becomes `per` x `hits`
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits']);
+//   poise { n }                    +n on the first plain poiseDamage effect
+//   tag { tag?, retarget?, damageSchool? }   a new identity tag (it replaces any tag of the same `range:`,
+//                                  `targeting:`, `maneuver:` or `school:` family; `rank.cantrip` just adds),
+//                                  `retarget` 'area' | 'single' moves the first damage effect between enemy
+//                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
+//                                  card's damage school (a magical property)
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag']);
+// The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
+// (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
+export const TAG_FAMILIES = Object.freeze({
+  'range:': RANGES,
+  'targeting:': Object.freeze(['single', 'area']),
+  'maneuver:': Object.freeze(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']),
+  'school:': Object.freeze(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']),
+});
+export const UPGRADE_ELEMENTS = Object.freeze(['magic', 'arcane', 'holy', 'fire']);
+export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
 
 const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
@@ -104,6 +122,29 @@ function applyStep(card, step) {
       }
       break;
     }
+    case 'poise': {
+      const index = firstPlainIndex(effects, 'poiseDamage');
+      if (index >= 0) effects[index].amount += step.n;
+      break;
+    }
+    case 'tag': {
+      if (step.tag) {
+        const family = Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix));
+        const keep = (tag) => tag !== step.tag && !(family && (tag.startsWith(family) || (family === 'range:' && tag.startsWith('reach:'))));
+        const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
+        for (const key of keys.length ? keys : ['tags']) out[key] = [...(card[key] || []).filter(keep), step.tag];
+      }
+      if (step.retarget) {
+        const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));
+        if (index >= 0) {
+          const area = step.retarget === 'area';
+          effects[index].target = area ? 'allEnemies' : 'enemy';
+          effects[index].amount = Math.max(1, Math.ceil(effects[index].amount * (area ? 0.75 : 1.25)));
+        }
+      }
+      if (step.damageSchool) out.damageSchool = step.damageSchool;
+      break;
+    }
     default:
       throw new Error(`Unknown card upgrade step '${step.k}'`);
   }
@@ -146,12 +187,21 @@ export function upgradeStepsProblems(instance, path) {
     }
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
-    if (['dmg', 'blk', 'stk'].includes(step.k) && !isCount(step.n)) bad('n');
+    if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
     if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
     if (step.k === 'hits' && !(isCount(step.hits, 3) && step.hits >= 2)) bad('hits');
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
+    if (step.k === 'tag') {
+      if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined) bad('tag');
+      if (step.tag !== undefined && step.tag !== RANK_DOWN_TAG) {
+        const family = typeof step.tag === 'string' ? Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix)) : null;
+        if (!family || !TAG_FAMILIES[family].includes(step.tag.slice(family.length))) bad('tag');
+      }
+      if (step.retarget !== undefined && step.retarget !== 'area' && step.retarget !== 'single') bad('retarget');
+      if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
+    }
   });
   return problems;
 }
