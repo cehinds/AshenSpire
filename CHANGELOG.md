@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-31
+
+- **Card drags and overhead intents stop forcing layout mid-pass** ([#2396](https://github.com/cehinds/AshenSpire/pull/2396), `0.7.2.13`). Dragging a card now plans its drop target before the ghost moves, and remembers the fighters' positions for the drag; overhead intents skip their re-measure when nothing moved. Nothing looks different; the drag and intent passes no longer force the browser to lay the screen out mid-frame.
+
 ## 2026-10-30
 
 - **Elites drop a Smithing Stone in Core** ([#2392](https://github.com/cehinds/AshenSpire/pull/2392), `0.7.2.13`). Core runs now pay the same Smithing Stone as the other modes when an elite or boss falls (one stone each; ordinary fights and chests none), and the victory receipt shows it. The stone is claimed once, so reloading a victory never pays it twice.
