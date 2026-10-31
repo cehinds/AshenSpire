@@ -42,7 +42,8 @@ export function desktopHandLayout({ width, height, count, zoom = 1 }, config = u
   const top = 8 * unit;
   const restTop = Math.min(...cards.map(c => top + c.y + cardHeight / 2 - (Math.abs(Math.sin(c.angle * Math.PI / 180)) * cardWidth + Math.cos(c.angle * Math.PI / 180) * cardHeight) / 2), top);
   return { cardWidth, cardHeight, cards, capacity: Math.max(1, count), span, start, step, top, lift: 18 * unit,
-    restLeft: start - 12 * unit, restTop, clearanceTop: -10 * unit, controlsReserve: 0 };
+    // Owner (2026-10-31): the fan docks to the hand box's bottom; handGapPx above End Turn is its only buffer.
+    restLeft: start - 12 * unit, restTop, clearanceTop: -10 * unit, controlsReserve: 0, reserve: 0, dock: 1 };
 }
 
 // The battlefield's bottom edge, in combat-root px: the fan's clearance line (its resting top

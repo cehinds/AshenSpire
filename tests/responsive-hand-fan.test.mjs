@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { responsiveHandLayout, handLayout } from '../src/ui/models/HandLayout.js';
+import { desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
 for (const [formFactor, width, height] of [['mobile',390,250],['tablet',820,300],['desktop',1440,340]]) {
   test(`${formFactor}: 3/5/7 cards fit and centre rises above the outer cards`, () => {
     const plans = [3,5,7].map(count => {
@@ -11,10 +12,9 @@ for (const [formFactor, width, height] of [['mobile',390,250],['tablet',820,300]
       assert.ok(plan.cards[Math.floor(count/2)].y < plan.cards[0].y);
       assert.ok(plan.step < plan.cardWidth, 'cards overlap');
       assert.equal(plan.capacity, count, 'all cards remain in the same viewport');
-      // Desktop (owner 2026-10-31): the footer's handGapPx buffer above End Turn replaces the tool-row reserve,
-      // so the lowest card may reach the hand box's bottom edge.
-      const room = formFactor === 'desktop' ? 0 : 30;
-      assert.ok(plan.top + plan.cardHeight + plan.cards[0].y < height - room + 1e-6, 'tool row stays below resting fan');
+      // The 66 px tool-row reserve holds on every handLayout path, desktop with the footer off included;
+      // only the desktop footer plan (desktopHandLayout) docks the fan to the bottom, tested below.
+      assert.ok(plan.top + plan.cardHeight + plan.cards[0].y < height - 30, 'tool row stays below resting fan');
       return plan;
     });
     assert.ok(plans[0].step > plans[1].step);
@@ -27,4 +27,14 @@ test('phone and tablet use independent physical card profiles', () => {
     const plan=responsiveHandLayout(input,handLayout(input));
     assert.ok(Math.abs(plan.cardWidth-expected)<.1, `${formFactor} ${width}: ${plan.cardWidth}`);
   }
+});
+
+test('desktop footer plan docks the fan to the hand box bottom; the classic desktop path keeps its reserve', () => {
+  const input = { formFactor: 'desktop', width: 1440, height: 160, count: 5, zoom: 1 };
+  const footer = responsiveHandLayout(input, desktopHandLayout(input));
+  const classic = responsiveHandLayout(input, handLayout(input));
+  const bottom = (plan) => plan.top + plan.cardHeight + plan.cards[0].y;
+  // The outer cards' tilt leaves a few px; nothing else is reserved.
+  assert.ok(bottom(footer) > 160 - 5, `footer fan reaches the bottom: ${bottom(footer)}`);
+  assert.ok(bottom(classic) < 160 - 30, `classic fan keeps the tool-row reserve: ${bottom(classic)}`);
 });
