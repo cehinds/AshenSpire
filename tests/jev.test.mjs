@@ -7,7 +7,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sparseLocal, triage, loadRules, severityOf, runChecks, FAST_CHECKS } from '../tools/jev.mjs';
+import { REGEN_STEPS, sparseLocal, triage, loadRules, severityOf, runChecks, FAST_CHECKS } from '../tools/jev.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const JEV = resolve(ROOT, 'tools/jev.mjs');
@@ -364,4 +364,9 @@ test('devmerge: a failing regen leaves the merge uncommitted with the abort hint
     assert.match(r.hint, /git merge --abort/);
     assert.ok(existsSync(join(f.work, '.git/MERGE_HEAD')));
   } finally { f.done(); }
+});
+
+test('regen runs config-build before content-build', () => {
+  const ids = REGEN_STEPS.map(a => a[0]);
+  assert.ok(ids.indexOf('tools/config-build.mjs') >= 0 && ids.indexOf('tools/config-build.mjs') < ids.indexOf('tools/content-build.mjs'));
 });
