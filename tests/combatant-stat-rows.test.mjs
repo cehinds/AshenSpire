@@ -44,3 +44,15 @@ test('rules on different tags sum for an attack card that carries both', () => {
   assert.equal(chance([]), '12%'); // no attack cards known: each rule's own tags
   assert.equal(chance([['guard']]), '0%');
 });
+
+test('an unarmed attack, resolved through its profile, carries no blade tag and cannot crit under a blade rule', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries, resolveCard } = await import('../src/model/registries.js');
+  const registries = createRegistries(contentBundle);
+  const effective = (profileId) => { const def = resolveCard(registries, { cardId: 'strike', profileId }); return def.cardTags?.length ? def.cardTags : def.tags; };
+  const unarmed = effective('unarmedAttack');
+  assert.ok(!unarmed.includes('blade'), `unarmed tags ${unarmed}`);
+  const chance = (attackTagSets) => combatStatRows({ statuses: {}, critRules: [rule], attributes, kind: 'player', attackTagSets }, t)[2].value;
+  assert.equal(chance([unarmed]), '0%');
+  assert.equal(chance([unarmed, ['blade']]), '10%');
+});

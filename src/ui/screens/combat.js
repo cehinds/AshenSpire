@@ -4004,8 +4004,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // The tag sets of the player's attack cards (draw, hand, discard, exhaust), as the engine reads them for a crit.
   const ownedAttackTagSets = () => Object.values(combat.piles).flat().flatMap((inst) => {
-    const def = registries.cards.get(inst?.cardId);
-    const tags = Array.isArray(inst.tags) && inst.tags.length ? inst.tags : def?.tags;
+    // The effective card: an equipment-bound attack's profile replaces the registry's damage tags.
+    let def = null;
+    try { def = resolveCard(registries, inst); } catch { return []; }
+    const tags = Array.isArray(def?.cardTags) && def.cardTags.length ? def.cardTags : def?.tags;
     return def?.type === 'attack' && Array.isArray(tags) && tags.length ? [tags] : [];
   });
   const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, evade: entity.evade, attributes: combat.attributes, kind, attackTagSets: kind === 'player' ? ownedAttackTagSets() : null }, t);
