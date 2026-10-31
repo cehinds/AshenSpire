@@ -20,11 +20,11 @@ test('Core 2 PIPs and card glossary share effective status tooltips without muta
   assert.equal(neutral,gearedPlayer);
   // The holder's own resolved rules (a scoped baseAC) feed its tooltip, not the global block.
   const scoped = {id:'e2',mechanicBindings:[{tag:'combat:accuracy',parameters:{baseAC:3}}]};
-  assert.match(tip(scoped),/^Each stack adds 3 \+ DEX to Evasion/);
-  assert.match(view.statuses.get('evade').tooltip,/^Each stack adds 1 \+ DEX to Evasion\. Only attacks roll\./);
+  assert.match(tip(scoped),/^Each stack adds 2 Evasion/); // Rule: Evade adds 2 Evasion per stack from mechanics.json accuracy.evadePerStack, not the holder's baseAC (owner, 2026-10-31)
+  assert.match(view.statuses.get('evade').tooltip,/^Each stack adds 2 Evasion\. Only attacks roll\./);
   assert.doesNotMatch(view.statuses.get('evade').tooltip,/gear \+2/);
-  assert.match(tip(enemy),/^Each stack adds 1 \+ DEX to Evasion/);
-  assert.match(tip(gearedPlayer),/^Each stack adds 1 \+ DEX to Evasion/);
+  assert.match(tip(enemy),/^Each stack adds 2 Evasion/);
+  assert.match(tip(gearedPlayer),/^Each stack adds 2 Evasion/);
   assert.match(view.statuses.all()[0].tooltip,/start of the owner's turn/);
   assert.equal(registries.statuses.get('weak'),weak);
   assert.equal(weak.tooltip,'Legacy damage reduction.');
@@ -41,11 +41,11 @@ test('player and enemy inspectors retain Core Evade wording after the real termi
   const enemy = {id:'e1',attributes:{dexterity:5},statuses:{evade:{stacks:2}},
     mechanicBindings:[{tag:'combat:accuracy',parameters:{baseAC:3}}]};
   const playerRow = activeCombatAbilities(view,player).find(row=>row.id==='evade');
-  assert.match(playerRow.detail,/Each stack adds 1 \+ DEX to Evasion/);
+  assert.match(playerRow.detail,/Each stack adds 2 Evasion/);
   // The enemy inspector uses this same get(holder) -> terminology sequence.
   const enemyDef = view.frameworkTerms.withStatusWords(view.statuses.get('evade',enemy));
-  assert.match(enemyDef.tooltip,/Each stack adds 3 \+ DEX to Evasion/);
-  assert.match(activeCombatAbilities(view,enemy).find(row=>row.id==='evade').detail,/3 \+ DEX/);
+  assert.match(enemyDef.tooltip,/Each stack adds 2 Evasion/);
+  assert.match(activeCombatAbilities(view,enemy).find(row=>row.id==='evade').detail,/2 Evasion/);
   assert.doesNotMatch(playerRow.detail,/Legacy 3|Evasion roll/);
   assert.equal(enemyDef.name,'Evasion','terminology still owns the status name');
   assert.equal(terms.withStatusWords(evade).tooltip,evade.tooltip,'the shared overlay remains unchanged');
