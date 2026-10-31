@@ -290,6 +290,18 @@ test('identical copies collapse into one row that selects the first instance', (
   assert.equal(legacyRows.find(r => r.instanceId === strikes[1].instanceId)?.copies, strikes.length - 1, 'the fresh copies stay free and selectable');
 });
 
+test('copies whose next upgrade rolls differently stay separate rows, each with its own preview', () => {
+  const run = newRun();
+  const strikes = run.deck.filter(c => c.cardId === 'core.strike');
+  for (const s of strikes) { s.upgraded = true; s.upgradeSteps = [{ k: 'authored' }]; }
+  run.smithingStones = 4;
+  const rows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike');
+  const steps = new Set(strikes.map(s => JSON.stringify(planCardUpgrade(run, registries, s.instanceId).step)));
+  assert.equal(rows.length, steps.size, 'one row per distinct next step');
+  assert.equal(rows.reduce((n, r) => n + r.copies, 0), strikes.length, 'every copy is counted once');
+  for (const row of rows) assert.ok(row.instanceIds.every(id => JSON.stringify(planCardUpgrade(run, registries, id).step) === JSON.stringify(row.plan.step)), 'a row only groups copies with its own next step');
+});
+
 test('rows carry levels, tags, art and the changed face numbers', () => {
   const run = newRun();
   const row = cardUpgradeModel(registries, run).rows.find(r => r.cardId === 'core.strike');

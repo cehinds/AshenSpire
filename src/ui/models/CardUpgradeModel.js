@@ -60,7 +60,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
     // upgradeStepsOf normalises an old-style `upgraded: true` (no step list) to the authored step, so such a copy
     // never shares a row with fresh copies of the same card.
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance)]);
+    // The next step is rolled per instance id, so copies whose next upgrade differs stay separate rows: each
+    // distinct outcome stays previewable and purchasable.
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.step]);
     if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
     const base = registries.cards.get(instance.cardId);
     const rarity = base.rarity || 'common';
