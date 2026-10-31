@@ -1913,4 +1913,4 @@ cardArtBuilder.invalidInput,,,Use a supported type and valid canonical tags.,
 cardArtBuilder.previewFailed,,,Could not render the preview: {reason},
 combat.stat.precision,,Precision,Each stack adds 1 Accuracy to your attacks.,Precision
 combat.stat.evasion,,Evasion,Each stack helps avoid incoming attacks.,Evasion
-combat.stat.critChance,,Crit chance,The best chance one of your attacks has to land a critical hit.,Crit chance
+combat.stat.critChance,,Crit,Crit chance: the best chance one of your attacks has to land a critical hit.,Crit chance

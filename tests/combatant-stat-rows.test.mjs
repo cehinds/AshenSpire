@@ -12,12 +12,12 @@ const stateRows = (resources) => Object.fromEntries(projectCombatantInspector({ 
 test('Current state shows Precision, Evasion and Crit chance with the fighter\'s values', () => {
   const rows = combatStatRows({ statuses: { precision: { stacks: 2 }, evade: { stacks: 1 } }, critRules: [rule], attributes, kind: 'player' }, t);
   assert.deepEqual(stateRows([...base, ...rows]).map((r) => [r.label, r.value]),
-    [['MP', '3 / 5'], ['Precision', '2'], ['Evasion', '1'], ['Crit chance', '10%']]);
+    [['MP', '3 / 5'], ['Precision', '2'], ['Evasion', '1'], ['Crit', '10%']]);
 });
 
 test('the three rows stay listed at 0 when the statuses and crit rules are absent', () => {
   for (const kind of ['player', 'enemy']) {
     const rows = combatStatRows({ statuses: {}, critRules: kind === 'enemy' ? [rule] : undefined, attributes, kind }, t);
-    assert.deepEqual(stateRows(rows).map((r) => [r.label, r.value]), [['Precision', '0'], ['Evasion', '0'], ['Crit chance', '0%']]);
+    assert.deepEqual(stateRows(rows).map((r) => [r.label, r.value]), [['Precision', '0'], ['Evasion', '0'], ['Crit', '0%']]);
   }
 });
