@@ -120,3 +120,18 @@ test('the hit preview of a contest card carries the DC and no out-of-range state
   }
 });
 test('the badge string reads DC N', () => assert.equal(t('combat.contest.dc', { dc: 9 }), 'DC 9'));
+
+// ---- Current / legacy profile ignores `contest` --------------------------------------------------------------------
+test('on the default (Current) bundle Read Intent keeps the Accuracy roll and never touches combatContest', () => {
+  const run = createRunState({ registries: createRegistries(contentBundle), classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries: createRegistries(contentBundle), run, rng: createRng(5), enemyIds: ['wanderingSoldier'] });
+  Object.assign(combat.player, { energy: 9, mana: 9, stamina: 9 });
+  combat.piles.hand.push({ instanceId: 'ri', cardId: 'base.reveal-opponent-hand', upgraded: false });
+  const n = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'ri', targetId: combat.enemies[0].id });
+  const types = combat.eventLog.slice(n).map(event => event.type);
+  assert.ok(types.includes('attackHit') || types.includes('attackMissed'), types.join());
+  assert.ok(!types.some(type => type.startsWith('contest')), types.join());
+  assert.equal(combat.rng.getCounters().combatContest, undefined, 'combatContest stays at counter 0');
+  assert.ok((combat.rng.getCounters().combatAvoidance || 0) > 0, 'Accuracy drew on combatAvoidance');
+});

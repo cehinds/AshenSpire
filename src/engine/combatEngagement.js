@@ -82,7 +82,7 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
   if (!ctx.rangeState) return null;
   const contacts = [];
   // An insight contest card plans no range row: it never advances, never misses for distance (SPEC §17 Contests).
-  const contestCard = contestKindOf(actions[0]?.card);
+  const contestCard = contestKindOf(actions[0]?.card, ctx);
   if (preview) actions = actions.map(action => ({...action,meta:{...action.meta}}));
   const planningCtx = preview ? { ...ctx, rng: createRng(ctx.rng.seed,ctx.rng.getCounters()) } : ctx;
   for (const [index, action] of actions.entries()) {

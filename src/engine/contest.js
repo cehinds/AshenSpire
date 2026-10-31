@@ -3,11 +3,14 @@
 //   d20 + caster attributes (by school) + card rank  vs  DC = target's CURRENT Poise + target attributes + target level.
 // A tie succeeds. The constants are data (content/framework/mechanics.json `contest`).
 import { mechanics } from '../framework/data/mechanics.js';
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // Pure on purpose: callers pass `read` ({ attributesOf, levelOf } from counterReturn.js) so this module adds no import cycle.
 
 export const CONTEST_KINDS = Object.freeze(['mental', 'physical']);
 export const contestRules = () => mechanics.contest;
-export const contestKindOf = carrier => {
+// Core 2 (FixCore) only: Current / legacy v2 combats ignore `contest` and keep the Accuracy roll (FIXCORE-DECISIONS D1).
+export const contestKindOf = (carrier, ctx) => {
+  if (!fixCoreEnabled(ctx)) return null;
   const kind = carrier?.contest ?? carrier?.combatProfile?.contest;
   return CONTEST_KINDS.includes(kind) ? kind : null;
 };
@@ -42,11 +45,11 @@ export function rollContest({ rng, caster, target, kind, rank = 1, ctx = null, r
 
 /** Rolls the contest for a carrier on the combat's rng; null when the card is not a contest card. */
 export function rollCarrierContest(ctx, source, target, carrier, read) {
-  const kind = contestKindOf(carrier);
+  const kind = contestKindOf(carrier, ctx);
   if (!kind || !source || !target) return null;
   return rollContest({ rng: ctx.rng, caster: source, target, kind, rank: cardRankOf(carrier), ctx, read });
 }
 export const previewCarrierContest = (ctx, source, target, carrier, read) => {
-  const kind = contestKindOf(carrier);
+  const kind = contestKindOf(carrier, ctx);
   return kind && source && target ? contestPreview({ caster: source, target, kind, rank: cardRankOf(carrier), ctx, read }) : null;
 };
