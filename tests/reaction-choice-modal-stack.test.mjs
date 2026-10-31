@@ -434,3 +434,15 @@ test('identical options show once with a count; different grades stay separate',
     opened.restore();
   }
 });
+
+test('options whose summary failed are never collapsed, even with the same name and costs', async () => {
+  const options = ['c1', 'c2'].map(id => ({ id: id + ':0:default', cardId: 'core.counter', name: 'Counter', play: { cardInstanceId: id } }));
+  const opened = await openWith({ pending: { id: 'r', options }, summarize: () => { throw new Error('no snapshot'); } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    assert.equal(rows.length, 2, 'two rows, so an upgraded copy is never hidden behind a plain one');
+    assert.equal(opened.shell.body.querySelectorAll('.option-row-count').length, 0);
+  } finally {
+    opened.restore();
+  }
+});

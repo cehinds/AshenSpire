@@ -49,12 +49,14 @@ export const reactionOptionArt = (option, registries = null) => reactionOptionAr
 // show once, with a count. Options carry no upgrade field, so the grade is read off the summary the
 // caller built from the live instance: its name and rendered numbers differ between Counter and
 // Counter+. The first instance stays the option that is played; the model's options are untouched.
-const optionKey = ({ option, row }) => JSON.stringify([option.cardId, row.name, row.costs || [], (row.line || []).map(part => [part.label, part.value]),
+// A row built without a summary (none given, or it threw) has only a name and costs, which cannot tell
+// Counter from Counter+ (options carry no grade field), so such rows are never collapsed.
+const optionKey = ({ option, row, fallback }, index) => fallback ? `fallback:${index}` : JSON.stringify([option.cardId, row.name, row.costs || [], (row.line || []).map(part => [part.label, part.value]),
   row.text ?? null, row.html ?? null, option.choiceName ?? null, option.play?.upcastTier ?? null, option.play?.rangeRoute ?? null, option.play?.targetId ?? null, option.sourceId ?? null]);
 export function collapseIdenticalOptions(entries) {
   const groups = new Map();
   for (const entry of entries) {
-    const key = optionKey(entry);
+    const key = optionKey(entry, entries.indexOf(entry));
     const group = groups.get(key);
     if (group) group.count += 1; else groups.set(key, { row: entry.row, count: 1 });
   }
@@ -88,7 +90,7 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
       const summaries = collapseIdenticalOptions(pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return { option, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
+        return { option, fallback: !summary, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
       }));
       const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
         selected = id;
