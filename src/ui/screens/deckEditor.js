@@ -879,14 +879,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // handlers re-focus it while typing.
   function paneFocusable(name) {
     return [...panel.querySelectorAll(`[data-pane="${name}"] [data-focus-key]`)]
-      .find(candidate => !['INPUT', 'TEXTAREA'].includes(candidate.tagName) && !candidate.closest?.('[inert]')) || null;
+      .find(candidate => !['INPUT', 'TEXTAREA'].includes(candidate.tagName) && !candidate.closest?.('[inert], [data-page-locked]')) || null;
   }
 
   function restoreFocus() {
     if (!focusKey) return;
     const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
     let node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
-    if (node?.closest?.('[inert]')) node = panel.querySelector('[data-focus-key="inspect-back"]') || paneFocusable(pane);
+    if (node?.closest?.('[inert], [data-page-locked]')) node = panel.querySelector('[data-focus-key="inspect-back"]') || paneFocusable(pane);
     // A pressed ＋ or － whose copy ran out is disabled now: focus moves to its
     // sibling in the same row, never to the search box.
     if (isDisabled(node)) {
