@@ -9,6 +9,7 @@ import { balance } from '../content/balance.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { thaw, shallowFrozen } from '../config/authored.js';
 import { variableIntentDamage } from '../model/intentDamage.js';
+import { resolveStatusPresentationDefinition, coreStatusLifecycle, statusPresentationContext } from '../model/statusPresentation.js';
 import { statusLifecycleText } from './statusLifecycle.js';
 
 // THE TABLES NOW LIVE IN content/config/ui/presentation/uiContent.json and are
@@ -30,7 +31,12 @@ const fill = (template, values) => Object.entries(values)
 // resolves to nothing stays visible as its literal '{...}' — a loud defect,
 // not a silent blank.
 export function statusTooltipText(def, context = {}) {
+  context = statusPresentationContext(def, context);
+  def = resolveStatusPresentationDefinition(def, context);
   let t = def.tooltip || '';
+  // Core's shared descriptive facts include a generic application sentence;
+  // the structured stack mode below owns that sentence for custom overrides.
+  if (coreStatusLifecycle(def, context)) t = t.replace(/Applications add stacks\. ?/g, '');
   const sub = (token, v) => {
     if (v != null) t = t.split(`{${token}}`).join(String(v));
   };

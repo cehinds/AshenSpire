@@ -6,6 +6,7 @@ import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
+import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -2944,6 +2945,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
     foundation: !!combat.foundation,
+    ...(fixCoreEnabled(combat) ? { coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects) } : {}),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),

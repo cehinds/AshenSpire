@@ -518,7 +518,7 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      const reading = cardStatusContext(def, opts);
+      const reading = cardStatusContext(def, opts, registries);
       details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() + cardStatusDetailsHtml(registries, def, reading)
         : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences, reading);
       const receipt = cardDamageReceipt(opts.preview);
@@ -823,13 +823,16 @@ function glossaryEntry(registries, kind, id, context = {}) {
 // Carry the actual run/preview rules into every status reading. A definition
 // stamped v2 is evidence too; a definition with no version keeps the shared
 // helper's explicitly labelled Classic/Expanded reading.
-function cardStatusContext(def, { preview = null, rules = null } = {}) {
+function cardStatusContext(def, { preview = null, rules = null } = {}, registries = null) {
   return {
     combatExpansionVersion: preview?.combatExpansionVersion ?? rules?.combatExpansionVersion
       ?? (def.minCombatExpansionVersion === 2 || def.defenseRulesVersion === 2 ? 2 : undefined),
     combatStatusRules: preview?.combatStatusRules ?? rules?.combatStatusRules,
     combatExpansionRules: preview?.combatExpansionRules ?? rules?.combatExpansionRules,
     foundation: preview?.foundation ?? rules?.foundation,
+    coreStatusAuthority: preview?.coreStatusAuthority,
+    fixCoreRules: rules?.fixCoreRules,
+    gameProfile: rules?.gameProfile ?? registries?.gameProfile,
     chargedEffects: preview?.chargedEffects,
   };
 }
@@ -859,7 +862,7 @@ function cardStatusDetailsHtml(registries, def, context) {
 export function cardDetailHtml(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = playingCardModel(registries, ref, { ...opts, definition: def });
-  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts));
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences, cardStatusContext(def, opts, registries));
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = [], statusContext = {}) {

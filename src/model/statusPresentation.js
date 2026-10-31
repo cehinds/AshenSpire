@@ -1,5 +1,5 @@
-import { fixCoreStatusDefinition } from './fixCoreMechanics.js';
-import { keyFor as fixCoreRulesKey } from './fixCoreRulesCache.js';
+import { fixCoreEnabled, fixCoreStatusDefinition } from './fixCoreMechanics.js';
+import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js';
 
 // UI wording is separate from the versioned mechanic source: changing a label
 // must not invalidate saved rules. Keep all configured numeric prose intact.
@@ -20,6 +20,21 @@ function present(ctx, id, definition, holder) {
 // Entries are deep-frozen copies; each call gets a fresh top-level object.
 const CACHE_MAX = 256;
 const cache = new Map();
+const presentationContexts = new WeakMap();
+
+export function inheritStatusPresentationContext(source, target) {
+  const saved = presentationContexts.get(source);
+  if (saved && target && typeof target === 'object') presentationContexts.set(target, saved);
+  return target;
+}
+
+export function statusPresentationContext(def, context = {}) {
+  const saved = presentationContexts.get(def);
+  if (!saved || context.coreStatusAuthority || context.fixCoreRules || context.gameProfile) return context;
+  // Read through the combat without copying its snapshot into each tooltip.
+  // Explicit caller options (including foundation instance semantics) win.
+  return Object.assign(Object.create(saved.context), context, { statusHolder: saved.holder });
+}
 
 function plain(value) {
   let ok = true;
@@ -54,7 +69,11 @@ function deepFreeze(value) {
 
 export function statusPresentationDefinition(ctx, id, definition, holder = null) {
   const key = definition && typeof definition === 'object' ? presentationKey(ctx, id, definition, holder) : null;
-  if (key === null) return present(ctx, id, definition, holder);
+  if (key === null) {
+    const result = present(ctx, id, definition, holder);
+    if (result && result !== definition) presentationContexts.set(result, { context: ctx, holder });
+    return result;
+  }
   let hit = cache.get(key);
   if (!hit) {
     const resolved = present(ctx, id, definition, holder);
@@ -63,9 +82,54 @@ export function statusPresentationDefinition(ctx, id, definition, holder = null)
     if (cache.size >= CACHE_MAX) cache.clear();
     cache.set(key, hit);
   }
-  return { ...hit };
+  const result = { ...hit };
+  presentationContexts.set(result, { context: ctx, holder });
+  return result;
 }
 
 /** Test seam: the number of distinct stored answers. */
 export const statusPresentationCacheSize = () => cache.size;
 export const clearStatusPresentationCache = () => cache.clear();
+
+export function resolveStatusPresentationDefinition(def, context = {}) {
+  context = statusPresentationContext(def, context);
+  const saved = context.coreStatusAuthority?.definitions?.[def.id];
+  if (saved) return { ...def, ...saved, name: def.name };
+  return fixCoreEnabled(context) ? statusPresentationDefinition(context, def.id, def, context.statusHolder ?? null) : def;
+}
+
+// These are the two clock exceptions in engine/statuses.js: Precision clears
+// its temporary part at owner turn end, and Evade decays at owner turn start.
+const clockFor = def => def.id === 'precision' ? 'temporaryOwnerTurnEnd'
+  : def.decay === 'perTurnEnd' || def.id === 'evade' ? 'stackOwnerTurnStart'
+    : typeof def.decay === 'object' && Number.isFinite(def.decay?.duration) ? 'timerOwnerTurnStart' : null;
+
+export function coreStatusLifecycle(def, context = {}) {
+  context = statusPresentationContext(def, context);
+  const saved = context.coreStatusAuthority;
+  if (saved) return { overrides: saved.overrideIds.includes(def.id), decayAmount: saved.decayAmount,
+    clock: saved.clocks?.[def.id] ?? clockFor(def) };
+  if (!fixCoreEnabled(context)) return null;
+  const rules = fixCoreRules(context, context.statusHolder ?? null).statuses;
+  return { overrides: Boolean(rules.overrides?.[def.id]), decayAmount: rules.decayAmount, clock: clockFor(def) };
+}
+
+/** Small detached preview receipt: only statuses the card can mention. */
+export function coreStatusPresentation(context, card, effects = card.effects) {
+  if (!fixCoreEnabled(context)) return undefined;
+  const ids = new Set(), visited = new Set();
+  const walk = value => {
+    if (!value || typeof value !== 'object' || visited.has(value)) return;
+    visited.add(value);
+    if (['applyStatus', 'buildup'].includes(value.op) && context.registries.statuses.has(value.status)) ids.add(value.status);
+    for (const child of Object.values(value)) if (child && typeof child === 'object') walk(child);
+  };
+  walk(card.effects);
+  walk(effects);
+  for (const key of ['counterPayload', 'upcast', 'schoolEffect']) walk(card[key]);
+  const statuses = fixCoreRules(context).statuses;
+  const definitions = Object.fromEntries([...ids].map(id => [id,
+    statusPresentationDefinition(context, id, context.registries.statuses.get(id))]));
+  return structuredClone({ definitions, overrideIds: Object.keys(statuses.overrides || {}), decayAmount: statuses.decayAmount,
+    clocks: Object.fromEntries([...ids].map(id => [id, clockFor(definitions[id])])) });
+}
