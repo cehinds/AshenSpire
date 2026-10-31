@@ -39,11 +39,13 @@ export function cardArtLayersHtml(composition) {
 // identical in square thumbnails, the short hand crop, and full inspection cards.
 function componentLayersHtml(art) {
   if (!art) return '';
+  const backgroundTints = (art.backgroundTints || []).map(tint =>
+    `<span data-art-background-tint="${esc(tint.id)}" style="position:absolute;inset:0;background:${color(tint.color)};opacity:${Number.isFinite(tint.opacity) ? Math.max(0, Math.min(1, tint.opacity)) : 0};pointer-events:none"></span>`).join('');
   const images = art.sprites.filter(layer => layer.id !== 'background').map(layer => {
     const css = Object.entries(layer.css).map(([key, value]) => `${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}:${value}`).join(';');
     return `<img data-card-art-component="${esc(layer.assetId)}" data-art-layer="${esc(layer.id)}" alt="" aria-hidden="true" draggable="false" src="${esc(cardCutoutUrl(layer.path))}" style="${esc(css)}" />`;
   }).join('');
-  return `<span data-art-composition="${esc(art.code)}" style="position:absolute;inset:0;container-type:size;pointer-events:none"><span style="position:absolute;left:50%;top:50%;width:min(100cqw,80cqh);height:min(125cqw,100cqh);transform:translate(-50%,-50%)">${images}</span></span>`;
+  return `<span data-art-composition="${esc(art.code)}" style="position:absolute;inset:0;container-type:size;pointer-events:none">${backgroundTints}<span style="position:absolute;left:50%;top:50%;width:min(100cqw,80cqh);height:min(125cqw,100cqh);transform:translate(-50%,-50%)">${images}</span></span>`;
 }
 
 /** A missing cutout must not leave a floating glow or an empty background. */

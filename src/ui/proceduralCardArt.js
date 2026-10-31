@@ -15,6 +15,12 @@ const freeze = value => {
   return value;
 };
 const clone = value => structuredClone(value);
+// Texture-preserving washes: the element paints first, then status in sorted
+// semantic order. Burn over Earth therefore blends red over brown consistently.
+export const PROCEDURAL_BACKGROUND_TINTS = freeze({
+  element: { earth: { color: '#88552f', opacity: 0.48 } },
+  status: { burn: { color: '#b3271b', opacity: 0.34 } },
+});
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
 for (const recipe of Object.values(reviewed.records)) {
@@ -116,6 +122,18 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   }
   if (!art) return null;
   art = clone(art);
+  art.backgroundTints = [
+    ...(PROCEDURAL_BACKGROUND_TINTS.element[element] ? [{ id: `element:${element}`, ...PROCEDURAL_BACKGROUND_TINTS.element[element] }] : []),
+    ...[...new Set(statuses.map(statusCueId))].flatMap(id => Object.hasOwn(PROCEDURAL_BACKGROUND_TINTS.status, id)
+      ? [{ id: `status:${id}`, ...PROCEDURAL_BACKGROUND_TINTS.status[id] }] : []),
+  ];
+  if (maneuver === 'counter') {
+    const shield = art.sprites.find(sprite => sprite.id === 'object');
+    const sword = art.sprites.find(sprite => sprite.id === 'secondaryObject');
+    // Change only the cloned procedural recipe, never the approved catalog.
+    sword.zIndex = Number(shield.zIndex) + 5;
+    sword.css.zIndex = String(sword.zIndex);
+  }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
   if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
     art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];

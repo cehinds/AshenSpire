@@ -14,11 +14,19 @@ attack, smash, counter, evade, sweep, defend, skill and power are supported,
 including defense/evasion aliases. Explicit element wins over school and then
 singleton damage tags; existing element aliases and wind are supported.
 Cast/projectile delivery selects approved elemental projectiles; explicit melee
-retains the ethereal weapon. Counter uses the separate sword and shield; Evade
+retains the ethereal weapon. Counter paints the separate sword in front of the shield for both camps; Evade
 uses the approved feather. Utility effect tags select healing, draw and cleanse
 objects. Status tags select approved PNG marks/glows (a restrained approved
 generic cue for other registered statuses). Action plus element and statuses
 never exceeds four visual identities.
+
+`PROCEDURAL_BACKGROUND_TINTS` maps semantic element/status identities to translucent
+background washes. Earth uses brown (`#88552f`, opacity 0.48), and Burn (including
+the burning alias) uses red (`#b3271b`, opacity 0.34). Earth paints first and Burn
+paints over it when both apply, regardless of input tag order. The original
+background PNG remains underneath; every object and effect PNG stays above the
+washes. Tint intensity is independent of rank. Reviewed and Legacy art retain
+their existing colors and counter placement.
 
 Ranks 1, 3 and 5 change actual decorative PNG opacity without changing weapon
 geometry or recoloring art. Higher ranks retain rank-5 decorative intensity.
