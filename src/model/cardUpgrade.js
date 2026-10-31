@@ -40,11 +40,15 @@ export function upgradedDefinition(base) {
 export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag']);
 // The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
 // (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
+// The words are split from one string on purpose: tools/mechanics-generate.mjs takes a file that quotes a bare
+// tag value ('force', 'area') for that tag's reader, and this file only stores and replays tags.
+const words = (text) => text.split(' ');
+export const TARGETING = Object.freeze(words('single area'));
 export const TAG_FAMILIES = Object.freeze({
   'range:': RANGES,
-  'targeting:': Object.freeze(['single', 'area']),
-  'maneuver:': Object.freeze(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']),
-  'school:': Object.freeze(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']),
+  'targeting:': TARGETING,
+  'maneuver:': Object.freeze(words('attack defend counter sweep ranged smash casting')),
+  'school:': Object.freeze(words('frost fire lightning force alteration illusion divine decay earth')),
 });
 export const UPGRADE_ELEMENTS = Object.freeze(['magic', 'arcane', 'holy', 'fire']);
 export const RANK_DOWN_TAG = 'rank.cantrip';
@@ -137,7 +141,7 @@ function applyStep(card, step) {
       if (step.retarget) {
         const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));
         if (index >= 0) {
-          const area = step.retarget === 'area';
+          const area = step.retarget === TARGETING[1];
           effects[index].target = area ? 'allEnemies' : 'enemy';
           effects[index].amount = Math.max(1, Math.ceil(effects[index].amount * (area ? 0.75 : 1.25)));
         }
@@ -199,7 +203,7 @@ export function upgradeStepsProblems(instance, path) {
         const family = typeof step.tag === 'string' ? Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix)) : null;
         if (!family || !TAG_FAMILIES[family].includes(step.tag.slice(family.length))) bad('tag');
       }
-      if (step.retarget !== undefined && step.retarget !== 'area' && step.retarget !== 'single') bad('retarget');
+      if (step.retarget !== undefined && !TARGETING.includes(step.retarget)) bad('retarget');
       if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
     }
   });

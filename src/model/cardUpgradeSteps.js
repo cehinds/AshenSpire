@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
-import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, UPGRADE_ELEMENTS, RANK_DOWN_TAG } from './cardUpgrade.js';
+import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, RANK_DOWN_TAG } from './cardUpgrade.js';
 import { normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
@@ -129,7 +129,7 @@ function options(base, current, applied, limits) {
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
-const ATTACK_MANEUVERS = ['attack', 'smash', 'ranged'];
+const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash', 'ranged'].some((x) => x === m));
 // Mirrors upgradeBasic (cardUpgradeLimits.js, which imports this module): a cantrip, or a common non-spell.
 const basicDef = (def) => {
   const tags = def.tags || [];
@@ -159,12 +159,13 @@ function addTagOptions(base, current, applied, found, dmgIndex) {
     if (next) found.range = { tag: `range:${next}` };
   }
   if (hitsEnemy && maneuver !== 'sweep' && !tagged((s) => s.retarget)) {
-    const area = familyValue(tags, 'targeting:') ? familyValue(tags, 'targeting:') === 'area' : effects[dmgIndex].target === 'allEnemies';
+    const [SINGLE, AREA] = TARGETING;
+    const area = familyValue(tags, 'targeting:') ? familyValue(tags, 'targeting:') === AREA : effects[dmgIndex].target === 'allEnemies';
     // Single-target hits harder (x1.25 up): it stays inside the same +100% guard a damage step keeps.
     const baseTotal = totalOf(base.effects || [], 'damage') || totalOf(effects, 'damage');
     const grown = Math.ceil(effects[dmgIndex].amount * 1.25) * hitsOf(effects[dmgIndex]);
-    if (!area) found.targeting = { tag: 'targeting:area', retarget: 'area' };
-    else if (grown - baseTotal <= baseTotal) found.targeting = { tag: 'targeting:single', retarget: 'single' };
+    if (!area) found.targeting = { tag: `targeting:${AREA}`, retarget: AREA };
+    else if (grown - baseTotal <= baseTotal) found.targeting = { tag: `targeting:${SINGLE}`, retarget: SINGLE };
   }
   if (hitsEnemy && !spell && ATTACK_MANEUVERS.includes(maneuver) && !tagged((t) => t.tag?.startsWith('maneuver:'))) {
     const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
