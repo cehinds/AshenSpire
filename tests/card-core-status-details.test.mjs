@@ -134,7 +134,51 @@ test('Core preview authority collects nested status sources without copying the 
     upcast: { effects: [grant('crimsonBlight')] }, schoolEffect: grant('evade'),
   }, [grant('vulnerable')]);
   assert.deepEqual(Object.keys(receipt.definitions).sort(), ['crimsonBlight', 'evade', 'precision', 'vulnerable', 'weak']);
-  assert.deepEqual(Object.keys(receipt).sort(), ['clocks', 'decayAmount', 'definitions', 'overrideIds']);
+  assert.deepEqual(Object.keys(receipt).sort(), ['clocks', 'decayAmount', 'definitions', 'enabled', 'overrideIds']);
   assert.equal(receipt.clocks.precision, 'temporaryOwnerTurnEnd');
   assert.equal(receipt.clocks.evade, 'stackOwnerTurnStart');
+});
+
+test('a real disabled Core v2 preview uses expansion caps and owner-turn-end decay instead of its Core registry profile', () => {
+  const { combat, reg, inst } = fixture();
+  combat.fixCoreRules.enabled = false;
+  applyStatus(combat, combat.player, 'weak', 5);
+  assert.equal(combat.player.statuses.weak.stacks, 3);
+  const preview = previewCard(combat, inst.instanceId);
+  assert.deepEqual(preview.coreStatusAuthority, { enabled: false });
+  const text = weakInfo(reg, inst, preview);
+  assert.match(text, /25% less attack damage/);
+  assert.match(text, /stack total up to 3/);
+  assert.match(text, /decreases by 1 at the end/);
+  assert.doesNotMatch(text, /Attack rating ×|at the start/);
+  decayAtTurnEnd(combat, combat.player);
+  assert.equal(combat.player.statuses.weak.stacks, 2);
+});
+
+test('disabled Core retains a custom expansion cap and explicit off overrides remembered Core tooltip context', () => {
+  const { combat, reg, inst } = fixture();
+  const view = combatStatusPresentationRegistries(reg, combat);
+  const rememberedCore = view.frameworkTerms.withStatusWords(view.statuses.get('weak'));
+  combat.fixCoreRules.enabled = false;
+  combat.combatStatusRules = structuredClone(combat.combatExpansionRules.statuses);
+  combat.combatStatusRules.statuses.weak.cap = 5;
+  applyStatus(combat, combat.player, 'weak', 9);
+  assert.equal(combat.player.statuses.weak.stacks, 5);
+  const preview = previewCard(combat, inst.instanceId), text = weakInfo(reg, inst, preview);
+  assert.match(text, /stack total up to 5/);
+  assert.doesNotMatch(text, /Attack rating ×|at the start/);
+  const tooltip = statusTooltipText(rememberedCore, preview);
+  assert.match(tooltip, /stack total up to 5/);
+  assert.match(tooltip, /decreases by 1 at the end/);
+  assert.doesNotMatch(tooltip, /Attack rating ×|at the start/);
+});
+
+test('no-preview inspection still uses a known Core profile or actual supplied run rules', () => {
+  const { combat, reg, inst } = fixture();
+  const actual = cardDetailHtml(reg, inst, { rules: combat });
+  assert.match(actual, /Attack rating ×0.6/);
+  assert.match(actual, /decreases by 1 at the start/);
+  const knownProfile = cardDetailHtml(reg, inst, { rules: { combatExpansionVersion: 2 } });
+  assert.match(knownProfile, /Attack rating ×0.75/);
+  assert.match(knownProfile, /decreases by 1 at the start/);
 });

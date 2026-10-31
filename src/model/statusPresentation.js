@@ -71,7 +71,8 @@ export function statusPresentationDefinition(ctx, id, definition, holder = null)
   const key = definition && typeof definition === 'object' ? presentationKey(ctx, id, definition, holder) : null;
   if (key === null) {
     const result = present(ctx, id, definition, holder);
-    if (result && result !== definition) presentationContexts.set(result, { context: ctx, holder });
+    if (result && result !== definition) presentationContexts.set(result, { context: ctx, holder,
+      definition: presentationContexts.get(definition)?.definition || definition });
     return result;
   }
   let hit = cache.get(key);
@@ -83,7 +84,8 @@ export function statusPresentationDefinition(ctx, id, definition, holder = null)
     cache.set(key, hit);
   }
   const result = { ...hit };
-  presentationContexts.set(result, { context: ctx, holder });
+  presentationContexts.set(result, { context: ctx, holder,
+    definition: presentationContexts.get(definition)?.definition || definition });
   return result;
 }
 
@@ -93,6 +95,10 @@ export const clearStatusPresentationCache = () => cache.clear();
 
 export function resolveStatusPresentationDefinition(def, context = {}) {
   context = statusPresentationContext(def, context);
+  if (context.coreStatusAuthority?.enabled === false) {
+    const original = presentationContexts.get(def)?.definition;
+    return original ? { ...original, name: def.name } : def;
+  }
   const saved = context.coreStatusAuthority?.definitions?.[def.id];
   if (saved) return { ...def, ...saved, name: def.name };
   return fixCoreEnabled(context) ? statusPresentationDefinition(context, def.id, def, context.statusHolder ?? null) : def;
@@ -107,6 +113,7 @@ const clockFor = def => def.id === 'precision' ? 'temporaryOwnerTurnEnd'
 export function coreStatusLifecycle(def, context = {}) {
   context = statusPresentationContext(def, context);
   const saved = context.coreStatusAuthority;
+  if (saved?.enabled === false) return null;
   if (saved) return { overrides: saved.overrideIds.includes(def.id), decayAmount: saved.decayAmount,
     clock: saved.clocks?.[def.id] ?? clockFor(def) };
   if (!fixCoreEnabled(context)) return null;
@@ -116,7 +123,7 @@ export function coreStatusLifecycle(def, context = {}) {
 
 /** Small detached preview receipt: only statuses the card can mention. */
 export function coreStatusPresentation(context, card, effects = card.effects) {
-  if (!fixCoreEnabled(context)) return undefined;
+  if (!fixCoreEnabled(context)) return { enabled: false };
   const ids = new Set(), visited = new Set();
   const walk = value => {
     if (!value || typeof value !== 'object' || visited.has(value)) return;
@@ -130,6 +137,6 @@ export function coreStatusPresentation(context, card, effects = card.effects) {
   const statuses = fixCoreRules(context).statuses;
   const definitions = Object.fromEntries([...ids].map(id => [id,
     statusPresentationDefinition(context, id, context.registries.statuses.get(id))]));
-  return structuredClone({ definitions, overrideIds: Object.keys(statuses.overrides || {}), decayAmount: statuses.decayAmount,
+  return structuredClone({ enabled: true, definitions, overrideIds: Object.keys(statuses.overrides || {}), decayAmount: statuses.decayAmount,
     clocks: Object.fromEntries([...ids].map(id => [id, clockFor(definitions[id])])) });
 }

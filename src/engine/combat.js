@@ -2945,7 +2945,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
     foundation: !!combat.foundation,
-    ...(fixCoreEnabled(combat) ? { coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects) } : {}),
+    coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),

@@ -831,8 +831,8 @@ function cardStatusContext(def, { preview = null, rules = null } = {}, registrie
     combatExpansionRules: preview?.combatExpansionRules ?? rules?.combatExpansionRules,
     foundation: preview?.foundation ?? rules?.foundation,
     coreStatusAuthority: preview?.coreStatusAuthority,
-    fixCoreRules: rules?.fixCoreRules,
-    gameProfile: rules?.gameProfile ?? registries?.gameProfile,
+    fixCoreRules: preview?.coreStatusAuthority?.enabled === false ? undefined : rules?.fixCoreRules,
+    gameProfile: preview?.coreStatusAuthority?.enabled === false ? undefined : rules?.gameProfile ?? registries?.gameProfile,
     chargedEffects: preview?.chargedEffects,
   };
 }

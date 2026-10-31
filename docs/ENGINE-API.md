@@ -486,6 +486,8 @@ IDs, the configured stack-decay amount, and each relevant status's clock. This
 small presentation receipt preserves Core overrides before expansion caps,
 owner-turn-start decay and Precision's temporary owner-turn-end expiry. It
 does not copy the whole Core rules snapshot or change status execution.
+Every preview explicitly stamps `coreStatusAuthority.enabled`; `false` prevents
+registry-profile defaults from replacing the combat's disabled Core mode.
 
 ### `previewIntent(combat, enemyInstanceId)`
 
