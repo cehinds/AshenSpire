@@ -387,7 +387,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
-  const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
+  const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount);
   // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
   const entryCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile, fixCoreRules: rules?.fixCoreRules };
   // The Entry Precision line follows the active Core profile, the predicate the live grant uses, not a per-card version field.
