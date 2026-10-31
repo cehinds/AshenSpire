@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-31
 
-- **Upgrade a Card works like Upgrade an Item** ([#2393](https://github.com/cehinds/AshenSpire/pull/2393), `0.7.2.13`). The card upgrade screen at the shrine and the Blacksmith now matches the item one: a card list with art and copies owned, a stats-change summary, the current and upgraded cards side by side, the Smithing Stone cost as required/available, and a hold-to-confirm Upgrade button. On phones the list now closes after a tap, so the preview and the button are no longer hidden. The upgrade rules are unchanged.
+- **Upgrade a Card works like Upgrade an Item** ([#2393](https://github.com/cehinds/AshenSpire/pull/2393), `0.7.2.15`). The card upgrade screen at the shrine and the Blacksmith now matches the item one: a card list with art and copies owned, a stats-change summary, the current and upgraded cards side by side, the Smithing Stone cost as required/available, and a hold-to-confirm Upgrade button. On phones the list now closes after a tap, so the preview and the button are no longer hidden. The upgrade rules are unchanged.
 
 ## 2026-10-30
 
