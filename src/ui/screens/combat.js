@@ -2061,7 +2061,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
     // An insight contest has no hit chance and no range: the badge prices the DC the d20 + attributes + rank must reach.
-    const label = preview?.contest ? t('combat.contest.dc', { dc: preview.contest.dc }) : rangeHitLabel(preview, { targetId: enemy.id });
+    const label = rangeHitLabel(preview, { targetId: enemy.id });
     if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';

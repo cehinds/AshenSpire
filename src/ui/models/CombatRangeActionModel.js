@@ -17,6 +17,8 @@ function targetChanceLabel(target, current) {
   return allUnreachable ? t('combat.range.outOfRange') : chanceLabel(target, current);
 }
 export function rangeHitLabel(preview, { current = true, targetId } = {}) {
+  // An insight contest has a DC, not a hit chance or a range (SPEC §17 Contests).
+  if (preview?.contest) return t('combat.contest.dc', { dc: preview.contest.dc });
   const targets = preview?.range?.targets;
   const target = targetId ? targets?.find(row => row.targetId === targetId) : targets?.[0];
   const row = target ?? { inRange: preview?.inRange, currentInRange: preview?.inRange, hitChance: preview?.hitChance, currentHitChance: preview?.hitChance };
