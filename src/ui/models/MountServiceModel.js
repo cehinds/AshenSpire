@@ -1,4 +1,5 @@
 import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { t } from '../strings.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the smith's two card services — extract and
 // install — in the shape the Smith upgrade model already has: the screen
@@ -134,7 +135,7 @@ export function mountServiceModel(registries, plan, selection = {}, { multiUse =
       selectedCard,
       canConfirm,
       blockedReasons: freeze(blockedReasons),
-      backLabel: place === 'merchant' ? 'Back to the merchant' : 'Back to Shrine',
+      backLabel: place === 'merchant' ? 'Back to the merchant' : t('smith.back.shrine'),
       confirmLabel: !selected ? 'Select an item' : `${copy.verb} (${selected.cost})`,
       verb: copy.verb,
     }),

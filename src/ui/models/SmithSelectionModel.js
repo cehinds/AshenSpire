@@ -159,12 +159,12 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       blockedReasons: freeze(selected && !selected.affordable
         ? [`Need ${selected.shortfall} more Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`]
         : []),
-      backLabel: 'Back to Shrine',
+      backLabel: t('smith.back.shrine'),
       confirmLabel: !selected
         ? 'Select an item'
         : selected.affordable
-          ? `Upgrade (${selected.cost})`
-          : `Upgrade (${selected.cost})`,
+          ? t('smith.upgrade.confirm', { cost: selected.cost })
+          : t('smith.upgrade.confirm', { cost: selected.cost }),
     }),
     accessibility: freeze({
       label: 'Upgrade an owned item',
