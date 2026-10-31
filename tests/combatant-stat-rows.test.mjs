@@ -27,3 +27,10 @@ test('rules sharing a tag add up, as an attack with those tags rolls them', () =
   const rows = combatStatRows({ statuses: {}, critRules: [keen, rule], attributes, kind: 'player' }, t);
   assert.equal(rows[2].value, '13%'); // 3% + 10%, not the larger one alone
 });
+
+test('Evasion reads status stacks first and falls back to the Foundation dodge charges on entity.evade', () => {
+  const value = (input) => combatStatRows({ attributes, kind: 'player', ...input }, t)[1].value;
+  assert.equal(value({ statuses: {}, evade: 2 }), 2);
+  assert.equal(value({ statuses: { evade: { stacks: 1 } }, evade: 2 }), 1);
+  assert.equal(value({ statuses: {} }), 0);
+});

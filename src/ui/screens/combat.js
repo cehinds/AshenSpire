@@ -4002,7 +4002,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }))}`);
   }
 
-  const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, attributes: combat.attributes, kind }, t);
+  const combatStatRows = (v, entity, kind) => statRows({ statuses: v.statuses, critRules: entity.critRules, evade: entity.evade, attributes: combat.attributes, kind }, t);
 
   function inspectorResources(rows, kind, entity) {
     return rows.map(({ tipId, ...row }) => ({ ...row, tooltipHtml: poiseTip(kind, entity)({ id: tipId || ({ MP: 'mana', SP: 'stamina' })[row.label] || row.label.toLowerCase() }) }));

@@ -1202,7 +1202,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
           ...(entity.combatExpansionVersion === 2 && !((entity.persistentWard?.max || 0) > 0) ? [] : [{ label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward }]),
           ...(entity.combatExpansionVersion === 2 ? [...((entity.persistentWard?.max || 0) > 0 ? [{ label: 'Ward pool', value: entity.persistentWard.value || 0, max: entity.persistentWard.max }] : []), { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
-        ...combatStatRows({ statuses: entity.statuses, critRules: entity.critRules, attributes: entity.attributes || snap.scene?.attributes, kind: def ? 'enemy' : 'player' }, t),
+        ...combatStatRows({ statuses: entity.statuses, critRules: entity.critRules, evade: entity.evade, attributes: entity.attributes || snap.scene?.attributes, kind: def ? 'enemy' : 'player' }, t),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
