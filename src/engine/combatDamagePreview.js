@@ -107,14 +107,28 @@ export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
   return true;
 }
 
+/**
+ * A preview context where the detached attacker stands in for `source`: when that is the context's player it becomes
+ * `player`, and the seat lookup maps it back to the live entity, so level, attribute and loadout lookups keyed by entity
+ * identity (counterReturn levelOf/attributesOf) still resolve while the detached state evolves.
+ */
+function bindDetachedAttacker(previewCtx, source, attacker) {
+  if (!attacker || attacker === source) return previewCtx;
+  const lookup = previewCtx.playerIdForEntity;
+  return { ...previewCtx,
+    ...(source === previewCtx.player ? { player: attacker } : {}),
+    ...(lookup ? { playerIdForEntity: entity => lookup(entity === attacker ? source : entity) } : {}) };
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
-  const { defender, previewCtx, targetKey } = local;
+  const { defender, targetKey } = local;
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
   if (ProfileCombat.configuredCombat(ctx)) {
     const receipts = [];
     const attacker = cloneDetachedAttacker(source);
+    const previewCtx = bindDetachedAttacker(local.previewCtx, source, attacker);
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
       receipts.push(receipt);
@@ -130,6 +144,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
   }
+  const { previewCtx } = local;
   const rules = Matchups.matchupRules(ctx);
   const hitDamages = [];
   for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {

@@ -219,3 +219,17 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
   assert.equal(view.totalDamage, liveHits.reduce((a, b) => a + b, 0));
   assert.ok(liveHits[1] < liveHits[0] + 6 && liveHits[1] === liveHits[2], 'later hits are equal once the stance bonus is gone');
 });
+
+test('a solo player preview binds its detached attacker, so level-keyed Precision matches the live roll chance, with and without Reflect', async () => {
+  const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
+  for (const stacks of [0, 2]) {
+    const { combat, enemy } = live();
+    combat.player.basePrecisionBonus = 0; // the real value, not live()'s auto-hit helper
+    Object.assign(enemy, { baseEvasionBonus: 15, reflectStacks: stacks || undefined });
+    const liveChance = profileDamageReceipt(combat, combat.player, enemy, 20, carrier).hitChance;
+    const view = previewDamageHits(combat, combat.player, enemy, 20, [], carrier, 2);
+    assert.equal(liveChance, 0.4, "control: level-1 Core Reaver vs +15 Evasion is a 40% hit");
+    assert.equal(view.hitChance, liveChance, `${stacks} Reflect stack(s): preview chance == live receipt chance`);
+  }
+});
