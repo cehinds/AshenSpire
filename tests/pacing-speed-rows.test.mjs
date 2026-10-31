@@ -54,3 +54,28 @@ test('the Mobile fast preset writes the two visible values the timing reads', ()
   assert.ok(fast.gapMs < custom.gapMs && fast.spriteSpeed.lungeMs < custom.spriteSpeed.lungeMs);
   setCombatPacing();
 });
+
+import { floaterLifeMs, COMBAT_TIMING } from '../src/ui/animationPace.js';
+import { readFileSync } from 'node:fs';
+
+test('a number floater lives at least 1.1 s held at ×1, scales with Combat speed, fade is the last third', () => {
+  setAnimSpeed('fast'); // a phone's Auto pace must not shrink it
+  setCombatPacing({ combatSpeed: 1 });
+  const life = floaterLifeMs();
+  assert.ok(life * (1 - COMBAT_TIMING.floaterFadeFraction) >= 1100 - 1, `hold ${life * 2 / 3} ms`);
+  setCombatPacing({ combatSpeed: 2 });
+  assert.ok(floaterLifeMs() < life && floaterLifeMs() >= COMBAT_TIMING.floaterMinLifeMs);
+  setCombatPacing({ combatSpeed: 8 });
+  assert.equal(floaterLifeMs(), COMBAT_TIMING.floaterMinLifeMs);
+  setAnimSpeed('instant');
+  assert.equal(floaterLifeMs(), COMBAT_TIMING.floaterInstantMs);
+  setAnimSpeed('normal'); setCombatPacing();
+});
+
+test('the CSS fade starts at two thirds of the life the script sets', () => {
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  assert.match(css, /@keyframes num-life \{[\s\S]*?66\.6% \{ opacity: 1/);
+  assert.match(css, /num-life var\(--float-ms/);
+  const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
+  assert.match(fx, /setTimeout\(\(\) => el\.remove\(\), life \+ 60\)/);
+});

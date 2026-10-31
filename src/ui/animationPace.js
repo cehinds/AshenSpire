@@ -19,6 +19,14 @@ export const COMBAT_TIMING = Object.freeze({
   castGlyphMs: 450,        // life of a non-attack actor's cast glyph
   watchdogBaseMs: 2000,    // fixed slack added to a timeline's watchdog budget
   fightEndDelayMs: 210,    // pause between the last hit and the spoils screen
+  // Damage / heal / guard numbers (ui/fx.js floatNum). Total life at combat speed 1: two thirds held
+  // (1100 ms, long enough to read on a phone) then the last third fades. Scales with the Combat speed
+  // multiplier only, NOT with the Fast/Slow animation pace, so a phone's Auto-Fast pace does not
+  // shrink the number below readability (owner, 2026-10-31).
+  floaterLifeMs: 1650,
+  floaterMinLifeMs: 400,   // the floor at the highest speed multiplier
+  floaterInstantMs: 480,   // the Instant pace keeps the classic short number
+  floaterFadeFraction: 1 / 3,
 });
 
 // The wait a timeline holds after a turn-banner beat. The banner's own display
@@ -62,6 +70,12 @@ function resolvePacing(settings = {}) {
 }
 let combatPacing = resolvePacing();
 export function setCombatPacing(settings = {}) { combatPacing = resolvePacing(settings); }
+// How long a damage/heal/guard number stays on screen, in ms. Reduced motion keeps the same life (it only
+// drops the bounce), so a number is never unreadable for lack of motion.
+export function floaterLifeMs() {
+  if (getAnimSpeed() === 'instant') return COMBAT_TIMING.floaterInstantMs;
+  return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / combatPacing.speed));
+}
 export function actionPacing({ reduced = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
