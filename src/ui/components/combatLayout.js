@@ -130,7 +130,10 @@ export function wireCombatLayout(combatEl) {
     const headerRow = !alternative || !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
     if (combatEl.dataset.headerRow !== headerRow) combatEl.dataset.headerRow = headerRow;
     const hudBand = headerRow
-      ? Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom)
+      // Desktop (owner, 2026-10-31): the header band is its own height, not floored at the 6% share,
+      // so a tall host does not keep an empty strip under the smaller header.
+      ? (split && headerRow === 'single' ? headerSizing.splitHeightPx / zoom
+        : Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom))
       : Math.max(combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo),
         alternative ? (clientHeight * zoom <= headerSizing.coopShortHostMaxPx ? headerSizing.coopHeightPx : headerSizing.coopTallHeightPx) / zoom : 0);
     combatEl.dataset.compactCombat = String(compact);
