@@ -239,3 +239,28 @@ test('only Elemental Weapon is live in Core; Greased stays inert in a configured
   assert.equal(proposalRuleEnabled(rules['base.greased'], caps), false);
   assert.equal(proposalRuleEnabled(rules['base.poison'], caps), false);
 });
+
+test('the queued Elemental Weapon rider executes as fire, not as the weapon\'s blunt blow', () => {
+  const { combat, target } = liveCore('blightHound');
+  target.hp = target.maxHp = 500; target.mana = 5;
+  target.weaknesses = [{ to: 'blunt', effect: 'damage' }, { to: 'blunt', effect: 'mana' }, { to: 'fire', effect: 'damage' }];
+  combat.player.statuses['base.elemental-weapon'] = { stacks: 2 };
+  primeAccuracyRolls(combat, { die: 20 });
+  applyAttackDamage(combat, combat.player, target, 10, [], { ...blunt, cardTags: ['source:weapon'], skipRatingBonus: true });
+  assert.equal(target.mana, 4, 'the blunt swing took 1 Mana');
+  const rider = combat.queue.find(a => a.effect?.op === 'damage' && a.card?.damageType === 'fire');
+  assert.ok(rider, 'rider queued');
+  assert.equal(rider.card.combatProfile.damageType, 'fire');
+  assert.equal(rider.card.combatProfile.school, 'fire');
+  assert.equal(rider.card.combatProfile.damageComponents, undefined);
+  combat.queue.length = 0;
+  primeAccuracyRolls(combat, { die: 20 });
+  executeAction(combat, rider);
+  const event = combat.eventLog.filter(e => e.type === 'damageDealt').at(-1);
+  const ids = event.damageReceipt.hits[0].sources.map(s => s.id);
+  assert.ok(ids.includes('weakness:fire'), 'fire weakness stage');
+  assert.ok(!ids.includes('weakness:blunt'), 'no blunt stage');
+  assert.deepEqual(event.weaknesses.map(w => w.to), ['fire']);
+  assert.equal(target.mana, 4, 'the rider does not trigger the blunt weakness again');
+  assert.deepEqual(hitWeaknessTriggers(combat, combat.player, { damageType: 'fire', combatProfile: { camp: 'physical', damageType: 'blunt' } }).sort(), ['blunt', 'fire']);
+});

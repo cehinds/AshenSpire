@@ -32,7 +32,7 @@ function imbuedElements(ctx, source, carrier) {
  */
 export function hitWeaknessTriggers(ctx, source, carrier = {}, profile = carrier.combatProfile || {}, share = magicShareOf(profile, ctx?.ratingsRules)) {
   const triggers = new Set();
-  const types = [profile.damageType, profile.physicalDamageType, carrier.physicalDamageType, ...(profile.damageComponents || []).map(row => row?.type)];
+  const types = [profile.damageType, carrier.damageType, profile.physicalDamageType, carrier.physicalDamageType, ...(profile.damageComponents || []).map(row => row?.type)];
   for (const type of types) add(triggers, type);
   const parts = componentPartsOf(profile);
   // A hit with a physical part and no stated type is the wielded weapon's blow, else bare-handed Blunt (splitDamageTypesOf).
