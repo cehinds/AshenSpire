@@ -3535,7 +3535,7 @@ async function onCombatEnd(result, combat, enc) {
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
-  const smithingStoneReceipt = isConfiguredRun(run) ? null : grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
+  const smithingStoneReceipt = grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
   // The Stone, its idempotent claim, the cleared combat receipt, every RNG
   // counter used to roll the offer, and the offer itself cross one persistence
   // boundary below. A reload therefore resumes the reward menu instead of
@@ -3543,7 +3543,7 @@ async function onCombatEnd(result, combat, enc) {
 
   if (configuredProgression) {
     // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
-    const victoryReceipt = { title: victoryTitle(enc), xpBefore,
+    const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
       xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
     run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
     const boss = enc.pool === 'boss';
