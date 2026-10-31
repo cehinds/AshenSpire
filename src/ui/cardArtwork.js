@@ -37,7 +37,10 @@ export function playingCardArtwork(ref, { large = false, extended = EXTENDED_CAR
 /** Resolve the visual style without changing the legacy artwork catalog. */
 export function playingCardArt(ref, { large = false, catalog, extended = EXTENDED_CARD_ART, definition, registries, style = cardArtStyle() } = {}) {
   if (style !== CARD_ART_LEGACY && definition) {
-    if (!playingCardArtwork(ref, {large, extended})) {
+    // renderCard may pass a canonical visual reference (base.poison -> ironSkin); the
+    // dedicated-art guard is about the reviewed card itself, so key it on the definition's ID.
+    const own = definition.id && !ref?.profileId ? { ...ref, cardId: definition.id } : ref;
+    if (!playingCardArtwork(own, {large, extended})) {
       const reviewed = reviewedCardArt(ref, definition);
       if (reviewed) return reviewed;
     }

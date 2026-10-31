@@ -9,6 +9,7 @@ import {playingCardArt,playingCardArtwork,cardArtFallbacks} from '../src/ui/card
 import {simpleCardArt} from '../src/ui/cardArtComposition.js';
 import {reviewedCardArtCatalog as catalog} from '../src/content/reviewedCardArt.generated.js';
 import {cardArtLayersHtml} from '../src/ui/cardArtLayers.js';
+import {baseCardPresentation} from '../src/content/generated/baseCards.js';
 const reg=createRegistries(contentBundle);
 
 test('every card without a dedicated illustration has a reviewed layered recipe',()=>{
@@ -54,4 +55,13 @@ test('approved identity: cleanse fire, healing leaf, separate counter and earth 
 });
 test('source JSON reproducibly compiles the applied recipes',()=>{
   execFileSync(process.execPath,['tools/export-reviewed-card-art.mjs','--check'],{cwd:new URL('../',import.meta.url)});
+});
+test('a canonical visual reference does not hide the reviewed card recipe',()=>{
+  const ids=Object.keys(catalog.records).filter(id=>baseCardPresentation[id]?.canonicalCardRef);
+  assert.ok(ids.length>=8);
+  for(const id of ids){
+    const definition=playingCardDefinition(reg,{cardId:id});
+    const art=playingCardArt({cardId:baseCardPresentation[id].canonicalCardRef},{definition,registries:reg,style:'Simple'});
+    assert.equal(art.componentArt,catalog.records[id],id);
+  }
 });
