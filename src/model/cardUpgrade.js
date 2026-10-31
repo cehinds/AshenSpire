@@ -36,7 +36,8 @@ export function upgradedDefinition(base) {
 //                                  `targeting:`, `maneuver:` or `school:` family; `rank.cantrip` just adds),
 //                                  `retarget` 'area' | 'single' moves the first damage effect between enemy
 //                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
-//                                  card's damage school (a magical property)
+//                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
+//                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
 export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag']);
 // The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
 // (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
@@ -147,6 +148,7 @@ function applyStep(card, step) {
         }
       }
       if (step.damageSchool) out.damageSchool = step.damageSchool;
+      if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
       break;
     }
     default:
@@ -205,6 +207,7 @@ export function upgradeStepsProblems(instance, path) {
       }
       if (step.retarget !== undefined && !TARGETING.includes(step.retarget)) bad('retarget');
       if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
+      if (step.exposureBuildupPerHit !== undefined && !(Number.isInteger(step.exposureBuildupPerHit) && step.exposureBuildupPerHit >= 0 && step.exposureBuildupPerHit <= 99)) bad('exposureBuildupPerHit');
     }
   });
   return problems;

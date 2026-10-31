@@ -90,3 +90,22 @@ test('a school change on a non-damaging spell projects a valid face and profile'
     assert.deepEqual(after.effects, before.effects, 'school changes typing only');
   }
 });
+
+test('an element step carries the exposure an authored card of that school builds, so combat reads both', async () => {
+  const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
+  const floor = registries.balance.exposure.buildupPerManaSpell;
+  const authored = [...registries.cards.ids()].map((id) => registries.cards.get(id)).find((c) => c.id.startsWith('core.') && c.damageSchool === 'magic' && c.manaCost > 0 && c.exposureBuildupPerHit > 0);
+  assert.ok(authored, 'an authored Mana spell of the magic school');
+  assert.ok(authored.exposureBuildupPerHit >= floor, 'the floor is what the least authored one builds');
+  const run = { seed: 504, gameProfile: profile };
+  const element = [];
+  for (let n = 0; n < 200; n += 1) {
+    const instance = { instanceId: `e${n}`, cardId: 'core.strike' };
+    for (const step of nextUpgradeOptions({ ...run, seed: n }, instance, registries.cards.get('core.strike'), registries, 20)) if (step.damageSchool) element.push(step);
+  }
+  assert.ok(element.length > 0 && element.every((s) => s.exposureBuildupPerHit === floor), 'every element step names the floor');
+  const stepped = face('core.strike', [element[0]]);
+  assert.equal(stepped.damageSchool, element[0].damageSchool);
+  assert.equal(stepped.exposureBuildupPerHit, floor);
+  assert.equal(plain('core.strike').exposureBuildupPerHit, 0, 'the base is untouched');
+});

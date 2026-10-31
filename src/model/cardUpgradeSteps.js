@@ -123,7 +123,7 @@ function options(base, current, applied, limits) {
     const counts = [2, 3].filter((hits) => hits <= 3 && per * hits - baseTotal <= baseTotal && per * hits > amount && hitFloor(current, hits) <= sp);
     if (counts.length) found.hits = { per, counts };
   }
-  addTagOptions(base, current, applied, found, dmgIndex);
+  addTagOptions(base, current, applied, found, dmgIndex, limits);
   return found;
 }
 
@@ -137,7 +137,7 @@ const basicDef = (def) => {
 };
 
 /** The identity-change options (poise, range, targeting, stance, school, element, rank-down) for a non-restricted card. */
-function addTagOptions(base, current, applied, found, dmgIndex) {
+function addTagOptions(base, current, applied, found, dmgIndex, limits = {}) {
   const effects = current.effects || [];
   const tags = tagsOf(current);
   const camp = familyValue(tags, 'camp:');
@@ -177,7 +177,7 @@ function addTagOptions(base, current, applied, found, dmgIndex) {
     const schools = TAG_FAMILIES['school:'].filter((school) => school !== own);
     if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };
   }
-  if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS };
+  if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
   if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
 
@@ -204,7 +204,7 @@ const stepOf = (kind, option, choice) => {
     case 'range': case 'rankDown': return { k: 'tag', tag: option.tag };
     case 'targeting': return { k: 'tag', tag: option.tag, retarget: option.retarget };
     case 'maneuver': case 'school': return { k: 'tag', tag: pickOf(option.tags) };
-    case 'element': return { k: 'tag', damageSchool: pickOf(option.schools) };
+    case 'element': return { k: 'tag', damageSchool: pickOf(option.schools), ...(Number.isInteger(option.exposure) && option.exposure > 0 ? { exposureBuildupPerHit: option.exposure } : {}) };
     default: {
       // Three hits only on the rarer roll; two otherwise.
       const hits = option.counts.includes(3) && choice >= 0.7 ? 3 : option.counts[0];
