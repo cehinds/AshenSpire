@@ -1,0 +1,662 @@
+{
+  "schema": 1,
+  "assets": {
+    "symbol.spiral": {
+      "id": "symbol.spiral",
+      "path": "assets-display/card-cutouts/symbol.spiral.png",
+      "name": "spiral object",
+      "sha256": "85823e2b7cb02d789a17442a8dbd53b30be26fe87662ef14791705f82b6ff21e",
+      "bytes": 186521,
+      "width": 400,
+      "height": 400
+    },
+    "cue.confused.glow": {
+      "id": "cue.confused.glow",
+      "path": "assets-display/card-cutouts/cue.confused.glow.png",
+      "name": "confused glow",
+      "sha256": "a6f2b23399e9fc8f7bf371b42816ae02a1aa488beab3e69393b8fdf11e8aa8cd",
+      "bytes": 212528,
+      "width": 400,
+      "height": 400
+    },
+    "cue.confused.mark": {
+      "id": "cue.confused.mark",
+      "path": "assets-display/card-cutouts/cue.confused.mark.png",
+      "name": "confused effect",
+      "sha256": "71d9167115723f37f1260c292a16665dbf79e39c34b5d79738425d576c07c779",
+      "bytes": 203044,
+      "width": 400,
+      "height": 400
+    },
+    "mineral.pebble": {
+      "id": "mineral.pebble",
+      "path": "assets-display/card-cutouts/mineral.pebble.png",
+      "name": "Pebble object 0",
+      "sha256": "898800ac5d3e9ffb27cfe5c02691c3ea7eb8e50f974c506d466b9867311be778",
+      "bytes": 171520,
+      "width": 400,
+      "height": 400
+    },
+    "cue.stoneskin.glow": {
+      "id": "cue.stoneskin.glow",
+      "path": "assets-display/card-cutouts/cue.stoneskin.glow.png",
+      "name": "stoneskin glow",
+      "sha256": "9e8b2c74858047363459350a4afe3f1ac091052a796a1ec8b36d270781e3694f",
+      "bytes": 209388,
+      "width": 400,
+      "height": 400
+    },
+    "cue.stoneskin.mark": {
+      "id": "cue.stoneskin.mark",
+      "path": "assets-display/card-cutouts/cue.stoneskin.mark.png",
+      "name": "stoneskin effect",
+      "sha256": "7de0388abf0c126e6933205f8e14b3571dd0d312f77e8ea85818d957ec9b9c25",
+      "bytes": 209114,
+      "width": 400,
+      "height": 400
+    },
+    "cue.entombed.glow": {
+      "id": "cue.entombed.glow",
+      "path": "assets-display/card-cutouts/cue.entombed.glow.png",
+      "name": "entombed glow",
+      "sha256": "2fa07dc697ee4d3987dd5b1ad315a192f4c86ba08d77423f7e7a84549d5ec5dc",
+      "bytes": 157160,
+      "width": 400,
+      "height": 400
+    },
+    "cue.entombed.mark": {
+      "id": "cue.entombed.mark",
+      "path": "assets-display/card-cutouts/cue.entombed.mark.png",
+      "name": "entombed effect",
+      "sha256": "977da71fa929c71a8c505f52ade2c07d1f0dd182fe4d95e797bec043d9108aed",
+      "bytes": 75864,
+      "width": 400,
+      "height": 400
+    },
+    "cue.frost.glow": {
+      "id": "cue.frost.glow",
+      "path": "assets-display/card-cutouts/cue.frost.glow.png",
+      "name": "frost glow",
+      "sha256": "918510b5ff600a3918240b73fc6bb96441373aa2323280eeec30e365c7e85420",
+      "bytes": 165181,
+      "width": 400,
+      "height": 400
+    },
+    "cue.frost.mark": {
+      "id": "cue.frost.mark",
+      "path": "assets-display/card-cutouts/cue.frost.mark.png",
+      "name": "frost effect",
+      "sha256": "0e7a9d9abd1d91ebcf43a5ac262d9e3bdfd34d5de4b162eebd76636f3f00f2bb",
+      "bytes": 111608,
+      "width": 400,
+      "height": 400
+    },
+    "cue.burn.glow": {
+      "id": "cue.burn.glow",
+      "path": "assets-display/card-cutouts/cue.burn.glow.png",
+      "name": "burn glow",
+      "sha256": "6bb32f5764fd6ea4883edb5d432d540a43402e0e39dcd5c5f35bd8ef239efa54",
+      "bytes": 143358,
+      "width": 400,
+      "height": 400
+    },
+    "cue.burn.mark": {
+      "id": "cue.burn.mark",
+      "path": "assets-display/card-cutouts/cue.burn.mark.png",
+      "name": "burn effect",
+      "sha256": "a0c60c78d2a72c8648a06f80d914de074e2c7d1dfeda4daaa987374c98babc73",
+      "bytes": 144288,
+      "width": 400,
+      "height": 400
+    },
+    "cue.paralysis.glow": {
+      "id": "cue.paralysis.glow",
+      "path": "assets-display/card-cutouts/cue.paralysis.glow.png",
+      "name": "paralysis glow",
+      "sha256": "c00d1943a1808c00b69a1b09b4b5df7909de06bbe82ba0fdec92a5134ee3c409",
+      "bytes": 144776,
+      "width": 400,
+      "height": 400
+    },
+    "cue.paralysis.mark": {
+      "id": "cue.paralysis.mark",
+      "path": "assets-display/card-cutouts/cue.paralysis.mark.png",
+      "name": "paralysis effect",
+      "sha256": "f8de2ddb22a724a88efae0f388a90ea976ca3bcf610e63729bc56b0b83412d3d",
+      "bytes": 76860,
+      "width": 400,
+      "height": 400
+    },
+    "cue.sleep.glow": {
+      "id": "cue.sleep.glow",
+      "path": "assets-display/card-cutouts/cue.sleep.glow.png",
+      "name": "sleep glow",
+      "sha256": "f7dfa66d5f50463d3f6b7b6e135d9d374fe2e2fa204f9f7897727e64b43c1e25",
+      "bytes": 157623,
+      "width": 400,
+      "height": 400
+    },
+    "cue.sleep.mark": {
+      "id": "cue.sleep.mark",
+      "path": "assets-display/card-cutouts/cue.sleep.mark.png",
+      "name": "sleep effect",
+      "sha256": "9aa284f3c3080d7c66c460cfcbf5083e5f4ce9952a4e1c67b8970afab63962df",
+      "bytes": 140268,
+      "width": 400,
+      "height": 400
+    },
+    "cue.crimsonBlight.glow": {
+      "id": "cue.crimsonBlight.glow",
+      "path": "assets-display/card-cutouts/cue.crimsonBlight.glow.png",
+      "name": "crimsonBlight glow",
+      "sha256": "5bf5715fa275553ede9d7555957bea3520f9ccac17f8a3bcf0517e914491ad9f",
+      "bytes": 152234,
+      "width": 400,
+      "height": 400
+    },
+    "cue.crimsonBlight.mark": {
+      "id": "cue.crimsonBlight.mark",
+      "path": "assets-display/card-cutouts/cue.crimsonBlight.mark.png",
+      "name": "crimsonBlight effect",
+      "sha256": "2281fe453a834275a7af319d30f1b35ebf328e23a4af6201e9351a3ac1c0986a",
+      "bytes": 147148,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.ring": {
+      "id": "symbol.ring",
+      "path": "assets-display/card-cutouts/symbol.ring.png",
+      "name": "ring object",
+      "sha256": "12eae427baf0ec85b7d6c05543516a10691d92d8018a10c32db78033c8ae3493",
+      "bytes": 144372,
+      "width": 400,
+      "height": 400
+    },
+    "cue.invulnerability.glow": {
+      "id": "cue.invulnerability.glow",
+      "path": "assets-display/card-cutouts/cue.invulnerability.glow.png",
+      "name": "invulnerability glow",
+      "sha256": "af86207630a7661d0df9d670932de7f629d119955205fdfa45f5f58f2b88ede0",
+      "bytes": 213507,
+      "width": 400,
+      "height": 400
+    },
+    "cue.invulnerability.mark": {
+      "id": "cue.invulnerability.mark",
+      "path": "assets-display/card-cutouts/cue.invulnerability.mark.png",
+      "name": "invulnerability effect",
+      "sha256": "a1ea66b34053da4ed9b693e49656549e192f9e8eb5047a101c1579eec01d3326",
+      "bytes": 123609,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.mask": {
+      "id": "symbol.mask",
+      "path": "assets-display/card-cutouts/symbol.mask.png",
+      "name": "mask object",
+      "sha256": "3028ecea4d5cd2f96ca9a8e0ee16e233f8801566b01a5d662864b72d2be6c0ea",
+      "bytes": 170365,
+      "width": 400,
+      "height": 400
+    },
+    "cue.decoy.glow": {
+      "id": "cue.decoy.glow",
+      "path": "assets-display/card-cutouts/cue.decoy.glow.png",
+      "name": "decoy glow",
+      "sha256": "187b28c9fa16e34bdc92221304d78fadf2d4f7b97c0b9562782a5a346e40db27",
+      "bytes": 203142,
+      "width": 400,
+      "height": 400
+    },
+    "cue.decoy.mark": {
+      "id": "cue.decoy.mark",
+      "path": "assets-display/card-cutouts/cue.decoy.mark.png",
+      "name": "decoy effect",
+      "sha256": "09c5c193f70434d785d5dfa6ada382e402b19e4082a9582b8b13fcd9bb5f6452",
+      "bytes": 157496,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.stone": {
+      "id": "symbol.stone",
+      "path": "assets-display/card-cutouts/symbol.stone.png",
+      "name": "stone object",
+      "sha256": "956091c7ae77740594f5f64dd7f56884567668f82df46fb5608bd489bc8576cb",
+      "bytes": 186504,
+      "width": 400,
+      "height": 400
+    },
+    "cue.grounded.glow": {
+      "id": "cue.grounded.glow",
+      "path": "assets-display/card-cutouts/cue.grounded.glow.png",
+      "name": "grounded glow",
+      "sha256": "e849f6460a05e5e408d2b63993543adfd23c2de29f316ffe1fb431564fbc90e1",
+      "bytes": 118572,
+      "width": 400,
+      "height": 400
+    },
+    "cue.grounded.mark": {
+      "id": "cue.grounded.mark",
+      "path": "assets-display/card-cutouts/cue.grounded.mark.png",
+      "name": "grounded effect",
+      "sha256": "e199ef594cf17230c3950d7ba7315b928a0de1c4ebfd1b6c70f48fd47d990636",
+      "bytes": 81975,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.moon": {
+      "id": "symbol.moon",
+      "path": "assets-display/card-cutouts/symbol.moon.png",
+      "name": "moon object",
+      "sha256": "52252f5236c2f9232bf96caabac92bdc36c863d8c55993df2f8dfd2c9d8fd1a7",
+      "bytes": 179449,
+      "width": 400,
+      "height": 400
+    },
+    "cue.venom.glow": {
+      "id": "cue.venom.glow",
+      "path": "assets-display/card-cutouts/cue.venom.glow.png",
+      "name": "venom glow",
+      "sha256": "928cecb71bc58faf8e0f2029376ebc7e95a779e612ae80aa54c8c64e0e0f88f5",
+      "bytes": 105781,
+      "width": 400,
+      "height": 400
+    },
+    "cue.venom.mark": {
+      "id": "cue.venom.mark",
+      "path": "assets-display/card-cutouts/cue.venom.mark.png",
+      "name": "venom effect",
+      "sha256": "e254c59c590a52219efe8c7538d5206c80419159a379d60c1730b1a628def8bc",
+      "bytes": 79378,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.shield": {
+      "id": "symbol.shield",
+      "path": "assets-display/card-cutouts/symbol.shield.png",
+      "name": "shield object",
+      "sha256": "1a66a68b3c2f7bf57e49afe4971d77553170a21b99ca518f50a4a7fd1f3bce4c",
+      "bytes": 121876,
+      "width": 400,
+      "height": 400
+    },
+    "cue.unbreakable.glow": {
+      "id": "cue.unbreakable.glow",
+      "path": "assets-display/card-cutouts/cue.unbreakable.glow.png",
+      "name": "unbreakable glow",
+      "sha256": "366e6e802646547b376b79767bb78bef3995e93120ef9ab757d3cdf2c14644d5",
+      "bytes": 139192,
+      "width": 400,
+      "height": 400
+    },
+    "cue.unbreakable.mark": {
+      "id": "cue.unbreakable.mark",
+      "path": "assets-display/card-cutouts/cue.unbreakable.mark.png",
+      "name": "unbreakable effect",
+      "sha256": "390a7f2d5abd3a1dc8c4b98f023e26886b43001a8998a2895a8539b8b5378a13",
+      "bytes": 135462,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.vial": {
+      "id": "symbol.vial",
+      "path": "assets-display/card-cutouts/symbol.vial.png",
+      "name": "vial object",
+      "sha256": "342d713af34d1cb09c904b9e1a580ed8c9737c25ce912ece1148c3ec072ea371",
+      "bytes": 168427,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.fang": {
+      "id": "symbol.fang",
+      "path": "assets-display/card-cutouts/symbol.fang.png",
+      "name": "fang object",
+      "sha256": "eea3b10da86371ed180abf2373f02bf9aac71eb0de33789b03622feb45d6b141",
+      "bytes": 96952,
+      "width": 400,
+      "height": 400
+    },
+    "cue.necroticBlight.glow": {
+      "id": "cue.necroticBlight.glow",
+      "path": "assets-display/card-cutouts/cue.necroticBlight.glow.png",
+      "name": "necroticBlight glow",
+      "sha256": "4f5903bc49f173fb21e43d3066cdc380397d6f9c0311c6394cfa111c75619e75",
+      "bytes": 172773,
+      "width": 400,
+      "height": 400
+    },
+    "cue.necroticBlight.mark": {
+      "id": "cue.necroticBlight.mark",
+      "path": "assets-display/card-cutouts/cue.necroticBlight.mark.png",
+      "name": "necroticBlight effect",
+      "sha256": "6fa6abd908d5115170e9a6e46baec086264a4731e434528d6f2e282c6bc8401d",
+      "bytes": 165797,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.broken-sword": {
+      "id": "symbol.broken-sword",
+      "path": "assets-display/card-cutouts/symbol.broken.sword.png",
+      "name": "broken-sword object",
+      "sha256": "7996fa0555929e2f1ff2f2fdf013a89e9992eb297460b4ce2340f1167a762262",
+      "bytes": 73127,
+      "width": 400,
+      "height": 400
+    },
+    "cue.weak.glow": {
+      "id": "cue.weak.glow",
+      "path": "assets-display/card-cutouts/cue.weak.glow.png",
+      "name": "weak glow",
+      "sha256": "4ebd834a38f9f9421b65a9c62f5e1668dfb8e9ebbba158f7157ac013109d7773",
+      "bytes": 126752,
+      "width": 400,
+      "height": 400
+    },
+    "cue.weak.mark": {
+      "id": "cue.weak.mark",
+      "path": "assets-display/card-cutouts/cue.weak.mark.png",
+      "name": "weak effect",
+      "sha256": "ebff8e977e26cb601fef02e86cb50f8ddc9bd08dce1a760d32a48ba1c8b91536",
+      "bytes": 68728,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.heart": {
+      "id": "symbol.heart",
+      "path": "assets-display/card-cutouts/symbol.heart.png",
+      "name": "heart object",
+      "sha256": "bac01b608f0ffad689ec4bfb75892a2b1e9db938d3161807bc055d4a75b90677",
+      "bytes": 189532,
+      "width": 400,
+      "height": 400
+    },
+    "cue.communion.glow": {
+      "id": "cue.communion.glow",
+      "path": "assets-display/card-cutouts/cue.communion.glow.png",
+      "name": "communion glow",
+      "sha256": "582589589515995643f6237dd326bffab1acb2db9e50d790444ac5bfd98f2021",
+      "bytes": 195488,
+      "width": 400,
+      "height": 400
+    },
+    "cue.communion.mark": {
+      "id": "cue.communion.mark",
+      "path": "assets-display/card-cutouts/cue.communion.mark.png",
+      "name": "communion effect",
+      "sha256": "663b62de8916307f004ba06e79efb5348737d6662e7ff5415098ad2450aedc8b",
+      "bytes": 154266,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.chain": {
+      "id": "symbol.chain",
+      "path": "assets-display/card-cutouts/symbol.chain.png",
+      "name": "chain object",
+      "sha256": "c365ab281ebd1b51625afe33a2c9fb3d87c4057b9ef3d71f10c7924a185744a2",
+      "bytes": 114848,
+      "width": 400,
+      "height": 400
+    },
+    "cue.silenced.glow": {
+      "id": "cue.silenced.glow",
+      "path": "assets-display/card-cutouts/cue.silenced.glow.png",
+      "name": "silenced glow",
+      "sha256": "e470299e15edb3b30ddd94bcd52dcd16d6e09c8d4d6e12544a44584dba4fe6cc",
+      "bytes": 221206,
+      "width": 400,
+      "height": 400
+    },
+    "cue.silenced.mark": {
+      "id": "cue.silenced.mark",
+      "path": "assets-display/card-cutouts/cue.silenced.mark.png",
+      "name": "silenced effect",
+      "sha256": "cac72966dd2e22a07b4caac4b44635e23b39a506c9c293ed41e1fb54b3bdcbba",
+      "bytes": 133932,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.eye": {
+      "id": "symbol.eye",
+      "path": "assets-display/card-cutouts/symbol.eye.png",
+      "name": "eye object",
+      "sha256": "bceb4d053258eae145f83d851edb9ffb7560379ff14d0debbe056c4adf1989c3",
+      "bytes": 110331,
+      "width": 400,
+      "height": 400
+    },
+    "cue.precision.glow": {
+      "id": "cue.precision.glow",
+      "path": "assets-display/card-cutouts/cue.precision.glow.png",
+      "name": "precision glow",
+      "sha256": "3828ecc3185a079dcd4584283cd0c8044cd2835d463537235c9a07ed44c0e157",
+      "bytes": 153618,
+      "width": 400,
+      "height": 400
+    },
+    "cue.precision.mark": {
+      "id": "cue.precision.mark",
+      "path": "assets-display/card-cutouts/cue.precision.mark.png",
+      "name": "precision effect",
+      "sha256": "2b063aac173f4eb96883d0a6974f34f4d448f7cf3cf41de32eb7fba154e9ce92",
+      "bytes": 116246,
+      "width": 400,
+      "height": 400
+    },
+    "cue.evade.glow": {
+      "id": "cue.evade.glow",
+      "path": "assets-display/card-cutouts/cue.evade.glow.png",
+      "name": "evade glow",
+      "sha256": "7015a1c1b10575135d8090ce46883ba02bc943b61e9b34fc9ad67c7387a3ecd3",
+      "bytes": 141887,
+      "width": 400,
+      "height": 400
+    },
+    "cue.evade.mark": {
+      "id": "cue.evade.mark",
+      "path": "assets-display/card-cutouts/cue.evade.mark.png",
+      "name": "evade effect",
+      "sha256": "4fc14d23a94d62c812358c459435cd3335db58c4f2c4bd4421da2e10dd126f48",
+      "bytes": 137218,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.smoke": {
+      "id": "symbol.smoke",
+      "path": "assets-display/card-cutouts/symbol.smoke.png",
+      "name": "smoke object",
+      "sha256": "ffc046ad9f3a08b07285298a4870208c709d57366b2e9a05ef8ad754fb2845eb",
+      "bytes": 122748,
+      "width": 400,
+      "height": 400
+    },
+    "cue.concealed.glow": {
+      "id": "cue.concealed.glow",
+      "path": "assets-display/card-cutouts/cue.concealed.glow.png",
+      "name": "concealed glow",
+      "sha256": "7a61ff5c0cad38462a0a9130e71f9113fd46b52dbef2d667adda0488fcdd0334",
+      "bytes": 188890,
+      "width": 400,
+      "height": 400
+    },
+    "cue.concealed.mark": {
+      "id": "cue.concealed.mark",
+      "path": "assets-display/card-cutouts/cue.concealed.mark.png",
+      "name": "concealed effect",
+      "sha256": "8213c10e1a2b02456c0ec9ef8c8d4418f66e88a4fc4b45956834fa62f666f13d",
+      "bytes": 155409,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.fist": {
+      "id": "symbol.fist",
+      "path": "assets-display/card-cutouts/symbol.fist.png",
+      "name": "fist object",
+      "sha256": "ff55a75f93d695a9b4dc0b6d78ad1b6a2553047a942dc927d109df114e0a023b",
+      "bytes": 216985,
+      "width": 400,
+      "height": 400
+    },
+    "cue.strength.glow": {
+      "id": "cue.strength.glow",
+      "path": "assets-display/card-cutouts/cue.strength.glow.png",
+      "name": "strength glow",
+      "sha256": "2bf2c181700e2d2a7db6a511b2077f1ff82a72dff6ce708a06112b65a5d88ad8",
+      "bytes": 124068,
+      "width": 400,
+      "height": 400
+    },
+    "cue.strength.mark": {
+      "id": "cue.strength.mark",
+      "path": "assets-display/card-cutouts/cue.strength.mark.png",
+      "name": "strength effect",
+      "sha256": "a88ff9248597a0b6ebfb49546efb83ed9936da1b8dffcf4dd4842733676e3a9f",
+      "bytes": 121127,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.orb": {
+      "id": "symbol.orb",
+      "path": "assets-display/card-cutouts/symbol.orb.png",
+      "name": "orb object",
+      "sha256": "d8624a5165b514a3970900e378cc44be8e2c600ef9ec2e7dabbe730cc926b5cd",
+      "bytes": 189185,
+      "width": 400,
+      "height": 400
+    },
+    "cue.stanceShifted.glow": {
+      "id": "cue.stanceShifted.glow",
+      "path": "assets-display/card-cutouts/cue.stanceShifted.glow.png",
+      "name": "stanceShifted glow",
+      "sha256": "c34e5bf739a8cb4d88046782de43c6f90787686a6765d34577c34813284b0718",
+      "bytes": 208394,
+      "width": 400,
+      "height": 400
+    },
+    "cue.stanceShifted.mark": {
+      "id": "cue.stanceShifted.mark",
+      "path": "assets-display/card-cutouts/cue.stanceShifted.mark.png",
+      "name": "stanceShifted effect",
+      "sha256": "80ce4f4655827a3b1e5e67e61b552a887c50e695679ec23eef8fda55312d7bc7",
+      "bytes": 164278,
+      "width": 400,
+      "height": 400
+    },
+    "cue.prepared.glow": {
+      "id": "cue.prepared.glow",
+      "path": "assets-display/card-cutouts/cue.prepared.glow.png",
+      "name": "prepared glow",
+      "sha256": "a5aeb00a9395df9982cde5b32ef18989fa03a82df6ee32040b748b06e98d2755",
+      "bytes": 176142,
+      "width": 400,
+      "height": 400
+    },
+    "cue.prepared.mark": {
+      "id": "cue.prepared.mark",
+      "path": "assets-display/card-cutouts/cue.prepared.mark.png",
+      "name": "prepared effect",
+      "sha256": "ded576e380c172b0a52693a458c5f2be6c94d3770c3f6db58fe543dbc558b03e",
+      "bytes": 122848,
+      "width": 400,
+      "height": 400
+    },
+    "cue.astralArmor.glow": {
+      "id": "cue.astralArmor.glow",
+      "path": "assets-display/card-cutouts/cue.astralArmor.glow.png",
+      "name": "astralArmor glow",
+      "sha256": "4db00bc221bd3255e026042092c783418581bfca4fe5feafbc41f688f946f114",
+      "bytes": 197354,
+      "width": 400,
+      "height": 400
+    },
+    "cue.astralArmor.mark": {
+      "id": "cue.astralArmor.mark",
+      "path": "assets-display/card-cutouts/cue.astralArmor.mark.png",
+      "name": "astralArmor effect",
+      "sha256": "c835f585690a9d10649a919819382bb0218616e486201fce5f35ed3a2ba53bbe",
+      "bytes": 190832,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.hammer": {
+      "id": "symbol.hammer",
+      "path": "assets-display/card-cutouts/symbol.hammer.png",
+      "name": "hammer object",
+      "sha256": "81a3d9fb5170e08507d6c0428928e0e3e6bfb07dcab4f4b95e0cf676aea5659b",
+      "bytes": 114138,
+      "width": 400,
+      "height": 400
+    },
+    "cue.staggered.glow": {
+      "id": "cue.staggered.glow",
+      "path": "assets-display/card-cutouts/cue.staggered.glow.png",
+      "name": "staggered glow",
+      "sha256": "7b0b68ba6132375cff0038477e494ac81c4fcae01386ad74501257edd73e85cb",
+      "bytes": 167160,
+      "width": 400,
+      "height": 400
+    },
+    "cue.staggered.mark": {
+      "id": "cue.staggered.mark",
+      "path": "assets-display/card-cutouts/cue.staggered.mark.png",
+      "name": "staggered effect",
+      "sha256": "25e1e37639ea74e3d0cb4ae43a515080333bb1b7ef03cfa9f99dbd2f23b81839",
+      "bytes": 156668,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.bolt": {
+      "id": "symbol.bolt",
+      "path": "assets-display/card-cutouts/symbol.bolt.png",
+      "name": "bolt object",
+      "sha256": "f61cffa1310c3b6ba68c62712da2c97c21fd7ace564c4e79154ccf717ab079d2",
+      "bytes": 82061,
+      "width": 400,
+      "height": 400
+    },
+    "symbol.feather": {
+      "id": "symbol.feather",
+      "path": "assets-display/card-cutouts/symbol.feather.png",
+      "name": "feather object",
+      "sha256": "9a60f00949ba26fec0ef60476d1929434dbee2f38e75f43a1180238e848cb36d",
+      "bytes": 102609,
+      "width": 400,
+      "height": 400
+    },
+    "cue.bleed.glow": {
+      "id": "cue.bleed.glow",
+      "path": "assets-display/card-cutouts/cue.bleed.glow.png",
+      "name": "bleed glow",
+      "sha256": "16af524ec4342b4bb3b21d0a0b0c5e16a6ea45f6942ffac49f008135b30606d2",
+      "bytes": 56705,
+      "width": 400,
+      "height": 400
+    },
+    "cue.bleed.mark": {
+      "id": "cue.bleed.mark",
+      "path": "assets-display/card-cutouts/cue.bleed.mark.png",
+      "name": "bleed effect",
+      "sha256": "e55b0eb18a1ec40807e85c99a1cd58b9856ffd98b092ad55d1500d61aa241edb",
+      "bytes": 48693,
+      "width": 400,
+      "height": 400
+    },
+    "cue.regen.glow": {
+      "id": "cue.regen.glow",
+      "path": "assets-display/card-cutouts/cue.regen.glow.png",
+      "name": "regen glow",
+      "sha256": "1afd6ffcfa2f965440a0076a8c2365e26292776cd5cdcee4fd49a2bb247e8a21",
+      "bytes": 174399,
+      "width": 400,
+      "height": 400
+    },
+    "cue.regen.mark": {
+      "id": "cue.regen.mark",
+      "path": "assets-display/card-cutouts/cue.regen.mark.png",
+      "name": "regen effect",
+      "sha256": "1a867e2443667622a9bf1fc152f9d1a96a73a837667929395e381d0bfc5b7d08",
+      "bytes": 173755,
+      "width": 400,
+      "height": 400
+    }
+  }
+}

@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `ce99c5a4a2329203ec8004624c1378dfb6424053`
+- Source commit: `c603a3d1b64ab1a53819366949f54159c65d2f82`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -27,11 +27,11 @@
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 129 |
 | DOM components and observer adapters | `src/ui/components/` | 149 |
-| Code-side content adapters | `src/content/` | 281 |
+| Code-side content adapters | `src/content/` | 282 |
 | Authoritative JSON/CSV content | `content/source/` | 139 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 1081 |
-| Architecture/tooling | `tools/` | 996 |
+| Tests | `tests/` | 1083 |
+| Architecture/tooling | `tools/` | 997 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **8233**.
-Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 5, `.css` 78, `.csv` 59, `.gitattributes` 5, `.gitignore` 6, `.gz` 1, `.html` 95, `.jpg` 67, `.js` 1090, `.json` 3072, `.md` 666, `.mjs` 1743, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 1015, `.ps1` 12, `.py` 91, `.sh` 5, `.sql` 1, `.svg` 3, `.txt` 152, `.webp` 4, `.yml` 38, `(none)` 2.
+Tracked files: **8244**.
+Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 5, `.css` 78, `.csv` 59, `.gitattributes` 5, `.gitignore` 6, `.gz` 1, `.html` 96, `.jpg` 67, `.js` 1095, `.json` 3074, `.md` 666, `.mjs` 1746, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 1015, `.ps1` 12, `.py` 91, `.sh` 5, `.sql` 1, `.svg` 3, `.txt` 152, `.webp` 4, `.yml` 38, `(none)` 2.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
