@@ -12,6 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { gainCounterStacks, gainReflectStacks } from './guardStacks.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -1711,6 +1712,15 @@ function runOpcode(ctx, action, eff) {
           gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), { ...action.card, cardId: null, syntheticDefense: true }, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
+      break;
+    }
+    // Counter stacks (owner 2026-10-31): a Counter card adds the Block it stands behind, after its own Block grant.
+    case 'gainCounterStacks': {
+      for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
+      break;
+    }
+    case 'applyReflect': {
+      for (const t of resolveTargets(ctx, action, eff.target)) gainReflectStacks(ctx, t, evalNum(ctx, action, eff.amount, 1, t));
       break;
     }
     case 'gainBarrier': {

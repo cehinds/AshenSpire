@@ -50,6 +50,10 @@ export const COMBAT_OPCODES = Object.freeze([
   // Refills Poise (the Poise twin of gainWard's restore); never a guard.
   'restorePoise',
   'gainBarrier',
+  // Counter / Reflect stack counts on the combat entity (owner 2026-10-31): gainCounterStacks is the Counter card's own
+  // rider (amount defaults to the owner's Block); applyReflect is authored.
+  'gainCounterStacks',
+  'applyReflect',
   'buildup',
   'wardDamage',
   'completeCombatAction',
@@ -125,7 +129,7 @@ export const EVENTS = Object.freeze([
   'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
-  'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
+  'evadeGained', 'attackEvaded', 'counterStacksChanged', 'reflectStacksChanged', 'reflectTriggered', 'impactDealt', 'manaRecovered',
   // A skill feat's critical hit landed (SPEC §13.4o).
   'critHit',
   'combatStart',
@@ -548,6 +552,8 @@ export const EFFECT_SPECS = Object.freeze({
   grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
   retain: { allowed: [], required: ['amount'], refs: {} },
   gainBarrier: { allowed: [], required: ['amount'], refs: {} },
+  gainCounterStacks: { allowed: [], required: [], refs: {} },
+  applyReflect: { allowed: [], required: ['amount'], refs: {} },
   wardDamage: { allowed: [], required: ['amount'], refs: {} },
   completeCombatAction: { allowed: [], required: [], refs: {} },
   buildup: { allowed: ['status', 'camp', 'recoveryProfile', 'traits', 'chance', 'advantage', 'disadvantage'], required: ['status', 'amount'], refs: { status: 'statuses' } },
