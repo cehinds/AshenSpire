@@ -61,7 +61,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
         continue;
       }
       const live = status === 'precision' && core && Number.isInteger(preview?.entryPrecision) ? preview.entryPrecision : null;
-      const formula = status === 'precision' && core && live === null ? 'stat mix' : null;
+      const formula = null; // the entry grant is exactly the authored stacks (owner, 2026-10-31); the stat mix is Precision, not a stack count
       const count = live ?? base, name = definition(status)?.name || status;
       add(status, { count, formula, entry: status,
         text: `On changing stance, gain ${count}${formula ? ' + ' + formula : ''} ${name}. Repeating the same stance grants none.` });

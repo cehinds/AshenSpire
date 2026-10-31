@@ -5,7 +5,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
-import { fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
+import { fixCoreRules } from '../src/model/fixCoreRulesCache.js';
+import { mechanics } from '../src/framework/data/mechanics.js';
 import { statusPresentationDefinition as cached, statusPresentationCacheSize, clearStatusPresentationCache } from '../src/model/statusPresentation.js';
 
 const weak = { id: 'weak', name: 'Weak', tooltip: 'Legacy.', modifiers: { damageDealtMult: .75 } };
@@ -15,7 +17,15 @@ const registries = { statuses: { get: id => [weak, evade].find(row => row.id ===
 const ctxWith = (rules = structuredClone(fixCoreMechanics)) => ({ combatExpansionVersion: 2, fixCoreRules: rules, registries });
 // The reference: what the code did before the cache.
 const uncached = (ctx, id, definition, holder = null) => {
-  const resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
+  let resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
+  // Core 2 accuracy: Precision and Evade wording come from mechanics.accuracy and the effective statuses rules.
+  if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
+    if (id === 'precision') resolved = { ...resolved, tooltip: mechanics.accuracy.precisionTooltip, description: mechanics.accuracy.precisionTooltip };
+    else if (id === 'evade') {
+      const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
+      resolved = { ...resolved, tooltip: text, description: text };
+    }
+  }
   if (id !== 'evade' || resolved === definition) return resolved;
   const display = text => typeof text === 'string' ? text.replace(/\bfixed Evasion\b/g, 'Evasion') : text;
   return { ...resolved, tooltip: display(resolved.tooltip), description: display(resolved.description) };
@@ -31,14 +41,14 @@ test('missing status definitions retain their null-safe fallback with Core off o
 test('cached presentation equals the uncached one for each status and holder, on a miss and on a hit', () => {
   clearStatusPresentationCache();
   const ctx = ctxWith();
-  const scoped = { id: 'e2', mechanicBindings: [{ tag: 'combat:accuracy', parameters: { baseAC: 3 } }] };
+  const scoped = { id: 'e2', mechanicBindings: [{ tag: 'combat:statuses', parameters: { decayAmount: 3 } }] };
   for (let pass = 0; pass < 2; pass++) {
     agree(ctx, 'weak', weak);
     agree(ctx, 'evade', evade);
     agree(ctx, 'evade', evade, scoped);
     agree(ctx, 'evade', evade, { id: 'e1' });
   }
-  assert.match(cached(ctx, 'evade', evade, scoped).tooltip, /^Each stack adds 3 \+ DEX to Evasion/);
+  assert.match(cached(ctx, 'evade', evade, scoped).tooltip, new RegExp(`^Each stack adds ${mechanics.accuracy.evadePerStack} Evasion\\..*Lose 3 stack`));
   assert.ok(statusPresentationCacheSize() >= 3 && statusPresentationCacheSize() <= 4, 'repeat calls share entries');
 });
 
@@ -46,16 +56,16 @@ test('a broken key would be seen: every input the answer reads changes the answe
   clearStatusPresentationCache();
   const ctx = ctxWith();
   const before = cached(ctx, 'evade', evade).tooltip;
-  ctx.fixCoreRules.accuracy.baseAC += 5;
+  ctx.fixCoreRules.statuses.decayAmount += 5;
   assert.notEqual(cached(ctx, 'evade', evade).tooltip, before, 'raw rules edited in place');
   agree(ctx, 'evade', evade);
-  ctx.fixCoreRules.accuracy.baseAC -= 5;
+  ctx.fixCoreRules.statuses.decayAmount -= 5;
   assert.equal(cached(ctx, 'evade', evade).tooltip, before, 'and edited back');
 
-  const holder = { id: 'h', mechanicBindings: [{ tag: 'combat:accuracy', parameters: { baseAC: 9 } }] };
+  const holder = { id: 'h', mechanicBindings: [{ tag: 'combat:statuses', parameters: { decayAmount: 9 } }] };
   assert.notEqual(cached(ctx, 'evade', evade, holder).tooltip, before, 'holder bindings');
-  holder.mechanicBindings[0].parameters.baseAC = 4;
-  assert.match(cached(ctx, 'evade', evade, holder).tooltip, /adds 4 \+ DEX/, 'holder edited in place');
+  holder.mechanicBindings[0].parameters.decayAmount = 4;
+  assert.match(cached(ctx, 'evade', evade, holder).tooltip, /Lose 4 stack/, 'holder edited in place');
 
   const renamed = { ...weak, name: 'Frail' };
   assert.equal(cached(ctx, 'weak', weak).name, 'Weak');
