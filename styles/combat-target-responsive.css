@@ -218,9 +218,9 @@
 }
 
 /* Stance badge: same plate as the others, tinted by maneuver. */
-:root .combat .combat-health-stance { color: #fff; }
-:root .combat .combat-health-stance[data-stance='attack'], :root .combat .combat-health-stance[data-stance='smash'], :root .combat .combat-health-stance[data-stance='sweep'] { color: #f08a7a; }
-:root .combat .combat-health-stance[data-stance='counter'] { color: #f0d27a; }
-:root .combat .combat-health-stance[data-stance='defend'] { color: #d8dde3; }
-:root .combat .combat-health-stance[data-stance='evade'] { color: #8fd9a8; }
-:root .combat .combat-health-stance[data-stance='casting'], :root .combat .combat-health-stance[data-stance='prepared'] { color: #b9a4f0; }
+:root .combat .combat-health-stance { color: white; }
+:root .combat .combat-health-stance[data-stance='attack'], :root .combat .combat-health-stance[data-stance='smash'], :root .combat .combat-health-stance[data-stance='sweep'] { color: salmon; }
+:root .combat .combat-health-stance[data-stance='counter'] { color: var(--gold, goldenrod); }
+:root .combat .combat-health-stance[data-stance='defend'] { color: var(--block-silver, silver); }
+:root .combat .combat-health-stance[data-stance='evade'] { color: mediumseagreen; }
+:root .combat .combat-health-stance[data-stance='casting'], :root .combat .combat-health-stance[data-stance='prepared'] { color: mediumpurple; }
