@@ -98,3 +98,19 @@ test('a blight attribute bonus moves the threshold: the preview matches what all
   assert.equal(stamina() - before, predicted, 'preview equals the real allocation');
   assert.equal(predicted, 0, 'the +1 CON bonus makes floor(0.5 x CON) cross no threshold at CON 1 -> 2');
 });
+
+test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', () => {
+  const core = build();
+  assert.ok(!attributePointGains(core.registries, core.run, 'dexterity').some(g => g.statId === 'energy'));
+  const legacyRegistries = createRegistries(contentBundle);
+  const run = createRunState({ seed: 4242, classId: 'rogue', registries: legacyRegistries });
+  run.combatExpansionVersion = 1; // a run born before combat expansion 2: energy is its own pool
+  run.attributes.dexterity = 3;
+  rederivePools(legacyRegistries, run, 'test');
+  const predicted = attributePointGains(legacyRegistries, run, 'dexterity').find(g => g.statId === 'energy');
+  run.level.unspentPoints = 1;
+  const before = run.energyMax;
+  allocateAttributePoint(legacyRegistries, run, 'dexterity');
+  assert.equal(run.energyMax - before, predicted?.delta ?? 0);
+  assert.equal(predicted?.text, '+1 Energy');
+});

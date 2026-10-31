@@ -22,10 +22,10 @@ export const POOL_SCALE = 10;
 const POOLS = new Set(['hp', 'mana', 'stamina']);
 // Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+10 HP and +1 Poise both score 1, HP first).
 // WIS reads "+1 Perception" on magnitude, not order: +1 MP scores 0.1 after the pool scale, +1 Perception scores 1.
-export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
-const ROW_IDS = Object.freeze(['hp', 'stamina', 'mana', 'ar', 'pr', 'dr', 'openingHand', 'handSize', 'draw', 'poise', 'ward']);
+export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
+const ROW_IDS = Object.freeze(['hp', 'stamina', 'energy', 'mana', 'ar', 'pr', 'dr', 'openingHand', 'handSize', 'draw', 'poise', 'ward']);
 const LABEL_KEYS = Object.freeze({
-  hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
+  energy: 'progression.gain.label.energy', hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
   ar: 'progression.gain.label.ar', dr: 'progression.gain.label.dr', pr: 'progression.gain.label.pr',
   openingHand: 'progression.gain.label.openingHand', handSize: 'progression.gain.label.handSize', draw: 'progression.gain.label.draw', poise: 'progression.gain.label.poise',
   ward: 'progression.gain.label.ward', evasion: 'progression.gain.label.evasion', precision: 'progression.gain.label.precision',
@@ -64,6 +64,8 @@ export function attributePointGains(registries, run, attributeId, { settings = {
   const fixCore = fixCoreEnabled(ctx);
   for (const statId of ROW_IDS) {
     if (statId === 'ward' && fixCoreWardDisabled(ctx)) continue;
+    // Under combatExpansionVersion 2 energy is stamina (rederivePools skips it); only a legacy run has its own pool.
+    if (statId === 'energy' && run.combatExpansionVersion === 2) continue;
     const rule = statRow(registries, run, statId, { settings });
     if (!rule || !rule[attributeId]) continue;
     const value = (attributes) => statRowValue(rule, { attributes, classDef, level, statId, lenientAttributes: true }).value;
