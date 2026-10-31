@@ -32,6 +32,10 @@
 :root .illustrated-card-face .ic-glyph .engraved-icon { width:35%; height:35%; }
 :root .card.illustrated-card.unaffordable .illustrated-card-face { filter:brightness(.65) saturate(.65); }
 :root .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face { filter:drop-shadow(0 0 3px #c49b56); }
+/* Owner, 2026-10-31: a combat hand card has no gold state. Hover and focus are a neutral lift; selected,
+   held and inspected wear the selection colour. Later and more specific than the gold rule above. */
+:root .hand .card.illustrated-card:is(:hover,:focus-visible) .illustrated-card-face { filter:drop-shadow(0 0 3px rgba(255,255,255,.6)); }
+:root .hand .card.illustrated-card:is(.selected,.inspection-selected) .illustrated-card-face { filter:drop-shadow(0 0 3px var(--selection-color,var(--green))); }
 
 /* Leave room for cost pennants that extend above and left of the card. */
 :root .card-inspection-layout:has(.illustrated-card) { padding:32px; }
@@ -117,4 +121,10 @@
 }
 :root[data-performance='lite'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face {
   filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 8px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+:root[data-performance='lite'] .hand .card.illustrated-card:is(.selected,.inspection-selected) .illustrated-card-face {
+  filter: none; box-shadow: 0 0 0 2px var(--selection-color,var(--green)), 0 0 8px color-mix(in srgb, var(--selection-color,var(--green)) 55%, transparent);
+}
+:root[data-performance='lite'] .hand .card.illustrated-card:is(:hover,:focus-visible):not(.selected,.inspection-selected) .illustrated-card-face {
+  filter: none; box-shadow: 0 0 0 2px rgba(255,255,255,.6);
 }
