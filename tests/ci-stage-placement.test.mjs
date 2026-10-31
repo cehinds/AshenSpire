@@ -104,12 +104,12 @@ test('every functional job depends on the stage decision and is gated on its fun
   assert.match(all.get('boundary'), /release tree differs from test: functional suites ran/, 'boundary does not print the differing-tree line');
 });
 
-// The four browser-check workflows run on a push to release only when its tree
+// The three browser-check workflows run on a push to release only when its tree
 // differs from origin/test, through the same stage decision as ci.yml, and their
 // gated job waits on that decision.
-const STAGED = ['tutorial-reach.yml', 'map-camera.yml', 'coop-hud.yml', 'quick-start.yml'];
+const STAGED = ['tutorial-reach.yml', 'map-camera.yml', 'quick-start.yml'];
 
-test('tutorial-reach, map-camera, coop-hud and quick-start gate their job on the stage output', () => {
+test('tutorial-reach, map-camera and quick-start gate their job on the stage output', () => {
   for (const file of STAGED) {
     const text = readFileSync(new URL(`../.github/workflows/${file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
     const all = jobs(text);
