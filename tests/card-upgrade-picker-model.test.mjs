@@ -380,3 +380,43 @@ test('a chosen option commits exactly that step', () => {
   commitCardUpgrade(run, registries, quote);
   assert.deepEqual(card.upgradeSteps, [row.options[1].step]);
 });
+
+test('Confirm with a picked option hands the picked step to onConfirm, and a shrunken list clamps the pick', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(async dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const card = strike(run);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    let confirmed = null;
+    const model = () => cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true });
+    const row = model().selected;
+    const door = mountCardUpgradeModal(host, model(), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm: (id, plan) => { confirmed = { id, plan }; } });
+    [...host.querySelectorAll('.card-upgrade-option')][1].click();
+    host.querySelector('.smith-confirm').click();
+    // A synthetic click (detail 0) is the whole action in holdconfirm.js, so it commits straight away.
+    assert.ok(confirmed, 'onConfirm ran');
+    assert.equal(confirmed.id, card.instanceId);
+    assert.deepEqual(confirmed.plan.step, row.options[1].step, 'the picked option, not option 1');
+    commitCardUpgrade(run, registries, confirmed.plan);
+    assert.deepEqual(card.upgradeSteps, [row.options[1].step]);
+  });
+});
+
+test('a pick past the end of a shrunken option list is clamped and still highlights an option', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(async dom => {
+    const run = newRun(); run.smithingStones = 3;
+    const card = strike(run);
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const full = cardUpgradeModel(registries, run, card.instanceId, { blacksmith: true });
+    const door = mountCardUpgradeModal(host, full, { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    [...host.querySelectorAll('.card-upgrade-option')][1].click();
+    const shrunk = { ...full, selected: { ...full.selected, options: full.selected.options.slice(0, 1) } };
+    door.update({ ...shrunk, rows: [shrunk.selected] });
+    assert.equal(host.querySelectorAll('.card-upgrade-option').length, 0, 'one option shows no choice layout');
+    door.update(full);
+    assert.deepEqual([...host.querySelectorAll('.card-upgrade-option')].map(o => o.getAttribute('aria-checked')).filter(v => v === 'true').length, 1, 'exactly one option is highlighted');
+  });
+});

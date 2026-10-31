@@ -239,7 +239,9 @@ export function mountCardUpgradeModal(host, initialModel, {
   function commitSelected() {
     if (!currentModel.canConfirm) return;
     const { selected } = currentModel;
-    const option = selected.options?.length > 1 ? selected.options[chosen] || selected.options[0] : null;
+    const option = selected.options?.length > 1 ? selected.options[chosen] : null;
+    // With a choice, a pick that no longer names an option commits nothing.
+    if (selected.options?.length > 1 && !option) return;
     close({ restoreFocus: false });
     // With a choice, the quote carries the picked step; the service re-plans the same list and checks it is on it.
     onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan);
@@ -266,6 +268,8 @@ export function mountCardUpgradeModal(host, initialModel, {
     currentModel = model;
     const { selected } = model;
     if ((selected ? selected.instanceId : null) !== chosenFor) { chosenFor = selected ? selected.instanceId : null; chosen = 0; }
+    // The option list can shrink under a redraw (a changed quote); never leave `chosen` past its end.
+    if (selected?.options?.length) chosen = Math.min(Math.max(chosen, 0), selected.options.length - 1);
     markCurrent(cards, selected ? selected.instanceId : null);
     for (const card of cards) {
       const on = Boolean(selected) && card.dataset.instanceId === selected.instanceId;
@@ -279,7 +283,7 @@ export function mountCardUpgradeModal(host, initialModel, {
       : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [artWell({ glyph: 'smith', cool: true }), prose(t('cardUpgrade.instruction'))]));
     disarmDecision?.();
     disarmDecision = null;
-    confirmBtn.disabled = !model.canConfirm;
+    confirmBtn.disabled = !model.canConfirm || (selected?.options?.length > 1 && !selected.options[chosen]);
     confirmBtn.hidden = !selected;
     confirmBtn.textContent = selected ? confirmText(selected) : '';
     confirmBtn.setAttribute('aria-disabled', String(!model.canConfirm));
@@ -298,7 +302,7 @@ export function mountCardUpgradeModal(host, initialModel, {
         confirmLabel: confirmText(selected),
         cancelLabel: t('common.back'),
         onCommit: commitSelected,
-        canCommit: () => Boolean(currentModel.canConfirm),
+        canCommit: () => Boolean(currentModel.canConfirm) && (!(selected.options?.length > 1) || Boolean(selected.options[chosen])),
         blockedTitle: t('cardUpgrade.blocked', { name: selected.name }),
         blockedMessage: model.blockedReasons.join(' ') || t('cardUpgrade.unavailable'),
         blockedDetailsHtml: confirmationDetails(model),
