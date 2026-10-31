@@ -1,7 +1,8 @@
 import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { openModal, button, el } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
-import { cardOptionGrid, markCardOptions } from './cardOptionGrid.js';
+import { optionRowList, markOptionRows } from './optionRowList.js';
+import { playingCardArt } from '../cardArtwork.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
 // `stack` is the already-committed entries of this root, top first, each
@@ -32,9 +33,37 @@ export function reactionStackEntryName(entry, registries) {
 export const stackedCardIds = (reactionStack, ownerId = null) => new Set((reactionStack?.entries || [])
   .filter(entry => entry.side !== 'enemy' && (ownerId == null || entry.ownerId === ownerId)).map(entry => entry.cardInstanceId));
 
-// `summarize(option)` returns the tile summary (summarizeCardOption with the caller's readers: the
-// engine in solo, the seat snapshot in co-op); without it a tile shows the name and costs only.
-export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null }) {
+// `summarize(option)` returns the row summary (summarizeCardOption with the caller's readers: the
+// engine in solo, the seat snapshot in co-op); without it a row shows the name and costs only.
+// The art a row shows: the card face's own resolver (reviewed, simple, official, then outline art),
+// so Core cards without extended art still get an image. Null when nothing resolves.
+export function reactionOptionArtwork(option, registries = null) {
+  if (!option?.cardId) return null;
+  try {
+    return playingCardArt({ cardId: option.cardId }, { definition: registries?.cards?.get?.(option.cardId), registries }) || null;
+  } catch { return null; }
+}
+export const reactionOptionArt = (option, registries = null) => reactionOptionArtwork(option, registries)?.path || null;
+
+// Two hand instances that read as the same option (same card, same grade, same numbers, same play)
+// show once, with a count. Options carry no upgrade field, so the grade is read off the summary the
+// caller built from the live instance: its name and rendered numbers differ between Counter and
+// Counter+. The first instance stays the option that is played; the model's options are untouched.
+// A row built without a summary (none given, or it threw) has only a name and costs, which cannot tell
+// Counter from Counter+ (options carry no grade field), so such rows are never collapsed.
+const optionKey = ({ option, row, fallback }, index) => fallback ? `fallback:${index}` : JSON.stringify([option.cardId, row.name, row.costs || [], (row.line || []).map(part => [part.label, part.value]),
+  row.text ?? null, row.html ?? null, option.choiceName ?? null, option.play?.upcastTier ?? null, option.play?.rangeRoute ?? null, option.play?.targetId ?? null, option.sourceId ?? null]);
+export function collapseIdenticalOptions(entries) {
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = optionKey(entry, entries.indexOf(entry));
+    const group = groups.get(key);
+    if (group) group.count += 1; else groups.set(key, { row: entry.row, count: 1 });
+  }
+  return [...groups.values()].map(({ row, count }) => (count > 1 ? { ...row, count: `\u00d7${count}` } : row));
+}
+
+export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [], summarize = null, registries = null }) {
   const stacked = Array.isArray(stack) && stack.length > 0;
   let selected = null;
   let settled = false;
@@ -58,14 +87,15 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
         for (const entry of stack) list.append(el('li', { text: String(entry.name), 'data-reaction-stack-entry': '' }));
         host.append(list);
       }
-      const summaries = pending.options.map(option => {
+      const summaries = collapseIdenticalOptions(pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return summary || summarizeCardOption(null, null, option);
-      });
-      const grid = cardOptionGrid(summaries, { idAttr: 'data-reaction-option', onSelect: id => {
+        return { option, fallback: !summary, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
+      }));
+      const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
         selected = id;
-        markCardOptions(grid, 'data-reaction-option', [id]);
+        row?.focus?.({ preventScroll: true });
+        markOptionRows(grid, 'data-reaction-option', [id]);
         play.disabled = false;
       } });
       host.append(grid);
