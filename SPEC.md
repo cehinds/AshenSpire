@@ -1246,7 +1246,7 @@ The reaction modal uses **Back, Play**; Back skips the offered reaction and
 resumes the incoming action. A combat-scoped, owned Reaction switch controls
 optional prompts. The right-side combat log unfolds in place, groups completed
 public actions by round, and supports Small, Medium and Large heights bounded
-below the menu controls. Every roll in it is logged as total vs DC ("Strike: 18 vs 9 · hit"), and the Full detail mode itemises each one (die, every bonus, the DC parts, the verdict) from the row's `rollReceipt`. The detailed contract specifies persistence, privacy,
+below the menu controls. Accuracy, contest, critical-hit, Intent-read perception, status buildup and status recovery rolls are logged as total vs DC ("Strike: 18 vs 9 · hit"); Dodge and Evade rows keep their sentences and gain an itemised receipt, and range-distance rows keep their sentence alone. In the Full detail mode each receipt is itemised (die, every bonus, the DC parts, the verdict) from the row's `rollReceipt`. The detailed contract specifies persistence, privacy,
 accessibility and responsive geometry for these controls.
 
 [docs/combat-reaction-contract.md](docs/combat-reaction-contract.md) defines the

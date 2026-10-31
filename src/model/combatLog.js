@@ -143,7 +143,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       return `${source}'s ${label || 'attack'}`;
     };
 
-    let text, rollReceipt = null;
+    let text, rollReceipt = null, lineReceipts = null;
     switch (event.type) {
       case 'cardPreparing':
         playing = { actorKey: sourceKey, label: row(registries?.cards, event.cardId)?.name || null };
@@ -254,12 +254,13 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         if (d) lines.push(d.success ? `${target} avoided ${attack} at range: distance roll ${d.roll}, needed ${d.chance} or less.`
           : `${target}'s range failed against ${attack}: distance rolled ${d.roll}, needed ${d.chance} or less.`);
         if (e) {
-          rollReceipt = evadeRollReceipt(e);
           const roll = Number.isFinite(e.total) && e.total !== e.roll ? `${e.roll} + ${e.total - e.roll} = ${e.total}` : `${e.roll}`;
           lines.push(e.success ? `${target} evaded ${attack}: Evade roll ${roll} beat ${e.difficulty}.`
             : `${target}'s Evade failed against ${attack}: rolled ${roll}, needed more than ${e.difficulty}.`);
         }
         text = lines.length ? lines : null;
+        // Each receipt belongs to its own row only: a failed distance row never shows the Evade's d20.
+        lineReceipts = lines.map(line => (e && line === lines[lines.length - 1] ? evadeRollReceipt(e) : null));
         break;
       }
       case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
@@ -348,7 +349,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) {
+    [].concat(text || []).forEach((line, lineIndex) => {
+      const receipt = lineReceipts ? lineReceipts[lineIndex] : rollReceipt;
       const segments = [];
       let cursor = 0;
       for (const match of line.matchAll(/\u0001(\d+)\u0002/g)) {
@@ -358,8 +360,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       if (cursor < line.length) segments.push({ text: line.slice(cursor) });
       rows.push({ id, round, text: segments.map(segment => segment.text).join(''), segments,
-        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}), ...(rollReceipt ? { rollReceipt } : {}) });
-    }
+        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}), ...(receipt ? { rollReceipt: receipt } : {}) });
+    });
   });
   return rows;
 }

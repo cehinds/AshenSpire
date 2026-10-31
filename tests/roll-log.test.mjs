@@ -103,3 +103,38 @@ test('Dodge and Evade keep their sentences and add an itemised receipt', () => {
   const evade = one({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', evade: { roll: 7, total: 9, difficulty: 12, success: false } });
   assert.deepEqual(rollReceiptLines(evade.rollReceipt), ['d20 [7]', '+ bonus 2', '= 9', 'vs DC 12', 'fail']);
 });
+
+test('critRolled shows a roll and chance whose comparison agrees with the verdict', () => {
+  const run = (draw, chance) => { const events = [];
+    const ctx = { attributes: {}, emit: (type, payload) => events.push(payload), rng: { float: () => draw } };
+    rollCrit(ctx, { kind: 'player', id: 'player', critRules: [{ tags: ['attack'], base: chance, multiplier: 2, cap: 1 }] }, ['attack']);
+    return events[0]; };
+  const crit = run(0.149996, 0.15);
+  assert.equal(crit.success, true);
+  assert.ok(crit.roll < crit.chance, `${crit.roll} < ${crit.chance}`);
+  const miss = run(0.150004, 0.15);
+  assert.equal(miss.success, false);
+  assert.ok(miss.roll >= miss.chance, `${miss.roll} >= ${miss.chance}`);
+});
+
+test('status roll mode comes from the kept die, never from the chance', () => {
+  const mode = event => one({ type: 'statusRecoveryRolled', status: 'burn', targetId: 'e1', chance: 100, effectiveChance: 100, success: true, ...event }).rollReceipt.mode;
+  assert.equal(mode({ rolls: [60, 20], roll: 20 }), 'advantage');
+  assert.equal(mode({ rolls: [60, 20], roll: 60 }), 'disadvantage');
+  assert.equal(mode({ rolls: [40, 40], roll: 40 }), undefined, 'equal dice cannot tell the mode');
+  assert.equal(mode({ rolls: [40], roll: 40 }), undefined);
+});
+
+test('Evade keeps both dice and the mode; a failed distance row never shows the Evade receipt', () => {
+  const evade = { roll: 17, dice: [2, 17], mode: 'advantage', total: 19, difficulty: 12, success: true };
+  const [row] = rows([{ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', evade }]);
+  assert.equal(rollReceiptLines(row.rollReceipt)[0], 'd20 [2, 17] → 17 · advantage');
+  const old = one({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', evade: { roll: 7, total: 7, difficulty: 12, success: false } });
+  assert.deepEqual(old.rollReceipt.dice, [7], 'older events fall back to the kept die');
+  const both = rows([{ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player',
+    distance: { roll: 80, dice: [80], chance: 40, success: false }, evade }]);
+  assert.equal(both.length, 2);
+  assert.match(both[0].text, /range failed/);
+  assert.equal(both[0].rollReceipt, undefined, 'the distance row has no Evade receipt');
+  assert.equal(both[1].rollReceipt.kind, 'evade');
+});

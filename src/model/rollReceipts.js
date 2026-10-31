@@ -61,7 +61,9 @@ export function perceptionRollReceipt(event) {
 export function percentRollReceipt(event, kind) {
   if (!finite(event.roll) || !finite(event.chance)) return null;
   const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
-  return { kind, die: 'd100', dice: rolls, ...(rolls.length > 1 ? { mode: event.effectiveChance > event.chance ? 'advantage' : 'disadvantage' } : {}),
+  // The kept die says which mode it was (advantage keeps the lower d100, disadvantage the higher); equal dice cannot tell, so no label.
+  const mode = event.mode || (rolls.length > 1 && rolls[0] !== rolls[1] ? (num(event.roll) === Math.min(...rolls) ? 'advantage' : 'disadvantage') : null);
+  return { kind, die: 'd100', dice: rolls, ...(rolls.length > 1 && ['advantage', 'disadvantage'].includes(mode) ? { mode } : {}),
     parts: [], total: num(event.roll), compare: 'lte', dcParts: [{ label: 'Chance %', value: num(event.chance) }], dc: num(event.chance),
     ...(finite(event.effectiveChance) && event.effectiveChance !== event.chance ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
 }
@@ -76,7 +78,8 @@ export function dodgeRollReceipt(event) {
 export function evadeRollReceipt(evade) {
   if (!finite(evade?.roll) || !finite(evade.difficulty)) return null;
   const total = finite(evade.total) ? num(evade.total) : num(evade.roll);
-  return { kind: 'evade', die: 'd20', dice: [num(evade.roll)], parts: total !== num(evade.roll) ? [{ label: 'bonus', value: total - num(evade.roll) }] : [],
+  const dice = Array.isArray(evade.dice) && evade.dice.length ? evade.dice.map(num) : [num(evade.roll)];
+  return { kind: 'evade', die: 'd20', dice, ...(['advantage', 'disadvantage'].includes(evade.mode) ? { mode: evade.mode } : {}), parts: total !== num(evade.roll) ? [{ label: 'bonus', value: total - num(evade.roll) }] : [],
     total, dcParts: [], dc: num(evade.difficulty), success: !!evade.success };
 }
 

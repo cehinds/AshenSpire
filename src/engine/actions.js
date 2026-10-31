@@ -239,8 +239,11 @@ export function rollCrit(ctx, source, tags, info = {}) {
   if (!(chance > 0) || !(multiplier > 1)) return 0;
   const draw = ctx.rng.float('combatProcs');
   const success = draw < chance;
-  ctx.emit?.('critRolled', { sourceId: source.id, targetId: info.targetId, cardId: info.cardId, roll: Math.round(draw * 1e4) / 100,
-    chance: Math.round(chance * 1e4) / 100, multiplier, success });
+  // Shown to 0.01, rounded so the displayed comparison agrees with the verdict: on a crit the roll rounds down and the
+  // chance up, on a miss the roll rounds up and the chance down (a draw of 0.149996 against 0.15 reads 14.99 vs 15).
+  const shown = (value, up) => (up ? Math.ceil(value * 1e4 - 1e-9) : Math.floor(value * 1e4 + 1e-9)) / 100;
+  ctx.emit?.('critRolled', { sourceId: source.id, targetId: info.targetId, cardId: info.cardId, roll: shown(draw, !success),
+    chance: shown(chance, success), multiplier, success });
   return success ? multiplier : 0;
 }
 
