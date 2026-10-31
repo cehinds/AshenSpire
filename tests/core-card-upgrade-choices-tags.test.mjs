@@ -166,3 +166,27 @@ test('an element-stepped Strike with a slashing weapon resolves as fire magic in
   };
   assert.notEqual(hpLost([step]), hpLost(null), 'the fire Strike routes through the magic lane');
 });
+
+test('a fire step rewrites the damage components of an authored mixed hit (ruinousBlow)', async () => {
+  const { live } = await import('./helpers/fixcore-combat-rules.mjs');
+  const { tacticalCarrier } = await import('../src/engine/combatCardTactics.js');
+  const { magicShareOf } = await import('../src/model/combatRatings.js');
+  const base = registries.cards.get('ruinousBlow');
+  const id = base.id;
+  assert.ok(base.attack.components.some((c) => c.type === 'arcane'), 'it is authored as blunt + arcane');
+  const step = { k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', magicShare: 1, exposureBuildupPerHit: 5 };
+  const combat = live();
+  const carrierFor = (steps) => {
+    const f = projectGameCard(subject, { instanceId: 'i', cardId: id, ...(steps ? { upgraded: true, upgradeSteps: steps } : {}) }) || (steps ? applyUpgradeSteps(base, steps) : base);
+    const ref = { cardId: id, damageSchool: f.damageSchool, exposureBuildupPerHit: f.exposureBuildupPerHit, ...(Number.isFinite(f.magicShare) ? { magicShare: f.magicShare } : {}), sourceHand: 'right' };
+    return tacticalCarrier(f, ref, combat, combat.player);
+  };
+  const plain = carrierFor(null), fire = carrierFor([step]);
+  assert.ok(plain.combatProfile.damageComponents.some((c) => c.type === 'arcane'));
+  assert.equal(fire.combatProfile.damageType, 'fire');
+  assert.ok(fire.attack.components.every((c) => c.type === 'fire'), 'no blunt or arcane part is left');
+  assert.ok(!(fire.combatProfile.damageComponents || []).some((c) => c.type !== 'fire'));
+  assert.deepEqual(fire.attack.components.map((c) => c.weight), base.attack.components.map((c) => c.weight), 'the shares stay');
+  assert.equal(magicShareOf({ ...fire.combatProfile, magicShare: fire.magicShare }), 1);
+  assert.deepEqual(base.attack.components.map((c) => c.type), ['blunt', 'arcane'], 'the base card is untouched');
+});

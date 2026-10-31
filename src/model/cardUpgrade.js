@@ -170,6 +170,15 @@ function applyStep(card, step) {
         const keepType = (tag) => !tag.startsWith('damage:');
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
         for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
+        // combatProfileFor reads an authored `attack` (damage components, a damage type) before the tags, and a
+        // weaponDamage block re-derives the components from the wielded weapon, so the whole hit becomes the element:
+        // every component takes its type (the shares stay) and the weapon block goes.
+        if (card.attack && typeof card.attack === 'object') {
+          const { weaponDamage, ...attack } = card.attack;
+          if (Array.isArray(attack.components)) attack.components = attack.components.map((part) => ({ ...part, type: step.damage }));
+          if (attack.damageType !== undefined) attack.damageType = step.damage;
+          out.attack = attack;
+        }
       }
       if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
       if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
