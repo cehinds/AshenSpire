@@ -9,6 +9,7 @@ import { createRunState, serializeRun, deserializeRun, validateRunShape } from '
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
+import { stanceOf } from '../src/model/stanceRules.js';
 
 const build = (weight, core = 'ashen.core@2.0.0') => {
   const modules = weight === undefined ? {} : { 'reward-ranks': { offeredCopyWeight: weight } };
@@ -118,4 +119,36 @@ test('offeredCopyWeight is a 0..1 schema setting; Core 2 default 0.25, Core 1 bu
   assert.equal(defaults.offeredCopyWeight, 0.25);
   assert.equal(bundle.modules['reward-ranks'].settings.offeredCopyWeight, 1);
   assert.throws(() => build(1.5)); assert.throws(() => build(-0.1));
+});
+
+// Owner 2026-10-31 (stance coverage, 93fc9e5): the reserved stance slot weights its stance and its card by the history too.
+// Stance coverage is a Core 2 setting (on by default); this run owns a casting card, so only sweep and evade are missing.
+const stanceOfId = (registries, id) => { try { return stanceOf(registries.cards.get(id))?.maneuver ?? null; } catch { return null; } };
+const SEEDS_200 = Array.from({ length: 200 }, (_, i) => i + 1);
+const stanceRun = registries => {
+  const run = createRunState({ seed: 1, classId: 'reaver', registries });
+  const ids = registries.cards.all().map(card => card.id);
+  const casting = ids.find(id => stanceOfId(registries, id) === 'casting');
+  run.sideboard.push({ instanceId: `t:${casting}`, cardId: casting, upgraded: false });
+  // Every sweep-stance card has been offered three times; no evade-stance card ever has.
+  run.rewardOfferHistory = { cards: {} };
+  for (const id of ids) if (stanceOfId(registries, id) === 'sweep') run.rewardOfferHistory.cards[id] = 3;
+  return run;
+};
+// Stance of the reserved slot (the first option of a combat offer), over 200 seeds, each on a fresh copy of the run.
+function reservedStances(registries) {
+  const base = stanceRun(registries);
+  return SEEDS_200.map(seed => {
+    const offer = gameProfileRewardOffers(registries, structuredClone(base), createRng(seed), { offerId: `s${seed}`, source: 'combat' });
+    const stance = stanceOfId(registries, offer.options[0].id);
+    assert.ok(stance === 'sweep' || stance === 'evade', `seed ${seed}: reserved ${offer.options[0].id} is of stance ${stance}`);
+    return stance;
+  });
+}
+test('the reserved stance slot favours the stance never offered, and is not skewed by history at weight 1', () => {
+  const share = (stances, stance) => stances.filter(value => value === stance).length / stances.length;
+  const skewed = reservedStances(build()), neutral = reservedStances(build(1));
+  console.log(`reserved evade share: Core 2 0.25 = ${share(skewed, 'evade').toFixed(3)}, weight 1 = ${share(neutral, 'evade').toFixed(3)}`);
+  assert.ok(share(skewed, 'evade') >= 0.7, `unoffered stance (evade) at 0.25: ${share(skewed, 'evade')}`);
+  assert.ok(share(neutral, 'sweep') >= 0.3 && share(neutral, 'sweep') <= 0.7, `offered stance (sweep) at weight 1: ${share(neutral, 'sweep')}`);
 });
