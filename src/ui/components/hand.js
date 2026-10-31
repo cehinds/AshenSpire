@@ -54,7 +54,7 @@ import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 import { reducedMotionRequested } from '../motion.js';
 import { renderCard, refreshCard, setHandFaceBudget } from './card.js';
 import { armInspect } from '../../framework/optionDecision.js';
-import { stickTooltip } from './tooltip.js';
+import { stickTooltip, watchHeldTriggers } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 import { keycap, pill } from '../kit/index.js';
 import { layoutMetrics } from '../layoutMetrics.js';
@@ -109,6 +109,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // (axis, mode, why) is the order the old template carried, so the paging
   // DOM stays byte-identical across the collapse.
   applyHandExemption(handEl);
+  watchHeldTriggers(handEl);
   const releaseInspectionOverlay = fitFan ? mountHandInspectionOverlay(handEl) : null;
 
   // Snapshot clients remount this strip; arrivals are opt-in for persistent mounts.

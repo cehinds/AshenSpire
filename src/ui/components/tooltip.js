@@ -426,6 +426,27 @@ function heldBackInCard(el) {
   return !!card && card !== el && !card.matches('.selected, .inspection-selected');
 }
 
+const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
+/**
+ * syncHeldTriggers(root) — triggers held back inside an unselected hand card leave the tab order
+ * (tabindex -1, so DOM focus and Enter never reach a control that does nothing); they get tabindex 0
+ * back once the card is selected or inspected.
+ */
+export function syncHeldTriggers(root) {
+  for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
+    if (heldBackInCard(el)) { el.tabIndex = -1; el.dataset.heldBack = 'true'; }
+    else if (el.dataset.heldBack === 'true') { el.tabIndex = 0; delete el.dataset.heldBack; }
+  }
+}
+/** Keep a hand's triggers in step with its cards' selection classes. Returns the stop function. */
+export function watchHeldTriggers(handEl) {
+  syncHeldTriggers(handEl);
+  if (typeof MutationObserver === 'undefined') return () => {};
+  const observer = new MutationObserver(() => syncHeldTriggers(handEl));
+  observer.observe(handEl, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
+  return () => observer.disconnect();
+}
+
 // ---- attaching --------------------------------------------------------------
 /**
  * attachTooltip(el, contentFn, options) — contentFn() → HTML string (computed at

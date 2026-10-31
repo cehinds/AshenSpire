@@ -119,3 +119,21 @@ test('a hit-lane press over a tag symbol on an unselected card is not redirected
   assert.equal(clickOn(lane, { clientX: 10, clientY: 10 }), false);
   assert.equal(open(), false);
 });
+
+test('held-back triggers leave the tab order and return to it when the card is selected or inspected', async () => {
+  const { syncHeldTriggers } = await import('../src/ui/components/tooltip.js');
+  const kw = keywordIn('hand', 'card');
+  const { sym } = symbolIn('card');
+  const hand = kw.parentNode.parentNode, card = kw.parentNode;
+  const run = (root) => syncHeldTriggers(root);
+  kw.tabIndex = 0; sym.tabIndex = 0;
+  run(hand); run(sym.parentNode.parentNode);
+  assert.equal(kw.tabIndex, -1);
+  assert.equal(sym.tabIndex, -1);
+  card.className = 'card selected'; run(hand);
+  assert.equal(kw.tabIndex, 0);
+  card.className = 'card'; run(hand);
+  assert.equal(kw.tabIndex, -1);
+  card.className = 'card inspection-selected'; run(hand);
+  assert.equal(kw.tabIndex, 0);
+});
