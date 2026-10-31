@@ -77,6 +77,7 @@ export function mountHandInspectionOverlay(hand) {
     }
     owner = control = null;
   };
+  let recheck = false;
   const position = (reveal = true) => {
     request = 0;
     const upcast = hand.querySelector('.card:is(.selected,.inspection-selected) > .card-upcast-controls');
@@ -109,7 +110,7 @@ export function mountHandInspectionOverlay(hand) {
       if (!selected) return;
       const info = selected.querySelector('.card-info-button');
       if (!info) return;
-      owner = selected; control = info;
+      owner = selected; control = info; recheck = true;
       control.classList.add('hand-info-portal');
       hand.parentElement.appendChild(control);
     }
@@ -130,10 +131,18 @@ export function mountHandInspectionOverlay(hand) {
     });
     control.style.left = `${local.left}px`;
     control.style.top = `${local.top}px`;
+    // The card is usually still moving on the frame it is selected: once more
+    // on the next frame, so the badge follows the settled box.
+    if (recheck) { recheck = false; cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false)); }
   };
   // A gesture, key, focus, resize or fan re-fit always re-reveals (the viewer
   // may have panned away since). A DOM mutation burst does not: it re-asks the
   // reveal only when the card it is about has changed (see revealedKey).
+  // The selected card lifts and scales on a transition; read its settled box.
+  const settleSelected = event => {
+    if (!owner || event.target !== owner || !/transform|translate|scale|top|left/.test(event.propertyName || 'transform')) return;
+    cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false));
+  };
   const lazy = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position()); };
   const schedule = () => { forceReveal = true; lazy(); };
   // A browser-owned pan already chose the viewport. Following its scroll must
@@ -155,6 +164,7 @@ export function mountHandInspectionOverlay(hand) {
   const observer = new MutationObserver(lazy);
   observer.observe(hand, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
   hand.addEventListener('scroll', followScroll);
+  hand.addEventListener('transitionend', settleSelected);
   hand.addEventListener('handlayoutchange', schedule);
   hand.addEventListener('pointerdown', press, true);
   hand.addEventListener('gpfocus', choose, true);
@@ -168,6 +178,7 @@ export function mountHandInspectionOverlay(hand) {
   return () => {
     observer.disconnect(); cancelAnimationFrame(request);
     hand.removeEventListener('scroll', followScroll);
+    hand.removeEventListener('transitionend', settleSelected);
     hand.removeEventListener('handlayoutchange', schedule);
     hand.removeEventListener('pointerdown', press, true);
     hand.removeEventListener('gpfocus', choose, true);
