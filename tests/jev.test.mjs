@@ -386,6 +386,7 @@ test('devmerge: a failing regen leaves the merge uncommitted with the abort hint
 test('regen runs config-build before content-build', () => {
   const ids = REGEN_STEPS.map(a => a[0]);
   assert.ok(ids.indexOf('tools/config-build.mjs') >= 0 && ids.indexOf('tools/config-build.mjs') < ids.indexOf('tools/content-build.mjs'));
+  assert.ok(ids.indexOf('tools/framework-data-build.mjs') >= 0 && ids.indexOf('tools/framework-data-build.mjs') < ids.indexOf('tools/content-build.mjs'), 'framework mirrors exist before content-build sweeps strays');
 });
 
 test('devmerge: --base starting with - is rejected before git runs', () => {

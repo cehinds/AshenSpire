@@ -19,7 +19,7 @@ Each prints one JSON line (add `--human` for text).
 
 - `triage [file|-]`: match a log against the rule table; reports each match with category, action, command and the evidence line.
 - `checks [--fast]`: the fast-check list in order (style-lint, content-build, config-build, game-config, framework-data-build, build-game, bundle-cycles, mechanics-generate, uistrings, run-node core, runsim 5), each failure triaged. `--fast` skips the slow checks (run-node core, runsim). `--only a,b` runs a subset.
-- `regen`: about-changelog `--write`, config-build (before content-build, which refuses config whose hashes do not match `src/config/generated/ui.js`), content-build, framework-data-build, game-config build, build-game.
+- `regen`: about-changelog `--write`, config-build and framework-data-build (before content-build, which refuses config whose hashes do not match `src/config/generated/ui.js` and framework JSON with no `src/framework/data` mirror), content-build, game-config build, build-game.
 - `restamp [--pr N]`: orchestrator only (it writes CHANGELOG.md). Sets this PR's receipt to the current `buildordinal.json` stamp, drops duplicate receipt lines, projects the changelog and checks order.
 - `devmerge [--base dev] [--pr N]`: clean tree required; merges `origin/<base>` without committing, takes dev's side of generated files, merges CHANGELOG receipts (ours first), regenerates, restamps, runs the check tools, commits the merge. It never pushes (it prints the push command), rebases or forces. Any other conflict aborts the merge and exits 2.
 

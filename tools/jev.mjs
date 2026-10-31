@@ -194,10 +194,11 @@ COMMANDS.checks = async (args) => {
 
 export const REGEN_STEPS = [
   ['tools/about-changelog.mjs', '--write'],
-  // config-build first: content-build refuses config whose source hashes do not match src/config/generated/ui.js.
+  // config-build and framework-data-build before content-build: content-build refuses config whose
+  // source hashes do not match src/config/generated/ui.js, and framework JSON with no src/framework/data mirror.
   ['tools/config-build.mjs'],
-  ['tools/content-build.mjs'],
   ['tools/framework-data-build.mjs'],
+  ['tools/content-build.mjs'],
   ['tools/game-config.mjs', 'build'],
   ['tools/build-game.mjs'],
 ];
