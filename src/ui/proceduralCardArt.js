@@ -1,6 +1,7 @@
 import { layeredCardArtCatalog as base } from '../content/layeredCardArt.generated.js';
 import { reviewedCardArtCatalog as reviewed } from '../content/reviewedCardArt.generated.js';
 import { approvedCardArt } from './layeredCardArt.js';
+import { cardRank } from '../model/cardRank.js';
 
 const actions = ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend'];
 const aliases = { defense: 'defend', evasion: 'evade' };
@@ -32,6 +33,8 @@ for (const [assetId, sprite] of spritesByAsset) {
     row.push(sprite); statusesById.set(match[1], row);
   }
 }
+const statusAliases = { bleeding: 'bleed', burning: 'burn', frozen: 'frost', chilled: 'frost', blight: 'necroticBlight' };
+const statusCueId = id => Object.hasOwn(statusAliases, id) ? statusAliases[id] : id;
 const globalCache = new Map(), registryCaches = new WeakMap();
 const canonicalTags = tags => [...new Set((Array.isArray(tags) ? tags : []).map(tag => typeof tag === 'string' ? tag : tag?.id)
   .filter(tag => typeof tag === 'string' && tag.length <= 100 && /^[\w:.-]+$/.test(tag)))].sort();
@@ -39,14 +42,26 @@ const identity = (tags, prefix) => {
   const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => tag.slice(prefix.length)))];
   return values.length === 1 ? values[0] : null;
 };
+function elementIdentity(tags) {
+  for (const prefix of ['element:', 'school:', 'damage:']) {
+    const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => {
+      const raw = tag.slice(prefix.length);
+      return elementOf(raw) || raw;
+    }))];
+    // Mixed damage is a valid unthemed identity; conflicting explicit art
+    // elements/schools cannot silently become a lower-priority school.
+    if (values.length > 1) return { conflict: prefix !== 'damage:', element: null };
+    if (values.length && elementOf(values[0])) return { element: elementOf(values[0]) };
+  }
+  return { element: null };
+}
 function statusExists(registries, id) {
   const registry = registries?.statuses;
-  if (!registry) return statusesById.has(id);
+  if (!registry) return statusesById.has(statusCueId(id));
   if (typeof registry.has === 'function' && !registry.has(id)) return false;
   try { return !!(typeof registry.get === 'function' ? registry.get(id) : registry.find?.(row => row.id === id)); }
   catch { return false; }
 }
-const normalizedRank = rank => typeof rank === 'number' && Number.isFinite(rank) && rank >= 1 ? Math.floor(rank) : 1;
 function withOpacity(sprite, intensity) {
   const result = clone(sprite);
   const opacity = Number((Number(result.css.opacity ?? 1) * intensity).toFixed(4));
@@ -70,9 +85,10 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   if (!actions.includes(maneuver) && maneuver !== 'skill') return null;
   if (tags.includes('delivery:melee')) projectile = false;
   const category = camp === 'spell' ? 'magical' : 'physical';
-  const element = elementOf(identity(tags, 'element:')) || elementOf(identity(tags, 'school:'))
-    || elementOf(identity(tags, 'damage:')) || (category === 'magical' ? 'force' : null);
-  rank = normalizedRank(rank);
+  const identityElement = elementIdentity(tags);
+  if (identityElement.conflict) return null;
+  const element = identityElement.element || (category === 'magical' ? 'force' : null);
+  rank = cardRank({ rank });
   const statuses = tags.filter(tag => tag.startsWith('status:')).map(tag => tag.slice(7))
     .filter(id => statusExists(registries, id)).slice(0, element ? 2 : 3);
   const utility = base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
@@ -94,8 +110,8 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   if (!art) return null;
   art = clone(art);
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
-  if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statuses[0])) {
-    art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statuses[0])), id: 'object' }];
+  if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
+    art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
   }
   const cueSprites = [];
   // Physical elemental actions retain their weapon and add the approved PNG cue.
@@ -104,7 +120,7 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     cueSprites.push({ ...clone(source), id: 'element-cue', path: base.assets[source.assetId].path, css: { ...source.css, opacity: '0.23' } });
   }
   for (const id of statuses) {
-    const cues = statusesById.get(id) || statusesById.get('prepared');
+    const cues = statusesById.get(statusCueId(id)) || statusesById.get('prepared');
     for (const source of cues || []) cueSprites.push({ ...clone(source), id: `status-${id}-${source.assetId.endsWith('.mark') ? 'mark' : 'glow'}` });
   }
   const intensity = 0.55 + (Math.min(rank, 5) - 1) * 0.1125;

@@ -1,13 +1,14 @@
 // Visual style is a saved game preference, independent of the art resolution tier.
 export const CARD_ART_STYLE_KEY = 'cardArtStyle';
 export const CARD_ART_SIMPLE = 'Simple';
+export const CARD_ART_REVIEWED = 'Reviewed';
 export const CARD_ART_LEGACY = 'Legacy';
-export const CARD_ART_STYLE_CHOICES = Object.freeze([CARD_ART_SIMPLE, CARD_ART_LEGACY]);
+export const CARD_ART_STYLE_CHOICES = Object.freeze([CARD_ART_SIMPLE, CARD_ART_REVIEWED, CARD_ART_LEGACY]);
 let current = CARD_ART_SIMPLE;
 const refreshers = new WeakMap();
 
 export function resolveCardArtStyle(settings = {}) {
-  return settings[CARD_ART_STYLE_KEY] === CARD_ART_LEGACY ? CARD_ART_LEGACY : CARD_ART_SIMPLE;
+  return CARD_ART_STYLE_CHOICES.includes(settings[CARD_ART_STYLE_KEY]) ? settings[CARD_ART_STYLE_KEY] : CARD_ART_SIMPLE;
 }
 export function cardArtStyle() { return current; }
 

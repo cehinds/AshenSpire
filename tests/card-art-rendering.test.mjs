@@ -39,7 +39,8 @@ test('resolved cards use Simple by default while legacy API and unsupported art 
   applyCardArtStyle({});
   const simple=playingCardArt(ref,{definition,registries});
   assert.equal(simple.kind,'simple');
-  assert.equal(simple.componentArt.code,'O00');
+  assert.equal(simple.maneuver,'attack');
+  assert.ok(simple.componentArt.sprites.some(sprite=>sprite.assetId==='O.object.0'));
   assert.equal(playingCardArt(ref,{definition,registries,style:'Legacy'}).path,playingCardArtwork(ref));
   const unsupported={id:'utility',type:'power',cardTags:[]};
   assert.deepEqual(playingCardArt(ref,{definition:unsupported,registries}),playingCardArt(ref,{style:'Legacy'}));

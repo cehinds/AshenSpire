@@ -20,7 +20,7 @@ test('every card without a dedicated illustration has a reviewed layered recipe'
   assert.deepEqual(new Set(missing.map(c=>c.id)),new Set(Object.keys(catalog.records)));
   for(const card of missing){
     const ref={cardId:card.id},definition=playingCardDefinition(reg,ref),before=structuredClone(definition);
-    const art=playingCardArt(ref,{definition,registries:reg,style:'Simple'});
+    const art=playingCardArt(ref,{definition,registries:reg,style:'Reviewed'});
     assert.equal(art.componentArt,catalog.records[card.id],card.id);
     assert.ok(art.componentArt.visualCues.length<=4);
     assert.equal(art.componentArt.sprites.filter(s=>s.id==='background').length,1);
@@ -30,10 +30,10 @@ test('every card without a dedicated illustration has a reviewed layered recipe'
     assert.ok(cardArtFallbacks(ref,art).length,'Each assembly retains a fallback');
   }
 });
-test('dedicated illustrations, equipment and Legacy mode retain their existing routing',()=>{
+test('Reviewed retains dedicated illustrations and equipment while Legacy retains its existing routing',()=>{
   for(const card of contentBundle.cards.filter(c=>playingCardArtwork({cardId:c.id}))){
     const ref={cardId:card.id},definition=playingCardDefinition(reg,ref);
-    const art=playingCardArt(ref,{definition,registries:reg,style:'Simple'});
+    const art=playingCardArt(ref,{definition,registries:reg,style:'Reviewed'});
     const previous=simpleCardArt(definition,{ref,registries:reg});
     if(previous)assert.deepEqual(art,previous);
     assert.equal(playingCardArt(ref,{definition,registries:reg,style:'Legacy'}).path,playingCardArtwork(ref));
@@ -41,7 +41,7 @@ test('dedicated illustrations, equipment and Legacy mode retain their existing r
   const ref={cardId:'mindSpike'},definition=playingCardDefinition(reg,ref);
   assert.notEqual(playingCardArt(ref,{definition,registries:reg,style:'Legacy'})?.componentArt,catalog.records.mindSpike);
   const custom={...definition,equipmentProfileId:'custom-weapon'};
-  assert.notEqual(playingCardArt(ref,{definition:custom,registries:reg,style:'Simple'})?.componentArt,catalog.records.mindSpike);
+  assert.notEqual(playingCardArt(ref,{definition:custom,registries:reg,style:'Reviewed'})?.componentArt,catalog.records.mindSpike);
 });
 test('approved identity: cleanse fire, healing leaf, separate counter and earth pebble',()=>{
   const source=JSON.parse(readFileSync(new URL('../asset-data/card-art/reviewed-library.json',import.meta.url)));
@@ -63,7 +63,7 @@ test('a canonical visual reference does not hide the reviewed card recipe',()=>{
   assert.ok(ids.length>=8);
   for(const id of ids){
     const definition=playingCardDefinition(reg,{cardId:id});
-    const art=playingCardArt({cardId:baseCardPresentation[id].canonicalCardRef},{definition,registries:reg,style:'Simple'});
+    const art=playingCardArt({cardId:baseCardPresentation[id].canonicalCardRef},{definition,registries:reg,style:'Reviewed'});
     assert.equal(art.componentArt,catalog.records[id],id);
   }
 });
