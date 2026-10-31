@@ -9,7 +9,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
-import { applyAttackDamage } from '../src/engine/actions.js';
+import { applyStatus } from '../src/engine/statuses.js';
+import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { hitWeaknessTriggers } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
@@ -144,4 +145,37 @@ test('the damage event lists the weaknesses it met', () => {
   const event = r.events('damageDealt')[0];
   assert.deepEqual(event.weaknesses, [{ to: 'blunt', effect: 'damage', amount: 25 }]);
   assert.equal(r.events('weaknessTriggered')[0].to, 'blunt');
+});
+
+// ---- status weaknesses ----
+test('burn applied by the player lands with +1 stack on a burn-stacks-weak enemy, not on a self-applied status', () => {
+  const { combat, target } = liveCore('lanternMoth');
+  assert.ok(target.weaknesses.some(w => w.to === 'burn' && w.effect === 'stacks'));
+  applyStatus(combat, target, 'burn', 2, combat.player);
+  assert.equal(target.statuses.burn.stacks, 3);
+  assert.equal(combat.eventLog.filter(e => e.type === 'weaknessTriggered' && e.effect === 'stacks').length, 1);
+  const other = liveCore('wanderingSoldier').target;
+  applyStatus(combat, other, 'burn', 2, combat.player);
+  assert.equal(other.statuses.burn.stacks, 2, 'an enemy with no burn weakness is unchanged');
+  const self = liveCore('lanternMoth');
+  applyStatus(self.combat, self.target, 'burn', 2, self.target);
+  assert.equal(self.target.statuses.burn.stacks, 2, 'the enemy burning itself is not weakness');
+});
+
+test('burn ticks x1.5 on a burn-tick-weak enemy (4 stacks: 6 HP, not 4)', () => {
+  for (const [enemyId, expected] of [['huskBrute', 6], ['wanderingSoldier', 4]]) {
+    const { combat, target } = liveCore(enemyId);
+    target.hp = target.maxHp = 100;
+    target.statuses.burn = { stacks: 4 };
+    const before = target.hp;
+    executeAction(combat, { effect: { op: 'loseHp', target: 'self', amount: { f: 'stacks', status: 'burn', of: 'owner' } }, source: target, owner: target, target });
+    assert.equal(before - target.hp, expected, enemyId);
+  }
+});
+
+test('a bleed burst deals x1.5 to a bleed-tick-weak enemy', () => {
+  const { combat, target } = liveCore('stitchedHound');
+  target.hp = target.maxHp = 100;
+  executeAction(combat, { effect: { op: 'loseHp', target: 'self', amount: 10, cause: 'proc:bleed' }, source: target, owner: target, target });
+  assert.equal(100 - target.hp, 15);
 });

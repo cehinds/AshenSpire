@@ -24,6 +24,7 @@ import { resolveStackApplications, stackMagnitude } from '../model/combatRules.j
 import { ratingValue } from '../model/combatRatings.js';
 import * as Control from './combatStatusControl.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
+import { weaknessStackBonus } from './weaknesses.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -53,7 +54,10 @@ function syncPoolsAfterStatus(ctx, target) {
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
   const before = getStacks(target, statusId);
-  const result = applyStatusRaw(ctx, target, statusId, stacks, source);
+  // Enemy weaknesses (SPEC 5.3): a status an opponent applies to an enemy weak to it lands with extra stacks.
+  const weakBonus = stacks > 0 ? weaknessStackBonus(target, statusId, source) : 0;
+  if (weakBonus > 0) ctx.emit?.('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: statusId, effect: 'stacks', amount: weakBonus });
+  const result = applyStatusRaw(ctx, target, statusId, stacks + weakBonus, source);
   // Persistence belongs to the granting effect, not every later application.
   if (fixCoreEnabled(ctx) && statusId === 'precision') {
     const inst = target?.statuses?.[statusId];

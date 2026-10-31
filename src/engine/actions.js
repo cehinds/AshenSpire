@@ -12,6 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { weaknessTickMultiplier } from './weaknesses.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -1976,7 +1977,11 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
         // record can attribute the loss — display + instruments read it.
-        const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        let amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        // Enemy weaknesses (SPEC 5.3): a burn or venom tick (its stacks formula) and a bleed or frost burst (its proc cause) hit a weak enemy harder.
+        const tickStatus = eff.amount?.f === 'stacks' ? eff.amount.status : String(eff.cause || '').startsWith('proc:') ? eff.cause.slice(5) : null;
+        const tickMultiplier = tickStatus && amount > 0 ? weaknessTickMultiplier(t, tickStatus) : 1;
+        if (tickMultiplier !== 1) { amount = Math.floor(amount * tickMultiplier); ctx.emit('weaknessTriggered', { targetId: t.id, to: tickStatus, effect: 'tick', amount: Math.round((tickMultiplier - 1) * 100) }); }
         if (eff.nonlethal && amount >= t.hp) throw new Error('Not enough HP for a nonlethal offering');
         applyLoseHp(ctx, t, amount, eff.cause || 'effect', action.meta?.killReceipt || { targetStatusesBefore: structuredClone(t.statuses || {}), sourceId: action.source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}) });
         if (eff.offering && amount > 0) {
