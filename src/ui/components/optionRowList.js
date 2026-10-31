@@ -36,6 +36,10 @@ function rowArt(row) {
   if (row.artComposition) {
     well.style && Object.assign(well.style, { position: 'relative', isolation: 'isolate' });
     well.insertAdjacentHTML?.('beforeend', cardArtLayersHtml(row.artComposition));
+    // A cutout that fails to load must not leave broken-image marks: drop the layers, like the card face.
+    for (const image of well.querySelectorAll?.('[data-card-art-component]') || []) {
+      image.addEventListener('error', () => well.querySelectorAll('[data-card-art-layers]').forEach(node => node.remove()), { once: true });
+    }
   }
   return well;
 }
