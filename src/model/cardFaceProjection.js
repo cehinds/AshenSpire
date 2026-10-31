@@ -12,7 +12,15 @@ export const FACE_CLAUSE_WORDS = 5;
 
 const plain = html => html.replace(/<[^>]*>/g, '').replace(/&(?:amp|lt|gt|quot|#39);/g, 'x');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-const shorten = html => html.replace(/At the start of your turn, /g, 'Turn start: ')
+const shorten = html => html.replace(/At the end of your turn, if this is in your hand, lose (\d+ HP)/g, 'In hand: lose $1')
+  // Triggers read as "On <event>: <effect>" so a whole trigger fits five words.
+  .replace(/^(?:When|Whenever) you lose HP, (?:gain (\d+ )|(?=\w))/, (match, gain) => `On HP loss: ${gain ? '+' + gain : ''}`)
+  .replace(/^(?:When|Whenever) you play an? (\w+), (?:gain (\d+ )|(?=\w))/, (match, type, gain) => `On ${type}: ${gain ? '+' + gain : ''}`)
+  .replace(/^(?:When|Whenever) you gain Starstone Charge, (?:gain (\d+ )|(?=\w))/, (match, gain) => `On Charge: ${gain ? '+' + gain : ''}`)
+  .replace(/^(?:When|Whenever) you heal, (?:gain (\d+ )|(?=\w))/, (match, gain) => `On heal: ${gain ? '+' + gain : ''}`)
+  .replace(/^(?:When|Whenever) an enemy dies, /, 'On kill: ')
+  .replace(/to ALL\b/g, 'to all')
+  .replace(/At the start of your turn, /g, 'Turn start: ')
   .replace(/At the end of your turn, /g, 'Turn end: ')
   .replace(/Whenever /g, 'When ').replace(/to the selected enemy/g, 'to target')
   .replace(/to ALL enemies/g, 'to all').replace(/to all enemies/g, 'to all').replace(/to a random enemy/g, 'to random enemy')
@@ -21,21 +29,43 @@ const shorten = html => html.replace(/At the start of your turn, /g, 'Turn start
   .replace(/In expanded combat, stops at (\d+) stacks each/g, 'Expanded: cap $1 stacks each')
   .replace(/(\d+) per (\d+) of \((.+?) stacks across all enemies plus (.+?) stacks across all enemies\) \(whole groups\)/g, '$1 per $2 total $3 + $4 on all enemies')
   .replace(/\bInflict (?=(?:<[^>]*>)*\d)/g, 'Deal ').replace(/\bInflict /g, 'Apply ')
-  .replace(/\(leave at least 1 HP\)/g, '(min 1)').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
+  .replace(/\(leave at least 1 HP\)/g, '(leave 1)')
+  // Face-only shortenings (the full wording stays in Information).
+  .replace(/ \((?:<[^>]*>)*\d+(?:<\/span>)* total across \d+ hits\)/g, '')
+  .replace(/Double the target(?:'|&#39;)s Blight \(Crimson and Necrotic\)/g, 'Double target Blight (Crimson, Necrotic)')
+  .replace(/^Remove all (\w+(?:, all \w+)+)/, (match, list) => 'Remove ' + list.replace(/all /g, ''))
+  .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
+// A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
+const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
 const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 // A line of five words or fewer is one clause. A longer list of complete
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
 // clause each; a longer conditional or sentence returns null and stays whole in
 // Information rather than being cut mid-condition.
-function clausesOf(line) {
+const CONDITIONAL_START = /^(?:When|If|Unless|While|After|Before|At|Once|Turn)\b/;
+function clausesOf(line, { split = true } = {}) {
   if (wordCount(line.html) <= FACE_CLAUSE_WORDS) return [line];
-  if (/:/.test(plain(line.html))) return null;
+  // A longer clause drops its leading verb ("Deal 5 Slashing damage to all" reads "5 Slashing damage to all").
+  const bare = line.html.replace(/^(?:Deal|Apply|Inflict) /, '');
+  if (bare !== line.html && wordCount(bare) <= FACE_CLAUSE_WORDS) return [{ ...line, html: bare }];
+  // A turn trigger carrying a downside splits into two triggers, so the cost is never lost ("Turn start: take 1 damage").
+  const trigger = /^(Turn (?:start|end)): (.+?)(?:,| and) ((?:take|lose) .+)$/.exec(line.html);
+  if (trigger) {
+    const both = [`${trigger[1]}: ${trigger[2].replace(/^gain (\d+) /, '+$1 ')}`, `${trigger[1]}: ${trigger[3]}`];
+    if (both.every(part => wordCount(part) <= FACE_CLAUSE_WORDS)) return both.map(html => ({ ...line, html }));
+    return null;
+  }
+  const text = plain(line.html);
+  if (!split || /:/.test(text) || /\bthen\b/i.test(text)) return null;
+  // Split only a list of complete effects: every piece carries its own amount and none opens a condition.
   const parts = [];
-  for (const piece of line.html.split(/,\s+/)) {
+  for (const piece of line.html.split(/[,;]\s+/)) {
     if (parts.length && (parts[parts.length - 1].split('(').length !== parts[parts.length - 1].split(')').length)) parts[parts.length - 1] += ', ' + piece;
     else parts.push(piece);
   }
-  if (parts.length < 2 || parts.some(part => wordCount(part) > FACE_CLAUSE_WORDS)) return null;
+  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > FACE_CLAUSE_WORDS) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
+  const whole = part => /\d/.test(plain(part)) || COST_RE.test(plain(part));
+  if (parts.length < 2 || parts.some(part => wordCount(part) > FACE_CLAUSE_WORDS || CONDITIONAL_START.test(plain(part)) || !whole(part))) return null;
   return parts.map(html => ({ ...line, html }));
 }
 
@@ -52,16 +82,17 @@ function authoredClauses(html) {
 
 /** At most two whole qualified clauses; omitted facts remain in Information. */
 export function cardFaceProjection(def, { lines = null, authoredHtml = '', registries = null, effects = def.effects || [] } = {}) {
-  let candidates = lines ? lines.map(line => ({ ...line,
+  let candidates = lines ? lines.map(line => ({ ...line, ...('faceHtml' in line ? { faceHtml: undefined } : {}),
     // Entry bonuses and the Defend restore are stance explanations, outside
     // the ordinary effect budget. Their complete reading stays in Information.
-    html: line.html.replace(/^Restore .*?Poise\/Ward\.\s*/, '').replace(/(?:, |\. )?Entry:.*$/, '').trim(),
+    html: ('faceHtml' in line ? line.faceHtml : line.html).replace(/^Restore .*?Poise\/Ward\.\s*/, '').replace(/(?:, |\. )?Entry:.*$/, '').trim(),
   })).filter(line => line.html && !/^(?:Entry:|Restore .*Poise\/Ward)/.test(plain(line.html))
     // `tag` lines (Smash, Prone, Entry riders) and `detail` lines are Information-only.
     && !['detail', 'tag'].includes(line.kind))
     : authoredClauses(authoredHtml);
   if (!candidates.length) candidates = authoredClauses(authoredHtml);
-  const keywordOnly = line => /^(?:Exhaust|Retain|Ethereal|Innate|Unplayable)(?:, (?:Exhaust|Retain|Ethereal|Innate|Unplayable))*$/.test(plain(line.html));
+  // Upsides keywords (Retain, Innate) drop beside real effects; the downside keywords stay as costs.
+  const keywordOnly = line => /^(?:Retain|Innate)(?:, (?:Retain|Innate))*$/.test(plain(line.html));
   if (candidates.some(line => !keywordOnly(line))) candidates = candidates.filter(line => !keywordOnly(line));
   // Attach probability to its own status amount. A grouped row may mix a
   // guaranteed application with a chance-based buildup; a row-wide suffix
@@ -94,19 +125,24 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
     if (!payments.some(payment => payment.html === line.html)) payments.push({ ...line, kind: 'cost' });
   }
   candidates = [...payments, ...candidates.filter(line => !payments.some(payment => payment.html === line.html))];
-  const clauses = [];
-  let shown = 0;
-  const fitted = candidates.map(line => ({ line, parts: clausesOf(line) }));
-  const paymentParts = fitted.filter(entry => payments.includes(entry.line));
-  const requiredPayments = paymentParts.every(entry => entry.parts) ? paymentParts.reduce((sum, entry) => sum + entry.parts.length, 0) : Infinity;
-  for (const { line, parts } of fitted) {
-    const used = clauses.reduce((sum, clause) => sum + plain(clause.html).length + 2, 0);
-    if (requiredPayments > FACE_EFFECT_CLAUSES || !parts || !plain(line.html).length
-      || used + plain(line.html).length > FACE_EFFECT_CHARACTERS || clauses.length + parts.length > FACE_EFFECT_CLAUSES) continue;
-    clauses.push(...parts);
-    shown++;
-    if (clauses.length === FACE_EFFECT_CLAUSES) break;
-  }
+  const fitted = candidates.map(line => ({ line, parts: clausesOf(line, { split: !!lines || /^(?:One play|Exhaust|Ethereal)/.test(plain(line.html)) }) }));
+  // Every downside (a payment, "take N damage", Exhaust, Ethereal, "cannot", ...) is reserved a place first and is never
+  // dropped for another line. If the downsides alone cannot be said in three short clauses the face is the Inspect cue,
+  // never a free-looking payoff.
+  const reserved = fitted.filter(entry => payments.includes(entry.line) || COST_RE.test(plain(entry.line.html)));
+  const reservedCount = reserved.every(entry => entry.parts) ? reserved.reduce((sum, entry) => sum + entry.parts.length, 0) : Infinity;
+  const chosen = new Set();
+  let count = 0, used = 0;
+  const take = entry => {
+    const size = plain(entry.line.html).length;
+    if (!entry.parts || !size || used + size > FACE_EFFECT_CHARACTERS || count + entry.parts.length > FACE_EFFECT_CLAUSES) return;
+    chosen.add(entry); count += entry.parts.length; used += size + 2;
+  };
+  if (reservedCount <= FACE_EFFECT_CLAUSES) { reserved.forEach(take); fitted.forEach(entry => { if (count < FACE_EFFECT_CLAUSES && !chosen.has(entry)) take(entry); }); }
+  const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => entry.parts);
+  const shown = chosen.size;
+  // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
+  if (clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
   // An unfamiliar long rule is named, never shortened mid-condition. Current
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.

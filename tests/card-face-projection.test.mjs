@@ -115,16 +115,44 @@ test('a payment requiring more than two clauses never leaves a free-looking payo
   assert.deepEqual(projection.clauses.map(line => line.html), ['Inspect full effect']);
 });
 
-test('authored fallback clauses over five words move whole to Information', () => {
+test('authored fallback clauses over five words move whole to Information; downsides always show', () => {
   // Owner 2026-10-31: no clause is cut mid-condition; one that cannot be said in five words is the Inspect cue.
-  for (const id of ['rallyingStandard', 'blightBloom']) {
-    assert.equal(plain(project(defOf(id)).clauses[0].html), 'Inspect full effect', id);
-  }
-  assert.match(plain(cardDetailHtml(reg, { cardId: 'rallyingStandard' }, { rules })), /Turn start: gain 1 Strength and take 1 damage|start of your turn/i);
+  assert.deepEqual(project(defOf('rallyingStandard')).clauses.map(line => plain(line.html)), ['Turn start: +1 Strength', 'Turn start: take 1 damage'],
+    'the trigger splits so the downside is never lost');
+  // blightBloom's long clause goes to the cue, but its Exhaust downside still shows.
+  assert.deepEqual(project(defOf('blightBloom')).clauses.map(line => plain(line.html)), ['Exhaust', 'Inspect full effect']);
   assert.match(cardDetailHtml(reg, { cardId: 'blightBloom' }, { rules }), /3 stacks each/);
   const guardian = project(defOf('shieldGuardian')).clauses.map(line => line.html).join('; ');
   assert.doesNotMatch(guardian, /Add a temporary/);
   assert.match(guardian, /Gain.*Block|Inspect full effect/);
+});
+
+test('conditionals and status lists are never cut at a comma', () => {
+  const faces = id => project(defOf(id)).clauses.map(line => plain(line.html));
+  // A trigger reads whole ("On HP loss: +3 Block") or goes to the cue; never "When you lose HP" / "gain 3 Block".
+  for (const id of ['ironVowCard', 'stigmataCard', 'lifeTitheCard', 'emberTideCard', 'azureCoilCard', 'moonlitShieldCard', 'lucidRecovery', 'groundedResolve', 'crimsonRite']) {
+    for (const clause of faces(id)) assert.doesNotMatch(clause, /^(?:When|If|Unless|While|After|Before) [^:]*$|^(?:gain|then|heal|deal) /i, `${id}: ${clause}`);
+  }
+  assert.deepEqual(faces('ironVowCard'), ['On HP loss: +3 Block']);
+  assert.deepEqual(faces('crimsonRite'), ['Inspect full effect'], '"then" clauses are not split');
+  assert.deepEqual(faces('base.divine-cleanse'), ['Remove Weak, Bind, Restrained'], 'a status list stays one clause');
+  assert.deepEqual(faces('lucidRecovery'), ['Break 1 Sleep'], 'the conditional rider stays whole in Information');
+});
+
+test('a face never hides a cost clause', () => {
+  const faces = id => project(defOf(id)).clauses.map(line => plain(line.html));
+  assert.ok(faces('guilt').some(clause => /lose 1 HP/.test(clause)), 'a curse shows its HP loss');
+  assert.ok(faces('base.one-use-scroll').some(clause => /One play per combat/.test(clause)));
+  assert.ok(faces('base.one-use-scroll').some(clause => /exhaust/i.test(clause)));
+  assert.ok(faces('rallyingStandard').some(clause => /take 1 damage/.test(clause)));
+  // Whatever the card, its authored downside is on the face or the face is the explicit cue; never a free-looking payoff.
+  const COST = /take \d+ damage|lose \d+ HP|pay \d+ HP|offer \d+ HP|exhaust|one play per combat|ethereal|unplayable/i;
+  for (const card of reg.cards.all()) {
+    const def = defOf(card.id), tokens = staticCardTokens(def);
+    const authored = plain(def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match));
+    const face = faces(card.id).join(' ');
+    if (COST.test(authored) && face !== 'Inspect full effect') assert.match(face, COST, `${card.id}: ${authored} => ${face}`);
+  }
 });
 
 test('stance entry details do not spend the ordinary effect budget', () => {
@@ -161,7 +189,7 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
     const cue = projection.clauses.length === 1 && plain(projection.clauses[0].html) === 'Inspect full effect';
     for (const clause of projection.clauses) {
       assert.ok(cue || plain(clause.html).split(/\s+/).filter(Boolean).length <= 5, `${label}: ${plain(clause.html)}`);
-      assert.ok(!['tag', 'detail'].includes(clause.kind), label);
+      assert.ok(clause.kind !== 'detail', label);
       assert.doesNotMatch(plain(clause.html), /Smash|while Prone|Entry:|Usable through/, label);
     }
   }
@@ -176,11 +204,11 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   assert.ok(backFace.clauses.some(line => plain(line.html) === 'Retreat 1 band'));
 });
 
-test('a Smash rider and an Entry rider are tag lines the projection drops', () => {
+test('a line with a tag rider reads its faceHtml on the face and drops when that is empty', () => {
   const projection = cardFaceProjection({}, { lines: [
-    { kind: 'damage', html: 'Inflict 8 damage' },
-    { kind: 'tag', html: 'Smash: +2 Poise' },
-    { kind: 'tag', html: 'Entry: +1 Precision' },
+    { kind: 'damage', html: 'Inflict 8 damage', },
+    { kind: 'bonus', html: 'Smash: +2 Poise, Entry: +1 Precision', faceHtml: '' },
+    { kind: 'bonus', html: 'Draw 1, Entry: +1 Precision', faceHtml: 'Draw 1' },
   ] });
-  assert.deepEqual(projection.clauses.map(line => line.html), ['Deal 8 damage']);
+  assert.deepEqual(projection.clauses.map(line => line.html), ['Deal 8 damage', 'Draw 1']);
 });
