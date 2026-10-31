@@ -15,11 +15,11 @@ test('Current state shows Precision, Evasion and Crit chance with the fighter\'s
     [['MP', '3 / 5'], ['Precision', '2'], ['Evasion', '1'], ['Crit', '10%']]);
 });
 
-test('the three rows stay listed at 0 when the statuses and crit rules are absent', () => {
-  for (const kind of ['player', 'enemy']) {
-    const rows = combatStatRows({ statuses: {}, critRules: kind === 'enemy' ? [rule] : undefined, attributes, kind }, t);
-    assert.deepEqual(stateRows(rows).map((r) => [r.label, r.value]), [['Precision', '0'], ['Evasion', '0'], ['Crit', '0%']]);
-  }
+test('a player keeps all three rows at 0; an enemy shows Precision and Evasion only', () => {
+  const player = combatStatRows({ statuses: {}, attributes, kind: 'player' }, t);
+  assert.deepEqual(stateRows(player).map((r) => [r.label, r.value]), [['Precision', '0'], ['Evasion', '0'], ['Crit', '0%']]);
+  const enemy = combatStatRows({ statuses: {}, critRules: [rule], attributes, kind: 'enemy' }, t);
+  assert.deepEqual(stateRows(enemy).map((r) => [r.label, r.value]), [['Precision', '0'], ['Evasion', '0']]);
 });
 
 test('rules sharing a tag add up, as an attack with those tags rolls them', () => {
