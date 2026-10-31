@@ -427,7 +427,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
 // Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
 // same damage type and costs the reflector one stack. The return is flagged so it can neither reflect nor counter again.
 function reflectBack(ctx, source, target, carrier, reflect) {
-  if (!source?.alive || !target?.alive || source === target) return;
+  // The holder's own survival is irrelevant: a landed eligible hit always spends the stack and sends its share back (SPEC §17).
+  if (!source?.alive || source === target) return;
   const amount = reflectReturned(reflect.original, reflect.stacks);
   const left = (spendReflectStacks(ctx, target, 1), target.reflectStacks || 0);
   ctx.emit('reflectTriggered', { sourceId: target.id, targetId: source.id, amount, stacks: reflect.stacks, stacksLeft: left, original: reflect.original,

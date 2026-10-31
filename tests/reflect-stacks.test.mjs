@@ -147,3 +147,11 @@ test('Mirror Guard\'s face states the amount: 1 Reflect, 2 upgraded', async () =
   assert.match(face(false), /\b1\b.*Reflect|Reflect.*\b1\b/);
   assert.match(face(true), /\b2\b.*Reflect|Reflect.*\b2\b/);
 });
+
+test('a lethal hit on the Reflect holder still returns damage and spends the stack', () => {
+  const { reflected, back, combat } = exchange(1, (c) => { c.player.hp = 1; });
+  assert.equal(combat.player.alive, false, 'the holder died');
+  assert.ok(reflected, 'the reflection resolved');
+  assert.equal(back.damageReceipt.hits[0].incoming, reflected.amount);
+  assert.equal(combat.player.reflectStacks ?? 0, 0, 'the stack was spent');
+});
