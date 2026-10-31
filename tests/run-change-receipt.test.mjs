@@ -85,3 +85,19 @@ test('sigil install and removal are rows', () => {
   const d2 = diff(run, (r) => { r.sigilSlots = { [ref]: [null] }; });
   assert.equal(d2.rows.find((r) => r.change).change, 'removed');
 });
+
+test('a ramped card upgraded after plays shows the faces the live resolver gives (playsEver is kept)', async () => {
+  const { projectGameCard } = await import('../src/model/gameProfile.js');
+  const run = newRun();
+  const nick = { instanceId: 'nick1', cardId: 'core.whetstoneNick', upgraded: false, playsEver: 5 };
+  run.deck.push(nick);
+  const beforeInstance = structuredClone(nick);
+  const d = diff(run, () => { nick.upgraded = true; nick.upgradeSteps = [{ k: 'authored' }]; });
+  const row = d.rows.find((r) => r.instanceId === 'nick1');
+  assert.ok(row?.faces, 'faces present');
+  const afterInstance = structuredClone(nick);
+  assert.deepEqual(JSON.parse(JSON.stringify(row.faces.before)), JSON.parse(JSON.stringify(projectGameCard(run, beforeInstance))));
+  assert.deepEqual(JSON.parse(JSON.stringify(row.faces.after)), JSON.parse(JSON.stringify(projectGameCard(run, afterInstance))));
+  const amount = (face) => JSON.stringify(face.effects[0].amount);
+  assert.match(amount(row.faces.before), /7/, 'the base 2 plus five plays is in the face');
+});

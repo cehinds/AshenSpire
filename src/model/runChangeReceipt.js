@@ -1,9 +1,11 @@
 // The "what changed" receipt: a pure before/after diff of the parts of a run a choice, event, rest
 // service or Blacksmith purchase can move. No DOM and no RNG; the modal (ui/components/whatChangedModal.js)
 // draws the rows. Card upgrades carry the instance's before and after faces, resolved with the same
-// applyUpgradeSteps the card-upgrade picker uses.
-import { applyUpgradeSteps, upgradeStepsOf } from './cardUpgrade.js';
-import { cardRank, rankedEffectsCapped } from './cardRank.js';
+// card-resolution the card-upgrade picker uses (projectGameCard, else resolveCard).
+import { upgradeStepsOf } from './cardUpgrade.js';
+import { cardRank } from './cardRank.js';
+import { resolveCard } from './registries.js';
+import { projectGameCard } from './gameProfile.js';
 
 const freeze = Object.freeze;
 const num = (v) => (Number.isFinite(v) ? v : 0);
@@ -22,6 +24,7 @@ export function snapshotRunForDiff(run) {
     hp: num(run?.hp), maxHp: num(run?.maxHp),
     mana: num(run?.mana), maxMana: num(run?.maxMana),
     stamina: num(run?.stamina), maxStamina: num(run?.maxStamina),
+    gameProfile: run?.gameProfile ?? null,
     cinders: num(run?.cinders),
     smithingStones: num(run?.smithingStones),
     smithingStonesRefined: num(run?.smithingStonesRefined),
@@ -29,6 +32,8 @@ export function snapshotRunForDiff(run) {
     deck: freeze([...(run?.deck || []).map((c) => [c, 'deck']), ...(run?.sideboard || []).map((c) => [c, 'sideboard'])].map(([card, zone]) => freeze({
       instanceId: card.instanceId, cardId: card.cardId, zone,
       steps: freeze(upgradeStepsOf(card).map((s) => ({ ...s }))), rank: cardRank(card),
+      // The instance state the resolver reads (steps, rank, playsEver ramp, carrier fields), copied at snapshot time.
+      instance: freeze({ ...card, ...(Array.isArray(card.upgradeSteps) ? { upgradeSteps: card.upgradeSteps.map((st) => ({ ...st })) } : {}) }),
     }))),
     armaments: freeze([...new Set([...sets, ...flatIds(loadout.storage || [])])]),
     equipped: freeze(sets),
@@ -41,11 +46,8 @@ export function snapshotRunForDiff(run) {
   });
 }
 
-// A card face at some upgrade steps and rank: the steps first, then the rank bonus as gameProfile.js resolves it.
-const faceAt = (base, steps, rank) => {
-  const face = applyUpgradeSteps(base, steps);
-  return rank > 1 ? { ...face, effects: rankedEffectsCapped(face, rank - 1), rank } : face;
-};
+// A card face as the game resolves an owned instance (the card-upgrade picker's own call): steps, rank, ramp.
+const faceOf = (registries, profileHolder, instance) => projectGameCard(profileHolder, instance) || resolveCard(registries, instance);
 
 const stat = (label, before, after, kind = 'stat') => freeze({ kind, label, before: String(before), after: String(after), delta: after - before });
 
@@ -89,7 +91,7 @@ export function diffRunSnapshots(before, after, registries) {
     const stepsChanged = JSON.stringify(prev.steps) !== JSON.stringify(card.steps);
     if (!stepsChanged && prev.rank === card.rank) continue;
     const base = registries?.cards?.has?.(card.cardId) ? registries.cards.get(card.cardId) : null;
-    const faces = base ? freeze({ before: faceAt(base, prev.steps, prev.rank), after: faceAt(base, card.steps, card.rank) }) : undefined;
+    const faces = base ? freeze({ before: faceOf(registries, after, prev.instance), after: faceOf(registries, after, card.instance) }) : undefined;
     const row = { kind: 'card', label: name, cardId: card.cardId, instanceId: card.instanceId, change: stepsChanged ? 'upgraded' : 'ranked' };
     if (stepsChanged) Object.assign(row, { before: `+${prev.steps.length}`, after: `+${card.steps.length}`, delta: card.steps.length - prev.steps.length });
     else Object.assign(row, { before: `RANK ${prev.rank}`, after: `RANK ${card.rank}`, delta: card.rank - prev.rank });
