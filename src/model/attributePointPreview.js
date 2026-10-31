@@ -20,7 +20,8 @@ import { t } from '../ui/strings.js';
 /** Pool stats are compared by delta / POOL_SCALE against rating stats by delta, so +10 HP ties +1 Poise. */
 export const POOL_SCALE = 10;
 const POOLS = new Set(['hp', 'mana', 'stamina']);
-// Tie-break order, best first (owner: Perception ahead of MP so WIS reads "+1 Perception").
+// Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+10 HP and +1 Poise both score 1, HP first).
+// WIS reads "+1 Perception" on magnitude, not order: +1 MP scores 0.1 after the pool scale, +1 Perception scores 1.
 export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
 const ROW_IDS = Object.freeze(['hp', 'stamina', 'mana', 'ar', 'pr', 'dr', 'openingHand', 'handSize', 'draw', 'poise', 'ward']);
 const LABEL_KEYS = Object.freeze({
