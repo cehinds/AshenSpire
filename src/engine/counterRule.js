@@ -14,6 +14,8 @@ import * as Tactics from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
 import { rememberCombatStance } from './concurrentStances.js';
 import * as statuses from '../framework/statusSemantics.js';
+import { counterStackReturn, counterStackCount } from './guardStacks.js';
+import { mechanics } from '../framework/data/mechanics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
 export const counterRuleActive = ctx => fixCoreEnabled(ctx);
@@ -23,11 +25,18 @@ export function counterBeats(ctx, incomingManeuver) {
   return !!incomingManeuver && !!configuredModule(ctx, 'stances')?.matchups?.counter?.includes(incomingManeuver);
 }
 
-/** { hp, poise, block } a Counter returns (and adds to its owner's Block) against one hit of `incoming` damage. */
-export function counterReturn(ctx, incoming, advantaged) {
+/**
+ * { hp, poise, block } a Counter returns (and adds to its owner's Block) against one hit of `incoming` damage.
+ * Owner ruling 2026-10-31 (SPEC §17): the HP return is the Counter's own base damage (`base`, once per answered attack)
+ * plus floor(stacks x 10% x incoming); an advantaged hit still adds its flat share of the incoming damage. Poise is the
+ * same fraction of that HP as before.
+ */
+export function counterReturn(ctx, incoming, advantaged, { stacks = 0, base = 0 } = {}) {
   const cfg = fixCoreCounterRules(fixCoreRules(ctx));
   const whole = Math.max(0, Math.floor(Number(incoming) || 0));
-  const hp = Math.floor(cfg.returnFraction * whole) + (advantaged ? Math.floor(cfg.advantageIncomingFraction * whole) : 0);
+  if (!whole) return { hp: 0, poise: 0, block: 0 };
+  const hp = Math.max(0, Math.floor(Number(base) || 0)) + counterStackReturn(stacks, whole)
+    + (advantaged ? Math.floor(cfg.advantageIncomingFraction * whole) : 0);
   return {
     hp,
     poise: Math.floor((advantaged ? cfg.advantagePoiseFraction : cfg.poiseFraction) * hp),
@@ -35,13 +44,18 @@ export function counterReturn(ctx, incoming, advantaged) {
   };
 }
 
-/** The return of an executed action: the sum over the contacts the Counter covered. */
-export function counterReturnForReceipt(ctx, receipt) {
+/** The Counter stacks `entity` would hold after playing a Counter card that leaves it `block` Block (capped). */
+export const counterStacksAfterCard = (entity, block) => Math.min(mechanics.counter.stackCap, counterStackCount(entity) + Math.max(0, Math.floor(Number(block) || 0)));
+
+/** The return of an executed action: the sum over the contacts the Counter covered. `base` is the card's own damage, paid on the first. */
+export function counterReturnForReceipt(ctx, receipt, { stacks = 0, base = 0 } = {}) {
   const total = { hp: 0, poise: 0, block: 0 };
+  let basePaid = false;
   (receipt.covered || []).forEach((covered, index) => {
     if (!covered) return;
     const incoming = receipt.incomings?.[index] ?? receipt.amounts?.[index] ?? 0;
-    const row = counterReturn(ctx, incoming, counterBeats(ctx, receipt.profiles?.[index]?.maneuver));
+    const row = counterReturn(ctx, incoming, counterBeats(ctx, receipt.profiles?.[index]?.maneuver), { stacks, base: basePaid ? 0 : base });
+    if (row.hp > 0 || incoming > 0) basePaid = true;
     total.hp += row.hp; total.poise += row.poise; total.block += row.block;
   });
   return total;
@@ -71,7 +85,7 @@ export function counterBlockBonus(ctx, receipt, index, incoming) {
  * `intent` is the observer-gated read (previewIntent) and only decides visibility (its own `damage` is the projected HP loss); the base is the enemy's committed intent, read only once revealed. The attack is
  * priced against a defender standing in Counter stance, as it would land once the Counter is armed.
  */
-export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected = null) {
+export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected = null, baseHp = 0) {
   if (!counterRuleActive(ctx) || !enemy?.alive || !intent || intent.hidden || intent.revealed === false || enemy.intent?.damage == null) return null;
   const maneuver = intent.profile?.maneuver;
   if (!maneuver) return null;
@@ -103,13 +117,15 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   const state = damagePreviewState(ctx, defender);
   const total = { hp: 0, poise: 0, block: 0 };
   let incoming = 0;
+  // Playing the Counter adds the Block it leaves as stacks first (SPEC §17); an already armed Counter holds what it has.
+  const stacks = card ? counterStacksAfterCard(ctx.player, base.block) : counterStackCount(ctx.player);
   for (let hit = 0; hit < hits; hit++) {
     const seen = profileDamageReceipt(state.previewCtx, enemy, state.defender, enemy.intent.damage, carrier).damageReceipt?.hits?.[0]?.incoming ?? 0;
-    const row = counterReturn(ctx, seen, advantaged);
+    const row = counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
     const granted = counterBlockGrant(state.previewCtx, state.defender, row.block);
     state.defender.block = (state.defender.block || 0) + granted;
     previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, 1, state);
     incoming += seen; total.hp += row.hp; total.poise += row.poise; total.block += granted;
   }
-  return { incoming, advantaged, hits, ...total };
+  return { incoming, advantaged, hits, stacks, base: baseHp, ...total };
 }

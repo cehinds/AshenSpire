@@ -3,7 +3,7 @@ import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
 import * as CounterRule from './counterRule.js';
 const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
-const counterReturnForReceipt = (ctx, receipt) => CounterRule.counterReturnForReceipt(ctx, receipt);
+const counterReturnForReceipt = (ctx, receipt, options) => CounterRule.counterReturnForReceipt(ctx, receipt, options);
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
@@ -728,9 +728,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.range === 'melee')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
   }
-  // Core 2 (SPEC §17): the return is a fraction of the damage that hit, not the card's printed numbers.
+  // Core 2 (SPEC §17, owner 2026-10-31): the return is the card's authored damage plus the owner's Counter stacks x 10% of
+  // the incoming hit (stacks persist across turns; a card-less auto-Counter has base 0), not a fraction of that hit alone.
   if (counterRuleActive(ctx)) {
-    const core = counterReturnForReceipt(ctx, receipt);
+    const core = counterReturnForReceipt(ctx, receipt, { stacks: target.counterStacks || 0, base: number(counter.payload.hp) });
     // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
     payload.hp = core.hp; payload.poise = core.poise;
     if (isSpellCounter(counter.carrier)) payload.ward = 0;
