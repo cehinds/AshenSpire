@@ -16,6 +16,8 @@ import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { proposalContext } from '../src/engine/proposalStatusRuntime.js';
+import { proposalRuleEnabled } from '../src/model/proposalStatusRules.js';
 import { hitWeaknessTriggers } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
 
@@ -227,4 +229,13 @@ test('weaknesses read in words: inspector rows, bestiary traits, and the Weak! c
   const names = (view.traits || []).map(row => row.name);
   assert.ok(names.includes('Weak to Blunt'), 'bestiary lists the weakness once the enemy is studied');
   assert.deepEqual(calloutForEvent({ type: 'weaknessTriggered', targetId: 'e1', to: 'blunt', effect: 'damage', amount: 25 }), { kind: 'weak', targetId: 'e1' });
+});
+
+test('only Elemental Weapon is live in Core; Greased stays inert in a configured combat', () => {
+  const { combat } = liveCore();
+  const rules = combat.registries.proposalStatusRules?.rules || combat.registries.proposalStatusRules;
+  const caps = proposalContext(combat).capabilities;
+  assert.equal(proposalRuleEnabled(rules['base.elemental-weapon'], caps), true);
+  assert.equal(proposalRuleEnabled(rules['base.greased'], caps), false);
+  assert.equal(proposalRuleEnabled(rules['base.poison'], caps), false);
 });
