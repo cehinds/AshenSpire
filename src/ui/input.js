@@ -78,7 +78,7 @@ const FOCUS_SELECTOR = [
 // five actions; what they never had was a THUMB, and that is what the buttons are
 // for.
 //
-// ⚠ AND IT INHERITS THE HOLE I MEASURED ON `.end-turn` SIX HOURS AGO: a control
+// warning AND IT INHERITS THE HOLE I MEASURED ON `.end-turn` SIX HOURS AGO: a control
 // in CHROME has no focus-cursor story at all, so Enter and pad-Confirm can never
 // arrive on a chip. Here that costs nothing, and it is stated rather than assumed
 // — a chip's whole subject is a binding those two inputs already carry. The day a
@@ -145,6 +145,13 @@ export function actionDestination(id) {
 // FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
 // why it is `key` and not `defKey` — the same shape `cancel` already uses.
 const CONFIRM_KEY = ACTIONS.find((a) => a.id === 'confirm').key;
+/** A checkbox or role=switch input: a toggle, not a text field. */
+export const isSwitchInput = (el) => el?.tagName === 'INPUT' && ((el.type || el.getAttribute?.('type')) === 'checkbox' || el.getAttribute?.('role') === 'switch');
+/** True when the key belongs to a text-entry control: any input but a switch, or a textarea. */
+export const isTypingTarget = (el) => {
+  const tag = el?.tagName || '';
+  return (tag === 'INPUT' && !isSwitchInput(el)) || tag === 'TEXTAREA';
+};
 
 /** Compact label for the hint bar. The full `label` reads as a settings row
  *  ("Open Deck"); the bar wants the short form ("Deck"). One action registry,
@@ -333,7 +340,7 @@ export function keyLabel(id) {
  * type"* — two derivations, and this function is the second one. The first is
  * `keyLabel`/`padLabel` reading the live binding maps.
  *
- * ⚠ THE BOUNDARY, AND IT IS THE HONEST WORD FOR IT: this answers CONNECTED, not
+ * warning THE BOUNDARY, AND IT IS THE HONEST WORD FOR IT: this answers CONNECTED, not
  * ACTIVE. `hasGamepad()` is true from the moment a pad is plugged in, so a player
  * with a pad resting on the desk and both hands on the keyboard reads pad glyphs.
  * The tree HAS the material for last-used — `doAction` already takes a `source`
@@ -350,7 +357,7 @@ export function actionLabel(id) {
 /**
  * actionHint(id) — "Menu (M)", derived, for a `title=` or any prose prompt.
  *
- * ⚠ WHY THIS EXISTS AT ALL: three places in this tree had typed the letter.
+ * warning WHY THIS EXISTS AT ALL: three places in this tree had typed the letter.
  * `screens/combat.js` and `screens/map.js` both shipped `title="Menu (M)"`, and
  * `components/tutorial.js` shipped *"Done? End Turn (or press E)."* All three are
  * LAW 1 CLAUSE 7 BREACHES OF THE SHARPEST KIND — a second copy of a binding, in
@@ -389,13 +396,16 @@ function scopeRoot() {
   return topVeil() || document.getElementById('app') || document.body;
 }
 
-function focusables() {
+function focusables(key = null) {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
   const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
   if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
-  return controls.filter(
-    (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
+  // Focus restoration usually holds a key from a previous screen. Reject
+  // unrelated controls before measuring layout on every child-list mutation.
+  const candidates = key === null ? controls : controls.filter(el => keyOf(el) === key);
+  return candidates.filter(
+    (el) => !el.closest?.('[inert], [data-page-locked]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -414,6 +424,7 @@ function keyOf(el) {
   if (d.classId) return `c:${d.classId}`;
   if (d.mod) return `m:${d.mod}`;
   if (d.deck) return `d:${d.deck}`;
+  if (d.flaskKind) return `f:${d.flaskKind}`;
   if (d.tab) return `t:${d.tab}`;
   if (d.slot) return `s:${el.className}:${d.slot}`;
   if (el.id) return `#${el.id}`;
@@ -421,7 +432,7 @@ function keyOf(el) {
 }
 function findByKey(k) {
   if (!k) return null;
-  return focusables().find((el) => keyOf(el) === k) || null;
+  return focusables(k)[0] || null;
 }
 
 function setFocus(el, remember = true) {
@@ -664,7 +675,7 @@ export function releaseActionControl(id, el) {
  *   2. `data-hold-ms` > 0 — reading the value the machinery already published ON
  *      THE CONTROL, so the dial is not re-derived here.
  *
- *      ⚠ AND THIS CLAUSE IS A REDUNDANT GUARD, NOT THE SWITCH — I called it the
+ *      warning AND THIS CLAUSE IS A REDUNDANT GUARD, NOT THE SWITCH — I called it the
  *      switch and I was wrong, and the plant aimed at it is what said so. THE
  *      SWITCH IS `armHold`'s `ms0 > 0`: with the dial off, `begin` declines the
  *      press, `pressBegin` activates immediately, and one key press commits
@@ -831,7 +842,7 @@ function openPopover(root) {
 }
 function backIn(root) {
   return [...root.querySelectorAll(BACK_SELECTOR)]
-    .find((el) => !el.disabled && !el.closest('[inert]') && visible(el)) || null;
+    .find((el) => !el.disabled && !el.closest('[inert], [data-page-locked]') && visible(el)) || null;
 }
 function onBackCapture(ev) {
   if (ev.key !== 'Escape') return;
@@ -843,8 +854,7 @@ function onBackKey(ev) {
   const aim = backAim && backAim.ev === ev ? backAim : null;
   backAim = null;
   if (!aim) return;
-  const tag = (ev.target && ev.target.tagName) || '';
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (isTypingTarget(ev.target) || ev.target?.tagName === 'SELECT') return;
   setTimeout(() => {
     if (ev.defaultPrevented) return;
     if (aim.popover) {
@@ -899,7 +909,7 @@ function doAction(id, source = 'key') {
  * A second implementation here would be a second chance to disagree with all of
  * that, which is the defect this house is named for.
  *
- * ⚠ IT DOES NOT SET `engaged`, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
+ * warning IT DOES NOT SET `engaged`, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
  * `engaged` means "this player drives with a keyboard or a pad", and screens use
  * it to decide whether to plant a focus ring nobody asked for. A thumb on a chip
  * is the opposite of that evidence. A mouse-only player pressing a chip must not
@@ -957,16 +967,21 @@ function onKeydown(ev) {
     return;
   }
   if (!enabled) return;
-  // The focused information button owns native Enter/Space activation. The
-  // game cursor may still point at its host card, whose action must stay inert.
-  if (ev.target?.closest?.('.card-info-button')) return;
+  // Inspection and route controls own native Enter/Space activation. The
+  // game cursor may still point at their card, whose action must stay inert.
+  if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
+  // A focused target HUD panel opens its own inspection on Enter/Space the
+  // same way; every other key (arrows) still drives the game cursor.
+  if (ev.target?.closest?.('.target-hud-panel') && (ev.key === 'Enter' || ev.key === ' ')) return;
   // The focused log handle uses these keys for its three drawer heights.
   // Let the component resize without also moving the game cursor away.
   if (ev.target?.closest?.('[data-combat-tool="log"]')
     && ['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(ev.key)) return;
-  const tag = (ev.target && ev.target.tagName) || '';
-  const typing = tag === 'INPUT' || tag === 'TEXTAREA';
+  const typing = isTypingTarget(ev.target);
   const cur = current();
+  // A checkbox switch is a button in every way that matters here: Enter toggles it (Space already does, natively)
+  // and the arrows keep driving the game cursor. Once the cursor has moved off the switch, Enter follows the cursor.
+  if (isSwitchInput(ev.target) && ev.key === CONFIRM_KEY && !ev.repeat && (!cur || cur === ev.target)) { ev.preventDefault(); ev.target.click(); return; }
 
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === CONFIRM_KEY)) {
     engaged = true;

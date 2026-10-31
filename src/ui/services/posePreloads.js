@@ -1,6 +1,7 @@
 import { reducedMotionRequested } from '../motion.js';
 import { liteRendering } from '../performance.js';
 import { builtInFor } from '../highResArt.js';
+import { warmImageBoundsWhenIdle } from '../artBounds.js';
 
 // Share a small working set across remounts. The browser owns decoded-image
 // caching; this only bounds the preload objects retained by the game.
@@ -19,6 +20,8 @@ export function preloadPoses(key, urls) {
     // A missing high-res frame retries once with the built-in art, here, so
     // the pose never plays a blank frame while the fallback loads.
     image.onerror = () => { image.onerror = null; const fallback = builtInFor(src); if (fallback) image.src = fallback; };
+    // The first read of a pose's opaque box is a whole-canvas readback; do it in idle time once loaded.
+    image.addEventListener('load', () => warmImageBoundsWhenIdle(image), { once: true });
     image.src = src;
     return image;
   });

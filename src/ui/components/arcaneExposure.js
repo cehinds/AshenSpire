@@ -17,7 +17,7 @@ export function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = 
   )) || null;
   if (state.mode === 'immune') {
     return {
-      mode: 'immune', label, badge: 'Immune', glyph: '✧',
+      mode: 'immune', label, badge: 'Immune', glyph: 'vulnerable',
       tooltip: `${label} buildup is refused for this enemy.`,
       event: event ? { ...event } : null,
     };
@@ -36,7 +36,7 @@ export function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = 
     duration: vulnerable.duration,
   } : null;
   return {
-    mode: 'configured', label, glyph: '✧', value, threshold,
+    mode: 'configured', label, glyph: 'vulnerable', value, threshold,
     percent, fillPercent: Math.max(0, Math.min(100, percent)),
     locked, status, event: event ? { ...event } : null,
     tooltip: helpText('arcane', { value, threshold })

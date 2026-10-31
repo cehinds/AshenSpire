@@ -1,0 +1,166 @@
+import test from 'node:test';
+import '../src/engine/runCombat.js'; // binds the combat engine Core Smith card rows run
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restSmithFree } from '../src/model/gameProfileRest.js';
+import { buildActMap } from '../src/engine/actmap.js';
+import { createRng } from '../src/engine/rng.js';
+import { smithingPlan } from '../src/model/smithing.js';
+import { gameProfileRestModel, gameProfileSmithModel } from '../src/ui/models/GameProfileRestModel.js';
+const profile = resolveGameProfile('core');
+const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+function fixture() {
+  const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-ui-test' });
+  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
+  run.hp = 1; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
+  run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
+  return { run, visit };
+}
+
+test('configured Rest uses exact non-mutating previews and offers Level Up only as unavailable without points', () => {
+  const { run, visit } = fixture();
+  const before = structuredClone(run);
+  const model = gameProfileRestModel(registries, run, visit);
+  assert.deepEqual(model.services.map(row => row.id), ['smith', 'upgradeCard', 'levelUp']);
+  assert.equal(model.services.find(row => row.id === 'levelUp').available, false, 'no points earned yet');
+  const preview = model.services.find(row => row.id === 'smith').preview;
+  assert.equal(preview.hp, preview.maxHp);
+  assert.equal(preview.flaskCharges.hpCurrent, preview.flaskCharges.hp);
+  assert.deepEqual(run, before, 'opening or cancelling a review has no transaction to undo');
+});
+
+test('a free Smith quote and shared review agree with the configured commit at zero stones', () => {
+  const { run, visit } = fixture();
+  const before = structuredClone(run);
+  const model = gameProfileRestModel(registries, run, visit);
+  const candidate = model.smith.candidates.find(row => model.smithPreviews.get(row.itemRef).available);
+  assert.ok(candidate);
+  assert.equal(candidate.cost, 0); assert.equal(candidate.shortfall, 0); assert.equal(candidate.affordable, true);
+  const review = gameProfileSmithModel(registries, model.smith, model.smithPreviews, candidate.itemRef, after => `HP ${after.hp}`);
+  assert.equal(review.properties.canConfirm, true);
+  assert.equal(review.properties.selected.cost, 0);
+  assert.match(review.properties.servicePreviewHtml, /HP/);
+  assert.deepEqual(run, before);
+  const expected = model.smithPreviews.get(candidate.itemRef).preview;
+  commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
+  // The preview skips card simulation (it runs for every candidate); the commit adds the chosen item's card rows to the receipt.
+  const { lastSmithingReceipt: committed, ...rest } = run, { lastSmithingReceipt: previewed, ...expectedRest } = expected;
+  assert.deepEqual(rest, expectedRest);
+  assert.deepEqual({ ...committed, changes: committed.changes.filter(row => row.kind !== 'card'), affectedCards: previewed.affectedCards },
+    { ...previewed, changes: previewed.changes.filter(row => row.kind !== 'card') });
+  assert.equal(run.smithingStones, 0);
+  // D10: Smith being used leaves Level Up usable in the same visit (not exclusive).
+  const spent = gameProfileRestModel(registries, run, run.gameProfileRestVisits[visit.id]);
+  assert.equal(spent.services.find(row => row.id === 'smith').available, false);
+  assert.ok(spent.services.find(row => row.id === 'smith').reason);
+});
+
+test('earned Constitution selection previews its new maximum and exactly matches confirmation', () => {
+  const { run, visit } = fixture(); run.level.unspentPoints = 1;
+  const before = structuredClone(run);
+  const model = gameProfileRestModel(registries, run, visit);
+  const con = model.attributes.find(row => row.id === 'constitution');
+  assert.equal(con.available, true);
+  assert.equal(con.preview.maxHp, run.maxHp + 10);
+  assert.equal(con.preview.hp, con.preview.maxHp);
+  assert.deepEqual(run, before);
+  commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'constitution' });
+  assert.deepEqual(run, con.preview);
+});
+
+test('normal Smithing quotes keep their authored cost and affordability', () => {
+  const { run } = fixture();
+  const ordinary = smithingPlan(registries, run);
+  const free = smithingPlan(registries, run, undefined, { free: true });
+  assert.deepEqual(ordinary.candidates.map(row => row.itemRef), free.candidates.map(row => row.itemRef));
+  assert.ok(ordinary.candidates.some(row => row.cost > 0 && !row.affordable));
+  assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
+});
+
+test('the Core deck editor mints collected trained basics and rejects uncollected or legacy attack mints before mutation', async () => {
+  const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
+  const { run } = fixture();
+  const draft = createGameProfileRestDraft(run);
+  const session = openDeckEdit(registries, draft);
+  const before = structuredClone(draft);
+  const editor = deckEditorModel({ registries, run: draft });
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend', 'core.counter']);
+  assert.ok(editor.collection.filter(tile => tile.unlimited).every(tile => run.collectedCardIds.includes(tile.cardId)));
+  assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
+  assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
+  assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
+  assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
+  const removed = draft.deck.find(card => card.cardId === 'core.counter');
+  assert.equal(session.remove(removed.instanceId).ok, true);
+  assert.equal(draft.deck.length, run.deck.length - 1);
+  assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), false, 'a pristine trained basic is backed by sticky collection knowledge');
+  assert.equal(session.add('basic:core.counter').ok, true);
+  assert.equal(draft.deck.at(-1).cardId, removed.cardId);
+  assert.equal(session.confirm().ok, true);
+  assert.throws(() => commitGameProfileRest(registries, run, 'strategize', { draft }), /Unknown rest service/, 'D10: deck editing is not a rest service');
+});
+
+test('the editor follows an explicit nonempty configured basic policy without legacy equipment slots', async () => {
+  const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
+  const { run } = fixture();
+  // With training disabled, the explicit editor policy remains the fallback.
+  run.gameProfile = { ...run.gameProfile, modules: { ...run.gameProfile.modules, 'deck-training': false }, content: { ...run.gameProfile.content,
+    editor: { unlimitedBasicCards: ['core.strike'] },
+  } };
+  const model = deckEditorModel({ registries, run });
+  assert.deepEqual(model.collection.filter(tile => tile.unlimited).map(tile => tile.key), ['basic:core.strike']);
+  const slots = run.equipmentAttackSlotCount;
+  const session = openDeckEdit(registries, run);
+  assert.equal(session.add('basic:core.strike').ok, true);
+  assert.equal(run.deck.at(-1).cardId, 'core.strike');
+  assert.equal(run.deck.at(-1).equipmentRole, undefined);
+  assert.equal(run.equipmentAttackSlotCount, slots);
+  session.cancel();
+});
+
+test('arriving with full pools but a spent flask records the flask refill (review finding)', () => {
+  const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
+  run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
+  run.flaskCharges.hpCurrent = 0;
+  const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
+  assert.equal(visit.healed.hp + visit.healed.mana + visit.healed.stamina, 0);
+  assert.ok(visit.healed.flaskHp > 0);
+  assert.equal(restHealedAny(visit.healed), true);
+  assert.equal(restHealedAny({ hp: 0, mana: 0, stamina: 0 }), false, 'older saves count missing flask fields as 0');
+});
+
+test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', () => {
+  const free = fixture();
+  free.run.level.unspentPoints = 1; // Grandfather an already earned character claim.
+  const freeModel = gameProfileRestModel(registries, free.run, free.visit);
+  assert.equal(freeModel.smithFree, true);
+  assert.match(freeModel.services.find(row => row.id === 'smith').description, /for free/);
+  const paid = fixture();
+  paid.run.gameProfile = structuredClone(paid.run.gameProfile);
+  paid.run.gameProfile.content.rests.smith.free = false;
+  assert.equal(restSmithFree(paid.run), false);
+  const paidModel = gameProfileRestModel(registries, paid.run, paid.visit);
+  assert.equal(paidModel.smithFree, false);
+  assert.doesNotMatch(paidModel.services.find(row => row.id === 'smith').description, /free/i);
+  const noLevel = gameProfileSmithModel(registries, paidModel.smith, paidModel.smithPreviews, null, () => '', { all: true, levelUpOffered: false });
+  assert.doesNotMatch(noLevel.properties.consequence, /Level Up/);
+});
+
+test('rest options list available choices first with Level Up leading, and unavailable ones last', () => {
+  const none = fixture();
+  assert.deepEqual(gameProfileRestModel(registries, none.run, none.visit).services.map(row => [row.id, row.available]),
+    [['smith', true], ['upgradeCard', true], ['levelUp', false]], 'unavailable Level Up sorts after an available Smith');
+  const points = fixture(); points.run.level.unspentPoints = 1;
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.visit).services.map(row => row.id), ['levelUp', 'smith', 'upgradeCard'], 'an available Level Up comes first');
+  commitGameProfileRest(registries, points.run, 'levelUp', { attributeId: 'constitution' });
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.run.gameProfileRestVisits[points.visit.id]).services.map(row => [row.id, row.available]),
+    [['smith', true], ['upgradeCard', true], ['levelUp', false]], 'a spent Level Up drops below the open Smith');
+});

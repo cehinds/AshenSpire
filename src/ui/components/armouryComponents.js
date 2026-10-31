@@ -1,3 +1,5 @@
+import { engravedIcon } from './engravedIcon.js';
+import { uiIconText } from '../../content/uiIcons.js';
 import { t } from '../strings.js';
 import { swapOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
@@ -130,7 +132,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
 /** The image dies quietly if the file is missing — the single-file dist and file:// play depend on this. */
 function fallbackOnError(well, glyphText) {
   const image = well.querySelector('img');
-  if (image) swapOnError(image, () => Object.assign(document.createElement('span'), { textContent: glyphText }));
+  if (image) swapOnError(image, () => engravedIcon(glyphText) || Object.assign(document.createElement('span'), { textContent: uiIconText(glyphText) }));
   return well;
 }
 
@@ -145,7 +147,7 @@ export function renderInventoryItemCard(model) {
   const element = face({
     art: row.artAsset
       ? fallbackOnError(artWell({ src: assetUrl(row.artAsset), alt: '', small: true, attrs: { class: 'inventory-item-art' } }), row.icon)
-      : artWell({ glyph: row.icon || '◆', small: true, attrs: { class: 'inventory-item-art' } }),
+      : artWell({ glyph: row.icon || 'skill', small: true, attrs: { class: 'inventory-item-art' } }),
     nameNode: el('span', { class: 'on' }, el('span', { class: 'inventory-name ec-name', text: row.name })),
     trail: [
       tagChip({ label: row.category, attrs: { class: 'inventory-category' } }),
@@ -181,7 +183,7 @@ export function renderInventoryDetailCard(model, { comparisonHtml = '', action =
     titleS(detail.name, { tag: 'h4' }),
     eyebrow(`${detail.category} · ${detail.rarity} · ${detail.count} owned`, { class: 'inventory-kind' }),
     prose(detail.description),
-    detail.mods.length ? kitLine(detail.mods.map((mod) => kitItem({ glyph: '◆', name: mod })), { class: 'inventory-mods' }) : null,
+    detail.mods.length ? kitLine(detail.mods.map((mod) => kitItem({ glyph: 'skill', name: mod })), { class: 'inventory-mods' }) : null,
     detail.tags.length ? el('div', { class: 'tags inventory-tags' }, detail.tags.map((tag) => tagChip({ label: tag }))) : null,
     detail.instruction ? flavour(detail.instruction, { class: 'inventory-instruction' }) : null,
   ]);
@@ -222,10 +224,10 @@ export function renderEquipmentSetCell(model) {
   const cellData = model.properties;
   let element;
   if (cellData.state === 'next') {
-    element = optionCard({ glyph: '🔒', name: cellData.rung.name, arrow: false, disabled: true, className: 'es-cell locked compact' });
+    element = optionCard({ glyph: 'lock', name: cellData.rung.name, arrow: false, disabled: true, className: 'es-cell locked compact' });
   } else {
     const well = cellData.piece
-      ? fallbackOnError(artWell({ src: cellData.piece.image, alt: '', small: true }), '⚔')
+      ? fallbackOnError(artWell({ src: cellData.piece.image, alt: '', small: true }), 'attack')
       : artWell({ glyph: '＋', small: true, attrs: { class: 'es-empty' } });
     element = optionCard({
       art: well, name: cellData.piece ? cellData.piece.name : 'Empty', arrow: false, selected: !!cellData.active,

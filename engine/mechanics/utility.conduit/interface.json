@@ -1,0 +1,8 @@
+{
+  "mechanic": "utility.conduit",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

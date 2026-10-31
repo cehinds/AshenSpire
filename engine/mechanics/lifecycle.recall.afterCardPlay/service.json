@@ -1,0 +1,4 @@
+{
+  "mechanic": "lifecycle.recall.afterCardPlay",
+  "handlers": []
+}

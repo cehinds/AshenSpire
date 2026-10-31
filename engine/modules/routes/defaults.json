@@ -1,0 +1,16 @@
+{
+  "mode": "configured",
+  "acts": 3,
+  "prebossNodes": 7,
+  "restsPerAct": 2,
+  "hideUnknownNodes": true,
+  "restFloors": [
+    1,
+    6
+  ],
+  "branchColumns": 3,
+  "minimumThreatFloor": 3,
+  "mapMode": "fog",
+  "firstFloor": null,
+  "startNodeRefills": true
+}

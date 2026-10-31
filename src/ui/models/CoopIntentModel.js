@@ -6,10 +6,10 @@ export function coopEnemyIntent(enemy, seatId, profile = null) {
   // Presentation-only carrier on the local paced snapshot. The authoritative
   // next intent and private read remain concealed when playback completes.
   if (enemy.executingCounterIntent) return enemy.executingCounterIntent;
-  if (enemy.actorIntentRevealed) {
+  if (enemy.actorIntentRevealed || enemy.burdenRead?.visible === true) {
     const preview = enemy.intentPreviews?.[seatId] || enemy.intent || {};
     const identity = preview.profile || preview.combatProfile || profile || {};
-    return { ...preview, profile: identity, stance: combatIntentStance(preview, identity), hidden: false, revealed: true };
+    return { ...preview, ...(enemy.burdenRead?.visible ? { burdenRead: enemy.burdenRead } : {}), profile: identity, stance: combatIntentStance(preview, identity), hidden: false, revealed: true };
   }
   if (enemy.knowledgeAction && enemy.intent?.kind !== 'staggered') {
     const read = enemy.knowledgeAction.reads?.[seatId];

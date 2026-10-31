@@ -1,7 +1,7 @@
 // tools/actends.mjs — when the act opens, can the player SEE both ends of it?
 //
 // THE SENTENCE THIS EXISTS FOR is Constantine's, and it is already quoted in
-// `src/model/mapknowledge.js` as the reason the boss is lit at all:
+// `src/model/map/mapknowledge.js` as the reason the boss is lit at all:
 //
 //   "when the act starts it show the start node and the end node"
 //

@@ -1,6 +1,29 @@
+import { FORMATION_ROWS, playerFormationCell, perspectiveEnemyCellOrder } from '../../model/formationLayout.js';
 import { uiConfig } from '../../config/generated/ui.js';
 
 const GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+
+export function validatePerspectiveGrid(grid) {
+  const ids = ['enemy-back','enemy-front','extra-combatants','player'];
+  if (!Array.isArray(grid.bands) || grid.bands.length !== ids.length
+    || grid.bands.some((band, i) => band.id !== ids[i] || band.index !== i
+      || !(Number.isFinite(band.anchor?.x) && band.anchor.x > 0 && band.anchor.x < 1)
+      // Feet may stand on the cell's bottom edge (y = 1): that is where the owner wants them.
+      || !(Number.isFinite(band.anchor?.y) && band.anchor.y > 0 && band.anchor.y <= 1)
+      || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
+  for (const key of ['wide','narrow','short', ...(grid.shortLandscape ? ['shortLandscape'] : []), ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
+    const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
+    if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
+      || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
+      || p.top + p.rowHeight * ids.length > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
+  }
+  if (!Number.isFinite(grid.footprintInsetPx) || grid.footprintInsetPx < 0) throw new Error('Invalid perspective footprint clearance');
+  if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0) || !(grid.enemyMiniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
+  if (!(grid.desktopMiniHudScale > 0) || !(grid.desktopEnemyMiniHudScale > 0)) throw new Error('Invalid perspective desktop HUD scale');
+  return grid;
+}
+validatePerspectiveGrid(GRID);
+
 
 // Spread k actors evenly over a rank of `lanes`: one stands in the middle
 // lane, two take the outer lanes, three fill the rank.
@@ -16,10 +39,26 @@ export function perspectiveLanePattern(count, lanes) {
 // foot anchor (its shadow) is where the sprite's feet stand. Enemies fill the
 // back rank first, then the front rank; the player's party shares one rank.
 // Cell IDs stay gameplay addresses: column = depth (outer = back), row = lane.
-export function alternativeFormation(plan, width, height, narrow) {
+// The landscape strip's ranks are tuned for a ~146px field. On a taller or narrower one the same skew shears the grid
+// too far: a back-rank cell's artwork width is laneWidth - 2*skew*cellHeight, the lane itself narrows by the shear
+// (laneWidth = (A - 4*skew*rowHeight*H)/lanes, A the grid's width) and at 844x240 the width clamped to 1px. The skew is
+// capped so the artwork keeps at least `minArtLaneFraction` (m) of the UNSHEARED lane width A/lanes:
+//   (A - 4srH)/L - 2srH >= m*A/L   =>   s <= A*(1 - m) / (rowHeight*H*(4 + 2L)).
+export function shortLandscapeProfile(width, height, lanes = 3) {
+  const near = GRID.shortLandscape;
+  const area = width * (near.right - near.left);
+  const cap = area * (1 - near.minArtLaneFraction) / (near.rowHeight * height * (4 + 2 * lanes));
+  return near.skew <= cap ? near : { ...near, skew: cap };
+}
+
+export function alternativeFormation(plan, width, height, narrow, presentation = {}) {
   // A short strip (landscape phone) has no room for depth above the bodies'
   // overhead controls; its ranks sit low and close together.
-  const profile = height < GRID.shortBelowPx ? GRID.short : narrow ? GRID.narrow : GRID.wide;
+  const formFactor = presentation.formFactor || (narrow ? 'mobile' : width <= 1024 ? 'tablet' : 'desktop');
+  // Owner 2026-10-28: a short LANDSCAPE strip (phone on its side, min width as the layout's own 600px container query)
+  // stands its ranks low so the bodies get the height; a short portrait field keeps the original short profile.
+  const shortProfile = width >= 600 && GRID.shortLandscape ? shortLandscapeProfile(width, height, plan.rows || 3) : GRID.short;
+  const profile = height < GRID.shortBelowPx ? shortProfile : GRID.profiles?.[formFactor] || (narrow ? GRID.narrow : GRID.wide);
   const lanes = plan.rows || 3;
   // The grid is sheared: every row slides right in proportion to its height
   // above the party's baseline, so lanes run on a diagonal and cells are
@@ -27,45 +66,46 @@ export function alternativeFormation(plan, width, height, narrow) {
   // The party's name and meters sit below its feet; on a short field the
   // whole grid rises together so they stay inside the field and no rank
   // overlaps another.
-  const playerFoot = height * profile.playerRowHeight * GRID.footFraction.player;
-  const lift = Math.max(0, height * profile.playerTop + playerFoot - (height - GRID.playerBelowFootPx));
-  const baseline = height * (profile.playerTop + profile.playerRowHeight) - lift;
+  const rowHeight = height * profile.rowHeight;
+  const baseline = height * (profile.top + 4 * profile.rowHeight);
   const shear = y => profile.skew * (baseline - y);
-  // The enemy back rank also steps right by a fraction of a lane, so its
-  // figures stand clear of the front rank's; the lanes narrow to keep it in.
-  const backShift = GRID.backRankShift || 0;
-  const laneWidth = (width * (profile.right - profile.left) - shear(height * profile.enemyTop - lift)) / (lanes + backShift);
+  const laneWidth = Math.max(1, (width * (profile.right - profile.left)
+    - shear(height * profile.top)) / lanes);
   const place = cell => {
     const enemy = cell.side ? cell.side === 'enemy' : Number(cell.cell.slice(1)) > plan.columns;
-    // Enemy column 0 is the outermost (back) column; the player's front
-    // column has no perspective rank.
     if (!enemy && cell.column > 0) return null;
-    const rank = enemy ? (cell.column === 0 ? 0 : 1) : 0;
+    const rank = enemy ? Math.min(2, cell.column) : 0;
+    const role = enemy ? ['enemy-back','enemy-front','extra'][rank] : 'player';
+    const band = GRID.bands.find(b => b.id === (role === 'extra' ? 'extra-combatants' : role));
     const lane = enemy ? cell.row : lanes - 1 - cell.row;
-    const rowHeight = height * (enemy ? profile.enemyRowHeight : profile.playerRowHeight);
-    const foot = rowHeight * (enemy ? GRID.footFraction.enemy : GRID.footFraction.player);
-    const top = height * (enemy ? profile.enemyTop : profile.playerTop) + rank * rowHeight - lift;
-    const ground = top + foot;
-    const laneLeft = width * profile.left + (lane + (enemy && rank === 0 ? backShift : 0)) * laneWidth;
-    // `box` is the cell's unsheared rectangle at its mid-height; `skew` shears
-    // it about that centre line into the drawn parallelogram.
+    const top = height * profile.top + band.index * rowHeight;
+    const ground = top + band.anchor.y * rowHeight;
+    // A short strip has no room for a lane-wide bar: it would lie across the neighbouring
+    // lane's body. The profile may narrow the HUD to a fraction of the lane, kept centred.
+    const hudWidth = laneWidth * (profile.hudWidthFraction ?? 1), hudInset = (laneWidth - hudWidth) / 2; // hudCenterOnBody (desktop, widescreen): the bar is centred on the body's x, not the lane's.
+    const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
-    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank,
+    const bodyX = laneLeft + band.anchor.x * laneWidth + shear(ground);
+    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
-      x: laneLeft + laneWidth / 2 + shear(ground), ground, fitGround: ground,
+      x: bodyX, ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
       width: Math.min(laneWidth * GRID.bodyWidthFraction, GRID.bodyWidthMaxPx),
-      artWidth: laneWidth, depth: enemy ? (rank === 0 ? GRID.depth.back : GRID.depth.front) : GRID.depth.player,
-      layer: enemy ? rank : 2 };
+      artWidth: laneWidth, miniHudLeft: profile.hudCenterOnBody ? bodyX - hudWidth / 2 + GRID.miniHudInsetPx : left + profile.skew * rowHeight / 2 + GRID.miniHudInsetPx + hudInset,
+      miniHudWidth: hudWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
+  // Display the full four-band lattice even when Core forbids extra-row
+  // occupancy. Visual-only cells never enter the gameplay/targeting cell map.
+  const extraVisualCells = Array.from({ length: lanes }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}5`, row, column: 2, side: 'enemy', visualOnly: true }))
+    .filter(cell => !plan.cells.some(existing => existing.cell === cell.cell)).map(place);
+  plan.visualCells = [...plan.cells, ...extraVisualCells];
   const cellAt = (side, rank, lane) => plan.cells.find(c => c.side === side && c.rank === rank && c.lane === lane);
   const enemies = plan.slots.filter(slot => slot.side === 'enemy');
   const friends = plan.slots.filter(slot => slot.side !== 'enemy');
-  // Back rank first, spread across the lanes; the remainder fills the front.
-  const back = Math.min(enemies.length, lanes);
-  const enemyCells = [...perspectiveLanePattern(back, lanes).map(lane => cellAt('enemy', 0, lane)),
-    ...perspectiveLanePattern(enemies.length - back, lanes).map(lane => cellAt('enemy', 1, lane))];
+  // Renderer fallback and the engine use the same default address order.
+  const enemyCells = perspectiveEnemyCellOrder({ rows: lanes, extraCells: plan.cells.filter(c => c.formationRole === 'extra') })
+    .map(address => plan.cells.find(cell => cell.side === 'enemy' && cell.cell === address)).filter(Boolean);
   // The lead player keeps the lane of their gameplay cell; others fill the rest.
   const lead = friends.length ? lanes - 1 - friends[0].row : 0;
   const friendLanes = [lead, ...Array.from({ length: lanes }, (_, i) => i).filter(i => i !== lead)];
@@ -75,6 +115,17 @@ export function alternativeFormation(plan, width, height, narrow) {
     // occupied cell rather than losing its geometry.
     ...enemies.map((slot, i) => ({ ...(enemyCells[i] ?? enemyCells[i % enemyCells.length]), id: slot.id })),
   ];
+  if (presentation.formationOccupancy?.length) {
+    const dimensions = { columns: plan.columns, rows: plan.rows, perspective: true };
+    const occupied = new Map(presentation.formationOccupancy.map(actor => [actor.id,
+      actor.side === 'player' ? playerFormationCell(actor.cell, dimensions) : actor.cell]));
+    plan.slots = plan.slots.map(slot => {
+      const cell = plan.cells.find(cell => cell.cell === occupied.get(slot.id) && cell.side === slot.side);
+      return cell ? { ...cell, id: slot.id } : slot;
+    });
+  }
+  // All four bands occupy the same space whether extra occupancy is enabled or not.
+  plan.visualBands = GRID.bands.map(band => ({ ...band, top: height * profile.top + band.index * rowHeight, height: rowHeight }));
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
   return plan;
 }
@@ -93,18 +144,36 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const ratio = !enemy ? 1 : low ? .50 : Math.min(1.3, a.ratio);
     // Owner (2026-10-12): an enemy class stands one height in every rank, so
     // the rank depth shrink applies to the party only.
-    const requested = height * (narrow ? .46 : .73) * ratio * (enemy ? 1 : a.slot.depth);
-    const widthLimit = Math.min(width * (narrow ? (sideCount > 2 ? .24 : .34) : (sideCount > 2 ? .20 : .31)),
-      a.slot.artWidth ? a.slot.artWidth * .96 : Infinity);
+    const requested = height * (enemy ? (narrow ? .46 : .73) : (narrow ? .46 : .31)) * ratio * (enemy ? 1 : a.slot.depth * GRID.playerArtworkScale);
+    // Reserve the complete artwork envelope, including weapons and capes,
+    // inside the common horizontal intersection of the cell's two edges.
+    const boxWidth = a.slot.box ? a.slot.box.width - Math.abs(a.slot.box.skew || 0) * a.slot.box.height - 2 * Math.abs((a.slot.box.skew || 0) * (a.slot.box.top + a.slot.box.height / 2 - a.slot.ground)) : a.slot.artWidth;
+    // The browser rounds scaled sprite boxes separately from their alpha bounds.
+    // Half a physical pixel reserves that rounding at each hard cell edge.
+    const widthLimit = Math.min(width - 12, boxWidth ? Math.max(1, boxWidth - 2 * (GRID.footprintInsetPx + .5)) : Infinity);
+    // Enemy foot anchors can move inward inside their own cell after fitting.
+    // Reserve screen edges at that available centre as well as the preferred
+    // side-biased anchor, so a newly occupied right lane cannot shrink the
+    // entire enemy class before its footprint receives the inset.
+    const box = enemy ? a.slot.box : null;
+    const cellCentre = box ? box.left + box.width / 2 + (box.skew || 0) * (box.top + box.height / 2 - a.slot.ground) : a.slot.x;
+    const edgeRoom = Math.max(Math.min(a.slot.x - 5, width - a.slot.x - 5),
+      Math.min(cellCentre - 5, width - cellCentre - 5));
     // A 130px landscape field can leave less headroom than the measured
     // Inspect/intent union. Keep one cell-height of readable silhouette in
     // that impossible case; the controls are packed independently, so they
     // must not collapse the body and make composition move its foot anchor.
     const shortFloor = height < GRID.shortBelowPx ? Math.min(a.slot.box?.height ?? 1, requested) : 1;
-    const visibleHeight = Math.max(shortFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
+    // A spacious rank retains its approved body size when the readable HUD grows.
+    // Its HUD is packed separately; viewport, cell width and edge bounds remain hard.
+    const spaciousFloor = enemy && !narrow && height >= GRID.shortBelowPx && sideCount <= 3
+      ? Math.min(height * GRID.spaciousEnemyClassHeightFraction * ratio * Math.min(1, a.multiplier || 1),
+        a.slot.ground - (a.artLeading ?? a.leading) - 6, widthLimit * a.visibleHeight / a.visibleWidth,
+        2 * edgeRoom * a.visibleHeight / a.visibleWidth) : 1;
+    const visibleHeight = Math.max(shortFloor, spaciousFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
       a.slot.ground - a.leading - 6, widthLimit * a.visibleHeight / a.visibleWidth,
-      2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth));
-    return { a, enemy, low, visibleHeight };
+      2 * edgeRoom * a.visibleHeight / a.visibleWidth));
+    return { a, enemy, low, visibleHeight: Math.min(visibleHeight, widthLimit * a.visibleHeight / a.visibleWidth) };
   });
   // Every enemy of one class takes the class's smallest fitted height, so no
   // member outgrows its own lane, headroom or edge. Low creatures stay at half
@@ -125,4 +194,15 @@ export function perspectiveCellContains(box, x, y) {
   if (y < box.top || y > box.top + box.height) return false;
   const centre = box.left + box.width / 2 + (box.skew || 0) * (box.top + box.height / 2 - y);
   return Math.abs(x - centre) <= box.width / 2;
+}
+
+// The height the overhead group (intent + health row) takes above a head. Pure config, no DOM and no selection
+// state: a selected frame hides its meters, so a measured height would refit the art on every click (owner
+// 2026-10-28). Desktop and widescreen draw the taller health row; a short desktop window steps it down (the
+// `min-width: 1200px and max-height: 800px` rule in styles/combat-target-responsive.css).
+export function overheadGroupHeightPx(grid, { wide = false, shortWindow = false, tall = true } = {}) {
+  // `tall` is the 1200px-wide window the taller health row is drawn at: a desktop form factor at 1101-1199 wide
+  // still renders the phone-height group.
+  if (!wide || !tall) return grid.miniHudGroupHeightPx;
+  return shortWindow ? grid.desktopShortMiniHudGroupHeightPx : grid.desktopMiniHudGroupHeightPx;
 }

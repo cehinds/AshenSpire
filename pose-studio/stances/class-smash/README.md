@@ -19,9 +19,9 @@ class actions and co-op remain outside this change; co-op continuation is paused
 
 ## Review artwork
 
-![Three approved five-slot Smash sequences](review/combined-review.gif)
+![Three approved five-slot Smash sequences](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/class-smash/review/combined-review.gif)
 
-[Interactive review](review/index.html) · [All fifteen slots](review/contact-sheet.png)
+[Interactive review](review/index.html) · [All fifteen slots](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/class-smash/review/contact-sheet.png)
 · [Review source hashes and alignment](review/review-sources.json).
 Review exposures are **350 ms per slot**, hard cuts without synthesized poses.
 Gameplay uses the existing Normal **195 ms** action beat, with actual effect

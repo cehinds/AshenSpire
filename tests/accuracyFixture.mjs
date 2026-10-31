@@ -1,12 +1,17 @@
 // Pin a real registered Accuracy outcome so transactional dispatch preserves it.
 import { createRng } from '../src/engine/rng.js';
-export function primeAccuracyRolls(combat, { die = 20, count = 1 } = {}) {
+export function primeAccuracyRolls(combat, { die = 20, count = 1, drawsPerAttack = 1 } = {}) {
+  if (!Number.isSafeInteger(drawsPerAttack) || drawsPerAttack < 1) throw new Error('drawsPerAttack must be a positive integer');
   const original = combat.rng.getCounters();
   const search = createRng(combat.rng.seed, original);
   let streak = 0, start = original.combatAvoidance || 0;
   for (let attempts = 0; attempts < 1000000; attempts++) {
     const before = search.getCounters().combatAvoidance;
-    if (search.int('combatAvoidance', 1, 20) === die) {
+    const attacker = search.int('combatAvoidance', 1, 20);
+    // Pin the selected attacker die; callers can reserve additional draws
+    // for advantage or disadvantage. Normal Core attacks draw only once.
+    for (let draw = 1; draw < drawsPerAttack; draw++) search.int('combatAvoidance', 1, 20);
+    if (attacker === die) {
       if (!streak) start = before;
       if (++streak === count) {
         combat.rng.restoreCounters({ ...original, combatAvoidance: start });

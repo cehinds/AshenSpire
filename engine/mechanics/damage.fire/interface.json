@@ -1,0 +1,8 @@
+{
+  "mechanic": "damage.fire",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

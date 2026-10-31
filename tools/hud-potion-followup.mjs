@@ -15,7 +15,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
 
 const sourceReceipt = () => ({
-  balance: read('src/content/balance.js'),
+  balance: read('content/source/balanceUi.json'),
   main: read('src/main.js'),
   input: read('src/ui/input.js'),
   combat: read('src/ui/screens/combat.js'),
@@ -24,7 +24,7 @@ const sourceReceipt = () => ({
 
 export function sourceFindings(s) {
   const bad = [];
-  if (!/main:\s*\{\s*scaleByMax:\s*true,\s*maxViewportPct:\s*40,\s*availableWidthPct:\s*82\s*\}/.test(s.balance)
+  if (!/"main":\s*\{\s*"scaleByMax":\s*true,\s*"maxViewportPct":\s*40,\s*"availableWidthPct":\s*82\s*\}/.test(s.balance)
       || !s.main.includes("setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`)")
       || !s.main.includes("setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`)")) {
     bad.push('S1 available-width authority is not authored at 82 and projected to the CSS variable');
@@ -104,7 +104,7 @@ export function receiptFindings(r) {
 function runSourceSelftest() {
   const clean = sourceReceipt();
   const plants = [
-    ['82 percent changes to 81', 'S1 ', (s) => ({ ...s, balance: s.balance.replace('availableWidthPct: 82', 'availableWidthPct: 81') })],
+    ['82 percent changes to 81', 'S1 ', (s) => ({ ...s, balance: s.balance.replace('"availableWidthPct": 82', '"availableWidthPct": 81') })],
     ['Vitals stops consuming the viewport cap', 'S2 ', (s) => ({ ...s, css: s.css.replace(
       /(\.topbar\.combat-hud\.shared-hud \.hud-vitals-panel \{[\s\S]*?)width: min\(100%, var\(--hud-resource-available-vw\)\);/,
       '$1width: 100%;',

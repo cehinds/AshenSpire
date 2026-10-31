@@ -1,15 +1,15 @@
 name: art-migrate
 
 # THE ART PIPELINE, AUTOMATED (owner, 2026-10-11). Art does not enter `dev`
-# through this repository any more: it enters through cehinds/AshenSpire-art
+# through this repository any more: it enters through cehinds/AI-Art
 # and its release, then a pin here (CONTRIBUTING.md, ground rule 2). This
 # workflow moves the two hand-offs that a person used to make.
 #
 #   1. INTAKE (pull_request_target into dev). A pull request that adds or modifies an
 #      art file (tools/art-intake.mjs: the high tier assets/, the fonts, the
-#      score renders, map-detail/, art/; NOT assets-mobile/, the light tier,
-#      which stays tracked here) is moved: its art files are staged in a branch
-#      `intake/ashenspire-pr-<N>` of cehinds/AshenSpire-art, and a pull request
+#      score renders, map-detail/, art/, assets-mobile/ and assets-display/
+#      images; game-owned display JSON/Markdown catalogs stay here) is moved: its art files are staged in a branch
+#      `intake/ashenspire-pr-<N>` of cehinds/AI-Art, and a pull request
 #      "Intake art from AshenSpire#<N>" is opened or updated there. A sticky
 #      comment on this pull request links it. THIS JOB THEN FAILS on purpose:
 #      the art must leave this pull request, so it never lands on dev.
@@ -21,7 +21,7 @@ name: art-migrate
 #      cleanup runs in the close-intake job. Neither runs any head code.
 #
 #   2. PIN BUMP (schedule every 6 h, workflow_dispatch, repository_dispatch
-#      `art-release`). When the art repository's newest hd-assets-v<N> release
+#      `art-release`). When the art repository's newest ashenspire-hd-assets-v<N> release
 #      is newer than art-release.json, this job writes the new pin (tag, zip
 #      and each pack's sha256, from the release's own .sha256 files), runs
 #      `node tools/art-manifest.mjs --write`, and opens a pull request into dev
@@ -58,7 +58,7 @@ name: art-migrate
 #     failure and no secret in any step's environment.
 #
 # SECRETS. ART_REPO_WRITE_TOKEN (owner adds it): contents and pull-requests
-# write on cehinds/AshenSpire-art, and (owner, 2026-10-11) contents and
+# write on cehinds/AI-Art, and (owner, 2026-10-11) contents and
 # pull-requests write on this repository too. In the intake job it is read only
 # by the push and gh steps, and only for a pull request from this repository.
 # pull_request_target runs a fork's pull request with the base's secrets in
@@ -84,13 +84,15 @@ permissions:
   contents: read
 
 env:
-  ART_REPO: cehinds/AshenSpire-art
+  ART_REPO: cehinds/AI-Art
 
 jobs:
   intake:
     if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Source libraries can contain hundreds of PNGs. The checkout and raw-blob
+    # transfer need time to finish before the guarded push and PR creation.
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
@@ -169,10 +171,10 @@ jobs:
         if: steps.gate.outputs.state == 'migrate'
         uses: actions/checkout@v5
         with:
-          repository: cehinds/AshenSpire-art
+          repository: cehinds/AI-Art
           token: ${{ secrets.ART_REPO_WRITE_TOKEN }}
           path: art-repo
-          ref: main
+          ref: ashenspire
           fetch-depth: 1
           persist-credentials: false
 
@@ -198,7 +200,7 @@ jobs:
           else
             status=$?
             if [ "$status" -ne 2 ]; then echo "::error title=Art repository unreachable::could not list $BRANCH in the art repository"; exit 1; fi
-            echo "No intake branch $BRANCH yet: this run starts from main."
+            echo "No intake branch $BRANCH yet: this run starts from ashenspire."
           fi
 
       # No token in this step: it runs the base tool and local git only.
@@ -214,7 +216,7 @@ jobs:
           # Build on the intake branch when an earlier run staged it (the fetch step
           # before this one put it at refs/remotes/origin/$branch), so files staged
           # earlier and since removed from this pull request stay on it. Only a branch
-          # that does not exist yet starts from main.
+          # that does not exist yet starts from ashenspire.
           if git rev-parse --verify -q "refs/remotes/origin/$branch" >/dev/null; then
             git checkout -B "$branch" "origin/$branch"
           else
@@ -262,24 +264,24 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo "Art files from [$REPO#$PR](https://github.com/$REPO/pull/$PR), at the paths the art repository keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`)."
+            echo "Art files from [$REPO#$PR](https://github.com/$REPO/pull/$PR), at the paths the art repository keeps them under (\`hd/assets/\`, \`light/assets/\`, \`common/\`, \`art/\`)."
             echo
-            echo "Merge this, and the release workflow publishes the next \`hd-assets-v<N>\`. The AshenSpire pin-bump job (every 6 hours) then opens the \`art-release.json\` bump."
+            echo "Merge this, and the release workflow publishes the next \`ashenspire-hd-assets-v<N>\`. The AshenSpire pin-bump job (every 6 hours) then opens the \`art-release.json\` bump."
             echo
             echo "Files:"
-            # Everything the intake branch carries against the art repository's main,
+            # Everything the intake branch carries against the art repository's ashenspire branch,
             # including files staged by earlier runs and since removed from the source.
             # To a file first, then one sed that prints the first 200: no early-closing
             # pipe, so a long list cannot SIGPIPE the step under pipefail.
-            git -C "$GITHUB_WORKSPACE/art-repo" diff --name-only origin/main HEAD > "$RUNNER_TEMP/intake-files.txt"
+            git -C "$GITHUB_WORKSPACE/art-repo" diff --name-only origin/ashenspire HEAD > "$RUNNER_TEMP/intake-files.txt"
             sed -n '1,200{s/^/- `/; s/$/`/; p}' "$RUNNER_TEMP/intake-files.txt"
           } > art-pr-body.md
           existing="$(gh pr list --repo "$ART_REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
-            gh pr edit "$existing" --repo "$ART_REPO" --body-file art-pr-body.md >/dev/null
+            gh pr edit "$existing" --repo "$ART_REPO" --base ashenspire --body-file art-pr-body.md >/dev/null
             url="$(gh pr view "$existing" --repo "$ART_REPO" --json url --jq .url)"
           else
-            url="$(gh pr create --repo "$ART_REPO" --base main --head "$BRANCH" --title "Intake art from AshenSpire#$PR" --body-file art-pr-body.md)"
+            url="$(gh pr create --repo "$ART_REPO" --base ashenspire --head "$BRANCH" --title "Intake art from AshenSpire#$PR" --body-file art-pr-body.md)"
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Art pull request: $url"
@@ -327,11 +329,11 @@ jobs:
               blocked-fork)
                 echo "### Art in this pull request: manual path"
                 echo
-                echo "This pull request comes from a fork, so this workflow cannot push to [$ART_REPO](https://github.com/$ART_REPO). Remove the art files from this pull request, and open a pull request in $ART_REPO that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). Then the release and the pin bump follow as above." ;;
+                echo "This pull request comes from a fork, so this workflow cannot push to [$ART_REPO](https://github.com/$ART_REPO). Remove the art files from this pull request, and open a pull request in $ART_REPO that carries them at the paths it keeps them under (\`hd/assets/\`, \`light/assets/\`, \`common/\`, \`art/\`). Then the release and the pin bump follow as above." ;;
               blocked-token)
                 echo "### Art in this pull request: manual path"
                 echo
-                echo "The repository secret ART_REPO_WRITE_TOKEN is not set, so this workflow cannot open the art pull request. Remove the art files from this pull request, and open a pull request in [$ART_REPO](https://github.com/$ART_REPO) that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). The owner can add the secret to enable this automatically." ;;
+                echo "The repository secret ART_REPO_WRITE_TOKEN is not set, so this workflow cannot open the art pull request. Remove the art files from this pull request, and open a pull request in [$ART_REPO](https://github.com/$ART_REPO) that carries them at the paths it keeps them under (\`hd/assets/\`, \`light/assets/\`, \`common/\`, \`art/\`). The owner can add the secret to enable this automatically." ;;
             esac
           } > comment.md
           if [ "$STATE" != none ] && [ "$STATE" != skip ]; then
@@ -425,11 +427,11 @@ jobs:
         run: |
           set -euo pipefail
           newest="$(gh release list --repo "$ART_REPO" --limit 100 --json tagName --jq '.[].tagName' \
-            | { grep -E '^hd-assets-v[0-9]+$' || true; } | sed 's/^hd-assets-v//' | sort -n | tail -1)"
-          pinned="$(node -p "require('./art-release.json').tag.replace(/^hd-assets-v/, '')")"
+            | { grep -E '^ashenspire-hd-assets-v[1-9][0-9]*$' || true; } | sed 's/^ashenspire-hd-assets-v//' | sort -n | tail -1)"
+          pinned="$(node -p "require('./art-release.json').tag.replace(/^(?:ashenspire-)?hd-assets-v/, '')")"
           echo "pinned: v$pinned; newest art release: v${newest:-none}"
           if [ -z "$newest" ] || [ "$newest" -le "$pinned" ]; then echo "tag=" >> "$GITHUB_OUTPUT"; echo "The pin is current."; exit 0; fi
-          tag="hd-assets-v$newest"
+          tag="ashenspire-hd-assets-v$newest"
           if [ -n "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "bot/art-pin-$tag" --state all --json number --jq '.[0].number // empty')" ]; then
             echo "tag=" >> "$GITHUB_OUTPUT"; echo "A pull request for $tag already exists."; exit 0
           fi
@@ -446,7 +448,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
           const tag = process.env.TAG;
-          const n = tag.replace(/^hd-assets-v/, '');
+          const n = tag.replace(/^ashenspire-hd-assets-v/, '');
           const files = { high: `hd-assets-v${n}.zip.sha256`, light: `light-assets-v${n}.zip.sha256`, common: `common-assets-v${n}.zip.sha256` };
           const sums = {};
           for (const [pack, sumFile] of Object.entries(files)) {

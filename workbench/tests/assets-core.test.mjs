@@ -1,3 +1,5 @@
+// Synthetic copied-tree sandbox; production gallery tests use verified packs.
+process.env.ASHEN_ART_SOURCE='trees';
 // node --test workbench/tests/assets-core.test.mjs — the Asset Gallery's listing core: the tracked
 // trees and the fetched packs, header dimensions, the pack status, and the path checks.
 import test from 'node:test';

@@ -1,9 +1,10 @@
 """Refresh explicit authoring coverage from normalized, class-specific families."""
 import json
 from pathlib import Path
+from art_authoring import authoring_root
 
 def refresh():
-    root=Path(__file__).resolve().parents[1]/'pose-studio/renewal'
+    root=authoring_root(Path(__file__).resolve().parents[1])/'pose-studio/renewal'
     path=root/'manifest.json'
     manifest=json.loads(path.read_text(encoding='utf-8'))
     families={'reaver/sword':{'rig':'reaver-sword.rig.json','folder':''}}

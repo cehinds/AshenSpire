@@ -1,0 +1,1096 @@
+{
+  "rows": [
+    {
+      "probeVersion": 3,
+      "delivery": "local pack-shaped; own copied packs and objects",
+      "packPins": {
+        "schema": 1,
+        "tier": "light",
+        "packs": {
+          "common": {
+            "index": "packs/common-107f16499cea.json",
+            "sha256": "107f16499cead5e6b15e04e101b1eea4fdd771e274b6b3c24eed83c477777ef3",
+            "ids": 821,
+            "objects": 583,
+            "bytes": 76899181
+          },
+          "light": {
+            "index": "packs/light-848d61547eb0.json",
+            "sha256": "848d61547eb0c234b73dc584accbc5e87bd09a0e51b187fa16180d719dd78b79",
+            "ids": 7348,
+            "objects": 7298,
+            "bytes": 41923125
+          }
+        },
+        "fonts": {
+          "file": "packs/fonts-c278c936e856.js",
+          "sha256": "c278c936e856b37d6d6d70b0c949953aa036bae3b779f477f0348a58ec1b5cf6",
+          "faces": 15
+        }
+      },
+      "assetBase": {
+        "base": "./"
+      },
+      "source": "25aed2598167a30cdde0ced7813f5e0737ff95cf",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "baseline-25aed",
+      "file": "/workspace/scratch/mobile-performance/pack-core-renewal-final-25aed/AshenSpire.html",
+      "sha256": "0e20099f6b8e27f470533cb91423198110b084dc888b9aca95f6ac7943e35001",
+      "version": "0.7.1.1773",
+      "digest": "1c4155a92c",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.504774000000907,
+            "taskSeconds": 0.008766000000000052,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 3331.7999999988824,
+          "inputAt": 12937.599999999627,
+          "upAt": 12937.799999998882,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 816.8000000000011,
+          "longTaskTotalMs": 1994,
+          "renderMetrics": {
+            "TaskDuration": 2.539556,
+            "ScriptDuration": 1.014655,
+            "LayoutDuration": 0.10658000000000001,
+            "RecalcStyleDuration": 0.9738330000000001,
+            "LayoutCount": 53,
+            "RecalcStyleCount": 131
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5059650000002875,
+            "taskSeconds": 0.00558200000000042,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 4108.699999999255,
+          "inputAt": 24523,
+          "upAt": 24523.099999999627,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 750,
+          "longTaskTotalMs": 2782,
+          "renderMetrics": {
+            "TaskDuration": 3.715368999999999,
+            "ScriptDuration": 1.253812,
+            "LayoutDuration": 0.16224,
+            "RecalcStyleDuration": 1.4514960000000001,
+            "LayoutCount": 78,
+            "RecalcStyleCount": 190
+          }
+        }
+      ],
+      "errors": [],
+      "assetDelivery": {
+        "builtInArt": "light",
+        "requestedObjects": 123,
+        "escapedAssetRoutes": [],
+        "assetFailures": []
+      },
+      "idle": {
+        "seconds": 2.5035210000005463,
+        "taskSeconds": 0.020083,
+        "scriptSeconds": 0.007555,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 1000,
+        "Nodes": 2810,
+        "Documents": 13,
+        "JSEventListeners": 1201,
+        "JSHeapUsedSize": 50651588,
+        "JSHeapTotalSize": 131375104
+      },
+      "memoryAfter": {
+        "connectedElements": 878,
+        "Nodes": 4286,
+        "Documents": 4,
+        "JSEventListeners": 2306,
+        "JSHeapUsedSize": 68764356,
+        "JSHeapTotalSize": 119422976
+      }
+    },
+    {
+      "probeVersion": 3,
+      "delivery": "local pack-shaped; own copied packs and objects",
+      "packPins": {
+        "schema": 1,
+        "tier": "light",
+        "packs": {
+          "common": {
+            "index": "packs/common-107f16499cea.json",
+            "sha256": "107f16499cead5e6b15e04e101b1eea4fdd771e274b6b3c24eed83c477777ef3",
+            "ids": 821,
+            "objects": 583,
+            "bytes": 76899181
+          },
+          "light": {
+            "index": "packs/light-848d61547eb0.json",
+            "sha256": "848d61547eb0c234b73dc584accbc5e87bd09a0e51b187fa16180d719dd78b79",
+            "ids": 7348,
+            "objects": 7298,
+            "bytes": 41923125
+          }
+        },
+        "fonts": {
+          "file": "packs/fonts-c278c936e856.js",
+          "sha256": "c278c936e856b37d6d6d70b0c949953aa036bae3b779f477f0348a58ec1b5cf6",
+          "faces": 15
+        }
+      },
+      "assetBase": {
+        "base": "./"
+      },
+      "source": "84ede677510dabf1b5dd054de29d4905d92b55d6",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "candidate-84ede-hand-tools",
+      "file": "/workspace/scratch/mobile-performance/pack-core-renewal-final-84ede/AshenSpire.html",
+      "sha256": "b021155224b919acac4ac9cd5a49a10d488942fb0da008a8a5029b4b04e14cec",
+      "version": "0.7.1.1773",
+      "digest": "2a8d63b26f",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5032739999987825,
+            "taskSeconds": 0.011395000000000044,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 3721.9000000003725,
+          "inputAt": 12577.699999999255,
+          "upAt": 12577.799999998882,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 883.3000000000011,
+          "longTaskTotalMs": 2413,
+          "renderMetrics": {
+            "TaskDuration": 2.882192,
+            "ScriptDuration": 1.209474,
+            "LayoutDuration": 0.114599,
+            "RecalcStyleDuration": 1.133728,
+            "LayoutCount": 51,
+            "RecalcStyleCount": 126
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.6088330000002316,
+            "taskSeconds": 0.3639580000000002,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 16858.300000000745,
+          "inputAt": 24174.199999999255,
+          "upAt": 24174.39999999851,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 4733.199999999997,
+          "longTaskTotalMs": 15335.300000000745,
+          "renderMetrics": {
+            "TaskDuration": 16.236808,
+            "ScriptDuration": 3.856258,
+            "LayoutDuration": 0.810252,
+            "RecalcStyleDuration": 4.517004,
+            "LayoutCount": 70,
+            "RecalcStyleCount": 164
+          }
+        }
+      ],
+      "errors": [],
+      "assetDelivery": {
+        "builtInArt": "light",
+        "requestedObjects": 123,
+        "escapedAssetRoutes": [],
+        "assetFailures": []
+      },
+      "idle": {
+        "seconds": 2.5087669999993523,
+        "taskSeconds": 0.015754999999999998,
+        "scriptSeconds": 0.005319,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 1000,
+        "Nodes": 2796,
+        "Documents": 13,
+        "JSEventListeners": 1201,
+        "JSHeapUsedSize": 50703080,
+        "JSHeapTotalSize": 132423680
+      },
+      "memoryAfter": {
+        "connectedElements": 878,
+        "Nodes": 4259,
+        "Documents": 4,
+        "JSEventListeners": 2306,
+        "JSHeapUsedSize": 70186456,
+        "JSHeapTotalSize": 119685120
+      }
+    },
+    {
+      "probeVersion": 3,
+      "delivery": "local pack-shaped; own copied packs and objects",
+      "packPins": {
+        "schema": 1,
+        "tier": "light",
+        "packs": {
+          "common": {
+            "index": "packs/common-107f16499cea.json",
+            "sha256": "107f16499cead5e6b15e04e101b1eea4fdd771e274b6b3c24eed83c477777ef3",
+            "ids": 821,
+            "objects": 583,
+            "bytes": 76899181
+          },
+          "light": {
+            "index": "packs/light-848d61547eb0.json",
+            "sha256": "848d61547eb0c234b73dc584accbc5e87bd09a0e51b187fa16180d719dd78b79",
+            "ids": 7348,
+            "objects": 7298,
+            "bytes": 41923125
+          }
+        },
+        "fonts": {
+          "file": "packs/fonts-c278c936e856.js",
+          "sha256": "c278c936e856b37d6d6d70b0c949953aa036bae3b779f477f0348a58ec1b5cf6",
+          "faces": 15
+        }
+      },
+      "assetBase": {
+        "base": "./"
+      },
+      "source": "84ede677510dabf1b5dd054de29d4905d92b55d6",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "candidate-84ede-hand-tools",
+      "file": "/workspace/scratch/mobile-performance/pack-core-renewal-final-84ede/AshenSpire.html",
+      "sha256": "b021155224b919acac4ac9cd5a49a10d488942fb0da008a8a5029b4b04e14cec",
+      "version": "0.7.1.1773",
+      "digest": "2a8d63b26f",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5072989999989659,
+            "taskSeconds": 0.008761999999999937,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 3180.5,
+          "inputAt": 13071,
+          "upAt": 13071.099999999627,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 716.5999999999985,
+          "longTaskTotalMs": 1790,
+          "renderMetrics": {
+            "TaskDuration": 2.3032559999999997,
+            "ScriptDuration": 0.957,
+            "LayoutDuration": 0.09393800000000001,
+            "RecalcStyleDuration": 0.812181,
+            "LayoutCount": 49,
+            "RecalcStyleCount": 126
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5081850000005943,
+            "taskSeconds": 0.008608999999999867,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 3413,
+          "inputAt": 20034.5,
+          "upAt": 20034.699999999255,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 616.7000000000007,
+          "longTaskTotalMs": 2106,
+          "renderMetrics": {
+            "TaskDuration": 3.037756,
+            "ScriptDuration": 1.0475789999999998,
+            "LayoutDuration": 0.13554600000000003,
+            "RecalcStyleDuration": 1.065541,
+            "LayoutCount": 74,
+            "RecalcStyleCount": 190
+          }
+        }
+      ],
+      "errors": [],
+      "assetDelivery": {
+        "builtInArt": "light",
+        "requestedObjects": 123,
+        "escapedAssetRoutes": [],
+        "assetFailures": []
+      },
+      "idle": {
+        "seconds": 2.50561099999868,
+        "taskSeconds": 0.021316,
+        "scriptSeconds": 0.004167,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 1000,
+        "Nodes": 2802,
+        "Documents": 13,
+        "JSEventListeners": 1201,
+        "JSHeapUsedSize": 50736232,
+        "JSHeapTotalSize": 131375104
+      },
+      "memoryAfter": {
+        "connectedElements": 878,
+        "Nodes": 6272,
+        "Documents": 13,
+        "JSEventListeners": 3122,
+        "JSHeapUsedSize": 55201232,
+        "JSHeapTotalSize": 133472256
+      }
+    },
+    {
+      "probeVersion": 3,
+      "delivery": "local pack-shaped; own copied packs and objects",
+      "packPins": {
+        "schema": 1,
+        "tier": "light",
+        "packs": {
+          "common": {
+            "index": "packs/common-107f16499cea.json",
+            "sha256": "107f16499cead5e6b15e04e101b1eea4fdd771e274b6b3c24eed83c477777ef3",
+            "ids": 821,
+            "objects": 583,
+            "bytes": 76899181
+          },
+          "light": {
+            "index": "packs/light-848d61547eb0.json",
+            "sha256": "848d61547eb0c234b73dc584accbc5e87bd09a0e51b187fa16180d719dd78b79",
+            "ids": 7348,
+            "objects": 7298,
+            "bytes": 41923125
+          }
+        },
+        "fonts": {
+          "file": "packs/fonts-c278c936e856.js",
+          "sha256": "c278c936e856b37d6d6d70b0c949953aa036bae3b779f477f0348a58ec1b5cf6",
+          "faces": 15
+        }
+      },
+      "assetBase": {
+        "base": "./"
+      },
+      "source": "25aed2598167a30cdde0ced7813f5e0737ff95cf",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "baseline-25aed",
+      "file": "/workspace/scratch/mobile-performance/pack-core-renewal-final-25aed/AshenSpire.html",
+      "sha256": "0e20099f6b8e27f470533cb91423198110b084dc888b9aca95f6ac7943e35001",
+      "version": "0.7.1.1773",
+      "digest": "1c4155a92c",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5332460000008723,
+            "taskSeconds": 0.02387499999999987,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 4457.5999999996275,
+          "inputAt": 12740.10000000149,
+          "upAt": 12740.700000001118,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 1166.5999999999985,
+          "longTaskTotalMs": 3173,
+          "renderMetrics": {
+            "TaskDuration": 3.686197,
+            "ScriptDuration": 1.6444829999999997,
+            "LayoutDuration": 0.14676699999999998,
+            "RecalcStyleDuration": 1.315668,
+            "LayoutCount": 51,
+            "RecalcStyleCount": 125
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5109430000011344,
+            "taskSeconds": 0.02090399999999981,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 4352.799999998882,
+          "inputAt": 21614.700000001118,
+          "upAt": 21615,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 1066.7000000000007,
+          "longTaskTotalMs": 3257,
+          "renderMetrics": {
+            "TaskDuration": 3.9867779999999993,
+            "ScriptDuration": 1.5370979999999999,
+            "LayoutDuration": 0.15012999999999999,
+            "RecalcStyleDuration": 1.3662110000000003,
+            "LayoutCount": 69,
+            "RecalcStyleCount": 176
+          }
+        }
+      ],
+      "errors": [],
+      "assetDelivery": {
+        "builtInArt": "light",
+        "requestedObjects": 123,
+        "escapedAssetRoutes": [],
+        "assetFailures": []
+      },
+      "idle": {
+        "seconds": 2.5211850000014238,
+        "taskSeconds": 0.052527000000000004,
+        "scriptSeconds": 0.014503,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 1000,
+        "Nodes": 2807,
+        "Documents": 13,
+        "JSEventListeners": 1201,
+        "JSHeapUsedSize": 50705204,
+        "JSHeapTotalSize": 130850816
+      },
+      "memoryAfter": {
+        "connectedElements": 878,
+        "Nodes": 6258,
+        "Documents": 13,
+        "JSEventListeners": 3122,
+        "JSHeapUsedSize": 55150088,
+        "JSHeapTotalSize": 132947968
+      }
+    },
+    {
+      "probeVersion": 3,
+      "delivery": "local pack-shaped; own copied packs and objects",
+      "packPins": {
+        "schema": 1,
+        "tier": "light",
+        "packs": {
+          "common": {
+            "index": "packs/common-107f16499cea.json",
+            "sha256": "107f16499cead5e6b15e04e101b1eea4fdd771e274b6b3c24eed83c477777ef3",
+            "ids": 821,
+            "objects": 583,
+            "bytes": 76899181
+          },
+          "light": {
+            "index": "packs/light-848d61547eb0.json",
+            "sha256": "848d61547eb0c234b73dc584accbc5e87bd09a0e51b187fa16180d719dd78b79",
+            "ids": 7348,
+            "objects": 7298,
+            "bytes": 41923125
+          }
+        },
+        "fonts": {
+          "file": "packs/fonts-c278c936e856.js",
+          "sha256": "c278c936e856b37d6d6d70b0c949953aa036bae3b779f477f0348a58ec1b5cf6",
+          "faces": 15
+        }
+      },
+      "assetBase": {
+        "base": "./"
+      },
+      "source": "25aed2598167a30cdde0ced7813f5e0737ff95cf",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "baseline-25aed",
+      "file": "/workspace/scratch/mobile-performance/pack-core-renewal-final-25aed/AshenSpire.html",
+      "sha256": "0e20099f6b8e27f470533cb91423198110b084dc888b9aca95f6ac7943e35001",
+      "version": "0.7.1.1773",
+      "digest": "1c4155a92c",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5172419999998965,
+            "taskSeconds": 0.02847999999999984,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 4166.299999998882,
+          "inputAt": 12732.10000000149,
+          "upAt": 12732.5,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 1050,
+          "longTaskTotalMs": 2952,
+          "renderMetrics": {
+            "TaskDuration": 3.4017289999999996,
+            "ScriptDuration": 1.499616,
+            "LayoutDuration": 0.142184,
+            "RecalcStyleDuration": 1.2385229999999998,
+            "LayoutCount": 52,
+            "RecalcStyleCount": 124
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5105440000006638,
+            "taskSeconds": 0.012470000000000425,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 5013.9000000003725,
+          "inputAt": 21480.5,
+          "upAt": 21480.60000000149,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 1099.8999999999978,
+          "longTaskTotalMs": 3837,
+          "renderMetrics": {
+            "TaskDuration": 4.682677,
+            "ScriptDuration": 1.753921,
+            "LayoutDuration": 0.19111300000000003,
+            "RecalcStyleDuration": 1.709654,
+            "LayoutCount": 79,
+            "RecalcStyleCount": 186
+          }
+        }
+      ],
+      "errors": [],
+      "assetDelivery": {
+        "builtInArt": "light",
+        "requestedObjects": 123,
+        "escapedAssetRoutes": [],
+        "assetFailures": []
+      },
+      "idle": {
+        "seconds": 2.503396000000066,
+        "taskSeconds": 0.026693,
+        "scriptSeconds": 0.012361,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 1000,
+        "Nodes": 2802,
+        "Documents": 13,
+        "JSEventListeners": 1201,
+        "JSHeapUsedSize": 51425176,
+        "JSHeapTotalSize": 132161536
+      },
+      "memoryAfter": {
+        "connectedElements": 878,
+        "Nodes": 3811,
+        "Documents": 7,
+        "JSEventListeners": 2244,
+        "JSHeapUsedSize": 62965048,
+        "JSHeapTotalSize": 119422976
+      }
+    },
+    {
+      "probeVersion": 3,
+      "delivery": "local pack-shaped; own copied packs and objects",
+      "packPins": {
+        "schema": 1,
+        "tier": "light",
+        "packs": {
+          "common": {
+            "index": "packs/common-107f16499cea.json",
+            "sha256": "107f16499cead5e6b15e04e101b1eea4fdd771e274b6b3c24eed83c477777ef3",
+            "ids": 821,
+            "objects": 583,
+            "bytes": 76899181
+          },
+          "light": {
+            "index": "packs/light-848d61547eb0.json",
+            "sha256": "848d61547eb0c234b73dc584accbc5e87bd09a0e51b187fa16180d719dd78b79",
+            "ids": 7348,
+            "objects": 7298,
+            "bytes": 41923125
+          }
+        },
+        "fonts": {
+          "file": "packs/fonts-c278c936e856.js",
+          "sha256": "c278c936e856b37d6d6d70b0c949953aa036bae3b779f477f0348a58ec1b5cf6",
+          "faces": 15
+        }
+      },
+      "assetBase": {
+        "base": "./"
+      },
+      "source": "84ede677510dabf1b5dd054de29d4905d92b55d6",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "candidate-84ede-hand-tools",
+      "file": "/workspace/scratch/mobile-performance/pack-core-renewal-final-84ede/AshenSpire.html",
+      "sha256": "b021155224b919acac4ac9cd5a49a10d488942fb0da008a8a5029b4b04e14cec",
+      "version": "0.7.1.1773",
+      "digest": "2a8d63b26f",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5046849999998813,
+            "taskSeconds": 0.01724300000000012,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 4077.2999999988824,
+          "inputAt": 14472.900000000373,
+          "upAt": 14472.900000000373,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 3,
+          "maxFrameMs": 1066.699999999997,
+          "longTaskTotalMs": 2823,
+          "renderMetrics": {
+            "TaskDuration": 3.3447640000000005,
+            "ScriptDuration": 1.516212,
+            "LayoutDuration": 0.14929800000000001,
+            "RecalcStyleDuration": 1.1744640000000002,
+            "LayoutCount": 51,
+            "RecalcStyleCount": 123
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5033180000009452,
+            "taskSeconds": 0.013234000000000634,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 4289.5999999996275,
+          "inputAt": 23068.699999999255,
+          "upAt": 23068.799999998882,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 916.6000000000022,
+          "longTaskTotalMs": 3153,
+          "renderMetrics": {
+            "TaskDuration": 3.871448000000001,
+            "ScriptDuration": 1.438024,
+            "LayoutDuration": 0.14539800000000003,
+            "RecalcStyleDuration": 1.4253810000000002,
+            "LayoutCount": 80,
+            "RecalcStyleCount": 190
+          }
+        }
+      ],
+      "errors": [],
+      "assetDelivery": {
+        "builtInArt": "light",
+        "requestedObjects": 123,
+        "escapedAssetRoutes": [],
+        "assetFailures": []
+      },
+      "idle": {
+        "seconds": 2.5124660000001313,
+        "taskSeconds": 0.040537,
+        "scriptSeconds": 0.013055,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 1000,
+        "Nodes": 2794,
+        "Documents": 8,
+        "JSEventListeners": 1201,
+        "JSHeapUsedSize": 45920856,
+        "JSHeapTotalSize": 129318912
+      },
+      "memoryAfter": {
+        "connectedElements": 878,
+        "Nodes": 4479,
+        "Documents": 4,
+        "JSEventListeners": 2363,
+        "JSHeapUsedSize": 42979216,
+        "JSHeapTotalSize": 117587968
+      }
+    }
+  ]
+}

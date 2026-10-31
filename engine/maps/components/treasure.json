@@ -1,0 +1,25 @@
+{
+  "id": "treasure",
+  "kind": "node",
+  "label": "Treasure",
+  "description": "A relic, free.",
+  "icon": "node-treasure",
+  "encounter": {},
+  "placement": {
+    "fixedFloor": {
+      "at": "fraction",
+      "of": 0.64
+    },
+    "noSameTypeAdjacent": true,
+    "source": "content/source/mapActShape.json:11"
+  },
+  "rewards": {
+    "relic": true
+  },
+  "assets": [
+    "node-treasure"
+  ],
+  "tags": [
+    "reward"
+  ]
+}

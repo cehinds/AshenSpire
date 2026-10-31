@@ -1,0 +1,27 @@
+{
+  "id": "status.vulnerable",
+  "tag": "status.vulnerable",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Vulnerable",
+  "description": "Takes 25% more attack damage. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.vulnerable"
+  },
+  "portability": "portable",
+  "legacy": {
+    "file": "src/engine/combatCardTactics.js",
+    "symbol": "enqueueCounterWard"
+  },
+  "authored": true
+}

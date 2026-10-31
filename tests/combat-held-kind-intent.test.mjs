@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { alternativeCardAnimationFamily } from '../src/model/cardAnimationFamily.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { createStanceLedger, kindForCard, stanceForCard } from '../src/model/alternativeStance.js';
 
@@ -35,13 +36,13 @@ test('an unarmed player shows the last confirmed kind, an armed card its own', (
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
     combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
-    playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
+    playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
   const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
-  sync({ querySelector: () => leading }, null, kindForCard({ id: 'defend' }));
+  sync({ querySelector: selector => selector === '.combatant-leading' ? leading : null }, null, kindForCard({ id: 'defend' }));
   assert.equal(actions.at(-1).profile.maneuver, 'defend', 'the held kind shows while nothing is armed');
-  sync({ querySelector: () => leading }, { instanceId: 'x', cardId: 'shieldBash' }, kindForCard({ id: 'defend' }));
+  sync({ querySelector: selector => selector === '.combatant-leading' ? leading : null }, { instanceId: 'x', cardId: 'shieldBash' }, kindForCard({ id: 'defend' }));
   assert.equal(actions.at(-1).profile.maneuver, 'smash', 'the armed card wins over the held kind');
 });
 
@@ -55,14 +56,14 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
   const context = {
     combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' },
-    playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
+    playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
   const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
-  sync({ querySelector: () => leading }, null, null);
+  sync({ querySelector: selector => selector === '.combatant-leading' ? leading : null }, null, null);
   assert.equal(actions.length, 1, 'a glyph is appended with nothing played');
   assert.equal(actions[0].profile.maneuver, 'ready');
-  sync({ querySelector: () => leading }, null);
+  sync({ querySelector: selector => selector === '.combatant-leading' ? leading : null }, null);
   assert.equal(actions.length, 2, 'a turn-start clear (no held kind) still shows the mark');
   const overhead = readFileSync(new URL('../src/ui/components/combatantOverhead.js', import.meta.url), 'utf8');
   assert.match(overhead, /ready: 'prepare'/, 'the resting mark draws the neutral prepare sigil');
@@ -74,14 +75,15 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
 const overheadSource = readFileSync(new URL('../src/ui/components/combatantOverhead.js', import.meta.url), 'utf8');
 const overheadBegin = overheadSource.indexOf('export function playerActionIntent(');
 const overheadEnd = overheadSource.indexOf('\n}\n', overheadBegin) + 3;
+const iconOf = node => node.icon || node.children?.map(iconOf).find(Boolean);
 function loadPlayerActionIntent() {
   const fakeDocument = { createElement: tag => ({
-    tag, type: '', className: '', attrs: {}, children: [], listeners: {},
+    tag, type: '', className: '', attrs: {}, dataset: {}, children: [], listeners: {},
     setAttribute(key, value) { this.attrs[key] = value; },
     append(...nodes) { this.children.push(...nodes); },
     addEventListener(type, fn) { this.listeners[type] = fn; },
   }) };
-  const body = overheadSource.slice(overheadBegin, overheadEnd).replace(/^export /, '');
+  const body = overheadSource.slice(overheadBegin, overheadEnd).replace(/^export /, '') + '\n' + overheadSource.slice(overheadSource.indexOf('export function intentParts(')).replace(/^export /, '');
   return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }) });
 }
 function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
@@ -95,7 +97,7 @@ function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
   const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
-  return { actions, sync: (inst, held) => sync({ querySelector: () => ({ querySelector: () => null, append: leading.append }) }, inst, held) };
+  return { actions, sync: (inst, held) => sync({ querySelector: selector => selector === '.combatant-leading' ? leading : null }, inst, held) };
 }
 
 test('a spell-only profile shows the prepare glyph, and an untyped one too', () => {
@@ -106,15 +108,15 @@ test('a spell-only profile shows the prepare glyph, and an untyped one too', () 
   const node = playerActionIntent(spellOnly, () => {});
   assert.ok(node, 'a spell-only profile is not dropped');
   assert.equal(node.attrs['aria-label'], 'Selected action: prepare');
-  assert.equal(node.children[0].icon, 'prepare');
+  assert.equal(iconOf(node), 'prepare');
   const untyped = playerActionIntent({ camp: 'physical', maneuver: null }, () => {});
   assert.ok(untyped, 'an untyped profile still shows a glyph');
-  assert.equal(untyped.children[0].icon, 'prepare', 'an untyped profile renders the prepare icon');
+  assert.equal(iconOf(untyped), 'prepare', 'an untyped profile renders the prepare icon');
   assert.equal(playerActionIntent(null, () => {}), null);
 });
 
 test('an armed spell-only card wins over the held kind', () => {
-  const { actions, sync } = loadSyncPlayerActionIntent(profile => ({ profile }), { id: 'scholarsInsight' });
+  const { actions, sync } = loadSyncPlayerActionIntent(profile => ({ profile, dataset: {} }), { id: 'scholarsInsight' });
   sync({ instanceId: 'x', cardId: 'scholarsInsight' }, kindForCard({ id: 'defend' }));
   assert.equal(actions.at(-1).profile.camp, 'spell', 'the armed spell-only profile is not replaced by the held kind');
   assert.equal(actions.at(-1).profile.maneuver, null);
@@ -129,13 +131,13 @@ test('after confirming a spell-only card, the held glyph becomes prepare', () =>
   sync(null, kinds.get());
   assert.equal(actions.length, 1, 'the held spell-only kind shows a glyph');
   assert.equal(actions[0].attrs['aria-label'], 'Selected action: prepare');
-  assert.equal(actions[0].children[0].icon, 'prepare');
+  assert.equal(iconOf(actions[0]), 'prepare');
 });
 
 test('a sweep profile renders the sweep icon, not the attack icon', () => {
   const playerActionIntent = loadPlayerActionIntent();
   const node = playerActionIntent({ camp: 'physical', maneuver: 'sweep' }, () => {});
-  assert.equal(node.children[0].icon, 'sweep');
+  assert.equal(iconOf(node), 'sweep');
   assert.equal(node.attrs['aria-label'], 'Selected action: sweep');
 });
 
@@ -143,7 +145,7 @@ test('an armed untyped card shows the prepare glyph over a held defend', () => {
   const { actions, sync } = loadSyncPlayerActionIntent(loadPlayerActionIntent(), { id: 'untypedSkill', type: 'skill', cardTags: [] });
   sync({ instanceId: 'x', cardId: 'untypedSkill' }, kindForCard({ id: 'defend' }));
   assert.equal(actions.at(-1).attrs['aria-label'], 'Selected action: prepare', 'the armed profile is always used when present');
-  assert.equal(actions.at(-1).children[0].icon, 'prepare');
+  assert.equal(iconOf(actions.at(-1)), 'prepare');
 });
 
 test('selection previews the card stance on the figure sprite; deselect returns to the held stance', () => {
@@ -184,7 +186,8 @@ test('a spell with an offensive maneuver shows the prepare glyph to match its ca
 // and a swing leaves from and returns to the held stance, not the ready frame.
 test('the card stage holds smash on the smash wind-up and swings from the held stance', () => {
   const source = readFileSync(new URL('../src/ui/alternativeCardStage.js', import.meta.url), 'utf8');
-  assert.match(source, /smash: family\.frames\['smash-load'\]/);
+  const assembled = alternativeCardAnimationFamily('reaver');
+  assert.equal(assembled.heldFrames.smash, assembled.pilotFrames?.smash || assembled.classSmash?.frames.held || assembled.family.frames['smash-load'], 'assembled selected weapon/class owns the actual smash wind-up');
   assert.match(source, /if \(pose==='ready' && stance\) pose='stance-'\+stance;/);
   assert.equal(kindForCard({ id: 'm', cardTags: ['camp:physical', 'maneuver:smash'] }).maneuver, 'smash');
 });

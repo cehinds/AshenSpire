@@ -1,5 +1,6 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
+import { withCoreSmashBlurb } from './smashBlurb.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
@@ -86,7 +87,7 @@ export function combatProfileFor(carrier = {}) {
   // These are authored payloads, not guessed from a card's name or damage type.
   if (typeof carrier.reach === 'string' && carrier.range === undefined && RANGE.has(normalizeRange(carrier.reach))) profile.range = normalizeRange(carrier.reach);
   for (const key of ['range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
-    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
+    'evade', 'upcast', 'stanceTrigger', 'mirrors', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
     if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
   }
   return profile;
@@ -144,5 +145,5 @@ export function combatProfileTags(carrier = {}, registries = null) {
   // Runtime surfaces must describe the active bundle, including intentionally
   // absent metadata. Static authoring callers can still use shipped labels.
   const rows = registries ? tagService(registries).resolve(ids) : resolve(ids);
-  return rows.map(row => numberedTraitRow(row, profile.traitValues));
+  return rows.map(row => withCoreSmashBlurb(numberedTraitRow(row, profile.traitValues), registries));
 }

@@ -1,12 +1,17 @@
+import {resolve} from 'node:path';
+import {authoringRoot,authoringPath} from './art-authoring.mjs';
 import {createRequire} from 'node:module';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const root=fileURLToPath(new URL('../',import.meta.url)),review='pose-studio/stances/options-20261008/';
-const selections=JSON.parse(readFileSync(root+review+'selections.json','utf8'));
+const root=fileURLToPath(new URL('../',import.meta.url));
+const artRoot=authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
+const file=rel=>rel.startsWith('src/')?resolve(root,rel):authoringPath(rel,{root,assetRoot:artRoot});
+const review='pose-studio/stances/options-20261008/';
+const selections=JSON.parse(readFileSync(file(review+'selections.json'),'utf8'));
 const sha=b=>createHash('sha256').update(b).digest('hex');
-for(const c of selections.choices)if(sha(readFileSync(root+review+c.source.path))!==c.source.sha256)throw Error('Source changed '+c.sourceOption);
+for(const c of selections.choices)if(sha(readFileSync(file(review+c.source.path)))!==c.source.sha256)throw Error('Source changed '+c.sourceOption);
 const browser=await chromium.launch({headless:true,...(process.env.CHROME ? {executablePath:process.env.CHROME} : {})});
 try{
  const page=await browser.newPage();await page.goto((process.env.STANCE_REVIEW_URL || 'http://127.0.0.1:4391/'+review+'index.html'));
@@ -32,18 +37,18 @@ try{
  const catalog={schemaVersion:1,selections:review+'selections.json',classes:{},hashes:{}};
  for(const e of exports){
   const actor=e.choice.actor,stance={attack:'offensive',defend:'defensive',casting:'casting'}[e.choice.stance];
-  const dir='assets-display/alternative/stances/'+actor;mkdirSync(root+dir,{recursive:true});
+  const dir='assets-display/alternative/stances/'+actor;mkdirSync(file(dir),{recursive:true});
   // Runtime rasters share the 256px export; choreography retains its 512px canvas.
   const path=dir+'/'+stance+'.webp',lite=dir+'/'+stance+'-mobile.webp',full=Buffer.from(e.lite,'base64'),small=Buffer.from(e.lite,'base64');
-  writeFileSync(root+path,full);writeFileSync(root+lite,small);
+  writeFileSync(file(path),full);writeFileSync(file(lite),small);
   catalog.hashes[path.replace('assets-display/alternative/','')]=sha(full);catalog.hashes[lite.replace('assets-display/alternative/','')]=sha(small);
   const item=catalog.classes[actor]??={frames:{}};
   item.frames[stance]={path,lite,size:[512,512],rasterSize:[256,256],bounds:e.bounds,anchor:[256,464],sha256:sha(full),liteSha256:sha(small),sourceOption:e.choice.sourceOption,source:e.choice.source,sourceBounds:e.sourceBounds,scale:e.scale};
  }
  catalog.filePaths=Object.fromEntries(Object.keys(catalog.hashes).map(file=>[file,'assets-display/alternative/'+file]));
- writeFileSync(root+'src/content/alternativeSelectedStances.js','// Owner-selected held poses, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
+ writeFileSync(file('src/content/alternativeSelectedStances.js'),'// Owner-selected held poses, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
  if (!process.argv.includes('--runtime-only')) {
- mkdirSync(root+'pose-studio/stances/selected-projects',{recursive:true});
+ mkdirSync(file('pose-studio/stances/selected-projects'),{recursive:true});
  for(const [actor,{frames}]of Object.entries(catalog.classes)){
   const rig={schemaVersion:1,id:'alternative.selected-stances.'+actor,name:actor+' · selected stances',canvas:{width:512,height:512},assets:{},poses:{},animations:{},queues:{}};
   for(const [stance,f]of Object.entries(frames)){
@@ -53,7 +58,7 @@ try{
    rig.animations[stance]={id:stance,name:stance,frames:[{id:stance+'-held',poseId:stance,duration:260,event:'',overrides:{}}]};
   }
   rig.queues.review={id:'review',name:'Selected stances',items:Object.keys(frames).map(s=>({id:s,animationId:s,repeats:1,pause:600}))};
-  writeFileSync(root+'pose-studio/stances/selected-projects/'+actor+'.rig.json',JSON.stringify(rig,null,2)+'\n');
+  writeFileSync(file('pose-studio/stances/selected-projects/'+actor+'.rig.json'),JSON.stringify(rig,null,2)+'\n');
  }
  }
  console.log('Exported 12 approved stances and 24 compact runtime assets.');

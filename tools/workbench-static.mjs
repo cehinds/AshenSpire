@@ -20,6 +20,8 @@
 // /assets/ with the light twin, and the Asset Gallery reads it from there. The
 // Asset Gallery's display art (assets-display/) goes to DIR/asset-file/assets-display/,
 // where its asset-file/ URLs load it. The light art is copied once.
+// COMMON fonts go to DIR/game/assets/fonts/ for the mirrored styles' font URLs;
+// their complete copyright/OFL notice remains embedded in styles/kit.css.
 //
 // docs/design/ (large design rigs) is never read or copied. A missing optional
 // input (the static-api module, assets-mobile/) prints a warning and the build
@@ -31,8 +33,11 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createWorkbench } from '../workbench/server.mjs';
+import { artDir } from './art-source.mjs';
+import { authoringRoot, compositeSourcePath } from './art-authoring.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ART_CHECKOUT = authoringRoot({root:REPO,required:false});
 const DESIGN_PREFIX = 'docs/design/';
 const UI_NAMES = ['index.html', 'app.mjs', 'workbench.css', 'shared', 'ui', 'modules', 'lib'];
 const UI_REWRITE = /(["'`(])\/(api|shared|ui|modules|lib|static|export|asset-file|app\.mjs|workbench\.css)\b/g;
@@ -40,7 +45,7 @@ const GAME_REWRITE = /(["'`(])\/(workbench|styles|src|assets|pose-studio)\//g;
 const PREVIEW_PAGE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const UI_TEXT = /\.(html|mjs|js|css)$/;
 const GAME_TEXT = /\.(html|mjs|js|css|json|svg)$/;
-const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace'];
+const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace', 'games/ashenspire', 'engine/modules'];
 const SNAPSHOT_FILES = ['src/content/card-layout.json', 'src/content/formationPositioningPresets.js', 'src/content/bookArtPresets.js'];
 const SNAPSHOT_APIS = ['tools', 'files/list', 'library', 'previews', 'assets/list', 'export/manifest', 'settings', 'jobs', 'review/state', 'files/backups', 'git'];
 
@@ -90,6 +95,14 @@ async function copyTree(src, dst, { textRe = null, rewrite = null } = {}) {
   else await fs.copyFile(src, dst);
 }
 
+// Font URLs in the mirrored styles resolve under game/assets/fonts. Fonts belong
+// to COMMON, not the LIGHT image tree. Always copy the pinned release, including
+// when a local authoring checkout or fixture-tree mode is selected elsewhere.
+export async function copyGameFonts(game, { root = REPO } = {}) {
+  const { dir } = artDir('assets/fonts', { root, env: { ASHEN_ART_SOURCE: 'cache' } });
+  await copyTree(dir, path.join(game, 'assets', 'fonts'));
+}
+
 // The root preview pages (names only) that go to game/ and the Library opens from there.
 async function rootPreviewPages() {
   return (await fs.readdir(REPO, { withFileTypes: true })).filter((e) => e.isFile() && PREVIEW_PAGE.test(e.name)).map((e) => e.name);
@@ -130,7 +143,7 @@ async function treeBytes(dir) {
 // a path that contains another is removed whole. A root path ('/') is never a needle.
 function machinePathNeedles(stateDir) {
   const found = new Set();
-  for (const p of [REPO, stateDir, os.homedir()]) {
+  for (const p of [REPO, ART_CHECKOUT, stateDir, os.homedir()]) {
     if (!p || p === path.parse(p).root) continue;
     for (const form of [p, p.replace(/\\/g, '/')]) found.add(JSON.stringify(form).slice(1, -1));
   }
@@ -148,6 +161,10 @@ async function buildSnapshot(out, { base, previews }) {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wbs-'));
   const needles = machinePathNeedles(stateDir);
   let app = null;
+  // A published gallery always describes the pinned release, even when the
+  // caller has an unpublished authoring checkout selected in its terminal.
+  const priorAuthoring=process.env.ASHEN_ART_CHECKOUT;
+  delete process.env.ASHEN_ART_CHECKOUT;
   try {
     app = await createWorkbench({ root: REPO, port: 0, children: false, stateDir });
     const get = async (p) => {
@@ -188,6 +205,7 @@ async function buildSnapshot(out, { base, previews }) {
     return read;
   } finally {
     if (app) await app.close();
+    if(priorAuthoring!==undefined)process.env.ASHEN_ART_CHECKOUT=priorAuthoring;
     await fs.rm(stateDir, { recursive: true, force: true });
   }
 }
@@ -200,7 +218,9 @@ async function main() {
   await fs.mkdir(out, { recursive: true });
 
   const previews = await rootPreviewPages();
-  const files = await buildSnapshot(out, { base, previews });
+  const mirroredPages = [...previews];
+  if (existsSync(path.join(REPO, 'pose-studio/enemy-back-proposals/index.html'))) mirroredPages.push('pose-studio/enemy-back-proposals/index.html');
+  const files = await buildSnapshot(out, { base, previews: mirroredPages });
 
   // The UI, with its absolute paths moved under the base.
   const uiRewrite = { re: UI_REWRITE, to: `$1${base}$2` };
@@ -243,15 +263,38 @@ async function main() {
       await copyTree(path.join(REPO, 'pose-studio', entry.name), path.join(game, 'pose-studio', entry.name), { textRe: GAME_TEXT, rewrite: gameRewrite });
     }
   }
+  // Scoped authoring review: nested module and its feature-local draft sources.
+  for (const dir of ['pose-studio/enemy-back-proposals', 'art/enemy-back-proposals', 'art/enemy-back-motion']) {
+    const source = dir.startsWith('art/') ? compositeSourcePath(dir,{root:REPO,assetRoot:ART_CHECKOUT}) : path.join(REPO, dir);
+    if (existsSync(source)) await copyTree(source, path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
+    if (dir === 'pose-studio/enemy-back-proposals' && existsSync(path.join(game, dir, 'index.html'))) {
+      const page = path.join(game, dir, 'index.html');
+      await fs.writeFile(page, (await fs.readFile(page, 'utf8')).replace('../../workbench/index.html#mod=assets', `${base}index.html#mod=assets`));
+    }
+  }
   if (art) {
-    const light = path.join(REPO, 'assets-mobile');
-    if (existsSync(light)) await copyTree(light, path.join(game, 'assets'));
+    let light;
+    try {light=artDir('assets-mobile',{root:REPO}).dir;}catch{light=null;}
+    if (light && existsSync(light)) await copyTree(light, path.join(game, 'assets'));
     else warnings.push('assets-mobile/ is missing: game/assets/ was not written');
+    await copyGameFonts(game);
     // The Asset Gallery loads its display art from ${base}asset-file/<repo path>. The light art is
     // not copied again: the gallery reads it from game/assets/ (ASHEN_ASSET_URL in static-api.mjs).
-    const display = path.join(REPO, 'assets-display');
-    if (existsSync(display)) await copyTree(display, path.join(out, 'asset-file', 'assets-display'));
-    else warnings.push('assets-display/ is missing: asset-file/assets-display/ was not written');
+    let display;
+    try {display=artDir('assets-display',{root:REPO}).dir;}catch{display=null;}
+    if (display && existsSync(display)) await copyTree(display, path.join(out, 'asset-file', 'assets-display'));
+    else warnings.push('pinned common assets-display/ is missing: fetch the common art pack before publishing the gallery');
+    // Only the retained metadata comes from the game tree. Do not copy stale
+    // local image originals over the verified common pack.
+    const metadata=path.join(REPO,'assets-display');
+    async function copyMetadata(dir){
+      for(const entry of await fs.readdir(dir,{withFileTypes:true})){
+        const source=path.join(dir,entry.name);
+        if(entry.isDirectory())await copyMetadata(source);
+        else if(entry.isFile()&&/\.(json|md)$/.test(entry.name))await copyTree(source,path.join(out,'asset-file','assets-display',path.relative(metadata,source)));
+      }
+    }
+    if(existsSync(metadata))await copyMetadata(metadata);
   }
 
   const bytes = await treeBytes(out);
@@ -259,7 +302,9 @@ async function main() {
   console.log(`workbench-static: ${files} files in the snapshot, ${(bytes / 1048576).toFixed(1)} MB in ${out}`);
 }
 
-main().catch((err) => {
-  console.error(`workbench-static: ${err.message}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(`workbench-static: ${err.message}`);
+    process.exitCode = 1;
+  });
+}

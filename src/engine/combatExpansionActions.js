@@ -1,3 +1,4 @@
+import * as Engagement from './combatEngagement.js';
 // A committed card/move owns one receipt per defender across all its contacts.
 import { evaluate } from '../model/formulas.js';
 import * as Triggers from './triggers.js';
@@ -35,11 +36,12 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     carrier = { ...carrier, combatProfile: { ...carrier.combatProfile, maneuver: 'attack' } };
     for (const action of actions) action.card = carrier;
   }
-  Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
+  if (!ctx.rangeState) Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
     .map(action => effectCarrier({ ...carrier, ...action.card }, action.effect).combatProfile));
   mountCombatCombo(ctx, source, carrier);
   const group = { key: `${ctx.combatKey || 'combat'}:${++ctx.expansionActionSerial || (ctx.expansionActionSerial = 1)}`,
     sourceId: source?.id, sourcePlayerId: ctx.playerIdForEntity?.(source), carrier, targets: {}, begun: false };
+  Engagement.acceptRangeActions(ctx, source, actions, carrier, group.key);
   // Prefix evaluation uses detached entities so a live predicate sees earlier
   // grants/removals while beforePlay keeps its original immutable snapshot.
   // Prefix chance streams are detached; execution pays those same draws once.
@@ -48,7 +50,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   prefix.emit = () => {}; prefix.enqueue = () => {};
   const prefixEntity = entity => entity && expansionEntity(prefix, { id: entity.id, playerId: ctx.playerIdForEntity?.(entity) });
   // Planning is committed seeded work. Paused effects retain this plan in snapshots.
-  for (const action of actions) {
+  for (const [rangeEffectIndex, action] of actions.entries()) {
     action.meta = { ...action.meta, expansionGroup: group };
     const eff = action.effect;
     const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined, expansionAuthoredAction: true } };
@@ -71,7 +73,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     for (let r = 0; r < repeat; r++) for (let h = 0; h < hits; h++) {
       const contacts = [];
       const targetRefs = [];
-      for (const entity of Actions.resolveTargets(ctx, action, eff.target)) {
+      for (const entity of (action.meta.rangeTargetBatches?.[r * hits + h]?.map(ref => expansionEntity(ctx, ref)) || Actions.resolveTargets(ctx, action, eff.target))) {
         const projected = prefixEntity(entity);
         if (!entity?.alive || (eff.if && !Triggers.evalPredicate(prefix, eff.if, { ...shadow, target: projected }))) continue;
         targetRefs.push({ id: entity.id, playerId: ctx.playerIdForEntity?.(entity) });
@@ -92,7 +94,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
         const split = eff.op === 'damage' ? { splitBase: Math.max(0, Math.floor(base)),
           ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier) } : {};
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, ...(carrier.rangePlan ? { rangeContactId: `${action.meta.rangeEffectIndex ?? rangeEffectIndex}:${r}:${h}:${source.kind === 'enemy' ? `player:${ctx.playerIdForEntity?.(entity) || 'player'}` : `enemy:${entity.id}`}` } : {}), amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
@@ -104,12 +106,119 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     }
   }
   ctx.pendingExpansionActions = (ctx.pendingExpansionActions || 0) + 1;
-  for (const action of actions) ctx.enqueue(action);
+  const queued = contactActions(ctx, group, actions);
+  for (const action of queued) ctx.enqueue(action);
   ctx.enqueue({ effect: { op: 'completeCombatAction' }, source, owner: source, target, card: carrier,
     meta: { ...completionMeta, expansionGroup: group } });
   // A reaction offer check reads the planned contacts of the card it tries (enemy reactions).
   ctx._groupSink?.push(group);
   return group;
+}
+
+// Core's per-contact policy carries the original seeded plan; no target, crit,
+// cost or once-per-card rider is replanned when the next contact resumes.
+function contactActions(ctx, group, actions) {
+  if (ctx.reactionRules?.contactPolicy !== 'perHit' || ctx._expansionPreview || group.carrier?.combatReaction) return actions;
+  const contacts = [], queued = [], ancillary = [];
+  for (const [effectIndex, action] of actions.entries()) {
+    if (action.effect.op !== 'damage' || !action.meta.expansionContacts?.length) {
+      if (action.meta.expansionContacts?.length) ancillary.push({ action, index: Math.max(0, contacts.length - 1) });
+      queued.push(action); continue;
+    }
+    for (const [index, batch] of action.meta.expansionContacts.entries()) {
+      const targets = {};
+      const refs = batch.map(contact => {
+        const original = group.targets[contact.key];
+        const row = targets[contact.key] ||= { id: original.id, playerId: original.playerId, contacts: [], receipt: null };
+        const next = { ...contact, index: row.contacts.length };
+        row.contacts.push(original.contacts[contact.index]);
+        return next;
+      });
+      const contactIndex = contacts.push({ targets }) - 1;
+      const unit = { ...action, effect: { ...action.effect, hits: 1, repeat: 1 }, meta: { ...action.meta,
+        contactIndex, contactEffectIndex: effectIndex, contactEffectFirst: index === 0,
+        expansionContacts: [refs], expansionTargets: [action.meta.expansionTargets[index]],
+        ...(action.meta.rangeSiteBatches ? {rangeSiteBatches:[action.meta.rangeSiteBatches[index] || []]} : {}),
+        ...(index > 0 ? { abilityChargeDamage: 0, abilityChargeBreak: 0 } : {}) } };
+      queued.push(unit, { ...unit, effect: { op: 'completeCombatAction' }, meta: { ...unit.meta, contactCompletion: true } });
+    }
+  }
+  if (!contacts.length) return actions;
+  // Printed status/pressure effects still execute once, in their authored
+  // position. Their saved contact indices belong to the adjacent hit receipt.
+  for (const { action, index } of ancillary) {
+    const targets = contacts[index].targets;
+    action.meta.expansionContacts = action.meta.expansionContacts.map(batch => batch.map(contact => {
+      const original = group.targets[contact.key];
+      const row = targets[contact.key] ||= { id: original.id, playerId: original.playerId, contacts: [], receipt: null };
+      const next = { ...contact, index: row.contacts.length };
+      row.contacts.push(original.contacts[contact.index]);
+      return next;
+    }));
+  }
+  group.contactSequence = { rootKey: group.key, index: -1, contacts, rootTargets: group.targets, gates: {} };
+  activateCombatContact(ctx, queued.find(action => action.meta?.contactIndex === 0));
+  return queued;
+}
+
+export function activateCombatContact(ctx, action) {
+  const group = action?.meta?.expansionGroup, sequence = group?.contactSequence;
+  const index = action?.meta?.contactIndex;
+  if (!sequence) return;
+  // These are root budgets, even after JSON has copied the carrier separately
+  // onto each pending unit. A reload must not grant a rider for every hit.
+  if (action.card) action.card.combatRiderTargets = group.carrier.combatRiderTargets ||= [];
+  action.meta.proposalTargetDecisions = sequence.proposalTargetDecisions ||= action.meta.proposalTargetDecisions || {};
+  // JSON has no aliases. Reconnect the active receipt to its saved plan before
+  // continuing it, including a nested choice or a post-contact status effect.
+  if (sequence.index >= 0) sequence.contacts[sequence.index].targets = group.targets;
+  if (!Number.isSafeInteger(index) || sequence.index === index || action.meta.contactCompletion) return;
+  sequence.index = index;
+  group.key = `${sequence.rootKey}:hit:${index}`;
+  group.targets = sequence.contacts[index].targets;
+  group.begun = false;
+  group.payloadStarted = false;
+  for (const key of ['reactionAnswered', 'reactionNoticed', 'manualCounterSerials', 'enemyWindows', 'contactTelegraphed']) delete group[key];
+}
+
+function completeContact(ctx, action, group) {
+  const start = ctx.queue.length;
+  for (const [key, row] of Object.entries(group.targets)) {
+    const target = expansionEntity(ctx, row), receipt = row.receipt;
+    if (!target || !receipt || !expansionTargetPresent(ctx, target)) { Engagement.discardCounterRangeReservation(group,target,row); continue; }
+    const serial = group.manualCounterSerials?.[row.playerId || 'player'];
+    Matchups.completeTacticalAction(ctx, action.source, target, { ...group.carrier, ...(row.contacts?.[0]?.rangeContactId ? { rangeContactId: row.contacts[0].rangeContactId } : {}), ...(serial ? { manualCounterSerial: serial } : {}) }, receipt,
+      { restrictions: Control.controlRestrictions(ctx, target) });
+    Engagement.discardCounterRangeReservation(group,target,row);
+    const root = group.contactSequence.rootTargets[key];
+    const combined = root.receipt ||= { connected: false, statusAccepted: 0, amount: 0 };
+    combined.connected ||= receipt.connected;
+    combined.statusAccepted += receipt.statusAccepted || 0;
+    combined.amount += receipt.amount || 0;
+    root.interactions ||= row.interactions;
+  }
+  // A return and its bounded response finish before the next incoming contact.
+  const generated = ctx.queue.splice(start);
+  ctx.queue.unshift(...generated);
+}
+
+function completedRootTargets(group) {
+  const sequence = group.contactSequence;
+  const roots = sequence.rootTargets;
+  for (const [key, root] of Object.entries(roots)) {
+    const receipts = sequence.contacts.map(contact => contact.targets[key]?.receipt).filter(Boolean);
+    root.receipt = {
+      connected: receipts.some(receipt => receipt.connected),
+      statusAccepted: receipts.reduce((sum, receipt) => sum + (receipt.statusAccepted || 0), 0),
+      amount: receipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0),
+      profile: root.contacts[0] || group.carrier.combatProfile,
+    };
+    root.interactions = { ...root.receipt.profile,
+      containsFire: root.contacts.some(contact => contact.amount > 0 && (contact.school === 'fire' || contact.damageType === 'fire')),
+      containsBlunt: root.contacts.some(contact => contact.amount > 0 && contact.damageType === 'blunt'),
+      containsReveal: root.contacts.some(contact => contact.amount > 0 && (contact.maneuver === 'sweep' || ['sacred', 'holy'].includes(contact.damageType))) };
+  }
+  return roots;
 }
 
 export function expansionEntity(ctx, row) {
@@ -135,7 +244,7 @@ export function beginExpandedAction(ctx, group, source) {
     if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-    const carrier = { ...group.carrier, additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
+    const carrier = { ...group.carrier, ...(ctx.rangeState ? {combatProfile:{...group.carrier.combatProfile,...profile}} : {}), ...(profile.rangeContactId ? { rangeContactId: profile.rangeContactId } : {}), additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
     row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, carrier, row.contacts,
       { ...Control.statusIncomingModifier(ctx, target, profile), contactModifiers: row.contacts.map(contact => Control.statusIncomingModifier(ctx, target, contact)), restrictions: Control.controlRestrictions(ctx, target) });
     row.interactions = { ...profile,
@@ -164,6 +273,10 @@ export function previewExpandedActions(ctx, actions, options) {
 export function completeExpandedAction(ctx, action) {
   const group = action.meta?.expansionGroup;
   if (!group) return;
+  if (action.meta.contactCompletion) {
+    if (!group.cancelled) completeContact(ctx, action, group);
+    return;
+  }
   if (group.cancelled) { ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1); return; }
   // Completion can enqueue guard-break and trait pressure after the scoped action returns.
   // Copy the delayed round receipt onto only those completion-generated actions; reaction
@@ -176,6 +289,7 @@ export function completeExpandedAction(ctx, action) {
   });
   try {
     beginExpandedAction(ctx, group, action.source);
+    if (group.contactSequence) group.targets = completedRootTargets(group);
     for (const row of Object.values(group.targets)) {
       const target = expansionEntity(ctx, row), receipt = row.receipt;
       if (!target || !receipt) continue;
@@ -185,11 +299,15 @@ export function completeExpandedAction(ctx, action) {
         continue;
       }
       if (!expansionTargetPresent(ctx, target)) continue;
-      Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
-        { restrictions: Control.controlRestrictions(ctx, target) });
+      if (!group.contactSequence) {
+        const serial = group.manualCounterSerials?.[row.playerId || 'player'];
+        Matchups.completeTacticalAction(ctx, action.source, target, { ...group.carrier, ...(serial ? { manualCounterSerial: serial } : {}) }, receipt,
+          { restrictions: Control.controlRestrictions(ctx, target) });
+      }
       Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
         actionKey: group.key, damaging: receipt.amount > 0 });
     }
+    for (const row of Object.values(group.targets)) Engagement.discardCounterRangeReservation(group,expansionEntity(ctx,row),row);
     applyTraitImpact(ctx, action, group);
     ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
   } finally {

@@ -86,7 +86,7 @@ const PARSED = { n: 0 };
 // omission is not an answer.
 // The standalone studio is authored source too. Capture tooling imports its
 // server, so both the live census and isolated failure-plant copies need it.
-const ROOTS = ['src', 'tools', 'tests', 'pose-studio'];
+const ROOTS = ['src', 'engine', 'tools', 'tests', 'pose-studio'];
 // Docs modules that tests import (tests/combat-rounds-round.test.mjs reads the
 // alternative-combat-rounds timeline). They are not walked as denominator, but
 // the self-test copy must carry them or the baseline links red with ENOENT.

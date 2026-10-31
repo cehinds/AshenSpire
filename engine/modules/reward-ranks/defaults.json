@@ -1,0 +1,46 @@
+{
+  "mode": "configured",
+  "minRank": 1,
+  "lowerRankChance": 0.1,
+  "rankOfRarity": {
+    "starter": 0,
+    "common": 1,
+    "uncommon": 2,
+    "rare": 3
+  },
+  "skipOwnedBasics": true,
+  "stanceCoverage": {
+    "enabled": true,
+    "reservedSlots": 1,
+    "preferTiers": [
+      "basic",
+      "cantrip"
+    ],
+    "excludePools": [
+      "special"
+    ]
+  },
+  "ownedCopyWeight": 0.05,
+  "ownedPotionWeight": 0.05,
+  "tagWeights": {
+    "maneuver:casting": 1,
+    "maneuver:smash": 2,
+    "maneuver:counter": 2,
+    "maneuver:sweep": 2,
+    "default": 1.5
+  },
+  "recentOfferWindow": 3,
+  "recentOfferWeight": 0.1,
+  "depthBias": {
+    "earlyMaxDepth": 3,
+    "early": {
+      "basicOrCantrip": 2.5,
+      "mana": 0.4
+    },
+    "late": {
+      "mana": 1.8,
+      "highRankMin": 2,
+      "highRank": 1.5
+    }
+  }
+}

@@ -27,25 +27,27 @@ if (process.argv.includes('--selftest')) {
     plants: [
       {
         name: 'the authored role copies stop summing to the starting deck size',
-        file: 'src/content/balance.js',
-        // The object spans lines since its note moved in beside it (#1243);
-        // the numbers still sit on one line, and this still breaks the sum.
-        find: 'roleCopies: {\n      attack: 4, guard: 4, technique: 1, signature: 1, ability: 1,',
-        replace: 'roleCopies: {\n      attack: 5, guard: 4, technique: 1, signature: 1, ability: 1,',
+        file: 'content/source/balanceEquipment.json',
+        // The numbers are authored in content/source/balanceEquipment.json (one
+        // per line); the build recompiles them into the generated module.
+        find: '"roleCopies": {\n    "attack": 4,',
+        replace: '"roleCopies": {\n    "attack": 5,',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /FAIL default roleCopies are 4\/4\/1\/1/,
       },
       {
         name: 'a class loses its authored signature card',
-        file: 'src/content/classes.js',
-        find: "startingSignatureCard: 'gorefireSlash',",
-        replace: "startingSignatureCard: 'starstonePebble',",
+        file: 'content/source/classes.json',
+        find: '"startingSignatureCard": "gorefireSlash",',
+        replace: '"startingSignatureCard": "starstonePebble",',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /FAIL reaver declares exactly one signature/,
       },
       {
         name: 'the Ash Staff attack profile stops declaring magic damage school',
         file: 'src/content/generated/basicCardProfiles.js',
-        find: '"id": "staffMagicAttack",\n    "role": "attack",\n    "baseCardId": "strike",\n    "displayName": "Staff Magic Strike",\n    "icon": "✦",\n    "damageSchool": "magic",',
-        replace: '"id": "staffMagicAttack",\n    "role": "attack",\n    "baseCardId": "strike",\n    "displayName": "Staff Magic Strike",\n    "icon": "✦",\n    "damageSchool": "physical",',
+        find: '"id":"staffMagicAttack","role":"attack","baseCardId":"strike","displayName":"Staff Magic Strike","icon":"✦","damageSchool":"magic"',
+        replace: '"id":"staffMagicAttack","role":"attack","baseCardId":"strike","displayName":"Staff Magic Strike","icon":"✦","damageSchool":"physical"',
         expectRed: /FAIL Ash Staff attack declares magic damageSchool/,
       },
       {
@@ -95,6 +97,13 @@ function check(ok, label, detail = '') {
 }
 
 const R = createRegistries(contentBundle);
+check(R.gameProfile === undefined, 'unbound registries exercise the legacy content contract');
+// Unbound registries use the legacy PR row: floor each weighted attribute,
+// then add the authored weapon rating. Keep this independent of receipts.
+const staff = contentBundle.equipment.armaments.find((piece) => piece.id === 'ashStaff');
+const expectedPr = (run) => Math.floor(run.attributes.dexterity * 0.25) + Math.floor(run.attributes.constitution * 0.5)
+  + Math.floor(run.attributes.wisdom * 0.5) + Math.floor(run.attributes.intelligence * 0.75);
+const staffDamage = (run, base = 2) => base + expectedPr(run) + staff.attackRating;
 const expected = {
   reaver: { rightHand: 'straightSword', leftHand: 'roundShield', signature: 'gorefireSlash' },
   starseer: { rightHand: 'ashStaff', leftHand: null, signature: 'starstonePebble' },
@@ -127,13 +136,20 @@ for (const [classId, want] of Object.entries(expected)) {
     `${classId} starts at the ${plan.cap}-card cap`, `${run.deck.length} vs cap ${plan.cap}`);
   check(run.deck.filter((c) => c.equipmentRole === 'attack').length === plan.attackCount,
     `${classId} starts with the planned ${plan.attackCount} attack instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
-  check(run.deck.filter((c) => c.equipmentRole === 'guard').length === plan.guardCount,
-    `${classId} starts with the planned ${plan.guardCount} guard instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
+  const equippedHands = [want.rightHand, want.leftHand].filter(Boolean);
+  const combatKits = equippedHands.map((id) => contentBundle.equipment.armaments.find((piece) => piece.id === id)?.weaponCardPackage?.combatKit).filter(Boolean);
+  const guardProfiles = combatKits.map((kit) => kit.guardProfileId);
+  check(combatKits.length > 0 && guardProfiles.every((id) => typeof id === 'string' && id.length > 0
+    && contentBundle.equipment.basicCardProfiles.some((profile) => profile.id === id && profile.role === 'guard')),
+    `${classId} equips combat kits with declared guard profiles`, JSON.stringify(guardProfiles));
+  const kitGuards = run.deck.filter((c) => c.equipmentRole === 'granted' && c.kitRole === 'guard');
+  check(guardProfiles.length > 0 && kitGuards.length === guardProfiles.length && guardProfiles.every((profileId) => run.deck.filter((c) => c.equipmentRole === 'granted' && c.kitRole === 'guard' && c.profileId === profileId).length === 1),
+    `${classId} carries each equipped combat kit guard once`, JSON.stringify(guardProfiles));
   check(plan.attackCount + plan.guardCount === plan.filler,
     `${classId}: base cards fill exactly what the cap left (${plan.filler})`, `${plan.attackCount}+${plan.guardCount} vs ${plan.filler}`);
   // The class grants: the signature and, since plan phase 5a, the ability
   // card — one instance each, both from the class.
-  const classGrants = run.deck.filter((c) => !c.equipmentRole);
+  const classGrants = run.deck.filter((c) => c.grantSource === 'from:class');
   const signatures = classGrants.filter((c) => c.cardId === want.signature);
   check(signatures.length === 1, `${classId} preserves one fixed signature instance`, JSON.stringify(classGrants));
   const abilityId = R.classes.get(classId).abilityCard;
@@ -153,18 +169,18 @@ check(Array.isArray(magic?.cardTags) && magic.cardTags.includes('starstone'),
   'Ash Staff attack presents its explicit magic/starstone tag', JSON.stringify(magic?.cardTags));
 check(R.cards.get('starstonePebble').name === 'Starstone Pebble', 'IP-safe Starstone Pebble remains authoritative');
 check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.rating?.id === 'pr'
-  && attack.profileReceipt.rating.attributeValue === 2
-  && attack.profileReceipt.rating.equipmentBase === 1
-  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 5,
-  'Ash Staff receipt is 2 base + 3 source PR + 0 rarity = 5', JSON.stringify(attack?.profileReceipt));
+  && attack.profileReceipt.rating.attributeValue === expectedPr(starseer)
+  && attack.profileReceipt.rating.equipmentBase === staff.attackRating
+  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === staffDamage(starseer),
+  'Ash Staff receipt adds base, attribute PR, authored weapon rating and rarity', JSON.stringify(attack?.profileReceipt));
 check(magic?.effects.find((e) => e.op === 'damage')?.amount === 2,
   'resolved Ash Staff definition carries base plus rarity before runtime PR', JSON.stringify(magic?.effects));
 const standardSeer = createRunState({ seed: 2, classId: 'starseer', registries: R, attributeMode: 'standard' });
 const standardReceipt = standardSeer.deck.find((c) => c.equipmentRole === 'attack')?.profileReceipt;
 check(standardReceipt?.base === 2 && standardReceipt.rating?.id === 'pr'
-  && standardReceipt.rating.attributeValue === 12
-  && standardReceipt.rating.equipmentBase === 1
-  && standardReceipt.rarityBonus === 0 && standardReceipt.value === 15,
+  && standardReceipt.rating.attributeValue === expectedPr(standardSeer)
+  && standardReceipt.rating.equipmentBase === staff.attackRating
+  && standardReceipt.rarityBonus === 0 && standardReceipt.value === staffDamage(standardSeer),
   'standard mode uses the same direct PR formula against its saved attributes', JSON.stringify(standardReceipt));
 
 const C = createCombat({
@@ -188,8 +204,8 @@ if (!C.piles.hand.includes(liveAttack)) {
 const previewDamage = previewCard(C, liveAttack.instanceId, 'e1').values.find((v) => v.op === 'damage').value;
 const hpBefore = C.enemies[0].hp;
 dispatch(C, { type: 'playCard', cardInstanceId: liveAttack.instanceId, targetId: 'e1' });
-check(previewDamage === 5 && hpBefore - C.enemies[0].hp === previewDamage,
-  'Ash Staff magic preview and execution share exact value 5', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
+check(previewDamage === staffDamage(starseer) && hpBefore - C.enemies[0].hp === previewDamage,
+  'Ash Staff magic preview and execution share the independently derived value', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
 
 // Stable role identity: a profile swap may change what the card resolves to,
 // never its instance id, upgrade flag, or signature card.
@@ -274,7 +290,7 @@ try {
 } catch (error) { layeredError = error.message; layered = createRunState({ seed: 3, classId: 'starseer', registries: R }); }
 const layeredAttack = layered.deck.find((c) => c.equipmentRole === 'attack');
 check(layeredAttack?.profileReceipt?.base === 4 && layeredAttack.profileReceipt.rating?.id === 'pr'
-  && layeredAttack.profileReceipt.value === 7,
+  && layeredAttack.profileReceipt.value === staffDamage(layered, 4),
   'run/explicit equipment profile resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
 check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.baseValue === 4,
   'run persists the host-resolved equipment profile snapshot', JSON.stringify(layered.equipmentProfileRuleSnapshot));
@@ -347,10 +363,16 @@ check(/Incompatible attack profile swap/.test(incompatibleSaid),
 // satisfied by either site and so says nothing about this one. Without this
 // red the non-attack half of the refusal is deletable in silence.
 const incompatibleGuardRun = createRunState({ seed: 34, classId: 'starseer', registries: R });
-const incompatibleGuard = incompatibleGuardRun.deck.find((c) => c.equipmentRole === 'guard');
+const incompatibleGuard = incompatibleGuardRun.deck.find((c) => (c.equipmentRole === 'guard' || (c.equipmentRole === 'granted' && c.kitRole === 'guard')));
+// A legacy saved guard uses rolePlan; kit grants instead resolve their own
+// profileId and cannot express an incompatible role-profile transition.
+check(incompatibleGuard?.equipmentRole === 'granted' && incompatibleGuard.profileId === 'staffGuard',
+  'the guard probe starts from the authored staff kit grant');
+incompatibleGuard.equipmentRole = 'guard';
+delete incompatibleGuard.kitRole;
 incompatibleGuard.profileId = 'staffMagicAttack';
 let incompatibleGuardSaid = '';
-try { stampDeck(R, incompatibleGuardRun); } catch (error) { incompatibleGuardSaid = error.message; }
+try { stampDeck(R, incompatibleGuardRun, [incompatibleGuard]); } catch (error) { incompatibleGuardSaid = error.message; }
 check(/Incompatible guard profile swap/.test(incompatibleGuardSaid),
   'a non-attack role refuses the same silent state-loss swap', incompatibleGuardSaid);
 

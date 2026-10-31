@@ -1,0 +1,26 @@
+{
+  "id": "status.opportunist",
+  "tag": "status.opportunist",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Opportunist",
+  "description": "When an enemy staggers, become Prepared and draw 1 card per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.opportunist"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

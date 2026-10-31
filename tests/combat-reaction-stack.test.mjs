@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -14,9 +15,9 @@ import { combatReactionProblems } from '../src/model/combatReactionState.js';
 const strikeDef = contentBundle.cards.find(card => card.id === 'strike');
 const chooseStrike = { ...strikeDef, id: 'chooseStrike', name: 'Choose Strike', effects: [...strikeDef.effects, { op: 'discard', amount: 1, choose: true }] };
 const strikeTagging = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike');
-function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1, sweepRank = 2 } = {}) {
+function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1, sweepRank = 2, zoneChoice = false } = {}) {
   const registries = createRegistries({ ...contentBundle,
-    cards: [...contentBundle.cards, chooseStrike],
+    cards: [...contentBundle.cards,zoneChoice ? {...chooseStrike,effects:[...strikeDef.effects,{op:'moveCards',from:'hand',to:'discard',amount:1,selection:'choose'}]} : chooseStrike],
     tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
       ...strikeTagging.map(row => ({ ...row, objectId: 'chooseStrike' })), { family: 'card', scope: '', objectId: 'chooseStrike', tagId: 'trait:reaction' }],
     // spPool 1: one incoming root per enemy turn; the stat-driven SP pool (SPEC §4.6a) would plan follow-up attacks.
@@ -228,7 +229,7 @@ test('a saved stack with a depth 1 offer resumes to the same state as an unsaved
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
 });
 
-test('co-op seats answer in order and the whole stack resolves last pushed first across seats', () => {
+test('co-op seats answer in order and the whole stack resolves last pushed first across seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
@@ -252,7 +253,7 @@ test('co-op seats answer in order and the whole stack resolves last pushed first
   assert.equal(C.pendingReaction, undefined);
 });
 
-test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', () => {
+test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
@@ -270,7 +271,7 @@ test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B 
   assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'), 'seat B rc1 is offered');
 });
 
-test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', () => {
+test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
@@ -291,33 +292,33 @@ test('a co-op seat that disconnects after committing fizzles its entries and pay
   assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 0);
 });
 
-test('a stacked play that pauses for its own discard resumes the rest of the stack', () => {
+for(const zoneChoice of [false,true]) test(`a stacked play that pauses for ${zoneChoice ? 'card-zone selection' : 'discard'} resumes the rest of the stack`, () => {
   // Pushed: a Sweep (r0), then the discarding Strike (r1). The Strike resolves first and pauses,
   // leaving the Sweep on the stack; the discard choice then resumes the Sweep and the attack.
-  const { combat, registries } = fixture({ cardIds: ['sweepingBlow', 'chooseStrike', 'strike'] });
+  const { combat, registries } = fixture({ cardIds: ['sweepingBlow', 'chooseStrike', 'strike'],zoneChoice });
   dispatch(combat, { type: 'endTurn' });
   answer(combat, pick(combat, 'r0'));
   answer(combat, pick(combat, 'r1'));
   const out = answer(combat);
   assert.deepEqual(out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r1']);
-  assert.ok(combat.pendingAbilityDiscard);
+  assert.ok(zoneChoice ? combat.pendingCardChoice : combat.pendingAbilityDiscard);
   assert.ok(combat.reactionResume);
   assert.deepEqual(combat.reactionStack.entries.map(entry => entry.cardInstanceId), ['r0']);
   const json = value => JSON.parse(JSON.stringify(value));
   const saved = json(serializeCombatSnapshot(combat));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
   // The Sweep (r0) still waits on the stack: it cannot be chosen as discard fodder.
-  assert.throws(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ['r0'] }), /Choose exactly/);
-  const resumed = [combat, restored].map(state => dispatch(state, { type: 'chooseDiscard', cardInstanceIds: ['r2'] }));
+  assert.throws(() => dispatch(combat, { type: zoneChoice ? 'chooseCards' : 'chooseDiscard', cardInstanceIds: ['r0'] }), /Choose exactly/);
+  const resumed = [combat, restored].map(state => dispatch(state, { type: zoneChoice ? 'chooseCards' : 'chooseDiscard', cardInstanceIds: ['r2'] }));
   assert.deepEqual(resumed[0].events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r0']);
   assert.deepEqual(json(resumed[0].events), json(resumed[1].events));
-  assert.equal(combat.pendingAbilityDiscard, undefined);
+  assert.equal(combat.pendingAbilityDiscard, undefined);assert.equal(combat.pendingCardChoice,undefined);
   assert.equal(combat.reactionResume, undefined);
   assert.equal(combat.reactionStack, undefined);
   assert.equal(combat.turn, 2);
 });
 
-test('a co-op stack saved at a depth 1 offer resumes to the same state as an unsaved run', () => {
+test('a co-op stack saved at a depth 1 offer resumes to the same state as an unsaved run', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,

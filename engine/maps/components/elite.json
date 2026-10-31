@@ -1,0 +1,33 @@
+{
+  "id": "elite",
+  "kind": "node",
+  "label": "Elite",
+  "description": "A hard fight. Drops a relic.",
+  "icon": "node-elite",
+  "encounter": {
+    "pool": "elite",
+    "resolver": "rollEncounter"
+  },
+  "placement": {
+    "eliteFrom": {
+      "at": "fraction",
+      "of": 0.43
+    },
+    "restBeforeElite": true,
+    "minPerAct": 2,
+    "noSameTypeAdjacent": true,
+    "source": "content/source/mapActShape.json:14,16,17; src/engine/mapgen.js:218,224"
+  },
+  "rewards": {
+    "cinders": "elite",
+    "cardOffer": "elite",
+    "relic": true
+  },
+  "assets": [
+    "node-elite"
+  ],
+  "tags": [
+    "combat",
+    "threat"
+  ]
+}

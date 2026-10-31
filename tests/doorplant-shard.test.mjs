@@ -11,6 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { parseShard, resolveShard, selectShard } from '../tools/doorplant.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -142,4 +143,32 @@ test('the heavy ci.yml jobs check out lean: no history blobs, no source PNGs', (
     const patterns = /^ {10}sparse-checkout: \|\n((?: {12}.*\n)+)/m.exec(opts)?.[1].trim().split(/\n\s*/);
     assert.deepEqual(patterns, ['/*', '!/art/**/*.png', '!/docs/**/*.png'], `${name} checks out a different tree`);
   }
+});
+
+
+test('slot-load keeps all eight named plants, partitioned four per CI shard with a clean edge', () => {
+  const source = readFileSync(`${ROOT}tools/slot-load-door.mjs`, 'utf8');
+  const declared = /const SELFTEST = (\{[\s\S]*?\n  \});/.exec(source);
+  assert.ok(declared, 'slot-load must declare its unchanged corpus before resolving a shard');
+  const config = runInNewContext(`(${declared[1]})`);
+  assert.equal(config.timeoutMs, 120000, 'each whole-tool run keeps its existing timeout');
+  assert.equal(config.plants.length, 8);
+  assert.deepEqual(Array.from(config.plants, plant => plant.expectRed.source), [
+    'RED SLOT-LOAD-NEWER-NOTICE', 'RED SLOT-LOAD-NEWER-AT-CONFIRM',
+    'RED SLOT-LOAD-REFUSED-KEEPS-RUN', 'RED SLOT-LOAD-OVERLAY-FOCUS',
+    'RED SLOT-LOAD-MIDCOMBAT-RESTART', 'RED SLOT-LOAD-EXPANDED-ENTRY',
+    'RED SLOT-LOAD-MIDCOMBAT-RESTART', 'RED SLOT-LOAD-KNOWLEDGE-SNAPSHOT',
+  ]);
+  const corpus = Array.from(config.plants);
+  const partition = [0, 1].map(index => selectShard(corpus, { index, count: 2 }).map(plant => corpus.indexOf(plant)));
+  assert.deepEqual(partition, [[0, 2, 4, 6], [1, 3, 5, 7]]);
+  assert.match(source, /const shard = resolveShard\(\);/);
+  assert.match(source, /doorSelftest\(\{ \.\.\.SELFTEST, shard \}\)/, 'shared harness must own each shard, including its mandatory clean rerun');
+  assert.match(source, /const ran = selectShard\(SELFTEST\.plants, shard\)\.length;/);
+  assert.ok(source.includes('${ran}/${ran} known-bads observed red'), 'success counts the executed shard; unsharded remains 8/8');
+  const ci = jobs(readFileSync(`${ROOT}.github/workflows/ci.yml`, 'utf8').replace(/\r\n/g, '\n'));
+  const job = ci.get('browser-slot-load-plants');
+  assert.ok(job);
+  assert.deepEqual(shardLegs(job).map(leg => leg.shard), ['0/2', '1/2']);
+  assert.match(job, /slot-load-door\.mjs --selftest --shard \$\{\{ matrix\.shard \}\}/);
 });

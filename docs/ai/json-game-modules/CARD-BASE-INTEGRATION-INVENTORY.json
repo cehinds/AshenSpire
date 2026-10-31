@@ -1,0 +1,4154 @@
+{
+  "schemaVersion": "card-base-integration-inventory-1",
+  "scope": "Mechanics and visuals are approved as the desired base; per-card rules, values, and production mapping remain to be authored. This is an inventory, not runtime content.",
+  "source": {
+    "repository": "AshenSpire",
+    "originBranch": "Feature/updateCharacterCreation",
+    "designBranch": "worker/updateCharacterCreation/card-tag-design",
+    "catalogCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+    "catalogPath": "docs/design/card-tag-design/proposed-design.json",
+    "sourceCatalogCounts": {
+      "total": 74,
+      "combatCards": 67,
+      "statusCards": 3,
+      "services": 2,
+      "ruleTemplates": 2
+    }
+  },
+  "currentExecutableBuildingBlocks": {
+    "effectOpcodes": [
+      "addCard",
+      "addCardToDeck",
+      "addCinders",
+      "addFlask",
+      "addFlaskCapacity",
+      "addRelic",
+      "applyStatus",
+      "arcaneBuildup",
+      "block",
+      "buildup",
+      "completeCombatAction",
+      "damage",
+      "discard",
+      "dodgeRoll",
+      "draw",
+      "enterStance",
+      "exhaust",
+      "gainBarrier",
+      "gainEnergy",
+      "gainPoise",
+      "gainWard",
+      "grantCardCharge",
+      "grantRollMode",
+      "heal",
+      "loseHp",
+      "loseMaxHpPct",
+      "poiseDamage",
+      "refillFlasks",
+      "removeCardFromDeck",
+      "removeStatus",
+      "restoreMana",
+      "restorePoise",
+      "restoreStamina",
+      "retain",
+      "shuffleDiscardIntoDraw",
+      "stagger",
+      "startCombat",
+      "swapClass",
+      "upgradeCard",
+      "wardDamage"
+    ],
+    "statusIds": [
+      "afterimage",
+      "astralArmor",
+      "astromancer",
+      "azureCoil",
+      "bleed",
+      "bleedResist",
+      "bloodUnction",
+      "bulwarkEcho",
+      "burn",
+      "communion",
+      "constellation",
+      "crimsonBlight",
+      "deadlyTempo",
+      "dexterity",
+      "emberTide",
+      "envenom",
+      "evade",
+      "frail",
+      "frost",
+      "frostExposed",
+      "frostResist",
+      "glassCannon",
+      "goreblood",
+      "harbingerOfBlight",
+      "insanity",
+      "insanityExposed",
+      "insanityResist",
+      "ironVow",
+      "lifeTithe",
+      "madness",
+      "magicVulnerable",
+      "moonlitShield",
+      "necroticBlight",
+      "opportunist",
+      "precision",
+      "prepared",
+      "rallyingStandard",
+      "rallyingStandardUp",
+      "regen",
+      "sanguinePact",
+      "silenced",
+      "staggered",
+      "stanceShifted",
+      "stargazer",
+      "starstoneCharge",
+      "stigmata",
+      "stoneskin",
+      "strength",
+      "thornHalo",
+      "unbreakable",
+      "unbreakableUp",
+      "venom",
+      "vulnerable",
+      "waxingMoon",
+      "weak",
+      "zealotry"
+    ]
+  },
+  "authoringDefaults": {
+    "manaFloor": "Every spell and weapon art costs at least 1 base MP; apply the same policy to authored variants unless an explicit approved exception says otherwise.",
+    "weaponArts": "Set weapon-art damage by explicit comparison with the current Smash baseline before costs; do not infer damage/cost from proposal text alone.",
+    "unspecifiedParameters": "Resolve to the smallest concrete value that preserves the stated effect; match core card effects, costs, durations, targets and lifecycle; record selected values in final rules.",
+    "statusCompatibility": "An existing status name or opcode only supplies a primitive. Match decay, trigger, target, magnitude, removal and turn timing before marking a proposal reusable."
+  },
+  "cards": [
+    {
+      "id": "proposed:card:persistent-protection",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "persistent per-damage defense stacks and matching damage groups",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "user-explicit"
+        },
+        "id": "proposed:card:persistent-protection",
+        "name": "Ward Armor",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:persistent-protection"
+        ],
+        "face": {
+          "lines": [
+            "Gain Persistent Block 4, Barrier 4"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Gain Persistent Block 4 and Persistent Barrier 4. At owner turn start replenish each using its remaining stacks. Lose one stack per qualifying matching-damage event, with no passive per-turn loss. Qualifying threshold and damage-group mapping unresolved; physical/magical is proposed, and Barrier versus existing Ward mapping is unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:persistent-protection"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": false
+      }
+    },
+    {
+      "id": "proposed:card:greased",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [
+        "burn"
+      ],
+      "runtimeGap": "new status modifiers plus guaranteed fire follow-up/splash resolution",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "user-explicit"
+        },
+        "id": "proposed:card:greased",
+        "name": "Grease",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:greased"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Greased 3"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Greased adds prone chance and melee/reach accuracy penalty. Fire hit is 100% unavoidable, deals 3× fire damage, applies Burn 3 and splashes 1.5× damage; splash basis unresolved.",
+          "parameters": {
+            "greasedStacks": 3
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:greased"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": false
+      }
+    },
+    {
+      "id": "proposed:card:divine-strike",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "weapon damage contribution plus quantified Divine damage",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "user-explicit"
+        },
+        "id": "proposed:card:divine-strike",
+        "name": "Smite",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:divine-strike"
+        ],
+        "face": {
+          "lines": [
+            "Deal weapon + ? Divine damage"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Deal weapon damage plus Divine damage. Weapon contribution and Divine magnitude remain undecided.",
+          "parameters": {
+            "includesWeaponDamage": true,
+            "weaponDamage": null,
+            "divineDamage": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:divine-strike"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": false
+      }
+    },
+    {
+      "id": "proposed:card:poison",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [
+        "venom"
+      ],
+      "runtimeGap": "new poison proc distinct from live Venom",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:poison",
+        "name": "Poison",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:poison"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Poison 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Poison causes necrotic damage at turn start; magnitude and relationship to live Venom unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:poison"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:blight",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "new lethal buildup/proc semantics distinct from live Crimson/Necrotic Blight",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:blight",
+        "name": "Blight",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:blight"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Blight 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Lethal when buildup equals health; current versus maximum health unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "damageType": "necrotic"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:blight"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:weak",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "existing-status-name-or-op-semantics-mismatch",
+      "currentStatusMatches": [
+        "weak"
+      ],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:weak",
+        "name": "Weaken",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:weak"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Weak 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Weak magnitude and interaction with existing live Weak require a migration decision.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:weak"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:charm",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "accuracy modifier with target/removal rules",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:charm",
+        "name": "Charm",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:charm"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Charm 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Charm affects accuracy; magnitude, targets and removal unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:charm"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:bind",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "action/card-type restriction lifecycle",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:bind",
+        "name": "Bind",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:bind"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Bind 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Bind restricts specified card types; restricted set unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:bind"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:restrained",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "reach/resource-cost card injection and action restriction",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:restrained",
+        "name": "Restrain",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:restrained"
+        ],
+        "face": {
+          "lines": [
+            "Inflict Restrained 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Restraint restricts reach using resource-cost cards; allowed actions and costs unresolved. Add resource-cost cards to the restrained target hand to express reach limits; exact card costs and actions unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "generatedCardDestination": "hand",
+            "recipient": "restrained target",
+            "generatedCardKind": "resource-cost card",
+            "cost": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:restrained"
+          ],
+          "generatedCardIds": [
+            "proposed:card:restrained-status-card"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:foresight",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "perception modifier/check integration",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:foresight",
+        "name": "Foresight",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:foresight"
+        ],
+        "face": {
+          "lines": [
+            "Gain Foresight 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Foresight increases perception; perception interaction unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:foresight"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:evade",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "existing-status-name-or-op-semantics-mismatch",
+      "currentStatusMatches": [
+        "evade"
+      ],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:evade",
+        "name": "Evade",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:evade"
+        ],
+        "face": {
+          "lines": [
+            "Gain Evade 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Evade eligibility and failed-evade behavior unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:evade"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:intangible",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage eligibility and duration model",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:intangible",
+        "name": "Intangible",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:intangible"
+        ],
+        "face": {
+          "lines": [
+            "Gain Intangible 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Intangibility rules, duration and damage eligibility unresolved.",
+          "parameters": {
+            "appliedStacks": 1,
+            "amountSource": "user-request default status stacks"
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:intangible"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:mirrors",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage amplification/target semantics",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:mirrors",
+        "name": "Mirrors",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:mirrors"
+        ],
+        "face": {
+          "lines": [
+            "Gain Mirrors 1"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Mirrors greatly improve damage as requested. Damage coefficient, duration and targeting remain unresolved; defensive decoy semantics are not assumed.",
+          "parameters": {
+            "damageImprovement": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:mirrors"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:elemental-weapon",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "temporary weapon enchantment and spell-created weapon support",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:elemental-weapon",
+        "name": "Elemental Weapon",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:elemental-weapon"
+        ],
+        "face": {
+          "lines": [
+            "Enchant weapon: ?",
+            "Add ? elemental effect"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Spell-created or spell-enchanted elemental weapon; element, duration and stacking unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:elemental-weapon"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:fire-cleanse",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "typed cleanse and fire interaction",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:fire-cleanse",
+        "name": "Purifying Flame",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:fire-cleanse"
+        ],
+        "face": {
+          "lines": [
+            "Cleanse ? with fire",
+            "Resolve fire interaction ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Fire cleansing targets and interactions unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:fire-cleanse"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:divine-cleanse",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "typed cleanse and stack removal",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:divine-cleanse",
+        "name": "Divine Cleanse",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:divine-cleanse"
+        ],
+        "face": {
+          "lines": [
+            "Cleanse ? statuses",
+            "Remove ? stacks"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Divine cleansing types, targets and magnitude unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:divine-cleanse"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:necrotic-heal",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage conversion event hook",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:necrotic-heal",
+        "name": "Necrotic Renewal",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:necrotic-heal"
+        ],
+        "face": {
+          "lines": [
+            "Convert necrotic to healing",
+            "Restore ? health"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Conversion eligibility and coefficient unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:necrotic-heal"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:divine-harm",
+      "entityKind": "combatCard",
+      "workstream": "status-defense-and-conversion",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage conversion event hook",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:divine-harm",
+        "name": "Profane Inversion",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:divine-harm"
+        ],
+        "face": {
+          "lines": [
+            "Convert divine to harm",
+            "Suffer ? damage"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Divine harm conversion eligibility and coefficient unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:divine-harm"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:shuffle-hand",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "selected/random hand ordering and destination rules",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:shuffle-hand",
+        "name": "Hand Shuffle",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:shuffle-hand"
+        ],
+        "face": {
+          "lines": [
+            "Shuffle ? hand cards"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Choose or random selection and destination unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:shuffle-hand"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:shuffle-deck",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "whole-pile shuffle op/timing",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:shuffle-deck",
+        "name": "Deck Shuffle",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:shuffle-deck"
+        ],
+        "face": {
+          "lines": [
+            "Shuffle the deck"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Deck shuffle timing and selection unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:shuffle-deck"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:draw",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "existing-op-building-blocks-semantics-partial",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:draw",
+        "name": "Draw",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:draw"
+        ],
+        "face": {
+          "lines": [
+            "Draw ? cards"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Draw count, trigger and limits unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:draw"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:retain",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "existing-op-building-blocks-semantics-partial",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:retain",
+        "name": "Retain",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:retain"
+        ],
+        "face": {
+          "lines": [
+            "Retain ? cards"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Selection and retention duration unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:retain"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:scout",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "peek/reorder/return operations",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:scout",
+        "name": "Scout",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:scout"
+        ],
+        "face": {
+          "lines": [
+            "Scout ? cards",
+            "Reorder or return ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Deck, count and permitted ordering unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:scout"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:reveal-opponent-hand",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "opponent hand visibility/duration",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:reveal-opponent-hand",
+        "name": "Read Intent",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:reveal-opponent-hand"
+        ],
+        "face": {
+          "lines": [
+            "Reveal ? enemy cards",
+            "For ? turns"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Visibility scope and duration unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:reveal-opponent-hand"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:recall-choose",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "source and chosen-card destination",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:recall-choose",
+        "name": "Recall",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:recall-choose"
+        ],
+        "face": {
+          "lines": [
+            "Choose ? cards to recall"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Choose cards from a specified source; source and destination unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:recall-choose"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:recover-exile",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "chosen exiled card recovery",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:recover-exile",
+        "name": "Exile Recovery",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:recover-exile"
+        ],
+        "face": {
+          "lines": [
+            "Recover ? exiled cards",
+            "Choose destination ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Exile recovery count and destination unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:recover-exile"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:exhaust-choose",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "chosen-card selection before exhaust",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:exhaust-choose",
+        "name": "Chosen Exhaust",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:exhaust-choose"
+        ],
+        "face": {
+          "lines": [
+            "Choose ? cards",
+            "Exhaust them"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Selection scope and count unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:exhaust-choose"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:transform",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "card transformation pool/permanence",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:transform",
+        "name": "Transform",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:transform"
+        ],
+        "face": {
+          "lines": [
+            "Transform ? cards",
+            "Into ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Transformation pool, permanence and count unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:transform"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:status-card-stagger",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "generated status cards with opponent deck lifecycle",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:status-card-stagger",
+        "name": "Staggering Burden",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:status-card-stagger"
+        ],
+        "face": {
+          "lines": [
+            "Add ? Stagger cards"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Stagger status-card behavior, target deck and draw/play trigger unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:status-card-stagger"
+          ],
+          "generatedCardIds": [
+            "proposed:card:stagger-status-card"
+          ],
+          "lifecycleAlternatives": [
+            "proposed:effect:exhaust",
+            "proposed:effect:ethereal"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:status-card-paralyze",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "generated status cards distinct from live paralysis",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:status-card-paralyze",
+        "name": "Paralyzing Burden",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:status-card-paralyze"
+        ],
+        "face": {
+          "lines": [
+            "Add ? Paralysis to enemy deck"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Paralysis status-card behavior and distinction from live paralysis unresolved.",
+          "parameters": {
+            "destination": "deck",
+            "recipient": "opponent",
+            "count": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:status-card-paralyze"
+          ],
+          "generatedCardIds": [
+            "proposed:card:paralysis-status-card"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:exhaust",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "existing-op-building-blocks-semantics-partial",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:exhaust",
+        "name": "Exhaust",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:exhaust"
+        ],
+        "face": {
+          "lines": [
+            "Resolve effect ?",
+            "Exhaust this card"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Exhaust lifecycle and recovery relationship unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:exhaust"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:ethereal",
+      "entityKind": "combatCard",
+      "workstream": "hand-and-pile-control",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "turn-expiration-to-exhaust timing",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:ethereal",
+        "name": "Ethereal",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:ethereal"
+        ],
+        "face": {
+          "lines": [
+            "Resolve effect ?",
+            "Ethereal"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Ethereal expiration trigger and destination unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:ethereal"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:stat-buff",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-selection-or-state-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:stat-buff",
+        "name": "Empower",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:stat-buff"
+        ],
+        "face": {
+          "lines": [
+            "Increase ? stat",
+            "By ? for ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Buff stat, magnitude and duration unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:stat-buff"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:drain-allies",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "ally resource transaction and consent/selection",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:drain-allies",
+        "name": "Shared Sacrifice",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:drain-allies"
+        ],
+        "face": {
+          "lines": [
+            "Drain allies: ?",
+            "Gain ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Drain resource, consent/targeting and benefit unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:drain-allies"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:scale-negative-status",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "dynamic effect formula over status state",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:scale-negative-status",
+        "name": "Affliction Scaling",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:scale-negative-status"
+        ],
+        "face": {
+          "lines": [
+            "Deal ? damage",
+            "Scale with afflictions"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Count stacks versus types and coefficient unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:scale-negative-status"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:scale-damage-taken",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage history tracking window and formula",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:scale-damage-taken",
+        "name": "Reprisal Growth",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:scale-damage-taken"
+        ],
+        "face": {
+          "lines": [
+            "Deal ? damage",
+            "Scale with damage taken"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Tracking window, damage basis and coefficient unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:scale-damage-taken"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:growth-per-type",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "per-turn/action type tracking and growth cap",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:growth-per-type",
+        "name": "Discipline Growth",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:growth-per-type"
+        ],
+        "face": {
+          "lines": [
+            "Gain ? per type played",
+            "Track types: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Type taxonomy, reset window and growth cap unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:growth-per-type"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:cost-per-use",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "mutable cost state/reset rules",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:cost-per-use",
+        "name": "Shifting Cost",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:cost-per-use"
+        ],
+        "face": {
+          "lines": [
+            "Resolve effect ?",
+            "Cost changes per use: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Cost direction, coefficient, minimum and reset unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:cost-per-use"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:damage-per-use",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "mutable effect state/reset rules",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:damage-per-use",
+        "name": "Rising Damage",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:damage-per-use"
+        ],
+        "face": {
+          "lines": [
+            "Deal ? damage",
+            "Changes per use: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Damage direction, coefficient and reset unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:damage-per-use"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:pay-x-effect",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "paid-X resource/effect formula",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:pay-x-effect",
+        "name": "Channel X",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:pay-x-effect"
+        ],
+        "face": {
+          "lines": [
+            "Pay X: ? resource",
+            "Scale effect with X"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Resource, effect curve and permitted X unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:pay-x-effect"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:pay-x-targets",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "paid-X target fanout",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:pay-x-targets",
+        "name": "Spread X",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:pay-x-targets"
+        ],
+        "face": {
+          "lines": [
+            "Pay X: ? resource",
+            "Affect X targets"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Resource, target eligibility and limits unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:pay-x-targets"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:hide-cards",
+      "entityKind": "combatCard",
+      "workstream": "card-status-and-resource-scaling",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "hidden-zone/visibility/return lifecycle",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:hide-cards",
+        "name": "Conceal",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:hide-cards"
+        ],
+        "face": {
+          "lines": [
+            "Hide X cards",
+            "For X turns"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Hide X cards for X turns per X stacks. Count and duration depend on stacks as requested; the exact relationship, hidden zone, visibility and return timing remain unresolved.",
+          "parameters": {
+            "stackDependentCount": true,
+            "stackDependentDuration": true,
+            "cardsPerStacksFormula": null,
+            "turnsPerStacksFormula": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:hide-cards"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:force-stance",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "forced stance override and duration",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:force-stance",
+        "name": "Force Stance",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:force-stance"
+        ],
+        "face": {
+          "lines": [
+            "Force stance: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Forced stance eligibility, duration and override rules unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:force-stance"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:multi-stance",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "remove/relax exclusive stance invariant",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:multi-stance",
+        "name": "Many Forms",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:multi-stance"
+        ],
+        "face": {
+          "lines": [
+            "Hold multiple stances"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Allow multiple stances simultaneously. Stance limit, allowed combinations and exceptions to exclusivity remain undecided. This capability is separate from selecting an effect based on current stance or paid resource.",
+          "parameters": {
+            "simultaneousStances": true,
+            "stanceLimit": null,
+            "combinations": null,
+            "exclusivityExceptions": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:multi-stance"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:current-stance-variant",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "variant choice, preview and resolution",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:current-stance-variant",
+        "name": "Stance Echo",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:current-stance-variant"
+        ],
+        "face": {
+          "lines": [
+            "Active stance effect: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Current-stance variant resolution and inactive previews inspectable.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:current-stance-variant"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:paid-resource-variant",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "paid-resource variant choice and inspectable selection",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:paid-resource-variant",
+        "name": "Resource Echo",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:paid-resource-variant"
+        ],
+        "face": {
+          "lines": [
+            "Active paid effect: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Resource paid selects variant; only selected variant displayed.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:paid-resource-variant"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:attack-then-defend",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "post-attack pending stance choice",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:attack-then-defend",
+        "name": "Strike and Settle",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:attack-then-defend"
+        ],
+        "face": {
+          "lines": [
+            "Deal ? damage",
+            "Choose defense stance"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Attack resolves, then immediately choose a stance transition. Defensive choices are supported, but the general requested transition may select another eligible stance; eligibility unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:attack-then-defend"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:modify-card-stance",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "temporary/permanent card definition modifier",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:modify-card-stance",
+        "name": "Reframe",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:modify-card-stance"
+        ],
+        "face": {
+          "lines": [
+            "Choose ? card",
+            "Change its stance: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Eligible card, stance, duration and costs unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:modify-card-stance"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:modify-card-range",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "temporary/permanent card definition modifier",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:modify-card-range",
+        "name": "Extend",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:modify-card-range"
+        ],
+        "face": {
+          "lines": [
+            "Choose ? card",
+            "Change its range: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Eligible card, range, duration and costs unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:modify-card-range"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:extra-weapon",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "extra weapon action identity/action economy",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:extra-weapon",
+        "name": "Extra Weapon",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:extra-weapon"
+        ],
+        "face": {
+          "lines": [
+            "Gain ? weapon action"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Extra weapon identity, action economy and duration unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:extra-weapon"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:extra-shield",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "extra shield action identity/action economy",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:extra-shield",
+        "name": "Extra Shield",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:extra-shield"
+        ],
+        "face": {
+          "lines": [
+            "Gain ? shield action"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Extra shield identity, action economy and duration unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:extra-shield"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:auto-counter",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "prepared automatic counter trigger/charges",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:auto-counter",
+        "name": "Automatic Counter",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:auto-counter"
+        ],
+        "face": {
+          "lines": [
+            "Prepare auto-counter ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Trigger, charges and interaction with existing Counter unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:auto-counter"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:auto-sweep",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "prepared automatic sweep trigger/charges",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:auto-sweep",
+        "name": "Automatic Sweep",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:auto-sweep"
+        ],
+        "face": {
+          "lines": [
+            "Prepare auto-sweep ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Trigger, charges and damage unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:auto-sweep"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:reflect",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage ownership and reflection timing",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:reflect",
+        "name": "Reflect",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:reflect"
+        ],
+        "face": {
+          "lines": [
+            "Reflect eligible hits",
+            "Return ? damage"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Eligibility, coefficient and damage ownership unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:reflect"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:guard-allies",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "damage redirection/coverage order",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:guard-allies",
+        "name": "Interpose",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:guard-allies"
+        ],
+        "face": {
+          "lines": [
+            "Guard ? allies",
+            "Absorb ? damage"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Coverage, redirect order, protection type and magnitude unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:guard-allies"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:transmute",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "target eligibility and yield transactions",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:transmute",
+        "name": "Transmute",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:transmute"
+        ],
+        "face": {
+          "lines": [
+            "Convert target: ?",
+            "Yield: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Targets may transmute to cinders, potions, components or scrolls; eligibility and yields unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:transmute"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:one-use-scroll",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "canonical spell reference, pay/focus/scaling and consumption",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:one-use-scroll",
+        "name": "Spell Scroll",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:one-use-scroll"
+        ],
+        "face": {
+          "lines": [
+            "Cast linked spell",
+            "Consume scroll"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "One-use scroll references canonical spell; costs, focus bypass and scaling unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:one-use-scroll"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "entityKind": "combatCard",
+        "namesProvisional": true
+      }
+    },
+    {
+      "id": "proposed:card:gain-resource",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-selection-or-state-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:gain-resource",
+        "name": "Resource Gain",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:gain-resource"
+        ],
+        "face": {
+          "lines": [
+            "Gain ? resource"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Gain energy or another resource at a reasonable cost; resource, amount and cost unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:gain-resource"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:buff-ally",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "ally target selection and buff ownership",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:buff-ally",
+        "name": "Ally Empowerment",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:buff-ally"
+        ],
+        "face": {
+          "lines": [
+            "Buff ally: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Buff an ally independently of draining allies; stat, amount and duration unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:buff-ally"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:break-ward",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "ward-break operation distinct from HP damage",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:break-ward",
+        "name": "Ward Break",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:break-ward"
+        ],
+        "face": {
+          "lines": [
+            "Break ? Ward"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Ward-breaking capability, separate from ordinary health damage; magnitude and multi-hit distribution unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:break-ward"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:break-poise",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "poise-break operation and per-hit allocation",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:break-poise",
+        "name": "Poise Break",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:break-poise"
+        ],
+        "face": {
+          "lines": [
+            "Break ? Poise"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Poise-breaking capability; per-hit and total multi-hit damage must be distinguished, amounts unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:break-poise"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:generate-smash",
+      "entityKind": "combatCard",
+      "workstream": "items-and-special-effects",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "hand generation and generated-card lifecycle",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:generate-smash",
+        "name": "Smash Creation",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:generate-smash"
+        ],
+        "face": {
+          "lines": [
+            "Add ? Smash to hand"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Generate a Smash card in the acting character hand; generated canonical identity, count and lifecycle unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:generate-smash"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:conditional-damage-bonus",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "condition evaluator across stance/type/range/element",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:conditional-damage-bonus",
+        "name": "Conditional Strike",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:conditional-damage-bonus"
+        ],
+        "face": {
+          "lines": [
+            "Deal ? damage"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Damage bonus conditional on stance, card type, range or element; condition combination and coefficient unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:conditional-damage-bonus"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:perception-untargetable",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "perception-based targeting gate",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:perception-untargetable",
+        "name": "Veil",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:perception-untargetable"
+        ],
+        "face": {
+          "lines": [
+            "Untargetable unless perceived"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Targeting requires passing a perception check; check formula, visibility duration and bypass rules unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:perception-untargetable"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:retain-block",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "block retention lifecycle",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:retain-block",
+        "name": "Hold Block",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:retain-block"
+        ],
+        "face": {
+          "lines": [
+            "Retain ? Block"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Retain Block across its normal expiration; amount, duration and interaction with Persistent Block unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:retain-block"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:immediate-stance-transition",
+      "entityKind": "combatCard",
+      "workstream": "stance-and-card-modification",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "stance transition after card action",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:immediate-stance-transition",
+        "name": "Flowing Transition",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:immediate-stance-transition"
+        ],
+        "face": {
+          "lines": [
+            "Play; change stance: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Allow immediate stance transition after play; attacks may change stance, and transitions are not limited to defensive stances.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:immediate-stance-transition"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:stagger-status-card",
+      "entityKind": "statusCard",
+      "workstream": "supporting-status-card",
+      "assessment": "new-selection-or-state-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Supporting status-card definition; author its trigger, recipient pile, and lifecycle with the parent card before shipping.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:stagger-status-card",
+        "name": "Stagger",
+        "namesProvisional": true,
+        "entityKind": "statusCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:stagger-status-card"
+        ],
+        "face": {
+          "lines": [
+            "Stagger: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Actual generated Stagger status card; lifecycle must use Exhaust OR Ethereal, selection unresolved. Trigger, effect and destination unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:stagger-status-card"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "tagAlternatives": {
+          "operator": "exactlyOne",
+          "tagIds": [
+            "proposed:effect:exhaust",
+            "proposed:effect:ethereal"
+          ],
+          "selected": null
+        },
+        "generatedByCandidateIds": [
+          "proposed:card:status-card-stagger"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:multi-hit",
+      "entityKind": "combatCard",
+      "workstream": "combat-actions-and-targeting",
+      "assessment": "new-engine-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "hit sequence and separate total/per-hit Ward/Poise accounting",
+      "recommendedAuthoringDefault": "Choose the smallest concrete values that preserve the stated fantasy and fit current core power; where the source explicitly leaves a decision open, use an author-owned default and record it in the final card rules. All spells and weapon arts should have at least 1 base MP under the requested floor; any exceptional zero-cost path must be explicit. Resolve weapon-art damage against the current Smash baseline before assigning cost.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "AI-suggested-working-label"
+        },
+        "id": "proposed:card:multi-hit",
+        "name": "Multiple Strikes",
+        "namesProvisional": true,
+        "entityKind": "combatCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:multi-hit"
+        ],
+        "face": {
+          "lines": [
+            "Strike ? times for ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Multi-hit total versus per-hit damage, Ward break and Poise break are separate quantities; count, distribution and timing unresolved.",
+          "parameters": null,
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:multi-hit"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:paralysis-status-card",
+      "entityKind": "statusCard",
+      "workstream": "supporting-status-card",
+      "assessment": "new-selection-or-state-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Supporting status-card definition; author its trigger, recipient pile, and lifecycle with the parent card before shipping.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "user-request-term"
+        },
+        "id": "proposed:card:paralysis-status-card",
+        "name": "Paralysis",
+        "namesProvisional": false,
+        "entityKind": "statusCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:paralysis-status-card"
+        ],
+        "face": {
+          "lines": [
+            "Paralysis: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Generated Paralysis card goes into the opponent deck; effect, costs and lifecycle unresolved.",
+          "parameters": {
+            "recipient": "opponent",
+            "destination": "deck",
+            "resourceCost": null,
+            "effect": null,
+            "lifecycle": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:paralysis-status-card"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "generatedByCandidateIds": [
+          "proposed:card:status-card-paralyze"
+        ]
+      }
+    },
+    {
+      "id": "proposed:card:restrained-status-card",
+      "entityKind": "statusCard",
+      "workstream": "supporting-status-card",
+      "assessment": "new-selection-or-state-semantics",
+      "currentStatusMatches": [],
+      "runtimeGap": "Selection, timing, lifecycle, target, or quantitative details still need explicit mapping; same-named operation/status is not full semantic compatibility.",
+      "recommendedAuthoringDefault": "Supporting status-card definition; author its trigger, recipient pile, and lifecycle with the parent card before shipping.",
+      "sourceProposal": {
+        "state": "proposed",
+        "balanceUndecided": true,
+        "provenance": {
+          "source": "user-request",
+          "nameSource": "user-request-term"
+        },
+        "id": "proposed:card:restrained-status-card",
+        "name": "Restrained",
+        "namesProvisional": false,
+        "entityKind": "statusCard",
+        "school": null,
+        "schoolGrouping": "unspecified",
+        "stance": null,
+        "cost": {
+          "sp": null,
+          "mp": null
+        },
+        "tagIds": [
+          "proposed:effect:restrained-status-card"
+        ],
+        "face": {
+          "lines": [
+            "Restrained: ?"
+          ],
+          "iconTags": [],
+          "maxClauses": 2,
+          "maxPhysicalLines": 3
+        },
+        "inspection": {
+          "fullRules": "Generated Restrained resource-cost card goes into the opponent hand. Pay resource to use reach/melee actions; resource, cost, eligible actions and lifecycle unresolved.",
+          "parameters": {
+            "recipient": "opponent",
+            "destination": "hand",
+            "resourceCost": null,
+            "effect": null,
+            "lifecycle": null
+          },
+          "canonicalSpellId": null,
+          "activeVariant": null,
+          "variants": [],
+          "openQuestionIds": [
+            "question:restrained-status-card"
+          ]
+        },
+        "wireframeIds": [
+          "proposed:wireframe:compact",
+          "proposed:wireframe:expanded-inspection"
+        ],
+        "generatedByCandidateIds": [
+          "proposed:card:restrained"
+        ]
+      }
+    }
+  ],
+  "otherProposals": [
+    {
+      "state": "proposed",
+      "balanceUndecided": true,
+      "provenance": {
+        "source": "user-request",
+        "nameSource": "AI-suggested-working-label"
+      },
+      "id": "proposed:card:creature-vulnerability",
+      "name": "Exploit Kind",
+      "school": null,
+      "schoolGrouping": "unspecified",
+      "stance": null,
+      "cost": {
+        "sp": null,
+        "mp": null
+      },
+      "tagIds": [
+        "proposed:effect:creature-vulnerability"
+      ],
+      "face": {
+        "lines": [
+          "Target creature kind: ?",
+          "Apply vulnerability ?"
+        ],
+        "iconTags": [],
+        "maxClauses": 2,
+        "maxPhysicalLines": 3
+      },
+      "inspection": {
+        "fullRules": "Creature taxonomy, matching and vulnerability magnitude unresolved.",
+        "parameters": null,
+        "canonicalSpellId": null,
+        "activeVariant": null,
+        "variants": [],
+        "openQuestionIds": [
+          "question:creature-vulnerability"
+        ]
+      },
+      "wireframeIds": [
+        "proposed:wireframe:rule-template"
+      ],
+      "entityKind": "ruleTemplate",
+      "namesProvisional": true
+    },
+    {
+      "state": "proposed",
+      "balanceUndecided": true,
+      "provenance": {
+        "source": "user-request",
+        "nameSource": "AI-suggested-working-label"
+      },
+      "id": "proposed:card:armor-resistance",
+      "name": "Armor Attunement",
+      "school": null,
+      "schoolGrouping": "unspecified",
+      "stance": null,
+      "cost": {
+        "sp": null,
+        "mp": null
+      },
+      "tagIds": [
+        "proposed:effect:armor-resistance"
+      ],
+      "face": {
+        "lines": [
+          "Resist damage type: ?",
+          "Reduction: ?"
+        ],
+        "iconTags": [],
+        "maxClauses": 2,
+        "maxPhysicalLines": 3
+      },
+      "inspection": {
+        "fullRules": "Armor resistance groups, stacking and reduction formula unresolved.",
+        "parameters": null,
+        "canonicalSpellId": null,
+        "activeVariant": null,
+        "variants": [],
+        "openQuestionIds": [
+          "question:armor-resistance"
+        ]
+      },
+      "wireframeIds": [
+        "proposed:wireframe:rule-template"
+      ],
+      "entityKind": "ruleTemplate",
+      "namesProvisional": true
+    },
+    {
+      "state": "proposed",
+      "balanceUndecided": true,
+      "provenance": {
+        "source": "user-request",
+        "nameSource": "AI-suggested-working-label"
+      },
+      "id": "proposed:card:learn-spell",
+      "name": "Study Skillbook",
+      "school": null,
+      "schoolGrouping": "unspecified",
+      "stance": null,
+      "cost": {
+        "sp": null,
+        "mp": null
+      },
+      "tagIds": [
+        "proposed:effect:learn-spell"
+      ],
+      "face": {
+        "lines": [
+          "Learn spell at rest",
+          "Spend ? cinders"
+        ],
+        "iconTags": [],
+        "maxClauses": 2,
+        "maxPhysicalLines": 3
+      },
+      "inspection": {
+        "fullRules": "Rare skillbook at rest spends cinders and adds spell to deck; book consumption unresolved.",
+        "parameters": null,
+        "canonicalSpellId": null,
+        "activeVariant": null,
+        "variants": [],
+        "openQuestionIds": [
+          "question:learn-spell"
+        ]
+      },
+      "wireframeIds": [
+        "proposed:wireframe:service"
+      ],
+      "entityKind": "service",
+      "namesProvisional": true
+    },
+    {
+      "state": "proposed",
+      "balanceUndecided": true,
+      "provenance": {
+        "source": "user-request",
+        "nameSource": "AI-suggested-working-label"
+      },
+      "id": "proposed:card:extract-ranked-copy",
+      "name": "Extract Spell",
+      "school": null,
+      "schoolGrouping": "unspecified",
+      "stance": null,
+      "cost": {
+        "sp": null,
+        "mp": null
+      },
+      "tagIds": [
+        "proposed:effect:extract-ranked-copy"
+      ],
+      "face": {
+        "lines": [
+          "Extract weapon art",
+          "Gain ranked copy ?"
+        ],
+        "iconTags": [],
+        "maxClauses": 2,
+        "maxPhysicalLines": 3
+      },
+      "inspection": {
+        "fullRules": "Ranked duplicates acquired via merchant or extraction from weapon art; extraction loss and rank mapping unresolved.",
+        "parameters": null,
+        "canonicalSpellId": null,
+        "activeVariant": null,
+        "variants": [],
+        "openQuestionIds": [
+          "question:extract-ranked-copy"
+        ]
+      },
+      "wireframeIds": [
+        "proposed:wireframe:service"
+      ],
+      "entityKind": "service",
+      "namesProvisional": true
+    }
+  ],
+  "partition": {
+    "wave1": "Cards expressible with current ops once balance and existing status semantics are chosen; exclude custom timing, selection or state.",
+    "wave2": "Status model extensions and simple card-state/hand operations with bounded selection and lifecycle.",
+    "wave3": "Dynamic scaling, mutable costs/effects, paid-X, stance variants, multi-stance and transformation.",
+    "wave4": "Action economy, counters/reflection/guard redirection, targeting gates and per-hit combat accounting.",
+    "shared": "UI/gallery presentation and card-face data are a separate shared renderer/artwork lane, preserving proposed descriptions and existing renderer contracts."
+  }
+}

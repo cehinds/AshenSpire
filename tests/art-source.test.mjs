@@ -11,6 +11,8 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { artDir, artPath, fetchPlanFor, manifestIds, packSource, packTreeOf, sourceMode, treeOf, HIGH_TREE, MOVING_TREES, PACK_TREES } from '../tools/art-source.mjs';
+import { createHash } from 'node:crypto';
+import { sourceDisplayArtInventory, assertSourceDisplayArt, SOURCE_DISPLAY_ART_OWNERS, readLoadedSourceBody } from '../tools/source-display-art.mjs';
 import { markerFor, readPin } from '../tools/fetch-art.mjs';
 
 const TOOL = fileURLToPath(new URL('../tools/art-source.mjs', import.meta.url));
@@ -54,7 +56,7 @@ function fixture(cached = [], { trees = false } = {}) {
 }
 
 test('the trees the packs carry, and the pack whose cache holds each at the same path', () => {
-  assert.deepEqual(MOVING_TREES, { 'assets-mobile': 'light', 'assets/fonts': 'common', music: 'common', 'map-detail': 'common' });
+  assert.deepEqual(MOVING_TREES, { 'assets-mobile': 'light', 'assets/fonts': 'common', 'assets-display': 'common', music: 'common', 'map-detail': 'common' });
   assert.equal(HIGH_TREE, 'assets');
   assert.deepEqual(PACK_TREES, { ...MOVING_TREES, assets: 'high' });
   assert.equal(treeOf('music/manifest.json'), 'music');
@@ -84,15 +86,11 @@ test('a verified pack is read from the cache, whatever the mode but trees', () =
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('auto uses local light art; other unfetched packs and explicit cache still require a verified release', () => {
+test('auto and cache require verified releases even when stale local trees exist', () => {
   const root = fixture([], { trees: true });
   try {
     for (const [tree, pack] of Object.entries(PACK_TREES)) {
       for (const env of [{}, { ASHEN_ART_SOURCE: 'cache' }]) {
-        if (tree === 'assets-mobile' && !env.ASHEN_ART_SOURCE) {
-          assert.equal(artDir(tree, { root, env }).from, 'trees');
-          continue;
-        }
         assert.throws(() => artDir(tree, { root, env }), new RegExp(`step 13.*fetch-art\\.mjs --pack ${pack}`), `${tree} is not read from the leftover tree`);
       }
     }
@@ -100,10 +98,10 @@ test('auto uses local light art; other unfetched packs and explicit cache still 
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('local light art wins in auto even when the light release is cached', () => {
+test('verified light art wins in auto even when a stale local light tree exists', () => {
   const root = fixture(['light'], { trees: true });
   try {
-    assert.equal(artDir('assets-mobile', { root, env: {} }).from, 'trees');
+    assert.equal(artDir('assets-mobile', { root, env: {} }).from, 'cache');
     assert.equal(artDir('assets-mobile', { root, env: { ASHEN_ART_SOURCE: 'cache' } }).from, 'cache');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
@@ -162,7 +160,7 @@ test('the CLI names each tree\'s directory from the cache, or fails naming the f
   // a fetched cache, or the run fails and names the fetch for the missing pack.
   const r = spawnSync(process.execPath, [TOOL, '--which'], { encoding: 'utf8', env: { ...process.env, ASHEN_ART_SOURCE: 'auto' } });
   if (r.status === 0) {
-    for (const tree of Object.keys(PACK_TREES)) assert.match(r.stdout, new RegExp(`^${tree.replace('/', '\\/')}\\s+(high|light|common)\\s+${tree === 'assets-mobile' ? 'trees\\s+assets-mobile' : 'cache\\s+\\.art-cache/'}`, 'm'));
+    for (const tree of Object.keys(PACK_TREES)) assert.match(r.stdout, new RegExp(`^${tree.replace('/', '\\/')}\\s+(high|light|common)\\s+${'cache\\s+\\.art-cache/'}`, 'm'));
   } else {
     assert.equal(r.status, 1);
     assert.match(r.stderr, /art-source: FAIL — .*node tools\/fetch-art\.mjs --pack (high|light|common)/);
@@ -185,4 +183,67 @@ test('fetchPlanFor: a rebuild fetches its own commit\'s packs, and only when its
     rmSync(join(root, 'art-release.json'));
     assert.equal(fetchPlanFor(root), null, 'no pin at all');
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+
+function displayFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'display-art-preflight-'));
+  const catalogs = SOURCE_DISPLAY_ART_OWNERS.map(([owner, name], index) => {
+    const file = `fixture-${index}.webp`, bytes = Buffer.from(`authored bytes ${index}`);
+    const path = `assets-display/${index === 1 ? 'shared' : 'alternative'}/${file}`;
+    const value = { hashes: { [file]: createHash('sha256').update(bytes).digest('hex') }, filePaths: { [file]: path } };
+    mkdirSync(join(root, owner, '..'), { recursive: true });
+    mkdirSync(join(root, path, '..'), { recursive: true });
+    writeFileSync(join(root, owner), `export const ${name} = ${JSON.stringify(value)};\n`);
+    writeFileSync(join(root, path), bytes);
+    return { owner, name, path, file, value };
+  });
+  return { root, catalogs, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
+
+test('source measurement preflight derives every owner declaration and rejects missing or corrupt bytes', () => {
+  const f = displayFixture();
+  try {
+    assert.equal(sourceDisplayArtInventory(f.root).length, SOURCE_DISPLAY_ART_OWNERS.length);
+    assert.deepEqual(assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}), { checked: SOURCE_DISPLAY_ART_OWNERS.length });
+    // A new declaration is measured without changing any remembered file count.
+    const row = f.catalogs[0], bytes = Buffer.from('new entry');
+    row.value.hashes['added.webp'] = createHash('sha256').update(bytes).digest('hex');
+    writeFileSync(join(f.root, row.owner), `export const ${row.name} = ${JSON.stringify(row.value)};\n`);
+    assert.throws(() => assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}), /missing\/unreadable.*added.webp/);
+    writeFileSync(join(f.root, 'assets-display/alternative/added.webp'), bytes);
+    assert.equal(assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}).checked, SOURCE_DISPLAY_ART_OWNERS.length + 1);
+    writeFileSync(join(f.root, row.path), 'corrupt');
+    assert.throws(() => assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}), /hash mismatch/);
+  } finally { f.cleanup(); }
+});
+
+test('source measurement preflight fails closed on unrecognized, empty, conflicting or unsafe catalog data', () => {
+  for (const mutate of [
+    row => 'export const unrelated = {};',
+    row => `export const ${row.name} = {"hashes":{}};`,
+    row => `export const ${row.name} = arbitraryCode();`,
+    row => { row.value.filePaths[row.file] = '../escape.webp'; return `export const ${row.name} = ${JSON.stringify(row.value)};`; },
+    (row, f) => `export const ${row.name} = ${JSON.stringify(f.catalogs[1].value)};`,
+  ]) {
+    const f = displayFixture();
+    try {
+      const row = f.catalogs[0]; writeFileSync(join(f.root, row.owner), mutate(row, f));
+      assert.throws(() => assertSourceDisplayArt(f.root, {env:{ASHEN_ART_SOURCE:'trees'}}));
+    } finally { f.cleanup(); }
+  }
+});
+
+test('loaded-body measurement predicate reads metadata only and refuses placeholders or incomplete images', () => {
+  const valid = { image: { complete: true, currentSrc: '/authored.webp', naturalWidth: 512, naturalHeight: 512 },
+    canvas: { width: 932, height: 625 }, width: 512, height: 512 };
+  let reads = 0;
+  const stage = { get currentArt() { reads++; return valid; }, paint() { throw new Error('must not paint'); } };
+  assert.equal(readLoadedSourceBody(stage).ready, true);
+  assert.equal(reads, 1);
+  for (const art of [undefined, {}, { ...valid, image: { ...valid.image, complete: false } },
+    { ...valid, image: { ...valid.image, naturalWidth: 0 } }, { ...valid, canvas: { width: 0, height: 625 } },
+    { ...valid, height: NaN }, { ...valid, image: { ...valid.image, currentSrc: '' } }]) {
+    assert.equal(readLoadedSourceBody({ currentArt: art }).ready, false);
+  }
 });

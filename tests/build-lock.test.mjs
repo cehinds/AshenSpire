@@ -8,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { tryAcquire, acquire, lockPath, pidAlive, procStartOf, LOCK_NAME, testHooks } from '../tools/lib/build-lock.mjs';
+import { tryAcquire, acquire, lockPath, pidAlive, procStartOf, LOCK_NAME, testHooks, holdForCli } from '../tools/lib/build-lock.mjs';
 
 const HOUR = 60 * 60 * 1000;
 const LINUX = process.platform === 'linux';
@@ -339,7 +339,7 @@ test('a --check run only reads and takes no lock', async (t) => {
 
 test('every writer CLI takes the lock, and every server wrapper passes its token on', () => {
   const read = (p) => fs.readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-  for (const p of ['tools/content-build.mjs', 'tools/config-build.mjs', 'tools/framework-data-build.mjs', 'tools/engine-export.mjs', 'tools/launch.mjs']) assert.match(read(p), /await holdForCli\(/, p);
+  for (const p of ['tools/base-cards.mjs', 'tools/game-config.mjs', 'tools/content-build.mjs', 'tools/config-build.mjs', 'tools/framework-data-build.mjs', 'tools/engine-export.mjs', 'tools/launch.mjs']) assert.match(read(p), /await holdForCli\(/, p);
   for (const p of ['workbench/core/jobs.mjs', 'workbench/server.mjs', 'editor/server.mjs', 'ui-studio/server.mjs']) assert.match(read(p), /lockEnv\(/, p);
 });
 
@@ -347,11 +347,127 @@ test('the workbench workflow runs this suite and triggers on the lock and its te
   const yml = fs.readFileSync(new URL('../.github/workflows/workbench.yml', import.meta.url), 'utf8');
   const run = yml.split('\n').find((l) => /run: node --test workbench\/tests/.test(l)) || '';
   assert.match(run, /tests\/build-lock\.test\.mjs/, 'the test step runs tests/build-lock.test.mjs');
-  for (const suite of ['tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs']) {
+  for (const suite of ['tests/generated-writer-locks.test.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs']) {
     assert.match(run, new RegExp(suite.replace(/[./]/g, (c) => `\\${c}`)), `the test step runs ${suite}`);
   }
-  const shared = ['tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs', 'tools/lib/process-tree.mjs', 'tools/lib/build-steps.mjs', 'tools/lib/write-atomic.mjs', 'tools/lib/shot-match.mjs', 'tools/launch.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs'];
+  const shared = ['tools/base-cards.mjs', 'tools/game-config.mjs', 'tests/generated-writer-locks.test.mjs', 'tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs', 'tools/lib/process-tree.mjs', 'tools/lib/build-steps.mjs', 'tools/lib/write-atomic.mjs', 'tools/lib/shot-match.mjs', 'tools/launch.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs'];
   for (const file of shared) {
     assert.equal(yml.split(`- '${file}'`).length - 1, 2, `${file} is in both the push and pull_request paths filters`);
   }
+});
+
+// Inject only the lock module's filesystem boundary; never patch process-wide fs.
+function windowsCreateFacade(openSync, overrides = {}) {
+  return { filesystem: { ...fs, openSync, ...overrides }, platform: 'win32' };
+}
+function denied() { return Object.assign(new Error('exclusive create denied'), { code: 'EPERM' }); }
+
+test('Windows EPERM with a readable live lock remains contention without removing its owner', t => {
+  const root = tmpRoot(t), release = tryAcquire(root, 'original owner');
+  t.after(release);
+  const before = fs.readFileSync(lockPath(root), 'utf8');
+  const got = tryAcquire(root, 'contender', windowsCreateFacade(() => { throw denied(); }));
+  assert.equal(got.heldBy.holder, 'original owner');
+  assert.equal(fs.readFileSync(lockPath(root), 'utf8'), before);
+});
+
+test('Windows delete-pending create EPERM retries a missing path and then owns/releases the real lock', t => {
+  const root = tmpRoot(t); let attempts = 0;
+  const release = tryAcquire(root, 'new owner', windowsCreateFacade((...args) => {
+    if (++attempts === 1) throw denied();
+    return fs.openSync(...args);
+  }));
+  assert.equal(attempts, 2);
+  assert.equal(fs.readFileSync(lockPath(root), 'utf8').includes('new owner'), true);
+  release(); assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+test('Windows delete-pending read EPERM is retried within the same fixed bound', t => {
+  const root = tmpRoot(t); let attempts = 0, reads = 0;
+  const release = tryAcquire(root, 'new owner', windowsCreateFacade((...args) => {
+    if (++attempts === 1) throw denied();
+    return fs.openSync(...args);
+  }, { readFileSync(...args) { if (++reads === 1) throw denied(); return fs.readFileSync(...args); } }));
+  assert.equal(attempts, 2); assert.equal(reads, 1);
+  release(); assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+for (const readFails of [false, true]) test(`Windows persistent create/read access error surfaces after five attempts (readFails=${readFails})`, t => {
+  const root = tmpRoot(t), original = denied(); let attempts = 0;
+  const options = windowsCreateFacade(() => { attempts++; throw original; }, readFails ? { readFileSync() { throw denied(); } } : {});
+  assert.throws(() => tryAcquire(root, 'blocked', options), error => error === original);
+  assert.equal(attempts, 5); assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+test('non-Windows EPERM is never reclassified as lock contention', t => {
+  const root = tmpRoot(t), original = denied(); let attempts = 0;
+  assert.throws(() => tryAcquire(root, 'blocked', { platform: 'linux', filesystem: { ...fs, openSync() { attempts++; throw original; } } }), error => error === original);
+  assert.equal(attempts, 1);
+});
+
+test('Windows async acquire waits beyond synchronous attempts for delete-pending access to clear', async t => {
+  const root = tmpRoot(t); let blocked = true, attempts = 0;
+  setTimeout(() => { blocked = false; }, 35);
+  const release = await acquire(root, 'eventual owner', { ...windowsCreateFacade((...args) => {
+    attempts++; if (blocked) throw denied(); return fs.openSync(...args);
+  }), pollMs: 10, timeoutMs: 500 });
+  assert.ok(attempts > 5); release(); assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+test('Windows EEXIST followed by unreadable delete-pending path retries before create', async t => {
+  const root = tmpRoot(t); let attempts = 0;
+  const release = await acquire(root, 'eventual owner', { ...windowsCreateFacade((...args) => {
+    if (++attempts <= 5) throw Object.assign(new Error('exists'), { code: 'EEXIST' });
+    return fs.openSync(...args);
+  }, { readFileSync() { throw denied(); } }), pollMs: 1, timeoutMs: 100 });
+  assert.equal(attempts, 6); release(); assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+test('Windows persistent EPERM respects caller deadline and surfaces the access error', async t => {
+  const root = tmpRoot(t), original = denied(); const started = Date.now();
+  await assert.rejects(acquire(root, 'blocked', { ...windowsCreateFacade(() => { throw original; }), pollMs: 5, timeoutMs: 30 }), error => error === original);
+  assert.ok(Date.now() - started < 1000); assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+test('Windows permission retry obeys abort before acquiring', async t => {
+  const root = tmpRoot(t), controller = new AbortController(), reason = new Error('stop');
+  setTimeout(() => controller.abort(reason), 15);
+  await assert.rejects(acquire(root, 'aborted', { ...windowsCreateFacade(() => { throw denied(); }), signal: controller.signal, pollMs: 10 }), error => error === reason);
+  assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+test('Windows persistent permission retry is capped even with a long acquisition deadline', async t => {
+  const root = tmpRoot(t), original = denied(), started = Date.now();
+  await assert.rejects(acquire(root, 'blocked', { ...windowsCreateFacade(() => { throw original; }), timeoutMs: 60_000, pollMs: 20 }), error => error === original);
+  const elapsed = Date.now() - started;
+  assert.ok(elapsed >= 900 && elapsed < 2000, `bounded permission window: ${elapsed} ms`);
+  assert.equal(fs.existsSync(lockPath(root)), false);
+});
+
+
+test('Windows unreadable real live lock recovers to contention without changing owner/token/text', async t => {
+  const root = tmpRoot(t), owner = tryAcquire(root, 'real owner'); t.after(owner);
+  const before = fs.readFileSync(lockPath(root), 'utf8'); let reads = 0;
+  const options = windowsCreateFacade((...args) => fs.openSync(...args), {
+    readFileSync(...args) { if (++reads <= 5) throw denied(); return fs.readFileSync(...args); }
+  });
+  await assert.rejects(acquire(root, 'contender', { ...options, timeoutMs: 25, pollMs: 2 }), error => error.status === 409 && error.heldBy.holder === 'real owner');
+  assert.ok(reads > 5); assert.equal(fs.readFileSync(lockPath(root), 'utf8'), before);
+});
+
+test('holdForCli recovers from its initial Windows EPERM using bounded async acquisition', async t => {
+  const root = tmpRoot(t), env = {}; let attempts = 0;
+  const release = await holdForCli(root, 'CLI owner', { env, timeoutMs: 100, pollMs: 1, ...windowsCreateFacade((...args) => {
+    if (++attempts <= 5) throw denied(); return fs.openSync(...args);
+  }) });
+  assert.equal(attempts, 6); assert.equal(env.ASHEN_BUILD_LOCK_TOKEN, release.token ?? JSON.parse(fs.readFileSync(lockPath(root))).token);
+  release(); assert.equal(fs.existsSync(lockPath(root)), false); assert.equal(env.ASHEN_BUILD_LOCK_TOKEN, undefined);
+});
+
+test('holdForCli preserves its initial Windows EPERM after persistent bounded retry', async t => {
+  const root = tmpRoot(t), first = denied(); let attempts = 0;
+  await assert.rejects(holdForCli(root, 'CLI blocked', { env: {}, timeoutMs: 20, pollMs: 2, ...windowsCreateFacade(() => {
+    throw ++attempts === 1 ? first : denied();
+  }) }), error => error === first);
+  assert.ok(attempts > 5); assert.equal(fs.existsSync(lockPath(root)), false);
 });

@@ -20,11 +20,11 @@
 #                              break together.
 #   workflow_dispatch        — the same jobs, on any ref.
 # Pushes to `test` and `release` do not run this file any more. ci.yml's
-# test-stage jobs run the same commands there with no fewer flags:
+# test-stage jobs retain all checks through exhaustive partitions:
 #   tests.yml core                 -> ci.yml test
-#   tests.yml discovered (--no-slow) -> ci.yml test-discovered (no --no-slow, so
-#                                       it covers SLOW_DISCOVERED too; this
-#                                       replaces the old discovered-slow job)
+#   tests.yml discovered (--no-slow) -> ci.yml full Linux/macOS shards; Windows
+#                                       --no-slow shards plus one isolated job
+#                                       per SLOW_DISCOVERED file (all files run)
 #   tests.yml selftests            -> ci.yml test-selftests (same groups, 3 OSes)
 #   tests.yml parse-gate           -> ci.yml parse-gate (same command)
 # So the deleted jobs ran nowhere that ci.yml does not run at test.
@@ -108,6 +108,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         run: |
           python3 -m venv "$RUNNER_TEMP/card-art-python"
@@ -174,6 +179,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         run: |
           python3 -m venv "$RUNNER_TEMP/card-art-python"

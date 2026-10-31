@@ -253,7 +253,21 @@ if (process.argv.includes('--selftest')) {
           file: 'styles/kit.css',
           append: ":root .combat[data-layout='formation'] > .hand-area { overflow: hidden !important; } :root .combat[data-layout='formation'] > .hand-area > .combat-action-row { position: absolute !important; top: 100% !important; left: 0 !important; right: 0 !important; }",
         }],
-        expectRed: /BAD\s+H3 1200x730/,
+        // The desktop row is bottom-anchored with its own bottom/height rules, so this
+        // shift no longer empties it there; the phone cell (the row is a grid child of
+        // .hand-area) loses every control, which is the vanished-row defect itself.
+        expectRed: /BAD\s+H3 (?:1200x730|390x844)/,
+      },
+      {
+        // The desktop twin of the plant above: the row is bottom-anchored at a negative offset in
+        // its parent there, so shifting it down empties nothing. Clipping the parent away does,
+        // and the DESKTOP cell must say so by name (the phone cells are red too).
+        name: 'the hand-area clips its whole footer away at desktop as well as phone',
+        edits: [{
+          file: 'styles/kit.css',
+          append: "\n:root .combat[data-layout='formation'] > .hand-area { overflow: clip !important; clip-path: inset(0 0 100% 0) !important; }\n",
+        }],
+        expectRed: /BAD\s+H3 1200x730 Text S .*ZERO controls/,
       },
       {
         // THE LABEL IS CUT OFF INSIDE ITS OWN BOX: a width cap with
@@ -357,21 +371,25 @@ if (process.argv.includes('--selftest')) {
         // pulled up over the count with a negative margin, an opaque
         // background and z-index: 1, which makes it a stacking context that
         // paints in z-order above the count's in-flow text (Codex, #550).
-        name: "the DRAW artwork, a flex item given z-index: 1, paints an opaque block over its compact count",
+        // The pile labels carry z-index: 1 themselves (styles/kit.css), so the plant
+        // lifts the art to 2: above the label, which is the defect.
+        name: "the DRAW artwork, a flex item given z-index: 2, paints an opaque block over its compact count",
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw > .footer-art-face { z-index: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
+          append: "\n.combat-action-row > .pile.draw > .footer-art-face { z-index: 2; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
       {
-        // AN INDIVIDUAL TRANSFORM ON THE LABEL: the same block over the count,
-        // but a stacking context by `scale: 1` alone — the transform
-        // shorthand stays "none" and the item has no z-index (Codex, #550).
-        name: "the DRAW artwork, given scale: 1 and nothing else, paints an opaque block over its compact count",
+        // THE LABEL'S SHIPPED POSITION/Z-INDEX PROTECTS IT FROM AN AUTO-LEVEL
+        // STACKING CONTEXT. Remove only that protection in this fixture; the
+        // artwork gets scale:1 but no position or z-index, so the individual
+        // transform is the sole property that promotes it above the later
+        // in-flow count. This is the specific #550 branch under test.
+        name: "the DRAW artwork's scale-only stacking context paints over the in-flow compact count",
         edits: [{
           file: 'styles/combat.css',
-          append: "\n.combat-action-row > .pile.draw > .footer-art-face { scale: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
+          append: "\n.combat-action-row > .pile.draw > .footer-compact-label { position: static !important; z-index: auto !important; }\n.combat-action-row > .pile.draw > .footer-art-face { transform: none !important; scale: 1; background: #000; margin-bottom: -2.6rem; padding-bottom: 2.6rem; width: 100%; }\n",
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -1012,7 +1030,20 @@ const TEXT_RESTORE = `(() => {
 const FREEZE = `(() => { const st = document.createElement('style'); st.id = 'hintstrip-freeze';
   st.textContent = '*, *::before, *::after { animation-play-state: paused !important; transition: none !important; }'; document.head.appendChild(st); return 1; })()`;
 const THAW = `(() => { const st = document.getElementById('hintstrip-freeze'); if (st) st.remove(); return 1; })()`;
+// THE ROW'S ARTWORK IS DECODED BEFORE ANY CAPTURE. The stamina orb (and every
+// plate) is an SVG <image> that decodes on first paint; a capture that lands
+// before it shows the control without its ring, so "paint in situ" reads a
+// fraction of "paint uncovered" and a slow machine reports a control painted
+// over that no player sees. Decode every href the row draws, then let two
+// frames and a beat pass; this waits for art, it never relaxes a threshold.
+const ART_READY = `(async () => { const row = document.querySelector('.combat-action-row'); if (!row) return 0;
+  const urls = [...new Set([...row.querySelectorAll('image')].map((i) => i.getAttribute('href')).filter(Boolean))];
+  await Promise.all(urls.map((u) => { const im = new Image(); im.src = u; return im.decode().catch(() => {}); }));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise((r) => setTimeout(r, 250));
+  return urls.length; })()`;
 async function paintOf(ev, shot) {
+  await ev(ART_READY);
   await ev(FREEZE);
   try { return await paintOfFrozen(ev, shot); } finally { await ev(THAW).catch(() => {}); }
 }
@@ -1308,6 +1339,22 @@ async function main() {
       while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); }
       throw new Error('timeout ' + w + ': ' + JSON.stringify(await ev(`({ready:document.readyState,text:document.body.innerText.slice(0,900)})`))); };
 
+    // THE SCENE HAS TO STOP MOVING before the row is read: a fixed 700 ms was
+    // enough on an idle runner and not on a busy one, and the row (still sliding
+    // into place) then read as "not wholly inside the viewport". Wait until the
+    // row's and the hand's boxes are the same on four reads in a row, 150 ms
+    // apart; never longer than 12 s, and a scene that never settles is read as it stands.
+    const settled = async () => {
+      const read = () => ev(`(() => { const box = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map((v) => Math.round(v * 10)); };
+        return JSON.stringify([box('.combat-action-row'), box('.hand'), box('.combat-tools')]); })()`).catch(() => '');
+      let last = null, same = 0;
+      for (const t0 = Date.now(); Date.now() - t0 < 12000;) {
+        const now = await read();
+        same = now && now === last ? same + 1 : 0; last = now;
+        if (same >= 3) return;
+        await wait(150);
+      }
+    };
     console.log(`\n  ${vp.tag}`);
     for (const text of TEXTS) {
       // Text size THROUGH THE GAME'S OWN DOOR: ?shotSettings is what the shot
@@ -1316,6 +1363,7 @@ async function main() {
       await cdp.send('Page.navigate', { url: q }, S);
       await until(`!!document.querySelector('.combat')`, `combat ${vp.tag} ${text}`);
       await wait(700);
+      await settled();
       const r = await ev(READ(FAN_LIFT_PROP));
       r.paint = await paintOf(ev, shot);
       reached++;
@@ -1337,6 +1385,7 @@ async function main() {
     await cdp.send('Page.navigate', { url: wq }, S);
     await until(`!!document.querySelector('.combat')`, `combat wide-label ${vp.tag}`);
     await wait(700);
+    await settled();
     const rw = await ev(READ(FAN_LIFT_PROP));
     rw.paint = await paintOf(ev, shot);
     reached++;

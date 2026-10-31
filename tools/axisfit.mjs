@@ -263,9 +263,8 @@ const textSize = argOf('--text') || null;
 // the boundary block below then names a swept axis that was never swept. So the
 // value is checked against the app's own home before the browser costs anything.
 function appTextSizes() {
-  const src = readFileSync(resolve(ROOT, 'src', 'content', 'balance.js'), 'utf8');
-  const m = /textSize:\s*\{([^}]*)\}/.exec(src);
-  return m ? [...m[1].matchAll(/([A-Za-z]+)\s*:/g)].map((x) => x[1]) : [];
+  const ui = JSON.parse(readFileSync(resolve(ROOT, 'content', 'source', 'balanceUi.json'), 'utf8'));
+  return ui.textSize ? Object.keys(ui.textSize) : [];
 }
 
 // THE MODE AXIS IS THE APP'S CLOSED SET, DERIVED — balance.ui.handLayoutModes,
@@ -273,9 +272,8 @@ function appTextSizes() {
 // a second copy that survives the feature's death; derived, it dies loudly with
 // its home (the zero-modes refusal in main()).
 function appHandModes() {
-  const src = readFileSync(resolve(ROOT, 'src', 'content', 'balance.js'), 'utf8');
-  const m = /handLayoutModes:\s*\[([^\]]*)\]/.exec(src);
-  return m ? [...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1]) : [];
+  const ui = JSON.parse(readFileSync(resolve(ROOT, 'content', 'source', 'balanceUi.json'), 'utf8'));
+  return Array.isArray(ui.handLayoutModes) ? ui.handLayoutModes.filter((x) => /^[a-z]+$/.test(x)) : [];
 }
 
 // The surfaces swept once per mode — TYPED, two entries, printed in the
@@ -619,7 +617,7 @@ async function main() {
   if (textSize) {
     const known = appTextSizes();
     if (!known.length) {
-      console.error('\naxisfit: read ZERO text sizes out of src/content/balance.js (ui.textSize).');
+      console.error('\naxisfit: read ZERO text sizes out of content/source/balanceUi.json (ui.textSize).');
       console.error('That home is how --text is validated; unread, every --text value would be taken on trust.');
       process.exit(1);
     }
@@ -646,7 +644,7 @@ async function main() {
   // ---- the mode axis, derived from its one home, refused loudly at zero ----
   const handModes = appHandModes();
   if (!handModes.length) {
-    console.error('\naxisfit: derived ZERO hand-layout modes from src/content/balance.js (ui.handLayoutModes).');
+    console.error('\naxisfit: derived ZERO hand-layout modes from content/source/balanceUi.json (ui.handLayoutModes).');
     console.error('That closed set is the mode axis of the combat cells; unread, the sweep would silently');
     console.error('collapse to one mode and a green would cover half the hand. If the word left the app,');
     console.error('delete the mode axis here in the same act — loudly, never by a silent shrink.');

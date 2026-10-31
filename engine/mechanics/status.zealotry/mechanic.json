@@ -1,0 +1,26 @@
+{
+  "id": "status.zealotry",
+  "tag": "status.zealotry",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Zealotry",
+  "description": "Whenever you lose HP, deal 3 damage to a random enemy per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.zealotry"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

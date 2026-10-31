@@ -30,8 +30,8 @@ test('--check exits 0 on the committed README', () => {
   assert.match(out, /README SYNC CURRENT/);
 });
 
-test('channel table lists Test, Dev, Release and Main only', () => {
-  const rows = committed.split('\n').filter((line) => line.startsWith('| ') && line.includes('latest/build.svg'));
+test('channel list includes Test, Dev, Release and Main only', () => {
+  const rows = committed.split('\n').filter((line) => line.includes('latest/build.svg'));
   assert.equal(rows.length, 4);
   assert.ok(!committed.includes('Alternative Dev'));
   assert.ok(!committed.includes('Alternative Test'));
@@ -69,8 +69,16 @@ test('text outside the regions is never touched', () => {
   assert.ok(text.includes('**Windows (edited):**'));
 });
 
-test('renderChannels emits a header, a separator and four rows', () => {
-  const lines = renderChannels().split('\n');
-  assert.equal(lines.length, 6);
+test('renderChannels emits four entries with separate badge paragraphs', () => {
+  const lines = renderChannels().split('\n').filter(Boolean);
+  assert.equal(lines.filter((line) => line.includes('latest/build.svg')).length, 4);
+  assert.equal(lines.length, 8);
   assert.equal(REGIONS.length, 1);
+});
+
+test('the HTML link names itself the offline desktop file, not a phone download', () => {
+  const rows = committed.split('\n').filter((line) => line.includes('/download/AshenSpire.html'));
+  assert.equal(rows.length, 4);
+  for (const row of rows) assert.match(row, /\[HTML \(offline, desktop, ~140 MB\)\]/);
+  assert.match(renderChannels(), /\[HTML \(offline, desktop, ~140 MB\)\]/);
 });

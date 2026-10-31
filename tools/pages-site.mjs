@@ -296,10 +296,22 @@ function buildsOf(branch, keep) {
 
 // Builds skipped this run, each with its reason — printed above the verdict and
 // on the branch's page, so a gap in the list is explained rather than silent.
+/**
+ * A GitHub warning annotation, except during --selftest. The selftest assembles
+ * a throwaway site with --keep 1, no --build-missing and every committed build
+ * simulated as purged, so its "skipped … LFS object unavailable" and "has no
+ * /latest/ … newest served build is 548" warnings are the PLANT, not the site.
+ * They landed on the real run's annotation list (run 39267231395) and read as
+ * "dev/latest is not published" when the real assemble step had served it.
+ */
+function annotate(title, message) {
+  if (process.env.GITHUB_ACTIONS && !process.argv.includes('--selftest')) console.log(`::warning title=${title}::${message}`);
+}
+
 const skippedBuilds = [];
 function skip(b, reason) {
   skippedBuilds.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, reason });
-  if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site skipped ${b.branch}/${b.ordinal}::${reason}`);
+  annotate(`pages-site skipped ${b.branch}/${b.ordinal}`, reason);
 }
 
 /**
@@ -326,6 +338,24 @@ function purgedOrThrow(error) {
   const text = `${error.message || ''}\n${error.stderr || ''}`;
   if (/Object does not exist|\[404\]|404 Not Found/i.test(text) && !/does not match|Malformed/.test(text)) return null;
   throw error;
+}
+
+/**
+ * WHAT A FAILED REBUILD SAYS (2026-10-19). The old text was the LAST TWO lines of
+ * stderr, and bundle.mjs ends every failure with "NOTE: dist/AshenSpire.html is
+ * untouched…" after the launcher's "mobile build failed — aborting." — so the
+ * annotation named neither the real cause (bundle.mjs: ERROR — the mobile build
+ * is … over its … budget) nor the commit's step. Now: the lines that name an
+ * error come first, the boilerplate that follows every failure is dropped, and
+ * the launcher's own verdict line closes it.
+ */
+function rebuildFailureDetail(error) {
+  const text = `${error.stderr || ''}\n${error.message || ''}`;
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+    .filter((l) => !/^NOTE: dist\/AshenSpire\.html is untouched/.test(l) && !/now holds a build-failed page/.test(l));
+  const causes = lines.filter((l) => /\bERROR\b|\bError:|failed|refus|ENOSPC|ENOENT|not found/i.test(l));
+  const picked = [...new Set(causes.length ? causes.slice(0, 4) : lines.slice(-3))];
+  return picked.join(' | ').slice(0, 900) || String(error.message || error).slice(0, 300);
 }
 
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
@@ -395,8 +425,7 @@ function rebuildAt(sha, fullArt) {
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
-    const detail = String(error.stderr || error.message || error).trim().split('\n').slice(-2).join(' ');
-    result = { error: `rebuild failed: ${detail}` };
+    result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
   }
   rebuilt.set(key, result);
   return result;
@@ -932,7 +961,7 @@ export function rootIndex(branchData, generatedAt, otherPages, previews = null) 
 <div class="grid">${cards(branchData.filter((d) => d.branch.startsWith('alternative/')))}</div>
 ${previews ? branchPreviewSection(previews) : ''}
 <div class="note"><strong>Web edition builds</strong> play here with their art fetched as needed; in the game, <em>Download &amp; saves</em> → <em>Make available offline</em> keeps one in this browser for offline play. Their <em>Download</em> saves the light-art single file: one self-contained <code>.html</code> that plays by double-click.</div>
-<div class="note"><strong>Light builds</strong> (dev and test) are one file whose art is already phone-sized, so they have no separate mobile download. <strong>Two downloads, one game</strong> for the others: <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
+<div class="note"><strong>Light builds</strong> (dev and test) are one file whose art is already phone-sized, so they have no separate mobile download. <strong>Two downloads, one game</strong> for the others: <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (a desktop download; on a phone, use Play, as these files are large), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
 <h2>All listed builds</h2>${rowsTable(all, '', new Set(branchData.filter((d) => d.builds[0] && isCurrent(d)).map((d) => d.builds[0])))}
 <h2>Other pages on this site</h2>
@@ -954,8 +983,8 @@ export function branchIndex(branch, builds, head, generatedAt, current = true, h
 ${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
-${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons(siteRoot(branch), builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
-<p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
+${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons(siteRoot(branch), builds[0], ` latest (${builds[0].ordinal})`)} <span class="meta">On a phone, use Play — this file is large.</span> <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+<p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, use Play; the download is a large offline file for a desktop.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
 ${rowsTable(builds, siteRoot(branch), new Set(current && builds[0] ? [builds[0]] : []))}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -990,7 +1019,7 @@ function writeOgImage(outDir, mainRef) {
   if (!pick) {
     const why = `no object in the store and no published branch's tree carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
+    annotate(`pages-site has no og:image`, why);
     return;
   }
   writeFileSync(join(outDir, OG_IMAGE.sitePath), ogImageBytes(outDir, pick));
@@ -1034,7 +1063,7 @@ function writeSourceAssets(outDir, mainRef) {
   if (missing) {
     const why = `${missing} of main's ${plan.length} assets/ ids have no object in the store; those images are missing on /index-game.html and the preview pages`;
     console.log(`  ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site /assets/ incomplete::${why}`);
+    annotate(`pages-site /assets/ incomplete`, why);
   }
 }
 /** The bytes a choice names: the store's object, or the branch tree's art. */
@@ -1308,7 +1337,7 @@ function assemble(outDir, keep) {
     if (builds[0] && !current) {
       const why = `${branch}/latest/ not published: the head's build ${headOrdinal ?? '(unnamed)'} is not served; the newest served build is ${builds[0].ordinal}`;
       console.log(`  NO LATEST ${why}`);
-      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site ${branch} has no /latest/::${why}`);
+      annotate(`pages-site ${branch} has no /latest/`, why);
     }
     if (builds[0] && current) {
       const latest = join(outDir, branch, 'latest');
@@ -1316,7 +1345,7 @@ function assemble(outDir, keep) {
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
       const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
-      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="24" role="img" aria-label="Published build ${stamp}"><rect width="220" height="24" rx="4" fill="#243344"/><text x="110" y="16" text-anchor="middle" fill="white" font-family="sans-serif" font-size="13">Build ${stamp}</text></svg>`);
+      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="44" viewBox="0 0 220 44" role="img" aria-label="Published build ${stamp}"><rect width="220" height="44" rx="6" fill="#243344"/><text x="110" y="28" text-anchor="middle" fill="white" font-family="sans-serif" font-size="18" font-weight="600">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
       for (const extra of [ASSET_BASE_FILE, 'download']) {
         const from = join(outDir, branch, String(builds[0].ordinal), extra);

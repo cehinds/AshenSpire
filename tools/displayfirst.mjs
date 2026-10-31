@@ -522,7 +522,8 @@ const READ = `(() => {
     fs: fs[0] || null,
     // The control's OWN box, so D3 can stop trusting the container to speak for
     // the thing inside it.
-    fsCtrl: fsEls[0] ? boxOf(fsEls[0]) : null,
+    // The checkbox switch is an opacity:0 input laid over its label; the thing a player sees is the track beside it.
+    fsCtrl: fsEls[0] ? boxOf(fsEls[0].matches('input.as-switch-input') ? (fsEls[0].parentElement.querySelector('.as-switch-track') || fsEls[0]) : fsEls[0]) : null,
     panelEffOpacity: effOpacity(panel),
     rootFontPx: +parseFloat(getComputedStyle(document.documentElement).fontSize).toFixed(2),
     scroll: { ancestors: scrollAncestors, docY: window.scrollY, docX: window.scrollX },
@@ -1137,17 +1138,16 @@ function refuseUnsupportedPlatform() {
 function selftestPlants() {
   const settingsEol = readFileSync(join(ROOT, 'src/ui/screens/settings.js'), 'utf8').includes('\r\n') ? '\r\n' : '\n';
   // The kit rewrite (#605) renamed this control (`toggle` -> `as-toggle
-  // toggle`), gave it an explicit type, and collapsed it from three lines onto
+  // toggle`); the options cleanup (owner, 2026-10-26) then made it a real
+  // checkbox switch drawn by `switchHtml`, so the plant now matches that one expression. It was collapsed from three lines onto
   // one — so the old three-line join matched nothing and this plant reported
   // PLANT SITE DRIFTED. Still assembled from parts rather than written whole,
   // for the same reason as before: a contiguous copy in this file would give
   // the self-referential plant below a second match to find.
   const fsButton = [
-    '<button type="button" class="as-toggle togg',
-    'le ${on ? \'on\' : \'\'}" data-key="${r.key}"',
-    '${r.type === \'action\' ? ` data-action="1" aria-label="${esc(r.label)}"',
-    ' aria-describedby="set-${r.key}-status"` : \'\'}',
-    ' role="switch" aria-checked="${on}"><span class="knob"></span></button>',
+    '${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"',
+    '${r.type === \'action\' ? ` data-action="1"',
+    ' aria-describedby="set-${r.key}-status"` : \'\'}` })}',
   ].join('');
   // Split the production line so the self-referential plant below does not
   // copy its own find bytes into this file. That leaves exactly one match: the
@@ -1236,8 +1236,8 @@ function selftestPlants() {
       // different control the first visible row while the table stays intact.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '    const rowHtml = rows.map(row => settingsRowHtml(settings, row));',
-      replace: '    const rowHtml = [...rows].reverse().map(row => settingsRowHtml(settings, row));',
+      find: '      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));',
+      replace: '      const rowHtml = custom ? [] : [...topicRows].reverse().map(row => settingsRowHtml(settings, row));',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
@@ -1473,7 +1473,7 @@ function selftestPlants() {
       // the check reads is correct and the player cannot reach the control.
       name: 'the Fullscreen CONTROL sits 4000px right while its row does not move',
       file: 'styles/ui.css',
-      append: '.set-panel .set-row [data-key="fullscreen"] { position: relative !important; left: 4000px !important; }',
+      append: '.set-panel .set-row .as-switch:has([data-key="fullscreen"]) { position: relative !important; left: 4000px !important; }',
       expectRed: /FINDING D3\/ink .*control\(present=true .*onscreen=false/,
     },
     {
@@ -1577,7 +1577,7 @@ function maxEdgeSelftestPlants() {
     'const textSizeArrived = xl.rootFontPx > ',
     'm.rootFontPx;',
   ].join('');
-  const textSizeTable = "textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },";
+  const textSizeTable = '"textSize": { "S": "56.25%", "M": "62.5%", "L": "68.75%", "XL": "75%" },';
   return [
     {
       name: 'fixed-height rows do not make a correctly enlarged XL font look absent',
@@ -1596,9 +1596,10 @@ function maxEdgeSelftestPlants() {
     },
     {
       name: 'Text XL is authored with the same computed root font size as Text M',
-      file: 'src/content/balance.js',
+      file: 'content/source/balanceUi.json',
       find: textSizeTable,
-      replace: "textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '62.5%' },",
+      replace: '"textSize": { "S": "56.25%", "M": "62.5%", "L": "68.75%", "XL": "62.5%" },',
+      prep: [['node', 'tools/content-build.mjs']],
       expectRed: /FINDING D5\/maxedge .*root-font-m=10 root-font-xl=10/,
     },
   ];
@@ -1898,7 +1899,7 @@ async function pipedOutputPlant() {
 const SERVER_CLOSE_DEADLINE_MS = 2000;
 
 async function serverClosePlant() {
-  const { mkdtempSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
+  const { mkdtempSync, mkdirSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { spawnSync } = await import('node:child_process');
 
@@ -1910,6 +1911,10 @@ async function serverClosePlant() {
       recursive: true,
       filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.png$/.test(src),
     });
+    // tools/buildversion.mjs (reached through serve.mjs) decodes the packed
+    // catalog with this one dependency-free module, so the copy carries it.
+    mkdirSync(join(dir, 'src', 'model'), { recursive: true });
+    cpSync(join(ROOT, 'src', 'model', 'catalogJson.js'), join(dir, 'src', 'model', 'catalogJson.js'));
     const tool = join(dir, 'tools', 'displayfirst.mjs');
     const real = readFileSync(tool, 'utf8');
     const canonicalReal = real.replace(/\r\n/g, '\n');

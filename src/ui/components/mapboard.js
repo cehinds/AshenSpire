@@ -1,6 +1,9 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
-import { mapPoint } from '../../model/mapview.js';
-import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
+import { mapPoint } from '../../model/map/mapview.js';
+import { actRegionId } from '../../model/environmentArt.js';
+import { paintingFrame, paintingGround, paintingFrameKey, terrainSettingAt } from '../../model/mapPaintingFrame.js';
+import { MAP_ART } from '../../content/mapArt.generated.js';
+import { MAP_PRESENTATION } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 import { builtInFor } from '../highResArt.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
@@ -70,12 +73,12 @@ import { trackGesture } from '../gesture.js';
 import {
   mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
   HIDDEN, KNOWN, MAP_MODE_DEFAULT,
-} from '../../model/mapknowledge.js';
+} from '../../model/map/mapknowledge.js';
 import {
   ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
   clampZoom, framingBox, fitZoom, nodeRadius, svgWidth, svgHeight,
   NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx, resolveMapFreePan,
-} from '../../model/mapview.js';
+} from '../../model/map/mapview.js';
 
 const HALO_PAD = 6;
 
@@ -144,6 +147,32 @@ function indexNodes(nodes) {
   return nodes;
 }
 
+// Journey pairs, not visited nodes: revisiting a junction must retain every
+// actually traversed edge without exposing its untraveled branches.
+export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, authoredMap = null, laneEdge = new Set(), px, py }) {
+  const byId = Object.fromEntries(nodes.map(node => [node.id, node]));
+  const pairs = new Set();
+  const key = (a, b) => JSON.stringify([a, b]);
+  for (let i = 1; i < path.length; i++) pairs.add(key(path[i - 1], path[i]));
+  let html = '';
+  for (const node of nodes) {
+    if (!isDrawn(node.id)) continue;
+    for (const toId of node.next || []) {
+      const to = byId[toId];
+      if (!to || !isDrawn(toId)) continue;
+      if (!pairs.has(key(node.id, toId)) && !(authoredMap && pairs.has(key(toId, node.id)))) continue;
+      const route = authoredMap?.routes.find(row => row.a === node.id && row.b === toId || row.b === node.id && row.a === toId);
+      if (route && route.a !== node.id) continue;
+      const isLane = laneEdge.has(`${node.id}>${toId}`) || (authoredMap && laneEdge.has(`${toId}>${node.id}`));
+      const tag = route ? 'polyline' : 'line';
+      const coords = route ? `points="${route.points.map(point => point.join(',')).join(' ')}"` : `x1="${px(node)}" y1="${py(node)}" x2="${px(to)}" y2="${py(to)}"`;
+      html += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
+      html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge traveled${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
+    }
+  }
+  return html;
+}
+
 /**
  * watchViewport(el, { read, onChange, delayMs, RO, setTimer, clearTimer })
  * — the camera's STANDING re-fit (#1142). The first-settle observer in
@@ -161,20 +190,22 @@ function indexNodes(nodes) {
  * observation. So only a later CHANGE re-fits. Within 1 px is not a change —
  * the restore door's own tolerance.
  *
+ * An optional initial baseline precedes a mount's layout-changing report.
+ * Other callers keep the current-box baseline by default.
  * Debounced (a settling layout fires several times in a row; the camera moves
  * once, on the last). The re-fit is a jump, never a glide, so reduced motion
  * needs no branch here. Returns `stop()`; no ResizeObserver means no watch,
  * and says so by returning a no-op rather than throwing.
  */
 export function watchViewport(el, {
-  read, onChange, delayMs = 100,
+  read, onChange, initial = null, delayMs = 100,
   RO = typeof ResizeObserver !== 'undefined' ? ResizeObserver : null,
   setTimer = setTimeout, clearTimer = clearTimeout,
 } = {}) {
   if (!RO || !el) return () => {};
   const usable = (v) => !!v && v.width > 0 && v.height > 0;
   const same = (a, b) => Math.abs(a.width - b.width) <= 1 && Math.abs(a.height - b.height) <= 1;
-  let last = read();
+  let last = initial || read();
   let timer = null;
   let stopped = false;
   const fire = () => {
@@ -333,31 +364,19 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
   // hidden, so their edges are not drawn either — the line stops where the light
   // does. In `path` mode nothing is hidden and this filter is the identity.
-  let edgeSvg = '';
-  const path = viewer.path || [];
-  for (const n of nodes) {
-    if (!isDrawn(n.id)) continue;
-    for (const toId of n.next || []) {
-      if (!isDrawn(toId)) continue;
-      const to = byId[toId];
-      if (!to) continue;
-      const ia = path.indexOf(n.id);
-      const reverseIndex = act.authoredMap ? path.indexOf(toId) : -1;
-      const isTraveled = (ia >= 0 && path[ia + 1] === toId) || (reverseIndex >= 0 && path[reverseIndex + 1] === n.id);
-      const isLane = laneEdge.has(`${n.id}>${toId}`) || (act.authoredMap && laneEdge.has(`${toId}>${n.id}`));
-      const route = act.authoredMap?.routes.find(r => r.a === n.id && r.b === toId || r.b === n.id && r.a === toId);
-      if (route && route.a !== n.id) continue; // undirected authored roads draw once
-      const tag = route ? 'polyline' : 'line';
-      const coords = route ? `points="${route.points.map(p=>p.join(',')).join(' ')}"` : `x1="${px(n)}" y1="${py(n)}" x2="${px(to)}" y2="${py(to)}"`;
-      edgeSvg += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
-      edgeSvg += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
-
-    }
-  }
+  const edgeSvg = mapTravelEdgesHtml({ nodes, path: viewer.path || [], isDrawn, authoredMap: act.authoredMap, laneEdge, px, py });
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
   const world = act.authoredMap || worldMapForRun(act);
+  // The painting is framed so the act's start sits on its region's biome (mapPaintingFrame.js).
+  const paintingAnchor = act.authoredMap ? null : world.biomes?.[actRegionId(act)] || null;
+  const paintingArt = MAP_ART[world.map]?.levels.at(-1);
+  let paintingFrameNow = null; // the frame last applied; terrainAt reads the painting under a node through it
+  const startNodes = (act.startIds || []).map(id => byId[id]).filter(Boolean);
+  const paintingStart = startNodes.length
+    ? { x: startNodes.reduce((t, n) => t + px(n), 0) / startNodes.length, y: startNodes.reduce((t, n) => t + py(n), 0) / startNodes.length }
+    : null;
   const groundSvg = act.authoredMap ? authoredMapTerrainHtml({ art: act.authoredMap, fog, visited: nodes.filter(n => traveled.has(n.id) || n.id === current).map(n => mapPoint(n, height)) }) : mapTerrainHtml({
     world, width, height, fog,
     points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: px(n), y: py(n) })),
@@ -370,7 +389,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     <div class="map-frame">
     <!-- data-pan-axis reports the Advanced preference applied by the board.
          It is written after mount beside the other camera evidence fields. -->
-    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}"${freePan ? ' data-scroll-axis="x" data-scroll-axis-why="Two-axis map dragging is enabled by the player in Advanced settings."' : ''}>
+    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}"${act.authoredMap ? '' : ' data-terrain="generated"'}${freePan ? ' data-scroll-axis="x" data-scroll-axis-why="Two-axis map dragging is enabled by the player in Advanced settings."' : ''}>
       <div class="map-canvas">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
           ${groundSvg}
@@ -479,7 +498,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       title.textContent = n.destinationLabel;
       el.appendChild(title);
     }
-    // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/mapview.js), and it is the
+    // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/map/mapview.js), and it is the
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
     const r = nodeRadius(n.type);
@@ -600,6 +619,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // offset and node coordinates remain untouched.
   const titleEl = svgEl.querySelector('.map-act-title');
   const inkBox = framingBox(nodes.filter((n) => isDrawn(n.id)), height) || { x0: 0, y0: 0, x1: width, y1: height };
+  // The whole act's bounds, discovered or not: the painting is framed against
+  // these so a fog reveal that widens inkBox never re-frames (rescales) art and
+  // terrain zones under nodes already on screen. The camera keeps inkBox.
+  const actBox = framingBox(nodes, height) || inkBox;
   // The content box last APPLIED to the element, in SVG units. Read by the
   // camera and by `report`, so the three cannot disagree about where zero is.
   let content = { x0: 0, y0: 0, w: width, h: height };
@@ -611,6 +634,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // nothing has been aimed at yet.
   let aimX = restored ? restored.aimX : (inkBox.x0 + inkBox.x1) / 2;
   let restorePending = !!restored;
+  let restoreWrite = null; // where the restore put the camera; null once a refit moved it
   let viewCommitTimer = null;
   let pendingViewCommit = null;
   // THE VIEWPORT THE CAMERA WAS LAST SOLVED AGAINST — the promise a `fit`
@@ -636,6 +660,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // `restored` is then the right answer. `data-camera-viewport` says the one
   // thing the door cannot: the shape the camera in force was measured against.
   let solvedViewport = null;
+  let viewportBeforeReport = null;
   function solveViewport(width, height) {
     if (!(Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0)) return;
     solvedViewport = { width, height };
@@ -692,6 +717,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       requestAnimationFrame(() => { sizedThisFrame = false; });
     }
   }
+  let frameCache = { key: '', frame: null };
   function apply() {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
@@ -717,8 +743,45 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plate were sized `0 0 width height`; grown content would have ended the
     // parchment in the middle of the screen with the scrollport's background
     // carrying on in the same tone — invisible today, and a seam the day Freja's
-    // plates land. One `<rect>` is the home; the plate copies it (attachParchment).
-    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image')) {
+    // plates land. The terrain shares this viewport-wide ground too: fitting
+    // the painting to a one-column route graph leaves a narrow strip of art.
+    // Its SVG image uses a uniform cover fit, so architecture never stretches.
+    // Framed against the ground the camera can ever show (free pan: the ink or
+    // the viewport centred on it; otherwise every aimX +- w/2 from the ink's
+    // columns, so an end-column node never shows bare paper), not this frame's viewBox: a pan moves
+    // x0 and must only translate the painting. Re-solved when the act, board
+    // size or zoom changes (the key), never per glide frame. The ground is the
+    // whole act (actBox), not what fog has revealed, and leaves out a tray's
+    // inset (temporary camera padding under the tray): either would rescale
+    // the painting, and move terrain zones, under nodes already on screen.
+    const actPadX = freePan && scroll.clientWidth > 0 ? viewportW / 2 : 0;
+    const frameBox = paintingGround({
+      ink: actBox,
+      w: freePan ? (actBox.x1 - actBox.x0) + 2 * actPadX : viewportW,
+      y0: actBox.y0 - padY,
+      h: (actBox.y1 - actBox.y0) + 2 * padY,
+      aim: freePan ? null : { min: actBox.x0, max: actBox.x1 },
+    });
+    const frameKey = paintingFrameKey(frameBox);
+    if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
+    else if (frameCache.key !== frameKey) {
+      frameCache = { key: frameKey, frame: paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: frameBox, start: paintingStart }) };
+    }
+    const frame = frameCache.frame;
+    paintingFrameNow = frame;
+    const painting = svgEl.querySelector('.map-painting');
+    if (painting) {
+      if (frame) painting.setAttribute('transform', frame.transform); else painting.removeAttribute('transform');
+      painting.dataset.flipX = frame?.flipX ? '1' : '0';
+      painting.dataset.flipY = frame?.flipY ? '1' : '0';
+      painting.dataset.framed = frame ? 'biome' : 'cover';
+    }
+    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image, .map-terrain .terrain-detail')) {
+      if (frame && el.classList.contains('terrain-detail')) {
+        el.setAttribute('x', '0'); el.setAttribute('y', '0');
+        el.setAttribute('width', String(frame.cw)); el.setAttribute('height', String(frame.ch));
+        continue;
+      }
       el.setAttribute('x', String(x0));
       el.setAttribute('y', String(y0));
       el.setAttribute('width', String(w));
@@ -777,7 +840,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // is standing on, because there isn't one yet.
   //
   //   "when the act starts it show the start node and the end node"
-  //                                        — Constantine, quoted in mapknowledge.js
+  //                                        — Constantine, quoted in map/mapknowledge.js
   //
   // THE FOG ALREADY OBEYED THAT SENTENCE AND THE CAMERA THEN UNDID IT. The boss
   // is lit from the first frame — `mapfog --selftest` holds that property and
@@ -954,7 +1017,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       // the decision box, so the zoom that fits it fits the decision as well.
       const zDecision = fitZoom(framingBox(fs, height), scroll.clientWidth, scroll.clientHeight);
       const zContext = fitZoom(framingBox(contextNodes(), height), scroll.clientWidth, scroll.clientHeight);
-      const z = clampZoom(Math.min(zDecision, zContext, MAP_CLOSE_NODE_SCALE));
+      const z = clampZoom(Math.min(zDecision, zContext, MAP_PRESENTATION.boardOpenZoomMax));
       if (Math.abs(z - zoom) > 0.0005) zoom = z;
     }
     const box = framingBox(fs, height);
@@ -1048,6 +1111,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // tools/mapfit.mjs all read one fact instead of three re-derivations.
   let warnedClipped = false;
   function report(box, count) {
+    // The current mount may restore a manual camera solved on another screen.
+    // Observe only layout changes OUR report makes, not that persisted shape.
+    viewportBeforeReport = { width: scroll.clientWidth, height: scroll.clientHeight };
     const d = scroll.dataset;
     if (!box) {
       d.framing = 'none'; d.framingMiss = '0';
@@ -1111,7 +1177,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // WHAT A MAP NODE ACTUALLY DELIVERS TO A THUMB, at this zoom on this screen.
   //
   // The radius is now solved from the tap floor rather than drawn and hoped for
-  // (model/mapview.js), and it is solved at ONE reference — 44 px at the default
+  // (model/map/mapview.js), and it is solved at ONE reference — 44 px at the default
   // map zoom on a 390x844 phone. It cannot be a promise at every shape, and the
   // honest thing is not a comment claiming otherwise: it is the screen saying
   // the number where the player is, and saying NOTHING when the floor is met.
@@ -1214,11 +1280,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // The tray's look, remembered so a re-fit can take it again (refitCamera).
   let look = null;
   const refit = () => refitCamera({ look, centerOnCurrent, centerOnNode });
+  // A host may provide a live inset when flow below the scrollport changes.
+  // Retain that provider for re-fits; never retain a stale footer measurement.
   function centerOnNode(id, { inset = 0, glideMs = 0 } = {}) {
     const n = byId[id];
     if (!n) return;
-    insetBottom = Math.max(0, inset);
-    look = { id, inset: insetBottom };
+    insetBottom = Math.max(0, typeof inset === 'function' ? inset() : inset);
+    look = { id, inset };
     sizeSvg();
     // WHAT THE TRAY COVERS OF THE MAP, not of the frame. The reveal panel is
     // absolutely positioned against the foot of the map frame (styles/map.css:
@@ -1252,8 +1320,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // recorded exactly as centerOnNode records it, and the camera stays put.
   function holdLook(id, { inset = 0 } = {}) {
     if (!byId[id]) return;
-    insetBottom = Math.max(0, inset);
-    look = { id, inset: insetBottom };
+    insetBottom = Math.max(0, typeof inset === 'function' ? inset() : inset);
+    look = { id, inset };
   }
   // Closing a tray that never moved the camera forgets its look without
   // re-framing, so the view the player is looking at does not jump.
@@ -1330,6 +1398,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
+    const dragScale = scroll.getBoundingClientRect().width / scroll.offsetWidth || 1;
     sl = scroll.scrollLeft;
     st = scroll.scrollTop;
     scroll.classList.add('grabbing');
@@ -1342,8 +1411,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     trackGesture(ev, {
       onMove: (mv) => {
         if (!panning || mv.pointerId !== activePointerId) return;
-        scroll.scrollLeft = sl - (mv.clientX - sx);
-        scroll.scrollTop = st - (mv.clientY - sy);
+        scroll.scrollLeft = sl - (mv.clientX - sx) / dragScale;
+        scroll.scrollTop = st - (mv.clientY - sy) / dragScale;
       },
       onEnd: (end) => {
         if (end.pointerId !== activePointerId) return;
@@ -1392,9 +1461,33 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   function startRefitWatch() {
     if (stopRefitWatch) return;
     stopRefitWatch = watchViewport(scroll, {
+      // report() can change flow notes after the current mount was measured.
+      // A restored camera's persisted viewport is deliberately not the baseline.
+      initial: viewportBeforeReport,
       read: () => ({ width: scroll.clientWidth, height: scroll.clientHeight }),
-      onChange: () => {
+      onChange: (now) => {
         if (!scroll.isConnected) return;
+        // A restore can land one layout step before the viewport it was saved
+        // under (report() brings in a note that shrinks the scrollport; the
+        // compact chrome of #2336 made that step visible on phones). When the
+        // box has now become the saved shape and the player has not moved the
+        // camera since the restore wrote it, finish the restore at that shape
+        // rather than re-fitting over the player's pan.
+        if (restoreWrite && restored
+          && Math.abs(now.width - restored.viewportWidth) <= 1
+          && Math.abs(now.height - restored.viewportHeight) <= 1
+          && Math.abs(scroll.scrollTop - restoreWrite.top) <= 1.5
+          && Math.abs(scroll.scrollLeft - restoreWrite.left) <= 1.5) {
+          restoreWrite = null;
+          sizeSvg();
+          scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
+          scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+          const fs = framingNodes();
+          report(fs.length ? framingBox(fs, height) : null, fs.length);
+          emitViewState(false);
+          return;
+        }
+        restoreWrite = null;
         refit();
         emitViewState(false);
       },
@@ -1413,6 +1506,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
         sizeSvg();
         scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
         scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+        restoreWrite = { left: scroll.scrollLeft, top: scroll.scrollTop };
         if (titleEl) titleEl.setAttribute('x', String(aimX));
         const fs = framingNodes();
         const box = fs.length ? framingBox(fs, height) : null;
@@ -1453,6 +1547,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
     recenter, resetFraming, centerOnNode, holdLook, releaseLook, stepZoom, teardown,
     readingOf: (id) => drawnReadings.get(id) || null,
+    // The setting (city, bridge, forest...) of the painting under a node, or null
+    // when the board has no framed painting or no zone there.
+    terrainAt: (id) => {
+      const n = byId[id];
+      return n && paintingFrameNow && !act.authoredMap ? terrainSettingAt(world, paintingFrameNow, { x: px(n), y: py(n) }) : null;
+    },
     get zoom() { return zoom; },
   };
 }

@@ -1,0 +1,23 @@
+{
+  "_": "DERIVED by node tools/build-game.mjs, never by hand. The full artifact is build output (dist/build/); this file pins it by hash.",
+  "format": "ashen.build.summary@1",
+  "artifactFormat": "ashen.build@1",
+  "game": "ashenspire",
+  "version": "2.0.0",
+  "hash": "sha256:641566d4200c3bee67d5a9024e6109a1a7d032459aa1817f4155216dcca5c0ca",
+  "bytes": 2884644,
+  "report": {
+    "mechanics": 257,
+    "portable": 15,
+    "legacy": 168,
+    "data": 74,
+    "portableShare": 0.0584,
+    "components": 28,
+    "screens": 14,
+    "maps": 3,
+    "assets": 8252,
+    "unboundTags": 0,
+    "missingIcons": 250,
+    "unresolvedAssets": 0
+  }
+}

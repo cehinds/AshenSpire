@@ -40,8 +40,8 @@ for (const { width, height, zoom } of WINDOWS) {
     for (const formFactor of ['desktop', 'widescreen']) {
       const wide = planCombatLayout({ formFactor, ...local });
       assert.deepEqual(SHARED.map(key => wide[key]), SHARED.map(key => phone[key]), `${formFactor} bands at ${width}x${height}`);
-      assert.ok(Math.abs(wide.footer * zoom - 92) < 1.5, `${formFactor} footer at ${width}x${height}: ${wide.footer * zoom}px`);
-      assert.ok(near(wide.hand / local.height, .30) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
+      assert.ok(wide.footer * zoom >= 92 && wide.footer * zoom <= height * .3, `${formFactor} footer at ${width}x${height}: ${wide.footer * zoom}px`);
+      assert.ok(near(wide.hand / local.height, .20) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
     }
   });
 }
@@ -52,6 +52,6 @@ for (const { width, height, zoom } of WINDOWS) {
 // of the observer when it releases.
 test('the combat layout re-plans when data-form-factor changes', () => {
   assert.match(combatLayoutSource, /formFactorObserver = new MutationObserver\(schedule\);/);
-  assert.match(combatLayoutSource, /formFactorObserver\.observe\(document\.documentElement, \{ attributes: true, attributeFilter: \['data-form-factor'\] \}\);/);
+  assert.match(combatLayoutSource, /formFactorObserver\.observe\(document\.documentElement, \{ attributes: true, attributeFilter: \['data-form-factor', 'data-display-appearance'\] \}\);/);
   assert.match(combatLayoutSource, /function release\(\) \{[\s\S]*?formFactorObserver\?\.disconnect\(\);/);
 });

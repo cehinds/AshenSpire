@@ -1,8 +1,9 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
-import {createRunState,serializeRun,deserializeRun,validateRunShape,initializeRunDerivedStats} from '../src/model/state.js';
+import {createCardInstance,createRunState,serializeRun,deserializeRun,validateRunShape,initializeRunDerivedStats} from '../src/model/state.js';
 import {openRunClassMastery,registriesForClassMastery} from '../src/model/classMasteryRun.js';
 import {bankSkillXp,claimBankedSkillLevel,xpToNext} from '../src/model/skills.js';
 import {rollClassMilestoneRewards,claimClassMilestoneReward} from '../src/model/classMilestoneOffers.js';
@@ -14,6 +15,8 @@ import {createSession,restoreSession} from '../tools/session.mjs';
 import {itemUpgradeTiers} from '../src/model/itemUpgrades.js';
 import {mountRows} from '../src/model/cardExtraction.js';
 import {createRng} from '../src/engine/rng.js';
+import {stampDeck} from '../src/model/loadout.js';
+import {resolveCard} from '../src/model/registries.js';
 
 const root=createRegistries(contentBundle);
 function built(level=12){
@@ -145,7 +148,7 @@ test('original earned card grades and INT offers cannot reroll or raise after IN
   assert.deepEqual(run.classMilestoneOffers[slotId],stored);
 });
 
-test('host-owned respec persists a single seat atomically without changing another seat or shared RNG',()=>{
+test('host-owned respec persists a single seat atomically without changing another seat or shared RNG', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const S=createSession({registries:root,seedString:'RESPEC'});
   for(const id of ['a','b'])S.addMember({id,name:id,classId:'reaver',classMastery:{}});
   S.start();
@@ -256,4 +259,46 @@ test('the initial class tree can rebuild before the first mastery level without 
   assert.deepEqual(draft.slots,[]);assert.equal(draft.treeBudget,1);assert.equal(preview.ok,true,preview.problems.join(' '));
   assert.equal(applyClassRespec(reg,run,preview,{saveCandidate:candidate=>{candidate.savedAt='2026-10-06T12:00:00.000Z';return true;}}).ok,true);
   assert.equal(run.savedAt,'2026-10-06T12:00:00.000Z');assert.deepEqual(validateRunShape(deserializeRun(serializeRun(run))),[]);
+});
+
+
+test('replacing an earned card adopts its own carrier while retaining identity and reviewed upgrade',()=>{
+  const {run,reg}=built(12);
+  const draft=createClassRespecDraft(reg,run),slot=draft.slots.find(slot=>slot.kind==='cards');
+  const previous=run.deck.find(card=>card.instanceId===slot.before.instanceId);
+  Object.assign(previous,{damageSchool:'fire',exposureBuildupPerHit:7,magicShare:1,upgraded:true});
+  const before=structuredClone(previous),selections=structuredClone(draft.selections);
+  // Rebuild after modifying the owned card, because the draft detects stale runs.
+  const updated=createClassRespecDraft(reg,run);
+  selections[slot.receiptId]={id:'ironResolve',abilityRank:null,transfer:'retain'};
+  assert(classRespecOptions(reg,run,updated,slot).some(choice=>choice.id==='ironResolve'));
+  const preview=previewClassRespec(reg,run,updated,{selections});
+  assert.equal(preview.ok,true,preview.problems.join('\n'));
+  const replacement=preview.candidate.deck.find(card=>card.instanceId===previous.instanceId);
+  assert.equal(replacement.cardId,'ironResolve');
+  assert.equal(replacement.upgraded,true);
+  assert.equal(replacement.rewardReceiptId,previous.rewardReceiptId);
+  for(const field of ['damageSchool','exposureBuildupPerHit','magicShare'])assert.equal(replacement[field],undefined,`${field} belongs to the old card`);
+  assert.deepEqual(previous,before,'preview never alters the original stamped instance');
+  const unchanged=previewClassRespec(reg,run,updated);
+  assert.equal(unchanged.ok,true,unchanged.problems.join('\n'));
+  const retained=unchanged.candidate.deck.find(card=>card.instanceId===previous.instanceId);
+  assert.equal(retained.damageSchool,'fire','keeping the same identity preserves its host snapshot');
+  assert.equal(retained.exposureBuildupPerHit,7);
+});
+
+test('a school-only status skill stamps an explicit zero buildup without losing its school or effect',()=>{
+  const {run,reg}=built(12),card=createCardInstance('base.divine-harm',false,()=> 'respec-school-only');
+  const authored=structuredClone(reg.cards.get(card.cardId));
+  run.deck.push(card);
+  stampDeck(reg,run,undefined,{adoptEquipmentBonuses:true});
+  assert.equal(card.damageSchool,'holy');
+  assert.equal(card.exposureBuildupPerHit,0,'the status skill adds no per-hit exposure');
+  const face=resolveCard(reg,card);
+  assert.equal(face.damageSchool,'holy');
+  assert.deepEqual(face.effects,authored.effects,'school stamping does not rewrite the authored status effect');
+  assert.deepEqual(reg.cards.get(card.cardId),authored,'stamping leaves canonical content unchanged');
+  assert.deepEqual(validateRunShape(deserializeRun(serializeRun(run))),[]);
+  stampDeck(reg,run);
+  assert.equal(card.exposureBuildupPerHit,0,'later stamps preserve the complete saved carrier');
 });

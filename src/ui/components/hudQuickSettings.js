@@ -1,5 +1,7 @@
+import { t } from '../strings.js';
+import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 // The HUD's two quick settings — Fullscreen and Music — are two kit
-// IconButtons (⛶, ♫) in the same cluster as Armoury and the menu, at the same
+// IconButtons (display, audio) in the same cluster as Armoury and the menu, at the same
 // size and inset. State is `aria-pressed` + `.on`; the sentence a player needs
 // when fullscreen is refused is a StatusText that appears beside them.
 import { childModel } from '../models/ComponentModel.js';
@@ -24,7 +26,7 @@ export function refreshHudQuickSettings(root, settings) {
   return true;
 }
 
-const GLYPHS = { fullscreen: '⛶', music: '♫' };
+const GLYPHS = { fullscreen: 'display', music: 'audio' };
 
 // THE KIT'S IconButton, AS A STRING. This module is read by tests/engine.test.js
 // under Node, where there is no document for kit.el() to build in, so the
@@ -35,7 +37,7 @@ function controlHtml(model, action, active) {
   const label = esc(model.accessibility.label);
   return `<button type="button" class="as-iconbtn modal-iconbtn hud-quick-setting${active ? ' on' : ''}"`
     + ` ${uiComponentAttrs(model.component, model.variant)} data-hud-quick-action="${action}"`
-    + ` aria-label="${label}" title="${label}" aria-pressed="${active}">${GLYPHS[action]}</button>`;
+    + ` aria-label="${label}" title="${label}" aria-pressed="${active}">${engravedIconHtml(GLYPHS[action])}</button>`;
 }
 
 export function hudQuickSettingsHtml(model) {
@@ -96,7 +98,7 @@ function syncMusic(stack, settings) {
   button.setAttribute('aria-pressed', String(plan.active));
   button.setAttribute('aria-label', plan.label);
   button.title = plan.label;
-  button.textContent = plan.active ? '♫' : '♫̸';
+  button.replaceChildren(engravedIcon('audio') || t('settings.row.muteAudio'));
 }
 
 export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } = {}) {
@@ -154,17 +156,13 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   syncFullscreen(stack);
   syncMusic(stack, binding.settings);
-  // Fullscreen exit notifications are inconsistent in embedded and mobile
-  // browser shells. A cheap state read keeps the control truthful even when
-  // the platform drops that event; this interval owns no simulation state.
-  const fullscreenStatePoll = setInterval(() => syncFullscreen(stack), 2000);
+  // fullscreenchange / webkitfullscreenchange (bound above) keep the control truthful; no polling.
 
   const detachObserver = new MutationObserver(() => {
     if (!stack.isConnected) release();
   });
   const release = () => {
     detachObserver.disconnect();
-    clearInterval(fullscreenStatePoll);
     clearTimeout(noticeTimer);
     fullscreenSyncTimers.forEach(clearTimeout);
     fullscreenSyncTimers.clear();

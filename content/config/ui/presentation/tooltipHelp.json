@@ -22,14 +22,14 @@
           "key": "hoverTooltips",
           "def": true,
           "label": "Hover explanations",
-          "note": "Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available."
+          "note": "Show explanations when the pointer rests on a detail."
         },
         {
           "key": "tooltipDelay",
           "type": "choice",
           "def": "1s",
           "label": "Explanation delay",
-          "note": "Wait before opening or switching hover and nested explanations. A tap or click selects a detail; a second one explains it."
+          "note": "Wait before hover explanations open or switch."
         },
         {
           "key": "tooltipCloseDelay",

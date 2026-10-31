@@ -1,3 +1,5 @@
+// Synthetic copied-tree sandbox; production gallery tests use verified packs.
+process.env.ASHEN_ART_SOURCE='trees';
 // node --test workbench/tests/assets-server.test.mjs — the Asset Gallery's two server routes: the
 // token-gated listing (GET /api/assets/list) and the same-origin art route (GET /asset-file/<path>).
 import test from 'node:test';

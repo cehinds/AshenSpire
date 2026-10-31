@@ -190,17 +190,20 @@ test('native pan preserves its viewport after a browser cancellation with an old
 });
 
 test('phone Upcast clears the footer at CSS zoom without accumulating lift', () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { innerWidth: 320, innerHeight: 844 };
+  try {
   const properties = new Map();
   const zoom = .74;
   const hand = { clientWidth: 300, scrollLeft: 0, scrollTop: 17,
-    getBoundingClientRect: () => ({ left: 50, right: 272, width: 222, bottom: 688 }) };
+    getBoundingClientRect: () => ({ left: 50, right: 272, width: 222, top: 350, bottom: 688, height: 338 }) };
   const card = { classList: { contains: name => name === 'card' },
     style: { getPropertyValue: key => properties.get(key) || '',
       setProperty: (key, value) => properties.set(key, value), removeProperty: key => properties.delete(key) },
-    getBoundingClientRect: () => ({ left: 132, right: 266, width: 134 }) };
+    getBoundingClientRect: () => { const shift = (parseFloat(properties.get('--hand-upcast-rise')) || 0) * zoom; return { left: 132, right: 266, width: 134, top: 500 + shift, bottom: 719 + shift, height: 219 }; } };
   const control = { parentElement: card, getBoundingClientRect: () => {
     const shift = (parseFloat(properties.get('--hand-upcast-rise')) || 0) * zoom;
-    return { left: 132, right: 266, width: 134, bottom: 719 + shift };
+    return { left: 132, right: 266, width: 134, top: 688 + shift, bottom: 719 + shift, height: 31 };
   } };
   revealHandUpcastControl(hand, control, 320);
   assert.equal(control.getBoundingClientRect().bottom, 687, 'the complete chooser clears the hand/footer edge by a physical pixel');
@@ -210,6 +213,7 @@ test('phone Upcast clears the footer at CSS zoom without accumulating lift', () 
   assert.equal(hand.scrollTop, 17, 'the field and resting hand do not move');
   revealHandUpcastControl(hand, card, 320);
   assert.equal(properties.has('--hand-upcast-rise'), false, 'ordinary focus restores the authored card lift');
+  } finally { if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow; }
 });
 
 test('visible, hidden and detached-size controls leave hand position untouched', () => {

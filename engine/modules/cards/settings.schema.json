@@ -1,0 +1,74 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "roundShuffle": {
+      "enum": [
+        "entireDeck"
+      ]
+    },
+    "retainHand": {
+      "enum": [
+        false
+      ]
+    },
+    "handBase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "handAttribute": {
+      "enum": [
+        "intelligence"
+      ]
+    },
+    "turnPolicy": {
+      "enum": [
+        "multiCard"
+      ]
+    },
+    "freeCommandLimit": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "editorEnabled": {
+      "type": "boolean"
+    },
+    "editorWhere": {
+      "enum": [
+        "strategize",
+        "noncombat"
+      ]
+    },
+    "faceMaxEffects": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "faceMaxLines": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    }
+  },
+  "required": [
+    "mode",
+    "roundShuffle",
+    "retainHand",
+    "handBase",
+    "handAttribute",
+    "turnPolicy",
+    "freeCommandLimit",
+    "editorEnabled",
+    "editorWhere",
+    "faceMaxEffects",
+    "faceMaxLines"
+  ],
+  "additionalProperties": false
+}

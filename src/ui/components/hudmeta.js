@@ -55,7 +55,7 @@ export function cindersCounterHtml(model) {
     role: 'status', 'aria-live': model.accessibility.live, 'aria-label': model.accessibility.label,
   }, el('span', { class: 'as-chip hud-cinders' }, [
     el('span', { class: 'ck', text: model.properties.label }),
-    el('span', { class: 'cv', text: `⛁ ${model.properties.value}` }),
+    el('span', { class: 'cv', text: String(model.properties.value) }),
   ])));
 }
 
@@ -81,8 +81,12 @@ export function buildMetadataTrailHtml(model) {
   ]));
 }
 
-// The floating header contains only HP and the relic rail.
-export function runHeaderStripHtml() { return ''; }
+// The existing Cinders model carries the active player's live purse. Keep
+// class/position on their dedicated surfaces while exposing this enabled layer.
+export function runHeaderStripHtml(model) {
+  return part(model, UI.cindersCounter, (counter) =>
+    `<div class="hud-info-row hud-cinders-strip as-band-row">${cindersCounterHtml(counter)}</div>`);
+}
 
 export function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
@@ -108,14 +112,18 @@ export function quickAccessPanelHtml(model) {
     if(icon){
       const [x,y,w,h]=icon.trim;
       node.classList.add('illustrated-hud-button');
-      node.innerHTML=`<span class="illustrated-hud-icon" aria-hidden="true" style="width:${Math.min(1,w/h)*100}%;height:${Math.min(1,h/w)*100}%"><img alt="" src="${esc(assetUrl(icon.href))}" style="width:${1254/w*100}%;height:${1254/h*100}%;left:${-x/w*100}%;top:${-y/h*100}%"></span>`;
+      node.innerHTML=`<span class="illustrated-hud-icon" aria-hidden="true"><svg viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMidYMid meet" focusable="false"><image href="${esc(assetUrl(icon.href))}" width="1254" height="1254"/></svg></span>`;
     }
     return html(node);
   };
   return `<section class="hud-control-grid as-cluster stack" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions as-cluster">
       ${part(model, UI.armouryControl, (armoury) => button(armoury))}
-      ${part(model, UI.quickMenuControl, (menu) => button(menu, { 'data-action-hint': 'menu' }))}
+      ${part(model, UI.quickMenuControl, (menu) => button(menu, {
+        'data-action-hint': 'menu',
+        // Opening the launcher is read-only; it must not skip a live combat beat.
+        'data-combat-read-only': '',
+      }))}
     </div>
   </section>`;
 }
@@ -148,7 +156,7 @@ export function sharedRunHudHtml(model) {
   // band draws one way. A HOST CONTEXT is not a grip: `layout` is chosen by the
   // screen (the map's W4b 10 vh header, styles/kit.css § MAP HEADER), never by
   // the player, and combat passes none.
-  return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}"${layout ? ` data-hud-layout="${esc(layout)}"` : ''} data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
+  return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}"${layout ? ` data-hud-layout="${esc(layout)}"` : ''} data-shared-chrome="true" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
       ${part(model, UI.runHeaderStrip, runHeaderStripHtml)}
       ${part(model, UI.primaryHudRow, primaryHudRowHtml)}${orientationHtml ? `

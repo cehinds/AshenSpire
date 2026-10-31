@@ -1,0 +1,167 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "minRank": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "lowerRankChance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rankOfRarity": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10
+      }
+    },
+    "skipOwnedBasics": {
+      "type": "boolean"
+    },
+    "stanceCoverage": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "reservedSlots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "preferTiers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "basic",
+              "cantrip"
+            ]
+          }
+        },
+        "excludePools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "enabled",
+        "reservedSlots",
+        "preferTiers",
+        "excludePools"
+      ],
+      "additionalProperties": false
+    },
+    "ownedCopyWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Weight multiplier per copy of a card the character already owns (deck plus sideboard); 1 disables the penalty."
+    },
+    "ownedPotionWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Weight multiplier per copy of a potion already held in the belt when a reward, chest or shop offers a potion; 1 disables the penalty, it is never a forced skip."
+    },
+    "tagWeights": {
+      "type": "object",
+      "description": "Card-pick weight by tag; a card takes the product of its matching tag weights, else `default` (1 when absent).",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1000
+      }
+    },
+    "recentOfferWindow": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20,
+      "description": "How many of the latest reward screens count as recently offered; 0 disables the recent-offer penalty."
+    },
+    "recentOfferWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Weight multiplier for a card shown on one of the last `recentOfferWindow` reward screens; 1 disables it."
+    },
+    "depthBias": {
+      "type": "object",
+      "description": "Card-pick weight multipliers by map depth (run.floor): `early` applies at depth <= earlyMaxDepth, `late` after it. Absent or 1 is neutral.",
+      "properties": {
+        "earlyMaxDepth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50
+        },
+        "early": {
+          "type": "object",
+          "properties": {
+            "basicOrCantrip": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Multiplier for a basic or cantrip card"
+            },
+            "mana": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Multiplier for a card with a Mana cost"
+            }
+          },
+          "additionalProperties": false
+        },
+        "late": {
+          "type": "object",
+          "properties": {
+            "mana": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Multiplier for a card with a Mana cost"
+            },
+            "highRankMin": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            },
+            "highRank": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Multiplier for a card of rank >= highRankMin"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "earlyMaxDepth",
+        "early",
+        "late"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "minRank",
+    "lowerRankChance",
+    "rankOfRarity",
+    "skipOwnedBasics",
+    "stanceCoverage"
+  ],
+  "additionalProperties": false
+}

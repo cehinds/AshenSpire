@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { masteryClassSummary } from '../components/classMastery.js';
 // src/ui/screens/lobby.js — Forsaken Together lobby (LAN play, phase 1).
 //
@@ -28,7 +29,7 @@ import { startingKitViews } from '../../model/startingKits.js';
 import { createRunState } from '../../model/state.js';
 import {
   el, pane, row, labelStack, button, buttonRow, optionCard, options, pill, flavour, blocker, eyebrow,
-  segmented, swatch, swatches, iconButton, hairline,
+  segmented, swatch, swatches, iconButton, hairline, glyph,
 } from '../kit/index.js';
 
 const NAME_KEY = 'sote_lan_name';
@@ -87,7 +88,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
   function renderBrowse(note) {
     const nameInput = textInput({ id: 'lb-name', maxlength: '18', value: state.name });
     const hostBtn = button({ label: 'Light a fire (host)', weight: 'primary', id: 'lb-host' });
-    const backBtn = button({ label: 'Back', role: 'exit', id: 'lb-back', attrs: { 'data-back': '' } });
+    const backBtn = button({ label: t('common.back'), role: 'exit', id: 'lb-back', attrs: { 'data-back': '' } });
     const hostsBox = options([flavour('Scanning…', { id: 'lb-scanning' })], { id: 'lb-hosts' });
     mountScreen(pane({
       eyebrow: 'Forsaken Together',
@@ -126,7 +127,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       }
       hosts.forEach((h, i) => {
         const card = optionCard({
-          glyph: '⚑', name: h.name, meta: h.local ? 'This fire' : `${h.addr}:${h.port}`,
+          glyph: 'combat', name: h.name, meta: h.local ? 'This fire' : `${h.addr}:${h.port}`,
           className: 'lb-join', attrs: { dataset: { i } },
         });
         card.addEventListener('click', () => join(hosts[Number(card.dataset.i)]));
@@ -203,10 +204,10 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
   function seatRow(p) {
     const seatState = p.isLocal ? { label: 'Local seat', on: true }
       : p.isHost ? { label: 'Host', on: true }
-        : p.ready ? { label: 'Ready', on: true } : { label: 'Not ready', on: false };
+        : p.ready ? { label: t('lobby.ready'), on: true } : { label: 'Not ready', on: false };
     return row({
       tag: 'div', setting: true,
-      glyph: p.isHost ? '⚑' : (p.classId ? classGlyph(p.classId) : '…'),
+      glyph: p.isHost ? 'combat' : (p.classId ? classGlyph(p.classId) : '…'),
       labelNode: el('span', { class: 'r-label' }, [
         el('span', { style: { color: tintCss(p.tint) }, text: p.name }),
         p.id === myId ? ' (you)' : '',
@@ -239,8 +240,8 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const addLocal = button({ label: '＋ Add local player', id: 'lb-addlocal' });
     const resumeWrap = el('div', { id: 'lb-resume-wrap' });
     const seedInput = iAmHost ? textInput({ id: 'lb-seed', value: state.seedString }) : null;
-    const startBtn = iAmHost ? button({ label: allReady ? 'Begin the climb' : 'Begin the climb (waiting for ready)', weight: 'primary', id: 'lb-start', disabled: !(state.players.length && allReady) }) : null;
-    const readyBtn = iAmHost ? null : button({ label: state.ready ? '✓ Ready — waiting for the host' : 'Ready up', weight: 'primary', id: 'lb-ready' });
+    const startBtn = iAmHost ? button({ label: allReady ? t('gameProfile.creation.copy2') : t('lobby.beginWaiting'), weight: 'primary', id: 'lb-start', disabled: !(state.players.length && allReady) }) : null;
+    const readyBtn = iAmHost ? null : button({ label: state.ready ? 'Ready — waiting for the host' : 'Ready up', weight: 'primary', id: 'lb-ready' });
     const leaveBtn = button({ label: 'Leave', role: 'exit', id: 'lb-leave' });
 
     mountScreen(pane({
@@ -341,18 +342,19 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const renderLocals = () => {
       localsBox.innerHTML = '';
       state.locals.forEach((lp, i) => {
-        const nameField = textInput({ class: 'll-name', maxlength: '14', value: lp.name, 'aria-label': `Player ${i + 2} name` });
-        const classBtn = button({ label: `${classGlyph(lp.classId)} ${classList.find((c) => c.id === lp.classId).name}`, className: 'll-class' });
+        const nameField = textInput({ class: 'll-name', maxlength: '14', value: lp.name, 'aria-label': `${t('combat.log.role.player')} ${i + 2} name` });
+        const classBtn = button({ label: classList.find((c) => c.id === lp.classId).name, className: 'll-class' });
+        classBtn.prepend(glyph(classGlyph(lp.classId)));
         const kitBtn = button({ label: (kitsFor(lp.classId).find((kit) => kit.id === lp.startingKitId) || kitsFor(lp.classId)[0]).label, className: 'll-kit' });
         const tintBtn = swatch({ color: tintCss(lp.tint), label: 'Next accent', className: 'll-tint' });
-        const del = iconButton({ glyph: '✕', label: 'Remove this player', className: 'll-del' });
+        const del = iconButton({ glyph: 'close', label: 'Remove this player', className: 'll-del' });
         const seat = row({
           tag: 'div', setting: true,
           labelNode: labelStack({ label: `Seat ${i + 2}` }),
           trail: [nameField, classBtn, kitBtn, tintBtn, del],
           className: 'lobby-local',
         });
-        nameField.addEventListener('input', (e) => { lp.name = e.target.value.trim() || `Player ${i + 2}`; sendLocals(); });
+        nameField.addEventListener('input', (e) => { lp.name = e.target.value.trim() || `${t('combat.log.role.player')} ${i + 2}`; sendLocals(); });
         classBtn.addEventListener('click', () => {
           const ci = classList.findIndex((c) => c.id === lp.classId);
           lp.classId = classList[(ci + 1) % classList.length].id;
@@ -380,7 +382,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
+      state.locals.push({ name: `${t('combat.log.role.player')} ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());

@@ -1,7 +1,61 @@
+import { deckCopyLimit as configuredCopyLimit, characterSettings, characterTags } from '../../engine/kernel/gameConfig.js';
 import { deckRules } from '../content/deckRules.js';
+import { gameContent } from './gameProfile.js';
+import { basicCardKind } from './basicCardRule.js';
+import { hasCollectedCardPolicy, knownCollectedCardIds } from './collectedCards.js';
 
-// Leaf shared by acquisition and the deck editor without importing loadout.
+/** Display names share the stable saved class tags used by the copy rules. */
+export function activeAdeptTraining(run) {
+  if (!hasCollectedCardPolicy(run) || run.classUnequipped) return null;
+  const row = gameContent(run, 'characters')?.find(row => row.id === run.class);
+  const tags = row ? characterTags(row) : [];
+  if (tags.includes('training.basic')) return { id: 'training.basic', label: 'Martial Adept', kind: 'Basic' };
+  if (tags.includes('training.graduate')) return { id: 'training.graduate', label: 'Magic Adept', kind: 'Cantrip' };
+  return null;
+}
+
+function eligibleAdeptDefinition(run, cardId) {
+  const card = gameContent(run, 'cards')?.find(card => card.id === cardId), adept = activeAdeptTraining(run);
+  return !!card && !!adept && basicCardKind(run, card) === adept.kind;
+}
+
+// Profiles are immutable snapshots. Compile the data-only training catalogue
+// once per profile/class; ownership is still checked live for every edit.
+const adeptDefinitionsByProfile = new WeakMap();
+export function collectedAdeptCardIds(run) {
+  if (!activeAdeptTraining(run)) return [];
+  const profile = run.gameProfile;
+  let classes = adeptDefinitionsByProfile.get(profile);
+  if (!classes) { classes = new Map(); adeptDefinitionsByProfile.set(profile, classes); }
+  let ids = classes.get(run.class);
+  if (!ids) {
+    const row = gameContent(run, 'characters').find(row => row.id === run.class);
+    const settings = characterSettings(profile.modules);
+    ids = (gameContent(run, 'cards') || []).filter(card => eligibleAdeptDefinition(run, card.id)
+      && configuredCopyLimit(card.id, row, profile.content, settings, profile.modules.gear, {}) === Infinity).map(card => card.id);
+    classes.set(run.class, ids);
+  }
+  const known = new Set(knownCollectedCardIds(run));
+  return ids.filter(id => known.has(id));
+}
+
+// The same copy rule serves acquisition and the deck editor.
+export function configuredDeckCopyLimit(run, cardId) {
+  const profile = run?.gameProfile;
+  if (profile?.modules?.['deck-training']?.mode !== 'configured') return null;
+  const row = profile.content.characters?.find(row => row.id === run.class) || { id: run.class, tags: [] };
+  const owned = {};
+  for (const card of [...(run.deck || []), ...(run.sideboard || [])]) owned[card.cardId] = (owned[card.cardId] || 0) + 1;
+  if (hasCollectedCardPolicy(run)) return collectedAdeptCardIds(run).includes(cardId) ? Infinity : owned[cardId] || 0;
+  return configuredCopyLimit(cardId, row, profile.content, characterSettings(profile.modules), profile.modules.gear, owned);
+}
+
 export function deckCopyLimit(registries, cardId, settings, classId) {
+  if (classId && typeof classId === 'object') {
+    const configured = configuredDeckCopyLimit(classId, cardId);
+    if (configured !== null) return configured;
+    classId = classId.class;
+  }
   const def = registries?.cards?.has(cardId) ? registries.cards.get(cardId) : null;
   if (!def || !def.class || def.class === 'colorless') return Infinity;
   if (classId && def.class !== classId) return Infinity;

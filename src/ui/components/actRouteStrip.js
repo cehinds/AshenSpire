@@ -1,3 +1,4 @@
+import { engravedIcon } from './engravedIcon.js';
 // Map-only orientation component. It sits between the shared run HUD and the
 // map board; Combat never mounts it and the shared HUD does not know it exists.
 //
@@ -30,8 +31,7 @@ export function actRouteStripHtml({ title, graph, path, current } = {}) {
           el('span', { class: 'map-route-slot' }, [el('span', {
             class: `map-route-node${step.type ? ' is-visited' : ''}${step.current ? ' is-current' : ''}`,
             dataset: { floor: step.floor, nodeId: step.id || '', type: step.type || '' },
-            text: step.type ? nodeIcon(step.type) : '',
-          })]))),
+          }, step.type ? [engravedIcon(nodeIcon(step.type)) || '?'] : [])]))),
         eyebrow('Boss', { tag: 'small', dataset: { role: 'boss', visited: String(route.bossVisited) } }),
       ]),
     ],

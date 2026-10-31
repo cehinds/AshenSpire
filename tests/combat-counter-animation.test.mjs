@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -110,7 +111,7 @@ function convert(combat, owner) {
   for (const threshold of [25, 50, 75]) chooseAshenBlightFeat(combat, owner, { threshold, path: 'martial' });
 }
 
-for (const convertedSeat of ['p1', 'p2']) test(`co-op p2 visual receipt uses its owner when ${convertedSeat} alone is Blighted`, () => {
+for (const convertedSeat of ['p1', 'p2']) test(`co-op p2 visual receipt uses its owner when ${convertedSeat} alone is Blighted`, { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const rows = ['p1', 'p2'].map((id, index) => ({ id, ...mounted(2, index + 41) }));
   const attribute = registries.attributes.ids()[0];
   rows[0].run.attributes[attribute] += 7;

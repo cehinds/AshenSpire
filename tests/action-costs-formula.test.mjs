@@ -3,10 +3,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
+import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
+import { live, baseRegistries as fixCoreRegistries } from './helpers/fixcore-combat-rules.mjs';
+import { cardPlayCosts } from '../src/engine/combat.js';
+import { core2ActionPolicyEnabled } from '../src/model/core2ActionPolicy.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
-import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, enemyAttributesOf, isCostOptOut, validateCostConfig } from '../src/model/actionCosts.js';
-import { COST_BUDGET, COST_TAGS, ENEMY_SP_ROW, ENEMY_SP_BANDS, ENEMY_BLIGHT_SHIFT } from '../src/content/actionCosts.js';
+import { COST_CONFIG, cardCostBudget, applyActionCosts, multiHitSpFloor, multiHitFloorFor, branchHitCount, enemyPoolOf, enemyAttributesOf, isCostOptOut, ownRestoreFunds, validateCostConfig } from '../src/model/actionCosts.js';
+import { MULTI_HIT_SP_FLOOR, COST_BUDGET, COST_TAGS, ENEMY_SP_ROW, ENEMY_SP_BANDS, ENEMY_BLIGHT_SHIFT } from '../src/content/actionCosts.js';
 import { derivedStatRules } from '../src/content/derivedStats.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { createRunState } from '../src/model/state.js';
@@ -21,6 +25,14 @@ const variant = ({ budget = {}, tags = {} } = {}) => ({ ...COST_CONFIG, budget: 
 // max(floor(6/20),1) = 1".
 const SWORD_STRIKE = Object.freeze({ id: 'swordStrike', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 3 }],
   tags: ['blade', 'camp:physical', 'damage:slashing'] });
+
+test('Persistent registers its lifetime metadata without changing the Precision grant budget', () => {
+  assert.deepEqual(COST_TAGS['trait:persistent'], { weight: 0, side: 'sp' });
+  const grant = { id: 'precisionGrant', type: 'skill', effects: [{ op: 'applyStatus', target: 'self', status: 'precision', stacks: 3 }], tags: [] };
+  const plain = cardCostBudget(grant);
+  const persistent = cardCostBudget({ ...grant, tags: ['trait:persistent'] });
+  for (const field of ['sSp', 'sMp', 'sp', 'mp']) assert.equal(persistent[field], plain[field], field);
+});
 
 test('the Sword Strike fixture: the owner\'s example prices to S_sp 6, and 1 SP at D = 20 and at the shipped tunables', () => {
   const owner = variant({ budget: { spDivisor: 20, damageWeight: 1, damageSteps: [] },
@@ -176,37 +188,35 @@ test('a magic card\'s rank weighs on its Mana side as well as its Stamina side; 
   for (let rank = 1; rank <= 5; rank++) assert.ok(cardCostBudget(spell, { rank }).mp >= cardCostBudget(spell, { rank: rank - 1 }).mp, `rank ${rank}`);
 });
 
-// Owner, 2026-10-13: restore cards break even. A card costs what it restores in that pool, its own restore pays that
-// part, so it is castable at 0 of the pool and changes it by 0.
-test('a restore card costs exactly what it restores, in the same pool, and that part is funded by the restore', () => {
-  for (const id of ['attune', 'emberCommunion']) {
-    const card = registries.cards.get(id);
-    const priced = cardCostBudget(card);
-    const restored = card.effects.filter((e) => e.op === 'restoreMana').reduce((sum, e) => sum + e.amount, 0);
-    assert.ok(restored > 0, `fixture: ${id} restores Mana`);
-    assert.equal(COST_BUDGET.restoreWeight, 1, 'one Mana of price per Mana restored');
-    assert.equal(priced.mp, priced.rawMp + restored, `${id}: its Mana price is its other Mana price plus what it restores`);
-    assert.equal(priced.funded.mp, restored, `${id}: the restore funds that part`);
-    assert.equal(resolveCard(registries, { cardId: id }).manaCost, priced.mp, `${id}: the face shows the full price`);
-  }
+// Generic derived restores still fund their own price. The paid entry spells
+// opt into authored prices so restoring two Mana actually gains one after payment.
+test('derived restores fund their price while authored recovery spells keep their gain', () => {
   const surge = { id: 'surge', type: 'skill', cost: 1, effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'damage', target: 'enemy', amount: 30 }], tags: ['camp:physical', 'heavy'] };
   const out = cardCostBudget(surge);
-  assert.equal(out.sp, Math.max(1, out.rawSp) + 2, 'its Stamina price plus the 2 Stamina it restores');
+  assert.equal(out.sp, Math.max(1, out.rawSp) + 2);
   assert.deepEqual({ ...out.funded }, { sp: 2, mp: 0 });
+  for (const id of ['attune', 'emberCommunion']) {
+    const card = resolveCard(registries, { cardId: id });
+    assert.equal(card.manaCost, 1, `${id}: actual payment stays one Mana`);
+    assert.equal(card.effects.find(e => e.op === 'restoreMana').amount, 2);
+    assert.deepEqual(ownRestoreFunds(card), { stamina: 0, mana: 0 });
+  }
 });
 
-test('Attune and Ember Communion are castable at 0 Mana and change Mana by exactly 0', () => {
+test('Attune and Ember Communion pay one Mana and restore two through the real interpreter', () => {
   for (const [classId, cardId] of [['herald', 'emberCommunion'], ['starseer', 'attune']]) {
-    for (const start of [0, 2]) {
+    for (const start of [0, 1, 2]) {
       const run = createRunState({ seed: 3, classId, registries });
       const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
-      combat.player.maxMana = Math.max(combat.player.maxMana, start);
+      combat.player.maxMana = Math.max(combat.player.maxMana, start + 2);
       combat.player.mana = start;
-      combat.piles.hand.push({ instanceId: `dry-${cardId}`, cardId, upgraded: false });
-      assert.ok(resolveCard(registries, { cardId }).manaCost >= 1, `${cardId} shows a Mana price`);
-      dispatch(combat, { type: 'playCard', cardInstanceId: `dry-${cardId}` });
-      assert.ok(combat.eventLog.some((e) => e.type === 'cardPlayed' && e.cardInstanceId === `dry-${cardId}`), `${cardId} was cast from ${start} Mana`);
-      assert.equal(combat.player.mana, start, `${cardId}: net Mana change 0 from ${start} Mana`);
+      combat.piles.hand.push({ instanceId: `paid-${cardId}`, cardId, upgraded: false });
+      const play = () => dispatch(combat, { type: 'playCard', cardInstanceId: `paid-${cardId}` });
+      if (start === 0) assert.throws(play, /Not enough Stamina or Mana/);
+      else play();
+      const played = combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === `paid-${cardId}`);
+      assert.equal(played, start > 0, `${cardId}: one Mana is required`);
+      assert.equal(combat.player.mana, start ? start + 1 : 0, `${cardId}: paid cast gains exactly one net Mana`);
     }
   }
 });
@@ -285,5 +295,51 @@ test('a sweep pays for its area: its damage is unscaled at 2 SP, its other rider
     const authored = Array.isArray(card.gradeProfiles) ? applyAbilityGrade(card, ref.abilityRank) : card;
     const dmg = (d) => d.effects.filter((e) => e.op === 'damage' && typeof e.amount === 'number').map((e) => e.amount);
     if (ref.rank === undefined || ref.rank === 1) assert.deepEqual(dmg(def), dmg(authored), `${card.id} ${JSON.stringify(ref)}`);
+  }
+});
+
+test('cantrip training classification adds no resource budget or cost', () => {
+  for (const card of [SWORD_STRIKE, {...SWORD_STRIKE, tags:['camp:spell','source:spell','damage:arcane']}]) {
+    const before=cardCostBudget(card,{rank:0});
+    const after=cardCostBudget({...card,tags:[...card.tags,'rank.cantrip']},{rank:0});
+    assert.deepEqual([after.sSp,after.sMp,after.sp,after.mp],[before.sSp,before.sMp,before.sp,before.mp]);
+  }
+});
+
+test('multi-hit floor: 1 SP per hit unless the card costs mana or has finesse, counted per branch (owner, 2026-10-25)', () => {
+  const card = (hits, extra = {}) => ({ id: 'flurry', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 1, hits }], tags: ['blade', 'camp:physical'], ...extra });
+  // The derived price never carries the floor: legacy and co-op prices are unchanged and nothing scales with it.
+  assert.equal(cardCostBudget(card(3)).sp, cardCostBudget(card(1)).sp, 'the derived cost ignores the hit count');
+  assert.equal(multiHitSpFloor(card(1)), 0);
+  assert.equal(multiHitSpFloor(card(3)), 3, '3 hits cost 3 SP');
+  assert.equal(multiHitSpFloor(card(6)), 6, 'no cap');
+  assert.equal(multiHitSpFloor(card(3, { tags: ['blade', 'finesse'] })), 2, 'finesse: max(hits - 1, 1)');
+  assert.equal(multiHitSpFloor(card(2, { tags: ['blade', 'finesse'] })), 1);
+  assert.equal(multiHitSpFloor(card(5, { manaCost: 1 })), 3, 'a Mana multi-hit: max(hits - 2, 1)');
+  assert.equal(multiHitSpFloor(card(3, { manaCost: 1, tags: ['finesse'] })), 1, 'Mana and finesse: the larger offset');
+  assert.deepEqual(MULTI_HIT_SP_FLOOR, { baseOffset: 0, finesseOffset: 1, manaOffset: 2, minimum: 1 }, 'the offsets are JSON config');
+  assert.equal(multiHitFloorFor(4, { finesse: true }, { baseOffset: 0, finesseOffset: 3, manaOffset: 2, minimum: 1 }), 1, 'a config variant is read, not a literal');
+  assert.equal(multiHitSpFloor({ ...card(1), effects: [{ op: 'damage', target: 'enemy', amount: 1 }, { op: 'damage', target: 'enemy', amount: 1 }] }), 2, 'two unguarded damage effects on one target are two hits');
+  const staggered = { p: 'hasStatus', of: 'target', status: 'staggered' };
+  assert.equal(multiHitSpFloor({ ...card(1), effects: [{ op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: staggered } }, { op: 'damage', target: 'enemy', amount: 25, if: staggered }] }), 0, 'an either/or pair is one hit');
+  assert.equal(branchHitCount([{ op: 'damage', target: 'enemy', hits: 6 }, { op: 'damage', target: 'enemy', hits: 6, if: { p: 'hasStatus', of: 'self', status: 'prepared' } }]), 6, 'a guarded bonus volley is its own branch');
+});
+
+test('Core 2 prices multi-hit cards per hit; legacy keeps its price and no profile scales damage with the floor', () => {
+  const legacy = createRegistries(legacyContentBundle);
+  const damageOf = (def) => def.effects.filter((e) => e.op === 'damage').map((e) => e.amount);
+  // [card, legacy SP, legacy MP, Core 2 paid SP]: Executioner's 10/25 is one hit; Thousand Cuts' prepared volley is
+  // its own branch (6, not 12); Twinblade Flurry costs Mana, so its three hits floor at max(3 - 2, 1) = 1 and its
+  // derived 2 SP stands. Whirling Guard's three area hits cost 3 SP in Core 2 (owner, 2026-10-25).
+  for (const [id, legacySp, legacyMp, core2Sp] of [['executioner', 2, 0, 2], ['thousandCutsRogue', 2, 0, 6], ['twinbladeFlurry', 2, 1, 2], ['whirlingGuard', 2, 0, 3]]) {
+    const old = resolveCard(legacy, { cardId: id });
+    assert.deepEqual([old.cost, old.manaCost || 0], [legacySp, legacyMp], `${id}: legacy price unchanged`);
+    const combat = live();
+    assert.ok(core2ActionPolicyEnabled(combat), 'the fixture is a Core 2 fight');
+    combat.piles.hand.push({ instanceId: 'probe', cardId: id });
+    assert.equal(cardPlayCosts(combat, 'probe').stamina, core2Sp, `${id}: Core 2 price`);
+    const core = resolveCard(fixCoreRegistries, { cardId: id });
+    assert.deepEqual(damageOf(core), damageOf(resolveCard(createRegistries(contentBundle), { cardId: id })), `${id}: the floor never scales damage`);
+    assert.deepEqual(damageOf(old), damageOf(resolveCard(createRegistries(contentBundle), { cardId: id })), `${id}: legacy damage unchanged`);
   }
 });

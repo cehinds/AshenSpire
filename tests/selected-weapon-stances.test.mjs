@@ -51,7 +51,7 @@ test('resolved starter Dodge chooses Evade preparation while mixed Evasive Guard
     assert.equal(stance,expected);
     assert.deepEqual(definition,before,'selecting a painting does not mutate mechanics or payloads');
     const plan=resolveCombatAnimation(definition,[],{classId:'reaver',appearance:'alternative',combatExpansionVersion:2});
-    assert.deepEqual([plan.technique,plan.rest],['counterPrepare','counter']);
+    assert.deepEqual([plan.technique,plan.rest],index===0?['evade','evade']:['counterPrepare','counter']);
     assert.equal(resolveCombatAnimation(definition,[],{classId:'reaver',appearance:'alternative',combatExpansionVersion:2,counterTriggered:true}).technique,'counter');
     combat.player.energy=combat.player.stamina=combat.player.mana=20;
     const out=dispatch(combat,{type:'playCard',cardInstanceId:instances[index].instanceId,targetId:combat.player.id});
@@ -180,6 +180,11 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
     assert.equal(typeof factory(earlyBreak),'function','final defeat does not hide an earlier guard break');
     assert.equal(factory(lethalBreak),null,'the guard break after the lethal loss yields to defeat');
     assert.equal(factory({type:'combatAvoidanceResolved',targetId:'player',avoided:false,evade:{success:false}}),null);
+    fxCtx.figureAnimations=false;
+    assert.equal(factory(earlyEvade),null,'disabled authored figure reactions do not reach the stage');
+    assert.equal(factory(earlyBreak),null);
+    fxCtx.figureAnimations=true;
+    assert.equal(typeof factory(earlyEvade),'function');
   } finally { animationPace.setAnimSpeed('normal'); }
 });
 
@@ -248,11 +253,14 @@ test('selected holds preserve existing returns and finite reactions restore the 
     const smashTiming=stage.actionTiming('smash'),originalHold=stage.currentArt;
     stage.play('smash',smashTiming.totalMs);
     assert.equal(stage.currentArt.image,originalHold.image,'SM03 starts with the byte-exact active held stance');
-    assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the first bookend never shifts the body');
+    assert.deepEqual([stage.currentArt.body?.headY,stage.currentArt.body?.feetY],
+      [originalHold.body?.headY,originalHold.body?.feetY],
+      'the first bookend keeps the normalized body head and floor anchors');
     advance(79);assert.equal(stage.pose,'pilot-smash-airborne');
     assert.equal(stage.currentArt.canvas.height,625,'airborne blade has the required 81 pixel top margin');
     const css=stage.currentArt.canvas.style.cssText,cssTop=Number(css.match(/top:([-\d.]+)px/)[1]),cssWidth=Number(css.match(/width:([\d.]+)px/)[1]),scale=cssWidth/stage.currentArt.canvas.width;
-    assert.ok(Math.abs(cssTop+(originalHold.top+464)*scale-190)<1e-8,'expanded canvas compensation preserves the original held floor in CSS pixels');
+    assert.ok(Math.abs(cssTop+originalHold.body.feetY*scale-190)<1e-8,
+      'expanded canvas compensation preserves the held semantic floor while airborne');
     assert.equal(stage.currentArt.top,-95,'source S padding maps to the original unchanged stance registration');
     stage.hold(60);assert.equal(stage.pose,'pilot-smash-impact','timer contact freezes the ground-impact painting');
     advance(160);assert.equal(stage.pose,'stance-smash');
@@ -260,17 +268,19 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.settle();stage.setStance('sweep');
     const sweepOrigin=stage.currentArt,sweepTiming=stage.actionTiming('sweep');
     assert.equal(sweepOrigin.canvas.width,932,'the planted wind-up blade gets its full horizontal canvas');
-    assert.deepEqual([sweepOrigin.width,sweepOrigin.height],[1024,1024],'the corrected stance is not fit to a different body scale');
+    const heldBodyHeight=originalHold.body.feetY-originalHold.body.headY;
+    assert.ok(Math.abs((sweepOrigin.body.feetY-sweepOrigin.body.headY)-heldBodyHeight)<1e-8,
+      'Sweep uses the ready-normalized body height');
     const sweepCss=sweepOrigin.canvas.style.cssText,sweepScale=Number(sweepCss.match(/width:([\d.]+)px/)[1])/sweepOrigin.canvas.width;
-    const sweepLeft=Number(sweepCss.match(/left:calc\(50% - ([\d.]+)px\)/)[1]),sweepTop=Number(sweepCss.match(/top:([-\d.]+)px/)[1]);
-    assert.ok(Math.abs((sweepOrigin.left+520)*sweepScale-sweepLeft)<1e-8,'anatomical Sweep anchor stays on the same body center');
-    assert.ok(Math.abs(sweepTop+(sweepOrigin.top+734)*sweepScale-190)<1e-8,'corrected Sweep keeps the common floor');
+    const sweepTop=Number(sweepCss.match(/top:([-\d.]+)px/)[1]);
+    assert.ok(Math.abs(sweepTop+sweepOrigin.body.feetY*sweepScale-190)<1e-8,'corrected Sweep keeps the semantic common floor');
     stage.play('sweep',sweepTiming.totalMs);const sweepCue=stage.contactCue();advance(208);
     assert.equal(stage.pose,'pilot-sweep-contact','a cold receipt cannot skip the turning slash');
     assert.equal(stage.presentation.elapsed,78);assert.equal(sweepCue.contact(),true);assert.equal(sweepCue.remainingMs(),117);
     advance(39);assert.equal(stage.pose,'pilot-sweep-finish');advance(39);assert.equal(stage.pose,'stance-sweep');advance(40);
     assert.equal(stage.presentation.action,undefined);
     assert.equal(stage.currentArt.image,sweepOrigin.image);assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[sweepOrigin.left,sweepOrigin.top]);
+    assert.deepEqual([stage.currentArt.body.headY,stage.currentArt.body.feetY],[sweepOrigin.body.headY,sweepOrigin.body.feetY]);
     stage.settle();stage.setStance('smash');stage.play('smash',195);
     const coldCue=stage.contactCue();advance(208);
     assert.equal(stage.pose,'pilot-smash-impact','a cold late receipt cannot skip the unacknowledged impact');
@@ -351,5 +361,61 @@ test('selected holds preserve existing returns and finite reactions restore the 
   } finally {
     for(const stage of stages)stage?.dispose();setAnimSpeed('normal');applyDisplayAppearance({});
     for(const [key,value]of Object.entries(before))value===undefined?delete globalThis[key]:globalThis[key]=value;
+  }
+});
+
+test('fixed pilot phases reuse aura work while preserving contact holds and readbacks', async () => {
+  const dom = rewardDom(), raf = new Map();
+  let time = 1000, serial = 0, glowDraws = 0, reads = 0;
+  const create = dom.document.createElement.bind(dom.document);
+  dom.document.createElement = tag => {
+    const element = create(tag);
+    if (tag === 'canvas') {
+      const stack = [], context = { shadowOffsetX: 0, filter: 'none',
+        clearRect() {}, fillRect() {},
+        save() { stack.push({ shadowOffsetX: this.shadowOffsetX, filter: this.filter }); },
+        restore() { Object.assign(this, stack.pop()); },
+        drawImage() { if (this.shadowOffsetX) glowDraws++; },
+        getImageData() { reads++; return { data: new Uint8ClampedArray(4) }; },
+      };
+      element.getContext = () => context;
+    }
+    return element;
+  };
+  const globals = { ...dom, performance: { now: () => time }, Image: class {
+    set src(value) { this.url = value; queueMicrotask(() => this.onload?.()); }
+  }, matchMedia: () => ({ matches: false }), requestAnimationFrame: fn => { raf.set(++serial, fn); return serial; }, cancelAnimationFrame: id => raf.delete(id) };
+  const before = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  let stage;
+  const advance = ms => { time += ms; const pending = [...raf.values()]; raf.clear(); for (const fn of pending) fn(time); };
+  try {
+    applyDisplayAppearance({}); setAnimSpeed('normal');
+    stage = createAlternativeCardStage('reaver', { weaponProfile: pilot }); await stage.ready;
+    stage.setStance('counter');
+    const held = glowDraws;
+    stage.setRestPose('idle');
+    assert.equal(glowDraws, held, 'setStance then setRestPose preserves lifecycle but reuses identical static Image aura');
+    stage.play('attack', 195, ['stamina']);
+    const first = glowDraws, firstReads = reads;
+    advance(1);
+    assert.equal(glowDraws, first, 'same pilot bitmap/filter/registration avoids source-alpha glow generation');
+    advance(40);
+    assert.ok(glowDraws > first, 'new phase generates its own aura');
+    const beforeHold = glowDraws;
+    stage.hold(60);
+    assert.equal(stage.pose, 'pilot-attack-4');
+    assert.ok(glowDraws > beforeHold, 'timer contact still paints the actual contact bitmap');
+    const contact = glowDraws, elapsed = stage.presentation.elapsed;
+    advance(30);
+    assert.equal(glowDraws, contact, 'held contact reuses its exact composed phase');
+    assert.equal(stage.presentation.elapsed, elapsed, 'authored hit-stop clock stays frozen');
+    assert.equal(reads, firstReads, 'no extra readbacks were introduced on RAFs');
+    stage.settle(); stage.play('smash', 195, ['stamina']);
+    const cue = stage.contactCue(), beforeContactRead = reads;
+    cue.contact();
+    assert.equal(reads, beforeContactRead + 1, 'contact still materializes visible pixels');
+  } finally {
+    stage?.dispose(); Object.assign(globalThis, before);
   }
 });

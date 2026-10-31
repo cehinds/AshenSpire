@@ -1,3 +1,5 @@
+import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceStaminaCost } from './stanceRules.js';
 // src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a, §4.11).
 //
@@ -12,7 +14,7 @@ import { stanceStaminaCost } from './stanceRules.js';
 //   3. A derived SP of 2 or more scales the card's effect amounts (SCALED_EFFECT_OPS) by twoCostMultiplier.
 import {
   ACTION_COST_TABLE, CAST_TAGS, COST_BUDGET, COST_TAGS, DRAWBACK_OPS, KEYWORD_TAGS, RANGE_TAGS, RANGE_WEIGHTS,
-  RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, MANEUVER_SP_FLOORS, SWEEP_UNSCALED_OPS,
+  RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, MANEUVER_SP_FLOORS, MULTI_HIT_SP_FLOOR, SWEEP_UNSCALED_OPS,
   ENEMY_SP_ROW, ENEMY_BLIGHT_SHIFT, STATUS_WEIGHT, STATUS_WEIGHTS,
 } from '../content/actionCosts.js';
 import { DRAWBACK_KEYWORD_TAGS } from '../content/actionCosts.js';
@@ -35,6 +37,7 @@ export const COST_CONFIG = Object.freeze({
   statusWeights: STATUS_WEIGHTS,
   statusStackCap: STATUS_STACK_CAP,
   maneuverFloors: MANEUVER_SP_FLOORS,
+  multiHitFloor: MULTI_HIT_SP_FLOOR,
   sweepUnscaledOps: SWEEP_UNSCALED_OPS,
 });
 
@@ -76,6 +79,10 @@ export function validateCostConfig(config = COST_CONFIG) {
   for (const [tag, floor] of Object.entries(config.maneuverFloors)) {
     if (!Number.isInteger(floor) || floor < 0) throw new TypeError(`actionCosts: the SP floor of "${tag}" is ${floor}; a floor is a whole number of SP, 0 or more`);
   }
+  for (const key of ['baseOffset', 'finesseOffset', 'manaOffset', 'minimum']) {
+    const n = config.multiHitFloor?.[key];
+    if (!Number.isInteger(n) || n < 0) throw new TypeError(`actionCosts: multi-hit floor "${key}" is ${n}; it must be a whole number, 0 or more`);
+  }
   if (!(Number.isFinite(config.budget.smashPoiseBase) && config.budget.smashPoiseBase >= 0)) throw new TypeError('actionCosts: budget "smashPoiseBase" must be a number, 0 or more');
   const steps = config.budget.damageSteps;
   if (steps !== undefined && !(Array.isArray(steps) && steps.every((t, i) => Number.isFinite(t) && t > 0 && (i === 0 || t > steps[i - 1])))) {
@@ -107,6 +114,51 @@ export function actionStance({ kind = 'other', tags = [] } = {}) {
 }
 
 const count = (value) => (Number.isFinite(value) ? value : 1);
+
+/**
+ * The most contacts any one target takes, counted per branch (review, 2026-10-25): damage effects are grouped by their
+ * `if` guard, and the largest group wins. A guarded effect is its own branch and never adds to another, so an
+ * either/or pair (Executioner's 10 or 25) is 1 hit and a conditional bonus volley prices as its own branch, not on top
+ * of the base volley. `hitsOf(effect)` is the effect's contact count; `targetsOf(effect)` the keys it lands on.
+ */
+export function branchHitCount(effects, { hitsOf = (e) => count(e.hits) * count(e.repeat), targetsOf = (e) => [e.target] } = {}) {
+  const branches = new Map();
+  for (const e of Array.isArray(effects) ? effects : []) {
+    if (e?.op !== 'damage') continue;
+    const branch = e.if === undefined || e.if === null ? '' : JSON.stringify(e.if);
+    if (!branches.has(branch)) branches.set(branch, new Map());
+    const perTarget = branches.get(branch);
+    const hits = hitsOf(e);
+    for (const key of targetsOf(e)) perTarget.set(key, (perTarget.get(key) || 0) + hits);
+  }
+  let most = 0;
+  for (const perTarget of branches.values()) most = Math.max(most, ...perTarget.values());
+  return most;
+}
+
+/**
+ * The SP floor of a move that hits one target `hits` times (owner, 2026-10-25), read from MULTI_HIT_SP_FLOOR:
+ * max(hits − offset, minimum), where the offset is manaOffset for a move that costs Mana, finesseOffset for a `finesse`
+ * move and baseOffset otherwise (the largest that applies). A single hit has no floor (0).
+ */
+export function multiHitFloorFor(hits, { mana = false, finesse = false } = {}, rule = MULTI_HIT_SP_FLOOR) {
+  if (!(hits > 1)) return 0;
+  const offset = Math.max(rule.baseOffset, finesse ? rule.finesseOffset : 0, mana ? rule.manaOffset : 0);
+  return Math.max(hits - offset, rule.minimum);
+}
+
+/** The tags a card definition carries, from each place a tag list is authored. */
+const cardTagList = (def) => [...(Array.isArray(def?.tags) ? def.tags : []), ...(Array.isArray(def?.cardTags) ? def.cardTags : []), ...(Array.isArray(def?.authoredTags) ? def.authoredTags : [])];
+
+/**
+ * The multi-hit price floor of a player card (owner, 2026-10-25): multiHitFloorFor over its per-branch hit count, with
+ * `mana` the card's Mana price when the caller knows it (else its authored `manaCost`). Returns 0 when it does not apply.
+ * Core 2 only: the engine applies it to the paid price (combat.js baseCardPriceReceipt) and never to the derived cost,
+ * so the legacy and co-op prices are unchanged and a higher price never scales the card's damage.
+ */
+export function multiHitSpFloor(def, { mana = def?.manaCost ?? def?.resourceCosts?.mp ?? def?.costs?.mp ?? 0 } = {}) {
+  return multiHitFloorFor(branchHitCount(def?.effects), { mana: mana > 0, finesse: cardTagList(def).includes('finesse') });
+}
 
 /**
  * The cost receipt of a player card (owner, 2026-10-12; SPEC §4.3a):
@@ -315,6 +367,9 @@ export const enemySpOf = enemyPoolOf;
  * (model/combatCardProfile.js spellCardCostSurcharge, one SP per stack); `enemyId` and `moveId` find its authored tags.
  */
 export function enemyMoveSpOf(move, kind, fallback, { entity = null, enemyId, moveId, ctx = null } = {}) {
+  const effects = move?.effects || [];
+  if (fixCoreEnabled(ctx) && (move?.heal > 0 || effects.some(effect => effect.op === 'heal'))
+    && (move?.block > 0 || effects.some(effect => effect.op === 'block'))) return fixCoreRules(ctx, entity, move).enemyHealBlockCost;
   const own = Number.isFinite(Number(move?.sp)) && move?.sp !== null && move?.sp !== undefined;
   const base = own ? Math.max(0, Number(move.sp)) : stanceCost(actionStance({ kind, tags: move?.tags })) ?? fallback;
   const carrier = { ...move, enemyId, moveId };

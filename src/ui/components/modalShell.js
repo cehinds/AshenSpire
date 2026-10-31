@@ -1,3 +1,4 @@
+import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 // src/ui/components/modalShell.js — THE CHROME EVERY MODAL WEARS.
 //
 // Measured 2026-09-02 by driving all four doors in a headless browser at
@@ -6,14 +7,14 @@
 // get out:
 //
 //   Settings (title)   left title, NO close control at all, one `Done` footer
-//   Settings (in-run)  tab strip left, boxed ☰ and ✕ right, a two-button
+//   Settings (in-run)  tab strip left, boxed menu and close right, a two-button
 //                      footer whose "Save and Quit" is painted DANGER RED
-//   Armoury            gold uppercase title, segmented tabs right, a BARE ✕
+//   Armoury            gold uppercase title, segmented tabs right, a BARE close
 //                      glyph with no button chrome, no footer
 //   Load Game          centred display title with an ornament rule, a ROUND
 //                      `×` (U+00D7, a different character), BACK / CONTINUE
 //
-// A player who learns "the way out is the boxed ✕ on the right" learns it four
+// A player who learns "the way out is the boxed close on the right" learns it four
 // times. And each of the four had grown its own Escape handler, its own
 // veil-click test and its own focus restore — four chances for three of them to
 // be subtly wrong, which is exactly what an audit finds and a player meets.
@@ -38,9 +39,10 @@ import { planButtonGroup } from '../models/ButtonSizeModel.js';
 import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
 import { registerModal } from '../modalState.js';
+import { focusableControls } from '../modalManager.js';
 
-/** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
-export const MODAL_CLOSE_GLYPH = '✕';
+/** The shared close icon uses its named asset, with a plain-text fallback. */
+export const MODAL_CLOSE_GLYPH = 'close';
 
 /**
  * The close control. One markup, one accessible name, one hit box — the tap
@@ -60,7 +62,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
   const face = document.createElement('span');
   face.className = 'modal-close-face';
   face.setAttribute('aria-hidden', 'true');
-  face.textContent = MODAL_CLOSE_GLYPH;
+  face.append(engravedIcon(MODAL_CLOSE_GLYPH) || 'X');
   button.appendChild(face);
   if (onClick) button.addEventListener('click', onClick);
   return button;
@@ -74,7 +76,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
  */
 export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
   return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}" data-control-role="exit"`
-    + ` data-tip="off" title="${esc(label)} (Esc)" aria-label="${esc(label)}" aria-keyshortcuts="Escape"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
+    + ` data-tip="off" title="${esc(label)} (Esc)" aria-label="${esc(label)}" aria-keyshortcuts="Escape"><span class="modal-close-face" aria-hidden="true">${engravedIconHtml(MODAL_CLOSE_GLYPH)}</span></button>`;
 }
 
 /**
@@ -160,8 +162,13 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
  *   and not `!panel.contains(e.target)`: the second form closes the modal when
  *   a drag that began on a slider ends outside the panel, which is a real way
  *   to lose a settings change mid-gesture.
+ *
+ * `escape: false` leaves Escape to the modal manager (modalManager.js): the
+ * shell's own openModal registers with a `dismiss` and the manager closes the
+ * top entry once. The other callers (classMastery, bookLearning, deckEditor)
+ * register no `dismiss`, so they keep the Escape handling here until they move.
  */
-export function bindModalDismiss({ veil, panel, close, opener = document.activeElement } = {}) {
+export function bindModalDismiss({ veil, panel, close, opener = document.activeElement, escape = true } = {}) {
   // Promote overflowing dialogs once per opening; shrinking back would oscillate
   // when content or scrollbars change the available width.
   const promote = () => {
@@ -180,9 +187,7 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
     if (event.key === 'Tab') {
       const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
       if (top !== panel) return;
-      const controls = [...panel.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
-        .filter(el => el.tabIndex >= 0 && !el.matches(':disabled') && !el.closest('[inert]')
-          && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+      const controls = focusableControls(panel);
       const first = controls[0], last = controls.at(-1);
       const active = document.activeElement;
       if (!first || !panel.contains(active) || active === panel
@@ -193,7 +198,7 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
       }
       return;
     }
-    if (event.key !== 'Escape' || event.repeat) return;
+    if (!escape || event.key !== 'Escape' || event.repeat) return;
     const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
     if (top !== panel) return;
     event.preventDefault();
@@ -355,12 +360,12 @@ export function modalHead({
   const actions = document.createElement('div');
   actions.className = 'modal-head-actions';
   if (extras) actions.appendChild(extras);
-  // ☰ IS NOT A DEFAULT, IT IS A PROPERTY OF WHAT THE DOOR IS.
+  // menu IS NOT A DEFAULT, IT IS A PROPERTY OF WHAT THE DOOR IS.
   //
   // Constantine, 2026-09-03: the menu and close buttons "should come by
   // default to all modal shells, I think, but improve on this if you think
   // otherwise". Close: yes, unconditionally, and it already did — one way out,
-  // same corner, every door. ☰: no, and the reason is what it opens. The
+  // same corner, every door. menu: no, and the reason is what it opens. The
   // hamburger opens the quick menu, which is a way to LEAVE for somewhere
   // else. On a door that asks a question — "Load slot 1?", "Quit without
   // saving?" — that is a third answer to a two-answer question, and it can
@@ -370,7 +375,7 @@ export function modalHead({
   // So the caller does not decide and does not have to remember: a TAB STRIP
   // is what marks a door as a place rather than a question (Settings, the
   // Armoury, the in-run overlay all carry one; the flask door, the confirm
-  // door and the inspector do not), so ☰ follows the tabs. `showMenuButton`
+  // door and the inspector do not), so menu follows the tabs. `showMenuButton`
   // stays overridable in both directions for the surface that is genuinely an
   // exception, but nothing has to pass it to be right.
   const wantsMenu = showMenuButton == null ? tabList.length > 0 : !!showMenuButton;
@@ -382,7 +387,7 @@ export function modalHead({
     menu.dataset.focusable = 'true';
     menu.title = menuLabel;
     menu.setAttribute('aria-label', menuLabel);
-    menu.textContent = '☰';
+    menu.replaceChildren(engravedIcon('menu') || 'Menu');
     if (onMenu) menu.addEventListener('click', onMenu);
     actions.appendChild(menu);
   }
@@ -456,6 +461,18 @@ export function stampModalSize(panel, size) {
 }
 
 /**
+ * Run `fn` once, two animation frames from now (so it lands in a frame after
+ * the one that paints whatever was just written), or after 250 ms if the page
+ * is hidden and frames are paused. Never twice.
+ */
+function afterFrames(fn) {
+  let done = false;
+  const run = () => { if (done) return; done = true; fn(); };
+  requestAnimationFrame(() => requestAnimationFrame(run));
+  setTimeout(run, 250)?.unref?.();
+}
+
+/**
  * restampModalWireframes(doc) → how many surfaces were re-resolved.
  *
  * A player changing a Modals choice is, almost always, looking at a modal while
@@ -504,6 +521,12 @@ export function openModal({
   host = document.body,
   role = 'dialog',
   titleId: givenTitleId = '',
+  // Focus waits for the next frame, so opening does not force a layout in the
+  // frame that builds the door. `initialFocus()` may name the element to land
+  // on; the default is still the forward button (or the way out).
+  deferFocus = false,
+  deferLift = false,
+  initialFocus = null,
 } = {}) {
   // A caller may name the heading (an instrument reads `aria-labelledby` by
   // that name); otherwise the id is minted here so the label always resolves.
@@ -524,7 +547,9 @@ export function openModal({
 
   let release = null;
   let unregisterModal = null;
-  const close = () => {
+  // close({ liftNow: true }) is for a caller that acts the moment the door closes (a command that moves focus):
+  // the page lock lifts and focus returns to the opener synchronously, so that command finds the page live.
+  const close = (options) => {
     // Every close path comes through here. Keep the registry entry until focus
     // has returned and the veil is gone: releasing the last modal synchronously
     // runs whenNoOverlay() waiters, and one of those may replace the opener.
@@ -538,6 +563,23 @@ export function openModal({
     const unregister = unregisterModal;
     release = null;
     unregisterModal = null;
+    if (deferLift && options?.liftNow !== true && typeof requestAnimationFrame === 'function') {
+      // The veil leaves in this frame. Lifting inert restyles the whole app
+      // behind it, so the lift, the focus restore and the registry release
+      // wait for a later frame (inert has no rendering: pixels are identical,
+      // and a timer backs the frames up for a hidden page).
+      veil.remove();
+      onClose?.();
+      afterFrames(() => {
+        unregister?.unlock?.();
+        releaseDismiss?.();
+        unregister?.();
+      });
+      return;
+    }
+    // Lift the page lock (inert) before focus returns to the opener: an
+    // element inside an inert subtree cannot take focus.
+    unregister?.unlock?.();
     releaseDismiss?.();
     veil.remove();
     onClose?.();
@@ -579,16 +621,40 @@ export function openModal({
 
   veil.appendChild(panel);
   host.appendChild(veil);
-  unregisterModal = registerModal(name || title || 'modal', panel);
-  release = bindModalDismiss({ veil, panel, close, opener });
+  // The manager owns Escape for this door: it calls dismiss() on the top entry.
+  // close() is idempotent, so a dismiss after a programmatic close is a no-op.
+  const deferInert = deferLift && typeof requestAnimationFrame === 'function';
+  unregisterModal = registerModal(name || title || 'modal', panel, { dismiss: () => close(), back: true, deferInert });
+  release = bindModalDismiss({ veil, panel, close, opener, escape: false });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
-  // A footer exit (the wide Close) outranks the head's small ✕.
-  const first = panel.querySelector('.modal-foot-actions .primary')
-    || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
-    || panel.querySelector('[data-focusable="true"]')
-    || panel.querySelector('.modal-close');
-  first?.focus?.({ preventScroll: true });
+  // A footer exit (the wide Close) outranks the head's small close.
+  const focusFirst = () => {
+    const first = (typeof initialFocus === 'function' ? initialFocus() : null)
+      || panel.querySelector('.modal-foot-actions .primary')
+      || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
+      || panel.querySelector('[data-focusable="true"]')
+      || panel.querySelector('.modal-close');
+    first?.focus?.({ preventScroll: true });
+  };
+  // The page lock (inert restyles everything behind the door) is armed a frame after mount whenever the door
+  // asked to defer it (deferLift), whether or not it also defers focus: an entry left unarmed locks nothing.
+  let armed = false;
+  const arm = () => { if (armed) return; armed = true; if (veil.isConnected) unregisterModal?.arm?.(); };
+  if (deferFocus && typeof requestAnimationFrame === 'function') {
+    // Mount landed in the frame before this one; focus here, and the page lock a frame later still.
+    requestAnimationFrame(() => {
+      if (veil.isConnected) focusFirst();
+      requestAnimationFrame(arm);
+    });
+    setTimeout(arm, 250)?.unref?.();
+  } else {
+    focusFirst();
+    if (deferInert) {
+      requestAnimationFrame(() => requestAnimationFrame(arm));
+      setTimeout(arm, 250)?.unref?.();
+    }
+  }
 
   return Object.freeze({ veil, panel, head, body: bodyEl, foot, close });
 }

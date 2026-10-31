@@ -14,7 +14,7 @@ export const INSPECTOR_SECTION_ORDER = Object.freeze(['summary', 'state', 'histo
 // The side preview's meters, in stack order (owner follow-up: restore the
 // HP/MP/Poise meters the tray lost). HP is shown whenever the subject has it;
 // MP and Poise only when the combatant actually has that pool (max > 0).
-export const INSPECTOR_PREVIEW_METERS = Object.freeze(['HP', 'MP', 'Poise', 'Ward']);
+export const INSPECTOR_PREVIEW_METERS = Object.freeze(['HP', 'SP', 'MP', 'Poise', 'Ward']);
 
 export function previewMeters(resources = []) {
   return INSPECTOR_PREVIEW_METERS
@@ -45,6 +45,7 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   } : subject.intent;
   const summary = [
     hp && { label: text('inspector.summary.hp'), value: `${hp.value} / ${hp.max}` },
+    ...resources.filter(r => r.label === 'SP').map(r => ({ label: 'SP', value: `${r.value} / ${r.max}` })),
     intent && { label: text('inspector.summary.intent'), value: intent.name, detail: intent.detail || '' },
     { label: text('inspector.summary.defense'), value: text('inspector.summary.block', { amount: block?.value ?? 0 }) },
   ].filter(Boolean);

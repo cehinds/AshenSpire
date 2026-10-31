@@ -1,3 +1,4 @@
+import { viewViewportBox } from '../viewViewport.js';
 // Keep the existing inspection button and its handlers, but paint it in the
 // browser top layer. A z-index alone cannot escape a scrolling ancestor.
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -26,18 +27,18 @@ export function mountCreationInfoLayer(root) {
     const box = owner.getBoundingClientRect();
     const pane = (root.querySelector('.cz-pane') || root).getBoundingClientRect();
     const gallery = owner.closest('.cc-card-selectors').getBoundingClientRect();
-    if (box.right <= gallery.left || box.left >= gallery.right || box.bottom <= pane.top || box.top >= pane.bottom || root.inert) { close(); return; }
+    if (box.right <= gallery.left || box.left >= gallery.right || box.bottom <= pane.top || box.top >= pane.bottom || root.inert || root.hasAttribute('data-page-locked')) { close(); return; }
     if (!control.matches(':popover-open')) control.showPopover();
     const size = control.getBoundingClientRect();
-    const left = Math.max(8, Math.min(innerWidth - size.width - 8, box.left + (box.width - size.width) / 2));
-    const top = Math.max(8, box.top - size.height - 8);
+    const left = Math.max(viewViewportBox().left + 8, Math.min(viewViewportBox().right - size.width - 8, box.left + (box.width - size.width) / 2));
+    const top = Math.max(viewViewportBox().top + 8, box.top - size.height - 8);
     const position = anchorLocalBox(VIEWPORT_ORIGIN, { left, top, width: size.width, height: size.height });
     control.style.left = `${position.left}px`;
     control.style.top = `${position.top}px`;
   };
   const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
   const observer = new MutationObserver(schedule);
-  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'open', 'hidden', 'inert'] });
+  observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'open', 'hidden', 'inert', 'data-page-locked'] });
   // Screen replacement also closes the control and releases listeners.
   const lifetime = new MutationObserver(() => { if (!root.isConnected) dispose(); else schedule(); });
   lifetime.observe(root.parentElement, { childList: true });

@@ -1,30 +1,73 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
+import {layoutMetrics} from '../layoutMetrics.js';
 const ruleGeometry = new WeakMap();
+// A face's fit is a pure function of its width, its text, its line budgets, the
+// page scale and the loaded fonts, and a full fit is a search of many forced
+// layouts. The inputs the last fit used are kept per face, and a face asked to
+// fit again with the same inputs keeps the result it has (the hand refits every
+// card on each render, and almost none of them changed).
+const fitSignatures = new WeakMap();
+// The font size a text row settled on, by everything the search read: the face's
+// signature (width, text, fonts, scale), the row's place in the face, its box and
+// its bounds. A hand re-render rebuilds a card's face whenever its preview or
+// affordability moves, with the same text at the same size, and the 7-pass
+// search (a forced layout per pass) found the same answer each time.
+const fitResults = new Map();
+const FIT_RESULTS_MAX = 800;
+let fontEpoch = 0, fontsWatched = false;
+function watchFonts() {
+  if (fontsWatched || typeof document === 'undefined' || !document.fonts?.addEventListener) return;
+  fontsWatched = true;
+  document.fonts.addEventListener('loadingdone', () => { fontEpoch++; });
+}
+function fitSignature(face, width) {
+  const { fontSize, zoom } = layoutMetrics();
+  const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
+    .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
+  return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
+    face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
+    face.textContent, texts.join(',')].join('\u0001');
+}
 
-// Search every text in one batch. Ordinary effects keep three physical lines
-// and their authored panel; Information owns the complete reading.
+// Search fonts inside the authored bays. Text must never resize the parchment
+// or consume artwork; names and costs retain their line budgets.
 export function fitIllustratedCards(cards) {
   const faces=[];
   for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
+  watchFonts();
   const widths=faces.map(face=>face.clientWidth);
-  const texts=[];
+  const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
+  const texts=[],skipped=new Set();
+  const { zoom } = layoutMetrics();
   faces.forEach((face,i)=>{
     if(!widths[i])return;
+    if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
     resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
+    let textIndex=0;
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
-      // The same budget applies at rest, selected, in catalogues and enlarged.
-      const faceLines=text.dataset.faceLines==='true';
-      const row={face,text,layer,scale,rules,bounded:faceLines,lines:rules?(faceLines?Number(text.dataset.maxLines)||3:Infinity):Number(text.dataset.maxLines)||1};
-      if(faceLines){
-        row.clauses=[...text.querySelectorAll('[data-face-clause]')];
+      const clauses=[...(text.querySelectorAll?.('[data-face-clause]')||[])];
+      const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
+      const fullRules=face.dataset.fullRules==='true';
+      const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
+      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:bounded?1.25:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+        lines:bounded?3:rules?Infinity:Number(text.dataset.maxLines)||1,
+        hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
+        hasHiddenRules:face.dataset.rulesHidden==='true'};
+      if(bounded){
         row.fallback=text.querySelector('[data-face-fallback]');
-        for(const clause of row.clauses)clause.style.display='';
+        row.fallbackShort=text.querySelector('[data-face-fallback-short]');
+        for(const clause of clauses)clause.style.display='';
         if(row.fallback)row.fallback.style.display='none';
+        if(row.fallbackShort)row.fallbackShort.style.display='none';
       }
       if(rules){
+        // A previous clipped fit must not constrain this fit's measurements.
+        text.style.maxHeight='none';layer.style.justifyContent='';
+        row.cue=face.querySelector('.card-rules-inspect-cue');
+        if(bounded&&row.cue)row.cue.style.display='none';
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');
@@ -40,8 +83,12 @@ export function fitIllustratedCards(cards) {
           row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
         }
         text.style.display='block';
+        // Two short benefit rows remain readable in the narrow native hand bay.
+        text.style.lineHeight=String(row.lineHeight);
       }
-      row.low=faceLines?Math.max(8,18*scale):rules?Math.max(Math.min(11,widths[i]/12),22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
+      // Rules may shrink below the design font minimum, but never below
+      // eleven on-screen pixels after the page's native zoom.
+      row.low=rules?11/zoom:Number(text.dataset.minFont)*scale;
       row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
       texts.push(row);
     }
@@ -60,29 +107,44 @@ export function fitIllustratedCards(cards) {
     row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
   }
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
+  for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset].join('\u0002');
+  // A face is taken from the cache only whole: its rows then all keep their old answer.
+  const unknownFaces=new Set(texts.filter(row=>!fitResults.has(row.fitKey)).map(row=>row.face));
+  for(const row of texts)if(!unknownFaces.has(row.face))row.result=fitResults.get(row.fitKey);
+  const measured=texts.filter(row=>unknownFaces.has(row.face));
+  const rules=texts.filter(row=>row.rules&&!row.bounded);
+  for(const row of rules)row.face.dataset.rulesDense='false';
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
-    return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*1.25*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
+    return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*row.lineHeight*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
   };
-  const atHigh=probe(texts,row=>row.high);
+  const atHigh=probe(measured,row=>row.high);
   const search=[];
-  texts.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
+  measured.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
   for(let pass=0;pass<7&&search.length;pass++){
     const mid=row=>(row.lo+row.hi)/2;
     const fits=probe(search,mid);
     search.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of search)row.result=row.lo;
-  for(const row of texts){row.text.style.fontSize=row.result+'px';row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);row.text.dataset.fittedFont=String(row.result/row.scale);}
-  // If a narrow face cannot hold both whole clauses at the readable floor,
-  // move its secondary clause to Information. Never clip half a condition or
-  // grow the panel into artwork. A resize restores and remeasures both.
+  for(const row of measured){
+    if(fitResults.size>=FIT_RESULTS_MAX)fitResults.delete(fitResults.keys().next().value);
+    fitResults.set(row.fitKey,row.result);
+  }
+  for(const row of texts){
+    row.text.style.fontSize=row.result+'px';
+    row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines);
+    row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);
+    row.text.style.display='block';
+    row.text.dataset.fittedFont=String(row.result/row.scale);
+    if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
+  }
+  // Cached font searches and page zoom keep their current-dev semantics.
+  // At that readable floor, omit only whole clauses, remeasure the primary,
+  // and switch the entire reading to Information if its fixed bay is short.
   const bounded=texts.filter(row=>row.bounded);
-  const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*1.25*row.lines)+1
+  const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*row.lineHeight*row.lines)+1
     ||row.text.scrollWidth>row.text.clientWidth+1;
-  // Separate batch reads and writes, including the second measurement. A
-  // primary clause can still exceed either three lines or a short rank bay
-  // after the secondary clause has gone (observed at 120/124px shelves).
   for(const row of bounded)row.omitSecondary=overBudget(row);
   for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1)row.clauses.at(-1).style.display='none';
   for(const row of bounded)row.needsFallback=overBudget(row);
@@ -96,59 +158,43 @@ export function fitIllustratedCards(cards) {
     row.face.dataset.rulesDense='false';
     row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
     row.face.dataset.rulesFallback=String(row.needsFallback);
-    row.text.dataset.rulesComplete=String(!row.omitSecondary);
+    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.needsFallback||row.hasHiddenRules);
+    row.text.dataset.rulesComplete=String(!row.omitSecondary&&!row.hasHiddenRules);
   }
-  // Measure the whole batch before expanding any panel. No per-card search or
-  // layout loop, and a resize starts from authored geometry rather than drift.
-  const rules=texts.filter(row=>row.rules&&!row.bounded),narrow=[];
-  // Dense rules keep the same readable text floor with the taller base bay.
-  // Tighten only their artwork rail before measuring the expansion boundary.
-  for(const row of rules)row.dense=row.text.scrollHeight>row.boxHeight*1.5;
-  for(const row of rules)row.face.dataset.rulesDense=String(row.dense);
+  // At the zoom-aware 11px floor even the full instruction can need two
+  // lines in the smallest authored bays. Use the existing localized short
+  // Inspect label, retaining the full instruction as its accessible name.
+  for(const row of bounded)row.useShortFallback=row.needsFallback&&overBudget(row);
+  for(const row of bounded)if(row.useShortFallback&&row.fallbackShort){
+    if(row.fallback)row.fallback.style.display='none';
+    row.fallbackShort.style.display='inline';
+  }
+  for(const row of bounded)row.fallbackUnavailable=row.useShortFallback&&overBudget(row);
+  for(const row of bounded){
+    // A designer can author a bay shorter than a single readable line. Keep
+    // the existing Information button as the reading door in that case,
+    // rather than clipping an instruction or shrinking below the font floor.
+    if(row.fallbackUnavailable&&row.fallbackShort)row.fallbackShort.style.display='none';
+    row.face.dataset.rulesShortFallback=String(row.useShortFallback);
+  }
   for(const row of rules){
-    row.height=row.face.clientHeight;row.top=row.layer.offsetTop;row.panelTop=row.panel?.offsetTop;row.panelHeight=row.panel?.clientHeight;row.artTop=row.art?.offsetTop;
-    const title=row.face.querySelector('[data-card-binding="name"]');
-    // Offsets stay in layout pixels, including the native UI zoom and rotated
-    // hand. Mixing a screen rectangle with offsetTop shrinks this boundary.
-    const titleBottom=title?title.parentElement.offsetTop+title.offsetTop+title.offsetHeight:0;
-    const rail=row.face.querySelector('.card-tag-rail');
-    const railBottom=rail?rail.offsetTop+rail.offsetHeight:0;
-    row.rankSpace=0;
-    // The centered rank can share a horizontal row with the narrow right rail.
-    // Reserve its height below the title, while the panel stays below the rail.
-    row.growthLimit=Math.max(0,Math.min(row.top,row.panelTop??row.top)-Math.max(titleBottom+row.rankSpace,railBottom)-Math.max(2,2*row.scale));
-    // The parchment border scales with its image. Preserve its authored
-    // interior margins as the panel grows, so text never sits on the ornament.
-    // The rank's reserved header is a fixed-height anchor. Only the authored
-    // parchment border grows with the panel; scaling the header again would
-    // waste the extra room and clip dense effects on narrow cards.
-    row.topInset=row.panelHeight?Math.max(0,(row.top-row.panelTop-row.rankInset)/row.panelHeight):0;
-    const bottomInset=row.panelHeight?Math.max(0,(row.panelTop+row.panelHeight-row.top-row.boxHeight)/row.panelHeight):0;
-    row.interiorScale=Math.max(.5,1-row.topInset-bottomInset);
-    row.authoredHeight=row.boxHeight;
-    if(row.text.scrollHeight>row.boxHeight+row.growthLimit*row.interiorScale+1){
-      // Supported narrow shelves use the authored minimum only after the
-      // preferred floor and all available artwork space have been spent.
-      row.lo=Math.min(row.result,Number(row.text.dataset.minFont)*row.scale,Math.max(7,18*row.scale));
-      row.hi=row.result;row.boxHeight+=row.growthLimit*row.interiorScale;narrow.push(row);
-    }
+    row.face.dataset.rulesExpanded='false';
+    row.face.dataset.rulesNarrowFit='false';
   }
-  for(let pass=0;pass<7&&narrow.length;pass++){
-    const mid=row=>(row.lo+row.hi)/2,fits=probe(narrow,mid);
-    narrow.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
-  }
-  for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
-  for(const row of rules){row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));}
+  // Content beyond the readable floor remains available through inspection.
   for(const row of rules){
-    const {extra,height}=row;
-    if(extra>1){
-      row.layer.style.top=(row.top-extra*(1-row.topInset))/height*100+'%';row.layer.style.height=(row.boxHeight+extra*row.interiorScale)/height*100+'%';
-      if(row.panel){row.panel.style.top=(row.panelTop-extra)/height*100+'%';row.panel.style.height=(row.panelHeight+extra)/height*100+'%';}
-      if(row.panelTrim){row.panelTrim.style.top=row.panel.style.top;row.panelTrim.style.height=row.panel.style.height;}
-      if(row.art)row.art.style.height=Math.max(0,row.panelTop-extra-row.artTop)/height*100+'%';
-    }
-    if(row.rank)row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
-    row.face.dataset.rulesExpanded=String(extra>1);row.text.dataset.rulesComplete='true';
+    row.finalHeight=row.layer.clientHeight;
+    row.cueHeight=Math.min(row.finalHeight,row.cue?.offsetHeight||0);
+    row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow
+      ||row.text.scrollHeight>Math.min(row.finalHeight,row.text.clientHeight)+1
+      ||row.text.scrollWidth>row.text.clientWidth+1);
   }
-  applyCardLayouts(faces);
+  for(const row of rules){
+    row.text.style.maxHeight=row.overflow?`calc(100% - ${row.cueHeight}px)`:'100%';
+    row.layer.style.justifyContent=row.overflow?'flex-start':'';
+    row.text.dataset.rulesComplete=String(!row.overflow);
+    row.face.dataset.rulesOverflow=String(row.overflow);
+  }
+  applyCardLayouts(faces.filter(face=>!skipped.has(face)));
+  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
 }

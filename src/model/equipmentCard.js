@@ -1,3 +1,5 @@
+import { gameModule, gameContent } from './gameProfile.js';
+import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { parseMod } from './loadout.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
@@ -6,16 +8,16 @@ import { breakPropertyText } from './breakMeter.js';
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
   const armor = piece.kind === 'armor';
-  const tags = piece.tags || [];
+  const tags = [...new Set([...(piece.tags || []), ...(gameModule(registries, 'effects')?.fixCoreVersion === 1 ? piece.propertyTags || [] : [])])];
   const tag = id => (registries.tags || []).find(row => row.id === id);
   const className = armor ? (piece.sharedSet ? 'All classes' : registries.classes.get(piece.classId)?.name || piece.classId) : '';
   const types = (piece.itemTypes || []).map(t => t.label).join(' / ');
   const type = armor ? `Armor · ${className}` : piece.kind === 'weapon' ? `Weapon · ${types}` : piece.kind === 'staff' ? `Staff · ${types}` : types || piece.kind;
   const field = (label, value, explanation) => ({ label, value, explanation });
-  const facts = armor
+  let facts = armor
     ? [field('DR', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armor bonus to Defense cards: adds this much Block. This is not damage reduction or the full equipped Defense Rating.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
     : [field('Attack', piece.attackRating, 'Base intrinsic Attack Rating, before attributes and smithing. This is not the final damage of a played card.'), field('Defense', piece.defenseRating, 'Base intrinsic Defense Rating. See the live comparison and resulting cards for actual Block and combat bonuses.'), field('Weight', pieceWeight(piece), 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
-  const bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
+  let bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
     const mod = parseMod(raw);
     const spec = registries.equipment.modFields[mod.field];
     const target = mod.prefix === 'self' ? '' : mod.prefix === 'power' ? 'Class power: ' : `${mod.prefix[0].toUpperCase()}${mod.prefix.slice(1)}: `;
@@ -23,6 +25,23 @@ export function equipmentCardModel(registries, piece) {
     const label = spec.apply === 'startStatus' ? `starting ${spec.label}` : mod.field === 'poise' ? 'poise damage' : spec.label;
     return field(`${target}${value} ${label}`, raw, `${mod.mode === 'set' ? 'Replaces the value' : 'Adjusts the value'} ${mod.prefix === 'self' ? 'on the wearer' : `on ${mod.prefix === 'power' ? 'the class power card' : mod.prefix}`}. ${spec.blurb}`);
   });
+  const configuredGear = gameModule(registries,'gear');
+  const item = configuredGear?.armorBudget && (gameContent(registries,'gear') || []).find(row =>
+    (row.source?.id || row.id) === piece.id && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
+  if (item) {
+    const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
+    const labels = {hp:'HP',mp:'MP',sp:'SP',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
+    // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule).
+    const tierAR = !armor && piece.kind !== 'shield' ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
+    facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
+      id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped AR.`
+        : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
+    const points = receipt.budget ?? Object.values(receipt.points).reduce((sum,n)=>sum+n,0) + receipt.tagCost;
+    const perRank = configuredGear.armorBudget.perRank ?? 0;
+    bonuses = armor || piece.kind === 'shield' ? [field(`Rank ${receipt.rank} · ${points} points`,points,
+      armor ? `Armor budget: ${receipt.budget} points (${configuredGear.armorBudget.baseline} baseline + ${receipt.budget-configuredGear.armorBudget.baseline} rarity/rank bonus).`
+        : `Stat points: ${points} (${perRank} more per Smith tier).`)] : [];
+  }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
     tags: tags.map(id => field(tag(id)?.label || id, id, registries.breakMeterVersion === 1 ? breakPropertyText(registries, id) || tag(id)?.blurb || 'Authored equipment classification.' : tag(id)?.blurb || 'Authored equipment classification.')),

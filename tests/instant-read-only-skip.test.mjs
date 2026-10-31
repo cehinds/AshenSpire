@@ -6,6 +6,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { animateEvents } from '../src/ui/fx.js';
+import { renderQuickMenu } from '../src/ui/components/menuComponents.js';
+import { quickAccessPanelHtml } from '../src/ui/components/hudmeta.js';
+import { quickMenuPanelModel } from '../src/ui/models/MenuModels.js';
+import { quickAccessPanelModel } from '../src/ui/models/QuickAccessPanelModel.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 function run(t, clickTarget) {
@@ -27,19 +31,49 @@ function run(t, clickTarget) {
   return floats;
 }
 
-test('a pointerdown inside [data-combat-read-only] during animateEvents does not flush', (t) => {
+function renderMenuRow(dom, act) {
+  const { veil, panel } = renderQuickMenu(quickMenuPanelModel({
+    context: 'combat', mode: 'mirror', caption: 'Menu',
+    rows: [{ act, icon: act === 'console' ? 'historic-eye' : 'inventory', label: act === 'console' ? 'Console' : 'Inventory', tip: 'Test row' }],
+  }), { onActivate() {} });
+  dom.document.body.append(veil);
+  return panel.querySelector(`.qn-row[data-act="${act}"]`);
+}
+
+function renderCombatMenuLauncher(dom) {
+  const model = quickAccessPanelModel({ armouryId: 'combat-armoury', menuId: 'combat-menu', menuHint: 'Menu' });
+  const host = dom.document.createElement('div');
+  host.innerHTML = quickAccessPanelHtml(model);
+  return host.querySelector('#combat-menu');
+}
+
+test('the rendered Console row does not flush animateEvents on pointerdown', (t) => {
   const floats = run(t, (dom) => {
-    const tools = dom.document.createElement('aside');
-    tools.setAttribute('data-combat-read-only', '');
-    const toggle = dom.document.createElement('button');
-    tools.append(toggle);
-    return toggle;
+    const row = renderMenuRow(dom, 'console');
+    assert.ok(row.hasAttribute('data-combat-read-only'));
+    const label = row.querySelector('.qn-label');
+    assert.ok(label, 'the renderer returns the Console label inside its marked row');
+    return label;
   });
   assert.deepEqual(floats, ['+1', '+2', '+3', '+4'], 'every float still plays');
 });
 
-test('a pointerdown elsewhere still skips the rest', (t) => {
-  const floats = run(t, (dom) => dom.document.createElement('div'));
+test('the rendered combat Menu launcher does not flush animateEvents on pointerdown', (t) => {
+  const floats = run(t, (dom) => {
+    const button = renderCombatMenuLauncher(dom);
+    assert.ok(button, 'the HUD renderer returns the combat launcher');
+    assert.ok(button.hasAttribute('data-combat-read-only'));
+    return button;
+  });
+  assert.deepEqual(floats, ['+1', '+2', '+3', '+4'], 'opening the launcher leaves the playback backlog intact');
+});
+
+test('a rendered mutating quick-menu row remains eligible to skip', (t) => {
+  const floats = run(t, (dom) => {
+    const row = renderMenuRow(dom, 'inventory');
+    assert.ok(!row.hasAttribute('data-combat-read-only'));
+    return row;
+  });
   assert.ok(floats.length < 4, 'the skip flushed the backlog');
 });
 

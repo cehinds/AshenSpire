@@ -1,0 +1,27 @@
+{
+  "id": "damage_piercing",
+  "tag": "damage:piercing",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Piercing",
+  "description": "Bypasses up to 2 Guard; bypasses melee Counter.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_piercing",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/gameProfileCombat.js",
+    "symbol": "isPierceHit"
+  }
+}

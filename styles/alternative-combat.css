@@ -13,9 +13,26 @@
 .combat .combatant.enemy .alternative-silhouette { --edge-color:#c84136; }
 .combat .combatant .alternative-figure img { object-fit:fill; }
 /* Let the alpha-cropped figure own its box, including co-op's older 110px slot. */
-:root[data-layout='narrow'] .combat.coop .coop-seat .sprite:has(.alternative-figure, .alternative-card-stage) { width:max-content; height:auto; }
-.combat:has(.alternative-backdrop) .hand-area { background:transparent; }
+:root[data-layout='narrow'] .combat.coop .coop-seat .sprite[data-alternative-art] { width:max-content; height:auto; }
+.combat[data-has-backdrop~='alternative'] .hand-area { background:transparent; }
 /* Large figures can leave no empty callout region on short screens. The
    tutorial's informational surface passes board input; its exits stay active. */
 .tut-veil > .tut-bubble { pointer-events:none; }
 .tut-bubble :is(.tut-next,.tut-skip) { pointer-events:auto; }
+
+/* Desktop targeting HUD: keep the existing fading header and live status node.
+   The band passes board input; only the real controls receive pointer events. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-header='true'] > .combat-hud.shared-hud {
+  z-index:calc(var(--combat-layer-hud, 700) + 2); pointer-events:none;
+}
+:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud > .turn-ribbon {
+  top:calc(14px / var(--ui-zoom,1)); left:50%; transform:translateX(-50%);
+  max-width:calc(100% - 2 * 300px / var(--ui-zoom,1)); box-sizing:border-box;
+  overflow:hidden; text-overflow:ellipsis; pointer-events:none;
+}
+:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud :is(.hud-control-grid,.hud-actions) {
+  pointer-events:none;
+}
+:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud .hud-actions > :is(button,.hud-cinders-strip) {
+  pointer-events:auto;
+}

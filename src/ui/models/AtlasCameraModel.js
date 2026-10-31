@@ -1,5 +1,5 @@
 import { MAP_PRESENTATION, MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
-import { COL_X, NODE_R } from '../../model/mapview.js';
+import { COL_X, NODE_R } from '../../model/map/mapview.js';
 
 export const ATLAS_NODE_SIZE = NODE_R * 2 * MAP_CLOSE_NODE_SCALE;
 

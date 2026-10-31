@@ -231,7 +231,7 @@ async function until(expression, what, ms = 20000) {
 const point = (selector) => ev(`(() => {
   const el = document.querySelector(${JSON.stringify(selector)});
   if (!el) return null;
-  el.scrollIntoView({ block: 'center', inline: 'center' });
+  el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   const b = el.getBoundingClientRect();
   return { x: b.x + b.width / 2, y: b.y + b.height / 2, hold: Number(el.dataset.holdMs) || 0 };
 })()`);
@@ -282,53 +282,58 @@ async function newGameFromTitle(label) {
   // Spells for casters -> Review): each stage is the `.cz-railed` panel's
   // data-creation-stage, and Next (#cz-next) leaves it.
   const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
-  await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
-  const openFace = async (key) => {
-    await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
-    if (!(await ev(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await press(`[data-face="${key}"]`);
-  };
-  await openFace('primary');
-  // Standard's mode id is `lean` (see map-camera-persistence.mjs).
-  const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
-  if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-  await press('#cz-next');
-  await until(onStage('keepsake'), 'the Keepsake stage');
-  await press('#cz-keepsakes [data-keepsake-id]');
-  await press('#cz-next');
-  await until(onStage('equipment'), 'the Equipment stage');
-  await openFace('armour');
-  await press('#cz-armours .equip-chip .equipment-poker-card');
-  // The armour's own Choose button is spent only when the stage shows it
-  // (a card click may already have chosen the armour).
-  if (await ev(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
-    await press('#cz-armours .equip-chip .equipment-choose');
-  }
-  let abilitySelections = 0;
-  for (let i = 0; i < 8; i++) {
-    if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
-    // Starting maneuvers/spells are required choices. Complete the open fold
-    // through its real Choose controls before asking its Continue to advance.
-    const abilityFold = STARTING_ABILITY_FOLD;
-    if (await has(abilityFold)) {
-      while (true) {
-        const snapshot = await ev(`(() => ({
-          continueBlocked: document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true',
-          choices: [...document.querySelectorAll(${JSON.stringify(abilityFold + ' .cc-ability-choose')})].map(button => ({
-            cardId: button.closest('.cc-ability-choice')?.dataset.cardId,
-            selected: button.getAttribute('aria-pressed') === 'true', disabled: button.disabled,
-          })),
-        }))()`);
-        let cardId;
-        try { cardId = startingAbilityChoice(snapshot, abilitySelections); }
-        catch (error) { throw new Error(`${error.message}; screen ${JSON.stringify(await ev(SCREEN))}`); }
-        if (cardId === null) break;
-        const choice = `${abilityFold} .cc-ability-choice[data-card-id=${JSON.stringify(cardId)}] .cc-ability-choose`;
-        await press(choice);
-        abilitySelections++;
-        await until(`document.querySelector(${JSON.stringify(choice)})?.getAttribute('aria-pressed') === 'true'`, `the starting ability ${cardId} to be chosen`);
-      }
-    }
+  // Core's fixed creation skips directly to Review; Current keeps its
+  // detailed choices. Wait for the actual mounted stage before branching.
+  await until(`${onStage('attributes')} || ${onStage('review')}`, 'Attributes or Review after Class');
+  if (await ev(onStage('attributes'))) {
+    await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
+    const openFace = async (key) => {
+      await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
+      if (!(await ev(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await press(`[data-face="${key}"]`);
+    };
+    await openFace('primary');
+    // Standard's mode id is `lean` (see map-camera-persistence.mjs).
+    const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
+    if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
     await press('#cz-next');
+    await until(onStage('keepsake'), 'the Keepsake stage');
+    await press('#cz-keepsakes [data-keepsake-id]');
+    await press('#cz-next');
+    await until(onStage('equipment'), 'the Equipment stage');
+    await openFace('armour');
+    await press('#cz-armours .equip-chip .equipment-poker-card');
+    // The armour's own Choose button is spent only when the stage shows it
+    // (a card click may already have chosen the armour).
+    if (await ev(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+      await press('#cz-armours .equip-chip .equipment-choose');
+    }
+    let abilitySelections = 0;
+    for (let i = 0; i < 8; i++) {
+      if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+      // Starting maneuvers/spells are required choices. Complete the open fold
+      // through its real Choose controls before asking its Continue to advance.
+      const abilityFold = STARTING_ABILITY_FOLD;
+      if (await has(abilityFold)) {
+        while (true) {
+          const snapshot = await ev(`(() => ({
+            continueBlocked: document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true',
+            choices: [...document.querySelectorAll(${JSON.stringify(abilityFold + ' .cc-ability-choose')})].map(button => ({
+              cardId: button.closest('.cc-ability-choice')?.dataset.cardId,
+              selected: button.getAttribute('aria-pressed') === 'true', disabled: button.disabled,
+            })),
+          }))()`);
+          let cardId;
+          try { cardId = startingAbilityChoice(snapshot, abilitySelections); }
+          catch (error) { throw new Error(`${error.message}; screen ${JSON.stringify(await ev(SCREEN))}`); }
+          if (cardId === null) break;
+          const choice = `${abilityFold} .cc-ability-choice[data-card-id=${JSON.stringify(cardId)}] .cc-ability-choose`;
+          await press(choice);
+          abilitySelections++;
+          await until(`document.querySelector(${JSON.stringify(choice)})?.getAttribute('aria-pressed') === 'true'`, `the starting ability ${cardId} to be chosen`);
+        }
+      }
+      await press('#cz-next');
+    }
   }
   await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');
   // The seed goes in through the Review's own Seed field, typed.
@@ -411,8 +416,11 @@ async function playFight() {
       await wait(250);
       // Defensive and other self cards use the real friendly confirmation;
       // attacks still go through the enemy's ordinary target control.
-      if (await has('.combatant.player.armed')) await press('.combatant.player.armed');
-      else if (await has('.combatant.enemy:not(.dead)')) await press('.combatant.enemy:not(.dead)');
+      // The combatant box is a tall pointer-events:none column (the figure
+      // stands on its bottom), so its centre is empty field; a player taps the
+      // figure, so press the visible sprite.
+      if (await has('.combatant.player.armed .sprite')) await press('.combatant.player.armed .sprite');
+      else if (await has('.combatant.enemy:not(.dead) .sprite')) await press('.combatant.enemy:not(.dead) .sprite');
       // Draw-on-play can leave the hand's size unchanged. Follow this exact
       // instance instead of treating a smaller total as the play receipt.
       const left = await ev(`(async () => { const end = Date.now() + 2500; while (Date.now() < end) { if (!window.__combat || !window.__combat.piles.hand.some(c => c.instanceId === ${JSON.stringify(card)})) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);

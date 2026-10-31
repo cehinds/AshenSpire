@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolveCombatAnimation as route, combatRestAfterEvent as restAfter } from '../src/model/combatAnimation.js';
@@ -89,7 +90,7 @@ test('rest reducer is owner-relative and paced/flush reduction agree',()=>{
   rest=restAfter(rest,events[3],'a');assert.equal(rest,'idle');
   assert.equal(events.reduce((r,e,i)=>restAfter(r,e,'a',plans[i]),'idle'),rest);
 });
-test('authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets',()=>{
+test('authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   // The actor/profile receipt fixture replays the pre-expansion character setup.
   const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
   for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});

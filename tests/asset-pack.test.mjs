@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { buildManifest, serialize, MANIFEST_PATH } from '../tools/art-manifest.mjs';
 import { guardOut, planPacks, renderPacks, verifyPacks, writePacks, withAlternativeArt, objectPath, PACKS } from '../tools/asset-pack.mjs';
+import { verify as verifyExternal } from '../tools/verify-external.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 
@@ -75,9 +76,9 @@ function withPacks(fn, files = FILES) {
   const root = tree(files);
   const out = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
   try {
-    writePacks({ source: 'trees', root, out });
+    const summary = writePacks({ source: 'trees', root, out });
     const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
-    return fn({ root, out, manifest });
+    return fn({ root, out, manifest, summary });
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(out, { recursive: true, force: true });
@@ -86,16 +87,41 @@ function withPacks(fn, files = FILES) {
 
 const packFile = (out, re) => readdirSync(join(out, 'packs')).find((f) => re.test(f));
 
+test('external verifier recognizes layered common IDs and still refuses corrupt objects', () => {
+  const id = 'assets-display/layered/rug.webp', bytes = webp(32, 32, 7);
+  withPacks(({ root, out, summary }) => {
+    const pin = { tier: 'light', ...summary };
+    writeFileSync(join(out, 'AshenSpire.html'), `<script>const ASSET_MAP = {};\nconst ASSET_PACKS = ${JSON.stringify(pin)};\nconst ASSET_CSS = null;\n</script>`);
+    writeFileSync(join(out, 'asset-base.json'), JSON.stringify({ base: './' }));
+    const result = verifyExternal(out, { root });
+    // The small pack fixture intentionally lacks the real game's CSS/map/music
+    // definitions. This assertion isolates manifest membership, not a full build.
+    assert.equal(result.findings.some(f => f.includes(id)), false, result.findings.join('\n'));
+    const object = join(out, objectPath(sha(bytes), id));
+    writeFileSync(object, 'corrupt');
+    const corrupt = verifyExternal(out, { root });
+    assert.ok(corrupt.findings.some(f => f.includes(id) && /does not hash to its name/.test(f)), corrupt.findings.join('\n'));
+  }, { ...FILES, [id]: bytes, 'assets-display/layered/manifest.json': JSON.stringify({ schema: 1, assets: { [id]: { sha256: sha(bytes), bytes: bytes.length, width: 32, height: 32 } } }) });
+});
+
+test('external verifier CLI still refuses an absent build', () => {
+  withPacks(({ out }) => {
+    const run = spawnSync(process.execPath, [fileURLToPath(new URL('../tools/verify-external.mjs', import.meta.url)), '--dir', out], { encoding: 'utf8' });
+    assert.equal(run.status, 1, run.stdout + run.stderr);
+    assert.match(run.stdout, /no build at/);
+  });
+});
+
 test('branch artwork uses the verified common store and refuses stale source hashes', () => {
   const sprite = webp(400, 600, 7);
   const catalog = { hashes: { 'reaver-default.webp': sha(sprite) } };
   withPacks(({ root, out, manifest }) => {
-    const combined = withAlternativeArt(manifest, root);
+    const combined = withAlternativeArt(manifest, root, {env:{ASHEN_ART_SOURCE:'trees'}});
     assert.deepEqual(verifyPacks(out, { manifest: combined }), []);
     const common = JSON.parse(readFileSync(join(out, 'packs', packFile(out, /^common-.*\.json$/)), 'utf8'));
     assert.deepEqual(common['assets-display/alternative/reaver-default.webp'], [sha(sprite), sprite.length, 'image/webp']);
     writeFileSync(join(root, 'assets-display/alternative/reaver-default.webp'), webp(400, 600, 8));
-    assert.throws(() => withAlternativeArt(manifest, root), /Alternative art changed/);
+    assert.throws(() => withAlternativeArt(manifest, root, {env:{ASHEN_ART_SOURCE:'trees'}}), /Alternative art changed/);
     assert.throws(() => writePacks({ root, out, source:'trees' }), /Alternative art changed/);
   }, { ...FILES, 'assets-display/alternative/reaver-default.webp':sprite,
     'src/ui/alternativeArtCatalog.js':`export const alternativeArtCatalog = ${JSON.stringify(catalog)};\n` });

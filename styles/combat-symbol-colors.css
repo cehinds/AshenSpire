@@ -1,0 +1,258 @@
+/* Shared combat identity palette. Keep the SVG path authored by its native
+   component; this layer supplies only color and the two outline rings. */
+:root {
+  --combat-symbol-outline: #171719;
+  --combat-symbol-gold: #e6c06b;
+  --combat-symbol-silver: #cbd0d7;
+  --combat-symbol-white: #f8f8f6;
+  --combat-symbol-blue-trim: #102f55;
+  --combat-symbol-black-trim: #050609;
+  --combat-symbol-red-trim: #601c28;
+  --combat-symbol-evade-trim: #37393b;
+  --combat-symbol-precision: #e6c06b;
+  --combat-symbol-precision-trim: #4a3a14;
+}
+
+/* One mapping drives intent glyphs, card footer glyphs and their type labels. */
+:root .intent-icon.intent-icon[data-intent='attack'],
+:root .card-sigil-band[data-primary-sigil='attack'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='attack'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':attack'] svg,
+:root .card-tag-symbol[data-tag-id='attack'] svg {
+  color: var(--combat-symbol-gold);
+  --combat-symbol-trim: var(--combat-symbol-blue-trim);
+}
+:root .intent-icon.intent-icon[data-intent='sweep'],
+:root .card-sigil-band[data-primary-sigil='sweep'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='sweep'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':sweep'] svg,
+:root .card-tag-symbol[data-tag-id='sweep'] svg {
+  color: var(--combat-symbol-gold);
+  --combat-symbol-trim: var(--combat-symbol-black-trim);
+}
+:root .intent-icon.intent-icon[data-intent='smash'],
+:root .card-sigil-band[data-primary-sigil='smash'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='smash'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':smash'] svg,
+:root .card-tag-symbol[data-tag-id='smash'] svg {
+  color: var(--combat-symbol-gold);
+  --combat-symbol-trim: var(--combat-symbol-red-trim);
+}
+:root .intent-icon.intent-icon[data-intent='prepare'],
+:root .intent-icon.intent-icon[data-intent='cast'],
+:root .intent-icon.intent-icon[data-intent='buff'],
+:root .intent-icon.intent-icon[data-intent='ready'],
+:root .card-sigil-band[data-primary-sigil='spell'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='spell'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='power'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='power'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='skill'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='skill'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='stance'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='stance'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':prepare'] svg {
+  color: var(--combat-symbol-silver);
+  --combat-symbol-trim: var(--combat-symbol-blue-trim);
+}
+:root .intent-icon.intent-icon[data-intent='defend'],
+:root .card-sigil-band[data-primary-sigil='defend'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='defend'] .card-type-name,
+:root .card-sigil-band[data-primary-sigil='defense'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='defense'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':defend'] svg {
+  color: var(--combat-symbol-silver);
+  --combat-symbol-trim: var(--combat-symbol-black-trim);
+}
+:root .intent-icon.intent-icon[data-intent='counter'],
+:root .card-sigil-band[data-primary-sigil='counter'] .card-action-icon,
+:root .card-sigil-band[data-primary-sigil='counter'] .card-type-name,
+:root .card-tag-symbol[data-tag-id$=':counter'] svg {
+  color: var(--combat-symbol-silver);
+  --combat-symbol-trim: var(--combat-symbol-red-trim);
+}
+:root .intent-icon.intent-icon[data-intent='evade'],
+:root .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg,
+:root .card-tag-symbol[data-tag-id$=':evade'] svg {
+  color: var(--combat-symbol-white);
+  --combat-symbol-trim: var(--combat-symbol-evade-trim);
+}
+
+/* Precision keeps Evade's badge geometry; its reticle and value read gold. */
+:root .combat .combat-health-precision-icon > svg {
+  color: var(--combat-symbol-precision);
+  --combat-symbol-trim: var(--combat-symbol-precision-trim);
+}
+
+/* Hard layers preserve the authored SVG paths. Solid marks get an actual dark
+   stroke; sharp, offset shadows form the outside trim without a soft glow. */
+:root :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg)[data-solid='true'],
+:root .card-sigil-band .card-action-icon svg[fill='currentColor'],
+:root .card-tag-symbol[data-tag-id] svg[fill='currentColor'],
+:root .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg[fill='currentColor'] {
+  stroke: var(--combat-symbol-outline) !important;
+  stroke-width: 1.5px !important;
+  paint-order: stroke fill;
+  filter: drop-shadow(0 -1px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)))
+          drop-shadow(0 1px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)))
+          drop-shadow(-1px 0 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)))
+          drop-shadow(1px 0 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)));
+}
+:root .intent-icon.intent-icon[data-intent]:not([data-solid='true']),
+:root .card-sigil-band .card-action-icon svg[fill='none'],
+:root .card-tag-symbol[data-tag-id] svg[fill='none'] {
+  filter: drop-shadow(0 -1px 0 var(--combat-symbol-outline))
+          drop-shadow(0 1px 0 var(--combat-symbol-outline))
+          drop-shadow(-1px 0 0 var(--combat-symbol-outline))
+          drop-shadow(1px 0 0 var(--combat-symbol-outline))
+          drop-shadow(0 -2px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)))
+          drop-shadow(0 2px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)))
+          drop-shadow(-2px 0 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)))
+          drop-shadow(2px 0 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)));
+}
+:root .card-sigil-band .card-type-name {
+  -webkit-text-stroke: 1px var(--combat-symbol-outline);
+  paint-order: stroke fill;
+  text-shadow: 0 -1px var(--combat-symbol-trim, var(--combat-symbol-black-trim)),
+    0 1px var(--combat-symbol-trim, var(--combat-symbol-black-trim)),
+    -1px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim)),
+    1px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim));
+}
+
+/* Mini HUD Evade badge: the symbol is 15.3px centered in its 22px box, with
+   the 7px value beginning one pixel past the symbol's lower-right edge. */
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision) {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: calc(22px / var(--ui-zoom, 1)) !important;
+  min-width: calc(22px / var(--ui-zoom, 1)) !important;
+  max-width: calc(22px / var(--ui-zoom, 1)) !important;
+  height: calc(22px / var(--ui-zoom, 1)) !important;
+  flex: 0 0 calc(22px / var(--ui-zoom, 1)) !important;
+  display: block !important;
+  grid-template-columns: none;
+  padding: 0;
+  overflow: visible;
+}
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) {
+  position: absolute;
+  left: calc(3.35px / var(--ui-zoom, 1));
+  top: calc(3.35px / var(--ui-zoom, 1));
+  width: calc(15.3px / var(--ui-zoom, 1));
+  height: calc(15.3px / var(--ui-zoom, 1));
+  font-size: 0;
+}
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+}
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+  position: absolute;
+  left: calc(19.65px / var(--ui-zoom, 1));
+  top: calc(19.65px / var(--ui-zoom, 1));
+  display: grid;
+  place-items: center;
+  width: calc(7px / var(--ui-zoom, 1));
+  height: calc(7px / var(--ui-zoom, 1));
+  transform: none;
+  font-size: calc(7px / var(--ui-zoom, 1));
+  line-height: 1;
+  overflow: visible;
+}
+
+/* The status rail shares the mini HUD's 22px group geometry. A dedicated glyph
+   wrapper makes text, engraved SVGs, and authored SVGs obey the same box. */
+:root .combat .statuses .status-icon,
+:root .combat .target-hud-statuses .status-icon {
+  position: relative;
+  display: block !important;
+  box-sizing: border-box;
+  width: calc(22px / var(--ui-zoom, 1)) !important;
+  min-width: calc(22px / var(--ui-zoom, 1)) !important;
+  max-width: calc(22px / var(--ui-zoom, 1)) !important;
+  height: calc(22px / var(--ui-zoom, 1)) !important;
+  flex: 0 0 calc(22px / var(--ui-zoom, 1)) !important;
+  padding: 0;
+  overflow: visible;
+}
+:root .combat .statuses .status-icon-glyph,
+:root .combat .target-hud-statuses .status-icon-glyph {
+  position: absolute;
+  /* Absolute offsets start at the pip's padding edge; subtract its 1px
+     physical border so the drawn symbol begins 3.35px into the full group. */
+  left: calc(2.35px / var(--ui-zoom, 1));
+  top: calc(2.35px / var(--ui-zoom, 1));
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: calc(15.3px / var(--ui-zoom, 1));
+  height: calc(15.3px / var(--ui-zoom, 1));
+  font-size: calc(15.3px / var(--ui-zoom, 1)) !important;
+  line-height: 1;
+}
+:root .combat .statuses .status-icon-glyph > *,
+:root .combat .target-hud-statuses .status-icon-glyph > * {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  flex: none;
+}
+:root .combat .statuses .status-icon > :is(.as-pip-count, .stk),
+:root .combat .target-hud-statuses .status-icon > :is(.as-pip-count, .stk) {
+  position: absolute !important;
+  /* Account for the same 1px pip border so the count box starts at 19.65px. */
+  left: calc(18.65px / var(--ui-zoom, 1)) !important;
+  top: calc(18.65px / var(--ui-zoom, 1)) !important;
+  right: auto !important;
+  bottom: auto !important;
+  box-sizing: border-box;
+  width: calc(7px / var(--ui-zoom, 1));
+  height: calc(7px / var(--ui-zoom, 1));
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: calc(7px / var(--ui-zoom, 1)) !important;
+  line-height: 1;
+  overflow: visible;
+}
+
+/* Cinders remains a white counter with a crisp black keyline. */
+:root .combat .hud-cinders {
+  color: #fff;
+  -webkit-text-stroke: .75px #000;
+  paint-order: stroke fill;
+}
+
+/* A mirrored Spell: the Spell mark keeps its silver, the basic's mark and word take the basic's own colour. */
+:root .card-sigil-band[data-mirror='attack'] .card-mirror-icon, :root .card-sigil-band[data-mirror='attack'] .card-type-name,
+:root .card-sigil-band[data-mirror='sweep'] .card-mirror-icon, :root .card-sigil-band[data-mirror='sweep'] .card-type-name,
+:root .card-sigil-band[data-mirror='smash'] .card-mirror-icon, :root .card-sigil-band[data-mirror='smash'] .card-type-name {
+  color: var(--combat-symbol-gold);
+}
+:root .card-sigil-band[data-mirror='defend'] .card-mirror-icon, :root .card-sigil-band[data-mirror='defend'] .card-type-name,
+:root .card-sigil-band[data-mirror='technique'] .card-mirror-icon, :root .card-sigil-band[data-mirror='technique'] .card-type-name,
+:root .card-sigil-band[data-mirror='counter'] .card-mirror-icon, :root .card-sigil-band[data-mirror='counter'] .card-type-name {
+  color: var(--combat-symbol-silver);
+}
+:root .card-sigil-band[data-mirror='attack'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-blue-trim); }
+:root .card-sigil-band[data-mirror='sweep'] .card-mirror-icon, :root .card-sigil-band[data-mirror='defend'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-black-trim); }
+:root .card-sigil-band[data-mirror='smash'] .card-mirror-icon, :root .card-sigil-band[data-mirror='counter'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-red-trim); }
+
+/* Lite: collapse the 4-8 stacked drop-shadow passes per glyph. Solid marks already carry a real stroke, so they drop the
+   filter; outline marks keep one soft outline pass. */
+:root[data-performance='lite'] :is(.intent-icon[data-intent], .card-sigil-band .card-action-icon svg, .card-tag-symbol[data-tag-id] svg, :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg)[data-solid='true'],
+:root[data-performance='lite'] .card-sigil-band .card-action-icon svg[fill='currentColor'],
+:root[data-performance='lite'] .card-tag-symbol[data-tag-id] svg[fill='currentColor'],
+:root[data-performance='lite'] .combat :is(.combat-health-evade-icon, .combat-health-precision-icon) > svg[fill='currentColor'] {
+  filter: none;
+}
+:root[data-performance='lite'] .intent-icon.intent-icon[data-intent]:not([data-solid='true']),
+:root[data-performance='lite'] .card-sigil-band .card-action-icon svg[fill='none'],
+:root[data-performance='lite'] .card-tag-symbol[data-tag-id] svg[fill='none'] {
+  filter: drop-shadow(0 0 1px var(--combat-symbol-outline));
+}

@@ -1,0 +1,120 @@
+{
+  "sourceCommit": "026f2839e0ea86308a88acf32418b55c34628191",
+  "captureDate": "2026-10-17",
+  "method": "Local canonical cache build served from dist/AshenSpire.html?shot=combat",
+  "localBuild": {
+    "version": "0.7.1.1556",
+    "digest": "4f155934c2"
+  },
+  "artifactIdentity": {
+    "runtimeSourceCommit": "df68bd95bfbd883553c0667d634be2297b11bb02",
+    "workflowRunId": 39080771198,
+    "workflowJobId": 117537068833,
+    "artifactId": 12118593676,
+    "version": "0.7.1.1558",
+    "sourceDigest": "d795417750",
+    "artifactArchiveSha256": "d188a92baeaaa99f74a25abd689ecdf10914ee8898e0f34869b8367bc8dd5f5a",
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39080771198/artifacts/12118593676",
+    "status": "artifact verified; public-route identity verified read-only"
+  },
+  "publicRouteVerification": {
+    "status": "verified read-only",
+    "checkedAt": "2026-10-18T00:23:17.911Z",
+    "workflowRunId": 39082551610,
+    "workflowJobId": 117542345031,
+    "attempt": 1,
+    "runtimeSourceCommit": "df68bd95bfbd883553c0667d634be2297b11bb02",
+    "url": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
+    "normalAndCacheBustedIndexStatus": 200,
+    "normalAndCacheBustedBuildStatus": 200,
+    "buildContentType": "text/plain",
+    "sourceDigest": "d795417750",
+    "ordinal": 1558,
+    "release": "0.7.1",
+    "trustedChecker": "b1b passed",
+    "payloadCharacters": 80780257,
+    "scope": "Publication/payload identity only; no hosted gameplay execution or live co-op demonstrated."
+  },
+  "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
+  "screenshots": [
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    },
+    {
+      "name": "wide",
+      "width": 1280,
+      "height": 720,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      }
+    }
+  ],
+  "limits": "Posed solo combat fixture; screenshots show rendering, not latency, a completed playthrough, or hosted execution. No capture-only CSS applied.",
+  "historicalArtifactIdentities": [
+    {
+      "runtimeSourceCommit": "1c3f9839d6fba3d178b84dab4d44defa88bf72c2",
+      "workflowRunId": 39075841889,
+      "workflowJobId": 117522696613,
+      "artifactId": 12116684498,
+      "version": "0.7.1.1556",
+      "sourceDigest": "f0a19c2c3b",
+      "artifactArchiveSha256": "44d197e214f533bec173c4885fb682aeee65544f7bc15fc4e0bc13b6be0da43d",
+      "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39075841889/artifacts/12116684498",
+      "status": "artifact verified; public route pending"
+    },
+    {
+      "runtimeSourceCommit": "b9d76d31f725f03b20f9669321b5ce79f21ebba2",
+      "workflowRunId": 39078006648,
+      "workflowJobId": 117529062039,
+      "artifactId": 12117562244,
+      "version": "0.7.1.1558",
+      "sourceDigest": "fe5a70442a",
+      "artifactArchiveSha256": "d5fa1996ee457641803de665df495ee7fa46734c7ee41c75dcee3f9ffd93c916",
+      "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39078006648/artifacts/12117562244",
+      "status": "artifact verified; public route pending"
+    }
+  ],
+  "currentValidation": {
+    "fastCI": "all green; quick-start 253/749 ms, only 1 ms first-number margin; no robust latency claim",
+    "canonicalBrowser": "984/984 passed",
+    "mapFixture": "Actual optional Map flask data-focusable; scoped Current fixture roomRail=true/outsideUse=true; clean passed and named fault caught; census 438 sites / 20 drift",
+    "timingTraceScope": "Corrected recorder39080448998/helper7a550 pins historical T499: native238/698; separate observational673/596/648. Summary39080984565/job117537687725. Recurring canvas drawImage hotspot and long tasks; does not attribute prior failures or justify further runtime change."
+  }
+}

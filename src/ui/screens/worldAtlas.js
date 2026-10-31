@@ -1,3 +1,6 @@
+import { engravedIconHtml } from '../components/engravedIcon.js';
+import { layeredCombatScene } from '../../model/layeredEnvironments.js';
+import { layeredEnvironmentHtml, fitLayeredEnvironment, wireLayeredEnvironment } from '../components/layeredEnvironment.js';
 import { surveyQuestPresentation } from '../models/SurveyQuestModel.js';
 import { locationScene } from '../../content/locationScenes.js';
 import { mountLocalMapCamera } from '../components/localMapCamera.js';
@@ -18,7 +21,7 @@ import { assetUrl } from "../assetmap.js";
 import { imageHintAttrs } from "../imageHints.js";
 import { nodeIcon } from '../uiContent.js';
 import { mapNodeInk } from '../components/mapNodeInk.js';
-import { nodeRadius } from '../../model/mapview.js';
+import { nodeRadius } from '../../model/map/mapview.js';
 import { MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 import { atlasFocusCamera } from '../models/AtlasCameraModel.js';
 import { atlasEnterKind, pickAtlasNode, projectAtlasContext } from '../models/AtlasSelectionModel.js';
@@ -31,6 +34,10 @@ const uri = (id) => assetUrl(ATLAS.assets[id]?.uri);
 const pct = (n) => `${(n * 100).toFixed(2)}%`;
 const button = (label, attrs = "") =>
   `<button type="button" class="as-btn" ${attrs}>${esc(label)}</button>`;
+
+export function atlasLayeredPreviewHtml(locationName, scene) {
+  return `<div class="atlas-layered-preview" role="img" aria-label="${esc(locationName)} — ${esc(scene.label)}">${layeredEnvironmentHtml(scene)}</div>`;
+}
 
 export function mountWorldAtlas(
   app,
@@ -87,7 +94,7 @@ export function mountWorldAtlas(
    )
    .join(
      "",
-   )}</g></svg><span class="atlas-compass" aria-hidden="true">N<br>✥</span>
+   )}</g></svg><span class="atlas-compass" aria-hidden="true">N<br>Map</span>
  ${j.activeNodeIds
    .filter((id) => known.has(id))
    .map((id) => {
@@ -229,8 +236,15 @@ export function mountWorldAtlas(
     const dialog = document.createElement("dialog");
     dialog.className = "atlas-dialog modal-veil";
     dialog.dataset.localMap = String(!!local);
+    const layeredSceneAt = pointId => layeredCombatScene({ ...run,
+      environmentRegionId: a.regionOf(pointId) || a.regionOf(id),
+      journey: { ...run.journey, currentNodeId: pointId },
+    });
+    const layeredScene = layeredSceneAt(id);
     const scene = locationScene(id, run);
-    const illustration = scene
+    const illustration = layeredScene
+      ? atlasLayeredPreviewHtml(n.displayName, layeredScene)
+      : scene
       ? `<svg viewBox="${scene.box.join(' ')}" role="img" aria-label="${esc(n.displayName)} — ${esc(scene.name)}" data-location-scene="${esc(scene.id)}"><image href="${esc(assetUrl(scene.atlas))}" width="1536" height="1024"/></svg>`
       : coreArt(id);
     dialog.setAttribute("aria-labelledby", "atlas-location-title");
@@ -242,8 +256,23 @@ export function mountWorldAtlas(
     }
     dialog.showModal();
     let disposeLocal = () => {};
+    let disposePreview = () => {};
+    const mountPreview = host => {
+      disposePreview();
+      disposePreview = () => {};
+      if (!host) return;
+      const backdrop = host.querySelector('.layered-environment');
+      const fit = () => fitLayeredEnvironment(backdrop, { width:host.clientWidth, height:host.clientHeight, groundY:host.clientHeight*.63 });
+      const observer = new ResizeObserver(fit);
+      observer.observe(host);
+      const releaseMotion = wireLayeredEnvironment(host);
+      fit();
+      disposePreview = () => { observer.disconnect(); releaseMotion(); };
+    };
+    if (!local && layeredScene) mountPreview(dialog.querySelector('.atlas-layered-preview'));
     const close = () => {
       disposeLocal();
+      disposePreview();
       dialog.close();
       dialog.remove();
       returnFocus?.focus();
@@ -332,7 +361,10 @@ export function mountWorldAtlas(
           `data-local-explore ${!here || j.localCompletedIds.includes(pointId) ? "disabled" : ""}`,
         );
       const pane = dialog.querySelector(".atlas-location-detail");
-      pane.innerHTML = `<div class="atlas-detail-scroll">${html}</div>`;
+      disposePreview();
+      const previewScene = layeredSceneAt(pointId);
+      pane.innerHTML = `<div class="atlas-detail-scroll">${previewScene ? atlasLayeredPreviewHtml(point.displayName, previewScene) : ''}${html}</div>`;
+      mountPreview(pane.querySelector('.atlas-layered-preview'));
       const actions = dialog.querySelector('.atlas-detail-actions');
       actions.replaceChildren();
       pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-board], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));
@@ -398,7 +430,7 @@ function localMapHtml(local) {
   <div class="atlas-local-port" tabindex="0" role="group" aria-label="${esc(map.displayName)} interactive map"><div class="atlas-local-map"><svg viewBox="0 0 1000 1000" aria-hidden="true"><g class="map-detail-surface"><image href="${esc(uri(map.artAssetId))}" width="1000" height="1000" preserveAspectRatio="none"/></g></svg>${points
     .map((p) => {
       const n = ATLAS.nodes[p.nodeId];
-      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-label="Inspect ${esc(n.displayName)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${nodeIcon(traditionalType(n.nodeTypeId))}</span><small>${esc(n.displayName)}</small></button>`;
+      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-label="Inspect ${esc(n.displayName)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${engravedIconHtml(nodeIcon(traditionalType(n.nodeTypeId)))}</span><small>${esc(n.displayName)}</small></button>`;
     })
     .join("")}</div></div><label class="atlas-local-picker-label">Locations <select data-local-picker><option value="">Choose a place…</option>${points.map(p=>`<option value="${esc(p.nodeId)}">${esc(ATLAS.nodes[p.nodeId].displayName)}</option>`).join('')}</select></label>`;
 }

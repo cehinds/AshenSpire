@@ -1,3 +1,6 @@
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { gameModule } from './gameProfile.js';
+import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
 // src/model/levelup.js — THE CHARACTER LEVEL (plan phase 6, proposal §10).
 //
 // A level is EARNED, not bought. The run keeps one ledger, `run.level =
@@ -171,7 +174,8 @@ export function claimBankedLevel(registries, run, { pointsPerLevel = null, grant
   if (!run || pendingLevelCount(registries, run) < 1) return null;
   const before = characterLevel(run);
   const cost = xpToNext(registries, before);
-  const points = grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const configured = gameModule(run,'progression');
+  const points = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   run.level.xp -= cost;
   run.level.level = before + 1;
   run.level.unspentPoints += points;
@@ -308,7 +312,8 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
   if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
-  const perLevel = grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const configured = gameModule(run,'progression');
+  const perLevel = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
   const points = levelUps * perLevel;
@@ -344,7 +349,7 @@ export function rederivePools(registries, run, why) {
   const level = characterLevel(run);
   const before = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
   const priorEnergy = run.energyMax;
-  const attributes = effectiveAshenBlightAttributes(run);
+  const attributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   let moved = 0;
   for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
     if (run[key] === undefined) continue;
@@ -406,6 +411,7 @@ export function levelUpBudget(registries, run) {
  * run's own snapshot with the deficit carried.
  */
 export function applyLevelUp(registries, run, attributeId) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'levelUp')) throw new Error('Configured level allocation requires a committed rest service');
   const plan = levelUpPlan(registries, run);
   const ids = plan.attributes.map((a) => a.id);
   if (!ids.includes(attributeId)) {
@@ -429,6 +435,18 @@ export function applyLevelUp(registries, run, attributeId) {
     why: `one earned point assigned at level ${run.level.level} (${run.levelPoints} assigned in total, ${run.level.unspentPoints} waiting); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
   });
   return { ...plan, attributeId, points: run.level.unspentPoints, level: run.level.level };
+}
+
+/**
+ * allocateAttributePoint(registries, run, attributeId) — spend ONE earned point
+ * outside a rest visit (owner, 2026-10-27: at the Victory receipt and on the
+ * Armory character sheet). It enters the same committed 'levelUp' scope
+ * applyLevelUp demands, but neither heals nor spends a rest service; every other
+ * caller of applyLevelUp stays rest-only.
+ */
+export function allocateAttributePoint(registries, run, attributeId) {
+  if (gameProfileServiceActive(run, 'levelUp')) return applyLevelUp(registries, run, attributeId);
+  return withGameProfileService(run, 'levelUp', () => applyLevelUp(registries, run, attributeId));
 }
 
 /**

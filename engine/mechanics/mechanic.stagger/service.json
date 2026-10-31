@@ -1,0 +1,48 @@
+{
+  "mechanic": "mechanic.stagger",
+  "handlers": [
+    {
+      "on": "command.breakPoise",
+      "do": [
+        {
+          "op": "poiseDamage",
+          "target": "$target",
+          "amount": "$amount"
+        }
+      ]
+    },
+    {
+      "on": "event.runtime.poiseBroken",
+      "description": "Numbers come from the model (copied from engine/modules/stagger/defaults.json).",
+      "do": [
+        {
+          "op": "stagger",
+          "target": "$target"
+        },
+        {
+          "op": "applyStatus",
+          "target": "$target",
+          "status": "$model.status",
+          "stacks": "$model.stacks"
+        },
+        {
+          "op": "restoreStamina",
+          "target": "$target",
+          "amount": {
+            "f": "mul",
+            "args": [
+              -1,
+              "$model.spLoss"
+            ]
+          }
+        },
+        {
+          "emit": "mechanic.stagger.staggered",
+          "with": {
+            "target": "$target"
+          }
+        }
+      ]
+    }
+  ]
+}

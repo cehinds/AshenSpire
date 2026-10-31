@@ -86,6 +86,36 @@ test('none and unknown future grammar retain original direct rendering; no surfa
   assert.equal(f.surfaces.length, 0); assert.equal(f.reads.length, 0);
 });
 
+test('immutable repeated frames reuse current pixels without allocating another surface or skipping readback', () => {
+  const f = fixture(), image = {}, filter = 'drop-shadow(0 0 7px #aabbcc) brightness(1.2)';
+  const draw = (source = image, text = filter, x = 128, y = 16, width = 512, height = 512) =>
+    f.renderer.draw(f.target, source, text, x, y, width, height, {immutable:true,materialize:true});
+  draw();
+  const first = f.draws.length;
+  draw();
+  assert.equal(f.draws.length, first + 1, 'only composite the existing aura on an unchanged frame');
+  assert.equal(f.clears.length, 1);
+  assert.equal(f.reads.length, 2, 'both first and reused frames materialize when requested');
+  assert.equal(f.draws.at(-1).filter, 'brightness(1.2)');
+  // A direct draw cannot alter the separate work surface.
+  f.renderer.draw(f.target, {}, 'blur(2px)', 0, 0);
+  draw(); assert.equal(f.clears.length, 1);
+  for (const args of [[{},filter], [image,filter,129], [image,filter,129,17],
+    [image,filter,129,17,511], [image,filter,129,17,511,510], [image,'drop-shadow(0 0 8px #aabbcc)']]) {
+    const before = f.clears.length; draw(...args);
+    assert.equal(f.clears.length, before + 1, 'source, filter and every geometry input invalidate current pixels');
+  }
+  draw();
+  assert.equal(f.surfaces.length, 1, 'the cache owns no additional canvas');
+  // A mutable source must render on every call and replace the old work pixels.
+  const mutable = {};
+  f.renderer.draw(f.target, mutable, filter, 128, 16);
+  const before = f.clears.length;
+  f.renderer.draw(f.target, mutable, filter, 128, 16);
+  assert.equal(f.clears.length, before + 1);
+  draw(); assert.equal(f.clears.length, before + 2);
+});
+
 test('surface reuse and disposal prevent retained pixels or late allocation/painting', () => {
   const f = fixture();
   for (let n = 0; n < 25; n++) f.renderer.draw(f.target, {}, `drop-shadow(0 0 ${n}px #aabbcc)`, 128, 16);
@@ -140,4 +170,49 @@ test('opt-in fixed phase reuse preserves pixels, filter and materialization with
   renderer.draw(visible,image,bright,126.75,9.5,340.25,440,{reuse:true});
   assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
   renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
+});
+
+test('a context whose filter already reads back as the requested value is not assigned again', () => {
+  const f = fixture(), image = {};
+  let writes = 0, stored = 'none', restoring = false;
+  const restore = f.target.restore;
+  f.target.restore = function () { restoring = true; try { restore.call(this); } finally { restoring = false; } };
+  Object.defineProperty(f.target, 'filter', { get: () => stored, set(v) { if (!restoring) writes++; stored = v; }, configurable: true });
+  f.renderer.draw(f.target, image, 'none', 128, 16);
+  assert.equal(writes, 0, 'drawing with the default filter never assigns it (an assignment forces a style flush)');
+  assert.equal(f.draws.at(-1).filter, 'none');
+  f.renderer.draw(f.target, image, 'blur(7px) contrast(1.2)', 128, 16);
+  assert.equal(f.draws.at(-1).filter, 'blur(7px) contrast(1.2)');
+  assert.ok(writes > 0, 'a different filter is still assigned');
+});
+
+test('a still (Effects off) aura rasterizes once per artwork + glow and never reads pixels back', () => {
+  const surfaces = [], draws = [], reads = [];
+  const context = owner => ({
+    filter: 'none', shadowColor: 'transparent', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0,
+    save() {}, restore() {}, clearRect() {},
+    drawImage(...args) { draws.push({ owner, args, blur: this.shadowBlur }); },
+    getImageData() { reads.push(owner); return { data: new Uint8ClampedArray(4) }; },
+  });
+  const renderer = createAlternativeAuraRenderer({ createCanvas() {
+    const canvas = { width: 0, height: 0, getContext: () => context('surface' + surfaces.length) }; surfaces.push(canvas); return canvas;
+  } });
+  const target = context('visible');
+  const image = { name: 'body' }, other = { name: 'pose2' };
+  const glow = auraFilter('ready', 'bulwark', [], false);
+  assert.notEqual(glow, 'none', 'the held stance has a glow to keep');
+  const shadowed = () => draws.filter(d => d.owner !== 'visible' && d.blur > 0).length;
+  for (let frame = 0; frame < 10; frame++) {
+    // the body drifts a little each frame (a lunge); the glow bitmap is only shifted
+    assert.equal(renderer.draw(target, image, glow, 128 + frame, 16, 512, 512, { still: true, materialize: false }), true);
+  }
+  const once = shadowed();
+  assert.ok(once > 0, 'the glow was rasterized');
+  assert.equal(surfaces.length, 1, 'one baked bitmap for ten frames');
+  assert.equal(reads.length, 0, 'no getImageData readback');
+  assert.equal(draws.filter(d => d.owner === 'visible').length, 10, 'each frame is a single blit');
+  renderer.draw(target, other, glow, 128, 16, 512, 512, { still: true });
+  assert.equal(surfaces.length, 2, 'a new pose is a new key');
+  renderer.draw(target, image, glow, 140, 16, 512, 512, { still: true });
+  assert.equal(surfaces.length, 2, 'going back to a known key reuses its bitmap');
 });

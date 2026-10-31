@@ -1,0 +1,3386 @@
+[
+  {
+    "id": "wanderingSoldier",
+    "name": "Wandering_Soldier",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "wanderingSoldier.slash",
+        "name": "Slash",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "slash"
+        }
+      },
+      {
+        "id": "wanderingSoldier.guard",
+        "name": "Guard",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "guard"
+        }
+      },
+      {
+        "id": "wanderingSoldier.warcry",
+        "name": "Warcry",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "warcry"
+        }
+      },
+      {
+        "id": "wanderingSoldier.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "blightHound",
+    "name": "Blight_Hound",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "blightHound.bite",
+        "name": "Bite",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "bite"
+        }
+      },
+      {
+        "id": "blightHound.lunge",
+        "name": "Lunge",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "lunge"
+        }
+      },
+      {
+        "id": "blightHound.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "huskBrute",
+    "name": "Husk_Brute",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "huskBrute.club",
+        "name": "Club",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 15
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "club",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "huskBrute.bellow",
+        "name": "Bellow",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          },
+          {
+            "op": "addCard",
+            "target": "enemy",
+            "card": "slimed"
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bellow"
+        }
+      },
+      {
+        "id": "huskBrute.brace",
+        "name": "Brace",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "brace"
+        }
+      },
+      {
+        "id": "huskBrute.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "graveWisp",
+    "name": "Grave_Wisp",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "graveWisp.curse",
+        "name": "Curse",
+        "copies": 2,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "addCard",
+            "target": "enemy",
+            "card": "dazed"
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "curse"
+        }
+      },
+      {
+        "id": "graveWisp.drain",
+        "name": "Drain",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [
+          "exhaust"
+        ],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "healRules",
+          "legacyMove": "drain"
+        }
+      },
+      {
+        "id": "graveWisp.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "graveWisp.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "wyrmAspirant",
+    "name": "Wyrm_Aspirant",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "wyrmAspirant.consecrate",
+        "name": "Consecrate",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 10,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "consecrate"
+        }
+      },
+      {
+        "id": "wyrmAspirant.halberdSweep",
+        "name": "Halberd_Sweep",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 17
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "halberdSweep"
+        }
+      },
+      {
+        "id": "wyrmAspirant.tailSlam",
+        "name": "Tail_Slam",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "costSource": "stance",
+          "legacyMove": "tailSlam"
+        }
+      },
+      {
+        "id": "wyrmAspirant.goldenGuard",
+        "name": "Golden_Guard",
+        "copies": 1,
+        "sp": 3,
+        "mp": 2,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "goldenGuard"
+        }
+      },
+      {
+        "id": "wyrmAspirant.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "fellWarden",
+    "name": "The_Fell_Warden",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "fellWarden.caneStrike",
+        "name": "Cane_Strike",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "caneStrike"
+        }
+      },
+      {
+        "id": "fellWarden.hammerToss",
+        "name": "Hammer_Toss",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "hammerToss"
+        }
+      },
+      {
+        "id": "fellWarden.heldBlade",
+        "name": "Held_Blade",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 8
+            }
+          },
+          "costSource": "authored",
+          "legacyMove": "heldBlade"
+        }
+      },
+      {
+        "id": "fellWarden.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "fellWarden.twinDaggers",
+        "name": "Twin_Daggers"
+      }
+    ]
+  },
+  {
+    "id": "lanternMoth",
+    "name": "Lantern_Moth",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "lanternMoth.lanternDust",
+        "name": "Lantern_Dust",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "lanternDust"
+        }
+      },
+      {
+        "id": "lanternMoth.wingSparks",
+        "name": "Wing_Sparks",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 65,
+          "costSource": "authored",
+          "legacyMove": "wingSparks",
+          "coreOffense": "card"
+        }
+      },
+      {
+        "id": "lanternMoth.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "lanternMoth.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "briarHermit",
+    "name": "Briar_Hermit",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "briarHermit.rootShelter",
+        "name": "Root_Shelter",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 7
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rootShelter"
+        }
+      },
+      {
+        "id": "briarHermit.briarCast",
+        "name": "Briar_Cast",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 16
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "costSource": "authored",
+          "legacyMove": "briarCast"
+        }
+      },
+      {
+        "id": "briarHermit.sapMend",
+        "name": "Sap_Mend",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [
+          "exhaust"
+        ],
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 5
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "sapMend"
+        }
+      },
+      {
+        "id": "briarHermit.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "chainScavenger",
+    "name": "Chain_Scavenger",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "chainScavenger.hookCast",
+        "name": "Hook_Cast",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 20
+          }
+        ],
+        "hints": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "hookCast"
+        }
+      },
+      {
+        "id": "chainScavenger.chainSnare",
+        "name": "Chain_Snare",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "chainSnare"
+        }
+      },
+      {
+        "id": "chainScavenger.draggingBlow",
+        "name": "Dragging_Blow",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 41
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 3
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "draggingBlow"
+        }
+      },
+      {
+        "id": "chainScavenger.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "chainScavenger.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "bellKeeper",
+    "name": "The_Bell_Keeper",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "bellKeeper.bronzeToll",
+        "name": "Bronze_Toll",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 19
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 6
+            }
+          },
+          "costSource": "authored",
+          "legacyMove": "bronzeToll"
+        }
+      },
+      {
+        "id": "bellKeeper.clapperSwing",
+        "name": "Clapper_Swing",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "clapperSwing"
+        }
+      },
+      {
+        "id": "bellKeeper.muffledPrayer",
+        "name": "Muffled_Prayer",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "muffledPrayer"
+        }
+      },
+      {
+        "id": "bellKeeper.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "bellKeeper.crackedPeal",
+        "name": "Cracked_Peal"
+      }
+    ]
+  },
+  {
+    "id": "thornMatriarch",
+    "name": "The_Thorn_Matriarch",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "thornMatriarch.rootCrown",
+        "name": "Root_Crown",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rootCrown"
+        }
+      },
+      {
+        "id": "thornMatriarch.thornNeedles",
+        "name": "Thorn_Needles",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "thornNeedles"
+        }
+      },
+      {
+        "id": "thornMatriarch.entwiningRoots",
+        "name": "Entwining_Roots",
+        "copies": 2,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 15
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 4
+            }
+          },
+          "costSource": "authored",
+          "legacyMove": "entwiningRoots"
+        }
+      },
+      {
+        "id": "thornMatriarch.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "gildedKnight",
+    "name": "Gilded_Knight",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "gildedKnight.thrust",
+        "name": "Thrust",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "thrust"
+        }
+      },
+      {
+        "id": "gildedKnight.parry",
+        "name": "Parry",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 9
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "parry"
+        }
+      },
+      {
+        "id": "gildedKnight.rally",
+        "name": "Rally",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rally"
+        }
+      },
+      {
+        "id": "gildedKnight.gildedGuard",
+        "name": "Gilded_Guard",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 1,
+          "costSource": "stance",
+          "legacyMove": "gildedGuard"
+        }
+      },
+      {
+        "id": "gildedKnight.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "courtSurgeon",
+    "name": "Court_Surgeon",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "courtSurgeon.scalpel",
+        "name": "Scalpel",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 7
+          },
+          {
+            "op": "addCard",
+            "target": "enemy",
+            "card": "wound"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "scalpel"
+        }
+      },
+      {
+        "id": "courtSurgeon.sedate",
+        "name": "Sedate",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "sedate"
+        }
+      },
+      {
+        "id": "courtSurgeon.stitch",
+        "name": "Stitch",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [
+          "exhaust"
+        ],
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "stitch"
+        }
+      },
+      {
+        "id": "courtSurgeon.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "courtSurgeon.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "stitchedHound",
+    "name": "Stitched_Hound",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "stitchedHound.maul",
+        "name": "Maul",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "maul"
+        }
+      },
+      {
+        "id": "stitchedHound.rend",
+        "name": "Rend",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "rend"
+        }
+      },
+      {
+        "id": "stitchedHound.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "courtMarionette",
+    "name": "Court_Marionette",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "courtMarionette.dart",
+        "name": "Dart",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "dart"
+        }
+      },
+      {
+        "id": "courtMarionette.blowdart",
+        "name": "Blowdart",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "blowdart"
+        }
+      },
+      {
+        "id": "courtMarionette.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "livingArmor",
+    "name": "Living_Armor",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "livingArmor.slam",
+        "name": "Slam",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 10
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "costSource": "stance",
+          "legacyMove": "slam",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "livingArmor.fortify",
+        "name": "Fortify",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "fortify"
+        }
+      },
+      {
+        "id": "livingArmor.crush",
+        "name": "Crush",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "crush",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "livingArmor.rimeCrush",
+        "name": "Rime_Crush",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frost",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rimeCrush",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "livingArmor.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "courtDuelist",
+    "name": "Duelist_of_the_Court",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "courtDuelist.enGarde",
+        "name": "En_Garde",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 10,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "enGarde"
+        }
+      },
+      {
+        "id": "courtDuelist.flurry",
+        "name": "Flurry",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "flurry"
+        }
+      },
+      {
+        "id": "courtDuelist.lunge",
+        "name": "Lunge",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "lunge"
+        }
+      },
+      {
+        "id": "courtDuelist.riposte",
+        "name": "Riposte",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "riposte"
+        }
+      },
+      {
+        "id": "courtDuelist.bindingRiposte",
+        "name": "Binding_Riposte",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4
+          }
+        ],
+        "hints": {
+          "aiWeight": 1,
+          "costSource": "stance",
+          "legacyMove": "bindingRiposte"
+        }
+      },
+      {
+        "id": "courtDuelist.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "stitchedKing",
+    "name": "The_Stitched_King",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "stitchedKing.scepterBlow",
+        "name": "Scepter_Blow",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "scepterBlow"
+        }
+      },
+      {
+        "id": "stitchedKing.graspingHands",
+        "name": "Grasping_Hands",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "graspingHands"
+        }
+      },
+      {
+        "id": "stitchedKing.courtlyDecree",
+        "name": "Courtly_Decree",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 15
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "courtlyDecree"
+        }
+      },
+      {
+        "id": "stitchedKing.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "stitchedKing.thousandHands",
+        "name": "Thousand_Hands"
+      }
+    ]
+  },
+  {
+    "id": "mirrorScribe",
+    "name": "Mirror_Scribe",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "mirrorScribe.silverScript",
+        "name": "Silver_Script",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "addCard",
+            "target": "enemy",
+            "card": "dazed"
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "silverScript"
+        }
+      },
+      {
+        "id": "mirrorScribe.shardVolley",
+        "name": "Shard_Volley",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "shardVolley",
+          "coreOffense": "card"
+        }
+      },
+      {
+        "id": "mirrorScribe.polishedWard",
+        "name": "Polished_Ward",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "polishedWard"
+        }
+      },
+      {
+        "id": "mirrorScribe.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "mirrorScribe.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "stitchCrab",
+    "name": "Stitch_Crab",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "stitchCrab.shellFold",
+        "name": "Shell_Fold",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 11
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "shellFold"
+        }
+      },
+      {
+        "id": "stitchCrab.seamShears",
+        "name": "Seam_Shears",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 4,
+            "hits": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "costSource": "stance",
+          "legacyMove": "seamShears"
+        }
+      },
+      {
+        "id": "stitchCrab.scuttleRush",
+        "name": "Scuttle_Rush",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 13
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "scuttleRush",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "stitchCrab.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "glassRegent",
+    "name": "The_Glass_Regent",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "glassRegent.prismGuard",
+        "name": "Prism_Guard",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 16
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "prismGuard"
+        }
+      },
+      {
+        "id": "glassRegent.crystalRapier",
+        "name": "Crystal_Rapier",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 15
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "crystalRapier"
+        }
+      },
+      {
+        "id": "glassRegent.splinterRain",
+        "name": "Splinter_Rain",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "splinterRain"
+        }
+      },
+      {
+        "id": "glassRegent.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "glassRegent.shatteredCourt",
+        "name": "Shattered_Court"
+      }
+    ]
+  },
+  {
+    "id": "marrowOrganist",
+    "name": "The_Marrow_Organist",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "marrowOrganist.bonePrelude",
+        "name": "Bone_Prelude",
+        "copies": 2,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bonePrelude"
+        }
+      },
+      {
+        "id": "marrowOrganist.ivoryKeys",
+        "name": "Ivory_Keys",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "ivoryKeys"
+        }
+      },
+      {
+        "id": "marrowOrganist.funeralChord",
+        "name": "Funeral_Chord",
+        "copies": 2,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 28
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 5
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "funeralChord"
+        }
+      },
+      {
+        "id": "marrowOrganist.quietRefrain",
+        "name": "Quiet_Refrain",
+        "copies": 1,
+        "sp": 3,
+        "mp": 2,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 12
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "quietRefrain"
+        }
+      },
+      {
+        "id": "marrowOrganist.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "ashRevenant",
+    "name": "Ash_Revenant",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "ashRevenant.cinderSlash",
+        "name": "Cinder_Slash",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12
+          }
+        ],
+        "hints": {
+          "aiWeight": 55,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "cinderSlash"
+        }
+      },
+      {
+        "id": "ashRevenant.reform",
+        "name": "Reform",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [
+          "exhaust"
+        ],
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "reform"
+        }
+      },
+      {
+        "id": "ashRevenant.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "emberStarvedPilgrim",
+    "name": "Ember-Starved_Pilgrim",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "emberStarvedPilgrim.desperateClaw",
+        "name": "Desperate_Claw",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 9
+          }
+        ],
+        "hints": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "desperateClaw"
+        }
+      },
+      {
+        "id": "emberStarvedPilgrim.wail",
+        "name": "Wail",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "frail",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "wail"
+        }
+      },
+      {
+        "id": "emberStarvedPilgrim.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "valkyrieShade",
+    "name": "Valkyrie_Shade",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "valkyrieShade.spiralLance",
+        "name": "Spiral_Lance",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "spiralLance"
+        }
+      },
+      {
+        "id": "valkyrieShade.bloodFeather",
+        "name": "Blood_Feather",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "bloodFeather"
+        }
+      },
+      {
+        "id": "valkyrieShade.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "charredColossus",
+    "name": "Charred_Colossus",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "charredColossus.smash",
+        "name": "Smash",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 16
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "smash",
+          "coreSp": "card"
+        }
+      },
+      {
+        "id": "charredColossus.ashCloud",
+        "name": "Ash_Cloud",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "ashCloud"
+        }
+      },
+      {
+        "id": "charredColossus.harden",
+        "name": "Harden",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "harden"
+        }
+      },
+      {
+        "id": "charredColossus.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "wyrmLord",
+    "name": "Wyrm_Lord",
+    "tier": "elite",
+    "cards": [
+      {
+        "id": "wyrmLord.consecration",
+        "name": "Consecration",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 4
+          }
+        ],
+        "hints": {
+          "aiWeight": 10,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "consecration"
+        }
+      },
+      {
+        "id": "wyrmLord.halberdReign",
+        "name": "Halberd_Reign",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 15
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "halberdReign"
+        }
+      },
+      {
+        "id": "wyrmLord.tailSweep",
+        "name": "Tail_Sweep",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 8
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "costSource": "stance",
+          "legacyMove": "tailSweep"
+        }
+      },
+      {
+        "id": "wyrmLord.goldenBulwark",
+        "name": "Golden_Bulwark",
+        "copies": 1,
+        "sp": 3,
+        "mp": 2,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 16
+          },
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 17
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "goldenBulwark"
+        }
+      },
+      {
+        "id": "wyrmLord.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "blightedValkyrie",
+    "name": "The_Blighted_Valkyrie",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "blightedValkyrie.spiralThrust",
+        "name": "Spiral_Thrust",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "spiralThrust"
+        }
+      },
+      {
+        "id": "blightedValkyrie.whirlwind",
+        "name": "Whirlwind",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 10,
+            "hits": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "whirlwind",
+          "coreOffense": "card"
+        }
+      },
+      {
+        "id": "blightedValkyrie.rotWings",
+        "name": "Rot_Wings",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 10
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rotWings"
+        }
+      },
+      {
+        "id": "blightedValkyrie.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "blightedValkyrie.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "blightedValkyrie.scarletDance",
+        "name": "Scarlet_Dance"
+      }
+    ]
+  },
+  {
+    "id": "cinderMantis",
+    "name": "Cinder_Mantis",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "cinderMantis.scythePair",
+        "name": "Scythe_Pair",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 5,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 55,
+          "costSource": "stance",
+          "legacyMove": "scythePair"
+        }
+      },
+      {
+        "id": "cinderMantis.emberPounce",
+        "name": "Ember_Pounce",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 18
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 2
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "emberPounce"
+        }
+      },
+      {
+        "id": "cinderMantis.foldedBlades",
+        "name": "Folded_Blades",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 8
+          },
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "foldedBlades"
+        }
+      },
+      {
+        "id": "cinderMantis.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "eclipseCantor",
+    "name": "Eclipse_Cantor",
+    "tier": "minion",
+    "cards": [
+      {
+        "id": "eclipseCantor.darkHymn",
+        "name": "Dark_Hymn",
+        "copies": 1,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "darkHymn"
+        }
+      },
+      {
+        "id": "eclipseCantor.lunarRay",
+        "name": "Lunar_Ray",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11
+          }
+        ],
+        "hints": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "lunarRay"
+        }
+      },
+      {
+        "id": "eclipseCantor.fadingEcho",
+        "name": "Fading_Echo",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 6
+          },
+          {
+            "op": "addCard",
+            "target": "enemy",
+            "card": "dazed"
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "fadingEcho"
+        }
+      },
+      {
+        "id": "eclipseCantor.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "eclipseCantor.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "furnaceSaint",
+    "name": "The_Furnace_Saint",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "furnaceSaint.openFurnace",
+        "name": "Open_Furnace",
+        "copies": 2,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 32
+          }
+        ],
+        "hints": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 10
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "openFurnace"
+        }
+      },
+      {
+        "id": "furnaceSaint.censerSweep",
+        "name": "Censer_Sweep",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 22
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "censerSweep"
+        }
+      },
+      {
+        "id": "furnaceSaint.coolingAsh",
+        "name": "Cooling_Ash",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 14
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "coolingAsh"
+        }
+      },
+      {
+        "id": "furnaceSaint.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": []
+  },
+  {
+    "id": "hollowAstronomer",
+    "name": "The_Hollow_Astronomer",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "hollowAstronomer.starChart",
+        "name": "Star_Chart",
+        "copies": 2,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "addCard",
+            "target": "enemy",
+            "card": "dazed"
+          }
+        ],
+        "hints": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "starChart"
+        }
+      },
+      {
+        "id": "hollowAstronomer.orbitalShards",
+        "name": "Orbital_Shards",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 11,
+            "hits": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "orbitalShards",
+          "coreOffense": "card"
+        }
+      },
+      {
+        "id": "hollowAstronomer.totalEclipse",
+        "name": "Total_Eclipse",
+        "copies": 2,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 30
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ],
+        "hints": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 6
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "totalEclipse"
+        }
+      },
+      {
+        "id": "hollowAstronomer.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "hollowAstronomer.fallingHeavens",
+        "name": "Falling_Heavens"
+      }
+    ]
+  },
+  {
+    "id": "ashheartDragon",
+    "name": "The_Ashheart_Dragon",
+    "tier": "boss",
+    "cards": [
+      {
+        "id": "ashheartDragon.obsidianClaws",
+        "name": "Obsidian_Claws",
+        "copies": 3,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "damage",
+            "target": "enemy",
+            "amount": 12,
+            "hits": 2
+          }
+        ],
+        "hints": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "obsidianClaws"
+        }
+      },
+      {
+        "id": "ashheartDragon.tailBastion",
+        "name": "Tail_Bastion",
+        "copies": 2,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 12
+          }
+        ],
+        "hints": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "tailBastion"
+        }
+      },
+      {
+        "id": "ashheartDragon.heartRumble",
+        "name": "Heart_Rumble",
+        "copies": 2,
+        "sp": 1,
+        "mp": 1,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 1
+          }
+        ],
+        "hints": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "heartRumble"
+        }
+      },
+      {
+        "id": "ashheartDragon.advance",
+        "name": "Advance",
+        "copies": 1,
+        "sp": 1,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
+        }
+      },
+      {
+        "id": "ashheartDragon.retreat",
+        "name": "Retreat",
+        "copies": 1,
+        "sp": 2,
+        "mp": 0,
+        "keywords": [],
+        "effects": [
+          {
+            "op": "moveEngagement",
+            "target": "enemy"
+          }
+        ],
+        "hints": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "retreat"
+        }
+      }
+    ],
+    "unlockCards": [
+      {
+        "id": "ashheartDragon.ashBreath",
+        "name": "Ash_Breath"
+      }
+    ]
+  }
+]

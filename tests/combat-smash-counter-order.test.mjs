@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
@@ -18,7 +20,7 @@ function fight({ coop = false, wardOnly = false, block = 3, poiseMax = 3, poiseG
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
     enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
   });
-  const player = { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+  const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] };
   const options = { registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
     ...(foundation ? { ruleset: combatRules, combatProfiles: { player: { sources: { mainHand: {
@@ -37,7 +39,7 @@ function fight({ coop = false, wardOnly = false, block = 3, poiseMax = 3, poiseG
     : dispatch(c, { type: 'playCard', cardInstanceId: 'smash1', targetId: enemy.id }) };
 }
 
-for (const coop of [false, true]) {
+for (const coop of COOP_MODES) {
   const mode = coop ? 'co-op' : 'solo';
   test(`${mode} same fully guarded Smash breaks Poise before Counter Health or listed Poise reply`, () => {
     const { c, enemy, actor, play } = fight({ coop });
@@ -93,7 +95,7 @@ test('foundation protected Poise prevents same-hit Smash interruption and preser
 });
 
 test('rating and single-meter breaks also interrupt the same-hit Smash reply in solo and co-op', () => {
-  for (const coop of [false, true]) for (const breakMeterVersion of [0, 1]) {
+  for (const coop of COOP_MODES) for (const breakMeterVersion of [0, 1]) {
     const { c, enemy, actor, play } = fight({ coop });
     c.ratingsRules = resolveCombatRatings({}, legacyContentBundle);
     c.breakMeterVersion = breakMeterVersion;

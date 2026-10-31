@@ -1,15 +1,27 @@
+import { mobileFloorLayer } from './models/MobileFloorModel.js';
+import { uiConfig } from '../config/generated/ui.js';
 import { alternativeArtCatalog } from './alternativeArtCatalog.js';
 import { assetUrl } from './assetmap.js';
 import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
 import { classicAppearance } from './displayAppearance.js';
 import { reducedMotionRequested } from './motion.js';
+import { displaySceneryTier } from './artTier.js';
+import { ART_SOURCE_EVENT } from './highResArt.js';
+import { isWideFormFactor } from './models/FormFactorModel.js';
 
 /* ALTERNATIVE_ART_START */
 const alternativeArtMap = {};
 /* ALTERNATIVE_ART_END */
 export const alternativeArtUrl = path => alternativeArtMap[path] || assetUrl(path);
 const phoneArt = () => typeof document !== 'undefined' && document.documentElement.dataset.layout === 'narrow';
+
+// Scenery detail changes the image source, never its authored canvas or framing.
+function sceneArtPath(art, narrow = phoneArt()) {
+  const factor = globalThis.document?.documentElement?.dataset.formFactor;
+  const desktop = !narrow && (!factor || isWideFormFactor(factor));
+  return art[desktop && displaySceneryTier() === 'high' ? 'path' : 'mobilePath'];
+}
 
 // Dedicated canonical appearances win over legacy painted-rig aliases. Shared
 // armor keeps the package's explicit visual-class mapping until dedicated art lands.
@@ -56,7 +68,7 @@ export function alternativeSprite(id, side = 'enemy') {
     // Keep the frame and authored crop in place while the failed image is
     // absent. Retry restores this same responsive picture at its newly resolved URLs.
     const placeholder = document.createElement('span');
-    placeholder.textContent = side === 'player' ? '⚔' : '☠';
+    placeholder.textContent = side === 'player' ? 'Player' : 'Enemy';
     placeholder.setAttribute('role', 'img');
     placeholder.setAttribute('aria-label', art.name);
     placeholder.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'
@@ -94,7 +106,7 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   const device = scene.devices[mobile ? 'phone' : 'desktop'];
   return `<div class="backdrop alternative-backdrop" data-region="${scene.region}" data-scene="${sceneId}" aria-hidden="true">
     <svg class="alternative-scene" viewBox="0 0 ${device.width} ${device.height}" focusable="false">
-      ${combatSceneLayers(device).map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(alternativeArtCatalog.sceneLayers[layer.id][mobile ? 'mobilePath' : 'path'])}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
+      ${combatSceneLayers(device).map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], mobile))}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
     </svg></div>${alternativeCardFadeHtml()}`;
 }
 
@@ -109,14 +121,20 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, zoom = 1 }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
+  if (backdrop) {
+    delete backdrop.dataset.mobileFloorPaintTop;
+    delete backdrop.dataset.mobileFloorShadowTop;
+  }
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
   if (!scene || width <= 0 || height <= 0) return;
   const key = narrow ? 'phone' : 'desktop';
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
-  const scale = Math.max(width / device.width, height / device.height);
+  const framing = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.scene;
+  const previewTop = narrow ? fieldTop * .5 : combat.clientHeight * framing.topHeightFraction;
+  const scale = Math.max(width / device.width, (coverFloor ? fieldTop + height - previewTop : height) / device.height);
   // Combat follows the fitted enemies while keeping the floor canvas beneath
   // the entire battlefield; moving it farther up exposes its lower edge.
   // Other callers (dialogue) keep their own floor line.
@@ -129,18 +147,32 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     ? Math.max(framed, height - (1 - device.groundAnchor) * device.height * scale) : framed;
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
-    : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
+    : coverFloor ? previewTop : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;
   [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
-    const layer = combatSceneLayers(device)[index];
+    let layer = combatSceneLayers(device)[index];
+    if (coverFloor && Number.isFinite(floorShadowTop)) {
+      const floor = framing.mobileFloor;
+      const paintStart = floor.paintStarts[layer.id];
+      if (paintStart) {
+        group.style.transform = '';
+        const maximumPaintTop = (floorShadowTop - top - floor.shadowClearancePx / zoom) / scale;
+        // Continue only the authored ground behind the hand to the footer;
+        // its painted horizon remains constrained by the back-row shadows.
+        const minimumBottom = (combat.clientHeight - top) / scale;
+        layer = mobileFloorLayer(layer, { paintStart, maximumPaintTop, minimumBottom });
+        backdrop.dataset.mobileFloorPaintTop = String((top + (layer.y + layer.height * paintStart) * scale) * zoom);
+        backdrop.dataset.mobileFloorShadowTop = String(floorShadowTop * zoom);
+      }
+    }
     const art = alternativeArtCatalog.sceneLayers[layer.id];
     const image = group.firstElementChild;
     group.dataset.depth = String(layer.depth);
     image.dataset.layer = layer.id;
     for (const prop of ['x', 'y', 'width', 'height']) image.setAttribute(prop, layer[prop]);
-    const href = alternativeArtUrl(narrow ? art.mobilePath : art.path);
+    const href = alternativeArtUrl(sceneArtPath(art, narrow));
     if (image.getAttribute('href') !== href) image.setAttribute('href', href);
     group.style.visibility = ['far', 'landmark'].includes(art.kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : '';
   });
@@ -155,15 +187,30 @@ export function wireAlternativeBackdrop(combat) {
   const move = event => {
     // The in-game Reduced motion setting counts as much as the OS preference.
     const off = reducedMotionRequested() || document.documentElement.dataset.ambient === 'off' || event.pointerType === 'touch';
+    if (off) { reset(); return; }
     const bounds = combat.getBoundingClientRect();
-    const x = off ? 0 : (event.clientX - bounds.left) / bounds.width * 2 - 1;
-    const y = off ? 0 : (event.clientY - bounds.top) / bounds.height * 2 - 1;
+    const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
+    const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
     for (const layer of layers) {
-      const depth = Number(layer.dataset.depth);
+      const id = layer.firstElementChild?.dataset.layer;
+      const groundedFloor = combat.querySelector('.alternative-backdrop')?.dataset.mobileFloorPaintTop !== undefined
+        && alternativeArtCatalog.sceneLayers[id]?.kind === 'ground';
+      const depth = groundedFloor ? 0 : Number(layer.dataset.depth);
       layer.style.transform = `translate(${x * depth * 9}px,${y * depth * 3}px)`;
     }
   };
-  const reset = () => layers.forEach(layer => { layer.style.transform = ''; });
+  const reset = () => layers.forEach(layer => { if (layer.style.transform) layer.style.transform = ''; });
+  const refreshSources = () => {
+    const narrow = combat.querySelector('.alternative-backdrop')?.dataset.device === 'phone' || phoneArt();
+    for (const layer of layers) {
+      const image = layer.firstElementChild;
+      const art = alternativeArtCatalog.sceneLayers[image?.dataset.layer];
+      if (!art) continue;
+      const href = alternativeArtUrl(sceneArtPath(art, narrow));
+      if (image.getAttribute('href') !== href) image.setAttribute('href', href);
+    }
+  };
+  document.addEventListener?.(ART_SOURCE_EVENT, refreshSources);
   combat.addEventListener('pointermove', move);
   combat.addEventListener('pointerleave', reset);
   reduced.addEventListener('change', reset);
@@ -172,5 +219,5 @@ export function wireAlternativeBackdrop(combat) {
   const setting = typeof MutationObserver === 'function'
     ? new MutationObserver(() => { if (reducedMotionRequested()) reset(); }) : null;
   setting?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  return () => { combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); setting?.disconnect(); };
+  return () => { document.removeEventListener?.(ART_SOURCE_EVENT, refreshSources); combat.removeEventListener('pointermove', move); combat.removeEventListener('pointerleave', reset); reduced.removeEventListener('change', reset); setting?.disconnect(); };
 }

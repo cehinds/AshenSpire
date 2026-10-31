@@ -66,4 +66,4 @@ Nominal box **320×448px**; all sizes preserve 5:7. Visible regions: `art`, `typ
 | armoury | glance | add type | 1:4:4 |
 | combat | focus | drop footer | 1:4:4 |
 
-[Visual anatomy of all three current levels](../mockups/card-anatomy.svg). Art proposals should keep this shell and change only the content of the art well.
+[Visual anatomy of all three current levels](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/docs/mockups/card-anatomy.svg). Art proposals should keep this shell and change only the content of the art well.

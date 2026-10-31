@@ -1,8 +1,9 @@
+import { engravedIcon } from './engravedIcon.js';
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
 // The in-run overlay is intentionally narrow: Settings and Controls only.
 // Deck, Stats, equipment, relics, and flasks live in Armoury. Opened from a button or hotkey on the map and
-// in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
+// in combat; combat is turn-based, so it needs no real "pause". Esc / the close /
 // clicking the veil closes it.
 
 import { blocker } from '../kit/index.js';
@@ -11,11 +12,12 @@ import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
-import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
+import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction, lockEquipmentRows } from './quicknav.js';
+import { openConsoleLog } from '../debuglog.js';
 import { statProjection } from '../../model/statProjection.js';
 import { characterLevelOf } from '../../model/state.js';
 import { closeFlaskActionMenu } from './flask.js';
-import { topVeil } from './veil.js';
+import { topVeil, OVERLAY_CLOSED_EVENT } from './veil.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
 import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 import { registerModal } from '../modalState.js';
@@ -44,6 +46,7 @@ let unregisterOverlay = null;
 const PANELS = {
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
+    gameProfile: ctx.gameProfile,
     previewAttributes: ctx.run?.attributes,
     previewLevel: ctx.run ? characterLevelOf(ctx.run) : null,
     previewClassId: ctx.run?.class || null,
@@ -107,6 +110,8 @@ export function closeOverlay() {
     openVeil = null;
     closeQuickNav(); // the mirrored list has nothing behind it any more
     setTabRing(null); // the bumpers go back to their global bindings
+    // Settings may have changed behind the screen; a screen that mirrors one (the combat footer's Auto switch) repaints.
+    window.dispatchEvent(new CustomEvent(OVERLAY_CLOSED_EVENT));
   }
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
@@ -119,7 +124,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings', gameProfile = null, editLocked = null }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
@@ -161,7 +166,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
+    onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, gameProfile,
   };
 
   // The body is shared, but the marker and scroll offset belong to one render.
@@ -232,8 +237,8 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // The quick-nav list, mirrored (A) or folded-into (B). Both open the SAME list
   // over the SAME table; only which control opens it differs, which is the whole
   // difference between the two variants at this one screen.
-  const openHere = (anchor) =>
-    openQuickNav(anchor, 'overlay', {
+  const openHere = (anchor) => {
+    const panel = openQuickNav(anchor, 'overlay', {
       counts: { deck: run.deck.length },
       current: currentTab,
       hasSave,
@@ -254,11 +259,15 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         tab: (id) => selectTab(id),
         ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
         ...(onLoad ? { load: () => { const loaded = onLoad({ returnFocusElement: anchor }); if (loaded) closeOverlay(); return loaded; } } : {}),
+        console: () => { openConsoleLog({ opener: anchor }); },
         ...(onSave ? { save: saveAction(onSave) } : {}),
         ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
         ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),
       },
     });
+    if (editLocked?.()) lockEquipmentRows(panel);
+    return panel;
+  };
   const overlayHead = veil.querySelector('.overlay-head');
   const syncQuickLauncher = () => {
     if (!overlayHead) return;
@@ -284,7 +293,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       quickButton.className = 'subtle';
       quickButton.id = 'ov-quicknav';
       quickButton.title = 'Go to…';
-      quickButton.textContent = '☰';
+      quickButton.replaceChildren(engravedIcon('menu') || 'Menu');
       actions?.prepend(quickButton);
     } else if (quickNavMode() !== 'mirror') {
       quickButton?.remove();

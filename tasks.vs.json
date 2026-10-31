@@ -1,0 +1,125 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskLabel": "AshenSpire: Play",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm start"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Serve without opening a browser",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run serve"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Fast core tests",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm test"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Full Node test suite",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run test:all"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Compile authored content",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/content-build.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Build standalone",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run build:standalone"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Start Workbench",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node workbench/server.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Editor tests",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm --prefix editor test"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check authored content",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/content-build.mjs --check"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Compile presentation configuration",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/config-build.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check presentation configuration",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run validate:config"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check named icon vocabulary",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node --test tests/ui-icons.test.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Compile Core game profiles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/game-config.mjs build"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check Core game profiles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/game-config.mjs check"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Build game artifact",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/build-game.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    }
+  ]
+}

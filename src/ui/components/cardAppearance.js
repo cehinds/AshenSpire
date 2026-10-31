@@ -5,6 +5,7 @@ function imageNode(href,fit){const img=document.createElement('img');img.src=ass
 function paint(node,visual){
   if(!node||!visual)return;
   node.querySelectorAll(':scope > [data-card-decoration]').forEach(n=>n.remove());
+  delete node.dataset.cardDecorated;
   const badge=node.querySelector(':scope > .card-tag-count');
   const isSvg=node.tagName.toLowerCase()==='svg';
   if(visual.href){
@@ -18,7 +19,7 @@ function paint(node,visual){
   if(badge && badge.parentNode!==node)node.append(badge);
   Object.assign(node.style,visual.style||{});
   if(visual.visible===false)node.style.visibility='hidden';
-  if(!visual.href)for(const d of visual.decorations||[]){const child=document.createElement('span');child.setAttribute('aria-hidden','true');child.dataset.cardDecoration='true';Object.assign(child.style,d.style);node.append(child);}
+  if(!visual.href)for(const d of visual.decorations||[]){const child=document.createElement('span');child.setAttribute('aria-hidden','true');child.dataset.cardDecoration='true';Object.assign(child.style,d.style);node.append(child);node.dataset.cardDecorated='true';}
 }
 export function applyCardAppearance(face,doc=cardLayoutDocument(face.dataset.cardLayoutId)){
   const nodes=cardPartNodes(face);

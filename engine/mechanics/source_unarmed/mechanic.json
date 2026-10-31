@@ -1,0 +1,27 @@
+{
+  "id": "source_unarmed",
+  "tag": "source:unarmed",
+  "version": "1.0.0",
+  "family": "source",
+  "label": "Unarmed",
+  "description": "Categorized Unarmed identity; effects are authored separately.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "source_unarmed",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/skillXp.js",
+    "symbol": "recordSkillXp"
+  }
+}

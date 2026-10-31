@@ -25,7 +25,16 @@ export function mountMapDetail(port, surface, source) {
   const art = MAP_ART[source], base = surface?.querySelector('image');
   if (!art || !base) return () => {};
   const svg = base.ownerSVGElement, ns = 'http://www.w3.org/2000/svg';
-  const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); surface.append(tiles);
+  // Match the fallback's uniform cover fit; tile coordinates remain in the
+  // painting's own aspect ratio rather than being stretched to the route board.
+  const paintingBox = () => {
+    const width = Number(base.getAttribute('width')), height = Number(base.getAttribute('height'));
+    const source = art.levels.at(-1);
+    const scale = Math.max(width / source.width, height / source.height);
+    const w = source.width * scale, h = source.height * scale;
+    return { width: w, height: h, x: (width - w) / 2, y: (height - h) / 2 };
+  };
+  const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); (base.parentNode || surface).append(tiles); // beside the base image, inside any framing transform it carries
   const cache = new Map(), failed = new Set(), pending = new Set();
   const loading = new Set(); // the Image of each tile in flight, dropped on dispose
   let generation = 0; // bumped when the art source changes
@@ -54,7 +63,8 @@ export function mountMapDetail(port, surface, source) {
   const setData = (name, value) => { if (port.dataset[name] !== value) port.dataset[name] = value; };
   function paint() {
     if (disposed || !desired.length || desired.some(t => !cache.has(t.key) && !failed.has(t.key))) return;
-    const width = Number(base.getAttribute('width')), height = Number(base.getAttribute('height'));
+    const { width, height, x, y } = paintingBox();
+    tiles.setAttribute('transform', `translate(${(Number(base.getAttribute('x')) || 0) + x} ${(Number(base.getAttribute('y')) || 0) + y})`);
     // The base image's size places every tile; if it changed, place them again.
     if (drawnSize !== `${width}x${height}`) { drawnSize = `${width}x${height}`; for (const image of drawn.values()) image.remove(); drawn.clear(); }
     const shown = desired.filter(t=>cache.has(t.key));
@@ -112,7 +122,12 @@ export function mountMapDetail(port, surface, source) {
   }
   function update() {
     frame = 0; if (disposed || !base.isConnected) return;
-    const rect = base.getBoundingClientRect(), view = port.getBoundingClientRect();
+    const frameRect = base.getBoundingClientRect(), view = port.getBoundingClientRect();
+    const box = paintingBox();
+    const sx = frameRect.width / Number(base.getAttribute('width'));
+    const sy = frameRect.height / Number(base.getAttribute('height'));
+    const rect = { left: frameRect.left + box.x * sx, top: frameRect.top + box.y * sy,
+      width: box.width * sx, height: box.height * sy };
     if (!rect.width || !rect.height) return;
     // Keep engraving fine even when the underlying world is many screens wide.
     const matrix = base.getScreenCTM();
@@ -123,7 +138,14 @@ export function mountMapDetail(port, surface, source) {
       for (const pattern of svg.querySelectorAll('.map-paper-pattern')) if (pattern.getAttribute('patternTransform') !== scale) pattern.setAttribute('patternTransform', scale);
     }
     level = detailLevel(art.levels,rect.width,rect.height,devicePixelRatio,level);
-    desired = visibleTiles(level,{x0:(view.left-rect.left)/rect.width,y0:(view.top-rect.top)/rect.height,x1:(view.right-rect.left)/rect.width,y1:(view.bottom-rect.top)/rect.height});
+    // A mirrored painting (biome framing, mapPaintingFrame.js) is addressed in
+    // the tiles' own, unmirrored coordinates.
+    const mirror = base.parentNode?.dataset || {};
+    let fx0 = (view.left-rect.left)/rect.width, fx1 = (view.right-rect.left)/rect.width;
+    let fy0 = (view.top-rect.top)/rect.height, fy1 = (view.bottom-rect.top)/rect.height;
+    if (mirror.flipX === '1') [fx0, fx1] = [1 - fx1, 1 - fx0];
+    if (mirror.flipY === '1') [fy0, fy1] = [1 - fy1, 1 - fy0];
+    desired = visibleTiles(level,{x0:fx0,y0:fy0,x1:fx1,y1:fy1});
     setData('detailRequested', String(level.edge));
     // Only the small visible set is requested, even at Fit. `cache` only
     // records which tiles have loaded (policy.cacheTiles bounds it); the

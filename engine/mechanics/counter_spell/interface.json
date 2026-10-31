@@ -1,0 +1,8 @@
+{
+  "mechanic": "counter_spell",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

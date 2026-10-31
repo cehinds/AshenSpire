@@ -1,0 +1,29 @@
+{
+  "id": "fx_heal",
+  "tag": "fx:heal",
+  "version": "1.0.0",
+  "family": "fx",
+  "label": "Heal",
+  "description": "Restores HP.",
+  "attaches": [
+    "card",
+    "character"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "fx_heal",
+    "color": "9FC3E8"
+  },
+  "portability": "portable",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "runOpcode"
+  },
+  "authored": true
+}

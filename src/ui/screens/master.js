@@ -40,8 +40,8 @@ import {
 } from '../../model/master.js';
 
 const GLYPH = Object.freeze({
-  skillBooks: '📖', weaponArts: '✧', armaments: '⚔', training: '⚒', respec: '↺',
-  lesson: '✎', appraisal: '◎', redistribute: '⇄', sell: '◆',
+  skillBooks: 'quest', weaponArts: 'vulnerable', armaments: 'attack', training: 'smith', respec: '↺',
+  lesson: 'quest', appraisal: 'target', redistribute: '⇄', sell: 'skill',
 });
 // An element id for a track id (`item:magic-focus` → `item-magic-focus`).
 const slug = (id) => String(id).replace(/[^a-z0-9]/gi, '-');
@@ -216,7 +216,7 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
     const categories = [...shopStockOfferings(stock).filter((key) => SHELVES[key]), ...(sellOn() ? ['sell'] : [])];
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
-      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
+      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
       <div class="screen room-screen shop-workspace master-workspace" data-wireframe="W1d" data-shop-kind="master">
         <div class="shop-frame">
           <div class="as-railed shop-railed">

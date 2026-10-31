@@ -1,0 +1,23 @@
+{
+  "id": "route",
+  "kind": "route",
+  "label": "Route",
+  "description": "An edge between adjacent floors. Walkers step -1, 0 or +1 column; edges merge and never cross.",
+  "icon": "route-line",
+  "placement": {
+    "stepColumns": [
+      -1,
+      0,
+      1
+    ],
+    "noCross": true,
+    "entries": 1,
+    "source": "src/engine/mapgen.js:123; content/source/mapActShape.json:5"
+  },
+  "assets": [
+    "route-line"
+  ],
+  "tags": [
+    "path"
+  ]
+}

@@ -11,7 +11,9 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / 'pose-studio/renewal'
+from art_authoring import authoring_root, art_path
+ART = authoring_root(ROOT)
+BASE = ART / 'pose-studio/renewal'
 CLASSES = {'reaver': 'Sword', 'rogue': 'Twin daggers', 'starseer': 'Staff', 'herald': 'Sword and shield'}
 ACTIONS = ['attack', 'defense', 'power']
 ATTACK = [
@@ -148,7 +150,7 @@ def build(only=None):
                                  'layer': 'front', 'travel': False, 'muted': False}]
             for i in range(1, 7):
                 key = f'assets/combat-effects/{effect}{i}.webp'
-                project['assets'][key] = uri(ROOT / key.replace('assets/', 'assets-mobile/', 1))
+                project['assets'][key] = uri(art_path(ROOT, key.replace('assets/', 'assets-mobile/', 1), ART))
             write_json(out / f'base-{action}.pose.json', project, True)
         rig['queues']['review'] = {'id': 'review', 'name': 'Three base actions', 'items': [
             {'id': 'queue-'+a, 'animationId': a, 'repeats': 1, 'pause': 600} for a in ACTIONS]}

@@ -24,17 +24,21 @@ ok(/onHoldStart:\s*\(\)\s*=>\s*\{\s*el\.dispatchEvent\(new CustomEvent\('cardhol
   'starting the visible hold preserves the shared card-selection signal without arming combat early');
 
 const completion = hold?.[1].match(/onConfirm:\s*\(\)\s*=>\s*\{([\s\S]*)\n      \},?/)?.[1] || '';
-ok(/if \(pv\.needsTarget\) \{\s*select\(\);\s*focusTargeting\(\);\s*return;\s*\}/.test(completion),
-  'a completed hold on a single-target card arms the existing target-selection flow');
-ok(!/dragTargetMode === 'all'/.test(completion),
-  'a card that sweeps every enemy has no target to choose, so its completed hold plays it');
-ok(/playCard\(inst\.instanceId, null\);/.test(completion),
-  'a completed hold on an untargeted card retains direct play');
+ok(/\n\s*select\(\);\s*if \(pv\.needsTarget\) focusTargeting\(\);\s*$/.test(completion),
+  'a completed hold SELECTS any card (and starts the target choice for a single-target one) (owner, 2026-10-18)');
+ok(!/oneTapOn\(\)/.test(completion),
+  'and does so whatever the oneTapPlay setting says');
+ok(!/playCard\(/.test(completion),
+  'a completed hold never plays a card: a tap does, or the next tap on the selected card with one-tap play off');
 ok(!/confirm\(\)/.test(completion),
   'the completed hold does not reuse the old same-press confirm path');
 
-ok(/const tap = \(\) => \{[\s\S]*?if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/.test(wire?.[1] || ''),
-  'the existing tap-to-select route remains present');
+ok(/const tap = \(\) => \{[\s\S]*?if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/.test(wire?.[1] || ''),
+  'the tap-to-select route remains for an ambiguous target; an unambiguous play goes through oneTapPlays (owner, 2026-10-18)');
+ok(/const playIsUnambiguous = \(\) => !pv\.needsTarget\s*\|\|\s*combat\.enemies\.filter\(enemy => enemy\.alive\)\.length === 1;/.test(wire?.[1] || ''),
+  'a play is unambiguous for a no-target card (self or all-enemy; needsTarget is false for a sweep) or exactly one living enemy');
+ok(/const confirm = \(\) => \{[\s\S]*?\{ select\(\); return; \}\s*play\(\);/.test(wire?.[1] || ''),
+  'the second tap of the select-then-confirm flow still plays through the same play()');
 // The drop decision lives in finishCardDrag (src/ui/cardDragEnd.js, #1298);
 // combat.js hands it the drop plan and the play of THIS card.
 const dragEnd = strip(readFileSync(new URL('../src/ui/cardDragEnd.js', import.meta.url), 'utf8'));

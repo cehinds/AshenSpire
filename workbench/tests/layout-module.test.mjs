@@ -71,10 +71,10 @@ test('dragging a band\'s bottom edge maps back to the band percents', () => {
   // Shrink the battlefield by 10 px from its bottom: the scene's bottom edge moves up.
   const items = doc.items.map((it) => (it.id === 'band.scene' ? { ...it, h: it.h - 10 } : it));
   const next = C.applyCanvasEdits({ data: f.data, regions: v.regions, items, viewport: vp, grid: settings.grid });
-  // 10 px of 800 is 1.25%; the scene goes 55 → 54 on the 1% step, the context takes the rest.
-  assert.equal(M.getPath(next, 'sizing.bands.scene'), 54);
-  assert.equal(M.getPath(next, 'sizing.bands.context'), 31);
-  assert.equal(M.getPath(next, 'sizing.bands.hud'), 10, 'other bands are unchanged');
+  // 10 px of 800 is 1.25%; the scene goes 61 → 60 on the 1% step, the context takes the rest.
+  assert.equal(M.getPath(next, 'sizing.bands.scene'), 60);
+  assert.equal(M.getPath(next, 'sizing.bands.context'), 21);
+  assert.equal(M.getPath(next, 'sizing.bands.hud'), 6, 'other bands are unchanged');
   const sum = Object.values(M.getPath(next, 'sizing.bands')).reduce((a, b) => a + b, 0);
   assert.equal(sum, 100, 'the percents still sum to 100');
   assert.deepEqual(f.data, JSON.parse(f.original), 'the input file data is not mutated');
@@ -90,8 +90,8 @@ test('moving band.scene sideways and down maps to no config change, and says the
   const report = C.canvasEditReport({ data: f.data, regions: v.regions, items: moved, viewport: vp, grid: settings.grid });
   assert.equal(report.data, f.data, 'a pure move leaves the data as it was: the same object comes back');
   assert.deepEqual(report.notes, [{ id: 'band.scene', label: v.regions.find((r) => r.id === 'band.scene').label, outcome: 'move' }]);
-  assert.equal(M.getPath(report.data, 'sizing.bands.scene'), 55, 'the scene keeps its 55%');
-  assert.equal(M.getPath(report.data, 'sizing.bands.context'), 30, 'the context keeps its 30%');
+  assert.equal(M.getPath(report.data, 'sizing.bands.scene'), 61, 'the scene keeps its authored share');
+  assert.equal(M.getPath(report.data, 'sizing.bands.context'), 20, 'the context keeps its authored share');
 });
 
 test('resizing band.scene\'s bottom edge maps to the bands change and no note', () => {
@@ -102,7 +102,7 @@ test('resizing band.scene\'s bottom edge maps to the bands change and no note', 
   const doc = C.canvasDocFor(vp, v.regions);
   const resized = doc.items.map((it) => (it.id === 'band.scene' ? { ...it, h: it.h + 40 } : it));
   const report = C.canvasEditReport({ data: f.data, regions: v.regions, items: resized, viewport: vp, grid: settings.grid });
-  assert.notEqual(M.getPath(report.data, 'sizing.bands.scene'), 55, 'the bottom edge drives the scene percent');
+  assert.notEqual(M.getPath(report.data, 'sizing.bands.scene'), 49, 'the bottom edge drives the scene percent');
   assert.deepEqual(report.notes, []);
 });
 

@@ -6,7 +6,7 @@ Research date: 2026-10-11, America/Anchorage. Initial pilot: **ten NEW held/read
 
 Use the existing Reaver: rusty plate, closed helmet, continuous crimson cape, the same long greatsword with **two separated hands on one hilt**. Camera remains **rear three-quarter, behind LEFT shoulder, facing screen RIGHT**. No front-facing panel, new equipment, spell aura, or weapon-scale change. Keep complete boots, cape, sword tip, guard, and pommel inside each cell.
 
-Directly visually inspected local sources: [Sheet A](../../../pose-studio/stances/update-stances/greatsword-smash/sheet-a.png) and [Sheet B](../../../pose-studio/stances/update-stances/greatsword-smash/sheet-b.png). These are body/pose observations, not alpha conclusions; any transparency review still requires compositing.
+Directly visually inspected local sources: [Sheet A](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-smash/sheet-a.png) and [Sheet B](https://raw.githubusercontent.com/cehinds/AI-Art/59663d814b62ab96cb5309b4e0720cd871782ee1/pose-studio/stances/update-stances/greatsword-smash/sheet-b.png). These are body/pose observations, not alpha conclusions; any transparency review still requires compositing.
 
 | Existing selection supplied by parent | Actual local visual observation | New-option concern |
 | --- | --- | --- |

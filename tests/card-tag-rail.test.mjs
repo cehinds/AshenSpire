@@ -139,3 +139,12 @@ test('boolean traits show no count while numeric traits keep their value',()=>{
   assert.match(counterHtml,/aria-label="Counterstrike"/);
   assert.match(cardTagRailHtml([flux]),/aria-label="Flux 2"/);
 });
+
+test('skills and powers use public category symbols instead of the physical camp', () => {
+  for (const type of ['skill','power']) {
+    const rows = cardSideTags(model('camp:physical'), {type,effects:[{op:'applyStatus',status:'strength',stacks:2}]},reg);
+    assert.equal(rows[0].id,'category:'+type);
+    assert.ok(!rows.some(row=>row.id==='camp:physical'));
+  }
+  assert.equal(cardSideTags(model('camp:spell'),{type:'skill'},reg)[0].id,'camp:spell');
+});

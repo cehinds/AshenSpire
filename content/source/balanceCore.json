@@ -1,0 +1,53 @@
+{
+  "energy": 3,
+  "draw": 5,
+  "flaskCapacity": 3,
+  "flaskGrowth": [
+    { "source": "relic", "id": "goldenSprout", "kind": "hp", "amount": 1 },
+    { "source": "relic", "id": "brimmingGourd", "kind": "hp", "amount": 1 }
+  ],
+  "flaskSlots": 3,
+  "startingCinders": 20,
+  "startingDeckSize": 11,
+  "level": {
+    "xp": {
+      "base": 200,
+      "linear": false,
+      "multScaler": 1.3,
+      "growth": 1.303,
+      "roundTo": 10,
+      "$note": {
+        "base": "Character XP for the first step and the base used for later increases.",
+        "linear": "Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).",
+        "multScaler": "Linear increase per character level as a multiple of the base, used only when the linear curve is on. At base 100 and scaler 1.3: 100, 230, 360 XP.",
+        "growth": "Exponential character-step growth, used only when the linear curve is off.",
+        "roundTo": "The character level curve: every step cost is rounded to a multiple of this."
+      }
+    },
+    "maxLevelsPerFight": 0,
+    "$note": {
+      "maxLevelsPerFight": "The most character levels one fight or quest can raise you; 0 is no cap. XP past the cap is lost, leaving you just short of the next level."
+    }
+  },
+  "graceRefill": [],
+  "graceRefillAtRunStart": true,
+  "$note": {
+    "energy": {
+      "text": "The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Stats → Actions is where they are set. It survives because the engine still spells actions \"energy\" — that rename is its own piece of work.",
+      "inert": true
+    },
+    "draw": {
+      "text": "The authored cards drawn each turn, and nothing reads it: a run derives Draw from its Draw / turn stat row, and Stats → Draw & hand is where it is set.",
+      "inert": true
+    },
+    "flaskCapacity": "Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class's HP and Mana flasks (Progression › the class) must add up to it; if they do not, the whole Advanced configuration is set aside and authored defaults are used.",
+    "flaskSlots": "Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.",
+    "startingCinders": "Cinders a new run opens with.",
+    "startingDeckSize": "How many cards a new character's deck holds, the class ability and signature included.",
+    "graceRefillAtRunStart": {
+      "text": "A retired flag: it once refilled flask charges the moment a run started, as though a grace had already been touched. Nothing reads it now.",
+      "inert": true
+    },
+    "flaskGrowth.{i}.amount": "How many extra {flaskKind} flask charges carrying {carrier} adds to the run's capacity."
+  }
+}

@@ -143,18 +143,22 @@ on:
     inputs:
       keep:
         description: newest builds to publish per branch
-        default: '10'
+        default: '5'
       publish:
         description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
         default: ''
 
 concurrency:
-  # A workflow_run whose jobs all skip (the same clause the jobs' `if:` use is false) is still
-  # a queued run when it arrives. In `pages-builds` it would supersede a PENDING publication
-  # (a newer arrival replaces a queued run even with cancel-in-progress: false), so it goes to
-  # its own group, `pages-builds-skipped`. Only a workflow_run the jobs will run for, and every
-  # non-workflow_run event, use `pages-builds`.
-  group: ${{ (github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) && 'pages-builds' || 'pages-builds-skipped' }}
+  # Only a run the deploy job's `if:` can admit joins `pages-builds`: a release push, a
+  # build-stamp completion on dev (or a branch preview), a closed PR, and the owner's
+  # PUBLISH dispatch. A run that cannot deploy is still a queued run when it arrives, and a
+  # newer arrival replaces a PENDING run even with cancel-in-progress: false. So it takes
+  # a group of its own: a workflow_run the jobs skip goes to `pages-builds-skipped`; a push
+  # to test or main, and a dispatch without PUBLISH, assemble and stop, so they go to
+  # `pages-builds-assemble-only`. Measured 2026-10-26: the push to test from promotion PR
+  # 2344 (run 5268) superseded the queued dev publication (run 5266/5267, 0.7.1.1878),
+  # and the site stayed on 1876 while dev and test were on 1878.
+  group: ${{ (github.event_name == 'push' && github.ref_name == 'release' || github.event_name == 'pull_request_target' || github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner || github.event_name == 'workflow_run' && ((github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || ((github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.name == 'dev preview') && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.name == 'feature preview' || github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))))) && 'pages-builds' || (github.event_name == 'workflow_run' && 'pages-builds-skipped' || 'pages-builds-assemble-only') }}
   # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
   #
   # One group keeps publications serialised, which is right — two deploys to the
@@ -231,6 +235,7 @@ jobs:
       # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
       comment_targets: ${{ steps.feature_previews.outputs.comment_targets }}
       preview_targets: ${{ steps.feature_previews.outputs.preview_targets }}
+      primary_targets: ${{ steps.primary_targets.outputs.targets }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -471,15 +476,27 @@ jobs:
             echo "$(jq '.previews | length' "$out/previews.json") current branch build(s) carry a playable preview."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
+        # THE DEFAULT IS 5, NOT 10 (2026-10-19). GitHub Pages refuses an artifact it
+        # cannot unpack ("Artifact could not be deployed ... total size is less than
+        # 10GB"): with --keep 10 the artifact grew 6.56 -> 6.99 -> 7.30 GB in a day and
+        # every dev deploy from 7.30 GB up failed (runs 39232459193, 39236238774) while
+        # the last at 6.99 GB landed. Each kept build carries its ~90 MB light single
+        # file, so halving the kept builds takes about 2 GB off. A lower --keep is the
+        # lever docs/EXTERNAL-ASSETS-PLAN.md (Pages size) names.
         # `keep` from a dispatch is clamped here (1..25) and again in the
         # generator: each listed uncommitted build is a rebuild.
         env:
-          KEEP_INPUT: ${{ inputs.keep || '10' }}
+          KEEP_INPUT: ${{ inputs.keep || '5' }}
         run: |
-          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-10}
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-5}
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
           node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
+      - name: Capture the exact primary channel pages this assembly will deploy
+        id: primary_targets
+        run: |
+          targets=$(node tools/check-feature-pages.mjs --capture-primary _site)
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
       # THE WORKBENCH IS PUBLISHED AS A STATIC SITE, BUILT FROM THIS RUN'S CHECKOUT.
       #
       # It lives at /workbench/ beside the game builds. On the workflow_run publish
@@ -488,18 +505,20 @@ jobs:
       # (workbench/static/static-api.mjs) and keeps edits in the visitor's browser;
       # nothing on the page writes to the repository.
       #
-      # The art it copies (assets-mobile/ and assets-display/) is tracked in git and
-      # already in this checkout, so nothing is fetched here: a fetch only filled an
-      # unused cache and could stall the job past its timeout.
-      #
+      # The gallery snapshot and static copy read this checkout's verified cache.
+      # Main's build and historical rebuilds fetch into their own worktrees, so
+      # hydrate this checkout's pinned LIGHT + COMMON before either reader runs.
+      - name: Fetch pinned light/common art for the publishing checkout
+        uses: ./.github/actions/fetch-art
+        with:
+          packs: light,common
       # It builds into $RUNNER_TEMP and is moved into _site only after the tool exits
-      # 0, so a failed build publishes nothing. timeout-minutes bounds a stall.
-      #
-      # The step may fail without stopping the site: continue-on-error keeps a
-      # Workbench failure to a warning in this run, and the game site still publishes.
+      # 0. Both hydration and static assembly are required: a missing Workbench
+      # must stop publication. timeout-minutes bounds a stalled static build.
       - name: "Build the published Workbench at /workbench/ (from this checkout)"
-        continue-on-error: true
         timeout-minutes: 10
+        env:
+          ASHEN_ART_SOURCE: cache
         run: |
           set -euo pipefail
           node tools/workbench-static.mjs --out "$RUNNER_TEMP/workbench" --base /AshenSpire/workbench/
@@ -507,6 +526,18 @@ jobs:
           echo "Workbench published at https://cehinds.github.io/AshenSpire/workbench/ from $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
+      # Say where the bytes are: Pages refuses an oversized artifact with no detail
+      # (run 39236238774), so the next growth is read here, not guessed.
+      - name: Report the assembled site's size by section
+        run: |
+          {
+            echo "### Assembled site size"
+            echo
+            echo '```'
+            du -sm _site | sed 's/\t/ MB total /'
+            du -sm _site/* | sort -rn | head -15
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -711,10 +742,11 @@ jobs:
           persist-credentials: false
           sparse-checkout: tools/check-feature-pages.mjs
           sparse-checkout-cone-mode: false
-      - name: Verify public feature preview delivery
+      - name: Verify public primary channels and feature preview delivery
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
           PREVIEW_TARGETS: ${{ needs.assemble.outputs.preview_targets }}
+          PRIMARY_TARGETS: ${{ needs.assemble.outputs.primary_targets }}
         run: node tools/check-feature-pages.mjs
       # The publication's own receipt, so the run that published says so rather
       # than leaving the assemble job's summary as the last word on it.

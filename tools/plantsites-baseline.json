@@ -1,5 +1,5 @@
 {
-  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
+  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction \u2014 regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
       "tool": "tools/armoury-picked-up.mjs",
@@ -97,16 +97,6 @@
       "id": "fecde7a543a0e80c"
     },
     {
-      "tool": "tools/text-geometry.mjs",
-      "target": "AshenSpire.html",
-      "id": "1353252b7cd6554a"
-    },
-    {
-      "tool": "tools/text-geometry.mjs",
-      "target": "AshenSpire.html",
-      "id": "c1dce040250e8564"
-    },
-    {
       "tool": "tools/title-new-slot.mjs",
       "target": "src/ui/models/SaveSlotSelectionModel.js",
       "id": "d905e8929851cbd2"
@@ -130,7 +120,7 @@
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
-      "digest": "aa1b69cfbda16d47"
+      "digest": "46d35ca02c37a95e"
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
@@ -138,7 +128,7 @@
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
-      "digest": "c843c93053de6c10"
+      "digest": "c623c7dfccf25f64"
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
@@ -157,8 +147,8 @@
       "digest": "e753cef1956378c6"
     },
     "tools/coop-secondbeat.mjs": {
-      "count": 2,
-      "digest": "b1e74e649f8b897d"
+      "count": 3,
+      "digest": "2029f5a47f49c665"
     },
     "tools/derived-runtime-authority.mjs": {
       "count": 3,
@@ -166,7 +156,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "f99b73fec00b83cb"
+      "digest": "063406fbfc09d1eb"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -206,11 +196,11 @@
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,
-      "digest": "24624c63c8967959"
+      "digest": "a935e3c0071a13d9"
     },
     "tools/hand-side-probe.mjs": {
-      "count": 4,
-      "digest": "202b7aeba2b2cf9e"
+      "count": 5,
+      "digest": "e1ee0130ed5f11a3"
     },
     "tools/hintstrip.mjs": {
       "count": 14,
@@ -226,7 +216,7 @@
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
-      "digest": "3614d59895fed293"
+      "digest": "e941179d534747bd"
     },
     "tools/menufit.mjs": {
       "count": 1,
@@ -237,8 +227,8 @@
       "digest": "fc4c88baf4d04e95"
     },
     "tools/motion-probe.mjs": {
-      "count": 24,
-      "digest": "40e1c40c9e71e9f9"
+      "count": 23,
+      "digest": "ce41eba87917728a"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
@@ -286,15 +276,15 @@
     },
     "tools/runcreation.mjs": {
       "count": 5,
-      "digest": "07bfaaffe1f4f502"
+      "digest": "3c4b36e60ac18c68"
     },
     "tools/saveroundtrip.mjs": {
       "count": 6,
       "digest": "258e4d2c96542f9e"
     },
     "tools/screenreach.mjs": {
-      "count": 9,
-      "digest": "c97702e7774f532f"
+      "count": 10,
+      "digest": "3318769333c0b08f"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
@@ -310,19 +300,19 @@
     },
     "tools/slot-load-door.mjs": {
       "count": 9,
-      "digest": "25b8ff56b0445600"
+      "digest": "af96a8243f60cb0d"
     },
     "tools/startup-gate.mjs": {
-      "count": 26,
-      "digest": "6a9e39a11d46196c"
+      "count": 28,
+      "digest": "c68e9388e48fc3bb"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
-      "digest": "a7bf54d937e5a54d"
+      "digest": "8828ae5f798ba270"
     },
     "tools/swap-cost-relic-surface.mjs": {
       "count": 2,
-      "digest": "6aac8989f887c067"
+      "digest": "e838dc2190fb3994"
     },
     "tools/swap-row-reads.mjs": {
       "count": 9,
@@ -338,7 +328,7 @@
     },
     "tools/text-geometry.mjs": {
       "count": 9,
-      "digest": "5401de8f2dfaf295"
+      "digest": "a7e98194cadbd438"
     },
     "tools/title-new-slot.mjs": {
       "count": 4,
@@ -354,7 +344,7 @@
     },
     "tools/uprightgate.mjs": {
       "count": 14,
-      "digest": "283880e7bfda1aa5"
+      "digest": "9adb6b057eb6f540"
     },
     "tools/zoomplace.mjs": {
       "count": 1,

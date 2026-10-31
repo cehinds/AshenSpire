@@ -1,3 +1,5 @@
+import * as RangeLineage from './combatRangeLineage.js';
+import { activeCombatStances, statusStacksWithStance } from './concurrentStances.js';
 // src/engine/triggers.js — event bus + declarative trigger wiring + predicates
 // (SPEC §3.6, §3.9, §3.10)
 //
@@ -28,7 +30,12 @@ const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'status
  * event object. Every event carries { type, ...payload }.
  */
 export function emitEvent(ctx, type, payload = {}) {
-  const action = ctx._abilityAction;
+  const lifecycleCarrier=payload.rangeLifecycleCarrier || ctx.pendingAbilityPlay?.ref;
+  if(payload.rangeLifecycleCarrier){payload={...payload};delete payload.rangeLifecycleCarrier;}
+  const lifecycle = ['cardPlayed','cardResolved'].includes(type) && lifecycleCarrier?.rangeLineagePlan ? {card:lifecycleCarrier,source:ctx.player,target:ctx.enemies?.find(enemy=>enemy.id===payload.targetId),meta:{}} : null;
+  const action = ctx._abilityAction || lifecycle;
+  const rangeOrigin = RangeLineage.eventRangeOrigin(ctx,type,payload,action);
+  if (rangeOrigin) payload={...payload,rangeOrigin};
   if (action?.card) payload = {
     cardId: action.card.cardId, cardInstanceId: action.card.instanceId, cardType: action.card.type,
     cardTags: action.card.authoredTags || action.card.tags || [], abilityKind: action.card.abilityKind,
@@ -65,7 +72,7 @@ export function emitEvent(ctx, type, payload = {}) {
   }
   try {
     dispatchCombatCombos(ctx, event);
-    scanTriggers(ctx, event);
+    scanTriggers(ctx, event, action?.card);
   } finally {
     ctx._emitDepth -= 1;
   }
@@ -141,14 +148,32 @@ export function hasEventTriggers(ctx, type, { cardTags } = {}) {
   }
 }
 
-function scanTriggers(ctx, event) {
+// The range quote reads the same owned hook sources as the live bus. It does
+// not fire predicates or consume gates while reserving possible descendants.
+export function rangeHookSources(ctx, owner, additionalStatuses = []) {
+  const rows=[], key=ownerKeyFor(ctx,owner);
+  if (owner?.kind === 'player') {
+    if (owner.stanceId) (ctx.registries.stances.get(owner.stanceId).hooks || []).forEach((trigger,i)=>rows.push({key:`stance:${key}:${owner.stanceId}:${i}`,trigger}));
+    for (const sourceKey of Object.keys(ctx.propertyMounts?.[key] || {}).sort()) {
+      let index=0;
+      for (const rule of ctx.propertyMounts[key][sourceKey].rules || []) for (const trigger of rule.triggers || []) rows.push({key:`property:${key}:${sourceKey}:${index++}`,trigger});
+    }
+  }
+  for (const id of new Set([...Object.keys(owner?.statuses || {}),...additionalStatuses])) {
+    const def=ctx.registries.statuses.has?.(id) ? ctx.registries.statuses.get(id) : null;
+    (def?.hooks || []).forEach((trigger,i)=>rows.push({key:`status:${key}:${id}:${i}`,trigger}));
+  }
+  return rows;
+}
+
+function scanTriggers(ctx, event, rangeCarrier = null) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
   const pKey = ownerKeyFor(ctx, player);
   const pending = [];
   const schedule = (key, trigger, owner, after, origin) => {
     if (ctx.foundation) pending.push({ key, trigger, owner, after, origin });
-    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin); if (fired) after?.(); }
+    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin, rangeCarrier); if (fired) after?.(); }
   };
 
   // A heal names its seat (targetPlayerId), so every seat's mounts hear it
@@ -216,7 +241,7 @@ function scanTriggers(ctx, event) {
   }
 
   pending.sort((a, b) => (a.trigger.priority || 0) - (b.trigger.priority || 0) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin)) row.after?.();
+  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin, rangeCarrier)) row.after?.();
 
   // Enemy phases hooked on bus events (hpBelowPct phases run via checkPhases).
   for (const enemy of ctx.enemies || []) {
@@ -269,7 +294,7 @@ export function fireOwnerHooks(ctx, entity, hookName) {
 
 // Gate a trigger through once / limitPerTurn / if, then enqueue its effects.
 // Returns true if it fired.
-function maybeFire(ctx, key, trigger, owner, event, origin = null) {
+function maybeFire(ctx, key, trigger, owner, event, origin = null, rangeCarrier = null) {
   let st = ctx.triggerState.get(key);
   if (!st) {
     st = { fires: 0, turn: -1, turnFires: 0 };
@@ -290,9 +315,12 @@ function maybeFire(ctx, key, trigger, owner, event, origin = null) {
   st.turnFires += 1;
   const ratingCard = ctx.ratingsRules && key.startsWith('status:')
     ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
-  for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+  const actions=[];
+  for (const [effectIndex,eff] of (trigger.do || []).entries()) {
+    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,ratingCard,rangeCarrier);
+    actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : ratingCard ? { card: ratingCard } : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
+  for(const action of RangeLineage.acceptIndependentTrigger(ctx,owner,actions,key))ctx.enqueue(action);
   return true;
 }
 
@@ -403,14 +431,16 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       const def = id && ctx.registries.cards.get(id);
       return !!def?.effects?.some(effect => effect.op === 'damage' && effect.target === 'allEnemies');
     }
+    case 'resourcePaid':
+      return (pctx.meta?.[pred.resource === 'mana' ? 'manaSpent' : 'staminaSpent'] || 0) >= (pred.amount ?? 1);
     case 'inStance':
-      return ctx.player.stanceId === pred.stance;
+      return ctx.player.stanceId === pred.stance || activeCombatStances(ctx,ctx.player).some(row=>row.maneuver===pred.stance || row.maneuver==='prepared' && pred.stance==='casting');
     case 'hasStatus': {
-      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && StatusHelpers.getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
+      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && statusStacksWithStance(ctx, entity, pred.status) >= (pred.atLeast ?? 1));
       const current = resolveOf(ctx, pctx, pred.of);
       const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
       const atLeast = pred.atLeast != null ? pred.atLeast : 1;
-      return ent != null && StatusHelpers.getStacks(ent, pred.status) >= atLeast;
+      return ent != null && statusStacksWithStance(ctx, ent, pred.status) >= atLeast;
     }
     case 'hasBlock': {
       const current = resolveOf(ctx, pctx, pred.of);

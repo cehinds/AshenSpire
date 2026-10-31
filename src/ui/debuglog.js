@@ -19,6 +19,7 @@
 // strings.js is itself a leaf (it imports only generated data), so this
 // module stays one.
 import { t } from './strings.js';
+import { consoleRecorder } from './consoleLog.js';
 
 export const MAX_ENTRIES = 300;
 const entries = [];
@@ -35,6 +36,10 @@ export function dlog(kind, msg, data) {
   }
   entries.push({ time: new Date(), kind, msg, detail });
   if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
+  // Mirror into the session console so ignored taps sit beside the errors.
+  // append, not console.debug: nothing extra prints to the devtools console.
+  // ERROR lines are skipped: the window handlers append them to the console themselves.
+  if (kind !== 'ERROR') try { consoleRecorder.append('debug', `[${kind}] ${msg}${detail ? ' ' + detail : ''}`); } catch (e) { /* never break a trace */ }
 }
 
 export function getEntries() {
@@ -45,7 +50,7 @@ export function getEntries() {
 // A CONTROL THAT STOPS WORKING TELLS SOMEONE
 // ---------------------------------------------------------------------------
 //
-// The ☰ button died and the game said nothing. Measured on six channels at
+// The menu button died and the game said nothing. Measured on six channels at
 // once: the TypeError is REAL and it IS emitted — CDP Runtime.exceptionThrown,
 // a page `error` listener installed before navigation, the same listener
 // installed after load, and the log below all carry it, identically over
@@ -153,6 +158,9 @@ export function failureBanner(key, title, body) {
     return last.el;
   }
   const built = (chrome ? chrome.banner : bareBanner)({ title, body, onOpen: () => openDebugLog() });
+  // A failure before the first screen mounts must not sit under the static boot splash.
+  document.getElementById?.('boot-splash')?.remove();
+  if (built.el.dataset) built.el.dataset.failureKey = key; // lets a caller tell its own banner from an overflow stand-in
   document.body.prepend(built.el);
   banners.set(key, { el: built.el, head: built.head, open: built.open, makeMore: built.more, more: null, n: 1 });
   return built.el;
@@ -197,14 +205,30 @@ if (typeof window !== 'undefined') {
   const where = (ev) => (ev.filename ? ` at ${String(ev.filename).split('/').pop()}:${ev.lineno}` : '');
   window.addEventListener('error', (ev) => {
     if (!ev.message) return;
-    if (isBenignPageNotice(ev.message)) { dlog('NOTICE', String(ev.message)); return; }
-    dlog('ERROR', String(ev.message), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
-    failureBanner(`uncaught:${ev.message}`, 'SOMETHING JUST STOPPED WORKING',
-      `${ev.message}${where(ev)}\nThe game is still running. What you last pressed did not.`);
+    const message = String(ev.message);
+    if (isBenignPageNotice(message)) {
+      dlog('NOTICE', message);
+      consoleRecorder.append('notice', message);
+      return;
+    }
+    // The legacy error handler already reads the browser's (sometimes lazy)
+    // stack. Read it once, then share the same bounded trace with both logs;
+    // the general console formatter still never invokes arbitrary getters.
+    const stack = ev.error && ev.error.stack;
+    const trace = stack ? String(stack).split('\n').slice(0, 4).join(' | ') : '';
+    const location = where(ev);
+    dlog('ERROR', message, trace);
+    consoleRecorder.append('error', message + location, trace);
+    failureBanner(`uncaught:${message}`, 'SOMETHING JUST STOPPED WORKING',
+      `${message}${location}\nThe game is still running. What you last pressed did not.`);
   });
   window.addEventListener('unhandledrejection', (ev) => {
-    const msg = String((ev.reason && ev.reason.message) || ev.reason || 'unhandled promise rejection');
-    dlog('ERROR', 'unhandled promise rejection', String((ev.reason && ev.reason.stack) || ev.reason).slice(0, 300));
+    const reason = ev.reason;
+    const msg = String((reason && reason.message) || reason || 'unhandled promise rejection');
+    const stack = reason && reason.stack;
+    const trace = String(stack || reason).slice(0, 300);
+    dlog('ERROR', 'unhandled promise rejection', trace);
+    consoleRecorder.append('error', 'Unhandled promise rejection:', msg, trace);
     failureBanner(`rejection:${msg}`, 'SOMETHING JUST STOPPED WORKING',
       `${msg}\nThe game is still running. What you last asked for did not finish.`);
   });
@@ -235,4 +259,26 @@ export function openDebugLog() {
   pre.textContent = logText();
   document.body.appendChild(pre);
   return null;
+}
+
+/** The console door shares the registered chrome without closing the leaf import graph. */
+// A screen may register one snapshot reader; opening the console first records
+// its line, so a stuck turn comes with the input state at that moment. The
+// reader returns a string (or null once its screen is gone). A snapshot error
+// can never block opening the console.
+let consoleSnapshot = null;
+export function registerConsoleSnapshot(fn) {
+  const own = typeof fn === 'function' ? fn : null;
+  consoleSnapshot = own;
+  // Clears only this reader, so a combat torn down after the next one mounted
+  // cannot unregister its successor.
+  return () => { if (consoleSnapshot === own) consoleSnapshot = null; };
+}
+
+export function openConsoleLog(options = {}) {
+  try {
+    const line = consoleSnapshot && consoleSnapshot();
+    if (line) dlog('snapshot', line);
+  } catch (e) { /* diagnostics only */ }
+  return chrome?.consoleDoor?.(options) || null;
 }

@@ -2,6 +2,20 @@ import { masteryRowId } from './classMastery.js';
 import { createRegistries } from './registries.js';
 import { createRunState } from './state.js';
 
+// One Map per tagging array (family|objectId -> tagIds, source order), so each
+// lookup is O(1) instead of a filter over the whole relation table.
+const tagIndexes=new WeakMap();
+export function tagIndexFor(tagging){
+  const rows=Array.isArray(tagging)?tagging:null;
+  let index=rows&&tagIndexes.get(rows);
+  if(!index){
+    index=new Map();
+    for(const t of rows||[]){const key=t.family+'\u0000'+t.objectId;const list=index.get(key);if(list)list.push(t.tagId);else index.set(key,[t.tagId]);}
+    if(rows)tagIndexes.set(rows,index);
+  }
+  return (family,id)=>{const list=index.get(family+'\u0000'+id);return list?list.slice():[];};
+}
+
 /** Refuse authored faults by their row identity, including the core's depth. */
 export function classMasteryProblems(bundle) {
   const problems = [];
@@ -46,15 +60,16 @@ export function classMasteryProblems(bundle) {
     else if(row.kind==='weapon' && arms.get(row.ref)?.kind!=='weapon')at(label,`'${row.ref}' is not a striking weapon`);
     else if(row.kind==='armament' && !armor.has(row.ref) && !['shield','staff'].includes(arms.get(row.ref)?.kind))at(label,`'${row.ref}' is not armour, a shield or a focus`);
   }
-  const tagsFor=(family,id)=>(bundle.tagging || []).filter(t=>t.family===family && t.objectId===id).map(t=>t.tagId);
+  const tagsFor=tagIndexFor(bundle.tagging);
   const schools=new Set((bundle.nodes || []).filter(n=>n.parentId==='card').map(n=>n.id));
   // Use the real deck planner, including package variants, instead of a
   // second list of what a kit is expected to grant. A card used by ANY kit
   // must remain core even when it belongs to another class's reward pool.
   const globallyGatedCards=new Set(rows.filter(r=>r?.kind==='cards').map(r=>r.ref));
   try {
-    const copy=value=>Array.isArray(value)?value.map(copy):value && typeof value==='object'?Object.fromEntries(Reflect.ownKeys(value).map(key=>[key,copy(value[key])])):value;
-    const deckBundle=copy(bundle);
+    // Only `equipment` is edited below, so only it is copied (and only the two
+    // arrays replaced); createRegistries reads the rest of the bundle as given.
+    const deckBundle={...bundle,equipment:{...bundle.equipment}};
     // This check concerns the composed cards. Alternate kits may require a
     // player's allocation above a configured preset; that is Begin's gate.
     deckBundle.equipment.equipmentRequirements=deckBundle.equipment.equipmentRequirements.map(row=>({...row,minimum:0}));

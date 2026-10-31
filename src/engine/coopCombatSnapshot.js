@@ -1,9 +1,11 @@
+import { formationOccupancyProblems } from '../model/formationOccupancy.js';
+import { hasCardChoice } from './cardZones.js';
 import { ashenBlightProblems, ashenBlightCombatProblems } from '../model/ashenBlight.js';
 import { statusControlProblems } from '../model/combatStatusState.js';
 import { combatExpansionEntityProblems } from '../model/combatTacticsRules.js';
 import { combatExpansionRulesProblems } from '../model/combatExpansionRules.js';
 import { combatEnemyKnowledgeProblems } from '../model/enemyKnowledgeCombat.js';
-import { combatReactionProblems } from '../model/combatReactionState.js';
+import { combatReactionProblems, combatRangeProblems } from '../model/combatReactionState.js';
 import { perceptionProblems } from '../model/perception.js';
 import { bringRangesForward } from '../model/combatRanges.js';
 
@@ -11,8 +13,10 @@ import { bringRangesForward } from '../model/combatRanges.js';
 // Runtime callbacks, catalogue projections and RNG objects never enter the save.
 const forbidden = new Set(['__proto__', 'prototype', 'constructor']);
 export function serializeCoopCombatSnapshot(combat) {
-  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !combat.pendingAbilityDiscard && !combat.pendingReaction
+  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !hasCardChoice(combat) && !combat.pendingReaction
     && !(combat.phase === 'suspended' && (combat.reactionCursor || combat.reactionStack || combat.reactionRootPlay)))) throw new Error('Co-op combat is still resolving');
+  const formationErrors = formationOccupancyProblems(combat);
+  if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const nodes = [], seen = new Map();
   function encode(value) {
     if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
@@ -120,7 +124,7 @@ export function decodeCoopCombatSnapshot(snapshot) {
     if (Object.hasOwn(combat.enemyKnowledge.owners, id)) knowledgeProblems.push(...perceptionProblems(seat.skills?.perception, combat.enemyKnowledge.rules.perception));
   }
   if (knowledgeProblems.length) throw new Error(knowledgeProblems.join('; '));
-  const reactionProblems = combatReactionProblems(combat, { ownerIds: new Set(combat.players.keys()) });
+  const reactionProblems = [...combatReactionProblems(combat, { ownerIds: new Set(combat.players.keys()) }), ...combatRangeProblems(combat)];
   if (reactionProblems.length) throw new Error(reactionProblems.join('; '));
   return combat;
 }

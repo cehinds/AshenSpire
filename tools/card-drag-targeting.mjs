@@ -579,8 +579,10 @@ async function main() {
         type, x, y, button: 'left', buttons: down ? 1 : 0, clickCount: type === 'mousePressed' || type === 'mouseReleased' ? 1 : 0,
       }, S);
       const point = (selector) => ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      // The combined .pile.spent control displays Discard and Exhaust separately.
+      // Exact-once checks need discard alone, as the identity-based cells below do.
       const state = () => ev(`(() => ({
-        discard:+document.querySelector('.pile.discard .n').textContent,
+        discard:window.__combat.piles.discard.length,
         energy:document.querySelector('.energy-orb').textContent.trim(),
         mode:document.querySelector('.combat').classList.contains('drag-targeting'),
         drop:document.querySelector('.combat').dataset.dropState || null,

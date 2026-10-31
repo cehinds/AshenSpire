@@ -1,0 +1,14 @@
+{
+  "baseHiddenChance": 0.7,
+  "wisdomReduction": 0.02,
+  "intelligenceReduction": 0.01,
+  "minimumHiddenChance": 0,
+  "maximumHiddenChance": 0.95,
+  "$note": {
+    "baseHiddenChance": "Chance an enemy hides its exact move while still showing its stance, before attribute reductions.",
+    "wisdomReduction": "Reduction in hidden intent chance for each point of Wisdom.",
+    "intelligenceReduction": "Reduction in hidden intent chance for each point of Intelligence.",
+    "minimumHiddenChance": "Lowest allowed chance an enemy hides its exact move after attribute reductions.",
+    "maximumHiddenChance": "Highest allowed chance an enemy hides its exact move after attribute reductions."
+  }
+}

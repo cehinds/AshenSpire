@@ -1,4 +1,5 @@
 import { expandedProgression, classRewardBudget } from './classMilestones.js';
+import { recordCollectedCards } from './collectedCards.js';
 import { classMilestoneOptions } from './classMilestoneOffers.js';
 import { classRewardGrants, classRewardPresent } from './classRewardProvenance.js';
 import { abilityOfferPool } from './abilityOffers.js';
@@ -8,7 +9,7 @@ import {mountRows} from './cardExtraction.js';
 import {cardMountRules,isExtraMountKey,mountKey} from './cardMounts.js';
 import { itemUpgradeTiers } from './itemUpgrades.js';
 import { rebuildClassRespecResources } from './classRespecResources.js';
-import { validateRunShape } from './state.js';
+import { createCardInstance, validateRunShape } from './state.js';
 
 // Stable preview sentinel; UI wording is independently authored in uiStrings.
 export const RESPEC_UNASSIGNED = 'Unassigned';
@@ -21,6 +22,7 @@ const grantIn = (run,id) => Object.values(run.classMilestones).flatMap(row => Ob
 const itemPiece = (reg,ref) => ref.startsWith('armament/') ? reg.equipment.armaments.find(piece => piece.id === ref.slice(9)) : reg.equipment.armour.find(piece => `armor/${piece.classId}/${piece.id}` === ref);
 
 export function classRespecAvailability(registries,run) {
+  if (run.gameProfile?.foundation?.mode === 'configured') return {ok:false,reason:'Class rebuilding is unavailable in this fixed-class ruleset.'};
   if (!expandedProgression(run)) return {ok:false,reason:'This run uses the earlier class rules.'};
   if (registries.balance.progression?.respec?.enabled === false) return {ok:false,reason:'Class respec is disabled in this run’s rules.'};
   if (run.classUnequipped) return {ok:false,reason:'Equip a class before rebuilding it.'};
@@ -54,6 +56,7 @@ function removeGrantItem(candidate,grant) {
   const selection = grant.selection;
   if (!selection || grant.state !== 'taken') return;
   if (grant.kind === 'cards') {
+    recordCollectedCards(candidate);
     candidate.deck = candidate.deck.filter(inst => inst.instanceId !== selection.instanceId);
     candidate.sideboard = (candidate.sideboard || []).filter(inst => inst.instanceId !== selection.instanceId);
   } else if (grant.kind === 'relic') candidate.relics = candidate.relics.filter(id => id !== selection.id);
@@ -78,7 +81,7 @@ function transferItem(registries,candidate,grant,choice,original,transfers) {
   if (!tier && !mounts && !sigils) return;
   if (choice.transfer !== 'retain') throw new Error('Review and retain this item’s upgrades and components before exchanging it.');
   if (candidate.itemUpgradeLevels?.[newRef] || candidate.itemMounts?.[newRef] || candidate.sigilSlots?.[newRef]) throw new Error('The replacement has its own upgrade or component history. Choose another item.');
-  if (tier && !itemUpgradeTiers(registries,newRef).includes(tier)) throw new Error('The replacement does not support the retained smithing tier.');
+  if (tier && !itemUpgradeTiers(registries,newRef,candidate).includes(tier)) throw new Error('The replacement does not support the retained smithing tier.');
   if (mounts) {
     const oldPiece=itemPiece(registries,oldRef),newPiece=itemPiece(registries,newRef);
     if (!oldPiece || !newPiece || oldPiece.kind !== newPiece.kind) throw new Error('Mounted cards can transfer only between the same equipment kind.');
@@ -196,7 +199,14 @@ export function previewClassRespec(registries,run,draft,{selections = draft.sele
     if(slot.kind==='cards'){
       const previous=ownedCard(run,grant),instanceId=previous?.instanceId || `respec-card:${slot.receiptId}`;
       if(previous&&(previous.upgraded||previous.mods?.length||previous.smithingLevel) && choice.transfer!=='retain')problems.push('Review the card upgrade and component transfer before confirming.');
-      const inst={...(previous || {}),instanceId,cardId:choice.id,upgraded:previous?.upgraded || false,rewardReceiptId:slot.receiptId};
+      // A replacement is a new card identity. Only the reviewed upgrade and
+      // component transfer crosses identities; old carrier/profile stamps do not.
+      const sameIdentity=previous?.cardId===choice.id && (previous.abilityRank??null)===(choice.abilityRank??null);
+      const inst=sameIdentity ? {...previous}
+        : {...createCardInstance(choice.id,previous?.upgraded,()=>instanceId),
+          ...(previous?.mods ? {mods:copy(previous.mods)} : {}),
+          ...(previous?.smithingLevel ? {smithingLevel:previous.smithingLevel} : {})};
+      Object.assign(inst,{instanceId,cardId:choice.id,upgraded:previous?.upgraded || false,rewardReceiptId:slot.receiptId});
       if(Number.isInteger(choice.abilityRank)){inst.abilityRank=choice.abilityRank;delete inst.rank;}
       else delete inst.abilityRank;
       ((!eligible||(run.sideboard || []).some(card=>card.instanceId===instanceId))?candidate.sideboard:candidate.deck).push(inst);

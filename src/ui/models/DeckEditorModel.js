@@ -17,13 +17,16 @@
 
 import {
   addBasicCard, beginDeckEdit, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
-  deckEditingOn, deckEditingWhere, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder,
+  deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
 import { resolveCard } from '../../model/registries.js';
 import { cardClassification } from '../../model/cardClassification.js';
 import { deckRules } from '../../content/deckRules.js';
 import { has, t } from '../strings.js';
+import { rangeCardAvailable } from '../../model/rangeCardAvailability.js';
+import { hasCollectedCardPolicy, knownCollectedCardIds } from '../../model/collectedCards.js';
+import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
 
 /** The cost buckets the curve and the cost filter share. */
 export const DECK_COST_BUCKETS = Object.freeze(['0', '1', '2', '3', '4', '5+', 'X']);
@@ -46,7 +49,9 @@ const TECHNIQUE_TAG_PREFIX = 'technique:';
 export function deckVariantKey(card) {
   const mods = Array.isArray(card.mods) ? card.mods.join(',') : '';
   const rank = Number.isInteger(card.rank) && card.rank > 1 ? `~r${card.rank}` : '';
-  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}`;
+  const ability = card.abilityRank > 0 ? `~a${card.abilityRank}` : '';
+  const smithing = card.smithingLevel > 0 ? `~s${card.smithingLevel}` : '';
+  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}${ability}${smithing}`;
 }
 
 function costBucket(cost) {
@@ -56,14 +61,24 @@ function costBucket(cost) {
 
 function isEquipmentCard(card) { return !!(card && (card.grantedBy || isItemOwned(card))); }
 
-function sourceOf(card, def) {
+function sourceOf(card, def, run) {
   if (isEquipmentCard(card)) return 'item';
-  if (isUnlimitedBasic(card)) return 'basic';
+  if (isBasicCard(card, run)) return 'basic';
   const tags = def.tags || [];
   if (tags.includes(ART_TAG)) return 'art';
   // A technique (a skill-draft card, SPEC §13.4e) carries a `technique:*` tag.
   if (tags.some((tag) => String(tag).startsWith(TECHNIQUE_TAG_PREFIX))) return 'technique';
   return 'reward';
+}
+
+/**
+ * The ui-string id of a rank 0 card's badge. A spell's is Cantrip. A rank 0 card whose source is 'basic' reads Basic;
+ * every other source reads its own source label (Weapon art, Technique, Reward, Item-owned), so the badge agrees with
+ * the Basic filter: a card that filter hides is never badged Basic (owner ruling 2026-10-19).
+ */
+export function rankZeroLabelId(source, isSpell) {
+  if (isSpell) return 'deckEditor.rank.cantrip';
+  return source === 'basic' || !DECK_SOURCES.includes(source) ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`;
 }
 
 function typeLabel(type) {
@@ -73,7 +88,7 @@ function typeLabel(type) {
   return has(id) ? t(id) : t('deckEditor.type.other');
 }
 
-function describe(registries, card) {
+function describe(registries, card, run) {
   const def = resolveCard(registries, card);
   return {
     ref: Object.freeze({ ...card, mods: card.mods ? Object.freeze([...card.mods]) : undefined }),
@@ -83,7 +98,7 @@ function describe(registries, card) {
     costBucket: costBucket(def.cost),
     type: def.type,
     cardCategory: cardClassification(def).cardCategory,
-    source: sourceOf(card, def),
+    source: sourceOf(card, def, run),
     upgraded: !!card.upgraded,
   };
 }
@@ -145,7 +160,7 @@ function lastInstanceId(deck, belongs) {
 function basicTiles(registries, run) {
   const deck = run.deck || [];
   const sideboard = run.sideboard || [];
-  const fresh = (c) => c && !c.grantedBy && !isSetAsideBasic(c);
+  const fresh = (c) => c && !c.grantedBy && !isSetAsideBasic(c, run);
   // `belongs` is the one test that counts a basic's copies in the deck: the
   // tile's inDeck and its − target both read it.
   // The mint tile counts and removes only PLAIN copies: a set-aside (upgraded
@@ -158,7 +173,7 @@ function basicTiles(registries, run) {
         || { cardId: role === 'attack' ? deckRules.unlimitedCardIds[0] : deckRules.unlimitedCardIds[1], equipmentRole: role };
       return { key: `basic:${role}`, card: sample, belongs, inDeck: deck.filter(belongs).length, mint: true };
     })
-    : deckRules.unlimitedCardIds.map((cardId) => {
+    : unlimitedCardIds(run).map((cardId) => {
       const belongs = mintBelongs((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === cardId);
       return { key: `basic:${cardId}`, card: { cardId }, belongs, inDeck: deck.filter(belongs).length, mint: true };
     });
@@ -167,15 +182,15 @@ function basicTiles(registries, run) {
   // its − takes the last set-aside copy of that variant from the deck.
   const kept = new Map();
   for (const card of [...deck, ...sideboard]) {
-    if (!isSetAsideBasic(card)) continue;
+    if (!isSetAsideBasic(card, run)) continue;
     const variant = deckVariantKey(card);
     if (!kept.has(variant)) {
-      const belongs = (c) => isSetAsideBasic(c) && deckVariantKey(c) === variant;
+      const belongs = (c) => isSetAsideBasic(c, run) && deckVariantKey(c) === variant;
       kept.set(variant, { key: `kept:${variant}`, card, count: 0, inDeck: deck.filter(belongs).length, belongs, mint: false });
     }
   }
   for (const card of sideboard) {
-    if (!isSetAsideBasic(card)) continue;
+    if (!isSetAsideBasic(card, run)) continue;
     kept.get(deckVariantKey(card)).count += 1;
   }
   return [...mints, ...kept.values()];
@@ -208,7 +223,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   // The curve counts the whole deck, never the filtered rows: it describes the
   // deck the player would confirm.
   const tally = Object.fromEntries(DECK_COST_BUCKETS.map((b) => [b, 0]));
-  const described = deck.map((card) => ({ card, row: describe(registries, card) }));
+  const described = deck.map((card) => ({ card, row: describe(registries, card, run) }));
   for (const { row } of described) tally[row.costBucket] += 1;
   const peak = Math.max(1, ...Object.values(tally));
   const curve = DECK_COST_BUCKETS
@@ -218,7 +233,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   // The collection tile a deck card counts toward: the basic whose `belongs`
   // test counts it (the same test as that basic's inDeck), else its variant tile.
   const basicMints = basicTiles(registries, run).filter((basic) => basic.mint);
-  const tileKeyFor = (card) => (isSetAsideBasic(card) ? `kept:${deckVariantKey(card)}`
+  const tileKeyFor = (card) => (isSetAsideBasic(card, run) ? `kept:${deckVariantKey(card)}`
     : basicMints.find((basic) => basic.belongs(card))?.key || `card:${deckVariantKey(card)}`);
   let deckRows = described.map(({ card, row }, index) => {
     const locked = false;
@@ -261,11 +276,14 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   // owns (deck ∪ sideboard), one tile per card id.
   const tiles = [];
   for (const basic of basicTiles(registries, run)) {
-    const row = describe(registries, basic.card);
+    const row = describe(registries, basic.card, run);
     const removeInstanceId = lastInstanceId(deck, basic.belongs);
+    const eligible = deckCardEquipmentEligible(registries, run, basic.card);
+    const mintRefusal = !rangeCardAvailable(run, resolveCard(registries, basic.card)) ? 'Range mechanics are disabled'
+      : !eligible ? t('deckEditor.refuse.equipment') : '';
     tiles.push(basic.mint
       ? { ...row, source: 'basic', key: basic.key, unlimited: true, owned: Infinity, inDeck: basic.inDeck,
-        countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: true, refusal: '',
+        countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: !mintRefusal, refusal: mintRefusal,
         removeInstanceId, removable: removeInstanceId != null }
       : { ...row, source: 'basic', key: basic.key, unlimited: false, owned: basic.count, inDeck: basic.inDeck,
         countText: t(basic.card.upgraded ? 'deckEditor.tile.keptUpgraded' : 'deckEditor.tile.kept', { count: basic.count }),
@@ -281,19 +299,26 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   const inDeckById = new Map();
   for (const card of deck) if (card) inDeckById.set(card.cardId, (inDeckById.get(card.cardId) || 0) + 1);
   for (const card of [...deck, ...sideboard]) {
-    if (!card || isUnlimitedBasic(card)) continue;
+    if (!card || isUnlimitedBasic(card, run)) continue;
     const variant = deckVariantKey(card);
     const entry = limited.get(variant) || { card, owned: 0, inDeck: 0, loose: 0 };
     entry.owned += 1;
     if (deck.includes(card)) entry.inDeck += 1; else entry.loose += 1;
     limited.set(variant, entry);
   }
+  if (hasCollectedCardPolicy(run)) for (const cardId of knownCollectedCardIds(run)) {
+    if (unlimitedCardIds(run).includes(cardId) || [...limited.values()].some(entry => entry.card.cardId === cardId)) continue;
+    const card = { cardId };
+    limited.set(deckVariantKey(card), { card, owned: 0, inDeck: 0, loose: 0 });
+  }
   for (const [variant, entry] of limited) {
-    const row = describe(registries, entry.card);
-    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run.class);
+    const row = describe(registries, entry.card, run);
+    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run);
     const equipmentEligible = deckCardEquipmentEligible(registries, run, entry.card);
     let tileRefusal = '';
-    if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
+    if (!rangeCardAvailable(run, resolveCard(registries, entry.card))) tileRefusal = 'Range mechanics are disabled';
+    else if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
+    else if (!entry.owned) tileRefusal = 'No owned copy is available.';
     else if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
     else if ((inDeckById.get(entry.card.cardId) || 0) >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
     const removeInstanceId = lastInstanceId(deck, (c) => deckVariantKey(c) === variant);
@@ -314,6 +339,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     || described.some(({ row }) => row.costBucket === 'X') || tiles.some((tile) => tile.costBucket === 'X'));
 
   return Object.freeze({
+    adept: activeAdeptTraining(run),
     counter: Object.freeze({
       count, min: bounds.min, max: bounds.max,
       text: t('deckEditor.counter', { count, min: bounds.min, max: maxText }),
@@ -383,7 +409,8 @@ export function openDeckEdit(registries, run, settings = {}) {
     add(key) {
       live();
       const before = beginDeckEdit(run);
-      const [kind, id] = String(key || '').split(':');
+      const colon = String(key || '').indexOf(':');
+      const kind = String(key || '').slice(0, colon), id = String(key || '').slice(colon + 1);
       if (kind === 'basic') {
         // The mint tile: a fresh copy back, or a new one, never a set-aside
         // (upgraded) copy, which has its own tile.
@@ -392,7 +419,7 @@ export function openDeckEdit(registries, run, settings = {}) {
       }
       if (kind === 'kept') {
         const variant = String(key).slice('kept:'.length);
-        const card = (run.sideboard || []).find((c) => isSetAsideBasic(c) && deckVariantKey(c) === variant);
+        const card = (run.sideboard || []).find((c) => isSetAsideBasic(c, run) && deckVariantKey(c) === variant);
         if (!card) return { ok: false, refusal: '' };
         return remember(before, { ok: moveFromSideboard(registries, run, card.instanceId, settings), refusal: '' });
       }
@@ -402,14 +429,15 @@ export function openDeckEdit(registries, run, settings = {}) {
       const variant = String(key).slice('card:'.length);
       const matches = variant.includes('~') ? (c) => deckVariantKey(c) === variant : (c) => c.cardId === variant;
       const cardId = variant.split('~')[0];
-      const loose = (run.sideboard || []).find((c) => c && matches(c) && !isUnlimitedBasic(c));
+      const loose = (run.sideboard || []).find((c) => c && matches(c) && !isUnlimitedBasic(c, run));
       if (!loose) {
         const any = (run.deck || []).find((c) => c && matches(c));
         return { ok: false, refusal: t('deckEditor.refuse.allInDeck', { name: any ? nameOf(any) : cardId }) };
       }
+      if (!rangeCardAvailable(run, resolveCard(registries, loose))) return { ok: false, refusal: 'Range mechanics are disabled' };
       if (!deckCardEquipmentEligible(registries, run, loose)) return { ok: false, refusal: t('deckEditor.refuse.equipment') };
       if (moveFromSideboard(registries, run, loose.instanceId, settings)) return remember(before, { ok: true, refusal: '' });
-      const limit = deckCopyLimit(registries, cardId, settings, run.class);
+      const limit = deckCopyLimit(registries, cardId, settings, run);
       return { ok: false, refusal: t('deckEditor.refuse.copyLimit', { name: nameOf(loose), limit }) };
     },
     remove(instanceId) {

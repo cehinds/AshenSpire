@@ -34,3 +34,19 @@ test('authoring exporters receive the same sprite and scenery rules with no nati
   assert.equal(plan[1].alphaQuality,policyFor('environments/far.webp').alphaQuality);
   assert.throws(()=>artExportPlan([{path:'sprites/bad.webp',width:0,height:480}]),/positive integer/);
 });
+
+
+test('reviewed desktop scene exports fit 1280 by 720 without changing phone or other asset policy', () => {
+  const rows = [{path:'environments/scene-forest.webp',width:1920,height:1080},
+    {path:'environments/scene-landmark.webp',width:1536,height:1024},
+    {path:'environments/scene-small.webp',width:200,height:100},
+    {path:'environments/scene-portrait.webp',width:1024,height:1536}];
+  const phoneBefore = artExportPlan(rows);
+  const desktop = artExportPlan(rows, {profile:'desktop-scenes'});
+  assert.deepEqual(desktop.map(({width,height})=>[width,height]), [[1280,720],[1080,720],[200,100],[480,720]]);
+  assert.ok(desktop.every(row=>row.quality===78 && row.alphaQuality===80));
+  assert.deepEqual(artExportPlan(rows), phoneBefore, 'requesting desktop scenes cannot alter the shared phone policy');
+  assert.deepEqual(phoneBefore.map(({width,height})=>[width,height]), [[256,144],[256,171],[200,100],[171,256]]);
+  for (const path of ['sprites/hero.webp','cards/portrait.webp','environments/unreviewed.webp'])
+    assert.throws(()=>artExportPlan([{path,width:1536,height:1024}],{profile:'desktop-scenes'}),/reviewed scene layer/);
+});

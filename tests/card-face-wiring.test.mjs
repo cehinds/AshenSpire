@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard, cardDetailHtml, setHandFaceBudget } from '../src/ui/components/card.js';
+import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -56,6 +57,30 @@ test('a card without a preview renders whole clauses starting with Deal', () => 
   assert.ok(lines.every(line => textOf(line).trimEnd().endsWith('.')), 'periods stay attached to the preceding clause');
 }));
 
+test('every printed surface moves automatic bonuses to tags and retains distinct authored Precision', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const definition = { ...previewOf('bashingBlow').resolvedDefinition,
+    effects: [...previewOf('bashingBlow').resolvedDefinition.effects,
+      { op: 'applyStatus', status: 'precision', target: 'self', stacks: 2 }] };
+  const printed = (surface, level) => markup.get(renderCard(reg, { cardId: 'bashingBlow' },
+    { definition, surface, level, inspection: false }));
+  const face = (surface, level) => faceLinesOf(printed(surface, level)).map(textOf).join(' | ');
+  const hand = face('combat', 'glance');
+  assert.doesNotMatch(hand, /Entry:/);
+  assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
+  assert.match(hand, /Deal/, 'the attack still explains its damage');
+  for (const [surface, level] of [['combat', 'inspect'], ['reward', 'glance']]) {
+    assert.doesNotMatch(face(surface, level), /Entry:/);
+    assert.match(face(surface, level), /Precision 2/, 'a distinct authored grant remains explicit');
+    assert.match(printed(surface, level), /On changing stance, gain 1 Precision/);
+    assert.match(printed(surface, level), /Gain 2 Precision when this effect resolves/);
+  }
+  const defense = markup.get(renderCard(reg, { cardId: 'crystalBarrier' },
+    { definition: previewOf('crystalBarrier').resolvedDefinition, surface: 'combat', level: 'glance', inspection: false }));
+  assert.doesNotMatch(defense, /Entry:/);
+  assert.match(defense, /data-tag-id="status:precision"[^>]*aria-label="Precision 1"/);
+}));
+
 test('the same card with a preview gives the same line text when the numbers are equal', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const plain = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
@@ -64,6 +89,13 @@ test('the same card with a preview gives the same line text when the numbers are
     { inspection: false, preview: previewOf('bashingBlow') })));
   assert.deepEqual(previewed.map(textOf), plain.map(textOf));
 }));
+
+test('the shared title fade appears on a base face without adding a sigil footer', () => {
+  const html = illustratedCardHtml({id:'bashingBlow',name:'Test Base Card',costs:{},type:{},sigils:null,sideTags:[],range:null},
+    {rules:'A short rule.'});
+  assert.match(html, /class="card-title-fade"/);
+  assert.doesNotMatch(html, /class="card-footer-backdrop"/);
+});
 
 test('all authored faces keep at most two clauses even with a legacy hand limit', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);

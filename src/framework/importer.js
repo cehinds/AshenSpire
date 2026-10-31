@@ -15,6 +15,7 @@
 
 import { EQUIPMENT_CATEGORIES, EQUIPMENT_RARITIES } from './schema.js';
 import { tagIndex } from '../model/tags.js';
+import { RANGES } from '../model/combatRanges.js';
 
 export class ImportError extends Error {
   constructor(message) { super(`import: ${message}`); this.name = 'ImportError'; }
@@ -47,6 +48,8 @@ const DAMAGE_SCHOOL_PROPERTY = Object.freeze({
   physical: 'damage.physical',
   magic: 'damage.magic',
   arcane: 'damage.arcane',
+  holy: 'damage.holy',
+  fire: 'damage.fire',
 });
 
 const TARGET_PROPERTY = Object.freeze({
@@ -55,6 +58,7 @@ const TARGET_PROPERTY = Object.freeze({
   allEnemies: 'targeting.allEnemies',
   randomEnemy: 'targeting.randomEnemy',
   ally: 'targeting.ally',
+  allAllies: 'targeting.allAllies',
 });
 
 const PROFILE_ROLE_PROPERTY = Object.freeze({
@@ -162,6 +166,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   // earlier review rounds on this branch: an importer answering for the shipped
   // rows while importing a supplied bundle is the same defect one more time.
   const tags = tagIndex(bundle);
+  const propertyIds = new Set((bundle.tags || []).filter(row => row.domain === 'property').map(row => row.id));
   const tagsOf = (family, object) => {
     const ids = tags.tagIdsOf(family, object);
     return ids.length ? ids : undefined;
@@ -284,6 +289,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
   };
   for (const piece of bundle.equipment.armaments) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
+    if (!RANGES.includes(piece.range)) throw new ImportError(`armament ${piece.id}: unknown range ${JSON.stringify(piece.range)}`);
     const weight = armamentInteger(piece, 'weight');
     const attackRating = armamentInteger(piece, 'attackRating');
     const defenseRating = armamentInteger(piece, 'defenseRating');
@@ -305,10 +311,12 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         hand: piece.hand,
         rarity: checkRarity(piece.rarity, `armament ${piece.id}`),
         tags: gameplayTagsOf('armament', piece),
+        propertyTags: tags.tagIdsOf('armament', piece).filter(id => propertyIds.has(id)),
         mods: piece.mods,
         requirements: piece.requirements,
         poiseThreshold: piece.poiseThreshold,
         physicalDamageType: piece.physicalDamageType,
+        range: piece.range,
         dropWeight: piece.dropWeight,
         unlock: piece.unlock,
         artKey: piece.artKey,

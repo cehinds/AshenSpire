@@ -10,11 +10,15 @@ import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { sfx } from '../src/ui/sfx.js';
 import { haptic } from '../src/ui/haptics.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const IMPACT = 100, TOTAL = 300;
 
 function drive(t, events, beatOrder) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  // The scheduler's monotonic clock must advance with these mocked timers.
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
   const trace = [];
   const at = (what) => trace.push({ what, at: Date.now() });
   const oldSfx = sfx.sink, oldHaptic = haptic.sink;
@@ -38,7 +42,7 @@ function drive(t, events, beatOrder) {
       playTimeline(events, { layer, combatEl: el(), beatOrder, anchorFor: (id) => anchors[id] || null,
         animateActor: () => ({ impactMs: IMPACT, totalMs: TOTAL, hold() {}, cancel() {} }),
         onBeatApplied() {}, onFlush() {} }, () => completed++);
-      for (let i = 0; i < 4000 && !completed; i++) t.mock.timers.tick(1);
+      for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
       assert.equal(completed, 1);
     });
   } finally { sfx.sink = oldSfx; haptic.sink = oldHaptic; setAnimSpeed('normal'); setBeatOrder('sequential'); }
@@ -53,8 +57,8 @@ const isHitSound = (w) => /^sound:(hit_|playerHurt)/.test(w);
 test('sequential: the hit sound and the damage buzz fire with the number, not at contact', (t) => {
   const trace = drive(t, enemyHit(6), 'sequential');
   const number = timeOf(trace, (w) => w === 'float:-6');
-  assert.equal(timeOf(trace, (w) => w === 'contact'), IMPACT, 'the slash stays at the contact');
-  assert.equal(number, TOTAL + 60 + ANIM_SPEEDS.normal.reactionMs, 'the number waits reactionMs after the reaction');
+  assert.equal(timeOf(trace, (w) => w === 'contact'), 500 + IMPACT, 'the slash stays at the contact after the default 500ms action lead');
+  assert.equal(number, 500 + TOTAL + 60 + 1500, 'the number follows accuracy and the target reaction, separated by 500ms gaps');
   assert.equal(timeOf(trace, isHitSound), number, 'the hit sound comes with the number');
   assert.equal(timeOf(trace, (w) => w === 'haptic:damageTaken'), number, 'so does the damage buzz');
   assert.ok(!trace.some((e) => e.at < number && (isHitSound(e.what) || e.what === 'haptic:damageTaken')), 'nothing sounds at the contact');
@@ -64,7 +68,7 @@ test('sequential: a guarded hit\'s block sound comes with its number', (t) => {
   const trace = drive(t, enemyHit(5, 5), 'sequential');
   // A hit Block takes whole shows its word (BLOCKED) in place of the number; the sound comes with the word.
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'word:BLOCKED'));
-  assert.equal(timeOf(trace, (w) => w === 'contact'), IMPACT, 'the spark stays at the contact');
+  assert.equal(timeOf(trace, (w) => w === 'contact'), 500 + IMPACT, 'the spark stays at the contact');
 });
 
 test('impact: the hit sound and the damage buzz stay at the contact', (t) => {
@@ -81,3 +85,4 @@ test('sequential: an attack card\'s heal and Block sounds come with their number
   assert.equal(timeOf(trace, (w) => w === 'sound:heal'), timeOf(trace, (w) => w === 'float:+3'), 'heal sound with its number');
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:+5'), 'block sound with its number');
 });
+

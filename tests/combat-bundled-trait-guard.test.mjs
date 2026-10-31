@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -75,7 +76,7 @@ function assertSettled(combat, turn) {
   assert.equal(combat.queue.length, 0);
 }
 
-for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} Quickstep resolves Defend Guard and leaves the next EndTurn usable`, () => {
+for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} Quickstep resolves Defend Guard and leaves the next EndTurn usable`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
   const combat = fixture({ coop });
   send(combat, { type: 'endTurn' });
   const offer = combat.pendingReaction;
@@ -97,7 +98,7 @@ for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} Quick
   assert.equal(guardEvents(combat).length, 1);
 });
 
-for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} ordinary EndTurn resolves Defend Guard without a reaction card`, () => {
+for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} ordinary EndTurn resolves Defend Guard without a reaction card`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
   const combat = fixture({ reaction: false, coop });
   assert.doesNotThrow(() => send(combat, { type: 'endTurn' }));
   assertSettled(combat, 2);

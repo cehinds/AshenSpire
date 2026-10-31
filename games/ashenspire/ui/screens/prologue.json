@@ -1,0 +1,39 @@
+{
+  "id": "prologue",
+  "description": "Prologue scene sequence. Mounted by src/ui/screens/prologue.js (mountPrologue).",
+  "route": "prologue",
+  "layout": {
+    "ref": "content/config/ui/screens/prologue.json"
+  },
+  "viewModel": {
+    "props": {
+      "scenes": "array",
+      "startScene": "number"
+    }
+  },
+  "regions": [
+    {
+      "slot": "stage",
+      "component": "dialogueFrame"
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "next",
+          "skip"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "advance": "prologue.advance",
+    "finish": "prologue.finish",
+    "settings": "settings.open"
+  },
+  "assets": [
+    "scene.prologue",
+    "portrait"
+  ]
+}

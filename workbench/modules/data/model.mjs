@@ -1,6 +1,6 @@
 // workbench/modules/data/model.mjs — the Data Studio's DOM-free table model.
 //
-// A table is one repo file: content/source/*.csv, content/source/*.json (arrays
+// A table is one repo file: content/source/*.csv, content/source/*.json, content/source/cards/*.json (arrays
 // of objects) or content/framework/*.json (arrays of objects). parseTable turns
 // the text into { columns, rows } for the grid kit; serializeTable turns the
 // grid's { columns, rows } back into text.
@@ -16,6 +16,12 @@
 
 export const SOURCE_DIR = 'content/source';
 export const FRAMEWORK_DIR = 'content/framework';
+export const PACKS_DIR = 'games/ashenspire/packs';
+export const HUD_DIR = 'content/hud-layout';
+export const PACKS_GROUP = 'Packs';
+export const HUD_GROUP = 'HUD layout';
+/** Profile pack JSON: an object of objects is a table keyed by id (parseTable's `keyed` rule). */
+const isPackPath = (path) => /^games\/ashenspire\/packs\/(?:[\w.-]+\/)*[\w.-]+\.json$/.test(String(path));
 const KEY_NAMES = ['id', 'key', 'name'];
 /**
  * Tables whose id is unique only within a scope column (file path -> scope column). Every other table's id is
@@ -57,6 +63,15 @@ export function listTables(paths = []) {
       out.push({ path, name: t[1], group: TAG_MODEL_GROUP, format: 'csv', ...(label ? { label } : {}) });
       continue;
     }
+    // The profile packs (one table per JSON file) and the HUD layout files: read through files/read, shown as a table
+    // when the shape fits and as a read-only JSON view otherwise (parseTable returns format 'view').
+    const pk = /^games\/ashenspire\/packs\/((?:[\w.-]+\/)*[\w.-]+)\.json$/.exec(String(path));
+    if (pk) { out.push({ path, name: pk[1], group: PACKS_GROUP, format: 'json' }); continue; }
+    const hud = /^content\/hud-layout\/([\w.-]+)\.json$/.exec(String(path));
+    if (hud) { out.push({ path, name: hud[1], group: HUD_GROUP, format: 'json' }); continue; }
+    // The card pools (content/source/cards/<pool>.json): one subdirectory level, JSON arrays like the flat Source tables.
+    const card = /^content\/source\/cards\/([\w.-]+)\.json$/.exec(String(path));
+    if (card) { out.push({ path, name: `cards/${card[1]}`, group: 'Source', format: 'json' }); continue; }
     const m = /^(content\/(source|framework))\/([^/]+)\.(csv|json)$/.exec(String(path));
     if (!m) continue;
     const group = m[2] === 'source' ? 'Source' : 'Framework';
@@ -64,7 +79,7 @@ export function listTables(paths = []) {
     if (group === 'Framework' && format !== 'json') continue;
     out.push({ path, name: m[3], group, format });
   }
-  const rank = (g) => (g === 'Source' ? 0 : g === 'Framework' ? 1 : 2);
+  const rank = (g) => ['Source', 'Framework', PACKS_GROUP, HUD_GROUP].indexOf(g) + 1 || 9;
   return out.sort((a, b) => (a.group === b.group ? a.name.localeCompare(b.name) : rank(a.group) - rank(b.group)));
 }
 
@@ -308,20 +323,63 @@ function serializeCsv(meta, { columns, rows }, path) {
 
 // ---------- JSON ----------
 
-function parseJson(text) {
+/**
+ * An object whose values are all plain objects, as rows keyed by id: each row is { id: <key>, ...value }.
+ * Returns null when the object is empty, a value is not an object, or a value carries an `id` that is not its key.
+ * idInside records whether the values hold their own id (so the save writes it back the same way).
+ */
+function keyedRows(document) {
+  const keys = Object.keys(document);
+  if (!keys.length || !keys.every((k) => isObject(document[k]))) return null;
+  const withId = keys.filter((k) => Object.hasOwn(document[k], 'id'));
+  if (withId.length && (withId.length !== keys.length || withId.some((k) => document[k].id !== k || Object.keys(document[k])[0] !== 'id'))) return null;
+  return { rows: keys.map((k) => ({ id: k, ...document[k] })), idInside: withId.length > 0 };
+}
+
+function parseJson(text, { keyed = false } = {}) {
   let document;
   try { document = JSON.parse(text); } catch (e) { throw Error(`Invalid JSON: ${e.message}`); }
   if (!document || typeof document !== 'object') throw Error('Not a table: the JSON needs an array of objects');
   const arrayKey = Array.isArray(document) ? null : Object.keys(document).find((k) => Array.isArray(document[k])) ?? null;
-  const list = Array.isArray(document) ? document : arrayKey ? document[arrayKey] : null;
+  let list = Array.isArray(document) ? document : arrayKey ? document[arrayKey] : null;
+  let keyedMeta = null;
+  if (!list && keyed && !Array.isArray(document)) {
+    const k = keyedRows(document);
+    if (k) { list = k.rows; keyedMeta = { idInside: k.idInside }; }
+  }
   if (!list || !list.every(isObject)) throw Error('Not a table: the JSON needs an array of objects');
   const names = [...new Set(list.flatMap(Object.keys))];
   const columns = names.map((key) => ({ key, label: key, type: inferType(list.map((r) => r[key])) }));
-  return { columns, rows: list, meta: { format: 'json', arrayKey, document, canonical: JSON.stringify(document), text } };
+  return { columns, rows: list, meta: { format: 'json', arrayKey, keyed: keyedMeta, document, canonical: JSON.stringify(document), text } };
+}
+
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** The reasons a keyed pack table cannot be written as an object: empty, duplicate or reserved ids. */
+export function keyProblems(rows) {
+  const problems = [], seen = new Set();
+  rows.forEach((row, i) => {
+    const id = String(row.id ?? '').trim();
+    const at = `row ${i + 1}`;
+    if (!id) problems.push(`${at}: the id is empty`);
+    else if (RESERVED_KEYS.has(id)) problems.push(`${at}: "${id}" is a reserved key and cannot be an id`);
+    else if (seen.has(id)) problems.push(`${at}: the id "${id}" is used by another row`);
+    seen.add(id);
+  });
+  return problems;
 }
 
 function serializeJson(meta, { rows }) {
-  const out = meta.arrayKey === null ? rows : { ...meta.document, [meta.arrayKey]: rows };
+  let out;
+  if (meta.keyed) {
+    const problems = keyProblems(rows);
+    if (problems.length) throw Object.assign(Error(`Cannot save: ${problems.join('; ')}`), { keyProblems: problems });
+    out = Object.create(null);
+    for (const row of rows) {
+      const { id, ...rest } = row;
+      out[String(id)] = meta.keyed.idInside ? { id, ...rest } : rest;
+    }
+  } else out = meta.arrayKey === null ? rows : { ...meta.document, [meta.arrayKey]: rows };
   if (JSON.stringify(out) === meta.canonical) return meta.text;
   return JSON.stringify(out, null, 2) + '\n';
 }
@@ -334,18 +392,28 @@ function serializeJson(meta, { rows }) {
  */
 export function parseTable(path, text, { hash = null } = {}) {
   const format = /\.csv$/.test(path) ? 'csv' : 'json';
+  if (format === 'json' && viewable(path)) {
+    // A pack or HUD layout file that is not a table (or not an array of objects) opens as a read-only JSON view.
+    try { return tableOf(path, format, parseJson(text, { keyed: isPackPath(path) }), text, hash); } catch (e) {
+      if (/^Invalid JSON/.test(e.message)) throw e;
+      return { path, format: 'view', columns: [], rows: [], baseHash: hash, text, meta: { format: 'view', pretty: JSON.stringify(JSON.parse(text), null, 2) } };
+    }
+  }
   const parsed = format === 'csv' ? parseCsv(text, { rfc: /^docs\/tag-model\/tables\//.test(path) }) : parseJson(text);
-  return { path, format, columns: parsed.columns, rows: parsed.rows, baseHash: hash, text, meta: parsed.meta };
+  return tableOf(path, format, parsed, text, hash);
 }
+const viewable = (path) => isPackPath(path) || new RegExp(`^${HUD_DIR}/[\\w.-]+\\.json$`).test(String(path));
+const tableOf = (path, format, parsed, text, hash) => ({ path, format, columns: parsed.columns, rows: parsed.rows, baseHash: hash, text, meta: parsed.meta });
 
 /** The text a table's { columns, rows } would be saved as. Unchanged data gives the original text. */
 export function serializeTable(table, doc = { columns: table.columns, rows: table.rows }) {
+  if (table.format === 'view') return table.text; // a read-only view never changes
   return table.format === 'csv' ? serializeCsv(table.meta, doc, table.path) : serializeJson(table.meta, doc);
 }
 
 /** True when the grid's document differs from the file as read. */
 export function isDirty(table, doc) {
-  return serializeTable(table, doc) !== table.text;
+  try { return serializeTable(table, doc) !== table.text; } catch (e) { if (e.keyProblems) return true; throw e; }
 }
 
 /**
@@ -417,12 +485,17 @@ export function savedTable(path, text, hash) {
  * table is not parsed is skipped and its path returned in skipped, not thrown on.
  */
 export function reviewableChanges(entries) {
-  const changes = [], skipped = [];
+  const changes = [], skipped = [], blocked = [];
   for (const entry of entries) {
-    const change = changeFor(entry.table, entry.doc);
+    let change;
+    try { change = changeFor(entry.table, entry.doc); } catch (e) {
+      if (!e.keyProblems) throw e;
+      blocked.push({ path: entry.path, message: e.message });
+      continue;
+    }
     if (change) changes.push(change); else skipped.push(entry.path);
   }
-  return { changes, skipped };
+  return { changes, skipped, blocked };
 }
 
 /**

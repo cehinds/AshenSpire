@@ -52,9 +52,11 @@ ritual,card,Ritual,C9A227,◈,,,,,"Rites, offerings, and faith work."
 blight,card,Blight,B5541C,☣,,,,,Creeping decay.
 oath,card,Oath,C9A227,✚,,,,,"Binding, lasting commitments."
 flourish,card,Flourish,9FC3E8,✧,,,,,Finesse — footwork and multi-hit.
+finesse,card,Finesse,9FC3E8,✧,,,,,"Multi-hit without the per-hit SP price: the move costs its ordinary price."
 ash,card,Ash,7A6F5A,•,,,,,"Spent once, then gone to ash."
 heavy,card,Heavy,C9A227,◆,,,,,"Slow, committed, and hard to stop."
 basic,card,Basic,7A6F5A,○,,,,,Everybody's — on the shelf without being found.
+rank.cantrip,card,Cantrip,7FA8C9,✦,,,,,Basic spell eligible for Magic Adept deck copies.
 pierce,card,Pierce,9FC3E8,†,,,,,A precise physical form; presentation only.
 ranged,card,Ranged,7FA8C9,➶,,,,,Authored ranged presentation; no position system.
 precision,card,Precision,C9A227,◎,,,,,Deliberate aim and finesse; presentation only.
@@ -267,6 +269,8 @@ damage,,damage,,,INTERNAL,0,DAMAGE,,
 damage.physical,damage,physical,,,SECONDARY,10,,,
 damage.magic,damage,magic,,,SECONDARY,11,,,
 damage.arcane,damage,arcane,,,SECONDARY,12,,,
+damage.fire,damage,fire,,,SECONDARY,16,,,
+damage.holy,damage,holy,,,SECONDARY,17,,,
 damage.blade,damage,blade,,,SECONDARY,13,,,
 damage.blunt,damage,blunt,,,SECONDARY,14,,,
 damage.piercing,damage,piercing,,,SECONDARY,15,,,
@@ -309,6 +313,7 @@ targeting.enemy,targeting,enemy,,,CONTEXTUAL,11,,,
 targeting.allEnemies,targeting,allEnemies,,,CONTEXTUAL,12,,,
 targeting.randomEnemy,targeting,randomEnemy,,,CONTEXTUAL,13,,,
 targeting.ally,targeting,ally,,,CONTEXTUAL,14,,,
+targeting.allAllies,targeting,allAllies,,,CONTEXTUAL,15,,,
 internal,,internal,,,INTERNAL,0,INTERNAL,,
 internal.unplayable,internal,unplayable,,,SECONDARY,10,,,
 internal.upgraded,internal,upgraded,,,DEBUG,11,,,
@@ -485,9 +490,11 @@ trait:impact,trait,Impact,9FC3E8,◇,,,,,"On hit: N Poise damage, or double the 
 trait:insulated,trait,Insulated,9FC3E8,◇,,,,,Insulated combat interaction.
 trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
+trait:persistent,trait,Persistent,9FC3E8,◇,,,,,Granted Precision survives the end of its owner's turn.
 trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Playable from hand during the opponent's turn, before the pending action resolves."
 trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
 trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
 trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interaction.
 trait:unreflectable,trait,Unreflectable,9FC3E8,◇,,,,,Unreflectable combat interaction.
 target,card,Target,9FC3E8,◎,,,,,An explicitly targeted spell bypasses Evasion without consuming an Evasion stack.
+throw,property,Throw,9FC3E8,➶,,,,,"Choose Throw to attack one band beyond this weapon’s range with reduced Precision. Does not consume the weapon."

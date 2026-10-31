@@ -1,3 +1,7 @@
+import { partyRangeContext } from '../src/model/partyRangeContext.js';
+import { hitBadgeTargetIds } from '../src/model/hitBadge.js';
+import { formationOccupancy } from '../src/model/formationOccupancy.js';
+import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
@@ -52,7 +56,7 @@ import {
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult, bossTierScale } from '../src/model/seats.js';
-import { assertSavedBossReferences } from '../src/model/mapReferences.js';
+import { assertSavedBossReferences } from '../src/model/map/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
 import { enemyLevelsForFight } from '../src/engine/runCombat.js';
@@ -67,7 +71,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, createCoopCardPreviewReader, previewCoopCards, classifyPreviewCandidates, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
@@ -682,7 +686,9 @@ export function createSession({ registries, seedString, endless = false, restore
     // Dead seats are excluded: they can never rejoin, so they must not hold the living party back.
     const partyRuns = livingMembers().map(member => member.run);
     const partyReactionRulesVersion = !partyRuns.length ? null : partyRuns.every(run => run.reactionRulesVersion >= 1) ? Math.min(...partyRuns.map(run => run.reactionRulesVersion)) : null;
+    const sharedRange = partyRangeContext(partyRuns);
     const combat = createCoopCombat({
+      ...sharedRange,
       combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
       combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
       reactionRulesVersion: partyReactionRulesVersion,
@@ -698,6 +704,9 @@ export function createSession({ registries, seedString, endless = false, restore
       enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
+    // Adopt an absent historical run policy only after the new fight exists.
+    // Resume/join paths keep the active snapshot and never take this branch.
+    if (combat.rangeState) for (const run of partyRuns) if (!run.rangePolicy) run.rangePolicy = structuredClone(combat.rangeState.policy);
     if (combatStartStateForTools) {
       const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
       const player = member ? combat.players.get(member.id) : null;
@@ -768,14 +777,54 @@ export function createSession({ registries, seedString, endless = false, restore
     return { ok: true, combat: session.scene };
   }
 
+  // A card-zone choice's candidate previews, computed once per choice (they ride every snapshot until it is
+  // answered) and from a single detached state. Keyed on the live choice object, so a new choice recomputes.
+  const choicePreviews = new WeakMap();
+  const FULL_PREVIEW_CAP = 8;
+  function candidatePreviews(c, playerId, choice) {
+    if (!choicePreviews.has(choice)) {
+      let previews = {};
+      try {
+        const seat = c.players.get(playerId);
+        const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
+        const { liveIds, plainIds } = classifyPreviewCandidates(ctx, seat.entity, choice.candidates || [], c.enemies.some(enemy => enemy.alive));
+        const full = [...liveIds, ...plainIds].slice(0, FULL_PREVIEW_CAP), cheap = {};
+        // Any candidate past the cap has no priced numbers (a state-dependent card's branch or charge is unknown, and a
+        // plain card would read numbers a stance or advantage may change): its tile reads the card text.
+        for (const id of [...liveIds, ...plainIds].slice(FULL_PREVIEW_CAP)) cheap[id] = { textOnly: true, values: [] };
+        previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
+      } catch { previews = {}; }
+      choicePreviews.set(choice, previews);
+    }
+    return choicePreviews.get(choice);
+  }
+
   function combatScene() {
     const c = live.combat;
+    const previewReaders = new Map();
+    const handPreview = (ownerId, instanceId, ranks) => {
+      if (!previewReaders.has(ownerId)) previewReaders.set(ownerId, createCoopCardPreviewReader(c, ownerId));
+      const read = previewReaders.get(ownerId);
+      const owner = c.players.get(ownerId);
+      const instance = owner.piles.hand.find(card => card.instanceId === instanceId);
+      const definition = resolveCombatCard({ ...c, registries: c.registriesForPlayer(ownerId), player: owner.entity,
+        attributes: owner.attributes, loadout: owner.loadout }, instance, { upcastRanks: ranks });
+      const living = c.enemies.filter(enemy => enemy.alive);
+      const firstTarget = c.rangeState?.policy.enabled && hitBadgeTargetIds(definition, living).length ? living[0]?.id : undefined;
+      const preview = read(instanceId, firstTarget, ranks);
+      if (!preview.range?.enabled || (!hitBadgeTargetIds(preview.resolvedDefinition, living).length && !preview.range.targets?.length)) return preview;
+      // Keep only the small canonical quote; reuse the initial targeted read.
+      // The host applies this owner's knowledge before computing either chance.
+      const rangeByTarget = Object.fromEntries(living.map(enemy => [enemy.id, firstTarget === enemy.id ? preview.range
+        : read(instanceId, enemy.id, ranks, { rangeRoute: 'advance' }).range]));
+      return { ...preview, rangeByTarget };
+    };
     // Compact digest of display-worthy events since the LAST snapshot, so the
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
       .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak',
-        'combatReactionUnavailable', 'attackHit', 'attackMissed', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
+        'combatReactionUnavailable', 'combatRangeReturnUnavailable', 'attackHit', 'attackMissed', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         eventIndex: c.eventLog.indexOf(e),
@@ -797,6 +846,7 @@ export function createSession({ registries, seedString, endless = false, restore
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
         turn: e.turn,
         // Reaction notes (model/combatLog.js) and callouts (fx.js calloutForEvent).
+        ...(e.type === 'combatRangeReturnUnavailable' ? { required: e.required, available: e.available, advanceSp: e.advanceSp, defenseKept: e.defenseKept } : {}),
         ownerId: e.ownerId, attackKind: e.attackKind, need: e.need, have: e.have, resource: e.resource,
         ...(Array.isArray(e.cardIds) ? { cardIds: [...e.cardIds] } : {}),
         avoided: e.avoided, ...(e.hitCheck === true ? { hitCheck: true } : {}),
@@ -814,6 +864,7 @@ export function createSession({ registries, seedString, endless = false, restore
     live.opening = null;
     return {
       kind: 'combat',
+      ...(c.rangeState ? { rangeState: structuredClone(c.rangeState) } : {}),
       combatExpansionVersion: c.sharedExpansionVersion || 1,
       reactionRulesVersion: c.reactionRulesVersion,
       ...(c.reactionRules ? { reactionRules: structuredClone(c.reactionRules) } : {}),
@@ -826,6 +877,8 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(c.stanceRules ? { stanceRules: structuredClone(c.stanceRules) } : {}),
       ...(c.enemyKnowledge ? { enemyKnowledge: { version: 1, rules: structuredClone(c.enemyKnowledge.rules),
         owners: structuredClone(c.enemyKnowledge.owners) } } : {}),
+      formationPolicy: c.formationPolicy || null,
+      formationOccupancy: formationOccupancy(c),
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
@@ -837,6 +890,7 @@ export function createSession({ registries, seedString, endless = false, restore
       result: c.result,
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
+        burdenRead: projectEnemyBurdenHand(e, { turn: c.turn, registries: c.registries }),
         presentationStance: enemyStanceCategory(e.intent),
         combatExpansionVersion: e.combatExpansionVersion || 1, combatStance: e.combatStance,
         persistentWard: e.persistentWard, barrier: e.barrier, statusControl: e.statusControl,
@@ -869,10 +923,19 @@ export function createSession({ registries, seedString, endless = false, restore
         ashenBlight: P.entity.ashenBlight ? structuredClone(P.entity.ashenBlight) : undefined,
         combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
-        pendingAbilityDiscard: c.pendingAbilityDiscard || null,
+        pendingAbilityDiscard: c.pendingAbilityDiscard?.playerId===P.id ? c.pendingAbilityDiscard : null,
+        // Snapshot only: each candidate carries the preview a hand card gets (below), so a client prices a pile card by
+        // its live effect variant. Nothing here is written back to the engine state or a save.
+        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? (() => {
+          const choice = structuredClone(c.pendingCardChoice);
+          const previews = candidatePreviews(c, P.id, c.pendingCardChoice);
+          choice.candidates = (choice.candidates || []).map(card => (previews[card.instanceId] ? { ...card, combatPreview: previews[card.instanceId] } : card));
+          return choice;
+        })() : null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
         ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
+        ...(P.entity.rangeActorKey ? { rangeActorKey: P.entity.rangeActorKey } : {}),
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
@@ -890,10 +953,10 @@ export function createSession({ registries, seedString, endless = false, restore
         ...(P.entity.wardMeter ? { wardMeter: P.entity.wardMeter } : {}),
         ratings: P.entity.ratings,
         hand: P.piles.hand.map((c2) => {
-          const preview = previewCoopCard(c, P.id, c2.instanceId);
+          const preview = handPreview(P.id, c2.instanceId);
           const options = P.entity.combatExpansionVersion === 2 ? upcastOptions(preview.resolvedDefinition || resolveCombatCard({ ...c, registries: c.registriesForPlayer(P.id), player: P.entity, combatExpansionVersion: 2 }, c2)) : [];
           return { ...c2, combatPreview: preview,
-            ...(options.length ? { upcastPreviews: Object.fromEntries(options.map(option => [option.ranks, previewCoopCard(c, P.id, c2.instanceId, undefined, option.ranks)])) } : {}),
+            ...(options.length ? { upcastPreviews: Object.fromEntries(options.map(option => [option.ranks, handPreview(P.id, c2.instanceId, option.ranks)])) } : {}),
             breakMeterVersion: [1, 2].includes(c.breakMeterVersion) ? c.breakMeterVersion : 0 };
         }),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
@@ -913,9 +976,9 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined, rangeRoute = undefined) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup); }
+    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup, rangeRoute); }
     catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }
@@ -995,6 +1058,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (c.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(m.run, c, m.id);
       const s = outcome.survivors[m.id];
       if (!s) continue;
+      m.run.cinders=(m.run.cinders || 0)+(outcome.earnedCinders?.[m.id] || 0);
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
       if (s.ashenBlight) m.run.ashenBlight = structuredClone(s.ashenBlight);
       if (s.blightTerminal) { m.alive = false; m.catchup.length = 0; }

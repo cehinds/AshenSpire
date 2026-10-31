@@ -72,7 +72,7 @@ test('after-turn checks retain the original anchor/scale while allowing a legiti
   assert.equal(resized.verdicts.at(-1).ok, false, 'a turn cannot silently resize a fixed resting root');
 });
 
-test('Classic bob checks boot the actual display appearance rather than only changing sprite style', async () => {
+test('Classic rest checks boot the actual display appearance rather than only changing sprite style', async () => {
   const bootCode = source.slice(source.indexOf('async function boot('), source.indexOf('\nconst point ='));
   for (const classic of [false, true]) {
     let navigation;

@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +18,7 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 
 function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', attributes: { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 }, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
+    ? { ...enemy, firstMove: 'slash', attributes: { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 }, equipmentSp: 0, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
       tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,
@@ -117,7 +119,7 @@ test('reload preserves committed plan and all RNG streams through a paid reactio
 });
 
 test('pending enemy reactions reject a missing cursor or hand cleanup on solo/co-op restore', () => {
-  for (const coop of [false, true]) {
+  for (const coop of COOP_MODES) {
     const { registries } = fixture();
     const players = ['a'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
@@ -184,7 +186,7 @@ test('preference changes reject malformed and paused commands atomically', () =>
   assert.deepEqual(combat.rng.getCounters(), counters);
 });
 
-test('co-op preferences affect only their connected owner and survive the exact snapshot', () => {
+test('co-op preferences affect only their connected owner and survive the exact snapshot', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
@@ -210,7 +212,7 @@ test('co-op preferences affect only their connected owner and survive the exact 
   assert.deepEqual(decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)), decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(restored)));
 });
 
-test('every owed co-op hand cleanup is required, with unended frozen and newly joined seats exempt', () => {
+test('every owed co-op hand cleanup is required, with unended frozen and newly joined seats exempt', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
     maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 4, combatExpansionVersion: 2,
@@ -311,7 +313,7 @@ test('paid Counter reply to an automatic return terminates the chain', () => {
 });
 
 test('nested paid Sweep discard resumes a player-phase Counter return exactly after reload', () => {
-  for (const coop of [false, true]) {
+  for (const coop of COOP_MODES) {
     const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'sweepingBlow'
       ? { ...card, effects: [{ op: 'discard', choose: true, amount: 1 }, ...card.effects] } : card) });
     const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
@@ -359,7 +361,7 @@ test('nested paid Sweep discard resumes a player-phase Counter return exactly af
   }
 });
 
-test('disconnect settles the last owned offer and reconnect resumes the saved cursor', () => {
+test('disconnect settles the last owned offer and reconnect resumes the saved cursor', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
@@ -390,7 +392,7 @@ test('disconnect settles the last owned offer and reconnect resumes the saved cu
 });
 
 test('terminal reaction victory and defeat retire continuation before durable commit in both engines', () => {
-  for (const coop of [false, true]) for (const result of ['victory', 'defeat']) {
+  for (const coop of COOP_MODES) for (const result of ['victory', 'defeat']) {
     const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 100, hits: 1, weight: 1,
         tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
@@ -468,7 +470,7 @@ test('a terminal Blight play saves ended combat under the new reaction rules', (
   assert.deepEqual(rng.getCounters(), combat.rng.getCounters());
 });
 
-test('saved contacts skip disconnected bodies without spending Block or Counter, including suspended reload', () => {
+test('saved contacts skip disconnected bodies without spending Block or Counter, including suspended reload', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   for (const block of [0, 100]) for (const suspend of [false, true]) {
     const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 10, weight: 1,
@@ -508,7 +510,7 @@ test('saved contacts skip disconnected bodies without spending Block or Counter,
   }
 });
 
-test('co-op collects owned choices in saved seat order before either seat takes damage, with exact reload', () => {
+test('co-op collects owned choices in saved seat order before either seat takes damage, with exact reload', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,

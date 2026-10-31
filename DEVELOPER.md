@@ -1,11 +1,54 @@
 # DEVELOPER.md — extending AshenSpire
 
+For a practical Visual Studio editing map, common recipes, named icons and
+compiler tasks, see [Manual editing](docs/MANUAL-EDITING.md).
+
 How to run, test, and add content. The architecture contract lives in
 [SPEC.md §3](SPEC.md); exact engine signatures in
 [docs/ENGINE-API.md](docs/ENGINE-API.md). This file is the practical guide.
 
 For how work is branched, reviewed, and merged, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
+
+For separate game/art checkouts, composite editor previews, exports and the
+release/pin workflow in full Visual Studio, see [Art authoring](docs/ART-AUTHORING.md).
+
+## Open and navigate in Visual Studio
+
+Open the repository root with **File → Open → Folder**. Install Visual Studio's
+**Node.js development** workload and Node.js 22.14 or newer; this project has no
+root npm dependencies and does not need a generated solution or project file.
+The shared [`tasks.vs.json`](tasks.vs.json) adds Play, Serve, Fast core tests,
+Full Node test suite, Compile authored content, Build standalone, Start
+Workbench and Editor tests to the right-click menu for `package.json` in
+Solution Explorer. Tasks apply only to the root package file and run from the
+workspace root. Play, Serve and Workbench are long-running server tasks.
+See Microsoft's guides for [Open Folder](https://learn.microsoft.com/en-us/visualstudio/ide/develop-code-in-visual-studio-without-projects-or-solutions)
+and [custom tasks](https://learn.microsoft.com/en-us/visualstudio/ide/customize-build-and-debug-tasks-in-visual-studio?view=vs-2022)
+if Visual Studio's folder view or task menu is unfamiliar.
+
+Use these folders as the first stops when finding code:
+
+| Folder | What belongs here |
+|---|---|
+| `src/main.js` | Application wiring and the composition root. |
+| `src/model/` | Pure game state, formulas, validation and projections. |
+| `src/engine/` | Headless game rules, simulation, orchestration and persistence. |
+| `src/ui/` | Browser presentation: screens, view models, component models and renderers. |
+| `content/source/` | Authoritative authored card, class, enemy, relic, status and related tables. |
+| `content/config/`, `content/framework/` | Authored UI configuration and framework definitions. |
+| `src/content/generated/` | Compiler output. Change its source data and rebuild; do not author here. |
+| `styles/` | Game stylesheets and generated design-token CSS. |
+| `tests/` | Game behavior tests, fixtures and the shared Node test runner. |
+| `tools/` | Build, validation, QA and repository commands; [`tools/README.md`](tools/README.md) indexes them. |
+| `workbench/`, `editor/`, `ui-studio/`, `pose-studio/` | Separate local browser-based authoring tools. The Workbench combines them; they are not Visual Studio projects. |
+| `docs/` | Guides, architecture contracts, design notes and review evidence. |
+
+For the dependency boundaries and root-folder rules, see the
+[architecture map](docs/ARCHITECTURE-MAP.md). For gameplay authoring, use the
+quick reference in [CONTRIBUTING.md](CONTRIBUTING.md) and its linked sections
+in this guide. The detailed layout is a contract: keep browser import paths and
+generated outputs where the architecture map places them.
 
 ## Workbench — every authoring tool in one window
 
@@ -21,6 +64,32 @@ added to `workbench/tools.json`; `workbench/tests/registry.test.mjs` fails
 otherwise.
 
 ## Run & test
+
+`package.json` (no dependencies, no `"type"` field) gives the common commands
+short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
+`npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
+`npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
+and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+tool, what it does and who calls it: [tools/README.md](tools/README.md).
+
+**`styles/tokens.generated.css` is generated** from the design tokens in
+`content/config/ui/tokens.json` (`type`, `layer`, `motion`, `touch`, beside `vars`).
+Edit the JSON, then `npm run tokens:css` (`node tools/tokens-css.mjs --write`; `--check`
+exits 1 on drift and runs in `tests/run-node.mjs`). A token whose custom property
+`styles/base.css` already declares (`--t-1`, `--t-2`, `--t-4`, `--tap-floor`,
+`--iconbtn-size`) is marked `home` and is not declared again: one home per fact.
+`launch.mjs` writes the file before it bundles, `serve.mjs --watch` rebuilds it after
+`config-build`, and `index.html` links it straight after `base.css`.
+
+**`npm run lint:style` (`node tools/style-lint.mjs --check`) is a ratchet.** It counts,
+per file in `styles/*.css`, the `font-size` px literals below `type.minimum.textPx`, the
+bare `z-index` of 100 or more that is not `var(--layer-*)`, and the bare hex colours outside
+the token homes (`base.css` `:root` blocks, `combat-symbol-colors.css`,
+`tokens.generated.css`), and fails when a count rises above
+`tools/style-lint-baseline.json`. To lower it, replace raw values with tokens, run
+`node tools/style-lint.mjs --write-baseline` in the same change, and commit the new
+baseline; a count that fell without a baseline write still passes, but the gain is not
+locked in. Never raise the baseline to go green.
 
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
 Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
@@ -81,6 +150,15 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
+Dedicated co-op tests (32 files) and `coop-hud.yml` run only when
+`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
+While false, discovery prints the skip reason before sharding; mixed suites
+keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
+retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
+the co-op lanes automatically (`tests/feature-scopes.js` also works in the
+browser test harness).
+
+
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
@@ -90,10 +168,10 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
-| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
+| `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
-| `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → discovered tests, 3 OS, all shards; Windows uses `--no-slow` and runs each of the four `SLOW_DISCOVERED` files in its own Windows job | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | yes, if the tree differs from `test` |
@@ -117,7 +195,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`); the same run also publishes the Workbench as a static site at `/workbench/` (built from this checkout, `continue-on-error` so it never stops the game site) | — | yes (push to `dev`) | yes | yes |
 | `pages-builds.yml` → deploy to GitHub Pages (push to `dev` or `release`, or the owner's dispatch with `PUBLISH` for any branch the environment admits; `release` needs the owner's one-time `github-pages` deployment-branch addition, see the workflow header) | — | yes (push to `dev`) | — | — |
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
-| `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AshenSpire-art`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
+| `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AI-Art` on branch `ashenspire`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → pin bump: pushes `bot/art-pin-<tag>` and opens its pull request into `dev` with `ART_REPO_WRITE_TOKEN`, so CI runs on it (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
 | `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
 | `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
@@ -164,7 +242,7 @@ discard controls, under a live worked example.
 `dist/` (docs/EXTERNAL-ASSETS-PLAN.md step 8e, owner answers 2, 3 and 6): the
 pack-shaped game file `AshenSpire.html` (~10 MB of code, no media) with
 `asset-base.json`, `packs/` and `objects/` beside it, and the **light single
-file** at `download/AshenSpire.html` (~31 MB, every byte inline, held to no
+file** at `download/AshenSpire.html` (~140 MB at 0.7.1.1790, every byte inline, held to no
 byte budget); `dist/` also gets the version-stamped `AshenSpire-<version>.html`,
 and the root alias `AshenSpire.html` is the light single file. **By default
 the pack-shaped file's tier is light** (owner, 2026-09-26: dev builds are
@@ -179,9 +257,9 @@ says `light`. The full-art single file (~255 MB) and the separate mobile file
 are retired, and `bundle.mjs --mobile` is refused by name. **The art is not in
 this repository** (docs/EXTERNAL-ASSETS-PLAN.md step 13): `assets/`,
 `assets-mobile/`, the fonts, the score's MP3s, `map-detail/` and `art/` live in
-`cehinds/AshenSpire-art`, which generates the light twins and packs the release
+`cehinds/AI-Art` on branch `ashenspire`, which generates the light twins and packs the release
 (see *The art release* below); an art change is a PR there, then a PR here that
-bumps the pin. `art-manifest.json` lists every asset id (its runtime `assets/…`
+bumps the pin and matching canonical manifest atomically. Display images now live in the common pack; the eight display JSON/Markdown catalogs remain game data. `art-manifest.json` lists every asset id (its runtime `assets/…`
 path) with the file each tier ships — `light` (`assets-mobile/…` in the light
 zip) and `high` (`assets/…` in the high zip), each with bytes, sha256 and pixel
 size; the placeholder tier has no file. `node tools/art-manifest.mjs --write`
@@ -261,11 +339,11 @@ Leave it published for weeks, then set it back in a later PR. Publish it from
 not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
 
 **The art release** (docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md step
-11). `art-release.json` (schema 2) pins one release of `cehinds/AshenSpire-art`:
-its tag (today `hd-assets-v2`) and three zips with their sha256s — `high`
-(`hd-assets-v2.zip`, the full art), `light` (`light-assets-v2.zip`, the
-`assets-mobile/` twins) and `common` (`common-assets-v2.zip`: the fonts,
-`licenses/OFL.txt`, the music and the map tiles). `node tools/fetch-art.mjs`
+11). `art-release.json` (schema 2) pins one release of `cehinds/AI-Art` on branch `ashenspire`:
+its tag (currently `ashenspire-hd-assets-v24`) and three zips with their sha256s — `high`
+(`hd-assets-v24.zip`, the full art), `light` (`light-assets-v24.zip`, the
+`assets-mobile/` twins) and `common` (`common-assets-v24.zip`: the fonts,
+`licenses/OFL.txt`, the music, the map tiles and `assets-display/` images). `node tools/fetch-art.mjs`
 fetches all three (`--pack high|light|common`, a comma list, or `all`), refuses
 a zip unless its sha256 is the pinned one and every file matches its record in
 `art-manifest.json`, and unpacks each into `.art-cache/<tag>/<pack>/`
@@ -381,11 +459,12 @@ moves, phases, seeded encounter reachability and ten named boss locations.
 `node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
-and checks that every combatant's visible, loaded figure image is moved by
-exactly one running idle bob (on the image or its `.pose-layer` / `.facing`
-layer, or the Rendered style's `.rendered-stage`), whose keyframes really displace
-it (an opacity pulse or another infinite animation does not count), at boot, after a turn, and with the player redrawn in the Rendered and
-Classic sprite styles. It then plays one full turn under the Reduced motion setting with
+and checks that every combatant has visible, loaded artwork that holds still at
+rest, at boot, after a turn, and with the player redrawn in Rendered and Classic
+styles. Twenty RAF samples check actual art bounds, active displacement on its
+ancestors, and nonblank stable canvas pixels; Default retains its authored
+fixed-rest anchor, scale and pose check. Resting fighters have no continuous bob;
+bounded attack/reaction clips and visible status/aura feedback remain enabled. It then plays one full turn under the Reduced motion setting with
 the OS preference emulated, the setting alone and the OS alone: no animation
 `document.getAnimations()` or `Element.animate()` reports may run longer than
 0.01 s (a CSS animation or transition that ends between two frames is caught
@@ -393,6 +472,7 @@ by its end event), and no script flipbook or tween (3+ changes to one element
 inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
 kinds. A hand with no Attack is passed with End Turn until one is drawn (the
 selftest runs one plant and its clean copy at `--seed T14`, an all-Skill opening hand). `--selftest` plants sixteen known-bads through `doorplant.mjs` (CI runs them in 3 shards, `--shard i/3`).
+`node tools/perf-probe.mjs [--runs N] [--scenario combat,map,hand,transitions]` measures mobile performance (390x844, 4x CPU throttle, real touch input): frame times, long tasks, layout/paint totals, a CPU profile and the DOM census per scenario, median of N runs; it measures only and writes raw JSON outside the tree (baseline: docs/PERF-MOBILE-BASELINE.md).
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
@@ -508,6 +588,18 @@ node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftes
 # or open tests/index.html in a browser — same suite, green/red list
 ```
 
+**What is JSON-authored now.** Relics, stances, flasks and the authored statuses
+are authored in `content/source/relics.json`, `stances.json`, `flasks.json` and
+`statuses.json`; `node tools/content-build.mjs` compiles each to
+`src/content/generated/<kind>.js` (`launch.mjs` runs it before every build,
+`--check` is the drift gate), and `src/content/relics.js`, `stances.js`,
+`flasks.js` and `statuses.js` import the generated module so every importer is
+unchanged (`statuses.js` also joins the derived `expansionStatuses` from
+`combatStatusRules.js`, which stay JS). Base cards come through
+`tools/base-cards.mjs`; the interface strings (`uiStrings.csv`) and the node
+tables are CSV/JSON in `content/source/` too. Events and the class card files are
+still hand-written JS and follow the same way in later changes.
+
 Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
 (skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
 than `.github`) and hands them to one `node --test`. A new test file needs no
@@ -515,8 +607,17 @@ registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. A file that spawns full simulation runs goes in
 `SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
 discovered shards on a pull request into `dev` pass `--no-slow`, and
-`ci.yml`'s `test-discovered` shards run those files, with no `--no-slow`, on
-every push to `test`. `.github/workflows/tests.yml` runs the core suite and the
+`ci.yml` runs the complete corpus on every push to `test`: Linux/macOS keep
+all files in `test-discovered`; Windows uses `--no-slow` there and runs each
+`SLOW_DISCOVERED` file once in the `test-discovered-slow-windows` matrix. The
+isolated native `node --test` jobs retain every seed and assertion under the
+same 20-minute job limit, without sharing a runner with other test files.
+The historical combat-v1 `docs/BALANCE.md` drift test runs only when the
+default author in `games/ashenspire/game.json` uses the Current preset's core.
+The configured Core build reports an explicit skip before spawning its
+300-seed report. Manual `node tools/balance.mjs` remains available; shared
+runsim checks, report/parser contracts and simulation unit tests stay active.
+`.github/workflows/tests.yml` runs the core suite and the
 four discovered shards as Linux jobs on a pull request into `dev` and on a push
 to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
 fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
@@ -916,6 +1017,57 @@ are CSS lengths under the page's `--ui-zoom` (they are not divided by it).
 `<html data-form-factor>` is written by `applyUiScale` in `src/main.js` from
 `balance.ui.uiScale.formFactor`.
 
+## Game profiles (`games/ashenspire/`, `engine/modules/<id>/`)
+
+The Core game profile is JSON, not code. `games/ashenspire/game.json` is the
+default profile's author; `presets/` (`core.json`, `current.json`), `bundles/` and
+`packs/` (the base-card pack is `packs/base-cards/`) hold the rest. Each engine
+module is one folder, `engine/modules/<id>/`, with its `module.json`,
+`defaults.json`, `settings.schema.json` and `guide.md`. The profiles are resolved
+against the modules and the pack, and the result is locked in
+`games/ashenspire/game.lock.json`: a hash per profile. The lock and the
+generated modules are output. Edit the JSON, never them.
+
+```
+node tools/game-config.mjs validate   # resolve games/ashenspire/game.json; exit 1 on an error (the default command)
+node tools/game-config.mjs build      # write src/content/generated/gameProfiles.js, game.lock.json and baseCards.js
+node tools/game-config.mjs check      # exit 1 when gameProfiles.js or game.lock.json is stale
+node tools/base-cards.mjs [--check]   # the base-card pack alone: packs/base-cards → src/content/generated/baseCards.js
+node tools/hud-layout-css.mjs --write # content/hud-layout/*.json → styles/hud-layout.generated.css (see above)
+```
+
+`node tools/launch.mjs --build-only` already runs `game-config build` and the
+HUD layout step before it bundles, so a build from a clean checkout is current.
+Use `game-config check` to see whether the generated files are stale without
+rewriting them. The Workbench does the same work on save: a change under `games/ashenspire/` or in an engine module's
+contracts, foundation, kernel or modules rebuilds the profiles, and a change under
+`content/hud-layout/` rebuilds the HUD layout. The Build & Checks jobs
+**Game profiles**, **Check game profiles** and **HUD layout** run the same commands.
+The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
+
+### Edit Core range and movement
+
+The range contract is [Optional engagement, Advance and Throw](docs/design/RangeAdvance.md).
+Use these source locations when changing it in Visual Studio:
+
+| Change | Source |
+|---|---|
+| Default toggle, Advance price, Reach bonus or Throw penalty | `content/source/fixCoreMechanics.json`, `range` |
+| Weapon coverage and Throw property | `games/ashenspire/packs/core/gear.json` |
+| Player movement cards | `games/ashenspire/packs/core/cards.json` |
+| Enemy starting range and paid closing move | `games/ashenspire/packs/core/characters.json` and `enemyCards.json`; conversion helper `tools/lib/core-range-content.mjs` |
+| Pair distance, route quote and receipt validation | `src/model/combatEngagement.js` |
+| Runtime payment, committed source and reaction context | `src/engine/combatEngagement.js` |
+| Conditional follow-up targets and shared action payment | `src/engine/combatRangeLineage.js` |
+| Saved action and trigger validation | `src/model/combatReactionState.js`, `src/model/combatRangeLineageState.js` |
+| Selected-card route controls | `src/ui/models/CombatRangeActionModel.js`, `src/ui/components/combatRangeAction.js`, `styles/combat-range-action.css` |
+| Quantified Precision/Evade tags and concise face copy | `src/model/cardBonusTags.js`, `src/model/cardFaceText.js` |
+
+After editing authored data, run `node tools/content-build.mjs` followed by
+`node tools/game-config.mjs build`. Range settings apply to new runs; an active
+fight uses its saved policy and accepted action receipts. Keep price formulas
+in the shared planner so solo play, co-op and displayed choices agree.
+
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
 Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
@@ -956,25 +1108,37 @@ drift. Before that nothing ran it, and from 2026-09-17 to 2026-10-02 about 230
 sentences landed in code across 24 files without anyone seeing the red. Never
 regenerate the baseline to cover a file that GREW: move the sentence to a row.
 
-## Add a card (one file: `src/content/cards/<class>.js`)
+## Add a card (one file: `content/source/cards/<class>Cards.json`)
 
-```js
+The Herald, Reaver and Starseer pools, the armament cards, the colorless cards and the
+corrupted cards are plain JSON (an array of rows, two-space indent), named for the export
+they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
+`armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`.
+`src/content/cards/<class>.js` is only a shim over the compiled
+`src/content/generated/cards/<name>.js`; do not author there. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`) and commit
+the regenerated file. Design notes that used to be comments in the JS live in
+`content/source/CONTENT-NOTES.md` under "Cards", keyed by card id. JSON has no comments, no
+shared constants and no functions, so write a repeated value out in full. The two builder
+pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the JS file.
+
+```json
 {
-  id: 'moonSlash', name: 'Moon Slash', class: 'reaver', rarity: 'common',
-  cost: 1, type: 'attack', keywords: [], icon: '🌙',
-  effects: [
-    { op: 'damage', target: 'enemy', amount: 6 },
-    { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+  "id": "moonSlash", "name": "Moon Slash", "class": "reaver", "rarity": "common",
+  "cost": 1, "type": "attack", "keywords": [], "icon": "progression",
+  "effects": [
+    { "op": "damage", "target": "enemy", "amount": 6 },
+    { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 1 }
   ],
-  textTemplate: 'Deal {damage} damage. Apply {weak} Weak.',
-  upgrade: { effects: [
-    { op: 'damage', target: 'enemy', amount: 9 },
-    { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
-  ] },
+  "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
+  "upgrade": { "effects": [
+    { "op": "damage", "target": "enemy", "amount": 9 },
+    { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 2 }
+  ] }
 }
 ```
 
-Then add its id to the class `cardPool` in `src/content/classes.js` if it
+Then add its id to the class `cardPool` in `content/source/classes.json` if it
 should appear in rewards. Notes:
 
 - `{damage}` tokens bind to effects **in order**; repeats are `{damage.2}`.
@@ -982,7 +1146,7 @@ should appear in rewards. Notes:
   player-visible op without a token is a validation error.
 - Powers whose stack count is invisible ("gain the power", not "gain N")
   use formula-valued stacks to opt out of the token rule:
-  `stacks: { f: 'add', args: [1] }` — see Rallying Standard.
+  `"stacks": { "f": "add", "args": [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
@@ -991,14 +1155,22 @@ should appear in rewards. Notes:
   combat. Its numbers bind to the card's text template after `effects`
   (Guilt's text says `{loseHp}`).
 
-## Add a status (one file: `src/content/statuses.js`)
+## Add a status (one file: `content/source/statuses.json`)
 
-```js
+Statuses are plain JSON (an array of rows, two-space indent).
+`src/content/statuses.js` is only a shim over the compiled
+`src/content/generated/statuses.js` (plus the derived rows in
+`combatStatusRules.js`); do not author there. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`)
+and commit the regenerated file. Design notes that used to be comments in the JS
+live in `content/source/CONTENT-NOTES.md`, keyed by id.
+
+```json
 {
-  id: 'frostbite', name: 'Frostbite', icon: '❄',
-  stackMode: 'unique', decay: 'onConsume',
-  modifiers: { damageTakenMult: 1.3 },
-  tooltip: 'Takes 30% more attack damage until consumed.',
+  "id": "frostbite", "name": "Frostbite", "icon": "frost",
+  "stackMode": "unique", "decay": "onConsume",
+  "modifiers": { "damageTakenMult": 1.3 },
+  "tooltip": "Takes 30% more attack damage until consumed."
 }
 ```
 
@@ -1008,38 +1180,62 @@ The engine interprets `stackMode` (add/refresh/unique), `decay`
 Bleed, Crimson Blight, and Staggered are all plain data here — test 17 proves a
 brand-new status needs zero engine changes.
 
-## Add a relic (one file: `src/content/relics.js`)
+## Add a relic (`content/source/relics.json`, plus one node for its combat trigger)
 
-```js
+Relics are plain JSON (an array of rows, two-space indent). `src/content/relics.js`
+is only a re-export of the compiled `src/content/generated/relics.js`; do not
+author there. A relic row holds its identity, rarity, run-system `passives` and
+the one `textTemplate` that describes the whole relic. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`)
+and commit the regenerated file.
+
+```json
 {
-  id: 'whetstoneFragment', name: 'Whetstone Fragment', rarity: 'common', icon: '🪨',
-  triggers: [{
-    on: 'damageDealt', once: true,
-    if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
-    do: [{ op: 'damage', amount: 4 }],
-  }],
-  textTemplate: 'Your first attack each combat deals {damage} extra damage.',
+  "id": "whetstoneFragment", "name": "Whetstone Fragment", "rarity": "common", "icon": "weight",
+  "passives": { "poiseThresholdAdd": 1 },
+  "textTemplate": "Your first attack each combat deals {damage} extra damage. Poise threshold +1.",
+  "flavor": "Worn smooth by a thousand blades."
 }
 ```
 
-## Add an enemy (one file: `src/content/enemies/act<N>.js`)
+A relic's COMBAT behaviour is not in the row: since plan phase 2 `validate.js`
+refuses `triggers` on a relic. They are a property rule that shares the relic's
+id — a `property` node row in `content/source/nodes.csv`, its triggers under that
+id in `content/source/nodeEffects.json`, and a `relic,,<id>,<id>` line in
+`content/source/tagging.csv` (see `forsakenMedallion` in all three). The relic's
+`textTemplate` is checked against both halves. Design notes that used to be
+comments in the JS live in `content/source/CONTENT-NOTES.md`, keyed by id.
 
-```js
+A flask is added the same way in `content/source/flasks.json`, and a stance in
+`content/source/stances.json`.
+
+## Add an enemy (one file: `content/source/act<N>Enemies.json`)
+
+```json
 {
-  id: 'gildedKnight', name: 'Gilded Knight', hp: [40, 44], poiseMax: 18, art: '♞',
-  moves: {
-    thrust: { intent: 'attack', damage: 10, weight: 55, maxConsecutive: 2 },
-    parry:  { intent: 'block', block: 9, weight: 45, maxConsecutive: 1 },
-  },
+  "id": "gildedKnight", "name": "Gilded Knight", "hp": [40, 44], "poiseMax": 18, "art": "♞",
+  "moves": {
+    "thrust": { "intent": "attack", "damage": 10, "weight": 55, "maxConsecutive": 2 },
+    "parry": { "intent": "block", "block": 9, "weight": 45, "maxConsecutive": 1 }
+  }
 }
 ```
+
+Then `node tools/content-build.mjs` (launch does it). `src/content/enemies/act<N>.js` is a
+re-export, not a place to author; the design notes that were comments in it are in
+`content/source/CONTENT-NOTES.md`. The pack rows are converted from these files by
+`tools/enemy-decks-convert.mjs`.
 
 Add it to an encounter in `src/content/encounters/act<N>.js` so it can appear.
 Special moves: `delay: { turns, whileCharging }` makes a telegraphed
 delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 `phases[].unlockMoves` gates moves behind HP-threshold phase changes.
 
-## Add an event (one file: `src/content/events.js`)
+## Add an event (`content/source/events.json`, plus its choice ids)
+
+Add one object to the array in `content/source/events.json` (JSON, so quoted keys; then
+`node tools/content-build.mjs`, which launch does). `src/content/events.js` is a shim, not a
+place to author.
 
 ```js
 {
@@ -1060,11 +1256,19 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 `startCombat {encounterId}`, plus `heal`/`damage`/`addCardToDeck`. `requires?`
 (e.g. `{ cinders: 50 }`) gates a choice; a `startCombat` effect hands control to
 the combat orchestrator after `resultText` shows. Nothing to register — every
-shipped event is reachable via Unknown nodes.
+shipped event is reachable via Unknown nodes — except its **choice ids**: add
+`"testShrine": ["pray", "leave"]` to `content/source/eventChoiceIds.json`, one
+durable id per choice in order. `eventChoicesWithHistory` needs
+`eventChoiceIds[event.id]` to be the same length as `choices`; if it is not, the
+event offers no choices at all. A choice that needs an earlier choice in the run
+goes in `eventChoiceHistoryRequirements.json` (one slot per choice, `null` for
+none); an event that should wait for one goes in `eventHistoryRequirements.json`.
+Design notes that used to be comments live in `content/source/CONTENT-NOTES.md`
+under "Events".
 
-A **quest chain** is a sidecar beside the events in the same file: list its
-steps and completing choices in `questChains`, and name each step's speaker in
-`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+A **quest chain** is a sidecar beside the events: list its steps and completing
+choices in `content/source/questChains.json`, and name each step's speaker in
+`content/source/eventSpeakers.json`. A speaker is a row in `content/source/speakers.csv`
 (`id,name,portraitKey`; the key names existing art, and a blank key shows the
 name plate). A chain's steps open in the dialogue screen, one beat per
 blank-line paragraph of the event's `text`. Both event screens commit a choice

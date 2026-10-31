@@ -1,0 +1,42 @@
+{
+  "rewardByPool": {
+    "normal": 0,
+    "elite": 1,
+    "boss": 1,
+    "treasure": 0,
+    "$note": { "{kind}": "How many Smithing Stones {pool} pays out." }
+  },
+  "rewardChancePct": {
+    "normal": 100,
+    "elite": 100,
+    "boss": 100,
+    "treasure": 100,
+    "$note": {
+      "{kind}": "Percent chance {pool} pays its Smithing Stone reward, ordinary and refined alike. 100 is always and rolls nothing; 0 is never."
+    }
+  },
+  "refinedRewardByPool": {
+    "normal": 0,
+    "elite": 0,
+    "boss": 0,
+    "treasure": 0,
+    "$note": {
+      "{kind}": "How many Refined Smithing Stones {pool} pays out, through the same chance as its ordinary stones."
+    }
+  },
+  "services": {
+    "offeredAt": {
+      "shrine": { "chance": 100, "services": ["upgrade", "extract", "install"] },
+      "merchant": { "chance": 25, "services": ["upgrade", "extract", "install"] },
+      "$note": {
+        "{kind}.chance": "Percent chance {pool} offers the smith's services on a visit. 100 is always and rolls nothing; 0 is never."
+      }
+    },
+    "extract": { "cost": 0 },
+    "install": { "cost": 0 },
+    "$note": {
+      "extract.cost": "Smithing Stones to pull a card out of an item's mount so it becomes the run's own.",
+      "install.cost": "Smithing Stones to fit a run-owned card into an open or emptied mount."
+    }
+  }
+}

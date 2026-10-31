@@ -58,6 +58,18 @@ export function rewardDom() {
         if (!['br','img','input','hr','meta','link'].includes(tag) && !text.endsWith('/>')) stack.push(child);
       }
     }
+    // Repainting a card replaces only its frame; sibling controls keep their
+    // nodes and listeners. Match outerHTML's replacement and detach behavior.
+    set outerHTML(html) {
+      if (!this.parentNode) return;
+      const holder = document.createElement('div'); holder.innerHTML = String(html);
+      const parent = this.parentNode;
+      const replacements = [...holder.children];
+      for (const node of replacements) node.parentNode = parent;
+      parent.children.splice(parent.children.indexOf(this), 1, ...replacements);
+      holder.children = [];
+      this.parentNode = null;
+    }
     getBoundingClientRect() { return this.box || {left:0,top:0,width:140,height:196}; }
     cloneNode(deep) { const node = new Element(this.tagName); for (const [key,value] of this.attributes) node.setAttribute(key,value); Object.assign(node.dataset,this.dataset); if(deep) this.children.forEach(child=>node.appendChild(child.cloneNode(true))); return node; }
     addEventListener(type, listener) { const list = this.listeners.get(type) || []; list.push(listener); this.listeners.set(type, list); }

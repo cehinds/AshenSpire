@@ -1,0 +1,32 @@
+name: Windows art options
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - 'desktop/windows/art-releases.ps1'
+      - 'desktop/windows/art-options.ps1'
+      - 'tests/windows-art-options.ps1'
+      - 'art-release.json'
+      - '.github/workflows/art-migrate.yml'
+      - '.github/workflows/windows-art-options.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /tests/windows-art-options.ps1
+            /desktop/windows/art-releases.ps1
+            /desktop/windows/art-options.ps1
+      - name: Test art discovery and verified downloads offline
+        shell: powershell
+        run: ./tests/windows-art-options.ps1

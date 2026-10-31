@@ -1,0 +1,22 @@
+{
+  "id": "classification.slot",
+  "tag": "classification.slot",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Slot",
+  "description": "What a slot is. Every object in the slot collection carries this, and nothing outside it may.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.slot"
+  },
+  "portability": "data"
+}

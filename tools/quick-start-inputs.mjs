@@ -1,44 +1,9 @@
-// tools/quick-start-inputs.mjs — how many inputs does a new player spend between
-// the Title and their first card play? (docs/FINISH.md §6: a quick start gives
-// the first card play in 6 inputs or fewer; the full route measured 26.)
-//
-// A SCRIPTED INPUT COUNT, WITH REAL INPUT. A real headless Chromium boots the
-// source tree with empty durable storage (a genuinely new player), and every
-// input the script spends is a real CDP mouse click at the control's own
-// screen coordinates or a real key press — never el.click(). Each one is
-// counted and named, so a reader can audit the route line by line.
-//
-// It walks two routes and prints both counts:
-//   quick    — Title -> Quick start -> (opening sequence, if it plays) -> a fight
-//              on the map -> the first card play. JUDGED against BUDGET below,
-//              the number the FINISH line states. Run twice: once on the random
-//              seed a player gets, once pinned to SKILLS_ONLY_SEED, whose
-//              opening hand holds no attack. It also checks the fresh Title's
-//              default focus is Quick start (the keyboard/controller route).
-//   baseline — the full character-creation route (New -> slot -> Start ->
-//              class -> Next -> stat mode -> keepsake -> Next -> armour ->
-//              Choose -> Next… -> Begin -> Skip opening -> fight -> card play),
-//              the same selectors tools/tutorial-reach.mjs walks. REPORTED, not
-//              judged: it is the comparison the FINISH line names.
-// After the quick route it also begins an ordinary climb on the same profile
-// and checks the opening plays (Quick start records nothing as seen).
-//
-// What counts as one input: one mouse click (press + release) or one key press.
-// A native <select> is driven as a player would: a click to open it, one
-// ArrowDown per option moved, Enter to commit, each counted; its value is read
-// back from the control, never set by the script.
-// The startup gate's Enter counts: it is the first thing the Title asks for.
-// "First card play" is read from the fight itself:
-// `window.__combat.player.counters.cardsPlayedThisCombat` goes from 0 to 1.
-//
-//   node tools/quick-start-inputs.mjs                 (both routes, judge quick)
-//   node tools/quick-start-inputs.mjs --only quick    (the judged route alone)
-//   node tools/quick-start-inputs.mjs --only quick --quick-seed 8   (pin the first pass's seed)
-//   CHROME=/path/to/chrome node tools/quick-start-inputs.mjs
-//
-// Exit 0 when the quick route is within budget, 1 when it is not or a route
-// fails, 2 when no browser or no check ran (never a pass).
+// Count real native inputs from the default Core New Game menu to its first
+// card play. --only quick remains the CI entry point; it names this shortest
+// supported route, not a removed Quick Start menu control. --url checks a built
+// standalone. Every click/key travels through CDP and is counted.
 
+import { CORE_ENTRY_SEED, CORE_INPUT_ALLOWANCE, CORE_INPUT_BUDGET as BUDGET } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,18 +23,11 @@ const BROWSERS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean);
 
-// docs/FINISH.md §6: "A quick start gives the first card play in 6 inputs or
-// fewer (baseline 26)." The acceptance number, not a game setting.
-const BUDGET = 6;
-// A seed whose shuffled Reaver opening hand holds only skills (Defend, Dodge
-// Roll, Brace…), found with --quick-seed. The skills-only pass pins it.
-const SKILLS_ONLY_SEED = 190;
 const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const ROUTES = ['quick', 'baseline'];
 const only = argOf('--only');
-const pinSeed = argOf('--quick-seed') == null ? null : Number(argOf('--quick-seed'));
 if (args.includes('--only') && !ROUTES.includes(only)) {
   console.error(`quick-start-inputs: --only takes one of ${ROUTES.join(', ')}; got ${JSON.stringify(only)}`);
   process.exit(2);
@@ -109,8 +67,10 @@ function connectCdp(wsUrl) {
 
 async function main() {
   if (!browserPath) { console.error('quick-start-inputs: no Chrome/Chromium found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const { server, port } = await serve({ root: ROOT, port: 8247, open: false });
-  const base = `http://localhost:${port}/`;
+  const externalUrl = argOf('--url');
+  const hosted = externalUrl ? null : await serve({ root: ROOT, port: 8247, open: false });
+  const server = hosted?.server;
+  const base = externalUrl || `http://localhost:${hosted.port}/`;
   const { wsUrl, close: dropBrowser } = await launchBrowser({
     prefix: 'qsinputs-', browser: browserPath,
     args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'],
@@ -167,10 +127,10 @@ async function main() {
     spend(label);
     await clickAt(pt.x, pt.y);
   };
-  const pressKey = async (key, code, keyCode, label) => {
+  const pressKey = async (key, code, keyCode, label, modifiers = 0) => {
     spend(label);
     for (const type of ['keyDown', 'keyUp']) {
-      await cdp.send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
+      await cdp.send('Input.dispatchKeyEvent', { type, key, code, modifiers, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
     }
     await wait(150);
   };
@@ -207,30 +167,26 @@ async function main() {
 
   // From wherever a new climb lands (the opening or the map) to the first card play.
   const toFirstCardPlay = async () => {
-    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening sequence, class tree or map');
-    if (await evalIn(`!!document.querySelector('.prologue-screen')`)) {
-      const marked = await evalIn(`(() => {
-        const b = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent));
-        if (!b) return false;
-        b.dataset.qsSkip = 'true';
-        return true;
+    // Walk the live entry rest, authored dungeon dialogue and map doors.
+    // These are real controls, never engine calls or injected run state.
+    for (let step = 0; step < 24; step += 1) {
+      if (await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)) break;
+      const next = await evalIn(`(() => {
+        const visible = n => { if (!n || n.hidden || n.disabled || n.getAttribute('aria-disabled') === 'true') return false; const r=n.getBoundingClientRect(); return r.width>0 && r.height>0 && n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)); };
+        const pick = selector => [...document.querySelectorAll(selector)].find(visible);
+        const direct = pick('#shrine-leave, #leave-shop, .prologue-screen [data-prologue-action="continue"], .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
+        const node = direct || pick('.map-node.monster.reachable:not(.current)') || [...document.querySelectorAll('.map-node.reachable:not(.current):not(.visited)')].filter(visible).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left)[0];
+        const dialogue = node || [...document.querySelectorAll('.dialogue-screen button, .event-screen button, .class-mastery-node')].find(visible);
+        if (!dialogue) return null;
+        document.querySelectorAll('[data-input-probe-next]').forEach(n => delete n.dataset.inputProbeNext);
+        dialogue.dataset.inputProbeNext = 'true';
+        return (dialogue.textContent || dialogue.getAttribute('aria-label') || dialogue.getAttribute('class') || dialogue.tagName).trim().slice(0,100);
       })()`);
-      if (!marked) throw new Error('the opening sequence offers no Skip');
-      await click('[data-qs-skip="true"]', 'Skip opening');
-    }
-    if (await evalIn(`!!document.querySelector('.class-mastery-node')`)) await click('.class-mastery-node', 'a tier 1 class-tree node');
-    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'a reachable fight on the map');
-    await click('.map-node.monster.reachable', 'a fight on the map');
-    // A map node may ask to be confirmed; answer whatever the board asks, and count it.
-    for (let guard = 0; guard < 4 && !(await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)); guard += 1) {
-      const confirm = await evalIn(`(() => {
-        const b = document.querySelector('.confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"]:not([disabled]), .map-enter:not([disabled])');
-        if (!b) return false;
-        b.dataset.qsConfirm = 'true';
-        return true;
-      })()`);
-      if (confirm) await click('[data-qs-confirm="true"]', 'confirm the fight');
-      else await wait(600);
+      if (next) await click('[data-input-probe-next="true"]', next);
+      else {
+        if (step === 8) console.log('    route waiting:', await evalIn(`JSON.stringify({screens:[...document.querySelectorAll('main > *, #app > *')].map(n=>n.className),buttons:[...document.querySelectorAll('button')].filter(n=>n.getBoundingClientRect().width>0).map(n=>({text:n.textContent.slice(0,80),id:n.id,cls:n.className}))})`));
+        await wait(500);
+      }
     }
     // Any affordable card is a first card play. A shuffled opening hand can
     // hold no attack at all (Defend, Dodge Roll, Brace…), so the probe takes an
@@ -270,7 +226,9 @@ async function main() {
     ok(true, 'the first card was played');
   };
 
+  const counted = {}; // each route's numbered inputs, kept so a failure can print them again at the end
   const report = (name) => {
+    counted[name] = [...inputs];
     console.log(`    ${name}: ${inputs.length} inputs`);
     inputs.forEach((label, i) => console.log(`      ${String(i + 1).padStart(2)}. ${label}`));
     return inputs.length;
@@ -284,6 +242,7 @@ async function main() {
     await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
     await click('[data-title-action="review-new"]', 'Start in this slot');
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
+    // Core's authored creation has Class and Review only.
     // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
     // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
     // data-creation-stage; Next (#cz-next) is the one real click that leaves a
@@ -294,7 +253,15 @@ async function main() {
       if (!(await evalIn(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await click(`[data-face="${key}"]`, `open the ${key} fold`);
     };
     await click('#cz-classes .cz-class', 'a class');
-    await click('#cz-next', 'Next (to Attributes)');
+    await click('#cz-next', 'Next (creation)');
+    if (await evalIn(onStage('review'))) {
+      await click('#seed-input', 'seed field');
+      await pressKey('a', 'KeyA', 65, 'select seed text', 2);
+      spend('type route seed', CORE_ENTRY_SEED.length);
+      await cdp.send('Input.insertText', { text: CORE_ENTRY_SEED }, S);
+      await click('#cz-start', 'Begin Core');
+      return;
+    }
     await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
     await chooseStatMode('lean');
     await click('#cz-next', 'Next (to Keepsake)');
@@ -352,83 +319,16 @@ async function main() {
     if (end?.value !== wanted) throw new Error(`the stat mode select never reached ${wanted}`);
   };
 
-  // Quick start draws a fresh seed with Math.random (main.js randomSeedString:
-  // seedToString((Math.random() * 0xffffffff) >>> 0)). To pin one, the next
-  // Math.random call alone returns the value that maps to `seed`; the real one
-  // is put back at once. The seed the run got is then read from its save.
-  const pinNextSeed = (seed) => evalIn(`(() => {
-    const real = Math.random;
-    Math.random = () => { Math.random = real; return (${seed} + 0.5) / 0xffffffff; };
-    return true;
-  })()`);
-  const savedSeed = () => evalIn(`(() => {
-    for (const k of Object.keys(localStorage)) {
-      if (!/^sote_run_v1(_s\\d+)?$/.test(k)) continue;
-      try { const r = JSON.parse(localStorage.getItem(k)); const run = r.run || r; if (run.seed != null || run.seedString) return { seed: run.seed ?? null, seedString: run.seedString ?? null }; } catch {}
-    }
-    return null;
-  })()`);
-
   const counts = {};
   if (want('quick')) {
-    console.log('\n  quick route: Title -> Quick start -> first card play (fresh profile, 1440x900)');
+    console.log('\n  Core route: New Game -> Class/Review -> opening -> first card play');
     await freshBoot();
-    ok(await evalIn(`!!document.querySelector('.title-menu [data-title-action="quick-start"]:not([disabled])')`), 'the Title offers Quick start');
-    // A keyboard or controller player presses nothing to reach it: after the
-    // startup gate's Enter the Title's default focus is Quick start, so the
-    // next Enter / A press is the Quick start press this route counts.
-    ok(await evalIn(`document.activeElement?.dataset?.titleAction === 'quick-start'`), `a fresh profile's Title focuses Quick start (focused: ${await evalIn(`document.activeElement?.dataset?.titleAction || document.activeElement?.id || document.activeElement?.tagName || null`)})`);
-    if (pinSeed != null) await pinNextSeed(pinSeed);
-    await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
-    await toFirstCardPlay();
-    console.log(`    opening hand: ${lastHand.types.join(', ')}`);
-    counts.quick = report('quick');
-    ok(counts.quick <= BUDGET, `quick start reaches the first card play in ${counts.quick} inputs (budget ${BUDGET})`);
-
-    // THE SKILLS-ONLY OPENING, pinned. Quick start's seed is random, and a
-    // legal Reaver opening can hold no attack at all; the route above meets
-    // whichever hand the seed deals. This pass pins a seed known to deal only
-    // skills, so the path that plays a non-attack card is exercised on every
-    // run instead of on one run in several.
-    console.log(`\n  quick route, skills-only opening hand (seed pinned to ${SKILLS_ONLY_SEED})`);
-    await freshBoot();
-    await pinNextSeed(SKILLS_ONLY_SEED);
-    await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
-    await toFirstCardPlay();
-    console.log(`    opening hand: ${lastHand.types.join(', ')}`);
-    const pinned = await savedSeed();
-    ok(pinned?.seed === SKILLS_ONLY_SEED, `the pinned run was dealt seed ${SKILLS_ONLY_SEED} (saved: ${JSON.stringify(pinned)})`);
-    ok(!lastHand.types.includes('type-attack'), `seed ${SKILLS_ONLY_SEED} still opens with no attack in hand (if this fails, the deal changed: pick another skills-only seed with --quick-seed and update SKILLS_ONLY_SEED)`);
-    counts.quickSkillsOnly = report('quick, skills-only hand');
-    ok(counts.quickSkillsOnly <= BUDGET, `quick start with a skills-only hand reaches the first card play in ${counts.quickSkillsOnly} inputs (budget ${BUDGET})`);
-    // Back to the first pass's profile shape for the opening check below: one
-    // quick-start climb in slot 1, nothing recorded as seen.
-
-    // The changelog's promise: Quick start skips the opening for its own climb
-    // only and records nothing as seen, so the same profile's next ordinary
-    // climb (New -> character creation -> Begin) still plays it. Not counted.
-    // The shipped playback is "every", which plays the opening whatever was
-    // recorded; the profile is switched to "once" so the check reads the
-    // recorded prologueSeen and fails if the quick path ever writes it.
-    console.log('\n  after a quick start: the next ordinary climb on the same profile still plays the opening (playback "once")');
-    const seenAfterQuick = await evalIn(`(() => {
-      const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || '{}');
-      const seen = meta.settings?.prologueSeen === true;
-      meta.settings = { ...(meta.settings || {}), 'gameConfig.prologue.presentation.playback': 'once' };
-      const json = JSON.stringify(meta);
-      localStorage.setItem('sote_meta_v1', json);
-      localStorage.setItem('sote_meta_backup_v1', json);
-      return seen;
-    })()`);
-    ok(!seenAfterQuick, 'a quick start records the opening as not seen');
-    await cdp.send('Page.navigate', { url: base }, S);
-    await until(`!!(document.querySelector('.startup-gate') || document.querySelector('.title-menu .slot-new'))`, 'the startup gate or the title (same profile)');
-    if (await evalIn(`!!document.querySelector('.startup-gate')`)) await pressKey('Enter', 'Enter', 13, 'the startup gate (Enter)');
-    await until(`!!document.querySelector('.title-menu .slot-new')`, 'the title screen (same profile)');
-    await wait(300);
+    ok(await evalIn(`document.activeElement?.matches('.title-menu .slot-new') === true`), 'a fresh title focuses New Game');
+    ok(await evalIn(`!document.querySelector('.title-menu [data-title-action="quick-start"]')`), 'the default menu does not expose the retired Quick Start control');
     await createAndBegin();
-    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map (ordinary climb)');
-    ok(await evalIn(`!!document.querySelector('.prologue-screen')`), 'the next ordinary climb after a quick start plays the opening');
+    await toFirstCardPlay();
+    counts.core = report('Core default');
+    ok(counts.core <= BUDGET, `Core reaches first play in ${counts.core} inputs (budget ${BUDGET}: ${JSON.stringify(CORE_INPUT_ALLOWANCE)})`);
   }
 
   if (want('baseline')) {
@@ -441,7 +341,7 @@ async function main() {
 
   cdp.close();
   await dropBrowser();
-  server.close();
+  server?.close();
 
   if (!fails.length && passedCount === 0) {
     console.error('quick-start-inputs: 0 checks ran — an empty run is not a pass.');
@@ -449,10 +349,16 @@ async function main() {
   }
   console.log(`\n  counts: ${JSON.stringify(counts)}`);
   console.log(`${passedCount} passed, ${fails.length} failed`);
-  console.log('  boundary: real Chromium headless against the source server at 1440x900, mouse clicks, Enter and ArrowDown only,');
+  console.log('  boundary: real Chromium headless at 1440x900 against the supplied standalone or source server; counted native mouse and keyboard inputs,');
   console.log('  a fresh profile with the shipped defaults (slot 1 empty). Not checked: touch or gamepad input,');
-  console.log('  a profile whose every slot is full (Quick start then asks before replacing), or other browsers.');
-  if (fails.length) process.exit(1);
+  console.log('  occupied-slot replacement, touch, gamepad, other browsers, and optional detours are not checked.');
+  if (fails.length) {
+    // CI shows only the tail of this output as annotations, so a failure repeats what it
+    // counted on one line at the very end: the whole numbered step list, not just the total.
+    for (const f of fails) console.log(`  FAILED: ${f}`);
+    for (const [name, list] of Object.entries(counted)) console.log(`  steps counted (${name}, ${list.length}): ${list.map((label, i) => `${i + 1}. ${label}`).join('; ')}`);
+    process.exit(1);
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

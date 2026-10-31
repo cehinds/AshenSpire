@@ -1,0 +1,206 @@
+/* Native responsive target HUD. Artwork/grid geometry remains battlefield-owned. */
+:root .combat[data-target-hud='true'] .target-hud-panel {
+  border-color: var(--combat-matchup-color,#f07870);
+  box-shadow: 0 0 5px color-mix(in srgb,var(--combat-matchup-color,#f07870) 60%,transparent),0 .2em .8em #0008;
+}
+:root .combat[data-target-hud='true'] .target-hud-detail[data-role='player'] { --combat-matchup-color:#87caff; }
+:root .combat[data-target-hud='true'] .target-hud-inspect-info {
+  position:absolute; z-index:800; min-width:0; min-height:0; padding:0;
+  border:1px solid #b9b9d0; border-radius:50%; background:#262e41; color:#dedff1;
+  font:italic 15px Georgia,serif; pointer-events:auto; transform:none; translate:none;
+  visibility:visible!important; opacity:1!important; right:auto!important; bottom:auto!important;
+}
+:root .combat[data-target-hud='true'] .target-hud-inspect-info:focus-visible { outline:2px solid #87caff; outline-offset:3px; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters {
+  position:absolute; left:var(--combat-mini-hud-left,0px); top:var(--combat-mini-hud-top,-63px);
+  width:var(--combat-mini-hud-width,100%); display:flex!important; flex-direction:column; align-items:center;
+  gap:calc(5px / var(--ui-zoom,1)); pointer-events:none; padding:0; margin:0; transform:none; translate:none;
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { pointer-events:auto; }
+/* A fallen combatant takes its overhead HP bar (and intent) with it. The
+   dead frame fades to .25 for the body, but the rack is not a child of the
+   faded stack, so without this the 0/N bar of every dead enemy stayed on the
+   field through the victory beat and behind the spoils veil. Transitions are
+   already off under reduced motion (base.css), so it simply hides there. */
+:root .combat[data-target-hud='true'] .combatant.dead > .target-hud-overhead-meters {
+  opacity:0; visibility:hidden; pointer-events:none; transition:opacity .25s ease, visibility 0s linear .25s;
+}
+:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters {
+  display:flex!important; top:var(--combat-selected-intent-top,calc(var(--combat-mini-hud-top,-63px) + 22px / var(--ui-zoom,1)));
+  left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
+}
+:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
+  position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
+  /* Only the centered action row owns intent input. The full-width host
+     aligns the health bar; its empty sides must pass through to other UI. */
+  display:flex!important; justify-content:center; align-items:flex-end;
+  min-width:min(100%, calc(44px / var(--ui-zoom,1)))!important; width:max-content!important; pointer-events:auto;
+  height:calc(37px / var(--ui-zoom,1))!important; min-height:calc(37px / var(--ui-zoom,1))!important; max-height:calc(37px / var(--ui-zoom,1))!important; flex:0 0 calc(37px / var(--ui-zoom,1)); margin:0!important; padding:0!important;
+  background:transparent!important; border:0!important; box-shadow:none!important; color:#ffe7ab;
+}
+:root .combat[data-target-hud='true'] .intent > :not(.intent-compact):not(.cr-followups) { display:none!important; }
+:root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
+:root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
+/* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
+   with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
+   Solo (target HUD) and co-op share one size so neither role drifts. */
+:root .combat { --intent-content-scale: .8; --intent-value-size: calc(22px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+/* Owner (2026-10-26): desktop and widescreen read smaller than the phone. */
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat { --intent-value-size: calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-target-hud='true'] :is(.intent-action,.intent-followup) .intent-icon { width:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+:root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
+:root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
+  width:100%!important; min-width:0!important; margin:0!important; gap:0!important;
+}
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+  position:relative; display:flex; flex-wrap:wrap; width:100%!important; min-width:0; gap:0;
+  padding:0!important; margin:0!important; --health-row-h:calc(7px / var(--ui-zoom,1));
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-meter {
+  order:-1; flex:0 0 100%; width:100%!important; margin:0!important;
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters :is(.m-track,.as-meter) { width:100%!important; min-width:0!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-plate {
+  position:absolute; inset:calc(9px / var(--ui-zoom,1)) 0 auto auto; width:auto; height:auto;
+  display:flex; justify-content:flex-end; background:transparent; pointer-events:none;
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-value { font-size:calc(10px / var(--ui-zoom,1));  }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-label { display:none!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-badge {
+  position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
+  font-size:calc(9px / var(--ui-zoom,1)); flex:0 0 calc(16px / var(--ui-zoom,1)); width:calc(16px / var(--ui-zoom,1)); height:calc(16px / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
+}
+:root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#f07870))!important;
+}
+:root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] :is(.intent,.combat-health-meter .m-track) {
+  filter:drop-shadow(0 0 3px var(--combat-matchup-color,#f07870));
+}
+:root .combat[data-target-hud='true'] .target-hud-detail .combat-health-meter .m-track {
+  box-shadow:0 0 0 1px var(--combat-matchup-color,#f07870),0 0 4px var(--combat-matchup-color,#f07870);
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
+/* battlefieldStage.js slides an intent sideways (overheadIntentSeparation.js) when a neighbour's stands on it. */
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { left:var(--combat-intent-shift,auto)!important; }
+:root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
+:root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
+:root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#8ad498; }
+:root .combat[data-target-hud='true'] [data-intent-visibility]:not([data-intent-visibility='known']) .intent-action-value { color:#e8d59b; }
+/* Native player intents have no stage-placed marker after moving into this host. */
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { visibility:visible!important; }
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row { height:calc(19px / var(--ui-zoom,1))!important; min-height:calc(19px / var(--ui-zoom,1))!important; align-content:flex-start; }
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+  inset:calc(9px / var(--ui-zoom,1)) 0 auto auto!important; width:auto!important; height:auto!important;
+  justify-content:flex-end!important; align-items:flex-start!important;
+}
+
+/* Matchup feedback exists only while an eligible selected card owns it. */
+:root .combat[data-target-hud='true'] .target-hud-layer { z-index:700!important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']) .sprite { filter:none!important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']):is(.target-hud-selected,.target-hud-focused) .sprite { filter:drop-shadow(0 0 2px #f07870) drop-shadow(0 0 2px #f07870)!important; }
+:root .combat[data-target-hud='true'] .target-hud-detail[data-role='enemy'][data-matchup-active='false'] { --combat-matchup-color:#f07870!important; }
+
+:root .combat[data-target-hud='true'] .target-hud-detail[data-crowded='true'] .target-hud-panel {
+  padding:var(--target-hud-padding-block,.3em) var(--target-hud-padding-inline,.6em);
+}
+/* The compact confirmation surface keeps the name and HP. Its intent remains
+   overhead; repeating it here consumed the only space for other phone targets. */
+:root .combat[data-target-hud='true'] .target-hud-detail[data-targeting='true'][data-crowded='true'] .target-hud-panel {
+  min-height:calc(44px / var(--ui-zoom,1)); cursor:pointer;
+}
+
+/* Remaining queued actions after an actor has acted: "?" per unread one (owner 2026-10-18). Same size step as
+   the amount's neighbours; the icon form (a passed read) matches the maneuver icon's row. */
+:root .combat .intent .intent-followups { display:inline-flex; align-items:center; gap:calc(3px / var(--ui-zoom,1)); margin-inline-start:calc(4px / var(--ui-zoom,1)); }
+/* The expanded copy of the row shows only where the compact row is hidden: a selected enemy in the formation layout. */
+:root .combat .intent > .intent-followups.intent-followups-expanded { display:none; }
+:root .combat[data-layout='formation'] .combatant.context-selected .intent > .intent-followups.intent-followups-expanded { display:inline-flex; }
+:root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
+:root .combat .intent .intent-followup .intent-icon { width:calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+
+/* The same scoped total remains visible in compact overheads and target HUDs.
+   Narrow hosts wrap action groups and the title instead of clipping the total. */
+:root .combat .intent-actions { min-width:0; max-width:100%; flex-wrap:wrap; row-gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .intent-damage-read { min-width:0; max-width:100%; display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
+:root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; text-align:center; }
+/* Owner 2026-10-25: the mini HUD over a combatant keeps the damage and multiplier only; the total line under it was redundant. The target panel and inspector keep it. */
+:root .combat .combatant .intent .intent-damage-scope { display:none; }
+
+/* Lite: one drop-shadow instead of three on the matchup-highlighted sprite. */
+:root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
+}
+
+/* Owner 2026-10-25: every HP bar over a combatant or in a target panel is 70% of its cell's width, centred.
+   The meter (which carries the poise ring) is narrowed, not just its track; an empty full-width line break
+   keeps the badges on their own row below it. */
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row {
+  justify-content:flex-start;
+}
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row::after {
+  content:''; order:-1; flex:0 0 100%; height:0;
+}
+/* The break is a second flex line, so the panel's row gap moves onto the badges. */
+:root .combat .target-hud-detail .target-hud-meters .combat-health-row { row-gap:0; }
+:root .combat .target-hud-detail .target-hud-meters .combat-health-badge { margin-top:.3em; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-meter {
+  /* Owner (2026-10-26): the bar spans its row, so the badges below it start at the bar's left edge and the value ends at its right edge. */
+  flex:0 0 100%!important; width:100%!important; margin-inline:0!important;
+}
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+  right:0!important;
+}
+
+/* Owner 2026-10-28: the panel's icon badges (Precision, Evade) grow to fit a two-digit value instead of clipping it
+   at the fixed 1.8em square; they stay square for one digit and grow to hug icon and number for two. Poise and Block stay round. */
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge:is(.combat-health-precision, .combat-health-evade) {
+  display:inline-flex; align-items:center; justify-content:center; gap:.2em; aspect-ratio:auto;
+  flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:0; box-sizing:border-box;
+}
+
+/* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
+   numbers. The bar is now 16px thick, its value 16px and the badges 1.6x, all in physical px (the width cap and the
+   centring on the body are the profile's hudWidthFraction and hudCenterOnBody). Badges stay flush left and the value
+   flush right. Phones and tablets keep the rules above. */
+@media (min-width: 1200px) {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+    --health-row-h: calc(16px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(15px / var(--ui-zoom,1));
+    height: calc(54px / var(--ui-zoom,1))!important; min-height: calc(54px / var(--ui-zoom,1))!important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+    inset: calc(18px / var(--ui-zoom,1)) 0 auto auto !important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+    width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
+  }
+}
+
+/* Owner 2026-10-28, phone landscape: the enemies were too tiny because the overhead readout (intent, bar, badges)
+   took 65px of a 146px field and the body is fitted into what is left under it. A leaner intent gives that height
+   back to the bodies (the short profile in combatFormationModel.json moves the ranks down for the rest). */
+@container game-viewport (max-height: 480px) and (min-width: 600px) {
+  :root .combat[data-layout='formation'] { --intent-value-size: calc(16px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+  :root .combat[data-layout='formation'][data-target-hud='true'] .intent-action .intent-icon { width:calc(19px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(19px * var(--intent-content-scale) / var(--ui-zoom,1)); }
+}
+
+/* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
+   first approved sizes so the bodies keep their height (the stage's group height is config: desktopShortMiniHudGroupHeightPx, matched to this rule). */
+@media (min-width: 1200px) and (max-height: 800px) {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+    --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));
+    height: calc(38px / var(--ui-zoom,1))!important; min-height: calc(38px / var(--ui-zoom,1))!important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+    inset: calc(14px / var(--ui-zoom,1)) 0 auto auto !important;
+  }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(12px / var(--ui-zoom,1)); }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.25; }
+}

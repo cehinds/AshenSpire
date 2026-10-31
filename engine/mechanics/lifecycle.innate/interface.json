@@ -1,0 +1,8 @@
+{
+  "mechanic": "lifecycle.innate",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

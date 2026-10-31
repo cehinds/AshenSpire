@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -16,7 +18,7 @@ function fight(effects, coop) {
     enemyMoves: legacyContentBundle.enemyMoves.map(move => move.enemyId === 'gildedKnight' && move.id === 'parry'
       ? { ...move, counterPoiseDamage: 4 } : move),
   });
-  const player = { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+  const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'strike1', cardId: 'strike' }], relicIds: [] };
   const options = { registries, rng: createRng(340), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null };
   const c = coop ? createCoopCombat({ ...options, players: [{ id: 'p1', ...player }] }) : createCombat({ ...options, player });
@@ -26,7 +28,7 @@ function fight(effects, coop) {
     : dispatch(c, { type: 'playCard', cardInstanceId: 'strike1', targetId: c.enemies[0].id }) };
 }
 
-for (const coop of [false, true]) {
+for (const coop of COOP_MODES) {
   const mode = coop ? 'co-op' : 'solo';
   for (const interrupt of ['stagger', 'death']) {
     test(`${mode} cancels an already queued Counter reply after source ${interrupt}`, () => {
@@ -82,7 +84,7 @@ test('a freshly prepared live Counter works after an earlier player stagger', ()
       ? { ...move, damage: 4 } : move),
   });
   const c = createCombat({ registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null,
-    player: { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+    player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'riposte1', cardId: 'riposte' }], relicIds: [] } });
   staggerPlayer(c, c.player);
   assert(c.player.pendingActionLoss > 0);

@@ -6,18 +6,18 @@
 //                                             assets/fonts, music, map-detail) and exit
 //   node tools/art-source.mjs --which          one line per tree: its pack and where
 //
-// The compact assets-mobile/ light tier is tracked in the game. High-resolution
+// All runtime tiers are pinned release data. High-resolution
 // assets/ and common files remain in cehinds/AshenSpire-art; fetch-art verifies
 // their pinned release into
 // .art-cache/<tag>/<pack>/, whose files sit at the trees' old paths
 // (`assets/bg/…`, `assets-mobile/bg/…`, `assets/fonts/…`, `music/…`,
 // `map-detail/…`). Every reader of those paths asks this file.
 //
-// THE RULE. Auto reads the tracked light tier when present. Other packs are
-// read from a verified cache (fetch-art's marker matches the current pin and
+// THE RULE. Auto and cache both read pinned runtime packs; all packs are
+// read from a verified cache (including assets-display runtime exports; fetch-art's marker matches the current pin and
 // manifest); an unfetched pack names the fetch. ASHEN_ART_SOURCE:
 //
-//   unset or `auto`           local light, verified cache for high and common;
+//   unset or `auto`           verified release cache for every pack;
 //   `cache`                   verified release for every pack (CI);
 //   `trees`                    the files at the trees' paths under the root
 //                              itself, silently: for a tool's temporary sandbox
@@ -27,8 +27,9 @@
 // other tools/ module tools/bundle.mjs reaches (tests/build-identity.test.mjs):
 // it decides which bytes the bundler reads, so a change here is a new build.
 
-import { cpSync, existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync, realpathSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { CACHE_DIR, MANIFEST_PATH, PIN_PATH, verifiedPackDir } from './fetch-art.mjs';
 
@@ -36,13 +37,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ENV = 'ASHEN_ART_SOURCE';
 export const MODES = Object.freeze(['auto', 'cache', 'trees']);
 /**
- * The four trees step 12 switched (the light and common packs' files), and the
+ * The light/common trees (including display exports), and the
  * pack whose cache holds each at the same path. tools/bundle.mjs keeps them
  * out of an art tier's sweep, and tools/serve.mjs answers them from the cache.
  */
 export const MOVING_TREES = Object.freeze({
   'assets-mobile': 'light',
   'assets/fonts': 'common',
+  'assets-display': 'common',
   music: 'common',
   'map-detail': 'common',
 });
@@ -96,10 +98,6 @@ function stampOf(root, pack) {
 export function packSource(pack, { root = ROOT, env = process.env } = {}) {
   const mode = sourceMode(env);
   if (mode === 'trees') return { from: 'trees', dir: null, why: `${ENV}=trees` };
-  // The game carries its compact light tier. Auto uses those bytes directly;
-  // cache remains an explicit, pinned-release check for CI and remote builds.
-  if (mode === 'auto' && pack === 'light' && existsSync(join(root, 'assets-mobile')))
-    return { from: 'trees', dir: null, why: 'local light art' };
   const vkey = `${real(root)}\0${pack}`;
   // The decision is kept only while the pin, the manifest and every pack's
   // verified marker are unchanged, so a long-running server (tools/serve.mjs)
@@ -146,6 +144,20 @@ export function artPath(rel, opts = {}) {
   return abs;
 }
 
+/** Reuse a pinned display row only when its entire common-record contract matches. */
+export function addDisplayRecord(assets, id, common) {
+  if (Object.hasOwn(assets, id)) {
+    const entry = assets[id];
+    const row = entry?.common;
+    if (!entry || Object.keys(entry).length !== 1 || !row ||
+        Object.keys(row).length !== 3 ||
+        !['path', 'sha256', 'bytes'].every(key => Object.hasOwn(row, key) && row[key] === common[key]))
+      throw new Error(`Display art ID collides with a pinned asset: ${id}`);
+    return;
+  }
+  assets[id] = { common };
+}
+
 /**
  * copyPackTrees(toRoot, trees, { root, env }) — a SANDBOX'S ART. A tool that
  * builds in a throwaway copy of the checkout (tools/bundle.test.mjs,
@@ -164,6 +176,36 @@ export function copyPackTrees(toRoot, trees, { root = ROOT, env = process.env } 
   }
 }
 
+/** Game-owned metadata stays local; only manifest-declared images come from the release. */
+export const DISPLAY_METADATA = Object.freeze([
+  'assets-display/README.md',
+  'assets-display/alternative/README.md', 'assets-display/alternative/library.json',
+  'assets-display/classic/README.md', 'assets-display/classic/library.json',
+  'assets-display/layered/manifest.json',
+  'assets-display/shared/README.md', 'assets-display/shared/library.json',
+]);
+export function copyDisplayArt(toRoot, { root = ROOT, env = process.env } = {}) {
+  const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
+  for (const [id, entry] of Object.entries(manifest.assets || {})) {
+    if (!id.startsWith('assets-display/')) continue;
+    const rec = entry.common;
+    if (!rec || rec.path !== id || !/\.(?:webp|png)$/.test(id)) throw new Error(`Invalid display pack record: ${id}`);
+    const bytes = readFileSync(artPath(id, { root, env }));
+    if (bytes.length !== rec.bytes || createHash('sha256').update(bytes).digest('hex') !== rec.sha256)
+      throw new Error(`Display art hash mismatch: ${id}`);
+    const target = resolve(toRoot, id);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, bytes);
+  }
+  for (const id of DISPLAY_METADATA) {
+    const from = resolve(root, id);
+    if (!existsSync(from)) continue;
+    const target = resolve(toRoot, id);
+    mkdirSync(dirname(target), { recursive: true });
+    cpSync(from, target);
+  }
+}
+
 /**
  * copySourceArt(toRoot, opts) — the `assets/` tree a served SOURCE sandbox used
  * to copy from this checkout (src/ + styles/ + assets/, played through
@@ -174,6 +216,7 @@ export function copyPackTrees(toRoot, trees, { root = ROOT, env = process.env } 
  */
 export function copySourceArt(toRoot, opts = {}) {
   copyPackTrees(toRoot, [HIGH_TREE, 'assets/fonts'], opts);
+  copyDisplayArt(toRoot, opts);
 }
 
 /**

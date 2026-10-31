@@ -1,0 +1,48 @@
+{
+  "mode": "configured",
+  "default": "owned",
+  "unlimited": [
+    {
+      "id": "basicTraining",
+      "requiresTag": "training.basic",
+      "pools": [
+        "strike",
+        "defend",
+        "counter",
+        "smash",
+        "sweep",
+        "evade"
+      ],
+      "cards": {
+        "rarity": [
+          "starter"
+        ],
+        "tagsAny": [
+          "maneuver:attack",
+          "maneuver:defend",
+          "maneuver:counter",
+          "maneuver:smash",
+          "maneuver:sweep"
+        ]
+      }
+    },
+    {
+      "id": "graduate",
+      "requiresTag": "training.graduate",
+      "pools": [],
+      "cards": {
+        "tagsAll": [
+          "rank.cantrip"
+        ]
+      }
+    }
+  ],
+  "owned": {
+    "pools": [
+      "special"
+    ],
+    "tags": [
+      "classification.weaponArt"
+    ]
+  }
+}

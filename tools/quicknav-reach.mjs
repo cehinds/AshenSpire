@@ -324,8 +324,8 @@ async function checkMusicParity(where) {
   }
   await ev(`document.querySelector('.set-tab[data-member="Audio"]').click(); true`);
   await wait(100);
-  const settingsOff = await ev(`document.querySelector('.toggle[data-key="musicEnabled"]')?.getAttribute('aria-checked')`);
-  if (settingsOff !== 'false') return fail('R9', where, `Settings did not reflect Quick Menu OFF (aria=${settingsOff})`);
+  const settingsOff = await ev(`document.querySelector('.toggle[data-key="musicEnabled"]')?.checked`);
+  if (settingsOff !== false) return fail('R9', where, `Settings did not reflect Quick Menu OFF (aria=${settingsOff})`);
   await ev(`document.querySelector('.toggle[data-key="musicEnabled"]').click(); true`);
   await wait(100);
   await ev(`document.querySelector('#ov-close').click(); true`);

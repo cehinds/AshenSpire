@@ -1,0 +1,26 @@
+{
+  "id": "status.rallyingStandard",
+  "tag": "status.rallyingStandard",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Rallying Standard",
+  "description": "At the start of your turn: gain 1 Strength and take 1 damage (per stack).",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.rallyingStandard"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

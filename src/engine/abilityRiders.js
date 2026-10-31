@@ -1,3 +1,4 @@
+import { hasCardChoice } from './cardZones.js';
 // Shared data-driven ability riders. State is per entity and bounded to a turn;
 // it is saved with the combat entity, never reconstructed from a growing log.
 import { ABILITY_TURN_METRICS } from '../model/schemas.js';
@@ -20,7 +21,7 @@ export function beginAbilityTurn(entity) {
     hpLostThisRound: 0, offeringsPaid: 0, previousSpell: 0,
     turnStartHpPct: entity.maxHp > 0 ? 100 * entity.hp / entity.maxHp : 0,
     charges: {}, once: {},
-    sameCardPlays: {}, attacksPlayed: 0, cardPlaysCombat: old.cardPlaysCombat || 0,
+    instanceUsesCombat:old.instanceUsesCombat || {},cardUsesCombat:old.cardUsesCombat || {}, typePlays: {}, sameCardPlays: {}, attacksPlayed: 0, cardPlaysCombat: old.cardPlaysCombat || 0,
   };
 }
 
@@ -38,6 +39,9 @@ export function abilityMetric(entity, predicate, snapshot) {
 
 export function recordAbilityCard(entity, card, manaSpent) {
   const state = stateFor(entity);
+  state.typePlays ||= {}; state.typePlays[card.type]=(state.typePlays[card.type] || 0)+1;
+  if(card.instanceId) {state.instanceUsesCombat ||= {};state.instanceUsesCombat[card.instanceId]=(state.instanceUsesCombat[card.instanceId] || 0)+1;}
+  state.cardUsesCombat ||= {}; state.cardUsesCombat[card.cardId]=(state.cardUsesCombat[card.cardId] || 0)+1;
   state.cardsPlayed += 1;
   state.cardPlaysCombat = (state.cardPlaysCombat || 0) + 1;
   state.attacksPlayed = (state.attacksPlayed || 0) + (card.type === 'attack' ? 1 : 0);
@@ -197,13 +201,18 @@ export function chooseAbilityDiscard(ctx, ids) {
 }
 
 export function assertNoAbilityChoice(ctx) {
-  if (ctx.pendingAbilityDiscard) throw new Error('Choose the cards to discard before taking another action');
+  if (hasCardChoice(ctx)) throw new Error('Choose the cards to discard before taking another action');
 }
 
 export function abilityResolved(ctx) {
   const play = ctx.pendingAbilityPlay;
-  if (!play || ctx.pendingAbilityDiscard) return null;
+  if (!play || hasCardChoice(ctx)) return null;
   delete ctx.pendingAbilityPlay;
-  ctx.emit('cardResolved', { ...play.before, cardInstanceId: play.instance.instanceId, cardId: play.instance.cardId, cardType: play.kind, cardTags: play.ref.authoredTags || play.ref.tags || [], abilityKind: play.ref.abilityKind, printedManaCost: play.printedManaCost, targetId: play.targetId, sourceId: ctx.player.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}), magicalResolved: play.ref.abilityKind === 'spell' });
+  ctx.emit('cardResolved', { ...(play.ref.rangeLineagePlan?{rangeLifecycleCarrier:play.ref}:{}), ...play.before, cardInstanceId: play.instance.instanceId, cardId: play.instance.cardId, cardType: play.kind, cardTags: play.ref.authoredTags || play.ref.tags || [], abilityKind: play.ref.abilityKind, printedManaCost: play.printedManaCost, targetId: play.targetId, sourceId: ctx.player.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}), magicalResolved: play.ref.abilityKind === 'spell',
+    ...(ctx.gameProfile?.foundation?.mode === 'configured' ? {
+      ...(Object.hasOwn(play.ref, 'usedArmamentId') ? { usedArmamentId: play.ref.usedArmamentId } : {}),
+      ...(play.ref.grantedBy ? { grantedBy: play.ref.grantedBy } : {}),
+      ...(play.ref.sourceHand ? { sourceHand: play.ref.sourceHand } : {}),
+    } : {}) });
   return play;
 }

@@ -3,6 +3,8 @@ import { constantFormulaValue } from '../../model/formulas.js';
 import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
 import { esc } from './tooltip.js';
+import { cardBonusTags } from '../../model/cardBonusTags.js';
+import { coreSmashHelp } from '../../model/smashClause.js';
 
 const FORCE_SHAPE = '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle cx="16" cy="16" r="4"/>';
 const SHAPES_BLUNT = '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>';
@@ -14,9 +16,11 @@ const SYMBOL_TRAITS = new Set(['flux', 'impact', 'reaction', 'counterstrike']);
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
   evade: '<path d="M7 2h13l-2 12 4 6 7 3 2 5-2 3H13L2 25l2-8Zm1 5-1 4 10 2 1-4ZM5 21l-1 3 10 5h14v-3H15Z"/>',
+  precision: '<path d="M14 1h4v6h-4Zm0 24h4v6h-4ZM1 14h6v4H1Zm24 0h6v4h-6Z"/><path d="M16 6a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/><circle cx="16" cy="16" r="2.5"/>',
   earth: SCHOOL_SIGILS.earth.shape,
   fire: '<path d="M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z"/>',
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
+  power: '<path d="m16 1 4 9 10 2-7 7 1 11-8-5-8 5 1-11-7-7 10-2Z"/>',
   skill: '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>',
   bleed: '<path d="M16 1C13 8 5 15 5 21a11 11 0 0 0 22 0C27 15 19 8 16 1ZM9 21h3c0 4 2 5 5 5v3c-5 0-8-3-8-8Z"/>',
   frost: '<path d="M14 1h4v8l6-5 3 3-8 7 10-1v4l-10 1 8 7-3 3-6-7v10h-4V21l-7 7-3-3 8-7-10-1v-4l10 1-8-7 3-3 7 5Z"/>',
@@ -41,6 +45,10 @@ const SHAPES = Object.freeze({
 const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', psychic:'illusion', alternation:'alteration', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
+  // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
+  if (tag.id === 'effect:precision') return SHAPES.precision;
+  if (tag.id === 'effect:block') return SHAPES.guard;
+  if (tag.id === 'effect:barrier') return FORCE_SHAPE;
   const key = tag.id.split(':').at(-1);
   const id = key === 'physical' ? 'guard' : ['evade', 'evasion', 'dodge'].includes(key) ? 'evade' : key === 'slashing' || key === 'blade' ? 'attack' : ALIASES[key] || key;
   return ACTION_SIGILS[id]?.solid ? ACTION_SIGILS[id].shape : SHAPES[id] || SHAPES.skill;
@@ -65,11 +73,14 @@ function carriesHealthDamage(def) {
 }
 
 // Category, damage/effect identity, then authored statuses. No filler tags.
-export function cardSideTags(model, def = {}, registries = null, preview = null) {
+export function cardSideTags(model, def = {}, registries = null, preview = null, rules = null) {
   const tags = Array.isArray(model?.tags) ? model.tags : [];
   const selected = [];
   const camp = tags.find(tag => ['camp:physical', 'camp:spell'].includes(tag.id));
-  if (camp) selected.push(camp);
+  // Public category is independent of the engine's legacy physical camp.
+  const category = def.type === 'power' ? 'power' : def.type === 'skill' && camp?.id !== 'camp:spell' ? 'skill' : null;
+  if (category) selected.push({ id: `category:${category}`, label: category[0].toUpperCase() + category.slice(1), blurb: category === 'power' ? 'Persistent power effects.' : 'Skill effects.' });
+  else if (camp && (camp.id !== 'camp:physical' || carriesHealthDamage(def) || !def.type)) selected.push(camp);
   const damage = carriesHealthDamage(def) ? tags.filter(tag => tag.id.startsWith('damage:')) : [];
   // One effect identity: an explicit supported element wins over its school,
   // including aliases, before the cap can displace a status icon.
@@ -102,6 +113,20 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
   }
   for (const [index, effect] of (def.effects || []).entries()) walk(effect, index);
   for (const key of ['counterPayload', 'upcast', 'schoolEffect']) walk(def[key]);
+  // Quantified benefits must remain visible when their duplicate body line is
+  // removed. Their conditions/formulas live on the same tag on every surface.
+  const benefits = cardBonusTags(def, preview, registries, rules);
+  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
+  for (const benefit of benefits) {
+    const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');
+    if (existing >= 0) selected.splice(existing, 1);
+    statuses.delete(benefit.id.slice(7));
+  }
+  // Reserve room before secondary identity symbols: automatic benefits never
+  // return as body prose merely because a multi-type card filled its rail.
+  selected.splice(Math.max(0, 5 - benefits.length));
+  selected.push(...benefits);
   // Traits with a symbol rank after the effect and camp tags, before statuses:
   // when the five-symbol cap is full, statuses drop first. A numbered trait
   // (Flux 1, Impact 2) takes its value from the card's traitValues.
@@ -124,7 +149,11 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
     const count = occurrences.length === 1 ? occurrences[0].count : undefined;
     selected.push({ id: 'status:' + id, label: status.name, blurb: status.tooltip || status.name, ...(count !== undefined ? { count } : {}) });
   }
-  return selected;
+  // Only a rendered tag can carry an explanation omitted from the face.
+  return selected.slice(0, 5).map(tag => {
+    const status = tag.id.startsWith('status:') && registries?.statuses?.get(tag.id.slice(7));
+    return status?.tooltip ? { ...tag, representedRules: [...(tag.representedRules || []), tag.id] } : tag;
+  });
 }
 
 /** The card rail's solid symbol for one tag id (e.g. 'effect:evade') as a bare SVG element. */
@@ -148,7 +177,7 @@ export function cardCategorySigilHtml(camp) {
 // The tooltip a symbol shows when selected: its name and blurb, from uiStrings.
 // A numbered trait's N in the blurb takes the card's value ("On hit: 1 Ward damage").
 function symbolTip(tag) {
-  const traitName = tag.id.startsWith('trait:') && Number.isInteger(tag.count) ? `${tag.label} ${tag.count}` : tag.label;
+  const traitName = Number.isInteger(tag.count) && tag.count >= 0 ? `${tag.label} ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : tag.label;
   const blurb = (tag.blurb || tag.label).replace(/\bN\b/g, tag.count ?? 'N');
   return tFull('card.tag.tooltip', { name: traitName, blurb });
 }
@@ -164,7 +193,7 @@ export function cardTagRailHtml(tags, range = null) {
   if(!tags?.length && !range)return '';
   return '<div class="card-tag-rail" aria-label="Primary card tags">' + (tags || []).slice(0,5).map(tag => {
     const count = Number.isInteger(tag.count) && tag.count >= 0 ? tag.count : null;
-    const name = tag.label + (count === null ? '' : ' ' + count);
-    return '<span class="card-tag-symbol" role="img" tabindex="0" data-tip="' + esc(symbolTip(tag)) + '" data-tag-id="' + esc(tag.id) + '" aria-label="' + esc(name) + '" aria-description="' + esc(tag.blurb || tag.label) + '"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">' + shapeFor(tag) + '</svg>' + (count === null ? '' : '<span class="card-tag-count" aria-hidden="true">' + count + '</span>') + '</span>';
+    const name = tag.label + (count === null ? '' : ' ' + count + (tag.countFormula ? ' + ' + tag.countFormula : ''));
+    return '<span class="card-tag-symbol" role="img" tabindex="0" data-tip="' + esc(symbolTip(tag)) + '" data-tag-id="' + esc(tag.id) + '" aria-label="' + esc(name) + '" aria-description="' + esc(tag.blurb || tag.label) + '"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">' + shapeFor(tag) + '</svg>' + (count === null ? '' : '<span class="card-tag-count" aria-hidden="true">' + count + (tag.countFormula ? '+' : '') + '</span>') + '</span>';
   }).join('') + cardRangeChipHtml(range) + '</div>';
 }

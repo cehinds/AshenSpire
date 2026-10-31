@@ -11,7 +11,7 @@
 // Windows installer lines are outside every region and stay that way.
 //
 // Regions:
-//   channels — the "Play and download" table: Test, Dev, Release, Main only.
+//   channels — the "Play and download" list: Test, Dev, Release, Main only.
 //              The retired Alternative Dev / Alternative Test rows are gone;
 //              they are frozen root branches (CONTRIBUTING.md, Branch model).
 //
@@ -27,7 +27,7 @@ export const README = resolve(ROOT, 'README.md');
 const BASE = 'https://cehinds.github.io/AshenSpire';
 
 // The four playable channels the README lists. `slug` is the Pages path
-// segment; `label` is the first-column text as the README words it.
+// segment; `label` is the channel text as the README words it.
 export const CHANNELS = Object.freeze([
   { name: 'Test', slug: 'test', label: '**Test** — promoted' },
   { name: 'Dev', slug: 'dev', label: 'Dev — integration' },
@@ -36,17 +36,13 @@ export const CHANNELS = Object.freeze([
 ]);
 
 function channelRow({ name, slug, label }) {
-  return `| ${label} | [![${name} build](${BASE}/${slug}/latest/build.svg)](${BASE}/${slug}/) `
-    + `| [Play ${name}](${BASE}/${slug}/latest/) `
-    + `| [HTML](${BASE}/${slug}/latest/download/AshenSpire.html) |`;
+  return `${label} · [Play ${name}](${BASE}/${slug}/latest/) `
+    + `· [HTML (offline, desktop, ~140 MB)](${BASE}/${slug}/latest/download/AshenSpire.html)\n\n`
+    + `[![${name} build](${BASE}/${slug}/latest/build.svg)](${BASE}/${slug}/)`;
 }
 
 export function renderChannels() {
-  return [
-    '| Channel | Published build / history | Play | Download |',
-    '| --- | --- | --- | --- |',
-    ...CHANNELS.map(channelRow),
-  ].join('\n');
+  return CHANNELS.map(channelRow).join('\n\n');
 }
 
 export const REGIONS = Object.freeze([

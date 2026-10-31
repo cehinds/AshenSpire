@@ -126,7 +126,7 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
   // positioned over the card, so an occupied row is exactly as wide as an
   // empty one instead of losing 4rem of its text to a spacer.
   const trailing = deletable
-    ? iconButton({ glyph: '✕', label: `Delete slot ${slot}`, className: 'title-slot-delete', attrs: { dataset: { slotDelete: slot, component: UI.titleSaveSlotDelete } } })
+    ? iconButton({ glyph: 'close', label: `Delete slot ${slot}`, className: 'title-slot-delete', attrs: { dataset: { slotDelete: slot, component: UI.titleSaveSlotDelete } } })
     : null;
   const rowEl = optionRow(card, trailing, {
     class: `title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}${deletable ? ' has-delete' : ''}`,
@@ -140,7 +140,7 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
  * → the <section class="modal"> for a slot list — LOAD GAME and NEW GAME wear
  * exactly this. The caller wraps it in its own veil and wires by delegation.
  */
-export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back', continueLabel = 'Continue', canContinue = false, actionSlot = null, backAction = 'back', className = '' }) {
+export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = t('common.back'), continueLabel = t('common.continue'), canContinue = false, actionSlot = null, backAction = 'back', className = '' }) {
   const head = modalHead({ eyebrow, title, titleId: 'title-modal-heading', closeLabel });
   const close = head.querySelector('.modal-close');
   close.classList.add('title-modal-close');
@@ -195,14 +195,14 @@ const SLOT_DECISIONS = {
 };
 
 /**
- * deleteSlotReview(slot, summary) → the copy the ✕'s review door reads.
+ * deleteSlotReview(slot, summary) → the copy the close's review door reads.
  *
  * DELETE IS A DECISION DOOR LIKE THE OTHER FOUR (Constantine's review,
  * 2026-09-11): the head asks "Delete slot n?", the body shows the DetailCard
  * of the save that would go, the foot answers Delete (danger — the tone is
  * the secondbeat row's: profile stakes, no undo) or Back. The machinery draws
  * the door (framework/optionDecision.js → the shared confirmation modal); this
- * only authors what it says, so the title's two ✕ sites read one home.
+ * only authors what it says, so the title's two close sites read one home.
  */
 export function deleteSlotReview(slot, summary = null) {
   const card = summary

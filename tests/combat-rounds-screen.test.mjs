@@ -226,7 +226,14 @@ test('a completed hold on a queued card takes it back before the affordable and 
   const confirm = hold.slice(hold.indexOf('onConfirm: () => {'));
   const queued = confirm.indexOf('isRoundQueued(inst.instanceId)');
   assert.ok(queued >= 0, 'the hold-confirm path checks for a queued card');
-  assert.ok(queued < confirm.indexOf('if (busy || !affordable || dragging)'), 'before the affordable and dragging guard');
+  const lockGuard = confirm.indexOf('if (busy || dragging) return;');
+  const affordabilityGuard = confirm.indexOf('if (!affordable && !rangeSelectable)');
+  assert.ok(lockGuard >= 0, 'busy or dragging still prevents hold selection');
+  assert.ok(affordabilityGuard >= 0, 'an unaffordable card still needs a selectable range route');
+  assert.ok(queued < lockGuard && queued < affordabilityGuard, 'take-back precedes both guards');
+  assert.ok(lockGuard < affordabilityGuard, 'busy or dragging returns before an affordability refusal');
+  assert.match(confirm.slice(affordabilityGuard), /^if \(!affordable && !rangeSelectable\) \{ logUnaffordable\('confirm'\); return; \}/,
+    'a refused hold logs and returns before selecting');
   assert.match(confirm.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
 });
 
@@ -234,7 +241,9 @@ test('the hotkey on a queued card takes it back before the affordable guard', ()
   const hotkey = sliceBetween(combatScreenSource, 'const visibleId = handCards', 'const hostile = cardTargets(');
   const queued = hotkey.indexOf('isRoundQueued(inst.instanceId)');
   assert.ok(queued >= 0, 'the hotkey path checks for a queued card');
-  assert.ok(queued < hotkey.indexOf('if (!affordable) return;'), 'before the affordable guard');
+  const guard = hotkey.indexOf('if (!affordable && (!canChooseRangeRoute(pv) || isUnplayable(inst))) return;');
+  assert.ok(guard >= 0, 'the hotkey retains route affordability and the unplayable-card guard');
+  assert.ok(queued < guard, 'before the affordable guard');
   assert.match(hotkey.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
 });
 

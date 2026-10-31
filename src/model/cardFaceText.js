@@ -1,4 +1,8 @@
+import { uiStrings } from '../content/generated/uiStrings.js';
+import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
+import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
+import { armsAsCoreCounter } from './profileStance.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
 // ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
@@ -51,26 +55,32 @@ function esc(value) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+/** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
+export function withChargedEffects(def, preview = null) {
+  return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
+}
+
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
-export function cardFaceLines(def, preview = null, registries = null) {
+export function cardFaceLines(def, preview = null, registries = null, rules = null,
+  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry' } = {}) {
   try {
-    return buildLines(def, preview, registries);
+    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel });
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
   }
 }
 
-function buildLines(def, preview, registries) {
+function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
-  if (Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects) def = { ...def, effects: preview.chargedEffects };
+  def = withChargedEffects(def, preview);
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
   if (AUTHORED_DAMAGE_RIDER_CARDS.includes(def.id)) return null;
   // A curse's hand trigger and an Ashen Blight price live only in the authored text.
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
-  const { value, defenseValue, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p, bindings, tokens, poiseMerge } = cardSummaryContext(def, preview, registries, rules);
   const ratings = registries?.balance?.combatRatings ?? null;
   // A self status consumed after a payoff must read after the condition that uses it.
   // Walk nested predicates too, so the face never implies the prerequisite is removed first.
@@ -87,7 +97,9 @@ function buildLines(def, preview, registries) {
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
   const counterMode = counter ? counterModeOf(def, p) : null;
   if (counter && !counterMode && def.defenseRulesVersion !== 2) return null;
-  const damageVerb = counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
+  const concise = registries?.gameProfile?.foundation?.mode === 'configured';
+  const conciseCounter = counter && concise;
+  const damageVerb = conciseCounter ? 'Counter' : counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
 
   // The static number an effect's field authored: its token's base, else the literal.
   const baseOf = (effect, index, field) => {
@@ -109,6 +121,9 @@ function buildLines(def, preview, registries) {
     }
     return `<span class="${cls}">${esc(amount)}</span>`;
   };
+  // Saved profiles may still carry the old verbose template. Phrase this
+  // complete grant from the shared configured/live value on every face.
+  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }];
 
   const typeWord = id => {
     const service = registries && tagService(registries);
@@ -133,7 +148,11 @@ function buildLines(def, preview, registries) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
         if (typeof hits !== 'number') fail();
-        const sequence = live?.hitDamages;
+        // Core 2: one row carries the computed return; every other damage row of the Counter is zeroed and not listed.
+        if (counter && preview?.counterReturn && live && hits === 0 && live.totalDamage === 0) return [];
+        // Core: the face's sequence is the before-Block one (faceHitDamages); the targeted preview keeps hitDamages.
+        const sequence = live?.faceHitDamages && hits > 0 ? live.faceHitDamages : live?.hitDamages;
+        const sequenceTotal = sequence === live?.hitDamages ? live?.totalDamage : sequence?.reduce((sum, amount) => sum + amount, 0);
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
         // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.
         const type = combatCardDamageLabel(def, preview, registries, index).split(' · ')[0];
@@ -147,14 +166,25 @@ function buildLines(def, preview, registries) {
           text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`
             + (hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : '');
         } else if (unequal) {
-          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(live.totalDamage, typeof base === 'number' ? base * sequence.length : undefined)} total across ${sequence.length} hits)`;
+          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(sequenceTotal, typeof base === 'number' ? base * sequence.length : undefined)} total across ${sequence.length} hits)`;
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
-        return frag('damage', text + area);
+        return frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
       }
-      case 'poiseDamage': return frag('damage', `${num(n, base)} Poise damage${area}`);
-      case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
+      case 'poiseDamage': case 'wardDamage': {
+        // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
+        if (counter && preview?.counterReturn && !(n > 0)) return [];
+        // Ward off (Core 2): Ward damage drains Poise, so the face reads one combined Poise figure.
+        const merged = poiseMerge?.get(index);
+        if (merged) {
+          if (!merged.leader) return [];
+          const live = merged.indices.map(i => value(def.effects[i], i)), authored = merged.indices.map(i => baseOf(def.effects[i], i, 'amount'));
+          const sum = list => list.reduce((total, amount) => total + amount, 0);
+          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise${concise ? '' : ' damage'}${area}`);
+        }
+        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
+      }
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
           ? (defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
@@ -193,8 +223,15 @@ function buildLines(def, preview, registries) {
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
       case 'applyStatus': {
+        // Unmodelled per-application tags (for example Persistent) may carry
+        // authored rules. Preserve that prose rather than silently dropping it.
+        if (effect.tags?.length) fail();
         if (STATUS_NEVER_PHRASED.includes(effect.status)
           && !(counter && def.defenseRulesVersion === 2 && effect.status === 'grounded')) fail();
+        if (effect.chance !== undefined) {
+          if (typeof effect.chance !== 'number') fail();
+          if (effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+        }
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
@@ -202,7 +239,7 @@ function buildLines(def, preview, registries) {
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
         else if (effect.target === 'ally') out.push({ cat: 'bonus', text: `Apply ${name} to an ally${duration}` });
         else out.push({ cat: 'bonus', text: `Apply ${name}${duration}${area}` });
-        if (MECHANIC_STATUSES.includes(effect.status)) {
+        if (MECHANIC_STATUSES.includes(effect.status) && !representedRules.includes(`status:${effect.status}`)) {
           const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
           if (!explanation) fail();
           out.push({ cat: 'bonus', text: esc(explanation.replace(/\.$/, '')) });
@@ -214,6 +251,12 @@ function buildLines(def, preview, registries) {
         const suffix = effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area;
         const cat = effect.target === 'self' && dependentStatuses.has(effect.status) ? 'consume' : 'remove';
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
+      }
+      case 'moveEngagement': {
+        if (!['enemy', 'pendingAttacker'].includes(effect.target) || ![-1, 1].includes(effect.bands)
+          || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
+        const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
@@ -236,20 +279,23 @@ function buildLines(def, preview, registries) {
     }
   };
 
+  // Comma-join phrases; one that already ends a sentence drops its period first (no ".,"), as playingCard does.
+  const joinList = parts => parts.map((part, i) => i < parts.length - 1 ? part.replace(/\.$/, '') : part).join(', ');
+
   // The line a set of fragments reads as, one segment per kind, in fixed order.
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
-    if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
-    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
+    if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
+    if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
-    if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
-    if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
-    if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
-    if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
-    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? defenseRestore.join(', ') + '. ' + bonus.join(', ') : bonus.join(', ') });
-    else if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
+    if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
+    if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
+    if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
+    if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
+    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? joinList(defenseRestore) + '. ' + joinList(bonus) : joinList(bonus) });
+    else if (defenseRestore.length) out.push({ kind: 'bonus', text: joinList(defenseRestore) });
     return out;
   };
 
@@ -280,8 +326,10 @@ function buildLines(def, preview, registries) {
 
   const unconditional = [], groups = new Map();
   for (const [index, effect] of (def.effects || []).entries()) {
+    if (representedEffects.includes(index)) continue;
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
+    if (effect.if && !fragments.length) continue; // a condition with nothing left to say (a Core return zeroed its row) is not listed
     if (effect.if) {
       const key = JSON.stringify(effect.if);
       if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [], sleeping: JSON.stringify(effect.if).includes('"status":"sleep"') });
@@ -290,24 +338,62 @@ function buildLines(def, preview, registries) {
   }
 
   // Counter: what the payload returns, for each part the effects do not already deal.
-  if (counter) {
+  // An uncovered revealed attack (the Counter will not arm): no return lines, not even the authored payload.
+  const counterUncovered = counter && preview?.counterReturn?.uncovered === true;
+  // Core: with no revealed attack a spell Counter's authored Poise/Ward row is not what it returns; it reads the rule.
+  const coreSpellFace = counter && !counterUncovered && !preview?.counterReturn && !!def.counterCoverage && p.camp === 'spell'
+    && fixCoreEnabled({ gameProfile: rules?.gameProfile ?? registries?.gameProfile, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules })
+    // Only where live arms it: a profile whose stances omit counter (or prepared) never returns, so the face must not promise it.
+    && armsAsCoreCounter({ gameProfile: rules?.gameProfile ?? registries?.gameProfile }, { ...def, combatProfile: p });
+  if (coreSpellFace) unconditional.push({ cat: 'damage', text: esc(uiStrings.find(row => row.id === 'card.counter.face.core').short) });
+  if (counter && !counterUncovered && !coreSpellFace) {
     const payload = def.counterPayload || {};
+    // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
+    let poiseReturn = 0, poiseAuthored = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
+      // The configured Counter face states HP return once. Its automatic
+      // Poise/Ward reply is explained by Counter inspection; distinct authored
+      // effect rows above remain visible.
+      if (conciseCounter && preview?.counterReturn && key !== 'hp') continue;
       if ((def.effects || []).some(effect => effect.op === op)) continue;
-      const live = preview?.values?.find(row => row.op === op)?.value;
+      // Core 2 (SPEC §17): the computed return against the revealed attack replaces the authored payload; Ward is not part of it.
+      const core = preview?.counterReturn;
+      const live = core ? (key === 'ward' ? 0 : core[key]) : preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
       if (typeof amount !== 'number' || !(amount > 0)) continue;
+      if (poiseMerge && key !== 'hp') { poiseReturn += amount; poiseAuthored += payload[key] || 0; continue; }
       const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
-      unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
+      unconditional.push({ cat: 'damage', text: conciseCounter && key === 'hp' ? num(amount, payload[key]) : `${typed(num(amount, payload[key]), type)} ${label}` });
     }
+    if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
+    // Beating the revealed hit also adds Block before it lands.
+    if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
-  if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
-  if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
-  if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
-    const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules };
+  if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
+  if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
+  // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
+  const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
+  // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
+  const entryCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile, fixCoreRules: rules?.fixCoreRules };
+  // The Entry Precision line follows the active Core profile, the predicate the live grant uses, not a per-card version field.
+  const coreProfile = fixCoreEnabled(entryCtx);
+  const versioned = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
+  if (stanceEntry && !versioned && coreProfile) {
+    const precision = stanceEntryBonuses(def, entryCtx).precision;
+    if (precision > 0 && !representedEntry.includes('precision')) unconditional.push({ cat: 'bonus', text: esc(entryLabel) + ': ' + entryPrecisionText(precision, preview) + ' Precision' });
+  }
+  if (versioned) {
+    const ctx = entryCtx;
     const entry = stanceEntryBonuses(def, ctx);
-    const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + num(amount) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
-    if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
+    // Core grants 1 + the actor's stat mix of Precision: the live figure when a preview has an actor, else the formula (owner, 2026-10-19).
+    const statMixGrant = entry.precision > 0 && coreProfile;
+    const grants = Object.entries(entry).filter(([id, amount]) => amount > 0 && !representedEntry.includes(id)).map(([id, amount]) => (id === 'precision' && statMixGrant
+      ? entryPrecisionText(amount, preview)
+      : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+    if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', text: esc(entryLabel) + ': ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
       unconditional.push({ cat: 'defenseRestore', text: 'Restore ' + restore + ' Poise/Ward' });
@@ -340,7 +426,7 @@ function buildLines(def, preview, registries) {
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
 
   const lines = [];
-  for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
+  for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
   // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
-  return lines.length ? lines : null;
+  return lines.length || representedEffects.length ? lines : null;
 }

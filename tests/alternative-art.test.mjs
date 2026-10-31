@@ -1,3 +1,4 @@
+import { artPath } from '../tools/art-source.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -17,7 +18,7 @@ test('all reviewed actors and both export tiers have pinned bytes and idle bound
   for (const [family, count] of Object.entries({ armor: 19, enemy: 33, companion: 2, speaker: 5 }))
     assert.equal(Object.values(catalog.sprites).filter(s => s.family === family).length, count);
   for (const [file, hash] of Object.entries(catalog.hashes)) {
-    const bytes = readFileSync(new URL('../' + catalog.filePaths[file], import.meta.url));
+    const bytes = readFileSync(artPath(catalog.filePaths[file]));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), hash, file);
   }
   for (const [id, art] of Object.entries(catalog.sprites)) {
@@ -110,7 +111,7 @@ test('phone first paint references only phone scene exports before fitting', () 
 
 test('smaller exports preserve the original crop registration and scene resolution budget',()=>{
   for(const sprite of Object.values(catalog.sprites)) {
-    const bytes=readFileSync(new URL('../'+sprite.path,import.meta.url));
+    const bytes=readFileSync(artPath(sprite.path));
     const {width,height}=webpDimensions(bytes);
     assert.deepEqual([width,height],sprite.size,sprite.name);
     assert(Math.max(width,height)<=256,sprite.name);
@@ -119,16 +120,19 @@ test('smaller exports preserve the original crop registration and scene resoluti
       -sprite.sourceBounds[index]/sprite.sourceSize[index%2])<1e-12,`${sprite.name}: crop registration`));
   }
   for(const [id,path] of Object.entries(catalog.layers)) {
-    const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
+    const {width,height}=webpDimensions(readFileSync(artPath(path)));
     assert.deepEqual([width,height],catalog.layerSizes[id],id);
     assert(width<=256 && height<=256,id);
   }
   for(const [id,art] of Object.entries(catalog.sceneLayers)) {
-    for(const path of [art.path,art.mobilePath]) {
-      const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
-      assert.deepEqual([width,height],art.size,id);
-      assert(width<=256 && height<=256,id);
-    }
+    const desktop=webpDimensions(readFileSync(artPath(art.path)));
+    const phone=webpDimensions(readFileSync(artPath(art.mobilePath)));
+    assert.deepEqual([desktop.width,desktop.height],art.size,id);
+    assert.deepEqual([phone.width,phone.height],art.mobileSize || art.size,id);
+    assert(desktop.width<=1280 && desktop.height<=720,id);
+    assert(phone.width<=256 && phone.height<=256,id);
+    const source=catalog.sources['scene-'+id];
+    assert(desktop.width<=source.size[0] && desktop.height<=source.size[1],id);
   }
   for(const art of Object.values(catalog.sprites)) {
     assert.equal(catalog.hashes[art.path.split('/').pop()],catalog.hashes[art.mobilePath.split('/').pop()]);
@@ -147,7 +151,7 @@ test('portable alternative exports share duplicate bytes and reject a corrupt so
       ['src/ui/alternativeArtCatalog.js', `export const alternativeArtCatalog = ${JSON.stringify(fixture)};`],
     ]);
     runInNewContext(code, { EXTERNAL_ART: false, sources, ROOT: '.', createHash,
-      resolve: (...parts) => parts.join('/'), readFileSync: () => data,
+      resolve: (...parts) => parts.join('/'), artPath: value => value, readFileSync: () => data,
       fail: message => { throw new Error(message); } });
     return sources.get('src/ui/alternativeArt.js');
   };

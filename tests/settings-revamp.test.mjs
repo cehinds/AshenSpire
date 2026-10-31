@@ -329,11 +329,10 @@ test('a resolved row shows its dot and Reset when clearing its key would change 
   assert.doesNotMatch(html, /data-reset-key="musicEnabled"[^>]*hidden/);
 });
 
-test('while searching, the scoped reset resets every matching result and says so', async () => {
+test('the scoped reset controls are gone; Reset all stays a Display row', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
-  assert.ok(screen.includes("'Reset these results'"));
+  assert.ok(!screen.includes('data-reset-config') && !screen.includes("'Reset these results'"), 'the scoped reset controls are gone with the top action row');
 });
 
 test('a volume slider takes every whole percent, and a compact slider widens for values outside it', async () => {
@@ -506,8 +505,6 @@ test('widening the device-key scope forgets the loaded version (narrowing keeps 
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(next\) write\(SYNC_STORAGE\.lastSha, null\);/, 'widening re-reads the loaded version; narrowing keeps it');
-  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true \}\)\.length;/);
   const hidden = settingsSearchHits('', false, { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
   assert.deepEqual(hidden, [], 'release: hidden tuning is not in Changed');
 });
@@ -694,7 +691,7 @@ test('every version marker and the token removal report a refused write', async 
   assert.doesNotMatch(panel, /^\s*write\(SYNC_STORAGE\.(lastSha|token), (remote|pending|result)\.sha/m, 'no unchecked version write is left');
 });
 
-test('a Reset that cannot be saved is not left applied, and results reset covers every match', async () => {
+test('a Reset that cannot be saved is not left applied', async () => {
   const { resetKeys } = await import('../src/ui/screens/settings.js');
   const settings = { screenShake: false, reducedMotion: true };
   const calls = [];
@@ -703,7 +700,7 @@ test('a Reset that cannot be saved is not left applied, and results reset covers
   assert.deepEqual(calls[1], { screenShake: false, reducedMotion: true }, 'and back through onChange, so live state follows');
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
+  assert.ok(screen.includes('data-btn="resetAllSettings"'), 'Reset all is still reachable');
 });
 
 test('Save drops an older preview, and Undo gives promotion ownership back', async () => {

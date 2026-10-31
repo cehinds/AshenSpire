@@ -1,3 +1,6 @@
+import { gameModule } from './gameProfile.js';
+import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
+import { rederivePools } from './levelup.js';
 // Smithing is a run-owned transaction over a namespaced item, never a card copy.
 // The caller supplies the balance block so this model does not become a second
 // home for economy tuning. Exact item/tier tags own every cost and change.
@@ -9,12 +12,15 @@ import {
   cumulativeRequirementDelta,
   itemRefIdentity,
   itemUpgradeCost,
+  itemUpgradeCostAt,
   itemUpgradeRows,
+  itemUpgradeRowsAt,
   itemUpgradeTiers,
   itemUpgradeValueReceipts,
   parseItemUpgradeTag,
   resolveUpgradedItem,
 } from './itemUpgrades.js';
+import { coreSmithingActive, coreSmithingStats, coreSmithingCards, coreSmithingPreviewRows, coreCardSimulationAllowed, coreAffectedCards } from './smithingCore.js';
 
 export { normalizeSmithingRules };
 
@@ -302,7 +308,7 @@ function validateLastReceipt(registries, run) {
   for (const key of ['beforeLevel', 'afterLevel', 'authoredCost', 'spent', 'cost', 'stoneBalanceBefore', 'stoneBalanceAfter']) {
     integer(receipt[key], `run.lastSmithingReceipt.${key}`);
   }
-  if (receipt.afterLevel !== receipt.beforeLevel + 1 || !itemUpgradeTiers(registries, receipt.itemRef).includes(receipt.afterLevel)) {
+  if (receipt.afterLevel !== receipt.beforeLevel + 1 || !itemUpgradeTiers(registries, receipt.itemRef, run).includes(receipt.afterLevel)) {
     throw new Error('run.lastSmithingReceipt levels do not describe one valid Smithing promotion');
   }
   if (typeof receipt.free !== 'boolean') throw new Error('run.lastSmithingReceipt.free must be boolean');
@@ -315,7 +321,7 @@ function validateLastReceipt(registries, run) {
       throw new Error('run.lastSmithingReceipt refined balance does not describe its Smithing transaction');
     }
   }
-  const authoredCost = itemUpgradeCost(itemUpgradeRows(registries, receipt.itemRef, receipt.afterLevel));
+  const authoredCost = itemUpgradeCostAt(registries, receipt.itemRef, receipt.afterLevel, itemUpgradeRowsAt(registries, receipt.itemRef, receipt.afterLevel, run), run);
   const expectedSpend = receipt.free || purse === 'refined' ? 0 : authoredCost;
   if (receipt.authoredCost !== authoredCost || receipt.spent !== expectedSpend || receipt.cost !== receipt.spent
       || receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.spent) {
@@ -382,12 +388,12 @@ function genericCardChanges(affectedCards, requirements) {
 }
 
 /** Stable, distinct owned item choices with exact, non-noop change receipts. */
-export function smithingPlan(registries, run, explicitRules = undefined) {
+export function smithingPlan(registries, run, explicitRules = undefined, { free = false } = {}) {
   rulesFor(registries, explicitRules);
   const levelMap = levels(run);
   for (const [itemRef, level] of Object.entries(levelMap)) {
     if (!itemByRef(registries, itemRef)) throw new Error(`Unknown run.itemUpgradeLevels item '${itemRef}'`);
-    const tiers = itemUpgradeTiers(registries, itemRef);
+    const tiers = itemUpgradeTiers(registries, itemRef, run);
     if (level > (tiers.at(-1) || 0)) throw new Error(`run.itemUpgradeLevels.${itemRef} exceeds its highest authored tier ${tiers.at(-1) || 0}`);
   }
   const stones = stoneBalance(run);
@@ -402,15 +408,22 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     const piece = itemByRef(registries, itemRef);
     const currentLevel = levelMap[itemRef] || 0;
     const nextLevel = currentLevel + 1;
-    const upgradeRows = itemUpgradeRows(registries, itemRef, nextLevel);
+    const upgradeRows = itemUpgradeRowsAt(registries, itemRef, nextLevel, run);
+    // A Core item stops at its ladder's top tier (the CSV only authors tier 1).
+    if (upgradeRows.length && !itemUpgradeTiers(registries, itemRef, run).includes(nextLevel)) continue;
     if (!upgradeRows.length) continue;
-    const cost = itemUpgradeCost(upgradeRows);
-    const affectedCards = identity.itemKind === 'armament'
+    const cost = free ? 0 : itemUpgradeCostAt(registries, itemRef, nextLevel, upgradeRows, run);
+    // Core 2: cards are not tier-rewritten, so the receipt comes from the Core pipeline (smithingCore.js)
+    // and the legacy source rows only supply the item's tier ladder and stone cost.
+    const core = identity.itemKind !== 'relic' && coreSmithingActive(run)
+      ? coreSmithingStats(run, itemRef, currentLevel, nextLevel) : null;
+    const affectedCards = core ? [] : identity.itemKind === 'armament'
       ? sourceCards(registries, run, identity.itemId)
         .map((card) => smithingCardReceipt(registries, run, card, nextLevel))
         .filter((card) => card.changes.some((change) => change.before !== change.after))
       : [];
-    const previewCards = identity.itemKind === 'armament'
+    const previewCards = core ? Object.freeze(coreSmithingPreviewRows(piece.name, core).map((row) => Object.freeze(row)))
+      : identity.itemKind === 'armament'
       ? armamentRolePreviews(registries, run, piece, nextLevel)
       : Object.freeze([]);
     const requirements = identity.itemKind === 'armament'
@@ -420,7 +433,15 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     // A stored armament composes no live cards, so its preview is what the
     // upgrade does to the cards it WOULD supply (the authored role previews,
     // `used: false`), never an empty list that reads as "nothing changes".
-    const changes = identity.itemKind === 'armament'
+    // Core keeps the authored non-card deltas the upgrade still applies: attribute requirements and the
+    // equipment Poise threshold (itemUpgrades.js). An item with no Core effect stays off the grid.
+    const coreExtras = core?.length ? [
+      ...requirements.filter((row) => row.currentRequired !== row.nextRequired)
+        .map((row) => ({ kind: 'requirement', tag: `requirement:${row.attributeId}`, label: `${row.label} requirement`, before: row.currentRequired, after: row.nextRequired })),
+      ...(identity.itemKind === 'armor' && itemUpgradeRows(registries, itemRef, nextLevel).length ? itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel) : []),
+    ] : [];
+    const changes = core ? Object.freeze([...core, ...coreExtras].map((row) => Object.freeze({ ...row })))
+      : identity.itemKind === 'armament'
       ? genericCardChanges(affectedCards.length ? affectedCards : previewCards, requirements)
       : itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel);
     if (!authoredChanges.length || !changes.length || changes.every((row) => row.before === row.after)) continue;
@@ -447,7 +468,20 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
       affectedCards: Object.freeze(affectedCards),
       previewCards,
       changes,
+      ...(core ? { core: true } : {}),
     };
+    // Card rows run real combats: computed on first read, for the item under review only, and kept off
+    // spreads (non-enumerable) so a rest preview never pays for every candidate; toJSON adds them for the wire.
+    if (core) {
+      let cardRows = null;
+      Object.defineProperty(candidate, 'coreCardRows', { enumerable: false, get() {
+        cardRows ||= Object.freeze(coreSmithingCards(registries, run, itemRef, currentLevel, nextLevel).map((row) => Object.freeze(row)));
+        return cardRows;
+      } });
+      // A snapshot that crosses the wire (co-op LAN) is JSON: it pays for the rows once, at serialization, so the
+      // client's Smith modal still shows each card's Damage/Block change. Spreads and plain reads stay cheap.
+      Object.defineProperty(candidate, 'toJSON', { enumerable: false, value() { return { ...candidate, coreCardRows: candidate.coreCardRows }; } });
+    }
     candidates.push(Object.freeze(candidate));
   }
   return Object.freeze({ schemaVersion: SMITHING_SCHEMA_VERSION, stones, refined, candidates: Object.freeze(candidates) });
@@ -461,12 +495,14 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
     instance.sourceArmamentId = pieceId;
     instance.smithingLevel = levels(run)[`armament/${pieceId}`] || 0;
     instance.upgraded = false;
+    delete instance.upgradeSteps;
   }
   return cards;
 }
 
 /** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
 export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones' } = {}) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')
     ? requestedItemRef
     : `armament/${requestedItemRef}`;
@@ -503,8 +539,10 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
     free,
     purse: refinedPurse ? 'refined' : 'stones',
     ...(refinedPurse ? { refinedSpent: candidate.refinedCost, refinedBalanceBefore: beforeRefined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
-    changes: candidate.changes,
-    affectedCards: candidate.affectedCards,
+    // Core card rows run combats: skipped while a rest previews every candidate, added by the real commit.
+    changes: candidate.core && coreCardSimulationAllowed() ? Object.freeze([...candidate.changes, ...candidate.coreCardRows]) : candidate.changes,
+    // Core: the cards whose live numbers changed (co-op announces this count).
+    affectedCards: candidate.core && coreCardSimulationAllowed() ? Object.freeze(coreAffectedCards(candidate.coreCardRows)) : candidate.affectedCards,
   });
   // The transaction's durable read-back. Solo Armoury/map and every co-op
   // snapshot project this same receipt; presentation never reconstructs what
@@ -515,7 +553,25 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
 
 /** Backward-compatible name; bare ids still mean armament/<id>. */
 export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRules = undefined, options = {}) {
+  if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
+}
+
+/**
+ * Run `commit` inside the Smith service a Core run requires, then re-derive the pools like the rest Smith does:
+ * an equipped item's tier moves attributes and max HP/MP/SP. Already inside the service (the rest Smith), the
+ * caller owns the re-derive. Legacy and Current have no derived-stat snapshot, so rederivePools is a no-op.
+ */
+export function withSmithService(registries, run, commit) {
+  if (gameProfileServiceActive(run, 'smith')) return commit();
+  const receipt = withGameProfileService(run, 'smith', commit);
+  rederivePools(registries, run, 'Smith equipment upgrade');
+  return receipt;
+}
+
+/** The merchant's Upgrade an Item service: pays smithingPlan's stone price inside the Smith service. */
+export function commitMerchantSmithing(registries, run, itemRef) {
+  return withSmithService(registries, run, () => commitSmithing(registries, run, itemRef));
 }
 
 /**
@@ -591,7 +647,7 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
   const wasMissing = run.smithingStones == null || run.itemUpgradeLevels == null || run.smithingRewardClaims == null;
   const priorLevels = levels(run);
   for (const [itemRef, level] of Object.entries(priorLevels)) {
-    const maxTier = itemUpgradeTiers(registries, itemRef).at(-1) || 0;
+    const maxTier = itemUpgradeTiers(registries, itemRef, run).at(-1) || 0;
     if (!itemByRef(registries, itemRef) || level > maxTier) throw new Error(`Invalid item upgrade level '${itemRef}=${level}'`);
   }
   const itemUpgradeLevels = { ...priorLevels };
@@ -604,6 +660,7 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
     itemUpgradeLevels[itemRef] = Math.max(beforeLevel, 1);
     if (itemUpgradeLevels[itemRef] !== beforeLevel) promotedArmaments.add(pieceId);
     instance.upgraded = false;
+    delete instance.upgradeSteps;
   }
   run.smithingStones = run.smithingStones == null ? 0 : stoneBalance(run);
   run.itemUpgradeLevels = itemUpgradeLevels;

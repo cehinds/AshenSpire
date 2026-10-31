@@ -1,0 +1,26 @@
+{
+  "id": "status.precision",
+  "tag": "status.precision",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Precision",
+  "description": "Each stack adds 1 Accuracy.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.precision"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatMatchups.js",
+    "symbol": "tagRidersFor"
+  }
+}

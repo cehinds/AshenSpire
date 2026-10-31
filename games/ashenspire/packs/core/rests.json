@@ -1,0 +1,19 @@
+{
+  "servicesPerVisit": "all",
+  "services": [
+    "smith",
+    "levelUp",
+    "upgradeCard"
+  ],
+  "recovery": {
+    "hp": "full",
+    "sp": "full",
+    "mp": "full",
+    "healingFlasks": "full",
+    "mpFlasks": "full"
+  },
+  "smith": {
+    "free": true,
+    "tiersPerService": 1
+  }
+}

@@ -86,7 +86,7 @@ test('combat.combatRounds is stamped only when on, with empty state', () => {
 // Review finding 3: a save must carry the round state. The off-mode golden below is the snapshot text
 // as it was before the preview saved anything (two fights, a turn each): the preview-off save must not change.
 
-test('a preview-off save is byte-identical to the save before the preview saved round state', () => {
+test('preview-off saves preserve historical bytes apart from approved event metadata', () => {
   const out = [];
   for (const [seed, classId] of [[5, 'rogue'], [9, 'reaver']]) {
     const run = createRunState({ seed, classId, registries, profileMeta: { settings: {} } });
@@ -109,7 +109,74 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   // Re-recorded from ae2899cf CI for the stance continuation: ordinary fight
   // saves now carry stance entry, Accuracy and round-start Evasion receipts.
   // The exact SHA commits to every byte, including the saved text's length.
-  assert.equal(createHash('sha256').update(all).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
+  // Base abilities add three empty per-combat bookkeeping maps. Independently
+  // compared with origin/dev 37c414acd: these are the only twelve differences
+  // across the four snapshots; removing exactly those fields preserves its SHA.
+  // Compared independently with actual Dev eb6: the only changes are ten
+  // public intent/action receipt keys on six actor/move events. Normalize only
+  // those approved event fields to retain both historical snapshot goldens.
+  let receiptKeys = 0;
+  const previousTotals = [], endedMoves = [], rawCompatible = [], metadataCompatible = [];
+  const compatible = out.map(text => {
+    const snapshot = JSON.parse(text);
+    snapshot.eventLog = snapshot.eventLog.filter(event => {
+      if (event.type !== 'enemyMoveEnded') return true;
+      assert.deepEqual(Object.keys(event).sort(), ['moveId', 'sourceId', 'type'], 'the additive lifecycle receipt has only its event name, actor and consumed move');
+      assert.equal(event.sourceId, snapshot.enemies[0].id);
+      assert.equal(typeof event.moveId, 'string');
+      endedMoves.push([event.sourceId, event.moveId]);
+      return false;
+    });
+    rawCompatible.push(JSON.stringify(snapshot));
+    // #2260's additive status receipt records the pre-grant total. Verify
+    // every occurrence before excluding only that field from prior goldens.
+    for (const event of snapshot.eventLog) {
+      if (event.type === 'statusApplied') {
+        assert.ok(Number.isInteger(event.previousTotal) && event.previousTotal >= 0);
+        previousTotals.push(event.previousTotal);
+        delete event.previousTotal;
+      } else assert.equal(Object.hasOwn(event, 'previousTotal'), false, 'before-total metadata belongs only to statusApplied');
+    }
+    metadataCompatible.push(JSON.stringify(snapshot));
+    for (const event of snapshot.eventLog) {
+      if (event.type === 'enemyActorTurnStarted') {
+        assert.equal(event.intentPreview?.moveId, event.moveId);
+        assert.equal(event.intentPreview?.revealed, true);
+        assert.equal(event.intentPreview?.hidden, false);
+        assert.equal(typeof event.intentPreview?.moveId, 'string');
+        delete event.intentPreview; receiptKeys++;
+      } else if (event.type === 'enemyMoveStarted') {
+        assert.equal(event.intentPreview?.moveId, event.moveId);
+        assert.equal(event.intentPreview?.revealed, true);
+        assert.equal(event.intentPreview?.hidden, false);
+        assert.equal(event.actionPreview?.moveId, event.moveId);
+        delete event.intentPreview; delete event.actionPreview; receiptKeys += 2;
+      }
+    }
+    return snapshot;
+  });
+  assert.equal(previousTotals.length, 6, 'the four snapshots carry exactly six status before-total receipts');
+  assert.deepEqual(previousTotals, [0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(endedMoves, [['e1', 'warcry'], ['e1', 'guard'], ['e1', 'warcry'], ['e1', 'guard']],
+    'only the consumed-move lifecycle events are removed from the historical snapshots');
+  assert.equal(createHash('sha256').update(rawCompatible.join('\n')).digest('hex'), '99e51d2dc12e025176c5bc228ecdd68189aa34f7dab51134bad239e3eed484ff',
+    'filtering only the four verified additive lifecycle events retains the raw historical snapshots');
+  assert.equal(createHash('sha256').update(metadataCompatible.join('\n')).digest('hex'), '85aa5931f4ec09a49f7ebf62ab172d024a1828d8d2ed2c6e886dc567d7829778',
+    'removing only the six approved status fields retains the previous complete snapshot golden');
+  assert.equal(receiptKeys, 10, 'two actor and four move events carry the approved metadata');
+  const compatibleText = compatible.map(snapshot => JSON.stringify(snapshot)).join('\n');
+  assert.equal(createHash('sha256').update(compatibleText).digest('hex'), 'dda5335e3fdf198f3a00ed7d040e1597a028e75a845941623ab2f215d917ce99');
+  const legacyText = compatible.map(snapshot => {
+    for (const key of ['typePlays', 'instanceUsesCombat', 'cardUsesCombat']) {
+      assert.deepEqual(snapshot.player.abilityRiders[key], {});
+      delete snapshot.player.abilityRiders[key];
+    }
+    return JSON.stringify(snapshot);
+  }).join('\n');
+  assert.equal(createHash('sha256').update(legacyText).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
+  // The raw historical golden includes the six previousTotal receipts; the
+  // additive end events above are checked by exact shape and move identity.
+  assert.equal(rawCompatible.join('\n').length, 137297);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

@@ -110,7 +110,12 @@ test('inspection and leading controls keep priority over the tap square', () => 
 });
 
 test('the player proxy paints nothing and shares the fitted center, height and transform', () => {
-  for (const property of ['height', 'transform']) assert.equal(proxy.declarations[property], plate.declarations[property]);
+  assert.equal(proxy.declarations.transform, plate.declarations.transform);
+  assert.equal(proxy.declarations.height, 'var(--enemy-hit-height, 0px)', 'unmeasured auxiliary targets own no input region');
+  for (const height of [44, 80, 160]) {
+    const vars = { '--enemy-hit-height': `${height}px` };
+    assert.equal(numeric(proxy.declarations.height, vars), numeric(plate.declarations.height, vars));
+  }
   for (const zoom of [0.65, 0.738, 1, 1.5]) {
     const vars = { '--enemy-hit-x': `${148 / zoom}px`, '--enemy-hit-y': `${122 / zoom}px` };
     for (const property of ['left', 'top']) assert.equal(numeric(proxy.declarations[property], vars), numeric(plate.declarations[property], vars));

@@ -34,6 +34,11 @@ jobs:
       - uses: ./.github/actions/fetch-art
         with:
           packs: all
+      - name: Run game profile and save migration checks
+        # These tests compile/mutate generated profile artifacts; serialize to avoid races.
+        run: node --test --test-concurrency=1 tests/game-profile-*.test.mjs tests/save-migration.test.mjs
+      - name: Check compiled JSON game profiles
+        run: node tools/game-config.mjs check
       - name: Build branch HEAD
         run: node tools/launch.mjs --build-only
       - name: Collect standalone and provenance
@@ -58,6 +63,11 @@ jobs:
           writeFileSync(`${directory}/README.md`, instructions);
           appendFileSync(process.env.GITHUB_STEP_SUMMARY, instructions);
           NODE
+      - name: Embed feature authoring review
+        # The rear-design frames moved to cehinds/AshenSpire-art (intake PR #27) and are
+        # not in the released art packs, so skip the embed when they are absent.
+        if: github.ref_name == 'feature/EnemyBackSprites' && hashFiles('art/enemy-back-proposals/**') != ''
+        run: node pose-studio/enemy-back-proposals/embed-gallery.mjs feature-preview/AshenSpire.html
       - uses: actions/upload-artifact@v4
         with:
           name: feature-preview-${{ github.sha }}

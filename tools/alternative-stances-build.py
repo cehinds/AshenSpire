@@ -8,7 +8,9 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'pose-studio/stances'
+from art_authoring import authoring_root, art_path
+ART = authoring_root(ROOT)
+OUT = ART / 'pose-studio/stances'
 STANCES = ['offensive', 'defensive', 'casting']
 PROJECTS_ONLY = False
 EQUIVALENCES = {'reaver-wayfarerPlate': 'reaver-default', 'rogue-gutterLeathers': 'rogue-default',
@@ -47,13 +49,13 @@ def export(actor, images, sources):
   if not PROJECTS_ONLY:
    image.save(path, 'WEBP', quality=90, method=4)
    image.resize((256,256),Image.Resampling.LANCZOS).save(lite,'WEBP',quality=84,method=4)
-  frames[stance] = {'path': path.relative_to(ROOT).as_posix(), 'lite': lite.relative_to(ROOT).as_posix(),
+  frames[stance] = {'path': path.relative_to(ART).as_posix(), 'lite': lite.relative_to(ART).as_posix(),
                     'size': [512,512], 'bounds': list(box), 'anchor': [256,464], 'sha256':sha(path), 'liteSha256':sha(lite)}
  rig = {'schemaVersion':1, 'id':'alternative.stance.'+actor, 'name':actor+' · three held stances', 'canvas':{'width':512,'height':512},
         'assets':{},'poses':{},'animations':{},'queues':{}}
  starter = json.loads((ROOT/'content/config/ui/presentation/presentationSequence.json').read_text())['components']['starter']
  for stance, frame in frames.items():
-  embedded = uri(ROOT/frame['path']); rig['assets'][stance] = {'id':stance,'src':embedded}
+  embedded = uri(ART/frame['path']); rig['assets'][stance] = {'id':stance,'src':embedded}
   grip = 'two-handed' if actor.split('-')[0] in ['reaver','starseer'] and stance != 'casting' else 'released'
   if actor.startswith('starseer') and stance=='casting': grip='one-handed'
   rig['poses'][stance] = {'id':stance,'name':stance,'gripMode':grip,'reviewed':False,'bones':[],
@@ -93,14 +95,14 @@ def build(source_checkout, only=None):
    cut=isolated.crop(box);resized=cut.resize((round(cut.width*scale),round(cut.height*scale)),Image.Resampling.LANCZOS)
    canvas=Image.new('RGBA',(512,512));canvas.alpha_composite(resized,(round(256-resized.width/2),464-resized.height))
    images[stance]=canvas;recipes.append({'stance':stance,'polygon':polygon,'bounds':box,'scale':scale,'floor':box[3]})
-  actors[actor]={'kind':'player','status':'painted-draft',**export(actor,images,[{'kind':'imagegen','path':path.relative_to(ROOT).as_posix(),'sha256':sha(path)}])}
+  actors[actor]={'kind':'player','status':'painted-draft',**export(actor,images,[{'kind':'imagegen','path':path.relative_to(ART).as_posix(),'sha256':sha(path)}])}
   normalizations[actor]=recipes
  for enemy in inventory['enemies']:
   if only and enemy['id'] != only: continue
   actor=enemy['id']; images={}; sources=[]
   names={'offensive':f'enemy-poses/{actor}_attack.webp','defensive':f'enemy-states/{actor}_guard.webp','casting':f'enemy-states/{actor}_buff.webp'}
   for stance,rel in names.items():
-   path=source_checkout/'assets-mobile'/rel
+   path=art_path(ROOT, 'assets-mobile/'+rel, source_checkout)
    if not path.exists(): continue
    original=Image.open(path).convert('RGBA')
    # The existing enemy family has a shared 384 canvas, foot (192,364).
@@ -135,7 +137,7 @@ def build(source_checkout, only=None):
  print(json.dumps(counts))
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--source-checkout',type=Path,default=ROOT)
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--source-checkout',type=Path,default=ART)
  parser.add_argument('--projects-only',action='store_true',help='Rebuild metadata/projects without re-encoding existing sprites')
  parser.add_argument('--actor',help='Rebuild one authored actor, retaining the other validated exports')
  args=parser.parse_args();PROJECTS_ONLY=args.projects_only

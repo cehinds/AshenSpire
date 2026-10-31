@@ -1,0 +1,41 @@
+{
+  "id": "gameOver",
+  "description": "Defeat screen. Mounted by src/ui/screens/gameover.js (mountGameOver, victory false).",
+  "route": "gameOver",
+  "viewModel": {
+    "props": {
+      "game": "object",
+      "earned": "array",
+      "victory": "boolean"
+    }
+  },
+  "regions": [
+    {
+      "slot": "body",
+      "component": "choiceBody",
+      "props": {
+        "title": "gameOver.title",
+        "choices": "$earned"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "retry",
+          "history",
+          "title"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "retry": "run.retry",
+    "history": "history.open",
+    "title": "nav.title"
+  },
+  "assets": [
+    "scene.gameOver"
+  ]
+}

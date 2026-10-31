@@ -1,0 +1,101 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "servicesPerVisit": {
+      "enum": [
+        1,
+        "all"
+      ],
+      "description": "1: exactly one listed service closes the visit. \"all\": every listed service is usable once in the same visit and none closes another."
+    },
+    "services": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "strategize",
+          "smith",
+          "levelUp",
+          "upgradeCard"
+        ]
+      },
+      "minItems": 1
+    },
+    "allowEmptyStrategize": {
+      "enum": [
+        true
+      ]
+    },
+    "recovery": {
+      "type": "object",
+      "properties": {
+        "hp": {
+          "enum": [
+            "full"
+          ]
+        },
+        "sp": {
+          "enum": [
+            "full"
+          ]
+        },
+        "mp": {
+          "enum": [
+            "full"
+          ]
+        },
+        "healingFlasks": {
+          "enum": [
+            "full"
+          ]
+        },
+        "mpFlasks": {
+          "enum": [
+            "full"
+          ]
+        }
+      },
+      "required": [
+        "hp",
+        "sp",
+        "mp",
+        "healingFlasks",
+        "mpFlasks"
+      ],
+      "additionalProperties": false
+    },
+    "smith": {
+      "type": "object",
+      "properties": {
+        "free": {
+          "type": "boolean"
+        },
+        "tiersPerService": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        }
+      },
+      "required": [
+        "free",
+        "tiersPerService"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "servicesPerVisit",
+    "services",
+    "recovery",
+    "smith"
+  ],
+  "additionalProperties": false
+}

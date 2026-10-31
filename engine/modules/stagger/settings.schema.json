@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "spLoss": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 99
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stacks": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 99
+    },
+    "damageTakenMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "mode",
+    "spLoss",
+    "status",
+    "stacks",
+    "damageTakenMultiplier"
+  ],
+  "additionalProperties": false
+}

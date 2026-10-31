@@ -1,0 +1,2823 @@
+[
+  {
+    "id": "reaver",
+    "name": "Reaver",
+    "tags": [
+      "character.player",
+      "class.reaver",
+      "training.basic"
+    ],
+    "attributes": {
+      "strength": 2,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "level": 1,
+    "defaultDeck": [
+      {
+        "pool": "strike",
+        "copies": 3
+      },
+      {
+        "pool": "defend",
+        "copies": 2
+      },
+      {
+        "pool": "counter",
+        "copies": 1
+      },
+      {
+        "pool": "smash",
+        "copies": 1
+      },
+      {
+        "pool": "sweep",
+        "copies": 1
+      },
+      {
+        "pool": "evade",
+        "copies": 1
+      },
+      {
+        "card": "base.draw",
+        "copies": 1
+      },
+      {
+        "pool": "special",
+        "copies": 1
+      }
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "reaver",
+      "size": "medium"
+    },
+    "player": {
+      "specialCardId": "core.reaverSpecial",
+      "description": "Strength-focused fighter with a greatsword and heavy attacks."
+    }
+  },
+  {
+    "id": "starseer",
+    "name": "Starseer",
+    "tags": [
+      "character.player",
+      "class.starseer",
+      "training.basic"
+    ],
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 1,
+      "intelligence": 2
+    },
+    "attributePriority": [
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom"
+    ],
+    "level": 1,
+    "defaultDeck": [
+      {
+        "pool": "strike",
+        "copies": 3
+      },
+      {
+        "pool": "defend",
+        "copies": 2
+      },
+      {
+        "pool": "counter",
+        "copies": 1
+      },
+      {
+        "pool": "smash",
+        "copies": 1
+      },
+      {
+        "pool": "sweep",
+        "copies": 1
+      },
+      {
+        "pool": "evade",
+        "copies": 1
+      },
+      {
+        "card": "base.draw",
+        "copies": 1
+      },
+      {
+        "pool": "special",
+        "copies": 1
+      }
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "starseer",
+      "size": "medium"
+    },
+    "player": {
+      "specialCardId": "core.starseerSpecial",
+      "description": "Intelligence-focused caster with a sceptre and Star Spark."
+    }
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "tags": [
+      "character.player",
+      "class.rogue",
+      "training.basic"
+    ],
+    "attributes": {
+      "strength": 1,
+      "dexterity": 2,
+      "constitution": 1,
+      "wisdom": 1,
+      "intelligence": 1
+    },
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "level": 1,
+    "defaultDeck": [
+      {
+        "pool": "strike",
+        "copies": 3
+      },
+      {
+        "pool": "defend",
+        "copies": 2
+      },
+      {
+        "pool": "counter",
+        "copies": 1
+      },
+      {
+        "pool": "smash",
+        "copies": 1
+      },
+      {
+        "pool": "sweep",
+        "copies": 1
+      },
+      {
+        "pool": "evade",
+        "copies": 1
+      },
+      {
+        "card": "base.draw",
+        "copies": 1
+      },
+      {
+        "pool": "special",
+        "copies": 1
+      }
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      },
+      {
+        "key": "offHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "rogue",
+      "size": "medium"
+    },
+    "player": {
+      "specialCardId": "core.rogueSpecial",
+      "description": "Dexterity-focused fighter with two daggers and Quick Guard."
+    }
+  },
+  {
+    "id": "herald",
+    "name": "Herald",
+    "tags": [
+      "character.player",
+      "class.herald",
+      "training.basic"
+    ],
+    "attributes": {
+      "strength": 1,
+      "dexterity": 1,
+      "constitution": 1,
+      "wisdom": 2,
+      "intelligence": 1
+    },
+    "attributePriority": [
+      "wisdom",
+      "strength",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "level": 1,
+    "defaultDeck": [
+      {
+        "pool": "strike",
+        "copies": 3
+      },
+      {
+        "pool": "defend",
+        "copies": 2
+      },
+      {
+        "pool": "counter",
+        "copies": 1
+      },
+      {
+        "pool": "smash",
+        "copies": 1
+      },
+      {
+        "pool": "sweep",
+        "copies": 1
+      },
+      {
+        "pool": "evade",
+        "copies": 1
+      },
+      {
+        "card": "base.draw",
+        "copies": 1
+      },
+      {
+        "pool": "special",
+        "copies": 1
+      }
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "herald",
+      "size": "medium"
+    },
+    "player": {
+      "specialCardId": "core.heraldSpecial",
+      "description": "Wisdom-focused fighter with a sceptre and Lasting Resolve."
+    }
+  },
+  {
+    "id": "wanderingSoldier",
+    "name": "Wandering_Soldier",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 4
+    },
+    "defaultDeck": [
+      "wanderingSoldier.slash",
+      "wanderingSoldier.guard",
+      "wanderingSoldier.warcry"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "wanderingSoldier",
+      "size": "medium"
+    },
+    "enemy": {
+      "poiseMax": 10,
+      "arcaneExposure": {
+        "mode": "configured",
+        "threshold": 8,
+        "buildupMultiplier": 1,
+        "resetMode": "zero",
+        "overflowPolicy": "discard",
+        "lockPolicy": "whileMagicVulnerable",
+        "onBreak": {
+          "status": "magicVulnerable",
+          "value": 25,
+          "duration": 2
+        }
+      },
+      "cardHints": {
+        "wanderingSoldier.slash": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "slash"
+        },
+        "wanderingSoldier.guard": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "guard"
+        },
+        "wanderingSoldier.warcry": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "warcry"
+        }
+      }
+    }
+  },
+  {
+    "id": "blightHound",
+    "name": "Blight_Hound",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "dexterity",
+      "strength",
+      "wisdom",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 3
+    },
+    "defaultDeck": [
+      "blightHound.bite",
+      "blightHound.bite",
+      "blightHound.lunge"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "blightHound",
+      "size": "small",
+      "tint": "rot",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 6,
+      "blighted": true,
+      "cardHints": {
+        "blightHound.bite": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "bite"
+        },
+        "blightHound.lunge": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "lunge"
+        }
+      }
+    }
+  },
+  {
+    "id": "huskBrute",
+    "name": "Husk_Brute",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "defaultDeck": [
+      "huskBrute.club",
+      "huskBrute.bellow",
+      "huskBrute.brace"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "huskBrute",
+      "size": "medium"
+    },
+    "enemy": {
+      "poiseMax": 16,
+      "cardHints": {
+        "huskBrute.club": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "club"
+        },
+        "huskBrute.bellow": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bellow"
+        },
+        "huskBrute.brace": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "brace"
+        }
+      }
+    }
+  },
+  {
+    "id": "graveWisp",
+    "name": "Grave_Wisp",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 1,
+      "max": 4
+    },
+    "defaultDeck": [
+      "graveWisp.curse",
+      "graveWisp.curse",
+      "graveWisp.drain"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "graveWisp",
+      "size": "small",
+      "tint": "grace"
+    },
+    "enemy": {
+      "poiseMax": 4,
+      "cardHints": {
+        "graveWisp.curse": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "curse"
+        },
+        "graveWisp.drain": {
+          "aiWeight": 50,
+          "costSource": "healRules",
+          "legacyMove": "drain"
+        }
+      }
+    }
+  },
+  {
+    "id": "wyrmAspirant",
+    "name": "Wyrm_Aspirant",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributes": {
+      "wisdom": 2
+    },
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 4,
+      "max": 6
+    },
+    "defaultDeck": [
+      "wyrmAspirant.consecrate",
+      "wyrmAspirant.halberdSweep",
+      "wyrmAspirant.halberdSweep",
+      "wyrmAspirant.tailSlam",
+      "wyrmAspirant.goldenGuard"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "wyrmAspirant",
+      "size": "large",
+      "tint": "gold"
+    },
+    "enemy": {
+      "firstCard": "wyrmAspirant.consecrate",
+      "poiseMax": 24,
+      "cardHints": {
+        "wyrmAspirant.consecrate": {
+          "aiWeight": 10,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "consecrate"
+        },
+        "wyrmAspirant.halberdSweep": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "halberdSweep"
+        },
+        "wyrmAspirant.tailSlam": {
+          "aiWeight": 30,
+          "costSource": "stance",
+          "legacyMove": "tailSlam"
+        },
+        "wyrmAspirant.goldenGuard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "goldenGuard"
+        }
+      }
+    }
+  },
+  {
+    "id": "fellWarden",
+    "name": "The_Fell_Warden",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "defaultDeck": [
+      "fellWarden.caneStrike",
+      "fellWarden.caneStrike",
+      "fellWarden.caneStrike",
+      "fellWarden.hammerToss",
+      "fellWarden.hammerToss",
+      "fellWarden.heldBlade",
+      "fellWarden.heldBlade"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.gutterLeathers"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal"
+      }
+    ],
+    "presentation": {
+      "art": "fellWarden",
+      "size": "large",
+      "tint": "blood"
+    },
+    "enemy": {
+      "unlockCards": [
+        "fellWarden.twinDaggers"
+      ],
+      "firstCard": "fellWarden.caneStrike",
+      "poiseMax": 30,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "weak",
+              "stacks": 1
+            },
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            }
+          ],
+          "unlockCards": [
+            "fellWarden.twinDaggers"
+          ]
+        }
+      ],
+      "cardHints": {
+        "fellWarden.caneStrike": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "caneStrike"
+        },
+        "fellWarden.hammerToss": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "hammerToss"
+        },
+        "fellWarden.heldBlade": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 8
+            }
+          },
+          "costSource": "authored",
+          "legacyMove": "heldBlade"
+        },
+        "fellWarden.twinDaggers": {
+          "aiWeight": 35,
+          "costSource": "authored",
+          "legacyMove": "twinDaggers"
+        }
+      }
+    }
+  },
+  {
+    "id": "lanternMoth",
+    "name": "Lantern_Moth",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "defaultDeck": [
+      "lanternMoth.lanternDust",
+      "lanternMoth.wingSparks",
+      "lanternMoth.wingSparks"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "lanternMoth",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 5,
+      "cardHints": {
+        "lanternMoth.lanternDust": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "lanternDust"
+        },
+        "lanternMoth.wingSparks": {
+          "aiWeight": 65,
+          "costSource": "authored",
+          "legacyMove": "wingSparks"
+        }
+      }
+    }
+  },
+  {
+    "id": "briarHermit",
+    "name": "Briar_Hermit",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "defaultDeck": [
+      "briarHermit.rootShelter",
+      "briarHermit.briarCast",
+      "briarHermit.sapMend"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "briarHermit",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "briarHermit.rootShelter",
+      "poiseMax": 9,
+      "cardHints": {
+        "briarHermit.rootShelter": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rootShelter"
+        },
+        "briarHermit.briarCast": {
+          "aiWeight": 45,
+          "costSource": "authored",
+          "legacyMove": "briarCast"
+        },
+        "briarHermit.sapMend": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "sapMend"
+        }
+      }
+    }
+  },
+  {
+    "id": "chainScavenger",
+    "name": "Chain_Scavenger",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "defaultDeck": [
+      "chainScavenger.hookCast",
+      "chainScavenger.chainSnare",
+      "chainScavenger.draggingBlow"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "chainScavenger",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 8,
+      "cardHints": {
+        "chainScavenger.hookCast": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "hookCast"
+        },
+        "chainScavenger.chainSnare": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "chainSnare"
+        },
+        "chainScavenger.draggingBlow": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 3
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "draggingBlow"
+        }
+      }
+    }
+  },
+  {
+    "id": "bellKeeper",
+    "name": "The_Bell_Keeper",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "defaultDeck": [
+      "bellKeeper.bronzeToll",
+      "bellKeeper.bronzeToll",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.clapperSwing",
+      "bellKeeper.muffledPrayer",
+      "bellKeeper.muffledPrayer"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal"
+      }
+    ],
+    "presentation": {
+      "art": "bellKeeper",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "bellKeeper.crackedPeal"
+      ],
+      "firstCard": "bellKeeper.bronzeToll",
+      "poiseMax": 25,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 45,
+          "do": [],
+          "unlockCards": [
+            "bellKeeper.crackedPeal"
+          ]
+        }
+      ],
+      "cardHints": {
+        "bellKeeper.bronzeToll": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 6
+            }
+          },
+          "costSource": "authored",
+          "legacyMove": "bronzeToll"
+        },
+        "bellKeeper.clapperSwing": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "clapperSwing"
+        },
+        "bellKeeper.muffledPrayer": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "muffledPrayer"
+        },
+        "bellKeeper.crackedPeal": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "crackedPeal"
+        }
+      }
+    }
+  },
+  {
+    "id": "thornMatriarch",
+    "name": "The_Thorn_Matriarch",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "defaultDeck": [
+      "thornMatriarch.rootCrown",
+      "thornMatriarch.rootCrown",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.thornNeedles",
+      "thornMatriarch.entwiningRoots",
+      "thornMatriarch.entwiningRoots"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal"
+      }
+    ],
+    "presentation": {
+      "art": "thornMatriarch",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "thornMatriarch.rootCrown",
+      "poiseMax": 22,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 40,
+          "do": [
+            {
+              "op": "heal",
+              "target": "self",
+              "rule": "healRules"
+            },
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            }
+          ]
+        }
+      ],
+      "cardHints": {
+        "thornMatriarch.rootCrown": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "authored",
+          "legacyMove": "rootCrown"
+        },
+        "thornMatriarch.thornNeedles": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "authored",
+          "legacyMove": "thornNeedles"
+        },
+        "thornMatriarch.entwiningRoots": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 4
+            }
+          },
+          "costSource": "authored",
+          "legacyMove": "entwiningRoots"
+        }
+      }
+    }
+  },
+  {
+    "id": "gildedKnight",
+    "name": "Gilded_Knight",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "defaultDeck": [
+      "gildedKnight.thrust",
+      "gildedKnight.parry",
+      "gildedKnight.rally",
+      "gildedKnight.gildedGuard"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "gildedKnight",
+      "size": "medium",
+      "tint": "gold"
+    },
+    "enemy": {
+      "poiseMax": 18,
+      "cardHints": {
+        "gildedKnight.thrust": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "thrust"
+        },
+        "gildedKnight.parry": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "parry"
+        },
+        "gildedKnight.rally": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rally"
+        },
+        "gildedKnight.gildedGuard": {
+          "aiWeight": 1,
+          "costSource": "stance",
+          "legacyMove": "gildedGuard"
+        }
+      }
+    }
+  },
+  {
+    "id": "courtSurgeon",
+    "name": "Court_Surgeon",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "defaultDeck": [
+      "courtSurgeon.scalpel",
+      "courtSurgeon.sedate",
+      "courtSurgeon.stitch"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "courtSurgeon",
+      "size": "medium",
+      "tint": "grace"
+    },
+    "enemy": {
+      "poiseMax": 10,
+      "cardHints": {
+        "courtSurgeon.scalpel": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "scalpel"
+        },
+        "courtSurgeon.sedate": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "sedate"
+        },
+        "courtSurgeon.stitch": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "stitch"
+        }
+      }
+    }
+  },
+  {
+    "id": "stitchedHound",
+    "name": "Stitched_Hound",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 6,
+      "max": 8
+    },
+    "defaultDeck": [
+      "stitchedHound.maul",
+      "stitchedHound.maul",
+      "stitchedHound.rend"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "stitchedHound",
+      "size": "small",
+      "tint": "blood",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 8,
+      "cardHints": {
+        "stitchedHound.maul": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "maul"
+        },
+        "stitchedHound.rend": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "rend"
+        }
+      }
+    }
+  },
+  {
+    "id": "courtMarionette",
+    "name": "Court_Marionette",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 6,
+      "max": 9
+    },
+    "defaultDeck": [
+      "courtMarionette.dart",
+      "courtMarionette.dart",
+      "courtMarionette.blowdart"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "courtMarionette",
+      "size": "small",
+      "tint": "rot"
+    },
+    "enemy": {
+      "poiseMax": 6,
+      "cardHints": {
+        "courtMarionette.dart": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "dart"
+        },
+        "courtMarionette.blowdart": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "blowdart"
+        }
+      }
+    }
+  },
+  {
+    "id": "livingArmor",
+    "name": "Living_Armor",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "defaultDeck": [
+      "livingArmor.slam",
+      "livingArmor.fortify",
+      "livingArmor.crush",
+      "livingArmor.rimeCrush"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "livingArmor",
+      "size": "medium",
+      "tint": "frost"
+    },
+    "enemy": {
+      "poiseMax": 22,
+      "cardHints": {
+        "livingArmor.slam": {
+          "aiWeight": 30,
+          "costSource": "stance",
+          "legacyMove": "slam"
+        },
+        "livingArmor.fortify": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "fortify"
+        },
+        "livingArmor.crush": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "crush"
+        },
+        "livingArmor.rimeCrush": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rimeCrush"
+        }
+      }
+    }
+  },
+  {
+    "id": "courtDuelist",
+    "name": "Duelist_of_the_Court",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 10,
+      "max": 11
+    },
+    "defaultDeck": [
+      "courtDuelist.enGarde",
+      "courtDuelist.flurry",
+      "courtDuelist.lunge",
+      "courtDuelist.riposte",
+      "courtDuelist.bindingRiposte"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "courtDuelist",
+      "size": "large",
+      "tint": "frost"
+    },
+    "enemy": {
+      "firstCard": "courtDuelist.enGarde",
+      "poiseMax": 26,
+      "cardHints": {
+        "courtDuelist.enGarde": {
+          "aiWeight": 10,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "enGarde"
+        },
+        "courtDuelist.flurry": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "flurry"
+        },
+        "courtDuelist.lunge": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "lunge"
+        },
+        "courtDuelist.riposte": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "riposte"
+        },
+        "courtDuelist.bindingRiposte": {
+          "aiWeight": 1,
+          "costSource": "stance",
+          "legacyMove": "bindingRiposte"
+        }
+      }
+    }
+  },
+  {
+    "id": "stitchedKing",
+    "name": "The_Stitched_King",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "defaultDeck": [
+      "stitchedKing.scepterBlow",
+      "stitchedKing.scepterBlow",
+      "stitchedKing.scepterBlow",
+      "stitchedKing.graspingHands",
+      "stitchedKing.graspingHands",
+      "stitchedKing.courtlyDecree",
+      "stitchedKing.courtlyDecree"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenCore"
+      }
+    ],
+    "presentation": {
+      "art": "stitchedKing",
+      "size": "large",
+      "tint": "gold"
+    },
+    "enemy": {
+      "unlockCards": [
+        "stitchedKing.thousandHands"
+      ],
+      "firstCard": "stitchedKing.courtlyDecree",
+      "poiseMax": 34,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            }
+          ],
+          "unlockCards": [
+            "stitchedKing.thousandHands"
+          ]
+        }
+      ],
+      "cardHints": {
+        "stitchedKing.scepterBlow": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "scepterBlow"
+        },
+        "stitchedKing.graspingHands": {
+          "aiWeight": 30,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "graspingHands"
+        },
+        "stitchedKing.courtlyDecree": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "courtlyDecree"
+        },
+        "stitchedKing.thousandHands": {
+          "aiWeight": 40,
+          "costSource": "stance",
+          "legacyMove": "thousandHands"
+        }
+      }
+    }
+  },
+  {
+    "id": "mirrorScribe",
+    "name": "Mirror_Scribe",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "defaultDeck": [
+      "mirrorScribe.silverScript",
+      "mirrorScribe.shardVolley",
+      "mirrorScribe.polishedWard"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "mirrorScribe",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 8,
+      "cardHints": {
+        "mirrorScribe.silverScript": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "silverScript"
+        },
+        "mirrorScribe.shardVolley": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "shardVolley"
+        },
+        "mirrorScribe.polishedWard": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "polishedWard"
+        }
+      }
+    }
+  },
+  {
+    "id": "stitchCrab",
+    "name": "Stitch_Crab",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "defaultDeck": [
+      "stitchCrab.shellFold",
+      "stitchCrab.seamShears",
+      "stitchCrab.scuttleRush"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "stitchCrab",
+      "size": "small",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "stitchCrab.shellFold",
+      "poiseMax": 17,
+      "cardHints": {
+        "stitchCrab.shellFold": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "shellFold"
+        },
+        "stitchCrab.seamShears": {
+          "aiWeight": 45,
+          "costSource": "stance",
+          "legacyMove": "seamShears"
+        },
+        "stitchCrab.scuttleRush": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "scuttleRush"
+        }
+      }
+    }
+  },
+  {
+    "id": "glassRegent",
+    "name": "The_Glass_Regent",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "defaultDeck": [
+      "glassRegent.prismGuard",
+      "glassRegent.prismGuard",
+      "glassRegent.crystalRapier",
+      "glassRegent.crystalRapier",
+      "glassRegent.crystalRapier",
+      "glassRegent.splinterRain",
+      "glassRegent.splinterRain"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
+    ],
+    "presentation": {
+      "art": "glassRegent",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "glassRegent.shatteredCourt"
+      ],
+      "firstCard": "glassRegent.prismGuard",
+      "poiseMax": 26,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 4
+            }
+          ],
+          "unlockCards": [
+            "glassRegent.shatteredCourt"
+          ]
+        }
+      ],
+      "cardHints": {
+        "glassRegent.prismGuard": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "prismGuard"
+        },
+        "glassRegent.crystalRapier": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "crystalRapier"
+        },
+        "glassRegent.splinterRain": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "splinterRain"
+        },
+        "glassRegent.shatteredCourt": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 0
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "shatteredCourt"
+        }
+      }
+    }
+  },
+  {
+    "id": "marrowOrganist",
+    "name": "The_Marrow_Organist",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "defaultDeck": [
+      "marrowOrganist.bonePrelude",
+      "marrowOrganist.bonePrelude",
+      "marrowOrganist.ivoryKeys",
+      "marrowOrganist.ivoryKeys",
+      "marrowOrganist.funeralChord",
+      "marrowOrganist.funeralChord",
+      "marrowOrganist.quietRefrain"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
+    ],
+    "presentation": {
+      "art": "marrowOrganist",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "marrowOrganist.bonePrelude",
+      "poiseMax": 30,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 35,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 6
+            }
+          ]
+        }
+      ],
+      "cardHints": {
+        "marrowOrganist.bonePrelude": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "bonePrelude"
+        },
+        "marrowOrganist.ivoryKeys": {
+          "aiWeight": 40,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "ivoryKeys"
+        },
+        "marrowOrganist.funeralChord": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 5
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "funeralChord"
+        },
+        "marrowOrganist.quietRefrain": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "quietRefrain"
+        }
+      }
+    }
+  },
+  {
+    "id": "ashRevenant",
+    "name": "Ash_Revenant",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 13,
+      "max": 16
+    },
+    "defaultDeck": [
+      "ashRevenant.cinderSlash",
+      "ashRevenant.cinderSlash",
+      "ashRevenant.reform"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "ashRevenant",
+      "size": "medium",
+      "tint": "ember"
+    },
+    "enemy": {
+      "poiseMax": 10,
+      "cardHints": {
+        "ashRevenant.cinderSlash": {
+          "aiWeight": 55,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "cinderSlash"
+        },
+        "ashRevenant.reform": {
+          "aiWeight": 45,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "reform"
+        }
+      }
+    }
+  },
+  {
+    "id": "emberStarvedPilgrim",
+    "name": "Ember-Starved_Pilgrim",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 13,
+      "max": 15
+    },
+    "defaultDeck": [
+      "emberStarvedPilgrim.desperateClaw",
+      "emberStarvedPilgrim.desperateClaw",
+      "emberStarvedPilgrim.wail"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "emberStarvedPilgrim",
+      "size": "small",
+      "tint": "grace"
+    },
+    "enemy": {
+      "poiseMax": 8,
+      "cardHints": {
+        "emberStarvedPilgrim.desperateClaw": {
+          "aiWeight": 60,
+          "costSource": "stance",
+          "legacyMove": "desperateClaw"
+        },
+        "emberStarvedPilgrim.wail": {
+          "aiWeight": 40,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "wail"
+        }
+      }
+    }
+  },
+  {
+    "id": "valkyrieShade",
+    "name": "Valkyrie_Shade",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "defaultDeck": [
+      "valkyrieShade.spiralLance",
+      "valkyrieShade.spiralLance",
+      "valkyrieShade.bloodFeather"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "valkyrieShade",
+      "size": "medium",
+      "tint": "blood"
+    },
+    "enemy": {
+      "poiseMax": 14,
+      "cardHints": {
+        "valkyrieShade.spiralLance": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "spiralLance"
+        },
+        "valkyrieShade.bloodFeather": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "bloodFeather"
+        }
+      }
+    }
+  },
+  {
+    "id": "charredColossus",
+    "name": "Charred_Colossus",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 15,
+      "max": 18
+    },
+    "defaultDeck": [
+      "charredColossus.smash",
+      "charredColossus.ashCloud",
+      "charredColossus.harden"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "charredColossus",
+      "size": "large",
+      "tint": "ember"
+    },
+    "enemy": {
+      "poiseMax": 30,
+      "arcaneExposure": {
+        "mode": "immune"
+      },
+      "cardHints": {
+        "charredColossus.smash": {
+          "aiWeight": 50,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "smash"
+        },
+        "charredColossus.ashCloud": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "ashCloud"
+        },
+        "charredColossus.harden": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "harden"
+        }
+      }
+    }
+  },
+  {
+    "id": "wyrmLord",
+    "name": "Wyrm_Lord",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 18,
+      "max": 19
+    },
+    "spFloor": 3,
+    "defaultDeck": [
+      "wyrmLord.consecration",
+      "wyrmLord.halberdReign",
+      "wyrmLord.halberdReign",
+      "wyrmLord.tailSweep",
+      "wyrmLord.goldenBulwark"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "wyrmLord",
+      "size": "large",
+      "tint": "gold"
+    },
+    "enemy": {
+      "firstCard": "wyrmLord.consecration",
+      "poiseMax": 30,
+      "cardHints": {
+        "wyrmLord.consecration": {
+          "aiWeight": 10,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "consecration"
+        },
+        "wyrmLord.halberdReign": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "halberdReign"
+        },
+        "wyrmLord.tailSweep": {
+          "aiWeight": 30,
+          "costSource": "stance",
+          "legacyMove": "tailSweep"
+        },
+        "wyrmLord.goldenBulwark": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "healRules",
+          "legacyMove": "goldenBulwark"
+        }
+      }
+    }
+  },
+  {
+    "id": "blightedValkyrie",
+    "name": "The_Blighted_Valkyrie",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "intelligence",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "defaultDeck": [
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.spiralThrust",
+      "blightedValkyrie.whirlwind",
+      "blightedValkyrie.whirlwind",
+      "blightedValkyrie.rotWings",
+      "blightedValkyrie.rotWings"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "blightedValkyrie",
+      "size": "large",
+      "tint": "rot"
+    },
+    "enemy": {
+      "unlockCards": [
+        "blightedValkyrie.scarletDance"
+      ],
+      "firstCard": "blightedValkyrie.spiralThrust",
+      "poiseMax": 36,
+      "blighted": true,
+      "phases": [
+        {
+          "on": "damageDealt",
+          "once": false,
+          "if": {
+            "p": "eventSourceIsOwner"
+          },
+          "do": [
+            {
+              "op": "heal",
+              "target": "self",
+              "rule": "healRules"
+            }
+          ]
+        },
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 3
+            },
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "crimsonBlight",
+              "stacks": 4
+            }
+          ],
+          "unlockCards": [
+            "blightedValkyrie.scarletDance"
+          ]
+        }
+      ],
+      "cardHints": {
+        "blightedValkyrie.spiralThrust": {
+          "aiWeight": 35,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "spiralThrust"
+        },
+        "blightedValkyrie.whirlwind": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "whirlwind"
+        },
+        "blightedValkyrie.rotWings": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "rotWings"
+        },
+        "blightedValkyrie.scarletDance": {
+          "aiWeight": 35,
+          "costSource": "stance",
+          "legacyMove": "scarletDance"
+        }
+      }
+    }
+  },
+  {
+    "id": "cinderMantis",
+    "name": "Cinder_Mantis",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "defaultDeck": [
+      "cinderMantis.scythePair",
+      "cinderMantis.emberPounce",
+      "cinderMantis.foldedBlades"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "dagger"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "cinderMantis",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 11,
+      "cardHints": {
+        "cinderMantis.scythePair": {
+          "aiWeight": 55,
+          "costSource": "stance",
+          "legacyMove": "scythePair"
+        },
+        "cinderMantis.emberPounce": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 2
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "emberPounce"
+        },
+        "cinderMantis.foldedBlades": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "foldedBlades"
+        }
+      }
+    }
+  },
+  {
+    "id": "eclipseCantor",
+    "name": "Eclipse_Cantor",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "attributePriority": [
+      "wisdom",
+      "intelligence",
+      "strength",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 14,
+      "max": 17
+    },
+    "defaultDeck": [
+      "eclipseCantor.darkHymn",
+      "eclipseCantor.lunarRay",
+      "eclipseCantor.fadingEcho"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff"
+      }
+    ],
+    "defaultRelics": [],
+    "presentation": {
+      "art": "eclipseCantor",
+      "size": "medium",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "poiseMax": 7,
+      "cardHints": {
+        "eclipseCantor.darkHymn": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "darkHymn"
+        },
+        "eclipseCantor.lunarRay": {
+          "aiWeight": 50,
+          "costSource": "stance",
+          "legacyMove": "lunarRay"
+        },
+        "eclipseCantor.fadingEcho": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "fadingEcho"
+        }
+      }
+    }
+  },
+  {
+    "id": "furnaceSaint",
+    "name": "The_Furnace_Saint",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "dexterity",
+      "constitution",
+      "wisdom",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "defaultDeck": [
+      "furnaceSaint.openFurnace",
+      "furnaceSaint.openFurnace",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.censerSweep",
+      "furnaceSaint.coolingAsh",
+      "furnaceSaint.coolingAsh"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
+    ],
+    "presentation": {
+      "art": "furnaceSaint",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "firstCard": "furnaceSaint.openFurnace",
+      "poiseMax": 40,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 50,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 8
+            }
+          ]
+        }
+      ],
+      "cardHints": {
+        "furnaceSaint.openFurnace": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 10
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "openFurnace"
+        },
+        "furnaceSaint.censerSweep": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "censerSweep"
+        },
+        "furnaceSaint.coolingAsh": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "coolingAsh"
+        }
+      }
+    }
+  },
+  {
+    "id": "hollowAstronomer",
+    "name": "The_Hollow_Astronomer",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "intelligence",
+      "dexterity",
+      "constitution"
+    ],
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "defaultDeck": [
+      "hollowAstronomer.starChart",
+      "hollowAstronomer.starChart",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.orbitalShards",
+      "hollowAstronomer.totalEclipse",
+      "hollowAstronomer.totalEclipse"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart"
+      }
+    ],
+    "presentation": {
+      "art": "hollowAstronomer",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "hollowAstronomer.fallingHeavens"
+      ],
+      "firstCard": "hollowAstronomer.starChart",
+      "poiseMax": 25,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 40,
+          "do": [],
+          "unlockCards": [
+            "hollowAstronomer.fallingHeavens"
+          ]
+        }
+      ],
+      "cardHints": {
+        "hollowAstronomer.starChart": {
+          "aiWeight": 20,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "starChart"
+        },
+        "hollowAstronomer.orbitalShards": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "orbitalShards"
+        },
+        "hollowAstronomer.totalEclipse": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 6
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "totalEclipse"
+        },
+        "hollowAstronomer.fallingHeavens": {
+          "aiWeight": 30,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "fallingHeavens"
+        }
+      }
+    }
+  },
+  {
+    "id": "ashheartDragon",
+    "name": "The_Ashheart_Dragon",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "attributePriority": [
+      "strength",
+      "wisdom",
+      "dexterity",
+      "constitution",
+      "intelligence"
+    ],
+    "levelProfile": {
+      "min": 19,
+      "max": 20
+    },
+    "defaultDeck": [
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.obsidianClaws",
+      "ashheartDragon.tailBastion",
+      "ashheartDragon.tailBastion",
+      "ashheartDragon.heartRumble",
+      "ashheartDragon.heartRumble"
+    ],
+    "defaultGear": [
+      {
+        "key": "mainHand",
+        "id": "halberd"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave"
+      }
+    ],
+    "defaultRelics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore"
+      }
+    ],
+    "presentation": {
+      "art": "ashheartDragon",
+      "size": "large",
+      "artFaces": "left"
+    },
+    "enemy": {
+      "unlockCards": [
+        "ashheartDragon.ashBreath"
+      ],
+      "firstCard": "ashheartDragon.obsidianClaws",
+      "poiseMax": 34,
+      "phases": [
+        {
+          "on": "hpBelowPct",
+          "pct": 60,
+          "do": [
+            {
+              "op": "applyStatus",
+              "target": "enemy",
+              "status": "frail",
+              "stacks": 1
+            },
+            {
+              "op": "applyStatus",
+              "target": "self",
+              "status": "strength",
+              "stacks": 2
+            }
+          ],
+          "unlockCards": [
+            "ashheartDragon.ashBreath"
+          ]
+        }
+      ],
+      "cardHints": {
+        "ashheartDragon.obsidianClaws": {
+          "aiWeight": 45,
+          "maxConsecutive": 2,
+          "costSource": "stance",
+          "legacyMove": "obsidianClaws"
+        },
+        "ashheartDragon.tailBastion": {
+          "aiWeight": 25,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "tailBastion"
+        },
+        "ashheartDragon.heartRumble": {
+          "aiWeight": 15,
+          "maxConsecutive": 1,
+          "costSource": "stance",
+          "legacyMove": "heartRumble"
+        },
+        "ashheartDragon.ashBreath": {
+          "aiWeight": 35,
+          "maxConsecutive": 1,
+          "delay": {
+            "turns": 1,
+            "whileCharging": {
+              "block": 5
+            }
+          },
+          "costSource": "stance",
+          "legacyMove": "ashBreath"
+        }
+      }
+    }
+  }
+]

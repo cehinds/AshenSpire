@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
 import { createServer } from 'node:http';
-import { download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { artVersionForTag, zipNameFor, download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 import { buildManifest, canonicalBytes, checkManifest, commonSources, releaseDocsFromCache, releaseDocsFromZips, releaseManifest, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
 
@@ -61,13 +61,41 @@ test('the shared zip writer produces the vector cehinds/AshenSpire-art pins', ()
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('legacy and AshenSpire-scoped release tags retain the same archive basenames', () => {
+  for (const tag of ['hd-assets-v23', 'ashenspire-hd-assets-v23']) {
+    assert.equal(artVersionForTag(tag), '23');
+    assert.deepEqual(['high', 'light', 'common'].map(pack => zipNameFor(pack, tag)),
+      ['hd-assets-v23.zip', 'light-assets-v23.zip', 'common-assets-v23.zip']);
+  }
+  for (const tag of ['hd-assets-v0', 'hd-assets-v01', 'ashenspire-hd-assets-v0', 'other-hd-assets-v23', '../hd-assets-v23', 'ashenspire-hd-assets-v23/..']) {
+    assert.throws(() => artVersionForTag(tag), /tag must be/);
+  }
+});
+
+test('both tag families validate schema-1 and schema-2 pins without renaming zip assets', () => {
+  const root = tmp();
+  try {
+    for (const [repo, tag] of [['cehinds/AshenSpire-art', 'hd-assets-v23'], ['cehinds/AI-Art', 'ashenspire-hd-assets-v23']]) {
+      const base = { repo, tag, zip: 'hd-assets-v23.zip', sha256: 'a'.repeat(64) };
+      writeFileSync(join(root, PIN_PATH), JSON.stringify(base));
+      assert.equal(readPin(root).packs.high.zip, 'hd-assets-v23.zip');
+      const packs = Object.fromEntries(['high', 'light', 'common'].map(pack => [pack, { zip: zipNameFor(pack, tag), sha256: base.sha256 }]));
+      writeFileSync(join(root, PIN_PATH), JSON.stringify({ ...base, schema: 2, packs }));
+      assert.deepEqual(readPin(root).packs, packs);
+      writeFileSync(join(root, PIN_PATH), JSON.stringify({ ...base, zip: `ashenspire-${base.zip}` }));
+      assert.throws(() => readPin(root), /zip must be/);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('the committed pin is schema 2: one tag, three packs, the top level equal to the high pack', () => {
   const raw = JSON.parse(readFileSync(new URL(`../${PIN_PATH}`, import.meta.url), 'utf8'));
-  assert.equal(raw.repo, 'cehinds/AshenSpire-art');
+  assert.equal(raw.repo, 'cehinds/AI-Art');
+  assert.match(raw.tag, /^ashenspire-hd-assets-v[1-9]\d*$/);
   assert.equal(raw.schema, 2);
   const pin = readPin();
   assert.deepEqual(Object.keys(pin.packs).sort(), ['common', 'high', 'light']);
-  const n = pin.tag.replace('hd-assets-v', '');
+  const n = artVersionForTag(pin.tag);
   assert.equal(pin.packs.high.zip, `hd-assets-v${n}.zip`);
   assert.equal(pin.packs.light.zip, `light-assets-v${n}.zip`);
   assert.equal(pin.packs.common.zip, `common-assets-v${n}.zip`);
@@ -897,7 +925,8 @@ test('every ART_REPO_TOKEN in a workflow_run workflow also requires a same-repos
 // no fetch: they served a checkout whose art had gone, and the motion probe
 // went red on figures that 404 (dispatch run 37098149492). Every ci.yml job
 // that checks this repository out fetches the packs before its first step
-// that runs a tool, since any of them may build, serve or copy the art.
+// that runs a tool, unless its complete executable shape matches the narrow
+// reviewed headless declaration below. Other tools may build, serve or copy art.
 //
 // A tool runs from an inline `run: node tools/…` OR from a command line inside
 // a `run: |` / `run: >` block scalar (#1524 review): both are scanned; comment
@@ -911,6 +940,48 @@ test('every ART_REPO_TOKEN in a workflow_run workflow also requires a same-repos
 const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.[\\/])?(tools|tests)[\\/][\w./\\-]+\.[cm]?js\b/.test(cmd) };
 // Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
 const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
+// Reviewed art-free checkout: only these four headless simulations, each using
+// the native Node test runner. Their dependencies are repository JS/data and
+// Markdown, never art packs, images, fonts, audio or an artwork encoder.
+// Pin the whole executable job shape so this is not an exemption by job name:
+// a new matrix file, command, action, environment or YAML structure requires
+// another dependency review or the normal art fetch. Indentation is retained;
+// only comments, blank lines and trailing spaces are insignificant.
+const HEADLESS_WINDOWS_SIMULATION_JOB = `    name: slow discovered test (windows-latest, \${{ matrix.file }})
+    needs: stage
+    if: \${{ needs.stage.outputs.functional == 'true' }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        file:
+          - 'tests/balance-doc.test.mjs'
+          - 'tests/runsim-report-flags.test.mjs'
+          - 'tests/simbot-decisions.test.mjs'
+          - 'tests/simrun-loop.test.mjs'
+    steps:
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
+      - uses: ./.github/actions/setup-node
+      - name: Complete isolated simulation file
+        run: node --test --test-reporter=spec "\${{ matrix.file }}"`;
+const executableJobLines = text => text.split('\n')
+  .filter(line => line.trim() && !/^\s*#/.test(line)).map(line => line.trimEnd()).join('\n');
+function declaredHeadlessSimulationJob(name, lines) {
+  return name === 'test-discovered-slow-windows'
+    && executableJobLines(lines.join('\n')) === executableJobLines(HEADLESS_WINDOWS_SIMULATION_JOB);
+}
+
 function jobsRunningToolsBeforeFetch(yml) {
   // A job header: two-space indent, the id bare or quoted, then `:` and an
   // optional comment (tools/workflow-lint.mjs's fixtures use both forms).
@@ -926,7 +997,8 @@ function jobsRunningToolsBeforeFetch(yml) {
   for (const { name, lines } of jobs) {
     if (!lines.some((l) => !/^\s*#/.test(l) && /actions\/checkout@/.test(l))) continue;
     checked += 1;
-    // ONE EXEMPTION: a checkout that is sparse down to .github alone, in a job
+    if (declaredHeadlessSimulationJob(name, lines)) continue;
+    // The other exemption is a checkout sparse down to .github alone, in a job
     // that runs no tool (ci.yml's `stage` decision: tree ids and git only). It
     // has no tools/ or tests/ to run and no art to read. Any other checkout,
     // tool or not, still needs the fetch.
@@ -960,7 +1032,7 @@ function jobsRunningToolsBeforeFetch(yml) {
   return { checked, missing };
 }
 
-test('every ci.yml job that checks the repository out fetches the art packs before it runs a tool', () => {
+test('every ci.yml checkout fetches art before tools or matches the reviewed headless declaration', () => {
   const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
   assert.ok(checked >= 10, `the job split found the checkout jobs (${checked})`);
@@ -1000,4 +1072,27 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
   assert.equal(checked, 25);
   assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-sparse-github-with-tool', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+});
+
+
+test('the art-free simulation declaration rejects any unreviewed job or executable change', () => {
+  const name = 'test-discovered-slow-windows';
+  const scan = (body, id = name) => jobsRunningToolsBeforeFetch(`jobs:\n  ${id}:\n${body}\n`);
+  assert.deepEqual(scan(HEADLESS_WINDOWS_SIMULATION_JOB), { checked: 1, missing: [] });
+  const mutations = [
+    ['matrix file', body => body.replace('tests/balance-doc.test.mjs', 'tests/asset-pack.test.mjs')],
+    ['additional matrix entry', body => body.replace("          - 'tests/simrun-loop.test.mjs'", "          - 'tests/simrun-loop.test.mjs'\n          - 'tests/asset-pack.test.mjs'")],
+    ['different command', body => body.replace('node --test --test-reporter=spec', 'node tools/source-display-art.mjs')],
+    ['inline tool step', body => body + '\n      - run: node tools/serve.mjs'],
+    ['block tool step', body => body + '\n      - run: |\n          node tools/serve.mjs'],
+    ['setup action', body => body.replace('./.github/actions/setup-node', './.github/actions/which-browser')],
+    ['Node startup hook', body => body.replace('    steps:', '    env:\n      NODE_OPTIONS: --require ./tools/prepare.cjs\n    steps:')],
+    ['matrix include', body => body.replace('    steps:', "        include:\n          - file: tests/asset-pack.test.mjs\n    steps:")],
+  ];
+  for (const [label, mutate] of mutations) {
+    const body = mutate(HEADLESS_WINDOWS_SIMULATION_JOB);
+    assert.notEqual(body, HEADLESS_WINDOWS_SIMULATION_JOB, `${label} is a real mutation`);
+    assert.deepEqual(scan(body).missing, [name], `${label} must fetch art or receive a new dependency review`);
+  }
+  assert.deepEqual(scan(HEADLESS_WINDOWS_SIMULATION_JOB, 'another-headless-job').missing, ['another-headless-job'], 'the declaration covers only its named job');
 });

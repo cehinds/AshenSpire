@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "extraRow": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "sides": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "enemy"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true
+        },
+        "capacityPerLane": {
+          "enum": [
+            1
+          ]
+        }
+      },
+      "required": [
+        "enabled",
+        "sides",
+        "capacityPerLane"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "extraRow"
+  ],
+  "additionalProperties": false
+}

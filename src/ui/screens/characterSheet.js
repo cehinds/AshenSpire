@@ -1,6 +1,7 @@
 // Progression hub and read-only skill / feat inspection. Reward claims and
 // attribute allocation use their existing game writers.
 
+import { isConfiguredRun } from '../../model/gameProfileRun.js';
 import { el, meter, openModal, pill, prose, statusText, titleS, button } from '../kit/index.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { characterSheetModel, characterSheetRegistries, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
@@ -90,7 +91,7 @@ function characterPane(registries, run, sheet, state) {
     meter({ stack: true, tone: 'xp', label: progress.label, value: progress.value, pct: progress.pct,
       cur: progress.capped ? null : progress.xp, max: progress.capped ? null : progress.xpToNext, ariaLabel: progress.sense,
       attrs: { class: 'cs-meter' } }),
-    prose(t('characterSheet.character.cadence', { max: sheet.character.maxLevel }), { class: 'cs-cadence' }),
+    prose(t(isConfiguredRun(run) ? 'characterSheet.character.cadenceConfigured' : 'characterSheet.character.cadence', { max: sheet.character.maxLevel }), { class: 'cs-cadence' }),
     attributesCard({ registries, run, settings: state.settings, onChange: state.onChange ? () => { state.onChange(); state.show('character'); state.host.querySelector('.progression-points')?.focus({ preventScroll: true }); } : null }),
     characterStatsButton({ registries, run, settings: state.settings }),
     featButtons(registries, run, ownedFeatInspections(registries, run)),
@@ -249,6 +250,8 @@ function skillsPane(registries, run, sheet, state) {
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
 export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null, onRespec = null } = {}) {
+  const configured = run.gameProfile?.foundation?.mode === 'configured';
+  if (configured) { tab = 'character'; onRewards = null; onRespec = null; offers = { ...offers, feats: false, classTree: false }; }
   registries = characterSheetRegistries(registries, run);
   let bodyHost = null;
   const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
@@ -268,8 +271,10 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     eyebrow: t('progression.title'), secondary: [back],
     tabs: [
       { id: 'character', label: t('progression.tab.character'), selected: tab === 'character' },
-      { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
-      { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
+      ...(configured ? [] : [
+        { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
+        { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
+      ]),
     ],
     onTab: (id) => state.show(id),
     showMenuButton: false, // a read-only page has no menu to offer

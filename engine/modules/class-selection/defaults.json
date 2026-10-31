@@ -1,0 +1,6 @@
+{
+  "mode": "configured",
+  "initialClass": "reaver",
+  "fixedAttributes": true,
+  "fixedLoadout": true
+}

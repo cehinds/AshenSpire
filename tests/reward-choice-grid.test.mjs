@@ -39,7 +39,7 @@ test('the card chooser lays out three option columns, each a card face above its
       assert.equal(column.querySelectorAll('.card').length, 1, `column ${i} has one card face`);
       const button = column.querySelector('button.reward-pick');
       assert.ok(button, `column ${i} has a text button`);
-      assert.equal(button.querySelector('h3').textContent, REG.cards.get(CARDS[i]).name, `column ${i} button names the card`);
+      assert.equal(button.textContent, REG.cards.get(CARDS[i]).name, `column ${i} button names the card`);
       assert.equal(button.getAttribute('role'), 'radio');
     });
   });
@@ -77,14 +77,16 @@ test('clicking a card\'s text button selects that card and moves the trim', () =
   });
 });
 
-test('each card option\'s text button carries that card\'s plain rules text, not an empty line', () => {
+test('card choice buttons show only names and retain complete accessible rules', () => {
   const expectedWord = { frostNova: /damage/, starstoneArc: /damage/, scholarsInsight: /Draw/ };
   withKitDom((dom) => {
     const { app } = mountCardReward(dom);
     const buttons = app.querySelectorAll('.reward-row button.reward-pick');
     assert.equal(buttons.length, CARDS.length, 'one text button per card option');
     buttons.forEach((button, i) => {
-      const text = button.querySelector('p')?.textContent ?? '';
+      assert.equal(button.textContent, REG.cards.get(CARDS[i]).name, `button ${i} visibly names only the card`);
+      assert.equal(button.querySelector('p'), null, 'effect paragraphs stay out of the fixed choice box');
+      const text = button.getAttribute('aria-description') ?? '';
       assert.ok(text.trim().length > 0, `button ${i} has effect text`);
       assert.equal(text, cardPlainText(REG, { cardId: CARDS[i] }), `button ${i} matches cardPlainText for ${CARDS[i]}`);
       assert.match(text, expectedWord[CARDS[i]], `button ${i} names the card's effect`);

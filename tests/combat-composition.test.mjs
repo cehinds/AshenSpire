@@ -26,6 +26,23 @@ test('taller intent and Inspect controls cannot change settled artwork; explicit
   }
 });
 
+test('changed visible header keepout invalidates consecutive fits without field or artwork changes', () => {
+  const actor = { slot: { id: 'enemy', cell: 'A1', x: 100, ground: 180, fitGround: 180, depth: 1, artWidth: 140 },
+    side: 'enemy', ratio: 1, multiplier: 1, visibleWidth: 60, visibleHeight: 100, boxHeight: 100, footOffset: 0 };
+  const layout = { width: 375, height: 240, zoom: 1, actors: [actor] };
+  const fit = (previous, ceiling) => {
+    const current = { ...layout, ceiling, actors: [{ ...actor, leading: ceiling + 40 }] };
+    return stableCombatArtwork(previous, combatArtworkKey(current), fitCombatSprites(current));
+  };
+  const before = fit(null, 72);
+  const captionShown = fit(before, 89.094);
+  assert.notEqual(captionShown.key, before.key);
+  assert.notDeepEqual(captionShown.sizes, before.sizes, 'new caption headroom must actually constrain artwork');
+  const captionHidden = fit(captionShown, 72);
+  assert.notStrictEqual(captionHidden, captionShown);
+  assert.deepEqual(captionHidden.sizes, before.sizes, 'removing caption restores the available body fit');
+});
+
 test('playing, hovering and emptying the hand do not move the initial composition anchor', () => {
   const anchor = stableHandAnchor(null, 'desktop', { left: 400, top: 540 });
   const actors = [{ side: 'player', visibleWidth: 60, leading: 40, slot: { id: 'p', ground: 300 } }];

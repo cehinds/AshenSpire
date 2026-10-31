@@ -1,43 +1,68 @@
+import { uiIconText } from '../../content/uiIcons.js';
+import { engravedIcon } from '../components/engravedIcon.js';
 // src/ui/screens/gameover.js — YOU PERISHED / EMBER RESTORED (SPEC §7.4)
 //
 // THE RUN'S END IS A DECISION DOOR ON THE PAGE (kit §05 body C): Title·L and
 // the ornament say what happened, a DetailCard says who and where, a StatStrip
 // carries the numbers, a KitLine the final deck, and a WCB0 choice row the
-// two ways on. `.stats-table` stays on the strip as the landmark
+// ways on (Run again, history, title). `.stats-table` stays on the strip as the landmark
 // tools/release-shots.mjs reads for `?shot=death`; it draws nothing.
 
 import { resolveCard } from '../../model/registries.js';
 import { t } from '../strings.js';
 import { sfx } from '../sfx.js';
+import { haptic } from '../haptics.js';
 import {
   el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, choiceRow, statusText,
 } from '../kit/index.js';
 
-export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, onRetry = null, earned = [] }) {
+// "Slain by Ash Warden · Cleave for 14". The move part drops out when the blow
+// had none (a status tick); a run saved before lastHit existed has no line.
+export function slainByLine(lastHit) {
+  if (!lastHit || !lastHit.sourceName) return '';
+  const move = lastHit.move ? ` · ${lastHit.move}` : '';
+  const amount = Number.isFinite(lastHit.amount) ? ` for ${lastHit.amount}` : '';
+  return `Slain by ${lastHit.sourceName}${move}${amount}`;
+}
+
+export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, onRetry = null, onRunAgain = null, earned = [] }) {
   sfx.play(victory ? 'victory' : 'youDied');
+  if (victory) haptic.play('victory'); // the win's own buzz, not the sound id's
   const name = (game.customization && game.customization.name) || 'Forsaken';
   const glyph = (game.customization && game.customization.glyph) || '';
   const floors = game.mapGraph ? ` / ${game.mapGraph.floors}` : '';
 
-  const toTitle = button({ label: 'Return to title', weight: 'primary', id: 'to-title' });
+  // Run again is the way on when the run is saved away; without it (a failed
+  // save offers Retry instead) the title stays the primary exit.
+  const runAgain = onRunAgain ? button({ label: t('gameover.runAgain'), weight: 'primary', id: 'run-again' }) : null;
+  const toTitle = button({ label: 'Return to title', weight: runAgain ? 'secondary' : 'primary', id: 'to-title' });
   const toHistory = onHistory ? button({ label: 'Run history', id: 'to-history' }) : null;
 
   const retry = onRetry ? button({ label: t('save.status.retry'), id: 'retry-finish' }) : null;
 
+  const cause = victory ? '' : slainByLine(game.stats.lastHit);
+
   const deck = kitLine(game.deck.map((inst) => {
     const def = resolveCard(registries, inst);
-    return kitItem({ glyph: inst.upgraded ? '✦' : '◆', name: def.name, attrs: { class: `mini${inst.upgraded ? ' upgraded' : ''}` } });
+    return kitItem({ glyph: inst.upgraded ? 'staggered' : 'skill', name: def.name, attrs: { class: `mini${inst.upgraded ? ' upgraded' : ''}` } });
   }), { class: 'plain deck-strip' });
+
+  const identity = detailCard({
+    eyebrow: 'Forsaken',
+    name,
+    line: `Floor ${game.floor}${floors} · ${game.stats.fightsWon} fight${game.stats.fightsWon === 1 ? '' : 's'} won`,
+    meta: `Seed ${game.seedString}`,
+    children: cause ? el('div', { class: 'dc-line go-cause', text: cause }) : null,
+  });
+  if (glyph) {
+    identity.querySelector('.dc-name').appendChild(el('span', { class: 'go-sigil', style: { marginInlineStart: '.3em' }, 'aria-hidden': 'true' }, engravedIcon(glyph) || uiIconText(glyph)));
+    identity.querySelector('.dc-name').setAttribute('aria-label', `${name}, sigil ${uiIconText(glyph)}`);
+  }
 
   const body = decide({
     title: victory ? 'Ember restored' : 'You perished',
     children: [
-      detailCard({
-        eyebrow: 'Forsaken',
-        name: `${name} ${glyph}`.trim(),
-        line: `Floor ${game.floor}${floors} · ${game.stats.fightsWon} fight${game.stats.fightsWon === 1 ? '' : 's'} won`,
-        meta: `Seed ${game.seedString}`,
-      }),
+      identity,
       statStrip([
         chip({ key: 'Damage dealt', value: game.stats.damageDealt }),
         chip({ key: 'Damage taken', value: game.stats.damageTaken }),
@@ -51,7 +76,7 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
       el('div', { class: 'set-section-head' }, [eyebrow('Final deck'), titleS(`${game.deck.length} card${game.deck.length === 1 ? '' : 's'}`, { tag: 'h3' })]),
       deck,
       // WCB0 choice: both ways on share the half preset of the door's width.
-      choiceRow({ buttons: [retry, toHistory, toTitle] }),
+      choiceRow({ buttons: [retry, runAgain, toHistory, toTitle] }),
     ],
   });
   if (!victory) body.querySelector('.as-title-l').dataset.tone = 'loss';
@@ -70,5 +95,6 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
   toTitle.addEventListener('click', onTitle);
   if (toHistory) toHistory.addEventListener('click', onHistory);
   if (retry) retry.addEventListener('click', onRetry);
-  toTitle.focus({ preventScroll: true });
+  if (runAgain) runAgain.addEventListener('click', onRunAgain);
+  (runAgain || toTitle).focus({ preventScroll: true });
 }

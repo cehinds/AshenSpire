@@ -87,7 +87,7 @@ test('log drag can traverse every size without leaving the physical viewport', (
 test('unsupported historical combat has a disabled switch and immutable public log model', () => {
   const entries = [{ id: 2, round: 1, text: 'A public action.' }];
   const model = combatToolsModel({ supported: false, enabled: true, open: true, size: 'Large', entries });
-  assert.deepEqual(childModel(model, UI.reactionToggle).properties, { enabled: false, disabled: true });
+  assert.deepEqual(childModel(model, UI.reactionToggle).properties, { enabled: false, disabled: true, supported: false });
   assert.equal(childModel(model, UI.combatLogDrawer).properties.open, true);
   entries[0].text = 'Mutated';
   assert.equal(childModel(model, UI.combatLogDrawer).properties.entries[0].text, 'A public action.');
@@ -127,6 +127,56 @@ const logRows = [{ id: 1, round: 1, text: 'Reaver played Guard Counter.' }];
 const logRowsMore = [...logRows, { id: 2, round: 1, text: 'Soldier used Slash.' }];
 const fullLogButton = (combatEl) => combatEl.querySelector('[data-combat-tool="full-log"]');
 const closeDoor = (door) => [...door.panel.querySelectorAll('button')].find(node => node.textContent === 'Close').click();
+
+test('tools layout leaves hidden log geometry alone while real drag, cancel and keyboard readers work', () => {
+  withToolsDom((dom) => {
+    resetModalState(); window.innerHeight = 800;
+    const combatEl = dom.document.createElement('section');
+    combatEl.box = { left: 0, top: 0, width: 390, height: 800, bottom: 800 };
+    combatEl.clientWidth = 390; dom.document.body.appendChild(combatEl);
+    const menu = dom.document.createElement('div'); menu.className = 'topbar';
+    const menuButton = dom.document.createElement('button'); let menuReads = 0;
+    menuButton.getBoundingClientRect = () => { menuReads++; return { bottom: 60 }; };
+    menu.append(menuButton); combatEl.append(menu);
+    const state = { open: false, size: 'Small', followLatest: true };
+    let tools;
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows, ...state }));
+    tools = mountCombatTools(combatEl, { state, onViewChange: paint, onToggle() {} });
+    const root = combatEl.querySelector('.combat-tools'), log = combatEl.querySelector('[data-combat-tool="log"]');
+    root.box = { left: 16, top: 500, right: 374, bottom: 540, width: 358, height: 40 };
+    log.box = { left: 16, top: 500, right: 96, bottom: 540, width: 80, height: 40 };
+    paint(); tools.flushGeometry(); tools.flushGeometry();
+    assert.equal(menuReads, 0, 'ordinary layouts do not measure menu clearance for an invisible panel');
+    log.click();
+    assert.ok(state.drawerLog?.panel.isConnected, 'ordinary tap opens the actual compact modal');
+    assert.equal(combatEl.querySelector('#combat-log').hidden, true);
+    closeDoor(state.drawerLog);
+    assert.equal(state.open, false);
+    const gesture = (endType, toY) => {
+      log.dispatchEvent(new dom.Event('pointerdown', { pointerId: 1, pointerType: 'touch', button: 0, clientY: 520 }));
+      window.dispatchEvent(new dom.Event('pointermove', { pointerId: 1, clientY: toY, cancelable: true }));
+      window.dispatchEvent(new dom.Event(endType, { pointerId: 1, clientY: toY }));
+    };
+    gesture('pointerup', 370);
+    assert.deepEqual([state.open, state.size], [true, 'Large'], 'upward drag opens and snaps to Large');
+    assert.ok(state.drawerLog?.panel.isConnected);
+    log.click(); assert.equal(state.open, true, 'the drag release owns its trailing click');
+    gesture('pointercancel', 720);
+    assert.deepEqual([state.open, state.size], [true, 'Large'], 'cancel restores the prior reader state');
+    gesture('pointerup', 720);
+    assert.deepEqual([state.open, state.size], [true, 'Small'], 'a completed downward drag reaches Small');
+    log.click(); assert.equal(state.open, true);
+    assert.equal(menuReads, 3, 'each real press obtains fresh drag stops');
+    for (const [key, size] of [['Home', 'Small'], ['ArrowUp', 'Medium'], ['End', 'Large'], ['ArrowDown', 'Medium']]) {
+      log.dispatchEvent(new dom.Event('keydown', { key, cancelable: true }));
+      tools.flushGeometry();
+      assert.equal(state.size, size); assert.equal(root.dataset.logSize, size);
+      assert.ok(state.drawerLog?.panel.isConnected);
+    }
+    assert.equal(menuReads, 3, 'keyboard/modal updates do not repeat unused panel measurement');
+    closeCombatFullLog(state); tools.release();
+  });
+});
 
 test('a remount keeps the open full log, refreshes its entries and Close returns focus to the new button', () => {
   withToolsDom((dom) => {
@@ -203,4 +253,291 @@ test('Full log reads as a text link in the log header, keeping its 44px tap targ
   for (const rule of [/background:transparent/, /border:0/, /box-shadow:none/, /color:var\(--gold\)/, /font-size:inherit/]) assert.match(link, rule);
   assert.match(css, /\.combat-log-head > \.combat-log-full:is\(:hover, :focus-visible[^)]*\) \{[^}]*text-decoration:underline/);
   assert.match(css, /\.combat-log-head > \.combat-log-full:focus-visible \{[^}]*outline:2px solid/);
+});
+
+test('live Grid checkbox waits for persistence and rolls back a refused preference', async () => {
+  for (const accepted of [true,false]) {
+    let checkbox, settle, root;
+    withToolsDom(dom => {
+      dom.document.documentElement = {dataset:{formationGrid:'true'}};
+      root = dom.document.documentElement;
+      const combatEl=dom.document.createElement('section');
+      dom.document.body.appendChild(combatEl);
+      mountCombatTools(combatEl,{state:{},onViewChange(){},onToggle(){},
+        onGridToggle:enabled=>new Promise(resolve=>{settle=()=>{
+          if(accepted) root.dataset.formationGrid=String(enabled);
+          resolve({ok:accepted});
+        };})});
+      checkbox=combatEl.querySelector('input[data-combat-tool="grid"]');
+      assert.equal(checkbox.getAttribute('aria-label'),'Show battlefield grid');
+      assert.equal(checkbox.checked,true);
+      checkbox.checked=false;
+      checkbox.dispatchEvent(new dom.Event('change'));
+      assert.equal(checkbox.disabled,true,'another write cannot race the pending save');
+      assert.equal(root.dataset.formationGrid,'true','no optimistic visual-grid change');
+      settle();
+    });
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(checkbox.disabled,false);
+    assert.equal(checkbox.checked,!accepted,'control reflects the actually persisted root value');
+  }
+});
+
+test('Auto switch mirrors the Reaction switch and follows the autoCombat setting', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const settings = { autoCombat: false };
+    const writes = [];
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      onAutoToggle: enabled => { writes.push(enabled); settings.autoCombat = enabled; } });
+    const paint = (supported = true) => tools.update(combatToolsModel({ supported, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    paint();
+    const auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    const reaction = combatEl.querySelector('[data-combat-tool="reaction"]');
+    assert.equal(auto.getAttribute('role'), 'switch');
+    assert.equal(auto.className.includes('reaction-switch'), true, 'same component style as Reaction');
+    assert.equal(auto.nextElementSibling === reaction.nextElementSibling || reaction.nextElementSibling === auto, true, 'sits beside Reaction');
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    assert.equal(auto.getAttribute('aria-label'), 'Auto combat disabled');
+    auto.click();
+    assert.deepEqual(writes, [true]);
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'true');
+    assert.equal(auto.getAttribute('aria-label'), 'Auto combat enabled');
+    settings.autoCombat = false; // the Settings screen turns it off: the next paint follows
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    paint(false);
+    assert.equal(auto.disabled, true, 'unavailable where reactions are unsupported');
+    tools.release();
+  });
+});
+
+test('Auto switch waits for the write, blocks overlapping toggles and repaints after a rollback', async () => {
+  let auto, tools, settle, calls = 0;
+  const settings = { autoCombat: false };
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      onAutoToggle: enabled => new Promise(resolve => { calls++; settle = () => { resolve({ ok: false }); }; }) });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    auto.click();
+    assert.equal(auto.disabled, true, 'a pending write blocks another toggle');
+    auto.click();
+    assert.equal(calls, 1);
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    assert.equal(auto.disabled, true, 'a repaint does not re-enable a pending switch');
+    settle();
+  });
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  assert.equal(auto.disabled, false);
+  assert.equal(auto.getAttribute('aria-checked'), 'false', 'refused write: still shows the persisted value');
+});
+
+test('Auto switch toggles from the live setting after Settings changed it behind the footer', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const settings = { autoCombat: false };
+    const writes = [];
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      readAuto: () => settings.autoCombat,
+      onAutoToggle: enabled => { writes.push(enabled); settings.autoCombat = enabled; } });
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    paint();
+    const auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    settings.autoCombat = true; // Menu > Settings turned it on; the footer has not repainted yet
+    auto.click();
+    assert.deepEqual(writes, [false], 'a stale switch still toggles the live value off, not a no-op write of true');
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    tools.release();
+  });
+});
+
+test('closing the overlay repaints the combat footer: closeOverlay announces it and combat listens', () => {
+  const overlay = readFileSync(new URL('../src/ui/components/overlay.js', import.meta.url), 'utf8');
+  const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(overlay, /dispatchEvent\(new CustomEvent\(OVERLAY_CLOSED_EVENT\)\)/);
+  assert.match(combat, /addEventListener\(OVERLAY_CLOSED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /repaintAutoSwitch = \(\) => \{[^}]*renderCombatTools\(\)/);
+  assert.match(combat, /removeEventListener\(OVERLAY_CLOSED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /readAuto: \(\) => resolveCombatAutomation\(readSettings\(\)\)\.enabled/);
+});
+
+test('a settings save that settles (saved or rolled back) announces it and combat repaints from the settled value', () => {
+  const veil = readFileSync(new URL('../src/ui/components/veil.js', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const persist = main.slice(main.indexOf('async function persistSettingsChange'), main.indexOf('const quickMenuControls'));
+  // Rollback path: announce sits in a finally after the run restore, so it runs even if the restore throws; then the early return.
+  assert.match(persist, /activeSettings = settingsBefore;[\s\S]*finally \{[\s\S]*showSettingsNotice\(QUARANTINE_NOTICE\);\s*announceSettingsSettled\(\);\s*\}\s*return res;/);
+  // Success path: announce comes last.
+  assert.match(persist, /announceSettingsSettled\(\);\s*return res;\s*}\s*$/);
+  assert.equal((persist.match(/announceSettingsSettled\(\)/g) || []).length, 2);
+  assert.match(veil, /SETTINGS_SETTLED_EVENT = 'ashenspire:settings-settled'/);
+  assert.match(combat, /addEventListener\(SETTINGS_SETTLED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /removeEventListener\(SETTINGS_SETTLED_EVENT, repaintAutoSwitch\)/);
+});
+
+test('announceSettingsSettled dispatches on window, and combat repaints the footer from the rolled-back value', async () => {
+  const { announceSettingsSettled, SETTINGS_SETTLED_EVENT } = await import('../src/ui/components/veil.js');
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const target = new EventTarget();
+  Object.defineProperty(globalThis, 'window', { value: target, configurable: true, writable: true });
+  try {
+    const settings = { autoCombat: false };
+    let painted = null;
+    const repaint = () => { painted = settings.autoCombat; };
+    target.addEventListener(SETTINGS_SETTLED_EVENT, repaint);
+    // Menu toggled Auto on, closed, the footer repainted "on"; then the save failed and rolled back.
+    settings.autoCombat = true; repaint();
+    assert.equal(painted, true);
+    settings.autoCombat = false; // persistSettingsChange rollback
+    assert.equal(painted, true, 'no repaint yet: the stale switch is the bug');
+    announceSettingsSettled();
+    assert.equal(painted, false, 'the settled event repaints from the rolled-back value');
+    target.removeEventListener(SETTINGS_SETTLED_EVENT, repaint);
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'window', had); else delete globalThis.window;
+  }
+  assert.doesNotThrow(() => announceSettingsSettled(), 'no window: a no-op, not a throw');
+});
+
+test('co-op mounts the tools without an Auto switch', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {} });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
+    assert.equal(combatEl.querySelector('[data-combat-tool="auto"]'), null);
+    assert.ok(combatEl.querySelector('[data-combat-tool="reaction"]'));
+    tools.release();
+  });
+});
+
+test('the log palette follows saved settings and refreshes while the modal is open', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    let settings = { combatLogPlayerColor: '#73bdff', combatLogEnemyColor: '#ffaaa0' };
+    const state = {};
+    const tools = mountCombatTools(combatEl, { state, readSettings: () => settings, onViewChange() {}, onToggle() {} });
+    const model = combatToolsModel({ supported: true, enabled: true, entries: logRows });
+    tools.update(model);
+    fullLogButton(combatEl).click();
+    const list = state.fullLog.panel.querySelector('.combat-log-modal-entries');
+    assert.equal(list.getAttribute('style'), '--combat-log-player-color:#73bdff;--combat-log-enemy-color:#ffaaa0');
+    settings = { combatLogPlayerColor: '#84caff', combatLogEnemyColor: '#ff9f96' };
+    tools.update(model);
+    assert.equal(list.getAttribute('style'), '--combat-log-player-color:#84caff;--combat-log-enemy-color:#ff9f96');
+    closeCombatFullLog(state);
+    tools.release();
+  });
+});
+
+test('hidden legacy log stays empty while current receipts and palette reach both readers', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    let settings = { combatLogPlayerColor: '#73bdff', combatLogEnemyColor: '#ffaaa0' };
+    const tools = mountCombatTools(combatEl, { state, readSettings: () => settings, onViewChange() {}, onToggle() {} });
+    const update = (entries, open = false) => tools.update(combatToolsModel({ supported: true, enabled: true, entries, open }));
+    const legacy = combatEl.querySelector('[data-combat-tool="entries"]');
+    update(logRows);
+    update(logRowsMore);
+    assert.equal(combatEl.querySelector('#combat-log').hidden, true);
+    assert.equal(legacy.children.length, 0, 'closed readers do not build a second hidden copy of every receipt');
+
+    fullLogButton(combatEl).click();
+    const full = state.fullLog;
+    assert.deepEqual([...full.panel.querySelectorAll('li')].map(row => row.textContent), logRowsMore.map(row => row.text), 'opening reads the latest receipts, including changes made while closed');
+    state.open = true;
+    update(logRowsMore, true);
+    const drawer = state.drawerLog;
+    assert.ok(drawer);
+    for (const reader of [full, drawer]) {
+      assert.equal(reader.panel.getAttribute('aria-modal'), 'true');
+      assert.equal(reader.panel.querySelector('.combat-log-modal-entries').getAttribute('role'), 'region');
+    }
+
+    settings = { combatLogPlayerColor: '#84caff', combatLogEnemyColor: '#ff9f96' };
+    const newest = [...logRowsMore, { id: 3, round: 2, text: 'Reaver dealt 9 damage.' }];
+    update(newest, true);
+    for (const reader of [full, drawer]) {
+      assert.deepEqual([...reader.panel.querySelectorAll('li')].map(row => row.textContent), newest.map(row => row.text));
+      assert.equal(reader.panel.querySelector('.combat-log-modal-entries').getAttribute('style'), '--combat-log-player-color:#84caff;--combat-log-enemy-color:#ff9f96');
+    }
+    assert.equal(legacy.children.length, 0, 'live readers do not repopulate the unused legacy region');
+
+    update([], true);
+    for (const reader of [full, drawer]) assert.equal(reader.panel.querySelectorAll('li').length, 0, 'clearing receipts refreshes every open reader');
+    closeCombatFullLog(state);
+    fullLogButton(combatEl).click();
+    assert.equal(state.fullLog.panel.querySelectorAll('li').length, 0, 'reopening after clear cannot revive stale receipts');
+    assert.equal(logRowsMore.length, 2, 'reading and clearing do not mutate the supplied receipt history');
+    closeCombatFullLog(state);
+    tools.release();
+  });
+});
+
+test('the reachable Combat log shortcut follows the setting live and across remounts', () => {
+  withToolsDom(dom => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section'); dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    let settings = {}, tools;
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows, ...state }));
+    const mount = () => mountCombatTools(combatEl, { state, readSettings: () => settings, onViewChange: paint, onToggle() {} });
+    tools = mount(); paint();
+    combatEl.querySelector('[data-combat-tool="log"]').click();
+    const door = state.drawerLog, shortcut = door.panel.querySelector('[data-console-shortcut]');
+    assert.equal(shortcut.hidden, true);
+    settings = { combatLogConsole: true }; paint(); assert.equal(shortcut.hidden, false);
+    tools.release(); tools = mount(); paint();
+    assert.equal(state.drawerLog, door); assert.equal(shortcut.hidden, false);
+    settings = { combatLogConsole: false }; paint(); assert.equal(shortcut.hidden, true);
+    closeDoor(door);
+    assert.equal(dom.document.activeElement, combatEl.querySelector('[data-combat-tool="log"]'));
+    closeCombatFullLog(state); tools.release();
+  });
+});
+
+test('lazy entries: nothing is formatted until a reader is open or opens', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    const tools = mountCombatTools(combatEl, { state, onViewChange() {}, onToggle() {} });
+    let formatted = 0, rows = logRows;
+    const entries = () => { formatted++; return rows; };
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: [], ...state }), { entries });
+    for (let i = 0; i < 5; i++) paint();
+    assert.equal(formatted, 0, 'no reader open: the log is never formatted');
+    fullLogButton(combatEl).click();
+    assert.equal(formatted, 1, 'opening the full log formats it once');
+    assert.equal(state.fullLog.panel.querySelectorAll('li').length, logRows.length);
+    rows = logRowsMore;
+    paint();
+    assert.ok(formatted >= 2, 'an open reader is kept current');
+    assert.equal(state.fullLog.panel.querySelectorAll('li').length, logRowsMore.length);
+    const door = state.fullLog;
+    closeDoor(door);
+    const after = formatted;
+    paint(); paint();
+    assert.equal(formatted, after, 'closed again: formatting stops');
+    tools.release();
+  });
 });

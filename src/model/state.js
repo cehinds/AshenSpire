@@ -1,3 +1,10 @@
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
+import { gameModule, gameContent } from './gameProfile.js';
+import { upgradeStepsProblems } from './cardUpgrade.js';
+import { compactRun, expandStoredRun } from './runStorage.js';
+import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
+import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
@@ -6,6 +13,8 @@ import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { advancedConfigSnapshot } from './advancedConfig.js';
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
+import { snapshotRangePolicy, rangePolicyProblems, RANGE_POLICY_DEFAULTS } from './combatEngagement.js';
+import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -112,7 +121,10 @@ export const MAX_CARD_RANK = 99;
 // bump is what makes an OLDER build refuse-and-keep such a save rather than
 // read it and drop the choice; a 23 save has no relic choices, so 23 → 24 is a
 // no-op at the migration door.
-export const RUN_SCHEMA_VERSION = 24;
+// 25: pinned game profile, durable run ID and configured service receipts.
+// 26: the stored form may carry `gameProfileRef` instead of the pinned profile
+// (model/runStorage.js); a 25 save loads unchanged, an older build keeps a 26 one.
+export const RUN_SCHEMA_VERSION = 26;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -142,6 +154,8 @@ export function createRunState({
   seed,
   classId,
   registries,
+  gameProfile = registries.gameProfile,
+  runId = undefined,
   combatExpansionVersion = 2,
   enemyKnowledgeVersion = 1,
   reactionRulesVersion = combatExpansionVersion === 2 ? 2 : null,
@@ -159,18 +173,28 @@ export function createRunState({
   if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
   if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
+  const profileSubject = { gameProfile };
+  const configured = isConfiguredRun(profileSubject);
+  if (configured) enemyKnowledgeVersion = null;
+  if (!gameProfileClassAvailable(profileSubject, profileMeta, classId)) throw new Error(`Class '${classId}' is locked in this profile`);
+  const fixedAttributes = gameModule(profileSubject, 'class-selection')?.mode === 'configured' ? gameProfileAttributes(profileSubject, classId) : null;
+  if (gameModule(profileSubject, 'class-selection')?.mode === 'configured' && !fixedAttributes) throw new Error(`Configured class '${classId}' has no attributes`);
+  if (fixedAttributes && requestedAttributes && Object.entries(fixedAttributes).some(([key,value]) => requestedAttributes[key] !== value)) throw new Error('Configured creation uses fixed attributes');
+  derivedStatOptions = gameProfileStatOptions(profileSubject, derivedStatOptions, classId);
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
     : attributeMode;
-  const attributes = requestedAttributes === undefined
+  const attributes = fixedAttributes ? structuredClone(fixedAttributes) : requestedAttributes === undefined
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
+  if (fixedAttributes) Object.assign(attributeModeSnapshot, { baseline: 1, bonusPool: Object.values(fixedAttributes).reduce((a,b)=>a+b,0)-5, minimum: 1, maximum: Math.max(...Object.values(fixedAttributes)) });
   const idGen = createIdGen('rc');
   const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit, profileMeta);
-  const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}) };
+  const hands = resolveCreationHands(registries, classId, configured ? undefined : startingHands, baseStartingKit, profileMeta);
+  const fixedHands = fixedAttributes ? gameContent(profileSubject, 'classes')?.find(row => row.id === classId)?.loadout : null;
+  const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}), ...(fixedHands || {}) };
   const startingRelic = resolveCreationRelic(registries, classId, startingRelicId, profileMeta);
   // E5 (#250): the set the run begins wearing. Resolved against the same
   // profile meta the kit above is — absent, the class's free set, which is
@@ -198,7 +222,10 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
+    ...(gameProfile ? { gameProfile: structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
     combatExpansionVersion,
+    ...(combatExpansionVersion === 2 && gameModule(profileSubject, 'effects')?.fixCoreVersion === 1
+      ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),
     ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
     advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
@@ -258,7 +285,7 @@ export function createRunState({
     smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
-    deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    deck: configured ? [] : startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
     // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
     // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
@@ -338,7 +365,7 @@ export function createRunState({
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
-  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
+  for (const ref of configured ? [] : startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
     run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
   }
   // Stamp only after every opening card exists. Starting ability grades own
@@ -350,7 +377,10 @@ export function createRunState({
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
   // statement about the deck a run BEGINS with, not about later arrivals.
   orderStartingDeck(registries, run);
-  ensureExpandedStarterCoverage(registries, run);
+  if (!configured) ensureExpandedStarterCoverage(registries, run);
+  initializeGameProfileRun(registries, run, { profileMeta });
+  // Core: the authored deck exists now; add what the worn gear's grantedCards lend (owner 2026-10-19).
+  if (configured) reconcileGrantedCards(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -397,7 +427,7 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
-  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const effectiveAttributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
   // A smaller starting pool used to multiply every `pointsPerTier` by the
@@ -414,7 +444,7 @@ export function initializeRunDerivedStats(run, registries, {
   const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
-  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class) : null;
+  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class, run) : null;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
     : createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);
@@ -670,6 +700,11 @@ export function initializeRunDerivedStats(run, registries, {
  * are allowed through untouched — this is a floor, not a whitelist.
  */
 export const RUN_SHAPE = [
+  { key: 'collectedCardIds', type: 'array', optional: true },
+  { key: 'gameProfile', type: 'object', optional: true },
+  { key: 'rangePolicy', type: 'object', optional: true },
+  { key: 'runId', type: 'string', optional: true },
+  { key: 'gameProfileRestVisits', type: 'object', optional: true },
   { key: 'contentVersion', type: 'string' },
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
@@ -813,6 +848,9 @@ export const RUN_SHAPE = [
   // rather than Settings because the ladder and pan are live choices for this
   // climb; Settings only supplies the default when this field is absent.
   { key: 'mapView', type: 'object', optional: true, nullable: true },
+  // The painted ground under the node the player last travelled to (map.js),
+  // so the fight there shows it. Decorative; absent on older saves.
+  { key: 'mapTerrain', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
 
@@ -837,6 +875,7 @@ export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
  * phase 3b, nothing else may write these two fields.
  */
 export function syncZones(run) {
+  recordCollectedCards(run);
   const next = projectZones(run);
   const changed = JSON.stringify({ z: run.zones, c: run.collection }) !== JSON.stringify({ z: next.zones, c: next.collection });
   // Write only on change: a save whose projection is current serializes the
@@ -950,7 +989,23 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.gameProfile) {
+    try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
+    if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
+  } else if (run.runId || run.gameProfileRestVisits) problems.push('Profile-owned fields require a pinned gameProfile');
+  // Defeat summaries may acknowledge earned XP, but never open spoils or
+  // resume combat. The acknowledgement itself is persisted before finishing.
+  if (run.gameProfilePendingReward?.after === 'defeat') {
+    const pending = run.gameProfilePendingReward;
+    if (!isConfiguredRun(run) || pending.noticeOnly !== true || pending.source !== 'combat' || pending.levelOffers !== 0) problems.push('Defeat progression requires a configured combat notice without reward offers');
+    if (run.hp !== 0 || run.combatPendingOutcome || run.combatEntered) problems.push('Defeat progression requires a settled defeated run');
+  }
+
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
+  if (run.rangePolicy !== undefined) {
+    problems.push(...rangePolicyProblems(run.rangePolicy));
+    if (run.combatExpansionVersion !== 2 || gameModule(run, 'effects')?.fixCoreVersion !== 1) problems.push('rangePolicy requires Core combat');
+  }
   if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
   if (run.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(run.reactionRules).map(problem => `reactionRules: ${problem}`));
   else if (run.reactionRules !== undefined) problems.push('reactionRules require reaction rules version 2');
@@ -967,9 +1022,26 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
   const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
+    // An absent rangeState is an old active fight; never adopt the run policy here.
+    if (snapshot.rangeState !== undefined && run.rangePolicy !== undefined
+      && Object.keys(RANGE_POLICY_DEFAULTS).some(key => snapshot.rangeState?.policy?.[key] !== run.rangePolicy?.[key])) problems.push(`${path}.rangeState.policy must match the run`);
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
     if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
-    else if (run.reactionRulesVersion === 2 && JSON.stringify(snapshot.reactionRules) !== JSON.stringify(run.reactionRules)) problems.push(`${path}.reactionRules must match the run`);
+    else if (run.reactionRulesVersion === 2) {
+      // Core contact policy belongs to the fight: historical active fights keep
+      // their whole-root plan, while newly created fights use per-hit contacts.
+      // The run still owns every tuning field; snapshot validation separately
+      // restricts contactPolicy to the known optional value.
+      const localContactPolicy = isConfiguredRun(run) && gameModule(run, 'effects')?.fixCoreVersion === 1
+        && snapshot.gameProfile?.hash === run.gameProfile.hash
+        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true;
+      const tuning = rules => {
+        if (!localContactPolicy) return rules;
+        const { contactPolicy, ...rest } = rules || {};
+        return rest;
+      };
+      if (JSON.stringify(tuning(snapshot.reactionRules)) !== JSON.stringify(tuning(run.reactionRules))) problems.push(`${path}.reactionRules must match the run`);
+    }
     problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
     const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
     if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
@@ -980,6 +1052,16 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (!typeOk(snapshot, 'object')) return;
     const knowledge = snapshot.enemyKnowledge;
     if (!run.enemyKnowledgeRules) {
+      // Configured FixCore fights own their cached reads locally. They do not
+      // open the legacy run learning/Perception ledger or bank any knowledge.
+      // The caller still validates the complete combat snapshot above.
+      const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
+        && gameModule(run, 'effects')?.fixCoreVersion === 1
+        && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
+        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
+        && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
+        && knowledge?.bankable === false && knowledge.encounter === null;
+      if (battleLocal) return;
       if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
       return;
     }
@@ -1048,6 +1130,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
   }
+  problems.push(...collectedCardProblems(run));
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
@@ -1066,6 +1149,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
   });
   problems.push(...sigilInventoryProblems(run), ...attunedSigilProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
+  for (const zone of ['deck', 'sideboard', 'collection']) {
+    if (Array.isArray(run[zone])) run[zone].forEach((card, i) => { if (card && typeof card === 'object') problems.push(...upgradeStepsProblems(card, `${zone}[${i}]`)); });
+  }
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1097,6 +1183,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
     }
+  }
+  if (run.mapTerrain !== undefined && run.mapTerrain !== null && typeOk(run.mapTerrain, 'object')) {
+    const t = run.mapTerrain;
+    if (typeof t.nodeId !== 'string' || !t.nodeId) problems.push('mapTerrain.nodeId must be a non-empty string');
+    if (typeof t.settingId !== 'string' || !t.settingId) problems.push('mapTerrain.settingId must be a non-empty string');
   }
   if (run.mapView !== undefined && run.mapView !== null && typeOk(run.mapView, 'object')) {
     const v = run.mapView;
@@ -1579,11 +1670,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   return problems;
 }
 
-export function serializeRun(run) {
+export function serializeRun(run, { inline = false, hasCopy = null } = {}) {
   // What is written is what the legacy fields say NOW — a writer between two
   // saves touches `relics` or the loadout, never `zones` (syncZones's contract).
   syncZones(run);
-  return JSON.stringify(run);
+  return JSON.stringify(inline ? run : compactRun(run, hasCopy));
 }
 
 export function initializeRunFlaskCharges(run, registries) {
@@ -1709,7 +1800,12 @@ export function migrateRunSchema(run) {
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
   // v23 → v24: no relic choices could be written before (SPEC §6); nothing to fill.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+  // v25 → v26: the stored form may hold a reference to the pinned game profile
+  // instead of the profile (model/runStorage.js); deserializeRun expands it
+  // before this runs, so there is nothing to fill. The bump exists so an OLDER
+  // build refuses and keeps a v26 slot (save.js 'newer') rather than reading a
+  // run with no pinned profile as corrupt and archiving it.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
   }
   if (run.combatExpansionVersion === 2) {
@@ -1758,8 +1854,8 @@ export function migrateRunSchema(run) {
   return run;
 }
 
-export function deserializeRun(json) {
-  return migrateRunSchema(JSON.parse(json));
+export function deserializeRun(json, lookup = null) {
+  return migrateRunSchema(expandStoredRun(JSON.parse(json), lookup));
 }
 
 // ---------------------------------------------------------------------------

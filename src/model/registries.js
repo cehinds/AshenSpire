@@ -1,3 +1,7 @@
+import { applyBaseManaPolicy } from './cardManaPolicy.js';
+import { cardRank, primaryEffectIndex, rankBonus, rankedEffects } from './cardRank.js';
+export { cardRank, primaryEffectIndex, rankBonus };
+import { applyUpgradeSteps, upgradeStepsOf, upgradeCount, upgradeSignature } from './cardUpgrade.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -27,9 +31,19 @@ import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
 import { resolveEnemyMoveSources } from './enemyMoveSources.js';
 
-function applyBasicCardProfile(def, profile) {
+// Owner ruling 2026-10-18: a magic/arcane profile (a sceptre's or staff's basic card) is a Spell and
+// a Cantrip that plays as the basic it is projected onto. Derived from the profile, never a list of ids.
+const MIRROR_OF_BASE = Object.freeze({ strike: 'attack', smash: 'smash', sweep: 'sweep', defend: 'defend', counter: 'counter', technique: 'technique' });
+export function profileMirrors(profile) {
+  return profile && ['magic', 'arcane'].includes(profile.damageSchool) ? MIRROR_OF_BASE[profile.baseCardId] || null : null;
+}
+// Core 2 only (FixCore): the Current/v2 profile keeps its sceptre and staff cards exactly as they were.
+const fixCoreRegistries = (registries) => registries?.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+function applyBasicCardProfile(def, profile, mirrorsOn = false) {
   if (!profile) return def;
+  const mirrors = mirrorsOn ? profileMirrors(profile) : null;
   const tags = [...(profile.tags || [])];
+  if (mirrors) for (const tag of ['source:spell', 'camp:spell', 'rank.cantrip']) if (!tags.includes(tag)) tags.push(tag);
   const effects = (def.effects || []).map((effect) => (
     effect.op === 'damage' ? { ...effect, tags } : { ...effect }
   ));
@@ -42,6 +56,7 @@ function applyBasicCardProfile(def, profile) {
     exposureBuildupPerHit: profile.exposureBuildupPerHit,
     ...(Number.isFinite(profile.magicShare) ? { magicShare: profile.magicShare } : {}),
     cardTags: tags,
+    ...(mirrors ? { mirrors } : {}),
     effects,
     equipmentProfileId: profile.id,
     equipmentRole: profile.role,
@@ -206,6 +221,7 @@ function stampTags(bundle) {
 export function createRegistries(contentBundle) {
   const bundle = projectAttackCardDamageBundle(resolveEnemyMoveSources(contentBundle || {}));
   const registries = {};
+  registries.proposalStatusRules = deepFreeze(bundle.proposalStatusRules || {});
 
   // The tag join, resolved once for every collection tagFamilies.csv names.
   // Everything below reads a stamped collection where one exists, so `.tags` is
@@ -614,7 +630,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank));
+  if (!upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -624,7 +640,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -638,9 +654,10 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const school = typeof instanceOrRef.damageSchool === 'string' ? instanceOrRef.damageSchool : profile?.damageSchool;
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
-  if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
+  if (upgradeCount(instanceOrRef) && !usesAbilityGrade) result = mergeUpgrade(result, upgradeStepsOf(instanceOrRef));
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
-  if (profileId) result = applyBasicCardProfile(result, profile);
+  if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
+  result = applyBaseManaPolicy(registries, result);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(
@@ -682,15 +699,6 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
 }
 
 /**
- * cardRank(instance) → the instance's rank (SPEC §13.4o), 1 when absent. A
- * rank is a whole number from 1 up; validateRunShape refuses anything else.
- */
-export function cardRank(instance) {
-  const rank = instance && instance.rank;
-  return Number.isInteger(rank) && rank >= 1 ? rank : 1;
-}
-
-/**
  * cardSkillBonus(instance) → the every-5th-level skill bonus the instance
  * carries (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
  * stampSkillBonuses` writes it from the run's skill levels.
@@ -728,42 +736,6 @@ export function applyPassiveBlock(card, amount) {
 }
 
 /**
- * The ops a rank may move, best first (SPEC §13.4o): a card's PRIMARY NUMBER is
- * what it is for — damage, then Block, then healing, then a status it applies,
- * then poise damage. Costs (loseHp) and tempo (draw, energy, mana, discard)
- * are never primary, so a rank cannot raise a price or snowball a turn.
- */
-const RANKED_OPS = ['damage', 'block', 'heal', 'applyStatus', 'poiseDamage'];
-// An X-hit card (hits = energy spent) splits its rank as if it hit this often.
-const RANK_FORMULA_HITS = 3;
-
-/**
- * primaryEffectIndex(card) → the index of the card's PRIMARY NUMBER: its first
- * unconditional effect of the best RANKED_OPS op present, with a numeric
- * amount (stacks for a status); -1 when it has none (the rank moves nothing).
- */
-export function primaryEffectIndex(card) {
-  const effects = (card && card.effects) || [];
-  const numeric = (effect) => (effect.op === 'applyStatus' ? typeof effect.stacks === 'number' : typeof effect.amount === 'number');
-  for (const op of RANKED_OPS) {
-    const index = effects.findIndex((effect) => effect && !effect.if && effect.op === op && numeric(effect));
-    if (index !== -1) return index;
-  }
-  return -1;
-}
-
-/**
- * rankBonus(effect, steps) → what `steps` rank steps add to the primary number.
- * One per step; a multi-hit effect splits that across its hits, rounded up, so
- * the total stays near one per step and a step never passes without a gain.
- */
-export function rankBonus(effect, steps) {
-  if (!steps) return 0;
-  const hits = typeof effect.hits === 'number' ? effect.hits : effect.hits != null ? RANK_FORMULA_HITS : 1;
-  return Math.ceil(steps / Math.max(1, hits));
-}
-
-/**
  * applyCardRank(card, rank, skillBonus) → the face at that rank. Each step past
  * rank 1 adds 1 to the primary number: odd ranks by rule, even ranks until a
  * skill's rank-step pool is authored (SPEC §13.4o, content phase C). Each
@@ -772,25 +744,11 @@ export function rankBonus(effect, steps) {
  */
 export function applyCardRank(card, rank, skillBonus = 0) {
   const steps = Math.max(0, cardRank({ rank }) - 1) + cardSkillBonus({ skillBonus });
-  const index = primaryEffectIndex(card);
-  const effects = (card.effects || []).map((effect, i) => {
-    if (i !== index || !steps) return effect;
-    const bonus = rankBonus(effect, steps);
-    return effect.op === 'applyStatus' ? { ...effect, stacks: effect.stacks + bonus } : { ...effect, amount: effect.amount + bonus };
-  });
+  const effects = rankedEffects(card, steps);
   return deepFreeze({ ...card, effects, rank: cardRank({ rank }) });
 }
 
 /** The upgrade half of resolveCard, split out so mods can layer on top. */
-function mergeUpgrade(base) {
-  const up = base.upgrade || {};
-  return deepFreeze({
-    ...base,
-    ...up,
-    name: up.name != null ? up.name : `${base.name}+`,
-    keywords: up.keywords != null ? up.keywords : base.keywords || [],
-    effects: up.effects != null ? up.effects : base.effects,
-    textTemplate: up.textTemplate != null ? up.textTemplate : base.textTemplate,
-    upgraded: true,
-  });
+export function mergeUpgrade(base, steps) {
+  return deepFreeze(applyUpgradeSteps(base, Array.isArray(steps) && steps.length ? steps : [{ k: 'authored' }]));
 }

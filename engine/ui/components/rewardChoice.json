@@ -1,0 +1,43 @@
+{
+  "id": "rewardChoice",
+  "description": "One reward offer on the reward screen. Reads src/ui/screens/reward.js, src/ui/components/rewardDoor.js and cardChoiceModal.js.",
+  "layout": {
+    "ref": "content/config/ui/components/choiceBody.json"
+  },
+  "viewModel": {
+    "props": {
+      "reward": "rewardRef"
+    },
+    "bindings": {
+      "kind": "$reward.kind",
+      "title": "$reward.title",
+      "card": "$reward.card",
+      "amount": "$reward.amount"
+    }
+  },
+  "states": [
+    "offered",
+    "claimed",
+    "skipped"
+  ],
+  "events": {
+    "tap": "reward.claim",
+    "skip": "reward.skip"
+  },
+  "children": [
+    {
+      "component": "card",
+      "slot": "face",
+      "props": {
+        "card": "$reward.card",
+        "level": "reward"
+      }
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

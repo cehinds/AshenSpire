@@ -1,0 +1,72 @@
+{
+  "offerCount": 3,
+  "price": 10,
+  "blacksmithChance": 25,
+  "itemsPerCategory": 3,
+  "priceTable": {
+    "card": {
+      "common": [
+        34,
+        41
+      ],
+      "uncommon": [
+        51,
+        62
+      ],
+      "rare": [
+        101,
+        120
+      ]
+    },
+    "relic": {
+      "common": [
+        105,
+        120
+      ],
+      "uncommon": [
+        150,
+        173
+      ],
+      "rare": [
+        203,
+        225
+      ]
+    },
+    "armament": {
+      "common": [
+        60,
+        75
+      ],
+      "uncommon": [
+        90,
+        113
+      ],
+      "rare": [
+        150,
+        180
+      ]
+    },
+    "armour": {
+      "common": [
+        60,
+        75
+      ],
+      "uncommon": [
+        90,
+        113
+      ],
+      "rare": [
+        150,
+        180
+      ]
+    },
+    "weaponArt": [
+      68,
+      90
+    ],
+    "flask": [
+      38,
+      60
+    ]
+  }
+}

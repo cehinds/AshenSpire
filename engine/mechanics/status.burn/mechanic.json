@@ -1,0 +1,26 @@
+{
+  "id": "status.burn",
+  "tag": "status.burn",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Burn",
+  "description": "At the start of its turn, loses HP equal to Burn stacks (ignores Block). One stack burns out each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.burn"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/ashenBlight.js",
+    "symbol": "ashenBlightSpellBuildup"
+  }
+}

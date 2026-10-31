@@ -1,4 +1,4 @@
-import { attackHitPreview, resolveAttackHit } from './stanceHit.js';
+import * as StanceHit from './stanceHit.js';
 // Counter attack reach, Accuracy and base Evasion are independent of protection
 // coverage and prepared Evade. One committed check gates the entire return.
 import { accuracyFor, evasionFor, parseEvasionArmor } from './combatRounds/resolver.js';
@@ -60,19 +60,23 @@ export function counterBaseEvasion(ctx, entity) {
   return evasionFor({ attrs, evasionArmor, shield: buckler ? 'buckler' : undefined }, { armor });
 }
 
+/** An entity's level: the run level object or number, a seat's character level, or 0 (an enemy without a level field). */
+export function levelOf(ctx, entity) {
+  const seat = seatOf(ctx, entity);
+  return finite(entity?.level?.level ?? entity?.level ?? seat?.characterLevel ?? (entity === ctx.player ? ctx.characterLevel : 0));
+}
 export function attackAccuracy(ctx, source, carrier) {
-  const seat = seatOf(ctx, source);
-  const level = source?.level?.level ?? source?.level ?? seat?.characterLevel ?? (source === ctx.player ? ctx.characterLevel : 0);
-  return accuracyFor({ attrs: timelineAttrs(attributesOf(ctx, source)), level: finite(level), tags: carrier?.tags || [], accuracy: finite(source?.accuracy) });
+  const level = levelOf(ctx, source);
+  return accuracyFor({ attrs: timelineAttrs(attributesOf(ctx, source)), level, tags: carrier?.tags || [], accuracy: finite(source?.accuracy) });
 }
 
 export function counterAttackPreview(ctx, source, target, carrier) {
   if (ctx.combatExpansionVersion !== 2 || !carrier?.counterReturnAttack) return null;
-  return attackHitPreview(ctx, source, target, carrier);
+  return StanceHit.attackHitPreview(ctx, source, target, carrier);
 }
 
 /** Counter replies use the same group Accuracy and Evasion decision as other offense. */
 export function resolveCounterAttack(ctx, source, target, carrier) {
   if (ctx.combatExpansionVersion !== 2 || !carrier?.counterReturnAttack) return null;
-  return resolveAttackHit(ctx, source, target, carrier);
+  return StanceHit.resolveAttackHit(ctx, source, target, carrier);
 }

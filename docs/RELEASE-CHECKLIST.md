@@ -123,8 +123,8 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §4 | A2–A4: bring the classes into the target band | G16 |
 | §4 | The Mana-aware A/B balance run | G17 |
 | §4 | Seat-tier tolerance is stated | G19 |
-| §5 | Click to impact ≤ 400 ms at Normal pacing | G20 |
-| §5 | The idle animation plays | G20 |
+| §5 | Ordered Core2 action responsiveness | G20 |
+| §5 | Resting fighters stay still in every rendering style | G20 |
 | §5 | Hit sound tiers | G20 |
 | §5 | Every HP hit shakes the screen, scaled by damage, and big hits stop | G20 |
 | §5 | Haptics | G20 |
@@ -229,3 +229,8 @@ moved. The comment names:
 
 After sign-off the owner cuts `release` from that RC SHA, merges it into `main`,
 tags `vX.Y.Z` on `main`, and publishes.
+
+## After the cut
+
+- [ ] Open the PR into `dev` that advances the candidate in `src/content/index.js` (`contentBundle.version`), so the next build is `<major>.<minor>.<candidate+1>.0` (docs/versioning.md, *A release cut advances the candidate*).
+- [ ] After `release` merges to `main`, open the PR into `dev` that advances MINOR and resets the candidate to 0 in `src/content/index.js`.

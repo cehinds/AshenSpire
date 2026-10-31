@@ -199,14 +199,14 @@ check('Mana authority is mostly WIS data and gameplay uses small-unit costs/rest
 });
 
 check('Mana semantic constant scan refuses legacy class-scale authority', () => {
-  const classSource = readFileSync(resolve(ROOT, 'src/content/classes.js'), 'utf8');
-  const ruleSource = readFileSync(resolve(ROOT, 'src/content/derivedStats.js'), 'utf8');
-  const cardSources = ['reaver', 'starseer', 'herald'].map((name) => readFileSync(resolve(ROOT, `src/content/cards/${name}.js`), 'utf8')).join('\n');
-  const flaskSource = readFileSync(resolve(ROOT, 'src/content/flasks.js'), 'utf8');
-  assert(!/maxMana\s*:\s*(40|60|80)\b/.test(classSource), 'legacy class Mana maximum remains');
-  assert(!/rules:\s*\{[\s\S]*?mana:\s*\{[\s\S]*?classField[\s\S]*?maxMana/.test(ruleSource), 'Mana still reads class maxMana');
-  assert(!/manaCost\s*:\s*10\b/.test(cardSources), 'legacy signature Mana cost remains');
-  assert(!/id:\s*['"]azureFlask['"][\s\S]*?restoreMana['"],\s*amount:\s*20\b/.test(flaskSource), 'legacy Azure restore remains');
+  const classSource = readFileSync(resolve(ROOT, 'content/source/classes.json'), 'utf8');
+  const ruleSource = readFileSync(resolve(ROOT, 'content/source/derivedStatRules.json'), 'utf8');
+  const cardSources = ['reaverCards', 'starseerCards', 'heraldCards'].map((name) => readFileSync(resolve(ROOT, `content/source/cards/${name}.json`), 'utf8')).join('\n');
+  const flaskSource = readFileSync(resolve(ROOT, 'content/source/flasks.json'), 'utf8');
+  assert(!/"maxMana"\s*:\s*(40|60|80)\b/.test(classSource), 'legacy class Mana maximum remains');
+  assert(!/\"rules\":\s*\{[\s\S]*?\"mana\":\s*\{[\s\S]*?classField[\s\S]*?maxMana/.test(ruleSource), 'Mana still reads class maxMana');
+  assert(!/"manaCost"\s*:\s*10\b/.test(cardSources), 'legacy signature Mana cost remains');
+  assert(!/"id":\s*"azureFlask"[\s\S]*?"restoreMana"[\s\S]*?"amount":\s*20\b/.test(flaskSource), 'legacy Azure restore remains');
 });
 
 check('co-op UI affordability and host execution agree for all three Mana signatures', () => {

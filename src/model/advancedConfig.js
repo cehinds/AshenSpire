@@ -61,7 +61,7 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   enemySpawnRow: 'F',
   playerSpawnColumn: '1',
   enemySpawnColumn: '6',
-  showFormationGrid: false,
+  showFormationGrid: true,
   movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
   tileActivation: 'hold', moveActivation: 'hold', selectionColor: '#59bd75',
   rowAScale: 1, rowBScale: 1, rowCScale: 1, rowDScale: 1, rowEScale: 1, rowFScale: 1,
@@ -456,6 +456,7 @@ function balanceGroup(path) {
 // File` abort the file on an unknown key, which is the defect #1238 fixed for
 // the preset cells. `retired` is the same flag a hidden creation mode's pool
 // row carries, and settings.js filters on it.
+const OFF_SCREEN_BALANCE_PATH = /^(coop|gauntlet)\./;
 const RETIRED_BALANCE_PATHS = new Set([
   'energy',
   'draw',
@@ -611,7 +612,7 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
   if (typeof value === 'number' || typeof value === 'boolean') {
     const joined = path.join('.');
     const domain = typeof value === 'number' ? { ...numberDomain(value), ...(BALANCE_DOMAINS[joined] || {}), ...(SIGNED_CARD_BONUS.test(joined) ? SIGNED_BONUS : {}), ...(joined.startsWith('progressionFeats.') && joined.endsWith('.hpPct') ? PERCENT : {}) } : {};
-    const described = balanceNote(joined, { bundle, parent });
+    const described = balanceNote(path, { bundle, parent });
     rows.push({
       cat: 'Advanced',
       advancedGroup: balanceGroup(joined),
@@ -636,6 +637,9 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       // `inert` as well as `retired`: nothing reads it, so a stored value is
       // never applied — see `configuredContentBundle`.
       ...(RETIRED_BALANCE_PATHS.has(joined) ? { retired: true, inert: true } : {}),
+      // Owner, 2026-10-26: the co-op and headless-gauntlet tuning rows left the screen with the co-op content.
+      // `retired` alone: the key stays importable and a stored value still applies; only the row is gone.
+      ...(OFF_SCREEN_BALANCE_PATH.test(joined) ? { retired: true } : {}),
     });
     return rows;
   }
@@ -795,11 +799,11 @@ function presentationRows() {
       note: 'Outline and highlight color for this side of the formation grid.',
     })),
     {
-      cat: 'Advanced', advancedGroup: 'Interface',
+      cat: 'Display',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
-      presentationKey: 'showFormationGrid', def: false,
-      label: 'Show formation grid',
-      note: 'Show labeled positions for the selected grid, up to A1–F6. The left half belongs to your team; the right half to enemies.',
+      presentationKey: 'showFormationGrid', def: true,
+      label: 'Show battlefield grid',
+      note: 'Show faint formation lines behind combatants.',
     },
     ...PRESENTATION_ROWS.map((row) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'number',

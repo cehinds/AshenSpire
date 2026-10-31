@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {readLayeredArt} from './layered-art.mjs';
 // tools/bundle.mjs — produce the built game: the pack-shaped HTML at
 // build/AshenSpire.html (its packs/ and objects/ beside it), or with
 // --single-file the self-contained light single file at
@@ -14,6 +15,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
+import { cardCutoutAssets } from './card-cutout-assets.mjs';
 
 import { createHash } from 'node:crypto';
 import { readdirSortedSync } from './dirorder.mjs';
@@ -22,6 +24,7 @@ import { MOBILE_ASSET_DIR, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
 import { writePacks, inBuildOrDist, objectPath } from './asset-pack.mjs';
 import { artDir, artPath, treeOf } from './art-source.mjs';
+import { stripCssComments } from './css-strip.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_HIGH, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
@@ -582,7 +585,7 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
     const path = catalog.filePaths[file] || `assets-display/alternative/${file}`;
     if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(path) || !path.endsWith('/' + file)) fail(`Invalid display art path: ${path}`);
-    const bytes = readFileSync(resolve(ROOT, path));
+    const bytes = readFileSync(artPath(path));
     if (createHash('sha256').update(bytes).digest('hex') !== expectedHash) {
       fail(`Alternative art changed: ${file}. Run python tools/alternative-art-build.py to refresh its source identity.`);
     }
@@ -597,6 +600,22 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
     () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n`
       + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) alternativeArtMap[alias] = alternativeArtMap[key];\n` : '')
       + '/* ALTERNATIVE_ART_END */'));
+}
+const layeredArtId='src/ui/layeredArt.js';
+if(!EXTERNAL_ART&&sources.has(layeredArtId)){
+ const map=Object.fromEntries(readLayeredArt(ROOT).map(({id,bytes})=>[id,'data:image/webp;base64,'+bytes.toString('base64')]));
+ const markers=/\/\* LAYERED_ART_START \*\/[\s\S]*?\/\* LAYERED_ART_END \*\//;
+ if(!markers.test(sources.get(layeredArtId)))fail('Layered art markers missing');
+ sources.set(layeredArtId,sources.get(layeredArtId).replace(markers,()=>`/* LAYERED_ART_START */\nconst layeredArtMap = ${JSON.stringify(map)};\n/* LAYERED_ART_END */`));
+}
+// The same PNG components ship through the common pack on web and inline in
+// the portable game; neither build depends on proposal pages being hosted.
+const cutoutModule = 'src/ui/layeredCardArt.js';
+if (!EXTERNAL_ART && sources.has(cutoutModule)) {
+  const map = Object.fromEntries(cardCutoutAssets(ROOT).map(a => [a.id, 'data:image/png;base64,' + a.bytes.toString('base64')]));
+  sources.set(cutoutModule, sources.get(cutoutModule).replace(
+    /\/\* CARD_CUTOUTS_START \*\/[\s\S]*?\/\* CARD_CUTOUTS_END \*\//,
+    () => '/* CARD_CUTOUTS_START */\nconst cardCutoutMap = ' + JSON.stringify(map) + ';\n/* CARD_CUTOUTS_END */'));
 }
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
@@ -670,7 +689,7 @@ if (EXTERNAL_ART) {
       const cssAbs = resolve(ROOT, href);
       if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
       try {
-        externalStyles.set(href, externalizeCss(readText(cssAbs), { idFor: idFor(cssAbs), inlineData, template }));
+        externalStyles.set(href, externalizeCss(stripCssComments(readText(cssAbs)), { idFor: idFor(cssAbs), inlineData, template }));
       } catch (e) {
         fail(`${href}: ${e.message}`);
       }
@@ -904,7 +923,7 @@ let inlinedAssets = 0;
 let inlinedAssetBytes = 0;
 
 function inlineCssUrls(css, cssAbs) {
-  return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
+  return stripCssComments(css).replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
     if (/^(data:|https?:|\/\/)/i.test(ref)) return whole;
     const assetAbs = resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]);
     const ext = extname(assetAbs).toLowerCase();
@@ -1107,6 +1126,13 @@ const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire']
 // Web/share metadata (description, og:*, icon, theme-color) — copied from index.html.
 let headMeta;
 try { headMeta = headMetaTags(indexHtml); } catch (e) { fail(e.message); }
+// First-paint splash (style + element), copied from index.html like the head
+// meta so the two cannot drift. The style goes BEFORE the big stylesheets and the
+// element sits before the 13 MB script, so the browser can paint it while the
+// script is still parsing. #app:not(:empty)~#boot-splash hides it once the game mounts.
+const splashStyle = /<style\b[^>]*\bid=["']boot-splash-style["'][^>]*>[\s\S]*?<\/style>/i.exec(indexHtml);
+const splashEl = /<div\b[^>]*\bid=["']boot-splash["'][^>]*>[\s\S]*?<\/div>\s*<\/div>/i.exec(indexHtml);
+if (!splashStyle || !splashEl) fail('index.html is missing the #boot-splash element or its #boot-splash-style block');
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1117,10 +1143,12 @@ const html = `<!DOCTYPE html>
   <meta name="mobile-web-app-capable" content="yes" />
   <title>${title}</title>
 ${headMeta.map((tag) => '  ' + tag).join('\n')}
+  ${splashStyle[0]}
 ${styleBlocks.join('\n')}
 </head>
 <body>
   <main id="app" aria-live="polite"></main>
+  ${splashEl[0]}
   <script>
 ${runtime}
   </script>

@@ -6,26 +6,36 @@ import { playingCardDefinition, staticCardTokens } from '../src/model/playingCar
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_CHARACTERS } from '../src/model/cardFaceProjection.js';
 import { cardDetailHtml, cardPlainText } from '../src/ui/components/card.js';
+import { tokenRe } from '../src/model/validate.js';
 
 const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
 const plain = html => html.replace(/<[^>]*>/g, '');
 const defOf = (cardId, extra = {}) => playingCardDefinition(reg, { cardId, ...extra }, { rules });
 const project = (def, preview = null) => {
   const tokens = { ...staticCardTokens(def), ...preview?.tokens };
-  const authoredHtml = def.textTemplate.replace(/\{([\w.]+)\}/g, (match, key) => tokens[key] ?? match);
+  const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
   return cardFaceProjection(def, { lines: cardFaceLines(def, preview, reg), authoredHtml, registries: reg,
     effects: preview?.chargedEffects || def.effects });
 };
 
 test('every authored base, upgrade and rank projects whole short clauses without changing definitions', () => {
   let checked = 0;
+  const longFormulaReadings = new Map([
+    ['base.scale-damage-taken', 'half of HP lost this turn'],
+    ['base.growth-per-type', 'per distinct card type played this turn'],
+    ['base.damage-per-use', 'per play of this card this combat'],
+  ]);
   for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }, { abilityRank: 1 }, { abilityRank: 5 }]) {
     const def = defOf(card.id, extra), before = JSON.stringify(def), projection = project(def);
     assert.equal(projection.maxLines, 3);
     assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 2, card.id);
     const text = projection.clauses.map(line => plain(line.html)).join('; ');
     assert.ok(text.length <= FACE_EFFECT_CHARACTERS, `${card.id}: ${text}`);
-    assert.doesNotMatch(text, /Inspect full effect|\{|\.\.\.|…/, card.id);
+    if (longFormulaReadings.has(card.id)) {
+      assert.equal(text, 'Inspect full effect', 'a long formula moves whole to Information');
+      const detail = plain(cardDetailHtml(reg, { cardId: card.id, ...extra }, { rules }));
+      assert.ok(detail.includes(longFormulaReadings.get(card.id)), `${card.id}: full formula remains in Information`);
+    } else assert.doesNotMatch(text, /Inspect full effect|\{|\.\.\.|…/, card.id);
     assert.equal(JSON.stringify(def), before);
     checked++;
   }

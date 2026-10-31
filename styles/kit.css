@@ -222,16 +222,23 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .as-seg button:disabled { color: var(--muted); background: transparent; }
 
 /* Toggle — a binary setting. The knob is the state; the pill is the track. */
-.as-toggle {
+.as-toggle, .as-switch-track {
   position: relative; display: inline-block; flex: 0 0 auto;
   width: 5.2rem; height: 2.8rem; min-height: 0; padding: 0;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-pill);
   cursor: pointer;
 }
-.as-toggle .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
-.as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
-.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
-.as-toggle:disabled { opacity: 0.55; cursor: default; }
+.as-toggle .knob, .as-switch-track .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
+.as-toggle.on, .as-toggle[aria-checked="true"], .as-switch-input:checked + .as-switch-track { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
+.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob, .as-switch-input:checked + .as-switch-track .knob { left: calc(100% - 2.3rem); background: var(--gold); }
+.as-toggle:disabled, .as-switch-input:disabled + .as-switch-track { opacity: 0.55; cursor: default; }
+/* The switch is a real checkbox (role="switch"): the input covers the label so it takes every tap, Space toggles it
+   from the keyboard, and the track beside it draws the state and the focus ring. */
+.as-switch { position: relative; display: inline-flex; flex: 0 0 auto; cursor: pointer; }
+.as-switch-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.as-switch-input:disabled { cursor: default; }
+.as-switch-input:is(:focus-visible, .gp-focus) + .as-switch-track { outline: 2px solid var(--gold); outline-offset: 2px; }
+.as-switch::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
 /* The drawn pill is 2.8rem × 5.2rem; the finger gets the tap floor around it
    on both axes. `overflow: visible` because `button { overflow: hidden }`
    (CONTAINMENT, above) clipped this pseudo to the pill: measured 17–33 px of
@@ -348,6 +355,8 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
 }
 .as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+/* Original class symbols follow the existing 2.25rem font inside its 3rem slot. */
+.as-option .og > .engraved-glyph { width:1em; height:1em; }
 .cz-keepsake .og img { display: block; width: 3rem; height: 3rem; object-fit: contain; }
 .as-option .relic-art { width: 3rem; height: 3rem; }
 .tray-icon > .relic-art { width: 100%; height: 100%; }
@@ -627,7 +636,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 
 /* ═══ PAGE-LEVEL ═══════════════════════════════════════════════════════════ */
 /* A phone: the inset stays one number, the note goes, every row fills. */
-@media (max-width: 640px) {
+@container game-viewport (max-width: 640px) {
   .as-modal, .modal { --modal-inset: 1rem; }
   .modal-foot, .as-foot { align-items: stretch; }
   .modal-foot-note, .as-foot-note { display: none; }
@@ -636,7 +645,7 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
   .modal-btnrow > button, .as-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
   .as-railed { grid-template-columns: 10rem minmax(0, 1fr); }
 }
-@media (prefers-reduced-motion: reduce) { .as-toggle .knob { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .as-toggle .knob, .as-switch-track .knob { transition: none; } }
 
 /* ═══ INPUTS INSIDE A ROW — the kit's field, one look ══════════════════════ */
 .as-row.setting input[type="text"], .as-row.setting input[type="number"] {
@@ -776,6 +785,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .rebind-ctl .as-keycap { min-width: 4.4rem; min-height: var(--tap-floor); padding-inline: 0.8rem; font-size: 1.2rem; color: var(--gold); }
 .rebind-ctl .rebind-btn { padding-inline: 1.2rem; }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.9s ease-in-out infinite alternate; }
+:root[data-performance='lite'] .rebind-btn.listening { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
 .pad-live { color: var(--green); }
 .pad-off { color: var(--muted); }
 .controls-pane { padding: 0; }
@@ -854,6 +864,11 @@ input[type="range"] { min-height: var(--tap-floor); }
     inset 0 0 0 5px color-mix(in srgb, var(--green) 45%, #695334);
 }
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
+/* Lite: filters force an offscreen pass per card. Selection is a ring, unaffordable a flat dim; no filter on either. */
+:root[data-performance='lite'] .card.selected, :root[data-performance='lite'] .card[data-selected="true"], :root[data-performance='lite'] .as-card[data-selected="true"] {
+  filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 12px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+:root[data-performance='lite'] .card.unaffordable:not(.illustrated-card) { filter: none; opacity: 0.6; }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
 .card .card-costs { display: contents; }
@@ -1148,6 +1163,39 @@ input[type="range"] { min-height: var(--tap-floor); }
 .class-pick.quiet { opacity: 0.7; }
 .class-pick.quiet > .cp-body > h3 { color: var(--muted); }
 .class-pick.locked:hover { border-color: var(--line); }
+/* The configured next class stays readable and focusable behind a dark veil.
+   Only its decorative lock and unlock instruction rise above the dimmed face. */
+.class-pick.configured-class-lock.locked[data-class] {
+  display:grid; grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);
+  gap:16px; min-height:80px; opacity:1;
+}
+.class-pick.configured-class-lock.locked[data-class] > .og { position:absolute; left:15px; }
+.class-pick.configured-class-lock.locked[data-class] > .ob { grid-column:1; padding-left:40px; }
+.class-pick.configured-class-lock.locked[data-class] .on { white-space:normal; }
+.class-pick.configured-class-lock.locked[data-class] > .class-unlock-hint {
+  grid-column:3; position:relative; z-index:3; justify-self:end;
+  max-width:100%; white-space:normal; color:var(--parchment);
+}
+.class-pick.configured-class-lock.locked[data-class] > .class-lock-veil {
+  position:absolute; inset:0; z-index:2; display:grid; place-items:center;
+  border-radius:inherit; background:rgba(8,9,10,.48); pointer-events:none;
+  color:#b89a54;
+}
+.class-lock-veil > svg { display:block; width:56px; height:56px; }
+/* Compact tiles reserve a band above and below the centered silhouette. */
+.cc-choice-collection[data-view="grid"] .class-pick.configured-class-lock.locked[data-class] { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock > .og { display:none; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock .od { display:none; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
+@container game-viewport (max-width:600px) {
+  .class-pick.configured-class-lock.locked[data-class] { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
+  .class-pick.configured-class-lock.locked[data-class] > .og { display:none; }
+  .class-pick.configured-class-lock.locked[data-class] > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
+  .class-pick.configured-class-lock.locked[data-class] .od { display:none; }
+  .class-pick.configured-class-lock.locked[data-class] > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
+}
+
 .class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
 .class-pick > .cp-body, .class-pick > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .class-pick h3 { margin: 0; display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -1285,7 +1333,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 /* The game's UI zoom can shrink an entire desktop composition on a phone.
    Keep these text-led offers readable and their native Buy targets tappable. */
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   #shop-skillBooks > .shop-book-offer {
     grid-template-columns:
       max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1)))
@@ -1535,7 +1583,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 
 /* ═══ SHRINE — equal-height option headers, with expanding fold content ═══ */
 .shrine-option-list, .shrine-option-grid {
-  --shrine-card-h: max(6rem, min(var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 8.4rem)));
+  --shrine-card-h: max(6rem, min(var(--shrine-folded-card-height, calc(10 * var(--view-vh, 1vh))), var(--shrine-folded-card-max-height, 8.4rem)));
 }
 .shrine-option-list { width: min(100%, 44rem); margin-inline: auto; flex-direction: column; align-items: stretch; gap: 1.05rem; }
 .shrine-option-list > .class-pick { width: 100%; }
@@ -1562,6 +1610,9 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    field it was won on (or the map, or a bare backdrop after a reload). Rows
    are OptionCards; the foot carries the hold copy and Continue on the ladder. */
 .reward-backdrop { min-height: 100%; }
+/* ONE LAYOUT AT EVERY WIDTH (owner, 2026-10-26): the phone's single column,
+   capped at a phone-like width and centred, so desktop reads the same. */
+.modal.reward-door[data-size]:has(.reward-claim-layout) { --modal-rung-width: calc(480px / var(--ui-zoom, 1)); width: var(--modal-rung-width); max-width: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door[data-victory-compact='true'] > .modal-head { justify-content: center; }
 .reward-door[data-victory-compact='true'] > .modal-head .modal-head-id { align-items: center; text-align: center; }
@@ -1574,7 +1625,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-compact-more { flex: none; border: 0; padding: 0 .15rem; background: transparent; color: var(--gold); font: inherit; cursor: help; }
 .reward-door .reward-compact-more[hidden] { display: none; }
 .reward-door .reward-compact-value { justify-self: end; white-space: nowrap; color: var(--gold); }
-.reward-door .reward-compact-list { box-sizing: border-box; height: min(calc(var(--receipt-rows, 4) * 2.1rem + .7rem), 32vh); margin: 0; padding: .35rem .55rem; list-style: none; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; border: 1px solid var(--line); border-radius: var(--r-4); background: color-mix(in srgb, var(--panel) 72%, var(--bg)); }
+.reward-door .reward-compact-list { box-sizing: border-box; height: min(calc(var(--receipt-rows, 4) * 2.1rem + .7rem), calc(32 * var(--view-vh, 1vh))); margin: 0; padding: .35rem .55rem; list-style: none; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; border: 1px solid var(--line); border-radius: var(--r-4); background: color-mix(in srgb, var(--panel) 72%, var(--bg)); }
 .reward-door .reward-compact-row { min-height: 2.1rem; display: flex; align-items: center; justify-content: space-between; gap: .7rem; min-width: 0; }
 .reward-door .reward-compact-row-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .reward-door .reward-compact-row-value { flex: none; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
@@ -1585,9 +1636,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* A reward's intrinsic title width must not expand into the XP column. */
 .reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
 .reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
-/* W1t: reward choices beside their claim status; stacked on narrow hosts. */
-.reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
-:root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+/* W1t: reward choices above their claim status, one column at every width. */
+.reward-door .reward-claim-layout { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); align-items: start; }
 .reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
 .reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
 .reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
@@ -1640,7 +1690,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
 .reward-door .rp-layered-bar .rp-under { background: #62c686; z-index: 1; }
 .reward-door .rp-layered-bar .rp-over { background: #d7b64b; z-index: 2; }
-.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
+.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; justify-content: safe flex-end; max-width: calc(100% - 1.1rem); color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
 .reward-door .rp-layered-bar.rp-bar-ready .rp-under, .reward-door .rp-layered-bar.rp-bar-ready .rp-over { background: #6ab8f5; }
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
 .reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
@@ -1669,6 +1719,14 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
   to { transform: translateY(-2px); }
 }
 .reward-door .reward-level-summary { margin: 0 0 .6rem; color: #a7d9ff; font-variant-numeric: tabular-nums; }
+.reward-door .reward-skill-summary + .reward-skill-summary { margin-top: 1.2rem; }
+.reward-door .reward-skill-meter { height: .4rem; background: var(--line); border-radius: .2rem; overflow: hidden; margin-bottom: .65rem; }
+.reward-door .reward-skill-fill { display: block; height: 100%; background: var(--frost); animation: reward-skill-fill .7s ease-out; }
+.reward-door .reward-skill-effects { color: var(--text); font-variant-numeric: tabular-nums; }
+.reward-door .reward-skill-next { margin: .5rem 0 0; color: var(--muted); }
+@keyframes reward-skill-fill { from { width: var(--skill-before); } }
+.reduced-motion .reward-skill-fill { animation: none; }
+@media (prefers-reduced-motion: reduce) { .reward-skill-fill { animation: none; } }
 .reward-door .reward-level-rewards { margin-bottom: .6rem; }
 .reward-door .reward-level-log { margin: .4rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
 .reward-door .reward-level-line { color: #a7d9ff; font-variant-numeric: tabular-nums; }
@@ -1679,14 +1737,14 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
 .reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
-:root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
-:root[data-layout='narrow'] .reward-door .reward-progress-row {
+.reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
+.reward-door .reward-progress-row {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
-:root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
+.reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
+.reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
+.reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
 /* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
@@ -1697,26 +1755,29 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* The column count follows the offer (--choice-count, set from JS): one to four
    options, each column capped at 16rem and the row centred, so a lone option
    sits in the middle rather than stretching across the door. */
-.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
-.reward-door .reward-choice-option > .equipment-poker-card { width: 100%; max-width: 220px; margin-inline: auto; flex: 0 0 auto; }
-.reward-door .reward-choice-option > .card { align-self: center; zoom: 1; }
-.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
-.reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, 1.5vw, 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
-.reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, 1.25vw, 1.35rem); overflow-wrap: anywhere; }
-@media (max-width: 520px) {
-  /* Four options still share one row on a 390px phone: the faces zoom down by
-     count (1.68 / count, so three options keep the .56 they had). */
-  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 4), minmax(0, 1fr)); }
+/* Every face uses the shared glance width, independent of its card family or
+   selection. Equal grid rows and flexible buttons let the longest rules set
+   their common height, including when phone choices wrap onto a second row. */
+.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 152px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
+.reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 0 3.5rem; height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+.reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, calc(1.25 * var(--view-vw, 1vw)), 1.35rem); overflow-wrap: anywhere; }
+@container game-viewport (max-width: 520px) {
+  /* Equal tracks keep all offered faces and buttons comparable on phones.
+     Text wraps in the shared button row rather than shrinking the hit area. */
+  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
   .reward-door .reward-choice-option { gap: .4rem; }
-  .reward-door .reward-choice-option > .card { zoom: min(1, calc(1.68 / var(--choice-count, 3))); }
   .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
-  .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(11px, 3.2vw, 14px); }
-  .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(10px, 2.9vw, 12.5px); }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
 }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
-.reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
+.reward-door .reward-choice-option > .card:hover,
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
@@ -2089,7 +2150,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .customize .disc-face .r-trail { flex-shrink: 1; overflow-wrap: anywhere; }
 .customize .cc-primary-stat .disc-summary { white-space: normal; }
 .customize .cc-preview-side > .cz-portrait { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 24rem; border: 0; }
-@media (max-width: 900px) {
+@container game-viewport (max-width: 900px) {
   .customize .cc-character-grid { grid-template-columns: minmax(0, 1fr); }
   .customize .cc-preview-side { min-height: 0; }
   .customize .cc-preview-side > .cz-portrait { flex: none; height: 24rem; }
@@ -2157,10 +2218,22 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }
+/* Refusal notes are rows, not a full-height flex basis in this column. */
+.smith-preview-region > .as-reasonnote { flex: 0 0 auto; }
 .mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
    so the pinned strip sits flush on the card's foot. */
 .smith-preview-card { flex: 1 1 auto; min-height: 0; width: 100%; gap: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: 0; }
+.card-upgrade-modal .smith-candidate-region > .as-rail { gap: .3rem; }
+.card-upgrade-modal .card-upgrade-row { padding: .35rem .6rem; gap: .6rem; }
+.card-upgrade-modal .smith-cost-strip { margin-top: .5rem; padding: .5rem 0; }
+.card-upgrade-modal .smith-confirm { margin-top: auto; flex-shrink: 0; }
+/* The fold holds two small cards (current, upgraded) side by side; on a phone they wrap rather than scroll sideways. */
+.card-upgrade-modal .smith-fold-detail { grid-template-columns: minmax(0, 1fr); }
+/* Unscoped on purpose: the same two faces are drawn inside the hold-to-confirm decision dialog, outside the modal. */
+.card-upgrade-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem 1.2rem; min-width: 0; }
+.card-upgrade-face { min-width: 0; padding: 1rem 0.4rem 0 0.4rem; }
+.card-upgrade-face .card { transform: none !important; }
 /* The summary: the selected item — its art beside its name, tier, kind and
    tags — one column, the rows flush so the stats row follows. */
 .smith-summary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding-bottom: 0.6rem; }
@@ -2174,21 +2247,42 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   margin-top: 0.9rem; padding: 0.8rem 0 1.28rem; border-top: 1px solid var(--line); background: var(--panel);
 }
 .smith-cost-strip > .as-blocker.pinned { margin: 0; }
-.smith-selected-head > .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-selected-head > .sr-name,
+.smith-upgrade-modal .smith-upgrade-fold > summary .sr-name,
+.smith-upgrade-modal .smith-economy-values {
+  font-family: var(--font-body); font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1)));
+  font-weight: 600; line-height: 1.2; color: var(--parchment);
+}
 .smith-preview-economy { display: flex; align-items: baseline; }
-.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; color: var(--parchment); }
 .smith-economy-values > b { white-space: nowrap; font-weight: 600; }
 .smith-cost-pair > .sp-k { font-size: 1rem; letter-spacing: 0.18em; }
 .smith-cost-pair > .sp-k > i, .smith-cost-pair > .sp-v > i { font-style: normal; color: var(--muted); padding-inline: 0.1em; }
 .smith-preview-economy.affordable .smith-cost-available, .confirmation-cost.affordable .smith-cost-available { color: var(--green); }
 .smith-preview-economy.unaffordable .smith-cost-available, .confirmation-cost.unaffordable .smith-cost-available { color: var(--danger, var(--ember)); }
+/* Leave room for italic glyph overhang inside clipped delta flex boxes. */
+.smith-preview-card .as-delta { padding-inline-end: 0.2em; }
 .smith-preview-card .smith-fold-values { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem 1rem; }
 .smith-preview-card .smith-data-heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .smith-preview-card .sr-vals { flex-direction: column; align-items: flex-end; gap: 0.3rem; }
 /* A fact row that runs out of room stacks its values under its name. */
 .smith-preview-card > .as-statrow.flat { flex-wrap: wrap; }
-.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; }
+.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; width: auto; max-width: 100%; }
 .smith-preview-card > .as-statrow.flat > .sr-vals { flex: 1 1 14rem; }
+@media (max-width: 440px) {
+  .smith-preview-card > .as-statrow.flat { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .smith-preview-card > .as-statrow.flat > .sr-id,
+  .smith-preview-card > .as-statrow.flat > .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
+  .smith-preview-card > .as-statrow.flat > .sr-vals { margin-left: 0; align-items: flex-start; text-align: left; }
+  .smith-preview-card .smith-fold-values { justify-content: flex-start; }
+  .smith-preview-card .smith-requirement small { text-align: left; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary > .as-statrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-id,
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-hint { overflow-wrap: normal; word-break: normal; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { margin-left: 0; justify-content: space-between; }
+}
 .smith-stat-costs > i { font-style: normal; }
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
 .smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
@@ -2289,13 +2383,15 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   background: var(--ember); box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55); opacity: 0;
   animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
 }
+/* Lite: the rising ash is decoration only; hide it. */
+:root[data-performance='lite'] .startup-ash-field { display: none; }
 @keyframes startupAshRise {
   0% { transform: translate3d(0, 0, 0); opacity: 0; }
   14% { opacity: 0.62; }
   72% { opacity: 0.28; }
   100% { transform: translate3d(1.4rem, -78rem, 0); opacity: 0; }
 }
-@media (max-width: 640px) {
+@container game-viewport (max-width: 640px) {
   .startup-gate { padding: 1.2rem 0.8rem; }
   .startup-gate > .as-titlemenu .tm-foot { margin-top: 2.4rem; }
 }
@@ -2379,6 +2475,9 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
 }
+/* Asleep under a door (modalManager page chrome): drop beneath the veil (z 500)
+   instead of floating above a dialog it cannot answer. */
+.as-dock[inert], .as-dock[data-page-locked] { z-index: calc(var(--layer-sheet) - 50); } /* under the modal veil (--layer-sheet); the page lock marks data-page-locked, not inert */
 .as-dock > .as-tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
 .as-dock .as-tab { display: inline-flex; align-items: center; gap: 0.5rem; }
 
@@ -2439,7 +2538,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-pane > .as-options.grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
 .screen > .as-pane { --modal-inset: 1.4rem; width: min(100%, 76rem); flex: 0 1 auto; max-height: 100%; }
 .screen > .as-railed { --modal-inset: 1.4rem; container-type: inline-size; width: min(100%, 96rem); flex: 1 1 auto; min-height: 0; max-height: 100%; background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden; }
-@media (max-width: 640px) { .screen > .as-railed, .screen > .as-pane { --modal-inset: 1rem; } }
+@container game-viewport (max-width: 640px) { .screen > .as-railed, .screen > .as-pane { --modal-inset: 1rem; } }
 /* A KitLine that lists rather than explains: no help underline, no help cursor. */
 .as-kitline.plain .ki { cursor: default; }
 .as-kitline.plain .ki .kn { border-bottom: 0; }
@@ -2534,6 +2633,8 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-meter.skinny { --meter-h: 4px; }
 .as-meter.skinny > .m-plate { display: none; }
 .as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
+/* Lite: pulse-gold animates box-shadow (paint every frame); show one still glow. */
+:root[data-performance='lite'] .as-meter.pulse .m-fill { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
 .reduced-motion .as-meter.pulse .m-fill { animation: none; }
 /* A dashed rim says "this length is the floor, not the data". */
 .as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }
@@ -2701,7 +2802,7 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
    every width, which is the whole point of the middle track — and what yields
    is DETAIL: a trail keeps the first part of each compound fact and drops the
    rest (a build keeps its number, drops its source). */
-@media (max-width: 640px) {
+@container game-viewport (max-width: 640px) {
   .as-band-row.thirds { gap: 0.5rem; }
   /* TWO SELECTORS, NOT ONE, and the phone photograph is why. A trail carries two
      shapes of compound fact: the build stamp (number · source) and a progress
@@ -3089,8 +3190,8 @@ body.pad-mode .as-keycap.float { display: none; }
   border-bottom: 1px solid var(--line); background: var(--bg-raise);
   pointer-events: none; user-select: none; cursor: default;
 }
-.mapscreen > .act-route-strip > .as-title-s { max-width: 32vw; font-size: 1.1rem; letter-spacing: 0.12em; }
-@media (max-width: 700px) {
+.mapscreen > .act-route-strip > .as-title-s { max-width: calc(32 * var(--view-vw, 1vw)); font-size: 1.1rem; letter-spacing: 0.12em; }
+@container game-viewport (max-width: 700px) {
   .mapscreen > .act-route-strip {
     grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 6px 10px;
   }
@@ -3142,7 +3243,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
    the reading under the pile. Only the two columns scroll. */
 .spent-pile-modal .pile-body { display: flex; min-height: 0; }
 .spent-pile-modal .pile-body > .as-railed { flex: 1 1 auto; min-height: 0; width: 100%; }
-.spent-pile-modal .pile-pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; min-height: 0; padding-inline-start: 2.5vw; }
+.spent-pile-modal .pile-pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(2 * var(--view-vw, 1vw)); min-height: 0; padding-inline-start: calc(2.5 * var(--view-vw, 1vw)); }
 .spent-pile-modal :is(.pile-collection, .pile-detail) { min-height: 0; overflow: auto; }
 .spent-pile-modal .pile-detail { padding: var(--modal-inset); border-left: 1px solid var(--line); font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.5; color: var(--ink-dim); }
 .spent-pile-modal .pile-detail .tt-title { font-size: calc(18px / var(--ui-zoom, 1)); font-weight: 600; color: var(--parchment); margin-bottom: .4em; }
@@ -3163,7 +3264,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
    took two lines across a 390 px screen and its second line landed on the boss's
    own nameplate underneath (photographed at 390x844, ?shot=boss). The splash is
    an announcement, so the type yields before the box does. */
-@media (max-width: 640px) {
+@container game-viewport (max-width: 640px) {
   .boss-intro .bi-name { font-size: 3.6rem; }
   .boss-intro .bi-stack { max-width: 88%; }
 }
@@ -3247,7 +3348,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 .flask-inspect-art { width: 12rem; height: 12rem; font-size: 5.3rem; }
 .flask-inspect-art .flask-identity, .flask-inspect-art .flask-art { width: 100%; height: 100%; }
 .flask-inspect-lines .as-prose + .as-prose { color: var(--muted); font-size: 1.2rem; }
-@media (max-width: 640px) {
+@container game-viewport (max-width: 640px) {
   .flask-inspect-body { flex-direction: column; align-items: center; text-align: center; }
   .flask-inspect-lines { align-items: center; }
 }
@@ -3264,7 +3365,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
    separator between two buttons is dropped when it wraps because a border-left
    on the first button of a new line is a hairline hanging off nothing; the
    group's own border still says where the control begins and ends. */
-@media (max-width: 700px) {
+@container game-viewport (max-width: 700px) {
   /* The trail has to be ALLOWED to be narrower than its contents first: it is
      `flex: 0 0 auto` on a nowrap row, so the group was handed its max-content
      295 px inside a 311 px pane and never wrapped at all (measured; wrapping
@@ -3399,13 +3500,13 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   background: linear-gradient(140deg, #241c16, #17120f);
 }
 .inventory-detail > .inventory-model {
-  width: clamp(8.4rem, 16vw, 14rem); height: auto; aspect-ratio: 1;
+  width: clamp(8.4rem, calc(16 * var(--view-vw, 1vw)), 14rem); height: auto; aspect-ratio: 1;
   padding: .7rem; background: radial-gradient(ellipse at 50% 35%, #403527, #18130f 76%);
 }
 .inventory-information { min-width: 0; }
 .inventory-information > .inventory-kind { margin-block: .45rem 1rem; }
 .inventory-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1rem; }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .inventory-face { gap: .65rem; flex-wrap: wrap; }
   .inventory-face > .inventory-item-art { width: 3.6rem; height: 3.6rem; }
   .inventory-face > .r-trail { width: 100%; justify-content: flex-start; }
@@ -3487,6 +3588,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-shell-body > *, .armoury .armoury-trays { flex: 0 0 auto; }
 .armoury-card-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(230px / var(--ui-zoom, 1)))); justify-content: center; align-items: start; gap: calc(20px / var(--ui-zoom, 1)); padding: calc(14px / var(--ui-zoom, 1)) 0; }
 .armoury-card-gallery > .card { --card-w: 100%; width: 100%; height: auto; aspect-ratio: var(--card-ratio); min-height: 0; max-height: none; transform: none; margin: 0; box-sizing: border-box; --card-art-h: 5rem; --card-name-h: 3.5rem; }
+/* A short phone (320x740): the title row, the lead and a 230px card are taller than the pane, so the first
+   card hung under Back. A 200px track keeps the 2:3 card whole above the fold; the text keeps its 15px floor. */
+@media (max-height: 760px) {
+  .armoury-card-gallery { grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(190px / var(--ui-zoom, 1))), calc(200px / var(--ui-zoom, 1)))); }
+}
 .armoury-card-gallery .cname { font-size: max(1.6rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.2; white-space: normal; }
 .armoury-card-gallery .ctext { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.35; }
 .armoury-card-gallery .cost { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
@@ -3743,7 +3849,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   clip-path:inset(0 calc((1 - var(--hold,0)) * 100%) 0 0);
   box-shadow:inset 0 0 0 3px #f6d46f;
 }
-@media(max-width:360px) {
+@container game-viewport (max-width:360px) {
   .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors[data-view="grid"] { grid-template-columns:minmax(0,280px); }
 }
 
@@ -3894,7 +4000,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(220px, .85fr) minmax(0,1.15fr); gap:24px; align-items:start; }
 .cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(auto-fit,minmax(180px,220px)); gap:16px; }
 .cc-equipment-details { padding:16px; border:1px solid #74603c; border-radius:8px; min-width:0; }
-@media (max-width:700px) { .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); } }
+@container game-viewport (max-width:700px) { .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); } }
 
 .card-inspection-art > .card { width:220px; height:308px; min-width:0; max-width:100%; margin:0 auto; transform:none; }
 .card-inspection-art > .card .ctext { overflow:hidden; text-overflow:ellipsis; }
@@ -3912,7 +4018,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .equipment-poker-explanations .inspection-effect:last-of-type { margin-bottom:0; }
 .as-tip .ctext { white-space:normal; max-height:none; overflow:visible; }
 .as-tip .inspection-tags { gap:5px; }
-@media(max-width:600px) {
+@container game-viewport (max-width:600px) {
   .card-inspection-modal .card-inspection-layout, .card-inspection-layout { grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; }
   .playing-card-details .ctext { font-size:16px; }
   .card-inspection-art { width:100%; max-width:100%; margin-inline:auto; }
@@ -4375,16 +4481,19 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .cc-summary-slot { position:relative; min-width:0; display:flex; flex-direction:column; gap:6px; }
 .cc-summary-slot > .as-eyebrow { margin:0; }
 .cc-summary-slot > .equipment-poker-card { width:100%; margin:0; }
-.cc-summary-slot > .card-inspection-target {
+.cc-summary-slot > .card-inspection-target,
+.cc-review .cc-starter-deck > .card-inspection-target {
   position:relative; z-index:1;
   transition:margin-top var(--card-info-fade,120ms) ease;
 }
-.cc-summary-slot > .card-inspection-target.inspection-selected {
+.cc-summary-slot > .card-inspection-target.inspection-selected,
+.cc-review .cc-starter-deck > .card-inspection-target.inspection-selected {
   z-index:2;
   margin-top:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))));
 }
 @media (prefers-reduced-motion:reduce) {
-  .cc-summary-slot > .card-inspection-target { transition:none; }
+  .cc-summary-slot > .card-inspection-target,
+  .cc-review .cc-starter-deck > .card-inspection-target { transition:none; }
 }
 .cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
 .cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
@@ -4440,7 +4549,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
    Below the split's own stacking width the phone layout stands: chooser first,
    preview after it, the page scrolling as one. */
 @container (width > 64rem) {
-  .cc-class-split { max-height: max(30rem, calc(100dvh / var(--ui-zoom, 1) - 25rem)); grid-template-rows: minmax(0, 1fr); }
+  .cc-class-split { max-height: max(30rem, calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - 25rem)); grid-template-rows: minmax(0, 1fr); }
   .cc-class-split > .as-split-pane { min-height: 0; }
   .cc-class-split > .as-split-pane > .as-pane { min-height: 0; overflow: hidden; }
   .cc-class-split > .cc-class-preview-host > .as-pane { overflow-y: auto; scrollbar-gutter: stable; }
@@ -4459,12 +4568,12 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
    The choices scrollport's head (above) is what keeps the above-card inspect
    control off the section face on the first row. Phones keep the stacked,
    page-scrolling layout below. */
-@media(min-width:701px) {
-  .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
+@container game-viewport (min-width:701px) {
+  .cc-equip-group[data-equipment-section] { max-height:calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
   .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
   .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
 }
-@media(max-width:700px) {
+@container game-viewport (max-width:700px) {
   .cc-equip-group > .cc-card-selectors { grid-row:auto; }
   .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
   /* THE SECTION'S OWN WAY ON, MEASURED: with the Main Hand section open at
@@ -4553,9 +4662,9 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
    preview must not grow it. min(12cqi, 4.8rem) is exactly its size in the
    40rem no-save block, whatever the host width. */
 .title-screen .as-titlemenu:has(> .title-home) .tm-name { font-size: min(12cqi, 4.8rem); }
-.title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: center; margin: 1.8rem 0; }
+.title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(2 * var(--view-vw, 1vw)); align-items: center; margin: 1.8rem 0; }
 .title-screen .title-home > .title-menu { margin: 0; }
-:root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+:root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); }
 .title-screen .title-save-preview { display: grid; gap: .35rem; min-width: 0; padding: 1rem 1.2rem; text-align: left; border: 1px solid var(--line-soft); border-radius: var(--r-3); background: color-mix(in srgb, var(--panel) 82%, transparent); }
 .title-screen .title-save-preview > p { margin: 0; }
 .title-screen .title-save-name { font: 600 1.6rem/1.2 var(--font-display); color: var(--parchment); }
@@ -4620,7 +4729,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .card-inspection-modal .card-inspection-art > .card { height:auto; aspect-ratio:auto; }
 .card-inspection-art > .card .cd-body { flex:0 0 auto; height:auto; overflow:visible; }
 .card-inspection-art > .card .ctext { display:block; flex:0 0 auto; overflow:visible; -webkit-line-clamp:unset; }
-@media (max-width:600px) {
+@container game-viewport (max-width:600px) {
   .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
   .card-inspection-modal .card-inspection-art { width:100%; max-width:var(--card-w-inspect, 320px); }
 }
@@ -4670,14 +4779,19 @@ button.primary:disabled, button.primary[aria-disabled='true'],
   --veil-pad-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)));
   padding: var(--veil-pad-top) max(8px, calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1))) var(--veil-pad-bottom) max(8px, calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1)));
 }
-.modal, .as-modal { max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); min-height: 0; }
-.modal[data-height='long'], .as-modal[data-height='long'] { height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); }
+.modal, .as-modal { max-height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); min-height: 0; }
+.modal[data-height='long'], .as-modal[data-height='long'] { height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); }
 /* A short viewport (the decider's own `data-short`, written by main.js): the
    railed doors give up their fixed share and follow their body, and the
    veil's ceiling above still caps them. */
 :root[data-short='true'] .modal[data-size='lg'], :root[data-short='true'] .modal[data-size='xl'],
 :root[data-short='true'] .as-modal[data-size='lg'], :root[data-short='true'] .as-modal[data-size='xl'] { height: auto; }
 .modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
+/* SCROLL LOCK. modalManager.js writes the open-modal count on <html>; while any
+   modal is open the page behind it does not scroll. base.css already pins
+   `html, body { overscroll-behavior: none }` and the doors' own bodies keep
+   `contain` above, so a drag inside a door never chains to the page. */
+html[data-modal-depth]:not([data-modal-depth="0"]) body { overflow: hidden; }
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
 /* Ready actions rise slightly without moving surrounding layout. */
@@ -4836,7 +4950,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   cursor: pointer; border-radius: 2px;
 }
 .tower-preview-replay:hover, .tower-preview-replay:focus-visible { border-color: var(--gold); color: var(--parchment); }
-@media (orientation: portrait) {
+@container game-viewport (orientation: portrait) {
   .tower-door-frame {
     background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall-phone.webp');
     -webkit-mask-image: url('../assets/bg/tower-door-mask-phone.svg');
@@ -4855,7 +4969,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   .startup-gate > .as-titlemenu, .startup-gate .tm-foot { animation: none; }
   .startup-wordmark::before, .title-screen .tm-name::before { animation: none; }
 }
-@media (max-width: 360px) and (orientation: portrait) {
+@container game-viewport (max-width: 360px) and (orientation: portrait) {
   .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
 }
 /* Approved wireframe composition. Domain controls retain their handlers. */
@@ -4868,7 +4982,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    2026-10-01). Combat's hand area spans the context and footer
    bands and divides them itself. */
 :root :is(.combat[data-layout='formation'], .w4-frame) {
-  display: grid; flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0; overflow: clip;
+  display: grid; flex: none; height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1)); min-height: 0; overflow: clip;
   grid-template-rows: auto minmax(0, 1fr)
     var(--w4-band-context, var(--w4-context-fallback, 35%)) var(--w4-band-footer, var(--w4-footer-fallback, 15%));
 }
@@ -4976,6 +5090,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
 @media (pointer: coarse) {
   .footer-art-face [data-footer-binding='endTurnKey'] { display: none; }
+  /* Owner 2026-10-28: no keyboard key hints on touch. The compact End Turn label's key line (second line) and
+     its HOLD word go; the hold gesture itself is unchanged. Keyboard and mouse keep both. */
+  .combat-action-row .end-turn .footer-compact-line:nth-child(n+2),
+  .combat-action-row .end-turn > .hold-hint,
+  .combat-action-row .end-turn .et-key { display: none; }
 }
 .footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
 .combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
@@ -5050,6 +5169,13 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
+/* The pile and potion labels sit above their art too: a dropped face (--art-drop) overlaps its label's box with
+   blank strip, and the label is the text a player reads, so it paints over the face, never under it. */
+.combat-action-row[data-footer-art] :is(.pile,.combat-potions) > .footer-compact-label { position: relative; z-index: 1; }
+/* HOLD's line box (line-height 1) is shorter than the glyphs' content area, so a hit at the edge of its ink
+   landed on the plate beneath it. A pixel of padding, taken back by a negative margin, makes its box the
+   ink's box without moving it or growing the button. */
+.combat-action-row[data-footer-art] .end-turn > .hold-hint { padding-block: 1px; margin-block: -1px; }
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
@@ -5085,7 +5211,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:not(.coop) > .topbar {
   padding-inline: max(1.6rem, var(--safe-left-local, 0px)) max(1.6rem, var(--safe-right-local, 0px));
 }
-@media (max-height: 500px) {
+@container game-viewport (max-height: 500px) {
   :root .combat[data-layout='formation']:not(.coop) > .topbar {
     padding-inline: max(calc(8px / var(--ui-zoom, 1)), var(--safe-left-local, 0px)) max(calc(8px / var(--ui-zoom, 1)), var(--safe-right-local, 0px));
   }
@@ -5291,15 +5417,15 @@ button[data-button-size] {
    components/w1Workspace.js. Head and foot size to their controls, the body
    takes the rest, and only the pane's two slots scroll: never the page. */
 :root .modal.w1-workspace[data-size] {
-  width: min(calc(100vw / var(--ui-zoom, 1) * var(--w1-frame-w)), 100%);
-  height: min(calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-frame-h)), 100%);
+  width: min(calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom, 1) * var(--w1-frame-w)), 100%);
+  height: min(calc(var(--visible-height, calc(100 * var(--view-vh, 1dvh))) / var(--ui-zoom, 1) * var(--w1-frame-h)), 100%);
   max-width: 100%;
 }
 .screen.compendium { padding: 0; overflow: hidden; }
 .w1-workspace > .modal-body { display: flex; min-height: 0; padding: 0; overflow: hidden; }
 .w1-workspace > .modal-body > .as-railed {
   flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
-  grid-template-columns: clamp(var(--w1-rail-min), calc(100vw / var(--ui-zoom, 1) * var(--w1-rail)), var(--w1-rail-max)) minmax(0, 1fr);
+  grid-template-columns: clamp(var(--w1-rail-min), calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom, 1) * var(--w1-rail)), var(--w1-rail-max)) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
 }
 .w1-workspace .as-railitem { min-height: var(--tap-floor); }
@@ -5307,7 +5433,7 @@ button[data-button-size] {
 .w1-workspace .as-pane > .w1-split { flex: 1 1 auto; min-height: 0; }
 .w1-split {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
-  column-gap: calc(100vw / var(--ui-zoom, 1) * var(--w1-col-gap));
+  column-gap: calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom, 1) * var(--w1-col-gap));
 }
 .w1-split > * { min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
 /* W1f: the entry list scrolls its grid; the detail is the selected entry. */
@@ -5326,7 +5452,7 @@ button[data-button-size] {
    W1 CATEGORY NAVIGATION below); the pane's two slots stack. */
 :root[data-layout='narrow'] .w1-split {
   grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
+  column-gap: 0; row-gap: calc(var(--visible-height, calc(100 * var(--view-vh, 1dvh))) / var(--ui-zoom, 1) * var(--w1-row-gap));
 }
 
 /* The Bestiary lists identities rather than thumbnail collections. One column
@@ -5549,7 +5675,7 @@ button[data-button-size] {
 }
 .dialogue-response-note { display: block; font-size: 0.85em; color: var(--muted); }
 /* L6: the footer band (WGQ5), the three-action variant: equal thirds after the
-   shared gaps (WCB0 footer shares), 6vh tall, never under the touch target. */
+   shared gaps (WCB0 footer shares), calc(6 * var(--view-vh, 1vh)) tall, never under the touch target. */
 :root .w4-frame > .dialogue-foot {
   grid-row: 4; position: relative; z-index: var(--dialogue-z-footer, 6); min-height: 0; box-sizing: border-box;
   /* One full-width track: the kit buttons are inline-size containers, so an
@@ -5629,7 +5755,7 @@ button[data-button-size] {
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
 .customize .cz-railed .cz-class.unfolded { display:block; grid-column:1 / -1; height:auto; min-height:0; padding-block:1.2rem; }
 .customize .cz-class.unfolded > :is(.og, .ob) { display:none; }
-.customize .cz-class.unfolded > .cc-class-unfold { min-height: 0; display: grid; grid-template-columns: clamp(11rem, 16vw, 15rem) minmax(0, 1fr); gap:1rem; align-items:center; }
+.customize .cz-class.unfolded > .cc-class-unfold { min-height: 0; display: grid; grid-template-columns: clamp(11rem, calc(16 * var(--view-vw, 1vw)), 15rem) minmax(0, 1fr); gap:1rem; align-items:center; }
 .customize .cc-unfold-portrait { display:flex; align-items:center; justify-content:flex-start; gap:.6rem; min-width:0; }
 .customize .cc-unfold-class-icon { display:inline-flex; flex:0 0 auto; color:var(--gold); }
 .customize .cc-unfold-class-icon > * { width:2rem; height:2rem; }
@@ -5723,7 +5849,7 @@ button[data-button-size] {
 .customize .cc-single-tags { display:flex; flex-wrap:nowrap; gap:5px; min-width:0; width:100%; }
 .customize .cc-single-tags > .inspection-tag { flex:none; white-space:nowrap; font-size:12px; padding:5px 7px; }
 .cc-single-tags > [hidden] { display:none!important; }
-.cc-tags-popup { position:fixed; inset:auto; margin:0; width:min(290px,calc(100vw - 24px)); padding:12px; background:#302719; border:1px solid #b79a4e; border-radius:8px; color:#e4d5af; box-shadow:0 8px 28px #000b; }
+.cc-tags-popup { position:fixed; inset:auto; margin:0; width:min(290px,calc(calc(100 * var(--view-vw, 1vw)) - 24px)); padding:12px; background:#302719; border:1px solid #b79a4e; border-radius:8px; color:#e4d5af; box-shadow:0 8px 28px #000b; }
 .cc-tags-popup .inspection-tag { display:inline-block; margin:0 5px 5px 0; cursor:pointer; }
 .cc-tag-explanation { margin:6px 0 0; font-size:14px; line-height:1.4; }
 .customize .cc-equipment-continue { margin:2px 8px 8px; position:static; }
@@ -5758,7 +5884,7 @@ button[data-button-size] {
 .customize .cc-equipment-header { font-size:max(14px,calc(14px / var(--ui-zoom,1))); }
 .customize #cz-equipment-count { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
 .customize .cc-equip-group[data-equipment-section] { max-width:max(440px,calc(440px / var(--ui-zoom,1))); }
-@media (max-width:700px) {
+@container game-viewport (max-width:700px) {
   .customize:has(#cz-equipment-panel) .cz-railed { display:block; }
   .customize:has(#cz-equipment-panel) .as-rail { display:none; }
   .customize:has(#cz-equipment-panel) .cz-pane { width:100%; height:100%; }
@@ -5791,13 +5917,13 @@ button[data-button-size] {
 .customize .cc-compact-details { gap:8px; }
 .customize .cc-starting-summary { display:flex; flex-wrap:wrap; gap:4px 8px; }
 .customize .cc-starting-summary .cc-package-context { font-size:12px; margin:0; }
-@media(max-width:700px) {
+@container game-viewport (max-width:700px) {
  .customize .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto; gap:8px; padding:0 10px; }
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1; grid-auto-flow:column; grid-template-columns:none; grid-auto-columns:calc((100% - 24px) / 3); justify-content:start; gap:12px; padding:54px 0 10px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
  .customize .cc-card-selectors[data-view="grid"] .poker-equipment-choice { padding:0; scroll-snap-align:start; }
  .customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance,152px); }
- .customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1; max-height:32vh; }
+ .customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1; max-height:calc(32 * var(--view-vh, 1vh)); }
  .customize .cc-equip-group > .cc-equipment-details { grid-column:1; grid-row:2; padding:2px 0; }
  .customize .cc-equipment-continue { grid-column:1; grid-row:3; margin:0 0 10px; }
 }
@@ -5805,7 +5931,7 @@ button[data-button-size] {
 .customize #cz-equipment-fold .disc-fold-row[open] { position:relative; }
 .customize #cz-equipment-fold .disc-reveal { position:absolute; inset:0; height:auto; display:block; }
 .customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { row-gap:54px; }
-@media(max-width:700px) {
+@container game-viewport (max-width:700px) {
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { padding-top:70px; row-gap:12px; }
 }
@@ -5813,7 +5939,7 @@ button[data-button-size] {
 /* Creation header: stable menu and a single, plain close control. */
 .customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
 .customize .cz-head-view-tools { flex: 0 0 auto; }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .customize .cz-head-view-tools .cc-view-option { padding-inline: 6px; min-width: var(--tap-floor); }
 }
 /* `--place-gap` is the ONE home for the hairline under the ☰ button: fx.js
@@ -5842,23 +5968,23 @@ button[data-button-size] {
 
 /* Book lessons use live card faces and a searchable, keyboard-operable list. */
 .book-learning-veil { z-index: 13000; }
-.book-learning-panel { width: min(90rem, 96vw); max-height: 94dvh; display: flex; flex-direction: column; }
+.book-learning-panel { width: min(90rem, calc(96 * var(--view-vw, 1vw))); max-height: calc(94 * var(--view-vh, 1dvh)); display: flex; flex-direction: column; }
 .book-learning-body { overflow: auto; min-height: 0; display: grid; gap: 1rem; padding: 1.4rem; }
 .book-learning-body > p { margin: 0; }
 .book-learning-body input, .book-learning-body select { width: 100%; min-height: 44px; padding: .8rem 1rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-2); }
 .book-learning-body select:disabled { opacity: 1; color: var(--ink-dim); }
 .book-learning-rarity { color: var(--ink-dim); font-size: 1.2rem; }
 .book-lesson-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr); gap: 1.4rem; }
-.book-lesson-list { display: grid; align-content: start; gap: .6rem; max-height: 42dvh; overflow: auto; }
+.book-lesson-list { display: grid; align-content: start; gap: .6rem; max-height: calc(42 * var(--view-vh, 1dvh)); overflow: auto; }
 .book-lesson-option.as-btn { min-height: 44px; width: 100%; text-align: left; white-space: normal; }
 .book-lesson-option[aria-pressed='true'] { outline: 2px solid var(--gold); outline-offset: -2px; }
 .book-lesson-detail { display: grid; justify-items: center; align-content: start; gap: 1rem; }
 .book-lesson-detail > p { width: 100%; }
 .book-learning-status { color: var(--gold); }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .book-learning-panel { font-size: 14px; }
   .book-lesson-columns { grid-template-columns: minmax(0, 1fr); }
-  .book-lesson-list { max-height: 25dvh; }
+  .book-lesson-list { max-height: calc(25 * var(--view-vh, 1dvh)); }
   .book-learning-rarity { font-size: 12px; }
 }
 .book-art { display: inline-block; position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; flex-shrink: 0; }
@@ -5908,22 +6034,22 @@ button[data-button-size] {
   box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #b38ae966;
 }
 :root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
-:root .combat .combatant .combat-health-badge {
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge {
   position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
   color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
   font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
 }
-:root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
 /* Block badge: a dark plate with a silver rim, so its silver figure reads with a black outline. */
-:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #3b434d, #1d2228 60%, #0f1216); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
-:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
-:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
-:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield::before { background: linear-gradient(135deg, #3b434d, #1d2228 60%, #0f1216); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
-:root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
-:root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-:root .combat .combatant .combat-health-badge { min-width: max-content; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
 @container combat-health (max-width: 4em) {
   :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
@@ -5931,9 +6057,9 @@ button[data-button-size] {
     content: attr(data-current-hp); font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)));
   }
 }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
-  :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
 }
 
 .character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
@@ -5966,7 +6092,7 @@ button[data-button-size] {
 .character-sheet .cs-grants { display: flex; flex-wrap: wrap; gap: .3rem; min-width: 0; }
 .character-sheet .cs-grant.routine { opacity: .75; }
 .character-sheet .cs-here { color: var(--gold); white-space: nowrap; }
-@media (max-width: 760px) {
+@container game-viewport (max-width: 760px) {
   /* A phone stacks the rail above the ladder as a scrolling strip, and a row
      puts its grants under the level and XP rather than squeezing a column. */
   .character-sheet .cs-skills { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
@@ -6028,7 +6154,7 @@ button[data-button-size] {
 .merchant-offer-action.as-btn { width: 100%; min-width: 0; min-height: 44px; white-space: normal; }
 .merchant-offer-price.as-status { color: var(--gold); text-align: center; white-space: normal; overflow-wrap: anywhere; }
 .merchant-workspace .shop-services .class-row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   :root .shop-workspace .shop-shelf .merchant-offer { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--book-compact-gap); padding: var(--book-compact-padding); }
   .merchant-offer-actions { grid-column: 2; grid-template-columns: minmax(0, 1fr); }
   .merchant-offer-media { grid-row: 1 / span 2; }
@@ -6046,12 +6172,12 @@ button[data-button-size] {
   grid-template-areas: 'name level bar next' 'gain gain gain gain';
   gap: 0 .6rem;
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] {
+.reward-door .reward-progress-row[data-kind='character'] {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
   font-size: 1rem;
 }
-:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+.reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
   grid-template-areas: 'name level' 'bar next' 'gain gain';
 }
 /* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
@@ -6059,7 +6185,7 @@ button[data-button-size] {
 .armoury[data-view="grid"] .armoury-railed { grid-template-columns: minmax(0, 1fr); }
 .armoury[data-view="grid"] .armoury-character { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr); gap: .8rem 1.2rem; }
 .armoury[data-view="grid"] .armoury-character-stats { overflow: visible; gap: .6rem; }
-.armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, 28vh, 28rem); }
+.armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, calc(28 * var(--view-vh, 1vh)), 28rem); }
 .character-skill-section { display: grid; gap: .35rem; }
 .character-skill-progression { width: 100%; text-align: left; }
 .progression-summary, .progression-skill-button { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: .5rem; background: var(--panel, #201b16); color: var(--parchment); text-align: left; }
@@ -6095,7 +6221,7 @@ button.progression-summary, .progression-attributes-toggle { display: flex; flex
 .progression-inspection .cc-class-resource-grid { flex-wrap: wrap; }
 .progression-inspection .progression-stat-card { width: 100%; }
 .deck-editor:has(> .modal-head) { grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
-@media (max-width: 680px) {
+@container game-viewport (max-width: 680px) {
   .armoury[data-view="grid"] .armoury-character { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: .6rem; }
   .armoury[data-view="grid"] .armoury-character > * { grid-column: 1; grid-row: auto; }
   .armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: calc(100px / var(--ui-zoom, 1)); }
@@ -6139,7 +6265,7 @@ button.progression-feat-card::after { content: none; }
 button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--gold); background-color: color-mix(in srgb, var(--panel) 90%, var(--gold)); }
 .progression-feat-empty { padding: .9rem 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2); }
 .progression-feat-empty .as-prose { margin: .3rem 0 0; font-size: 1.25rem; color: var(--ink-dim); }
-@media (max-width: 680px) {
+@container game-viewport (max-width: 680px) {
   .progression-feat-list { grid-template-columns: minmax(0, 1fr); }
   .progression-feat-effect { font-size: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
 }
@@ -6164,14 +6290,14 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-expansion-controls:empty, .combat-expansion-controls[hidden] { display:none; }
 .combat-recovery-controls { display:flex; flex-wrap:wrap; gap:4px; }
 .combat-recovery-controls button { flex:1 1 100px; min-height:36px; font-size:12px; white-space:normal; }
-@media(max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
+@container game-viewport (max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
-@media(max-width:600px) { .card-upcast-controls :is(button,select) { min-height:max(44px, var(--tap-floor)); } }
+@container game-viewport (max-width:600px) { .card-upcast-controls :is(button,select) { min-height:max(44px, var(--tap-floor)); } }
 
 /* Recovery and pending feat actions have no permanent protection box. */
 .field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; z-index:2600; }
-@media(max-width:600px) { .field > .combat-expansion-controls { top:48px; } }
+@container game-viewport (max-width:600px) { .field > .combat-expansion-controls { top:48px; } }
 
 /* Positive Blight occupies the open center of the floating header. A phone
    gives it a full-width row so health, relics and menu controls stay clear. */
@@ -6184,7 +6310,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-blight-hud > .ashen-blight { margin:0; padding:.35rem .6rem; border:0; background:#171411bd; }
 .combat-blight-hud .ashen-blight-heading { font-size:max(.8rem, calc(11px / var(--ui-zoom, 1))); line-height:1.2; }
 .combat-blight-hud .ashen-blight-track { height:calc(18px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
-@media(max-width:700px) {
+@container game-viewport (max-width:700px) {
   .combat-hud > .combat-blight-hud { position:relative; top:auto; left:auto; transform:none; width:100%; margin:.25rem auto 0; }
   .combat.coop > .combat-hud { flex-wrap:wrap; }
   .combat.coop > .combat-hud > .combat-blight-hud { flex:0 0 100%; }
@@ -6208,7 +6334,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-page-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin:0 0 24px; }
 .cc-page-heading-copy { min-width:0; }
 .cc-page-heading .cc-page-eyebrow { color:var(--cc-brass); font-size:max(14px,calc(14px / var(--ui-zoom,1))); letter-spacing:.1em; }
-.cc-page-heading .cc-page-title { margin:8px 0 12px; color:#d7b45f; font-family:Georgia,serif; font-size:clamp(28px,2.5vw,38px); line-height:1.2; }
+.cc-page-heading .cc-page-title { margin:8px 0 12px; color:#d7b45f; font-family:Georgia,serif; font-size:clamp(28px,calc(2.5 * var(--view-vw, 1vw)),38px); line-height:1.2; }
 .cc-page-heading .cc-page-description { margin:0; font-size:var(--cc-body-font); line-height:1.5; color:var(--cc-copy); }
 .cc-part { position:relative; isolation:isolate; overflow:visible; background:#11100c; border:0; min-width:0; }
 .cc-part-material { position:absolute; inset:0; z-index:-2; pointer-events:none; background-image:var(--cc-part-material-url); background-color:#15120e; background-size:360px; opacity:.45; border-radius:4px; }
@@ -6249,13 +6375,21 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:var(--card-w,14rem); }
 .cc-design-workspace .cc-ability-choose { max-width:var(--card-w,14rem); min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
-.cc-design-workspace .cc-review .card { max-width:300px; }
-@media(max-width:960px) {
+/* Review uses the same authored resting width for the character, equipment
+   and starter deck. A shelf must not promote its playing cards to focus size. */
+.cc-design-workspace .cc-review :is(.cc-summary-cards, .cc-starter-deck) {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, var(--card-w-glance, 152px)), var(--card-w-glance, 152px)));
+  justify-content:start;
+  align-items:start;
+}
+.cc-design-workspace .cc-review .card { width:100%; max-width:var(--card-w-glance, 152px); }
+@container game-viewport (max-width:960px) {
  .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
  .cc-feat-detail .cc-part-body { min-height:300px; }
  .cc-feat-detail .cc-feat-emblem { width:168px; height:168px; }
 }
-@media(max-width:600px) {
+@container game-viewport (max-width:600px) {
  .cc-page-heading { flex-direction:column; gap:8px; margin-bottom:20px; }
  .cc-page-heading .cc-page-title { font-size:max(28px,calc(26px / var(--ui-zoom,1))); }
  .cc-page-heading .cc-page-description, .cc-feat-availability { max-width:none; }
@@ -6294,13 +6428,13 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace select { color-scheme:dark; color:var(--cc-copy); background-color:var(--bg-raise,#1b1710); border:1px solid var(--line,#786443); border-radius:var(--r-2,4px); padding:10px 12px; }
 .cc-design-workspace select option { color:var(--cc-copy); background-color:var(--bg-raise,#1b1710); }
 .cc-choice-title { white-space:normal; overflow-wrap:break-word; }
-@media(max-width:600px) {
+@container game-viewport (max-width:600px) {
  .customize.cc-design-workspace .cz-actions { min-width:0; max-width:100%; }
  .customize.cc-design-workspace .cz-actions > .modal-foot-actions { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); width:100%!important; min-width:0!important; max-width:100%; margin:0!important; gap:8px; }
  .customize.cc-design-workspace .cz-actions > .modal-foot-actions > button { width:100%!important; min-width:0!important; max-width:100%; white-space:normal; }
 }
 .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:16px; }
-@media(max-width:600px) { .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:12px; } }
+@container game-viewport (max-width:600px) { .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:12px; } }
 .cc-feat-groups { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 20px; }
 .cc-feat-group-filter { min-height:var(--cc-control-floor); padding:10px 18px; font-size:var(--cc-body-font); color:var(--cc-copy); }
 .cc-feat-group-filter.on { color:var(--cc-emerald); border-color:var(--cc-emerald); }
@@ -6311,26 +6445,26 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-feat-level-copy { color:var(--cc-copy-muted); }
 .cc-feat-detail .cc-feat-level-requirement { align-items:center; padding-bottom:24px; }
 .cc-feat-detail-description { margin-bottom:22px; }
-@media(max-width:600px) {
+@container game-viewport (max-width:600px) {
  .cc-feat-groups { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
  .cc-feat-group-filter { padding:10px 6px; white-space:normal; }
 }
 /* Equipment's former compact layout suppressed the whole category rail.
    Opening the shared selector must expose its real tabs on every page. */
 .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { display:flex!important; }
-@media(max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
+@container game-viewport (max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
 /* Spells is now its own page rather than an equipment fold. Match its real
    selector hook and keep card rules readable instead of the old tiny grid. */
 .cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { width:100%; }
-@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
+@container game-viewport (max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
 .cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:auto; overflow:visible; scroll-snap-type:none; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { grid-column:auto; grid-row:auto; min-width:0; }
 .cc-design-workspace .cz-actions button[aria-disabled="true"] { background:var(--bg-raise,#1b1710); color:var(--cc-copy-muted); border-color:var(--line,#786443); animation:none; }
 
 /* Compact creation study: short benefits on the cards, complete rules in the
    inspector. Physical desktop sizes compensate the game's UI zoom. */
-@media(min-width:601px) {
+@container game-viewport (min-width:601px) {
  .cc-design-workspace, .cc-page-parts { --cc-body-font:calc(16px / var(--ui-zoom,1)); --cc-control-floor:calc(36px / var(--ui-zoom,1)); }
  .cc-design-workspace .as-railitem { min-height:var(--cc-control-floor); padding:8px 12px; font-size:var(--cc-body-font); }
  .cc-design-workspace .cz-actions button { padding:8px 20px; font-size:var(--cc-body-font); }
@@ -6359,7 +6493,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-feat-detail-description { line-height:1.45; margin-bottom:14px; }
 .cc-feat-detail .cc-feat-level-requirement { font-size:calc(14px / var(--ui-zoom,1)); padding-bottom:0; gap:6px; }
 .cc-feat-return { display:none; }
-@media(max-width:960px) {
+@container game-viewport (max-width:960px) {
  .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
  .cc-feat-choices { display:contents; }
  .cc-feat-browser .cc-choice-tile { order:var(--cc-choice-order); }
@@ -6367,7 +6501,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .cc-feat-detail .cc-part-body { min-height:0; }
  .cc-feat-return { display:block; margin-top:14px; min-height:var(--cc-control-floor); padding:8px 18px; font-size:var(--cc-body-font); }
 }
-@media(max-width:600px) {
+@container game-viewport (max-width:600px) {
  .cc-feat-browser .cc-page-title { font-size:calc(26px / var(--ui-zoom,1)); }
  .cc-feat-browser .cc-page-eyebrow { font-size:calc(12px / var(--ui-zoom,1)); }
  .cc-feat-browser .cc-page-heading { margin-bottom:12px; }
@@ -6381,14 +6515,14 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .cc-feat-detail .cc-feat-emblem { width:96px; height:96px; }
  .cc-feat-detail .cc-feat-level-requirement { font-size:calc(16px / var(--ui-zoom,1)); }
 }
-@media(min-width:601px) {
+@container game-viewport (min-width:601px) {
  .customize.cc-design-workspace .cz-actions > .modal-foot-actions { grid-template-columns:repeat(2,160px)!important; width:auto!important; }
  .customize.cc-design-workspace .cz-actions > .modal-foot-actions > button { width:160px!important; min-width:0!important; }
 }
-@media(max-width:960px) {
+@container game-viewport (max-width:960px) {
  .cc-feat-browser:not([data-detail-open="true"]) .cc-feat-detail { display:none; }
 }
-@media(min-width:601px) {
+@container game-viewport (min-width:601px) {
  .customize.cc-design-workspace .cz-actions > .modal-foot-actions { width:100%!important; justify-content:space-between!important; }
 }
 /* Long class/skill summaries are teasers; the inspector always retains the
@@ -6407,29 +6541,35 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
 
 /* Defense order is shared by player, enemy and co-op health rows. */
-:root .combat .combatant .combat-health-evade { color: #fff; gap: .08em; }
-:root .combat .combatant .combat-health-evade::before { border-radius: 50%; background: #20242a; }
-:root .combat .combatant .combat-health-evade-icon { font-size: .8em; }
-:root .combat .combatant .combat-health-poise { color: var(--gold, #ffd34d); }
-:root .combat .combatant .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
-:root .combat .combatant .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-hit-chance { color: #fff; font-weight: 700; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
-:root .combat .combatant .combat-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision) { color: #fff; gap: .08em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision)::before { border-radius: 50%; background: #20242a; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) { font-size: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+/* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
+   --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline
+   is a text-shadow ring so Chromium and WebKit draw the same; it never takes a tap. */
+:root .combat .combatant > .combat-hit-chance {
+  position: absolute; left: var(--combat-body-center-x, 50%); top: var(--combat-body-center-y, 50%);
+  translate: -50% -50%; z-index: var(--combat-layer-hud, 700); pointer-events: none; white-space: nowrap;
+  color: white; font: 700 calc(26px / var(--ui-zoom, 1))/1 var(--font-body, Georgia, serif);
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 0 -2px 0 black, 0 2px 0 black, -2px 0 0 black, 2px 0 0 black;
+}
 
-:root .combat .combatant .combat-health-evade-icon svg { width: .85em; height: .85em; display: block; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) svg { width: .85em; height: .85em; display: block; }
 
 :root .combat .combatant .combat-health-meter .m-value,
 :root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 
 /* Keep the Evade icon inside the same compact badge geometry as defenses. */
-:root .combat .combatant .combat-health-evade {
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision) {
   flex: 0 0 calc(22px / var(--ui-zoom, 1)); width: calc(22px / var(--ui-zoom, 1));
   min-width: 0; max-width: calc(22px / var(--ui-zoom, 1)); height: calc(22px / var(--ui-zoom, 1));
   aspect-ratio: 1; grid-template-columns: .8em 1fr; padding: 0 .15em; overflow: hidden;
 }
-:root .combat .combatant .combat-health-evade-icon { min-width: 0; width: .8em; height: .8em; }
-:root .combat .combatant .combat-health-evade-icon svg { width: 100%; height: 100%; max-width: 100%; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) { min-width: 0; width: .8em; height: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) svg { width: 100%; height: 100%; max-width: 100%; }
 
 /* Selected-card odds share the engine preview and observer gate with the HUD. */
 .combat .hand .card .card-hit-chances { position: absolute; z-index: 8; inset-inline: 0; bottom: calc(100% + .35rem); display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .5rem; padding: .35rem; background: #15120fed; border: 1px solid #a58a4f; border-radius: .3rem; font: 700 1.1rem/1.2 var(--font-body); pointer-events: none; }
@@ -6441,3 +6581,44 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat .hand .card .card-hit-chances { top: 16%; bottom: auto; inset-inline: 6%; max-width: 88%; box-sizing: border-box; font-size: max(10px, 1.05rem); }
 .combat .card-hit-chance { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
 .expanded-combat-card .ic-text[data-card-binding="rules"] .face-line { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+/* The enabled purse layer is part of the shared HUD, in normal flow. */
+.shared-hud .hud-cinders-strip { display:flex; flex:0 0 auto; justify-content:flex-start; }
+.shared-hud .hud-cinders-strip .hud-center { display:flex; min-width:0; }
+.shared-hud .hud-cinders-strip .hud-cinders { white-space:nowrap; }
+
+/* Reward review has an explicit red return/skip action, independent of the
+   theme's orange danger tint. Only the chooser footer uses this treatment. */
+.reward-door .reward-chooser-foot .danger {
+  background: #a51f2b;
+  border-color: #e65b66;
+  color: #fff7f3;
+}
+.reward-door .reward-chooser-foot .danger:hover,
+.reward-door .reward-chooser-foot .danger:focus-visible {
+  background: #c02634;
+  border-color: #ff8b94;
+  color: #fff7f3;
+}
+/* Author display:flex otherwise overrides the browser's hidden attribute. */
+.reward-door .reward-choice-option[hidden] { display: none; }
+.reward-door .reward-choice-grid[inert] {
+  --choice-count: 1;
+  grid-template-columns: minmax(0, 16rem);
+  justify-content: center;
+}
+
+/* Combat-log actor roles are named in the legend as well as separated by hue. */
+.combat-log-actor { font-weight:600; }
+.combat-log-actor[data-combat-log-side='player'] { color:var(--combat-log-player-color); }
+.combat-log-actor[data-combat-log-side='enemy'] { color:var(--combat-log-enemy-color); }
+.combat-log-role-legend { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0 0 0.45rem; color:var(--parchment); font-size:0.9em; }
+.combat-log-role { display:inline-flex; align-items:center; gap:0.4rem; }
+.combat-log-role-swatch { width:0.75em; height:0.75em; border:1px solid currentColor; border-radius:50%; }
+.combat-log-role--player .combat-log-role-swatch { background:var(--combat-log-player-color); }
+.combat-log-role--enemy .combat-log-role-swatch { background:var(--combat-log-enemy-color); }
+
+/* Console uses the shared modal and a native selectable text field on phones. */
+.console-log-pane { display: flex; flex-direction: column; gap: var(--space-2, 8px); min-width: 0; }
+.console-log-text { box-sizing: border-box; width: 100%; min-width: 0; height: 48vh; height: 48dvh; min-height: 8rem; resize: none; white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; font-size: max(16px, 1rem); line-height: 1.4; user-select: text; touch-action: auto; }
+.combat-log-modal [data-console-shortcut][hidden] { display: none !important; }

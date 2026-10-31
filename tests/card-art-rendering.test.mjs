@@ -24,11 +24,13 @@ test('authored layout and actual mounted Spell footers retain the outlined spark
     for (const cardId of ['starstonePebble', 'starSpark']) {
       const card = renderCard(registries, { cardId }, { inspection: false });
       document.body.append(card);
-      const svg = card.querySelector('[data-primary-sigil="attack"] .combat-sigil-action svg');
+      const primary = card.querySelector('[data-primary-sigil]');
+      const action = primary?.dataset.primarySigil;
+      const svg = primary?.querySelector('.combat-sigil-action svg');
       assert.ok(svg, cardId);
       assert.equal(svg.getAttribute('fill-rule'), 'evenodd');
       assert.equal(svg.querySelectorAll('path').length, 1);
-      assert.equal(svg.querySelector('path').getAttribute('d'), ACTION_SIGILS.attack.shape.match(/d="([^"]+)"/)[1]);
+      assert.equal(svg.querySelector('path').getAttribute('d'), ACTION_SIGILS[action].shape.match(/d="([^"]+)"/)[1]);
     }
   });
 });
@@ -37,7 +39,7 @@ test('resolved cards use Simple by default while legacy API and unsupported art 
   applyCardArtStyle({});
   const simple=playingCardArt(ref,{definition,registries});
   assert.equal(simple.kind,'simple');
-  assert.match(simple.path,/assets\/cards\/library\/physical-attack-\d\d-512.webp$/);
+  assert.equal(simple.componentArt.code,'O00');
   assert.equal(playingCardArt(ref,{definition,registries,style:'Legacy'}).path,playingCardArtwork(ref));
   const unsupported={id:'utility',type:'power',cardTags:[]};
   assert.deepEqual(playingCardArt(ref,{definition:unsupported,registries}),playingCardArt(ref,{style:'Legacy'}));
@@ -63,7 +65,7 @@ test('new artwork replaces shipped layout paintings while Legacy keeps its old p
     const cardRef={cardId},def=resolveCard(registries,cardRef);
     const simple=illustratedArtwork(cardRef,cardId,{definition:def,registries,style:'Simple'});
     assert.equal(simple.kind,'simple',cardId);
-    assert.match(simple.path,/assets\/cards\/library\//);
+    assert.match(simple.path,/assets-display\/card-cutouts\//);
     const legacy=illustratedArtwork(cardRef,cardId,{definition:def,registries,style:'Legacy'});
     assert.equal(legacy.path,illustratedArtwork(cardRef,cardId,{style:'Legacy'}).path);
     assert.notEqual(legacy.path,simple.path);
@@ -93,4 +95,26 @@ test('mounted cards switch style immediately and image failure advances to legac
     applyCardArtStyle({});
     assert.equal(image().dataset.cardArt,'simple');
   });
+});
+
+test('an illustrated-card layer emits filter and transform only when hue or rotation is non-zero',()=>{
+  const model={id:'__layerFilterProbe',name:'Probe',costs:{},type:{},sigils:null,sideTags:[],range:null};
+  const layers=CARD_COMPONENTS.template.layers;
+  const saved=layers.map(l=>({hue:l.hue,rotation:l.rotation}));
+  const styleOf=component=>illustratedCardHtml(model,{rules:'Deal damage.',glyph:''})
+    .match(new RegExp(`data-component="${component}" style="([^"]*)"`))?.[1];
+  try{
+    const [plain,tilted]=layers;
+    plain.hue=0;plain.rotation=0;
+    assert.match(styleOf(plain.id),/filter:none;transform:none;/,'zero hue and rotation emit no filter or transform');
+    assert.doesNotMatch(styleOf(plain.id),/hue-rotate\(0deg\)|rotate\(0deg\)/);
+    delete plain.hue;delete plain.rotation;
+    assert.match(styleOf(plain.id),/filter:none;transform:none;/,'absent hue and rotation emit no filter or transform');
+    tilted.hue=30;tilted.rotation=5;
+    assert.match(styleOf(tilted.id),/filter:hue-rotate\(30deg\);transform:rotate\(5deg\);/);
+  }finally{
+    layers.forEach((l,i)=>{
+      for(const k of ['hue','rotation'])if(saved[i][k]===undefined)delete l[k];else l[k]=saved[i][k];
+    });
+  }
 });

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -52,7 +53,7 @@ test('provenance survives save/restore and clears on turn reset; old saves stay 
   assert(combatSnapshotProblems(saved).some(p => p.includes('wardBlock')));
 });
 
-test('co-op resets each seat and enemy Ward with their Block', () => {
+test('co-op resets each seat and enemy Ward with their Block', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const c = createCoopCombat({ registries, rng: createRng(5), players: [player('p1'), player('p2')], enemyIds: ['wanderingSoldier'] });
   for (const seat of c.players.values()) gainBlock(c, seat.entity, 100, magic);
   gainBlock(c, c.enemies[0], 8, magic);

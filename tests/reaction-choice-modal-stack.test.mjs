@@ -255,3 +255,60 @@ test('Resolve still answers with no option chosen', async () => {
     opened.restore();
   }
 });
+
+test('options render as uniform tiles with the card name, effect line and direction', async () => {
+  const summaries = {
+    'opt-a': { id: 'opt-a', name: 'Counter', costs: ['1 SP'], line: [
+      { label: 'Def', before: 'Def ', after: '', value: 9, base: 7, dir: 'up' },
+      { label: 'Return', before: 'Return ', after: '', value: 2, base: 4, dir: 'down' },
+      { label: 'Dmg', before: 'Dmg ', after: '', value: 5, base: 5, dir: null }] },
+  };
+  const opened = await openWith({ summarize: option => summaries[option.id] });
+  try {
+    const tile = opened.shell.body.querySelector('[data-reaction-option="opt-a"]');
+    assert.ok(tile.classes.has('card-option'));
+    assert.equal(tile.querySelector('.co-name').textContent, 'Counter');
+    assert.equal(tile.querySelector('.co-effect').textContent, 'Def 9\u25b2 raised · Return 2\u25bc lowered · Dmg 5', 'changed numbers carry an arrow and words, not colour alone');
+    assert.deepEqual(tile.querySelectorAll('.co-arrow').map(node => node.textContent), ['\u25b2', '\u25bc']);
+    assert.deepEqual(tile.querySelectorAll('.co-sr').map(node => node.textContent.trim()), ['raised', 'lowered']);
+    assert.deepEqual(tile.querySelectorAll('.val.up').map(node => node.textContent), ['9'], 'a raised number is green');
+    assert.deepEqual(tile.querySelectorAll('.val.down').map(node => node.textContent), ['2'], 'a lowered number is red');
+    assert.equal(tile.querySelectorAll('.co-part').map(node => node.getAttribute('data-dir')).join(), 'up,down,none');
+    assert.equal(tile.querySelector('.co-chip').textContent, '1 SP');
+    const play = opened.document.querySelectorAll('button').find(node => node.textContent === 'Play');
+    assert.equal(play.disabled, true);
+    tile.click();
+    assert.equal(tile.getAttribute('aria-pressed'), 'true');
+    assert.equal(play.disabled, false);
+    play.click();
+    assert.deepEqual(opened.answers, [{ offerId: 'root:e1:0', optionId: 'opt-a' }]);
+  } finally {
+    opened.restore();
+  }
+});
+
+test('focus waits for the next frame, then lands on the first option', async () => {
+  const savedRaf = globalThis.requestAnimationFrame;
+  const frames = [];
+  globalThis.requestAnimationFrame = fn => { frames.push(fn); return frames.length; };
+  const opened = await openWith({});
+  try {
+    const tile = opened.shell.body.querySelector('[data-reaction-option]');
+    assert.notEqual(opened.document.activeElement, tile, 'opening forces no layout: focus is not set in the opening frame');
+    assert.equal(frames.length, 1, 'one frame callback places focus');
+    frames.forEach(fn => fn());
+    assert.equal(opened.document.activeElement, tile, 'the default control takes focus once painted');
+  } finally {
+    if (savedRaf === undefined) delete globalThis.requestAnimationFrame; else globalThis.requestAnimationFrame = savedRaf;
+    opened.restore();
+  }
+});
+
+test('without a frame scheduler focus lands on the first option at once', async () => {
+  const opened = await openWith({});
+  try {
+    assert.equal(opened.document.activeElement, opened.shell.body.querySelector('[data-reaction-option]'));
+  } finally {
+    opened.restore();
+  }
+});

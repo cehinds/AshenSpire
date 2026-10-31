@@ -107,7 +107,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','status','sweep']); assert.equal(schools.size, 9);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 9);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {
@@ -128,10 +128,10 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
   assert.equal(compactCardRules('If you have starstoneCharge: Deal 4 damage to every living enemy. Apply <span class="val">1</span> starstoneCharge to yourself. Draw <span class="val">1</span> card(s), once per turn from this family.'), 'With Starstone: 4 damage to all enemies. Gain <span class="val">1</span> Starstone. Draw <span class="val">1</span>, once per turn per family.');
 });
 
-test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
+test('Ritual Ward keeps its canonical Spell category below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
-  assert.equal(model.sigils.action,'defense');
+  assert.equal(model.sigils.action,'spell');
   assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
 
@@ -200,4 +200,18 @@ test('a press on a tag symbol through the hand lane explains it and never reache
   // One press explains a tag symbol: the symbol skips the select-then-explain step.
   assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
   assert.doesNotMatch(tooltip, /for \(const type of \['pointerdown'/, 'no computed-type page listener');
+});
+
+
+test('dense authored fallback idioms retain quantity, target stacks and own-turn timing', () => {
+  assert.equal(compactCardRules('Deal <span class="val">6</span> damage, plus 1 for each Bleed on the target.'),
+    '<span class="val">6</span> damage, +1 per target Bleed.');
+  assert.equal(compactCardRules('Deal <span class="val">6</span> damage, plus 1 for each <span class="st-bleed">Bleed</span> on the target.'),
+    '<span class="val">6</span> damage, +1 per target <span class="st-bleed">Bleed</span>.');
+  assert.equal(compactCardRules('At the start of your turn, gain 1 Strength and take 1 damage.'),
+    'Your turn start: +1 Strength; take 1 damage.');
+  assert.equal(compactCardRules('At the end of your turn, gain 1 Strength and take 1 damage.'),
+    'At the end of your turn, gain 1 Strength and take 1 damage.');
+  assert.equal(compactCardRules('Deal 6 damage, plus 1 for each Bleed on an ally.'),
+    '6 damage, plus 1 for each Bleed on an ally.');
 });

@@ -1,0 +1,32 @@
+{
+  "$comment": "A heal card: fx:heal (+ lifecycle.exhaust for the cheap shape). Cost must match the matching healRules shape; amount = that % of the owner's max HP.",
+  "id": "ashenSentry.mend",
+  "name": "Mend",
+  "class": "colorless",
+  "rarity": "special",
+  "cost": 1,
+  "staminaCost": 1,
+  "manaCost": 1,
+  "costRule": "fixed",
+  "type": "power",
+  "icon": "casting",
+  "keywords": [
+    "exhaust"
+  ],
+  "effects": [
+    {
+      "op": "heal",
+      "target": "self",
+      "amount": 4
+    }
+  ],
+  "tags": [
+    "camp:spell",
+    "maneuver:casting",
+    "classification.power",
+    "classification.enemyMove",
+    "fx:heal",
+    "lifecycle.exhaust"
+  ],
+  "textTemplate": "Heal {heal} HP. Exhaust."
+}

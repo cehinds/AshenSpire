@@ -56,9 +56,15 @@ export const COMBAT_OPCODES = Object.freeze([
   'grantRollMode',
   'retain',
   'dodgeRoll',
+  'moveEngagement',
   'applyStatus',
   'removeStatus',
   'grantCardCharge',
+  'modifyCards',
+  'castLinkedSpell',
+  'addBurden',
+  'revealIntent',
+  'moveCards',
   'draw',
   'discard',
   'exhaust',
@@ -106,6 +112,7 @@ export const TARGETS = Object.freeze([
   'randomEnemy',
   'player',
   'owner',
+  'allAllies',
   'ally', // co-op: a chosen living teammate; resolves to self in solo play
   // Every living enemy EXCEPT the one the firing event names (and the action's
   // own target): a break's ripple reaches the others, never the broken one.
@@ -115,7 +122,7 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
-  'combatAvoidanceResolved',
+  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
@@ -127,10 +134,16 @@ export const EVENTS = Object.freeze([
   'playerTurnEnd',
   'enemyTurnStart',
   'enemyTurnEnd',
-  'enemyMoveStarted',
+  'enemyMoveStarted', 'enemyMoveEnded',
+  'combatHitStarted',
+  'combatContactPrepared',
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
   // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
   'combatReactionUnavailable', 'combatGuardBroken',
+  'proposalHitAvoided',
+  'enemyBurdenAdded','enemyBurdenDrawn','enemyBurdenBlocked','intentRevealed',
+  'cardModified',
+  'cardMoved',
   'cardDrawn',
   'cardPlayed',
   'cardPreparing',
@@ -220,6 +233,7 @@ export const PREDICATES = Object.freeze([
   'enemyNegativeStatusNew',
   'cardAbilityKindIs',
   'cardTargetsAllEnemies',
+  'resourcePaid',
   'inStance',
   'hasStatus',
   'hasBlock',
@@ -445,7 +459,9 @@ export const SIGIL_RARITIES = Object.freeze(['common', 'uncommon', 'rare', 'lege
 // and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
 // a quest-pool relic that no event choice grants, because it would then be
 // unreachable content.
-export const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+// `core2` (owner 2026-10-25) is a relic only the Core 2 reward policy draws: rewards.json eligibility.relics.pools
+// names it, so legacy and Core 1 never see it.
+export const RELIC_POOLS = Object.freeze(['reward', 'quest', 'core2']);
 export function relicInRewardPool(relic) {
   return (relic.pool || 'reward') === 'reward';
 }
@@ -539,9 +555,15 @@ export const EFFECT_SPECS = Object.freeze({
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
-  applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
+  moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
+  applyStatus: { allowed: ['status', 'stacks', 'tags'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
+  modifyCards: { allowed: ['from','selection','look','changes'], required: ['from','amount','changes'], refs: {} },
+  castLinkedSpell:{allowed:['card'],required:['card'],refs:{card:'cards'}},
+  addBurden:{allowed:['card','count','pile'],required:['card'],refs:{card:'cards'}},
+  revealIntent:{allowed:[],required:['amount'],refs:{}},
+  moveCards: { allowed: ['from','to','selection','position','look','transformTo'], required: ['from','to','amount'], refs: { transformTo: 'cards' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
   exhaust: { allowed: ['random'], required: [], refs: {} },
@@ -558,7 +580,7 @@ export const EFFECT_SPECS = Object.freeze({
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   // Exactly one of `stance` (a fixed stance) or `choose` (a pending choice the
   // play intent answers, model/cardChoices.js); validate.js refuses neither and both.
-  enterStance: { allowed: ['stance', 'choose'], required: [], refs: { stance: 'stances' } },
+  enterStance: { allowed: ['stance', 'choose','maneuver'], required: [], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
   // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
   // validate.js refuses neither or both. The school is the firing event's.
@@ -623,6 +645,7 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  range: opt(en('melee', 'reach', 'ranged')),
   // The move's SP price (SPEC §4.6a): replaces the stance table's. A boss move's price is authored here.
   sp: opt(int),
   counterDamage: opt(int),
@@ -635,6 +658,8 @@ const enemyMoveSchema = obj({
   // Required on a rolled move; absent on a reaction move, which is never rolled
   // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
   weight: opt(num),
+  // A retreat move's weight, applied only while the fight is closer than the enemy's starting range (combat.js weightedMovePick).
+  retreatWeight: opt(num),
   reaction: opt(obj({
     on: arr(en('playerAction', 'playerReaction')),
     minIncoming: opt(int),
@@ -731,8 +756,16 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // Entity schemas (SPEC §3.3 table)
 // ---------------------------------------------------------------------------
 
+// Optional authored behavior attachments. The shared compiler validates tag
+// registration, attachment eligibility and parameter schemas at the boot door.
+const mechanicAttachmentFields = {
+  mechanicTags: opt(arr(str)),
+  mechanicBindings: opt(arr(obj({tag: str, enabled: opt(bool), parameters: opt(mapOf(any)), upgradeParameters: opt(mapOf(any))}))),
+};
+
 export const SCHEMAS = Object.freeze({
   basicCardProfile: obj({
+    ...mechanicAttachmentFields,
     id: str,
     role: en('attack', 'guard', 'technique'),
     baseCardId: ref('cards'),
@@ -794,6 +827,7 @@ export const SCHEMAS = Object.freeze({
     retired: opt(mapOf(str)),
   }),
   card: obj({
+    ...mechanicAttachmentFields,
     minCombatExpansionVersion: opt(int),
     // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
     costRule: opt(str),
@@ -816,6 +850,8 @@ export const SCHEMAS = Object.freeze({
     targeting: opt(str),
     traits: opt(arr(str)),
     stanceTrigger: opt(any),
+    // A Spell that plays as a basic card (owner 2026-10-18): stance, discounts and reads use this type.
+    mirrors: opt(en('attack', 'smash', 'sweep', 'defend', 'counter', 'technique')),
     stanceExpiry: opt(any),
     id: str,
     name: str,
@@ -832,6 +868,11 @@ export const SCHEMAS = Object.freeze({
     legacyGradeMap: opt(mapOf(int)),
     legacyFace: opt(any),
     requirements: opt(any),
+    playLimit:opt(int),
+    burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
+    costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
+    targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),
@@ -845,6 +886,8 @@ export const SCHEMAS = Object.freeze({
     // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
     onTurnEndInHand: opt(effects),
     textTemplate: str,
+    // Core 2 with Ward off: the rules text when this card's Ward damage reads as Poise damage; {poiseDamage} is all of its Poise (model/wardOffCardText.js).
+    wardOffTextTemplate: opt(str),
     upgrade: opt(
       obj({
         name: opt(str),
@@ -862,6 +905,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   relic: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     rarity: en(...RELIC_RARITIES),
@@ -911,6 +955,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   status: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     icon: opt(str),
@@ -1009,6 +1054,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   enemy: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
@@ -1021,6 +1067,11 @@ export const SCHEMAS = Object.freeze({
     blighted: opt(bool), // blight shifts its attributes (content/actionCosts.js ENEMY_BLIGHT_SHIFT)
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
+    startingRange: opt(en('melee', 'reach', 'ranged')),
+    rangeClosingMove: opt(str),
+    rangeRetreatMove: opt(str),
+    rangeRoutePolicy: opt(en('advance')),
+    moveSources: opt(mapOf(obj({ cardId: str }))),
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
@@ -1114,6 +1165,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   class: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     maxHp: int,
@@ -1141,7 +1193,7 @@ export const SCHEMAS = Object.freeze({
     // How many DISTINCT columns the act may be entered from. Absent = today's
     // rule (see engine/mapgen.js). Whether the number is reachable at all —
     // more doors than walkers, more doors than columns — needs two fields to
-    // ask, so it is model/mapview.js's `viewRefusals`, not the schema's.
+    // ask, so it is model/map/mapview.js's `viewRefusals`, not the schema's.
     entries: opt(int),
     typeWeights: mapOf(num),
     // What a `?` node resolves to — beside the geometry, per act. Moved out of

@@ -140,7 +140,7 @@ export function skillLevel(run, skillId) {
  * A level no longer upgrades cards: the `upgradeAt` standing rule is retired
  * for card ranks (SPEC §13.4o), which a level's rank-up raises one at a time.
  */
-export function awardSkillXp(registries, run, skillId, amount) {
+export function awardSkillXp(registries, run, skillId, amount, { queueRewards = true, queueRankUps = false } = {}) {
   if (skillId === PERCEPTION_SKILL) throw new Error('Perception XP requires an accepted enemy knowledge success');
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`awardSkillXp: '${skillId}' is not a skill track`);
@@ -156,15 +156,21 @@ export function awardSkillXp(registries, run, skillId, amount) {
     if (kind === 'class' && hasClassMastery(run)) run.classMasteryState.spentXp[skillId.slice(6)] += cost;
     row.xp -= cost;
     row.level += 1;
-    row.pendingDrafts += 1;
-    if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
-    if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
+    // Configured Core uses its own reward policy. Its informational class /
+    // weapon levels must not strand unsupported legacy draft/rank/feat picks.
+    if (queueRewards) {
+      row.pendingDrafts += 1;
+      if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
+      if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
+    }
+    // Core queues only the rank-up (SPEC 13.4o): its other level rewards follow its own policy.
+    else if (queueRankUps) queueRankUp(kind, row);
     cost = xpToNext(registries, kind, row.level);
   }
   const skillAwards = [];
   if (kind === 'class' && row.level > before) {
     claimRunClassMastery(registries, run);
-    for (let level = before + 1; level <= row.level; level++) skillAwards.push(...payClassMilestone(registries, run, skillId.slice(6), level));
+    if (queueRewards) for (let level = before + 1; level <= row.level; level++) skillAwards.push(...payClassMilestone(registries, run, skillId.slice(6), level));
   }
   return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain, skillAwards };
 }
@@ -326,7 +332,7 @@ function queueRankUp(kind, row) {
  * piece's (its upgrade is the smith's tier) and is not offered.
  */
 export function rankUpCandidates(registries, run, skillId) {
-  const schools = new Set(skillSchools(registries, run && run.loadout, skillId));
+  const schools = rankSchools(registries, run, skillId);
   const ceiling = Math.min(skillLevel(run, skillId), draftRows(registries).rankMax || 1);
   if (!schools.size || ceiling < 2) return [];
   const cards = registries && registries.cards;
@@ -337,6 +343,23 @@ export function rankUpCandidates(registries, run, skillId) {
     if(Number.isInteger(inst.abilityRank)||(run.progressionRulesVersion===1&&def.gradeProfiles&&!inst.legacyAbility))return false;
     return (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) < ceiling;
   });
+}
+
+/**
+ * pendingRankUpRows(registries, run) → the reward-door rows for the rank-ups a
+ * Core run has queued (card ranks on): one per queued rank-up of a track that
+ * still has a card to raise, at most balance.skill.draftsPerCombat per track.
+ * Same row shape the Legacy door takes ({ skillId, level, claimOrdinal }).
+ */
+export function pendingRankUpRows(registries, run) {
+  const perDoor = draftRows(registries).draftsPerCombat || 1;
+  const rows = [];
+  for (const track of skillTracks(registries)) {
+    const row = run && run.skills && run.skills[track.id];
+    if (!row || !(row.pendingRankUps > 0) || !rankUpCandidates(registries, run, track.id).length) continue;
+    for (let i = 0; i < Math.min(perDoor, row.pendingRankUps); i += 1) rows.push({ skillId: track.id, level: row.level, claimOrdinal: 0 });
+  }
+  return rows;
 }
 
 /**
@@ -373,6 +396,51 @@ export function skillBonusFor(registries, run, inst, schoolsByTrack = trackSchoo
   let bonus = 0;
   for (const { flat, schools } of schoolsByTrack) if (tags.some((tag) => schools.has(tag))) bonus += flat;
   return Math.min(bonus, MAX_SKILL_BONUS);
+}
+
+/** Whether this run's profile turns card ranks on (progression.cardRanks): Core does, Legacy and Current do not. */
+export const coreCardRanks = (subject) => subject?.gameProfile?.modules?.progression?.cardRanks === true;
+
+// Core cards carry camp:/maneuver: tags, never the weapon-family tags (blade, bow ...) that
+// skillSchools matches, so the school match alone ranks no Core card. These are Core's own
+// tracks mapped to the tags their cards carry (keyed by the track id without its item:
+// prefix): blade and dual-wield rank martial cards, shield ranks guard cards, and
+// Spellcraft (the focus track) ranks spell cards. Pairs, not tag literals: the mechanics
+// generator takes a quoted tag for that tag's reader.
+const CORE_TRACK_TAGS = Object.freeze({
+  blade: [['camp', 'physical']],
+  shield: [['maneuver', 'defend']],
+  dualWield: [['camp', 'physical']],
+  'magic-focus': [['camp', 'spell']],
+});
+
+/**
+ * rankSchools(registries, run, skillId) → the tags a track ranks cards by: the
+ * held weapons' school tags (skillSchools), plus Core's explicit track-to-tag
+ * map above when the run has card ranks on. Legacy and Current read skillSchools alone.
+ */
+export function rankSchools(registries, run, skillId) {
+  const schools = new Set(skillSchools(registries, run && run.loadout, skillId));
+  if (coreCardRanks(run)) for (const [family, name] of CORE_TRACK_TAGS[skillId.replace(/^item:/, '')] || []) schools.add(`${family}:${name}`);
+  return schools;
+}
+
+/**
+ * cardTrackLevel(registries, run, def) → the highest skill-track level
+ * (run.skills[t].level, 0..10) over the rank-up tracks whose rankSchools the
+ * card's tags meet. It is the ceiling a Core drafted card's rank is rolled
+ * against (rollDraftRank).
+ */
+export function cardTrackLevel(registries, run, def) {
+  const tags = (def && def.tags) || [];
+  let best = 0;
+  for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
+    const level = row && Number.isInteger(row.level) ? row.level : 0;
+    if (level <= best || !rankUpKind(skillKindOf(registries, skillId))) continue;
+    const schools = rankSchools(registries, run, skillId);
+    if (tags.some((tag) => schools.has(tag))) best = level;
+  }
+  return Math.max(0, Math.min(10, best));
 }
 
 // The tracks that earn a flat now, with their schools: read once per stamp.

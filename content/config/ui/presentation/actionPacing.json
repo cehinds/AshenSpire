@@ -1,0 +1,27 @@
+{
+  "motion": {
+    "spritePlaybackRate": 0.5,
+    "stageGapMs": 500,
+    "animationStepDurationMs": 390
+  },
+  "behavior": {
+    "autoCombat": false,
+    "combatSpeed": 1.25,
+    "combatPreference": "offense",
+    "speedMinimum": 0.25,
+    "speedMaximum": 8,
+    "delayMaximumMs": 5000,
+    "maxActionsPerTurn": 64,
+    "autoCombatSpeed": 1.5,
+    "autoSpeedMinimum": 1,
+    "autoSpeedMaximum": 3,
+    "stageGapMinimumMs": 0,
+    "stageGapMaximumMs": 2000,
+    "animationStepMinimumMs": 50,
+    "animationStepMaximumMs": 3000,
+    "mobileFastPreset": {
+      "combatStepPause": 250,
+      "animationStepDuration": 195
+    }
+  }
+}

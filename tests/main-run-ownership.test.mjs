@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { commitRunFinishAsync } from '../src/model/runCompletion.js';
+import { isConfiguredRun } from '../src/model/gameProfileRun.js';
 import { createRunStartOwner } from '../src/model/runStart.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
@@ -25,7 +26,7 @@ function finishFixture({ failCheckpoint = false } = {}) {
     withProfile: callback => callback({ loadMeta: () => ({}), saveMeta: meta => { records.push(...meta.results); return { ok: true }; } }),
     clearRun: slot => { cleared.push(slot); manager.clearRun(slot); }, hasRun: slot => manager.hasRun(slot),
   };
-  const fixture = new Function('commitRunFinishAsync', 'saves', `
+  const fixture = new Function('commitRunFinishAsync', 'saves', 'isConfiguredRun', `
     let run = { seed: 'A', classMasteryState: { receiptId: 'A' } }, activeSlot = 1;
     const registries = { unlocks: [] }, rng = { getCounters: () => ({}) }, shotState = false;
     const crypto = { randomUUID: () => 'unused' };
@@ -34,7 +35,7 @@ function finishFixture({ failCheckpoint = false } = {}) {
     const completedRunMeta = (registries, meta, result) => ({ meta: { results: [result] }, unlocked: [] });
     ${body('async function finishRun(', '\nasync function showFinishedRun(')}
     return { finish: finishRun, change: () => { run = { seed: 'B' }; activeSlot = 2; } };
-  `)(commitRunFinishAsync, saves);
+  `)(commitRunFinishAsync, saves, isConfiguredRun);
   return { ...fixture, gate, checkpoints, records, cleared, banks: () => banks, savedRun: () => memory.getItem(RUN_KEY) };
 }
 
@@ -55,7 +56,7 @@ test('repeated terminal completion requests share one bank, result and original-
   await Promise.resolve(); await Promise.resolve(); fixture.gate.resolve({ ok: true });
   assert.ok((await first).ok); assert.ok((await second).ok);
   assert.equal(fixture.banks(), 1); assert.equal(fixture.records.length, 1);
-  assert.deepEqual(fixture.records[0], { victory: false, seed: 'A', finishId: 'A' });
+  assert.deepEqual(fixture.records[0], { victory: false, seed: 'A', finishId: 'A', gameProfile: undefined, runId: undefined });
   assert.deepEqual(fixture.cleared, [1]);
   assert.equal(fixture.savedRun(), null);
 });
@@ -72,15 +73,17 @@ test('actual terminal checkpoint preserves the save manager throwing failure con
 
 test('actual screenshot new-run entry adopts its synchronous memory fixture before returning', () => {
   const fixture = new Function('createRunStartOwner', `
-    const runStartOwner = createRunStartOwner(), shotState = 'combat';
+    const runStartOwner = createRunStartOwner(), shotState = 'combat', selectedGameProfile = 'core';
     let run = null; const saves = { ensureProfile: () => ({ ok: true }) };
     const randomSeedString = () => 'SHOWCASE', seedProblem = () => null;
-    const beginPreparedRun = config => { run = { seed: config.seedString }; };
+    const beginPreparedRun = config => { run = { seed: config.seedString, gameProfile: config.gameProfile }; };
     ${body('function newRun(', '\nfunction beginPreparedRun(')}
     return { start: newRun, current: () => run };
   `)(createRunStartOwner);
   fixture.start({ seedString: 'SHOWCASE' });
-  assert.deepEqual(fixture.current(), { seed: 'SHOWCASE' });
+  assert.deepEqual(fixture.current(), { seed: 'SHOWCASE', gameProfile: 'core' });
+  fixture.start({ seedString:'EXPLICIT', gameProfile:'current' });
+  assert.deepEqual(fixture.current(),{seed:'EXPLICIT',gameProfile:'current'},'an explicit profile still overrides the selected default');
 });
 
 function combatOutcomeFixture() {
@@ -91,6 +94,7 @@ function combatOutcomeFixture() {
     const saves = { bankEnemyKnowledge: () => bank.promise };
     const app = { querySelector: () => ({}) }, registries = { balance: { ui: { victoryBeat: { ms: 0 } } } };
     const persist = () => checkpoints.push(run.seed), showSettingsNotice = () => {}, victoryTitle = () => 'VICTORY';
+    const persistOrWarn = () => { persist(); return true; };
     const victoryBeat = () => { beats++; return beat.promise; };
     const runCombatEnd = () => { settlements++; throw new Error('Unexpected stale combat settlement'); };
     ${body('async function onCombatEnd(', '\n/**\n * The spoils')}

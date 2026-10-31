@@ -1,0 +1,8 @@
+{
+  "action": 1,
+  "stamina": 1,
+  "mana": 1,
+  "$note": {
+    "{resource}": "The {resource} a card pays when it carries {a resource} cost with no amount of its own."
+  }
+}

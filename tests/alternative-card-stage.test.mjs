@@ -23,7 +23,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     const node=create(tag);
     if(tag==='canvas')node.getContext=(kind,options)=>{contexts.push({node,kind,options});return {
       clearRect(){},save(){},restore(){},
-      drawImage(...args){paints.push({args,alpha:this.globalAlpha,filter:this.filter});},
+      drawImage(...args){paints.push({args,canvas:node,alpha:this.globalAlpha,filter:this.filter});},
       fillRect(){paints.push({fill:this.fillStyle,mode:this.globalCompositeOperation});},
       getImageData(){readbacks.push(node);time+=materializeMs;wallTime+=materializeMs;return {data:new Uint8ClampedArray(4)};},
     };};
@@ -50,11 +50,65 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     assert.match(stage.currentArt.image.url,/reaver/);
     assert.equal(stage.currentArt.left,128);
+    stage.setRestPose('idle');
+    const idlePaints=paints.length;
+    stage.setRestPose('idle');stage.setRestPose('idle',{immediate:true});
+    assert.equal(paints.length,idlePaints,'repeated settled HUD receipts retain the painted rest pixels');
+    // Lite's existing image-filter policy also applies to the canvas body.
+    // Switching quality must invalidate the settled-pixel optimization.
+    dom.document.documentElement ||= create('html');
+    const quality=dom.document.documentElement.dataset;
+    stage.setRestPose('defend');
+    const fullRest=paints.filter(p=>p.canvas===visible&&p.args).at(-1);
+    assert.equal(fullRest.args[0].tagName,'CANVAS','Standard retains its authored aura work surface');
+    quality.performance='lite';
+    stage.setRestPose('defend');
+    const liteRest=paints.filter(p=>p.canvas===visible&&p.args).at(-1);
+    assert.match(liteRest.args[0].url,/reaver/,'Lite draws the original sharp body without a decorative shadow surface');
+    const beforeLite=paints.length, beforeLiteReads=readbacks.length;
+    stage.play('attack',260,['stamina','mana']);
+    assert.equal(stage.presentation.action,'attack');assert.equal(stage.presentation.duration,260,'quality never changes action timing');
+    assert.ok(paints.slice(beforeLite).filter(p=>p.args).every(p=>p.args[0].url),'Lite action allocates no decorative canvas composite');
+    assert.equal(readbacks.length,beforeLiteReads+1,'Lite still materializes the first action before its clock');
+    stage.settle({reaction:true});step(16);
+    stage.play('hit',220);const beforeLiteHit=paints.length;step(66);
+    assert.ok(paints.slice(beforeLiteHit).some(p=>p.fill==='#ff2424'),'Lite preserves the readable hit mask');
+    assert.match(stage.currentArt.image.url,/HURT/,'Lite preserves the authored reaction body');
+    step(300);stage.setRestPose('defend');
+    quality.performance='full';stage.setRestPose('defend');
+    assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','switching back restores Standard aura at the same rest pose');
+    // Effects off keeps the glow but holds it still: a baked bitmap, no pixel readback, no action pulse.
+    quality.effects='off';quality.performance='lite';stage.setRestPose('idle');stage.setRestPose('defend');
+    assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','Effects off still draws the stance aura');
+    const beforeStill=readbacks.length;
+    stage.play('attack',260,['stamina','mana']);step(100);stage.settle({reaction:true});step(300);
+    assert.equal(readbacks.length,beforeStill,'Effects off never materializes through getImageData');
+    // Effects off: no red hit mask and no attack trail, but the recoil (motionHit) still travels.
+    stage.settle({reaction:true});step(16);paints.length=0;
+    stage.play('hit',220);const stillLeft=stage.currentArt.left;step(66);
+    assert.ok(!paints.some(p=>p.fill==='#ff2424'),'Effects off never fills the red hit mask');
+    assert.notEqual(stage.currentArt.left,stillLeft,'the hit recoil still moves the body');
+    step(300);stage.settle({reaction:true});
+    quality.effects='on';quality.performance='full';paints.length=0;
+    stage.play('hit',220);step(66);
+    assert.ok(paints.some(p=>p.fill==='#ff2424'),'Effects on fills the red hit mask');
+    step(300);stage.settle({reaction:true});delete quality.performance;
+    delete quality.effects;
+    delete quality.performance;stage.setRestPose('idle');paints.length=0;
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
+    let unchangedPaints=paints.length;
+    stage.setStance('offensive');assert.equal(paints.length,unchangedPaints,'same held stance retains its painted canvas');
     stage.play('attack',260);step(115);
+    unchangedPaints=paints.length;
+    stage.setStance('offensive');assert.equal(paints.length,unchangedPaints,'same stance neither repaints nor interrupts an active swing');
     stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
     step(145);assert.equal(stage.pose,'stance-casting');
     assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
+    const finishedActionPaints=paints.length;
+    stage.setRestPose('idle');
+    assert.equal(paints.length,finishedActionPaints,'finished action already painted its held rest');
+    assert.equal(stage.presentation.elapsed,0,'settled receipt still normalizes the completed action clock');
+    assert.deepEqual(stage.presentation.resources,[]);
     assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
     stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
@@ -71,7 +125,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.ok(paints.some(p=>p.args[0]?.url?.includes('attack-contact')&&p.args[1]===208&&p.args[2]===16),'the source figure advances 80 pixels at the authored floor anchor');
     assert.deepEqual(paints.at(-1).args.slice(1,3),[0,0],'the materialized aura surface composites at the canvas origin');
     assert.equal(stage.currentArt.left,208,'HUD ink source follows authored canvas travel');
+    const heldSource=stage.currentArt.image;
+    const heldRasterizations=paints.filter(p=>p.args?.[0]===heldSource).length;
     stage.hold(60);step(50);assert.equal(stage.presentation.elapsed,115);
+    assert.equal(paints.filter(p=>p.args?.[0]===heldSource).length,heldRasterizations,
+      'a held immutable outfit composites its existing aura instead of rasterizing the shadows again');
     step(155);assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     assert.equal(paints.at(-1).args[1],128,'unfiltered rest returns to the original floor anchor');
     stage.play('hit');
@@ -104,6 +162,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('smash');step(60);stage.setRestPose('defend');
     assert.equal(stage.pose,'guard-brace','a rest change cancels the prior action');
     step(300);assert.equal(stage.pose,'guard-brace');
+    const guardedBody = { ...stage.currentArt.body };
+    const guardedDraw = { left:stage.currentArt.left, width:stage.currentArt.width, height:stage.currentArt.height };
     stage.play('hit');step(50);
     assert.ok(paints.some(p=>p.fill==='#ff2424'&&p.mode==='source-in'),'red mask follows sprite alpha on strobe frame 2');
     step(200);assert.equal(raf.size,1,'the default reaction (280 ms minimum) is still running');
@@ -111,11 +171,14 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     // Knock-back: the painted hurt body moves left mid-reaction from its registered origin and rests afterwards.
     const hurtX=128+playerHurtFrames.reaver.dx;
     stage.play('hit',220);step(66);
+    const reactionBody={...stage.currentArt};stage.setStance(null);
+    assert.equal(stage.currentArt.left,reactionBody.left,'same stance preserves the in-progress reaction position');
     assert.match(stage.currentArt.image.url,/greatsword-outfits\/reaver\/HURT\.webp$/,'the clip paints the registered hurt pose');
     assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX-10,'the body is knocked left at the 30% peak');
     assert.ok(stage.currentArt.left<hurtX-10,'HUD ink source follows the knock-back');
-    step(220);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],128,'the knock-back returns to rest');
-    assert.equal(stage.currentArt.left,128);
+    step(220);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],guardedDraw.left,'the knock-back returns to the normalized guarded rest');
+    assert.deepEqual({left:stage.currentArt.left,width:stage.currentArt.width,height:stage.currentArt.height},guardedDraw);
+    assert.deepEqual(stage.currentArt.body,guardedBody,'the reaction restores the same semantic head and supporting feet');
     // Hit-stop: a held reaction freezes at impact with its tint showing.
     stage.play('hit',380);assert.equal(stage.hold(100),true,'a running reaction accepts a hold');
     paints.length=0;step(50);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],hurtX,'a held hit freezes the knock-back at impact');
@@ -133,7 +196,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     };
     clipFrames('strobe');
     stage.play('hit');step(300);assert.doesNotMatch(stage.currentArt.image.url,/HURT/,'the clip returns to the rest pose');
-    assert.equal(stage.currentArt.left,128);
+    assert.equal(stage.currentArt.left,guardedDraw.left);
     document.body.classList.add('reduce-flashes');clipFrames('reduce-flashes',false);document.body.classList.remove('reduce-flashes');
     // Reduce flashes drops the red tint but keeps the knock-back (SPEC §7.4).
     document.body.classList.add('reduce-flashes');paints.length=0;
@@ -174,6 +237,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('attack',0);assert.equal(raf.size,0);
     setAnimSpeed('normal');stage.play('attack');assert.equal(raf.size,1);
     stage.dispose();assert.equal(raf.size,0);assert.equal(stage.play('attack'),false);
+    assert.equal(stage.setStance('defensive'),false,'disposed canvas rejects stance work');
     failArt=true;stage=createAlternativeCardStage('herald');
     assert.equal(await stage.ready,false);
     assert.ok(stage.el.hasAttribute('data-art-placeholder'));
@@ -182,7 +246,13 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.el.hasAttribute('data-art-placeholder'),false);
     assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
     assert.equal(stage.pose,'ready');
-    stage.dispose();deferArt=true;stage=createAlternativeCardStage('rogue');
+    stage.dispose();deferArt=true;stage=createAlternativeCardStage('starseer');
+    stage.setRestPose('idle');stage.setRestPose('idle');
+    assert.equal(stage.currentArt,null,'pending art cannot be mistaken for a painted rest');
+    stage.setStance('offensive');stage.setStance('offensive');
+    pendingArt.splice(0).forEach(finish=>finish());await stage.ready;
+    assert.equal(stage.pose,'stance-offensive');assert.ok(stage.currentArt,'pending load still paints the requested stance');
+    stage.dispose();stage=createAlternativeCardStage('rogue');
     stage.dispose();const beforeLate=paints.length;
     pendingArt.splice(0).forEach(finish=>finish());
     assert.equal(await stage.ready,false,'a disposed stage ignores late artwork');

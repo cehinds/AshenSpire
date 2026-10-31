@@ -11,7 +11,9 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'pose-studio/renewal'
+from art_authoring import authoring_root, art_path
+ART = authoring_root(ROOT)
+OUT = ART / 'pose-studio/renewal'
 FRAMES = OUT / 'frames'
 FRAMES.mkdir(parents=True, exist_ok=True)
 
@@ -101,7 +103,7 @@ for name in ['attack','power','spell']:
     project['clips']=[{'id':'effect-'+effect,'effect':effect,'cue':'contact','offset':-15,'duration':130,'anchor':'weapon' if name=='attack' else 'hand','x':0,'y':0,'size':190,'opacity':.6,'rotation':0,'layer':'front','travel':name=='spell','muted':False}]
     for i in range(1,7):
         key='assets/combat-effects/'+effect+str(i)+'.webp'
-        project['assets'][key]=data_url(ROOT/key.replace('assets/','assets-mobile/',1))
+        project['assets'][key]=data_url(art_path(ROOT, key.replace('assets/','assets-mobile/',1), ART))
     (OUT/(name+'.pose.json')).write_text(json.dumps(project,separators=(',',':')),encoding='utf-8')
 
 # Refresh coverage only after every portable family project has been written.

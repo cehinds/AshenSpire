@@ -1,7 +1,9 @@
 // One DOM frame for player and enemy combatants. The screen supplies rendered
 // slots and interaction callbacks; this component owns only stable structure,
 // role semantics, and component identity.
+import { markSpriteArt } from './spriteArtFlags.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { classicAppearance } from '../displayAppearance.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 
 const ownedClasses = new WeakMap();
@@ -19,6 +21,12 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   for (const value of ownedClasses.get(frame) || []) if (!classNames.includes(value)) frame.classList.remove(value);
   for (const value of classNames.filter(Boolean)) frame.classList.add(value);
   ownedClasses.set(frame, classNames.filter(Boolean));
+  // The action glyph owns a live selection callback and is reconciled by
+  // syncPlayerActionIntent. Rebuilding HUD slots must not defeat that
+  // maneuver guard and schedule another geometry pass for the same glyph.
+  const action = frame.classList.contains('player') ? frame.querySelector('.player-action-intent') : null;
+  const actionFocused = action && document.activeElement === action;
+  frame.querySelector(':scope > .target-hud-overhead-meters')?.remove();
   const leadingHost = frame.querySelector('.combatant-leading');
   leadingHost.replaceChildren(...leading.filter(Boolean));
   const card = frame.querySelector('.combatant-card');
@@ -32,9 +40,83 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(frame.classList.contains('enemy') && !classicAppearance() ? leadingHost : widget,
+    trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
+  if (action) leadingHost.appendChild(action);
+  if (actionFocused) action.focus({ preventScroll: true });
   return frame;
+}
+
+// The slot-level counterpart of updateCombatantFrame: replace only the slots
+// passed (`leading`, `name`, `meters`, `statuses`, `chips`; `classNames`
+// reconciles the frame's classes) and leave every other node in place. The
+// nodes land exactly where a full update puts them, so the frame's outerHTML
+// matches a fresh combatantFrame() built from the same slots. Returns false,
+// touching nothing, when a node slot is asked for while the target-HUD
+// overhead rack holds the meters and intent; the caller then does the full
+// update, which discards the rack as it always has.
+export function updateCombatantSlots(frame, { classNames, leading, name, meters, statuses, chips } = {}) {
+  const wantsNodes = leading !== undefined || name !== undefined || meters !== undefined
+    || statuses !== undefined || chips !== undefined;
+  if (wantsNodes && [...frame.children].some(node => node.classList?.contains('target-hud-overhead-meters'))) return false;
+  if (classNames) {
+    const next = classNames.filter(Boolean);
+    for (const value of ownedClasses.get(frame) || []) if (!next.includes(value)) frame.classList.remove(value);
+    for (const value of next) frame.classList.add(value);
+    ownedClasses.set(frame, next);
+  }
+  if (!wantsNodes) return true;
+  const isPlayer = frame.classList.contains('player');
+  const leadingHost = frame.querySelector('.combatant-leading');
+  const card = frame.querySelector('.combatant-card');
+  const spriteHost = [...card.children].find(node => node.classList.contains('sprite'));
+  const widget = isPlayer ? [...leadingHost.children].find(node => node.classList.contains('combatant-mini-hud')) : card;
+  const statusHost = !isPlayer && !classicAppearance() ? leadingHost : widget;
+  const isStatuses = (node) => node.classList?.contains('statuses');
+  const isAction = (node) => node.classList?.contains('player-action-intent');
+  const isName = (node) => node.dataset?.identityPart === 'name';
+  const isMeters = (node) => node.classList?.contains('meters');
+  const kids = (host) => [...host.children];
+  const find = (host, test) => kids(host).find(test) || null;
+  const isLeading = (node) => node !== widget && !isStatuses(node) && !isAction(node);
+  if (leading !== undefined) {
+    for (const node of kids(leadingHost)) if (isLeading(node)) node.remove();
+    leadingHost.prepend(...leading.filter(Boolean));
+  }
+  if (name !== undefined) {
+    find(widget, isName)?.remove();
+    if (name) {
+      markName(name, isPlayer ? 'player' : 'enemy');
+      widget.insertBefore(name, isPlayer ? widget.firstChild : spriteHost.nextSibling);
+    }
+  }
+  if (meters !== undefined) {
+    find(widget, isMeters)?.remove();
+    if (meters) {
+      const anchor = find(widget, isName);
+      widget.insertBefore(meters, anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling));
+    }
+  }
+  if (statuses !== undefined) {
+    for (const node of kids(statusHost)) if (isStatuses(node)) node.remove();
+    const list = statuses ? [].concat(statuses).filter(Boolean) : [];
+    if (statusHost === leadingHost) {
+      const action = find(leadingHost, isAction);
+      for (const node of list) leadingHost.insertBefore(node, action);
+    } else {
+      const anchor = find(widget, isMeters) || find(widget, isName);
+      const before = anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
+      for (const node of list) widget.insertBefore(node, before);
+    }
+  }
+  if (chips !== undefined) {
+    for (const node of kids(widget)) {
+      if (node !== spriteHost && !isName(node) && !isMeters(node) && !isStatuses(node)) node.remove();
+    }
+    appendAll(widget, [].concat(chips || []).filter(Boolean));
+  }
+  return true;
 }
 
 function appendAll(parent, nodes) {
@@ -61,6 +143,9 @@ export function adoptCombatantFrame(frame) {
   if (name) markName(name, role);
   const sprite = card.querySelector(':scope > .sprite');
   if (sprite) markArtwork(sprite);
+  if (role === 'enemy' && !classicAppearance()) {
+    for (const status of card.querySelectorAll(':scope > .statuses')) leading.append(status);
+  }
   if (role === 'player') {
     const widget = playerWidget(leading);
     for (const child of [...card.children]) if (child !== sprite) widget.append(child);
@@ -112,6 +197,7 @@ export function combatantFrame({
   markUiComponent(spriteHost, UI.combatantSprite, role);
   markArtwork(spriteHost);
   spriteHost.appendChild(sprite);
+  markSpriteArt(spriteHost);
   if (blockBadge) spriteHost.appendChild(blockBadge);
   card.appendChild(spriteHost);
   const widget = role === 'player' ? playerWidget(leadingHost) : card;
@@ -120,9 +206,35 @@ export function combatantFrame({
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(role === 'enemy' && !classicAppearance() ? leadingHost : widget,
+    trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
   return frame;
+}
+
+// The contextual desktop HUD keeps only HP beside the overhead intent. Move
+// the shared live meter nodes, including their tooltips, instead of cloning a
+// second health display or changing the sprite's frame geometry.
+export function setCombatantTargetHud(frame, enabled) {
+  const leading = frame.querySelector('.combatant-leading');
+  const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
+  if (!leading) return;
+  if (enabled) {
+    if (rack) {
+      for (const intent of leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) rack.prepend(intent);
+      return;
+    }
+    const meters = frame.querySelector('.combatant-card .meters, .combatant-mini-hud .meters');
+    if (!meters) return;
+    for (const slot of [meters, ...frame.querySelectorAll('.nm')]) { slot.style.removeProperty('transform'); slot.style.removeProperty('translate'); slot.style.removeProperty('position'); slot.style.removeProperty('left'); slot.style.removeProperty('top'); }
+    const host = document.createElement('div'); host.className = 'target-hud-overhead-meters';
+    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters); frame.append(host);
+  } else if (rack) {
+    const parent = frame.classList.contains('player') ? leading.querySelector('.combatant-mini-hud') : frame.querySelector('.combatant-card');
+    for (const intent of rack.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) leading.append(intent);
+    if (parent) parent.append(...rack.childNodes);
+    rack.remove();
+  }
 }

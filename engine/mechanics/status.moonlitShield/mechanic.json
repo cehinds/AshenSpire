@@ -1,0 +1,26 @@
+{
+  "id": "status.moonlitShield",
+  "tag": "status.moonlitShield",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Moonlit Shield",
+  "description": "Whenever you gain Starstone Charge, gain 3 Block per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.moonlitShield"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

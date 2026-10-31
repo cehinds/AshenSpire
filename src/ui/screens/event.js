@@ -78,7 +78,7 @@ export function mountEvent(app, opts) {
     eyebrow: 'Event',
     title: def.name,
     choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
-      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || '❖' }),
+      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || 'relic' }),
       prose(def.text),
     ]),
     consequences: el('div', { class: 'choice-body-responses event-responses' },
@@ -173,7 +173,7 @@ export function mountEvent(app, opts) {
       // one and always was.
       disarmers.push(arm(btn, 'eventChoice', {
         ctx: { binding },
-        question: `Choose ${choice.label || choice.text || 'this event option'}?`,
+        question: t('dialogue.respond.question', { label: choice.label || choice.text || t('event.defaultOption') }),
         detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
         confirmLabel: 'CHOOSE',
         onConfirm: commit,

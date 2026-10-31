@@ -13,6 +13,31 @@ import { combatLogEntries } from '../src/model/combatLog.js';
 const registries = createRegistries(contentBundle);
 const enemies = [{ id: 'e1', enemyId: 'wyrmLord' }, { id: 'e2', enemyId: 'wanderingSoldier' }];
 const log = events => combatLogEntries(events, { registries, enemies }).map(row => row.text);
+
+test('public log carries semantic identity spans without matching names in card text', () => {
+  const entries = combatLogEntries([{ type: 'cardPlayed', sourceId: 'player', targetId: 'e1', cardId: 'strike' }], {
+    registries, players: [{ id: 'player', name: 'Strike' }], enemies,
+  });
+  const row = entries[0];
+  assert.equal(row.segments.map(part => part.text).join(''), row.text);
+  assert.deepEqual(row.segments.filter(part => part.side).map(({ id, side, text }) => ({ id, side, text })), [
+    { id: 'player', side: 'player', text: 'Strike' }, { id: 'e1', side: 'enemy', text: 'Wyrm Lord' },
+  ]);
+  assert.ok(!row.text.includes('\u0001'));
+  assert.ok(row.segments.some(part => !part.side && part.text.includes('Strike')));
+});
+
+test('same-named players and enemies keep their own identity roles in co-op', () => {
+  const entries = combatLogEntries([{ type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'seat-a', targetId: 'e1', amount: 2 }], {
+    registries, players: [{ id: 'seat-a', name: 'Wyrm Lord' }], enemies,
+  });
+  assert.deepEqual(entries[0].segments.filter(part => part.side).map(part => [part.id, part.side]), [['seat-a', 'player'], ['e1', 'enemy']]);
+});
+
+test('unknown and environmental sources have no enemy identity role', () => {
+  const entries = combatLogEntries([{ type: 'healed', sourceId: 'environment', targetId: 'player', amount: 2 }], { registries, enemies });
+  assert.ok(entries[0].segments.every(part => part.id !== 'environment' || part.side === undefined));
+});
 // Moves carry no authored name: the log words the move id ('goldenBulwark' → 'Golden Bulwark').
 const move = (enemyId, moveId) => registries.enemies.get(enemyId).moves[moveId].name
   || moveId.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
@@ -191,4 +216,22 @@ test('a hidden charging enemy logs its Block and Barrier as preparing, never nam
     assert.ok(lines.includes(`${warden} gained 3 Barrier (preparing).`), lines.join('\n'));
     for (const text of lines) assert.ok(!text.includes(name), `the log never names the hidden move: ${text}`);
   }
+});
+
+test('Core automatic outcomes (Evasion bypassed, out of range) log without the removed stance term', () => {
+  const lines = log([
+    { type: 'attackHit', sourceId: 'player', targetId: 'e1', opposed: true, bypass: true, dice: [], d20: null, accuracy: 4, evasion: 3, hitChance: 100, mode: 'normal' },
+    { type: 'attackMissed', sourceId: 'player', targetId: 'e1', opposed: true, inRange: false, missReason: 'range', dice: [], d20: null, accuracy: 4, evasion: 3, hitChance: 0, mode: 'normal' },
+  ]);
+  assert.equal(lines.length, 2);
+  assert.match(lines[0], /hit .*: Evasion bypassed · Precision 4 · 100% chance\.$/);
+  assert.match(lines[1], /missed .*: out of range · Precision 4 · 0% chance\.$/);
+  for (const line of lines) assert.doesNotMatch(line, /stance/);
+});
+
+test('Core hit log shows one attacker roll against Evasion', () => {
+  const [line] = log([{ type: 'attackHit', sourceId: 'player', targetId: 'e1', fixedDefense: true,
+    dice: [8, 13], d20: 8, attackTotal: 17, accuracy: 4, evasion: 9, evasionTotal: 9, hitChance: 96, mode: 'advantage' }]);
+  assert.match(line, /d20 \[8, 13\] \+ Precision 4 = 17 vs Evasion 9 · advantage · 96% chance\.$/);
+  assert.doesNotMatch(line, /vs d20|stance/);
 });

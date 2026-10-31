@@ -738,3 +738,10 @@ export function pendingPrologueScene(run) {
   return state?.version === PROLOGUE_STATE_VERSION && state.status === 'pending' && Number.isInteger(state.scene)
     && state.scene >= 0 && state.scene < PROLOGUE_DEFAULTS.scenes.length ? state.scene : null;
 }
+
+// Only Core 2 opts into the configured opening. Other configured modes keep
+// their own entry route, and a loaded save never gains a pending opening.
+export function runSupportsPrologue(run) {
+  return run?.gameProfile?.foundation?.mode !== 'configured'
+    || run?.gameProfile?.author?.core === 'ashen.core@2.0.0';
+}

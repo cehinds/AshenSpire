@@ -1,0 +1,992 @@
+{
+  "format": "ashen.ops@1",
+  "ops": {
+    "grantRollMode": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "roll": {
+          "type": "string",
+          "required": true
+        },
+        "advantage": {
+          "type": "boolean",
+          "required": false
+        },
+        "disadvantage": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Sets the target next evade roll to advantage or disadvantage.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case grantRollMode"
+      }
+    },
+    "retain": {
+      "params": {
+        "amount": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Marks the first N cards in hand as retained through the next turn end.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case retain"
+      }
+    },
+    "damage": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "hits": {
+          "type": "value",
+          "required": false
+        },
+        "attack": {
+          "type": "object",
+          "required": false
+        },
+        "damageSchool": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "description": "Deals amount damage to each target, hits times (default 1). Block absorbs first, then hp.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case damage"
+      }
+    },
+    "block": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Adds block to each target.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case block"
+      }
+    },
+    "gainBarrier": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Adds barrier (a block that does not expire) to each target.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case gainBarrier"
+      }
+    },
+    "wardDamage": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Spends the target persistent ward.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case wardDamage"
+      }
+    },
+    "buildup": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "status": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        },
+        "chance": {
+          "type": "value",
+          "required": false
+        },
+        "advantage": {
+          "type": "boolean",
+          "required": false
+        },
+        "disadvantage": {
+          "type": "boolean",
+          "required": false
+        },
+        "camp": {
+          "type": "string",
+          "required": false
+        },
+        "recoveryProfile": {
+          "type": "string",
+          "required": false
+        },
+        "traits": {
+          "type": "object",
+          "required": false
+        }
+      },
+      "description": "Applies status build-up pressure to each target; the status triggers at its threshold.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case buildup"
+      }
+    },
+    "gainPoise": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Adds poise to each target, with no cap.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case gainPoise"
+      }
+    },
+    "gainWard": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Adds ward to each target.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case gainWard"
+      }
+    },
+    "restorePoise": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "oncePerCombat": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "description": "Refills the target poise toward poiseMax (no cap when poiseMax is absent).",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case restorePoise"
+      }
+    },
+    "moveEngagement": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": true
+        },
+        "bands": {
+          "type": "number",
+          "required": true
+        }
+      },
+      "description": "Moves the selected opposing engagement pair one band (-1 closing, +1 retreat), clamped to Melee..Ranged; inactive when range mechanics are disabled.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case moveEngagement"
+      }
+    },
+    "dodgeRoll": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        }
+      },
+      "description": "Rolls the dodge check and grants temporary guard on success.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case dodgeRoll"
+      }
+    },
+    "applyStatus": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "status": {
+          "type": "string",
+          "required": true
+        },
+        "stacks": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Adds stacks (default 1) of a status to each target.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case applyStatus"
+      }
+    },
+    "removeStatus": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "status": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Removes a status, or amount stacks of it.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case removeStatus"
+      }
+    },
+    "grantCardCharge": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "damage": {
+          "type": "value",
+          "required": false
+        },
+        "manaDiscount": {
+          "type": "value",
+          "required": false
+        },
+        "block": {
+          "type": "value",
+          "required": false
+        },
+        "heal": {
+          "type": "value",
+          "required": false
+        },
+        "break": {
+          "type": "value",
+          "required": false
+        },
+        "buildup": {
+          "type": "value",
+          "required": false
+        },
+        "key": {
+          "type": "string",
+          "required": false
+        },
+        "cardType": {
+          "type": "string",
+          "required": false
+        },
+        "abilityKind": {
+          "type": "string",
+          "required": false
+        },
+        "cardTag": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "description": "Grants a one-shot charge that boosts the next card played.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case grantCardCharge"
+      }
+    },
+    "castLinkedSpell": {
+      "params": {
+        "card": {
+          "type": "cardRef",
+          "required": true
+        }
+      },
+      "description": "Queues the effects of another card as part of this action.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case castLinkedSpell"
+      }
+    },
+    "addBurden": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "card": {
+          "type": "cardRef",
+          "required": true
+        },
+        "count": {
+          "type": "value",
+          "required": false
+        },
+        "pile": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "description": "Adds burden cards to an enemy piles.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addBurden"
+      }
+    },
+    "revealIntent": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Reveals an enemy intent to the owner for N turns.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case revealIntent"
+      }
+    },
+    "modifyCards": {
+      "params": {
+        "from": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "selection": {
+          "type": "string",
+          "required": false
+        },
+        "position": {
+          "type": "string",
+          "required": false
+        },
+        "look": {
+          "type": "integer",
+          "required": false
+        },
+        "transformTo": {
+          "type": "cardRef",
+          "required": false
+        },
+        "changes": {
+          "type": "object",
+          "required": true
+        }
+      },
+      "description": "Changes properties of cards in a zone (retain, hide, maneuver, range).",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case modifyCards"
+      }
+    },
+    "moveCards": {
+      "params": {
+        "from": {
+          "type": "string",
+          "required": true
+        },
+        "to": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "selection": {
+          "type": "string",
+          "required": false
+        },
+        "position": {
+          "type": "string",
+          "required": false
+        },
+        "look": {
+          "type": "integer",
+          "required": false
+        },
+        "transformTo": {
+          "type": "cardRef",
+          "required": false
+        }
+      },
+      "description": "Moves cards between zones, optionally transforming them.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case moveCards"
+      }
+    },
+    "draw": {
+      "params": {
+        "amount": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Draws cards (default 1) from the front of the draw pile into hand.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case draw"
+      }
+    },
+    "discard": {
+      "params": {
+        "amount": {
+          "type": "value",
+          "required": false
+        },
+        "choose": {
+          "type": "boolean",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Moves cards from hand to the discard pile.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case discard"
+      }
+    },
+    "exhaust": {
+      "params": {
+        "amount": {
+          "type": "value",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Moves cards from hand to the exhaust pile.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case exhaust"
+      }
+    },
+    "addCard": {
+      "params": {
+        "card": {
+          "type": "cardRef",
+          "required": true
+        },
+        "count": {
+          "type": "value",
+          "required": false
+        },
+        "pile": {
+          "type": "string",
+          "required": false
+        },
+        "position": {
+          "type": "string",
+          "required": false
+        },
+        "target": {
+          "type": "entityRef",
+          "required": false
+        }
+      },
+      "description": "Creates card copies in a pile.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addCard"
+      }
+    },
+    "gainEnergy": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        },
+        "funded": {
+          "type": "number",
+          "required": false
+        }
+      },
+      "description": "Adds stamina points (sp, called energy) to the target, less the funded part.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case gainEnergy"
+      }
+    },
+    "restoreStamina": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Restores stamina (sp), up to spMax when present. A negative amount removes sp, not below 0.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case restoreStamina"
+      }
+    },
+    "restoreMana": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        },
+        "toFloorPct": {
+          "type": "value",
+          "required": false
+        },
+        "funded": {
+          "type": "number",
+          "required": false
+        }
+      },
+      "description": "Restores mana (mp) by an amount or up to a percent floor, up to mpMax when present.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case restoreMana"
+      }
+    },
+    "loseHp": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "nonlethal": {
+          "type": "boolean",
+          "required": false
+        },
+        "cause": {
+          "type": "string",
+          "required": false
+        },
+        "offering": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Removes hp directly, bypassing block.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case loseHp"
+      }
+    },
+    "heal": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true,
+          "contentRequiredUnless": "rule"
+        },
+        "damageType": {
+          "type": "string",
+          "required": false
+        },
+        "ashenBlightBaseAmount": {
+          "type": "value",
+          "required": false
+        },
+        "ashenBlightBonusPct": {
+          "type": "number",
+          "required": false
+        },
+        "rule": {
+          "type": "string",
+          "required": false,
+          "description": "Legacy content form: take the amount from the named heal-rules shape (src/engine/actions.js). The portable runtime does not read it and still requires amount."
+        }
+      },
+      "description": "Restores hp up to max hp.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case heal"
+      }
+    },
+    "shuffleDiscardIntoDraw": {
+      "params": {},
+      "description": "Shuffles the discard pile into the draw pile.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case shuffleDiscardIntoDraw"
+      }
+    },
+    "enterStance": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "stance": {
+          "type": "string",
+          "required": false
+        },
+        "choose": {
+          "type": "string",
+          "required": false
+        },
+        "maneuver": {
+          "type": "string",
+          "required": false
+        }
+      },
+      "description": "Puts the actor into a stance or maneuver.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case enterStance"
+      }
+    },
+    "poiseDamage": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Reduces the target poise; reaching zero breaks the poise.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case poiseDamage"
+      }
+    },
+    "stagger": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        }
+      },
+      "description": "Staggers (breaks) each target.",
+      "reference": "portable",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case stagger"
+      }
+    },
+    "arcaneBuildup": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "amount": {
+          "type": "value",
+          "required": false
+        },
+        "pct": {
+          "type": "value",
+          "required": false
+        }
+      },
+      "description": "Pours arcane build-up into each target, by points or percent of threshold.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case arcaneBuildup"
+      }
+    },
+    "addCinders": {
+      "params": {
+        "amount": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Run level: changes the cinders currency.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addCinders"
+      }
+    },
+    "addCardToDeck": {
+      "params": {
+        "card": {
+          "type": "cardRef",
+          "required": true
+        }
+      },
+      "description": "Run level: adds a card to the deck.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addCardToDeck"
+      }
+    },
+    "removeCardFromDeck": {
+      "params": {
+        "card": {
+          "type": "cardRef",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Run level: removes a card from the deck.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case removeCardFromDeck"
+      }
+    },
+    "upgradeCard": {
+      "params": {
+        "card": {
+          "type": "cardRef",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Run level: upgrades a card or armament.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case upgradeCard"
+      }
+    },
+    "addRelic": {
+      "params": {
+        "id": {
+          "type": "string",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Run level: grants a relic.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addRelic"
+      }
+    },
+    "addFlask": {
+      "params": {
+        "id": {
+          "type": "string",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Run level: grants a flask.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addFlask"
+      }
+    },
+    "addFlaskCapacity": {
+      "params": {
+        "kind": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "integer",
+          "required": true
+        }
+      },
+      "description": "Run level: raises restorative flask capacity.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case addFlaskCapacity"
+      }
+    },
+    "loseMaxHpPct": {
+      "params": {
+        "pct": {
+          "type": "value",
+          "required": true
+        }
+      },
+      "description": "Run level: lowers max hp by a percent.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case loseMaxHpPct"
+      }
+    },
+    "startCombat": {
+      "params": {
+        "encounterId": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "description": "Run level: enters a combat encounter.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case startCombat"
+      }
+    },
+    "swapClass": {
+      "params": {
+        "classId": {
+          "type": "string",
+          "required": false
+        },
+        "random": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Run level: swaps the character class.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case swapClass"
+      }
+    },
+    "refillFlasks": {
+      "params": {},
+      "description": "Run level: tops flasks up at a grace.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case refillFlasks"
+      }
+    }
+  },
+  "effectEnvelope": {
+    "if": {
+      "type": "object",
+      "required": false,
+      "description": "Live-engine predicate, evaluated at the existing effect boundary; not portable service syntax."
+    },
+    "oncePerTurn": {
+      "type": "string",
+      "required": false,
+      "description": "Live-engine per-owner gate key."
+    },
+    "tags": {
+      "type": "array",
+      "required": false,
+      "description": "Live-engine effect classification tags."
+    }
+  }
+}

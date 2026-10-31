@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "characterLevels": {
+      "type": "boolean"
+    },
+    "classUnlocks": {
+      "type": "boolean"
+    },
+    "cardRanks": {
+      "type": "boolean",
+      "description": "Card ranks (SPEC 13.4o): card-school track levels queue rank-ups, drafted cards arrive ranked, and rank scales the card. Absent or false keeps cards unranked."
+    },
+    "attributePointsPerLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "entitlementPolicy": {
+      "enum": [
+        "authored"
+      ]
+    },
+    "classXpMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "weaponXpMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "characterXpMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "mode",
+    "characterLevels",
+    "classUnlocks",
+    "attributePointsPerLevel"
+  ],
+  "additionalProperties": false
+}

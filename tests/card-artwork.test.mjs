@@ -7,7 +7,7 @@ const playingCardArt=(ref,options={})=>resolveArt(ref,{...options,extended:null}
 import { DEFAULT_CARD_ART, defaultCardArtFallbacks } from '../src/ui/defaultCardArtwork.js';
 import { contentBundle } from '../src/content/index.js';
 import { existsSync } from 'node:fs';
-import { manifestIds } from '../tools/art-source.mjs';
+import { artPath, manifestIds } from '../tools/art-source.mjs';
 
 const SHIPPED = manifestIds();
 
@@ -51,11 +51,21 @@ test('the installed outline catalogue covers current cards, profiles, and unknow
   for (const card of contentBundle.cards) assert.ok(DEFAULT_CARD_ART.cards[card.id], card.id);
   for (const path of [...Object.values(DEFAULT_CARD_ART.cards), ...Object.values(DEFAULT_CARD_ART.profiles)]) {
     assert.ok(SHIPPED.has(path), path);
-    assert.ok(existsSync(new URL('../' + path.replace('assets/', 'assets-mobile/'), import.meta.url)), path);
+    assert.ok(existsSync(artPath(path.replace('assets/', 'assets-mobile/'))), path);
   }
   assert.equal(playingCardArt({cardId:'unknown'}).path, DEFAULT_CARD_ART.default);
   const candidates = defaultCardArtFallbacks({cardId:'strike'});
   assert.ok(candidates[0].endsWith('sword.svg'));
   assert.ok(candidates[1].endsWith('default.svg'));
   assert.ok(candidates[2].startsWith('data:image/svg+xml;base64,'));
+});
+
+test('base card fallback motifs follow their authored effect families', () => {
+  const icon = id => DEFAULT_CARD_ART.cards[id];
+  assert.ok(icon('base.persistent-protection').endsWith('/shieldwall.svg'));
+  assert.ok(icon('base.poison').endsWith('/serpent.svg'));
+  assert.ok(icon('base.fire-cleanse').endsWith('/flame.svg'));
+  assert.ok(icon('base.evade').endsWith('/dodge.svg'));
+  assert.ok(icon('base.draw').endsWith('/book.svg'));
+  assert.ok(icon('base.smash').endsWith('/hammer.svg'));
 });

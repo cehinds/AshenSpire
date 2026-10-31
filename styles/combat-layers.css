@@ -6,7 +6,7 @@
   --combat-layer-shadows: 100;
   --combat-layer-enemy: 200;
   --combat-layer-player: 300;
-  --combat-layer-fade: 150;
+  --combat-layer-fade: 375;
   --combat-layer-selection: 500;
   --combat-layer-cards: 600;
   --combat-layer-hud: 700;
@@ -43,7 +43,7 @@
 :root .combat[data-layout='formation'] > .alternative-card-fade { z-index: var(--combat-layer-fade); }
 :root .combat[data-layout='formation'] .fx-layer { z-index: 400; }
 :root .combat[data-layout='formation'] .enemy-target-picker { z-index: var(--combat-layer-selection); }
-:root .combat[data-layout='formation']:has(> .environment-backdrop)::before {
+:root .combat[data-layout='formation'][data-has-backdrop~='environment']::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   z-index: var(--combat-layer-fade);
   background: linear-gradient(180deg, transparent 58%, #17130f 79%);
@@ -56,12 +56,13 @@
    must not split the physical tap area into strips: the transparent square
    belongs to the frame and uses the fitted height. On enemies it occupies the
    left side of the full footer, leaving the name's center for inspection.
-   Explicit overhead reading controls retain priority above this square. */
+   Explicit overhead reading controls retain priority above this square.
+   Until geometry is measured, no auxiliary square owns an input region. */
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
   content: ''; display: block; position: absolute;
   left: var(--enemy-core-x, var(--enemy-hit-x)); top: var(--enemy-core-y, var(--enemy-hit-y));
-  width: min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))));
-  height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
+  width: min(var(--enemy-hit-width, 0px), var(--enemy-hit-height, 0px));
+  height: var(--enemy-hit-height, 0px);
   transform: translate(-50%, -50%); pointer-events: auto;
   background: none; border: 0; box-shadow: none;
   z-index: calc(var(--combat-layer-selection) + 2) !important;
@@ -153,7 +154,7 @@
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
   position: absolute; right: auto; bottom: auto;
 }
-@media (max-height: 480px) and (min-width: 600px) {
+@container game-viewport (max-height: 480px) and (min-width: 600px) {
   :root .combat[data-layout='formation'] .combat-tools {
     right: auto; left: calc(8px / var(--ui-zoom,1)); grid-template-columns: 1fr;
   }
@@ -164,14 +165,15 @@
 
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
-  display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
+  display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; gap: calc(8px / var(--ui-zoom,1));
   padding: 0; border: 0;
   /* HUD layout tokens: the row's backing (transparent = off). */
   background: var(--hud-tools-bg); box-shadow: var(--hud-panel-shadow, none);
   border-radius: var(--hud-panel-radius, 0px);
 }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; text-shadow: var(--hud-text-shadow, none); }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { grid-column: 1; grid-row: 1; justify-self: start; text-shadow: var(--hud-text-shadow, none); }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { grid-column: 3; grid-row: 1; justify-self: end; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='auto'] { grid-column: 4; grid-row: 1; justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
@@ -182,6 +184,12 @@
 }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(9px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); }
+/* Phone width: the Reaction and Auto switches keep label, track and knob; the
+   enabled/disabled words drop out (state stays in aria-checked and aria-label). */
+@media (max-width: 480px) {
+  :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { display: none; }
+  :root .combat[data-layout='formation'] .combat-tools .reaction-switch-track { width: calc(34px / var(--ui-zoom,1)); }
+}
 /* The toolbar spans the hand with Log at its left; open the drawer beside it. */
 :root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: 0; right: auto; }
 
@@ -356,7 +364,7 @@
   color: #ffe7ab; font-size: calc(16px / var(--ui-zoom,1));
   text-shadow: var(--hud-text-shadow, none);
 }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact) { display: none; }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact):not(.cr-followups) { display: none; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent .intent-compact { display: inline-flex; }
 :root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--hud-enemy-panel-border, var(--combatant-highlight)); }
 /* HUD layout tokens: the selected intent bubble shares the panel style. */
@@ -408,7 +416,7 @@
   --combatant-value-text: calc(11px / var(--ui-zoom,1));
   height: var(--health-row-h); min-height: var(--health-row-h);
 }
-@media (max-width: 320px) {
+@container game-viewport (max-width: 320px) {
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(4px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm {
@@ -491,3 +499,33 @@
    and they sit above any card that reaches a corner. */
 :root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: calc(var(--combat-layer-cards) + 1) !important; }
 :root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] > * { pointer-events: auto; }
+
+/* Text feedback portals out of sprite effects so 800 is a root paint level. */
+:root .combat[data-layout='formation'] > .combat-floater-layer {
+  position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 800;
+}
+
+/* Lite: one drop-shadow instead of three on the selected combatant's sprite. */
+:root[data-performance='lite'] .combat[data-layout='formation'] .combatant.context-selected .sprite {
+  filter: drop-shadow(0 0 2px var(--combatant-highlight));
+}
+
+/* Lite: the four coloured target-outline edges plus two dark halos collapse to
+   one coloured drop-shadow (kept out of combat-visuals.css, whose always-on
+   rules all start at .combat). */
+:root[data-performance='lite'] .combat [data-target-outline='green'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--green)) !important; }
+:root[data-performance='lite'] .combat [data-target-outline='yellow'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--gold)) !important; }
+:root[data-performance='lite'] .combat [data-target-outline='red'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--ember)) !important; }
+
+/* Classic compact controls keep the complete scope label and follow-ups on one
+   line. Their measured width is packed by battlefieldStage; expanded/default
+   HUD intents retain their existing composition and sizing. */
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent {
+  flex-direction: row; width: max-content;
+  max-width: calc((100 * var(--view-vw, 1vw) - 16px) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-damage-read {
+  flex-direction: row; align-items: center; gap: calc(4px / var(--ui-zoom,1));
+}
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-actions { flex-wrap: nowrap; }
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent :is(.intent-compact,.cr-followups) { flex: none; }

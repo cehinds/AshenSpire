@@ -1,6 +1,8 @@
 // Closed, data-owned upgrade vocabulary. Content selects exact item/tier rows;
 // runtime code only interprets the registered tags and never invents a delta.
 
+import { gameModule } from './gameProfile.js';
+
 export const UPGRADE_COST_TAG = 'upgrade:cost:smithing-stone';
 export const UPGRADE_CARD_ROLES = Object.freeze(['attack', 'guard', 'technique']);
 export const UPGRADE_CARD_EFFECTS = Object.freeze(['damage', 'block', 'draw', 'discard']);
@@ -59,10 +61,46 @@ export function itemUpgradeRows(registries, itemRef, nextTier) {
     .filter((row) => row.itemRef === itemRef && row.nextTier === nextTier));
 }
 
-export function itemUpgradeTiers(registries, itemRef) {
-  return Object.freeze([...new Set(((registries?.equipment?.itemUpgradeChanges) || [])
+/** True when this subject (a run, snapshot or profile-bound registries) resolves gear through the Core 2 pipeline. */
+export function coreGearActive(subject) {
+  const gear = gameModule(subject, 'gear');
+  return gear?.mode === 'configured' && !!gear.armorBudget && gameModule(subject, 'stats')?.mode === 'configured';
+}
+
+/**
+ * The profile's per-item tier ladder for a Core armament or armor: { maxTier, steps, costs } from the equipment
+ * module's upgradeBonuses.tierBonusSteps / tierStoneCosts, or null (Legacy/Current, relics, no ladder configured),
+ * in which case the authored CSV ladder alone decides the tiers.
+ */
+export function coreTierLadder(subject, itemRef) {
+  const identity = itemRefIdentity(itemRef);
+  if (!identity || identity.itemKind === 'relic' || !coreGearActive(subject)) return null;
+  const bonuses = gameModule(subject, 'equipment')?.upgradeBonuses;
+  const steps = bonuses?.tierBonusSteps, costs = bonuses?.tierStoneCosts;
+  if (!Array.isArray(steps) || !steps.length || !Array.isArray(costs) || costs.length !== steps.length) return null;
+  return Object.freeze({ maxTier: steps.length, steps, costs });
+}
+
+/** `subject` is whatever carries the game profile (a run or snapshot); it defaults to the registries. */
+export function itemUpgradeTiers(registries, itemRef, subject = registries) {
+  const authored = [...new Set(((registries?.equipment?.itemUpgradeChanges) || [])
     .filter((row) => row.itemRef === itemRef)
-    .map((row) => row.nextTier))].sort((a, b) => a - b));
+    .map((row) => row.nextTier))].sort((a, b) => a - b);
+  const ladder = authored.length ? coreTierLadder(subject, itemRef) : null;
+  return Object.freeze(ladder ? Array.from({ length: ladder.maxTier }, (_, index) => index + 1) : authored);
+}
+
+/** The rows that describe promoting to `nextTier`: the authored rows, or (Core ladder past the CSV) the top authored tier's. */
+export function itemUpgradeRowsAt(registries, itemRef, nextTier, subject = registries) {
+  const rows = itemUpgradeRows(registries, itemRef, nextTier);
+  if (rows.length || !coreTierLadder(subject, itemRef) || !itemUpgradeTiers(registries, itemRef, subject).includes(nextTier)) return rows;
+  return itemUpgradeRows(registries, itemRef, 1);
+}
+
+/** Smithing Stones to promote to `nextTier`: the Core ladder's cost, else the authored cost row. */
+export function itemUpgradeCostAt(registries, itemRef, nextTier, rows, subject = registries) {
+  const ladder = coreTierLadder(subject, itemRef);
+  return ladder ? ladder.costs[nextTier - 1] : itemUpgradeCost(rows);
 }
 
 export function itemUpgradeCost(rows) {
@@ -122,7 +160,7 @@ export function resolveUpgradedEquipment(registries, itemRef, level = 0) {
       if (poiseThreshold < 0) throw new Error(`${itemRef} poiseThreshold would fall below zero`);
     }
   }
-  return Object.freeze({ ...base, poiseThreshold });
+  return Object.freeze({ ...base, poiseThreshold, upgradeLevel: level });
 }
 
 /** Resolve one relic definition at a tier without mutating frozen content. */

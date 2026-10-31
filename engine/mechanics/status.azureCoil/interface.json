@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.azureCoil",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

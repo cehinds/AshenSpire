@@ -14,7 +14,7 @@
 // The artifact lane checks the selected standalone file, never an assumed
 // output. Selftest plants the source seams and that selected artifact.
 
-import { copyPackTrees, SANDBOX_ENV } from './art-source.mjs';
+import { copyPackTrees, copyDisplayArt, SANDBOX_ENV } from './art-source.mjs';
 import {
   cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -30,6 +30,9 @@ const argOf = (flag) => { const at = args.indexOf(flag); return at >= 0 ? args[a
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const SOURCE_BASIS_PATHS = [
   'src/content/sfx.js',
+  'content/source/sfxRecipes.json',
+  'content/source/sfxFamilyIds.json',
+  'content/source/sfxHitTiers.json',
   'src/ui/assetmap.js',
   'src/ui/audio.js',
   'tools/bundle.mjs',
@@ -180,6 +183,12 @@ if (argOf('--verify-receipt')) verifyReceiptCli(argOf('--verify-receipt'));
 async function runner() {
   const { installWebAudioStub } = await import('./webaudio-stub.mjs');
   const gains = installWebAudioStub();
+  // The stub's audio clock never moves, and sfx() drops a repeat of one id
+  // inside 40 ms of audio time. The runner's second play is a later cue, so
+  // capture the context initAudio() builds and advance its clock between plays.
+  const BaseCtx = window.AudioContext;
+  let liveCtx = null;
+  window.AudioContext = class extends BaseCtx { constructor() { super(); liveCtx = this; } };
   const proto = window.AudioContext.prototype;
   const createSource = proto.createBufferSource;
   let decodeFails = false;
@@ -238,6 +247,7 @@ async function runner() {
     await wait(30);
     const afterWarm = snapshot();
     gains.length = 0;
+    liveCtx.currentTime += 0.1; // past the 40 ms same-id dedupe in sfx()
     engine.sfx(id);
     const secondImmediate = snapshot();
     await wait(5);
@@ -359,11 +369,12 @@ function copyBundleInputs(to) {
   // they come from the fetched packs (or, in a sandbox of a sandbox, its own
   // copies: copyPackTrees, tools/art-source.mjs), and every child this tool
   // runs in a copy reads them with ASHEN_ART_SOURCE=trees (SANDBOX_ENV).
-  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'tools']) {
+  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'engine', 'content', 'asset-data', 'styles', 'tools']) {
     const from = resolve(ROOT, name);
     if (existsSync(from)) cpSync(from, resolve(to, name), { recursive: true });
   }
   copyPackTrees(to, ['assets-mobile', 'assets/fonts'], { root: ROOT });
+  copyDisplayArt(to, { root: ROOT });
 }
 
 function forceCrLfTree(path) {

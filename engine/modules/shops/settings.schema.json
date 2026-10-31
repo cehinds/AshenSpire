@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "options": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "price": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "itemsPerCategory": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "Distinct eligible items on each merchandise shelf; depleted catalogs offer fewer."
+    },
+    "blacksmithChance": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percent of shop nodes that are a Blacksmith instead of the merchandise shop, decided once per node from the run seed."
+    },
+    "priceTable": {
+      "type": "object",
+      "description": "Per-offer prices: kind (card, relic, armament, armour, weaponArt, flask) to a [min, max] range or a rarity-keyed map of ranges. Each offer rolls its own price on the shop stream; absent, every offer costs `price`.",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "mode",
+    "options",
+    "price"
+  ],
+  "additionalProperties": false
+}

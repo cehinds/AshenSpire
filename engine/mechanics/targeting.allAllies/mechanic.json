@@ -1,0 +1,26 @@
+{
+  "id": "targeting.allAllies",
+  "tag": "targeting.allAllies",
+  "version": "1.0.0",
+  "family": "targeting",
+  "label": "AllAllies",
+  "description": "Tag targeting.allAllies in the targeting family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "targeting.allAllies"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "resolveRawTargets"
+  }
+}

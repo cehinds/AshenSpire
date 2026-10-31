@@ -1,5 +1,6 @@
+import { logicalViewport } from '../viewViewport.js';
 import { openModal } from './modalShell.js';
-import { hideTooltip } from './tooltip.js';
+import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
@@ -68,7 +69,7 @@ function doorStackBelowPx() {
   if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
   return inspect + doorReadableMinPx();
 }
-// MEASURE THE DOOR, NOT THE WINDOW. This compared `window.innerWidth`, and the
+// MEASURE THE DOOR, NOT THE WINDOW. This compared `logicalViewport().width`, and the
 // door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
 // so at a 1440px viewport the layout is 748px whatever the screen does. While
 // the inspect width was authored-only that gap was merely conservative and I
@@ -118,7 +119,7 @@ function decideCardDoorShape(widthPx, layout = document.querySelector('.card-ins
 function applyCardDoorShape() {
   const slimmest = narrowestDoorWidth();
   if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
-  else decideCardDoorShape(window.innerWidth, null);
+  else decideCardDoorShape(logicalViewport().width, null);
 }
 // A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
 // THE WRONG ONE. `disconnect()` before `observe()` meant only the most recently
@@ -177,6 +178,36 @@ function narrowestDoorWidth() {
 export function refreshCardDoorShape() {
   applyCardDoorShape();
 }
+
+// The inspect face already contains the authoritative, rendered values for
+// these parts. Attach the shared tooltip machine to those native components so
+// mouse, keyboard/gamepad focus, and touch all read the same thing without
+// rebuilding card facts or guessing from a card name.
+function bindNativeCardTooltips(card) {
+  const face = card?.matches?.('.illustrated-card-face')
+    ? card
+    : card?.querySelector?.('.illustrated-card-face');
+  if (!face) return;
+  const bind = (target, label, value = target?.textContent) => {
+    const text = String(value || '').trim();
+    if (!target || !text || target.dataset.tipAttached === 'true') return;
+    if (!target.matches('button, a[href], input, select, textarea, [tabindex]')) target.tabIndex = 0;
+    attachTooltip(target, () => `<div class="tt-title">${esc(label)}</div>${esc(text)}`, {
+      intent: 'above', align: 'center',
+    });
+  };
+  bind(face.querySelector('[data-card-binding="name"]'), 'Card title');
+  bind(face.querySelector('[data-card-binding="stamina"]'), 'Stamina cost');
+  bind(face.querySelector('[data-card-binding="mana"]'), 'Mana cost');
+  const rankedCost = face.querySelector('.card-rank[title]');
+  if (rankedCost) bind(rankedCost, 'Cost', rankedCost.title || rankedCost.textContent);
+  else bind(face.querySelector('.card-rank'), 'Cost');
+  bind(face.querySelector('.card-type-name'), 'Card type');
+  bind(face.querySelector('.ic-text[data-card-binding="tags"]'), 'Card tags');
+  bind(face.querySelector('.ic-text[data-card-binding="rules"]'), 'Rules');
+  // Tag symbols carry their own authored `data-tip` copy and are adopted by
+  // the tooltip service; leave that copy and its one-tap behavior intact.
+}
 // AND A CLOSED DOOR'S LAYOUT IS RELEASED, NOT MERELY IGNORED. Skipping detached
 // nodes in `narrowestDoorWidth` stopped them voting but left them observed, and
 // an observer holds its targets — so every card you opened kept its whole
@@ -223,6 +254,7 @@ export function cardInspectionLayout(card, details) {
   observeDoorWidth(body);
   const art = document.createElement('div');
   art.className = 'card-inspection-art';
+  bindNativeCardTooltips(card);
   art.append(card);
   const tags = details.querySelector('.inspection-tags');
   if (tags) art.append(tags);
@@ -248,7 +280,7 @@ export function cardInspectionLayout(card, details) {
 // `actions` may be a function so a door that stands open while the run moves
 // re-reads on press rather than acting on what was true when it opened. That
 // is the one behaviour the old `getAction()`-on-click had right.
-export function openCardInspection({ title, card, details, opener, actions = null, commands = {} }) {
+export function openCardInspection({ title, card, details, opener, actions = null, commands = {}, deferLift = false }) {
   hideTooltip();
   document.getSelection()?.removeAllRanges();
   const read = () => {
@@ -282,7 +314,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   // actions — one fills it — and a read-only door has no footer at all, not a
   // redundant Back beside the close it duplicates.
   const shell = openModal({ title, size: 'lg',
-    className: 'card-inspection-modal', opener,
+    className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
     secondary: buttons.slice(1),
     body: cardInspectionLayout(card, details) });
@@ -301,7 +333,8 @@ export function openCardInspection({ title, card, details, opener, actions = nul
         return;
       }
       button.disabled = true;
-      shell.close();
+      // The command may move focus (targeting): lift the page lock now, not a frame later, so its target is focusable.
+      shell.close({ liftNow: true });
       commit();
     });
   }
@@ -315,8 +348,18 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   return shell;
 }
 
+// Hosts can expose a visible Inspect action without simulating the face's
+// Information button. The renderer owns the reading; opening it owns no choice.
+const boundInspections = new WeakMap();
+export function openBoundCardInspection(card, opener = card) {
+  const open = boundInspections.get(card);
+  if (!card?.isConnected || !open) return false;
+  return open(opener);
+}
+
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
 export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
+  boundInspections.set(card, open);
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
@@ -338,7 +381,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // number reaches CSS and JS alike; a card rendered without tokens still gets
   // the documented default rather than an instant flash.
   const revealDelayMs = () => {
-    const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
+    // Only equipmentCard.js sets this property, inline on the card (no stylesheet
+    // declares it), so the inline read is the computed one without the style flush.
+    const raw = card.style.getPropertyValue('--card-info-delay').trim();
     const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
     return Number.isFinite(ms) && ms >= 0 ? ms : selectionRevealDelayMs();
   };
@@ -365,6 +410,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // selection, showing an information button on a card nobody chose.
   const douse = () => {
     card.classList.remove('inspection-selected', 'inspection-info-visible', 'selected');
+    // Keep combat.css's `.hand[data-has-selection]` (the old `.hand:has(.selected)`) true to the DOM.
+    const hand = card.closest('.hand');
+    if (hand && hand.getAttribute('data-has-selection') === 'true' && !hand.querySelector('.selected')) hand.setAttribute('data-has-selection', 'false');
     card.setAttribute('aria-pressed', 'false');
     card.removeAttribute('aria-current');
     card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
@@ -447,6 +495,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.classList.add('inspection-selected');
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
+    // The old node's pending reveal cannot paint after it is detached. The
+    // selected replacement owns its own delay, without a new selection event.
+    revealInfo();
   }
   card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });

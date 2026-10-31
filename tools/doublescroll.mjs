@@ -51,10 +51,12 @@
 // WHY --mutate EXISTS AND WHAT IT PLANTS. A green sweep is worth exactly what
 // its ruler is worth, and the ruler here is one expression against one engine's
 // layout: get the paint test wrong and every door reports clean forever. The
-// plant is the defect itself, restored by a stylesheet rather than by editing
-// the tree — `overflow: auto` back on the settings host that owns the shell —
-// on the very door the photograph was taken in. If the sweep does not go red
-// against that, nothing it says about the other doors means anything.
+// plant restores a scrolling settings host and a fixed-height rail through a
+// stylesheet rather than editing the tree. The host must be shorter than the
+// rail in this overlay: overflow:auto alone is not enough when the rail fills
+// the body exactly. The plant checks both scroll ranges and classic gutters
+// before the independent sweep runs. If the sweep does not go red against
+// that, nothing it says about the other doors means anything.
 //
 // BOUNDARY. Linux headless Chromium, the shapes listed below, Text M, and all
 // six of them driven with `mobile: false` for the reason stated at SHAPES. It
@@ -172,8 +174,14 @@ const SURFACES = [
   { name: 'combat', shot: 'combat', ready: `!!document.querySelector('.combat .hand .card')` },
   { name: 'customize', shot: 'customize', ready: `!!document.querySelector('.cz-portrait')` },
   { name: 'compendium', shot: 'compendium', ready: `!!document.querySelector('.cp-cell')` },
-  { name: 'rest', shot: 'rest', ready: `!!document.querySelector('#rest-opt')` },
-  { name: 'smith', shot: 'smith', ready: `!!document.querySelector('.smith-candidate-region')` },
+  { name: 'rest', shot: 'rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt, #smith-opt, #level-opt')` },
+  // ?shot=smith lands on the Shrine; its Smith option opens the candidate dialog
+  // (the same press tools/screenreach.mjs makes).
+  { name: 'smith', shot: 'smith', ready: `!!document.querySelector('.smith-candidate-region, #smith-opt')`,
+    after: `(async () => { if (!document.querySelector('.smith-candidate-region')) document.querySelector('#smith-opt')?.click();
+      await new Promise((r) => setTimeout(r, 200));
+      return document.querySelector('.smith-candidate-region') ? true : 'the Smith option opened no candidate dialog'; })()`,
+    open: `!!document.querySelector('.smith-candidate-region')` },
   { name: 'shop', shot: 'shop', ready: `!!document.querySelector('#leave-shop')` },
   { name: 'death', shot: 'death', ready: `!!document.querySelector('#app button')` },
 ];
@@ -239,11 +247,13 @@ const selectCategory = (member) => `(async () => {
   return true;
 })()`;
 
-// THE PLANT (--mutate). Exactly the rule the fix added, undone, in the page:
-// the shell scrolls again under a pane that is still scrolling, and the two
-// bars stand where Constantine photographed them. It is injected AFTER the
-// door opens so it cannot change which door opens, and it is torn down with
-// the navigation that follows.
+// THE PLANT (--mutate). Restore a scrolling shell around a pane that is still
+// scrolling, and the two bars stand where Constantine photographed them. In
+// this overlay the body normally flexes to the rail, so setting overflow:auto
+// alone creates no shell scroll range. Constrain the body and restore the
+// shared rail's minimum height to make both scroll ranges real. This is
+// injected AFTER the door opens so it cannot change which door opens, and it
+// is torn down with the navigation that follows.
 //
 // BOTH HALVES, AND THE SECOND IS THE ONE A FIRST DRAFT OF THIS PLANT LEFT OUT.
 // Giving the shell its scrollport back is not enough: the fix also frees the
@@ -257,14 +267,28 @@ const PLANT = `(() => {
   const style = document.createElement('style');
   style.id = 'doublescroll-plant';
   style.textContent = '.modal-body[data-settings-host]:has(> .set-railed)'
-    + ' { display: block !important; overflow-y: auto !important; }'
-    + '.modal-body[data-settings-host] > .set-railed { height: 100% !important; }';
+    + ' { overflow-y: auto !important; max-height: 300px !important; }'
+    + '.modal-body[data-settings-host] > .set-railed { height: 100% !important; min-height: 360px !important; }';
   document.head.appendChild(style);
   // The plant has to actually plant something: a rule that changes no box is a
   // defeat that was never dealt, and it would pass this check by accident.
   const host = document.querySelector('.modal-body[data-settings-host]');
   if (!host) return 'no settings host in a modal body to plant on';
-  return getComputedStyle(host).overflowY === 'auto' ? true : 'the plant did not take';
+  const pane = host.querySelector(':scope > .set-railed > .set-panel');
+  const scrollsY = (e) => /auto|scroll/.test(getComputedStyle(e).overflowY);
+  const classicY = (e) => e.offsetWidth - e.clientWidth
+    - (parseFloat(getComputedStyle(e).borderLeftWidth) || 0)
+    - (parseFloat(getComputedStyle(e).borderRightWidth) || 0);
+  if (getComputedStyle(host).overflowY !== 'auto') return 'host overflow rule did not take';
+  if (!pane) return 'settings pane missing under the planted host';
+  if (!scrollsY(host) || !scrollsY(pane)) return 'plant did not create two vertical scrollport rules';
+  if (host.scrollHeight <= host.clientHeight + 1 || pane.scrollHeight <= pane.clientHeight + 1)
+    return 'plant did not create two overflowing vertical scrollports (host '
+      + host.scrollHeight + '/' + host.clientHeight + ', pane '
+      + pane.scrollHeight + '/' + pane.clientHeight + ')';
+  if (classicY(host) < 1 || classicY(pane) < 1)
+    return 'plant did not create two classic vertical scrollbar gutters';
+  return true;
 })()`;
 
 function connectCdp(wsUrl) {

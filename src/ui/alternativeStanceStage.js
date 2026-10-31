@@ -17,18 +17,25 @@ export function createAlternativeStanceStage(actorId, {
   image.draggable = false;
   image.style.cssText = 'position:absolute;max-width:none;width:304px;height:304px;left:calc(50% - 152px);bottom:-28.5px';
   el.append(image);
-  let current = null, generation = 0, pending = null;
+  let current = null, currentUrl, generation = 0, pending = null, disposed = false;
   let ready = Promise.resolve(false);
   return Object.freeze({
     el, ownsMotion: false,
     get stance() { return current; },
     get ready() { return ready; },
     setStance(stance) {
+      if (disposed) return false;
       const frame = stanceArtFor(catalog, actorId, stance);
+      const next = frame ? stance : null;
+      const url = frame ? resolveUrl(frame[lite ? 'lite' : 'path']) : null;
+      // Keep the visible bitmap and any in-flight readiness promise. An error
+      // can retry; a changed asset tier/resolver URL must still load its image.
+      if (next === current && url === currentUrl && !el.dataset.artError) return !!frame;
       pending?.(false); pending = null;
-      current = frame ? stance : null;
+      current = next; currentUrl = url;
       const token = ++generation;
       delete el.dataset.frameReady;
+      delete el.dataset.artError;
       el.dataset.stance = current || 'neutral';
       image.alt = current ? `${actorId} · ${current} stance` : '';
       image.style.visibility = 'hidden';
@@ -38,11 +45,11 @@ export function createAlternativeStanceStage(actorId, {
         image.onload = () => { if (token !== generation) return resolve(false); pending = null; delete el.dataset.artError; el.dataset.frameReady = 'true'; image.style.visibility = 'visible'; resolve(true); };
         image.onerror = () => { if (token !== generation) return resolve(false); pending = null; el.dataset.artError = 'Stance artwork unavailable'; resolve(false); };
       });
-      image.src = resolveUrl(frame[lite ? 'lite' : 'path']);
+      image.src = url;
       return true;
     },
     setLite(value) { lite = !!value; if (current) this.setStance(current); },
-    dispose() { generation++; pending?.(false); pending = null; image.onload = image.onerror = null; image.removeAttribute('src'); },
+    dispose() { disposed = true; generation++; pending?.(false); pending = null; image.onload = image.onerror = null; image.removeAttribute('src'); },
   });
 }
 
@@ -68,9 +75,14 @@ export function withAlternativeStance(stage, actorId, options = {}) {
     originals.forEach(el => { el.style.visibility = painted ? 'hidden' : visibility.get(el); });
   };
   const finish = () => { active = false; show(); };
+  let observedReady;
+  const showWhenReady = () => {
+    show();
+    if (observedReady !== held.ready) { observedReady = held.ready; observedReady.then(show); }
+  };
   const overrides = {
-    setStance(next) { const selected = held.setStance(next); show(); held.ready.then(show); return selected; },
-    setStanceLite(value) { held.setLite(value); show(); held.ready.then(show); },
+    setStance(next) { const selected = held.setStance(next); showWhenReady(); return selected; },
+    setStanceLite(value) { held.setLite(value); showWhenReady(); },
     suspendStance() { active = true; show(); },
     resumeStance() { finish(); },
     play(...args) {

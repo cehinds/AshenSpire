@@ -354,7 +354,7 @@ test('a balance row nothing reads says so in its description', () => {
   // one whose note must say so. `graceRefillAtRunStart` is the one inert row
   // still on screen, named because nothing marks it.
   const hidden = advancedConfigRows(contentBundle)
-    .filter((row) => row.generatedBalance && row.retired).map((row) => row.searchPath);
+    .filter((row) => row.generatedBalance && row.retired && row.inert).map((row) => row.searchPath);
   const inert = [...hidden, 'graceRefillAtRunStart'];
   // 18, not 20: ruleset 6 (#1253) deleted `levelUp.tierSizeMin/Max` outright
   // with the tier dial, so those two are no longer rows to hide.
@@ -887,4 +887,26 @@ test('a stored or exported balance.skill.upgradeAt is dropped with a warning, ne
   assert.equal(imported[CINDER], 2, 'the rest of the file lands');
   assert.ok(!Object.hasOwn(imported, KEY));
   assert.match(importWarnings.join(' '), /card upgrade setting is retired/);
+});
+
+test('balance notes keep dotted identity keys distinct from nested object paths', async () => {
+  const { balanceNote, noteMatches, NOTE } = await import('../src/model/balanceNotes.js');
+  const balance = { values: {
+    'base.strike': { amount: 2 }, base: { strike: { amount: 3 } },
+    [NOTE]: { '{id}.amount': 'Identity {id}.', 'base.{id}.amount': 'Nested {id}.' },
+  } };
+  const bundle = { balance };
+  assert.match(balanceNote(['values', 'base.strike', 'amount'], { bundle }), /^Identity base\.strike\./);
+  assert.match(balanceNote(['values', 'base', 'strike', 'amount'], { bundle }), /^Nested strike\./);
+  assert.match(balanceNote('values.base.strike.amount', { bundle }), /^Identity base\.strike\./, 'dotted compatibility input respects an authored literal identity');
+  assert.equal(noteMatches(['values', 'base.strike', 'amount'], balance).length, 1);
+  assert.equal(noteMatches(['values', 'base', 'strike', 'amount'], balance).length, 1);
+});
+
+test('same-name base and legacy status dials identify the status they affect', async () => {
+  const { balanceNote, NOTE } = await import('../src/model/balanceNotes.js');
+  const bundle = { statuses: [{ id: 'evade', name: 'Evade' }, { id: 'base.evade', name: 'Evade' }],
+    balance: { values: { evade: 1, 'base.evade': 2, [NOTE]: { '{status}': 'Weight for {statusLabel}.' } } } };
+  assert.match(balanceNote(['values', 'evade'], { bundle }), /Evade \(evade\)/);
+  assert.match(balanceNote(['values', 'base.evade'], { bundle }), /Evade \(base\.evade\)/);
 });

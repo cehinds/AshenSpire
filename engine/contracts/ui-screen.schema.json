@@ -1,0 +1,94 @@
+{
+  "$id": "ashen.ui-screen@1",
+  "title": "UI screen",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "route": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scene": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "string",
+            "minLength": 1
+          },
+          "component": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+          },
+          "props": {
+            "type": "object"
+          },
+          "when": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "slot",
+          "component"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "viewModel": {
+      "type": "object"
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "assets": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "id",
+    "regions"
+  ],
+  "additionalProperties": false
+}

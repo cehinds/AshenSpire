@@ -20,6 +20,7 @@
 // down, and the arriving screen is the one that must not inherit.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatusPresentationModel.js';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const strip = (text) => text.split('\n').filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
@@ -38,6 +39,18 @@ for (const screen of SCREENS) {
   ok(/clearSelection\(\)/.test(source), `${screen}.js clears the selection`);
   // It has to be the FIRST thing the mount does, not a line buried in a branch
   // that a particular run may not reach.
+  if (['combat','customize'].includes(screen)) {
+    // Combat defines profile-aware art closures before setup. Execute its
+    // actual prologue: the unconditional clear must happen before tooltip,
+    // card or input setup, irrespective of the helper declarations' length.
+    const start = source.indexOf('{', source.indexOf('}) {', source.indexOf('export function mount')));
+    const prologue = source.slice(start + 1, source.indexOf('clearSelection();', start) + 'clearSelection();'.length);
+    let cleared = 0;
+    new Function('run','combat','registries','clearSelection','createPreviewMemo','enginePreviewCard','engineDispatch','fixedClasses','combatStatusPresentationRegistries', prologue)(
+      {}, {}, { statuses: { get: () => null, all: () => [] } }, () => cleared++, () => ({}), () => {}, () => {}, null, combatStatusPresentationRegistries);
+    ok(cleared === 1, `${screen} clears the selection unconditionally before screen setup`);
+    continue;
+  }
   const mount = source.match(/export function mount\w+[^\n]*\n([\s\S]{0,400})/);
   ok(!!mount, `${screen}.js has a mount whose opening lines can be read`);
   ok(/clearSelection\(\);/.test(mount[1]),

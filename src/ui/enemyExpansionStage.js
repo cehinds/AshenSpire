@@ -1,3 +1,4 @@
+import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
 import { enemyExpansion } from '../content/enemyExpansion.js';
 import { enemyStanceSprites } from '../content/enemyStanceSprites.js';
 import { assetUrl } from './assetmap.js';
@@ -6,6 +7,7 @@ import { reducedMotionRequested } from './motion.js';
 import { registerStage } from './services/PoseAnimator.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { builtInFor } from './highResArt.js';
+import { warmImageBoundsWhenIdle } from './artBounds.js';
 
 const aliases = { guard: 'block', guardHit: 'block', projectile: 'rangedWeaponAttack', ranged: 'rangedWeaponAttack', buff: 'magicAttack', casting: 'magicAttack', magic: 'magicAttack', hurt: 'hit', afflicted: 'wounded', counter: 'counterattack', prone: 'defeated', sleep: 'defeated' };
 
@@ -19,6 +21,9 @@ export function enemyExpansionSprite(definition, entity = {}) {
   root.dataset.enemyId = definition.id;
   root.dataset.facing = 'screen-left';
   const scale = 190 / art.idleHeight;
+  const idleBody = COMBAT_BODY_LANDMARKS[`assets/enemy-poses/expansion/${definition.id}/idle.webp`];
+  const referenceBodyHeight = idleBody ? idleBody.feetY - idleBody.headY : null;
+  let currentBody = null;
   root.style.cssText = `position:relative;width:${art.idleWidth * scale}px;height:190px;flex:none;overflow:visible`;
   const image = new Image();
   image.className = 'pose-frame';
@@ -26,7 +31,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
   image.draggable = false;
   image.style.cssText = `position:absolute;max-width:none;width:${512 * scale}px;height:${512 * scale}px;left:calc(50% - ${256 * scale}px);bottom:${-32 * scale}px`;
   // The root is the sprite's first child, which the hit recoil animates.
-  // The idle bob lives on this inner layer so a recoil never resets its clock.
+  // The art container holds still; bounded recoil stays on the outer root.
   // Like the older pose stages, nothing inside takes a hit: taps land on the stage.
   const bob = document.createElement('div');
   bob.className = 'enemy-expansion-bob';
@@ -60,14 +65,24 @@ export function enemyExpansionSprite(definition, entity = {}) {
   let presentation = enemyPresentation(entity), timer = null, disposed = false, due = 0;
   let generation = 0;
   const resolve = pose => aliases[pose] || pose;
-  function draw(pose) {
+  function draw(pose, normalizeBody = false) {
     if (disposed) return;
     const frame = art.actions[pose]?.[0]?.pose || pose;
     root.dataset.pose = frame;
+    const landmarks = COMBAT_BODY_LANDMARKS[path(frame)];
+    const factor = normalizeBody && referenceBodyHeight && landmarks
+      ? referenceBodyHeight / (landmarks.feetY - landmarks.headY) : 1;
+    const drawScale = scale * factor;
+    const floor = landmarks?.feetY ?? 480;
+    image.style.width = `${512 * drawScale}px`;
+    image.style.height = `${512 * drawScale}px`;
+    image.style.left = `calc(50% - ${256 * drawScale}px)`;
+    image.style.bottom = `${-(512 - floor) * drawScale}px`;
+    currentBody = landmarks;
     image.src = assetUrl(path(frame));
   }
   function stop() { clearTimeout(timer); timer = null; generation++; }
-  function settle() { stop(); draw(resolve(presentation.rest)); }
+  function settle() { stop(); draw(resolve(presentation.rest), true); }
   function setState(next = {}) {
     presentation = enemyPresentation(next);
     const stances = enemyStanceSprites[definition.id];
@@ -79,10 +94,18 @@ export function enemyExpansionSprite(definition, entity = {}) {
     if (presentation.rest === 'defeated' || !timer) settle();
   }
   const stancePoses = Object.values(enemyStanceSprites[definition.id] || {});
-  for (const pose of new Set([...art.poses, ...stancePoses])) { const preload = new Image(); preload.src = assetUrl(path(pose)); }
+  for (const pose of new Set([...art.poses, ...stancePoses])) { const preload = new Image(); preload.addEventListener('load', () => warmImageBoundsWhenIdle(preload), { once: true }); preload.src = assetUrl(path(pose)); }
   const stage = {
     el: root, enemy: true, poses: [...art.poses, ...Object.keys(art.actions), ...Object.keys(aliases)],
     setState, settle,
+    get currentBody() {
+      if (!currentBody || !image.complete || !image.naturalWidth) return null;
+      const rect = image.getBoundingClientRect();
+      const headY = rect.top + currentBody.headY * rect.height / currentBody.height;
+      const feetY = rect.top + currentBody.feetY * rect.height / currentBody.height;
+      return { top:headY, bottom:feetY, headY, feetY, bodyHeight:feetY-headY,
+        left:rect.left, right:rect.right, source:'authored' };
+    },
     dispose() { stop(); disposed = true; },
     hold(ms) {
       if (!timer || !(ms > 0)) return false;

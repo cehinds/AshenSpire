@@ -1,3 +1,6 @@
+import { uiIconText } from '../../content/uiIcons.js';
+import { engravedIconHtml } from '../components/engravedIcon.js';
+import { uiZoom } from '../fx.js';
 import { removeOwnedRelic } from '../../model/classRewardProvenance.js';
 import { bindCardInspection } from '../components/cardInspection.js';
 import { wireCardShelf } from '../components/cardShelf.js';
@@ -30,8 +33,11 @@ import { t } from '../strings.js';
 import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationReviewModel.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
-import { flaskSlotCap } from '../../model/gracerefill.js';
+import { acquireFlask, flaskAcquisitionPlan } from '../../model/gracerefill.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
+import { shopOfferPrice } from '../../model/shopOfferPrice.js';
+import { gameProfileShopPurchasePlan } from '../../model/gameProfileRewards.js';
+import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase, armourPurchasePlan, commitArmourPurchase,
   sigilPurchasePlan, commitSigilPurchase, innRestPlan,
@@ -40,7 +46,7 @@ import {
 import { consumableText, consumableSalePlan, commitConsumableSale } from '../../model/consumables.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { settingOn } from './settings.js';
-import { commitSmithing, smithingPlan } from '../../model/smithing.js';
+import { commitMerchantSmithing, smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService } from './smithServices.js';
@@ -88,6 +94,89 @@ const RAIL_LABEL = {
  * so this screen does not draw again after it. `priceMult` is a custom run's
  * shop price multiplier, which caps what a consumable sells back for.
  */
+// Configured stock uses the same merchant frame, category dock, offer rows,
+// inspections and purchase review as the full game. The host retains ownership
+// of saved stock and its atomic transaction; this adapter only presents it.
+export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud = null }) {
+  const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
+  clearSelection();
+  app.replaceChildren();
+  if (hud) {
+    const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' });
+    app.append(...band.childNodes);
+    wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud }) });
+  }
+  const root = el('div', { class: 'screen room-screen shop-workspace merchant-workspace', dataset: { wireframe: 'W1d', shopRail: 'dock' } });
+  const paneHead = el('div', { class: 'as-pane-head shop-pane-head' });
+  const offersBox = el('div', { class: 'shop-offers' });
+  const detail = el('section', { class: 'shop-detail', hidden: true });
+  const body = el('div', { class: 'shop-body' }, [offersBox, detail]);
+  const pane = el('div', { class: 'as-pane shop-pane', id: 'shop-pane', dataset: { wireframe: 'W1v' } }, [paneHead, body]);
+  const railed = el('div', { class: 'as-railed shop-railed' }, pane);
+  const dock = el('nav', { class: 'merchant-category-dock', 'aria-label': t('shop.rail.aria') });
+  const foot = el('div', { class: 'shop-foot-host' });
+  const frame = el('div', { class: 'shop-frame' }, [modalHead({ title: t('shop.title'), closeLabel: t('shop.leave'), onClose: onLeave, showMenuButton: false, extras: hud ? null : statusText(t('shop.purse', { cinders: run.cinders })) }), railed, dock, foot]);
+  root.append(servicePortrait('merchant'), frame); app.append(root);
+  const status = statusText('', { role: 'alert' });
+  const leave = button({ label: t('shop.leave'), role: 'exit', id: 'leave-shop' }); leave.addEventListener('click', onLeave);
+  foot.append(status, modalFooter({ secondary: [leave], className: 'shop-foot' }));
+  const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell' };
+  const sellEnabled = onSell && settingOn(meta?.settings, 'shopSell');
+  const categories = [...new Set(offer.options.map(option => option.kind)), ...(sellEnabled ? ['sell'] : [])];
+  let active = categories.includes(previousCategory) ? previousCategory : categories[0];
+  const shopId = offer.id.slice('shop:'.length);
+  const shelves = new Map(); const tabs = new Map();
+  let layout;
+  function showCategory(key) {
+    active = key; root.dataset.shopContent = key;
+    paneHead.textContent = t(labels[key] || 'shop.title');
+    for (const [kind, shelf] of shelves) shelf.hidden = kind !== key;
+    for (const [kind, tab] of tabs) { tab.classList.toggle('on', kind === key); tab.setAttribute('aria-expanded', String(kind === key)); }
+    layout?.apply();
+  }
+  for (const kind of categories) {
+    const shelf = el('div', { class: 'card-shelf shop-shelf', dataset: { shopShelf: kind } }); shelves.set(kind, shelf); offersBox.append(shelf);
+    const tab = railItem({ label: t(labels[kind]), member: kind, current: kind === active, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: kind }, 'aria-controls': 'shop-pane' } });
+    tab.removeAttribute('role'); tab.addEventListener('click', () => showCategory(kind)); tabs.set(kind, tab); dock.append(tab);
+  }
+  const arm = beatArmer(meta, registries);
+  for (const [index, option] of offer.options.entries()) {
+    const card = ['combatCards', 'weaponArts'].includes(option.kind);
+    const def = card ? registries.cards.get(option.id) : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id) : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id) : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
+    const quote = gameProfileShopPurchasePlan(registries, run, shopId, index);
+    const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
+    const available = quote.ok;
+    const tile = el('div', { class: 'class-pick shop-offer' });
+    const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, { level: 'glance' }) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+    const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
+    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: def?.textTemplate || '', visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
+    if (available) arm(buy, 'shopBuy', { question: t('shop.configured.buy'), target: def?.name || option.id, message: t('shop.configured.buy.message', { cost: price, cinders: run.cinders, left: run.cinders - price }), confirmLabel: t('shop.buy.confirm'), policyAction: 'action.purchase', onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
+    shelves.get(option.kind).append(tile);
+  }
+  if (sellEnabled) {
+    const sales = gameProfileShopSalePlans(registries, run, shopId);
+    for (const quote of sales) {
+      const { def, kind, price } = quote;
+      const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
+      const visual = ['combatCards', 'weaponArts'].includes(kind)
+        ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), { level: 'glance' })
+        : ['weapons', 'armor'].includes(kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card
+        : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+      const sell = arrangeMerchantOffer({ tile, name: def.name, desc: def.textTemplate || def.blurb || '', visual,
+        price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
+        action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
+      const reviewKind = { relics: 'relic', potions: 'flask', consumables: 'consumable' }[kind];
+      const review = reviewKind ? sellReview({ kind: reviewKind, name: def.name, price })
+        : { question: t('shop.bar.sell'), target: def.name, message: t('shop.review.sell.message', { price }), confirmLabel: t('shop.sell.confirm'), policyAction: null };
+      if (['weapons', 'armor'].includes(kind)) review.message += ` Smithing tier ${quote.tier}. Attached cards: ${quote.mounts.map(mount => mount.cardName).join(', ') || 'none'}. Tier and mounted cards stay with this item if you reacquire it. Discovery is retained.`;
+      if (quote.ok) arm(sell, 'shopSell', { ...review, onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } } });
+      shelves.get('sell').append(tile);
+    }
+    if (!sales.length) shelves.get('sell').append(statusText(t('shop.status.nothingWanted')));
+  }
+  showCategory(active); layout = wireShopLayout(root); wireCardShelf(offersBox);
+}
+
 export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {}, restAtInn = null, enterQuestEvent = null, priceMult = 1, hud = null }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -105,7 +194,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   // remove's mirror — a possession gone for good — so `shopSell` sits in the
   // same table and takes whatever beat the table derives.
   const arm = beatArmer(meta, registries);
-  const slotsFree = () => run.flasks.length < flaskSlotCap(registries.balance);
   const sellOn = () => settingOn((meta || {}).settings, 'shopSell');
 
   /** Everything the player could sell right now, each row priced by the table. */
@@ -114,7 +202,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     run.relics.forEach((rid, at) => {
       const def = registries.relics.get(rid);
       const price = sellPriceFor(registries.balance, 'relic', def);
-      if (price > 0) out.push({ kind: 'relic', at, def, price, title: `${def.icon || '◆'} ${def.name}`, desc: relicText(def, registries) });
+      if (price > 0) out.push({ kind: 'relic', at, def, price, title: def.name, desc: relicText(def, registries) });
     });
     run.flasks.forEach((f, at) => {
       const def = registries.flasks.get(f.flaskId);
@@ -175,7 +263,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // SELL IS ABSENT, NEVER GREYED, WHEN HIS TOGGLE IS OFF — the recorded
     // answer: no rail item and no #shop-sell node at all.
     app.innerHTML = `
-      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
+      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
       <div class="screen room-screen shop-workspace merchant-workspace" data-wireframe="W1d">
         <div class="shop-frame">
           <div class="as-railed shop-railed">
@@ -191,7 +279,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
                     <div id="shop-remove"${removeOffered ? '' : ' hidden'}>
                       <div class="class-row">
                         <div class="class-pick shop-offer${run.cinders >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt" role="button" tabindex="0">
-                          <div class="glyph">✂</div><div class="cp-body"><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p></div>
+                          <div class="glyph">${engravedIconHtml('frail')}</div><div class="cp-body"><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p></div>
                         </div>
                       </div>
                       <div id="remove-grid" class="deck-strip card-shelf" style="display:none"></div>
@@ -254,7 +342,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders });
-      const tile = shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
+      const tile = shopItem(def.name, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
       addOffer('relics', {
         ref: relicRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,
@@ -274,14 +362,15 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const flaskRefs = offerRefs('flasks', stock.flasks.map((item) => item.id));
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
-      const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !slotsFree() });
+      const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !flaskAcquisitionPlan(registries, run, item.id).ok });
       const tile = shopItem(flaskIdentityHtml(def), def.textTemplate, item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
       addOffer('flasks', {
         ref: flaskRefs[i], tile, name: def.name, desc: def.textTemplate || '',
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem('flask', def.name, item.cost, () => {
+          if (run.cinders < item.cost || !stock.flasks.includes(item)) return;
+          if (!acquireFlask(registries, run, item.id).ok) return;
           run.cinders -= item.cost;
-          run.flasks.push({ flaskId: item.id });
           stock.flasks.splice(i, 1);
           sfx.play('buy');
           onChanged();
@@ -527,7 +616,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       el.setAttribute('role', 'button');
       el.tabIndex = available ? 0 : -1;
       el.setAttribute('aria-disabled', String(!available));
-      el.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
+      el.innerHTML = `<div class="glyph">${engravedIconHtml(glyph) || esc(uiIconText(glyph))}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
       markUiComponent(el, UI.shopSmithCard, id.replace('shop-', ''));
       const ref = `services:${id.replace('shop-', '')}#0`;
       el.addEventListener('click', () => select('services', ref));
@@ -551,7 +640,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     };
     if (smithHere.includes('upgrade')) {
       const plan = smithingPlan(registries, run);
-      const el = smithOption('shop-upgrade', '⚒', 'Upgrade an Item',
+      const el = smithOption('shop-upgrade', 'smith', 'Upgrade an Item',
         plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
         plan.candidates.length > 0, function openUpgrade() {
           let selectedItemRef = null;
@@ -561,7 +650,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
             onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },
             onBack: () => { render(); app.querySelector('#shop-upgrade')?.focus({ preventScroll: true }); },
             onConfirm: (itemRef) => {
-              commitSmithing(registries, run, itemRef);
+              commitMerchantSmithing(registries, run, itemRef);
               sfx.play('shrine');
               onChanged();
               if (run.smithingStones > 0) { openUpgrade(); return; }
@@ -573,7 +662,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     for (const service of ['extract', 'install']) {
       if (!smithHere.includes(service)) continue;
       const offer = mountServiceOffer(registries, run, service);
-      const el = smithOption(`shop-${service}`, service === 'extract' ? '⚙' : '⚒',
+      const el = smithOption(`shop-${service}`, service === 'extract' ? 'settings' : 'smith',
         service === 'extract' ? 'Extract a Card' : 'Seat a Card', offer.summary, offer.available, () => openMountService(app, {
           service, registries, run, meta, returnFocusElement: el, multiUse: true, place: 'merchant',
           onCommitted: () => {
@@ -660,11 +749,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // All categories share the book shelf's image/details/action composition.
     // Keep the selected-offer footer as the established keyboard/controller
     // action, while each row also offers a direct, explicitly labelled action.
-    const categoryGlyphs = { armour: '◈', smithStones: '⚒', sigils: '✦', innRest: '☾', reviveTokens: '✧', questEvent: '◇', companions: '♟', services: '⚒' };
+    const categoryGlyphs = { armour: 'skill', smithStones: 'smith', sigils: 'staggered', innRest: 'progression', reviveTokens: 'vulnerable', questEvent: 'dexterity', companions: 'profile', services: 'smith' };
     for (const [key, list] of Object.entries(offers)) {
       if (key === 'skillBooks') continue;
       for (const offer of list) {
-        offer.rowAction = arrangeMerchantOffer(offer, { fallback: categoryGlyphs[key] || '◇' });
+        offer.rowAction = arrangeMerchantOffer(offer, { fallback: categoryGlyphs[key] || 'dexterity' });
         const action = offer.action;
         if (offer.rowAction && action?.enabled) {
           if (action.beat) offerDisarms.push(arm(offer.rowAction, action.beat.id, { ...action.beat.opts, showHint: false }));
@@ -918,7 +1007,7 @@ export function wireShopLayout(root) {
     const rem = parseFloat(style.fontSize) || 16;
     // The short landscape HUD is absolute. Reserve its measured bottom before
     // sizing the scrollable pane, so the merchant's close button stays exposed.
-    const zoom = Number(style.getPropertyValue('--ui-zoom')) || 1;
+    const zoom = uiZoom();
     const clearance = hud ? Math.max(0, hud.getBoundingClientRect().bottom - root.getBoundingClientRect().top) / zoom + 8 / zoom : 0;
     root.style.setProperty('--merchant-hud-clearance', `${clearance}px`);
     // How wide a resting card is ACTUALLY drawn. `--card-w-glance` is what
@@ -940,9 +1029,9 @@ export function wireShopLayout(root) {
     if (root.classList.contains('merchant-workspace')) {
       const port = root.querySelector('.shop-offers');
       const gap = 6;
-      // Four rows plus three gaps and the shelf's two 2px padding edges.
+      // Five compact rows plus four gaps and the shelf's two 2px padding edges.
       // Short landscape windows retain a readable minimum and scroll.
-      root.style.setProperty('--merchant-row-height', `${Math.max(88 / zoom, Math.floor((port.clientHeight - gap * 3 - 4) / 4))}px`);
+      root.style.setProperty('--merchant-row-height', `${Math.max(72 / zoom, Math.floor((port.clientHeight - gap * 4 - 4) / 5))}px`);
     }
     if (plan.detailMax == null) root.style.removeProperty('--shop-detail-max');
     else root.style.setProperty('--shop-detail-max', `${plan.detailMax}px`);

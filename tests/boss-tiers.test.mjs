@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/boss-tiers.test.mjs — SPEC §13.3 balance.bossTiers: a boss is scaled
 // by the tier it is MET at, whichever seat holds it (#1284).
 //   node --test tests/boss-tiers.test.mjs
@@ -157,7 +158,7 @@ test('a randomized seat order scales each boss by the tier it is met at', () => 
   assert.ok(seen.size >= 4, `the draw covers several orders (${seen.size})`);
 });
 
-test('co-op: the scene projects a boss’s damageMult, so a client’s move cards show the scaled damage', async () => {
+test('co-op: the scene projects a boss’s damageMult, so a client’s move cards show the scaled damage', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createSession } = await import('../tools/session.mjs');
   // This historical boss-damage fixture starts after character setup.
   const host = createSession({ registries: createRegistries(legacyContentBundle), seedString: 'BOSSTIER' });

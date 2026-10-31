@@ -3,6 +3,7 @@
 :root {
   --bg: #0d0b08;
   --bg-raise: #171310;
+  --environment-backdrop: #17130f;
   --panel: #241d15;
   --line: #3a3226;
   --line-soft: #4a4034;
@@ -231,7 +232,20 @@ body.readable-ui { --font-display: var(--font-body); }
 /* Root text anchor: 62.5% makes 1rem = 10px at Text M. The Text-size setting
    overrides this value for type and line metrics; component geometry must not
    derive from this calibration. */
-html { height: var(--visible-height, 100dvh); overflow: hidden; font-size: 62.5%; }
+html {
+  height: var(--view-height, var(--visible-height, 100dvh));
+  width: var(--view-width, 100%);
+  overflow: hidden;
+  font-size: 62.5%;
+  container: game-viewport / size;
+  background: var(--bg);
+}
+/* A real logical layout box, fitted into the available window. The root is
+   also the containing block for fixed overlays; the run and DOM stay mounted. */
+html[data-view-preset]:not([data-view-preset='auto']) {
+  transform-origin: top left;
+  transform: translate(var(--view-left), var(--view-top)) scale(var(--view-fit));
+}
 /* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
    both edges x3. The straight line from the leftmost card to the far-right
    enemy runs at 38 deg, under the ~45-47 deg boundary where Chromium claims a
@@ -389,10 +403,15 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 
 /* ---------- screen transitions (every mount fades in) ---------- */
 #app > * { animation: screenIn 240ms ease-out; }
+/* A fight is being entered (one frame): taps elsewhere wait (main.js startFight). */
+#app[aria-busy="true"] { pointer-events: none; }
 @keyframes screenIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
+/* Lite: fade only; a transform animation on a whole screen promotes it to a layer. */
+@keyframes screenInLite { from { opacity: 0; } to { opacity: 1; } }
+:root[data-performance='lite'] #app > * { animation-name: screenInLite; }
 
 /* Accessibility: honor reduced-motion for ALL animation (GDD §6).
    TRANSITIONS ARE OFF, NOT SHORT. The usual snippet sets
@@ -419,4 +438,15 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition: none !important;
+}
+
+/* Native top-layer surfaces escape ancestor transforms, but keep inherited
+   body zoom. Give them the outer fit themselves. Popover positions are in
+   frame-local coordinates; native centered dialogs share the frame's center. */
+:root[data-view-preset]:not([data-view-preset='auto']) :is(:popover-open, dialog:modal) {
+  zoom: var(--view-fit);
+}
+:root[data-view-preset]:not([data-view-preset='auto']) :popover-open {
+  translate: calc(var(--view-left) / (var(--ui-zoom, 1) * var(--view-fit)))
+    calc(var(--view-top) / (var(--ui-zoom, 1) * var(--view-fit)));
 }

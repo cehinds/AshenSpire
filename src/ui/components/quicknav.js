@@ -1,8 +1,8 @@
-// src/ui/components/quicknav.js — the ☰ quick-nav dropdown (EldenSpire#34).
+// src/ui/components/quicknav.js — the menu quick-nav dropdown (EldenSpire#34).
 //
 // WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
 // It is a LAUNCHER: every row calls a handler that already exists — the screen's
-// ⚒/? buttons, openOverlay({initialTab}), the pile modals, onSave, onQuit. It
+// smith/? buttons, openOverlay({initialTab}), the pile modals, onSave, onQuit. It
 // holds no navigation state at all, so `selectTab` in overlay.js stays the single
 // decider. The day a row knows something selectTab does not, this stopped being a
 // quick way into the menu and became a second menu.
@@ -32,7 +32,7 @@
 // LAW 2 — one coordinate space. The panel is `position: fixed`, so the viewport
 // is its containing block, and every number below is converted to LOCAL px ONCE,
 // through fx.js, before anything is compared or written. The anchor clamp is not
-// decoration: the combat topbar WRAPS on a phone and puts ☰ at the LEFT edge
+// decoration: the combat topbar WRAPS on a phone and puts menu at the LEFT edge
 // (measured: `combat-menu @ 18,49` at 390×844), so "hang it off the top-right"
 // would have put the list off-screen on exactly the shape it is for.
 
@@ -43,7 +43,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 
 // The player's presentation choice, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -150,6 +150,15 @@ export function saveAction(onSave) {
  * does that thing. An act with no handler is dropped rather than drawn dead.
  * Returns the panel element, or null when there is no anchor/action to show.
  */
+/** D15: while Core's combat edit lock holds, the equipment doors (Inventory, Character) read as disabled with the lock title. */
+export function lockEquipmentRows(panel) {
+  if (!panel) return;
+  for (const act of ['inventory', 'character']) {
+    const row = panel.querySelector(`.qn-row[data-act="${act}"]`);
+    if (row) { row.disabled = true; row.setAttribute('aria-disabled', 'true'); row.title = tFull('combat.editLocked'); }
+  }
+}
+
 export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, counts = {}, current = null, hasSave = true } = {}) {
   if (mode === 'off' || !anchorEl) return null;
   closeFlaskActionMenu({ cancelled: true });
@@ -240,7 +249,7 @@ function syncControlRows(panel, controls, announcedAct = '', announcement = '') 
 // the button's). The gap moved with it — `.qn-panel { --place-gap }` in ui.css,
 // the same one home #tooltip now reads, instead of `const gap = 6` here.
 //
-// NO `clear` HERE, ON PURPOSE. The ☰ button's group is the topbar, and a
+// NO `clear` HERE, ON PURPOSE. The menu button's group is the topbar, and a
 // dropdown that refused to hang under its own bar would have nowhere left to go.
 // A preference is only worth naming where the caller wants it.
 function position(anchorEl, panel) {

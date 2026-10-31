@@ -187,6 +187,7 @@ player's piles).
 | `targeting.ally` | 0 | SP | Not carried by a card today; the base. |
 | `targeting.randomEnemy` | 1 | SP | Not carried by a card today; between single and area. |
 | `targeting.allEnemies` | 2 | SP | Not carried by a card today; as targeting:area. |
+| `targeting.allAllies` | 2 | SP | Every ally at once; as targeting:area. |
 
 ### Magic schools
 
@@ -214,6 +215,7 @@ player's piles).
 | `bow` | 0 | SP | The range weight prices a bow. |
 | `ranged` | 0 | SP | The range weight prices it. |
 | `flourish` | 0 | SP | An archetype chip. |
+| `finesse` | 0 | SP | A multi-hit card or move with it floors at max(hits − 1, 1) SP instead of 1 SP per hit, and its damage scales with Dexterity (owner, 2026-10-25). |
 | `guile` | 0 | SP | An archetype chip. |
 | `venom` | 0 | SP | The status it applies is priced instead. |
 | `blood` | 0 | SP | An archetype chip; its HP costs are drawbacks. |
@@ -221,6 +223,7 @@ player's piles).
 | `oath` | 0 | SP | An archetype chip. |
 | `ash` | 0 | SP | An archetype chip. |
 | `basic` | 0 | SP | An archetype chip. |
+| `rank.cantrip` | 0 | SP | Training classification only; the numerical rank and authored effects own the cost. |
 | `extractable` | 0 | SP | A loot marker. |
 | `target` | 0 | MP | Spell identity; its authored effects and range own the price. |
 | `hex` | 0 | MP | Spell identity; its authored effects and range own the price. |
@@ -248,6 +251,7 @@ player's piles).
 | `trait:grounded` | 1 | SP | Holds its ground: 1. |
 | `trait:insulated` | 0 | SP | A matchup trait, not power. |
 | `trait:mental` | 0 | SP | A matchup trait, not power. |
+| `trait:persistent` | 0 | SP | Precision lifetime marker; the status grant prices its magnitude. Preserves the existing grant cost. |
 | `trait:projectile` | 0 | SP | Priced by range. |
 | `trait:reveal` | 0 | SP | Information, not power. |
 | `trait:shattering` | 1 | SP | Breaks guards: 1. |

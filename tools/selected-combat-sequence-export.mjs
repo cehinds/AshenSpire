@@ -1,3 +1,4 @@
+import {authoringRoot,authoringPath} from './art-authoring.mjs';
 // Production export from approved review rasters. No image generation or body refitting.
 import {registerSelectedSweep} from './selected-sweep-registration.mjs';
 import {registerSelectedSmash} from './selected-smash-registration.mjs';
@@ -7,24 +8,26 @@ import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
+const artRoot=authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
+const file=rel=>rel.startsWith('src/')?resolve(root,rel):authoringPath(rel,{root,assetRoot:artRoot});
 const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const recipePath='pose-studio/stances/update-stances/sequence-production.json';
-const recipe=JSON.parse(readFileSync(resolve(root,recipePath)));
-const reviewBytes=readFileSync(resolve(root,recipe.reviewManifest));
-const review=JSON.parse(reviewBytes),reviewDir=dirname(resolve(root,recipe.reviewManifest));
+const recipe=JSON.parse(readFileSync(file(recipePath)));
+const reviewBytes=readFileSync(file(recipe.reviewManifest));
+const review=JSON.parse(reviewBytes),reviewDir=dirname(file(recipe.reviewManifest));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const catalogPath=resolve(root,'src/content/alternativeSelectedStances.js');
+const catalogPath=file('src/content/alternativeSelectedStances.js');
 const match=readFileSync(catalogPath,'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
 if(!match)throw new Error('Missing selected stances catalog');
 const catalog=JSON.parse(match[1]),previous=catalog.weaponProfiles[recipe.id];
-const selectedSweep=existsSync(resolve(root,'pose-studio/stances/update-stances/selected-sweep-sw09/production.json'));
-if(selectedSweep)registerSelectedSweep(catalog,{root});
+const selectedSweep=existsSync(file('pose-studio/stances/update-stances/selected-sweep-sw09/production.json'));
+if(selectedSweep)registerSelectedSweep(catalog,{root,assetRoot:artRoot});
 const preserved=new Map();
 for(const choice of recipe.choices.filter(choice=>choice.preserve)){
  const frame=previous.frames[choice.role];
  for(const [path,expected]of [[frame.path,frame.sha256],[frame.lite,frame.liteSha256]]){
-  if(sha(readFileSync(resolve(root,path)))!==expected)throw new Error('Preserved source changed: '+path);
+  if(sha(readFileSync(file(path)))!==expected)throw new Error('Preserved source changed: '+path);
  }
  preserved.set(choice.role,frame);
 }
@@ -33,7 +36,7 @@ const inputs=recipe.choices.filter(choice=>!choice.preserve&&!choice.aliasOf&&!(
  if(sha(bytes)!==preview.sha256)throw new Error('Approved preview changed: '+choice.previewId);
  const original=choice.role==='attack-3'?recipe.legacyAttack3Source:preview.source;
  const originalPath=original.path||original.source;
- if(sha(readFileSync(resolve(root,originalPath)))!==original.sha256)throw new Error('Original approved source changed: '+originalPath);
+ if(sha(readFileSync(file(originalPath)))!==original.sha256)throw new Error('Original approved source changed: '+originalPath);
  return {choice,preview,bytes,dataUrl:'data:image/webp;base64,'+bytes.toString('base64')};
 });
 const browser=await chromium.launch({headless:true,...(process.env.CHROME?{executablePath:process.env.CHROME}:{})});
@@ -89,8 +92,8 @@ for(const choice of recipe.choices){
  const path='assets-display/alternative/'+recipe.id+'-'+choice.role+'.webp';
  const lite='assets-display/alternative/'+recipe.id+'-'+choice.role+'-mobile.webp';
  const mobile=Buffer.from(generated.mobile,'base64');
- mkdirSync(dirname(resolve(root,path)),{recursive:true});
- writeFileSync(resolve(root,path),input.bytes);writeFileSync(resolve(root,lite),mobile);
+ mkdirSync(dirname(file(path)),{recursive:true});
+ writeFileSync(file(path),input.bytes);writeFileSync(file(lite),mobile);
  const source=preview.source;
  const original=choice.role==='attack-3'?recipe.legacyAttack3Source:
   {path:source.source,width:source.size[0],height:source.size[1],sha256:source.sha256,
@@ -108,12 +111,12 @@ for(const choice of recipe.choices){
 }
 catalog.weaponProfiles[recipe.id]={...previous,selections:recipePath,canvas:recipe.canvas,stageAnchor:recipe.stageAnchor,frames,
  approvedSequences:recipe.sequences,sourceReview:recipe.reviewManifest};
-registerSelectedSmash(catalog,{root});
-registerSelectedSweep(catalog,{root});
+registerSelectedSmash(catalog,{root,assetRoot:artRoot});
+registerSelectedSweep(catalog,{root,assetRoot:artRoot});
 writeFileSync(catalogPath,'// Owner-selected held poses and weapon-specific pose profiles, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
-writeFileSync(resolve(root,'pose-studio/stances/update-stances/sequence-production-provenance.json'),JSON.stringify({
+writeFileSync(file('pose-studio/stances/update-stances/sequence-production-provenance.json'),JSON.stringify({
  schemaVersion:1,tool:'tools/selected-combat-sequence-export.mjs',recipe:recipePath,
- recipeSha256:sha(readFileSync(resolve(root,recipePath))),approvedReview:recipe.reviewManifest,approvedReviewSha256:sha(reviewBytes),
+ recipeSha256:sha(readFileSync(file(recipePath))),approvedReview:recipe.reviewManifest,approvedReviewSha256:sha(reviewBytes),
  geometry:{canvas:recipe.canvas,stageAnchor:recipe.stageAnchor,note:'Logical frame height and draw offsets retain the approved body scale; Mobile raster dimensions do not change geometry.'},
  preservedRoles:[...preserved.keys()],outputs
 },null,2)+'\n');

@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.frozen",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -340,6 +340,11 @@ jobs:
             !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         shell: bash
         run: |
@@ -493,6 +498,11 @@ jobs:
             !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
+      # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
+      # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install card artwork encoder for conversion tests
         shell: bash
         run: |
@@ -512,8 +522,50 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Every discovered test file, partitioned without omissions
+      - name: Every discovered test file on Linux and macOS, partitioned without omissions
+        if: runner.os != 'Windows'
         run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --shard ${{ matrix.shard }}
+
+      - name: Windows discovered files outside the isolated simulation jobs
+        if: runner.os == 'Windows'
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard ${{ matrix.shard }}
+
+  # The full balance report alone approaches fifteen minutes on Windows. Keep
+  # the existing closed slow set exhaustive, one file per runner: competing
+  # suites exhausted the aggregate shard's fifteen-minute subprocess deadline.
+  # Native node:test preserves every assertion and seed under the same twenty-
+  # minute Actions job limit; these headless files need no art packs or Pillow.
+  test-discovered-slow-windows:
+    name: slow discovered test (windows-latest, ${{ matrix.file }})
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        file:
+          - 'tests/balance-doc.test.mjs'
+          - 'tests/runsim-report-flags.test.mjs'
+          - 'tests/simbot-decisions.test.mjs'
+          - 'tests/simrun-loop.test.mjs'
+    steps:
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
+
+      - uses: ./.github/actions/setup-node
+      - name: Complete isolated simulation file
+        run: node --test --test-reporter=spec "${{ matrix.file }}"
 
   # Windows linkcheck's complete five-plant corpus took 15 minutes at test6a903.
   # Give it its own job; `other` runs every remaining self-test unchanged.
@@ -897,8 +949,32 @@ jobs:
         # opening hand and deck (SPEC 3.12, 9 M2).
         run: node tools/verdict.mjs -- node tools/slot-load-door.mjs
 
-      - name: ...and that gate can fail (3 plants)
-        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest
+  # The eight Load-door plants plus their clean edge exhausted browser-guard's
+  # 20-minute budget in run 39168881469 after all eight plants were caught.
+  # Keep the clean production door above; each shard below runs four plants
+  # and its own mandatory clean rerun, without increasing either timeout.
+  browser-slot-load-plants:
+    name: slot-load known-bads in a real browser (${{ matrix.shard }})
+    needs: stage
+    if: ${{ needs.stage.outputs.functional == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/2', '1/2']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/fetch-art
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+      # Source only: no standalone build is consumed by this browser door.
+      - name: Load-door plants and the unplanted clean edge (index i mod 2)
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest --shard ${{ matrix.shard }}
 
   # ---------------------------------------------------------------------------
   # The browser full run is a FUNCTIONAL check (title, class, map, fight, boss,
@@ -1428,7 +1504,7 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [stage, test, test-discovered, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [stage, test, test-discovered, test-discovered-slow-windows, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-slot-load-plants, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Stage summary, which jobs ran here and which did not
@@ -1448,7 +1524,7 @@ jobs:
           if [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "release" ] && [ "$ran_test" = 1 ]; then
             echo "release tree differs from test: functional suites ran"
           fi
-          TEST_JOBS="test test-discovered test-selftests parse-gate browser-guard browser-full-run browser-flask-menu browser-flask-menu-plants browser-guard-changelog browser-startup-plants"
+          TEST_JOBS="test test-discovered test-discovered-slow-windows test-selftests parse-gate browser-guard browser-slot-load-plants browser-full-run browser-flask-menu browser-flask-menu-plants browser-guard-changelog browser-startup-plants"
           RELEASE_JOBS="reproducible reproducible-agree display-first browser-guard-stamp browser-layout-guard browser-layout-plants browser-layout-all browser-layout-hintstrip browser-hintstrip-plants browser-motion"
           {
             echo "RAN_TEST=$ran_test"
@@ -1473,8 +1549,8 @@ jobs:
 
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} test-discovered=${{ needs['test-discovered'].result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
-          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-full-run=${{ needs['browser-full-run'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
+          echo "upstream results: test=${{ needs.test.result }} test-discovered=${{ needs['test-discovered'].result }} test-discovered-slow-windows=${{ needs['test-discovered-slow-windows'].result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
+          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-slot-load-plants=${{ needs['browser-slot-load-plants'].result }} browser-full-run=${{ needs['browser-full-run'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-plants=${{ needs['browser-layout-plants'].result }} browser-layout-all=${{ needs['browser-layout-all'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
@@ -1592,7 +1668,8 @@ jobs:
           echo "    no balance, art or screen content. The browser jobs check their named doors."
           echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
           echo "    the build stamp and cold boot (release), browser-full-run that full run (test), browser-guard-changelog the"
-          echo "    changelog's known-bads;"
+          echo "    changelog's known-bads; browser-slot-load-plants runs the Load-door corpus"
+          echo "    in two exhaustive shards, each with its own clean rerun."
           echo "    browser-layout-guard owns phone reach, browser-layout-all the complete five-size sweep,"
           echo "    browser-layout-hintstrip the hint strip and"
           echo "    Armoury, browser-hintstrip-plants the hint strip's known-bads. display-first owns"

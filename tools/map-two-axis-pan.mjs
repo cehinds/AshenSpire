@@ -78,6 +78,8 @@ try {
       const port = document.querySelector('.map-scroll');
       const maxLeft = port.scrollWidth - port.clientWidth;
       const maxTop = port.scrollHeight - port.clientHeight;
+      const viewportBox = port.getBoundingClientRect();
+      const viewportScale = { x: viewportBox.width / port.offsetWidth, y: viewportBox.height / port.offsetHeight };
       const test = (pointerType, pointerId) => {
         port.scrollLeft = maxLeft / 2; port.scrollTop = maxTop / 2;
         const before = { left: port.scrollLeft, top: port.scrollTop };
@@ -96,7 +98,7 @@ try {
       port.dispatchEvent(new Event('scroll'));
       const node = document.querySelector('.map-node.reachable');
       return {
-        maxLeft, maxTop, touchAction:getComputedStyle(port).touchAction,
+        maxLeft, maxTop, viewportScale, touchAction:getComputedStyle(port).touchAction,
         mouse, touch, pen, nodeReachable:!!node,
         resting:{ left:port.scrollLeft, top:port.scrollTop },
       };
@@ -206,8 +208,11 @@ try {
       };
     })()`);
 
-    const moves = (sample) => Math.abs(sample.moved.left - sample.before.left - 60) < 1.5
-      && Math.abs(sample.moved.top - sample.before.top - 60) < 1.5 && sample.moved.grabbed && sample.cleaned;
+    // Pointer coordinates are physical CSS viewport pixels; scroll offsets
+    // are local layout pixels. Compare both axes in the pointer's space.
+    const moves = (sample) => Math.abs((sample.moved.left - sample.before.left) * evidence.viewportScale.x - 60) < 1.5
+      && Math.abs((sample.moved.top - sample.before.top) * evidence.viewportScale.y - 60) < 1.5
+      && sample.moved.grabbed && sample.cleaned;
     const checks = {
       horizontalExtent: evidence.maxLeft > 100,
       verticalExtent: evidence.maxTop > 100,
@@ -248,12 +253,13 @@ try {
   const setting = await evaluate(`(() => {
     const control = document.querySelector('[data-key="mapFreePan"]');
     const row = control && control.closest('.set-row');
-    const before = control && control.getAttribute('aria-checked');
+    const state = () => control.type === 'checkbox' ? String(control.checked) : control.getAttribute('aria-checked');
+    const before = control && state();
     control && control.click();
-    const after = control && control.getAttribute('aria-checked');
+    const after = control && state();
     control && control.click();
     row && row.scrollIntoView({ block:'center' });
-    return { present:!!control, before, after, restored:control && control.getAttribute('aria-checked'), text:row && row.textContent.trim() };
+    return { present:!!control, before, after, restored:control && state(), text:row && row.textContent.trim() };
   })()`);
   const settingsChecks = {
     settingPresent: setting.present,

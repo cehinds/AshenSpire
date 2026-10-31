@@ -1,0 +1,85 @@
+{
+  "xp": {
+    "base": 100,
+    "linear": false,
+    "multScaler": 1.3,
+    "growth": 1.995,
+    "roundTo": 5,
+    "maxLevel": 10,
+    "perHit": 5,
+    "perWinEquipped": 5,
+    "killMult": 1.5,
+    "impactPerXp": 5,
+    "evadeXp": 5,
+    "buildupPerXp": 5,
+    "$note": {
+      "base": "Weapon, armour, focus and dual-wield tracks: XP for the first step and the base used for later increases.",
+      "linear": "Use base + skill level × base × scaler. Off: use base × exponential growth^skill level.",
+      "multScaler": "Linear XP increase per step as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.",
+      "growth": "Exponential growth per step, used only when the linear curve is off.",
+      "roundTo": "Those tracks: every step cost is rounded to a multiple of this.",
+      "maxLevel": "The highest level those tracks reach (SPEC §13.4o: 10, about 100,000 XP); XP past it stays banked.",
+      "perHit": "Skill XP for a hit or block a track's card lands on a live target.",
+      "perWinEquipped": "Skill XP each equipped track earns for a won fight.",
+      "killMult": "Multiplies that win award for the one track that landed the killing blow.",
+      "impactPerXp": "Impact a heavy-armoured wearer must absorb per point of armour skill XP. Medium armour earns half as fast; light earns none this way.",
+      "evadeXp": "Armour skill XP for evading a hit in light armour. Medium armour earns half.",
+      "buildupPerXp": "Arcane Exposure buildup a caster must deal per point of focus skill XP."
+    }
+  },
+  "class": {
+    "xp": {
+      "base": 400,
+      "linear": false,
+      "multScaler": 1.3,
+      "growth": 1.224,
+      "roundTo": 5,
+      "maxLevel": 20,
+      "perWin": 5,
+      "bossKill": 10,
+      "perQuest": 5
+    },
+    "tierAt": [1, 3, 5],
+    "$note": {
+      "xp.base": "The class track: what its first level step costs.",
+      "xp.linear": "Use base + class skill level × base × scaler. Off: use exponential growth.",
+      "xp.multScaler": "Linear increase per class skill step as a multiple of the base. Default 1.3.",
+      "xp.growth": "Exponential class-step growth, used only when the linear curve is off.",
+      "xp.roundTo": "The class track: every step cost is rounded to a multiple of this.",
+      "xp.maxLevel": "The highest class level (SPEC §13.4o: 20, about 100,000 XP); XP past it stays banked.",
+      "xp.perWin": "Class XP for a won fight.",
+      "xp.bossKill": "Class XP for killing an act boss, on top of the win.",
+      "xp.perQuest": "Class XP for a completed quest.",
+      "tierAt.{i}": "The class level at which tier {ordinal} of the class tree opens."
+    }
+  },
+  "rarityUnlock": {
+    "common": 1,
+    "uncommon": 4,
+    "rare": 7,
+    "$note": {
+      "{rarity}": "The skill-track level at which {rarity} cards start appearing in that track's drafts."
+    }
+  },
+  "draftSize": 3,
+  "draftsPerCombat": 1,
+  "rankMax": 10,
+  "flatEvery": 5,
+  "attributeEvery": 4,
+  "featEvery": 2,
+  "linkedAttributes": {
+    "item:blade": ["strength", "dexterity"],
+    "item:shield": ["strength", "dexterity", "constitution", "wisdom"],
+    "item:magic-focus": ["dexterity", "constitution", "wisdom", "intelligence"]
+  },
+  "favoredXpMult": 1.25,
+  "$note": {
+    "draftSize": "How many cards a skill draft lays out for you to take one of.",
+    "draftsPerCombat": "The most drafts one track may hand out at a single reward door. The rest queue for later doors.",
+    "featEvery": "Every this many levels of a skill with its own feats lets you take one.",
+    "attributeEvery": "Every this many levels of a skill with linked attributes lets you raise one of them by 1.",
+    "flatEvery": "Every this many levels of a weapon, focus or dual-wield skill adds 1 to the main number of every card of that skill.",
+    "rankMax": "A card's highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill's level.",
+    "favoredXpMult": "Multiplies skill XP in the weapon groups your class card leans toward."
+  }
+}
