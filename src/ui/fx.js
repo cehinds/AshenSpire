@@ -370,41 +370,63 @@ export function combatReadoutLayer(layer, create = true) {
   return host;
 }
 
-// Per anchor: the floaters still showing, each with its lane, so a new one takes the lowest lane
-// nobody occupies (0 is the spawn point, each lane lifts it one line higher). Lanes are tracked,
-// not counted: when the first of three expires the next floater takes lane 0, not lane 2 over a
-// floater still showing. With all three lanes taken, the lane freeing soonest is reused.
+// Per anchor: the floaters still showing, each with its lane and the lift that lane earned.
+// Lane 0 is the spawn point; a higher lane lifts its number above the numbers still in its way.
+// A number rises as it ages (num-life in styles/combat.css: 3 px by 12% of its life, 30 px by
+// 66.6%, 52 px at the end; nothing under Reduced motion), so an older number that has already
+// risen past its own height is out of the newcomer's way and the newcomer starts at lane 0 below
+// it, as it would have without lanes. Only numbers that have not cleared their own height block,
+// and a blocked newcomer is lifted to clear the highest current top among them. Three lanes, then
+// the lane freeing soonest is reused.
 const FLOAT_LANES = 3;
 const floaterLanes = new WeakMap();
+function floaterRise(entry, now) {
+  if (reducedMotionRequested()) return 0;
+  const f = Math.max(0, Math.min(1, (now - entry.start) / Math.max(1, entry.until - entry.start)));
+  if (f < 0.12) return f < 0.04 ? 0 : (f - 0.04) / 0.08 * 3;
+  if (f < 0.666) return 3 + (f - 0.12) / 0.546 * 27;
+  return 30 + (f - 0.666) / 0.334 * 22;
+}
+function floaterBlocks(entry, now) {
+  return !entry.height || floaterRise(entry, now) < entry.height * 1.1;
+}
 function floaterLaneFor(anchor, lifeMs) {
   const now = Date.now();
   const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
+  const blocking = live.filter((entry) => floaterBlocks(entry, now));
   let lane = -1;
-  for (let i = 0; i < FLOAT_LANES && lane < 0; i++) if (!live.some((entry) => entry.lane === i)) lane = i;
+  for (let i = 0; i < FLOAT_LANES && lane < 0; i++) if (!blocking.some((entry) => entry.lane === i)) lane = i;
   if (lane < 0) {
-    const soonest = live.reduce((a, b) => (b.until < a.until ? b : a));
+    const soonest = blocking.reduce((a, b) => (b.until < a.until ? b : a));
     lane = soonest.lane;
     live.splice(live.indexOf(soonest), 1);
   }
-  const entry = { lane, until: now + lifeMs, height: 0, el: null };
+  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, el: null };
   live.push(entry);
   floaterLanes.set(anchor, live);
   return entry;
 }
-// Floaters share one top edge and a lane lifts upward, so lane N's lift must clear its own height
-// (its bottom lands on lane 0's top) plus the heights of lanes 1..N-1 stacked above that. Lane 0's
-// height never enters: it sits below the shared edge. A small number over a crit and a crit over
-// a small number both clear the row beneath them.
-function floaterLaneLift(anchor, entry) {
-  let lift = 0;
-  for (const other of floaterLanes.get(anchor) || []) if (other.lane > 0 && other.lane <= entry.lane) lift += (other.height || 22) * 1.1;
-  return lift;
+// Floaters share one top edge, so a lane's lift must put the number's bottom above the current
+// top of every blocking number in a lower lane: that number's lift plus how far it has risen,
+// less how far this one has risen itself, plus this one's own height. Lane 0 never lifts.
+function floaterLaneLift(anchor, entry, now) {
+  if (entry.lane === 0) return 0;
+  let clear = -Infinity;
+  for (const other of floaterLanes.get(anchor) || []) {
+    if (other.lane >= entry.lane || !floaterBlocks(other, now)) continue;
+    clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
+  }
+  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
 }
-// A newcomer in a reused lower lane may be taller than the number it replaced, so every live
-// floater above it is re-lifted from the lanes as they stand now, not as they were when it spawned.
+// A newcomer in a reused lower lane may be taller than the number it replaced, and the numbers
+// below it keep rising, so every live floater at the anchor is re-lifted, lane by lane, from the
+// lanes as they stand now, not as they were when it spawned.
 function reliftFloaterLanes(anchor) {
-  for (const entry of floaterLanes.get(anchor) || []) {
-    if (entry.lane > 0 && entry.el) entry.el.style.setProperty('--float-lane', `${Math.round(floaterLaneLift(anchor, entry))}px`);
+  const now = Date.now();
+  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now).sort((a, b) => a.lane - b.lane);
+  for (const entry of live) {
+    entry.lift = floaterLaneLift(anchor, entry, now);
+    if (entry.el && entry.lane > 0) entry.el.style.setProperty('--float-lane', `${Math.round(entry.lift)}px`);
   }
 }
 

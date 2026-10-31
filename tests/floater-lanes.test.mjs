@@ -40,10 +40,11 @@ test('floaters on one anchor take separate lanes, reset after the life, and are 
   });
 });
 
-test('a lane freed by an expired floater is reused before a lane still occupied', (t) => {
+test('a lane freed by an expired floater is reused before a lane still occupied (Reduced motion: nothing rises)', (t) => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   setCombatPacing({ combatSpeed: 1 });
   withKitDom(({ document }) => {
+    document.body.classList.add('reduced-motion');
     const create = document.createElement.bind(document);
     document.createElement = (name) => Object.assign(create(name), { offsetWidth: 40, offsetHeight: 20 });
     const fx = document.createElement('div'); fx.className = 'fx-layer';
@@ -117,10 +118,11 @@ test('a lane lifts by the measured heights of the lanes below it', (t) => {
   });
 });
 
-test('a taller number reusing a lower lane re-lifts the live floaters above it', (t) => {
+test('a taller number reusing a lower lane re-lifts the live floaters above it (Reduced motion)', (t) => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   setCombatPacing({ combatSpeed: 1 });
   withKitDom(({ document }) => {
+    document.body.classList.add('reduced-motion');
     const create = document.createElement.bind(document);
     let nextHeight = 20;
     document.createElement = (name) => {
@@ -152,5 +154,42 @@ test('a taller number reusing a lower lane re-lifts the live floaters above it',
     assert.equal(crit.dataset.floatLane, '1');
     assert.equal(crit.props['--float-lane'], '66px');
     assert.equal(upper.props['--float-lane'], '88px', 'the surviving lane-2 number rises above the taller crit (66 + 22)');
+  });
+});
+
+test('with motion, a number that has risen past its own height no longer blocks: the newcomer starts at lane 0', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    document.createElement = (name) => {
+      const node = Object.assign(create(name), { offsetWidth: 40, offsetHeight: 20 });
+      const props = node.props = {};
+      const set = node.style.setProperty?.bind(node.style);
+      node.style.setProperty = (key, value) => { props[key] = value; return set?.(key, value); };
+      return node;
+    };
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    const a = document.createElement('div'); a.box = { left: 100, top: 100, width: 80, height: 120 };
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const opts = { jitter: false };
+    const life = floaterLifeMs();
+    floatNum(fx, a, '-1', 'dmg', null, opts);
+    flushMeasureJobs();
+    // A quarter of a life in, the first number has risen about 9 px: still in the way, so the second
+    // is lifted past its current top (9 + 22), not a bare lane height.
+    t.mock.timers.tick(Math.round(life * 0.25));
+    const second = floatNum(fx, a, '-2', 'dmg', null, opts);
+    flushMeasureJobs();
+    assert.equal(second.dataset.floatLane, '1');
+    const lift = parseFloat(second.props['--float-lane']);
+    assert.ok(lift > 28 && lift < 36, `lifted past the risen first number: ${lift}`);
+    // Two thirds in, the first has risen 30 px, past its 20 px height: it no longer blocks, and the
+    // second (risen ~9 px, lifted ~31) sits far above, so the third starts at lane 0 under both.
+    t.mock.timers.tick(Math.round(life * 0.42));
+    const third = floatNum(fx, a, '-3', 'dmg', null, opts);
+    flushMeasureJobs();
+    assert.equal(third.dataset.floatLane, '0', 'the first number no longer blocks lane 0; the second still holds lane 1');
+    assert.equal(third.props['--float-lane'], undefined, 'lane 0 is not lifted: the risen numbers are above it');
   });
 });
