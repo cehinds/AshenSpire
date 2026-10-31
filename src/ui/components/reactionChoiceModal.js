@@ -37,12 +37,13 @@ export const stackedCardIds = (reactionStack, ownerId = null) => new Set((reacti
 // engine in solo, the seat snapshot in co-op); without it a row shows the name and costs only.
 // The art a row shows: the card face's own resolver (reviewed, simple, official, then outline art),
 // so Core cards without extended art still get an image. Null when nothing resolves.
-export function reactionOptionArt(option, registries = null) {
+export function reactionOptionArtwork(option, registries = null) {
   if (!option?.cardId) return null;
   try {
-    return playingCardArt({ cardId: option.cardId }, { definition: registries?.cards?.get?.(option.cardId), registries })?.path || null;
+    return playingCardArt({ cardId: option.cardId }, { definition: registries?.cards?.get?.(option.cardId), registries }) || null;
   } catch { return null; }
 }
+export const reactionOptionArt = (option, registries = null) => reactionOptionArtwork(option, registries)?.path || null;
 
 // Two hand instances that read as the same option (same card, same grade, same numbers, same play)
 // show once, with a count. Options carry no upgrade field, so the grade is read off the summary the
@@ -87,7 +88,7 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
       const summaries = collapseIdenticalOptions(pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return { option, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), chip: t('combat.reactions.label') } };
+        return { option, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
       }));
       const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
         selected = id;

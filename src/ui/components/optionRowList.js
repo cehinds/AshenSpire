@@ -8,6 +8,8 @@
 import { el, artWell } from '../kit/index.js';
 import { assetUrl } from '../assetmap.js';
 import { hideOnError } from '../artFallback.js';
+import { cardCutoutUrl } from '../layeredCardArt.js';
+import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { effectLine } from './cardOptionGrid.js';
 
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
@@ -23,10 +25,17 @@ export function optionColumns(count) {
 // No art (no artAsset and no artGlyph): no art cell at all, the text takes the width.
 function rowArt(row) {
   if (!row.artAsset && !row.artGlyph) return null;
+  // A Simple-art composition (row.artComposition, from playingCardArt) paints its background as the
+  // image and the illustration as layers over it, as the card face does.
+  const composed = row.artComposition?.componentArt;
   const well = row.artAsset
-    ? artWell({ src: assetUrl(row.artAsset), alt: '', small: true, attrs: { class: 'option-row-art' } })
+    ? artWell({ src: composed ? cardCutoutUrl(row.artAsset) : assetUrl(row.artAsset), alt: '', small: true, attrs: { class: 'option-row-art' } })
     : artWell({ glyph: row.artGlyph, small: true, attrs: { class: 'option-row-art' } });
   hideOnError(well.querySelector?.('img'));
+  if (row.artComposition) {
+    well.style && Object.assign(well.style, { position: 'relative', isolation: 'isolate' });
+    well.insertAdjacentHTML?.('beforeend', cardArtLayersHtml(row.artComposition));
+  }
   return well;
 }
 
