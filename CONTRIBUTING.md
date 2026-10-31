@@ -191,7 +191,7 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
    - **Push to `test`: the heavy functional suites.** `ci.yml`'s test-stage
      jobs (3-OS tests, all discovered shards, tool self-tests, the bundler parse
      gate, the real-browser checks), `dev-preview.yml`'s reachability gates,
-     `map-camera.yml`, `tutorial-reach.yml`, `coop-hud.yml`.
+     `map-camera.yml`, `tutorial-reach.yml`.
    - **Push to `release`: polish.** `ci.yml`'s polish jobs (the reproducible
      build, Fullscreen first, the build stamp and cold boot, layout, hint strip
      and motion), and `windows-installer.yml`. `release` receives only the

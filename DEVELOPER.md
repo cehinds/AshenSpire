@@ -150,15 +150,6 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
-Dedicated co-op tests (32 files) and `coop-hud.yml` run only when
-`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
-While false, discovery prints the skip reason before sharding; mixed suites
-keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
-retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
-the co-op lanes automatically (`tests/feature-scopes.js` also works in the
-browser test harness).
-
-
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
@@ -182,7 +173,6 @@ browser test harness).
 | `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | only when release differs from test |
 | `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | only when release differs from test |
 | `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | only when release differs from test |
 | `workbench.yml` → Workbench, editor, UI Studio and engine-export tests, a full engine export and the Workbench screenshots (real browser); uploads `engine-export-<commit>` and `workbench-screenshots-<commit>` ([workbench/README.md](workbench/README.md)) | — | a PR into `dev` only when it touches `workbench/`, `editor/`, `ui-studio/`, `pose-studio/`, `content/`, `src/content/`, `.github/actions/`, `tools/launch.mjs`, the engine exporter, the build-lock and build-step libraries or `docs/workbench/` (the full list is in the workflow; also a push to `feature/**`, `chore/**`, `Chore/**`, `fix/**` with the same paths). It also runs those tests on Windows and macOS, each test limited to 3 minutes. Path-filtered, so never make it a required check | — | — |
 | `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
