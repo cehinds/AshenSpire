@@ -112,8 +112,9 @@ test('snapshots round-trip reflectStacks, load without it, and refuse a count ov
   const old = structuredClone(snapshot);
   delete old.player.reflectStacks;
   assert.deepEqual(combatSnapshotProblems(old), [], 'absent means 0');
-  old.player.reflectStacks = mechanics.reflect.stackCap + 1;
-  assert.ok(combatSnapshotProblems(old).some(problem => problem.includes('reflectStacks')));
+  old.player.reflectStacks = 25;
+  assert.deepEqual(combatSnapshotProblems(old), []);
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, mechanics.reflect.stackCap);
 });
 
 test('multi-hit previews spend one Reflect stack per landed hit, as live does', async () => {

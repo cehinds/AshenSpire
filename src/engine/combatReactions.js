@@ -201,7 +201,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
   }
   // Auto-Counter (owner 2026-10-31): in Counter stance a covered hit may be answered with no card, for the data-set SP.
   const owner = ctx.players ? ctx.players.get(seat)?.entity : ctx.player;
-  if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner)
+  if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner, entries.filter(entry => entry.side === 'player' && entry.ownerId === seat).reduce((sum, entry) => sum + (entry.staminaCost || 0), 0))
     && threats.some(threat => threat.row.contacts.some(contact => counterCoversAttack(ctx, Matchups.autoCounterCarrier(), contact, contact.effect || 'damage')))) {
     options.push({ id: 'autoCounter', name: 'Counter', cardId: null, autoCounter: true, play: { autoCounter: true },
       staminaCost: Matchups.autoCounterCost(), manaCost: 0, choiceName: null, ...(captureIncoming ? { incoming: {} } : {}) });
@@ -563,7 +563,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     const def = resolveCombatCard(ctx, instance);
     const stack = ctx.reactionStack ||= { groupKey: group.key, entries: [], resolving: false };
     const entry = { side: 'player', ownerId, optionId: option.id, play: option.play, cardId: option.cardId,
-      cardInstanceId: option.play.cardInstanceId, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null,
+      cardInstanceId: option.play.cardInstanceId, staminaCost: option.staminaCost || 0, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null,
       ...(option.sourceId ? { sourceId: option.sourceId } : {}), ...(option.incoming ? { incoming: option.incoming } : {}) };
     stack.entries.push(entry);
     if (ctx.reactionRules.contactPolicy === 'perHit') group.reactionAnswered.push(ownerId);

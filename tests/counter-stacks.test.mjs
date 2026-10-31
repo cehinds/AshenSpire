@@ -13,6 +13,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
 import { counterReturn } from '../src/engine/counterRule.js';
+import { autoCounterAvailable } from '../src/engine/combatMatchups.js';
 import { counterStackReturn } from '../src/engine/guardStacks.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -142,8 +143,9 @@ test('snapshots round-trip counterStacks, load without it, and refuse a count ov
   const old = structuredClone(snapshot);
   delete old.player.counterStacks;
   assert.deepEqual(combatSnapshotProblems(old), [], 'absent means 0: old saves load');
-  old.player.counterStacks = mechanics.counter.stackCap + 1;
-  assert.ok(combatSnapshotProblems(old).some(problem => problem.includes('counterStacks')));
+  old.player.counterStacks = 25;
+  assert.deepEqual(combatSnapshotProblems(old), [], 'a count over the live cap is not refused');
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.counterStacks, mechanics.counter.stackCap, 'it loads clamped to the live cap');
   old.player.counterStacks = -1;
   assert.ok(combatSnapshotProblems(old).some(problem => problem.includes('counterStacks')));
 });
@@ -161,4 +163,27 @@ test('a paused fight offering the card-less auto-Counter saves and restores with
   const loaded = restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot });
   const option = loaded.pendingReaction.options.find(row => row.autoCounter);
   assert.deepEqual([option.id, option.cardId, option.staminaCost], ['autoCounter', null, 1]);
+});
+
+test('auto-Counter is not offered when the SP is already promised to a stacked card', () => {
+  const { combat, enemy } = live();
+  combat.piles.hand.length = 0;
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  combat.player.energy = 1;
+  // The seat has a 1-SP card on the stack that has not paid yet: nothing is left for the card-less option.
+  const ctx = combat;
+  assert.equal(autoCounterAvailable(ctx, combat.player, 0), true);
+  assert.equal(autoCounterAvailable(ctx, combat.player, 1), false);
+});
+
+test('outside Core 2 (default bundle) a Counter gains no stacks', () => {
+  const plain = createRegistries(contentBundle);
+  const run = createRunState({ registries: plain, classId: 'reaver', seed: 7 });
+  const combat = createRunCombat({ registries: plain, run, rng: createRng(7), enemyIds: ['wanderingSoldier'] });
+  const card = contentBundle.cards.find(c => c.combatProfile?.maneuver === 'counter' && !c.counterCoverage);
+  if (!card) return;
+  combat.piles.hand.push({ instanceId: 'lg1', cardId: card.id, upgraded: false });
+  combat.player.energy = 9; combat.player.mana = 9;
+  try { dispatch(combat, { type: 'playCard', cardInstanceId: 'lg1', targetId: combat.enemies[0].id }); } catch { /* unplayable here: still no stacks */ }
+  assert.ok(!combat.player.counterStacks);
 });

@@ -312,11 +312,12 @@ export const autoCounterCarrier = () => ({ instanceId: 'autoCounter', cardId: 'a
   combatProfile: { camp: 'physical', maneuver: 'counter', school: null, damageType: 'blunt', counterMode: 'melee', range: 'melee', targeting: 'single', traits: [] } });
 export const autoCounterCost = () => Math.max(0, Math.floor(mechanics.counter.autoCounterStamina));
 /** True when `entity` may answer a hit with an auto-Counter right now: Core, Counter stance, nothing armed or spent, SP in hand. */
-export function autoCounterAvailable(ctx, entity) {
+export function autoCounterAvailable(ctx, entity, unpaid = 0) {
   if (!counterRuleActive(ctx) || !combatExpansionEnabled(ctx) || entity?.kind !== 'player' || !entity.alive) return false;
   if (entity.combatStance?.maneuver !== 'counter' || entity.combatCounter?.charges > 0) return false;
   if (CounterRule.counterReturnSpent(entity) || restrictions(ctx, entity).counterDisabled) return false;
-  return (entity.energy ?? 0) >= autoCounterCost();
+  // SP already promised to cards stacked this root (they pay when the stack resolves) is not free to spend again.
+  return (entity.energy ?? 0) - Math.max(0, unpaid) >= autoCounterCost();
 }
 /** Pays the auto-Counter's SP (as a card play pays it) and arms it; returns the armed counter. */
 export function armAutoCounter(ctx, entity) {

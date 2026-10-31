@@ -241,7 +241,7 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
   const support = effects.filter(effect => !payloadOps.includes(effect.op));
   if (!combatExpansionEnabled(ctx) && !support.some(effect => effect.op === 'block')) support.unshift({ op: 'block', target: 'self', amount: rules.guard });
   // Counter stacks (owner 2026-10-31): the Block the player stands behind, read after the card's own Block grant (last in line).
-  if (arm && source.kind === 'player') support.push({ op: 'gainCounterStacks', target: 'self' });
+  if (arm && source.kind === 'player' && fixCoreEnabled(ctx)) support.push({ op: 'gainCounterStacks', target: 'self' });
   return counterstrikeEffects(ctx, source, target, carrier, support, arm);
 }
 

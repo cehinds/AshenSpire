@@ -80,7 +80,7 @@
   },
   "counter": {
     "stackFraction": 0.1,
-    "stackCap": 20,
+    "stackCap": 10,
     "autoCounterStamina": 1
   },
   "reflect": {

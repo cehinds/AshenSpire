@@ -1549,7 +1549,16 @@
       "classification.skill"
     ],
     "textTemplate": "Gain 1 Reflect.",
-    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyReflect",
+          "target": "self",
+          "amount": 2
+        }
+      ]
+    }
   },
   {
     "id": "core.starfall",

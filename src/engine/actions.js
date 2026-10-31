@@ -1732,10 +1732,12 @@ function runOpcode(ctx, action, eff) {
     }
     // Counter stacks (owner 2026-10-31): a Counter card adds the Block it stands behind, after its own Block grant.
     case 'gainCounterStacks': {
+      if (!fixCoreEnabled(ctx)) break; // Core 2 only (SPEC §17)
       for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
       break;
     }
     case 'applyReflect': {
+      if (!fixCoreEnabled(ctx)) break; // Core 2 only (SPEC §17)
       for (const t of resolveTargets(ctx, action, eff.target)) gainReflectStacks(ctx, t, evalNum(ctx, action, eff.amount, 1, t));
       break;
     }

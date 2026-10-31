@@ -8,10 +8,18 @@ const nonNegative = value => Number.isFinite(value) && value >= 0;
 const whole = value => Number.isSafeInteger(value) && value >= 0;
 
 /** Counter and Reflect stack counts (owner 2026-10-31): whole, capped by mechanics.counter / mechanics.reflect; absent means 0 (older saves). */
+/** Clamps saved stack counts to the live caps (load-time companion of stackCountProblems). */
+export function clampStackCounts(entity) {
+  if (!entity) return;
+  if (entity.counterStacks > mechanics.counter.stackCap) entity.counterStacks = mechanics.counter.stackCap;
+  if (entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
+}
+
 export function stackCountProblems(entity, path = 'entity') {
   const problems = [];
-  for (const [key, cap] of [['counterStacks', mechanics.counter.stackCap], ['reflectStacks', mechanics.reflect.stackCap]]) {
-    if (entity?.[key] !== undefined && (!whole(entity[key]) || entity[key] > cap)) problems.push(`${path}.${key} must be a whole number from 0 to ${cap}`);
+  // Type and sign only: a later cap change must not brick a save; the loader clamps to the live cap.
+  for (const key of ['counterStacks', 'reflectStacks']) {
+    if (entity?.[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
   }
   return problems;
 }
