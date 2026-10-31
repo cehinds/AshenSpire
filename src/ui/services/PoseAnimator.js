@@ -23,6 +23,7 @@ import { POSE_CANVAS, POSE_DIR, POSE_FRAMES, POSE_STRIP } from '../../content/po
 import { assetUrl } from '../assetmap.js';
 import { reducedMotionRequested } from '../motion.js';
 import { motionOff } from '../performance.js';
+import { frameHoldMs } from '../animationPace.js';
 import { hintImage } from '../imageHints.js';
 import { preloadPoses } from './posePreloads.js';
 
@@ -157,7 +158,8 @@ export function createPoseStage(classId, tint, id = `${classId}_${tint}`) {
       if (!poseFrame(classId, target, tint)) return false;
       if (timer) { clearTimeout(timer); timer = null; }
       setPose(target);
-      const duration = Math.max(POSE_MOTION.minimumPlayMs, ms);
+      // A pose is one frame: hold it at least the sprite frame floor (Animation step duration) so it can be seen.
+      const duration = Math.max(POSE_MOTION.minimumPlayMs, frameHoldMs(), ms);
       due = Date.now() + duration;
       timer = setTimeout(settle, duration);
       return true;

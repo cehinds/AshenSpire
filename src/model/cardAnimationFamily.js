@@ -62,7 +62,7 @@ export function alternativeCardAnimationFamily(classId, { weaponProfile = null, 
 export function cardSequenceTiming(sequence, speed) {
   if (!sequence) return null;
   if (sequence.pilot || sequence.timingUnits) return selectedWeaponSequenceTiming(sequence, speed);
-  const totalMs = durationFor(sequence, speed);
+  const totalMs = Math.max(durationFor(sequence, speed), (Number(speed?.minFrameMs) || 0) * sequence.durations.length);
   const base = sequence.durations.reduce((sum, ms) => sum + ms, 0);
   return { totalMs, impactMs: sequence.durations.slice(0, sequence.impact).reduce((sum, ms) => sum + ms, 0) / base * totalMs };
 }
