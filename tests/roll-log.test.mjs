@@ -55,3 +55,29 @@ test('crit, perception, status chance and status recovery log total vs DC', () =
   assert.match(recovery.text, /Burn recovery: 20 vs 30 · success$/);
   assert.equal(recovery.rollReceipt.mode, 'advantage');
 });
+
+// ---- engine events ---------------------------------------------------------------------------------------------
+import { EVENTS, TRIGGER_EVENTS } from '../src/model/schemas.js';
+import { rollCrit } from '../src/engine/actions.js';
+
+test('each new roll event is registered', () => {
+  for (const type of ['critRolled', 'perceptionRolled', 'statusChanceRolled', 'statusRecoveryRolled']) {
+    assert.ok(EVENTS.includes(type), type);
+    assert.ok(TRIGGER_EVENTS.includes(type), type);
+  }
+});
+
+test('rollCrit emits critRolled and keeps its single combatProcs draw', () => {
+  const events = [], draws = [];
+  const ctx = { attributes: { dexterity: 10 }, emit: (type, payload) => events.push({ type, ...payload }),
+    rng: { float: stream => { draws.push(stream); return 0.124; } } };
+  const source = { kind: 'player', id: 'player', critRules: [{ tags: ['attack'], base: 0.15, multiplier: 2, cap: 1 }] };
+  assert.equal(rollCrit(ctx, source, ['attack'], { targetId: 'e1', cardId: 'strike' }), 2);
+  assert.deepEqual(draws, ['combatProcs']);
+  assert.deepEqual(events, [{ type: 'critRolled', sourceId: 'player', targetId: 'e1', cardId: 'strike', roll: 12.4, chance: 15, multiplier: 2, success: true }]);
+  ctx.rng.float = () => 0.9;
+  assert.equal(rollCrit(ctx, source, ['attack']), 0);
+  assert.equal(events[1].success, false);
+  assert.equal(rollCrit(ctx, source, ['spell']), 0, 'no matching rule: no draw, no event');
+  assert.equal(events.length, 2);
+});
