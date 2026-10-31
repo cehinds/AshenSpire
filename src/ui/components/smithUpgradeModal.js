@@ -30,23 +30,13 @@ import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { FOLD_GLYPH } from './foldGlyph.js';
 import { workspaceFrame, markCurrent } from './w1Workspace.js';
+import { pairSpaced, deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
 import { smithWorkspaceVars, smithCandidateRows, smithSelectorFace, smithPaneSlots } from '../models/SmithWorkspaceModel.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
 )].filter((element) => !element.hidden && element.getClientRects().length);
 
-/** A StatPair whose key and value are separated by a space, so the text reads "AR 5". */
-const pairSpaced = (key, valueNode, className = '') => el('span', { class: `as-statpair${className ? ` ${className}` : ''}` }, [
-  el('em', { class: 'sp-k', text: key }), ' ', valueNode,
-]);
-/** A delta as the kit draws it, with the tags the Smith tool reads (b before, i arrow, strong after). */
-const deltaNode = (from, to, { spaced = true } = {}) => {
-  const dir = Number(to) > Number(from) ? 'up' : Number(to) < Number(from) ? 'down' : 'flat';
-  return el('span', { class: 'sp-v as-delta', dataset: { dir } }, spaced
-    ? [el('b', { class: 'd-from', text: from }), ' ', el('i', { class: 'd-arrow', 'aria-hidden': 'true', text: '→' }), ' ', el('strong', { class: 'd-to', text: to })]
-    : [el('b', { class: 'd-from', text: from }), el('i', { class: 'd-arrow', 'aria-hidden': 'true', text: '→' }), el('strong', { class: 'd-to', text: to })]);
-};
 /** The item's art as an ArtWell: its painted asset, or its glyph (a relic). */
 const itemArt = (item, { small = false } = {}) => {
   const well = item.artAsset
@@ -99,15 +89,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
   let closed = false;
   let disarmDecision = null;
 
-  const CHANGE_LABELS = {
-    damage: 'DAMAGE', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
-  };
-  /** A row's changes as StatPairs with deltas: "AR 7 → 10". */
-  const changeSummary = (row) => el('span', { class: 'smith-fold-values' }, row.values.map((change) => {
-    const label = change.label || CHANGE_LABELS[change.op] || String(change.op || 'change');
-    return pairSpaced(label, deltaNode(String(change.before), String(change.after)));
-  }));
-
   /** The requirement: "STR 10 → 9", with what the player has under it. */
   const requirementNodes = (selected) => (selected.requirements.length
     ? selected.requirements.map((row) => el('span', { class: `smith-requirement ${row.metAfter ? 'met' : 'unmet'}` }, [
@@ -115,17 +96,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
       el('small', { text: `You have ${row.actual == null ? '?' : row.actual}` }),
     ]))
     : [el('span', { class: 'smith-requirement met' }, el('span', { class: 'smith-requirement-values as-statpair' }, [el('em', { class: 'sp-k', text: 'NONE' }), ' ', el('b', { class: 'sp-v', text: 'No attribute requirement' })]))]);
-
-  /** The stone cost as a StatPair: "REQ/AVAIL 1/0", the available count coloured by affordability. */
-  const costPairNode = (selected) => el('span', { class: 'as-statpair smith-cost-pair' }, [
-    el('span', { class: 'sp-k' }, [el('em', { text: 'REQ' }), el('i', { 'aria-hidden': 'true', text: '/' }), el('em', { text: 'AVAIL' })]),
-    ' ',
-    el('span', { class: 'sp-v' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
-  ]);
-  const economyNode = (selected) => el('span', { class: 'smith-economy-values' }, [
-    glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
-    el('b', { text: 'Smithing Stone Cost' }), ' ', costPairNode(selected),
-  ]);
 
   const intrinsicStatsNode = (selected) => {
     const stats = selected.intrinsicStats || {};
