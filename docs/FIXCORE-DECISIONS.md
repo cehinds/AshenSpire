@@ -74,3 +74,19 @@ configuration or historical non-Core profiles.
 ## Precision as stacks, Evasion base 8 (owner, 2026-10-31)
 
 - Owner decision: enemies hit too easily (any Precision of 1 or more hit 95% because the miss threshold was Evasion 1 + DEX). Core 2 only. Precision = 1 + statMix + stacks (was 1 + mix × (stacks + 1)); Evasion = 8 + DEX + gear + 2 × Evade stacks (was 1 + DEX + (1 + DEX) × stacks). The constants live in the `accuracy` block of `content/framework/mechanics.json` (`evasionBase` 8, `evadePerStack` 2, `precisionStackValue` 1, `precisionDecayPerTurn` 1), read in `src/engine/stanceHit.js`, because the locked `fixCoreMechanics.json` cannot change. A stance entry grants exactly 1 stack; Precision loses 1 stack at the owner's turn start (Persistent exempt) and the badge tooltip is the `statuses.json` text. SPEC §17 Accuracy paragraph amended.
+
+## Insight contests (2026-10-31)
+
+Owner: "Read Intent, Foresight and that kind of spell should not need a hit chance or care about range."
+They resolve a contest: d20 + caster INT + WIS + card rank against DC = the target's current Poise +
+target WIS + target level; a tie succeeds. Example: rank 1, INT 1, WIS 2, roll 5 gives 9 against Poise 7 +
+WIS 1 + level 1 = 9, a success; a roll of 4 fails. More status-inflicting spells work this way, with
+attributes by school: physical effects use DEX + CON (against CON), mental effects INT + WIS (against WIS),
+and every DC includes current Poise first.
+
+Implemented as an authored card field `contest: 'mental' | 'physical'`, constants in
+`content/framework/mechanics.json`, a new last RNG stream `combatContest`, and `src/engine/contest.js`.
+Foresight targets only the caster, so it carries no contest. The cards converted are listed in SPEC §17
+Contests. Rallying Roar and Smoke Veil (physical-camp Core skills that apply Weak) and Restrained
+(which also adds a burden card) were left on the Accuracy roll.
+The contest applies in Core 2 only; Current/v2 combats ignore the `contest` field (D1).

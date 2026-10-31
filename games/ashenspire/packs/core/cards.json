@@ -2453,6 +2453,7 @@
     "id": "core.hexmark",
     "name": "Hexmark",
     "class": "colorless",
+    "contest": "physical",
     "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,

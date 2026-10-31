@@ -68,5 +68,32 @@
       38,
       60
     ]
+  },
+  "blacksmith": {
+    "restSmithMaxTier": 2,
+    "stoneDiscount": 1,
+    "prices": {
+      "tierUpgrade": [
+        60,
+        100,
+        150
+      ],
+      "cardUpgrade": 40,
+      "rankUp": 120
+    },
+    "rankUpStones": 1,
+    "armamentStock": 6,
+    "tierWeights": {
+      "0": 20,
+      "1": 40,
+      "2": 30,
+      "3": 10
+    },
+    "tierPriceMult": [
+      1,
+      1.4,
+      1.8,
+      2.3
+    ]
   }
 }
