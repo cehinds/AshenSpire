@@ -81,3 +81,4 @@ Implemented as an authored card field `contest: 'mental' | 'physical'`, constant
 Foresight targets only the caster, so it carries no contest. The cards converted are listed in SPEC §17
 Contests. Rallying Roar and Smoke Veil (physical-camp Core skills that apply Weak) and Restrained
 (which also adds a burden card) were left on the Accuracy roll.
+The contest applies in Core 2 only; Current/v2 combats ignore the `contest` field (D1).
