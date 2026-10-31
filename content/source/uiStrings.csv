@@ -1680,6 +1680,7 @@ gameProfile.rest.description.levelUp,,Assign one earned attribute point. Confirm
 gameProfile.rest.spent,,Your choice here is spent.,Your choice here is spent.,
 gameProfile.rest.spentShort,,Done.,Done.,
 gameProfile.rest.noSmith,,Nothing to upgrade.,Nothing to upgrade.,
+gameProfile.rest.needsBlacksmith,,Needs a Blacksmith.,"A rest site's Smith reaches tier 2. Tier {tier} needs a Blacksmith.",
 gameProfile.rest.noLevel,,No attribute point.,No attribute point.,
 gameProfile.rest.chooseOne,,Choose one service. Confirming restores HP and any active MP and SP pools and refills healing and MP flasks.,Choose one service. Confirming restores HP and any active MP and SP pools and refills healing and MP flasks.,
 gameProfile.rest.complete,,{service} completed. Your choice here is spent.,{service} completed. Your choice here is spent.,
