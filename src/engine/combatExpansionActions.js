@@ -84,7 +84,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
         const profile = contactCarrier.combatProfile;
         const base = evaluate(eff.amount ?? eff.stacks ?? 1, Actions.formulaCtxFor(prefix, shadow, projected));
         const tags = Actions.attackTagsFor({ ...action, card: contactCarrier }, eff, ctx.registries);
-        const crit = eff.op === 'damage' && !ctx._expansionPreview && !carrier?.combatReaction ? Actions.rollCrit(ctx, source, tags, { targetId: entity.id, cardId: carrier?.cardId }) : 0;
+        const crit = eff.op === 'damage' && !ctx._expansionPreview && !carrier?.combatReaction ? Actions.rollCrit(ctx, source, tags, { targetId: entity.id, target: entity, cardId: carrier?.cardId }) : 0;
         if (crit) contactCarrier.critMultiplier = crit;
         const attackBase = base + (action.meta.abilityChargeDamageEffect || 0) + (h === 0 ? action.meta.abilityChargeDamage || 0 : 0);
         let amount = eff.op === 'damage' ? Actions.computeAttackDamage(prefix, shadow.source, projected, attackBase,

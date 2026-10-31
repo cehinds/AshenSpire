@@ -15,10 +15,10 @@ const one = event => rows([event])[0];
 test('accuracy: compact total vs Evasion, itemised in the receipt', () => {
   const row = one({ type: 'attackHit', sourceId: 'player', targetId: 'e1', fixedDefense: true, cardId: 'strike',
     dice: [8, 13], d20: 8, attackTotal: 17, accuracy: 4, evasion: 9, evasionTotal: 9, hitChance: 96, mode: 'advantage' });
-  assert.match(row.text, /: 17 vs 9 · hit$/);
+  assert.match(row.text, /: 17 vs 9 · lands$/);
   assert.deepEqual(row.rollReceipt, { kind: 'accuracy', die: 'd20', dice: [8, 13], mode: 'advantage', success: true, chance: 96,
     parts: [{ label: 'Precision', value: 4 }], total: 17, dcParts: [{ label: 'Evasion', value: 9 }], dc: 9 });
-  assert.deepEqual(rollReceiptLines(row.rollReceipt), ['d20 [8, 13] → 13 · advantage', '+ Precision 4', '= 17', 'vs Evasion 9', 'hit · 96%']);
+  assert.deepEqual(rollReceiptLines(row.rollReceipt), ['d20 [8, 13] → 13 · advantage', '+ Precision 4', '= 17', 'vs Evasion 9', 'lands · 96%']);
 });
 
 test('accuracy: itemised Precision pieces on the event are shown when present; a miss reads miss', () => {
@@ -47,7 +47,7 @@ test('crit, perception, status chance and status recovery log total vs DC', () =
   assert.deepEqual(rollReceiptLines(crit.rollReceipt), ['d100 [12.4]', '= 12.4', 'needs < Crit chance % 15', 'crit']);
   const perception = one({ type: 'perceptionRolled', ownerId: 'player', enemyInstanceId: 'e1', roll: 9, wisdom: 3, total: 12, dc: 8, passed: true,
     dcParts: [{ label: 'base', value: 5 }, { label: 'INT', value: 2 }, { label: 'WIS', value: 1 }] });
-  assert.match(perception.text, /Perception: 12 vs 8 · read$/);
+  assert.match(perception.text, /Perception: 12 vs 8 · identified$/);
   assert.deepEqual(rollReceiptLines(perception.rollReceipt).slice(0, 4), ['d20 [9]', '+ WIS 3', '= 12', 'vs base 5']);
   const buildup = one({ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [34], roll: 34, chance: 45, effectiveChance: 45, success: true });
   assert.match(buildup.text, /Burn buildup: 34 vs 45 · success$/);
@@ -137,4 +137,15 @@ test('Evade keeps both dice and the mode; a failed distance row never shows the 
   assert.match(both[0].text, /range failed/);
   assert.equal(both[0].rollReceipt, undefined, 'the distance row has no Evade receipt');
   assert.equal(both[1].rollReceipt.kind, 'evade');
+});
+
+test('co-op: a crit roll carries the roller seat and the log names it', () => {
+  const events = [];
+  const ctx = { attributes: {}, emit: (type, payload) => events.push({ type, ...payload }), rng: { float: () => 0.01 },
+    playerIdForEntity: entity => entity.seat || null };
+  const source = { kind: 'player', id: 'player', seat: 'p2', critRules: [{ tags: ['attack'], base: 0.5, multiplier: 2, cap: 1 }] };
+  rollCrit(ctx, source, ['attack'], { targetId: 'e1', target: { id: 'e1' }, cardId: 'strike' });
+  assert.equal(events[0].sourcePlayerId, 'p2');
+  const [row] = combatLogEntries(events, { registries, players: [{ id: 'p1', name: 'Ash' }, { id: 'p2', name: 'Briar' }], enemies });
+  assert.match(row.text, /^Briar → Wyrm Lord: Crit:/);
 });
