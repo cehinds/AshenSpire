@@ -238,7 +238,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     let selection = null;
     const model = () => cardUpgradeModel(registries, run, selection);
     const modal = mountCardUpgradeModal(app, model(), {
-      registries, meta, returnFocusElement,
+      registries, meta, returnFocusElement, backLabel: t('smith.back.shrine'),
       consequence: t('blacksmith.cardUpgrade.consequence'), decisionConsequence: t('blacksmith.cardUpgrade.decision'),
       onSelect: (instanceId) => { selection = instanceId; modal.update(model()); },
       onBack: () => {},
