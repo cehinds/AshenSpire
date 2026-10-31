@@ -1,16 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Procedural card art
 
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/Feature/NewCardArt/latest/)
-
-Cards assemble approved artwork from type, tags and rank. Ordinary effects stay within three lines, with complete rules in Information. The art-review tool adds a Procedural builder; Reviewed and Legacy artwork remain available. [Capture record](docs/preview/features/new-card-art-2404/README.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile native card with compact effects](docs/preview/features/new-card-art-2404/mobile.png) | ![Desktop card art and compact effects](docs/preview/features/new-card-art-2404/desktop.png) | ![Wide native card gallery](docs/preview/features/new-card-art-2404/wide.png) | ![Tablet card gallery and effect layout](docs/preview/features/new-card-art-2404/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
