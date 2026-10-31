@@ -18,8 +18,10 @@ export function returnUnplayedCards(ctx, cards) {
 }
 
 // The turn-end refresh (shuffleHand). When the draw pile holds fewer cards than
-// the next turn will draw, the discard joins the returned cards in this same
-// shuffle, so a held hand cannot starve the discard of its reshuffle.
+// the next turn will draw, the discard joins the returned cards in a shuffle so
+// a held hand cannot starve the discard of its reshuffle. The cards already in
+// the draw pile stay on top, unshuffled, so the next turn draws them first and
+// only then the reshuffled rest (owner, 2026-10-31).
 function refreshHandIntoDraw(ctx, cards) {
   const next = handDrawCount(ctx.handRules, ctx.attributes, { handSize: ctx.piles.hand.length, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel }).value;
   const joins = ctx.handRules.reshuffle !== false && ctx.piles.discard.length > 0 && ctx.piles.draw.length < next;
@@ -27,8 +29,14 @@ function refreshHandIntoDraw(ctx, cards) {
   const moved = joins ? [...cards, ...ctx.piles.discard] : cards;
   if (joins) ctx.piles.discard.length = 0;
   // The explicit Play in deck order mode keeps its no-randomness contract.
-  ctx.piles.draw.push(...(ctx.orderedDraw ? orderedReturn(moved, ctx.orderedDraw.order) : moved));
-  if (!ctx.orderedDraw) ctx.piles.draw = ctx.rng.shuffle('shuffle', ctx.piles.draw);
+  const incoming = ctx.orderedDraw ? orderedReturn(moved, ctx.orderedDraw.order) : moved;
+  if (joins) {
+    const onTop = ctx.piles.draw;
+    ctx.piles.draw = [...onTop, ...(ctx.orderedDraw ? incoming : ctx.rng.shuffle('shuffle', incoming))];
+  } else {
+    ctx.piles.draw.push(...incoming);
+    if (!ctx.orderedDraw) ctx.piles.draw = ctx.rng.shuffle('shuffle', ctx.piles.draw);
+  }
   ctx.emit('deckShuffled', {
     size: ctx.piles.draw.length, reason: 'handRefresh',
     cardInstanceIds: moved.map(card => card.instanceId),
