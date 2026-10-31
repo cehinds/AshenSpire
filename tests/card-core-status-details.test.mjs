@@ -123,6 +123,16 @@ test('Core-only status wording adapts custom timers without changing versioned d
     authored.description, 'normalizing a known tooltip does not replace a custom description');
   const customBurn = { ...reg.statuses.get('burn'), tooltip: 'Burn from a custom source lasts three turns.' };
   assert.equal(statusPresentationDefinition(combat, 'burn', customBurn).tooltip, customBurn.tooltip);
+  for (const id of ['burn', 'crimsonBlight']) {
+    const source = reg.statuses.get(id);
+    const extended = { ...source, tooltip: `Custom amount 17. ${source.tooltip} Custom rate 23.`,
+      description: `Custom amount 17. ${source.tooltip} Custom rate 23.` };
+    for (const context of [combat, { ...combat, fixCoreRules: { ...combat.fixCoreRules, enabled: false } }]) {
+      const display = statusPresentationDefinition(context, id, extended);
+      assert.equal(display.tooltip, extended.tooltip, `${id}: a custom field containing legacy wording stays verbatim`);
+      assert.equal(display.description, extended.description, `${id}: its independent custom description stays verbatim`);
+    }
+  }
   const projected = statusPresentationDefinition(combat, 'crimsonBlight', custom);
   assert.equal(statusTooltipText(projected, { coreStatusAuthority: { enabled: false } }), statusTooltipText(custom),
     'explicit off restores the original legacy definition before presentation');

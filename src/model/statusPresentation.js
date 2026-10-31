@@ -4,16 +4,21 @@ import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js'
 // UI wording is separate from the versioned mechanic source: changing a label
 // must not invalidate saved rules. Adapt only known legacy wording here, never
 // the versioned mechanic definitions (whose prose is part of old-save pins).
+const LEGACY_TOOLTIPS = Object.freeze({
+  burn: 'At the start of its turn, loses HP equal to Burn stacks (ignores Block). One stack burns out each turn.',
+  crimsonBlight: 'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
+});
 function present(ctx, id, definition, holder) {
   const resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
   return presentationWording(ctx, id, resolved, fixCoreEnabled(ctx), resolved !== definition);
 }
 function presentationWording(ctx, id, resolved, core, changedDefinition = false) {
+  if (!resolved || typeof resolved !== 'object') return resolved;
   const display = text => {
     if (typeof text !== 'string') return text;
     if (id === 'evade' && core && changedDefinition) return text.replace(/\bfixed Evasion\b/g, 'Evasion');
-    if (id === 'burn' && core) return text.replace(' One stack burns out each turn.', '');
-    if (id === 'crimsonBlight' && (core || ctx?.combatExpansionVersion >= 2)) return text.replace(
+    if (id === 'burn' && core && text === LEGACY_TOOLTIPS.burn) return text.replace(' One stack burns out each turn.', '');
+    if (id === 'crimsonBlight' && (core || ctx?.combatExpansionVersion >= 2) && text === LEGACY_TOOLTIPS.crimsonBlight) return text.replace(
       'the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
       'the Blight expires entirely after {decay.duration} turns.');
     return text;
