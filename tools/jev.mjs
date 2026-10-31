@@ -146,8 +146,8 @@ export const FAST_CHECKS = [
   { id: 'bundle-cycles', args: ['tools/bundle-cycles.mjs'] },
   { id: 'mechanics-generate', args: ['tools/mechanics-generate.mjs', '--check'] },
   { id: 'uistrings', args: ['tools/uistrings.mjs', '--check'] },
-  { id: 'run-node', args: ['tests/run-node.mjs', '--no-selftests', '--no-discovered'] },
-  { id: 'runsim', args: ['tools/runsim.mjs', '5'] },
+  { id: 'run-node', args: ['tests/run-node.mjs', '--no-selftests', '--no-discovered'], slow: true },
+  { id: 'runsim', args: ['tools/runsim.mjs', '5'], slow: true },
 ];
 
 // A failed check is never "resolved", so its severity is at least 1; triage can
@@ -182,9 +182,11 @@ COMMANDS.checks = async (args) => {
   const human = args.includes('--human');
   const onlyAt = args.indexOf('--only');
   const only = onlyAt >= 0 ? new Set(args[onlyAt + 1].split(',')) : null;
-  const list = FAST_CHECKS.filter(c => !only || only.has(c.id));
+  const fast = args.includes('--fast');
+  const list = FAST_CHECKS.filter(c => (!only || only.has(c.id)) && !(fast && c.slow));
   const r = runChecks(list, c => node(c.args));
-  emit({ cmd: 'checks', exit: r.exit, verdict: r.exit === 0 ? 'pass' : r.exit === 1 ? 'explained' : 'needs-model', results: r.results }, human, () => checksText(r));
+  r.skipped = fast ? FAST_CHECKS.filter(c => c.slow).map(c => c.id) : [];
+  emit({ cmd: 'checks', exit: r.exit, skipped: r.skipped, verdict: r.exit === 0 ? 'pass' : r.exit === 1 ? 'explained' : 'needs-model', results: r.results }, human, () => checksText(r));
   return r.exit;
 };
 
@@ -341,10 +343,12 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
   const doRegen = deps.regen || regen;
   const doRestamp = deps.restamp || restamp;
   const runNode = deps.node || node;
+  if (typeof base !== 'string' || !base || base.startsWith('-')) return { exit: 2, verdict: 'bad-base', reason: `--base must name a branch, got ${JSON.stringify(base)}` };
   const top = git(['rev-parse', '--show-toplevel'], cwd).out.trim() || cwd;
   const dirty = git(['status', '--porcelain', '--untracked-files=no'], top).out.trim();
   if (dirty) return { exit: 1, verdict: 'dirty-tree', files: dirty.split('\n') };
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], top).out.trim();
+  const untrackedBefore = new Set(git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean));
   const fetched = git(['fetch', '--filter=blob:none', 'origin', base], top);
   if (fetched.status !== 0) return { exit: 2, verdict: 'fetch-failed', tail: fetched.out.trim().slice(-400) };
   const merged = git(['merge', '--no-edit', '--no-ff', '--no-commit', `origin/${base}`], top);
@@ -390,15 +394,17 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
   if (verify.exit !== 0) return { exit: verify.exit, verdict: 'checks-failed', branch, resolved, checks: verify.results.filter(r => r.status === 'fail'), hint: 'merge left uncommitted; `git merge --abort` to undo' };
   git(['add', '-u'], top);
   const fresh = git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean);
-  for (const f of classifyConflicts(fresh).generated) git(['add', '--', f], top);
+  // Only files the regen created: an untracked generated file that was already here is not ours to stage.
+  for (const f of classifyConflicts(fresh.filter(p => !untrackedBefore.has(p))).generated) git(['add', '--', f], top);
   const c = git(['commit', '--no-edit'], top);
-  if (c.status !== 0) return { exit: 2, verdict: 'commit-failed', tail: c.out.trim().slice(-400) };
+  if (c.status !== 0) return { exit: 2, verdict: 'commit-failed', tail: c.out.trim().slice(-400), hint: 'merge left uncommitted; `git merge --abort` to undo' };
   const sha = git(['rev-parse', '--short', 'HEAD'], top).out.trim();
   return { exit: 0, verdict: 'merged', branch, sha, resolved, notes, push: `git push origin ${branch}` };
 }
 
 COMMANDS.devmerge = async (args) => {
   const baseAt = args.indexOf('--base');
+  if (baseAt >= 0 && (args[baseAt + 1] === undefined || args[baseAt + 1].startsWith('-'))) { emit({ cmd: 'devmerge', exit: 2, verdict: 'bad-base', reason: '--base needs a branch name' }, args.includes('--human'), o => `jev devmerge: ${o.verdict} (exit 2)\n${o.reason}`); return 2; }
   const prAt = args.indexOf('--pr');
   const r = devmerge({ base: baseAt >= 0 ? args[baseAt + 1] : 'dev', pr: prAt >= 0 ? Number(args[prAt + 1]) : null, cwd: process.cwd() });
   emit({ cmd: 'devmerge', ...r }, args.includes('--human'),

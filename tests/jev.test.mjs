@@ -370,3 +370,42 @@ test('regen runs config-build before content-build', () => {
   const ids = REGEN_STEPS.map(a => a[0]);
   assert.ok(ids.indexOf('tools/config-build.mjs') >= 0 && ids.indexOf('tools/config-build.mjs') < ids.indexOf('tools/content-build.mjs'));
 });
+
+test('devmerge: --base starting with - is rejected before git runs', () => {
+  assert.deepEqual(devmerge({ base: '--upload-pack=x', cwd: ROOT }).verdict, 'bad-base');
+  const r = spawnSync(process.execPath, [JEV, 'devmerge', '--base', '-x'], { encoding: 'utf8' });
+  assert.equal(r.status, 2);
+});
+
+test('devmerge: a pre-existing untracked generated file is not staged; a commit failure prints the abort hint', () => {
+  const f = fixture({ 'a.txt': 'a\n' });
+  try {
+    f.onDev(w => f.put(w, 'b.txt', 'b\n'));
+    f.onFeature(w => f.put(w, 'c.txt', 'c\n'));
+    f.put(f.work, 'src/content/generated/stray.js', 'stray\n');
+    const regenMakes = () => { f.put(f.work, 'src/content/generated/new.js', 'new\n'); return { exit: 0, steps: [] }; };
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS({ regen: regenMakes }) });
+    assert.equal(r.verdict, 'merged');
+    const tracked = f.sh(f.work, 'ls-files').split('\n');
+    assert.ok(tracked.includes('src/content/generated/new.js'));
+    assert.ok(!tracked.includes('src/content/generated/stray.js'));
+  } finally { f.done(); }
+  const g = fixture({ 'a.txt': 'a\n' });
+  try {
+    g.onDev(w => g.put(w, 'b.txt', 'b\n'));
+    g.onFeature(w => g.put(w, 'c.txt', 'c\n'));
+    g.sh(g.work, 'config', 'core.hooksPath', join(g.root, 'hooks'));
+    mkdirSync(join(g.root, 'hooks'));
+    writeFileSync(join(g.root, 'hooks/commit-msg'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+    const r = devmerge({ base: 'dev', pr: 2, cwd: g.work, deps: OK_DEPS() });
+    assert.deepEqual([r.exit, r.verdict], [2, 'commit-failed']);
+    assert.match(r.hint, /git merge --abort/);
+  } finally { g.done(); }
+});
+
+test('CLI: checks --fast skips run-node and runsim and exits 0 here', () => {
+  const r = spawnSync(process.execPath, [JEV, 'checks', '--fast', '--only', 'bundle-cycles,run-node,runsim'], { encoding: 'utf8' });
+  const out = JSON.parse(r.stdout.trim());
+  assert.deepEqual(out.results.map(x => x.id), ['bundle-cycles']);
+  assert.deepEqual(out.skipped, ['run-node', 'runsim']);
+});
