@@ -93,7 +93,7 @@ test('every target body is measured before inherited HUD coordinates are written
     style: { getPropertyValue: () => '', setProperty: () => operations.push(`write:${id}`) },
     getBoundingClientRect: () => { operations.push(`read:${id}`); return { left: 0, top: 0 }; },
     querySelector: selector => selector === '.sprite' ? { id } : selector === '.combatant-leading' ? {} : {
-      getBoundingClientRect: () => ({}),
+      getBoundingClientRect: () => { operations.push(`read:rack${id}`); return {}; },
       querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }),
     },
   }));
@@ -106,9 +106,10 @@ test('every target body is measured before inherited HUD coordinates are written
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),
   });
   align();
-  assert.equal(operations.filter(op => op.startsWith('read:')).length, 3);
+  assert.equal(operations.filter(op => /^read:\d$/.test(op)).length, 3);
+  assert.equal(operations.filter(op => op.startsWith('read:rack')).length, 3, 'each rack box is read once');
   const firstWrite = operations.findIndex(op => op.startsWith('write:'));
-  assert.ok(firstWrite > operations.lastIndexOf('read:3'), 'all targets read before the first style invalidation');
+  assert.ok(firstWrite > Math.max(...operations.map((op, i) => op.startsWith('read:') ? i : -1)), 'all targets and racks read before the first style invalidation');
   assert.ok(operations.slice(firstWrite).every(op => op.startsWith('write:')), 'no later target forces layout after a coordinate write');
   for (const frame of frames.slice(0, 3)) assert.equal(frame.dataset.miniHudHeadY, '400');
 });
