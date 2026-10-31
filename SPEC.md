@@ -2092,6 +2092,9 @@ together.
   "Tap a card to play it" Settings switch, off by default, restores one-tap play
   when the target is unambiguous (self and all-enemy cards; one living enemy).
   The hold selects without playing (inspect, Upcast, target choice).
+  A hand card has one select colour, the targeting colour (`--selection-color`): armed,
+  held, keyboard-focused and inspected cards all wear it, and there is no yellow (gold)
+  select state on the hand (owner, 2026-10-31).
 - **End Turn.** A single press when no card in hand is playable; otherwise the
   configured second beat (owner, 2026-10-18).
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
