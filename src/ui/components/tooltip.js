@@ -426,6 +426,19 @@ function heldBackInCard(el) {
   return !!card && card !== el && !card.matches('.selected, .inspection-selected');
 }
 
+/**
+ * oneClickContext(el) — owner, 2026-10-31: while a card is selected or being inspected, or inside the (i)
+ * inspection modal, every keyword, tag and face part explains on ONE click. An unselected hand card keeps
+ * the held-back gate (heldBackInCard) and everything else keeps tap-to-select, tap-again-to-explain.
+ */
+function oneClickContext(el) {
+  if (el?.closest?.('.card-inspection-modal, .card-inspection-layout')) return true;
+  const card = el?.closest?.('.card.selected, .card.inspection-selected');
+  // A hold or press selects the card at pointerdown, before the click: a hand card pressed while it was NOT
+  // selected (`data-pressed-selected="0"`, stamped below) is still on its first tap, which selects only.
+  return !!card && !(card.closest('.hand') && card.dataset.pressedSelected === '0');
+}
+
 const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
 /**
  * syncHeldTriggers(root) — triggers held back inside an unselected hand card leave the tab order
@@ -540,6 +553,11 @@ export function attachTooltip(el, contentFn, {
   // keep their click for what the click does; keyboard Enter/Space on a
   // tap-to-explain detail still answers at once — a key press is deliberate.
   const explainOnSecondTap = ev => {
+    // Selected or inspected card, or the inspection modal: one click explains.
+    if (oneClickContext(el)) {
+      if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
+      selectControl(el, 'explicit'); ev.stopPropagation(); cancelOpen(); show(); return;
+    }
     // The first press still travels: a status pip inside an enemy is also how
     // that enemy is targeted, and the selection survives the screen's board
     // click now that hideTooltip keeps it. The second press is the
@@ -693,7 +711,7 @@ function wireTitles() {
     // Outside the panels the same two-tap rule holds: a click selects the
     // term, the next click explains it; a key press explains at once.
     // A tag symbol explains on one press (touch, mouse or Enter); other inspection terms keep the two-tap rule.
-    const oneTap = term.classList.contains('card-tag-symbol');
+    const oneTap = term.classList.contains('card-tag-symbol') || oneClickContext(term);
     if (ev.type === 'click' && !oneTap && selectedControl !== term) {
       if (selectedControl) { clearControlSelection(); hideTooltip(); }
       selectControl(term, 'explicit');
@@ -717,6 +735,8 @@ function wireTitles() {
     return null;
   };
   document.addEventListener('pointerdown', ev => {
+    const pressed = ev.target?.closest?.('.hand .card');
+    if (pressed) pressed.dataset.pressedSelected = pressed.matches('.selected, .inspection-selected') ? '1' : '0';
     // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection,
     // and it does not reach the hand, whose press handling would re-render the lane under the finger.
     if (symbolUnderLane(ev)) ev.stopPropagation();

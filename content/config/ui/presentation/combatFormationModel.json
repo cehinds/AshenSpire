@@ -180,8 +180,8 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.32,
-          "rowHeight": 0.16
+          "top": 0.43,
+          "rowHeight": 0.14
         },
         "tablet": {
           "left": 0.06,
@@ -202,8 +202,8 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.6,
-          "top": 0.3,
-          "rowHeight": 0.17,
+          "top": 0.4,
+          "rowHeight": 0.13,
           "hudWidthFraction": 0.5,
           "hudCenterOnBody": true
         }
