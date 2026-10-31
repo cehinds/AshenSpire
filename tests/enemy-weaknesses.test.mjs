@@ -4,6 +4,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { hitWeaknessTriggers } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
 
 const registries = createRegistries(contentBundle);
@@ -30,4 +36,69 @@ test('the validator refuses malformed weaknesses', () => {
   assert.ok(weaknessProblems([{ to: 'blunt', effect: 'nope' }]).length);
   assert.deepEqual(weaknessProblems([{ to: 'frost', effect: 'damage' }, { to: 'frost', effect: 'stacks' }]), []);
   assert.equal(WEAKNESS_EFFECTS.length, 6);
+});
+
+// ---- the live Core profile ----
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+function liveCore(enemyId = 'wanderingSoldier') {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: [enemyId] });
+  delete combat.player.combatStance;
+  const target = combat.enemies[0];
+  Object.assign(target, { block: 0, barrier: 0, persistentWard: null, persistentPoise: { value: 0, max: 20 }, gameProfilePoise: 0, statuses: {} });
+  delete target.combatStance;
+  return { combat, target };
+}
+function hit(carrier, { enemyId, weaknesses, statuses, amount = 10 } = {}) {
+  const { combat, target } = liveCore(enemyId);
+  if (weaknesses) target.weaknesses = weaknesses;
+  if (statuses) target.statuses = statuses;
+  const receipt = profileDamageReceipt(combat, combat.player, target, amount, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+  return { receipt, combat, target };
+}
+const blunt = { combatProfile: { camp: 'physical', damageType: 'blunt' } };
+const slashing = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
+const fireSpell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
+const stageIds = r => r.receipt.damageReceipt.hits[0].sources.map(s => s.id);
+
+test('the entity carries the authored weaknesses', () => {
+  assert.deepEqual(liveCore().target.weaknesses, registries.enemies.get('wanderingSoldier').weaknesses);
+});
+
+test('a blunt hit on a blunt-weak enemy is x1.25 (10 -> 12) with a labelled receipt stage; slashing is not', () => {
+  const plain = hit(slashing).receipt, weak = hit(blunt).receipt;
+  assert.equal(plain.hpLoss, 10);
+  assert.equal(weak.hpLoss, 12);
+  const stage = weak.damageReceipt.hits[0].sources.find(s => s.id === 'weakness:blunt');
+  assert.equal(stage.label, 'Weak to Blunt');
+  assert.equal(stage.multiplier, 1.25);
+  assert.deepEqual(weak.weaknesses.map(r => r.to), ['blunt']);
+  assert.ok(!stageIds({ receipt: plain }).includes('weakness:blunt'));
+});
+
+test('the weakness stage multiplies after Vulnerable: 10 x1.25 x1.25 = 15', () => {
+  const r = hit(blunt, { statuses: { vulnerable: { stacks: 1 } } });
+  assert.equal(r.receipt.hpLoss, 15);
+  const ids = stageIds(r);
+  assert.ok(ids.indexOf('vulnerable') >= 0 && ids.indexOf('vulnerable') < ids.indexOf('weakness:blunt'));
+});
+
+test('several matching weaknesses multiply: blunt x1.25 and magic x1.5 on a blunt+magic hit', () => {
+  const weaknesses = [{ to: 'blunt', effect: 'damage' }, { to: 'magic', effect: 'damage', amount: 50 }, { to: 'fire', effect: 'damage', amount: 100 }];
+  const r = hit({ combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 0.5, physicalDamageType: 'blunt' } }, { weaknesses, amount: 16 });
+  assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['blunt', 'fire', 'magic']);
+  assert.equal(r.receipt.hpLoss, Math.floor(16 * 1.25 * 1.5 * 2));
+});
+
+test('a spell triggers magic and its element, not a physical type', () => {
+  const triggers = hitWeaknessTriggers(liveCore().combat, null, fireSpell);
+  assert.deepEqual(triggers.sort(), ['fire', 'magic']);
+  const r = hit(fireSpell, { enemyId: 'graveWisp' });
+  assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['magic']);
+  const sacred = hit({ combatProfile: { camp: 'spell', damageType: 'sacred', magicShare: 1 } }, { enemyId: 'graveWisp' });
+  assert.deepEqual(sacred.receipt.weaknesses.map(w => w.to).sort(), ['magic', 'sacred']);
+  const incoming = x => x.receipt.damageReceipt.hits[0].sources.filter(row => row.id.startsWith('weakness:')).at(-1).effective;
+  assert.equal(incoming(r), 12);
+  assert.equal(incoming(sacred), 18);
 });

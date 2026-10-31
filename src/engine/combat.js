@@ -389,7 +389,7 @@ export function createCombat({
       createEnemyCombatEntity({
         instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
         arcaneExposure: combat.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
-        damageResistanceBySchool: def.damageResistanceBySchool,
+        damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: def.weaknesses,
         damageMult: enemyDamageMult,
       })
     );

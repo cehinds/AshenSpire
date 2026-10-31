@@ -214,7 +214,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     C.enemies.push(createEnemyCombatEntity({
       instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
       arcaneExposure: C.breakMeterVersion === 1 ? undefined : def.arcaneExposure,
-      damageResistanceBySchool: def.damageResistanceBySchool,
+      damageResistanceBySchool: def.damageResistanceBySchool, weaknesses: def.weaknesses,
       damageMult: enemyDamageMult,
     }));
     if (C.sharedExpansionVersion === 2 && !configuredCombat(C)) {
