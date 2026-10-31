@@ -137,3 +137,42 @@ test('held-back triggers leave the tab order and return to it when the card is s
   card.className = 'card inspection-selected'; run(hand);
   assert.equal(kw.tabIndex, 0);
 });
+
+// Owner 2026-10-31: one click explains while a card is selected or inspected, and anywhere in the (i) modal.
+function termIn(termClass, containerClass, cardClasses) {
+  const host = document.createElement('div'); host.className = containerClass;
+  const card = document.createElement('div'); card.className = cardClasses;
+  const term = document.createElement('span'); term.className = termClass; term.dataset.tip = 'Explained';
+  card.appendChild(term); host.appendChild(card); document.body.appendChild(host);
+  return term;
+}
+test('one click on a keyword in a selected or inspection-selected hand card explains it', () => {
+  for (const cls of ['card selected', 'card inspection-selected']) {
+    clearControlSelection(); hideTooltip();
+    const kw = termIn('tooltip-keyword', 'hand', cls);
+    clickOn(kw);
+    assert.equal(open(), true, cls);
+  }
+});
+
+test('one click on an inspection tag inside the inspection modal explains it', () => {
+  const tag = termIn('inspection-tag', 'card-inspection-modal', 'card-inspection-details');
+  clickOn(tag);
+  assert.equal(open(), true);
+});
+
+test('one click on a native face part inside the inspection modal explains it', () => {
+  const part = termIn('ic-text', 'card-inspection-modal', 'card inspect');
+  part.tabIndex = 0;
+  attachTooltip(part, () => '<div>Rules</div>', { intent: 'above', align: 'center' });
+  part.dispatchEvent(new Event('click', { target: part }));
+  assert.equal(open(), true);
+});
+
+test('outside a selected card or the modal a keyword still needs a second click', () => {
+  const kw = termIn('tooltip-keyword', 'reward-offers', 'card');
+  clickOn(kw);
+  assert.equal(open(), false, 'the first click only selects the term');
+  clickOn(kw);
+  assert.equal(open(), true);
+});
