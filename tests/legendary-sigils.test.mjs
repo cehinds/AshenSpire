@@ -379,7 +379,7 @@ test('FINISH: market and blacksmith stock over 200 seeds never offers a legendar
 test('the `sigils` stream retains its appended index after later stream additions', () => {
   assert.equal(STREAM_NAMES.indexOf('sigils'), 16);
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
-  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
+  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds', 'combatContest']);
 });
 
 test('FINISH: with defaults no sigil ever drops and no stream counter moves', () => {
