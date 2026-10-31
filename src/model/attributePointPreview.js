@@ -15,6 +15,7 @@ import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { runHandRules, handSizeReceipts } from './handRules.js';
 import { t } from '../ui/strings.js';
 
 /** Pool stats are compared by delta / POOL_SCALE against rating stats by delta, so +10 HP ties +1 Poise. */
@@ -23,7 +24,7 @@ const POOLS = new Set(['hp', 'mana', 'stamina']);
 // Tie-break order, best first. It only decides exact score ties, e.g. CON in Core 2 (+10 HP and +1 Poise both score 1, HP first).
 // WIS reads "+1 Perception" on magnitude, not order: +1 MP scores 0.1 after the pool scale, +1 Perception scores 1.
 export const GAIN_ORDER = Object.freeze(['hp', 'perception', 'mana', 'stamina', 'energy', 'ar', 'dr', 'pr', 'draw', 'openingHand', 'handSize', 'poise', 'ward', 'evasion', 'precision']);
-const ROW_IDS = Object.freeze(['hp', 'stamina', 'energy', 'mana', 'ar', 'pr', 'dr', 'openingHand', 'handSize', 'draw', 'poise', 'ward']);
+const ROW_IDS = Object.freeze(['hp', 'stamina', 'energy', 'mana', 'ar', 'pr', 'dr', 'poise', 'ward']);
 const LABEL_KEYS = Object.freeze({
   energy: 'progression.gain.label.energy', hp: 'progression.gain.label.hp', mana: 'progression.gain.label.mana', stamina: 'progression.gain.label.stamina',
   ar: 'progression.gain.label.ar', dr: 'progression.gain.label.dr', pr: 'progression.gain.label.pr',
@@ -72,6 +73,14 @@ export function attributePointGains(registries, run, attributeId, { settings = {
     const value = (attributes) => statRowValue(rule, { attributes, classDef, level, statId, lenientAttributes: true }).value;
     push(statId, value(current), value(raised));
   }
+  // THE HAND IS WHAT IS DEALT, NOT WHAT THE ROWS SAY: handDrawCount caps the opening hand and the turn draw
+  // at hand capacity (and fill mode draws up to capacity), so these three go through the same receipts
+  // the fight reads, before and after, and show only cards the player will actually receive.
+  const hand = runHandRules(registries, run, settings);
+  const handBefore = handSizeReceipts(hand, current, level), handAfter = handSizeReceipts(hand, raised, level);
+  push('draw', handBefore.turn.value, handAfter.turn.value);
+  push('openingHand', handBefore.opening.value, handAfter.opening.value);
+  push('handSize', handBefore.capacity.value, handAfter.capacity.value);
   const after = previewContext(registries, run, raised);
   push('evasion', effectiveEvasion(ctx, entity), effectiveEvasion(after.ctx, after.entity));
   if (fixCore) {

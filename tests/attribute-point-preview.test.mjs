@@ -114,3 +114,12 @@ test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', (
   assert.equal(run.energyMax - before, predicted?.delta ?? 0);
   assert.equal(predicted?.text, '+1 Energy');
 });
+
+test('Draw and Opening hand show only cards that will be dealt: hand capacity caps them', () => {
+  const { registries, run } = build();
+  const ids = (int) => { run.attributes.intelligence = int; return attributePointGains(registries, run, 'intelligence').map(g => g.statId); };
+  const capped = ids(3);
+  assert.ok(!capped.includes('draw') && !capped.includes('openingHand'), 'INT 3 -> 4 deals no extra card, so shows none');
+  const raisesCapacity = ids(8);
+  for (const id of ['draw', 'openingHand', 'handSize']) assert.ok(raisesCapacity.includes(id), `INT 8 -> 9 raises capacity, so ${id} shows`);
+});
