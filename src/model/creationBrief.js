@@ -49,6 +49,7 @@
 // REMOVAL CONDITION (SOP 1's corollary): deleted the day the creation screen
 // and the combat frame no longer show stats — the split has no subject then.
 
+import { attributePointGains, sortedAttributeGains } from './attributePointPreview.js';
 import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
@@ -219,7 +220,7 @@ function mainBenefitSummary(attributeId, feeds, ratings) {
  * time; every authored label, sentence, rule and equipment gate still comes
  * from its owning registry row.
  */
-export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null } = {}) {
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null, gainContext = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
   const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
@@ -331,11 +332,17 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const stated = [...faceFacts, ...scalingCaps, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];
+    // WHAT ONE MORE POINT BUYS, from the live formulas (model/attributePointPreview.js):
+    // `gains` is every non-zero gain, largest first; `mainGain` the one a level-up row shows.
+    // Only a caller holding a run (`gainContext: { run, settings }`) can price a point.
+    const gains = gainContext?.run ? sortedAttributeGains(attributePointGains(registries, gainContext.run, def.id, { settings: gainContext.settings || {} })) : [];
     return {
       id: def.id,
       key: `attribute:${def.id}`,
       kind: 'attribute',
       disclosure: def.disclosure,
+      gains,
+      mainGain: gains[0] || null,
       face: { label: def.shortLabel, summary: faceSummary,
         mainSummary: mainBenefitSummary(def.id, feedFacts, ratingFacts) || faceSummary, value: def.value },
       reveal: {
