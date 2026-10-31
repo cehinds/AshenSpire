@@ -226,10 +226,10 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
   for (const stacks of [0, 2]) {
     const { combat, enemy } = live();
     combat.player.basePrecisionBonus = 0; // the real value, not live()'s auto-hit helper
-    Object.assign(enemy, { baseEvasionBonus: 15, reflectStacks: stacks || undefined });
+    Object.assign(enemy, { baseEvasionBonus: 0, reflectStacks: stacks || undefined });
     const liveChance = profileDamageReceipt(combat, combat.player, enemy, 20, carrier).hitChance;
     const view = previewDamageHits(combat, combat.player, enemy, 20, [], carrier, 2);
-    assert.equal(liveChance, 0.4, "control: level-1 Core Reaver vs +15 Evasion is a 40% hit");
+    assert.equal(liveChance, 0.8, 'control: level-1 Core Reaver vs no bonus Evasion is an 80% hit under the #2436 formula (Evasion 8 + DEX + 2/stack), unclamped so a level-0 preview would differ');
     assert.equal(view.hitChance, liveChance, `${stacks} Reflect stack(s): preview chance == live receipt chance`);
   }
 });
