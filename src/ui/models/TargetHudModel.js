@@ -28,7 +28,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
   // enemy's overhead intent instead of covering it (topInsetPx); desktop and widescreen keep the common inset.
   const topInset = tightTop ? config.positioning.topInsetPx ?? inset : inset;
   const area = { left: bounds.left + inset, top: bounds.top + topInset,
-    width: bounds.width - inset * 2, height: bounds.height - topInset - inset };
+    width: Math.max(0, bounds.width - inset * 2), height: Math.max(0, bounds.height - topInset - inset) };
   const requests = [];
   // Owner (2026-10-17): the player's panel is pinned to the player's right. It
   // is placed first and never falls back to another side or the free-space
@@ -49,14 +49,14 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
       const p = point(direction);
       for (const offset of [0, -step, step, -height - gap, height + gap, -height * 2 - gap * 2, height * 2 + gap * 2]) add(p.left, p.top + offset, rank * 500 + Math.abs(offset), direction);
     }
-    if (!pinned) for (let top = area.top; top <= area.top + area.height - height; top += step)
-      for (let left = area.left; left <= area.left + area.width - width; left += width + gap) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top));
+    if (!pinned) for (let top = area.top; top <= area.top + area.height - height; top += Math.max(1, step))
+      for (let left = area.left; left <= area.left + area.width - width; left += Math.max(1, width + gap)) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top), 'free');
     // A narrow free strip can fall between lattice rows. Try measured
     // obstacle edges so an available sprite-safe slot survives quantization.
     if (!pinned) for (const obstacle of obstacles.filter(other => other.width > 0 && other.height > 0))
       for (const top of [obstacle.top + obstacle.height + gap, obstacle.top - height - gap])
         for (const left of [area.left, area.left + area.width - width])
-          add(left, top, 1200 + Math.abs(left - a.left) + Math.abs(top - a.top));
+          add(left, top, 1200 + Math.abs(left - a.left) + Math.abs(top - a.top), 'obstacle');
     const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
     const free = choices.filter(choice => obstacleCount(choice) === 0);

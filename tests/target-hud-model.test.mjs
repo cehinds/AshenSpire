@@ -41,6 +41,13 @@ test('a lone enemy gets its card left of it; a crowd gets it below, shifted in f
   assert.equal(placed.side, 'right');
   assert.ok(placed.left >= player.anchor.left + player.anchor.width);
 });
+test('a zero or tiny visible width still returns a clamped panel instead of hanging', () => {
+  for (const width of [0, 16]) {
+    const panel = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 0, top: 100, width: 80, height: 100 }, width: 224, height: 110 };
+    const [placed] = placeTargetHudPanels({ bounds: { left: 0, top: 0, width, height: 300 }, panels: [panel], obstacles: [{ left: 0, top: 100, width: 80, height: 100 }] });
+    assert.ok(placed && Number.isFinite(placed.left) && placed.width >= 0, `width ${width}`);
+  }
+});
 function clock() {
   let now = 0, serial = 0; const jobs = new Map();
   return { schedule(fn, delay) { const id = ++serial; jobs.set(id, { fn, at: now + delay }); return id; }, cancel(id) { jobs.delete(id); },
