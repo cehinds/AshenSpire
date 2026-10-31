@@ -23,7 +23,7 @@
     },
     {
       "id": "changelog-order",
-      "regex": "--check-order|check-order:|build rises|rises? within (a )?date",
+      "regex": "(^|\\s)check-order: |build rises|rises? within (a )?date|build runs backward",
       "flags": "i",
       "category": "receipts",
       "deterministic": true,

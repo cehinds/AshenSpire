@@ -222,3 +222,12 @@ test('runChecks: a failing check no rule recognises is exit 2, never 1', () => {
   const r = runChecks([{ id: 'x' }], () => ({ status: 1, out: 'quiet death' }));
   assert.equal(r.exit, 2);
 });
+
+test('changelog-order keys on about-changelog failure output, not the echoed --check-order command', () => {
+  const header = 'Run node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order\n';
+  const r = triage(`${header}ok\nnot ok 3 - tests/unrelated.test.mjs\n`);
+  assert.equal(r.exit, 2);
+  assert.ok(!r.matches.some(m => m.id === 'changelog-order'));
+  const real = triage(`${header}Error: check-order: build rises within 2026-10-31: #1 cites x\n`);
+  assert.deepEqual(real.matches.map(m => m.id), ['changelog-order']);
+});
