@@ -23,6 +23,8 @@ import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem, categoryNav, segmented } from '../kit/index.js';
 import { t } from '../strings.js';
+import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
+import { showRunReceipt } from '../components/whatChangedModal.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
@@ -68,6 +70,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   // One action: commit, sound, persist, redraw — or show the refusal in place.
   function act(tile, commit) {
+    const before = snapshotRunForDiff(run);
     try { commit(); }
     catch (error) {
       refuse(tile, error);
@@ -76,6 +79,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     sfx.play('shrine');
     onChanged();
     render();
+    // The what-changed receipt (SPEC §14.4): after the redraw, so the page lock covers the new screen. Refusals
+    // above keep the inline .bs-refusal and open nothing.
+    showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') });
   }
 
   function tile(glyph, title, desc, reason = '') {
@@ -238,17 +244,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // line is the whole answer and no dead-end modal opens.
     const ready = readyCount(id) > 0;
     const control = button({ label: t('blacksmith.action.open'), weight: 'primary', disabled: !ready, attrs: { dataset: { smithService: id } } });
-    if (ready) control.addEventListener('click', () => openMountService(app, {
+    if (ready) control.addEventListener('click', () => { let before; openMountService(app, {
       service, registries, run, meta, returnFocusElement: control, multiUse: true, place: 'merchant',
       quote: (chosen) => (service === 'extract'
         ? blacksmithExtractPlan(registries, run, chosen.itemRef, chosen.mountKey)
         : blacksmithInstallPlan(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId)),
-      commit: (_chosen, quote) => (service === 'extract'
+      commit: (_chosen, quote) => { before = snapshotRunForDiff(run); return service === 'extract'
         ? commitBlacksmithExtract(registries, run, quote)
-        : commitBlacksmithInstall(registries, run, quote)),
+        : commitBlacksmithInstall(registries, run, quote); },
       onError: (error) => refuse(host, error),
-      onCommitted: () => { sfx.play('shrine'); onChanged(); render(); },
-    }));
+      // The receipt, as the other purchases show it (SPEC §14.4), after the redraw.
+      onCommitted: () => { sfx.play('shrine'); onChanged(); render(); showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') }); },
+    }); });
     host.append(control);
     shelf.append(host);
   }

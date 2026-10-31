@@ -25,6 +25,8 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
+import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
+import { showRunReceipt } from '../components/whatChangedModal.js';
 import { assetUrl } from '../assetmap.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
 
@@ -161,8 +163,11 @@ export function mountEvent(app, opts) {
       // the quest completion check — one writer for all three, shared with the
       // dialogue screen.
       const commit = () => {
+        const before = snapshotRunForDiff(run);
         commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
+        // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
+        showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
       };
       // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
       // CHARACTERISTIC of the choice, derived from its own ops
