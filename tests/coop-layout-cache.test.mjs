@@ -30,8 +30,16 @@ test('co-op layout state is declared once per mount, outside any render', () => 
 
 test('co-op layout state resets when the scene leaves combat', () => {
   const render = body('render');
-  assert.match(render, /if \(snap\.scene\.kind !== 'combat'\) \{\s*combatLayoutState = \{\};/,
-    'a new encounter must start from an empty layout state');
+  const assertReset = source => assert.match(source,
+    /if \(snap\.scene\.kind !== 'combat'\) \{[^{}]*\bcombatLayoutState\s*=\s*\{\};/,
+    'the noncombat guard must reset layout state unconditionally; cleanup may precede it');
+  assertReset(render);
+  const withoutReset = render.replace('combatLayoutState = {};', '');
+  assert.throws(() => assertReset(withoutReset), /noncombat guard must reset/);
+  assert.throws(() => assertReset(withoutReset + '\nif (snap.scene.kind === \'combat\') { combatLayoutState = {}; }'),
+    /noncombat guard must reset/, 'a reset in the combat guard does not clear the departed encounter');
+  assert.throws(() => assertReset(render.replace('combatLayoutState = {};', 'if (cleanupComplete) { combatLayoutState = {}; }')),
+    /noncombat guard must reset/, 'a nested condition must not make the encounter reset optional');
 });
 
 test('co-op wires the battlefield stage once, with the layout state, after the hand mounts', () => {
