@@ -60,8 +60,11 @@ export function blacksmithOffering(registries, id) {
   return (registries.shops?.blacksmith?.offerings || []).find((row) => row && row.id === id) || null;
 }
 
-/** What a Core (card ranks on) Blacksmith offers: the equipment upgrade and the card upgrade, and nothing else. */
-export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt']);
+/**
+ * What a Core (card ranks on) Blacksmith offers (owner ask 2026-10-31): the equipment upgrade, the card upgrade, a card rank-up,
+ * and two shelves (armaments rolled at tiers, weapon arts). Nothing else.
+ */
+export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts']);
 
 /**
  * Core (card ranks on) is an allow-list, not a deny-list: Core has no sigils, no copy-stacking, no weapon-art mounts
@@ -390,6 +393,49 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
 }
 
 // ---------------------------------------------------------------------------
+// Rank-up (Core only): one more rank on an owned card, for cinders and a stone
+// ---------------------------------------------------------------------------
+
+const RANK_CEILING = 99; // state.js MAX_CARD_RANK (not imported: state.js pulls the whole run schema into this module)
+const instanceRank = (card) => (Number.isInteger(card?.rank) && card.rank >= 1 ? card.rank : 1);
+const equipmentOwned = (card) => !!card && (!!card.sourceArmamentId || !!card.grantedBy || card.equipmentRole === 'granted' || card.equipmentRole === 'weaponArt');
+
+/** The cards a rank-up could raise now: owned, run-owned (not equipment-bound), below the rank ceiling. */
+export function rankUpCards(registries, run) {
+  if (!coreCardUpgrades(run)) return [];
+  return owned(run).filter((card) => !equipmentOwned(card) && registries.cards.has(card.cardId) && instanceRank(card) < RANK_CEILING);
+}
+
+export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
+  const card = owned(run).find((row) => row.instanceId === instanceId) || null;
+  const rules = blacksmithRules(run);
+  const price = cinders(blacksmithPrices(run).rankUp, priceMult);
+  const need = Number.isSafeInteger(rules?.rankUpStones) && rules.rankUpStones > 0 ? rules.rankUpStones : 0;
+  const name = card ? cardName(registries, card.cardId) : '';
+  let reason = '';
+  if (!coreCardUpgrades(run) || !blacksmithOffers(run, 'rankUp') || !rules) reason = say('blacksmith.refuse.notOffered');
+  else if (!card) reason = say('shop.refuse.gone');
+  else if (equipmentOwned(card) || !registries.cards.has(card.cardId)) reason = say('blacksmith.refuse.rankNone', { name });
+  else if (instanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
+  else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
+  else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
+  const from = instanceRank(card);
+  return { ok: !reason, reason, instanceId, name, from, to: from + 1, stones: need, cost: price, revision: blacksmithRevision(run) };
+}
+
+export function commitRankUp(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = rankUpPlan(registries, run, quote.instanceId, { priceMult });
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  if ((quote.from ?? plan.from) !== plan.from) throw new Error(say('shop.refuse.stale'));
+  owned(run).find((row) => row.instanceId === plan.instanceId).rank = plan.to;
+  run.smithingStones = stones(run) - plan.stones;
+  run.cinders -= plan.cost;
+  bump(run, plan);
+  return { instanceId: plan.instanceId, rank: plan.to, spentStones: plan.stones, spent: plan.cost };
+}
+
+// ---------------------------------------------------------------------------
 // Stacking a copy
 // ---------------------------------------------------------------------------
 
@@ -458,6 +504,7 @@ export function serviceCandidates(registries, run, id, settings = {}) {
     case 'extractArt': return extractionPlan(registries, run).candidates;
     case 'installArt': return installPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
+    case 'rankUp': return rankUpCards(registries, run);
     case 'stackCopy': return stackableCardIds(registries, run, settings);
     default: return [];
   }
@@ -470,6 +517,7 @@ export function serviceCandidates(registries, run, id, settings = {}) {
  * (`blacksmith.refuse.extract.poolDeck`, cardExtraction.js extractionRefusal).
  */
 export function serviceIdleReason(id, run = null) {
+  if (id === 'rankUp') return say('blacksmith.idle.rankUp');
   const refusal = id === 'extractArt' && run ? extractionRefusal(run) : null;
   if (!refusal && id === 'upgradeArt' && run && coreCardUpgrades(run)) return say('blacksmith.idle.upgradeCard');
   return say(refusal ? `blacksmith.refuse.extract.${refusal}` : `blacksmith.idle.${id}`);

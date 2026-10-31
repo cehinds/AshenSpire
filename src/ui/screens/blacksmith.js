@@ -34,12 +34,14 @@ import { shopStockOfferings } from '../../model/shopKinds.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { armamentPurchasePlan, commitArmamentPurchase } from '../../model/armamentTrading.js';
+import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
 import { smithStonePurchasePlan, commitSmithStonePurchase } from '../../model/marketAdditions.js';
 import {
   BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason,
   refinePlan, commitRefine,
   sigilSlotPieces, sigilSlotPlan, commitSigilSlot,
   sigilInstallPlan, commitSigilInstall, sigilRemovePlan, commitSigilRemove,
+  rankUpCards, rankUpPlan, commitRankUp,
   upgradeableArts, upgradeArtPlan, commitUpgradeArt, coreCardUpgrades, blacksmithWithholds, plural,
   stackableCardIds, stackCopyPlan, commitStackCopy,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
@@ -50,6 +52,7 @@ import {
 const GLYPH = Object.freeze({
   armaments: 'attack', upgrade: 'smith', smithStones: 'skill', refineStones: 'skill', sigilSlots: 'dexterity',
   sigils: 'staggered', extractArt: 'settings', installArt: 'smith', upgradeArt: 'vulnerable', stackCopy: 'relic',
+  rankUp: 'skill', weaponArts: 'attack',
 });
 
 export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, priceMult = 1, hud = null }) {
@@ -92,6 +95,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   // ---- each offering's shelf ------------------------------------------------
   const SHELVES = {
     armaments(shelf) {
+      // Core: the rack is tiered (each piece is sold at the tier it shows) and bought with the Core model's quote.
+      if (coreCardUpgrades(run)) {
+        for (const item of stock.armaments || []) {
+          const plan = coreArmamentPlan(registries, run, item.id, { priceMult });
+          if (!plan.def) continue;
+          const host = tile(GLYPH.armaments, plan.name, t('blacksmith.armament.lineTier', { tier: plan.tier, cost: plan.cost }));
+          host.dataset.armamentTier = String(plan.tier);
+          actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan, { priceMult }).id) });
+          shelf.append(host);
+        }
+        return;
+      }
       for (const item of stock.armaments || []) {
         const plan = armamentPurchasePlan(registries, run, item);
         if (!plan.def) continue;
@@ -100,6 +115,23 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
           const receipt = commitArmamentPurchase(registries, run, plan);
           onArmamentPurchased(receipt.id);
         } });
+        shelf.append(host);
+      }
+    },
+    weaponArts(shelf) {
+      for (const item of stock.weaponArts || []) {
+        const plan = coreWeaponArtPlan(registries, run, item.id, { priceMult });
+        if (!plan.name) continue;
+        const host = tile(GLYPH.weaponArts, plan.name, t('blacksmith.weaponArt.line', { cost: plan.cost }));
+        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => commitCoreWeaponArt(registries, run, plan, { priceMult }) });
+        shelf.append(host);
+      }
+    },
+    rankUp(shelf) {
+      for (const card of rankUpCards(registries, run)) {
+        const plan = rankUpPlan(registries, run, card.instanceId, { priceMult });
+        const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.line', { from: plan.from, to: plan.to, cost: plan.cost, stones: plan.stones, plural: plural(plan.stones) }));
+        actionButton(host, { label: t('blacksmith.action.rankUp'), plan, commit: () => commitRankUp(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
@@ -252,6 +284,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   // How many things each offering can act on now: the rail's {Status}.
   const readyCount = (key) => {
     if (key === 'armaments') return (stock.armaments || []).length;
+    if (key === 'weaponArts') return (stock.weaponArts || []).length;
+    if (key === 'rankUp') return serviceCandidates(registries, run, key, meta?.settings).length;
     if (key === 'smithStones') return stock.smithStones ? stock.smithStones.left : 0;
     return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, meta?.settings).length : 0;
   };
@@ -295,7 +329,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       const shelf = root.querySelector(`#blacksmith-${key}`);
       SHELVES[key](shelf);
       // A service with nothing to act on now says why, and stays on the rail.
-      if (BLACKSMITH_SERVICES.includes(key) && !readyCount(key)) {
+      if ((BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key)) {
         idle[key] = serviceIdleReason(key, run);
         shelf.prepend(statusText(idle[key], { class: 'shop-offer-avail bs-idle', role: 'status' }));
       }
