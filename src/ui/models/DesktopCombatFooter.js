@@ -17,7 +17,8 @@ export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConf
     end: { x: (width - config.endHitWidthPx * unit) / 2, y: bottom - config.endHitHeightPx * unit,
       w: config.endHitWidthPx * unit, h: config.endHitHeightPx * unit },
   };
-  return { unit, controls, handTop: height - (config.handBottomPx + config.handHeightPx) * unit,
+  // Owner (2026-10-31): the fan's lowest card sits handGapPx (viewport px) above End Turn's top edge.
+  return { unit, controls, handTop: controls.end.y - config.handGapPx / zoom - config.handHeightPx * unit,
     handHeight: config.handHeightPx * unit, backgroundTop: height - (config.referenceHeightPx - config.backgroundTopPx) * unit,
     backgroundFadeHeight: config.backgroundFadeHeightPx * unit,
     toolsTop: bottom - config.toolsBottomPx * unit, corner, endArtWidth: config.endArtWidthPx * unit,
