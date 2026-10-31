@@ -371,3 +371,35 @@ test('selecting a row marks it pressed and leaves focus on it', async () => {
     opened.restore();
   }
 });
+
+test('optionColumns: a list up to 3, then ceil(sqrt(n)) columns', async () => {
+  const { restore } = installDom();
+  try {
+    const { optionColumns } = await import('../src/ui/components/optionRowList.js');
+    const expected = { 0: 1, 1: 1, 2: 1, 3: 1, 4: 2, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 4, 11: 4, 12: 4, 13: 4, 14: 4, 15: 4, 16: 4, 17: 5 };
+    for (const [count, columns] of Object.entries(expected)) assert.equal(optionColumns(Number(count)), columns, `${count} options`);
+  } finally {
+    restore();
+  }
+});
+
+test('four options form a 2-column grid; ArrowDown moves a row, ArrowRight one tile, both wrap', async () => {
+  const options = ['a', 'b', 'c', 'd'].map(id => ({ id, name: id.toUpperCase(), play: {} }));
+  const opened = await openWith({ pending: { id: 'r', options } });
+  try {
+    const rows = opened.shell.body.querySelectorAll('[data-reaction-option]');
+    const list = rows[0].parentNode;
+    assert.equal(list.getAttribute('data-columns'), '2');
+    const key = (key, from) => list.listeners.get('keydown')[0]({ key, target: from, preventDefault() {} });
+    key('ArrowDown', rows[0]);
+    assert.equal(opened.document.activeElement, rows[2], 'ArrowDown from row 0 lands on row 2');
+    key('ArrowRight', rows[2]);
+    assert.equal(opened.document.activeElement, rows[3]);
+    key('ArrowDown', rows[3]);
+    assert.equal(opened.document.activeElement, rows[1], 'Down from the last row wraps within its column');
+    key('ArrowLeft', rows[0]);
+    assert.equal(opened.document.activeElement, rows[3], 'Left from the first tile wraps to the last');
+  } finally {
+    opened.restore();
+  }
+});

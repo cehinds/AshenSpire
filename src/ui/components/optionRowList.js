@@ -11,6 +11,14 @@ import { hideOnError } from '../artFallback.js';
 import { effectLine } from './cardOptionGrid.js';
 
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+const VERTICAL = new Set(['ArrowDown', 'ArrowUp']);
+const COLUMN_LIST_MAX = 3;
+
+/** optionColumns(count) -> columns of the list: one column up to 3 options, then ceil(sqrt(count)). */
+export function optionColumns(count) {
+  const n = Math.max(0, Math.floor(Number(count) || 0));
+  return n <= COLUMN_LIST_MAX ? 1 : Math.ceil(Math.sqrt(n));
+}
 
 // No art (no artAsset and no artGlyph): no art cell at all, the text takes the width.
 function rowArt(row) {
@@ -47,15 +55,19 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
     item.addEventListener('click', () => { if (!item.disabled) onSelect?.(row.id, item); });
     return item;
   });
-  const list = el('div', { class: 'option-row-list', role: 'group' }, items);
+  const columns = optionColumns(rows.length);
+  const list = el('div', { class: 'option-row-list', role: 'group', 'data-columns': String(columns) }, items);
+  list.style?.setProperty?.('--option-columns', String(columns));
   list.addEventListener('keydown', event => {
-    const step = ARROWS[event.key];
-    if (!step) return;
+    const dir = ARROWS[event.key];
+    if (!dir) return;
+    // Grid mode (DOM order is row-major): Up/Down move a whole row of tiles, Left/Right one tile.
+    const step = dir * (columns > 1 && VERTICAL.has(event.key) ? columns : 1);
     const live = items.filter(item => !item.disabled);
     const at = live.indexOf(event.target?.closest?.('.option-row') ?? event.target);
     if (at < 0) return;
     event.preventDefault?.();
-    live[(at + step + live.length) % live.length].focus?.({ preventScroll: true });
+    live[(((at + step) % live.length) + live.length) % live.length].focus?.({ preventScroll: true });
   });
   return list;
 }
