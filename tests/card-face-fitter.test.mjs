@@ -7,7 +7,7 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 const fitIllustratedCards = cards => withKitDom(() => { invalidateLayoutMetrics(); fitCards(cards); });
 
 // Deterministic layout fixture: each character has a fixed em advance and
-// the line box follows the real rules layer's 1.25 line height. This exercises
+// the line box follows the line height the fitter writes (1.05 compact). This exercises
 // the fitter's measurements and mutations; browser QA validates actual fonts.
 function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
   const clauses = lengths.map(length => ({ style: {}, length }));
@@ -24,7 +24,7 @@ function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
       const size = parseFloat(this.style.fontSize) || 8;
       const count = [...clauses, fallback, fallbackShort].filter(node => node.style.display !== 'none')
         .reduce((sum, node) => sum + node.length, 0);
-      return Math.ceil(count / Math.floor(this.clientWidth / (size * 0.55))) * size * 1.25;
+      return Math.ceil(count / Math.floor(this.clientWidth / (size * 0.55))) * size * (parseFloat(this.style.lineHeight) || 1.25);
     },
   };
   const face = { dataset: { designWidth: '360' },
@@ -42,8 +42,9 @@ test('an overflowing primary switches whole to Information at the readable floor
   const f = faceFixture([80, 10]);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === 'none'));
-  assert.equal(f.fallback.style.display, 'none');
-  assert.equal(f.fallbackShort.style.display, 'inline');
+  // The full fallback renders in two lines at the floor, so it is chosen over "Inspect.".
+  assert.equal(f.fallback.style.display, 'inline');
+  assert.equal(f.fallbackShort.style.display, 'none');
   assert.equal(f.face.dataset.rulesFallback, 'true');
   assert.equal(f.face.dataset.rulesExpanded, 'false');
   assert.equal(parseFloat(f.text.style.fontSize), 11);
@@ -69,20 +70,20 @@ test('dropping a secondary keeps the complete primary when it fits', () => {
 });
 
 test('120 to 240 to 120 restores both clauses and then the whole Information fallback', () => {
-  const f = faceFixture([80, 10]);
+  const f = faceFixture([40, 10]);
   fitIllustratedCards([f.card]);
-  assert.equal(f.fallbackShort.style.display, 'inline');
+  assert.equal(f.fallback.style.display, 'inline');
   f.resize(240, 80);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
   assert.equal(f.fallback.style.display, 'none');
   assert.equal(f.fallbackShort.style.display, 'none');
   assert.equal(f.face.dataset.rulesFallback, 'false');
-  assert.ok(f.text.scrollHeight <= Math.min(f.layer.clientHeight, parseFloat(f.text.style.fontSize) * 1.25 * 3) + 1);
+  assert.ok(f.text.scrollHeight <= Math.min(f.layer.clientHeight, parseFloat(f.text.style.fontSize) * 1.05 * 2) + 1);
   f.resize(120, 25.66);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === 'none'), 'no selected first-clause fragment remains clipped');
-  assert.equal(f.fallbackShort.style.display, 'inline');
+  assert.equal(f.fallback.style.display, 'inline');
   assert.equal(f.face.dataset.rulesFallback, 'true');
-  assert.ok(f.text.scrollHeight <= Math.min(f.layer.clientHeight, parseFloat(f.text.style.fontSize) * 1.25 * 3) + 1);
+  assert.ok(f.text.scrollHeight <= Math.min(f.layer.clientHeight, parseFloat(f.text.style.fontSize) * 1.05 * 2) + 1);
 });
