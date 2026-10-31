@@ -169,3 +169,29 @@ test('a reflected hit keeps the incoming carrier\'s magicShare split (fully magi
   assert.equal(back.hpLoss, 0, 'all absorbed by the 20 Poise');
   assert.equal(enemy.hp, hp);
 });
+
+test('a Reflect return that kills a multi-hit attacker cancels its later hits in previews, as live does', async () => {
+  const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
+  const { projectEnemyIntentDamage } = await import('../src/engine/enemyIntentProjection.js');
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
+  const prime = () => { const { combat, enemy } = live(); enemy.hp = 1; combat.player.reflectStacks = 1; return { combat, enemy }; };
+  const { combat, enemy } = prime();
+  const view = previewDamageHits(combat, enemy, combat.player, 5, [], carrier, 3);
+  assert.equal(view.hits, 1, 'the first hit\'s return kills the 1-HP attacker; hits 2 and 3 are cancelled');
+  assert.equal(view.totalDamage, view.hitDamages[0]);
+  assert.equal(enemy.hp, 1, 'the preview never damages the live attacker');
+  // Without a Reflect stack all three hits are forecast, so the cut is what cancels them.
+  const bare = live();
+  bare.enemy.hp = 1;
+  assert.equal(previewDamageHits(bare.combat, bare.enemy, bare.combat.player, 5, [], carrier, 3).hits, 3);
+  // Enemy-intent projection: the same three-hit move forecasts only the first hit.
+  const p = prime();
+  const move = { id: 'x', intent: 'attack', damage: 5, hits: 3 };
+  p.enemy.intent = { moveId: 'x', kind: 'attack', damage: 5, hits: 3 };
+  const projected = projectEnemyIntentDamage(p.combat, p.enemy, { kind: 'attack', damage: 5, damageScope: 'action' }, { base: 5, hits: 3, move, action: null });
+  const one = prime();
+  const cut = projectEnemyIntentDamage(one.combat, one.enemy, { kind: 'attack', damage: 5, damageScope: 'action' }, { base: 5, hits: 1, move, action: null }).projectedDamage.max;
+  const bareProj = projectEnemyIntentDamage(bare.combat, bare.enemy, { kind: 'attack', damage: 5, damageScope: 'action' }, { base: 5, hits: 3, move, action: null });
+  assert.ok(bareProj.projectedDamage.max > cut, 'control: without Reflect the three hits exceed one cut hit');
+  assert.ok(projected.projectedDamage.max <= cut, `projection max ${projected.projectedDamage.max} counts only the first hit (${cut}), not three`);
+});

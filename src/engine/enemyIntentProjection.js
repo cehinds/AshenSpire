@@ -50,7 +50,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
     // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's defensive-stance bonus.
     const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses, row.reflectStacks]);
     const prepared = enemyIntentDamageState(ctx, source, carrier, base, action);
-    let states = [{ target: prepared.defender, key: targetKey(prepared.defender), loss: 0, probability: 1 }];
+    let states = [{ attacker: Damage.cloneDetachedAttacker(source), target: prepared.defender, key: targetKey(prepared.defender), loss: 0, probability: 1 }];
     for (let hit = 0; hit < hits; hit++) {
       const next = new Map();
       const add = row => {
@@ -61,10 +61,13 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
         else next.set(key, row);
       };
       for (const state of states) {
+        if (!(state.attacker?.hp > 0)) { add(state); continue; }
         const receipt = ProfileCombat.profileDamageReceipt(ctx, source, state.target, base, carrier);
         const landed = structuredClone(state.target);
         Damage.applyReceiptToPreviewTarget(ctx, landed, receipt);
-        add({ target: landed, key: targetKey(landed), loss: state.loss + receipt.hpLoss, probability: state.probability * receipt.hitChance });
+        const attacker = Damage.cloneDetachedAttacker(state.attacker);
+        Damage.previewReflectReturn(ctx, attacker, landed, receipt, carrier);
+        add({ attacker, target: landed, key: targetKey(landed) + `|${attacker?.hp}`, loss: state.loss + receipt.hpLoss, probability: state.probability * receipt.hitChance });
         add({ ...state, probability: state.probability * (1 - receipt.hitChance) });
       }
       states = [...next.values()];
