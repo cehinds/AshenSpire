@@ -4,6 +4,7 @@
 // trailing chip. Same contract as cardOptionGrid: `idAttr` carries each row's id, a click calls
 // `onSelect(id, row)`, `markOptionRows(list, idAttr, ids)` sets aria-pressed. A row is a button, so
 // Tab, Enter and Space work; ArrowUp/ArrowDown (and Left/Right) move focus between rows.
+// Not carried over from cardOptionGrid: `disabledIds` (use `row.disabled`), `attrs` and `ordered`.
 
 import { el, artWell } from '../kit/index.js';
 import { assetUrl } from '../assetmap.js';
