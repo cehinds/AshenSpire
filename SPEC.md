@@ -1627,6 +1627,8 @@ It remains history, not a second implementable mode.
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
+**The what-changed receipt (owner ask, 2026-10-31).** Every committed event choice (the event screen, quest-chain dialogue, quest-board and dungeon choices) takes a run snapshot before it commits and, when the run differs afterwards, opens the page-locked **What changed** receipt (`ui/components/whatChangedModal.js`): the event's name as title, the authored `resultText` as its lead line, then one row per stat, resource, relic, card (with before and after faces) or armament that moved. A pure flavour choice that changes nothing opens no receipt. The same receipt follows a Core rest-site Smith or card upgrade (the profile rest services; not level-up, which ends in its own reward door). The classic rest site's Smith keeps its own receipt line and is not wired to this modal.
+
 Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `src/content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
 
 1. **Goldbough Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
@@ -3020,6 +3022,8 @@ These offerings extend `buildShopStock`. The existing shelves become offerings w
 **The quest event.** The shelf's stock is `{ eventId, price, taken }`: one event drawn on `shopOffers` from the eligible pool, which is the events `resolveUnknownNode` could offer (an ungated event, or a quest step whose history requirement is met and which is not yet complete) minus `run.seenEvents`. `questEvent.price` (cinders, from 1) is its Settings row. Entering it is a plan/commit pair: the plan refuses by name a taken offer, an event the run has seen since the shelf was stocked, or too few cinders; the commit spends the price, marks it `taken`, adds the event to `run.seenEvents`, closes the shop visit exactly as Leave does, and opens the existing event door (`showEvent`). So it opens the door once. An unsold offer naming an event this build does not know is pruned at the load door, like an unknown sigil offer.
 
 ### 14.4 The blacksmith
+
+**The what-changed receipt (owner ask, 2026-10-31).** Every Blacksmith purchase that commits (armament, weapon art, tier upgrade, card upgrade, rank-up, stones, refine, sigil work) ends in a page-locked **What changed** receipt, opened after the screen redraws: the run's before and after (`model/runChangeReceipt.js`) as stat and resource deltas, card faces before and after for a card, the armament's tier stat rows (`coreSmithingStats`), and a strip of the cinders and stones spent. One Continue button closes it. A refusal keeps the inline `.bs-refusal` and opens nothing; a commit that changes nothing opens nothing.
 
 **The Core Blacksmith (owner ask, 2026-10-31).** Core (`progression.cardRanks`) lays out a fixed workshop: `upgrade`, `upgradeArt` (the card upgrade, §13.4s), `rankUp`, `armaments` and `weaponArts`; every other offering stays withheld. About 25% of Core shop nodes are one (`shops.blacksmithChance`). The numbers are the profile's `shops.blacksmith` block (`games/ashenspire/packs/core/shops.json`):
 
