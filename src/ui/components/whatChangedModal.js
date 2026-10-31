@@ -41,6 +41,17 @@ function rowNode(registries, row) {
   return wrap;
 }
 
+// The control that opened a receipt is gone by the time it closes (the event box, the rest screen and the
+// Blacksmith all redraw), so the shell cannot hand focus back. If focus fell to the page, land it on the
+// screen that is now mounted instead.
+function refocusScreen() {
+  const active = document.activeElement;
+  if (active && active !== document.body && document.body.contains?.(active) && active.isConnected !== false) return;
+  const root = document.getElementById?.('app') || document.body;
+  const target = root.querySelector('#event-continue:not(:disabled), .choice-foot button:not(:disabled), [data-focusable="true"], button:not(:disabled)');
+  target?.focus?.({ preventScroll: true });
+}
+
 /**
  * openWhatChangedModal({ title, eyebrow, lead, rows, registries, costLine, onClose, returnFocusElement })
  * `rows` is runChangeReceipt's rows; a row may carry `stats` ([{ label, before, after }]) for an armament tier.
@@ -60,7 +71,7 @@ export function openWhatChangedModal({ title, eyebrow: eyebrowText = t('whatChan
   const handle = openModal({
     name: 'what-changed', size: 'sm', className: 'what-changed-modal',
     eyebrow: eyebrowText, title, closeLabel: t('whatChanged.close'),
-    body, primary: cont, onClose, opener: returnFocusElement,
+    body, primary: cont, onClose: () => { onClose?.(); refocusScreen(); }, opener: returnFocusElement,
   });
   markUiComponent(handle.panel, UI.whatChangedModal);
   closeModal = handle.close;

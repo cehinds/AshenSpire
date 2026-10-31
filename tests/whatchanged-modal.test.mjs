@@ -32,3 +32,16 @@ test('rows, faces and the cost strip are drawn; Continue closes and calls onClos
     assert.equal(dom.document.body.querySelector('.what-changed-modal'), null);
   });
 });
+
+test('closing the receipt lands focus inside the screen when its opener was redrawn away', () => {
+  withKitDom((dom) => {
+    const app = dom.document.createElement('main'); app.id = 'app';
+    const keep = dom.document.createElement('button'); keep.id = 'event-continue';
+    app.appendChild(keep);
+    dom.document.body.replaceChildren(app);
+    const gone = dom.document.createElement('button'); // an opener that was removed by a redraw
+    openWhatChangedModal({ title: 'X', rows: [{ kind: 'stat', label: 'HP', before: '1', after: '2', delta: 1 }], registries, returnFocusElement: gone });
+    dom.document.body.querySelector('#what-changed-continue').click();
+    assert.ok(app.contains(dom.document.activeElement), 'focus is inside the screen');
+  });
+});
