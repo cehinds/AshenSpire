@@ -5,6 +5,8 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
+import { showRunReceipt } from './ui/components/whatChangedModal.js';
+import { snapshotRunForDiff } from './model/runChangeReceipt.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
@@ -3986,9 +3988,15 @@ function showRest(openPanel = null, locationId = null) {
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
     const commit = (service, payload) => {
+      const before = snapshotRunForDiff(run);
       commitGameProfileRest(registries, run, service, payload);
       if (record) recordRestConsumed(run, service);
       persist(); showRest();
+      // The what-changed receipt for the services that change gear or cards. Level-up already ends in its own
+      // reward door, so it is skipped. It opens after the screen re-mounts, so the page lock covers the new screen.
+      if (service === 'smith' || service === 'upgradeCard') {
+        showRunReceipt({ run, registries, before, title: t(service === 'smith' ? 'whatChanged.rest.smith' : 'whatChanged.rest.upgradeCard') });
+      }
     };
     const strategize = () => {
       if (!gameModule(run, 'cards')) return commit('strategize', {});
