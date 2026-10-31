@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-31
+
+- **Upgrade a Card works like Upgrade an Item** ([#2393](https://github.com/cehinds/AshenSpire/pull/2393), `0.7.2.13`). The card upgrade screen at the shrine and the Blacksmith now matches the item one: a card list with art and copies owned, a stats-change summary, the current and upgraded cards side by side, the Smithing Stone cost as required/available, and a hold-to-confirm Upgrade button. On phones the list now closes after a tap, so the preview and the button are no longer hidden. The upgrade rules are unchanged.
+
 ## 2026-10-30
 
 - **Elites drop a Smithing Stone in Core** ([#2392](https://github.com/cehinds/AshenSpire/pull/2392), `0.7.2.13`). Core runs now pay the same Smithing Stone as the other modes when an elite or boss falls (one stone each; ordinary fights and chests none), and the victory receipt shows it. The stone is claimed once, so reloading a victory never pays it twice.
