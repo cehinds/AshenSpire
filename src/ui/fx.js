@@ -391,11 +391,13 @@ function floaterLaneFor(anchor, lifeMs) {
   floaterLanes.set(anchor, live);
   return entry;
 }
-// A lane's lift is the measured height of every live floater in the lanes below it, so a small
-// number over a crit clears the crit's row rather than its own.
+// Floaters share one top edge and a lane lifts upward, so lane N's lift must clear its own height
+// (its bottom lands on lane 0's top) plus the heights of lanes 1..N-1 stacked above that. Lane 0's
+// height never enters: it sits below the shared edge. A small number over a crit and a crit over
+// a small number both clear the row beneath them.
 function floaterLaneLift(anchor, entry) {
   let lift = 0;
-  for (const other of floaterLanes.get(anchor) || []) if (other.lane < entry.lane) lift += (other.height || 22) * 1.1;
+  for (const other of floaterLanes.get(anchor) || []) if (other.lane > 0 && other.lane <= entry.lane) lift += (other.height || 22) * 1.1;
   return lift;
 }
 

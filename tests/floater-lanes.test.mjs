@@ -104,7 +104,15 @@ test('a lane lifts by the measured heights of the lanes below it', (t) => {
     const third = floatNum(fx, a, '-3', 'dmg small', null, opts);
     flushMeasureJobs();
     assert.equal(crit.props['--float-lane'], undefined);
-    assert.equal(small.props['--float-lane'], '66px', 'lane 1 clears the 60px crit (60 x 1.1)');
-    assert.equal(third.props['--float-lane'], '88px', 'lane 2 clears the crit and the small number (66 + 22)');
+    assert.equal(small.props['--float-lane'], '22px', 'lane 1 lifts by its own height: its bottom lands on the crit top');
+    assert.equal(third.props['--float-lane'], '44px', 'lane 2 lifts by its own height plus lane 1 (22 + 22)');
+    // Reversed: a crit over a small number must lift by the crit's own height.
+    const b = document.createElement('div'); b.box = { left: 300, top: 100, width: 80, height: 120 };
+    nextHeight = 20; floatNum(fx, b, '-2', 'dmg small', null, opts);
+    nextHeight = 60; const bigOver = floatNum(fx, b, '-40', 'dmg crit', null, opts);
+    nextHeight = 20; const smallOver = floatNum(fx, b, '-3', 'dmg small', null, opts);
+    flushMeasureJobs();
+    assert.equal(bigOver.props['--float-lane'], '66px', 'the 60px crit in lane 1 clears lane 0 by its own height');
+    assert.equal(smallOver.props['--float-lane'], '88px', 'lane 2 sits above the crit (66 + 22)');
   });
 });
