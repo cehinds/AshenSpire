@@ -1747,6 +1747,7 @@ combat.deckEdit.deferred,,,Changes apply next encounter; current combat piles st
 combat.receipt.poiseAbsorbed,,Poise absorbed {n},,
 combat.receipt.pierced,,Pierced {n},,
 combat.receipt.piercedPoise,,Pierced {n} (Poise took {poise}),,
+combat.receipt.magicPoise,,Poise {n},,
 combat.receipt.poiseDamage,,Poise damage {n},,
 card.smash.coreClause,,,"Against {stances}: {mult} damage, plus {block} of their Block; {poise} of it breaks Poise.",
 tag.smash.coreHelp,,,"Heavy strike. Against {stances}: {mult} damage, plus {block} of their Block; {poise} of it breaks Poise. Fast Attack and Counter answer it.",
