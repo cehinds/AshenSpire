@@ -144,7 +144,7 @@ test('the picker omits capped cards and draws available cards with their upgrade
     assert.equal(rowOf(fresh.instanceId).dataset.upgradeState, 'free');
     assert.match(rowOf(fresh.instanceId).outerHTML, /No charge/);
     assert.equal(host.querySelector('.card-upgrade-preview').dataset.cardUpgradePreview, fresh.instanceId);
-    assert.match(host.querySelector('.smith-confirm').outerHTML, /Buy upgrade · No charge/);
+    assert.match(host.querySelector('.smith-confirm').outerHTML, /Upgrade \(0\)/);
     door.close();
   });
 });
@@ -295,4 +295,27 @@ test('rows carry levels, tags, art and the changed face numbers', () => {
   if (row.plan.step.k === 'dmg') assert.equal(Number(dmg.after), Number(dmg.before) + row.plan.step.n);
   assert.ok(row.changes.length >= 1, 'an upgrade changes at least one face number');
   for (const change of row.changes) assert.notEqual(change.before, change.after);
+});
+
+test('the pane reads like the item pane: head, stats deltas, faces fold, cost strip, Upgrade (N)', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 0;
+    const card = strike(run);
+    card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const html = host.querySelector('.smith-preview-card').outerHTML;
+    assert.match(html, /Selected card/);
+    assert.match(html, /Card Stats/);
+    assert.match(html, /d-from/);
+    assert.match(html, /Smithing Stone Cost/);
+    assert.match(html, /smith-cost-required/);
+    assert.match(html, /Short by 1 Smithing Stone\./);
+    assert.equal(host.querySelectorAll('[data-card-upgrade-face]').length, 2, 'before and after faces');
+    assert.match(host.querySelector('.smith-confirm').textContent, /^Upgrade \(1\)$/);
+    assert.equal(host.querySelector('.smith-confirm').getAttribute('aria-label'), `Upgrade ${cardUpgradeModel(registries, run, card.instanceId).selected.name} for 1 Smithing Stone`);
+    door.close();
+  });
 });

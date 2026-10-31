@@ -259,7 +259,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         values: [changeSummary(row), glyph(FOLD_GLYPH.collapsed, { class: 'caret smith-fold-caret' })],
       }));
       const facts = el('div', { class: 'smith-card-facts' }, [
-        eyebrow('Current → upgraded'),
+        eyebrow(t('smith.upgrade.fold')),
         ...row.changes.map((change) => prose(change)),
         row.rating
           ? flavour(`Uses the source item’s ${row.rating.label}.`, { class: 'smith-scaling' })
@@ -332,16 +332,16 @@ export function mountSmithUpgradeModal(host, initialModel, {
     confirmReason();
     confirm.dataset.smithActionState = !selected ? 'unselected' : (selected.affordable ? 'actionable' : 'blocked');
     if (selected) {
-      confirm.setAttribute('aria-label', `Upgrade ${selected.name} for ${selected.cost} Smithing Stone${selected.cost === 1 ? '' : 's'}`);
+      confirm.setAttribute('aria-label', t(selected.cost === 1 ? 'smith.upgrade.aria.one' : 'smith.upgrade.aria.many', { name: selected.name, cost: selected.cost }));
       disarmDecision = armOptionDecision(confirm, {
         meta,
         registries,
         id: 'smithUpgrade',
-        title: `Upgrade ${selected.name}?`,
+        title: t('smith.upgrade.title', { name: selected.name }),
         message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${model.properties.staysAtShrine ? '; ' : ' '}${model.properties.decisionConsequence}.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
-        confirmLabel: `Upgrade (${selected.cost})`,
+        confirmLabel: t('smith.upgrade.confirm', { cost: selected.cost }),
         // W2: the way out is Back (bottom-left), the same word every review wears.
         cancelLabel: t('common.back'),
         onCommit: commitSelected,

@@ -163,8 +163,8 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       confirmLabel: !selected
         ? 'Select an item'
         : selected.affordable
-          ? `Upgrade (${selected.cost})`
-          : `Upgrade (${selected.cost})`,
+          ? t('smith.upgrade.confirm', { cost: selected.cost })
+          : t('smith.upgrade.confirm', { cost: selected.cost }),
     }),
     accessibility: freeze({
       label: 'Upgrade an owned item',
