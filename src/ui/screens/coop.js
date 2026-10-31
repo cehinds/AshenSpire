@@ -306,6 +306,32 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   return seq;
 }
 
+// Peak scale an element's running animations reach, so stacked receipt
+// numbers reserve their popped height. Reads both the `transform` matrix and
+// the standalone `scale` property (num-pop animates `scale`); they multiply.
+export function coopMaxAnimationScale(el) {
+  let scale = 1;
+  if (typeof el?.getAnimations !== 'function') return scale;
+  for (const animation of el.getAnimations()) {
+    for (const frame of animation.effect?.getKeyframes?.() || []) {
+      let own = 1;
+      if (frame.transform && frame.transform !== 'none') {
+        try {
+          const matrix = new DOMMatrixReadOnly(frame.transform);
+          own = Math.max(Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
+        } catch { /* an unparseable transform cannot reduce the measured box */ }
+      }
+      const raw = frame.scale;
+      if (raw != null && raw !== 'none') {
+        const parts = String(raw).trim().split(/\s+/).map(Number).filter(Number.isFinite);
+        if (parts.length) own *= Math.max(...parts);
+      }
+      scale = Math.max(scale, own);
+    }
+  }
+  return scale;
+}
+
 export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettings = null, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
   clearSelection();
   let disposed = false;
@@ -2547,26 +2573,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       setTimeout(() => el.remove(), 1100);
       return el;
     };
-    const maxAnimationScale = (el) => {
-      let scale = 1;
-      for (const animation of el.getAnimations()) {
-        for (const frame of animation.effect?.getKeyframes?.() || []) {
-          if (!frame.transform || frame.transform === 'none') continue;
-          try {
-            const matrix = new DOMMatrixReadOnly(frame.transform);
-            scale = Math.max(scale, Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
-          } catch { /* an unparseable transform cannot reduce the measured box */ }
-        }
-      }
-      return scale;
-    };
     const layoutReceiptRows = (rowsByTarget) => {
       const view = anchorLocalBox(layer, layer);
       for (const rows of rowsByTarget.values()) {
         const all = rows.flatMap((row) => row.items);
         const gap = Math.max(2, ...all.map((el) => (parseFloat(getComputedStyle(el).fontSize) || 0) * 0.12));
         for (const row of rows) {
-          row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));
+          row.height = Math.max(...row.items.map((el) => el.offsetHeight * coopMaxAnimationScale(el)));
         }
         const height = rows.reduce((sum, row) => sum + row.height, 0) + gap * Math.max(0, rows.length - 1);
         let cursor = clampBox(
