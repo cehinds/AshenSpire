@@ -24,7 +24,7 @@ const agree = (ctx, id, definition, holder) => assert.deepEqual(cached(ctx, id, 
 
 test('missing status definitions retain their null-safe fallback with Core off or on', () => {
   for (const context of [{}, ctxWith()]) for (const definition of [undefined, null]) {
-    assert.equal(cached(context, 'missing', definition), uncached(context, 'missing', definition));
+    assert.deepEqual(cached(context, 'missing', definition), uncached(context, 'missing', definition));
   }
 });
 
