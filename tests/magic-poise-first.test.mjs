@@ -24,6 +24,7 @@ function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10 } = {}) {
   const combat = liveCore(), target = combat.enemies[0];
   Object.assign(target, { block, barrier, persistentWard: null, persistentPoise: { value: poise, max: Math.max(20, poise) }, gameProfilePoise: 0, statuses: {} });
   delete target.combatStance;
+  delete target.weaknesses; // enemy weaknesses (SPEC 5.3) are tested in enemy-weaknesses.test.mjs; this suite isolates the Poise/Block order
   const receipt = profileDamageReceipt(combat, combat.player, target, amount, { ...carrier, skipRatingBonus: true }, { roll: 0 });
   return { receipt, combat, target, poiseAfter: poise - receipt.poiseMitigated, blockAfter: receipt.blockRemaining };
 }

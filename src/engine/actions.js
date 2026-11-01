@@ -12,6 +12,8 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
+import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -359,6 +361,23 @@ export function drainFixCorePoise(ctx, source, target, amount) {
   return spent;
 }
 
+// Owner, 2026-10-31 (SPEC 5.3): the non-damage weakness effects of a landed hit. `damage` was in the receipt; here the hit also
+// costs the weak enemy Mana or Stamina, or may stagger it (one stagger per target per round, as every other source).
+function applyWeaknessEffects(ctx, source, target, receipt) {
+  if (!weaknessesActive(ctx) || receipt.evaded || target.kind !== 'enemy' || !receipt.weaknesses?.length) return;
+  const tell = row => ctx.emit('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: row.to, effect: row.effect, amount: row.amount, ...seatOf(ctx, target) });
+  for (const row of receipt.weaknesses) {
+    if (!target.alive) break;
+    if (row.effect === 'damage') { if (receipt.amount > 0) tell(row); }
+    else if (row.effect === WEAKNESS_MANA) {
+      const lost = Math.min(Math.max(0, target.mana || 0), row.amount);
+      if (lost > 0) { target.mana -= lost; ctx.emit('manaLost', { targetId: target.id, amount: lost, source: 'weakness' }); tell(row); }
+    } else if (row.effect === WEAKNESS_STAMINA) {
+      target.pendingStaminaLoss = (target.pendingStaminaLoss || 0) + row.amount; tell(row);
+    } else if (row.effect === 'stagger' && ctx.rng.chance('combatProcs', row.amount) && claimStagger(ctx, target) && staggerEnemy(ctx, target, { cause: 'weakness' })) tell(row);
+  }
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
@@ -406,7 +425,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
     poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
-    advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
+    advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
@@ -417,6 +436,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
+  applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
   return receipt.amount;
 }
@@ -1958,7 +1978,11 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
         // record can attribute the loss — display + instruments read it.
-        const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        let amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        // Enemy weaknesses (SPEC 5.3): a burn or venom tick (its stacks formula) and a bleed or frost burst (its proc cause) hit a weak enemy harder.
+        const tickStatus = eff.amount?.f === 'stacks' ? eff.amount.status : String(eff.cause || '').startsWith('proc:') ? eff.cause.slice(5) : null;
+        const tickMultiplier = tickStatus && amount > 0 ? weaknessTickMultiplier(ctx, t, tickStatus) : 1;
+        if (tickMultiplier !== 1) { amount = Math.floor(amount * tickMultiplier); ctx.emit('weaknessTriggered', { targetId: t.id, to: tickStatus, effect: 'tick', amount: Math.round((tickMultiplier - 1) * 100) }); }
         if (eff.nonlethal && amount >= t.hp) throw new Error('Not enough HP for a nonlethal offering');
         applyLoseHp(ctx, t, amount, eff.cause || 'effect', action.meta?.killReceipt || { targetStatusesBefore: structuredClone(t.statuses || {}), sourceId: action.source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}) });
         if (eff.offering && amount > 0) {

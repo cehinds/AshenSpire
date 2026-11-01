@@ -6,7 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, validateGameProfileSnapshot, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { coreEvasionCompatibleRuntime } from '../src/model/coreEvasionCompatibility.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat, withoutWeaknesses } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
@@ -29,6 +29,7 @@ function priorRuntimeEnvelope() {
   return digest(profile);
 }
 
+const restoreStripped = (...args) => withoutWeaknesses(restoreCombatSnapshot(...args)); // a restore refills enemy weaknesses; the fixture drops them again
 test('a compatible prior-runtime Core profile resumes without changing its integrity hash', () => {
   const profile = priorRuntimeEnvelope(), before = JSON.stringify(profile), originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
@@ -42,7 +43,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const snapshot = serializeCombatSnapshot(combat);
   snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
   delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackBase = 1;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
-  const restored = restoreCombatSnapshot({ registries, rng: createRng(511), snapshot, expectedGameProfile: restoredRun.gameProfile });
+  const restored = restoreStripped({ registries, rng: createRng(511), snapshot, expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 2);
   const target = restored.enemies[0];
@@ -64,7 +65,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const granted = restored.player.statuses.evade.stacks - start;
   assert.equal(granted, 1);
   for (const text of [face, plain, live]) assert.equal(text, `Gain ${granted} Evade.`, 'the resumed card face matches its grant');
-  const roundtrip=restoreCombatSnapshot({registries,rng:createRng(511),snapshot:serializeCombatSnapshot(restored),expectedGameProfile:restoredRun.gameProfile});
+  const roundtrip=restoreStripped({registries,rng:createRng(511),snapshot:serializeCombatSnapshot(restored),expectedGameProfile:restoredRun.gameProfile});
   assert.equal(roundtrip.gameProfile.hash,originalHash);assert.equal(roundtrip.fixCoreRules.accuracy.evadeStackDex,0);
 });
 
@@ -81,7 +82,7 @@ test('a run saved on dev before the 2026-10-25 combat retune (runtime 73ef24...)
   const run = deserializeRun(serializeRun(createRunState({ registries, classId: 'rogue', seed: 513, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a','b','c'] } } } })));
   assert.equal(run.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run, rng: createRng(513), enemyIds: ['wanderingSoldier'] });
-  const restored = restoreCombatSnapshot({ registries, rng: createRng(513), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: run.gameProfile });
+  const restored = restoreStripped({ registries, rng: createRng(513), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: run.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   const other = structuredClone(profile); other.lock.core = 'ashen.core@1.0.0'; digest(other);
   assert.throws(() => validateGameProfileSnapshot(other), /unsupported runtime artifact/);
@@ -109,7 +110,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
   assert.equal(combat.fixCoreRules.smashVsDefensive.damageMultiplier, 1.25);
-  const restored = restoreCombatSnapshot({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: restoredRun.gameProfile });
+  const restored = restoreStripped({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 1.25);
   const target = restored.enemies[0];
