@@ -87,6 +87,27 @@ function authoredClauses(html) {
   return out.map(html => ({ kind: 'effect', html: shorten(html) }));
 }
 
+// Attach probability to its own status amount ("Weak 2 (50% chance)"). Null when a chance-based status is named but its
+// amount or probability cannot be read unambiguously: that line stays in Information.
+function withChance(html, effects, registries) {
+  const chanceIds = new Set(effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op)
+    && effect.chance !== undefined && effect.chance < 100).map(effect => effect.status));
+  for (const id of chanceIds) {
+    const name = esc(registries?.statuses?.get?.(id)?.name || id);
+    if (!html.includes(name)) continue;
+    const sources = effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op) && effect.status === id);
+    const chances = new Set(sources.map(effect => effect.chance ?? 100));
+    if (chances.size !== 1) return null;
+    const chance = [...chances][0];
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
+    if (!amount.test(html)) return null;
+    amount.lastIndex = 0;
+    html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
+  }
+  return html;
+}
+
 /** At most two whole qualified clauses; omitted facts remain in Information. */
 export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceHtml = null, registries = null, effects = def.effects || [] } = {}) {
   const projection = computedFaceProjection(def, { lines, authoredHtml, registries, effects });
@@ -104,7 +125,10 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
     // A reserved clause may already carry part of the payoff ("Heal 8 HP, Exhaust, Retain"): a summary line it contains is dropped.
     const wordsOf = html => new Set((plain(html).toLowerCase().match(/[\p{L}\p{N}%+]+/gu) || []).filter(word => !/^cards?$/.test(word)));
     const covered = html => downsides.some(clause => { const have = wordsOf(clause.html); return [...wordsOf(html)].every(word => have.has(word)); });
-    const summary = faceHtml.filter(html => !covered(html)).map(html => ({ kind: 'effect', html }));
+    // A chance, like a downside, is never dropped: a summary line that cannot carry it keeps the cue.
+    const qualified = faceHtml.map(html => withChance(html, effects, registries));
+    if (qualified.includes(null)) return projection;
+    const summary = qualified.filter(html => !covered(html)).map(html => ({ kind: 'effect', html }));
     // A card's Exhaust / Ethereal keyword is a downside the summary never has to repeat.
     for (const [keyword, word] of [['exhaust', 'Exhaust'], ['ethereal', 'Ethereal']]) {
       if ((def.keywords || []).includes(keyword) && !downsides.some(clause => plain(clause.html).includes(word)))
@@ -134,23 +158,8 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   // would falsely make both uncertain. Ambiguous repeated grants stay in
   // Information rather than borrowing another grant's probability.
   if (lines) candidates = candidates.map(line => {
-    let html = shorten(line.html);
-    const chanceIds = new Set(effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op)
-      && effect.chance !== undefined && effect.chance < 100).map(effect => effect.status));
-    for (const id of chanceIds) {
-      const name = esc(registries?.statuses?.get?.(id)?.name || id);
-      if (!html.includes(name)) continue;
-      const sources = effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op) && effect.status === id);
-      const chances = new Set(sources.map(effect => effect.chance ?? 100));
-      if (chances.size !== 1) return null;
-      const chance = [...chances][0];
-      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
-      if (!amount.test(html)) return null;
-      amount.lastIndex = 0;
-      html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
-    }
-    return { ...line, html };
+    const html = withChance(shorten(line.html), effects, registries);
+    return html === null ? null : { ...line, html };
   }).filter(Boolean);
   // A payment cannot disappear while its payoff remains. Include authored
   // Ashen Blight payments too: those costs are intentionally outside effects.

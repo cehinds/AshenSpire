@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { applyCardTraits } from '../src/content/traitProjection.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
@@ -117,5 +119,29 @@ test('a summary reads uneven hit damage from the preview, not the base number', 
     assert.doesNotMatch(text, /Inspect full effect/);
     assert.match(text, /1 \+ 5/, text);
     assert.doesNotMatch(text, /\b2\b.*times|×/, text);
+  } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
+}));
+
+// Table: the summary never loses a qualifier the projected clauses carry (chance, payment, discard, uneven hits).
+test('qualifier table: chance, payment, discard, hits and plain cards', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  const proto = Object.getPrototypeOf(dom.document.body), descriptor = Object.getOwnPropertyDescriptor(proto, 'innerHTML'), markup = new WeakMap();
+  Object.defineProperty(proto, 'innerHTML', { configurable: true, set(value) { markup.set(this, value); descriptor.set.call(this, value); } });
+  const face = (ref, preview) => {
+    const el = renderCard(reg, ref, { inspection: false, rules, ...(preview ? { preview } : {}) });
+    return (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
+  };
+  try {
+    const live = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
+      resolvedDefinition: applyCardTraits(applyCombatExpansionCard(resolveCard(reg, { cardId }))) });
+    const table = [
+      ['Hex v2 keeps its 50% chance', () => face({ cardId: 'hex' }, live('hex')), /50% chance/],
+      ['Silent Exchange rank 4 keeps its discard', () => face({ cardId: 'progression-silent-exchange', abilityRank: 4 }), /discard/i],
+      ['Silent Exchange rank 5 keeps its discard', () => face({ cardId: 'progression-silent-exchange', abilityRank: 5 }), /discard/i],
+      ['Arrow Volley reads uneven hits', () => face({ cardId: 'arrowVolley' }, { combatExpansionVersion: 2, tokens: {}, values: [], damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 5], totalDamage: 6 }] }), /1 \+ 5/],
+      ['a plain card still gets its summary', () => face({ cardId: 'base.foresight' }), /^Gain 3 Foresight\./],
+      ['another plain card still gets its summary', () => face({ cardId: 'base.recover-exile' }), /^Return 1 exhausted card\.$/],
+    ];
+    for (const [name, run, expected] of table) { const text = run(); assert.match(text, expected, `${name}: ${text}`); assert.doesNotMatch(text, /Inspect full effect/, name); }
   } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
 }));
