@@ -216,32 +216,42 @@ function zoomOutFloor(fitted, { paintStart, device, width, coverScale, scale, to
 
 // The blurred fill is the old, closer framing (zoomed about the ground anchor);
 // the sharp layers fade into it along each edge that no longer reaches the screen.
+// Write only on change: on phones every refresh re-fits, and a redundant attribute write
+// repaints the masked layers and the blurred fill.
+function setAttr(node, name, value) {
+  value = String(value);
+  if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+}
+function clearAttr(node, name) {
+  if (node.getAttribute(name) !== null) node.removeAttribute(name);
+}
+
 function fitBackdropFill(svg, { device, scale, coverScale, left, top, width, bottom, groundBottom, fillGround, narrow }) {
   const fill = svg.querySelector?.(':scope > .alternative-scene-fill');
   if (!fill) return;
   const grow = coverScale / scale;
   const bare = grow > 1.001;
-  fill.setAttribute('display', bare ? '' : 'none');
-  svg.querySelector(':scope > .alternative-scene-main')?.removeAttribute('mask');
-  if (!bare) return;
+  setAttr(fill, 'display', bare ? '' : 'none');
+  const main = svg.querySelector(':scope > .alternative-scene-main');
+  if (!bare) { if (main) clearAttr(main, 'mask'); return; }
   const anchor = device.groundAnchor * device.height;
-  fill.setAttribute('transform', `translate(${device.width * (1 - grow) / 2} ${anchor * (1 - grow)}) scale(${grow})`);
+  setAttr(fill, 'transform', `translate(${device.width * (1 - grow) / 2} ${anchor * (1 - grow)}) scale(${grow})`);
   for (const image of fill.querySelectorAll('image')) {
     // Same ground as the sharp layer had before the zoom: its horizon stays level across the seam.
     const place = fillGround?.id === image.dataset.fillLayer ? fillGround : combatSceneLayers(device).find(layer => layer.id === image.dataset.fillLayer);
-    for (const prop of ['x', 'y', 'width', 'height']) image.setAttribute(prop, place[prop]);
-    const href = alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[image.dataset.fillLayer], narrow));
-    if (image.getAttribute('href') !== href) image.setAttribute('href', href);
+    for (const prop of ['x', 'y', 'width', 'height']) setAttr(image, prop, place[prop]);
+    setAttr(image, 'href', alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[image.dataset.fillLayer], narrow)));
   }
   const fade = 72 / scale, far = 5000;
   const exposed = [left > .5, top > .5, left + device.width * scale < width - .5, Math.min(top + device.height * scale, groundBottom) < bottom - .5];
-  if (!exposed.some(Boolean)) return;
+  if (!exposed.some(Boolean)) { if (main) clearAttr(main, 'mask'); return; }
   const edge = svg.querySelector('.alternative-scene-edge');
   const x0 = exposed[0] ? fade : -far, y0 = exposed[1] ? fade : -far;
   const x1 = exposed[2] ? device.width - fade : far, y1 = exposed[3] ? (Math.min(top + device.height * scale, groundBottom) - top) / scale - fade : far;
-  for (const [name, value] of [['x', x0], ['y', y0], ['width', x1 - x0], ['height', y1 - y0]]) edge.setAttribute(name, value);
-  svg.querySelector('#alternative-scene-edge-blur feGaussianBlur')?.setAttribute('stdDeviation', String(fade / 2));
-  svg.querySelector(':scope > .alternative-scene-main').setAttribute('mask', 'url(#alternative-scene-edge)');
+  for (const [name, value] of [['x', x0], ['y', y0], ['width', x1 - x0], ['height', y1 - y0]]) setAttr(edge, name, value);
+  const blur = svg.querySelector('#alternative-scene-edge-blur feGaussianBlur');
+  if (blur) setAttr(blur, 'stdDeviation', fade / 2);
+  setAttr(main, 'mask', 'url(#alternative-scene-edge)');
 }
 
 export function wireAlternativeBackdrop(combat) {

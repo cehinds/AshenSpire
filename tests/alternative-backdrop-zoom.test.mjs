@@ -27,7 +27,7 @@ function fixture(t) {
       : sel.includes('alternative-scene-edge') && !sel.includes('blur') ? edge : sel.includes('blur') ? blur : null });
   const backdrop = element({ dataset: { scene: 'hollow-weald-1' }, querySelector: () => svg });
   const combat = { clientHeight: 1080, querySelector: sel => sel === '.alternative-backdrop' ? backdrop : null, querySelectorAll: () => [] };
-  return { combat, svg, fill, main, edge };
+  return { combat, svg, fill, main, edge, blur, nodes: [fill, main, edge, blur, ...fillImages] };
 }
 
 test('the zoom factor is authored config, below 1 and within the owner\'s 15-20% window', () => {
@@ -57,4 +57,17 @@ test('callers without coverFloor (dialogue) keep the pure cover fit and show no 
   assert.ok(Math.abs(parseFloat(svg.style.cssText.match(/width:([\d.]+)px/)[1]) - device.width * cover) < 1e-6);
   assert.equal(fill.attrs.display, 'none');
   assert.equal(main.attrs.mask, undefined);
+});
+
+test('fitting twice with identical inputs writes no attributes the second time', t => {
+  const { combat, nodes } = fixture(t);
+  const args = { width: 1920, height: 900, fieldTop: 180, ground: 600, narrow: false, coverFloor: true };
+  fitAlternativeBackdrop(combat, args);
+  const writes = [];
+  for (const node of nodes) for (const op of ['setAttribute', 'removeAttribute']) {
+    const original = node[op];
+    node[op] = function (...a) { writes.push(`${op}:${a[0]}`); return original.apply(this, a); };
+  }
+  fitAlternativeBackdrop(combat, args);
+  assert.deepEqual(writes, []);
 });
