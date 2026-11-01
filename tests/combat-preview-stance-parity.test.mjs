@@ -128,33 +128,22 @@ for (const mode of ['native', 'bundled']) {
     }
   });
 
-  test(`${mode}: default spell Counter support matches paid protection with Ward overflow`, () => {
+  test(`${mode}: default spell Counter support matches paid Barrier stacks`, () => {
     const { combat, instance } = fixture(api, { classId: 'starseer', cardId: 'frostCounter', protection: 'none' });
-    assert.equal(combat.player.ratings.dr, 2);
-    assert.equal(combat.player.ratings.pr, 4);
     const before = state(combat), hp = combat.enemies[0].hp;
     const shown = api.previewCard(combat, instance.instanceId);
     const protection = shown.values.find(value => value.op === 'gainBarrier');
-    // Counterstrike makes the base 7 (4 Block/3 Ward); Defense 2 joins Block,
-    // and Power 4 plus the accepted Counter's 1 joins Ward. Full Ward overflows.
-    assert.equal(protection.value, 14);
-    assert.equal(JSON.stringify(protection.defenseSplit), JSON.stringify({ block: 6, ward: 8 }));
-    assert.equal(shown.tokens['gainBarrier.block'], 6);
-    assert.equal(shown.tokens['gainBarrier.ward'], 8);
+    // Counterstrike makes the base 7; the gainBarrier opcode adds that many Barrier stacks, unscaled by ratings (SPEC 4.1a).
+    assert.equal(protection.value, 7);
+    assert.equal(protection.defenseSplit, undefined);
     assert.equal(state(combat), before);
     const out = api.dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: combat.player.id });
     const own = out.events.filter(event => event.cardInstanceId === instance.instanceId && !event.triggeredBy);
-    assert.equal(own.find(event => event.type === 'blockGained').amount, 6);
-    assert.equal(own.find(event => event.type === 'persistentWardChanged' && event.source === 'card').credited, 8);
-    assert.equal(own.find(event => event.type === 'barrierGained').amount, 8);
-    const entry = out.events.filter(event => event.triggeredBy?.kind === 'stance');
-    assert.equal(entry.find(event => event.type === 'blockGained').amount, 2);
-    assert.equal(entry.find(event => event.type === 'barrierGained').amount, 1);
-    assert.equal(combat.player.block, 8);
-    assert.equal(combat.player.barrier, 9);
-    assert.equal(combat.player.persistentWard.value, 6);
+    assert.equal(own.find(event => event.type === 'barrierGained').amount, 7);
+    assert.equal(own.find(event => event.type === 'blockGained'), undefined, 'a Barrier grant is no longer Block');
     assert.equal(combat.enemies[0].hp, hp, 'only preparation, no retaliation');
     assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
+    assert.ok(combat.player.statuses.barrier.stacks >= 7, 'the stacks are on the player');
   });
 
   test(`${mode}: Counterstrike support keeps duplicate effect slots and deferred Counter payloads`, () => {

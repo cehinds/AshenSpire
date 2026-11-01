@@ -134,6 +134,32 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
   bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && (closingKeys.has(JSON.stringify([row.scope, row.objectId])) || rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId)))),
     ...additions, ...[...rangeOverrides].map(([key, range]) => { const [scope, objectId] = JSON.parse(key); return { family: 'enemyMove', scope, objectId, tagId: `range:${range}` }; })];
 }
+// Core weapon arts (owner 2026-11-01) are the legacy default-art cards. A configured profile that
+// disables a resource pool refuses any card that still costs it (profileCardCosts), so the arts get
+// the same rule every Core variant has: a disabled pool's cost is 0. Pools that are on are untouched.
+function projectWeaponArtResources(bundle,profile) {
+  if(gameModule(profile,'equipment')?.weaponArts !== true || gameModule(profile,'cards')?.mode !== 'configured') return;
+  const pools=gameModule(profile,'resources')?.include||[],sp=pools.includes('sp'),mp=pools.includes('mp');
+  if(sp&&mp) return;
+  const ids=new Set((bundle.equipment?.armaments||[]).flatMap(piece=>piece.weaponCardPackage?.weaponArtDefaults||[]));
+  const zero=def=>{
+    const out={...def};
+    if(!sp&&out.cost!==undefined) out.cost=0;
+    if(!sp&&out.staminaCost!==undefined) out.staminaCost=0;
+    if(!mp&&out.manaCost!==undefined) out.manaCost=0;
+    return out;
+  };
+  bundle.cards=(bundle.cards||[]).map(def=>{
+    if(!ids.has(def.id)) return def;
+    // 'fixed' keeps the derived action cost (src/model/actionCosts.js) from re-pricing a pool that is off.
+    const out={...zero(def),costRule:'fixed'};
+    // An ability-grade art (a Riposte, a Frost Nova) takes its price from its grade row, not the card.
+    if(Array.isArray(def.gradeProfiles)) out.gradeProfiles=def.gradeProfiles.map(row=>({...row,...(sp?{}:{actionCost:0}),...(mp?{}:{manaCost:0})}));
+    if(def.legacyFace&&typeof def.legacyFace==='object') out.legacyFace=zero(def.legacyFace);
+    if(def.upgrade&&typeof def.upgrade==='object') out.upgrade=zero(def.upgrade);
+    return out;
+  });
+}
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
   if(profile.foundation.mode === 'legacy') return bundle;
@@ -145,6 +171,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
     bundle.equipment = {...bundle.equipment, cardExposure:[...(bundle.equipment?.cardExposure || []).filter(row=>!raw.some(def=>def.id===row.cardId)), ...raw.filter(def => def.effects.some(effect => effect.op === 'damage')).map(def => ({cardId:def.id,damageSchool:def.damageSchool,exposureBuildupPerHit:def.exposureBuildupPerHit}))]};
     bundle.tagging=[...(bundle.tagging||[]).filter(row=>row.family!=='card'||!raw.some(def=>def.id===row.objectId)),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
   }
+  projectWeaponArtResources(bundle,profile);
   if(gameModule(profile,'class-selection')) {
     bundle.classes=(bundle.classes||[]).map(def=>{
       const row=gameContent(profile,'classes').find(item=>item.id===def.id);

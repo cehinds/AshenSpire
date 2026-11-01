@@ -248,7 +248,8 @@
         "effect": "damage",
         "amount": 50
       }
-    ]
+    ],
+    "element": "earth"
   },
   {
     "id": "wyrmLord",

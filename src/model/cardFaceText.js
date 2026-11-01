@@ -1,4 +1,8 @@
 import { uiStrings } from '../content/generated/uiStrings.js';
+import { effectiveD20Percent } from '../engine/d20Chance.js';
+
+// A chance note shows only a partial 5% step: a sure (100) or sure-failure (0) rolled chance prints nothing.
+export const partialChance = chance => effectiveD20Percent(chance) > 0 && effectiveD20Percent(chance) < 100;
 import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
@@ -216,15 +220,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         }
         return frag('gain', `${num(n, base)} Block`);
       }
-      // A Spell's gain refills Ward first, so it reads Ward.
-      case 'gainBarrier': {
-        const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
-        if (split) {
-          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
-          return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
-        }
-        return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
-      }
+      // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
+      case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Barrier`);
       case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
@@ -234,7 +231,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
       case 'buildup': {
         // The face names the status and amount; a partial chance is kept for the detail line.
-        if (effect.chance !== undefined && effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+        if (effect.chance !== undefined && partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
       case 'applyStatus': {
@@ -245,7 +242,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           && !(counter && def.defenseRulesVersion === 2 && effect.status === 'grounded')) fail();
         if (effect.chance !== undefined) {
           if (typeof effect.chance !== 'number') fail();
-          if (effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+          if (partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         }
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);

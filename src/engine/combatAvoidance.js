@@ -67,6 +67,7 @@ export function distancePreview(ctx, entity, incomingProfile) {
     && !trait(incomingProfile, 'closing') && !trait(incomingProfile, 'adequateReach')
     && !trait(incomingProfile, 'unavoidable');
   const base = position === 'ranged' ? cfg.rangedChance : position === 'reach' ? cfg.reachChance : 0;
+  // The authored base stays in the preview and event payloads; the receipt shows the 5% step the d20 rolls (rollD20Check rounds too).
   const baseChance = eligible ? Math.max(0, Math.min(cfg.maximumBaseChance, base + finite(entity.distanceAvoidanceBonus))) : 0;
   const flags = { advantage: entity?.distanceAdvantage, disadvantage: entity?.distanceDisadvantage };
   return { eligible: eligible && baseChance > 0, baseChance, chance: effectiveChance(baseChance, flags), flags };

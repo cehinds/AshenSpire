@@ -2264,8 +2264,12 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   .card-upgrade-option { flex: 0 0 auto; text-align: left; }
   .card-upgrade-option-body { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; }
   .card-upgrade-option-title { flex: 0 0 100%; }
-  .card-upgrade-option-face { flex: 0 0 8.5rem; width: 8.5rem; }
-  .card-upgrade-option-changes { flex: 1 1 0; min-width: 0; font-size: 0.9rem; }
+  /* The face column is as wide as the card it holds (the small card is wider than 8.5rem on a 360px phone, so a fixed
+     column let it spill over the changes). The card's cost medallion hangs 1rem outside its top-left corner, so the
+     column pads that much to keep it clear of the "Option N" title and the left edge. */
+  .card-upgrade-option-face { flex: 0 0 auto; width: auto; max-width: 100%; padding: 1rem 0 0 1rem; box-sizing: content-box; }
+  /* The changes take the rest of the row and wrap; under 7rem free, they drop below the card instead of squeezing. */
+  .card-upgrade-option-changes { flex: 1 1 7rem; min-width: 0; font-size: 0.9rem; overflow-wrap: anywhere; }
 }
 /* The summary: the selected item — its art beside its name, tier, kind and
    tags — one column, the rows flush so the stats row follows. */
@@ -6119,7 +6123,6 @@ button[data-button-size] {
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow .combat-health-badge-value { white-space: nowrap; letter-spacing: -.02em; -webkit-text-stroke: 0; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
@@ -6616,6 +6619,11 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) { font-size: .8em; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+/* Ward status (SPEC 4.1a): the Poise badge turns purple, and a purple bar over the HP bar shows current Poise in HP points (same scale as HP). */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise-ward { color: white; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise-ward::before { background: linear-gradient(135deg, var(--ward-purple), color-mix(in srgb, var(--ward-purple) 55%, black)); border: 1px solid color-mix(in srgb, var(--ward-purple) 50%, white); }
+:root .combat .combatant .combat-health-meter .m-track { position: relative; }
+:root .combat .combatant .combat-health-poise-overlay { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--ward-purple) 62%, transparent); border-right: 2px solid color-mix(in srgb, var(--ward-purple) 40%, white); border-radius: 5px 0 0 5px; pointer-events: none; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 /* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
    --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline
@@ -6693,6 +6701,12 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .console-log-text { box-sizing: border-box; width: 100%; min-width: 0; height: 48vh; height: 48dvh; min-height: 8rem; resize: none; white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; font-size: max(16px, 1rem); line-height: 1.4; user-select: text; touch-action: auto; }
 .combat-log-modal [data-console-shortcut][hidden] { display: none !important; }
 
+/* The rank-up bonus choice (owner, 2026-11-01): 2-3 option buttons under the card strip. */
+.reward-door .reward-rank-bonus { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; align-items: stretch; width: 100%; max-width: 60rem; margin: .4rem auto 0; position: sticky; bottom: 0; z-index: 2; padding: .6rem .4rem; background: var(--bg-raise); border-top: 1px solid var(--line); }
+/* sticky: the choices stay in view while the player scrolls the cards */
+.reward-door .reward-rank-bonus[hidden] { display: none; }
+.reward-door .reward-rank-bonus-title { flex: 0 0 100%; margin: 0; text-align: center; font-weight: 600; }
+.reward-door .reward-bonus-option { flex: 1 1 12rem; min-width: 0; max-width: 20rem; min-height: var(--tap-floor); white-space: normal; overflow-wrap: anywhere; line-height: 1.25; padding: .6rem .8rem; }
 /* The shared toast (src/ui/components/toast.js): a short sentence that floats
    over its screen for ~3 s, then fades. Never takes a click. */
 .as-toast {

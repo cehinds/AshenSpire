@@ -92,15 +92,33 @@ test('the Precision badge glyph is the reticle, not the ranged arrow the card-ra
   assert.equal(row.querySelector('.combat-health-precision-icon svg').outerHTML, reticle);
 }));
 
-test('a Ward badge keeps its Barrier provenance when it is shown', () => {
-  const ward = combatHealthModel({ ward: 12, barrier: 4 }).badges.find(b => b.kind === 'ward');
-  assert.equal(ward.barrier, 4);
+test('the Ward status turns the Poise badge purple and marks it with its stacks', () => {
+  const plain = combatHealthModel({ poise: 10, poiseMax: 20, maxHp: 50 }).badges.find(b => b.kind === 'poise');
+  assert.equal(plain.ward, undefined);
+  const warded = combatHealthModel({ poise: 10, poiseMax: 20, maxHp: 50, wardStacks: 2 }).badges.find(b => b.kind === 'poise');
+  assert.equal(warded.ward, true);
+  assert.equal(warded.wardStacks, 2);
 });
 
-test('a shown Ward badge renders its Barrier rim and data-barrier', () => withKitDom(() => {
-  const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { ward: 12, barrier: 4 }, { tooltips: false });
-  const ward = row.querySelector('.combat-health-badge[data-defense-kind="ward"]');
-  assert.ok(ward, 'the Ward badge is drawn');
-  assert.equal(ward.dataset.barrier, '4');
-  assert.ok(ward.classList.contains('combat-health-ward-barrier'));
+test('while Ward is active, Poise is drawn over the HP bar on the HP scale (10 Poise on 50 HP covers 20%)', () => {
+  assert.equal(combatHealthModel({ poise: 10, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 20);
+  assert.equal(combatHealthModel({ poise: 80, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 100, 'never past the bar');
+  assert.equal(combatHealthModel({ poise: 10, maxHp: 50 }).poiseOverlayPct, 0, 'no Ward, no overlay');
+  assert.equal(combatHealthModel({ poise: 0, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 0);
+});
+
+test('a warded Poise badge renders purple (combat-health-poise-ward, data-ward) with the HP-scale overlay', () => withKitDom(() => {
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/50', cur: 18, max: 50 }), { poise: 10, poiseMax: 20, maxHp: 50, wardStacks: 2 }, { tooltips: false });
+  const poise = row.querySelector('.combat-health-badge[data-defense-kind="poise"]');
+  assert.ok(poise, 'the Poise badge is drawn');
+  assert.equal(poise.dataset.ward, '2');
+  assert.ok(poise.classList.contains('combat-health-poise-ward'));
+  const overlay = row.querySelector('.combat-health-poise-overlay');
+  assert.ok(overlay, 'the overlay bar is drawn');
+  assert.equal(overlay.style.width, '20%');
+  assert.equal(row.querySelector('.combat-health-meter').dataset.wardActive, 'true');
+  const plain = combatHealthRow(meter({ id: 'hp', value: '18/50', cur: 18, max: 50 }), { poise: 10, poiseMax: 20, maxHp: 50 }, { tooltips: false });
+  assert.equal(plain.querySelector('.combat-health-poise-overlay'), null);
+  assert.ok(!plain.querySelector('.combat-health-badge[data-defense-kind="poise"]').classList.contains('combat-health-poise-ward'));
 }));
+

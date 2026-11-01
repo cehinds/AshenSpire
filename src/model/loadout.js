@@ -2131,13 +2131,49 @@ function configuredGearGrantSubject(registries, run) {
   const subject = run?.gameProfile ? run : registries;
   if (subject?.gameProfile?.foundation?.mode !== 'configured') return null;
   if (gameModule(subject, 'cards')?.mode !== 'configured') return null;
-  return Array.isArray(gameContent(subject, 'gear')) ? subject : null;
+  return Array.isArray(gameContent(subject, 'gear')) || configuredWeaponArtsOn(subject) ? subject : null;
+}
+
+/**
+ * CORE'S WEAPON ARTS (owner 2026-11-01, reversing the 2026-10-19 "arts stay off"). A configured
+ * profile turns them on with the equipment module's `weaponArts` setting (the Core bundle sets
+ * it). Only the arts: kits and the Dodge Roll stay off, and Core has no smith mounts to edit.
+ */
+function configuredWeaponArtsOn(subject) {
+  return gameModule(subject, 'equipment')?.weaponArts === true;
+}
+
+/**
+ * The worn weapons' default arts as item-owned instances, the same ids and shape a legacy weapon
+ * art has. Two hands go through the framework split, so an art both author installs once. A
+ * kit's art (`combatKit.artCardId`, the default art of most weapons) is still the weapon's art; the
+ * kit's basic attack and guard cards are not minted.
+ */
+function configuredWeaponArtInstances(registries, run) {
+  const subject = configuredGearGrantSubject(registries, run);
+  if (!subject || !configuredWeaponArtsOn(subject) || !run.loadout) return [];
+  const sources = { right: null, left: null };
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (source.package) sources[hand] = source;
+  }
+  const authored = (source) => source.package.weaponArtDefaults;
+  const picks = sources.right && sources.left
+    ? splitAuthoredWeaponArts(authored(sources.right), authored(sources.left))
+    : ['right', 'left'].flatMap((hand) => (sources[hand] ? authored(sources[hand]).map((id) => ({ id, hand })) : []));
+  const weaponSource = grantSourceFor(startingDeckSettings(registries), 'weapon');
+  return picks.map((art) => weaponArtInstance(sources[art.hand].package.weaponId, art.id, weaponSource));
+}
+
+/** Everything the worn gear lends a configured profile: its authored grantedCards, then its weapon arts. */
+function configuredGrantInstances(registries, run) {
+  return [...configuredGearGrantInstances(registries, run), ...configuredWeaponArtInstances(registries, run)];
 }
 
 /** Item-owned instances the worn Core gear lends: same ids and shape as a weapon package grant. */
 function configuredGearGrantInstances(registries, run) {
   const subject = configuredGearGrantSubject(registries, run);
-  if (!subject || !run.loadout) return [];
+  if (!subject || !run.loadout || !Array.isArray(gameContent(subject, 'gear'))) return [];
   const rows = gameContent(subject, 'gear').filter((row) => Array.isArray(row.grantedCards) && row.grantedCards.length);
   const copies = new Map();
   const out = [];
@@ -2170,7 +2206,7 @@ function configuredGearGrantInstances(registries, run) {
 /** Sweep stale item-owned cards from the deck and sideboard, append the missing ones. In place. */
 function reconcileConfiguredGearGrants(registries, run) {
   if (!run.deck) run.deck = [];
-  const desired = configuredGearGrantInstances(registries, run);
+  const desired = configuredGrantInstances(registries, run);
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   if (Array.isArray(run.sideboard)) {
@@ -2199,7 +2235,8 @@ export function reconcileGrantedCards(registries, run) {
   if (run.gameProfile?.foundation?.mode !== 'legacy' && run.gameProfile && (!gameModule(run, 'cards') || gameModule(run, 'cards')?.mode === 'configured')) {
     // A Core (configured-cards) deck is its authored list, except for the cards
     // the worn gear's data-driven grantedCards lend it (owner 2026-10-19).
-    // Legacy weapon packages, arts, kits and the Dodge Roll stay off.
+    // Weapon arts ride the same path when the profile's equipment.weaponArts is on
+    // (owner 2026-11-01); legacy weapon packages, kits and the Dodge Roll stay off.
     return configuredGearGrantSubject(registries, run) ? reconcileConfiguredGearGrants(registries, run) : undefined;
   }
   if (!run.deck) run.deck = [];
@@ -2269,7 +2306,7 @@ export function isCurrentEquipmentGrant(registries, run, card) {
  * so an art both weapons author installs once, attributed to the winning hand.
  */
 function desiredGrantInstances(registries, run) {
-  if (configuredGearGrantSubject(registries, run)) return configuredGearGrantInstances(registries, run);
+  if (configuredGearGrantSubject(registries, run)) return configuredGrantInstances(registries, run);
   // Stamped from the authored binding, not typed here — see grantSourceFor.
   const settings = startingDeckSettings(registries);
   const weaponSource = grantSourceFor(settings, 'weapon');

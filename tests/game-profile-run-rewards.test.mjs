@@ -20,7 +20,8 @@ test('mixed reward is stable across reload, choose one once, card acquisition do
 });
 test('the owner 70/20/10 mix: cards, potions and weapons occur; retired relics/armor and the owned weapon art do not (2026-10-27)',()=>{
  const categories=new Set();for(let seed=0;seed<300;seed++){
-  const run=fresh(),o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:'fight'});assert.equal(o.options.length,3);o.options.forEach(row=>{if(row.kind==='relics'){assert.equal(row.id,'brimmingGourd');categories.add('potions');}else categories.add(row.kind);});
+  // The Reaver's starting weapon art now replaces core.reaverSpecial, so own it explicitly: an owned art is still never offered.
+  const run=fresh();run.deck.push({instanceId:'owned-art',cardId:'core.reaverSpecial',upgraded:false});const o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:'fight'});assert.equal(o.options.length,3);o.options.forEach(row=>{if(row.kind==='relics'){assert.equal(row.id,'brimmingGourd');categories.add('potions');}else categories.add(row.kind);});
  }
  assert.deepEqual([...categories].sort(),['combatCards','potions','weapons'].sort());
  const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rewards:{offerCount:2,takeCount:1}}});
