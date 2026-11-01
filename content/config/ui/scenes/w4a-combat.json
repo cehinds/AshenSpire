@@ -20,6 +20,7 @@
       "arcPx": 8,
       "handHeightPx": 270,
       "handGapPx": 10,
+      "handOverlapFraction": 0.12,
       "backgroundTopPx": 700,
       "backgroundFadeHeightPx": 90,
       "cornerInsetPx": 32,

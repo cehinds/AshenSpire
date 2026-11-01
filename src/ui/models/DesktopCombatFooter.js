@@ -52,5 +52,6 @@ export function desktopHandLayout({ width, height, count, zoom = 1 }, config = u
 export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor = 'desktop' }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
   const input = { width, height: plan.handHeight, count: 5, rem, zoom, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor };
   const fan = responsiveHandLayout(input, desktopHandLayout(input, config));
-  return plan.handTop + fan.clearanceTop;
+  // Owner (2026-11-01): the cards overlap the battlefield's lower edge by handOverlapFraction of their height.
+  return plan.handTop + fan.restTop + (config.handOverlapFraction || 0) * fan.cardHeight;
 }
