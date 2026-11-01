@@ -313,6 +313,26 @@ test('narrow phone strips keep sprite width and stay above the parent short prof
 // height), so rank D's bottom (top + 4 * rowHeight of the field) must stay above the resting top card edge, which is
 // the field's bottom minus that overlap. Desktop is checked against the model's own field bottom at three viewports
 // (1280x720 leaves about 1px).
+// Cards may overlap the field's background, never a sprite's feet. The widescreen form factor has no profile of its
+// own and falls back to `wide`; its player anchor must sit above the resting top card edge (10 cards rest at the same
+// height as 5) at ultrawide-ish sizes, with the player in the right-hand lane.
+test('widescreen player feet stay above the resting cards', () => {
+  const footer = uiConfig.scenes.w4a.sizing.desktopFooter;
+  const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx;
+  for (const [width, height] of [[1920, 800], [2560, 1080], [1920, 980], [3440, 1440]]) {
+    const footerPlan = desktopFooterLayout({ width, height });
+    const fieldHeight = desktopFieldBottom(footerPlan, { width, zoom: 1, rem: 16, formFactor: 'widescreen' }) - header;
+    for (const count of [5, 10]) {
+      const input = { width, height: footerPlan.handHeight, count, rem: 16, zoom: 1, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'widescreen' };
+      const cardTop = footerPlan.handTop + responsiveHandLayout(input, desktopHandLayout(input)).restTop;
+      const formation = alternativeFormation(combatFormation({ width, height: fieldHeight, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+        friends: ['p0', 'p1', 'p2'], enemies: ['e0', 'e1', 'e2'] }), width, fieldHeight, false, { formFactor: 'widescreen' });
+      for (const slot of formation.slots) assert.ok(header + slot.ground <= cardTop + 0.5, `${width}x${height} x${count} cards: ${slot.side} ${slot.cell} feet ${header + slot.ground} below the cards at ${cardTop}`);
+    }
+  }
+  assert.ok(footer.handOverlapFraction > 0);
+});
+
 test('desktop and phone profiles stand the back rank lower and keep rank D above the hand', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.4, 0.14]);
