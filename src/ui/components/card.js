@@ -891,6 +891,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
+  const commonStart = html.length;
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
   if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
@@ -930,6 +931,11 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
+  // KEY FIRST (owner, 2026-11-01): the card's effect line and its effect-tag
+  // definitions lead; the common type, school, stance and element explanations
+  // follow, then the chips.
+  const common = html.slice(commonStart);
+  html = html.slice(0, commonStart);
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
@@ -991,11 +997,10 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
   for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, registries)); }
   for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, registries));
-  if (chips.size) {
-    const rows = [...chips.values()];
-    html += `<div class="inspection-tags">${rows.map((chip) => `<span class="inspection-tag${chip.effect ? ' inspection-tag-effect' : ''}" role="button" tabindex="0" data-tip="${esc(chip.tips.join(' '))}">${esc(chip.label)}</span>`).join('')}</div>`;
-    const effects = rows.filter((chip) => chip.effect && chip.tips.length);
-    if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.tips.join(' '))}</dd>`).join('')}</dl>`;
-  }
+  const rows = [...chips.values()];
+  const effects = rows.filter((chip) => chip.effect && chip.tips.length);
+  if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.tips.join(' '))}</dd>`).join('')}</dl>`;
+  html += common;
+  if (rows.length) html += `<div class="inspection-tags">${rows.map((chip) => `<span class="inspection-tag${chip.effect ? ' inspection-tag-effect' : ''}" role="button" tabindex="0" data-tip="${esc(chip.tips.join(' '))}">${esc(chip.label)}</span>`).join('')}</div>`;
   return html;
 }

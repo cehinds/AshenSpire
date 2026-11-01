@@ -53,3 +53,12 @@ test('a card with only type and element tags has no inline effect list', () => w
   const html = cardDetailHtml(registries, { cardId: 'cometFragment' });
   assert.doesNotMatch(html, /inspection-effect-tags/);
 }));
+
+test('key effect text leads; common type/school explanations and chips follow', () => withKitDom(() => {
+  const html = cardDetailHtml(registries, { cardId: 'crystalBarrier' });
+  const at = (needle) => html.indexOf(needle);
+  assert.ok(at('class="ctext"') > 0 && at('inspection-effect-tags') > 0 && at('inspection-sigils') > 0 && at('class="inspection-tags"') > 0);
+  assert.ok(at('class="ctext"') < at('inspection-effect-tags'), 'effect line before effect-tag definitions');
+  assert.ok(at('inspection-effect-tags') < at('inspection-sigils'), 'key tags before common tags');
+  assert.ok(at('inspection-sigils') < at('class="inspection-tags"'), 'common tags before chips');
+}));
