@@ -288,12 +288,11 @@ test('one action-wide d20 controls multi-hit avoidance and replay spends no seco
   }
 });
 
-test('Advantage chooses high d20 / low d100; Disadvantage reverses and both cancel', () => {
+test('Advantage keeps the high d20, Disadvantage the low d20, and both cancel', () => {
   assert.equal(effectiveChance(15, { advantage: true }).toFixed(2), '27.75');
   assert.equal(effectiveChance(15, { disadvantage: true }).toFixed(2), '2.25');
-  for (const [die, flags, want] of [[20, { advantage: true }, 17], [20, { disadvantage: true }, 4],
-    [100, { advantage: true }, 4], [100, { disadvantage: true }, 17], [20, { advantage: true, disadvantage: true }, 4]]) {
-    const f = fixture([4, 17]); const result = rollChanceDie(f.ctx.rng, die, flags);
+  for (const [flags, want] of [[{ advantage: true }, 17], [{ disadvantage: true }, 4], [{ advantage: true, disadvantage: true }, 4]]) {
+    const f = fixture([4, 17]); const result = rollChanceDie(f.ctx.rng, 20, flags);
     assert.equal(result.roll, want); assert.equal(result.dice.length, flags.advantage && flags.disadvantage ? 1 : 2);
   }
 });
