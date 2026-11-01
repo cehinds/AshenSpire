@@ -17,8 +17,8 @@
 // `--read-current` prints the triple the file holds now; `--subject <triple> <branch> <sha>`
 // prints the commit subject the workflow writes.
 //
-// IDEMPOTENCE: `--done <sha>` exits 0 when a commit on HEAD already records that
-// source sha as `version-advance: <triple> after <release|main> <sha>`, else 1.
+// IDEMPOTENCE: `--done <branch> <sha>` exits 0 when a commit on HEAD already records that
+// branch and source sha as `version-advance: <triple> after <release|main> <sha>`, else 1.
 // The workflow runs it first, so a re-run of a push never bumps twice.
 // .github/workflows/version-advance.yml is the caller; a person never runs it.
 import { execFileSync } from 'node:child_process';
@@ -66,10 +66,15 @@ export function advanceSeries(text, next) {
   return text.replace(SERIES, (_, a, e) => `${a}${next.split('.').slice(0, 2).join('.')}${e}`);
 }
 
-/** True when any subject records this source sha as an advance. Pure. */
-export function recordsSource(subjects, sha) {
+/**
+ * True when any subject records THIS branch and sha as an advance. Pure. The record is
+ * keyed on both: a sha cut to release and later fast-forwarded to main is a different
+ * event (candidate, then minor), so release's record must not satisfy main.
+ */
+export function recordsSource(subjects, branch, sha) {
+  if (!/^(release|main)$/.test(branch)) throw new Error(`'${branch}' is not release or main`);
   if (!/^[0-9a-f]{7,40}$/.test(sha)) throw new Error(`'${sha}' is not a commit sha`);
-  return subjects.some((s) => new RegExp(`^version-advance: \\d+\\.\\d+\\.\\d+ after (release|main) ${sha}\\b`).test(s));
+  return subjects.some((s) => new RegExp(`^version-advance: \\d+\\.\\d+\\.\\d+ after ${branch} ${sha}\\b`).test(s));
 }
 
 /** The commit subject the workflow writes. One home for the format. */
@@ -79,7 +84,7 @@ function main(argv, root = ROOT) {
   const d = argv.indexOf('--done');
   if (d >= 0) {
     const subjects = execFileSync('git', ['log', '--format=%s'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
-    return recordsSource(subjects, argv[d + 1] || '') ? 0 : 1;
+    return recordsSource(subjects, argv[d + 1] || '', argv[d + 2] || '') ? 0 : 1;
   }
   const sj = argv.indexOf('--subject');
   if (sj >= 0) {

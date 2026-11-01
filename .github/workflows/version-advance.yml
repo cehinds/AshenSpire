@@ -105,7 +105,7 @@ jobs:
           for attempt in 1 2 3 4; do
             git fetch -q origin "+refs/heads/dev:refs/remotes/origin/dev"
             git reset -q --hard origin/dev
-            if node tools/version-advance.mjs --done "$src_sha"; then
+            if node tools/version-advance.mjs --done "$SRC_BRANCH" "$src_sha"; then
               echo "dev already records version-advance for $SRC_BRANCH $src_sha; nothing to do."
               exit 0
             fi

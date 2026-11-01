@@ -52,11 +52,20 @@ test('advanceSeries follows a minor bump only through the one SERIES line', () =
 test('idempotence guard: a recorded source sha is skipped, another is not', () => {
   const sha = 'a'.repeat(40);
   const subjects = ['feat: x', advanceSubject('0.7.3', 'release', sha), 'build: stamp 0.7.3.0 [build-stamp]'];
-  assert.equal(recordsSource(subjects, sha), true);
-  assert.equal(recordsSource(subjects, 'b'.repeat(40)), false);
-  assert.equal(recordsSource(['version-advance: 0.8.0 after main ' + sha], sha), true);
-  assert.equal(recordsSource(['mentions version-advance: 0.7.3 after release ' + sha], sha), false, 'only a subject that starts with it counts');
-  assert.throws(() => recordsSource([], 'not a sha'));
+  assert.equal(recordsSource(subjects, 'release', sha), true);
+  assert.equal(recordsSource(subjects, 'release', 'b'.repeat(40)), false);
+  assert.equal(recordsSource(['version-advance: 0.8.0 after main ' + sha], 'main', sha), true);
+  assert.equal(recordsSource(['mentions version-advance: 0.7.3 after release ' + sha], 'release', sha), false, 'only a subject that starts with it counts');
+  assert.throws(() => recordsSource([], 'release', 'not a sha'));
+});
+
+test('idempotence is keyed on branch AND sha: a release record does not satisfy main', () => {
+  const sha = 'd'.repeat(40);
+  const cut = [advanceSubject('0.7.3', 'release', sha)];
+  assert.equal(recordsSource(cut, 'release', sha), true);
+  assert.equal(recordsSource(cut, 'main', sha), false, 'main fast-forwarded to a cut sha still owes its minor bump');
+  assert.equal(recordsSource([...cut, advanceSubject('0.8.0', 'main', sha)], 'main', sha), true);
+  assert.throws(() => recordsSource(cut, 'dev', sha));
 });
 
 test('CLI dry run in a temp copy: prints the next triple, --write moves both files', () => {
@@ -96,6 +105,6 @@ test('CLI: --read-current and --subject, and the subject round-trips through the
   const subject = run('--subject', '0.7.3', 'release', sha);
   assert.equal(subject.status, 0);
   assert.equal(subject.stdout.trim(), `version-advance: 0.7.3 after release ${sha} [version-advance]`);
-  assert.equal(recordsSource([subject.stdout.trim()], sha), true);
+  assert.equal(recordsSource([subject.stdout.trim()], 'release', sha), true);
   assert.equal(run('--subject', '0.7.3', 'dev', sha).status, 2);
 });
