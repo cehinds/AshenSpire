@@ -706,3 +706,12 @@ test('regen rebuilds the CSS projections after config-build, checks them, and tr
   assert.deepEqual(classifyConflicts(['styles/tokens.generated.css', 'styles/hud-layout.generated.css', 'styles/combat.css']),
     { generated: ['styles/tokens.generated.css', 'styles/hud-layout.generated.css'], changelog: [], other: ['styles/combat.css'] });
 });
+
+test('checks run against the caller\'s checkout, not jev\'s own (Codex repro)', () => {
+  const f = fixture({ 'tools/bundle-cycles.mjs': "console.log('bundle-cycles: 1 hazard(s)'); process.exit(1);\n" });
+  try {
+    const jev = fileURLToPath(new URL('../tools/jev.mjs', import.meta.url));
+    const r = spawnSync(process.execPath, [jev, 'checks', '--only', 'bundle-cycles'], { cwd: f.work, encoding: 'utf8', env: { ...process.env, CI: '' } });
+    assert.notEqual(r.status, 0, r.stdout + r.stderr);
+  } finally { f.done(); }
+});

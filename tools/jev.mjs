@@ -74,7 +74,7 @@ export function severityOf(matches) {
 // evidence: core.sparseCheckout is on AND git marks every tracked copy of the named
 // file skip-worktree ('S' in `git ls-files -t`), i.e. sparse checkout excluded it.
 // A plain deletion in a full checkout is a real failure. Under CI, never. Injectable.
-export function sparseLocal(line, { env = process.env, git: g = (args) => run('git', args, { cwd: ROOT }) } = {}) {
+export function sparseLocal(line, { env = process.env, git: g = (args) => run('git', args, { cwd: callerRoot() }) } = {}) {
   if (env.CI) return false;
   if (g(['config', '--get', 'core.sparseCheckout']).out.trim() !== 'true') return false;
   const file = (String(line).match(/(component-catalog\.html|attack-source-audit\.csv)/) || [])[1];
@@ -125,7 +125,7 @@ export function triage(text, rules = loadRules(), ctx = DEFAULT_CTX) {
 // ---- process helpers ----
 
 export function run(cmd, args, opts = {}) {
-  const r = spawnSync(cmd, args, { cwd: opts.cwd || ROOT, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, input: opts.input });
+  const r = spawnSync(cmd, args, { cwd: opts.cwd || callerRoot(), encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, input: opts.input });
   return { status: r.status === null ? 1 : r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
 }
 const node = (args, opts) => run(process.execPath, args, opts);
@@ -227,7 +227,7 @@ export const REGEN_STEPS = [
 ];
 
 // Returns { exit, steps:[{cmd,status}], failed? }. Stops at the first failing step.
-export function regen(cwd = ROOT) {
+export function regen(cwd = callerRoot()) {
   const steps = [];
   for (const args of REGEN_STEPS) {
     const r = node(args, { cwd });
@@ -238,6 +238,13 @@ export function regen(cwd = ROOT) {
     }
   }
   return { exit: 0, steps };
+}
+
+// Every command defaults to the caller's checkout (see targetRoot), resolved once per process.
+let callerRootCache = null;
+export function callerRoot() {
+  if (!callerRootCache) callerRootCache = targetRoot(process.argv.slice(2));
+  return callerRootCache;
 }
 
 // The checkout a command acts on: --root when given, else the git checkout the shell is in,
@@ -313,13 +320,13 @@ export function restampChangelog(text, { pr, build }) {
   return { text: out, deduped, moved: moved || relocatedFrom !== null, relocatedFrom, restamped: after !== before, from: (FIELD.exec(before) || [])[2] || '', to: build };
 }
 
-export function currentBuild(root = ROOT) {
+export function currentBuild(root = callerRoot()) {
   const b = JSON.parse(readFileSync(resolve(root, 'buildordinal.json'), 'utf8'));
   return `${b.release}.${b.ordinal}`;
 }
 
 // The PR this branch carries: --pr, else the branch's open PR via gh when present.
-export function detectPr(args, cwd = ROOT) {
+export function detectPr(args, cwd = callerRoot()) {
   const at = args.indexOf('--pr');
   if (at >= 0) return Number(args[at + 1]);
   const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd }).out.trim();
@@ -329,7 +336,7 @@ export function detectPr(args, cwd = ROOT) {
 }
 
 // Rewrites CHANGELOG.md in root, then (unless noRegen) projects it and checks order.
-export function restamp({ root = ROOT, pr, noRegen = false }) {
+export function restamp({ root = callerRoot(), pr, noRegen = false }) {
   const path = resolve(root, 'CHANGELOG.md');
   const r = restampChangelog(readFileSync(path, 'utf8'), { pr, build: currentBuild(root) });
   writeFileSync(path, r.text);
@@ -452,7 +459,7 @@ export function resolveChangelogConflict(text, baseText = null, oursText = null)
 const git = (args, cwd) => run('git', args, { cwd });
 
 // deps: injectable regen/restamp/node runner, so tests need not run the full repo tools.
-export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
+export function devmerge({ base = 'dev', pr = null, cwd = callerRoot(), deps = {} }) {
   const doRegen = deps.regen || regen;
   const doRestamp = deps.restamp || restamp;
   const runNode = deps.node || node;
