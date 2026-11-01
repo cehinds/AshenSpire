@@ -1873,7 +1873,7 @@
 .target-hud-meters .m-value { font-size: 1em !important; line-height: 1; }
 .target-hud-meters .m-label { display: none; }
 .target-hud-meters .combat-health-row { height: auto !important; min-height: 0; }
-.target-hud-meters .combat-health-badge { font-size: .8em; }
+.target-hud-meters .combat-health-badge { font-size: .64em; }
 .target-hud-damage { color: #f17e73; font-variant-numeric: tabular-nums; }
 .target-hud-statuses.statuses { display: flex !important; justify-content: flex-end; gap: .35em; margin: .4em 0 0; padding: 0; width: 100%; min-height: 0; overflow: visible; }
 .target-hud-statuses .tray-icon { flex: none; width: var(--target-hud-status-size) !important; height: var(--target-hud-status-size) !important; min-width: 0; min-height: 0; font-size: 1em; }
@@ -1910,8 +1910,8 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root .combat[data-target-hud='true'] .combatant.context-selected .sprite { scale: 1 !important; }
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-row { position: relative; display: flex; padding: 0; }
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge {
-  display: grid; flex: 0 0 1.8em; width: 1.8em !important; height: 1.8em;
-  min-width: 0 !important; max-width: 1.8em !important; aspect-ratio: 1; padding: 0;
+  display: grid; flex: 0 0 1.44em; width: 1.44em !important; height: 1.44em;
+  min-width: 0 !important; max-width: 1.44em !important; aspect-ratio: 1; padding: 0;
 }
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-row { flex-wrap: wrap; gap: .3em; }
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-meter { order: -1; flex: 0 0 100%; }
@@ -1947,7 +1947,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   --health-row-h: calc(7px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
   --combatant-hp-h: var(--health-row-h);
   --combatant-value-text: calc(10px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
-  --mini-health-badge: calc(16px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --mini-health-badge: calc(12.8px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
   --mini-health-gap: calc(3px / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
   display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start;
   width: 100% !important; min-width: 0; height: auto !important;
@@ -1957,6 +1957,9 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter {
   order: -1; flex: 0 0 100%; width: 100% !important; height: var(--health-row-h);
   margin: 0; min-height: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row:has(> .combat-health-ac) > .combat-health-meter {
+  flex: 1 1 0 !important; width: auto !important;
 }
 :root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-track {
   width: 100% !important; height: var(--health-row-h); min-height: 0;
@@ -1971,7 +1974,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value::after { content: none; }
 :root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-badge {
   flex: 0 0 var(--mini-health-badge); width: var(--mini-health-badge); height: var(--mini-health-badge);
-  min-width: 0; aspect-ratio: auto; font-size: var(--combatant-value-text); line-height: 1;
+  min-width: 0; aspect-ratio: auto; font-size: calc(var(--combatant-value-text) * .8); line-height: 1;
 }
 
 .combat-log-calculation { white-space: pre-wrap; margin-top: .35em; padding: .5em; border-left: 2px solid var(--gold); font-variant-numeric: tabular-nums; background: var(--panel); }
