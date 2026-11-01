@@ -204,7 +204,8 @@ test('a hidden charging enemy logs its Block and Barrier as preparing, never nam
     dispatch(c, { type: 'endTurn' });
     assert.equal(c.enemies[0].pendingMove?.moveId, 'heldBlade', `v${combatExpansionVersion}: the Warden is charging`);
     const gains = c.eventLog.filter(event => ['blockGained', 'barrierGained'].includes(event.type) && event.sourceId === 'e1');
-    assert.deepEqual(gains.map(event => event.type).sort(), ['barrierGained', 'blockGained']);
+    // The numeric Barrier pool is gone (SPEC 4.1a): a charging enemy's `barrier` grant is Block too.
+    assert.deepEqual(gains.map(event => event.type).sort(), ['blockGained', 'blockGained']);
     for (const event of gains) {
       assert.equal(event.moveId, undefined, `v${combatExpansionVersion}: ${event.type} carries no moveId`);
       assert.equal(event.preparing, true);
@@ -213,7 +214,7 @@ test('a hidden charging enemy logs its Block and Barrier as preparing, never nam
     const warden = charging.enemies.get('fellWarden').name;
     const lines = combatLogEntries(c.eventLog, { registries: charging, enemies: c.enemies }).map(row => row.text);
     assert.ok(lines.includes(`${warden} gained 8 Block (preparing).`), lines.join('\n'));
-    assert.ok(lines.includes(`${warden} gained 3 Barrier (preparing).`), lines.join('\n'));
+    assert.ok(lines.includes(`${warden} gained 3 Block (preparing).`), lines.join('\n'));
     for (const text of lines) assert.ok(!text.includes(name), `the log never names the hidden move: ${text}`);
   }
 });

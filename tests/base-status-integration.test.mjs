@@ -255,8 +255,7 @@ test('authored Ward Armor replenishes both protection pools at owner start and s
   dispatch(c, { type: 'endTurn' });
   const blockStacks = c.player.statuses['base.persistent-block'].stacks;
   const barrierStacks = c.player.statuses['base.persistent-barrier'].stacks;
-  assert.equal(c.player.block, blockStacks, 'pool matches actual status potency, with no second rating bonus');
-  assert.equal(c.player.barrier, barrierStacks);
+  assert.equal(c.player.block, blockStacks + barrierStacks, 'both pools are Block now (the numeric Barrier pool is gone), at the actual status potency, with no second rating bonus');
   applyAttackDamage(c, c.enemies[0], c.player, 2, [], physical); drain(c);
   assert.equal(c.player.statuses['base.persistent-block'].stacks, blockStacks - 1);
   assert.equal(c.player.statuses['base.persistent-barrier'].stacks, barrierStacks);

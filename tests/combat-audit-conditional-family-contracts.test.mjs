@@ -32,8 +32,8 @@ for (const mode of ['native', 'bundled']) test(`five remaining predicate familie
   }
   const paired = id => report.plays.filter(row => row.instance.cardId === id);
   const iron = paired('ironResolve');
-  assert.deepEqual(iron.map(row => [row.after.player.block, row.after.player.barrier]), [[13, 5], [19, 5]],
-    'Iron Resolve:5/9 selected Block +3entry +5restore, plus2Bulwarkskillhook only in Bulwark');
+  assert.deepEqual(iron.map(row => [row.after.player.block, row.after.player.barrier]), [[18, 0], [24, 0]],
+    'Iron Resolve:5/9 selected Block +3entry +5restore +5 Ward overflow (the old Barrier pool is Block, SPEC 4.1a), plus2Bulwarkskillhook only in Bulwark');
   assert.equal(iron[1].expected.contributions.find(c => c.kind === 'bulwark-skill-hook').block, 2);
   const executioner = paired('executioner');
   assert.deepEqual(executioner.map(row => row.before.target.hp - row.after.target.hp), [18, 67],
@@ -41,8 +41,8 @@ for (const mode of ['native', 'bundled']) test(`five remaining predicate familie
   assert.ok(executioner.every(row => row.selectedTargetId === 'e2'));
   assert.equal(executioner[1].after.target.statuses.staggered.stacks, 1);
   const ward = paired('umbralWard');
-  assert.deepEqual(ward.map(row => [row.after.player.block, row.after.player.barrier]), [[19, 8], [27, 12]],
-    'Counterstrike scales16/24→24/36, alteration splits70:30, entry adds2Block+1Barrier');
+  assert.deepEqual(ward.map(row => [row.after.player.block, row.after.player.barrier]), [[20, 0], [28, 0]],
+    'Counterstrike scales16/24→24/36, alteration splits70:30 (the Ward share refills a full pool and its overflow is dropped), entry adds2Block+1 (the old Barrier share is Block, SPEC 4.1a)');
   assert.deepEqual(ward.map(row => row.after.player.statuses.starstoneCharge.stacks), [1, 1],
     'unique Starstone coeffect occurs after the branch and cannot double-select protection');
   const rite = paired('desperateRite');

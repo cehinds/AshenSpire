@@ -36,16 +36,16 @@ test('defense uses school shares independently of damage routing and preserves o
   assert.deepEqual(spellDefenseSplit({ type: 'skill', combatProfile: { camp: 'spell', school: 'divine' } }, 3), { block: 1, ward: 2 });
 });
 
-test('both guard opcodes split the modified total once, refill Ward and overflow into Barrier', () => {
+test('both guard opcodes split the modified total once, refill Ward, and the overflow past a full pool is dropped', () => {
   for (const gain of [gainBarrier, gainBlock]) for (const [school, block, ward] of [['fire', 2, 3], ['frost', 3, 2], ['force', 4, 1], ['alteration', 4, 1]]) {
     for (const startingWard of [0, 3]) {
       const combat = fixture(), player = combat.player;
       player.block = 0; player.barrier = 0; player.persistentWard = { max: 3, value: startingWard };
-      assert.equal(gain(combat, player, 5, guard(school)), 5);
+      assert.equal(gain(combat, player, 5, guard(school)), block + Math.min(ward, 3 - startingWard));
       assert.equal(player.block, block);
       assert.equal(player.wardBlock || 0, 0, 'physical Block has no Ward provenance');
       assert.equal(player.persistentWard.value, Math.min(3, startingWard + ward));
-      assert.equal(player.barrier, Math.max(0, startingWard + ward - 3));
+      assert.equal(player.barrier || 0, 0, 'no numeric Barrier pool (SPEC 4.1a)');
     }
   }
   const combat = fixture(), player = combat.player;

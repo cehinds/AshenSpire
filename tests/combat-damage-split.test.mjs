@@ -149,15 +149,14 @@ test('a spell-camp card with slashing damage hits Block and then Poise, and neve
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
-test('a physical-camp card whose damage type shares 1 is all magic: Block soaks it first, then Barrier and Ward', () => {
+test('a physical-camp card whose damage type shares 1 is all magic: Block soaks it first, then Ward', () => {
   const slashAsMagic = { tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
-  const r = strike(slashAsMagic, 5, { ward: 3, block: 3, barrier: 2, damageTypeShares: { slashing: 1 } });
+  const r = strike(slashAsMagic, 5, { ward: 3, block: 5, damageTypeShares: { slashing: 1 } });
   const [d] = r.damage;
   assert.equal(d.magicAmount, 5, 'all magic');
   assert.equal(d.physicalAmount, 0);
-  assert.equal(d.blocked, 3, 'Block soaks the magic part (owner, 2026-10-25)');
+  assert.equal(d.blocked, 5, 'Block soaks the magic part (owner, 2026-10-25)');
   assert.equal(r.enemy.block, 0, 'Block is spent');
-  assert.equal(r.enemy.barrier, 0, 'Barrier soaks the 2 Block left');
   assert.equal(d.wardAbsorbed ?? 0, 0, 'nothing is left for Ward');
   assert.equal(r.committed, 0, 'no HP lost');
   assert.equal(r.preview, r.committed);
@@ -166,16 +165,16 @@ test('a physical-camp card whose damage type shares 1 is all magic: Block soaks 
 test('a default spell defend splits 5 into Ward 3 and Block 2 regardless of damage magicShare', () => {
   const guard = { tags: ['camp:spell', 'maneuver:defend'], skipRatingBonus: true, magicShare: 0.4, physicalDamageType: 'blunt',
     combatProfile: { camp: 'spell', maneuver: 'defend', damageType: 'arcane', reach: 'near', targeting: 'single' } };
-  for (const [ward, wardAfter, barrier] of [[3, 3, 3], [0, 3, 0]]) {
+  for (const [ward, wardAfter] of [[3, 3], [0, 3]]) {
     const { combat } = fixture({ ward: 0 });
     const player = combat.player;
     player.persistentWard = { max: 3, value: ward };
     player.barrier = 0; player.block = 0;
     const gained = gainBlock(combat, player, 5, guard);
-    assert.equal(gained, 5, 'the guard lays down 5 in all');
+    assert.equal(gained, ward === 3 ? 2 : 5, 'the guard lays down its Block and refills Ward (the overflow past a full pool is dropped)');
     assert.equal(player.block, 2, 'Block 2');
     assert.equal(player.persistentWard.value, wardAfter, `Ward ${ward} becomes ${wardAfter}`);
-    assert.equal(player.barrier, barrier, `Barrier ${barrier}`);
+    assert.equal(player.barrier || 0, 0, 'no Barrier pool');
   }
 });
 

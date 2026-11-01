@@ -128,7 +128,7 @@ for (const mode of ['native', 'bundled']) {
     }
   });
 
-  test(`${mode}: default spell Counter support matches paid protection with Ward overflow`, () => {
+  test(`${mode}: default spell Counter support matches paid protection with the Ward overflow dropped`, () => {
     const { combat, instance } = fixture(api, { classId: 'starseer', cardId: 'frostCounter', protection: 'none' });
     assert.equal(combat.player.ratings.dr, 2);
     assert.equal(combat.player.ratings.pr, 4);
@@ -146,12 +146,11 @@ for (const mode of ['native', 'bundled']) {
     const own = out.events.filter(event => event.cardInstanceId === instance.instanceId && !event.triggeredBy);
     assert.equal(own.find(event => event.type === 'blockGained').amount, 6);
     assert.equal(own.find(event => event.type === 'persistentWardChanged' && event.source === 'card').credited, 8);
-    assert.equal(own.find(event => event.type === 'barrierGained').amount, 8);
+    assert.equal(own.find(event => event.type === 'barrierGained'), undefined, 'the Ward overflow past a full pool is dropped (SPEC 4.1a)');
     const entry = out.events.filter(event => event.triggeredBy?.kind === 'stance');
-    assert.equal(entry.find(event => event.type === 'blockGained').amount, 2);
-    assert.equal(entry.find(event => event.type === 'barrierGained').amount, 1);
-    assert.equal(combat.player.block, 8);
-    assert.equal(combat.player.barrier, 9);
+    assert.deepEqual(Array.from(entry.filter(event => event.type === 'blockGained').map(event => event.amount)), [2, 1], 'the entry grant and its old Barrier share are both Block');
+    assert.equal(combat.player.block, 9);
+    assert.equal(combat.player.barrier || 0, 0);
     assert.equal(combat.player.persistentWard.value, 6);
     assert.equal(combat.enemies[0].hp, hp, 'only preparation, no retaliation');
     assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
