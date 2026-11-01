@@ -584,7 +584,7 @@ const BALANCE_LABELS = Object.freeze({
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',
   'mana.minStaminaCost': 'Least stamina cost of a mana card',
-  'mana.focusManaDiscount': 'Mana off every card with a Focus armament equipped',
+  'mana.focusManaDiscount': 'Mana off every card with a focus armament equipped',
   'level.maxLevelsPerFight': 'Most levels one award can give',
 });
 
