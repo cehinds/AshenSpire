@@ -110,7 +110,8 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
       if ((def.keywords || []).includes(keyword) && !downsides.some(clause => plain(clause.html).includes(word)))
         downsides.push({ kind: 'cost', html: word });
     }
-    return { ...projection, clauses: [...downsides, ...summary].slice(0, FACE_EFFECT_CLAUSES), omitted: true };
+    // A downside plus a short summary stays within two lines, so a narrow hand card still fits it; the downside wins the room.
+    return { ...projection, clauses: [...downsides, ...summary].slice(0, downsides.length ? 2 : FACE_EFFECT_CLAUSES), omitted: true };
   }
   return projection;
 }
@@ -174,7 +175,7 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   };
   if (reservedCount <= FACE_EFFECT_CLAUSES) { reserved.forEach(take); fitted.forEach(entry => { if (count < FACE_EFFECT_CLAUSES && !chosen.has(entry)) take(entry); }); }
   // `downside` marks what the face reserved as a payment or requirement; a summary that replaces the cue keeps it.
-  const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => reserved.includes(entry) ? entry.parts.map(part => ({ ...part, downside: true })) : entry.parts);
+  const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => reserved.includes(entry) ? entry.parts.map(part => payments.includes(entry.line) || COST_RE.test(plain(part.html)) ? { ...part, downside: true } : part) : entry.parts);
   const shown = chosen.size;
   // The primary effect that cannot be said in five words is named by the cue, never silently dropped behind a minor line.
   const primary = fitted.find(entry => !reserved.includes(entry));

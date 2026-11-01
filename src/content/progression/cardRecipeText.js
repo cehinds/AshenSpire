@@ -92,6 +92,6 @@ export function recipeFace(effects, { counterMode = null } = {}) {
   const pool = plainOnes.length ? plainOnes : phrases;
   const costs = pool.filter(p => p.cost), others = pool.filter(p => !p.cost);
   const chosen = new Set([...costs, ...others].slice(0, 2));
-  const lines = pool.filter(p => chosen.has(p)).map(p => p.options.find(o => words(o) <= 5)).filter(Boolean);
+  const lines = [...costs, ...others].filter(p => chosen.has(p)).map(p => p.options.find(o => words(o) <= 5)).filter(Boolean);
   return lines.length ? lines : undefined;
 }
