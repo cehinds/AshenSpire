@@ -207,6 +207,9 @@ test('Attune and Ember Communion pay one Mana and restore two through the real i
   for (const [classId, cardId] of [['herald', 'emberCommunion'], ['starseer', 'attune']]) {
     for (const start of [0, 1, 2]) {
       const run = createRunState({ seed: 3, classId, registries });
+      // The class staff is a Focus armament, which would take this Mana off (tests/focus-mana-discount.test.mjs):
+      // price the printed 1 Mana with a non-Focus weapon in hand.
+      run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
       const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
       combat.player.maxMana = Math.max(combat.player.maxMana, start + 2);
       combat.player.mana = start;

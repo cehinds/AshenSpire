@@ -657,7 +657,9 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     const mana = b.balance.mana;
     if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { minActionCost, minStaminaCost } — the card cost rule reads it (plan phase 8)');
     else {
-      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost', 'focusManaDiscount', 'focusItemType'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      if (!(Number.isInteger(mana.focusManaDiscount) && mana.focusManaDiscount >= 0)) err('balance.mana.focusManaDiscount', `must be a non-negative integer, got ${JSON.stringify(mana.focusManaDiscount)}`);
+      if (typeof mana.focusItemType !== 'string' || !mana.focusItemType) err('balance.mana.focusItemType', 'must be an item-type tag id');
       for (const key of ['minActionCost', 'minStaminaCost']) {
         if (!(Number.isInteger(mana[key]) && mana[key] >= 0)) err(`balance.mana.${key}`, `must be a non-negative integer, got ${JSON.stringify(mana[key])}`);
       }
