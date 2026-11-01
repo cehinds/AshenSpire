@@ -101,13 +101,13 @@
 //     hand, because there is now exactly one thing that mounts a hand.
 //
 // UNTIL 2026-08-15 THERE WERE TWO, and the second one's death is this file's
-// own wake condition firing. coop.js used to render its OWN .hand — a
+// own wake condition firing. A retired screen used to render its OWN .hand — a
 // pager-only twin with no overlap arm and no reader of the word — so its
 // declaration was UNSCOPED (true in every mode), and the wake written beside
-// it was: "the day coop grows an overlap arm, the coop[overlap] cells reach
+// it was: "the day that screen grows an overlap arm, its [overlap] cells reach
 // zero travel and A4 fires on the declaration, forcing a person to re-scope
 // it." That is exactly what happened. Viki's renderer collapse gave both
-// surfaces src/ui/components/hand.js; the coop hand gained the overlap arm in
+// surfaces src/ui/components/hand.js; that hand gained the overlap arm in
 // the same act; CM2 below went RED on its dead premise and forced this
 // paragraph to be rewritten by a person. The premise did not rot quietly for
 // six days — the mechanism caught it inside one act. That is the wake

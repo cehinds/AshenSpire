@@ -11,12 +11,12 @@ import { builtInFor } from '../highResArt.js';
 // WHY THIS FILE EXISTS, and it is a collapse and not a repair.
 //
 // There were two act-map renderers in this tree: `ui/screens/map.js` and a
-// second one (the retired co-op screen's) with its own `ROW_H = 46`, its own
+// second one (a retired screen's) with its own `ROW_H = 46`, its own
 // `y(floor)` and its own `r = boss ? 20 : 15` — the literals every other map
 // number was derived away from on 2026-08-08. It imported neither map module, so
 // none of that work reached it. Measured at dev `cd3da94`, 390x844, `?shot=`:
 //
-//                                        solo          co-op
+//                                        solo          retired
 //   node diameter, device px             44.09         27
 //   at 320x640                           36.25         22.2
 //   the tap-size setting 44 -> 24        (honest note) nothing moves
@@ -30,7 +30,7 @@ import { builtInFor } from '../highResArt.js';
 // copy stops existing.
 //
 // THE RULING THIS FILE IS SHAPED BY — ask what the predicate's subject is.
-// "Is the co-op map a different map, or the same map with a second player on
+// "Is a party's map a different map, or the same map with a second player on
 // it?" It is the SAME MAP. The graph, the geometry, the radii solved from the
 // tap floor, the zoom ladder, the camera, the fog rule and the act title are
 // properties of THE ACT. They are not properties of who is looking at it.
@@ -49,7 +49,7 @@ import { builtInFor } from '../highResArt.js';
 //   2. The camera. My zoom and my scroll position are mine. Nothing syncs them
 //      and nothing should — a partner panning my map is not a feature.
 //   3. WHO DECIDES WHAT I KNOW. In solo the client derives its own fog, because
-//      the client IS the authority. In co-op the server is, and a client may
+//      the client IS the authority. Under a server-authoritative board the server is, and a client may
 //      never widen what it was sent — which is why the snapshot ships `unknown`
 //      instead of `event` and why this file never tries to lift that rung.
 //      Same ladder, different hand on it, deliberately.
@@ -93,7 +93,7 @@ const HALO_PAD = 6;
  *
  * IT LIVES HERE BECAUSE THE ZOOM IS THE VIEWER'S, NOT THE MAP'S. Two players
  * looking at one act have two zooms and that is correct. Moved out of
- * `ui/screens/map.js` unchanged so the co-op board honours the same preference
+ * `ui/screens/map.js` unchanged so any other board honours the same preference
  * from the same key rather than opening at a literal.
  *
  * `Fit` stays a REAL VALUE of the setting rather than an absence, so choosing it
@@ -259,8 +259,8 @@ export function refitCamera({ look, centerOnCurrent, centerOnNode }) {
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
  * of the viewport, so once the zoom bar stopped floating the two claimed one
  * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
- * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
- * omits it because that screen has no matching legend popover.
+ * `showLegendControl` adds the solo map's help control to the bottom row. A board
+ * without a matching legend popover omits it.
  *
  * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
  * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler

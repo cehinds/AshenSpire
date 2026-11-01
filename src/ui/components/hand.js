@@ -251,7 +251,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // card width (Text size), and the narrow/wide word main.js writes. All three
   // observers reconcile through the same function, are attached only when the
   // layout word asks for them, and dispose themselves when the strip's DOM is
-  // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
+  // replaced (a re-mounting screen disposes it; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
   const observedCards = new Set();
@@ -480,7 +480,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       setHandFaceBudget(el, !!entry.selected);
       // Already committed to an open reaction stack: muted until it resolves.
       if (entry.stacked) el.classList.add('is-stacked');
-      // The spelled-out unavailability reason is VIEWER data (co-op supplies
+      // The spelled-out unavailability reason is VIEWER data (a host-driven screen could supply
       // it; solo's player reads live previews and the hint bar instead). When
       // present it rides the card as a badge and as assistive text.
       if (entry.reason) {

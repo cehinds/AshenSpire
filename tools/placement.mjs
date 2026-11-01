@@ -144,14 +144,14 @@
 //   · P3 IS THE HAND AND NOTHING ELSE, AND THE REST IS NOW MEASURED ELSEWHERE.
 //     Every other attachTooltip caller passes `clear: el.parentElement` too and
 //     none is sampled HERE. It is no longer unknown: 160 tooltip-bearing controls
-//     over EIGHT ?shot= surfaces (customize, combat, map, compendium, coop, shop,
+//     over EIGHT ?shot= surfaces (customize, combat, map, compendium, a retired board, shop,
 //     profile, event) at both shapes, 8c34bc0 against d705b66, same synthesized
 //     door as P3. 158 matched by key — 84 placements moved, 74 unchanged, ZERO
 //     regressions (not one control where the sibling count or the worst sibling
 //     coverage rose); worst coverage IMPROVED on 79 and went from >=99.9% to
 //     exactly 0 on TWENTY-ONE, including the settings tab strip (`.set-tabs`,
 //     5 siblings at 100% — a Law 3 surface), `.cp-grid` (96.3%), `.disc-faces`
-//     (6 siblings at 100%), `.mh-actions` and `.coop-flasks`. The 2 unmatched
+//     (6 siblings at 100%), `.mh-actions` and a retired board's flask row. The 2 unmatched
 //     rows each side are the same hovered map node, whose own rect differs by
 //     ~2 px under its hover scale. That sweep is a scratch probe, not a shipped
 //     check: P3 stays the hand because the hand is where the corpus can plant,
