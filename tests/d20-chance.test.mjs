@@ -43,3 +43,20 @@ test('the displayed chance is the rolled chance, in 5% steps', () => {
   assert.equal(chanceToD20Target(effectiveD20Percent(32)), 15);
   assert.equal(21 - chanceToD20Target(effectiveD20Percent(32)), effectiveD20Percent(32) / 5);
 });
+
+test('a d20 chance receipt shows the rolled 5% chance, not the authored percent', async () => {
+  const { critRollReceipt, percentRollReceipt, distanceRollReceipt } = await import('../src/model/rollReceipts.js');
+  const crit = critRollReceipt({ roll: 17, rolls: [17], target: chanceToD20Target(32), chance: 32, success: true });
+  assert.equal(crit.dcParts[0].value, 30);
+  assert.equal(crit.dc, 15);
+  assert.equal(crit.chance, undefined);
+  const status = percentRollReceipt({ roll: 14, rolls: [14], target: chanceToD20Target(33), chance: 33, success: false }, 'statusChance');
+  assert.equal(status.dcParts[0].value, 35);
+  assert.equal(status.dc, 14);
+  const distance = distanceRollReceipt({ dice: [9], roll: 9, target: chanceToD20Target(32), chance: 32 });
+  assert.equal(distance.dcParts[0].value, 30);
+  // Advantage: the suffix is the rolled chance with advantage, from the rounded base (30 -> 51%), not the raw 32.
+  const adv = critRollReceipt({ roll: 15, rolls: [15, 4], mode: 'advantage', target: chanceToD20Target(32), chance: 32, effectiveChance: 51, success: true });
+  assert.equal(adv.dcParts[0].value, 30);
+  assert.equal(adv.chance, 51);
+});

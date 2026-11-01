@@ -8,6 +8,7 @@
 // meet a target: 'gte' with dc = the target and dcParts = the source chance.
 import { t } from '../ui/strings.js';
 import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
+import { effectiveD20Percent } from '../engine/d20Chance.js';
 
 const finite = value => Number.isFinite(Number(value)) && value !== null && value !== '';
 const num = value => (finite(value) ? Number(value) : 0);
@@ -63,12 +64,14 @@ export function critRollReceipt(event) {
 }
 
 // The shared shape of a percentage chance rolled as a d20: success on d20 >= target, the source chance kept as the note.
+// The chance shown is the one the d20 really rolls, round(chance / 5) × 5 (owner, 2026-11-01): 32% reads 30%.
 function d20ChanceReceipt(event, kind) {
   const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
   const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode : null;
+  // Only a modified (advantage or disadvantage) chance gets a suffix; the engine computes it from the rounded chance.
   return { kind, die: 'd20', dice: rolls, ...(rolls.length > 1 && mode ? { mode } : {}), parts: [], total: num(event.roll), compare: 'gte',
-    dcParts: [{ label: 'Chance %', value: num(event.chance) }], dc: num(event.target),
-    ...(finite(event.effectiveChance) && event.effectiveChance !== event.chance ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
+    dcParts: [{ label: 'Chance %', value: effectiveD20Percent(event.chance) }], dc: num(event.target),
+    ...(mode && finite(event.effectiveChance) ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
 }
 
 export function perceptionRollReceipt(event) {
