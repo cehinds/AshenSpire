@@ -11,8 +11,9 @@ import { executeAction as applyAction } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { prototypeInput, prototypeBundle } from '../src/content/prototypes/combatBuilds.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
-const regs = createRegistries(contentBundle);
+const regs = createRegistries(withWeaponRack(contentBundle));
 function inHand(c, cardId) {
   for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
     const i = c.piles[pile].findIndex((card) => card.cardId === cardId);
@@ -119,6 +120,7 @@ test('live equipment maps staff, hammer, and left/right hand carriers correctly'
 
 test('real equipment swap refreshes all piles without persisting inherited tags', () => {
   const input = prototypeInput('heavy', 'basic', 5);
+  input.registries = createRegistries(withWeaponRack(prototypeBundle())); // swapping needs a second set, which the shipped hands no longer carry
   delete input.combatProfiles.player.sources;
   input.player.loadout = { sets: { rightHand: ['katana', 'straightSword', null], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } };
   const c = createCombat(input);
