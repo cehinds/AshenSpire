@@ -469,7 +469,7 @@ export function devmerge({ base = 'dev', pr = null, cwd = callerRoot(), deps = {
   if (dirty) return { exit: 1, verdict: 'dirty-tree', files: dirty.split('\n') };
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], top).out.trim();
   const untrackedBefore = new Set(git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean));
-  const fetched = git(['fetch', '--filter=blob:none', 'origin', base], top);
+  const fetched = git(['fetch', '--filter=blob:none', 'origin', `+refs/heads/${base}:refs/remotes/origin/${base}`], top); // explicit destination: a single-branch clone's refspec would leave origin/<base> stale
   if (fetched.status !== 0) return { exit: 2, verdict: 'fetch-failed', tail: fetched.out.trim().slice(-400) };
   const merged = git(['merge', '--no-edit', '--no-ff', '--no-commit', `origin/${base}`], top);
   if (merged.status === 0 && /Already up to date/i.test(merged.out)) return { exit: 0, verdict: 'up-to-date', branch };

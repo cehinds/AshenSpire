@@ -737,3 +737,16 @@ test('stale CSS projections triage to regen, using both tools\' real messages (C
     assert.ok(r.matches.some(m => m.id === 'generated-stale' && m.action === 'regen'), JSON.stringify(r));
   }
 });
+
+test('devmerge refreshes origin/<base> even when the fetch refspec excludes it (Codex repro)', () => {
+  const f = fixture({ 'a.txt': 'a\n' });
+  try {
+    f.sh(f.work, 'fetch', '-q', 'origin');                       // origin/dev exists, then goes stale
+    f.sh(f.work, 'config', 'remote.origin.fetch', '+refs/heads/feature:refs/remotes/origin/feature');
+    f.onDev(w => f.put(w, 'b.txt', 'new on dev\n'));            // pushes dev; local origin/dev now stale under the narrow refspec
+    f.sh(f.work, 'update-ref', 'refs/remotes/origin/dev', f.sh(f.work, 'rev-parse', 'dev~1').trim());
+    const r = devmerge({ base: 'dev', pr: 9, cwd: f.work, deps: OK_DEPS() });
+    assert.notEqual(r.verdict, 'up-to-date', JSON.stringify(r));
+    assert.ok(existsSync(join(f.work, 'b.txt')), 'the newer dev commit was merged');
+  } finally { f.done(); }
+});
