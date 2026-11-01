@@ -6674,3 +6674,25 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .as-toast.is-leaving { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .as-toast { transition: none; } }
 body.reduced-motion .as-toast { transition: none; }
+
+/* The Replace comparison (src/ui/components/equipCompareModal.js): everything
+   centred, the buttons right-justified; the card-upgrade modal's faces and
+   as-delta colours do the rest. Unchanged rows are dimmed. */
+.equip-compare-modal .equip-compare-body { display: flex; flex-direction: column; align-items: center; gap: 1.6rem; text-align: center; }
+.equip-compare-faces { align-items: center; justify-content: center; flex-wrap: nowrap; gap: 1.6rem; }
+.equip-compare-face { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.equip-compare-caption { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.equip-compare-which { color: var(--muted); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); letter-spacing: 0.08em; text-transform: uppercase; }
+.equip-compare-arrow { color: var(--gold); font-size: 3.2rem; line-height: 1; }
+.equip-compare-rows { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; }
+.equip-compare-rows .as-statrow { justify-content: center; width: auto; max-width: 100%; gap: 1.6rem; }
+.equip-compare-rows .as-statrow.is-same { opacity: 0.55; }
+.equip-compare-face { flex: 0 0 auto; }
+.equip-compare-face .equipment-poker-card { width: 14rem !important; max-width: 100%; --epc-level-w: 14rem; }
+.equip-compare-rows .as-statrow .sr-name { overflow: visible; text-overflow: clip; flex: none; }
+.equip-compare-rows .as-statrow { padding-block: 0.2rem; column-gap: 2rem; }
+/* The owner's tweak for this door: the buttons sit together at the right, not as equal tracks across the foot. */
+.modal.equip-compare-modal .modal-foot-actions { display: flex !important; width: auto !important; margin-left: auto !important; justify-content: flex-end; gap: 1rem; }
+.modal.equip-compare-modal .modal-foot-actions > button.as-btn { flex: 0 0 auto !important; width: auto !important; min-width: 12rem !important; max-width: none !important; padding-inline: 2rem; overflow: visible; }
+.equip-compare-modal .equip-compare-body { overflow-y: auto; min-height: 0; }
+@media (max-width: 600px) { .equip-compare-faces { gap: 0.6rem; } .equip-compare-arrow { font-size: 2.2rem; } }

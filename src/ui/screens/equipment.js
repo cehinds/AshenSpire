@@ -11,7 +11,8 @@ import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { createToast } from '../components/toast.js';
-import { equipmentModLines } from '../../model/equipmentCompare.js';
+import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
+import { mountEquipCompareModal } from '../components/equipCompareModal.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
@@ -1034,6 +1035,41 @@ export function mountEquipment(host, {
     return true;
   }
 
+  /**
+   * Replace's last step (owner wireframe, 2026-11-01): a candidate picked for an
+   * OCCUPIED position opens the comparison first, the equipped item on the left
+   * and the new one on the right. Back returns to the picker having changed
+   * nothing; Equip runs the same applyEquipmentChange the picker always ran.
+   * An empty position, a drag/drop and the Inventory tab's own buttons are not a
+   * replacement and equip at once.
+   */
+  function requestEquip(slotId, setIndex, pieceId, actionLabel) {
+    const slot = eq.slots.find(candidate => candidate.id === slotId);
+    const currentId = run.loadout.sets[slotId]?.[setIndex];
+    if (!picking || !slot || !pieceId || !currentId || currentId === pieceId) {
+      return applyEquipmentChange(slotId, setIndex, pieceId, actionLabel);
+    }
+    const resolved = (id) => {
+      const authored = pieceById(slot, id);
+      if (!authored) return null;
+      const ref = slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`;
+      return resolveUpgradedEquipment(registries, ref, (run.itemUpgradeLevels || {})[ref] || 0);
+    };
+    const current = resolved(currentId), next = resolved(pieceId);
+    if (!current || !next) return applyEquipmentChange(slotId, setIndex, pieceId, actionLabel);
+    mountEquipCompareModal(wrap, {
+      registries,
+      title: t('armoury.compare.replaceTitle', { slot: slot.label }),
+      current: { item: current, name: current.name },
+      next: { item: next, name: next.name },
+      rows: equipmentCompareRows(registries, current, next, {
+        attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels,
+      }),
+      onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); },
+    });
+    return true;
+  }
+
   function comparisonFor(slotId, setIndex, pieceId) {
     return equipmentSurfaceReceipt(registries, run, {
       candidate: { slotId, setIndex, pieceId },
@@ -1545,7 +1581,7 @@ export function mountEquipment(host, {
         act.dataset.act = target.kind;
         if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
         else if (!parts.transition.ok) { act.disabled = true; refuses(act, () => parts.transition.reason); }
-        else act.addEventListener('click', () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
+        else act.addEventListener('click', () => requestEquip(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
         actions.push(act);
       }
       const actionsCell = el('td', {}, [el('div', { class: 'equip-picker-actions' }, actions)]);
@@ -1737,7 +1773,7 @@ export function mountEquipment(host, {
       let comparison = null;
       let eligibility = null;
       if (target) {
-        const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
+        const act = () => requestEquip(target.slot.id, target.setIndex, target.pieceId, actionLabel);
         // With the candidate named, the seal carries the grip's sentence too
         // (model/loadout.js gripRefusal) — the player reads why before the act.
         // EVERY INPUT THE MUTATION READS, or the seal refuses in words an act
