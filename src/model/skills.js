@@ -1,3 +1,5 @@
+import { rankUpBonusOptions } from './rankUpBonus.js';
+import { upgradeStepsOf } from './cardUpgrade.js';
 import {spendAbilityDraft} from './abilityDraftReceipts.js';
 import { activateAbilitySkill } from './abilitySkillActivation.js';
 export { activateAbilitySkill };
@@ -363,17 +365,27 @@ export function pendingRankUpRows(registries, run) {
 }
 
 /**
- * raiseCardRank(registries, run, skillId, instanceId) → the instance raised by
+ * raiseCardRank(registries, run, skillId, instanceId, bonus?) → the instance raised by
  * one rank, spending one queued rank-up; null (and nothing written) when the
  * ledger holds none or the card is not a candidate.
+ * A Core card with rank-up bonus options (model/rankUpBonus.js) also takes the ONE option the player picked:
+ * `bonus` is that option's step, and a missing or unoffered one lands nothing. The step is appended as an
+ * ordinary upgrade step, so the rank's range expansion and the bonus both land together.
  */
-export function raiseCardRank(registries, run, skillId, instanceId) {
+export function raiseCardRank(registries, run, skillId, instanceId, bonus = null) {
   const row = run && run.skills && run.skills[skillId];
   if (!row || !(row.pendingRankUps > 0)) return null;
   const inst = rankUpCandidates(registries, run, skillId).find((card) => card.instanceId === instanceId);
   if (!inst) return null;
+  const options = rankUpBonusOptions(registries, run, inst);
+  let picked = null;
+  if (options.length) {
+    picked = options.find((option) => JSON.stringify(option.step) === JSON.stringify(bonus));
+    if (!picked) return null;
+  }
   row.pendingRankUps -= 1;
   inst.rank = (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) + 1;
+  if (picked) { inst.upgradeSteps = [...upgradeStepsOf(inst), picked.step]; inst.upgraded = true; }
   return inst;
 }
 

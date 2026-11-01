@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries, profile } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
+import { rankUpBonusOptions } from '../src/model/rankUpBonus.js';
 import { awardSkillXp, xpToNext, coreCardRanks, rankUpCandidates, raiseCardRank, levelQueuesRankUp } from '../src/model/skills.js';
 import { settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { contentBundle } from '../src/content/index.js';
@@ -50,11 +51,13 @@ test('Core cards (camp:/maneuver: tags) are rank-up candidates of the matching t
   assert.ok(ids.length > 0, 'martial deck cards can be ranked by the blade track');
   assert.ok(!rankUpCandidates(registries, run, 'item:magic-focus').length, 'a track at level 0 ranks nothing');
   const strike = run.deck.find((c) => c.cardId === 'core.strike');
-  const raised = raiseCardRank(registries, run, 'item:blade', strike.instanceId);
+  // A Core rank-up also takes the one bonus the player picked (model/rankUpBonus.js).
+  assert.equal(raiseCardRank(registries, run, 'item:blade', strike.instanceId), null, 'a Core rank-up with bonus options needs a pick');
+  const raised = raiseCardRank(registries, run, 'item:blade', strike.instanceId, rankUpBonusOptions(registries, run, strike)[0].step);
   assert.equal(raised.rank, 2);
   assert.equal(run.skills['item:blade'].pendingRankUps, 1);
   // The ceiling is the track level: at level 3 a rank-3 card is done.
-  raiseCardRank(registries, run, 'item:blade', strike.instanceId);
+  raiseCardRank(registries, run, 'item:blade', strike.instanceId, rankUpBonusOptions(registries, run, strike)[0].step);
   assert.equal(strike.rank, 3);
   assert.equal(rankUpCandidates(registries, run, 'item:blade').some((c) => c.instanceId === strike.instanceId), false);
 });
