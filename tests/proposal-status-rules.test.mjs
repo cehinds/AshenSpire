@@ -62,8 +62,8 @@ test('Blight uses current HP with an at-least threshold and never kills an alrea
 
 test('Grease has an explicit prone roll and melee/reach accuracy cost',()=>{
  const owner=actor('e',{greased:3,charm:1});
- assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>24}).effects[0].status,'prone');
- assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>25}).effects.length,0);
+ assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>16}).effects[0].status,'prone');
+ assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>15}).effects.length,0);
  assert.equal(proposalTargetRules({actor:owner,target:player,card,rules}).accuracyDelta,-45);
  assert.equal(proposalTargetRules({actor:owner,target:player,card:{...card,range:'ranged'},rules}).accuracyDelta,-25);
 });
@@ -97,24 +97,24 @@ test('Bind and Restrained are typed restrictions, independent of burden marker s
  assert.equal(tracking.allowed,true);assert.equal(tracking.staminaTax,0,'burden metadata owns its one skip/tax');
 });
 
-test('Veil uses perception, Foresight and explicit rolls; area targeting bypasses it',()=>{
+test('Veil uses perception, Foresight and explicit d20 rolls; area targeting bypasses it',()=>{
  const target=actor('e',{veil:1},{perception:4}),observer=actor('p',{foresight:1},{perception:4});
  const input={actor:observer,target,card,rules};
  assert.equal(proposalTargetRules(input).perceptionChance,50);
- assert.equal(proposalTargetRules({...input,perceptionRoll:49}).allowed,true);
- assert.equal(proposalTargetRules({...input,perceptionRoll:50}).allowed,false);
+ assert.equal(proposalTargetRules({...input,perceptionRoll:11}).allowed,true);
+ assert.equal(proposalTargetRules({...input,perceptionRoll:10}).allowed,false);
  assert.equal(proposalTargetRules({...input,actor:player}).perceptionChance,20);
  assert.equal(proposalTargetRules({...input,card:{...card,targeting:'area'}}).perceptionChance,null);
 });
 
 test('Evade consumes a charge on success and failure, while unavoidable fire bypasses it',()=>{
  const target=actor('e',{evade:2});
- for(const [evadeRoll,avoided]of[[24,true],[25,false]]){
+ for(const [evadeRoll,avoided]of[[16,true],[15,false]]){
   const out=proposalTargetRules({actor:player,target,card,rules,evadeRoll});
   assert.equal(out.avoided,avoided);assert.deepEqual(out.statusChanges,[{actorId:'e',status:'base.evade',delta:-1}]);
  }
  const greasy=actor('e',{evade:1,greased:1});
- const fire=proposalTargetRules({actor:player,target:greasy,card:{...card,damageType:'fire'},rules,evadeRoll:0});
+ const fire=proposalTargetRules({actor:player,target:greasy,card:{...card,damageType:'fire'},rules,evadeRoll:1});
  assert.equal(fire.unavoidable,true);assert.equal(fire.avoided,false);assert.deepEqual(fire.statusChanges,[]);
 });
 

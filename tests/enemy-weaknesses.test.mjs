@@ -117,7 +117,9 @@ test('a spell triggers magic and its element, not a physical type', () => {
 function land(weaknesses, { hits = 1, chance = () => true, mana = 3 } = {}) {
   const { combat, target } = liveCore();
   target.weaknesses = weaknesses; target.mana = mana; target.hp = target.maxHp = 500;
-  combat.rng.chance = chance;
+  // The stagger chance is a d20 on combatProcs (owner, 2026-11-01): `chance` decides whether that die meets any target.
+  const int = combat.rng.int.bind(combat.rng);
+  combat.rng.int = (stream, lo, hi) => (stream === 'combatProcs' && lo === 1 && hi === 20 ? (chance(stream, lo, hi) ? 20 : 1) : int(stream, lo, hi));
   for (let i = 0; i < hits; i++) {
     primeAccuracyRolls(combat, { die: 20 });
     applyAttackDamage(combat, combat.player, target, 3, [], { ...blunt, skipRatingBonus: true });
@@ -141,8 +143,8 @@ test('a stamina weakness queues SP loss for the enemy next turn; a non-matching 
 test('a stagger weakness rolls its chance, and staggers once per target per round', () => {
   const weak = [{ to: 'blunt', effect: 'stagger', amount: 40 }];
   const rolls = [];
-  const r = land(weak, { hits: 2, chance: (stream, pct) => { rolls.push([stream, pct]); return true; } });
-  assert.deepEqual(rolls[0], ['combatProcs', 40]);
+  const r = land(weak, { hits: 2, chance: (stream, lo, hi) => { rolls.push([stream, lo, hi]); return true; } });
+  assert.deepEqual(rolls[0], ['combatProcs', 1, 20]);
   assert.equal(r.events('enemyStaggered').filter(e => e.cause === 'weakness').length, 1, 'second hit the same round does not stagger again');
   assert.equal(land(weak, { chance: () => false }).events('enemyStaggered').length, 0);
 });

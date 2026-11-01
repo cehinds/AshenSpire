@@ -98,9 +98,10 @@ test('Core armor tier: receipt shows the budget point and the block it adds to D
 test('Smith item summaries expose actual tier deltas for weapons, shields and armor without simulating other cards', () => {
   const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil'; visit(run);
   const plan = smithingPlan(reg, run);
-  const before = coreCardSimulationCount();
   const model = smithSelectionModel(reg, plan);
-  assert.equal(coreCardSimulationCount(), before, 'item summaries do not evaluate live card previews');
+  // The default pick (first upgradeable item) is the only one that pays for card rows.
+  assert.ok(model.properties.selected, 'the first upgradeable item is preselected');
+  assert.ok(model.properties.candidates.filter(row => !row.selected).every(row => row.affectedRows.length === 0), 'item summaries do not evaluate live card previews');
   for (const ref of ['armament/greatsword', 'armament/kiteShield', 'armor/reaver/vigil']) {
     const candidate = plan.candidates.find(row => row.itemRef === ref);
     const item = model.properties.candidates.find(row => row.itemRef === ref);
@@ -117,11 +118,11 @@ test('Smith renders calculated item and card deltas outside the closed details',
   const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
   const host = dom.document.createElement('main'); dom.document.body.append(host);
   const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
-  const stone = host.querySelector('.smith-economy-values .smith-stone-icon');
+  const stone = host.querySelector('.smith-head-cost .smith-stone-icon');
   assert.equal(stone.querySelector('[data-engraved-icon]')?.dataset.engravedIcon, 'weight');
   assert.equal(stone.getAttribute('aria-hidden'), 'true', 'cost text names the decorative stone');
   assert.doesNotMatch(stone.textContent, /weight/);
-  assert.match(host.querySelector('.smith-economy-values').outerHTML, /Smithing Stone Cost/);
+  assert.match(host.querySelector('.smith-head-cost').getAttribute('aria-label'), /Smithing Stone Cost/);
   const stats = host.querySelector('.smith-intrinsic-stats');
   const deltas = node => node.querySelectorAll('.as-statpair').map(pair => [
     pair.querySelector('em')?.textContent, pair.querySelector('b')?.textContent, pair.querySelector('strong')?.textContent,

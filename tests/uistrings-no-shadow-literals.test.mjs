@@ -53,6 +53,7 @@ const ALLOWED = [
   ['src/ui/components/creationCards.js', 'Draw', 'character resource stat label for cards drawn per turn; not the builder draw-effect art cue'],
   ['src/ui/models/ProgressionInspectionModel.js', 'Draw', 'progression resource stat label for cards drawn per turn; not the builder draw-effect art cue'],
   ['src/ui/models/SmithSelectionModel.js', 'Draw', 'card upgrade draw-amount stat label; not the builder draw-effect art cue'],
+  ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
   ['src/ui/screens/settings.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],

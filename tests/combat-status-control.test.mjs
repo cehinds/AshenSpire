@@ -7,7 +7,7 @@ import * as S from '../src/engine/combatStatusControl.js';
 import { statusControlProblems } from '../src/model/combatStatusState.js';
 
 function setup(ward = 3) {
-  const events = [], queued = [], rolls = [100]; let cursor = 0;
+  const events = [], queued = [], rolls = [1]; let cursor = 0;
   const entity = { id: 'p1', kind: 'player', alive: true, hp: 10, maxHp: 50, energy: 12,
     attributes: { constitution: 0, wisdom: 3, intelligence: 4 }, statuses: {} };
   const ctx = { combatExpansionVersion: 2, combatStatusRules: structuredClone(combatStatusRules), player: entity,
@@ -107,7 +107,7 @@ test('waiting breaks one lock and guarantees a Resolve window without clearing b
   const ended = S.endControlTurn(ctx, entity, 'paralysis');
   assert.equal(ended.removed, 1); assert.equal(entity.statuses.paralysis.stacks, 1);
   assert.equal(ended.resolveNextTurn, true);
-  rolls[0] = 100;
+  rolls[0] = 1;
   S.recoverStatusesAtOwnerStart(ctx, entity, { cycle: 2 });
   assert.equal(S.controlRestrictions(ctx, entity).locked, false);
   assert.equal(S.controlRestrictions(ctx, entity).counterDisabled, false);
@@ -123,7 +123,7 @@ test('Mental recovery matches weighted stats/stack penalty and rolls once per cy
   assert.equal(S.recoveryChance(ctx, entity, 'sleep'), 33);
   applyStatus(ctx, entity, 'sleep', 1); assert.equal(S.recoveryChance(ctx, entity, 'sleep'), 23);
   applyStatus(ctx, entity, 'sleep', 1); assert.equal(S.recoveryChance(ctx, entity, 'sleep'), 13);
-  rolls[0] = 1;
+  rolls[0] = 20;
   S.recoverStatusesAtOwnerStart(ctx, entity, { cycle: 1 });
   assert.equal(entity.statuses.sleep.stacks, 2);
   const before = cursor(); S.recoverStatusesAtOwnerStart(ctx, entity, { cycle: 1 });
@@ -131,8 +131,8 @@ test('Mental recovery matches weighted stats/stack penalty and rolls once per cy
   entity.attributes.wisdom = 1000; assert.equal(S.recoveryChance(ctx, entity, 'sleep'), 80);
 });
 
-test('percentage Advantage keeps lower die, Disadvantage higher, and both cancel', () => {
-  const { ctx, rolls, cursor } = setup(); rolls.splice(0, 1, 90, 10, 10, 90, 20);
+test('percentage Advantage keeps the higher d20, Disadvantage the lower, and both cancel', () => {
+  const { ctx, rolls, cursor } = setup(); rolls.splice(0, 1, 4, 18, 4, 18, 18);
   assert.equal(S.rollStatusChance(ctx, 30, { advantage: true }).success, true);
   assert.equal(S.rollStatusChance(ctx, 30, { disadvantage: true }).success, false);
   assert.equal(S.rollStatusChance(ctx, 30, { advantage: true, disadvantage: true }).success, true);
@@ -142,7 +142,7 @@ test('percentage Advantage keeps lower die, Disadvantage higher, and both cancel
 });
 
 test('successful recovery shrinks pending gauge25%, does not restore Ward', () => {
-  const { ctx, entity, rolls } = setup(); rolls[0] = 1;
+  const { ctx, entity, rolls } = setup(); rolls[0] = 20;
   S.applyStatusPressure(ctx, entity, 'sleep', 4);
   S.spendPersistentWard(ctx, entity, 2);
   S.recoverStatusesAtOwnerStart(ctx, entity, { cycle: 1 });
@@ -150,7 +150,7 @@ test('successful recovery shrinks pending gauge25%, does not restore Ward', () =
 });
 
 test('Sleep rest budgets survive removal/reinfliction/save and fractional Ward grant cannot repeat', () => {
-  const { ctx, entity, rolls } = setup(); rolls[0] = 100;
+  const { ctx, entity, rolls } = setup(); rolls[0] = 1;
   S.spendPersistentWard(ctx, entity, 2); applyStatus(ctx, entity, 'sleep', 3);
   S.recoverStatusesAtOwnerStart(ctx, entity, { cycle: 1 });
   const rest = S.sleepRestoration(ctx, entity, { wardModifierPercent: -20 });
