@@ -2,6 +2,8 @@
 // no engine module, so statuses.js and stanceHit.js can read it without an import cycle. The numbers are data
 // (content/framework/mechanics.json `elements`). The contest itself lives in elementLightning.js.
 import { mechanics } from '../framework/data/mechanics.js';
+import { equippedIn } from '../model/loadout.js';
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 
 export const elementRules = () => mechanics.elements;
 export const lightningRules = () => mechanics.elements.lightning;
@@ -47,3 +49,24 @@ export function ownElementAmount(amount, userElement, abilityElement) {
   if (!(base > 0) || !userElement || userElement !== abilityElement) return amount;
   return Math.max(base, Math.floor(base * elementRules().ownElementMult));
 }
+
+/** The pieces an entity wears (the player's or a seat's loadout). Enemies carry no loadout. */
+export function wornPieces(ctx, entity) {
+  const key = ctx.playerIdForEntity?.(entity);
+  const seat = key ? ctx.players?.get(key) : null;
+  const loadout = seat?.loadout || (entity === ctx.player ? ctx.loadout : null);
+  if (!loadout || !ctx.registries) return [];
+  return (ctx.registries.equipment?.slots || []).map(slot => equippedIn(ctx.registries, loadout, entity.classId || seat?.classId, slot.id)).filter(Boolean);
+}
+export const isMetalPiece = piece => piece?.material === 'metal';
+/** True when the entity wears metal equipment; an enemy counts when it or its definition says `material: 'metal'`. */
+export function wearsMetal(ctx, entity) {
+  if (!entity) return false;
+  if (entity.material === 'metal') return true;
+  const def = entity.kind === 'enemy' && entity.enemyId && ctx.registries?.enemies?.has?.(entity.enemyId) ? ctx.registries.enemies.get(entity.enemyId) : null;
+  return def?.material === 'metal' || wornPieces(ctx, entity).some(isMetalPiece);
+}
+
+/** +1 Precision on a lightning hit whose target uses metal equipment; 0 otherwise. */
+export const lightningPrecisionBonus = (ctx, target, carrier) => (fixCoreEnabled(ctx) && isLightning(carrier) && wearsMetal(ctx, target) ? lightningRules().metalPrecision : 0);
+

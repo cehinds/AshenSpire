@@ -7,6 +7,7 @@ import { proposalTargetPlan } from './proposalStatusRuntime.js';
 import { attackAccuracy, counterBaseEvasion, attributesOf, levelOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
 import * as Contest from './contest.js';
+import { shockedPenalty, lightningPrecisionBonus } from './elementRules.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { mechanics } from '../framework/data/mechanics.js';
@@ -126,11 +127,13 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   // Under FixCore, Precision and fixed Evasion are whole numbers, rounded down.
   const statMix = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) : 0;
   const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
+  // Lightning (SPEC 4.7): +1 against a target using metal; each Shocked stack on the attacker is -1.
+  const elementDelta = fixCoreEnabled(ctx) ? lightningPrecisionBonus(ctx, target, carrier) - shockedPenalty(source) : 0;
   // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
   const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, ...precisionStatParts(ctx, source, carrier), { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
-    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
+    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0], ['lightning / Shocked', elementDelta]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
-    ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
+    ? Math.floor(cfg.precisionBase + precisionMultiplier + elementDelta + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options)) : effectiveEvasion(ctx, target, options);

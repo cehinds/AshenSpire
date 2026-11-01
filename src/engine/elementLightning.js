@@ -6,32 +6,11 @@ import { d20Mode } from './d20Chance.js';
 import { applyStatus } from './statuses.js';
 import { attributesOf, levelOf } from './counterReturn.js';
 import { currentPoise } from './contest.js';
-import { equippedIn } from '../model/loadout.js';
-import { isLightning, lightningRules, statusStacks, elementOf } from './elementRules.js';
+import { isLightning, lightningRules, statusStacks, elementOf, wearsMetal, lightningPrecisionBonus, isMetalPiece, wornPieces } from './elementRules.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 
-export { isLightning };
+export { isLightning, wearsMetal, lightningPrecisionBonus, isMetalPiece, wornPieces };
 const whole = value => (Number.isFinite(Number(value)) ? Number(value) : 0);
-
-/** The pieces an entity wears (the player's or a seat's loadout). Enemies carry no loadout. */
-export function wornPieces(ctx, entity) {
-  const key = ctx.playerIdForEntity?.(entity);
-  const seat = key ? ctx.players?.get(key) : null;
-  const loadout = seat?.loadout || (entity === ctx.player ? ctx.loadout : null);
-  if (!loadout || !ctx.registries) return [];
-  return (ctx.registries.equipment?.slots || []).map(slot => equippedIn(ctx.registries, loadout, entity.classId || seat?.classId, slot.id)).filter(Boolean);
-}
-export const isMetalPiece = piece => piece?.material === 'metal';
-/** True when the entity wears metal equipment; an enemy counts when it or its definition says `material: 'metal'`. */
-export function wearsMetal(ctx, entity) {
-  if (!entity) return false;
-  if (entity.material === 'metal') return true;
-  const def = entity.kind === 'enemy' && entity.enemyId && ctx.registries?.enemies?.has?.(entity.enemyId) ? ctx.registries.enemies.get(entity.enemyId) : null;
-  return def?.material === 'metal' || wornPieces(ctx, entity).some(isMetalPiece);
-}
-
-/** +1 Precision on a lightning hit whose target uses metal equipment; 0 otherwise. */
-export const lightningPrecisionBonus = (ctx, target, carrier) => (fixCoreEnabled(ctx) && isLightning(carrier) && wearsMetal(ctx, target) ? lightningRules().metalPrecision : 0);
 
 const rankOf = carrier => { const r = carrier?.rank ?? carrier?.cardRef?.rank ?? carrier?.combatProfile?.rank; return Number.isInteger(r) && r >= 1 ? r : 1; };
 const sum = (attrs, ids) => ids.map(id => ({ id, value: whole(attrs?.[id]) }));
@@ -91,11 +70,18 @@ export function fireDriesDamp(ctx, target, hpLoss) {
   return true;
 }
 
-/** An earth enemy opens the fight with Bedrock (SPEC 4.7): call after the enemy entity is built. */
+/** An enemy opens the fight with its element's and its authored starting statuses (SPEC 4.7): an earth enemy gets Bedrock; `startStatuses` rows seed as written. */
 export function seedElementStatuses(ctx, enemy, def) {
-  if (!fixCoreEnabled(ctx) || elementOf(enemy, def) !== 'earth') return 0;
-  const rules = lightningRules(), start = def?.bedrockStacks ?? rules.bedrockStartStacks;
-  if (!(start > 0) || statusStacks(enemy, rules.bedrockStatus) > 0) return 0;
-  applyStatus(ctx, enemy, rules.bedrockStatus, start, null);
-  return start;
+  if (!fixCoreEnabled(ctx)) return 0;
+  const rules = lightningRules();
+  let seeded = 0;
+  if (elementOf(enemy, def) === 'earth' && statusStacks(enemy, rules.bedrockStatus) <= 0) {
+    const start = def?.bedrockStacks ?? rules.bedrockStartStacks;
+    if (start > 0) { applyStatus(ctx, enemy, rules.bedrockStatus, start, null); seeded += start; }
+  }
+  for (const row of def?.startStatuses || []) {
+    if (statusStacks(enemy, row.status) > 0 || !(row.stacks > 0)) continue;
+    applyStatus(ctx, enemy, row.status, row.stacks, null); seeded += row.stacks;
+  }
+  return seeded;
 }
