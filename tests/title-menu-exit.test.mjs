@@ -17,7 +17,7 @@ function invoke(saved) {
   const events = [];
   const run = { slot: 1 };
   const state = { run, document: { activeElement: {} }, saveNow: () => { events.push('save'); return saved; },
-    closeOverlay: () => events.push('overlay'), dropLanLink: () => events.push('lan'),
+    closeOverlay: () => events.push('overlay'),
     audio: { stopMusic: () => events.push('stop') }, app: {}, showCollapsedTitle() {},
     mountQuitScreen: (_, opts) => { events.push('exit'); assert.equal(opts.savedRun, true); } };
   vm.runInNewContext(`(function () { ${quitBody} })()`, state);
@@ -27,5 +27,5 @@ test('a failed exit save retains the run and does not stop music or close', () =
   const h = invoke(false); assert.deepEqual(h.events, ['save']); assert.equal(h.state.run, h.run);
 });
 test('a successful exit saves before stopping and mounting the close route', () => {
-  const h = invoke(1); assert.deepEqual(h.events, ['save', 'overlay', 'lan', 'stop', 'exit']); assert.equal(h.state.run, null);
+  const h = invoke(1); assert.deepEqual(h.events, ['save', 'overlay', 'stop', 'exit']); assert.equal(h.state.run, null);
 });
