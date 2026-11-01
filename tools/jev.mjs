@@ -368,7 +368,7 @@ export function classifyConflicts(paths) {
 
 // Pure: resolve every conflict block in CHANGELOG.md text. Ours (HEAD) receipt
 // block first, then theirs; a non-blank line of ours that theirs already holds is dropped.
-export function resolveChangelogConflict(text, baseText = null) {
+export function resolveChangelogConflict(text, baseText = null, oursText = null) {
   // Receipt-level, not line-level: every conflict hunk takes theirs (dev's date groups and
   // headings intact), and ours contributes only its new receipt bullets, which go to the top
   // of the newest date group (restamp then orders them). diff3/zdiff3 base sections are dropped.
@@ -406,8 +406,27 @@ export function resolveChangelogConflict(text, baseText = null) {
     }
     return theirs;
   });
-  if (!extra.length) return merged;
-  const lines = merged.split('\n');
+  // A receipt this branch deleted (in the base, gone from ours) must not come back with dev's
+  // hunk. Dev's copy unchanged from the base: drop it. Dev edited it: delete vs edit, escalate.
+  let out = merged;
+  if (baseText != null && oursText != null) {
+    const prOf = (l) => (/^- \*\*.*?\(\[#(\d+)\]\(/.exec(l) || [])[1];
+    const unstamped = (l) => l.replace(/(\(\[#\d+\]\([^)\s]*\/pull\/\d+\), )`\d+\.\d+\.\d+\.\d+`/, '$1`#`');
+    const byPr = (t) => new Map(String(t).split('\n').filter(prOf).map(l => [prOf(l), l]));
+    const base = byPr(baseText), ours = byPr(oursText);
+    const keep = [];
+    for (const line of out.split('\n')) {
+      const pr = prOf(line);
+      if (pr && base.has(pr) && !ours.has(pr) && !extra.includes(line)) {
+        if (unstamped(line) === unstamped(base.get(pr))) continue;
+        throw new Error(`CHANGELOG conflict: receipt #${pr} was deleted on this branch but edited on dev; a model must decide`);
+      }
+      keep.push(line);
+    }
+    out = keep.join('\n');
+  }
+  if (!extra.length) return out;
+  const lines = out.split('\n');
   const at = lines.findIndex(l => /^## \d{4}-\d{2}-\d{2}\b/.test(l));
   if (at < 0) throw new Error('CHANGELOG.md has no "## <date>" heading to receive the receipt');
   const first = lines.findIndex((l, i) => i > at && l.trim() !== '');
@@ -449,9 +468,10 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
     for (const f of cls.changelog) {
       const path = resolve(top, f);
       let text;
-      // Stage 1 of the index is the merge base's copy; without it every ours-only receipt reads as new.
+      // Index stages 1 (merge base) and 2 (ours) tell new receipts from deleted ones on either side.
       const baseCopy = git(['show', `:1:${f}`], top);
-      try { text = resolveChangelogConflict(readFileSync(path, 'utf8'), baseCopy.status === 0 ? baseCopy.out : null); } catch (error) {
+      const oursCopy = git(['show', `:2:${f}`], top);
+      try { text = resolveChangelogConflict(readFileSync(path, 'utf8'), baseCopy.status === 0 ? baseCopy.out : null, oursCopy.status === 0 ? oursCopy.out : null); } catch (error) {
         git(['merge', '--abort'], top);
         return { exit: 2, verdict: 'needs-model', reason: error.message, files: [f] };
       }

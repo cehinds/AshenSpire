@@ -661,3 +661,27 @@ test('devmerge: a receipt dev deleted is not restored by our neighbouring new re
     }
   } finally { f.done(); }
 });
+
+test('resolveChangelogConflict keeps a receipt deletion made on this branch (Codex repro)', () => {
+  const head = '# Changelog\n\n## 2026-10-31\n\n';
+  const base = `${head}${RCPT(5, 'Old', 5)}\n${RCPT(1, 'Base', 1)}\n`;
+  const ours = `${head}${RCPT(9, 'New', 9)}\n${RCPT(1, 'Base', 1)}\n`;
+  const text = `${head}<<<<<<< HEAD\n${RCPT(9, 'New', 9)}\n=======\n${RCPT(8, 'Dev', 8)}\n${RCPT(5, 'Old', 5)}\n>>>>>>> origin/dev\n${RCPT(1, 'Base', 1)}\n`;
+  const r = resolveChangelogConflict(text, base, ours);
+  assert.ok(r.includes('#9]') && r.includes('#8]') && r.includes('#1]'), r);
+  assert.ok(!r.includes('#5]'), 'the receipt this branch deleted stays deleted');
+  const devEdited = text.replace('**Old**', '**Old, reworded on dev**');
+  assert.throws(() => resolveChangelogConflict(devEdited, base, ours), /deleted on this branch but edited on dev/);
+});
+
+test('devmerge: a receipt this branch deleted is not restored by dev\'s neighbouring receipt (Codex repro)', () => {
+  const head = '# Changelog\n\n## 2026-10-31\n\n';
+  const f = fixture({ 'CHANGELOG.md': `${head}${RCPT(5, 'Old', 5)}\n${RCPT(1, 'Base', 1)}\n` });
+  try {
+    f.onDev(w => f.put(w, 'CHANGELOG.md', `${head}${RCPT(8, 'Dev', 8)}\n${RCPT(5, 'Old', 5)}\n${RCPT(1, 'Base', 1)}\n`));
+    f.onFeature(w => f.put(w, 'CHANGELOG.md', `${head}${RCPT(9, 'New', 9)}\n${RCPT(1, 'Base', 1)}\n`));
+    devmerge({ base: 'dev', pr: 9, cwd: f.work, deps: OK_DEPS() });
+    const cl = readFileSync(join(f.work, 'CHANGELOG.md'), 'utf8');
+    assert.ok(cl.includes('#9]') && cl.includes('#8]') && !cl.includes('#5]'), cl);
+  } finally { f.done(); }
+});
