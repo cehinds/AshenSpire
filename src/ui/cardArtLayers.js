@@ -23,6 +23,10 @@ const MOTIFS = Object.freeze({
 
 export function cardArtLayersHtml(composition) {
   if (composition?.kind !== 'simple') return '';
+  const treatment = composition.componentArt?.backgroundColor;
+  // Keep this outside the component stage's stacking context: blend only with
+  // the existing background image, before any object/effect PNG is painted.
+  const background = treatment ? `<span data-art-background-color="${esc(treatment.id)}" style="position:absolute;inset:0;background:${color(treatment.color)};mix-blend-mode:color;pointer-events:none"></span>` : '';
   const components = componentLayersHtml(composition.componentArt);
   const layers = (composition.layers || []).slice(0, 3).map((layer, index) => {
     const theme = layer.kind === 'element' && Object.hasOwn(CARD_ART_ELEMENTS, layer.id) && CARD_ART_ELEMENTS[layer.id];
@@ -32,7 +36,7 @@ export function cardArtLayersHtml(composition) {
     const glow = theme ? `<span style="position:absolute;inset:0;background:radial-gradient(ellipse at 15% 65%,${color(theme.glow)}24,transparent 42%),radial-gradient(ellipse at 85% 30%,${color(theme.glow)}1c,transparent 40%)"></span>` : '';
     return `${glow}<svg data-art-${theme ? 'element' : 'status'}="${esc(layer.id)}" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:hidden;color:${tint};opacity:${theme ? '.34' : '.42'}" fill="none" stroke="currentColor" stroke-width="${theme ? '.55' : '.8'}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><g${!theme && index > 1 ? ` transform="translate(0 ${index % 2 ? 7 : -7})"` : ''}>${motif}</g></svg>`;
   }).join('');
-  return layers || components ? `<span data-card-art-layers aria-hidden="true" style="position:absolute;inset:0;display:block;overflow:hidden;pointer-events:none;border-radius:inherit">${components}${layers}</span>` : '';
+  return layers || components ? `<span data-card-art-layers aria-hidden="true" style="position:absolute;inset:0;display:block;overflow:hidden;pointer-events:none;border-radius:inherit">${background}${components}${layers}</span>` : '';
 }
 
 // A uniformly scaled 512×640 stage keeps shaft alignment and PNG aspect ratios
