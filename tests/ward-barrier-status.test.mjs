@@ -150,3 +150,13 @@ test('old saves: a combat snapshot holding the numeric barrier loads and drops i
   assert.equal('barrier' in restored.enemies[0], false);
   assert.equal(restored.player.hp, combat.player.hp);
 });
+
+test('Barrier on an emptied Poise pool clears the empty marker, so the fight still saves (review #2476)', async () => {
+  const { serializeCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
+  const combat = liveCore(), e = combat.enemies[0];
+  e.persistentPoise = { ...e.persistentPoise, value: 0, missing: e.persistentPoise.max };
+  S.applyStatus(combat, e, 'barrier', 1, combat.player);
+  assert.equal(e.persistentPoise.value, 5);
+  assert.equal('missing' in e.persistentPoise, false, 'a refilled pool is no longer empty');
+  assert.doesNotThrow(() => serializeCombatSnapshot(combat));
+});
