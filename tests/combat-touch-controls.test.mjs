@@ -42,6 +42,8 @@ test('compact hand leaves the footer tool and Grid rows below its resting cards'
     // Owner (2026-11-01): the cards sit lower, into the band above the strip. The strip is one 30px row now (Combat log,
     // Grid, Reaction and Auto share it; the separate 28px Grid row is gone), measured 10px below the lowest card in a
     // real browser at 360x740, 390x844 and 467x920. The authored reserve (mobileHandReservePx) is that contract.
+    // Pin the floor too, so cutting the authored reserve cannot silently drop the cards onto the 30px strip.
+    assert.ok(uiConfig.scenes.w4a.sizing.mobileHandReservePx >= 36, 'the phone hand reserve keeps the 30px strip plus a 6px gap');
     assert.ok((input.height - bottom) * zoom >= uiConfig.scenes.w4a.sizing.mobileHandReservePx, `${count} cards at zoom ${zoom} keep the authored reserve above the 30px tool and Grid strip`);
   }
 });
