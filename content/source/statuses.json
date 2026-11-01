@@ -1346,5 +1346,32 @@
     "decay": "perTurnEnd",
     "tooltip": "Each stack gives +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
     "sharedWord": true
+  },
+  {
+    "id": "shocked",
+    "name": "Shocked",
+    "icon": "target",
+    "tint": "#e8d46a",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack is -1 Precision. 1 stack expires each turn."
+  },
+  {
+    "id": "damp",
+    "name": "Damp",
+    "icon": "frost",
+    "tint": "#5f8fb5",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Lightning against it rolls with advantage to Shock. Burn applied to it is halved. Any Fire damage dries it. 1 stack expires each turn."
+  },
+  {
+    "id": "bedrock",
+    "name": "Bedrock",
+    "icon": "armour",
+    "tint": "#8a7b5c",
+    "stackMode": "add",
+    "decay": "none",
+    "tooltip": "Each stack fully absorbs one lightning hit and is lost doing so."
   }
 ]

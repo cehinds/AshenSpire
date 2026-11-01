@@ -1125,6 +1125,9 @@ export const SCHEMAS = Object.freeze({
     ))),
     // Weaknesses (owner, 2026-10-31): [{ to, effect, amount? }], validated by model/enemyWeaknessRules.js in validate.js.
     weaknesses: opt(arr(obj({ to: str, effect: str, amount: opt(num) }))),
+    // Element (owner, 2026-10-31, SPEC 4.7): an earth enemy opens with Bedrock; own-element moves get x1.25. startStatuses seed at spawn (Core).
+    element: opt(str),
+    startStatuses: opt(arr(obj({ status: str, stacks: num }))),
     script: opt(ref('scripts')),
   }),
 

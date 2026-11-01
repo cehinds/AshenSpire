@@ -26,6 +26,7 @@ import { ratingValue } from '../model/combatRatings.js';
 import * as Control from './combatStatusControl.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 import { weaknessStackBonus } from './weaknesses.js';
+import { dampBurnStacks } from './elementRules.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -54,6 +55,8 @@ function syncPoolsAfterStatus(ctx, target) {
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
+  // Damp (SPEC 4.7): Burn applied to a Damp holder is halved.
+  if (statusId === 'burn' && fixCoreEnabled(ctx)) stacks = dampBurnStacks(target, stacks);
   const before = getStacks(target, statusId);
   // Enemy weaknesses (SPEC 5.3): a status an opponent applies to an enemy weak to it lands with extra stacks.
   const weakBonus = stacks > 0 ? weaknessStackBonus(ctx, target, statusId, source) : 0;

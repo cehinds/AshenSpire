@@ -1,0 +1,26 @@
+{
+  "id": "status.bedrock",
+  "tag": "status.bedrock",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Bedrock",
+  "description": "Each stack fully absorbs one lightning hit and is lost doing so.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.bedrock"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

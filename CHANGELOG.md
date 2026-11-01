@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Lightning, Shocked, Damp and Bedrock** ([#2477](https://github.com/cehinds/AshenSpire/pull/2477), `0.7.3.28`). Added Spark, a lightning cantrip, with Shocked, Damp and Bedrock statuses, metal gear conducting lightning, and a 1.25x bonus for enemies using their own element.
 - **Ward and Barrier stacks** ([#2476](https://github.com/cehinds/AshenSpire/pull/2476), `0.7.3.28`). Ward and Barrier are now stacked statuses: Ward sends all damage to Poise first, then Block, then HP, with a purple Poise badge and HP overlay; each Barrier stack adds 5 Poise and fades by one per turn; Mote Shield gives both.
 - **Armoury: compact rows, toast and Replace comparison** ([#2470](https://github.com/cehinds/AshenSpire/pull/2470), `0.7.3.28`). Equipment rows are selectable with a green outline driving the Inspect panel, the status line is a fading toast, and Replace shows the equipped and new item side by side (green better, red worse) with Back and Equip.
 - **Focus discount needs Prepared stance** ([#2469](https://github.com/cehinds/AshenSpire/pull/2469), `0.7.3.26`). A Focus armament now lowers magic cards by 1 Mana only while you are in Prepared stance.

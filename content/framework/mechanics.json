@@ -89,7 +89,14 @@
   "counter": {
     "stackFraction": 0.1,
     "autoCounterStamina": 1,
-    "autoCounterTags": ["camp:physical", "maneuver:counter", "counter:melee", "range:melee", "targeting:single", "trait:reaction"],
+    "autoCounterTags": [
+      "camp:physical",
+      "maneuver:counter",
+      "counter:melee",
+      "range:melee",
+      "targeting:single",
+      "trait:reaction"
+    ],
     "decayPerTurn": 2
   },
   "reflect": {
@@ -135,5 +142,27 @@
     ],
     "tieSucceeds": true,
     "rankBonus": true
+  },
+  "elements": {
+    "comment": "Lightning, Shocked, Damp, Bedrock and the own-element bonus (owner, 2026-10-31; SPEC 4.7). The Shocked contest is d20 + target Shocked stacks x (caster INT + WIS + card rank) vs DC = target current Poise + STR + DEX + CON + level; a tie succeeds.",
+    "ownElementMult": 1.25,
+    "lightning": {
+      "metalPrecision": 1,
+      "shockStacks": 1,
+      "shockAttacker": [
+        "intelligence",
+        "wisdom"
+      ],
+      "shockDefender": [
+        "strength",
+        "dexterity",
+        "constitution"
+      ],
+      "advantageStatus": "damp",
+      "bedrockStatus": "bedrock",
+      "bedrockStartStacks": 3,
+      "dampBurnMult": 0.5,
+      "tieSucceeds": true
+    }
   }
 }
