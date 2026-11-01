@@ -113,25 +113,12 @@ const SHAPES = [
   { tag: '1200x730', width: 1200, height: 730, dsf: 1, mobile: false },
 ];
 
-// D2 (Vira): coverage was HAND-LISTED and had already drifted from the app by
-// five — eleven ?shot= states exist in src/, this file covered six, and the
-// five co-op states were silently absent. That is precisely the failure this
-// harness exists to correct in screenshot.mjs, reproduced by me in the tool
-// that was supposed to be the fix. So the list is now DERIVED: the app's own
-// states are read out of src/main.js, and any state with neither a shot entry
-// nor an explicit exclusion below is a hard failure. A silent gap cannot
-// recur; an intentional gap must be typed out and justified in one line.
-const EXCLUDED_STATES = {
-  // Co-op is a LAN mode whose shots need a canned server snapshot through a
-  // stub socket (main.js coopStubMount, tools/coop-shoot.mjs is its own
-  // instrument). Whether co-op ships in 0.4.x is Marina's call; until it is
-  // in the release set, these are excluded BY NAME rather than missing.
-  coop: 'LAN co-op — photographed by tools/coop-shoot.mjs; not in the 0.4.x solo delivery set',
-  coopmap: 'LAN co-op — see coop',
-  coopreward: 'LAN co-op — see coop',
-  coopshrine: 'LAN co-op — see coop',
-  coopcatchup: 'LAN co-op — see coop',
-};
+// D2 (Vira): coverage was HAND-LISTED and had already drifted from the app. So
+// the list is DERIVED: the app's own states are read out of src/main.js, and
+// any state with neither a shot entry nor an explicit exclusion below is a hard
+// failure. A silent gap cannot recur; an intentional gap must be typed out and
+// justified in one line. Empty today.
+const EXCLUDED_STATES = {};
 
 /** The states the APP actually has, read from src/main.js — never retyped. */
 function appShotStates() {
@@ -594,17 +581,14 @@ const SUB_SURFACE_GROUPS = [
 // two members of a set that render the same panel are not two members.
 const DISTINCT_PANELS = 'no two ids in a set render the same panel';
 
-// Excluded sub-surfaces, keyed `group:id`, named exactly as the co-op states
-// are (SPEC §8 clause 5: a release-gating instrument prints what it did NOT
+// Excluded sub-surfaces, keyed `group:id` (SPEC §8 clause 5: a release-gating instrument prints what it did NOT
 // check). Empty today — every derived sub-surface is photographed.
 const EXCLUDED_SUBSURFACES = {};
 
 // Sub-surface SETS this tool knows exist and does NOT enumerate. This list is
 // the honest edge of denominator 2 and is printed with the run: it is the part
 // no derivation can close while the set-of-sets has no home.
-const UNENUMERATED_SETS = [
-  ['co-op seat tabs', 'src/ui/screens/coop.js renderSeatTabs() — one tab per connected player, built at runtime from the lobby; no static list exists and the whole co-op surface is excluded from the 0.4.x solo delivery set (see EXCLUDED_STATES)'],
-];
+const UNENUMERATED_SETS = [];
 
 // D2's gate: derived denominators vs what this file covers. Runs BEFORE the
 // browser so a coverage gap costs no time and cannot be mistaken for a render

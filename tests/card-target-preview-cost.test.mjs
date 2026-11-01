@@ -58,10 +58,10 @@ function assertPreviewParity(combat, expectedClones) {
 }
 
 test(`an ordinary friendly play retains only its real transaction clone`, () => {
-  const combat = fixture(), id = combat.piles.hand[0].instanceId, owner = combat.playerKey;
+  const combat = fixture(), id = combat.piles.hand[0].instanceId;
   assert.equal(hasEventTriggers(combat, 'cardPreparing'), false);
   assert.equal(assertPreviewParity(combat, 0), false);
-  const target = countFullClones(() => botCardTargetId(combat.registries, combat, combat.piles.hand[0], 'e1', owner));
+  const target = countFullClones(() => botCardTargetId(combat.registries, combat, combat.piles.hand[0], 'e1'));
   assert.equal(target.value, undefined);
   assert.equal(target.fullClones, 0, 'solo needs no detached graph');
   const actual = countFullClones(() => dispatch(combat, { type: 'playCard', cardInstanceId: id }));

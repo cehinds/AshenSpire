@@ -637,7 +637,7 @@ if (argv.includes('--selftest')) {
 }
 
 // ---- the drive ------------------------------------------------------------------
-const server = await serve({ root: ROOT, port: PORT, open: false, lan: true, quiet: CHECK });
+const server = await serve({ root: ROOT, port: PORT, open: false, quiet: CHECK });
 const base = server.url;
 let browser;
 let harness = null;

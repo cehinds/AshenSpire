@@ -377,7 +377,7 @@ export async function run(opts) {
     // inside the try: a throw from serve, loadPlaywright or launch still reaches the finally
     if (opts.serve) {
       const { serve } = await import('./serve.mjs');
-      server = await serve({ port: 0, open: false, lan: false, quiet: true, host: 'localhost' });
+      server = await serve({ port: 0, open: false, quiet: true, host: 'localhost' });
       result.base = server.url;
     }
     const base = result.base;

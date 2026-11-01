@@ -53,9 +53,9 @@ export function toolDefs({ repo, root, origin, ports = {} }) {
       blurb: 'Serves the game from source for the preview dock and the preview pages.',
       // --host localhost: loopback only (127.0.0.1 and ::1). Without it serve.mjs
       // listens on every interface and would expose the checkout, .git included,
-      // to the LAN; --no-lan only turns off the LAN session layer. The game keeps
+      // to the LAN. The game keeps
       // the `localhost` host, so its origin stays apart from the Workbench's 127.0.0.1.
-      command: (port) => [path.join(repo, 'tools/serve.mjs'), '--port', String(port), '--no-open', '--no-lan', '--host', 'localhost', '--root', root],
+      command: (port) => [path.join(repo, 'tools/serve.mjs'), '--port', String(port), '--no-open', '--host', 'localhost', '--root', root],
       portFrom: /live at http:\/\/localhost:(\d+)/, internal: true, serveRoot: '/__serve/info',
     },
   ];

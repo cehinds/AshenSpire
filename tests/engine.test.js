@@ -5983,9 +5983,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // BOUNDARY. This is the vocabulary and the sentence. It does NOT prove the
     // note renders, that BEGIN THE CLIMB refuses, that the refusal lets go
-    // again, or that anything at all happens on the co-op wire — those are
-    // tools/seedrefuses.mjs (rendered, three screens) and tools/lan.mjs's own
-    // boundary check. It is also silent on `ß`, which upper-cases to `SS` and
+    // again — that is tools/seedrefuses.mjs (rendered, two screens). It is also silent on `ß`, which upper-cases to `SS` and
     // is therefore accepted as two S's exactly as it always has been.
   });
 

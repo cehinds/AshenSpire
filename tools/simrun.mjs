@@ -227,7 +227,7 @@ export function createRunLoop(REG, config) {
       const cm = hpMult !== 1 || loop > 0
         ? { hpMult, loopMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] : [] }
         : {};
-      // The ONE boot path (#54) — same module main.js and session.mjs use, so a
+      // The ONE boot path (#54) — same module main.js uses, so a
       // signature change lands on the game and the harnesses in the same act.
       const map = buildActMap(REG, rng, seat, contentAct, null, { history: run.history });
       // Plant (runsim --selftest): every node a skipped merchant whose only exit

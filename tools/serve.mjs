@@ -3,13 +3,12 @@
 // Serves the project over http://localhost so the ES-module app (index.html →
 // src/main.js) and the optional music/ folder load correctly (file:// blocks
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
-// directly:  node tools/serve.mjs [--port N] [--no-open] [--no-lan] [--host ADDR] [--root DIR] [--watch]
+// directly:  node tools/serve.mjs [--port N] [--no-open] [--host ADDR] [--root DIR] [--watch]
 //
 // WHERE IT LISTENS. Without --host it listens on every interface, as it always
-// has (LAN play needs that). --host ADDR binds only ADDR; `--host localhost`
+// has. --host ADDR binds only ADDR; `--host localhost`
 // binds the loopback interfaces 127.0.0.1 and, where the machine has it, ::1,
 // so http://localhost:PORT answers whichever one the browser resolves first.
-// --no-lan only turns off the LAN session layer; it does not change the bind.
 //
 // THE ART COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md steps 12
 // and 13). Serving a checkout (a root with art-release.json), a request under
@@ -331,21 +330,18 @@ function startWatch(root, emit) {
 }
 
 /**
- * serve({ root, port, open, lan, host, watch }) → Promise<{ server, url, port }>
+ * serve({ root, port, open, host, watch }) → Promise<{ server, url, port }>
  * `host` binds one address ('localhost': 127.0.0.1 and ::1); unset, every interface.
- * Bumps to the next port if the requested one is in use. `lan: true` attaches
- * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
+ * Bumps to the next port if the requested one is in use.
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false, host, watch = false, assetRoot } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite = false, quiet = false, host, watch = false, assetRoot } = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
   const artCheckout = authoringRoot({ root: rootResolved, assetRoot, required: false });
   const notedMissing = new Set(); // one note per missing pack, not one per request
-  let lanLayer = null; // attached after listen (needs the final port)
   const devClients = new Set(); // --watch: open /__dev/events responses
   const server = createServer(async (req, res) => {
     try {
-      if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
       if (urlPath.includes('\\')) { res.writeHead(403); res.end('Forbidden'); return; }
       // --watch only: the live-reload stream (events are sent by startWatch below).
@@ -540,12 +536,6 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
       const log = quiet ? () => {} : (line) => console.log(line);
       log(`\n  ▸ Ashen Spire is live at ${url}`);
       log(`    Serving ${rootResolved}`);
-      if (lan) {
-        const { attachLan, lanAddress } = await import('./lan.mjs');
-        lanLayer = attachLan(server, { port, root: rootResolved });
-        server.on('close', () => lanLayer.close());
-        log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
-      }
       if (watch) {
         const sendDev = (event, text) => { const msg = sseMessage(event, text); for (const c of devClients) c.write(msg); };
         const watcher = startWatch(rootResolved, sendDev);
@@ -574,7 +564,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     root: flag('--root', ROOT_DIR),
     assetRoot: flag('--asset-root', undefined),
     open: !args.includes('--no-open'),
-    lan: !args.includes('--no-lan'),
     editorWrite: args.includes('--editor-write'),
     host: flag('--host', undefined),
     watch: args.includes('--watch'),

@@ -707,7 +707,7 @@ test('the game server the Workbench starts listens on loopback only, never on th
   if (!lan) { t.diagnostic('no non-loopback IPv4 interface: LAN reachability not checked'); return; }
   const reached = await fetch(`http://${lan.address}:${port}/index.html`, { signal: AbortSignal.timeout(2000) }).then(() => true, () => false);
   assert.equal(reached, false, `not reachable on ${lan.address}`);
-  // Without --host serve.mjs still listens everywhere (LAN play and existing callers rely on it).
+  // Without --host serve.mjs still listens everywhere (existing callers rely on it).
   const open = await serve({ root, port: 0, open: false, quiet: true });
   t.after(() => open.server.close());
   assert.equal((await fetch(`http://${lan.address}:${open.port}/index.html`)).status, 200, 'the default bind is unchanged');

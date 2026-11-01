@@ -481,7 +481,7 @@ check('resume refuses an unknown snapshot envelope version by name', () => {
 check('the integrated dependency seam has one rules owner and value-only consumers', () => {
   const consumers = [
     'src/model/state.js', 'src/model/resources.js', 'src/engine/actions.js',
-    'src/engine/combat.js', 'src/engine/coopCombat.js', 'tools/session.mjs',
+    'src/engine/combat.js',
   ];
   const wired = consumers.filter((rel) => /derivedStats|derivedStatRules/.test(readFileSync(resolve(ROOT, rel), 'utf8')));
   equal(wired.join(','), 'src/model/state.js', 'only run-state creation/restore resolves rules');
