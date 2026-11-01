@@ -12,6 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
@@ -391,7 +392,8 @@ function applyWeaknessEffects(ctx, source, target, receipt) {
 
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
-  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
+  // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
+  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && !carrier?.reflectedHit && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
   // Automatic returns share the owner-cycle limit. A newly paid per-contact
@@ -449,7 +451,27 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
+  if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
   return receipt.amount;
+}
+
+// Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
+// same damage type and costs the reflector one stack. The return is flagged so it can neither reflect nor counter again.
+function reflectBack(ctx, source, target, carrier, reflect) {
+  // The holder's own survival is irrelevant: a landed eligible hit always spends the stack and sends its share back (SPEC §17).
+  if (!source?.alive || source === target) return;
+  const amount = reflectReturned(reflect.original, reflect.stacks);
+  const left = (spendReflectStacks(ctx, target, 1), target.reflectStacks || 0);
+  ctx.emit('reflectTriggered', { sourceId: target.id, targetId: source.id, amount, stacks: reflect.stacks, stacksLeft: left, original: reflect.original,
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(target) } : {}) });
+  if (amount <= 0) return;
+  const profile = { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true };
+  applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [],
+    // The incoming hit's damage-routing overrides ride along so the return keeps its physical/magical split (SPEC §17).
+    ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}),
+    ...(carrier?.physicalDamageType ? { physicalDamageType: carrier.physicalDamageType } : {}),
+    ...(carrier?.attack ? { attack: carrier.attack } : {}) });
 }
 
 /**
@@ -1618,7 +1640,25 @@ function plannedStatusTargets(ctx, action, eff) {
     && !action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
 }
 
+// Counter and Reflect stacks (owner 2026-10-31, SPEC §17) are host ops outside the portable opcode catalogue
+// (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
+function runGuardStackOpcode(ctx, action, eff) {
+  if (eff.op === 'gainCounterStacks') {
+    if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
+    // A Counter card adds the Block it stands behind, after its own Block grant.
+    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
+    return true;
+  }
+  if (eff.op === 'applyReflect') {
+    if (!fixCoreEnabled(ctx)) return true;
+    for (const t of resolveTargets(ctx, action, eff.target)) gainReflectStacks(ctx, t, evalNum(ctx, action, eff.amount, 1, t));
+    return true;
+  }
+  return false;
+}
+
 function runOpcode(ctx, action, eff) {
+  if (runGuardStackOpcode(ctx, action, eff)) return;
   if(eff.op==='addCinders' && ctx.player && !ctx.run) {
     const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;if(ctx.playerKey){ctx.proposalRewards.byPlayer ||= {};ctx.proposalRewards.byPlayer[ctx.playerKey]=(ctx.proposalRewards.byPlayer[ctx.playerKey] || 0)+amount;}ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
   }

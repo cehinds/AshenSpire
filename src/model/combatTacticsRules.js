@@ -1,10 +1,28 @@
 // Saved tactical tuning is authoritative for the rest of that fight.
 import { combatMatchups } from '../content/combatMatchups.js';
 import { RANGES } from './combatRanges.js';
+import { mechanics } from '../framework/data/mechanics.js';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = value => typeof value === 'string' && value.length > 0;
 const nonNegative = value => Number.isFinite(value) && value >= 0;
 const whole = value => Number.isSafeInteger(value) && value >= 0;
+
+/** Counter and Reflect stack counts (owner 2026-10-31): whole, capped by mechanics.counter / mechanics.reflect; absent means 0 (older saves). */
+/** Clamps saved stack counts to the live caps (load-time companion of stackCountProblems). */
+export function clampStackCounts(entity) {
+  if (!entity) return;
+  if (entity.counterStacks > 999) entity.counterStacks = 999; // safety ceiling, not a rule
+  if (entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
+}
+
+export function stackCountProblems(entity, path = 'entity') {
+  const problems = [];
+  // Type and sign only: a later cap change must not brick a save; the loader clamps to the live cap.
+  for (const key of ['counterStacks', 'reflectStacks']) {
+    if (entity?.[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
+  }
+  return problems;
+}
 
 export function combatIntentRulesProblems(rules, path = 'combatIntentRules') {
   if (!record(rules)) return [`${path} must be an object`];
@@ -155,6 +173,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
     if (entity[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
   }
   if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
+  problems.push(...stackCountProblems(entity, path));
   const stance = entity.combatStance;
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);

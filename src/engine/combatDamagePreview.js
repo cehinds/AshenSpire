@@ -5,8 +5,10 @@ import * as Actions from './actions.js';
 // roots. Read cyclic engine exports when invoked, never during initialization.
 import * as Matchups from './combatMatchups.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
+import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 /**
  * Detached defender state shared by every damage effect in one previewed
@@ -69,6 +71,8 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  */
 export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   defender.block = receipt.blockRemaining;
+  // A reflected hit spends one Reflect stack, as live does (SPEC §17).
+  if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
   if (!fixCoreEnabled(ctx)) return;
   defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
@@ -79,26 +83,92 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   }
 }
 
+/** A detached copy of an attacker whose HP and defenses a previewed reflected return may spend. */
+export function cloneDetachedAttacker(entity) {
+  return entity && { ...entity, persistentWard: entity.persistentWard && { ...entity.persistentWard },
+    persistentPoise: entity.persistentPoise && { ...entity.persistentPoise } };
+}
+
+/**
+ * Applies a landed hit's Reflect return to the detached attacker, mirroring actions.js reflectBack (SPEC §17): the return is a
+ * flagged reaction hit that needs no hit roll. Returns true when it kills the attacker, so later hits of the same action are
+ * forecast as cancelled, as live does. Detached only; no events, no rng.
+ */
+export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
+  if (!receipt?.reflect || !attacker || attacker === holder || !(attacker.hp > 0)) return false;
+  const amount = reflectReturned(receipt.reflect.original, receipt.reflect.stacks);
+  if (!(amount > 0)) return false;
+  const back = ProfileCombat.profileDamageReceipt(ctx, holder, attacker, amount,
+    { ...carrier, combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+      combatProfile: { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true }, combatRiderTargets: [] });
+  applyReceiptToPreviewTarget(ctx, attacker, { ...back, reflect: null });
+  attacker.hp -= fixCoreEnabled(ctx) ? back.hpLoss : back.amount;
+  if (attacker.hp > 0) return false;
+  // Death prevention, as live afterHpChange (SPEC §14.3): a solo player spends one revive token and rises at its hpPct. Only the
+  // detached attacker's own copy of the counts is spent; the live entity and the fight's counts are never touched.
+  if (attacker.kind === 'player' && attacker === ctx.player && ctx.consumables) {
+    attacker.previewConsumables ||= { ...ctx.consumables };
+    const token = reviveTokenFor(ctx.registries, attacker.previewConsumables);
+    if (token) {
+      adjustCount(attacker.previewConsumables, token.id, -1);
+      attacker.hp = reviveHp(attacker.maxHp, token.hpPct);
+      return false;
+    }
+  }
+  attacker.hp = 0;
+  return true;
+}
+
+/**
+ * A preview context where the detached attacker stands in for `source`: when that is the context's player it becomes
+ * `player`, and the seat lookup maps it back to the live entity, so level, attribute and loadout lookups keyed by entity
+ * identity (counterReturn levelOf/attributesOf) still resolve while the detached state evolves.
+ */
+function bindDetachedAttacker(previewCtx, source, attacker) {
+  if (!attacker || attacker === source) return previewCtx;
+  const lookup = previewCtx.playerIdForEntity;
+  return { ...previewCtx,
+    ...(source === previewCtx.player ? { player: attacker } : {}),
+    ...(lookup ? { playerIdForEntity: entity => lookup(entity === attacker ? source : entity) } : {}) };
+}
+
+/**
+ * The attacker and context the next contact of `state` is priced from: the detached attacker once a previewed Reflect return
+ * has been applied to it (so a broken Poise ends its matching-stance bonus), else `source` itself.
+ */
+export function previewAttackerView(state, source) {
+  const attacker = state.attackerSource === source && state.attacker ? state.attacker : source;
+  return { attacker, previewCtx: bindDetachedAttacker(state.previewCtx, source, attacker) };
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
-  const { defender, previewCtx, targetKey } = local;
+  const { defender, targetKey } = local;
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
   if (ProfileCombat.configuredCombat(ctx)) {
     const receipts = [];
+    // One detached attacker per preview state, so a Reflect return's damage carries across successive calls (the Counter forecast prices one hit per call).
+    if (local.attackerSource !== source) { local.attackerSource = source; local.attacker = cloneDetachedAttacker(source); }
+    const attacker = local.attacker;
+    const previewCtx = bindDetachedAttacker(local.previewCtx, source, attacker);
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, source, defender, base, carrier);
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
       receipts.push(receipt);
       if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
+      // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
+      if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }
     return { damageReceipt: damageReceipt(target?.id, receipts.flatMap(row => row.damageReceipt?.hits || [])),
       damage: (fixCoreEnabled(ctx) ? receipts[0]?.hpLoss : receipts[0]?.amount) || 0, hits: receipts.length,
       hitDamages: receipts.map(receipt => fixCoreEnabled(ctx) ? receipt.hpLoss : receipt.amount),
       totalDamage: receipts.reduce((sum, receipt) => sum + (fixCoreEnabled(ctx) ? receipt.hpLoss : receipt.amount), 0),
       hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
+      attackerDead: !!attacker && attacker !== source && !(attacker.hp > 0),
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
   }
+  const { previewCtx } = local;
   const rules = Matchups.matchupRules(ctx);
   const hitDamages = [];
   for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {

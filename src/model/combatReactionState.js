@@ -115,7 +115,9 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     if (!record(pending) || !text(pending.id) || !text(pending.groupKey) || !ownerIds.has(pending.ownerId)
       || !state.enemies.some(enemy => enemy.id === pending.sourceId)
       || !Array.isArray(pending.options) || !pending.options.length
-      || pending.options.some(option => !record(option) || !text(option.id) || !record(option.play) || !text(option.play.cardInstanceId)
+      // The card-less auto-Counter option (owner 2026-10-31) has no card instance: {id:'autoCounter', cardId:null, autoCounter:true}.
+      || pending.options.some(option => !record(option) || !text(option.id) || !record(option.play)
+        || !(option.autoCounter === true ? option.id === 'autoCounter' && option.cardId === null && option.play.autoCounter === true : text(option.play.cardInstanceId))
         || !Number.isFinite(option.staminaCost) || option.staminaCost < 0 || !Number.isFinite(option.manaCost) || option.manaCost < 0)
       || new Set(pending.options.map(option => option.id)).size !== pending.options.length) problems.push('Invalid pending reaction choice');
     // A Combat Rounds Preview pause (SPEC §4.11) holds its attack in the round, not in the action queue.

@@ -129,6 +129,8 @@ test('physical Flux Counter keeps its Ward lane identity when the Core Poise ret
   dispatch(ctx,{type:'playCard',cardInstanceId:'flux-counter'});
   const counter=ctx.player.combatCounter;
   counter.carrier.traitValues={...counter.carrier.traitValues,flux:1};
+  // Re-pin (SPEC §17, Counter stacks 2026-10-31): the return is base + stacks share; a base of 1 and no stacks keeps the fixture's 1-damage / 0-Poise return.
+  counter.payload.hp=1;ctx.player.counterStacks=0;
   mount(ctx,[{on:'wardBroken',once:true,do:[{op:'applyStatus',target:'allEnemies',status:'weak',stacks:1}]}]);
   ctx.player.stamina=2;
   const profile={camp:'physical',maneuver:'ranged',range:'melee'};
@@ -163,6 +165,8 @@ test('an empty rounded automatic Counter reserves no conditional random slot or 
   ctx.piles.hand=[{instanceId:'empty-counter',cardId:'core.counter'}];
   dispatch(ctx,{type:'playCard',cardInstanceId:'empty-counter'});
   const counter=ctx.player.combatCounter;counter.charges=0;
+  // Re-pin (SPEC §17, Counter stacks 2026-10-31): an empty return now means no base damage and no stacks, not a rounded half-share.
+  counter.payload={...counter.payload,hp:0,poise:0,ward:0};ctx.player.counterStacks=0;
   mount(ctx,[{on:'damageDealt',once:true,if:{p:'eventSourceIsOwner'},do:[{op:'damage',target:'randomEnemy',amount:1}]}]);
   const profile={camp:'physical',maneuver:'ranged',range:'ranged'};
   const plan=rangeActionPlan(ctx.rangeState,'enemy:e1',[{contactId:'incoming',targetKey:'player:player',coverage:'ranged'}]);

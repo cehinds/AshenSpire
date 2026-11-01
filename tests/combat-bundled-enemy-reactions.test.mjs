@@ -35,8 +35,9 @@ test('bundled Core Counter previews a revealed attack without mutating live stat
   const view = previewCard(combat, 'bundled-core-counter', enemy.id);
   const returned = view.values.find(row => row.op === 'damage').counterReturn;
   assert.equal(returned.incoming, 8);
-  assert.equal(returned.hp, 6);
-  assert.equal(returned.poise, 3);
+  // Re-pin (SPEC §17, Counter stacks 2026-10-31): the card's 9 Block become 9 stacks, so 4 + floor(0.9 x 8) + 2 = 13, Poise floor(0.5 x 13) = 6.
+  assert.equal(returned.hp, 13);
+  assert.equal(returned.poise, 6);
   assert.equal(returned.block, 2);
   assert.equal(JSON.stringify({ player: combat.player, enemy, piles: combat.piles, rng: combat.rng.getCounters() }), before);
 });

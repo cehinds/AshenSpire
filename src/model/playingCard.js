@@ -219,6 +219,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainEnergy': text = `Gain ${n} SP`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} SP`; break;
+      case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
         if (merged && !merged.leader) continue; // its figure is in the leader's combined Poise

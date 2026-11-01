@@ -89,7 +89,7 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
 export const TOKENIZABLE_OPS = Object.freeze([
-  'gainBarrier', 'buildup',
+  'gainBarrier', 'buildup', 'applyReflect',
   'discard', 'removeStatus', 'grantCardCharge',
   'damage',
   'block',
