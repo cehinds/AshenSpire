@@ -141,3 +141,12 @@ test('an authored buildup chance that rolls as 100% or 0% prints no chance note'
     assert.doesNotMatch(text, /% chance/, `authored ${authored}: ${text}`);
   }
 });
+
+test('a sure chance with advantage prints no redundant advantage suffix', async () => {
+  const { critRollReceipt } = await import('../src/model/rollReceipts.js');
+  const sure = critRollReceipt({ roll: 20, rolls: [20, 3], mode: 'advantage', target: 1, chance: 100, effectiveChance: 100, success: true });
+  assert.equal(sure.chance, undefined);
+  assert.equal(sure.dcParts[0].value, 100);
+  const modified = critRollReceipt({ roll: 15, rolls: [15, 4], mode: 'advantage', target: chanceToD20Target(32), chance: 32, effectiveChance: 53.76, success: true });
+  assert.equal(modified.chance, 51);
+});

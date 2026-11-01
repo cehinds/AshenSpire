@@ -70,8 +70,10 @@ function d20ChanceReceipt(event, kind) {
   const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode : null;
   // A modified (advantage or disadvantage) chance gets a suffix when the event carries one; it is worked from the
   // rounded chance (32% with advantage reads 51%, not the raw 53.8%).
-  const modified = mode && finite(event.effectiveChance)
-    ? Math.round(d20ModeChance(event.chance, { advantage: mode === 'advantage', disadvantage: mode === 'disadvantage' }) * 10) / 10 : null;
+  // Only when the modified figure differs from the base shown (a sure 100% with advantage prints no suffix).
+  const base = effectiveD20Percent(event.chance);
+  const modifiedValue = Math.round(d20ModeChance(event.chance, { advantage: mode === 'advantage', disadvantage: mode === 'disadvantage' }) * 10) / 10;
+  const modified = mode && finite(event.effectiveChance) && modifiedValue !== base ? modifiedValue : null;
   return { kind, die: 'd20', dice: rolls, ...(rolls.length > 1 && mode ? { mode } : {}), parts: [], total: num(event.roll), compare: 'gte',
     dcParts: [{ label: 'Chance %', value: effectiveD20Percent(event.chance) }], dc: num(event.target),
     ...(modified != null ? { chance: modified } : {}), success: !!event.success };
