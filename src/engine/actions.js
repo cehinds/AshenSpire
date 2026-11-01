@@ -16,6 +16,7 @@ import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturn
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
+import { rollD20Check } from './d20Chance.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -234,21 +235,19 @@ export function critChance(rules, attributes, tags) {
 // The roll: only the player's attacks, only with a crit rule that matches, on
 // the combatProcs stream (nothing is drawn without a rule, so a run with no
 // such feat draws exactly what it always drew).
-// The roll is logged as critRolled (owner, 2026-10-31): `roll` and `chance` are percentages, the crit lands when roll < chance.
+// The roll is logged as critRolled (owner, 2026-11-01): a d20, `chance` the percentage, `target` the number to meet or beat
+// (crit on d20 >= 21 - round(chance% / 5)); `roll`/`rolls` are the dice.
 // `info` ({ targetId, cardId }) only labels the event; it never changes the draw.
 export function rollCrit(ctx, source, tags, info = {}) {
   if (!source || source.kind !== 'player' || !Array.isArray(source.critRules) || !source.critRules.length) return 0;
   const { chance, multiplier } = critChance(source.critRules, ctx.attributes, tags);
   if (!(chance > 0) || !(multiplier > 1)) return 0;
-  const draw = ctx.rng.float('combatProcs');
-  const success = draw < chance;
-  // Shown to 0.01, rounded so the displayed comparison agrees with the verdict: on a crit the roll rounds down and the
-  // chance up, on a miss the roll rounds up and the chance down (a draw of 0.149996 against 0.15 reads 14.99 vs 15).
-  const shown = (value, up) => (up ? Math.ceil(value * 1e4 - 1e-9) : Math.floor(value * 1e4 + 1e-9)) / 100;
+  const check = rollD20Check(ctx.rng, 'combatProcs', chance * 100);
+  const { success } = check;
   ctx.emit?.('critRolled', { sourceId: source.id, targetId: info.targetId, cardId: info.cardId,
     // Seats like critHit: all player entities share 'player', so a co-op log names the roller by seat.
-    ...(info.target ? critSeats(ctx, source, info.target) : ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}), roll: shown(draw, !success),
-    chance: shown(chance, success), multiplier, success });
+    ...(info.target ? critSeats(ctx, source, info.target) : ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
+    die: 'd20', roll: check.roll, rolls: check.rolls, target: check.target, chance: Math.round(chance * 1e4) / 100, multiplier, success });
   return success ? multiplier : 0;
 }
 

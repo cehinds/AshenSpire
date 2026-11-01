@@ -52,11 +52,22 @@ export function contestRollReceipt(event) {
   return { kind: 'contest', die: 'd20', dice: [num(c.roll)], parts, total: num(c.total), dcParts, dc: num(c.dc), success: event.type === 'contestPassed' };
 }
 
-// A crit rolls a float under its chance; shown as a percentile (12.4 against 15).
+// A crit is a d20 that must meet a target derived from its chance (owner, 2026-11-01): "d20 [17] needs ≥ 18 (Chance 15%)".
+// Events logged before that carry a float roll under the chance and no target; they keep the percentile receipt.
 export function critRollReceipt(event) {
   if (!finite(event.roll) || !finite(event.chance)) return null;
+  if (finite(event.target)) return d20ChanceReceipt(event, 'crit');
   return { kind: 'crit', die: 'd100', dice: [num(event.roll)], parts: [], total: num(event.roll), compare: 'lt',
     dcParts: [{ label: 'Crit chance %', value: num(event.chance) }], dc: num(event.chance), success: !!event.success };
+}
+
+// The shared shape of a percentage chance rolled as a d20: success on d20 >= target, the source chance kept as the note.
+function d20ChanceReceipt(event, kind) {
+  const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
+  const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode : null;
+  return { kind, die: 'd20', dice: rolls, ...(rolls.length > 1 && mode ? { mode } : {}), parts: [], total: num(event.roll), compare: 'gte',
+    dcParts: [{ label: 'Chance %', value: num(event.chance) }], dc: num(event.target),
+    ...(finite(event.effectiveChance) && event.effectiveChance !== event.chance ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
 }
 
 export function perceptionRollReceipt(event) {
