@@ -126,8 +126,81 @@ export function reconcileCuts(runs, current) {
   return [...list, { branch: current.branch, sha: current.sha, before }];
 }
 
+// ---- THE ACTIVITY FEED AND THE CURSOR (replaces the run-list reconciliation) ------------------
+// Cuts come from GET /repos/{repo}/activity?ref=refs/heads/<release|main>, which records every
+// ref update whether or not a workflow ran for it. A record on dev carries the feed event it
+// applied as a `Version-Advance-Event: <id> <timestamp>` trailer. The CURSOR is the newest
+// recorded event (timestamp, id); events at or before it are never reconsidered.
+
+/** Events before this instant are not cuts this tool owes (set when the automation merged). */
+export const SINCE = '2026-11-01T00:00:00Z';
+const CUT_TYPES = new Set(['push', 'force_push', 'pr_merge', 'merge_queue_merge', 'branch_creation']);
+const ZERO_SHA = /^0+$/;
+const SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (release|main) [0-9a-f]{7,40}\b/;
+const TRAILER = /^Version-Advance-Event: (\d+) (\S+)\s*$/m;
+
+/** Order two feed events (or a cursor) by (timestamp, id). Pure. */
+export function cmpEvents(a, b) {
+  const t = Date.parse(a.timestamp) - Date.parse(b.timestamp);
+  if (t !== 0) return t < 0 ? -1 : 1;
+  const x = BigInt(a.id);
+  const y = BigInt(b.id);
+  return x === y ? 0 : x < y ? -1 : 1;
+}
+
+/** The records a list of full commit messages hold: {id, timestamp, branch}. Pure. */
+export function parseRecords(messages) {
+  const out = [];
+  for (const m of messages) {
+    const subject = SUBJECT.exec(m);
+    const trailer = TRAILER.exec(m);
+    if (subject && trailer) out.push({ id: trailer[1], timestamp: trailer[2], branch: subject[1] });
+  }
+  return out;
+}
+
+/** The newest recorded event, or null when dev has no record yet. Pure. */
+export function latestRecord(records) {
+  return records.reduce((best, r) => (best === null || cmpEvents(r, best) > 0 ? r : best), null);
+}
+
+/** True when any message records the feed event `id`. Pure. */
+export function recordsEvent(messages, id) {
+  return parseRecords(messages).some((r) => r.id === String(id));
+}
+
+/** The branch an event moved, or null when it is not release or main. */
+export const eventBranch = (e) => ((e.ref === 'refs/heads/release' && 'release') || (e.ref === 'refs/heads/main' && 'main') || null);
+
+/**
+ * The cuts owed, oldest first. Pure. `events` are feed entries (any order, any overlap);
+ * `cursor` is the newest recorded {id, timestamp} or null (then SINCE). An event is a cut when it
+ * is after the cursor, on release or main, of a pushing type (branch_creation counts; its
+ * all-zero before is a cut, not a bot check) and not bot-only per `isBotOnly(event)`.
+ * branch_deletion and other types are dropped. Each cut: {id, timestamp, branch, before, after}.
+ */
+export function planCuts(events, cursor, isBotOnly) {
+  const floor = cursor ?? { id: '0', timestamp: SINCE };
+  const seen = new Set();
+  const cuts = [];
+  for (const e of [...events].sort(cmpEvents)) {
+    const branch = eventBranch(e);
+    if (!branch || !CUT_TYPES.has(e.activity_type) || seen.has(String(e.id))) continue;
+    if (cmpEvents(e, floor) <= 0) continue;
+    seen.add(String(e.id));
+    const created = !e.before || ZERO_SHA.test(e.before);
+    if (!created && isBotOnly(e)) continue;
+    cuts.push({ id: String(e.id), timestamp: e.timestamp, branch, before: created ? null : e.before, after: e.after });
+  }
+  return cuts;
+}
+
 /** The commit subject the workflow writes. One home for the format. */
 export const advanceSubject = (next, branch, sha) => `version-advance: ${next} after ${branch} ${sha} [version-advance]`;
+
+/** The full commit message the workflow writes: subject plus the event trailer. */
+export const advanceMessage = (next, branch, sha, event) =>
+  `${advanceSubject(next, branch, sha)}\n\nVersion-Advance-Event: ${event.id} ${event.timestamp}\n`;
 
 function main(argv, root = ROOT) {
   const d = argv.indexOf('--done');

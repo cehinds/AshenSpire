@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { reconcileCuts, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, recordsSource, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
+import { planCuts, parseRecords, latestRecord, recordsEvent, advanceMessage, cmpEvents, reconcileCuts, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, recordsSource, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = `  // version-advance: 0.7.2\n  version: '0.7.2',\n  balance,\n`;
@@ -224,4 +224,56 @@ test('reconcile (property): a dispatch reselecting any earlier head, successful 
       }
     }
   }
+});
+
+// ---- planCuts: the activity feed and the cursor -------------------------------------------------
+
+const ev = (id, branch, before, after, type = 'push', ts) => ({
+  id, activity_type: type, ref: `refs/heads/${branch}`, before, after, timestamp: ts ?? `2026-11-02T00:00:${String(id).padStart(2, '0')}Z`,
+});
+const noBots = () => false;
+
+test('planCuts: events after the cursor only, oldest first, release/main only', () => {
+  const events = [ev(5, 'release', 'a', 'b'), ev(3, 'main', 'c', 'd'), ev(4, 'dev', 'e', 'f'), ev(9, 'release', 'b', 'c')];
+  assert.deepEqual(planCuts(events, null, noBots).map((c) => c.id), ['3', '5', '9']);
+  assert.deepEqual(planCuts(events, { id: '5', timestamp: ev(5).timestamp }, noBots).map((c) => c.id), ['9']);
+  assert.deepEqual(planCuts(events, { id: '9', timestamp: ev(9).timestamp }, noBots), []);
+});
+
+test('planCuts: types, force push, branch creation, deletion, duplicates', () => {
+  const z = '0'.repeat(40);
+  const events = [
+    ev(1, 'release', 'a', 'b', 'force_push'), ev(2, 'main', 'b', 'c', 'pr_merge'), ev(3, 'main', 'c', 'd', 'merge_queue_merge'),
+    ev(4, 'release', z, 'e', 'branch_creation'), ev(5, 'release', 'e', z, 'branch_deletion'), ev(6, 'main', 'd', 'x', 'whatever'),
+    ev(1, 'release', 'a', 'b', 'force_push'),
+  ];
+  const cuts = planCuts(events, null, (e) => (e.before === z ? assert.fail('a creation must not be bot-checked') : false));
+  assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['1', 'release'], ['2', 'main'], ['3', 'main'], ['4', 'release']]);
+  assert.equal(cuts[3].before, null);
+});
+
+test('planCuts: a bot-only event is skipped, however many events follow it', () => {
+  const events = [ev(1, 'release', 'a', 'bot'), ...Array.from({ length: 150 }, (_, i) => ev(i + 2, 'main', `m${i}`, `m${i + 1}`))];
+  const cuts = planCuts(events, null, (e) => e.after === 'bot');
+  assert.equal(cuts.length, 150);
+  assert.ok(cuts.every((c) => c.branch === 'main'));
+});
+
+test('planCuts: a push that never started a run still gets its cut; release-then-main = 0.8.0, main-then-release = 0.8.1', () => {
+  const fold = (cuts) => cuts.reduce((t, c) => nextTriple(t, c.branch === 'release' ? 'candidate' : 'minor'), [0, 7, 2]).join('.');
+  assert.equal(fold(planCuts([ev(2, 'main', 'b', 'c'), ev(1, 'release', 'a', 'b')], null, noBots)), '0.8.0');
+  assert.equal(fold(planCuts([ev(1, 'main', 'a', 'b'), ev(2, 'release', 'b', 'c')], null, noBots)), '0.8.1');
+});
+
+test('records: the trailer round-trips and the cursor is the newest by (timestamp, id)', () => {
+  const m1 = advanceMessage('0.7.3', 'release', 'a'.repeat(40), { id: '7', timestamp: '2026-11-02T00:00:07Z' });
+  const m2 = advanceMessage('0.8.0', 'main', 'b'.repeat(40), { id: '12', timestamp: '2026-11-02T00:00:03Z' });
+  assert.match(m1, /^version-advance: 0\.7\.3 after release a{40} \[version-advance\]\n\nVersion-Advance-Event: 7 2026-11-02T00:00:07Z\n$/);
+  const recs = parseRecords([m1, m2, 'unrelated', 'version-advance: 0.7.3 after release aaaaaaa [x]\n']);
+  assert.equal(recs.length, 2);
+  assert.deepEqual(latestRecord(recs), { id: '7', timestamp: '2026-11-02T00:00:07Z', branch: 'release' });
+  assert.equal(latestRecord([]), null);
+  assert.equal(recordsEvent([m1, m2], 12), true);
+  assert.equal(recordsEvent([m1, m2], 8), false);
+  assert.equal(cmpEvents({ id: '2', timestamp: '2026-11-02T00:00:00Z' }, { id: '10', timestamp: '2026-11-02T00:00:00Z' }), -1);
 });
