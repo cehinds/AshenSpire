@@ -52,3 +52,14 @@ test('rank down is not offered where zeroing Mana would raise the multi-hit Stam
   assert.equal(saved.staminaCost, multiHitSpFloor(saved, { mana: saved.manaCost }));
   assert.equal(saved.cost, saved.staminaCost);
 });
+
+test('a zero-cost card (core.flick) is never offered rank down', async () => {
+  const { readFileSync } = await import('node:fs');
+  const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
+  const flick = cards.find((c) => c.id === 'core.flick');
+  assert.ok(flick && flick.staminaCost === 0, 'core.flick is a 0 SP card');
+  for (let i = 0; i < 2000; i += 1) {
+    const s = rollUpgradeStep(flick, [], 0, upgradeStepRng(i, 'flick', i));
+    assert.ok(!(s?.k === 'tag' && s.tag === RANK_DOWN_TAG), `seed ${i}`);
+  }
+});

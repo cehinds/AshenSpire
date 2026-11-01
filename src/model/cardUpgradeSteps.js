@@ -171,8 +171,8 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };
   }
   if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
-  // a card that pays no Stamina would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
-  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && !(current.staminaCost === 0 && current.manaCost > 0)
+  // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
+  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0
     // zeroing Mana drops the multi-hit Stamina offset: never offer it when the floor would then exceed the printed SP
     && hitFloor({ ...current, manaCost: 0 }, currentHits(current.effects || [])) <= (current.staminaCost || 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
