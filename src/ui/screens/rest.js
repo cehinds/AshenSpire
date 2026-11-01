@@ -365,7 +365,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // The names are read off the mounted cards, so a choice keeps one title.
   consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
   const recovery = el('section', { class: 'rest-recovery', 'aria-label': t('rest.recovery.heading') });
-  recovery.append(el('h3', { class: 'as-eyebrow', text: t('rest.recovery.heading') }));
   for (const [icon, label, before, after] of [
     ['health', 'HP', run.hp, noRest ? run.hp : Math.min(run.maxHp, run.hp + heal)],
     ['mana', 'Mana', run.mana, noRest ? run.mana : manaAfter],

@@ -67,3 +67,10 @@ test('Smith item header: tier beside the name, type and tags in one row', () => 
   assert.match(modal, /smith-tag-row[\s\S]*smith-item-type-row[\s\S]*smith-weapon-tags/);
   assert.match(css, /\.smith-tag-row \{ display: flex; flex-wrap: wrap/);
 });
+
+test('the shrine recovery panel has no heading and keeps every pool row', () => {
+  const rest = read('src/ui/screens/rest.js');
+  assert.doesNotMatch(rest, /recovery\.append\(el\('h3'/);
+  assert.match(rest, /\['health', 'HP'/);
+  assert.match(rest, /\['mana', 'Mana'/);
+});
