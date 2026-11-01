@@ -127,8 +127,29 @@ test('preview-off saves preserve historical bytes apart from approved event meta
   // those approved event fields to retain both historical snapshot goldens.
   let receiptKeys = 0;
   const previousTotals = [], endedMoves = [], rawCompatible = [], metadataCompatible = [];
+  // Ward and Barrier (SPEC 4.1a, 2026-11-01): the numeric `barrier` field is gone and Barrier is a status. Normalize ONLY that, per entity:
+  // re-insert `barrier` (the last Barrier gain's total, else 0) after `persistentPoise` (the historical key order), and remove the `barrier` status, its Poise bonus and its
+  // `statusApplied` receipts. Anything else that differs still breaks the byte checks below.
+  const withoutBarrierStatus = snapshot => {
+    for (const entity of [snapshot.player, ...snapshot.enemies]) {
+      assert.ok(!('barrier' in entity), 'the numeric barrier field is no longer saved');
+      // The historical pool held the last Barrier gain's total (it was cleared only at its owner's turn start).
+      const gains = snapshot.eventLog.filter(event => event.type === 'barrierGained' && event.targetId === entity.id);
+      const pooled = gains.length ? gains.at(-1).total : 0;
+      delete entity.statuses?.barrier;
+      const pool = entity.persistentPoise;
+      if (pool?.barrierBonus) { pool.max -= pool.barrierBonus; pool.value = Math.max(0, pool.value - pool.barrierBonus); delete pool.barrierBonus; }
+      const keys = Object.keys(entity), at = keys.indexOf('persistentPoise');
+      const rebuilt = {};
+      keys.forEach((key, i) => { rebuilt[key] = entity[key]; if (i === at) rebuilt.barrier = pooled; });
+      for (const key of keys) delete entity[key];
+      Object.assign(entity, rebuilt);
+    }
+    snapshot.eventLog = snapshot.eventLog.filter(event => !(event.type === 'statusApplied' && event.status === 'barrier'));
+    return snapshot;
+  };
   const compatible = out.map(text => {
-    const snapshot = JSON.parse(text);
+    const snapshot = withoutBarrierStatus(JSON.parse(text));
     snapshot.eventLog = snapshot.eventLog.filter(event => {
       if (event.type !== 'enemyMoveEnded') return true;
       assert.deepEqual(Object.keys(event).sort(), ['moveId', 'sourceId', 'type'], 'the additive lifecycle receipt has only its event name, actor and consumed move');
