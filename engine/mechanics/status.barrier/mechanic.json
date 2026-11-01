@@ -1,0 +1,26 @@
+{
+  "id": "status.barrier",
+  "tag": "status.barrier",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Barrier",
+  "description": "Each stack gives +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.barrier"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "gainBarrierAmount"
+  }
+}
