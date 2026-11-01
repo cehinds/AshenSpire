@@ -77,6 +77,30 @@ export function recordsSource(subjects, branch, sha) {
   return subjects.some((s) => new RegExp(`^version-advance: \\d+\\.\\d+\\.\\d+ after ${branch} ${sha}\\b`).test(s));
 }
 
+/**
+ * The cuts one run must apply, oldest first. Pure. `runs` are earlier push runs of the
+ * workflow as {number, branch, sha, conclusion}; `current` is {number, branch, sha}.
+ * Only runs that PRECEDE the current one and did not succeed are taken (a cancelled or
+ * failed run lost its cut); a run with a higher number is left to its own run, which
+ * reconciles this one in turn. Taking a later run would apply its bump before the
+ * current event's (a main minor bump landing before an earlier release candidate bump
+ * turns 0.7.2 into 0.8.2 instead of 0.8.1). Sorted by run number, de-duplicated on
+ * branch+sha, current last.
+ */
+export function reconcileCuts(runs, current) {
+  const lost = new Set(['cancelled', 'failure', 'timed_out']);
+  const seen = new Set([`${current.branch} ${current.sha}`]);
+  const out = [];
+  for (const r of [...runs].sort((a, b) => a.number - b.number)) {
+    const key = `${r.branch} ${r.sha}`;
+    if (r.number >= current.number || !lost.has(r.conclusion)) continue;
+    if (!/^(release|main)$/.test(r.branch) || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ branch: r.branch, sha: r.sha });
+  }
+  return [...out, { branch: current.branch, sha: current.sha }];
+}
+
 /** The commit subject the workflow writes. One home for the format. */
 export const advanceSubject = (next, branch, sha) => `version-advance: ${next} after ${branch} ${sha} [version-advance]`;
 
@@ -85,6 +109,15 @@ function main(argv, root = ROOT) {
   if (d >= 0) {
     const subjects = execFileSync('git', ['log', '--format=%s'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
     return recordsSource(subjects, argv[d + 1] || '', argv[d + 2] || '') ? 0 : 1;
+  }
+  const rc = argv.indexOf('--reconcile');
+  if (rc >= 0) {
+    const [number, branch, sha] = argv.slice(rc + 1);
+    const runs = JSON.parse(readFileSync(0, 'utf8') || '[]').map((r) => ({
+      number: r.number, branch: r.headBranch, sha: r.headSha, conclusion: r.conclusion,
+    }));
+    for (const c of reconcileCuts(runs, { number: Number(number), branch, sha })) console.log(`${c.branch} ${c.sha}`);
+    return 0;
   }
   const sj = argv.indexOf('--subject');
   if (sj >= 0) {

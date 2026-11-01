@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, recordsSource, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
+import { reconcileCuts, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, recordsSource, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = `  // version-advance: 0.7.2\n  version: '0.7.2',\n  balance,\n`;
@@ -107,4 +107,22 @@ test('CLI: --read-current and --subject, and the subject round-trips through the
   assert.equal(subject.stdout.trim(), `version-advance: 0.7.3 after release ${sha} [version-advance]`);
   assert.equal(recordsSource([subject.stdout.trim()], 'release', sha), true);
   assert.equal(run('--subject', '0.7.3', 'dev', sha).status, 2);
+});
+
+test('reconcile: only earlier lost runs are applied, in order, current last', () => {
+  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
+  const cur = { number: 10, branch: 'release', sha: 'r2' };
+  // The coordinator's scenario: release #10 is still setting up, a later main #11 was
+  // queued then cancelled by release #12. #10 must not take #11, or the minor bump lands
+  // before the candidate bump (0.7.2 -> 0.8.2 instead of 0.8.1).
+  const runs = [r(8, 'release', 'r0', 'cancelled'), r(9, 'main', 'm0', 'failure'), r(11, 'main', 'm1', 'cancelled'), r(7, 'release', 'ok', 'success')];
+  assert.deepEqual(reconcileCuts(runs, cur), [
+    { branch: 'release', sha: 'r0' }, { branch: 'main', sha: 'm0' }, { branch: 'release', sha: 'r2' },
+  ]);
+  // The later run (#12) reconciles #11 and #10's lost work in order.
+  assert.deepEqual(reconcileCuts([...runs, r(10, 'release', 'r2', 'cancelled')], { number: 12, branch: 'release', sha: 'r3' }).map((c) => c.sha),
+    ['r0', 'm0', 'r2', 'm1', 'r3']);
+  // De-duplicates on branch+sha, and keeps the same sha on two branches as two cuts.
+  assert.deepEqual(reconcileCuts([r(1, 'release', 'x', 'cancelled'), r(2, 'release', 'x', 'failure'), r(3, 'main', 'x', 'cancelled')], { number: 5, branch: 'release', sha: 'x' }),
+    [{ branch: 'main', sha: 'x' }, { branch: 'release', sha: 'x' }]);
 });
