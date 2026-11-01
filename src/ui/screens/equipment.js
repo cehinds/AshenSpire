@@ -11,6 +11,7 @@ import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { createToast } from '../components/toast.js';
+import { equipmentModLines } from '../../model/equipmentCompare.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
@@ -434,18 +435,7 @@ function thumbSrc(piece) {
 
 /** A piece's mods, written the way a player reads them. */
 function modSummary(registries, piece) {
-  const fields = registries.equipment.modFields || {};
-  const parts = [];
-  for (const raw of piece.mods || []) {
-    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
-    if (!m) continue;
-    const spec = fields[m[2]];
-    if (!spec) continue;
-    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
-    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
-    parts.push(`${where}${spec.label} ${sign}`);
-  }
-  return parts;
+  return equipmentModLines(registries, piece);
 }
 
 // EVERY CHIP IN THE PICKER IS ONE YOU OWN (#90), so there is no `locked` here
