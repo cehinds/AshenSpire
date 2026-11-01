@@ -62,3 +62,20 @@ test('key effect text leads; common type/school explanations and chips follow', 
   assert.ok(at('inspection-effect-tags') < at('inspection-sigils'), 'key tags before common tags');
   assert.ok(at('inspection-sigils') < at('class="inspection-tags"'), 'common tags before chips');
 }));
+
+test('every inline effect text is exactly a keyword or status tooltip, never a tag blurb', async () => {
+  const { tags } = await import('../src/content/generated/tags.js');
+  const blurbs = [...new Set(tags.map((t) => t.blurb).filter((b) => b && b.length > 20))];
+  withKitDom(() => {
+    let seen = 0;
+    for (const card of contentBundle.cards) {
+      for (const [label, text] of inline(cardDetailHtml(registries, { cardId: card.id }))) {
+        seen++;
+        const kw = (card.keywords || []).map((id) => registries.framework.keywordDisplay(id)).find((d) => d && d.name === label);
+        if (kw) assert.equal(text, kw.tooltip, `${card.id} ${label}`);
+        for (const blurb of blurbs) assert.ok(!text.includes(blurb), `${card.id} ${label} leaks tag text: ${blurb}`);
+      }
+    }
+    assert.ok(seen > 0);
+  });
+});

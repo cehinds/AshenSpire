@@ -949,8 +949,10 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   const chips = new Map();
   const addChip = (label, tip, effect = false) => {
     const key = String(label).trim().toLowerCase();
-    const chip = chips.get(key) || { label, tips: [], effect: false };
+    const chip = chips.get(key) || { label, tips: [], effectTips: [], effect: false };
     if (tip && !chip.tips.includes(tip)) chip.tips.push(tip);
+    // Only effect sources (keyword, applied status) feed the inline text.
+    if (effect && tip && !chip.effectTips.includes(tip)) chip.effectTips.push(tip);
     chip.effect ||= effect;
     chips.set(key, chip);
   };
@@ -998,8 +1000,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, registries)); }
   for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, registries));
   const rows = [...chips.values()];
-  const effects = rows.filter((chip) => chip.effect && chip.tips.length);
-  if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.tips.join(' '))}</dd>`).join('')}</dl>`;
+  const effects = rows.filter((chip) => chip.effect && chip.effectTips.length);
+  if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.effectTips.join(' '))}</dd>`).join('')}</dl>`;
   html += common;
   if (rows.length) html += `<div class="inspection-tags">${rows.map((chip) => `<span class="inspection-tag${chip.effect ? ' inspection-tag-effect' : ''}" role="button" tabindex="0" data-tip="${esc(chip.tips.join(' '))}">${esc(chip.label)}</span>`).join('')}</div>`;
   return html;
