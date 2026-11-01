@@ -90,8 +90,8 @@ jobs:
           # cut would be lost for good. Every earlier push run of this workflow that did
           # not conclude success (cancelled, failed, timed out) names a cut whose head
           # sha is its head_sha; those that precede this run are added to the list, oldest first,
-          # and the current event last. A cut already recorded on dev (branch AND sha) is skipped
-          # below, so including a run that actually finished is harmless, and a cancelled
+          # and the current event last. A cut already recorded on dev (branch AND sha), the current one included, is skipped
+          # below, so an overtaken older run that finally executes finds its cut done and bumps nothing; so including a run that actually finished is harmless, and a cancelled
           # pending run costs nothing.
           : > "$RUNNER_TEMP/cuts"
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then

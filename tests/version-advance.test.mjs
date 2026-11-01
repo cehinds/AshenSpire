@@ -145,3 +145,24 @@ test('reconcile: each cut carries the branch\'s previous push head as its before
   assert.equal(reconcileCuts(runs, { number: 5, branch: 'main', sha: 'm3' }).at(-1).before, 'm2');
   assert.equal(reconcileCuts(runs, { number: 5, branch: 'main', sha: 'm3', before: 'zz' }).at(-1).before, 'zz');
 });
+
+test('reconcile: an older run still pending is taken before the current cut', () => {
+  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
+  const pick = (cuts) => cuts.map(({ branch, sha }) => ({ branch, sha }));
+  for (const pending of ['', null, undefined, 'in_progress', 'queued']) {
+    assert.deepEqual(pick(reconcileCuts([r(10, 'release', 'A', pending)], { number: 11, branch: 'main', sha: 'B' })),
+      [{ branch: 'release', sha: 'A' }, { branch: 'main', sha: 'B' }], `conclusion ${JSON.stringify(pending)}`);
+  }
+  // A successful earlier run is not retaken; a later pending run is left to its own run.
+  assert.deepEqual(pick(reconcileCuts([r(9, 'release', 'S', 'success'), r(12, 'release', 'L', null)], { number: 11, branch: 'main', sha: 'B' })),
+    [{ branch: 'main', sha: 'B' }]);
+});
+
+test('overtaken older run: once the newer run recorded its work, the older cut is skipped by --done', () => {
+  // Run 11 (main B) reconciled pending run 10 (release A) and applied both, in order.
+  const subjects = [advanceSubject('0.8.0', 'main', 'b'.repeat(40)), advanceSubject('0.7.3', 'release', 'a'.repeat(40))];
+  // Run 10 finally executes: its own (current) cut is already recorded, so the workflow
+  // loop `continue`s on --done and applies no second bump.
+  assert.equal(recordsSource(subjects, 'release', 'a'.repeat(40)), true);
+  assert.equal(recordsSource(subjects, 'main', 'b'.repeat(40)), true);
+});

@@ -80,8 +80,12 @@ export function recordsSource(subjects, branch, sha) {
 /**
  * The cuts one run must apply, oldest first. Pure. `runs` are earlier push runs of the
  * workflow as {number, branch, sha, conclusion}; `current` is {number, branch, sha}.
- * Only runs that PRECEDE the current one and did not succeed are taken (a cancelled or
- * failed run lost its cut); a run with a higher number is left to its own run, which
+ * Only runs that PRECEDE the current one and did not succeed are taken: a cancelled or
+ * failed run lost its cut, and a run still pending (conclusion empty or null: queued,
+ * in progress) may be overtaken, because GitHub concurrency does not guarantee order, so
+ * a newer run can acquire the group first. The older run, when it finally executes, finds
+ * its own cut recorded (the workflow checks `--done` for every cut, the current one
+ * included) and does nothing. A run with a higher number is left to its own run, which
  * reconciles this one in turn. Taking a later run would apply its bump before the
  * current event's (a main minor bump landing before an earlier release candidate bump
  * turns 0.7.2 into 0.8.2 instead of 0.8.1). Sorted by run number, de-duplicated on
@@ -90,7 +94,6 @@ export function recordsSource(subjects, branch, sha) {
  * recovered cuts exactly as for the current one.
  */
 export function reconcileCuts(runs, current) {
-  const lost = new Set(['cancelled', 'failure', 'timed_out']);
   const byNumber = [...runs].sort((x, y) => x.number - y.number);
   // The branch's push BEFORE a run is the head sha of the previous push run on that
   // branch (any outcome: consecutive pushes chain). null when the list has none.
@@ -102,7 +105,7 @@ export function reconcileCuts(runs, current) {
   const out = [];
   for (const r of byNumber) {
     const key = `${r.branch} ${r.sha}`;
-    if (r.number >= current.number || !lost.has(r.conclusion)) continue;
+    if (r.number >= current.number || r.conclusion === 'success') continue;
     if (!/^(release|main)$/.test(r.branch) || seen.has(key)) continue;
     seen.add(key);
     out.push({ branch: r.branch, sha: r.sha, before: beforeOf(r.branch, r.number) });
