@@ -93,6 +93,10 @@ for (const [name, { row, classes }] of armour) {
     tags: [ARMOR_TYPE(name), ...tags], points, classes: [...new Set(classes)].sort(), source: { file: 'content/source/outfits.csv', id: row.id } }));
 }
 
+// Material (owner, 2026-10-31, SPEC 4.7 Lightning): metal conducts. Rows listed here carry `material: 'metal'`.
+const METAL_GEAR = new Set(["straightSword", "greatsword", "dagger", "katana", "halberd", "warhammer", "twinblade", "battleaxe", "frostSpear", "cinderAxe", "parryDagger", "buckler", "kiteShield", "towerShield", "roundShield", "spikedShield", "lantern", "gorefireBrand", "blightRod", "duskChime", "starstoneStaff", "armor.wayfarerPlate", "armor.gildedOathsworn", "armor.bastionHarness", "armor.ashenVigil", "armor.wardenMail"]);
+for (const item of gear) if (METAL_GEAR.has(item.id)) item.material = 'metal';
+
 const ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 for (const item of gear) if (item.rarity === 'common') {
   for (const a of ATTRIBUTES) delete item.points[a];
