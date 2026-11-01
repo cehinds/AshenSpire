@@ -14,6 +14,7 @@ import { equipPiece, ownership, equipmentRequirementReceipt } from '../src/model
 import { attackDescriptor } from '../src/model/attackTags.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { withWeaponRack } from './withWeaponRack.mjs';
 const json = value => JSON.parse(JSON.stringify(value));
 function fixture({ die = 20, count = 4 } = {}) {
   const profile = structuredClone(resolveGameProfile('core'));
@@ -22,7 +23,7 @@ function fixture({ die = 20, count = 4 } = {}) {
   profile.modules.characters.tagRules['tier.minion'].pools.sp += 4;
   profile.content.cards.find(card => card.id === 'core.counter').effects.unshift({ op: 'discard', choose: true, amount: 1 });
   delete profile.hash; profile.hash = gameDigest(profile);
-  const base = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const base = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
   const registries = { ...base, enemies: { ...base.enemies, get(id) {
     const enemy = base.enemies.get(id);
     if (id !== 'wanderingSoldier') return enemy;
