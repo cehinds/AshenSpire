@@ -8,6 +8,8 @@ import { createRunState } from '../src/model/state.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { createRng } from '../src/engine/rng.js';
 import { trimExtraSets, visibleSets } from '../src/model/loadout.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
 const registries = createRegistries(contentBundle);
 const hands = () => registries.equipment.slots.filter((slot) => slot.hand);
@@ -53,4 +55,33 @@ test('trimExtraSets is a no-op on a current loadout and never duplicates a store
   assert.deepEqual(old.sets.rightHand, ['x']);
   assert.deepEqual(old.storage.sort(), ['y', 'z']);
   assert.equal(old.active.rightHand, 0);
+});
+
+test('a fight an older build saved with three cells per hand loads, not archived, with set-2 items in storage', () => {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const run = createRunState({ seed: 0x51a7, classId: 'reaver', registries });
+  const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+  commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+  saves.saveRun(run, combat.rng);
+  const held = new Set([...run.loadout.sets.rightHand, ...run.loadout.sets.leftHand, ...run.loadout.storage]);
+  const extra = registries.equipment.armaments.map((piece) => piece.id).find((id) => !held.has(id));
+  const stored = JSON.parse(storage.getItem(RUN_KEY));
+  const runJson = stored.run ?? stored;
+  // What an older build wrote: three cells per hand, [x, null, null] or with a piece in set 2.
+  const pad = (loadout, withItem) => {
+    loadout.sets.rightHand = [loadout.sets.rightHand[0], withItem ? extra : null, null];
+    loadout.sets.leftHand = [loadout.sets.leftHand[0], null, null];
+  };
+  pad(runJson.loadout, true);
+  pad(runJson.combatEntered.snapshot.loadout, true);
+  storage.setItem(RUN_KEY, JSON.stringify(stored));
+  const loaded = saves.loadRun(registries);
+  assert.ok(loaded, `the fight save loads (${saves.runStatus().reason || ''})`);
+  assert.equal(saves.runStatus().state === 'archived', false);
+  assert.equal(loaded.loadout.sets.rightHand.length, 1);
+  assert.equal(loaded.combatEntered.snapshot.loadout.sets.rightHand.length, 1);
+  assert.equal(loaded.combatEntered.snapshot.loadout.sets.leftHand.length, 1);
+  assert.ok(loaded.loadout.storage.includes(extra), 'the set-2 piece is in storage');
+  assert.ok(loaded.combatEntered.snapshot.loadout.storage.includes(extra), 'and in the fight\'s own storage');
 });

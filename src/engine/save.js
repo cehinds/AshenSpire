@@ -962,6 +962,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         return null;
       }
       let run;
+      let trimmedLoadout = [];
       try {
         run = deserializeRun(json, readSharedProfile);
         // A run saved while LAN co-op existed may carry its host-held card
@@ -985,6 +986,19 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
           run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         }
+        // A hand slot carried three weapon sets until 2026-11-01 and carries one
+        // now. A save that holds a piece in set 2 or 3 (or an active set past the
+        // first) keeps the piece: it moves to storage, the extra cells are cut,
+        // and the active set is set 1. This runs BEFORE the snapshot reference
+        // check, which requires exactly `slot.sets` positions and would archive
+        // every fight an older build saved with its three cells. The ledger is
+        // not open yet, so the note is written below, once it is.
+        trimmedLoadout = [
+          ...trimExtraSets(registries, run.loadout),
+          ...[run.combatEntered, run.combatPendingOutcome]
+            .map((holder) => holder && holder.snapshot && holder.snapshot.loadout ? trimExtraSets(registries, holder.snapshot.loadout) : [])
+            .flat(),
+        ];
         const snapshotReferenceProblems = [
           ...combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries),
           ...combatSnapshotReferenceProblems(run.combatPendingOutcome?.snapshot, registries),
@@ -1012,6 +1026,16 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
             was: run.migratedFromRunSchemaVersion,
             now: RUN_SCHEMA_VERSION,
             why: 'an older build wrote this save; the schema stamp was brought forward',
+          });
+        }
+        if (trimmedLoadout.length) {
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field: 'loadout.sets',
+            was: trimmedLoadout,
+            now: { sets: run.loadout?.sets, storage: run.loadout?.storage },
+            why: 'a hand slot now carries one set; armaments held in a later set were moved to storage and the active set was reset to the first',
           });
         }
         // Plan phase 3a: `zones`/`collection` are a projection of the legacy
@@ -1172,24 +1196,6 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           was: undefined,
           now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
           why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
-        });
-      }
-      // A hand slot carried three weapon sets until 2026-11-01 and carries one
-      // now. A save that holds a piece in set 2 or 3 (or an active set past the
-      // first) keeps the piece: it moves to storage, the extra cells are cut,
-      // and the active set is set 1. The fight's own loadout is trimmed too.
-      const trimmed = trimExtraSets(registries, run.loadout);
-      const trimmedSnapshots = [run.combatEntered, run.combatPendingOutcome]
-        .map((holder) => holder && holder.snapshot && holder.snapshot.loadout ? trimExtraSets(registries, holder.snapshot.loadout) : [])
-        .flat();
-      if (trimmed.length || trimmedSnapshots.length) {
-        note(run, {
-          kind: 'overwrite',
-          site: 'save.js:loadRun',
-          field: 'loadout.sets',
-          was: [...trimmed, ...trimmedSnapshots],
-          now: { sets: run.loadout.sets, storage: run.loadout.storage },
-          why: 'a hand slot now carries one set; armaments held in a later set were moved to storage and the active set was reset to the first',
         });
       }
       // The skill threshold's standing upgrade is retired (SPEC §13.4o card
