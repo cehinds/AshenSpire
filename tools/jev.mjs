@@ -536,7 +536,7 @@ COMMANDS.devmerge = async (args) => {
   const baseAt = args.indexOf('--base');
   if (baseAt >= 0 && (args[baseAt + 1] === undefined || args[baseAt + 1].startsWith('-'))) { emit({ cmd: 'devmerge', exit: 2, verdict: 'bad-base', reason: '--base needs a branch name' }, args.includes('--human'), o => `jev devmerge: ${o.verdict} (exit 2)\n${o.reason}`); return 2; }
   const prAt = args.indexOf('--pr');
-  const r = devmerge({ base: baseAt >= 0 ? args[baseAt + 1] : 'dev', pr: prAt >= 0 ? Number(args[prAt + 1]) : null, cwd: process.cwd() });
+  const r = devmerge({ base: baseAt >= 0 ? args[baseAt + 1] : 'dev', pr: prAt >= 0 ? Number(args[prAt + 1]) : null, cwd: targetRoot(args) });
   emit({ cmd: 'devmerge', ...r }, args.includes('--human'),
     o => [`jev devmerge: ${o.verdict} (exit ${o.exit})`, o.reason || '', ...(o.files || []).map(f => `  ${f}`), ...(o.notes || []), o.tail || '', o.hint || '', o.push ? `next (not run): ${o.push}` : ''].filter(Boolean).join('\n'));
   return r.exit;

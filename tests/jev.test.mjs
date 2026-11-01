@@ -715,3 +715,14 @@ test('checks run against the caller\'s checkout, not jev\'s own (Codex repro)', 
     assert.notEqual(r.status, 0, r.stdout + r.stderr);
   } finally { f.done(); }
 });
+
+test('devmerge --root acts on the named checkout, not the shell\'s (Codex repro)', () => {
+  const target = fixture({ 'a.txt': 'a\n' });
+  const caller = fixture({ 'b.txt': 'b\n' });
+  try {
+    writeFileSync(join(target.work, 'a.txt'), 'dirty\n');
+    const jev = fileURLToPath(new URL('../tools/jev.mjs', import.meta.url));
+    const r = spawnSync(process.execPath, [jev, 'devmerge', '--root', target.work], { cwd: caller.work, encoding: 'utf8' });
+    assert.match(r.stdout, /dirty-tree/, r.stdout + r.stderr);
+  } finally { target.done(); caller.done(); }
+});
