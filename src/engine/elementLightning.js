@@ -6,7 +6,7 @@ import { d20Mode } from './d20Chance.js';
 import { applyStatus } from './statuses.js';
 import { attributesOf, levelOf } from './counterReturn.js';
 import { currentPoise } from './contest.js';
-import { isLightning, lightningRules, statusStacks, elementOf, wearsMetal, lightningPrecisionBonus, isMetalPiece, wornPieces } from './elementRules.js';
+import { carrierElement, isLightning, lightningRules, statusStacks, elementOf, wearsMetal, lightningPrecisionBonus, isMetalPiece, wornPieces } from './elementRules.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 
 export { isLightning, wearsMetal, lightningPrecisionBonus, isMetalPiece, wornPieces };
@@ -85,4 +85,23 @@ export function seedElementStatuses(ctx, enemy, def) {
     applyStatus(ctx, enemy, row.status, row.stacks, null); seeded += row.stacks;
   }
   return seeded;
+}
+
+/** A Fire hit: fire school or damage type, or a card that applies Burn. */
+export const isFireHit = carrier => carrierElement(carrier) === 'fire' || (carrier?.appliedStatuses || []).includes('burn');
+/**
+ * dealElementalHit(ctx, source, target, amount, carrier, deal) -> the one door a damage effect's hit goes through (SPEC 4.7).
+ * `deal(from, to, amount)` applies the ordinary damage; `loseHp(entity, amount)` takes the backlash straight from the caster's HP. A lightning hit is absorbed by Bedrock (no damage), backlashes onto a
+ * metal-clad caster on a natural 1 (the same damage to the caster, none to the target), or lands and then tries for 1 Shocked.
+ * A Fire hit that costs HP dries a Damp target. Anything else is exactly `deal(source, target, amount)`.
+ */
+export function dealElementalHit(ctx, source, target, amount, carrier, deal, loseHp = null) {
+  const hit = beginLightningHit(ctx, source, target, carrier);
+  if (hit?.absorbed) return;
+  if (hit?.backlash) { (loseHp || ((to, n) => deal(to, to, n)))(source, amount); return; }
+  const before = target.hp;
+  deal(source, target, amount);
+  const hpLoss = Math.max(0, before - target.hp);
+  if (hit) finishLightningHit(ctx, source, target, hit, hpLoss);
+  else if (isFireHit(carrier) && fixCoreEnabled(ctx)) fireDriesDamp(ctx, target, hpLoss);
 }

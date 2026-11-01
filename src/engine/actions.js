@@ -1,3 +1,4 @@
+import { dealElementalHit } from './elementLightning.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
@@ -1744,7 +1745,8 @@ function runOpcode(ctx, action, eff) {
           // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
           const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags, { targetId: t.id, target: t, cardId: carrier?.cardId });
           if (crit) carrier.critMultiplier = crit;
-          applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          dealElementalHit(ctx, action.source, t, base, carrier, (from, to, amount) => applyAttackDamage(ctx, from, to, amount, attackTags, carrier),
+            (to, amount) => applyLoseHp(ctx, to, amount, 'lightning backlash', { targetStatusesBefore: structuredClone(to.statuses || {}), sourceId: to.id })); // lightning, Bedrock, Damp (SPEC 4.7)
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by

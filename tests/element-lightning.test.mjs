@@ -29,6 +29,15 @@ function fight({ classId = 'starseer', enemyId = 'wanderingSoldier' } = {}) {
   combat.player.energy = 9; combat.player.mana = 9;
   return { combat, player: combat.player, enemy };
 }
+// Seed the combatContest stream so the next draws are exactly `dice`; survives a transactional dispatch (like primeAccuracyRolls).
+function primeContestDice(combat, ...dice) {
+  const original = combat.rng.getCounters();
+  for (let start = original.combatContest || 0, tries = 0; tries < 1000000; tries++, start++) {
+    const probe = createRng(combat.rng.seed, { ...original, combatContest: start });
+    if (dice.every(d => probe.int('combatContest', 1, 20) === d)) { combat.rng.restoreCounters({ ...original, combatContest: start }); return; }
+  }
+  throw new Error('Could not prime the contest stream');
+}
 // Pin the next contest dice (stream combatContest); anything else stays seeded.
 function pinContestDice(combat, ...dice) {
   const real = combat.rng.int.bind(combat.rng), queue = [...dice];
@@ -291,4 +300,44 @@ test('own-element bonus on a planned enemy move: Lantern Moth (lightning) wing s
   assert.equal(scaled[2].amount, 3);
   assert.equal(scaled[3].amount, 2, 'draw is not an effect amount');
   assert.equal(actions[0].effect.amount, 8, 'the planned actions are not mutated');
+});
+
+// Play a Spark from the first hand slot at the enemy; Accuracy is primed to hit, the contest dice are pinned.
+function castSpark(f, ...dice) {
+  const hand = f.combat.piles.hand[0];
+  hand.cardId = 'core.spark'; hand.upgraded = false;
+  primeAccuracyRolls(f.combat);
+  primeContestDice(f.combat, ...dice);
+  const hpBefore = [f.player.hp, f.enemy.hp];
+  dispatch(f.combat, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: f.enemy.id });
+  return { enemyLoss: hpBefore[1] - f.enemy.hp, playerLoss: hpBefore[0] - f.player.hp };
+}
+test('playing Spark: a passed contest deals the damage and adds 1 Shocked; a failed one still deals it', () => {
+  const win = fight(); const a = castSpark(win, 20);
+  assert.equal(a.enemyLoss > 0, true); assert.equal(getStacks(win.enemy, 'shocked'), 1);
+  const lose = fight(); const b = castSpark(lose, 1);
+  assert.equal(b.enemyLoss > 0, true); assert.equal(getStacks(lose.enemy, 'shocked'), 0);
+});
+test('playing Spark into Bedrock: the hit is absorbed (no damage, no Shocked) and one stack is lost', () => {
+  const f = fight(); f.enemy.statuses.bedrock = { stacks: 2 };
+  const r = castSpark(f, 20);
+  assert.equal(r.enemyLoss, 0); assert.equal(getStacks(f.enemy, 'bedrock'), 1); assert.equal(getStacks(f.enemy, 'shocked'), 0);
+});
+test('playing Spark in metal: a natural 1 sends the damage to the caster, none to the enemy', () => {
+  const f = fight({ classId: 'reaver' });
+  const r = castSpark(f, 1, 12);
+  assert.equal(r.enemyLoss, 0); assert.equal(r.playerLoss > 0, true); assert.equal(getStacks(f.enemy, 'shocked'), 0);
+});
+test('playing Spark at a Damp enemy rolls twice and keeps the higher die', () => {
+  const f = fight(); f.enemy.statuses.damp = { stacks: 1 };
+  castSpark(f, 4, 19);
+  const event = f.combat.eventLog.find(e => e.type === 'contestPassed' || e.type === 'contestFailed');
+  assert.equal(event.mode, 'advantage'); assert.equal(event.contest.roll, 19); assert.deepEqual(event.dice, [4, 19]);
+});
+test('Fire damage that costs HP dries a Damp target', () => {
+  const f = fight(); f.enemy.statuses.damp = { stacks: 2 };
+  const hand = f.combat.piles.hand[0]; hand.cardId = 'core.cinderDart'; hand.upgraded = false;
+  primeAccuracyRolls(f.combat);
+  dispatch(f.combat, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: f.enemy.id });
+  assert.equal(getStacks(f.enemy, 'damp'), 0);
 });
