@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Elemental cantrip families** ([#2479](https://github.com/cehinds/AshenSpire/pull/2479), `0.7.3.24`). Added 17 cantrips across fire, frost, healing, rot and lightning: Dazzle Flare, Palm Flame, Cinder Ward, Rime Bite, Brittle Touch, Steady Hands, Guiding Whisper, Hallowed Ward, Dawn Flame, Venom Spray, Grave Toll, Wearying Touch, Rending Hex, Acid Splash, Jolt, Shocking Grasp and Storm Lash.
 - **Weakness chips show once discovered** ([#2467](https://github.com/cehinds/AshenSpire/pull/2467), `0.7.3.24`). An enemy's weakness chip appears only after you trigger that weakness, with a proper icon (the empty Frost box is fixed) and a tooltip such as "Weak to Piercing: +25% damage"; the inspector no longer spoils undiscovered weaknesses.
 - **Stance glyph after a Poise break** ([#2473](https://github.com/cehinds/AshenSpire/pull/2473), `0.7.3.22`). The figure no longer shows a stance glyph (for example Smash) at turn start after a Poise break has already ended the stance; it shows the resting mark.
 - **Upgrade list shows only what you can upgrade** ([#2468](https://github.com/cehinds/AshenSpire/pull/2468), `0.7.3.20`). Items that cannot be upgraded are hidden; items that need a Blacksmith sit at the bottom, greyed out with "Needs a Blacksmith"; the first upgradeable item is selected.
