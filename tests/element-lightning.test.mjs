@@ -8,6 +8,8 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs';
+import { attackHitPreview } from '../src/engine/stanceHit.js';
+import { applyStatus } from '../src/engine/statuses.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -20,7 +22,7 @@ function fight({ classId = 'starseer', enemyId = 'wanderingSoldier' } = {}) {
   const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: [enemyId] });
   const enemy = combat.enemies[0];
-  Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: 0, max: 20 }, attributes: { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 }, level: 1 });
+  Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 0, max: 20 }, attributes: { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 }, level: 1 });
   delete enemy.combatStance; delete enemy.combatCounter;
   combat.player.energy = 9; combat.player.mana = 9;
   return { combat, player: combat.player, enemy };
@@ -217,4 +219,39 @@ test('own-element bonus: x1.25 floored, only for a matching element, never below
   assert.equal(ownElementAmount(10, null, 'fire'), 10);
   assert.equal(carrierElement({ damageType: 'lightning' }), 'lightning');
   assert.equal(carrierElement({ tags: ['school:frost'] }), 'frost');
+});
+
+const accuracy = (combat, enemy, carrier) => attackHitPreview(combat, combat.player, enemy, carrier).accuracy;
+const CARD = { cardId: 'core.spark', tags: ['camp:spell', 'maneuver:casting', 'school:lightning'], damageSchool: 'magic' };
+test('Precision: a lightning spell gains +1 against a metal target, and each Shocked stack on the caster costs 1', () => {
+  const { combat, player, enemy } = fight();
+  const base = accuracy(combat, enemy, CARD);
+  enemy.material = 'metal';
+  assert.equal(accuracy(combat, enemy, CARD), base + 1, 'metal target, lightning card');
+  assert.equal(accuracy(combat, enemy, { ...CARD, tags: ['camp:spell', 'maneuver:casting', 'school:fire'] }), base, 'metal target, fire card');
+  enemy.material = undefined;
+  player.statuses.shocked = { stacks: 2 };
+  assert.equal(accuracy(combat, enemy, CARD), base - 2, 'two Shocked stacks');
+  const parts = attackHitPreview(combat, player, enemy, CARD).precisionParts;
+  assert.equal(parts.reduce((sum, p) => sum + p.value, 0), accuracy(combat, enemy, CARD), 'the receipt parts add up');
+});
+
+test('Damp halves Burn applied to its holder through applyStatus; a dry target takes it all', () => {
+  const { combat, player, enemy } = fight();
+  applyStatus(combat, enemy, 'burn', 4, player);
+  const dry = getStacks(enemy, 'burn');
+  assert.ok(dry >= 3, 'a dry target takes the Burn (less any Poise buildup resistance)');
+  const wet = fight();
+  wet.enemy.statuses.damp = { stacks: 1 };
+  applyStatus(wet.combat, wet.enemy, 'burn', 4, wet.player);
+  assert.ok(getStacks(wet.enemy, 'burn') <= Math.ceil(dry / 2), 'Damp halves what was applied');
+  assert.ok(getStacks(wet.enemy, 'burn') >= 1);
+});
+
+test('authored enemies: the Charred Colossus (earth) spawns with 3 Bedrock, the Stitch Crab with 2 Damp, the Wandering Soldier with neither', () => {
+  const colossus = fight({ enemyId: 'charredColossus' }).enemy, crab = fight({ enemyId: 'stitchCrab' }).enemy, soldier = fight().enemy;
+  assert.equal(reg.enemies.get('charredColossus').element, 'earth');
+  assert.equal(getStacks(colossus, 'bedrock'), 3);
+  assert.equal(getStacks(crab, 'damp'), 2);
+  assert.equal(getStacks(soldier, 'bedrock') + getStacks(soldier, 'damp'), 0);
 });
