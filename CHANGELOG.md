@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.99`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
+- **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.101`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
+- **Windows test fix for jev paths** ([#2451](https://github.com/cehinds/AshenSpire/pull/2451), `0.7.2.101`). A jev self-test no longer fails on Windows runners whose temp folder uses a short 8.3 name.
 - **Enemies no longer "miss" when they Advance** ([#2445](https://github.com/cehinds/AshenSpire/pull/2445), `0.7.2.99`). Moving closer is not an attack: an enemy's Advance no longer rolls a hit that is logged as "missed: out of range".
 - **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.97`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
 - **Precision fades fast** ([#2448](https://github.com/cehinds/AshenSpire/pull/2448), `0.7.2.95`). Temporary Precision stacks now drop by 3 (was 1) at the start of their owner's turn, for players and enemies alike, so buff cards give a short burst instead of a growing pile; Persistent Precision still never decays.
