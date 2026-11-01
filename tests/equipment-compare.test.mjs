@@ -16,7 +16,10 @@ test('weapon rows read equipped to candidate, with better and worse marked', () 
   const rows = equipmentCompareRows(registries, weapon('greatsword'), weapon('ashStaff'), { attributes: {} });
   assert.deepEqual(pick(byId(rows, 'attackRating')), [4, 1, 'worse']);
   assert.deepEqual(pick(byId(rows, 'defenseRating')), [2, 1, 'worse']);
-  assert.deepEqual(pick(byId(rows, 'poise')), [8, 3, 'worse']);
+  assert.equal(byId(rows, 'poise'), undefined, 'a weapon has no Poise row: its poiseThreshold is its weight');
+  const weight = byId(rows, 'weight');
+  assert.equal(weight.verdict, 'changed', 'a lighter weapon is neither better nor worse');
+  assert.ok(weight.after < weight.before);
 });
 
 test('a lower requirement is better and a higher one is worse', () => {

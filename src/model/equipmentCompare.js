@@ -3,10 +3,15 @@
 // row, each marked better, worse or unchanged. Pure: it reads items and
 // registries and mutates nothing, so the modal only draws what is decided here.
 //
+// A WEAPON'S `poiseThreshold` IS ITS WEIGHT, never Poise (SPEC §13.4k;
+// combatRatings.itemRatingColumn): only armour's counts as Poise. Weapons get a
+// neutral Weight row (a lighter weapon is not worse).
+//
 // DIRECTION. A higher AR, DR or Poise is better; a higher requirement is worse
 // (it is harder to wield). Text facts (weapon art, modifiers) carry no order, so
 // a changed one is `changed`, never better or worse.
 import { equipmentRequirementReceipt } from './loadout.js';
+import { pieceWeight } from './statProjection.js';
 
 /** Authored modifier strings ("strike.poise=+3") as the short phrases the Armoury shows. */
 export function equipmentModLines(registries, piece) {
@@ -34,7 +39,6 @@ export function weaponArtName(registries, piece) {
 const NUMBER_ROWS = Object.freeze([
   { id: 'attackRating', label: 'AR', field: 'attackRating', better: 'higher' },
   { id: 'defenseRating', label: 'DR', field: 'defenseRating', better: 'higher' },
-  { id: 'poise', label: 'Poise', field: 'poiseThreshold', better: 'higher' },
 ]);
 
 const verdict = (before, after, better) => {
@@ -57,6 +61,13 @@ export function equipmentCompareRows(registries, current, next, context = {}) {
     if (!Number.isFinite(a) && !Number.isFinite(b)) continue;
     const before = Number.isFinite(a) ? a : 0, after = Number.isFinite(b) ? b : 0;
     rows.push({ id: spec.id, label: spec.label, kind: 'number', before, after, verdict: verdict(before, after, spec.better) });
+  }
+  if (current.kind === 'armor' && next.kind === 'armor') {
+    const before = Number(current.poiseThreshold) || 0, after = Number(next.poiseThreshold) || 0;
+    rows.push({ id: 'poise', label: 'Poise', kind: 'number', before, after, verdict: verdict(before, after, 'higher') });
+  } else {
+    const before = pieceWeight(current), after = pieceWeight(next);
+    rows.push({ id: 'weight', label: 'Weight', kind: 'number', before, after, verdict: before === after ? 'same' : 'changed' });
   }
   const reqOf = (piece) => new Map(equipmentRequirementReceipt(registries, piece, context.attributes || {}, {
     itemUpgradeLevels: context.itemUpgradeLevels, armamentLevels: context.armamentLevels,
