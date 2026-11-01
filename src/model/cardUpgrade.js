@@ -205,6 +205,9 @@ export function applyUpgradeSteps(base, steps) {
     if (steps[i].k === 'authored') throw new Error('An authored upgrade step must be the first step');
     card = applyStep(card, steps[i]);
   }
+  // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
+  // order of the steps, so a saved instance resolves the same way (no migration).
+  if (steps.some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) card.manaCost = 0;
   if (steps.length >= 2) card.name = `${base.name}+${steps.length}`;
   return card;
 }
