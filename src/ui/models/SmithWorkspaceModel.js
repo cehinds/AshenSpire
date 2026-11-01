@@ -54,8 +54,9 @@ export function smithCandidateRows(model) {
     member: item.itemRef,
     name: item.name,
     selected: Boolean(item.selected),
+    disabled: Boolean(item.needsBlacksmith),
     status: Object.freeze(service === 'upgrade'
-      ? { id: 'smith.row.tier', tokens: Object.freeze({ from: item.currentLevel, to: item.nextLevel }) }
+      ? (item.needsBlacksmith ? { id: 'smith.row.needsBlacksmith', tokens: Object.freeze({}) } : { id: 'smith.row.tier', tokens: Object.freeze({ from: item.currentLevel, to: item.nextLevel }) })
       : {
         id: item.mounts.length === 1 ? 'smith.row.mountOne' : 'smith.row.mountMany',
         tokens: Object.freeze({ where: item.whereLabel, n: item.mounts.length }),

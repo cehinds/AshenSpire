@@ -928,7 +928,7 @@ export function findings(r) {
       || !/itemRef,/.test(r.smithSelectionModel)
       || !/currentLevel:\s*candidate\.currentLevel[\s\S]*nextLevel:\s*candidate\.nextLevel[\s\S]*cost:\s*candidate\.cost[\s\S]*stones:\s*candidate\.stones[\s\S]*shortfall:\s*candidate\.shortfall[\s\S]*affordable:\s*candidate\.affordable/.test(r.smithSelectionModel)
       || !/affectedRows:\s*itemKind === 'armament'[\s\S]*groupedAffected\(candidate\.previewCards \|\| candidate\.affectedCards\)[\s\S]*genericAffected\(candidate\)/.test(r.smithSelectionModel)
-      || !/canConfirm:\s*Boolean\(selected\?\.affordable\)/.test(r.smithSelectionModel)
+      || !/canConfirm:\s*Boolean\(selected\?\.affordable && !selected\.needsBlacksmith\)/.test(r.smithSelectionModel)
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
       || !/role', 'dialog'/.test(r.smithUpgradeModal)
       || !/aria-modal/.test(r.smithUpgradeModal)
