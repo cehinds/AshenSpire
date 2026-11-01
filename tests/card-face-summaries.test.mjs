@@ -167,6 +167,9 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
           const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def);
           const full = (def.textTemplate || '').replace(tokenRe(), (m, k) => tokens[k] ?? m).replace(/<[^>]+>/g, '');
           const shown = `${face} ${(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word)).join(' ')}`;
+          // A literal number on a summary can drift from the graded values: every digit must appear in the full text (a Barrier split into Block + Ward counts as its sum; a status's own "N% chance" comes from the status rules, not the card).
+          const spelled = full.replace(/\b(?:a|an|one)\b/gi, '1').replace(/\b(?:twice|two)\b/gi, '2').replace(/\b(?:three)\b/gi, '3');
+          for (const n of face.replace(/\(\d+% chance\)/g, '').replace(/(\d+) Block, (\d+) Ward/g, (m, x, y) => String(+x + +y)).match(/\d+/g) || []) assert.ok(new RegExp(`(^|\\D)${n}(\\D|$)`).test(spelled), `${label}: face "${face}" shows ${n}, absent from "${full}"`);
           for (const [kind, re] of QUALIFIERS) if (re.test(full)) assert.ok(re.test(shown), `${label}: face "${face}" lost its ${kind} qualifier from "${full}"`);
         }
       }
