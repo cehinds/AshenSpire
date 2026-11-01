@@ -27,7 +27,7 @@ function fixture(t) {
       : sel.includes('alternative-scene-edge') && !sel.includes('blur') ? edge : sel.includes('blur') ? blur : null });
   const backdrop = element({ dataset: { scene: 'hollow-weald-1' }, querySelector: () => svg });
   const combat = { clientHeight: 1080, querySelector: sel => sel === '.alternative-backdrop' ? backdrop : null, querySelectorAll: () => [] };
-  return { combat, svg, fill, main, edge, blur, nodes: [fill, main, edge, blur, ...fillImages] };
+  return { combat, svg, fill, main, edge, blur, fillImages, nodes: [fill, main, edge, blur, ...fillImages] };
 }
 
 test('the zoom factor is authored config, below 1 and within the owner\'s 15-20% window', () => {
@@ -70,4 +70,17 @@ test('fitting twice with identical inputs writes no attributes the second time',
   }
   fitAlternativeBackdrop(combat, args);
   assert.deepEqual(writes, []);
+});
+
+test('the Never-drawn skyline setting hides the fill\'s far image too, and showing it restores it', t => {
+  const { combat, fillImages } = fixture(t);
+  const args = { width: 1920, height: 900, fieldTop: 180, ground: 600, narrow: false, coverFloor: true };
+  const [far, ground] = fillImages;
+  document.documentElement.dataset.wireframeSceneSkyline = 'off';
+  fitAlternativeBackdrop(combat, args);
+  assert.equal(far.attrs.visibility, 'hidden');
+  assert.equal(ground.attrs.visibility, 'visible');
+  document.documentElement.dataset.wireframeSceneSkyline = 'on';
+  fitAlternativeBackdrop(combat, args);
+  assert.equal(far.attrs.visibility, 'visible');
 });

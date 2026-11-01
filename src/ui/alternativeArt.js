@@ -241,6 +241,8 @@ function fitBackdropFill(svg, { device, scale, coverScale, left, top, width, bot
     const place = fillGround?.id === image.dataset.fillLayer ? fillGround : combatSceneLayers(device).find(layer => layer.id === image.dataset.fillLayer);
     for (const prop of ['x', 'y', 'width', 'height']) setAttr(image, prop, place[prop]);
     setAttr(image, 'href', alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[image.dataset.fillLayer], narrow)));
+    // Same rule as the sharp layers: "Never drawn" skyline hides far and landmark art here too.
+    setAttr(image, 'visibility', ['far', 'landmark'].includes(alternativeArtCatalog.sceneLayers[image.dataset.fillLayer].kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : 'visible');
   }
   const fade = 72 / scale, far = 5000;
   const exposed = [left > .5, top > .5, left + device.width * scale < width - .5, Math.min(top + device.height * scale, groundBottom) < bottom - .5];
