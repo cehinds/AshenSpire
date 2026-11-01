@@ -2841,10 +2841,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         break;
       }
       case 'gainBarrier': {
+        // Barrier stacks, one per point (SPEC 4.1a); ratings do not scale a stack count.
         const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0);
-        entry.defenseSplit = A.computeSpellDefenseGain(combat, p, base, action.card);
-        entry.value = entry.defenseSplit ? entry.defenseSplit.block + entry.defenseSplit.ward
-          : A.computeBlockGain(combat, p, base, action.card);
+        entry.value = Math.max(0, Math.floor(base));
+        entry.status = 'barrier';
         break;
       }
       case 'gainPoise':

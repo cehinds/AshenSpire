@@ -38,7 +38,7 @@ function effectsFor(effects = [], school) {
     return structuredClone(effect);
   });
 }
-const barrierText = text => typeof text === 'string' ? text.replace(/\{block(?=[}.])/g, '{gainBarrier') : text;
+const barrierText = text => typeof text === 'string' ? text.replace(/\{block(?=[}.])/g, '{gainBarrier').replace(/\bBlock\b/g, 'Barrier') : text;
 function conditionFor(value) {
   if (Array.isArray(value)) return value.map(conditionFor);
   if (!value || typeof value !== 'object') return value;

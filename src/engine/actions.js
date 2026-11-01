@@ -474,26 +474,30 @@ function reflectBack(ctx, source, target, carrier, reflect) {
 }
 
 /**
- * The `gainBarrier` opcode is a card's protection grant: a spell's gain refills Ward first. The old numeric
- * Barrier pool is gone (SPEC 4.1a): what overflows a full Ward pool, and any non-spell grant, is Block. Barrier
- * itself is a stacked status (`barrier`), added by applyStatus, and is worth Poise, not absorption.
+ * Barrier (SPEC 4.1a) is a stacked status: each stack is +5 maximum and current Poise, and one stack is lost per
+ * turn. The `gainBarrier` opcode, a stance's entry protection and an enemy move's `barrier` all add `base`
+ * stacks, one per point (owner, 2026-11-01); a stack count is not scaled by ratings.
  */
 export function gainBarrier(ctx, entity, base, card = null) {
-  if (configuredCombat(ctx)) return gainBlock(ctx, entity, base, card);
   if (!entity?.alive) return 0;
-  const split = computeSpellDefenseGain(ctx, entity, base, card);
-  if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
-  return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
+  return gainBarrierAmount(ctx, entity, Math.max(0, Math.floor(base)), card);
 }
 
-// A SPELL refills Ward first; the overflow past a full pool is dropped. Every other source adds Block.
-function gainBarrierAmount(ctx, entity, amount, card = null, spell = isSpellCard(card)) {
-  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && spell) {
+function gainBarrierAmount(ctx, entity, amount, card = null) {
+  if (!(amount > 0)) return 0;
+  statuses.applyStatus(ctx, entity, 'barrier', amount, null);
+  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.statuses.barrier?.stacks || 0, ...(card?.logSource ? { source: card.logSource } : {}), ...seatOf(ctx, entity) });
+  return amount;
+}
+
+// A spell's Ward share (the `block` opcode's split) refills the Ward pool; what is past a full pool becomes Barrier stacks, one per point.
+function refillWardShare(ctx, entity, amount, card = null) {
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2) {
     syncWardMaximum(ctx, entity);
     const granted = Control.restorePersistentWard(ctx, entity, amount, { source: 'card', modifierPercent: 0 });
-    return (granted.restored || 0) + (granted.missingRecovered || 0);
+    return (granted.restored || 0) + (granted.missingRecovered || 0) + (granted.barrier || 0);
   }
-  return gainBlockAmount(ctx, entity, amount, card, false);
+  return gainBarrierAmount(ctx, entity, amount, card);
 }
 
 /**
@@ -1046,7 +1050,7 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
 // status modifiers were computed on the total; neither portion reapplies them.
 function gainSpellDefenseAmount(ctx, entity, split, card) {
   const block = split.block > 0 ? gainBlockAmount(ctx, entity, split.block, card, false) : 0;
-  const ward = split.ward > 0 ? gainBarrierAmount(ctx, entity, split.ward, card, true) : 0;
+  const ward = split.ward > 0 ? refillWardShare(ctx, entity, split.ward, card) : 0;
   return block + ward;
 }
 
@@ -1071,7 +1075,7 @@ export function gainBlock(ctx, entity, base, card = null) {
     if (share > 0) {
       const amount = computeBlockGain(ctx, entity, base, card);
       const magic = Math.floor(amount * share + 1e-9);
-      if (magic > 0) gainBarrierAmount(ctx, entity, magic, card, true);
+      if (magic > 0) refillWardShare(ctx, entity, magic, card);
       if (amount - magic > 0) gainBlockAmount(ctx, entity, amount - magic, card, false);
       return amount;
     }
@@ -1770,7 +1774,7 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
-          gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+          gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card);
         } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;

@@ -174,7 +174,7 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   const exact = overflow ? credit + s.wardRestoreCarry : Math.min(room, credit + s.wardRestoreCarry);
   const whole = Math.floor(exact + 1e-9);
   const restored = Math.min(room, whole);
-  const barrier = 0; // overflow past a full pool is no longer kept as Barrier (SPEC 4.1a)
+  const barrier = overflow ? whole - restored : 0;
   if (missingMode) {
     const missingAfter = room - restored;
     ward.value = Math.max(0, Math.min(ward.max, ward.max - missingAfter));
@@ -191,6 +191,11 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   // missing debt (missingRecovered), which leaves the value where it was.
   const increase = ward.value - valueBefore, missingRecovered = restored - increase;
   emit(ctx, 'persistentWardChanged', entity, { restored: increase, missingRecovered, credited: credit, value: ward.value, max: ward.max, source });
+  if (barrier > 0) {
+    // The part past a full pool becomes Barrier stacks, one per point (SPEC 4.1a).
+    Statuses.applyStatus(ctx, entity, 'barrier', barrier, null);
+    emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.statuses?.barrier?.stacks || 0 });
+  }
   return { restored: increase, missingRecovered, barrier, credited: credit, carry: s.wardRestoreCarry };
 }
 

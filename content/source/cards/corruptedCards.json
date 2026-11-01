@@ -82,7 +82,7 @@
         "amount": 1
       }
     ],
-    "textTemplate": "Gain {gainBarrier} temporary Block. Draw {draw} card. Pay 10 Ashen Blight. Exhaust.",
+    "textTemplate": "Gain {gainBarrier} temporary Barrier. Draw {draw} card. Pay 10 Ashen Blight. Exhaust.",
     "flavor": "The brand flares outward, sheltering the body while darkening what remains within."
   }
 ]

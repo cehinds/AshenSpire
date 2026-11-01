@@ -70,8 +70,9 @@ const statusForms = status => {
   return [...forms].filter(Boolean);
 };
 // A status the full rules apply or grant ("Apply 4 weak", "gain Sleep"), not one merely mentioned ("Blight still accumulates").
-// A status whose name is also a protection word in card text ("Gain 3 Ward" is a pool refill; Ward and Barrier, SPEC 4.1a) is not
-// inferred from prose: its `sharedWord` flag keeps the face check from reading that sentence as applying the status.
+// A status whose name is also a pool word in card text ("Deal 3 Ward", "Restore 2 Ward": the Ward pool, not the Ward status, SPEC 4.1a) is not
+// inferred from prose: its `sharedWord` flag keeps the face check from reading that sentence as applying the status. Barrier carries
+// it too: a trailing once-per-turn Barrier clause (the Starseer combos) does not fit the face's clause cap and must not force the Inspect cue.
 export const statusApplied = (text, status) => !status?.sharedWord && statusForms(status).some(form =>
   new RegExp(`(?:\\d+|apply|applies|gain|inflict)\\s+${escapeRe(form).replace(/ /g, '\\s+')}\\b`, 'i').test(text));
 // The whole status name (or id) as a word, with a plural; never a stem, so "Prepared" is not "Prepare Melee Counter".

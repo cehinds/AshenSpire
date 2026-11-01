@@ -216,15 +216,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         }
         return frag('gain', `${num(n, base)} Block`);
       }
-      // A Spell's gain refills Ward first, so it reads Ward.
-      case 'gainBarrier': {
-        const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
-        if (split) {
-          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
-          return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
-        }
-        return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Block'}`);
-      }
+      // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
+      case 'gainBarrier': return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(n, base)} Barrier`);
       case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
