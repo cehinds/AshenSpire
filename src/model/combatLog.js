@@ -6,7 +6,7 @@
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
 import { t } from '../ui/strings.js';
-import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
+import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -143,7 +143,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       return `${source}'s ${label || 'attack'}`;
     };
 
-    let text;
+    let text, rollReceipt = null, lineReceipts = null;
     switch (event.type) {
       case 'cardPreparing':
         playing = { actorKey: sourceKey, label: row(registries?.cards, event.cardId)?.name || null };
@@ -170,20 +170,35 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
         break;
       }
-      // SPEC §17 Contests: "Contest: d20 [5] + INT 1 + WIS 2 + rank 1 = 9 vs Poise 7 + WIS 1 + level 1 = 9 · success".
+      // SPEC §17 Contests: "Read Intent contest: 9 vs 9 · success"; the full detail itemises d20 + attributes + rank vs Poise + attributes + level.
       case 'contestPassed': case 'contestFailed': {
-        const c = event.contest || event;
-        const short = id => ATTRIBUTES.find(row => row.id === id)?.shortLabel || word(id);
-        const mine = (c.parts || []).map(part => `${short(part.id)} ${part.value}`).join(' + ');
-        const theirs = (c.dcParts || []).map(part => `${part.id === 'poise' ? 'Poise' : part.id === 'level' ? 'level' : short(part.id)} ${part.value}`).join(' + ');
-        text = t(event.type === 'contestPassed' ? 'combat.log.contestPassed' : 'combat.log.contestFailed', {
-          source, target, roll: c.roll, mine, rank: c.rank ?? 1, total: c.total, theirs, dc: c.dc });
+        rollReceipt = contestRollReceipt(event);
+        const card = row(registries?.cards, event.cardId)?.name;
+        if (rollReceipt) text = `${source} → ${target}: ${rollCompactText(`${card ? `${card} ` : ''}contest`, rollReceipt)}`;
+        break;
+      }
+      // A critical-hit roll, a perception (Intent read) check, a status buildup chance and a status recovery roll.
+      case 'critRolled':
+        rollReceipt = critRollReceipt(event);
+        if (rollReceipt) text = `${source} → ${target}: ${rollCompactText('Crit', rollReceipt)}`;
+        break;
+      case 'perceptionRolled':
+        rollReceipt = perceptionRollReceipt(event);
+        if (rollReceipt) text = `${name(event.ownerId || 'player')} → ${name(event.enemyInstanceId)}: ${rollCompactText('Perception', rollReceipt)}`;
+        break;
+      case 'statusChanceRolled': case 'statusRecoveryRolled': {
+        const recovery = event.type === 'statusRecoveryRolled';
+        rollReceipt = percentRollReceipt(event, recovery ? 'statusRecovery' : 'statusChance');
+        if (rollReceipt) text = `${target}'s ${rollCompactText(`${statusName(registries, event.status)} ${recovery ? 'recovery' : 'buildup'}`, rollReceipt)}`;
         break;
       }
       case 'attackHit': case 'attackMissed': {
         const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
         const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
-        if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
+        rollReceipt = accuracyRollReceipt(event);
+        // Every roll reads "<what>: <total> vs <DC> · hit|miss"; the bonuses are in the full-detail receipt.
+        if (rollReceipt) text = `${source} → ${target}: ${rollCompactText(causeOf().label || 'Attack', rollReceipt)}${event.missReason === 'range' ? ' (out of range)' : ''}`;
+        else if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.opposed || event.fixedDefense) {
           // Core automatic outcome: no dice were rolled, so say why instead of showing a die.
@@ -245,6 +260,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
             : `${target}'s Evade failed against ${attack}: rolled ${roll}, needed more than ${e.difficulty}.`);
         }
         text = lines.length ? lines : null;
+        // Each receipt belongs to its own row only: a failed distance row never shows the Evade's d20.
+        lineReceipts = lines.map(line => (e && line === lines[lines.length - 1] ? evadeRollReceipt(e) : null));
         break;
       }
       case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
@@ -292,6 +309,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'statusExpired': text = `${target}'s ${statusName(registries, event.status)} expired.`; break;
       // The framework dodge (v1): the player rolls on playing a dodge card; a success lays down a guard.
       case 'dodgeRolled': {
+        rollReceipt = dodgeRollReceipt(event);
         const dodger = name(sourceKey || 'player');
         const via = paren(causeText({ self: sourceKey }));
         text = event.success
@@ -332,7 +350,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) {
+    [].concat(text || []).forEach((line, lineIndex) => {
+      const receipt = lineReceipts ? lineReceipts[lineIndex] : rollReceipt;
       const segments = [];
       let cursor = 0;
       for (const match of line.matchAll(/\u0001(\d+)\u0002/g)) {
@@ -342,8 +361,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       if (cursor < line.length) segments.push({ text: line.slice(cursor) });
       rows.push({ id, round, text: segments.map(segment => segment.text).join(''), segments,
-        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
-    }
+        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}), ...(receipt ? { rollReceipt: receipt } : {}) });
+    });
   });
   return rows;
 }

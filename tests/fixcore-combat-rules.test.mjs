@@ -136,11 +136,12 @@ test('Perception DC is 5 + target INT + target WIS + bonuses; level is ignored; 
  const {ctx}=setup();const target={level:9,attributes:{intelligence:2,wisdom:3}},observer={attributes:{wisdom:2}};
  // DC 5 + INT 2 + WIS 3 = 10; the target's level adds nothing. Roll 7 + WIS 2 = 9 fails.
  const failed=rollKnowledgeRead({float:()=>.3},enemyKnowledge,observer,'Attack',{ctx,target});
- assert.deepEqual(failed.perception,{roll:7,wisdom:2,dc:10,total:9,passed:false});
+ // #2434: the read also carries dcParts for the roll log; the D8 numbers are what this pins.
+ assert.deepEqual(failed.perception,{roll:7,wisdom:2,dc:10,total:9,passed:false,dcParts:[{label:'base',value:5},{label:'INT',value:2},{label:'WIS',value:3}]});
  assert.equal(failed.visibility,'unknown');
  // Roll 8 + WIS 2 = 10 meets the DC.
  const passed=rollKnowledgeRead({float:()=>.35},enemyKnowledge,observer,'Attack',{ctx,target});
- assert.deepEqual(passed.perception,{roll:8,wisdom:2,dc:10,total:10,passed:true});
+ assert.deepEqual(passed.perception,{roll:8,wisdom:2,dc:10,total:10,passed:true,dcParts:[{label:'base',value:5},{label:'INT',value:2},{label:'WIS',value:3}]});
  assert.equal(passed.visibility,'exact');
  // Configured bonuses sum into the DC.
  const bonus={...ctx,fixCoreRules:{...ctx.fixCoreRules,perception:{baseDC:5,bonuses:[2,-1]}}};
