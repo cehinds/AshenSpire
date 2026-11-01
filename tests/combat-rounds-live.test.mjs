@@ -406,8 +406,10 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
     }
     return JSON.stringify(log);
   }).join('\n');
-  assert.equal(previousTotals.length, 18, 'the scripted fights carry exactly 18 status before-total receipts');
-  assert.deepEqual(previousTotals, [0, 0, 0, 1, 2, 2, 0, 0, 1, 1, 2, 0, 0, 1, 2, 0, 0, 0]);
+  // Re-pinned 2026-11-01 (Ward and Barrier, SPEC 4.1a): an enemy's `guard` move grants Barrier as a status (one stack per old point),
+  // so each of the 7 scripted guards adds one more status before-total receipt (18 -> 25). Every other receipt is unchanged.
+  assert.equal(previousTotals.length, 25, 'the scripted fights carry exactly 25 status before-total receipts');
+  assert.deepEqual(previousTotals, [0, 0, 0, 4, 1, 7, 2, 2, 0, 0, 1, 0, 1, 4, 2, 0, 7, 0, 0, 1, 4, 2, 0, 0, 0]);
   assert.equal(endedMoves.length, 22, 'only the new consumed-move lifecycle events are excluded');
   assert.deepEqual(endedMoves.reduce((counts, [, moveId]) => ({ ...counts, [moveId]: (counts[moveId] || 0) + 1 }), {}),
     { slash: 11, guard: 7, warcry: 4 });
@@ -418,7 +420,8 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
     return counts;
   }, {}), { '0-7': 11, '0-9': 6 }, 'projected HP ranges are present only on the public attacking forecasts');
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
-    { sha256: '7ae61b7bedb9ccad09e9f732ce0650c130d34c3f350eec866b1e7460546e80fe', length: 414757 });
+    // Re-pinned 2026-11-01 with the receipt count above: the guard moves now log Barrier status events (SPEC 4.1a).
+    { sha256: '247df32bf95c3770373a5b3697d030e7a029f8fd75493a381c603a8a59594c99', length: 415816 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

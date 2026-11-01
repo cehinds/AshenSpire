@@ -36,16 +36,16 @@ test('defense uses school shares independently of damage routing and preserves o
   assert.deepEqual(spellDefenseSplit({ type: 'skill', combatProfile: { camp: 'spell', school: 'divine' } }, 3), { block: 1, ward: 2 });
 });
 
-test('both guard opcodes split the modified total once, refill Ward, and the overflow past a full pool is dropped', () => {
-  for (const gain of [gainBarrier, gainBlock]) for (const [school, block, ward] of [['fire', 2, 3], ['frost', 3, 2], ['force', 4, 1], ['alteration', 4, 1]]) {
+test('the block guard splits the modified total once and refills Ward; the part past a full pool becomes Barrier stacks', () => {
+  for (const gain of [gainBlock]) for (const [school, block, ward] of [['fire', 2, 3], ['frost', 3, 2], ['force', 4, 1], ['alteration', 4, 1]]) {
     for (const startingWard of [0, 3]) {
       const combat = fixture(), player = combat.player;
       player.block = 0; player.barrier = 0; player.persistentWard = { max: 3, value: startingWard };
-      assert.equal(gain(combat, player, 5, guard(school)), block + Math.min(ward, 3 - startingWard));
+      assert.equal(gain(combat, player, 5, guard(school)), 5);
       assert.equal(player.block, block);
       assert.equal(player.wardBlock || 0, 0, 'physical Block has no Ward provenance');
       assert.equal(player.persistentWard.value, Math.min(3, startingWard + ward));
-      assert.equal(player.barrier || 0, 0, 'no numeric Barrier pool (SPEC 4.1a)');
+      assert.equal(player.statuses.barrier?.stacks || 0, Math.max(0, startingWard + ward - 3), 'overflow past a full pool is Barrier stacks, one per point');
     }
   }
   const combat = fixture(), player = combat.player;
@@ -53,28 +53,31 @@ test('both guard opcodes split the modified total once, refill Ward, and the ove
   const card = { ...guard('frost'), cardId: 'frostCounter', skipRatingBonus: false, ratingValue: 4 };
   const total = computeBlockGain(combat, player, 5, card);
   assert.equal(total, 9, 'the authored fallback rating contributes four points');
-  assert.equal(gainBarrier(combat, player, 5, card), total);
-  assert.equal(player.block + player.persistentWard.value + player.barrier, total, 'rating bonus is included once');
+  assert.equal(gainBlock(combat, player, 5, card), total);
+  assert.equal(player.block + player.persistentWard.value + (player.statuses.barrier?.stacks || 0), total, 'rating bonus is included once');
+  // The gainBarrier opcode adds that many Barrier stacks and touches neither Block nor Ward (SPEC 4.1a).
+  const stacker = fixture().player; stacker.block = 0; stacker.persistentWard = { max: 3, value: 0 };
+  assert.equal(gainBarrier(fixture(), stacker, 5, guard('fire')), 5);
+  assert.equal(stacker.block, 0); assert.equal(stacker.persistentWard.value, 0);
 });
 
-test('upcast protection keeps its total and compact and authored faces show the same split', () => {
+test('upcast protection keeps its stack total and the faces read Barrier', () => {
   const combat = fixture();
   for (const [cardId, school] of [['frostCounter', 'frost'], ['fireCounter', 'fire'], ['forceCounter', 'force'], ['alterationCounter', 'alteration']]) {
     for (let rank = 0; rank <= 3; rank++) {
       const def = resolveCombatCard(combat, { cardId }, { upcastRanks: rank });
       const amount = def.effects.find(effect => effect.op === 'gainBarrier').amount;
-      const split = spellDefenseSplit({ ...def, combatProfile: { camp: 'spell', maneuver: 'counter', school } }, amount);
-      assert.equal(split.block + split.ward, amount);
+      assert.ok(Number.isInteger(amount) && amount > 0, 'an upcast adds whole Barrier stacks');
     }
   }
   const rules = { combatExpansionVersion: 2, breakMeterVersion: 2 };
-  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier', abilityRank: 1 }, { rules }), /Gain 3 Block, 1 Ward/);
+  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier', abilityRank: 1 }, { rules }), /Gain 4 Barrier/);
   const complex = { id: 'test-defense', name: 'Complex defense', type: 'skill',
     tags: ['camp:spell', 'school:divine'], ashenBlightCost: 10,
     effects: [{ op: 'gainBarrier', target: 'self', amount: 18 }],
     textTemplate: 'Gain {gainBarrier} temporary Barrier. Pay 10 Ashen Blight. Exhaust.' };
   assert.equal(cardFaceLines(complex, null, registries), null);
-  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: complex, rules }), /Gain 5 Block, 13 Ward\. Pay 10 Ashen Blight\. Exhaust/);
+  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: complex, rules }), /Gain 18 temporary Barrier\. Pay 10 Ashen Blight\. Exhaust/);
 });
 
 test('expanded block opcode faces and allied gains use defense shares; legacy faces retain Block', () => {
@@ -107,56 +110,37 @@ function ratedFixture(dr, pr, cardId = 'frostCounter', reactionRulesVersion = 2)
   return combat;
 }
 
-test('live DR scales Block and PR scales Ward independently, including preview parts and tokens', () => {
-  for (const [cardId, school, baseBlock, baseWard, counterBlock, counterWard] of [
-    ['fireCounter', 'fire', 2, 3, 2, 5], ['frostCounter', 'frost', 3, 2, 4, 3],
-    ['forceCounter', 'force', 4, 1, 5, 2], ['alterationCounter', 'alteration', 4, 1, 5, 2],
+test('live DR scales Block and PR scales Ward in the block guard; the gainBarrier stacks are not scaled by either', () => {
+  for (const [cardId, school, baseBlock, baseWard] of [
+    ['fireCounter', 'fire', 2, 3], ['frostCounter', 'frost', 3, 2],
+    ['forceCounter', 'force', 4, 1], ['alterationCounter', 'alteration', 4, 1],
   ]) for (const [dr, pr] of [[3, 0], [0, 3], [3, 3]]) {
-    for (const gain of [gainBarrier, gainBlock]) {
-      const combat = ratedFixture(dr, pr, cardId), player = combat.player;
-      const card = { ...guard(school), cardId, damageSchool: 'magic' };
-      const total = 5 + dr + pr, expected = { block: baseBlock + dr, ward: baseWard + pr };
-      assert.equal(computeBlockGain(combat, player, 5, card), total);
-      assert.deepEqual(computeSpellDefenseGain(combat, player, 5, card), expected);
-      assert.equal(gain(combat, player, 5, card), total);
-      assert.deepEqual({ block: player.block, ward: player.persistentWard.value + player.barrier }, expected);
-    }
-    for (const version of [1, 2]) {
-      const combat = ratedFixture(dr, pr, cardId, version), player = combat.player;
-      const before = JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog });
-      // Accepted spell Counter adds 1 Power. Version 2 additionally scales the
-      // card's base 5 to 7 through its Counterstrike trait, before DR/PR joins.
-      const expected = { block: (version === 2 ? counterBlock : baseBlock) + dr,
-        ward: (version === 2 ? counterWard : baseWard) + pr + 1 };
-      const total = (version === 2 ? 7 : 5) + dr + pr + 1;
-      const preview = previewCard(combat, 'rated-defense');
-      const protection = preview.values.find(value => value.op === 'gainBarrier');
-      assert.equal(protection.value, total);
-      assert.deepEqual(protection.defenseSplit, expected);
-      assert.equal(preview.tokens[protection.token + '.block'], expected.block);
-      assert.equal(preview.tokens[protection.token + '.ward'], expected.ward);
-      const model = playingCardModel(registries, { cardId }, { preview });
-      assert.equal(model.tokens[protection.token + '.block'], expected.block);
-      assert.equal(model.tokens[protection.token + '.ward'], expected.ward);
-      const lines = cardFaceLines(preview.resolvedDefinition, preview, registries);
-      const face = lines ? lines.map(line => line.html).join(' ').replace(/<[^>]+>/g, '')
-        : cardPlainText(registries, { cardId }, { preview, rules: { combatExpansionVersion: 2 } });
-      assert.ok(face.includes(`${expected.block} Block, ${expected.ward} Ward`));
-      const summary = combatCardSummary(preview.resolvedDefinition, preview, registries);
-      if (summary !== null) assert.ok(summary.includes(`${expected.block} Block and ${expected.ward} Ward`));
-      else assert.ok(cardPlainText(registries, { cardId }, { preview, rules: { combatExpansionVersion: 2 } })
-        .includes(`${expected.block} Block, ${expected.ward} Ward`));
-      assert.equal(JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog }), before,
-        'preview changes no stance, pools, preparation, queue or RNG');
-      const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'rated-defense', targetId: player.id });
-      const own = out.events.filter(event => event.cardInstanceId === 'rated-defense' && !event.triggeredBy);
-      assert.deepEqual({ block: own.filter(event => event.type === 'blockGained').reduce((sum, event) => sum + event.amount, 0),
-        ward: own.filter(event => event.type === 'persistentWardChanged' && event.source === 'card').reduce((sum, event) => sum + event.restored, 0) },
-      expected, 'paid authored support equals the preview, apart from separate stance entry grants');
-      assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
-      assert.equal(out.events.filter(event => event.type === 'combatStanceChanged').length, 1);
-      assert.equal(out.events.filter(event => event.type === 'combatCounterstrikeApplied').length, version === 2 ? 1 : 0);
-    }
+    const combat = ratedFixture(dr, pr, cardId), player = combat.player;
+    const card = { ...guard(school), cardId, damageSchool: 'magic' };
+    const total = 5 + dr + pr, expected = { block: baseBlock + dr, ward: baseWard + pr };
+    assert.equal(computeBlockGain(combat, player, 5, card), total);
+    assert.deepEqual(computeSpellDefenseGain(combat, player, 5, card), expected);
+    assert.equal(gainBlock(combat, player, 5, card), total);
+    assert.deepEqual({ block: player.block, ward: player.persistentWard.value + (player.statuses.barrier?.stacks || 0) }, expected);
+    // The gainBarrier opcode: stacks equal the printed amount, whatever DR and PR are (SPEC 4.1a).
+    const stacked = ratedFixture(dr, pr, cardId), holder = stacked.player;
+    assert.equal(gainBarrier(stacked, holder, 5, card), 5);
+    assert.equal(holder.statuses.barrier.stacks, 5); assert.equal(holder.block, 0);
+  }
+  for (const [cardId] of [['fireCounter'], ['frostCounter']]) for (const version of [1, 2]) {
+    const combat = ratedFixture(3, 3, cardId, version), player = combat.player;
+    const before = JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog });
+    const preview = previewCard(combat, 'rated-defense');
+    const protection = preview.values.find(value => value.op === 'gainBarrier');
+    assert.equal(protection.value, version === 2 ? 7 : 5, 'Counterstrike scales the printed 5 to 7; ratings do not');
+    assert.equal(protection.defenseSplit, undefined);
+    assert.equal(JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog }), before,
+      'preview changes no stance, pools, preparation, queue or RNG');
+    const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'rated-defense', targetId: player.id });
+    const own = out.events.filter(event => event.cardInstanceId === 'rated-defense' && !event.triggeredBy);
+    assert.equal(own.filter(event => event.type === 'barrierGained').reduce((sum, event) => sum + event.amount, 0), protection.value,
+      'paid support adds the previewed Barrier stacks');
+    assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
   }
 });
 

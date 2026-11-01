@@ -33,6 +33,8 @@ function setup(cardId, stacks, version = 2) {
   enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 };
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
   if (enemy.persistentWard) enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  // Isolate the Silenced rule from Poise: a Barrier stack (SPEC 4.1a) from the enemy's opening stance would add 5 Poise.
+  delete enemy.statuses.barrier; if (enemy.persistentPoise) enemy.persistentPoise = { value: 0, max: 0 };
   if (stacks) enemy.statuses.silenced = { stacks, duration: 2 };
   return { combat, enemy };
 }

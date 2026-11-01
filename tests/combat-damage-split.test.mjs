@@ -171,10 +171,10 @@ test('a default spell defend splits 5 into Ward 3 and Block 2 regardless of dama
     player.persistentWard = { max: 3, value: ward };
     player.barrier = 0; player.block = 0;
     const gained = gainBlock(combat, player, 5, guard);
-    assert.equal(gained, ward === 3 ? 2 : 5, 'the guard lays down its Block and refills Ward (the overflow past a full pool is dropped)');
+    assert.equal(gained, 5, 'the guard lays down its Block and refills Ward');
     assert.equal(player.block, 2, 'Block 2');
     assert.equal(player.persistentWard.value, wardAfter, `Ward ${ward} becomes ${wardAfter}`);
-    assert.equal(player.barrier || 0, 0, 'no Barrier pool');
+    assert.equal(player.statuses.barrier?.stacks || 0, ward === 3 ? 3 : 0, 'what a full Ward pool cannot take becomes Barrier stacks');
   }
 });
 

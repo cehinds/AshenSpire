@@ -28,6 +28,8 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
   primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0]; enemy.block = enemy.barrier = 0;
+  // Barrier stacks (SPEC 4.1a) are Poise: drop any from the enemy's opening stance so each test sets its own pools.
+  delete enemy.statuses.barrier; if (enemy.persistentPoise) delete enemy.persistentPoise.barrierBonus;
   enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {};
   enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 3 };
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
@@ -144,14 +146,14 @@ test('a physical hit skips Ward: Block soaks, then Health', () => {
   assert.equal(before - enemy.hp, 7);
 });
 
-test("owner's example: Block soaks the magic first and breaks, Ward lets max(5 - 3, 1) through and breaks (the old Barrier pool is Block)", () => {
+test("owner's example: Block soaks the magic first and breaks, Ward lets max(5 - 3, 1) through and breaks (Barrier is Poise now, not absorption)", () => {
   const { combat } = fixture();
   const mage = combat.player;
   mage.ratings = { ...mage.ratings, ward: 3 };
   mage.persistentWard.max = mage.persistentWard.value = 3;
   mage.block = 0;
-  gainBarrier(combat, mage, 6, { skipRatingBonus: true });
-  assert.equal(mage.persistentWard.value, 3); assert.equal(mage.block, 6, 'a non-spell protection grant is Block (9 total with Ward)');
+  mage.block = 6;
+  assert.equal(mage.persistentWard.value, 3);
   const events = []; const emit = combat.emit; combat.emit = (type, payload) => { events.push({ type, ...payload }); return emit.call(combat, type, payload); };
   const loss = mage.pendingActionLoss || 0;
   const spell = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
@@ -181,12 +183,12 @@ test('a combatant starts every fight with its full Ward (configurable share)', (
   assert.equal(persistentWardMaximum({ ratingsRules: { resistance: { wardPool: 0.5 } } }, { ratings: { ward: 25 } }), 12);
 });
 
-test('a card that adds Ward refills it first; the rest past a full pool is dropped (no Barrier pool, SPEC 4.1a)', () => {
+test('a card that adds Ward refills it first; the rest past a full pool becomes Barrier stacks (one per point, SPEC 4.1a)', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
   enemy.ratings.ward = enemy.persistentWard.max = 10; enemy.persistentWard.value = 7; enemy.barrier = 0;
-  assert.equal(restoreExpandedWard(combat, enemy, 5).restored, 3);
+  assert.equal(restoreExpandedWard(combat, enemy, 5).barrier, 2);
   assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10 });
-  assert.equal(enemy.barrier || 0, 0);
+  assert.equal(enemy.statuses.barrier.stacks, 2);
 });
 
 test('a buff that raises the Ward rating raises the Ward maximum and current Ward with it', () => {
@@ -208,67 +210,45 @@ test('a rating swing keeps the missing Ward fixed: a dip and recovery cannot ref
   assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 2 }, 'recovery restores the same missing, not a full pool');
 });
 
-test('a restore against a missing Ward fills the missing amount, and nothing overflows into a Barrier pool', () => {
+test('a restore against a missing Ward fills the missing amount, and Barrier stacks overflow only once missing reaches 0', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 }; enemy.barrier = 0;
   enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
   assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 8 });
   restoreExpandedWard(combat, enemy, 2, { modifierPercent: 0 });
   assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 6 }, 'the card restores 2 of the 8 missing, not up to max');
-  assert.equal(enemy.barrier, 0, 'no Barrier while missing is above max');
+  assert.equal(enemy.statuses.barrier?.stacks || 0, 0, 'no Barrier while missing is above max');
   enemy.ratings.ward = 10; syncWardMaximum(combat, enemy);
   assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 4 }, 'recovery returns the pool to 4 of 10');
   const overflow = restoreExpandedWard(combat, enemy, 8, { modifierPercent: 0 });
   assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10 });
-  assert.equal(overflow.barrier, 0, 'the part past the 6 missing is dropped');
-  assert.equal(enemy.barrier || 0, 0);
+  assert.equal(overflow.barrier, 2, 'the part past the 6 missing becomes Barrier stacks');
+  assert.equal(enemy.statuses.barrier.stacks, 2);
 });
 
-test('a card that closes the missing Ward drops only the rest past it', () => {
+test('a card that closes the missing Ward sends only the rest past it to Barrier stacks', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 }; enemy.barrier = 0;
   enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
   const out = restoreExpandedWard(combat, enemy, 10, { modifierPercent: 0 });
   assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 3 }, 'missing 8 is closed; the pool fills to its max');
-  assert.equal(out.barrier, 0);
-  assert.equal(enemy.barrier || 0, 0);
+  assert.equal(out.barrier, 2);
+  assert.equal(enemy.statuses.barrier.stacks, 2);
 });
 
-test('a magical protection gain refills Ward first and drops the overflow', () => {
-  const { combat, enemy } = fixture();
-  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+test('the gainBarrier opcode adds Barrier stacks, one per point, and leaves Ward and Block alone (magical or not)', () => {
   const spell = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
     combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
-  gainBarrier(combat, enemy, 6, spell);
-  assert.equal(enemy.persistentWard.value, 3, 'Ward is refilled to full first');
-  assert.equal(enemy.barrier || 0, 0); assert.equal(enemy.block || 0, 0, 'the other 4 are dropped');
-});
-
-test('a non-magical protection gain adds Block alone and leaves Ward alone', () => {
-  const { combat, enemy } = fixture();
-  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
-  gainBarrier(combat, enemy, 6, { skipRatingBonus: true });
-  assert.equal(enemy.persistentWard.value, 1, 'a non-magic source does not refill Ward');
-  assert.equal(enemy.block, 6);
-});
-
-test('a mana-costing skill that is not a Spell adds Block alone, even though it is magical', () => {
-  const { combat, enemy } = fixture();
-  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
   const skill = { cardId: 'starstonePebble', manaCost: 2, skipRatingBonus: true, tags: ['maneuver:casting'],
     combatProfile: { camp: 'physical', maneuver: 'casting', school: 'arcane', damageType: 'blunt', reach: 'near', targeting: 'single' } };
-  assert.equal(gainBarrier(combat, enemy, 6, skill), 6);
-  assert.equal(enemy.persistentWard.value, 1, 'a non-Spell source does not refill Ward');
-  assert.equal(enemy.block, 6);
-});
-
-test('a Spell card refills Ward first and gainBarrier returns the Ward refill only', () => {
-  const { combat, enemy } = fixture();
-  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
-  const spellByTag = { cardId: 'starstonePebble', skipRatingBonus: true, tags: ['camp:spell'] };
-  assert.equal(gainBarrier(combat, enemy, 6, spellByTag), 2, 'granted: 2 into Ward; the other 4 are dropped');
-  assert.equal(enemy.persistentWard.value, 3);
-  assert.equal(enemy.barrier || 0, 0);
+  for (const card of [spell, skill, { skipRatingBonus: true }, { cardId: 'starstonePebble', skipRatingBonus: true, tags: ['camp:spell'] }]) {
+    const { combat, enemy } = fixture();
+    enemy.persistentWard = { max: 3, value: 1 };
+    assert.equal(gainBarrier(combat, enemy, 6, card), 6);
+    assert.equal(enemy.persistentWard.value, 1, 'a Barrier grant never refills Ward');
+    assert.equal(enemy.block || 0, 0);
+    assert.equal(enemy.statuses.barrier.stacks, 6);
+  }
 });
 
 test('Block is consumed hit by hit: the first hit is fully stopped, the second meets Ward', () => {
