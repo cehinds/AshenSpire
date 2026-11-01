@@ -6,6 +6,6 @@
   "$note": {
     "minActionCost": "The least turn Stamina a card that costs Mana must also cost.",
     "minStaminaCost": "Retired additive Stamina floor; keep zero.",
-    "focusManaDiscount": "Mana off every magic card (camp:spell or source:spell tag) while an equipped armament carries the Focus item type (floored at 0; it does not stack per Focus armament)."
+    "focusManaDiscount": "Magic cards cost 1 less Mana while in Prepared stance: Mana off every magic card (camp:spell or source:spell tag) while the player is in the Prepared stance and an equipped armament carries the Focus item type (floored at 0; it does not stack per Focus armament)."
   }
 }
