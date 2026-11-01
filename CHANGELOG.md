@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Cantrip upgrades cost no Mana** ([#2457](https://github.com/cehinds/AshenSpire/pull/2457), `0.7.2.109`). An upgrade that turns a card into a cantrip now drops its Mana cost to 0, and Mana-cost cuts are no longer offered on cantrips and basics.
+- **Cantrips and basics cost no Mana** ([#2457](https://github.com/cehinds/AshenSpire/pull/2457), `0.7.2.109`). Mending Touch now costs 1 Stamina and no Mana, an upgrade that turns a card into a cantrip drops its Mana to 0, and Mana cuts or free-cantrip upgrades are no longer offered where they would do nothing.
 - **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.109`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
 - **Physical range cards show their weapons clearly** ([#2454](https://github.com/cehinds/AshenSpire/pull/2454), `0.7.2.107`). Reach weapon actions use a larger spear and Ranged actions use a bow; a thin ivory outline improves weapon contrast. Counter retains its shield and foreground weapon, while magical Counter keeps the shared shield-and-hammer assembly with magical colors and cues.
 - **Long fights no longer fill browser storage** ([#2449](https://github.com/cehinds/AshenSpire/pull/2449), `0.7.2.105`). Autosave could fail with "browser storage is full" late in a long fight because every saved combat-log line carried a full copy of the fighters; saves now drop those copies, so a 40-turn fight's log shrinks from about 3.6 MB to about 0.5 MB and older saves still load.
