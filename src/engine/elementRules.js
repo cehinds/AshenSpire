@@ -86,3 +86,20 @@ export function withAffinity(piece, element, count = 1) {
   const prior = piece?.affinity?.element === element ? Number(piece.affinity.count) || 0 : 0;
   return { ...piece, affinity: { element, count: prior + Math.max(1, Math.floor(count)) } };
 }
+
+const SCALED_AMOUNT_OPS = new Set(['damage', 'block', 'gainBarrier', 'heal', 'poiseDamage', 'wardDamage']);
+/**
+ * Own-element bonus for a planned enemy move (SPEC 4.7): when the enemy's element matches the move's, each action's damage,
+ * block, barrier, heal and status stacks are multiplied by 1.25 and floored. Returns new action objects; the input is untouched.
+ */
+export function scaleOwnElementActions(ctx, enemy, carrier, actions, def = null) {
+  const own = elementOf(enemy, def);
+  if (!own || !fixCoreEnabled(ctx) || carrierElement(carrier) !== own) return actions;
+  return actions.map(action => {
+    const effect = action.effect;
+    if (!effect) return action;
+    if (effect.op === 'applyStatus' && effect.stacks > 0) return { ...action, effect: { ...effect, stacks: ownElementAmount(effect.stacks, own, own) } };
+    if (SCALED_AMOUNT_OPS.has(effect.op) && effect.amount > 0) return { ...action, effect: { ...effect, amount: ownElementAmount(effect.amount, own, own) } };
+    return action;
+  });
+}

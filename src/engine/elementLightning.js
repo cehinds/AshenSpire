@@ -75,6 +75,7 @@ export function seedElementStatuses(ctx, enemy, def) {
   if (!fixCoreEnabled(ctx)) return 0;
   const rules = lightningRules();
   let seeded = 0;
+  if (enemy && enemy.element === undefined && def?.element) enemy.element = def.element; // own-element moves read it
   if (elementOf(enemy, def) === 'earth' && statusStacks(enemy, rules.bedrockStatus) <= 0) {
     const start = def?.bedrockStacks ?? rules.bedrockStartStacks;
     if (start > 0) { applyStatus(ctx, enemy, rules.bedrockStatus, start, null); seeded += start; }

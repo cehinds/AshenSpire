@@ -14,8 +14,9 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { beginLightningHit, finishLightningHit, wearsMetal, lightningPrecisionBonus, shockContestPreview, seedElementStatuses } from '../src/engine/elementLightning.js';
+import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
-import { isLightning, affinityTags, withAffinity, ownElementAmount, dampBurnStacks, shockedPenalty, carrierElement } from '../src/engine/elementRules.js';
+import { isLightning, affinityTags, withAffinity, ownElementAmount, dampBurnStacks, shockedPenalty, carrierElement, scaleOwnElementActions } from '../src/engine/elementRules.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -270,4 +271,24 @@ test('elemental affinity: an infused armament adds N element tags to its card; a
   assert.equal(card.tags.length, before + 4);
   assert.equal(card.tags.filter(t => t.value === 'element:lightning').length, 4);
   assert.equal(sword.affinity, undefined, 'the original piece is untouched');
+});
+
+test('own-element bonus on a planned enemy move: Lantern Moth (lightning) wing sparks scale damage and stacks by 1.25, floored; a foreign element does not', () => {
+  const { combat, enemy } = fight({ enemyId: 'lanternMoth' });
+  const def = reg.enemies.get('lanternMoth'), move = def.moves.wingSparks;
+  const carrier = enemyMoveCarrier(enemy, move, 'wingSparks', combat);
+  assert.equal(carrierElement(carrier), 'lightning');
+  const actions = [{ effect: { op: 'damage', target: 'player', amount: 8, hits: 2 } }, { effect: { op: 'applyStatus', target: 'player', status: 'weak', stacks: 3 } },
+    { effect: { op: 'block', target: 'self', amount: 3 } }, { effect: { op: 'draw', amount: 2 } }];
+  assert.strictEqual(scaleOwnElementActions(combat, enemy, carrier, actions, def), actions, 'no element on the enemy: nothing changes');
+  enemy.element = 'fire';
+  assert.strictEqual(scaleOwnElementActions(combat, enemy, carrier, actions, def), actions, 'a fire enemy casting lightning: no bonus');
+  enemy.element = 'lightning';
+  const scaled = scaleOwnElementActions(combat, enemy, carrier, actions, def).map(a => a.effect);
+  assert.equal(scaled[0].amount, 10, 'damage 8 x 1.25');
+  assert.equal(scaled[0].hits, 2, 'hits are not scaled');
+  assert.equal(scaled[1].stacks, 3, 'floor(3 x 1.25) = 3');
+  assert.equal(scaled[2].amount, 3);
+  assert.equal(scaled[3].amount, 2, 'draw is not an effect amount');
+  assert.equal(actions[0].effect.amount, 8, 'the planned actions are not mutated');
 });

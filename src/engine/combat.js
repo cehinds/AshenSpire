@@ -9,6 +9,7 @@ import { decayAtTurnStart } from './statuses.js';
 import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
+import { scaleOwnElementActions } from './elementRules.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -1037,7 +1038,7 @@ function enemyMoveActions(combat, enemy, move, moveId, carrier) {
   for (const eff of move.effects || []) {
     if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
-  return actions;
+  return scaleOwnElementActions(combat, enemy, carrier, actions, combat.registries.enemies.get(enemy.enemyId)); // own-element x1.25 (SPEC 4.7)
 }
 
 // ---------------------------------------------------------------------------
