@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries,resolveCard} from '../src/model/registries.js';
+import {inPreparedStance} from '../src/model/focusMana.js';
 import {createRunState,createCardInstance,serializeRun,deserializeRun} from '../src/model/state.js';
 import {openRunClassMastery,registriesForClassMastery} from '../src/model/classMasteryRun.js';
 import {createRunCombat} from '../src/engine/runCombat.js';
@@ -38,12 +39,14 @@ for(const abilityRank of [0,5])test(`solo combat entry and snapshot retain earne
   const combat=restoreCombatSnapshot({registries:reg,rng,snapshot:serializeCombatSnapshot(fresh)});
   const card=liveCard(combat.piles,inst.instanceId);assert.equal(card.abilityRank,abilityRank);
   assert.ok(combat.piles.hand.includes(card),'the original production opening draw is used');
-  const prior=structuredClone(combat.skillXp),beforeMana=combat.player.mana,beforeActions=combat.player.energy;
+  const prior=structuredClone(combat.skillXp),beforeMana=combat.player.mana,beforeActions=combat.player.energy,wasPrepared=inPreparedStance(combat.player);
   previewCard(combat,card.instanceId);assert.deepEqual(combat.skillXp,prior);
   const face=resolveCard(reg,card);
   dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:combat.enemies[0].id});
-  // The starseer's staff is a Focus armament: it takes 1 Mana off the payment, while the printed Mana (and its XP) stay.
-  assert.equal(combat.player.mana,beforeMana-Math.max(0,mana-1));
+  // The starseer's staff is a Focus armament, but its 1-Mana discount applies only in Prepared stance (#2469);
+  // the spell is cast from outside Prepared stance (it only enters it on play), so the full printed Mana is paid (and the printed Mana's XP stays).
+  assert.equal(wasPrepared,false);
+  assert.equal(combat.player.mana,beforeMana-mana);
   assert.equal(combat.player.energy,beforeActions-face.cost);
   const resolved=combat.eventLog.filter(event=>event.type==='cardResolved'&&event.cardInstanceId===card.instanceId);
   assert.equal(resolved.length,1);assert.equal(resolved[0].printedManaCost,mana);
