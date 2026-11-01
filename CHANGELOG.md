@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Upgrade options fit on phones** ([#2485](https://github.com/cehinds/AshenSpire/pull/2485), `0.7.3.34`). The small card in each upgrade option no longer covers the list of changes or the "Option N" title on a narrow screen.
 - **Merge train: Ward/Barrier, lightning elements, elemental cantrips** ([#2483](https://github.com/cehinds/AshenSpire/pull/2483), `0.7.3.34`). Lands #2476, #2477 and #2479 together in one merge to shorten the queue; no change beyond those three.
 - **Merge train: rank-ups, Core weapon arts, enemy sheets** ([#2482](https://github.com/cehinds/AshenSpire/pull/2482), `0.7.3.32`). Lands #2472, #2474 and #2478 together in one merge to shorten the queue; no change beyond those three.
 - **Enemy character sheets** ([#2478](https://github.com/cehinds/AshenSpire/pull/2478), `0.7.3.30`). Each Core enemy now has an editable JSON character sheet (stats, equipment, deck and reserve deck) using typed id references, with a generated table of what every id means.
