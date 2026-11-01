@@ -92,8 +92,8 @@ export const coreContentBundle = {
   // candidate (owner, 2026-11-01; .github/workflows/version-advance.yml,
   // tools/version-advance.mjs, docs/versioning.md). The marker line is rewritten
   // with the literal.
-  // version-advance: 0.7.2
-  version: '0.7.2',
+  // version-advance: 0.7.3
+  version: '0.7.3',
   balance,
   // The shop kinds and their offerings (SPEC §14.2). A bundle key, not a
   // balance leaf, so Advanced → Shops can generate its own rows from it.
