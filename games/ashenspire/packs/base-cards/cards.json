@@ -7827,6 +7827,7 @@
           }
         ],
         "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
+        "faceTemplate": ["Gain {block} Block.", "Retain it {base.retain-block} turn."],
         "icon": "shield",
         "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
       },
