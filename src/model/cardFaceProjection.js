@@ -2,6 +2,7 @@
 // cardFaceLines and the Information pane retain the full card. Selection does
 // not promote this budget: every ordinary face owes the same three lines.
 import { uiStrings } from '../content/generated/uiStrings.js';
+import { effectiveD20Percent } from '../engine/d20Chance.js';
 
 export const FACE_EFFECT_LINES = 3;
 // Owner, 2026-10-31: one to three lines, at most five words per line. A line
@@ -129,20 +130,22 @@ function authoredClauses(html) {
 // Attach probability to its own status amount ("Weak 2 (50% chance)"). Null when a chance-based status is named but its
 // amount or probability cannot be read unambiguously: that line stays in Information.
 function withChance(html, effects, registries) {
+  // A note only where the rolled 5% step is partial: a sure (100) or sure-failure (0) chance prints nothing.
+  const partial = chance => chance > 0 && chance < 100;
   const chanceIds = new Set(effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op)
-    && effect.chance !== undefined && effect.chance < 100).map(effect => effect.status));
+    && effect.chance !== undefined && partial(effectiveD20Percent(effect.chance))).map(effect => effect.status));
   for (const id of chanceIds) {
     const name = esc(registries?.statuses?.get?.(id)?.name || id);
     if (!html.includes(name)) continue;
     const sources = effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op) && effect.status === id);
-    const chances = new Set(sources.map(effect => effect.chance ?? 100));
+    const chances = new Set(sources.map(effect => effectiveD20Percent(effect.chance ?? 100)));
     if (chances.size !== 1) return null;
     const chance = [...chances][0];
     const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
     if (!amount.test(html)) return null;
     amount.lastIndex = 0;
-    html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
+    html = html.replace(amount, match => `${match} (${esc(effectiveD20Percent(chance))}% chance)`);
   }
   return html;
 }

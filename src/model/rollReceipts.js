@@ -8,6 +8,7 @@
 // meet a target: 'gte' with dc = the target and dcParts = the source chance.
 import { t } from '../ui/strings.js';
 import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
+import { d20ModeChance, effectiveD20Percent } from '../engine/d20Chance.js';
 
 const finite = value => Number.isFinite(Number(value)) && value !== null && value !== '';
 const num = value => (finite(value) ? Number(value) : 0);
@@ -63,12 +64,19 @@ export function critRollReceipt(event) {
 }
 
 // The shared shape of a percentage chance rolled as a d20: success on d20 >= target, the source chance kept as the note.
+// The chance shown is the one the d20 really rolls, round(chance / 5) × 5 (owner, 2026-11-01): 32% reads 30%.
 function d20ChanceReceipt(event, kind) {
   const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
   const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode : null;
+  // A modified (advantage or disadvantage) chance gets a suffix when the event carries one; it is worked from the
+  // rounded chance (32% with advantage reads 51%, not the raw 53.8%).
+  // Only when the modified figure differs from the base shown (a sure 100% with advantage prints no suffix).
+  const base = effectiveD20Percent(event.chance);
+  const modifiedValue = Math.round(d20ModeChance(event.chance, { advantage: mode === 'advantage', disadvantage: mode === 'disadvantage' }) * 10) / 10;
+  const modified = mode && finite(event.effectiveChance) && modifiedValue !== base ? modifiedValue : null;
   return { kind, die: 'd20', dice: rolls, ...(rolls.length > 1 && mode ? { mode } : {}), parts: [], total: num(event.roll), compare: 'gte',
-    dcParts: [{ label: 'Chance %', value: num(event.chance) }], dc: num(event.target),
-    ...(finite(event.effectiveChance) && event.effectiveChance !== event.chance ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
+    dcParts: [{ label: 'Chance %', value: effectiveD20Percent(event.chance) }], dc: num(event.target),
+    ...(modified != null ? { chance: modified } : {}), success: !!event.success };
 }
 
 export function perceptionRollReceipt(event) {
