@@ -67,7 +67,8 @@ function options(base, current, applied, limits) {
       && current.cost - 1 >= actionMin
       // a multi-hit card pays at least its hit floor, so a cheaper printed SP would buy nothing
       && hitFloor(current, currentHits(current.effects || [])) <= current.staminaCost - 1) pools.push('sp');
-    if (Number.isInteger(current.manaCost) && current.manaCost >= 2) pools.push('mp');
+    // A cantrip or basic costs no Mana (owner, 2026-11-01), so a Mana cut is pointless on one, or on a copy that becomes one.
+    if (Number.isInteger(current.manaCost) && current.manaCost >= 2 && !basicDef(base) && !tagsOf(current).includes(RANK_DOWN_TAG)) pools.push('mp');
     if (pools.length) found.cost = { pools };
   }
   if (restricted) return found;
@@ -182,7 +183,8 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };
   }
   if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
-  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
+  // a card that pays no Stamina would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
+  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && !(current.staminaCost === 0 && current.manaCost > 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
 
 /**
