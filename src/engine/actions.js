@@ -385,7 +385,7 @@ function applyWeaknessEffects(ctx, source, target, receipt) {
       if (lost > 0) { target.mana -= lost; ctx.emit('manaLost', { targetId: target.id, amount: lost, source: 'weakness' }); tell(row); }
     } else if (row.effect === WEAKNESS_STAMINA) {
       target.pendingStaminaLoss = (target.pendingStaminaLoss || 0) + row.amount; tell(row);
-    } else if (row.effect === 'stagger' && ctx.rng.chance('combatProcs', row.amount) && claimStagger(ctx, target) && staggerEnemy(ctx, target, { cause: 'weakness' })) tell(row);
+    } else if (row.effect === 'stagger' && row.amount > 0 && rollD20Check(ctx.rng, 'combatProcs', row.amount).success && claimStagger(ctx, target) && staggerEnemy(ctx, target, { cause: 'weakness' })) tell(row);
   }
 }
 
