@@ -4,7 +4,7 @@
 - **Status:** Design baseline approved for planning. The rebuild this document plans (§17, §22–§24) has **not started** and is **not planned**: the owner decided on 2026-09-27 to keep the vanilla-JS game as the product (§24). The vanilla-JS game on `dev` is the maintained product, and most of the player experience below ships in it; [SPEC.md](../SPEC.md)'s *Scope status* table says per section what is built, partly built or planned.
 - **Product:** Ashen Spire (`AshenSpire`)
 - **Platform:** Modern desktop and mobile browsers
-- **Genre:** Single-player, run-based tactical deckbuilder with optional co-op seams
+- **Genre:** Single-player, run-based tactical deckbuilder
 - **Reference layout:** 1280×720 desktop; responsive portrait target approximately 390×844
 
 ## 0. Purpose and authority
@@ -235,7 +235,7 @@ Each class requires at least two viable build directions and a silhouette that r
 - Relics alter the shape of a run rather than merely adding small percentages.
 - Shrines preserve the recurring heal-versus-improve dilemma.
 - Equipment changes combat verbs and ownership while preserving clear before-and-after receipts.
-- Progression is experience as well as cinders: skill tracks and a character level (SPEC §13.4d–§13.4i, built; the smithing re-point 4b-ii and co-op drafts are still open). SPEC §15's levelling-pace preview and per-fight level cap are built (#1349); its configurable card-reward schedule, crafting drops and legendary sigils are **planned**, not built.
+- Progression is experience as well as cinders: skill tracks and a character level (SPEC §13.4d–§13.4i, built; the smithing re-point 4b-ii is still open). SPEC §15's levelling-pace preview and per-fight level cap are built (#1349); its configurable card-reward schedule, crafting drops and legendary sigils are **planned**, not built.
 
 Nothing enters the player's run merely because a reward screen opened. Collection occurs only through an explicit action or an explicitly configured Auto collection policy.
 
@@ -793,7 +793,6 @@ These choices were the rebuild gates:
 2. Whether the existing vanilla JavaScript game remains the behavioral oracle, a maintained product, or a migration source only. **Decided 2026-09-27: it stays the product.**
 3. Final production-art sourcing mix: first-party rendered, commissioned, generated, and licensed library assets.
 4. The authoritative naming and coding convention document referred to as the Dimitar convention; it must be supplied or written before enforcement.
-5. Which co-op features belong in the first rebuild milestone versus preserved extension seams.
 6. Final localization scope and whether display text ships as keyed content from the first milestone.
 
 Until these choices are made, choose reversible interfaces and avoid framework-specific domain dependencies.

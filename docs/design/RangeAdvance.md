@@ -56,7 +56,7 @@ not paid again unless the enemy increases the distance again: when an action pay
 a positive Advance, the pair is committed at the distance that action closed to,
 for the player and for enemies alike, and later actions against that opponent
 quote no Advance. The committed state is ordinary saved engagement state, so
-saves, snapshots, forecasts and co-op seats all agree. Reaction contexts that only
+saves, snapshots and forecasts all agree. Reaction contexts that only
 borrow a temporary distance, and a prepaid reaction return, never commit.
 
 **Enemy retreat (owner, 2026-10-25).** An enemy increasing the distance works like
@@ -89,7 +89,7 @@ nor adds hits.
 ## Transactions and reactions
 
 One pure planner supplies legal routes, target-specific chances and total SP to
-UI, solo/co-op play and AI. Validate source, route, targets and complete affordability
+UI, solo play and AI. Validate source, route, targets and complete affordability
 atomically. Refusal changes no card, resource, action, charge or gameplay RNG.
 Random targets are sampled once using transactional RNG; an unaffordable action
 discards that fork. Freeze source, targets, selected route, approach, effective
@@ -164,6 +164,6 @@ to satisfy the preference.
 Acceptance covers preview/payment/chance parity; one/two-band approaches;
 explicit Throw and unsupported-route refusal; multi-target/multi-hit one-time
 payment; each Counter payment path; movement timing; low-SP enemy progress;
-co-op source ownership; special bypasses; toggle scope; old-fight continuation;
+special bypasses; toggle scope; old-fight continuation;
 save/reload at reaction boundaries; and native touch/keyboard use with readable,
 unclipped cards and route controls at narrow phone, landscape and desktop widths.
