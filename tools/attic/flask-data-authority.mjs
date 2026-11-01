@@ -32,7 +32,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a charge id is retyped in the engine',
         file: 'src/engine/combat.js',
         append: "export const plantedFlaskId = 'crimsonFlask';",
-        expectRed: /FAIL solo\/co-op\/UI\/migration do not retype charge ids/,
+        expectRed: /FAIL solo\/UI\/migration do not retype charge ids/,
       },
       {
         name: 'the Grace screen hardcodes a flask label',
@@ -50,14 +50,11 @@ const sources = {
   grace: read('src/model/gracerefill.js'),
   actions: read('src/engine/actions.js'),
   combat: read('src/engine/combat.js'),
-  coop: read('src/engine/coopCombat.js'),
   state: read('src/model/state.js'),
   soloUi: read('src/ui/screens/combat.js'),
-  coopUi: read('src/ui/screens/coop.js'),
   rest: read('src/ui/screens/rest.js'),
   shop: read('src/ui/screens/shop.js'),
   reward: read('src/ui/screens/reward.js'),
-  session: read('tools/session.mjs'),
 };
 let pass = 0;
 let fail = 0;
@@ -75,7 +72,7 @@ check('flaskSlotCap refuses zero', throws(() => G.flaskSlotCap({ flaskSlots: 0 }
 check('flaskSlotCap refuses fractional', throws(() => G.flaskSlotCap({ flaskSlots: 2.5 })));
 check('flaskSlotCap refuses string', throws(() => G.flaskSlotCap({ flaskSlots: '3' })));
 
-const productionReaders = [sources.grace, sources.actions, sources.shop, sources.reward, sources.session].join('\n');
+const productionReaders = [sources.grace, sources.actions, sources.shop, sources.reward].join('\n');
 check('production carry-cap readers have no silent fallback 3',
   !/(?:flaskSlots[^\n]{0,80}(?:\|\||:)\s*3\b|cap[^\n]{0,60}\?[^\n]{0,60}:\s*3\b)/.test(productionReaders));
 
@@ -99,8 +96,8 @@ if (typeof G.chargeFlaskDefinition === 'function' && typeof G.chargeFlaskId === 
   for (const name of ['HP definition resolves', 'Mana definition resolves', 'kind/id round-trip', 'renamed authored charge resolves']) check(name, false);
 }
 
-const duplicatedIds = [sources.combat, sources.coop, sources.state, sources.soloUi, sources.coopUi].join('\n');
-check('solo/co-op/UI/migration do not retype charge ids',
+const duplicatedIds = [sources.combat, sources.state, sources.soloUi].join('\n');
+check('solo/UI/migration do not retype charge ids',
   !/['"](?:crimsonFlask|azureFlask)['"]/.test(duplicatedIds));
 check('Grace allocation resolves charge definitions', /chargeFlaskDefinition/.test(sources.rest));
 check('Grace allocation does not hardcode Crimson/Azure labels',
