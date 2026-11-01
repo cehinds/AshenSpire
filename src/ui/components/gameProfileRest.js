@@ -55,7 +55,12 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
         ['flask-mana', t('gameProfile.rest.pool.mpFlask'), run.flaskCharges.manaCurrent, after.flaskCharges.manaCurrent],
       ] : []),
     ];
-    return `<section class="rest-recovery" aria-label="${esc(t('rest.recovery.heading'))}"><h3 class="as-eyebrow">${esc(t('rest.recovery.heading'))}</h3>${rows.map(([icon, label, before, next]) => `<div class="rest-recovery-row">${engravedIconHtml(icon)}<span>${esc(label)}</span><span>${before} → <strong>${next}</strong></span><span class="rest-recovery-gain">${next > before ? `+${next - before}` : '—'}</span></div>`).join('')}</section>`;
+    // Only pools that change draw a row (with their gain); when nothing changes one line says so.
+    const changed = rows.filter(([, , before, next]) => next !== before);
+    const body = changed.length
+      ? changed.map(([icon, label, before, next]) => `<div class="rest-recovery-row">${engravedIconHtml(icon)}<span>${esc(label)}</span><span>${before} → <strong>${next}</strong></span><span class="rest-recovery-gain">${next > before ? `+${next - before}` : `${next - before}`}</span></div>`).join('')
+      : `<p class="rest-recovery-none">${esc(t('rest.recovery.none'))}</p>`;
+    return `<section class="rest-recovery" aria-label="${esc(t('rest.recovery.heading'))}"><h3 class="as-eyebrow">${esc(t('rest.recovery.heading'))}</h3>${body}</section>`;
   };
   // Core: one line, since arrival always restores HP and MP in full. The recovery table, intro and
   // availability list are gone; each option card already says what it does or why it cannot be used.
