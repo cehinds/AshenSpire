@@ -1655,3 +1655,18 @@ Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
 portable file. Outputs and temporary/browser storage must stay on D: locally.
 
+
+## Editing enemies
+
+Every Core enemy has a character sheet, `games/ashenspire/packs/core/enemies/<enemyId>.json` (the file name is the
+unique key and equals the enemy's `id`). The sheets are the source of truth for the `character.enemy` rows of
+`characters.json`; do not hand-edit those rows.
+
+- **Stats:** `stats` (attributes, attributePriority, levelProfile, poiseMax, spFloor). `derived` is generated; edits are ignored.
+- **Equipment:** `equipment` (gear by slot) and `relics`, each `{ "slot", "ref" }`.
+- **Deck:** `deck` is the current deck, one reference per copy (repeat a ref for more copies). `reserve` is the cards it gains mid-fight (`enemy.unlockCards`). `ai` holds the planner hints per card.
+- **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.
+- **References** carry a type prefix: `card:<enemyCards id>`, `gear:<gear id>`, `relic:<enemyRelics id>`, and `enemy:<id>` (reference table only). `enemies/_reference.md` and `_reference.json` (generated) list what every id means.
+
+After editing, run `node tools/enemy-sheets.mjs --write` (also part of `node tools/jev.mjs regen`); `--check` runs in `jev checks --fast`
+and rejects unknown refs, duplicate ids and a stale `characters.json`. `--extract --force` rebuilds sheets from `characters.json`.
