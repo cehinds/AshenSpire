@@ -72,11 +72,9 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     }
     row.append(node);
   }
-  // The player's AC (owner 2026-11-01): a square left of the bar on the bar's line, with a small "AC" caption under it at the head
+  // The player's AC (owner 2026-11-01): a square left of the bar on the bar's line (a sibling of the meter), with a small "AC" caption under it at the head
   // of the badge row. `values.ac` is { value, evade, base } from acFor; enemies never carry it.
   if (values?.ac) {
-    const line = document.createElement('div');
-    line.className = 'combat-health-bar-line';
     const text = acBadgeText(values.ac);
     const square = document.createElement('span');
     square.className = 'combat-health-badge combat-health-ac';
@@ -91,15 +89,15 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       square.tabIndex = 0;
       attachTooltip(square, () => `<div class="tt-title">${esc(text.title)}</div>${text.lines.map(esc).join('<br>')}`);
     }
+    // The caption is decoration, not a badge: no data-defense-kind, so badge readers (and the HUD QA) never mistake it for one.
     const caption = document.createElement('span');
     caption.className = 'combat-health-badge combat-health-ac-caption';
-    caption.dataset.defenseKind = 'ac-caption';
+    caption.dataset.acCaption = '';
     caption.setAttribute('aria-hidden', 'true');
     caption.textContent = 'AC';
     row.insertBefore(caption, row.firstChild);
-    line.append(square, hp);
-    row.append(line);
-    return row;
+    // A sibling just before the meter, which stays a direct child of the row so its row-scoped styling still applies.
+    row.append(square);
   }
   row.append(hp);
   return row;

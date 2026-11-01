@@ -1958,6 +1958,9 @@ body.reduce-motion .target-hud-detail { transition: none; }
   order: -1; flex: 0 0 100%; width: 100% !important; height: var(--health-row-h);
   margin: 0; min-height: 0;
 }
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row:has(> .combat-health-ac) > .combat-health-meter {
+  flex: 1 1 0 !important; width: auto !important;
+}
 :root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-track {
   width: 100% !important; height: var(--health-row-h); min-height: 0;
 }

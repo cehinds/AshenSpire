@@ -6088,9 +6088,9 @@ button[data-button-size] {
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ac .combat-health-badge-value { -webkit-text-stroke: 0; }
 /* Caption under the AC square: same footprint as a badge so it lines up under the square, no plate; shown only where the bar owns its own line. */
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ac-caption { display: none; font-size: .7em; letter-spacing: .04em; color: var(--gold); opacity: .9; pointer-events: none; }
-.combat-health-bar-line { display: flex; align-items: center; gap: .3em; flex: 1 1 0; min-width: 0; order: -1; }
-:root .combat .combat-health-bar-line > .combat-health-meter { flex: 1 1 0 !important; min-width: 0; width: auto !important; margin: 0 !important; order: 0 !important; }
-:root .combat .combat-health-bar-line > .combat-health-ac { flex: 0 0 auto; order: -1; }
+:root .combat .combatant .combat-health-row > .combat-health-ac { flex: 0 0 auto; order: -1; }
+/* With the AC square beside it the bar takes the rest of the line instead of the whole line. */
+:root .combat .combatant .combat-health-row:has(> .combat-health-ac) > .combat-health-meter { flex: 1 1 0 !important; width: auto !important; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow::before { border-radius: 50%; background: linear-gradient(135deg, var(--panel-2, var(--panel)), var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--gold); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow .combat-health-badge-value { white-space: nowrap; letter-spacing: -.02em; -webkit-text-stroke: 0; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }

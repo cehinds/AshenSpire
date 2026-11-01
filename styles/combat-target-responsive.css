@@ -153,7 +153,8 @@
 }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
 /* Owner 2026-11-01: the player's AC square leads the bar's line (the bar loses only its width); its caption leads the badge row. */
-:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-bar-line { flex:0 0 100%; width:100%; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row:has(> .combat-health-ac) > .combat-health-meter { flex:1 1 0!important; width:auto!important; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-ac { order:-1; }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-ac-caption { display:grid; order:0; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
 :root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
