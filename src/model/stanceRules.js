@@ -42,15 +42,14 @@ export function stanceOf(carrier, entity = null) {
   let maneuver = mirrored ? (profile.mirrors || profile.maneuver) : preparation ? 'casting' : carrier.stanceTrigger?.stance || profile.stanceTrigger?.stance || profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
   if (maneuver === 'spell' || maneuver === 'cast' || maneuver === 'prepared') maneuver = 'casting';
-  const evade = profile.evade && profile.evadeEligible !== false
-    && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
-  if (!preparation && ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade')) maneuver = 'evade';
-  if (camp === 'spell' && !mirrored && !['defend', 'counter', 'evade'].includes(maneuver)
+  // Owner 2026-11-01: "All the evade stance cards were acting as defend cards so just migrate them all as defend cards".
+  // There is no Evade stance: an Evade card (or a legacy 'evade' maneuver) is a Defend-stance card that keeps its
+  // Evade stacks; a Counter card that carries an evade profile stays in Counter stance.
+  if (maneuver === 'evade') maneuver = 'defend';
+  if (camp === 'spell' && !mirrored && !['defend', 'counter'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';
-  // Evade remains the stance identity; retain authored Counter offense across snapshots.
-  const counterStance = maneuver === 'evade' && (profile.maneuver === 'counter' || profile.counterStance === true);
-  return { maneuver, camp, ...(mirrored ? { mirrored: true } : {}), ...(counterStance ? { counterStance: true } : {}), range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
+  return { maneuver, camp, ...(mirrored ? { mirrored: true } : {}), range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
 }
 export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
@@ -58,8 +57,8 @@ export function sameStance(entity, carrier) {
 }
 // Owner 2026-11-01 ("Any defensive card"; narrowed: "To be clear just for defense stance"): for the Core 2 Adept
 // same-stance cut, while the actor is already in Defend stance (either camp) every defensive card (Defend, Counter,
-// Evade) takes the cut. Counter and Evade stances do not extend it; they keep the exact match.
-const DEFENSIVE_FAMILY = ['defend', 'counter', 'evade'];
+// Evade cards are Defend cards since the 2026-11-01 ruling) takes the cut. Counter stance does not extend it; it keeps the exact match.
+const DEFENSIVE_FAMILY = ['defend', 'counter'];
 export function defensiveFamily(entity, carrier) {
   const next = stanceOf(carrier, entity);
   if (!next || !DEFENSIVE_FAMILY.includes(next.maneuver)) return false;
@@ -118,17 +117,17 @@ export function stanceRatingBonus(ctx, entity, id) {
   if (ctx?.combatExpansionVersion !== 2) return 0;
   const stance = stanceOf(entity?.combatStance);
   if (!stance) return 0;
-  const cfg = stanceRulesFor(ctx), offensive = stance.counterStance || ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
-  const defensive = ['defend', 'counter', 'evade'].includes(stance.maneuver);
-  const offensiveId = stance.maneuver === 'casting' || stance.mirrored || ((stance.maneuver === 'counter' || stance.counterStance) && stance.camp === 'spell') ? 'pr' : 'ar';
+  const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
+  const defensive = ['defend', 'counter'].includes(stance.maneuver);
+  const offensiveId = stance.maneuver === 'casting' || stance.mirrored || (stance.maneuver === 'counter' && stance.camp === 'spell') ? 'pr' : 'ar';
   return (offensive && id === offensiveId ? cfg.offensiveRating : 0)
     + (defensive && id === (stance.camp === 'spell' ? 'ward' : 'dr') ? cfg.defensiveRating : 0);
 }
 export function stanceEntryBonuses(carrier, ctx = null) {
   const stance = stanceOf(carrier);
   if (!stance) return { precision: 0, evade: 0, block: 0, barrier: 0 };
-  const cfg = stanceRulesFor(ctx), offensive = stance.counterStance || ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
-  const defensive = ['defend', 'counter', 'evade'].includes(stance.maneuver);
+  const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
+  const defensive = ['defend', 'counter'].includes(stance.maneuver);
   const amount = defensive ? cfg.entryProtection : 0;
   const share = cfg.schoolBlockShares?.[stance.school] ?? cfg.spellBlockShare;
   const block = stance.camp === 'spell' ? (fixCoreEnabled(ctx) ? Math.floor(amount * share) : Math.round(amount * share)) : amount;
@@ -137,7 +136,7 @@ export function stanceEntryBonuses(carrier, ctx = null) {
     && (!profile.evade.whileStatus || profile.evadeEligible === true);
   // Core 2 reads the entry grant from its own rules (the Evade card's evadeStackBase: 3, or a resumed fight's snapshot value);
   // the global stanceRules.evadeStacks stays 1 for the non-Core expanded path.
-  return { precision: offensive ? cfg.offensivePrecision : 0, evade: stance.maneuver === 'evade' || auxiliaryEvade ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
+  return { precision: offensive ? cfg.offensivePrecision : 0, evade: auxiliaryEvade ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
     block, barrier: amount - block };
 }
 
