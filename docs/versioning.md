@@ -246,8 +246,11 @@ update of those refs whether or not a workflow ran for it. `tools/version-advanc
 
 - **Cursor.** The newest `Version-Advance-Event` recorded on `dev`, ordered by
   (timestamp, id). Events at or before it are never reconsidered. With no record
-  yet, the floor is `SINCE` in the tool (raise it to the merge time of the
-  automation so older cuts, already hand-bumped, are not replayed).
+  yet, the floor is `SINCE` in the tool, set to `2026-10-31T18:56:00Z`, just before
+  the release cut to 0.7.2 (activity event 48504741615 at 18:56:02Z), so the first
+  run after merge replays that one cut and takes dev from 0.7.2 to 0.7.3. Copies of
+  one event in the feed (same ref, before, after and timestamp, different ids) are
+  one cut, under the lowest id.
 - **Plan.** Every later event on `release` or `main` of type `push`,
   `force_push`, `pr_merge`, `merge_queue_merge` or `branch_creation`
   (`branch_deletion` is dropped), oldest first. Release then main gives 0.8.0 from 0.7.2;

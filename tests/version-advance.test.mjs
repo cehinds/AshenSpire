@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { planCuts, parseRecords, latestRecord, recordsEvent, advanceMessage, cmpEvents, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
+import { SINCE, planCuts, parseRecords, latestRecord, recordsEvent, advanceMessage, cmpEvents, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = `  // version-advance: 0.7.2\n  version: '0.7.2',\n  balance,\n`;
@@ -138,6 +138,15 @@ test('planCuts: a cursor on one copy covers the other copies', () => {
   // The copy with the higher id would sort after the cursor, yet is not owed.
   const later = ev(300, 'main', 'q', 'r', 'push', '2026-11-05T03:10:00Z');
   assert.deepEqual(planCuts([a, b, later], { id: '100', timestamp: ts }, noBots).map((c) => c.id), ['300']);
+});
+
+test('SINCE replays exactly the 0.7.2 release cut and nothing earlier', () => {
+  assert.equal(SINCE, '2026-10-31T18:56:00Z');
+  const cut = ev(48504741615, 'release', 'x', 'y', 'push', '2026-10-31T18:56:02Z');
+  const older = ev(48000000000, 'release', 'w', 'x', 'push', '2026-10-31T10:00:00Z');
+  const cuts = planCuts([older, cut], null, noBots);
+  assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['48504741615', 'release']]);
+  assert.equal(nextTriple([0, 7, 2], 'candidate').join('.'), '0.7.3');
 });
 
 test('planCuts: a bot-only event is skipped, however many events follow it', () => {

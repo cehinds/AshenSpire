@@ -74,7 +74,7 @@ export function advanceSeries(text, next) {
 // recorded event (timestamp, id); events at or before it are never reconsidered.
 
 /** Events before this instant are not cuts this tool owes (set when the automation merged). */
-export const SINCE = '2026-11-01T00:00:00Z';
+export const SINCE = '2026-10-31T18:56:00Z';
 const CUT_TYPES = new Set(['push', 'force_push', 'pr_merge', 'merge_queue_merge', 'branch_creation']);
 const ZERO_SHA = /^0+$/;
 const SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (release|main) [0-9a-f]{7,40}\b/;
