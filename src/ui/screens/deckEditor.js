@@ -35,7 +35,7 @@ import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit, rankZeroLabelId } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
-import { renderCard, cardPlainText, cardDetailHtml } from '../components/card.js';
+import { renderCard, cardPlainText, cardDetailHtml, scheduleCardFits } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
@@ -369,7 +369,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         const referenceHeight = glossary?.querySelector('summary')?.offsetHeight || 0;
         const available = reading.clientHeight - details.offsetHeight - previewControl.offsetHeight - referenceHeight - 3.5 * rootFont;
         const width = Math.floor(Math.min(30 * rootFont, Math.max(22 * rootFont, available * cardShape().ratio)));
-        face.style.setProperty('--deck-preview-fitted-width', `${width}px`);
+        const fittedWidth = `${width}px`;
+        if (face.style.getPropertyValue('--deck-preview-fitted-width') === fittedWidth) return;
+        face.style.setProperty('--deck-preview-fitted-width', fittedWidth);
+        // This observer runs after the render's fit pass. Refit at the new
+        // width so names and rules do not keep the larger preview's font.
+        scheduleCardFits([face]);
       };
       previewFitObserver = new ResizeObserver(fitPreview);
       previewFitObserver.observe(reading);
