@@ -64,6 +64,7 @@
   "draftSize": 3,
   "draftsPerCombat": 1,
   "rankMax": 10,
+  "rankUpBonusScale": 2,
   "flatEvery": 5,
   "attributeEvery": 4,
   "featEvery": 2,
@@ -79,6 +80,7 @@
     "featEvery": "Every this many levels of a skill with its own feats lets you take one.",
     "attributeEvery": "Every this many levels of a skill with linked attributes lets you raise one of them by 1.",
     "flatEvery": "Every this many levels of a weapon, focus or dual-wield skill adds 1 to the main number of every card of that skill.",
+    "rankUpBonusScale": "A rank-up also offers 2-3 bonus options rolled like a blacksmith upgrade (damage, Block, Poise, cost, a tag); this multiplies their amounts (2 = double, rounded, never past the upgrade guards). 1 = same as a blacksmith upgrade.",
     "rankMax": "A card's highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill's level.",
     "favoredXpMult": "Multiplies skill XP in the weapon groups your class card leans toward."
   }

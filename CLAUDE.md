@@ -20,6 +20,14 @@ merge commit, then promotes `dev` to `test` as before. It still sends the owner
 the PR link, the preview link and screenshots of visible changes, but does not
 stop and wait. `main` stays owner-only.
 
+**Combine a long merge queue** (owner, 2026-11-01). When more than 5 reviewed
+pull requests are waiting to merge, combine them into merge branches of at
+most 3 related pull requests each (`chore/MergeTrain<Topic>`), merging each
+pull request's branch in with `git merge --no-ff` so its own PR closes as
+merged. Resolve the conflicts once on the combined branch, run the fast checks
+and the merged PRs' tests, have the conflict resolution reviewed, and merge the
+combined PR on green CI. Every combined pull request must already be reviewed.
+
 **Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
 visible (UI, tools, the Workbench, art, layout), finish the report with fresh
 screenshots of the changed screens and a preview the owner can open (a

@@ -14,6 +14,10 @@
       "type": "string",
       "minLength": 1
     },
+    "weaponArts": {
+      "type": "boolean",
+      "description": "Core weapon arts (owner 2026-11-01): a worn weapon lends its default weapon-art card(s) to the deck as item-owned cards. Absent or false: off. Kits and the Dodge Roll are not controlled by this flag and stay off in configured profiles."
+    },
     "fixedAppearance": {
       "type": "boolean"
     },

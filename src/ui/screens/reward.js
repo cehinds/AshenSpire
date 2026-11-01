@@ -83,6 +83,10 @@ import { el, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
+import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
+import { cardUpgradeChanges } from '../models/CardUpgradeModel.js';
+import { projectGameCard } from '../../model/gameProfile.js';
+import { resolveCard } from '../../model/registries.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
@@ -173,6 +177,7 @@ export function mountRewards(app, {
   // The rank-ups' picks (SPEC §13.4o), keyed by row key: the owned card raised.
   const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
+  const pendingBonusByKey = {}; // a rank-up's unconfirmed bonus pick (index into its options), per row
 
   function persistProgress() {
     if (checkpoint) {
@@ -291,7 +296,7 @@ export function mountRewards(app, {
     // A rank-up (SPEC §13.4o): the chosen owned card rises one rank and the
     // track's queued rank-up is spent; a card no longer eligible lands nothing.
     skillRankUp(row) {
-      const inst = raiseCardRank(registries, run, row.skillId, row.instanceId);
+      const inst = raiseCardRank(registries, run, row.skillId, row.instanceId, row.bonusStep || null);
       if (!inst) return false;
       chosenRankUps[row.key] = inst.instanceId;
       return true;
@@ -340,7 +345,7 @@ export function mountRewards(app, {
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
       skills: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? structuredClone(run.skills || {}) : null,
-      rankUp: raised ? { inst: raised, rank: raised.rank, chosen: { ...chosenRankUps } } : null,
+      rankUp: raised ? { inst: raised, rank: raised.rank, steps: raised.upgradeSteps, upgraded: raised.upgraded, chosen: { ...chosenRankUps } } : null,
       coreTags: row.kind === 'classDraft' || row.kind === 'levelChoice' ? [...(run.coreTags || [])] : null,
       checkpoint: checkpoint ? structuredClone(checkpoint) : null,
     } : null;
@@ -374,8 +379,10 @@ export function mountRewards(app, {
           if (pending !== undefined) run.pendingReward = pending;
         }
         if (cardBefore.rankUp) {
-          const { inst, rank, chosen } = cardBefore.rankUp;
+          const { inst, rank, steps, upgraded, chosen } = cardBefore.rankUp;
           if (rank === undefined) delete inst.rank; else inst.rank = rank;
+          if (steps === undefined) delete inst.upgradeSteps; else inst.upgradeSteps = steps;
+          if (upgraded === undefined) delete inst.upgraded; else inst.upgraded = upgraded;
           for (const key of Object.keys(chosenRankUps)) delete chosenRankUps[key];
           Object.assign(chosenRankUps, chosen);
         }
@@ -1273,10 +1280,47 @@ export function mountRewards(app, {
     strip.after(message);
     // Nothing chosen yet: the reason stands under Confirm as text (FINISH §6).
     // A press in flight is a beat, not a reason, so it stays quiet.
-    const confirmReason = reasonWhenDisabled(confirmButton, () => (selectedCardId ? null : t('reward.confirm.reason')));
+    const bonusOptionsOf = (instanceId) => (isRankUp && instanceId ? rankUpBonusOptions(registries, run, ownedInstance(instanceId)) : []);
+    const needsBonus = () => !!selectedCardId && bonusOptionsOf(selectedCardId).length > 0 && !(pendingBonusByKey[row.key] >= 0);
+    const confirmReason = reasonWhenDisabled(confirmButton, () => (!selectedCardId ? t('reward.confirm.reason') : needsBonus() ? t('reward.rankBonus.reason') : null));
+    // The bonus choices under the strip: one button per option, saying what it changes on the card.
+    const bonusPanel = el('div', { class: 'reward-rank-bonus', role: 'radiogroup', 'aria-label': t('reward.rankBonus.label'), hidden: true });
+    strip.after(bonusPanel);
+    const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+    function renderBonusPanel() {
+      bonusPanel.replaceChildren();
+      const options = bonusOptionsOf(selectedCardId);
+      bonusPanel.hidden = !options.length;
+      if (!options.length) return;
+      const inst = ownedInstance(selectedCardId);
+      const before = faceOf({ ...inst, rank: instanceRank(inst) + 1 });
+      bonusPanel.appendChild(el('p', { class: 'reward-rank-bonus-title', text: t('reward.rankBonus.label') }));
+      options.forEach((option, index) => {
+        const changes = cardUpgradeChanges(registries, before, faceOf(option.after));
+        const summary = changes.map((c) => `${c.label} ${c.before} \u2192 ${c.after}`).join(', ') || t('reward.rankBonus.option', { n: index + 1 });
+        const chosen = pendingBonusByKey[row.key] === index;
+        const choice = button({ label: summary, className: `class-pick reward-bonus-option${chosen ? ' is-chosen' : ''}`,
+          attrs: { role: 'radio', 'aria-checked': String(chosen), 'aria-label': t('cardUpgrade.option.aria', { n: index + 1, total: options.length, summary }), dataset: { bonusIndex: String(index) } } });
+        choice.addEventListener('click', () => selectBonus(index));
+        bonusPanel.appendChild(choice);
+      });
+    }
+    const selectBonus = (index) => {
+      if (reviewing || confirming || taken() || !(index >= 0)) return;
+      pendingBonusByKey[row.key] = index;
+      const old = [...strip.children].find((node) => node.dataset?.pickId === selectedCardId);
+      const inst = ownedInstance(selectedCardId);
+      if (old && inst) old.replaceWith(rankUpFace(inst));
+      renderBonusPanel();
+      confirmButton.disabled = false;
+      inspectButton.disabled = !inspectionFaces.has(selectedCardId);
+      confirmReason();
+    };
     // Choosing belongs to this screen; inspection only reads the selected face.
     const selectCard = (cardId) => {
       if (reviewing || confirming || taken()) return;
+      const previous = selectedCardId;
+      if (previous !== cardId) delete pendingBonusByKey[row.key]; // each card rolls its own bonuses
       selectedCardId = cardId;
       pendingByKey[row.key] = cardId;
       // Candidates are found by CLASS, not by attribute: the reward door's
@@ -1298,7 +1342,14 @@ export function mountRewards(app, {
         face.classList.toggle('reward-selected', selected);
         face.classList.toggle('is-chosen', selected);
       }
-      confirmButton.disabled = false;
+      if (isRankUp) {
+        // The face of the card just left goes back to plain rank-up; the new one waits for a bonus pick.
+        const left = previous && previous !== cardId ? rankUpCards.find((inst) => inst.instanceId === previous) : null;
+        const leftNode = left ? [...strip.children].find((n) => n.dataset?.pickId === previous) : null;
+        if (leftNode) leftNode.replaceWith(rankUpFace(left));
+        renderBonusPanel();
+      }
+      confirmButton.disabled = needsBonus();
       inspectButton.disabled = !inspectionFaces.has(selectedCardId);
       confirmReason();
       message.hidden = true;
@@ -1389,9 +1440,11 @@ export function mountRewards(app, {
       tile.addEventListener('click', () => selectCard(nodeId));
       strip.appendChild(tile);
     }
-    for (const inst of rankUpCards) {
-      const next = instanceRank(inst) + 1;
-      const face = renderCard(registries, { ...inst, rank: next }, {
+    // A rank-up also offers 2-3 bonus options once a card is picked (owner, 2026-11-01): the card shows at its
+    // new rank, and with the chosen bonus applied once one is picked.
+    const rankUpFace = (inst) => {
+      const option = inst.instanceId === selectedCardId ? bonusOptionsOf(inst.instanceId)[pendingBonusByKey[row.key]] : null;
+      const face = renderCard(registries, option ? option.after : { ...inst, rank: instanceRank(inst) + 1 }, {
         rules: run,
         owned: ownedCopies(run, inst.cardId),
         actionOwnsTouch: true,
@@ -1407,8 +1460,10 @@ export function mountRewards(app, {
       face.classList.toggle('reward-selected', inst.instanceId === selectedCardId);
       face.classList.toggle('is-chosen', inst.instanceId === selectedCardId);
       face.addEventListener('click', () => selectCard(inst.instanceId));
-      strip.appendChild(face);
-    }
+      return face;
+    };
+    for (const inst of rankUpCards) strip.appendChild(rankUpFace(inst));
+    if (isRankUp) renderBonusPanel();
     if (isRankUp && !rankUpCards.length) {
       const skill = skillTracks(registries).find((track) => track.id === row.skillId);
       strip.appendChild(el('p', { class: 'reward-rank-none', text: t('reward.skillRankUp.none', { skill: (skill && skill.label) || row.skillId }) }));
@@ -1476,7 +1531,7 @@ export function mountRewards(app, {
       column.append(face, tile);
       strip.appendChild(column);
     }
-    confirmButton.disabled = !selectedCardId;
+    confirmButton.disabled = !selectedCardId || needsBonus();
     inspectButton.disabled = !inspectionFaces.has(selectedCardId);
     confirmReason();
     // Confirm stages a review only. Continue is the sole persistence door;
@@ -1488,7 +1543,8 @@ export function mountRewards(app, {
       confirmButton.disabled = true;
       try {
         const cardSelection = row.kind === 'skillDraft' && row.choiceIds ? { cardId: row.cardIds[row.choiceIds.indexOf(selectedCardId)] } : {};
-        if (take({ ...row, ...cardSelection, [pickField]: selectedCardId }, row.key)) return;
+        const bonusStep = isRankUp ? bonusOptionsOf(selectedCardId)[pendingBonusByKey[row.key]]?.step : undefined;
+        if (take({ ...row, ...cardSelection, ...(bonusStep ? { bonusStep } : {}), [pickField]: selectedCardId }, row.key)) return;
         message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : row.kind === 'skillFeat' ? 'reward.skillFeat.spent' : 'reward.card.alreadyTaken');
       } catch {
         message.textContent = t('reward.card.saveFailed');
@@ -1511,6 +1567,7 @@ export function mountRewards(app, {
           && option.dataset.pickId !== selectedCardId;
       }
       for (const control of strip.querySelectorAll('button.reward-pick')) control.disabled = true;
+      for (const control of bonusPanel.querySelectorAll('button')) control.disabled = true;
     });
     backButton.addEventListener('click', () => {
       if (confirming || taken()) return;
