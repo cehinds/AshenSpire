@@ -361,7 +361,11 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   }
   // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
   refillWeaknesses(combat, combat.enemies, registries);
-  for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
+  for (const entity of [combat.player, ...(combat.enemies || [])]) {
+    backfillPersistentPoise(combat, entity);
+    // A snapshot from before Barrier became a status holds the numeric pool: it was a one-turn layer, so it is dropped (SPEC 4.1a).
+    if (entity && 'barrier' in entity) delete entity.barrier;
+  }
   const formationErrors = formationOccupancyProblems(combat);
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
   return combat;

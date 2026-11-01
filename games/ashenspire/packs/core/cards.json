@@ -2955,9 +2955,16 @@
         "amount": 2
       },
       {
-        "op": "gainBarrier",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 1
+        "status": "barrier",
+        "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "ward",
+        "stacks": 1
       },
       {
         "op": "draw",
@@ -2971,7 +2978,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block, {barrier} Barrier and {ward} Ward. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -2980,9 +2987,16 @@
           "amount": 3
         },
         {
-          "op": "gainBarrier",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 2
+          "status": "barrier",
+          "stacks": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "ward",
+          "stacks": 2
         },
         {
           "op": "draw",

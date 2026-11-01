@@ -1326,5 +1326,25 @@
       "retainBlock": true
     },
     "tooltip": "Your Block is not removed at the start of your next turn."
+  },
+  {
+    "id": "ward",
+    "name": "Ward",
+    "icon": "skill",
+    "tint": "#a066e0",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose 1 stack at the start of your turn.",
+    "sharedWord": true
+  },
+  {
+    "id": "barrier",
+    "name": "Barrier",
+    "icon": "skill",
+    "tint": "#6fa8ff",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack gives +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
+    "sharedWord": true
   }
 ]

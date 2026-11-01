@@ -14,7 +14,7 @@ const representatives = [
 ];
 const stacks = (entity, id) => entity.statuses[id]?.stacks || 0;
 function capture(c, target) {
-  return { player: { hp: c.player.hp, block: c.player.block, barrier: c.player.barrier,
+  return { player: { hp: c.player.hp, block: c.player.block, barrier: c.player.barrier || 0, // the numeric pool is gone (SPEC 4.1a): its share is Block
     ward: c.player.persistentWard.value, poise: c.player.persistentPoise.value,
     statuses: structuredClone(c.player.statuses), stanceId: c.player.stanceId,
     combatStance: structuredClone(c.player.combatStance || null) },
@@ -47,11 +47,11 @@ function expectedTotals(api, c, representative, definition, target, before) {
     const blockShare = representative.camp === 'spell'
       ? cfg.schoolBlockShares[representative.school] ?? cfg.spellBlockShare : 1;
     const block = Math.round(cfg.entryProtection * blockShare), barrier = cfg.entryProtection - block;
-    expected.block += block; expected.barrier += barrier; add('stance-entry', { block, barrier });
+    expected.block += block + barrier; add('stance-entry', { block, barrier });
   }
   if (representative.maneuver === 'defend') {
     assert.equal(c.player.persistentPoise.max, 0); assert.equal(c.player.persistentWard.max, 0);
-    expected.block += cfg.defenseRestore; expected.barrier += cfg.defenseRestore;
+    expected.block += 2 * cfg.defenseRestore; // the restore and its overflow are both Block now (SPEC 4.1a)
     add('defense-restore-overflow', { block: cfg.defenseRestore, barrier: cfg.defenseRestore });
   }
   for (const { effect, index } of selected) {
@@ -67,7 +67,7 @@ function expectedTotals(api, c, representative, definition, target, before) {
       if (representative.camp === 'spell') {
         const wardShare = spellDefenseRules.schools[representative.school] ?? spellDefenseRules.defaultWardShare;
         const block = Math.round(amount * (1 - wardShare)), barrier = amount - block;
-        expected.block += block; expected.barrier += barrier;
+        expected.block += block; // the Ward share refills a full pool and its overflow is dropped (SPEC 4.1a)
         add('selected-protection', { effectIndex: index, amount, block, barrier });
       } else { expected.block += amount; add('selected-protection', { effectIndex: index, amount, block: amount }); }
     } else if (effect.op === 'damage') {

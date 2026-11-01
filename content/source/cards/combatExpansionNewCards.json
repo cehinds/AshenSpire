@@ -49,7 +49,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a frost Counter: 2 Ward and 1 Poise return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a frost Counter: 2 Ward and 1 Poise return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -112,7 +112,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a fire Counter: 2 Ward return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a fire Counter: 2 Ward return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -175,7 +175,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a lightning Counter: 2 Ward return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a lightning Counter: 2 Ward return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -237,7 +237,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a force Counter: 0 Ward and 3 Poise return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a force Counter: 0 Ward and 3 Poise return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -301,7 +301,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a alteration Counter: 1 Ward and 1 Poise return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a alteration Counter: 1 Ward and 1 Poise return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -365,7 +365,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a illusion Counter: 1 Ward and 1 Poise return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a illusion Counter: 1 Ward and 1 Poise return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -428,7 +428,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a divine Counter: 2 Ward return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a divine Counter: 2 Ward return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -491,7 +491,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a decay Counter: 2 Ward return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a decay Counter: 2 Ward return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -555,7 +555,7 @@
         "amount": 5
       }
     ],
-    "textTemplate": "Gain {gainBarrier} Barrier. Prepare a alteration Counter: 1 Ward and 1 Poise return.",
+    "textTemplate": "Gain {gainBarrier} Block. Prepare a alteration Counter: 1 Ward and 1 Poise return.",
     "upcast": {
       "baseTier": 0,
       "unlockedTiers": [
@@ -1106,8 +1106,8 @@
         "amount": 3
       }
     ],
-    "textTemplate": "Usable through Sleep, Paralysis and Dazed. Cleanse {removeStatus} Sleep, {removeStatus.2} Paralysis and {removeStatus.3} Dazed. Gain {gainBarrier} Barrier.",
-    "faceTemplate": ["Cleanse Sleep, Paralysis, Dazed.", "Gain {gainBarrier} Barrier."],
+    "textTemplate": "Usable through Sleep, Paralysis and Dazed. Cleanse {removeStatus} Sleep, {removeStatus.2} Paralysis and {removeStatus.3} Dazed. Gain {gainBarrier} Block.",
+    "faceTemplate": ["Cleanse Sleep, Paralysis, Dazed.", "Gain {gainBarrier} Block."],
     "minCombatExpansionVersion": 2
   }
 ]

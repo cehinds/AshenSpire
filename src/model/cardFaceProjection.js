@@ -70,7 +70,9 @@ const statusForms = status => {
   return [...forms].filter(Boolean);
 };
 // A status the full rules apply or grant ("Apply 4 weak", "gain Sleep"), not one merely mentioned ("Blight still accumulates").
-export const statusApplied = (text, status) => statusForms(status).some(form =>
+// A status whose name is also a protection word in card text ("Gain 3 Ward" is a pool refill; Ward and Barrier, SPEC 4.1a) is not
+// inferred from prose: its `sharedWord` flag keeps the face check from reading that sentence as applying the status.
+export const statusApplied = (text, status) => !status?.sharedWord && statusForms(status).some(form =>
   new RegExp(`(?:\\d+|apply|applies|gain|inflict)\\s+${escapeRe(form).replace(/ /g, '\\s+')}\\b`, 'i').test(text));
 // The whole status name (or id) as a word, with a plural; never a stem, so "Prepared" is not "Prepare Melee Counter".
 export const statusNamed = (status, text) => statusForms(status).some(form =>

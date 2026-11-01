@@ -194,7 +194,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainBarrier': {
         const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
         text = split ? uiText('combat.card.splitBlock', { verb: effect.target === 'ally' ? 'Ally gains' : 'Gain', block: split.block, ward: split.ward })
-          : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
+          : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Block'}`;
         break;
       }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;

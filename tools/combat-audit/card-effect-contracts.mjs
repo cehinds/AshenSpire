@@ -44,7 +44,8 @@ function seedContractState(op, combat) {
   if (op === 'poiseDamage') enemy.poiseMeter = { value: 0, max: 10000 };
   if (op === 'draw') combat.piles.draw = [{ cardId: 'defend', instanceId: 'audit:draw-a' }, { cardId: 'strike', instanceId: 'audit:draw-b' }, ...combat.piles.draw];
   if (op === 'applyStatus') enemy.statuses.bleed = undefined;
-  if (op === 'gainBarrier') { player.barrier = 0; player.ward = 0; }
+  if (op === 'gainBarrier') { player.block = 0; player.ward = 0; }
+  if (op === 'gainWard' && player.persistentWard) { player.persistentWard.max = Math.max(10, player.persistentWard.max); player.persistentWard.value = 0; } // a full pool no longer overflows into Barrier (SPEC 4.1a)
   if (op === 'removeStatus') enemy.statuses.venom = { stacks: 2 };
   if (op === 'loseHp') player.hp = 9000;
   if (op === 'gainEnergy') player.energy = 0;
@@ -64,14 +65,14 @@ function stateFor(op, combat, cardId, effect) {
       const target = effect?.target === 'self' ? p : e;
       return { stacks: target.statuses[effect.status]?.stacks || 0 };
     }
-    case 'gainBarrier': return { barrier: p.barrier || 0, ward: p.ward || 0 };
+    case 'gainBarrier': return { barrier: p.block || 0, ward: p.ward || 0 }; // the old Barrier pool is Block now (SPEC 4.1a)
     case 'removeStatus': return { venom: e.statuses.venom?.stacks || 0 };
     case 'loseHp': return { hp: p.hp };
     case 'gainEnergy': return { energy: p.energy };
     case 'addCard': return { hand: combat.piles.hand.map(c => c.cardId), draw: combat.piles.draw.map(c => c.cardId), discard: combat.piles.discard.map(c => c.cardId) };
     case 'grantRollMode': return { nextEvadeMode: p.nextEvadeMode || null };
     case 'restoreMana': return { mana: p.mana };
-    case 'gainWard': return { ward: p.ward || 0, barrier: p.barrier || 0 };
+    case 'gainWard': return { ward: p.persistentWard?.value || 0, barrier: p.block || 0 };
     case 'discard': return { hand: combat.piles.hand.map(c => c.instanceId), discard: combat.piles.discard.map(c => c.instanceId) };
     case 'grantCardCharge': return structuredClone(p.abilityRiders?.charges || {});
     default: throw new Error(`No state contract for ${op}/${cardId}`);
@@ -86,7 +87,7 @@ function assertContract(op, before, after, events, instanceId, effect) {
     case 'enterStance': assert.equal(after.stanceId, 'bulwark'); assert.ok(ownEvents.some(e => e.type === 'stanceEntered' && e.stance === 'bulwark')); break;
     case 'draw': assert.ok(after.hand.length > before.hand.length, 'draw moves real instances from draw pile to hand'); assert.ok(events.some(e => e.type === 'cardDrawn'), 'draw emits real draw receipts'); break;
     case 'applyStatus': assert.ok(after.stacks > before.stacks, 'authored status increases target stacks'); assert.ok(ownEvents.some(e => e.type === 'statusApplied' && e.status === effect.status)); break;
-    case 'gainBarrier': assert.ok(after.barrier + after.ward > before.barrier + before.ward, 'barrier effect adds defense'); assert.ok(events.some(e => ['barrierGained', 'persistentWardChanged'].includes(e.type) && e.amount > 0)); break;
+    case 'gainBarrier': assert.ok(after.barrier + after.ward > before.barrier + before.ward, 'barrier effect adds defense'); assert.ok(events.some(e => ['blockGained', 'barrierGained', 'persistentWardChanged'].includes(e.type) && e.amount > 0)); break;
     case 'removeStatus': assert.equal(after.venom, 0); assert.ok(ownEvents.some(e => e.type === 'statusRemoved' && e.status === 'venom')); break;
     case 'loseHp': assert.ok(after.hp < before.hp, 'self HP loss changes player state'); assert.ok(ownEvents.some(e => e.type === 'hpLost' && e.amount > 0)); break;
     case 'gainEnergy': assert.ok(after.energy > before.energy, 'energy gain survives card payment'); assert.ok(ownEvents.some(e => e.type === 'energyGained' && e.amount > 0)); break;

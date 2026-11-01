@@ -16,7 +16,7 @@ export const combatExpansionCombos = [
   row('lucidRecovery', 'Lucid Recovery', 2, 'skill', spell('illusion'),
     [{ op: 'removeStatus', target: 'self', status: 'sleep', amount: 1 },
       { op: 'gainBarrier', target: 'self', amount: 2, if: { ...has('sleep'), snapshot: 'beforePlay' } }],
-    'Break {removeStatus} Sleep. If asleep when played, gain {gainBarrier} Barrier.', { usableWhile: locks }),
+    'Break {removeStatus} Sleep. If asleep when played, gain {gainBarrier} Block.', { usableWhile: locks }),
   row('groundedResolve', 'Grounded Resolve', 3, 'skill', spell('alteration'),
     [{ op: 'removeStatus', target: 'self', status: 'paralysis', amount: 1 },
       { op: 'applyStatus', target: 'self', status: 'grounded', stacks: 1, if: { ...has('paralysis'), snapshot: 'beforePlay' } }],
