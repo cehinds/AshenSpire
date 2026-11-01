@@ -8,7 +8,7 @@
 // meet a target: 'gte' with dc = the target and dcParts = the source chance.
 import { t } from '../ui/strings.js';
 import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
-import { effectiveD20Percent } from '../engine/d20Chance.js';
+import { d20ModeChance, effectiveD20Percent } from '../engine/d20Chance.js';
 
 const finite = value => Number.isFinite(Number(value)) && value !== null && value !== '';
 const num = value => (finite(value) ? Number(value) : 0);
@@ -68,10 +68,13 @@ export function critRollReceipt(event) {
 function d20ChanceReceipt(event, kind) {
   const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
   const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode : null;
-  // Only a modified (advantage or disadvantage) chance gets a suffix; the engine computes it from the rounded chance.
+  // A modified (advantage or disadvantage) chance gets a suffix when the event carries one; it is worked from the
+  // rounded chance (32% with advantage reads 51%, not the raw 53.8%).
+  const modified = mode && finite(event.effectiveChance)
+    ? Math.round(d20ModeChance(event.chance, { advantage: mode === 'advantage', disadvantage: mode === 'disadvantage' }) * 10) / 10 : null;
   return { kind, die: 'd20', dice: rolls, ...(rolls.length > 1 && mode ? { mode } : {}), parts: [], total: num(event.roll), compare: 'gte',
     dcParts: [{ label: 'Chance %', value: effectiveD20Percent(event.chance) }], dc: num(event.target),
-    ...(mode && finite(event.effectiveChance) ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
+    ...(modified != null ? { chance: modified } : {}), success: !!event.success };
 }
 
 export function perceptionRollReceipt(event) {

@@ -24,6 +24,13 @@ export function chanceToD20Target(percent) {
   return 21 - chanceToD20Steps(percent);
 }
 
+/** The chance a d20 check succeeds with advantage or disadvantage, from the rounded chance it rolls. */
+export function d20ModeChance(percent, { advantage = false, disadvantage = false } = {}) {
+  const p = effectiveD20Percent(percent) / 100;
+  if (Boolean(advantage) === Boolean(disadvantage)) return 100 * p;
+  return 100 * (advantage ? 1 - (1 - p) ** 2 : p ** 2);
+}
+
 export function d20Mode({ advantage = false, disadvantage = false } = {}) {
   return Boolean(advantage) === Boolean(disadvantage) ? 'normal' : advantage ? 'advantage' : 'disadvantage';
 }

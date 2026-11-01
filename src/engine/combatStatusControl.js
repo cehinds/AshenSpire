@@ -1,4 +1,4 @@
-import { effectiveD20Percent, rollD20Check } from './d20Chance.js';
+import { rollD20Check } from './d20Chance.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
@@ -406,8 +406,7 @@ export function effectiveChance(chance, { advantage = false, disadvantage = fals
 export function rollStatusChance(ctx, chance, { advantage = false, disadvantage = false, stream = 'statusRecovery', event = null } = {}) {
   // Rolled as a d20 (owner, 2026-11-01): success on d20 >= 21 - round(chance% / 5); advantage keeps the higher die.
   const check = rollD20Check(ctx.rng, stream, chance, { advantage, disadvantage });
-  // The advantage figure is taken from the rounded chance the d20 really rolls (owner, 2026-11-01).
-  const receipt = { rolls: check.rolls, roll: check.roll, target: check.target, mode: check.mode, chance, effectiveChance: effectiveChance(effectiveD20Percent(chance), { advantage, disadvantage }), success: check.success };
+  const receipt = { rolls: check.rolls, roll: check.roll, target: check.target, mode: check.mode, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: check.success };
   if (event) ctx.emit?.('statusChanceRolled', { ...event, ...receipt });
   return receipt;
 }

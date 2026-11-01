@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chanceToD20Target, chanceToD20Steps, effectiveD20Percent, rollD20Check } from '../src/engine/d20Chance.js';
+import { chanceToD20Target, chanceToD20Steps, d20ModeChance, effectiveD20Percent, rollD20Check } from '../src/engine/d20Chance.js';
 
 const seq = (...values) => { const calls = []; return { calls, int(stream, lo, hi) { calls.push([stream, lo, hi]); return values.shift(); } }; };
 
@@ -32,6 +32,8 @@ test('success is d20 >= target; 100% always succeeds, 0% never does', () => {
 });
 
 test('the displayed chance is the rolled chance, in 5% steps', () => {
+  assert.ok(Math.abs(d20ModeChance(32, { advantage: true }) - 51) < 1e-9);
+  assert.ok(Math.abs(d20ModeChance(32, { disadvantage: true }) - 9) < 1e-9);
   assert.equal(effectiveD20Percent(32), 30);
   assert.equal(effectiveD20Percent(33), 35);
   assert.equal(effectiveD20Percent(0), 0);
@@ -56,21 +58,23 @@ test('a d20 chance receipt shows the rolled 5% chance, not the authored percent'
   const distance = distanceRollReceipt({ dice: [9], roll: 9, target: chanceToD20Target(32), chance: 32 });
   assert.equal(distance.dcParts[0].value, 30);
   // Advantage: the suffix is the rolled chance with advantage, from the rounded base (30 -> 51%), not the raw 32.
-  const adv = critRollReceipt({ roll: 15, rolls: [15, 4], mode: 'advantage', target: chanceToD20Target(32), chance: 32, effectiveChance: 51, success: true });
+  const adv = critRollReceipt({ roll: 15, rolls: [15, 4], mode: 'advantage', target: chanceToD20Target(32), chance: 32, effectiveChance: 53.76, success: true });
   assert.equal(adv.dcParts[0].value, 30);
   assert.equal(adv.chance, 51);
 });
 
-test('an advantage chance is worked from the rolled 5% chance, and the draw is unchanged', async () => {
-  const { rollStatusChance, effectiveChance } = await import('../src/engine/combatStatusControl.js');
-  // 32% rolls as 30%; with advantage the d20 succeeds 1 - 0.7^2 = 51% of the time, not the raw 53.76%.
-  assert.ok(Math.abs(effectiveChance(effectiveD20Percent(32), { advantage: true }) - 51) < 1e-9);
+test('a status roll draws the same dice as before; the advantage figure is worked from the rolled chance in the receipt', async () => {
+  const { rollStatusChance } = await import('../src/engine/combatStatusControl.js');
+  const { critRollReceipt } = await import('../src/model/rollReceipts.js');
   const rng = seq(4, 17);
   const receipt = rollStatusChance({ rng, emit() {} }, 32, { advantage: true });
   assert.deepEqual([receipt.roll, receipt.target, receipt.chance], [17, 15, 32]);
-  assert.ok(Math.abs(receipt.effectiveChance - 51) < 1e-9);
   assert.equal(receipt.success, true);
   assert.deepEqual(rng.calls, [['statusRecovery', 1, 20], ['statusRecovery', 1, 20]]);
+  // 32% rolls as 30%; with advantage it succeeds 1 - 0.7^2 = 51% of the time, not the raw 53.76%.
+  const shown = critRollReceipt({ ...receipt, roll: receipt.roll, rolls: receipt.rolls, mode: receipt.mode, chance: 32, success: receipt.success });
+  assert.equal(shown.chance, 51);
+  assert.equal(shown.dcParts[0].value, 30);
 });
 
 test('a distance avoidance preview shows the 5% step it rolls, and keeps eligibility', async () => {
