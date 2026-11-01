@@ -441,3 +441,17 @@ test('a pick past the end of a shrunken option list is clamped and still highlig
     assert.deepEqual([...host.querySelectorAll('.card-upgrade-option')].map(o => o.getAttribute('aria-checked')).filter(v => v === 'true').length, 1, 'exactly one option is highlighted');
   });
 });
+
+// Owner screenshot 2026-11-01 (phone, ~360px): the option's face column was a fixed 8.5rem while the small card is wider,
+// so the card covered the change list and its cost medallion sat on the "Option N" title. Layout needs a browser; this pins
+// the CSS rule that fixed it (the column sizes to the card, pads for the medallion, the changes wrap and may drop below).
+test('narrow option row: the face column fits its card and the changes list wraps', () => {
+  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const narrow = css.slice(css.indexOf('.card-upgrade-option-list { flex-direction: column; }'));
+  const block = narrow.slice(0, narrow.indexOf('\n}'));
+  const face = block.match(/\.card-upgrade-option-face \{([^}]*)\}/)?.[1] || '';
+  assert.doesNotMatch(face, /width:\s*8\.5rem/, 'no fixed face width narrower than the card');
+  assert.match(face, /width:\s*auto/);
+  assert.match(face, /padding:\s*1rem 0 0 1rem/, 'room for the cost medallion that hangs outside the card corner');
+  assert.match(block.match(/\.card-upgrade-option-changes \{([^}]*)\}/)?.[1] || '', /flex:\s*1 1 7rem/);
+});
