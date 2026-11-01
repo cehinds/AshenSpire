@@ -37,13 +37,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL the map Potions model hands every entry the shared action plan/,
       },
       {
-        name: 'LAN stops routing the explicit flaskIntent through the host',
-        file: 'tools/lan.mjs',
-        find: "case 'flaskIntent': g.flaskIntent(id, msg.intent); break;",
-        replace: "case 'plantedFlask': g.useFlask(id, msg.slot); break;",
-        expectRed: /FAIL LAN routes only the explicit flaskIntent action through the host/,
-      },
-      {
         name: 'the map Potions model gives the Azure (mana) flask an empty plan',
         file: 'src/ui/models/RunPotionModel.js',
         find: "  if (entry.category === 'charge') {\n",
@@ -101,12 +94,9 @@ let actions = null;
 try { actions = await import('../src/model/flaskActions.js'); } catch { /* observed red */ }
 const component = text('src/ui/components/flask.js');
 const combat = text('src/ui/screens/combat.js');
-// The Potions list both boards open (2026-10-01): solo and co-op mount the one
-// footer and the one list in components/combatActionRow.js.
+// The Potions list the board opens (2026-10-01): the one footer and the one
+// list live in components/combatActionRow.js.
 const potions = text('src/ui/components/combatActionRow.js');
-const coop = text('src/ui/screens/coop.js');
-const session = text('tools/session.mjs');
-const lan = text('tools/lan.mjs');
 
 // WHAT THE BROWSER NOW OWNS (FINISH §11, D36). The source half that read
 // combat's Potions list, the map's Potions control (screens/map.js →
@@ -238,14 +228,6 @@ check('flask selection does not call useFlask directly',
   /if \(action.enabled\) arm\(use, 'useFlask', \{[\s\S]*?onConfirm: \(\) => \{[\s\S]*?onUse\(row\)/.test(potions)
     && /onUse: [\s\S]*?else useFlask\(slot, null, chargeKind\)/.test(combat)
     && /fold.addEventListener\('toggle', moveUse\)/.test(potions));
-check('co-op flask selection also opens the shared Potions list instead of sending use',
-  /openCombatPotions\(/.test(coop) && /combat-potions/.test(potions) && !/send\(\{ t: 'useFlask'/.test(coop));
-check('co-op transports an explicit flask intent to host authority',
-  /flaskIntent/.test(session) && /host/i.test(session) && /useFlask/.test(session));
-check('LAN routes only the explicit flaskIntent action through the host',
-  /case 'flaskIntent'/.test(lan) && /g\.flaskIntent/.test(lan));
-check('host refusal remains a returned reason rather than client mutation',
-  /flaskIntent[\s\S]*?ok:\s*false[\s\S]*?error/.test(session));
 
 console.log(`\nflask-action-contract: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

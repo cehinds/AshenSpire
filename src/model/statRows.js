@@ -365,7 +365,7 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
       && (key.includes('.draw.') || !ratingsOff));
     for (const key of dropped) delete next[key];
     if (dropped.length && Array.isArray(warnings)) {
-      warnings.push(`${dropped.some((key) => key.includes('.draw.')) ? 'The old Draw row was read only by co-op and older fights; Draw / turn is now every fight\'s turn draw, so the old values were set aside. ' : ''}${dropped.some((key) => key.includes('.poise.')) ? 'The old Poise pool was read only with combat ratings off; Poise is one row now, so its old values were set aside in favour of the Poise rating. ' : ''}Everything else in the file was imported.`);
+      warnings.push(`${dropped.some((key) => key.includes('.draw.')) ? 'The old Draw row was read only by older fights; Draw / turn is now every fight\'s turn draw, so the old values were set aside. ' : ''}${dropped.some((key) => key.includes('.poise.')) ? 'The old Poise pool was read only with combat ratings off; Poise is one row now, so its old values were set aside in favour of the Poise rating. ' : ''}Everything else in the file was imported.`);
     }
   }
   const key = (id, field) => `${STAT_ROW_KEY_PREFIX}${id}.${field}`;
@@ -450,7 +450,7 @@ export function migrateLegacyStatSettings(settings = {}, warnings = null, { lega
   }
   if (Object.hasOwn(next, LEGACY_HAND_MAX_KEY)) {
     delete next[LEGACY_HAND_MAX_KEY];
-    if (Array.isArray(warnings)) warnings.push('The fallback hand capacity was retired: every fight, co-op included, reads Stats → Draw & hand → Hand size. Everything else in the file was imported.');
+    if (Array.isArray(warnings)) warnings.push('The fallback hand capacity was retired: every fight reads Stats → Draw & hand → Hand size. Everything else in the file was imported.');
   }
   return next;
 }

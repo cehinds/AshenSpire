@@ -89,9 +89,9 @@ test('a socket error also rejects waiting calls', async () => {
   await assert.rejects(p, /DevTools connection (closed|failed)/);
 });
 
-test('screenshot.mjs routes both combat shots through the ready wait', () => {
+test('screenshot.mjs routes the combat shot through the ready wait', () => {
   const src = readFileSync(new URL('../tools/screenshot.mjs', import.meta.url), 'utf8');
-  for (const name of ['combat', 'coop-combat']) {
+  for (const name of ['combat']) {
     assert.match(src, new RegExp(`name: '${name}',[^}\\n]*ready: 'combatants'`), `${name} is a ready shot`);
   }
   assert.match(src, /shot\.ready \? await captureReady\(shot\)/);
@@ -114,7 +114,7 @@ test('BOUNDARY must-fail: a board that never holds still writes no frame', async
   assert.equal(n, 5);
 });
 
-test('BOUNDARY: the combat and co-op boards hide the animated backdrop glow', () => {
+test('BOUNDARY: the combat board hides the animated backdrop glow', () => {
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, /\.backdrop::after \{[^}]*animation: backdropGlow[^}]*infinite/);
   assert.match(css, /\.environment-backdrop::after \{ display: none; \}/);
@@ -123,7 +123,7 @@ test('BOUNDARY: the combat and co-op boards hide the animated backdrop glow', ()
   const backdrops = [...art.matchAll(/class="(backdrop[^"]*)"/g)].map((m) => m[1]);
   assert.ok(backdrops.length > 0);
   for (const cls of backdrops) assert.match(cls, /\benvironment-backdrop\b/, `combat backdrop "${cls}"`);
-  for (const screen of ['combat', 'coop']) {
+  for (const screen of ['combat']) {
     const src = readFileSync(new URL(`../src/ui/screens/${screen}.js`, import.meta.url), 'utf8');
     assert.match(src, /\$\{combatBackdropHtml\(/, `${screen} draws its backdrop through combatBackdropHtml`);
   }

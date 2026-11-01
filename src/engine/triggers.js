@@ -82,12 +82,11 @@ export function emitEvent(ctx, type, payload = {}) {
 /**
  * Trigger-state key for an entity's own gates (once / limitPerTurn).
  *
- * Co-op runs every seat through ONE ctx — coopCombat re-points ctx.player at
- * each player in turn — and every player combat entity carries the same
- * id 'player'. Without a per-seat discriminator, one player's once-per-combat
- * relic/stance/status would consume the gate for the whole party. coopCombat
- * sets ctx.playerKey to the active seat id; solo never sets it, so solo keys
- * keep using the entity id exactly as before. Enemies are genuinely shared and
+ * A multi-seat ctx runs every seat through ONE ctx and every player combat
+ * entity carries the same id 'player'. Without a per-seat discriminator, one
+ * player's once-per-combat relic/stance/status would consume the gate for the
+ * whole party. A multi-seat host sets ctx.playerKey to the active seat id; solo
+ * never sets it, so solo keys keep using the entity id exactly as before. Enemies are genuinely shared and
  * keep their own (already unique) entity ids.
  */
 function ownerKeyFor(ctx, entity) {

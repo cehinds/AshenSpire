@@ -6,12 +6,10 @@
 // solo and co-op, so a break anywhere along card tag -> hit tags -> resolver
 // shows here.
 import test from 'node:test';
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { resolveDamageComponents, taggedBonusFloor } from '../src/model/combatRules.js';
@@ -42,15 +40,6 @@ function solo(registries, cardId, status) {
   return { preview, hits: hitsOn(c, enemy.id) };
 }
 
-function coop(registries, cardId, status) {
-  const c = createCoopCombat({ registries, rng: createRng(50), players: [{ id: 'p1', ...player(cardId) }],
-    enemyIds: ['wanderingSoldier'], ratingsRules: null });
-  const enemy = c.enemies[0];
-  if (status) applyStatus(c, enemy, status, 1);
-  playCard(c, 'p1', 'card1', enemy.id);
-  return { hits: hitsOn(c, enemy.id) };
-}
-
 // [label, registries, card, tag the card must carry (null = must carry none of
 // the exposure tags), exposure status]
 const cases = [
@@ -60,7 +49,7 @@ const cases = [
 ];
 
 for (const [label, registries, cardId, tag, status] of cases) {
-  test(`${label}: ${cardId} hits harder, in preview, solo and co-op`, () => {
+  test(`${label}: ${cardId} hits harder, in preview`, () => {
     assert.ok(cardTags(registries, cardId).includes(tag), `${cardId} carries '${tag}' from tagging.csv`);
     if (tag === 'blight') assert.ok(!cardTags(registries, cardId).includes('ritual'), 'blight arm is blight alone');
     const clean = solo(registries, cardId, null);
@@ -70,10 +59,6 @@ for (const [label, registries, cardId, tag, status] of cases) {
     assert.ok(exposed.hits[0] > clean.hits[0], `${status} raises ${tag} damage (${clean.hits[0]} -> ${exposed.hits[0]})`);
     assert.equal(exposed.preview, exposed.hits[0], 'preview states the boosted hit');
     assert.equal(clean.preview, clean.hits[0], 'preview states the clean hit');
-    if (COOP_TESTS_ENABLED) {
-      assert.deepEqual(coop(registries, cardId, null).hits, clean.hits, 'co-op parity, clean');
-      assert.deepEqual(coop(registries, cardId, status).hits, exposed.hits, 'co-op parity, exposed');
-    }
   });
 }
 
@@ -84,7 +69,6 @@ test('untagged Strike deals the same to Frost-Exposed, Unraveled and clean targe
   assert.ok(clean[0] > 0);
   assert.deepEqual(solo(shipped, 'strike', 'frostExposed').hits, clean);
   assert.deepEqual(solo(shipped, 'strike', 'insanityExposed').hits, clean);
-  if (COOP_TESTS_ENABLED) assert.deepEqual(coop(shipped, 'strike', 'frostExposed').hits, clean);
 });
 
 test('each exposure answers only its own tags', () => {
@@ -102,7 +86,7 @@ const lowBase = [
   ['blightTouch', 'ritual', 'insanityExposed', 8, 1.3],
 ];
 for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
-  test(`exposure bonus rounds up: base-${authoredBase} ${cardId} (${tag}) gains damage vs ${status}, preview == hit, solo == co-op`, () => {
+  test(`exposure bonus rounds up: base-${authoredBase} ${cardId} (${tag}) gains damage vs ${status}, preview == hit`, () => {
     assert.ok(cardTags(shipped, cardId).includes(tag), `${cardId} carries '${tag}'`);
     const base = shipped.cards.get(cardId).effects.find((e) => e.op === 'damage').amount;
     assert.equal(base, authoredBase, `${cardId} retains its authored damage`);
@@ -111,7 +95,6 @@ for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
     assert.equal(clean.hits[0], authoredBase);
     assert.equal(exposed.hits[0], authoredBase + Math.ceil(authoredBase * (multiplier - 1)), `tagged bonus rounds up (${clean.hits[0]} -> ${exposed.hits[0]})`);
     assert.equal(exposed.preview, exposed.hits[0], 'preview states the rounded-up hit');
-    if (COOP_TESTS_ENABLED) assert.deepEqual(coop(shipped, cardId, status).hits, exposed.hits, 'co-op parity');
   });
 }
 

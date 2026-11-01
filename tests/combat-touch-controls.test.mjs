@@ -8,7 +8,6 @@ const css = read('../styles/combat-layers.css');
 const hand = read('../src/ui/components/hand.js');
 const tools = read('../src/ui/components/combatTools.js');
 const combat = read('../src/ui/screens/combat.js');
-const coop = read('../src/ui/screens/coop.js');
 
 test('approved compact Inspect and HP shapes retain active paging', () => {
   const inspectSizes = [...css.matchAll(/[^{}]*\.combatant-leading > \.combatant-info\s*\{([^}]*)\}/g)]
@@ -45,7 +44,6 @@ test('compact hand leaves the footer tool and Grid rows below its resting cards'
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
   assert.match(combat, /selectCombatant\(enemy\.id\);[\s\S]*?return false;/);
-  assert.match(coop, /selectCombatant\((?:e\.id|enemyId)\);[\s\S]*?return false;/);
 });
 
 test('an armed self-target HUD click reaches only one frame listener', () => {

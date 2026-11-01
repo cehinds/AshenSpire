@@ -149,8 +149,6 @@ export function catalogDisagreement(md, html) {
 //   - a preference guard written with CSS nesting is rejected; un-nest it;
 //   - a hexadecimal escape in a quoted guard value (`'fal\73 e'`) is not
 //     decoded, so the guard is rejected; write the value plainly.
-// Unseen here: combat.css's co-op formation rule sets the HUD top to
-// display:flex (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
@@ -546,9 +544,8 @@ export function receipt() {
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
-    // The combat action row's one home since 2026-10-01; solo and co-op both mount it.
+    // The combat action row's one home since 2026-10-01.
     actionRow: read('src/ui/components/combatActionRow.js'),
-    coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
     controls: read('src/ui/screens/controls.js'),
@@ -666,7 +663,7 @@ export function findings(r) {
       || !/const heightOf = a => base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
       || !stableCombatStageRendering(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)
-      || !/UI\.combatActionRail/.test(r.actionRow) || !/combatActionRowHtml\(/.test(r.combat) || !/combatActionRowHtml\(/.test(r.coop)
+      || !/UI\.combatActionRail/.test(r.actionRow) || !/combatActionRowHtml\(/.test(r.combat)
       || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
       || !/UI\.combatantSprite/.test(r.frame)
       || !/UI\.combatantNameplate/.test(r.frame)
@@ -675,7 +672,7 @@ export function findings(r) {
       || !/UI\.procStatusBar/.test(r.combat)
       || !/UI\.statusEffectTray/.test(r.combat)
       || !/UI\.intentIndicator/.test(r.overhead)
-      || !/UI\.blockBadge/.test(r.health) || !/combatHealthRow\(/.test(r.combat) || !/combatHealthRow\(/.test(r.coop)
+      || !/UI\.blockBadge/.test(r.health) || !/combatHealthRow\(/.test(r.combat)
       || !/UI\.arcaneExposureBar/.test(r.exposure)
       || !/UI\.tooltip/.test(r.tooltip)
       || !/UI\.guardedDamageIndicator/.test(r.fx)
@@ -924,13 +921,6 @@ export function findings(r) {
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
   }
-  if (!/import \{ hudQuickSettingsHtml, wireHudQuickSettings \}/.test(r.coop)
-      || !/import \{ hudQuickSettingsModel \}/.test(r.coop)
-      || (r.coop.match(/hudQuickSettingsHtml\(hudQuickSettingsModel\(\{/g) || []).length !== 2
-      || (r.coop.match(/wireHudQuickSettings\(app, \{ settings: meta\.settings \|\| \{\}, onSettingsChange \}\)/g) || []).length !== 2
-      || !/mountCoop\(app, \{[\s\S]*onSettingsChange/.test(r.main)) {
-    bad.push('C17 LAN Map and Combat no longer mount and persist the shared quick settings');
-  }
   const smithIds = ['smith-upgrade-modal', 'smith-candidate-card', 'smith-upgrade-preview'];
   if (!/export function smithSelectionModel/.test(r.smithSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.smithSelectionModel)
@@ -1068,7 +1058,6 @@ function selftest() {
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
     ['remove Armoury card gallery', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('gallery.appendChild(card)', 'gallery.remove()') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
-    ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
     ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
     ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],

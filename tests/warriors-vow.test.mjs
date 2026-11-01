@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // Warrior's Vow (SPEC §5.2): "Innate. Enter a Stance of your choice. Exhaust."
 // The card's effect names a CHOICE, not a stance: playing it offers a pending
 // choice of every stance the playing character's class owns (the stance rows'
@@ -115,28 +114,12 @@ test('the validator refuses an enterStance with neither or both selectors, and a
   }
 });
 
-// Co-op: the session route plays a seat's card through coopCombat.playCard,
-// which must offer the same choice and enter the chosen stance on that seat.
-test('co-op: a seat\'s Vow offers its class stances and enters the chosen one on that seat only', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createCoopCombat, playCard, cardChoicePlan: coopPlan } = await import('../src/engine/coopCombat.js');
-  for (const stance of reaverStances()) {
-    const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
-    const p1 = C.players.get('p1'), p2 = C.players.get('p2');
-    assert.ok(p2.piles.hand.some((card) => card.instanceId === 'p2vow'), 'the Vow is Innate for the seat');
-    assert.deepEqual(coopPlan(C, 'p2', 'p2vow').options.map((o) => o.id).sort(), reaverStances());
-    assert.throws(() => playCard(C, 'p2', 'p2vow'), /Choose a stance/);
-    playCard(C, 'p2', 'p2vow', undefined, stance);
-    assert.equal(p2.entity.stanceId, stance, 'the playing seat enters the chosen stance');
-    assert.equal(p1.entity.stanceId ?? null, null, 'the other seat is untouched');
-  }
-});
-
 // The stance the player is already in does nothing as a pick: the foundation
 // rules refuse it ("That stance is already active") and the legacy rules make
 // it a no-op that still spends the card, so the offer marks it `active` and the
 // dialog disables it rather than offer a pick the engine refuses (#1449
 // review, Codex P2). The other stances stay choosable.
-test('the offer marks the stance already active, solo and co-op', async () => {
+test('the offer marks the stance already active', async () => {
   const c = soloCombat();
   assert.ok(cardChoicePlan(c, 'pvow').options.every((o) => o.active === false), 'no stance yet: nothing marked');
   c.player.stanceId = 'bulwark';
@@ -144,15 +127,6 @@ test('the offer marks the stance already active, solo and co-op', async () => {
   assert.deepEqual(plan.options.filter((o) => o.active).map((o) => o.id), ['bulwark']);
   dispatch(c, { type: 'playCard', cardInstanceId: 'pvow', choice: 'gorefire' });
   assert.equal(c.player.stanceId, 'gorefire');
-
-  if (COOP_TESTS_ENABLED) {
-    const { createCoopCombat, cardChoicePlan: coopPlan } = await import('../src/engine/coopCombat.js');
-    const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
-    C.players.get('p2').entity.stanceId = 'brace';
-    assert.deepEqual(coopPlan(C, 'p2', 'p2vow').options.filter((o) => o.active).map((o) => o.id), ['brace']);
-    assert.ok(coopPlan(C, 'p1', 'p1vow').options.every((o) => !o.active), 'the other seat\'s stance is not this seat\'s');
-  }
-
 });
 
 // BOUNDARY (engine/actions.js enterStance, model/validate.js): only a played

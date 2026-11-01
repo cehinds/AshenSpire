@@ -99,16 +99,12 @@ if (arcaneExposureReceipt) {
 const component = fs.existsSync(new URL('../../src/ui/components/arcaneExposure.js', import.meta.url))
   ? fs.readFileSync(new URL('../../src/ui/components/arcaneExposure.js', import.meta.url), 'utf8') : '';
 const solo = fs.readFileSync(new URL('../../src/ui/screens/combat.js', import.meta.url), 'utf8');
-const coop = fs.readFileSync(new URL('../../src/ui/screens/coop.js', import.meta.url), 'utf8');
 const css = fs.readFileSync(new URL('../../styles/ui.css', import.meta.url), 'utf8');
 check(/renderArcaneExposure/.test(solo), 'solo combat renders the shared host-state meter');
-check(/renderArcaneExposure/.test(coop), 'co-op combat renders the shared snapshot meter');
-check(/statusInstancePresentation/.test(solo) && /statusInstancePresentation/.test(coop),
-  'solo and co-op generic status rows consume the shared typed presentation');
+check(/statusInstancePresentation/.test(solo),
+  'solo generic status rows consume the shared typed presentation');
 check(/arcaneExposure:/.test(solo) && /arcaneExposureChanged/.test(solo) && /arcaneBreak/.test(solo),
   'solo paced snapshot carries and advances host Arcane state');
-check(/scene\.events|sc\.events/.test(coop) && /arcaneExposureRefused|arcaneBreak/.test(coop),
-  'co-op consumes transported refusal and break receipts');
 check(!/dispatch|applyAttackDamage|arcaneExposure(?:\.value)?\s*(?:=|\+\+|--)/.test(component),
   'shared UI component contains no client mutation or damage path');
 check(/arcane-exposure-meter/.test(component) && /arcane-exposure-immune/.test(component),

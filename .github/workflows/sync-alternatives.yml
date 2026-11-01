@@ -65,7 +65,7 @@ jobs:
           set -euo pipefail
           workflows=(dev-preview.yml tests.yml quick-start.yml map-camera.yml tutorial-reach.yml)
           if [[ "$BRANCH" == */test ]]; then
-            workflows+=(ci.yml coop-hud.yml windows-installer.yml)
+            workflows+=(ci.yml windows-installer.yml)
           else
             workflows+=(receipts.yml architecture-sync.yml)
           fi

@@ -11,8 +11,6 @@ import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import { concealIntent } from '../src/model/combatIntentVisibility.js';
 import { enemyExpansionSprite } from '../src/ui/enemyExpansionStage.js';
 import { stageFor } from '../src/ui/services/PoseAnimator.js';
-import { projectLanSnapshot } from '../tools/lan-state.mjs';
-import { coopEnemyIntent } from '../src/ui/models/CoopIntentModel.js';
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
 // Execute the actual paced reducer case without mounting the screen's DOM.
@@ -125,25 +123,4 @@ test('planned stance persists through status changes and reactions, then follows
   assert.equal(el.dataset.pose, 'defeated');
   assert.equal(el.dataset.stance, undefined);
   stage.dispose();
-});
-
-test('remote hidden knowledge and legacy snapshots retain only the public body category for every connection', () => {
-  for (const knowledge of [false, true]) for (const category of ENEMY_STANCE_FAMILIES) {
-    const intent = { kind: category === 'preparing' ? 'buff' : 'attack', moveId: 'privateMove', damage: 99,
-      combatProfile: { camp: category === 'preparing' ? 'power' : 'attack', maneuver: category === 'preparing' ? null : category } };
-    const enemy = { id: 'e1', enemyId: 'stitchedHound', intent, intentReads: { p1: false, p2: false },
-      presentationStance: 'assets/private-arbitrary.png', combatStance: { moveId: 'privateMove' },
-      ...(knowledge ? { knowledgeAction: { serial: 3, category: 'privateCategory', reads: {
-        p1: { visibility: 'unknown', label: '?' }, p2: { visibility: 'unknown', label: '?' } } } } : {}) };
-    const source = { scene: { kind: 'combat', enemies: [enemy], players: [] }, party: [] };
-    for (const seat of ['p1', 'p2']) {
-      const projected = projectLanSnapshot(source, [seat]).scene.enemies[0];
-      assert.equal(projected.presentationStance, category);
-      assert.equal(projected.intent.moveId, null);
-      assert.equal(projected.intent.damage, undefined);
-      assert.equal(coopEnemyIntent(projected, seat).hidden, true);
-      if (knowledge) { assert.equal(coopEnemyIntent(projected, seat).label, '?'); assert.equal(projected.knowledgeAction.category, undefined); }
-    }
-    assert.equal(source.scene.enemies[0].intent.moveId, 'privateMove', 'authority is unchanged');
-  }
 });

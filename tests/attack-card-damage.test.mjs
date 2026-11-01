@@ -1,6 +1,5 @@
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { configuredContentBundle, advancedConfigRows } from '../src/model/advancedConfig.js';
@@ -357,35 +356,6 @@ test('a malformed status or bonus container is reported by name', () => {
   assert.deepEqual(attackCardDamageConfigProblems(contentBundle), []);
 });
 
-// CO-OP CARRIES THE RESOLVED FACE TOO (#1247 review): its action carrier is
-// built separately from solo's, so it needs the same Ward value.
-test('a staff Strike played in co-op lands its configured Ward impact', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createCoopCombat, playCard } = await import('../src/engine/coopCombat.js');
-  const { createRng } = await import('../src/engine/rng.js');
-  const { resolveCombatRatings } = await import('../src/model/combatRatings.js');
-  const settings = { 'gameConfig.balance.damage.wardCards.globalMultiplier': 3 };
-  const registries = createRegistries(configuredContentBundle(contentBundle, settings));
-  const instance = { cardId: 'strike', profileId: 'staffMagicAttack', damageSchool: 'magic', exposureBuildupPerHit: 0, upgraded: false };
-  const C = createCoopCombat({
-    registries, rng: createRng(998), ratingsRules: resolveCombatRatings(settings, contentBundle),
-    players: [{ id: 'p1', classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10,
-      energyMax: 3, drawPerTurn: 3, attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
-      deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `k${i}`, ...instance })), relicIds: [] }],
-    enemyIds: ['wanderingSoldier'],
-  });
-  const enemy = C.enemies[0];
-  enemy.poiseMeter = { value: 0, max: 999 };
-  enemy.wardMeter = { value: 0, max: 999 };
-  const seen = [];
-  const emit = C.emit;
-  C.emit = (type, payload) => { if (type === 'ratingImpact') seen.push(payload); return emit(type, payload); };
-  const seat = C.players.get('p1');
-  playCard(C, 'p1', seat.piles.hand[0].instanceId, enemy.id);
-  const ward = resolveCard(registries, instance).cardRatingValues.ward;
-  assert.ok(ward > (registries.balance.combatRatings?.impact?.magic ?? 1), 'the Ward value differs from the magic default');
-  assert.deepEqual(C.eventLog.filter(event => event.type === 'ratingImpact').map((row) => [row.meter, row.amount]), [['ward', ward]]);
-});
-
 // A WEAPON PACKAGE'S PRIORITY CARDS ARE DEALT UNDER A PROFILE TOO (#1247
 // review): a staff that listed Stomp would deal it magical, so Stomp needs its
 // magical face, and a row on the magical side, like the staff's own Strike.
@@ -415,7 +385,6 @@ test('a card a staff package deals resolves through the magical formulas', () =>
   assert.equal(physical.effects[0].amount, scaledFor(physical, authored.effects[0].amount), 'and not its physical face (after the action-cost step)');
 });
 
-
 test('fixed upgrades preserve authored value deltas while advanced settings still retune their base budget', () => {
   for (const multiplier of [1, 2]) {
     const bundle = configuredContentBundle(contentBundle, {
@@ -430,7 +399,6 @@ test('fixed upgrades preserve authored value deltas while advanced settings stil
     assert.equal(upgraded.effects[0].amount, 8 + (multiplier - 1) * 2);
   }
 });
-
 
 test('fixed upgrade effect valuation leaves preview and live payment at its authored price', async () => {
   const { createCombat, dispatch, previewCard } = await import('../src/engine/combat.js');

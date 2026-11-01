@@ -124,25 +124,18 @@ of tactical combat version 2. No release/main publication is authorized.
   Do not expose unreached facts in hidden DOM, tooltips, accessibility labels,
   move-card models or offline bestiary projections. Known-empty differs from locked.
 
-## Co-op authority, privacy and saves
+## Private reads, ownership and saves
 
-- The host selects actions, rolls per-seat reads and accepts predictions and
-  success receipts. Guests request an action/prediction, never invent credit.
-  Matchup benefit credits the responding owner only, not the whole party.
-- Co-op read randomness uses an injected host-private seed with independent
-  visibility/clue streams, not the publicly broadcast map/run seed. Persist the
-  private seed and counters only in the host save; neither is sent to guests.
-  The authority sorts observer IDs before rolling. Tests may inject a fixed
-  private seed. This prevents clients reconstructing another observer's rolls
-  from the ordinary published seed and known stream salts. The host itself is
-  trusted, and couch seats share one device; this is peer projection privacy,
-  not secrecy from a host administrator or someone reading the host save.
-- Durable progress belongs to each member's own profile. The host emits/project
-  authenticated owner-specific learning receipts; guests bank only their seat's
-  accepted receipt. No peer profile is written or pooled. Local display reads
-  only the viewer's visibility and learned facts. Other seats' rolls, predictions,
-  credited flags, raw intent payloads and private learning ledgers are omitted
-  from their public projections. Host restoration may retain authoritative state.
+- The engine selects actions, rolls reads and accepts predictions and success
+  receipts. Matchup benefit credits the responding owner only.
+- Read randomness uses an injected private seed with independent visibility/clue
+  streams, not the publicly displayed map/run seed. Persist the private seed and
+  counters in the save only. The authority sorts observer IDs before rolling.
+  Tests may inject a fixed private seed.
+- Durable progress belongs to the player's own profile. Local display reads only
+  the viewer's visibility and learned facts. Rolls, predictions, credited flags,
+  raw intent payloads and private learning ledgers are omitted from public
+  projections.
 - New run/combat/profile state has versioned validation and migration. Legacy
   saves restore their carried intent behavior without another roll or retroactive
   learning. Persist unique identities, serials, reads, predictions, XP, bounded
@@ -173,7 +166,7 @@ of tactical combat version 2. No release/main publication is authorized.
   streams, inert previews/rejections, progression during combat, one credit per
   multi-hit/delayed action, cancelled actions, bonus limits, duplicate enemy IDs,
   repeated-seed fresh runs, stale profile writes, failed-write retry, exact solo
-  and co-op save continuation, per-seat authority/privacy, legacy compatibility,
+  save continuation, legacy compatibility,
   learned-stage disclosure and malformed content/save state.
 - Require focused tests, the core suite, real desktop/phone inspection and
   prediction interactions with screenshots, component-catalog updates, review,

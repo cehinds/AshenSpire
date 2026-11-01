@@ -150,15 +150,6 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
-Dedicated co-op tests (32 files) and `coop-hud.yml` run only when
-`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
-While false, discovery prints the skip reason before sharding; mixed suites
-keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
-retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
-the co-op lanes automatically (`tests/feature-scopes.js` also works in the
-browser test harness).
-
-
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
@@ -182,7 +173,6 @@ browser test harness).
 | `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | only when release differs from test |
 | `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | only when release differs from test |
 | `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | only when release differs from test |
 | `workbench.yml` → Workbench, editor, UI Studio and engine-export tests, a full engine export and the Workbench screenshots (real browser); uploads `engine-export-<commit>` and `workbench-screenshots-<commit>` ([workbench/README.md](workbench/README.md)) | — | a PR into `dev` only when it touches `workbench/`, `editor/`, `ui-studio/`, `pose-studio/`, `content/`, `src/content/`, `.github/actions/`, `tools/launch.mjs`, the engine exporter, the build-lock and build-step libraries or `docs/workbench/` (the full list is in the workflow; also a push to `feature/**`, `chore/**`, `Chore/**`, `fix/**` with the same paths). It also runs those tests on Windows and macOS, each test limited to 3 minutes. Path-filtered, so never make it a required check | — | — |
 | `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
@@ -444,15 +434,15 @@ this ruleset yet. See the workshop's remaining content-expansion gate.
 Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
 compatibility alias. Resolve the chosen terminal through
-`bossEncounterForNode()` in solo, LAN and simulations. Legacy maps without this
+`bossEncounterForNode()` in solo play and simulations. Legacy maps without this
 metadata resolve their original act boss without consuming RNG. Run
-`node tests/branchingBosses.test.mjs` for topology, deterministic selection,
-LAN choice and real save-manager round trips.
+`node tests/branchingBosses.test.mjs` for topology, deterministic selection
+and real save-manager round trips.
 Loading validates explicit and legacy boss references before accepting a save.
 Existing destination labels refresh from current content without changing the
 saved graph's paths, encounter identities, selection or RNG counters. Run
 `node --test tests/legacyBossReferences.test.mjs tests/bossDestinationLabels.test.mjs`
-for content-update regressions in solo and LAN restoration.
+for content-update regressions in save restoration.
 Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
 moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
@@ -480,7 +470,7 @@ Attack motion uses the actor/action, tag, intent and neutral precedence in
 
 `node tools/full-run-probe.mjs` (FINISH §3 "A browser full run") plays one
 whole run in Chromium from a normal boot of the source tree, served as
-`tools/launch.mjs` serves it (LAN layer on): the startup gate and the title's
+`tools/launch.mjs` serves it: the startup gate and the title's
 New Game, character creation step by step with the fixed seed (`--seed`,
 default `FULLRUN1`) typed into the Review's Seed field, the act map, a first
 fight played with the Attack cards in hand, the map walked to the act boss
@@ -969,7 +959,7 @@ remount with the selected destination kept, and the world atlas must not remount
 (`--shard i/n` runs part of them). They run in `ci.yml`'s *every flask menu in
 a real browser* and, in two shards, *flask-menu known-bads in a real browser*;
 `tools/flask-action-contract.mjs`
-keeps the Node half (the pure plan, the map model, co-op's host intent):
+keeps the Node half (the pure plan and the map model):
 
 ```bash
 node tools/flask-menu-probe.mjs            # --only persistence|dispatch|plan
@@ -1066,7 +1056,7 @@ Use these source locations when changing it in Visual Studio:
 After editing authored data, run `node tools/content-build.mjs` followed by
 `node tools/game-config.mjs build`. Range settings apply to new runs; an active
 fight uses its saved policy and accepted action receipts. Keep price formulas
-in the shared planner so solo play, co-op and displayed choices agree.
+in the shared planner so solo play and displayed choices agree.
 
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
@@ -1119,8 +1109,8 @@ they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
 (`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`) and commit
 the regenerated file. Design notes that used to be comments in the JS live in
 `content/source/CONTENT-NOTES.md` under "Cards", keyed by card id. JSON has no comments, no
-shared constants and no functions, so write a repeated value out in full. The two builder
-pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the JS file.
+shared constants and no functions, so write a repeated value out in full. The builder
+pool `rogue.js` holds functions and stays JS: author it in the JS file.
 
 ```json
 {
@@ -1151,7 +1141,7 @@ should appear in rewards. Notes:
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
   each copy still in hand, before the hand is discarded — Guilt's
-  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in solo and co-op
+  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in
   combat. Its numbers bind to the card's text template after `effects`
   (Guilt's text says `{loseHp}`).
 
@@ -1319,12 +1309,9 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
 D48 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
 timeline per beat, `playEventCues` for instant playback and a fresh fight's
-opening (a boss fight's waits for its name splash to close), and
-`playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
-`src/ui/screens/coop.js`, gated by `receiptSeq`; a late joiner hears only the
-scene the host marks `opening`). `playEventCues` stings once per shared turn,
-however many co-op seats start it. `node --test tests/sound-tiers.test.mjs`
-covers them, including the opening turn and the real co-op session digest;
+opening (a boss fight's waits for its name splash to close);
+`playEventCues` stings once per turn. `node --test tests/sound-tiers.test.mjs`
+covers them, including the opening turn;
 `node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
 a remounted one, and a fresh boss fight behind its splash
 (`?shot=boss&shotBossHold=0` lets the splash close).
@@ -1345,10 +1332,9 @@ are:
 - the opening's `tick` (`src/ui/screens/prologue.js`), a `requestAnimationFrame`
   loop that runs every frame while the prologue is mounted, paused or not;
 - timers: the gamepad poller (`src/ui/input.js`, only while a controller is
-  connected), the co-op seat gamepad poll (`src/ui/screens/coop.js`, every
-  120 ms for as long as the co-op screen is open), the music scheduler
-  (`src/ui/audio.js`), and 2 s polls for fullscreen state
-  (`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
+  connected), the music scheduler
+  (`src/ui/audio.js`), and a 2 s poll for fullscreen state
+  (`hudQuickSettings.js`). Ambient title effects (embers, gold
 glow) are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
 Rendering-quality options and phone measurements are in
 [docs/MOBILE-PERFORMANCE.md](docs/MOBILE-PERFORMANCE.md).
@@ -1530,13 +1516,12 @@ falsifier), not deferred.
 
 None open.
 
-Resolved: **Warrior's Vow** enters a stance of your choice, solo and in co-op.
+Resolved: **Warrior's Vow** enters a stance of your choice.
 Its `enterStance` effect carries `choose: 'classStance'` instead of a fixed
-`stance`; `cardChoicePlan` (engine/combat.js, and engine/coopCombat.js for a
-seat) offers every stance row whose `class` is the player's class (the card's
+`stance`; `cardChoicePlan` (engine/combat.js) offers every stance row whose `class` is the player's class (the card's
 own class when the player's owns none, `model/cardChoices.js`), the play intent
 answers it with `choice`, and a play without a legal choice is refused before
-anything is spent. Solo and co-op screens ask through one dialog
+anything is spent. The combat screen asks through one dialog
 (`ui/components/cardChoiceModal.js`); bots take the first option
 (`tests/warriors-vow.test.mjs`).
 
@@ -1545,7 +1530,7 @@ thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
 only Poise, and the card text and tooltip say Poise only.
 
 Resolved: **Guilt** is no longer inert. Since #1286 it loses its HP at the end
-of each of your turns while in hand, solo and in co-op, through the card's
+of each of your turns while in hand, through the card's
 `onTurnEndInHand` hook (see *Add a card* above); the card text binds the amount.
 
 ## Dodge outcome presentation
@@ -1572,7 +1557,7 @@ Combat cards select before committing. A selected card retains its fan position 
 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
-Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
 
 ## Opening sequence
 
@@ -1651,7 +1636,7 @@ explicit visual class/set alias. Shared armor retains the reviewed package's
 mapping; future class-by-armor artwork can add exact IDs without replacing this
 collection or changing gameplay equipment definitions.
 
-Solo and co-op use `combatEnvironment` / saved dungeon selection through
+Combat uses `combatEnvironment` / saved dungeon selection through
 `combatBackdropHtml`. `fitAlternativeBackdrop` fits each art canvas to the
 battlefield and its formation ground; it does not import review-page HUD or
 actor positions. Companion art decorates the existing ally indicators. Named
@@ -1661,7 +1646,7 @@ with no action/hand anchors, pose strips or invented animation coverage.
 
 Check `node --test tests/alternative-art.test.mjs tests/environment-art.test.mjs
 tests/alternative-formation.test.mjs`. `node tools/alternative-art-qa.mjs` walks
-all 32 settings at desktop and phone sizes, co-op, a mounted resize, and real
+all 32 settings at desktop and phone sizes, a mounted resize, and real
 Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
 portable file. Outputs and temporary/browser storage must stay on D: locally.

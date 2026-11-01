@@ -142,14 +142,6 @@
       "count": 10,
       "digest": "1f5c08d068934c04"
     },
-    "tools/coop-hand-parity.mjs": {
-      "count": 1,
-      "digest": "e753cef1956378c6"
-    },
-    "tools/coop-secondbeat.mjs": {
-      "count": 3,
-      "digest": "2029f5a47f49c665"
-    },
     "tools/derived-runtime-authority.mjs": {
       "count": 3,
       "digest": "89f8750385c28673"
@@ -163,12 +155,8 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 10,
-      "digest": "63c88aea3a42c684"
-    },
-    "tools/flask-intent-smoke.mjs": {
-      "count": 3,
-      "digest": "e60db1b613402d0b"
+      "count": 9,
+      "digest": "914686cf81027ce3"
     },
     "tools/flask-menu-cancel.mjs": {
       "count": 6,
@@ -308,7 +296,7 @@
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
-      "digest": "8828ae5f798ba270"
+      "digest": "3a1addc6a9ae4e8a"
     },
     "tools/swap-cost-relic-surface.mjs": {
       "count": 2,

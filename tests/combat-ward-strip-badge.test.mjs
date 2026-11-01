@@ -27,9 +27,7 @@ test('a Ward strip emits the Ward it leaves: value and max', () => {
   assert.equal(enemy.persistentWard.value, 1);
 });
 
-test('the paced reducers in combat.js and coop.js apply combatWardStripped to the Ward badge', () => {
+test('the paced reducer in combat.js applies combatWardStripped to the Ward badge', () => {
   const combatUi = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  const coopUi = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
   assert.match(combatUi, /case 'persistentWardChanged':\s*case 'combatWardStripped':\s*if \(t\?\.persistentWard && Number\.isFinite\(e\.value\)\) \{ t\.persistentWard\.value = e\.value;/);
-  assert.match(coopUi, /if \(\(event\.type === 'persistentWardChanged' \|\| event\.type === 'combatWardStripped'\) && target\?\.persistentWard && Number\.isFinite\(event\.value\)\) \{/);
 });

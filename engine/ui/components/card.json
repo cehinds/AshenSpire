@@ -1,6 +1,6 @@
 {
   "id": "card",
-  "description": "Card face shared by hand, rewards, deck and inspection. Reads src/ui/components/card.js, cardLayout.js, cardAppearance.js, src/ui/models/CardSizeModel.js and CombatCardView.js.",
+  "description": "Card face shared by hand, rewards, deck and inspection. Reads src/ui/components/card.js, cardLayout.js, cardAppearance.js, and src/ui/models/CardSizeModel.js.",
   "layout": {
     "ref": "content/config/ui/components/card.json"
   },

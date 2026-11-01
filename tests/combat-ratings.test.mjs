@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -7,7 +6,6 @@ import { resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/
 import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
@@ -316,28 +314,6 @@ test('an equipment card uses only its source item rating', () => {
     'the other equipped weapon does not leak into this card');
   assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, equipmentRole: 'attack' }), 12,
     'an unarmed equipment-profile card excludes every equipped item but keeps attribute and relic AR');
-});
-
-test('co-op initializes source equipment ratings for every seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createRunState } = await import('../src/model/state.js');
-  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
-  const currentRegistries = createRegistries(configured);
-  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
-  const c = createCoopCombat({
-    registries: currentRegistries,
-    rng: createRng(998),
-    players: [{
-      id: 'p1', classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
-      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
-      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout,
-      itemUpgradeLevels: run.itemUpgradeLevels, relicIds: [],
-    }],
-    enemyIds: ['wanderingSoldier'],
-  });
-  // 5 + 3 attribute AR + 2 sword AR; 3 + 1 attribute DR + 5 shield DR (the armour's DR stays out).
-  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 10);
-  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 9);
-  assert.equal(c.enemies[0].ratings.poise, c.ratingsRules.enemyRatings.wanderingSoldier.poise);
 });
 
 test('restoring a legacy combat rebuilds typed rating sources before source filtering', async () => {

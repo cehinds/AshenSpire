@@ -1,12 +1,9 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
-import {legacyContentBundle} from './helpers/legacy-progression-content.mjs';
 import {createRegistries,resolveCard} from '../src/model/registries.js';
 import {combatEffectPlan,combatEffectTags,combatEffectTargetIds} from '../src/model/combatEffects.js';
-import {decorateCombatEffects,combatEffectForEvent,combatEffectReceipt,presentationTargetIds} from '../src/model/combatEffectEvents.js';
-import {createSession} from '../tools/session.mjs';
+import {decorateCombatEffects, combatEffectForEvent, presentationTargetIds} from '../src/model/combatEffectEvents.js';
 import {COMBAT_EFFECT_ART} from '../src/content/combatEffectArt.js';
 import {COMBAT_EFFECT_RULES} from '../src/content/combatEffectRules.js';
 import {applyAttackDamage} from '../src/engine/actions.js';
@@ -39,30 +36,6 @@ test('cost variants retain auras, defensive identities and actual X spending',()
  const x={type:'attack',cost:'X',cardTags:['blade'],effects:[{op:'damage',target:'enemy'}]};
  assert.equal(combatEffectPlan(x,{energySpent:1}).activation,'mundaneLow');
  assert.equal(combatEffectPlan(x,{energySpent:3}).activation,'mundaneHigh');
-});
-test('real co-op receipts retain the casting seat and a different friendly recipient', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
- // This receipt fixture replays historical cards after character setup.
- const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
- for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
- host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
- const p=host.live.combat.players.get('p2');p.entity.energy=99;p.entity.mana=99;p.entity.stamina=99;
- p.piles.hand.push({instanceId:'fx-hit',cardId:'gorefireSlash',upgraded:false},{instanceId:'fx-ally',cardId:'rallyingBanner',upgraded:false},{instanceId:'fx-status',cardId:'ashOath',upgraded:false});
- host.snapshot();assert.ok(host.combatPlay('p2','fx-hit','e1').ok);
- const hit=host.snapshot().scene.events.map(combatEffectReceipt);
- // Gorefire Slash's SP is the cost formula's (SPEC §4.3a).
- assert.equal(hit.find(e=>e.type==='cardPlayed').energySpent,resolveCard(createRegistries(legacyContentBundle),{cardId:'gorefireSlash'}).cost);
- assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p2'),['e1']);
- assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p1'),[]);
- assert.ok(host.combatPlay('p2','fx-ally','p1').ok);
- const guardEvents=host.snapshot().scene.events;
- const guard=guardEvents.map(combatEffectReceipt).find(e=>e.type==='blockGained');
- assert.equal(guard.targetId,'p1');assert.ok(guard.amount>0);
- assert.deepEqual(combatEffectTargetIds(plan('rallyingBanner'),guardEvents.map(combatEffectReceipt),'p2'),[]);
- assert.deepEqual(presentationTargetIds(guardEvents,'p2','rallyingBanner'),['p1']);
- assert.deepEqual(presentationTargetIds(guardEvents,'p1','rallyingBanner'),[]);
- assert.ok(host.combatPlay('p2','fx-status','p1').ok);
- const buffs=host.snapshot().scene.events.map(combatEffectReceipt).filter(e=>e.type==='statusApplied'&&e.status==='strength');
- assert.deepEqual(buffs.map(e=>[e.sourceId,e.targetId,e.stacks]),[['p2','p1',2],['p2','p2',1]]);
 });
 test('authored recipients require positive outcomes in the matching card receipt segment',()=>{
  const events=[{type:'healed',targetId:'outside',amount:3},{type:'cardPlayed',playerId:'p2',cardId:'ward'},

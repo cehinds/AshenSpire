@@ -139,19 +139,9 @@ test('on the default (Current) bundle Read Intent keeps the Accuracy roll and ne
   assert.ok((combat.rng.getCounters().combatAvoidance || 0) > 0, 'Accuracy drew on combatAvoidance');
 });
 
-// ---- both badges (solo and co-op) share rangeHitLabel ---------------------------------------------------------------
+// ---- the range badge reads DC for a contest preview ---------------------------------------------------------------
 import { rangeHitLabel } from '../src/ui/models/CombatRangeActionModel.js';
-import { coopCardHitPreview } from '../src/ui/models/CoopHitPreviewModel.js';
 test('rangeHitLabel shows DC N for a contest preview, never a percentage', () => {
   assert.equal(rangeHitLabel({ hitChance: 100, inRange: true, contest: { dc: 9 } }), 'DC 9');
   assert.equal(rangeHitLabel({ hitChance: 100, inRange: true }), '100%');
-});
-test('the co-op preview of a contest card under Core 2 carries the contest, so co-op badges read DC', () => {
-  const scene = { combatExpansionVersion: 2, gameProfile: { modules: { effects: { fixCoreVersion: 1 } } }, enemies: [] };
-  const actor = { id: 'seatA', kind: 'player', attributes: { intelligence: 1, wisdom: 1 }, level: 1 };
-  const enemy = { id: 'e1', kind: 'enemy', hp: 10, level: 1, attributes: { wisdom: 0 }, persistentPoise: { max: 5, value: 5 } };
-  const card = { id: 'base.reveal-opponent-hand', contest: 'mental', effects: [{ op: 'revealIntent', target: 'enemy', amount: 1 }] };
-  const preview = coopCardHitPreview(scene, reg, actor, enemy, card, { selected: false });
-  if (preview?.contest) assert.equal(rangeHitLabel(preview), `DC ${preview.contest.dc}`);
-  else assert.fail('co-op preview lost the contest: ' + JSON.stringify(preview));
 });

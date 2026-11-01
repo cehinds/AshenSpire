@@ -45,7 +45,7 @@ Studio and game server only when they serve this project (`/api/session`,
 | Content Editor | 4317 | `node editor/server.mjs --project <root> --port 4317 --frame-ancestor <workbench>` |
 | Pose & FX | 4318 | `POSE_STUDIO_PORT=4318 node pose-studio/server.mjs --project <root>` |
 | UI Studio | 4319 | `node ui-studio/server.mjs --project <root> --port 4319 --frame-ancestor <workbench>` |
-| Game server | 4320 | `node tools/serve.mjs --port 4320 --no-open --no-lan --root <root>` |
+| Game server | 4320 | `node tools/serve.mjs --port 4320 --no-open --root <root>` |
 
 `--no-children` starts the Workbench alone (the tests use it); the tool pages
 then explain how to start each tool.

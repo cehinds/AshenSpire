@@ -1,13 +1,10 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
-import { cardNeedsEnemyTarget } from '../src/model/friendlyTargets.js';
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries, relicPropertyRules, resolveCard } from '../src/model/registries.js';
+import { createRegistries, relicPropertyRules } from '../src/model/registries.js';
 import { progressionRelics, progressionRelicUnlocks } from '../src/content/progression/relics.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { getStacks } from '../src/engine/statuses.js';
@@ -15,7 +12,7 @@ import { getStacks } from '../src/engine/statuses.js';
 const id = name => `progression-${name}`;
 const hit = [{ op: 'damage', target: 'enemy', amount: 3 }];
 // Fixture cards pin their own Stamina and Mana: costRule 'fixed' opts them out of the cost formula (SPEC §4.3a).
-function fixture(relic, cards = {}, coop = false) {
+function fixture(relic, cards = {}) {
   const base = createRegistries(contentBundle);
   const definitions = new Map(Object.entries(cards).map(([key, card]) => [key, {
     ...base.cards.get('defend'), id: key, name: key, costRule: 'fixed', cost: 1, manaCost: 0,
@@ -27,19 +24,15 @@ function fixture(relic, cards = {}, coop = false) {
   const player = { id: 'p1', classId: 'herald', maxHp: 100, hp: 50, maxMana: 30, mana: 20,
     maxStamina: 30, stamina: 30, energyMax: 30, drawPerTurn: 5, relicIds: [id(relic)],
     deck: Array.from({ length: 20 }, (_, n) => ({ instanceId: `f${n}`, cardId: 'defend', upgraded: false })) };
-  const combat = coop
-    ? createCoopCombat({ registries, rng: createRng(9), players: [{ ...player, id: 'a' }, { ...player, id: 'b', relicIds: [] }], enemyIds: ['wanderingSoldier', 'wanderingSoldier'] })
-    : createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
+  const combat = createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
   combat.enemies.forEach(enemy => { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; });
   return combat;
 }
 let sequence = 0;
 function play(combat, cardId, target = combat.enemies[0]) {
   const instance = { instanceId: `play${sequence++}`, cardId, upgraded: false };
-  const piles = combat.players ? combat.players.get('a').piles : combat.piles;
-  piles.hand.push(instance);
-  if (combat.players) playCard(combat, 'a', instance.instanceId, cardNeedsEnemyTarget(resolveCard(combat.registries, instance)) ? target?.id : undefined);
-  else dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, target?.id) });
+  combat.piles.hand.push(instance);
+  dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, target?.id) });
   return instance;
 }
 const spell = { abilityKind: 'spell', cardTags: ['starstone', 'source:spell'], manaCost: 2, kindIds: ['classification.skill'], effects: [] };
@@ -135,10 +128,3 @@ test('Ember Alms Bowl pays a nonlethal offering before granting Block and reject
   assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), before);
 });
 
-test('Ossuary Prayer Wheel restores the credited co-op owner Mana once using predeath Blight', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const combat = fixture('ossuary-prayer-wheel', { kill: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: 1 }, { ...hit[0], amount: 2000 }] } }, true);
-  const a = combat.players.get('a').entity; const b = combat.players.get('b').entity;
-  const mana = a.mana; const otherMana = b.mana;
-  play(combat, 'kill'); assert.equal(a.mana, mana + 1); assert.equal(b.mana, otherMana);
-  play(combat, 'kill', combat.enemies[1]); assert.equal(a.mana, mana + 1);
-});

@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // SPEC §15.3 — armament, equipment and crafting drops.
 //
 // Every number is a balance leaf with a generated Settings row, and the shipped
@@ -7,7 +6,6 @@ import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
@@ -274,52 +272,6 @@ test('the spoils row copy names a refined stone', async () => {
   const { t } = await import('../src/ui/strings.js');
   assert.equal(t('reward.stone.refinedTitle', { amount: 2, plural: 's' }), '2 Refined Stones');
   assert.match(t('reward.stone.refinedBody', { total: 3 }), /3 refined/);
-});
-
-test('co-op treasure pays the same stone door as solo, and the catch-up names it', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createSession } = await import('../tools/session.mjs');
-  const { smithingStoneNote } = await import('../src/model/rewardplan.js');
-  const { t } = await import('../src/ui/strings.js');
-  const party = (registries) => {
-    const host = createSession({ registries, seedString: 'GOLDBOUGH' });
-    host.addMember({ id: 'p1', name: 'Here', classId: 'reaver' });
-    host.addMember({ id: 'p2', name: 'Away', classId: 'reaver' });
-    host.start();
-    host.setConnected('p2', false);
-    // Stand the party on a real node, dressed as treasure, as travelTo would.
-    const node = host.session.mapGraph.nodes[host.session.reachableIds[0]];
-    host.session.cursorId = node.id;
-    host.session.floor = node.floor;
-    host.resolveNode({ ...node, type: 'treasure' });
-    const [here, away] = host.livingMembers();
-    return { here, away, host };
-  };
-  // Shipped tables: no claim, no receipt, nothing written.
-  // This historical travel/stone receipt fixture starts after character setup.
-  const plain = party(createRegistries(legacyContentBundle));
-  assert.deepEqual((plain.here.run.smithingRewardClaims || []).filter((id) => id.startsWith('coop-treasure')), []);
-  assert.equal(plain.away.catchup.at(-1).smithingStoneReceipt, undefined);
-  // Raised: both seats are paid, present or away, and the away seat's catch-up carries the receipt.
-  const raised = party(createRegistries(configuredContentBundle(legacyContentBundle, { 'gameConfig.balance.smithing.rewardByPool.treasure': 2, 'gameConfig.balance.smithing.refinedRewardByPool.treasure': 1 })));
-  assert.equal(raised.here.run.smithingStones, 2);
-  assert.equal(raised.here.run.smithingStonesRefined, 1);
-  assert.equal(raised.away.run.smithingStones, 2);
-  const item = raised.away.catchup.at(-1);
-  assert.equal(item.type, 'treasure');
-  assert.equal(item.smithingStoneReceipt.amount, 2);
-  assert.equal(smithingStoneNote(item.smithingStoneReceipt, t), '⚒ 2 Smithing Stone secured · 2 total · 1 Refined Stone · 1 refined');
-  // The present seat sees its receipt too, on its own snapshot, until the party moves on.
-  const seat = (h, id) => h.snapshot().party.find((p) => p.id === id);
-  assert.equal(seat(plain.host, 'p1').treasureStoneReceipt, undefined, 'nothing paid, nothing shown');
-  const shown = seat(raised.host, 'p1').treasureStoneReceipt;
-  assert.equal(shown.amount, 2);
-  assert.equal(shown.refined, 1);
-  assert.equal(seat(raised.host, 'p2').treasureStoneReceipt, undefined, 'the away seat reads it on its catch-up instead');
-  raised.host.session.scene = { kind: 'map' };
-  raised.host.chooseNode('p1', raised.host.session.reachableIds[0]);
-  assert.equal(seat(raised.host, 'p1').treasureStoneReceipt, undefined, 'travelling on clears the notice');
-  assert.equal(smithingStoneNote(null, t), '');
-  assert.equal(smithingStoneNote({ amount: 0, stoneBalanceAfter: 0 }, t), '');
 });
 
 test('the spoils row names only the purse that was paid, in its title and its body', async () => {

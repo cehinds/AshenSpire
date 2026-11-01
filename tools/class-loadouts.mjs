@@ -10,7 +10,6 @@ import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 
 // DOOR. The real input is the content bundle and the model/engine modules,
 // entered by IMPORT — the same graph the game boots. The `mutant:`/`schema:`
@@ -386,31 +385,6 @@ const resumedRole = resumed?.deck.find((c) => c.equipmentRole === 'attack');
 check(JSON.stringify({ role: resumedRole?.equipmentRole, profile: resumedRole?.profileId, receipt: resumedRole?.profileReceipt })
   === JSON.stringify({ role: savedRole?.equipmentRole, profile: savedRole?.profileId, receipt: savedRole?.profileReceipt }),
   'save round-trip preserves role/profile/receipt identity', JSON.stringify(resumedRole));
-
-const coop = createCoopCombat({
-  registries: R, rng: createRng(9), enemyIds: [R.enemies.ids()[0]],
-  players: [{
-    id: 'p1', classId: persisted.class, maxHp: persisted.maxHp, hp: persisted.hp,
-    maxMana: persisted.maxMana, mana: persisted.mana, maxStamina: persisted.maxStamina, stamina: persisted.stamina,
-    deck: persisted.deck, relicIds: persisted.relics, flasks: persisted.flasks,
-    // STANDING RED, FOUND BY BUILDING THIS TOOL'S OWN KNOWN-BAD (Rune,
-    // 2026-08-15). This seat was UNSTAMPED, and createPlayerCombatEntity has
-    // refused an unstamped seat since the derived-authority slice — so this
-    // file THREW at pristine dev = 5244543 and had been exiting 1 for however
-    // long, with 60+ PASS lines printed above the stack trace. Vira's doors
-    // audit rated it NO-KNOWN-BAD at `pattern` depth, which is a claim about
-    // what the file says; nobody had run it. The stamp is passed here because
-    // every other transport in the tree passes it — the refusal is correct and
-    // the CALLER was wrong, which is exactly the invariant
-    // tools/derived-runtime-authority.mjs asserts and this tool was violating.
-    energyMax: persisted.energyMax, drawPerTurn: persisted.drawPerTurn,
-  }],
-});
-const coopRole = [...coop.players.get('p1').piles.hand, ...coop.players.get('p1').piles.draw]
-  .find((c) => c.instanceId === savedRole.instanceId);
-check(JSON.stringify({ role: coopRole?.equipmentRole, profile: coopRole?.profileId, receipt: coopRole?.profileReceipt })
-  === JSON.stringify({ role: savedRole.equipmentRole, profile: savedRole.profileId, receipt: savedRole.profileReceipt }),
-  'co-op transport preserves role/profile/receipt identity', JSON.stringify(coopRole));
 
 console.log(`\nclass-loadouts: ${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

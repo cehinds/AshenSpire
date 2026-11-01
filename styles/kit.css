@@ -1112,8 +1112,8 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 .hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
 /* NOTHING RESERVES A SLICE OF ITS OWN TOP ROW ANY MORE. The rail sits under the
-   band, so the run header, the co-op banner and the co-op board top each get
-   their full width back — that is the point of moving it, and re-adding a
+   band, so the run header gets
+   its full width back — that is the point of moving it, and re-adding a
    `padding-inline-end: var(--quick-corner)` to any of them would give the dead
    space back. What DOES reserve for the rail is what sits beneath it:
    `.field` (styles/combat.css) and the map's route strip, both already written
@@ -2431,8 +2431,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 }
 
 /* METER lives once — see the HUD's METER section: a plate beside a well.
-   C's overlay-text meter was folded into it at the merge (one home per fact);
-   the co-op party strip reads as `inset`, which puts the plate in the track. */
+   C's overlay-text meter was folded into it at the merge (one home per fact). */
 /* ═══ PARTY STRIP — who is here, and how they are ══════════════════════════ */
 /* One Member per seat: Glyph + inline Meter. State rides on `data-state`
    (me · away · dead); the kit says it with the border and the ink. */
@@ -2441,7 +2440,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-member > .as-glyph { flex-basis: auto; font-size: 1.5rem; }
 /* A member's Meter has a FLOOR: its inset value ("61/72") must read whole, so
    the track never squeezes below it and the strip wraps to a second line
-   instead. Measured on the co-op map header at 1200x730, where two members'
+   instead. Measured on a party map header at 1200x730, where two members'
    values overlapped by 16px. */
 .as-member > .as-meter { flex: 0 0 auto; width: 8.4rem; min-width: 8.4rem; }
 .as-member[data-state="me"] { border-color: var(--gold); }
@@ -2454,7 +2453,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-detailcard.floating { width: fit-content; max-width: 100%; margin: 0.4rem auto; }
 .as-detailcard.floating > .modal-btnrow { margin-top: 0.6rem; }
 /* A scene door over the board: the shared card row and choices inside a decide body. */
-.coop-scene > .as-party { flex: 0 0 auto; justify-content: center; }
 .as-pagedoor .as-decide > .reward-row { justify-content: center; flex-wrap: wrap; margin: 1.2rem 0; max-width: 100%; }
 .as-pagedoor .as-decide > .as-subtitle { margin-top: 0.6rem; }
 .as-pagedoor .as-decide > .as-options { margin-top: 1.2rem; }
@@ -2709,12 +2707,12 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 @media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }
 
 /* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
-/* `.topbar` is the hook co-op's bar still writes; the kit name is the recipe. */
+/* `.topbar` is the hook the combat bar still writes; the kit name is the recipe. */
 /* `position: relative` ON BOTH, because the utility rail hangs off the bottom
    of whichever one carries it (`top: 100%`, § QUICK SETTINGS). `.as-band`
-   already had it for its grip; `.topbar` did not, and the co-op board's two
-   headers (`screens/coop.js`) are bare `.topbar` with no `as-band` — so the
-   rail would have escaped to the nearest positioned ancestor and hung a full
+   already had it for its grip; `.topbar` did not, and a bare `.topbar` with
+   no `as-band` would have let the
+   rail escape to the nearest positioned ancestor and hung a full
    screen height below the fold. hud-quick-compact's 18 surfaces are solo
    map/combat/title, so no gate would have said so. */
 .as-band, .topbar { position: relative; display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
@@ -5024,8 +5022,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    from allocateSceneBands (models/CombatLayout.js) through each screen's
    adapter (components/combatLayout.js, components/dialogueStage.js) as
    --w4-band-*; the scene is the flexible row. A screen names only its
-   first-paint fallbacks (the co-op screen mounts the same adapter since
-   2026-10-01). Combat's hand area spans the context and footer
+   first-paint fallbacks. Combat's hand area spans the context and footer
    bands and divides them itself. */
 :root :is(.combat[data-layout='formation'], .w4-frame) {
   display: grid; flex: none; height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1)); min-height: 0; overflow: clip;
@@ -5102,32 +5099,31 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 /* WGC6: one centered, tightly packed five-track group sized by
    packCombatFooter(). Applies once the layout adapter has measured the row.
-   Solo and co-op both (`:is(.coop,:not(.coop))` keeps the specificity the old
-   solo-only `:not(.coop)` had); the co-op board mounts the same footer and
-   the same adapter (owner, 2026-10-01). */
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']{
+   The doubled `.combat.combat` keeps the specificity the former
+   solo-only gate had. */
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported']{
   --combat-control-size: var(--footer-circle) !important;
   grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-spent-width) var(--footer-circle);
   justify-content: center; align-items: center; gap: var(--footer-gap);
   width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
 }
 /* Discard/Exhaust is wider than Draw: two 13px counts sit beside the icon. */
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .pile.spent {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported'] > .pile.spent {
   width: var(--footer-spent-width); min-width: var(--footer-spent-width);
 }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> * {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported']> * {
   grid-column: span 1; grid-row: 1;
 }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported']> .pile {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
 /* Footer Atelier art: live labels are SVG text, never baked into a bitmap.
    Wide layouts honor the authored positions; compact controls keep readable
    labels and the existing minimum hit targets and short-host rails. */
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] {
   position: relative; isolation: isolate;
 }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
   position: relative; padding: 0; border: 0; border-radius: 0;
   background: transparent; box-shadow: none; overflow: visible;
   color: #e7dcc0; text-shadow: var(--hud-text-shadow, 0 1px 3px #000);
@@ -5147,30 +5143,30 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .footer-compact-label { display: none; }
 .footer-art-rails { position: absolute; inset: 0; height: 100%; pointer-events: none; z-index: -1; }
 .combat-action-row .footer-art-rails > .footer-art-face { height: 100%; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='false'] {
   display: block; width: var(--footer-art-width, 100%); height: 100%; margin-inline: auto;
 }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='false'] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
   position: absolute; left: var(--art-x); top: var(--art-y); width: var(--art-w); height: var(--art-h);
   min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); max-height: none;
 }
 /* The authored plate can be shorter than the primary action's physical target. */
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='false'] > .end-turn {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='false'] > .end-turn {
   min-width: calc(48px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));
 }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:focus-visible {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] > button:focus-visible {
   outline: 2px solid #e9c783; outline-offset: 3px;
 }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > button:hover:not(:disabled) .footer-art-face {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] > button:hover:not(:disabled) .footer-art-face {
   filter: brightness(1.18);
 }
 .combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) .footer-art-face {
   filter: drop-shadow(0 0 4px #83b885);
 }
 .combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
 .combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
   height: 100%; min-height: calc(44px / var(--ui-zoom, 1)); display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
 .combat-action-row[data-footer-compact='true'] button .footer-art-face { height: 58%; flex: 0 1 58%; }
@@ -5179,7 +5175,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   width: 100%; white-space: nowrap; text-align: center;
 }
 .combat-action-row[data-footer-compact='true'] .footer-compact-line { display: block; width: max-content; margin-inline: auto; white-space: nowrap; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile {
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile {
   height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1))); min-height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1)));
 }
 /* Every compact-label row (601-680px hosts and short-host rails such as
@@ -5204,8 +5200,8 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    about 35-37 px tall at its natural aspect), and Potions takes a 60 px face,
    so its art is 64 px wide at its natural aspect. The selectors outrank the
    packed-footer rules they replace. */
-:root .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile,
-:root .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .combat-potions {
+:root .combat[data-layout='formation'][data-compact-combat='true'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile,
+:root .combat[data-layout='formation'][data-compact-combat='true'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > .combat-potions {
   height: calc(88px / var(--ui-zoom, 1)); min-height: calc(88px / var(--ui-zoom, 1));
 }
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face[data-art-fit='contain'] { height: calc(56px / var(--ui-zoom, 1)); }
@@ -5225,40 +5221,40 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 /* W4a short landscape: allocateCombatBands() chose rails. The footer row is
    gone; the same WGC6 grid overlays the hand band and wraps the hand:
    (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) > .hand-area {
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat > .hand-area {
   grid-template-columns: var(--wireframe-rail-width) minmax(0, 1fr) var(--wireframe-rail-width);
   grid-template-rows: minmax(0, 1fr); grid-template-areas: 'lead hand trail';
   column-gap: var(--wireframe-rail-gap);
 }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] {
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] {
   grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
   grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-spent-width) var(--footer-circle);
   grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
   row-gap: var(--footer-gap); align-content: stretch;
 }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > * {
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > * {
   grid-row: 3; pointer-events: auto;
 }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
-:root .combat[data-layout='formation'][data-combat-arrangement='rails']:is(.coop,:not(.coop)) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
 /* Notched hosts held sideways: the device's safe-area insets (combat.css's
    --safe-*-local, zero on every other host) keep the rails and the hand they
    wrap, the formation, and the HUD's two ends off the notch. The layout
    adapter plans the rails for the width left between the insets. */
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) > .hand-area {
+:root .combat[data-layout='formation'].combat > .hand-area {
   padding-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
 }
-:root .combat[data-layout='formation']:not(.coop) > .field {
+:root .combat[data-layout='formation'].combat > .field {
   margin-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
 }
-:root .combat[data-layout='formation']:not(.coop) > .topbar {
+:root .combat[data-layout='formation'].combat > .topbar {
   padding-inline: max(1.6rem, var(--safe-left-local, 0px)) max(1.6rem, var(--safe-right-local, 0px));
 }
 @container game-viewport (max-height: 500px) {
-  :root .combat[data-layout='formation']:not(.coop) > .topbar {
+  :root .combat[data-layout='formation'].combat > .topbar {
     padding-inline: max(calc(8px / var(--ui-zoom, 1)), var(--safe-left-local, 0px)) max(calc(8px / var(--ui-zoom, 1)), var(--safe-right-local, 0px));
   }
 }
@@ -5272,18 +5268,18 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    HP carries the compact current/maximum at the value-text size; a secondary
    or buildup row is too short for readable numbers, so its exact values live
    in its tooltip and the inspector. Stance is a strip the size of HP. */
-:root .combat[data-layout='formation']:not(.coop) .combatant .meters { gap: var(--combatant-meter-gap, calc(3px / var(--ui-zoom, 1))); }
-:root .combat[data-layout='formation']:not(.coop) .combatant .meters .bar { height: var(--combatant-secondary-h, calc(10px / var(--ui-zoom, 1))); }
-:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .bar { height: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); }
-:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .m-value { font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1; }
-:root .combat[data-layout='formation']:not(.coop) .combatant .meters [data-meter-row='resource'] .m-plate { display: none; }
-:root .combat[data-layout='formation']:not(.coop) .combatant .stance-chip[data-meter-row='stance'] {
+:root .combat[data-layout='formation'].combat .combatant .meters { gap: var(--combatant-meter-gap, calc(3px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation'].combat .combatant .meters .bar { height: var(--combatant-secondary-h, calc(10px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation'].combat .combatant .meters .as-meter[data-res='hp'] .bar { height: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); }
+:root .combat[data-layout='formation'].combat .combatant .meters .as-meter[data-res='hp'] .m-value { font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1; }
+:root .combat[data-layout='formation'].combat .combatant .meters [data-meter-row='resource'] .m-plate { display: none; }
+:root .combat[data-layout='formation'].combat .combatant .stance-chip[data-meter-row='stance'] {
   display: flex; align-items: center; justify-content: center; gap: .25rem; box-sizing: border-box;
   width: 100%; height: var(--combatant-stance-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); min-height: 0;
   padding: 0 .3rem; border-radius: 3px; font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1;
 }
 /* Rows the configured list keeps for the selected combatant only. */
-:root .combat[data-layout='formation']:not(.coop) .combatant:not(.context-selected) [data-selected-only='true'] { display: none; }
+:root .combat[data-layout='formation'].combat .combatant:not(.context-selected) [data-selected-only='true'] { display: none; }
 /* THE ART TRACK IS THE CARD'S SIZE, NOT A SHARE OF THE DOOR. A `34fr` split
    made the inspected card a percentage of whatever modal it landed in — 292 px
    on a desktop and 118 px on a phone, where the phone's is SMALLER than the
@@ -5343,9 +5339,6 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root[data-card-door='stacked'] .card-inspection-modal .modal-body {
   overflow-y: auto; overflow-x: hidden;
 }
-/* Solo combat reads the configured selected-only list (WCM0, data-selected-only);
-   co-op keeps its name-only rule. */
-:root .combat.coop[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
 /* WCO2: the guard badge sits outside the sprite on its role's side, at its
    role's height (overlay.defenseAnchorByRole via the combat layout adapter);
    the fallbacks are the same accepted geometry. Never mirrored. */
@@ -5359,7 +5352,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 /* The badge sits inside the zoomed sprite host (battlefieldStage). It undoes
    that zoom and anchors to the visible art's box, published by the stage:
    --s is 1 for the right edge and 0 for the left; --f the height fraction. */
-:root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge {
+:root .combat[data-layout='formation'].combat .combatant .sprite > .block-badge {
   --s: var(--defense-right-player, 1); --f: var(--defense-fraction-player, .12);
   /* Out of the host's flex row: a relative badge was offset from its place
      after the art, which is why it floated far from the sprite. */
@@ -5373,11 +5366,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   min-width: var(--defense-min, 3.5rem); min-height: var(--defense-min, 3.5rem);
   font-size: max(1.2rem, var(--overlay-value-font, calc(13.2px / var(--ui-zoom, 1)))); line-height: 1;
 }
-:root .combat[data-layout='formation']:not(.coop) .combatant.enemy .sprite > .block-badge {
+:root .combat[data-layout='formation'].combat .combatant.enemy .sprite > .block-badge {
   --s: var(--defense-right-enemy, 0); --f: var(--defense-fraction-enemy, .88);
 }
 /* WCO1: the intent keeps its minimum height and value font. */
-:root .combat[data-layout='formation']:not(.coop) .combatant-leading .intent {
+:root .combat[data-layout='formation'].combat .combatant-leading .intent {
   min-height: max(calc(48px / var(--ui-zoom, 1)), var(--intent-min, 2.8rem));
 }
 :root .combat[data-layout='formation'] .combatant .sprite::before {
@@ -6047,7 +6040,7 @@ button[data-button-size] {
 .combat-action-row .energy-orb :is(.sp-k, .sp-v) { color: #88e183; }
 
 /* Approved SP Atelier assembly. Keep the shared footer's measured footprint. */
-:root .combat:is(.coop,:not(.coop)) .combat-action-row > .energy-orb.stamina-orb {
+:root .combat.combat .combat-action-row > .energy-orb.stamina-orb {
   padding: 0; border: 0; background: transparent; box-shadow: none; position: relative;
   overflow: visible; display: block;
 }
@@ -6358,8 +6351,6 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-blight-hud .ashen-blight-track { height:calc(18px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
 @container game-viewport (max-width:700px) {
   .combat-hud > .combat-blight-hud { position:relative; top:auto; left:auto; transform:none; width:100%; margin:.25rem auto 0; }
-  .combat.coop > .combat-hud { flex-wrap:wrap; }
-  .combat.coop > .combat-hud > .combat-blight-hud { flex:0 0 100%; }
 }
 
 /* Character creation component study: production DOM parts, scoped to this
@@ -6586,7 +6577,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
 
-/* Defense order is shared by player, enemy and co-op health rows. */
+/* Defense order is shared by player and enemy health rows. */
 :root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) { color: #fff; gap: .08em; }
 :root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance)::before { border-radius: 50%; background: #20242a; }
 :root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) { font-size: .8em; }
