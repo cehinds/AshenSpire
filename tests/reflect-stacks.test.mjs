@@ -291,3 +291,35 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   assert.equal(control.forecast.hp, 111, 'control forecast unchanged');
   assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');
 });
+
+// Codex on #2431: a solo player's revive token (SPEC §14.3) survives a lethal Reflect return live, so the preview must keep forecasting the later hits.
+test('a revive token keeps a solo attacker alive through a lethal Reflect return, preview == live, and previewing spends nothing', async () => {
+  const { previewDamageHits } = await import('../src/engine/combatDamagePreview.js');
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
+  const prime = tokens => {
+    const { combat, enemy } = live();
+    enemy.reflectStacks = 1;
+    combat.player.hp = 1;
+    combat.consumables = tokens ? { emberToken: tokens } : {};
+    return { combat, enemy };
+  };
+  const { combat, enemy } = prime(1);
+  const view = previewDamageHits(combat, combat.player, enemy, 5, [], carrier, 3);
+  assert.deepEqual(combat.consumables, { emberToken: 1 }, 'previewing leaves the live token count unchanged');
+  assert.equal(combat.player.hp, 1, 'and the live attacker untouched');
+  const liveRun = prime(1);
+  const hpBefore = liveRun.enemy.hp;
+  let liveHits = 0;
+  for (let i = 0; i < 3; i++) {
+    if (!liveRun.combat.player.alive) break;
+    applyAttackDamage(liveRun.combat, liveRun.combat.player, liveRun.enemy, 5, [], carrier);
+    liveHits++;
+  }
+  assert.equal(liveRun.combat.eventLog.some(e => e.type === 'reviveSpent'), true, 'live spent the token');
+  assert.equal(view.hits, liveHits, 'forecast hit count == live');
+  assert.equal(view.totalDamage, hpBefore - liveRun.enemy.hp, 'forecast damage == live');
+  assert.equal(view.attackerDead, false);
+  // Control: no token, the lethal return still cancels the later hits.
+  const bare = prime(0);
+  assert.equal(previewDamageHits(bare.combat, bare.combat.player, bare.enemy, 5, [], carrier, 3).hits, 1);
+});

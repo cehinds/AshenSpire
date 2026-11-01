@@ -8,6 +8,7 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 /**
  * Detached defender state shared by every damage effect in one previewed
@@ -103,6 +104,17 @@ export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
   applyReceiptToPreviewTarget(ctx, attacker, { ...back, reflect: null });
   attacker.hp -= fixCoreEnabled(ctx) ? back.hpLoss : back.amount;
   if (attacker.hp > 0) return false;
+  // Death prevention, as live afterHpChange (SPEC §14.3): a solo player spends one revive token and rises at its hpPct. Only the
+  // detached attacker's own copy of the counts is spent; the live entity and the fight's counts are never touched.
+  if (attacker.kind === 'player' && attacker === ctx.player && ctx.consumables) {
+    attacker.previewConsumables ||= { ...ctx.consumables };
+    const token = reviveTokenFor(ctx.registries, attacker.previewConsumables);
+    if (token) {
+      adjustCount(attacker.previewConsumables, token.id, -1);
+      attacker.hp = reviveHp(attacker.maxHp, token.hpPct);
+      return false;
+    }
+  }
   attacker.hp = 0;
   return true;
 }
