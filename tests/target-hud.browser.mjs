@@ -76,5 +76,5 @@ try {
     assert.equal(await page.locator('.target-hud-layer').isVisible(), true); await page.close();
   }
   assert.deepEqual(errors, []);
-} finally { writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ results, errors }, null, 2)); await browser.close(); await server?.close(); }
+} finally { writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ results, errors }, null, 2)); await browser.close(); await new Promise(done => server ? server.server.close(done) : done()); }
 console.log(`Target HUD browser checks passed (${results.length} desktop sizes).`);

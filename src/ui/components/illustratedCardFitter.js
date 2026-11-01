@@ -1,6 +1,7 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
 import {layoutMetrics} from '../layoutMetrics.js';
 const ruleGeometry = new WeakMap();
+const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
 // page scale and the loaded fonts, and a full fit is a search of many forced
 // layouts. The inputs the last fit used are kept per face, and a face asked to
@@ -52,10 +53,14 @@ export function fitIllustratedCards(cards) {
       const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:bounded?1.25:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
-        lines:bounded?3:rules?Infinity:Number(text.dataset.maxLines)||1,
+      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+        lines:bounded?GLANCE_LINES:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesHidden==='true'};
+      // A glance face shows its rules in one or two rendered lines; the font
+      // shrinks (to the readable floor) to get there, and three or more lines
+      // at the floor become the Inspect cue instead.
+      if(row.compact&&!bounded)row.lines=GLANCE_LINES;
       if(bounded){
         row.fallback=text.querySelector('[data-face-fallback]');
         row.fallbackShort=text.querySelector('[data-face-fallback-short]');
@@ -185,7 +190,11 @@ export function fitIllustratedCards(cards) {
   for(const row of rules){
     row.finalHeight=row.layer.clientHeight;
     row.cueHeight=Math.min(row.finalHeight,row.cue?.offsetHeight||0);
+    // Lines actually rendered at the settled size (guarding a zero line box).
+    const lineBox=(parseFloat(row.text.style.fontSize)||0)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
+    row.renderedLines=lineBox>0?Math.round(row.text.scrollHeight/lineBox):0;
     row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow
+      ||(row.compact&&!row.bounded&&row.renderedLines>GLANCE_LINES)
       ||row.text.scrollHeight>Math.min(row.finalHeight,row.text.clientHeight)+1
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }

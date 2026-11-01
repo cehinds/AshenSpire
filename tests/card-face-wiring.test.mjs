@@ -67,11 +67,11 @@ test('every printed surface moves automatic bonuses to tags and retains distinct
   const face = (surface, level) => faceLinesOf(printed(surface, level)).map(textOf).join(' | ');
   const hand = face('combat', 'glance');
   assert.doesNotMatch(hand, /Entry:/);
-  assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
+  assert.match(hand, /\+2 Precision/, 'an authored Precision effect remains on the hand face');
   assert.match(hand, /Deal/, 'the attack still explains its damage');
   for (const [surface, level] of [['combat', 'inspect'], ['reward', 'glance']]) {
     assert.doesNotMatch(face(surface, level), /Entry:/);
-    assert.match(face(surface, level), /Precision 2/, 'a distinct authored grant remains explicit');
+    assert.match(face(surface, level), /\+2 Precision/, 'a distinct authored grant remains explicit');
     assert.match(printed(surface, level), /On changing stance, gain 1 Precision/);
     assert.match(printed(surface, level), /Gain 2 Precision when this effect resolves/);
   }
@@ -97,12 +97,13 @@ test('the shared title fade appears on a base face without adding a sigil footer
   assert.doesNotMatch(html, /class="card-footer-backdrop"/);
 });
 
-test('all authored faces keep at most two clauses even with a legacy hand limit', () => withKitDom(dom => {
+// Owner 2026-10-31: one to three lines, at most five words per line (Inspect cue otherwise).
+test('all authored faces keep at most three short clauses even with a legacy hand limit', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   for (const card of reg.cards.all()) {
     const html = markup.get(renderCard(reg, { cardId: card.id }, { inspection: false, faceLineLimit: 3 }));
     const lines = faceLinesOf(html);
-    assert.ok(lines.length >= 1 && lines.length <= 2, card.id);
+    assert.ok(lines.length >= 1 && lines.length <= 3, card.id);
     assert.doesNotMatch(html, /data-face-extra/, card.id);
     assert.match(html, /data-max-lines="3" data-face-lines="true"/, card.id);
   }
@@ -137,6 +138,6 @@ test('complex fallback cards also use bounded whole authored clauses', () => wit
   const markup = trackInnerHtml(dom);
   const html = markup.get(renderCard(reg, { cardId: 'shieldGuardian' }, { inspection: false, preview: previewOf('shieldGuardian') }));
   assert.match(html, /class="face-line"/);
-  assert.ok(faceLinesOf(html).length <= 2);
+  assert.ok(faceLinesOf(html).length <= 3);
   assert.doesNotMatch(html, /Add 1 Enter: Bulwark to hand/);
 }));

@@ -1,4 +1,5 @@
 import { gameModule } from './gameProfile.js';
+import { uiSentence } from './blacksmithConfig.js';
 import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
 import { rederivePools } from './levelup.js';
 // Smithing is a run-owned transaction over a namespaced item, never a card copy.
@@ -388,7 +389,7 @@ function genericCardChanges(affectedCards, requirements) {
 }
 
 /** Stable, distinct owned item choices with exact, non-noop change receipts. */
-export function smithingPlan(registries, run, explicitRules = undefined, { free = false } = {}) {
+export function smithingPlan(registries, run, explicitRules = undefined, { free = false, stoneDiscount = 0, maxTier = null } = {}) {
   rulesFor(registries, explicitRules);
   const levelMap = levels(run);
   for (const [itemRef, level] of Object.entries(levelMap)) {
@@ -412,7 +413,9 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
     // A Core item stops at its ladder's top tier (the CSV only authors tier 1).
     if (upgradeRows.length && !itemUpgradeTiers(registries, itemRef, run).includes(nextLevel)) continue;
     if (!upgradeRows.length) continue;
-    const cost = free ? 0 : itemUpgradeCostAt(registries, itemRef, nextLevel, upgradeRows, run);
+    // A blacksmith takes `stoneDiscount` stones off the ladder price (never below 0); a rest site's Smith can mark a
+    // tier past `maxTier` as `capped` (it stays listed so the screen can say "Needs a Blacksmith").
+    const cost = free ? 0 : Math.max(0, itemUpgradeCostAt(registries, itemRef, nextLevel, upgradeRows, run) - stoneDiscount);
     // Core 2: cards are not tier-rewritten, so the receipt comes from the Core pipeline (smithingCore.js)
     // and the legacy source rows only supply the item's tier ladder and stone cost.
     const core = identity.itemKind !== 'relic' && coreSmithingActive(run)
@@ -460,6 +463,7 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
       stones,
       shortfall,
       affordable: shortfall === 0,
+      ...(maxTier !== null && nextLevel > maxTier ? { capped: true } : {}),
       refinedCost,
       refinedAffordable: refinedCost !== null && refined >= refinedCost,
       inventoryCount: identity.itemKind === 'armament' ? inventory.filter((id) => id === identity.itemId).length : 1,
@@ -501,15 +505,16 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
 }
 
 /** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
-export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones' } = {}) {
+export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones', stoneDiscount = 0, maxTier = null } = {}) {
   if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')
     ? requestedItemRef
     : `armament/${requestedItemRef}`;
   if (!SMITHING_PURSES.includes(purse)) throw new Error(`Unknown Smithing purse '${purse}' (purses: ${SMITHING_PURSES.join(', ')})`);
-  const plan = smithingPlan(registries, run, explicitRules);
+  const plan = smithingPlan(registries, run, explicitRules, { stoneDiscount, maxTier });
   const candidate = plan.candidates.find((row) => row.itemRef === itemRef);
   if (!candidate) throw new Error(`Item '${itemRef}' is not an eligible Smithing candidate`);
+  if (candidate.capped) throw new Error(uiSentence('gameProfile.rest.needsBlacksmith', { tier: candidate.nextLevel }));
   // THE REFINED PURSE (SPEC §14.4): ceil(cost / refine.value) refined stones
   // and no ordinary stone; the two are never mixed and no change is given.
   const refinedPurse = !free && purse === 'refined';

@@ -1100,6 +1100,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     const actor = sc.players.find(player => player.id === me);
     if (!actor || actor.combatExpansionVersion !== 2) return;
     const selected = actor.hand?.find(card => card.instanceId === litCard());
+    // A stale inspection mark never outlives its card's turn at the front (as combat.js; owner, 2026-10-31).
+    app.querySelectorAll('.hand .inspection-selected').forEach(card => {
+      if (selected && card.dataset.instanceId === selected.instanceId) return;
+      card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current');
+    });
     const definition = selected && cardDef(selected);
     const hostile = hitBadgeTargetIds(definition, sc.enemies).length > 0;
     const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : null;
@@ -1122,7 +1127,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       if (label.length > 6) badge.dataset.rangeDetail = 'true';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = label;
-      badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
+      badge.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + badge.textContent);
       frame.append(badge);
       if (selectedCard) {
         const odds = badge.cloneNode(true);

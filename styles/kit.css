@@ -842,9 +842,9 @@ input[type="range"] { min-height: var(--tap-floor); }
    in the Armoury, and because a word printed under the art ("Selected") reads
    as a button you can press when it is really a state you are in.
    GOLD STAYS HOVER, FOCUS AND INSPECTION; GREEN IS THE CHOICE THAT STANDS.
-   `.hand .card.selected` in combat is deliberately NOT this: an armed card is
-   a momentary aim you can still cancel, not a commitment, and it keeps the
-   gold lift combat.css gives it.
+   A combat hand card is the exception (owner, 2026-10-31): it has no gold
+   state at all. Armed, held, focused and inspected it wears the selection
+   colour (rules after `.inspection-selected` below), and hover is a neutral lift.
    Two arms because the two card families are drawn differently — a `.card`
    carries its own border, while an `.equipment-poker-card` is only the aspect
    box and the frame it draws is `.epc-frame`, whose inset bevel has to
@@ -1734,6 +1734,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-stat-allocation h3 { margin: 0; font-size: 1rem; }
 .reward-door .reward-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; }
 .reward-door .reward-stat-add { min-width: 2.5rem; }
+.reward-stat-name { min-width: 0; overflow-wrap: anywhere; }
+.reward-stat-gain, .se-gain { margin-left: .5em; color: var(--muted); font-size: max(12px, .8rem); font-weight: 500; font-family: var(--font-body, inherit); letter-spacing: 0; white-space: nowrap; }
 /* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
 .reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
@@ -2288,6 +2290,13 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
 .smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
 .confirmation-change-list { display: flex; flex-direction: column; }
+.what-changed-body { display: flex; flex-direction: column; gap: 1.2rem; padding: 1.8rem 2.1rem; min-width: 0; }
+.what-changed-body .what-changed-lead { margin: 0; font-style: italic; color: var(--muted); }
+.what-changed-row { display: flex; flex-direction: column; gap: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--line); }
+.what-changed-row .as-statrow { padding-left: 0; padding-right: 0; }
+.what-changed-cost { margin-top: 0.4rem; }
+.modal.what-changed-modal .as-statrow .sr-name { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: break-word; }
+.what-changed-cost .smith-summary-cell { padding: 0.8rem 1.2rem; }
 .smith-upgrade-folds { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.6rem; }
 .smith-upgrade-fold { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--bg-raise); }
 .smith-upgrade-fold > summary { list-style: none; cursor: pointer; }
@@ -3988,6 +3997,18 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
+/* Owner, 2026-10-31: a hand card never wears the yellow select state, only the targeting colour (--selection-color).
+   Hold-start, keyboard focus, the (i) and a second press all add `.inspection-selected`; it glows like `.selected`.
+   Gold stays on the deck editor, rewards and every other card surface. */
+:root .hand .card { --focus-ring: 2px solid var(--selection-color, var(--green)); }
+:root .hand .card:is(.selected, .inspection-selected), :root .hand-overlay > .hand-info-portal {
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, var(--green)));
+}
+:root .hand .card.inspection-selected { border-color: var(--selection-color, var(--green)); }
+:root .hand .card.playing-poker-card:is(.selected, .inspection-selected, :focus-visible):not(.is-chosen) {
+  border-color: var(--selection-color, var(--green));
+  box-shadow: 0 0 0 2px var(--selection-color, var(--green)), 0 0 18px color-mix(in srgb, var(--selection-color, var(--green)) 40%, transparent);
+}
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,320px)) minmax(0,1fr); }

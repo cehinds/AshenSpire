@@ -637,6 +637,12 @@
       {
         "op": "draw",
         "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -645,7 +651,7 @@
       "classification.skill",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block. Draw {draw} card. Gain {precision} Precision.",
     "upgrade": {
       "effects": [
         {
@@ -656,6 +662,12 @@
         {
           "op": "draw",
           "amount": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 1
         }
       ]
     },
@@ -876,6 +888,12 @@
         "op": "restoreMana",
         "target": "self",
         "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -885,7 +903,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana.",
+    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana. Gain {precision} Precision.",
     "upgrade": {
       "effects": [
         {
@@ -896,9 +914,15 @@
           "op": "restoreMana",
           "target": "self",
           "amount": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 2
         }
       ],
-      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana."
+      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana. Gain {precision} Precision."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
@@ -1497,6 +1521,12 @@
         "op": "block",
         "target": "self",
         "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -1506,7 +1536,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {block} Block.",
+    "textTemplate": "Draw {draw} card. Gain {block} Block. Gain {precision} Precision.",
     "upgrade": {
       "effects": [
         {
@@ -1517,6 +1547,12 @@
           "op": "block",
           "target": "self",
           "amount": 5
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 1
         }
       ]
     },
@@ -2417,6 +2453,7 @@
     "id": "core.hexmark",
     "name": "Hexmark",
     "class": "colorless",
+    "contest": "physical",
     "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
@@ -2524,5 +2561,397 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.flick",
+    "name": "Flick",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "upgrade": {
+      "ramp": {
+        "scope": "combat",
+        "stat": "damage",
+        "per": 1
+      }
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.pebbleThrow",
+    "name": "Pebble Throw",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.brace",
+    "name": "Brace",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block.",
+    "upgrade": {
+      "ramp": {
+        "scope": "combat",
+        "stat": "block",
+        "per": 1
+      }
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.quickGuard",
+    "name": "Quick Guard",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 3
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.whetstoneNick",
+    "name": "Whetstone Nick",
+    "class": "colorless",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Deal {damage} damage. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0,
+    "ramp": {
+      "scope": "run",
+      "stat": "damage",
+      "per": 1
+    }
+  },
+  {
+    "id": "core.temperedEdge",
+    "name": "Tempered Edge",
+    "class": "colorless",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Deal {damage} damage. Exhaust.",
+    "upgrade": {
+      "ramp": {
+        "scope": "run",
+        "stat": "damage",
+        "per": 2
+      }
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.frostNip",
+    "name": "Frost Nip",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frost",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:frost",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {frost} Frost.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frost",
+          "stacks": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.emberFlick",
+    "name": "Ember Flick",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.moteShield",
+    "name": "Mote Shield",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 2
+      },
+      {
+        "op": "gainBarrier",
+        "target": "self",
+        "amount": 1
+      },
+      {
+        "op": "draw",
+        "amount": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier. Draw {draw} card.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 3
+        },
+        {
+          "op": "gainBarrier",
+          "target": "self",
+          "amount": 2
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   }
 ]

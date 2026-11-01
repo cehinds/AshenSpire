@@ -5,6 +5,8 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
+import { showRunReceipt } from './ui/components/whatChangedModal.js';
+import { snapshotRunForDiff } from './model/runChangeReceipt.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
@@ -77,6 +79,7 @@ import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
+import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
 import { pendingRankUpRows, coreCardRanks, skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
@@ -3191,6 +3194,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     enemyStatuses: cm.enemyStatuses,
     playerStatuses: cm.playerStatuses,
   });
+  stampCombatPlaysEver(run, combat); // pile copies carry the deck copy's lifetime plays (Honed cards)
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
@@ -3449,6 +3453,7 @@ async function onCombatEnd(result, combat, enc) {
   delete run.combatPendingOutcome;
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
+  foldCombatPlaysEver(run, combat); // lifetime plays per deck card, for Honed cards
   const xpBefore = {
     character: { ...run.level },
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
@@ -3983,9 +3988,15 @@ function showRest(openPanel = null, locationId = null) {
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
     const commit = (service, payload) => {
+      const before = snapshotRunForDiff(run);
       commitGameProfileRest(registries, run, service, payload);
       if (record) recordRestConsumed(run, service);
       persist(); showRest();
+      // The what-changed receipt for the services that change gear or cards. Level-up already ends in its own
+      // reward door, so it is skipped. It opens after the screen re-mounts, so the page lock covers the new screen.
+      if (service === 'smith' || service === 'upgradeCard') {
+        showRunReceipt({ run, registries, before, title: t(service === 'smith' ? 'whatChanged.rest.smith' : 'whatChanged.rest.upgradeCard') });
+      }
     };
     const strategize = () => {
       if (!gameModule(run, 'cards')) return commit('strategize', {});
@@ -4184,7 +4195,7 @@ function showShop() {
     // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
     // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
     if (configuredShopKind(run, shopId) === 'blacksmith') {
-      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = buildBlacksmithStock(registries, rng, run);
+      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
       persist(); audio.music('shop');
       return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
         onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),

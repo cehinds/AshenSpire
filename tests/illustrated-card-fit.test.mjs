@@ -117,3 +117,28 @@ test('two live Counter rows shrink below design minimum within the native hand b
   assert.equal(f.face.dataset.rulesOverflow, 'false');
   assert.equal(f.text.style.maxHeight, '100%', 'no inspection cue reserves space when both rows fit');
 }));
+
+test('a one-liner that needs shrinking to fit shows its rules with no Inspect cue', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 20, width: 180, top: 80, height: 28, full: false });
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) < 15, 'the font shrank first');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+}));
+
+test('rules that still wrap to three rendered lines at the 11px floor get the Inspect cue', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 60, width: 180, top: 80, height: 45, full: false });
+  f.fit();
+  assert.equal(parseFloat(f.text.style.fontSize), 11, 'shrunk to the floor first');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight, 'the three lines would fit the bay');
+  assert.equal(f.face.dataset.rulesOverflow, 'true');
+}));
+
+test('two face lines that each render on one line show no cue', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 10, width: 180, top: 80, height: 45, full: false, printedRows: 2 });
+  f.fit();
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+}));

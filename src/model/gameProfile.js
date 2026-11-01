@@ -5,6 +5,7 @@ import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
 import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
+import { applyRamp, playsEverOf } from './cardRamp.js';
 import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
@@ -30,7 +31,8 @@ export function validateGameProfileSnapshot(profile) { return validateVerifiedPr
 function subjectProfile(subject) { return subject?.gameProfile || (subject?.formatVersion === 1 && subject?.modules ? subject : null); }
 export function gameModule(subject,id) { return subjectProfile(subject)?.modules?.[id] || null; }
 export function gameContent(subject,key) { return subjectProfile(subject)?.content?.[key]; }
-export function projectGameCard(subject,idOrInstance) {
+// `rampless` leaves a ramp unapplied: the registry copy of a card stays plain so resolveCard can ramp it with the instance's plays (SPEC §4.3).
+export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   if (!gameModule(subject,'cards') || gameModule(subject,'cards').mode === 'legacy') return null;
   const id = typeof idOrInstance === 'string' ? idOrInstance : idOrInstance?.cardId || idOrInstance?.id;
   const def = gameContent(subject,'cards')?.find(card => card.id === id);
@@ -50,6 +52,8 @@ export function projectGameCard(subject,idOrInstance) {
   if (typeof idOrInstance === 'object' && gameModule(subject,'progression')?.cardRanks === true && !Array.isArray(chosen.gradeProfiles) && cardRank(idOrInstance) > 1) {
     chosen = {...chosen, effects: rankedEffectsCapped(chosen, cardRank(idOrInstance) - 1), rank: cardRank(idOrInstance)};
   }
+  // Ramp lands last, after upgrade and rank growth, so the amount it wraps is still a plain number (SPEC §4.3).
+  if (chosen.ramp && !rampless) chosen = applyRamp(chosen, chosen.ramp.scope === 'run' ? playsEverOf(idOrInstance) : 0, (chosen.tags || []).filter(tag => !tag.startsWith('classification.')));
   chosen.kindIds = ['classification.' + chosen.type];
   chosen.resourceCosts = {sp:chosen.staminaCost || 0,mp:chosen.manaCost || 0};
   return freezeGameData(chosen);
@@ -134,7 +138,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
   if(profile.foundation.mode === 'legacy') return bundle;
   if(gameModule(profile,'cards')?.mode === 'configured') {
-    const additions=gameContent(profile,'cards').map(def=>projectGameCard(profile,def.id));
+    const additions=gameContent(profile,'cards').map(def=>projectGameCard(profile,def.id,{rampless:true}));
     // Existing registry schemas use tags through the tagging relation table.
     const raw=additions.map(({tags,resourceCosts,kindIds,combatEffectsTiming,...def})=>def);
     bundle.cards=[...(bundle.cards||[]).filter(def=>!raw.some(row=>row.id===def.id)),...raw];
