@@ -39,6 +39,7 @@ import { mountServiceOffer, openMountService, mountReceiptLine } from './smithSe
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { mountRestFrame, restPresentation } from '../components/restFrame.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
+import { recoveryLedgerHtml } from '../components/recoveryLedger.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
@@ -364,15 +365,11 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // The second slot: what arriving already restored, then each choice's state.
   // The names are read off the mounted cards, so a choice keeps one title.
   consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
-  const recovery = el('section', { class: 'rest-recovery', 'aria-label': t('rest.recovery.heading') });
-  recovery.append(el('h3', { class: 'as-eyebrow', text: t('rest.recovery.heading') }));
-  for (const [icon, label, before, after] of [
-    ['health', 'HP', run.hp, noRest ? run.hp : Math.min(run.maxHp, run.hp + heal)],
-    ['mana', 'Mana', run.mana, noRest ? run.mana : manaAfter],
-  ]) {
-    const gain = after - before;
-    recovery.append(el('div', { class: 'rest-recovery-row', html: `${engravedIconHtml(icon)}<span>${label}</span><span>${before} → <strong>${after}</strong></span><span class="rest-recovery-gain">${gain > 0 ? `+${gain}` : '—'}</span>` }));
-  }
+  // Only the pools that change draw a row; otherwise one "No recovery changes" line.
+  const recovery = el('div', { html: recoveryLedgerHtml(run, {
+    hp: noRest ? run.hp : Math.min(run.maxHp, run.hp + heal), mana: noRest ? run.mana : manaAfter,
+    stamina: run.stamina, flaskCharges: run.flaskCharges,
+  }) });
   consequences.append(recovery);
   consequences.append(el('details', { class: 'rest-availability' }, [
     el('summary', { text: t('rest.consequences.heading') }),
