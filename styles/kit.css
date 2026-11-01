@@ -6074,8 +6074,8 @@ button[data-button-size] {
 }
 :root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge {
-  position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
-  color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
+  position: relative; flex: 0 0 max(11.428%, calc(20.8px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
+  color: #fff1d6; font: 500 calc(var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))) * .8)/1 var(--font-body);
   font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
 }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
@@ -6098,7 +6098,7 @@ button[data-button-size] {
 }
 @container game-viewport (max-width: 600px) {
   :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
-  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(12.8px / var(--ui-zoom, 1)); }
 }
 
 .character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
