@@ -1879,10 +1879,10 @@ keeps the same state and focus contract without meaningful animation.
   id, label, position label/code, accepted kinds, physical hand/socket, set capacity, swap rule,
   storage behavior, and order; `content/source/unlocks.csv` supplies any additional position rungs;
   and `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the
-  set of slots. The Armoury iterates every authored position in vertical list or configured grid
-  form and renders its locked, empty, or occupied state. Empty positions follow the occupied and
-  locked positions automatically; in Grid form each empty position spans the full group width so
-  the available drop target reads as a bottom row rather than a missing item tile. Adding an authored position or slot group
+  set of slots. The Armoury iterates every authored position as one compact vertical list and renders its locked, empty, or
+  occupied state (the grid form was retired 2026-11-01). Each occupied or empty row is a button that
+  selects it for the Inspect panel beside the list; Replace and Unequip stay separate buttons. Empty
+  positions follow the occupied and locked positions automatically. Adding an authored position or slot group
   must not require a branch in the screen. Item kind determines eligibility only: the selected
   hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
   position renders it in the right hand and placing a sword in a left-hand position renders it in
