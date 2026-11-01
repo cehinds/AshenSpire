@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **OpenRouter client for dev tools** ([#2481](https://github.com/cehinds/AshenSpire/pull/2481), `0.7.3.24`). Developer tooling only: a server-side OpenRouter client (`tools/lib/openrouter.mjs`) and `node tools/openrouter.mjs` command; the key stays in your environment or a gitignored `.env`, and the game itself still calls no AI service.
 - **Focus discount needs Prepared stance** ([#2469](https://github.com/cehinds/AshenSpire/pull/2469), `0.7.3.24`). A Focus armament now lowers magic cards by 1 Mana only while you are in Prepared stance.
 - **Weakness chips show once discovered** ([#2467](https://github.com/cehinds/AshenSpire/pull/2467), `0.7.3.24`). An enemy's weakness chip appears only after you trigger that weakness, with a proper icon (the empty Frost box is fixed) and a tooltip such as "Weak to Piercing: +25% damage"; the inspector no longer spoils undiscovered weaknesses.
 - **Stance glyph after a Poise break** ([#2473](https://github.com/cehinds/AshenSpire/pull/2473), `0.7.3.22`). The figure no longer shows a stance glyph (for example Smash) at turn start after a Poise break has already ended the stance; it shows the resting mark.
