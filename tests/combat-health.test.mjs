@@ -54,13 +54,13 @@ test('PIP badges preserve actual Evasion stacks independently of other defenses'
     { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
   assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
     [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
-  [['shield', '5'], ['evade', '2'], ['poise', '3'], ['ward', '4']]);
+  [['shield', '5'], ['poise', '3'], ['evade', '2'], ['ward', '4']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 
-test('Precision badge sits right after Evade and is hidden at zero, negative or null', () => withKitDom(() => {
+test('Precision badge sits after Ward and is hidden at zero, negative or null', () => withKitDom(() => {
   const kinds = values => combatHealthModel(values).badges.map(b => b.kind);
-  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'evade', 'precision', 'poise', 'ward']);
+  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'poise', 'evade', 'ward', 'precision']);
   for (const precision of [0, -2, null, undefined, NaN]) assert.ok(!kinds({ precision }).includes('precision'));
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { evasion: 2, precision: 3 }, { tooltips: false });
   const badge = row.querySelector('.combat-health-precision');

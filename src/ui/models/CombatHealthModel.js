@@ -7,7 +7,7 @@ import { reflectReduceFraction, reflectReturnFraction } from '../../engine/guard
 import { healthGuardTone } from '../../model/blockPresentation.js';
 // Presentation only: callers supply the live protection values. HP fill
 // always represents health, never protection added to the health numerator.
-// Defense badges read Block (the Defense badge, owner 2026-10-18), Evade, Precision, Poise and Ward before HP. Poise also
+// Defense badges read Block (the Defense badge, owner 2026-10-18), Poise, Evade, Ward, Precision, Counter, Reflect and stance before HP. Poise also
 // retains its gold HP trim and value/max accessible label.
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
@@ -27,18 +27,19 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
     poised: poised > 0,
     poiseLabel: poised > 0 ? t('combat.protection.poiseValue', { value: poised, max: Math.max(poised, count(poiseMax)) }) : null,
     badges: [
-      // The current combat stance (owner 2026-10-31): first in the row, only while one is set; `stance` is built by stanceBadgeFor.
-      ...(stance?.maneuver ? [{ kind: 'stance', label: stance.label, value: '', glyph: stance.maneuver, tone: stance.maneuver, help: stance.help }] : []),
+      // Row order (owner 2026-11-01): Block, Poise, Evasion, then the status-like stacks (Ward, Precision, Counter, Reflect), stance last.
       ...(shield > 0 ? [{ kind: 'shield', label: t('combat.protection.block'), value: shield }] : []),
+      ...(poised > 0 ? [{ kind: 'poise', label: t('combat.protection.poise'), value: poised }] : []),
       ...(Number.isFinite(evasion) && count(evasion) > 0 ? [{ kind: 'evade', label: t('card.tags.evade'), value: count(evasion) }] : []),
+      ...(arcaneWard > 0 ? [{ kind: 'ward', label: t('combat.protection.ward'), value: arcaneWard, barrier: charged, wardBlock: warded }] : []),
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
         help: tFull('combat.protection.counter', { stacks: count(counterStacks), decay: mechanics.counter.decayPerTurn }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
         help: tFull('combat.protection.reflect', { reduce: Math.round(100 * reflectReduceFraction(count(reflectStacks))), back: Math.round(100 * reflectReturnFraction(count(reflectStacks))) }) }] : []),
-      ...(poised > 0 ? [{ kind: 'poise', label: t('combat.protection.poise'), value: poised }] : []),
-      ...(arcaneWard > 0 ? [{ kind: 'ward', label: t('combat.protection.ward'), value: arcaneWard, barrier: charged, wardBlock: warded }] : []),
+      // The current combat stance (owner 2026-10-31): last in the row (owner 2026-11-01), only while one is set; `stance` is built by stanceBadgeFor.
+      ...(stance?.maneuver ? [{ kind: 'stance', label: stance.label, value: '', glyph: stance.maneuver, tone: stance.maneuver, help: stance.help }] : []),
     ],
   });
 }
