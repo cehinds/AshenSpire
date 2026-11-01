@@ -395,11 +395,13 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
+    // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
+    const appliedRules = expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
-      ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
+      ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
         model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, '')) : null;
-    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, faceHtml: summaryHtml, registries,
+    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: appliedRules, faceHtml: summaryHtml, registries,
       effects: opts.preview?.chargedEffects || def.effects || [] });
     const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '))
       + `<span data-face-fallback style="display:none">${esc(t('card.face.inspectEffect'))}.</span>`

@@ -212,3 +212,12 @@ test('a status is named by its whole name or id, never by a stem of another word
     }
   });
 });
+
+test('Blight Bloom shows its 3-stack cap only under the expanded combat rules', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle);
+  for (const extra of [{}, { upgraded: true }]) {
+    const v1 = facesOf(dom, reg, { cardId: 'blightBloom', ...extra }, {}).join(' | '), v2 = facesOf(dom, reg, { cardId: 'blightBloom', ...extra }, { combatExpansionVersion: 2 }).join(' | ');
+    assert.ok(/Double/.test(v1) && !/stops at|\[v2|Inspect/.test(v1), `v1 ${JSON.stringify(extra)}: ${v1}`);
+    if (!extra.upgraded) assert.ok(/Double Blight, stops at 3/.test(v2), `v2: ${v2}`);
+  }
+}));

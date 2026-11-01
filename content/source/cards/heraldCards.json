@@ -617,7 +617,7 @@
       }
     ],
     "textTemplate": "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each. Exhaust.",
-    "faceTemplate": ["Double Blight, stops at 3."],
+    "faceTemplate": ["Double Blight[v2:, stops at 3]."],
     "upgrade": {
       "keywords": [
         "retain"
