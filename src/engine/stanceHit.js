@@ -45,6 +45,18 @@ export function precisionStatMix(ctx, entity, carrier = null) {
   return Math.floor(wt.dex * (Number(attrs.dexterity) || 0) + wt.str * (Number(attrs.strength) || 0)
     + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * mixLevel(ctx, entity));
 }
+/** The stat mix itemised for the roll receipt: one part per non-zero contributor, plus a rounding part so the parts add up to the floored mix exactly. Display only; weights come from `accuracy.precisionWeights`. */
+export function precisionStatParts(ctx, entity, carrier = null) {
+  const wt = fixCoreRules(ctx, entity, carrier).accuracy.precisionWeights, attrs = attributesOf(ctx, entity) || {};
+  const cents = n => Math.round(n * 100) / 100;
+  const raw = [['DEX', Number(attrs.dexterity) || 0, wt.dex], ['STR', Number(attrs.strength) || 0, wt.str], ['INT', Number(attrs.intelligence) || 0, wt.int], ['WIS', Number(attrs.wisdom) || 0, wt.wis]]
+    .map(([label, score, weight]) => ({ label, value: cents(score * weight), note: `${score} ×${weight}` }));
+  const level = mixLevel(ctx, entity);
+  raw.push({ label: 'level', value: cents(level * wt.level), ...(wt.level === 1 ? {} : { note: `${level} ×${wt.level}` }) });
+  const parts = raw.filter(part => part.value), total = precisionStatMix(ctx, entity, carrier);
+  const rounding = cents(total - parts.reduce((sum, part) => sum + part.value, 0));
+  return rounding ? [...parts, { label: 'rounding', value: rounding }] : parts;
+}
 /** Core 2 Accuracy constants (owner, 2026-10-31): editable data in content/framework/mechanics.json, not the locked FixCore rules. */
 export const accuracyRules = () => mechanics.accuracy;
 /** Precision stacks an offensive stance entry grants under FixCore: the base grant only (owner, 2026-10-31; the stat mix is Precision, not stacks). */
@@ -115,7 +127,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const statMix = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) : 0;
   const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
   // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
-  const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, { label: 'stat mix', value: statMix }, { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
+  const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, ...precisionStatParts(ctx, source, carrier), { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
     ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
     ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
