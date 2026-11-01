@@ -16,3 +16,18 @@ test('every weakness trigger and every authored weakness has a real icon, never 
   }
   assert.deepEqual([...triggers].filter(to => !Object.hasOwn(WEAKNESS_ICON, to)), []);
 });
+
+import { withKitDom } from './helpers/kit-dom.mjs';
+import { weaknessChips, weaknessChipText } from '../src/ui/components/weaknessChips.js';
+
+test('a chip is a labelled square icon with the badge tooltip attached', () => {
+  withKitDom(() => {
+    const [chip] = weaknessChips([{ to: 'piercing', effect: 'damage' }]);
+    assert.equal(chip.getAttribute('aria-label'), 'Weak to Piercing: +25% damage');
+    assert.equal(chip.dataset.weakness, 'piercing');
+    assert.equal(chip.dataset.tipAttached, 'true', 'the shared tooltip is attached');
+    assert.equal(chip.querySelectorAll('svg').length, 1, 'one real icon, no letter');
+    assert.equal(chip.textContent, '');
+    assert.equal(weaknessChipText({ to: 'burn', effect: 'tick' }).full, 'Weak to Burn: ticks harder');
+  });
+});
