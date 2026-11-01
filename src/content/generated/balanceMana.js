@@ -2,4 +2,4 @@
 // Do not edit by hand — edit the source file and re-run the build.
 
 import { withNotes } from '../noteKeys.js';
-export const balanceMana = withNotes({"minActionCost":1,"minStaminaCost":0,"$note":{"minActionCost":"The least turn Stamina a card that costs Mana must also cost.","minStaminaCost":"Retired additive Stamina floor; keep zero."}});
+export const balanceMana = withNotes({"minActionCost":1,"minStaminaCost":0,"focusManaDiscount":1,"focusItemType":"item:magic-focus","$note":{"minActionCost":"The least turn Stamina a card that costs Mana must also cost.","minStaminaCost":"Retired additive Stamina floor; keep zero.","focusManaDiscount":"Mana off every card while an equipped armament carries the Focus item type (floored at 0; it does not stack per Focus armament).","focusItemType":"The item-type tag that makes an armament a Focus."}});
