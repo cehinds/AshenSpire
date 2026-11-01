@@ -2,7 +2,7 @@
   "note": "Ratchet baseline for tools/style-lint.mjs: per-file counts of raw font sizes below the text minimum, bare z-index of 100 or more, and bare hex colours. --check fails when a count rises; lower a count and run --write-baseline in the same change. Never raise it to go green.",
   "rules": {
     "font-size-below-min": {
-      "styles/combat.css": 3,
+      "styles/combat.css": 2,
       "styles/kit.css": 4,
       "styles/map.css": 2,
       "styles/player-polish.css": 1,

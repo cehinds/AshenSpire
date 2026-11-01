@@ -237,7 +237,6 @@
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.coop-smithing-receipts b { color: var(--gold); }
 
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
@@ -318,7 +317,7 @@
    container query does not fire there, measured, 0 bleed and 0 travel both.
 
    LAW 5 RETIRED THAT SCROLLPORT ON THE PICK ROWS — Viki, 2026-08-14, on
-   Marina's 2026-08-16 ruling (the coop reward rows' 73-79px is a defect,
+   Marina's 2026-08-16 ruling (the reward rows' 73-79px is a defect,
    mine). Sunna's swipe was the right recovery before the law existed; clause 1
    now says horizontal travel on a narrow shape is ZERO, and clause 3 licenses
    the honest answer instead: a narrow shape is a DIFFERENT COMPOSITION. So a
@@ -339,7 +338,7 @@
    rule that decides how many cards a row holds. The two `#shop-cards` rules
    that used to state the wrap here are gone rather than kept as a second
    answer; the rows below are the ones still dealt as `.reward-row` — the
-   reward door, the draft and the co-op picks. */
+   reward door, the draft and the picks. */
   :root[data-layout='narrow'] .reward-row { flex-wrap: wrap; justify-content: center; max-width: 100%; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
@@ -364,7 +363,7 @@
    the day content grows. Cards keep their authored size — nothing shrinks,
    tap floors hold (Law 4: the floor is ergonomic, not proportional).
 
-   Scoped to #shop-cards, NOT to .reward-row: the coop reward rows are red in
+   Scoped to #shop-cards, NOT to .reward-row: the reward rows are red in
    the same sweep and they are Viki's, dealt by name (wave-three board,
    2026-08-14) — a class-level wrap here would fix her rows behind her back.
 
@@ -637,19 +636,6 @@ button.ev-choice {
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
 /* multiple player seats sit side-by-side in the combat player-zone */
-.combat.coop .player-zone {
-  display: flex; flex-direction: row; flex-wrap: wrap; gap: 1.4rem;
-  min-width: 13rem; align-items: flex-end; justify-content: center;
-}
-/* Phones cannot honestly hold two player seats beside three enemies: both
-   groups have real min-content widths from their resource bars. Stack the two
-   rows only for co-op, keeping every fighter at the shared sprite/text sizes.
-   The field owns vertical reach if an unusually short phone cannot hold both.
-   The hand remains its existing horizontal scroller; inline padding gives a
-   rotated first/last card a whole-card resting position at either edge. */
-:root[data-layout='narrow'] .combat.coop .field {
-  flex-direction: column; min-height: 0; overflow-y: auto;
-}
 /* BOTH ZONES YIELD BEFORE THE FIELD SCROLLS. `flex: N 0 auto` on either row
    meant neither could give a pixel, so at 390x844 the two together wanted
    449px of a 407px field and the enemy row ran 42px past the bottom — its
@@ -661,26 +647,7 @@ button.ev-choice {
    pixels and the name, meters and intent keep theirs. The field's own
    `overflow-y: auto` above stays the last resort, for a phone genuinely too
    short to hold both groups even at their smallest. */
-:root[data-layout='narrow'] .combat.coop .player-zone {
-  width: 100%; min-width: 0; flex: 0 1 auto; min-height: 0; flex-wrap: nowrap;
-  align-items: flex-end; justify-content: space-evenly; padding-bottom: 0.6rem;
-}
-:root[data-layout='narrow'] .combat.coop .enemy-row {
-  width: 100%; min-width: 0; flex: 1 1 auto; min-height: 0; padding-bottom: 0.6rem;
-}
-:root[data-layout='narrow'] .combat.coop .hand { padding-inline: 1rem; }
-.combat.coop .combatant.player { position: relative; }
-.combat.coop .combatant.player.me .sprite { filter: drop-shadow(0 0 6px rgba(200,160,70,.55)); }
-.combat.coop .combatant.player.ended { opacity: .62; }
-.combat.coop .combatant.player.down { filter: grayscale(1); opacity: .45; }
-.combat.coop .combatant.player.away { opacity: .45; }
-.combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--r-3); box-shadow: 0 0 12px rgba(200,160,70,.4); }
-.combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: var(--r-3); }
-.combat.coop .coop-leave { min-height: var(--tap-floor); height: auto; }
 
-/* co-op: fork voting on the shared map */
-.map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }
-.vote-pips { pointer-events: none; }
 .combatant.enemy.acting .sprite > img { animation: enemy-lunge 400ms cubic-bezier(.25,.8,.35,1); }
 @keyframes enemy-lunge {
   0% { transform: translateX(0); }

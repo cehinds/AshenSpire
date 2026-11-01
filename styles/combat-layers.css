@@ -81,9 +81,6 @@
 :root .combat[data-layout='formation'] .combatant .combatant-leading {
   z-index: calc(var(--combat-layer-selection) + 3) !important;
 }
-:root .combat[data-layout='formation'] :is(.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls,.coop-arm-host) {
-  z-index: calc(var(--combat-layer-selection) + 4) !important;
-}
 :root .combat[data-layout='formation'] .hand-overlay,
 :root .combat[data-layout='formation'] > .hand-area > .hand { z-index: var(--combat-layer-cards); }
 :root .combat[data-layout='formation'] > .combat-hud,
@@ -251,7 +248,7 @@
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-label {
   color: var(--hud-details-label-color, var(--muted)); text-shadow: var(--hud-text-shadow, none);
 }
-:root .combat[data-layout='formation']:not(.coop) .player:is(.context-selected,.selected-target) .combatant-mini-hud .meters .as-meter[data-res='hp'] .m-value {
+:root .combat[data-layout='formation'].combat .player:is(.context-selected,.selected-target) .combatant-mini-hud .meters .as-meter[data-res='hp'] .m-value {
   font-size: var(--hud-details-value-size, var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))));
 }
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-value { text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
@@ -445,9 +442,9 @@
   line-height: 1.25;
 }
 
-/* Co-op's protection readout (screens/coop.js: "Ward 0/0 · Barrier 0 · Attack")
+/* The on-figure protection readout ("Ward 0/0 · Barrier 0 · Attack")
    had no style and painted as large wrapping body text over the fighters.
-   Solo has no on-figure equivalent; it reads like the details panel's
+   It reads like the details panel's
    POISE / WARD labels, so it takes their compact type, one line, and folds
    away at rest as the solo resource rows do. */
 :root .combat .combat-expansion-protection {

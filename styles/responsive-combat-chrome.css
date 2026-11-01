@@ -52,7 +52,7 @@
   max-height: calc(var(--w4-band-footer) - 4px / var(--ui-zoom,1));
   align-self: center;
 }
-:root[data-form-factor='mobile'] .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+:root[data-form-factor='mobile'] .combat[data-layout='formation'][data-compact-combat='true'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
   height: calc(var(--w4-band-footer) - 4px / var(--ui-zoom,1));
   min-height: 0; max-height: calc(var(--w4-band-footer) - 4px / var(--ui-zoom,1));
   padding-block: 0; overflow: visible;
