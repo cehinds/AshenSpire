@@ -1,4 +1,5 @@
 import { uiStrings } from '../content/generated/uiStrings.js';
+import { effectiveD20Percent } from '../engine/d20Chance.js';
 import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
@@ -234,7 +235,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
       case 'buildup': {
         // The face names the status and amount; a partial chance is kept for the detail line.
-        if (effect.chance !== undefined && effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+        if (effect.chance !== undefined && effect.chance < 100) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
       case 'applyStatus': {
@@ -245,7 +246,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           && !(counter && def.defenseRulesVersion === 2 && effect.status === 'grounded')) fail();
         if (effect.chance !== undefined) {
           if (typeof effect.chance !== 'number') fail();
-          if (effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+          if (effect.chance < 100) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         }
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);

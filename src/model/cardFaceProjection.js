@@ -2,6 +2,7 @@
 // cardFaceLines and the Information pane retain the full card. Selection does
 // not promote this budget: every ordinary face owes the same three lines.
 import { uiStrings } from '../content/generated/uiStrings.js';
+import { effectiveD20Percent } from '../engine/d20Chance.js';
 
 export const FACE_EFFECT_LINES = 3;
 // Owner, 2026-10-31: one to three lines, at most five words per line. A line
@@ -139,7 +140,7 @@ function withChance(html, effects, registries) {
     const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
     if (!amount.test(html)) return null;
     amount.lastIndex = 0;
-    html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
+    html = html.replace(amount, match => `${match} (${esc(effectiveD20Percent(chance))}% chance)`);
   }
   return html;
 }

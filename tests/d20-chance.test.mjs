@@ -95,3 +95,17 @@ test('the Crit chance row shows the 5% step the crit d20 rolls', async () => {
   const row = combatStatRows({ kind: 'player', critRules: rules, attributes: {}, attackTagSets: [['strike']] }, text).find(r => r.tipId === 'critChance');
   assert.equal(row.value, '30%');
 });
+
+test('an authored buildup chance on a card reads the 5% step it rolls', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const reg = createRegistries(contentBundle);
+  const card = applyCombatExpansionCard(reg.cards.get('cinderSigil'));
+  // Author the same buildup chance at 33%: the face must read the 35% the d20 rolls.
+  const authored = JSON.parse(JSON.stringify(card), (key, value) => key === 'chance' && typeof value === 'number' ? 33 : value);
+  const detail = (cardFaceLines(authored, null, reg) || []).map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.ok(detail.some(line => /35% chance$/.test(line)), JSON.stringify(detail));
+  assert.ok(!detail.some(line => /33% chance/.test(line)), JSON.stringify(detail));
+});

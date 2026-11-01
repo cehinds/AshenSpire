@@ -42,6 +42,7 @@ import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
+import { effectiveD20Percent } from '../engine/d20Chance.js';
 import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
@@ -199,7 +200,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
-      case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
+      case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effectiveD20Percent(effect.chance)}%)` : ''}`; break;
       case 'applyStatus': {
         if (['invulnerability', 'decoy', 'grounded', 'sleep'].includes(effect.status)) return null;
         if (effect.duration !== undefined && typeof effect.duration !== 'number') return null;
