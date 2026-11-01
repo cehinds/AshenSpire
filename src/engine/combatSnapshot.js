@@ -1,3 +1,4 @@
+import { persistedEventLog } from '../model/runStorage.js';
 import { pinGameProfileCopy } from '../model/ownedGameProfile.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
 import { clampStackCounts } from '../model/combatTacticsRules.js';
@@ -69,17 +70,6 @@ const snapshotProfilesValidated = new WeakSet();
  * `combat.eventLog` is not touched; every other field of every row, and so the
  * combat log a resumed fight shows, is unchanged.
  */
-const EVENT_EVALUATION_CONTEXT = ['abilityBefore', 'abilityEntities'];
-function persistedEventLog(eventLog) {
-  if (!Array.isArray(eventLog)) return eventLog;
-  return eventLog.map((event) => {
-    if (!event || typeof event !== 'object' || !EVENT_EVALUATION_CONTEXT.some((key) => key in event)) return event;
-    const row = { ...event };
-    for (const key of EVENT_EVALUATION_CONTEXT) delete row[key];
-    return row;
-  });
-}
-
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
