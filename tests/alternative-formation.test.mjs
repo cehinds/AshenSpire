@@ -5,7 +5,7 @@ import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, per
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { mobileFieldOverlap, desktopFieldBottom, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
-import { responsiveHandLayout, HAND_TOOL_ROW_RESERVE_PX } from '../src/ui/models/HandLayout.js';
+import { responsiveHandLayout, handLayout } from '../src/ui/models/HandLayout.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
@@ -312,14 +312,14 @@ test('narrow phone strips keep sprite width and stay above the parent short prof
 // ends above the hand. Owner 2026-11-01: the field runs under the top of the cards (handOverlapFraction of a card's
 // height), so rank D's bottom (top + 4 * rowHeight of the field) must stay above the resting top card edge, which is
 // the field's bottom minus that overlap. Desktop is checked against the model's own field bottom at three viewports
-// (1280x720 leaves about 1px).
+// (short desktops such as 1366x657 clamp the overlap so the feet stand above the card edge).
 // Cards may overlap the field's background, never a sprite's feet. The widescreen form factor has no profile of its
 // own and falls back to `wide`; its player anchor must sit above the resting top card edge (10 cards rest at the same
 // height as 5) at ultrawide-ish sizes, with the player in the right-hand lane.
 test('widescreen player feet stay above the resting cards', () => {
   const footer = uiConfig.scenes.w4a.sizing.desktopFooter;
   const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx;
-  for (const [width, height] of [[1920, 800], [2560, 1080], [1920, 980], [3440, 1440]]) {
+  for (const [width, height] of [[1920, 800], [2560, 1080], [1920, 980], [3440, 1440], [1920, 600]]) {
     const footerPlan = desktopFooterLayout({ width, height });
     const fieldHeight = desktopFieldBottom(footerPlan, { width, zoom: 1, rem: 16, formFactor: 'widescreen' }) - header;
     for (const count of [5, 10]) {
@@ -327,30 +327,34 @@ test('widescreen player feet stay above the resting cards', () => {
       const cardTop = footerPlan.handTop + responsiveHandLayout(input, desktopHandLayout(input)).restTop;
       const formation = alternativeFormation(combatFormation({ width, height: fieldHeight, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
         friends: ['p0', 'p1', 'p2'], enemies: ['e0', 'e1', 'e2'] }), width, fieldHeight, false, { formFactor: 'widescreen' });
-      for (const slot of formation.slots) assert.ok(header + slot.ground <= cardTop + 0.5, `${width}x${height} x${count} cards: ${slot.side} ${slot.cell} feet ${header + slot.ground} below the cards at ${cardTop}`);
+      for (const slot of formation.slots) assert.ok(header + slot.ground <= cardTop, `${width}x${height} x${count} cards: ${slot.side} ${slot.cell} feet ${header + slot.ground} below the cards at ${cardTop}`);
     }
   }
   assert.ok(footer.handOverlapFraction > 0);
 });
 
-// Short portrait phones: the 36px extension is only granted to a field of at least mobileFieldOverlapMinFieldPx, so the
-// player's feet (rank D ground, measured from the field's top) never pass the resting cards' top: the row's bottom plus the
-// drop the phone fan takes (HAND_TOOL_ROW_RESERVE_PX less mobileHandReservePx), on either
-// side of the 280px shortBelowPx profile switch and the gate itself. 360x620 (natural field ~296px) was the regression:
-// the extension flipped it to the phone profile and the feet landed 20px inside the first card.
-test('phone field extension never puts the player feet below the hand, either side of shortBelowPx', () => {
+// Phones: the field extension is whatever the real fan allows. For every field and hand height pair of a dense sweep
+// (and the reviewed 360x660 case: field 306.7, hand 201.3) the lowest rank's ground, measured from the field's top,
+// must stand at or above the resting top card edge that responsiveHandLayout produces: the hand band's top (the
+// field's natural bottom) plus the fan's restTop. Both sides of shortBelowPx are swept; the short profile keeps
+// its own 94% rank D.
+test('phone field extension keeps every ground at or above the resting cards', () => {
   const sizing = uiConfig.scenes.w4a.sizing;
-  const below = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortBelowPx;
-  assert.equal(mobileFieldOverlap(sizing.mobileFieldOverlapMinFieldPx - 1), 0);
-  assert.equal(mobileFieldOverlap(sizing.mobileFieldOverlapMinFieldPx), sizing.mobileFieldHandOverlapPx);
-  for (const natural of [150, below - 10, below - 1, below, below + 1, 296, sizing.mobileFieldOverlapMinFieldPx - 1,
-    sizing.mobileFieldOverlapMinFieldPx, 320, 364, 431, 600]) {
-    const field = natural + mobileFieldOverlap(natural);
-    const formation = alternativeFormation(combatFormation({ width: 360, height: field, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
-      friends: ['p0'], enemies: ['e0', 'e1', 'e2'] }), 360, field, true, { formFactor: 'mobile' });
-    const cardTop = natural + HAND_TOOL_ROW_RESERVE_PX - sizing.mobileHandReservePx;
-    for (const slot of formation.slots) assert.ok(slot.ground <= cardTop + 1e-6, `natural ${natural}: ${slot.side} ${slot.cell} feet ${slot.ground} below the cards at ${cardTop}`);
+  const cases = [];
+  for (const width of [360, 390, 467]) for (let natural = 200; natural <= 640; natural += 10) for (let hand = 150; hand <= 300; hand += 10) cases.push([width, natural, hand]);
+  cases.push([360, 306.7, 201.3]);
+  for (const [width, natural, handHeight] of cases) {
+    const extension = mobileFieldOverlap({ natural, width, handHeight });
+    assert.ok(extension >= 0 && extension <= sizing.mobileFieldHandOverlapPx, `${width}x${natural}/${handHeight}: extension ${extension} within the authored cap`);
+    const input = { width, height: handHeight, count: 5, rem: 16, zoom: 1, compact: true, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'mobile' };
+    const cardTop = natural + responsiveHandLayout(input, handLayout(input)).restTop;
+    const field = natural + extension;
+    const formation = alternativeFormation(combatFormation({ width, height: field, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+      friends: ['p0'], enemies: ['e0', 'e1', 'e2'] }), width, field, true, { formFactor: 'mobile' });
+    for (const slot of formation.slots) assert.ok(slot.ground <= cardTop + 1e-6, `${width}: field ${natural} hand ${handHeight}: ${slot.side} ${slot.cell} feet ${slot.ground} below the cards at ${cardTop}`);
   }
+  const reviewed = mobileFieldOverlap({ natural: 306.7, width: 360, handHeight: 201.3 });
+  assert.ok(reviewed < 66, '360x660 no longer takes the full cap');
 });
 
 test('desktop and phone profiles stand the back rank lower and keep rank D above the hand', () => {
@@ -365,15 +369,18 @@ test('desktop and phone profiles stand the back rank lower and keep rank D above
   const footer = uiConfig.scenes.w4a.sizing.desktopFooter;
   const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx;
   const desktop = grid.profiles.desktop;
-  for (const [width, height] of [[1280, 720], [1280, 800], [1920, 980]]) {
+  for (const [width, height] of [[1280, 720], [1280, 800], [1920, 800], [1920, 980], [2560, 1080], [1366, 657], [1280, 600], [1280, 560]]) {
     const footerPlan = desktopFooterLayout({ width, height });
     const fieldBottom = desktopFieldBottom(footerPlan, { width, zoom: 1, rem: 16, formFactor: 'desktop' });
     const input = { width, height: footerPlan.handHeight, count: 5, rem: 16, zoom: 1, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'desktop' };
     const fan = responsiveHandLayout(input, desktopHandLayout(input));
     const cardTop = footerPlan.handTop + fan.restTop;
-    assert.ok(Math.abs(fieldBottom - cardTop - footer.handOverlapFraction * fan.cardHeight) < 1e-6, `${width}x${height}: the field runs handOverlapFraction of a card under the cards`);
+    const overlap = fieldBottom - cardTop;
+    assert.ok(overlap <= footer.handOverlapFraction * fan.cardHeight + 1e-6, `${width}x${height}: the field runs at most handOverlapFraction of a card under the cards`);
+    // Short desktops shrink the overlap to keep rank D clear, they never drop it below the cards' top edge.
+    assert.ok(overlap >= -1e-6, `${width}x${height}: the field reaches the cards`);
     const fieldHeight = fieldBottom - header;
-    assert.ok(header + fieldHeight * (desktop.top + 4 * desktop.rowHeight) <= cardTop + 0.5, `${width}x${height}: rank D ends above the resting cards`);
+    assert.ok(header + fieldHeight * (desktop.top + 4 * desktop.rowHeight) <= cardTop, `${width}x${height}: rank D ends above the resting cards`);
   }
   // Phone: the cards' top sits in the DOM (not in a model), so tests/battlefield-layout.browser.mjs and the measured
   // 390x844 / 360x740 shots own that check; rank D ends at 89% of the field here.

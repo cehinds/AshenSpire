@@ -7,7 +7,6 @@
     "floorPercent": 80,
     "mobileHandReservePx": 36,
     "mobileFieldHandOverlapPx": 66,
-    "mobileFieldOverlapMinFieldPx": 300,
     "desktopHeader": { "heightPx": 56,
         "splitHeightPx": 44.8, "stackedHeightPx": 76, "singleRowMinWidthPx": 640 },
     "desktopFooter": {
