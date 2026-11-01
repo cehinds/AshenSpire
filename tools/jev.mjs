@@ -368,7 +368,7 @@ export function classifyConflicts(paths) {
 
 // Pure: resolve every conflict block in CHANGELOG.md text. Ours (HEAD) receipt
 // block first, then theirs; a non-blank line of ours that theirs already holds is dropped.
-export function resolveChangelogConflict(text) {
+export function resolveChangelogConflict(text, baseText = null) {
   // Receipt-level, not line-level: every conflict hunk takes theirs (dev's date groups and
   // headings intact), and ours contributes only its new receipt bullets, which go to the top
   // of the newest date group (restamp then orders them). diff3/zdiff3 base sections are dropped.
@@ -384,6 +384,10 @@ export function resolveChangelogConflict(text) {
     // Blank only the structured stamp field after the PR link, never a version in the prose.
     const unstamped = (l) => l.replace(/(\(\[#\d+\]\([^)\s]*\/pull\/\d+\), )`\d+\.\d+\.\d+\.\d+`/, '$1`#`');
     const theirByPr = new Map(theirs.split('\n').filter(prOf).map(l => [prOf(l), l]));
+    // The merge base tells a new receipt from one dev deleted: a receipt ours holds that the base
+    // already had, and theirs no longer has, was removed on dev. Keep the deletion when ours left
+    // it untouched; escalate when ours edited it (delete vs edit is a decision, not a merge).
+    const baseByPr = new Map(String(baseText ?? '').split('\n').filter(prOf).map(l => [prOf(l), l]));
     for (const line of ours.split('\n')) {
       if (!line.trim() || have.has(line) || /^## \d{4}-\d{2}-\d{2}\b/.test(line)) continue;
       const pr = prOf(line);
@@ -392,6 +396,10 @@ export function resolveChangelogConflict(text) {
         if (unstamped(line) === unstamped(theirByPr.get(pr))) continue;
         // Both sides changed the receipt's words: an authored edit a merge must not drop.
         throw new Error(`CHANGELOG conflict: receipt #${pr} was edited on both sides; a model must merge the wording`);
+      }
+      if (pr && baseByPr.has(pr)) {
+        if (unstamped(line) === unstamped(baseByPr.get(pr))) continue;
+        throw new Error(`CHANGELOG conflict: receipt #${pr} was deleted on dev but edited on this branch; a model must decide`);
       }
       if (!/^- \*\*/.test(line)) throw new Error(`CHANGELOG conflict: ours changed a non-receipt line: ${line.slice(0, 80)}`);
       if (!extra.includes(line)) extra.push(line);
@@ -441,7 +449,9 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
     for (const f of cls.changelog) {
       const path = resolve(top, f);
       let text;
-      try { text = resolveChangelogConflict(readFileSync(path, 'utf8')); } catch (error) {
+      // Stage 1 of the index is the merge base's copy; without it every ours-only receipt reads as new.
+      const baseCopy = git(['show', `:1:${f}`], top);
+      try { text = resolveChangelogConflict(readFileSync(path, 'utf8'), baseCopy.status === 0 ? baseCopy.out : null); } catch (error) {
         git(['merge', '--abort'], top);
         return { exit: 2, verdict: 'needs-model', reason: error.message, files: [f] };
       }

@@ -630,3 +630,34 @@ test('CLI: checks --fast skips run-node and runsim and exits 0 here', () => {
   assert.deepEqual(out.results.map(x => x.id), ['bundle-cycles']);
   assert.deepEqual(out.skipped, ['run-node', 'runsim']);
 });
+
+const RCPT = (n, words, ord) => `- **${words}** ([#${n}](https://github.com/o/r/pull/${n}), \`0.7.2.${ord}\`)`;
+
+test('resolveChangelogConflict keeps a receipt deletion made on dev (merge base, Codex repro)', () => {
+  const base = `# Changelog\n\n## 2026-10-31\n\n${RCPT(5, 'Old', 5)}\n`;
+  const text = `# Changelog\n\n## 2026-10-31\n\n<<<<<<< HEAD\n${RCPT(9, 'New', 9)}\n${RCPT(5, 'Old', 5)}\n=======\n>>>>>>> origin/dev\n`;
+  const r = resolveChangelogConflict(text, base);
+  assert.ok(r.includes('#9]'), 'our new receipt stays');
+  assert.ok(!r.includes('#5]'), 'the receipt dev deleted stays deleted');
+  // Without the base the resolver cannot tell; with it, an edit of the deleted receipt escalates.
+  const edited = text.replace('**Old**', '**Old, reworded**');
+  assert.throws(() => resolveChangelogConflict(edited, base), /deleted on dev but edited/);
+});
+
+test('devmerge: a receipt dev deleted is not restored by our neighbouring new receipt (Codex repro)', () => {
+  const head = '# Changelog\n\n## 2026-10-31\n\n';
+  const f = fixture({ 'CHANGELOG.md': `${head}${RCPT(5, 'Old', 5)}\n${RCPT(1, 'Base', 1)}\n` });
+  try {
+    f.onDev(w => f.put(w, 'CHANGELOG.md', `${head}${RCPT(1, 'Base', 1)}\n`));
+    f.onFeature(w => f.put(w, 'CHANGELOG.md', `${head}${RCPT(9, 'New', 9)}\n${RCPT(5, 'Old', 5)}\n${RCPT(1, 'Base', 1)}\n`));
+    const r = devmerge({ base: 'dev', pr: 9, cwd: f.work, deps: OK_DEPS() });
+    const cl = readFileSync(join(f.work, 'CHANGELOG.md'), 'utf8');
+    if (r.resolved?.changelog?.length) {
+      assert.equal(r.exit, 0, JSON.stringify(r));
+      assert.ok(cl.includes('#9]') && !cl.includes('#5]'), cl);
+    } else {
+      // git merged it cleanly: the deletion must still hold.
+      assert.ok(!cl.includes('#5]'), cl);
+    }
+  } finally { f.done(); }
+});
