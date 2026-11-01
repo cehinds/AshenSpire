@@ -372,7 +372,6 @@ async function main() {
             })),
           })),
           summaryFonts:[
-            {label:getComputedStyle(document.querySelector('.smith-preview-label')).fontSize,value:getComputedStyle(document.querySelector('.smith-selected-head > b')).fontSize},
             {label:getComputedStyle(document.querySelector('.smith-cost-pair em')).fontSize,value:getComputedStyle(document.querySelector('.smith-economy-values')).fontSize},
           ],
           requirementRow:document.querySelector('.smith-requirements')?{
@@ -460,10 +459,10 @@ async function main() {
           && zero.economy.valuesScrollWidth <= zero.economy.valuesClientWidth + 1
           && zero.economy.availableColor !== zero.economy.requiredColor && zero.economy.requiredColor === zero.economy.costColor,
         `SMITH-UI-${upper}-SUMMARY-GRID`, `Selected Item and Cost are two borderless cells of one DetailCard; the cost is one inline REQ/AVAIL pair that does not overflow (${JSON.stringify({ heights: zero.summaryHeights, borders: zero.summaryBorders, economy: zero.economy })})`);
-      check(zero.summaryFonts.length === 2
+      check(zero.summaryFonts.length === 1
           && new Set(zero.summaryFonts.map((row) => row.label)).size === 1
           && new Set(zero.summaryFonts.map((row) => row.value)).size === 1,
-        `SMITH-UI-${upper}-SUMMARY-TYPE`, `the two summary components share one header size and one primary-value size (${JSON.stringify(zero.summaryFonts)})`);
+        `SMITH-UI-${upper}-SUMMARY-TYPE`, `the cost summary shares one header size and one primary-value size (${JSON.stringify(zero.summaryFonts)})`);
       const summaryColumns = zero.summaryGrid?.columns.trim().split(/\s+/).map((value) => Number.parseFloat(value)) || [];
       // One column since the sweep: the cost stands UNDER the selected item (it shared a 3:1 row).
       check(zero.summaryGrid && summaryColumns.length === 1

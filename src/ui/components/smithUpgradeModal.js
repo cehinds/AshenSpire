@@ -246,7 +246,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const head = el('div', { class: 'smith-summary-grid' }, [
       el('div', { class: 'smith-summary-cell smith-selected-head' }, [
         itemArt(selected),
-        eyebrow('Selected item', { class: 'smith-preview-label' }),
         el('b', { class: 'sr-name', text: selected.name }),
         el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
         el('span', { class: 'smith-item-type-row' }, types),
