@@ -95,7 +95,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       el('span', { class: 'smith-requirement-values as-statpair' }, [el('em', { class: 'sp-k', text: row.label }), deltaNode(String(row.currentRequired), String(row.nextRequired), { spaced: false })]),
       el('small', { text: `You have ${row.actual == null ? '?' : row.actual}` }),
     ]))
-    : [el('span', { class: 'smith-requirement met' }, el('span', { class: 'smith-requirement-values as-statpair' }, [el('em', { class: 'sp-k', text: 'NONE' }), ' ', el('b', { class: 'sp-v', text: 'No attribute requirement' })]))]);
+    : [el('span', { class: 'smith-requirement smith-requirement-none met' }, el('b', { class: 'sp-v', text: 'None' }))]);
 
   const intrinsicStatsNode = (selected) => {
     const stats = selected.intrinsicStats || {};
@@ -134,11 +134,14 @@ export function mountSmithUpgradeModal(host, initialModel, {
 
   /** The decision door's details: the same cost and deltas, as kit rows. */
   const confirmationDetails = (selected) => html([
-    el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
-    ...(currentModel.properties.servicePreviewHtml ? [el('div', { html: currentModel.properties.servicePreviewHtml })] : []),
-    el('div', { class: 'confirmation-change-list' }, [
-      ...selected.affectedRows.map((row) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
-      statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
+    el('div', { class: 'smith-confirm-details' }, [
+      el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
+      ...(currentModel.properties.servicePreviewHtml ? [el('div', { class: 'smith-confirm-recovery', html: currentModel.properties.servicePreviewHtml })] : []),
+      // Name left, change right: each row is a two-column grid (CSS), the change on one line.
+      el('div', { class: 'confirmation-change-list' }, [
+        ...selected.affectedRows.map((row) => statRow({ flat: true, className: 'smith-confirm-row', nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
+        statRow({ flat: true, className: 'smith-confirm-row smith-confirm-requirements', nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
+      ]),
     ]),
   ]);
 
