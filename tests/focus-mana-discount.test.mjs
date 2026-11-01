@@ -20,7 +20,8 @@ const cards = [fixture('mp2', 1, 2), fixture('mp1', 1, 1), fixture('mp0', 1, 0),
 const tagging = cards.flatMap(c => c.tags.map(tagId => ({ family: 'card', scope: '', objectId: c.id, tagId })));
 const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, ...cards], tagging: [...contentBundle.tagging, ...tagging] });
 
-function fight(rightHand, { mana = 10 } = {}) {
+const PREPARED = { maneuver: 'casting', camp: 'spell' };
+function fight(rightHand, { mana = 10, stance = PREPARED } = {}) {
   const run = createRunState({ registries, classId: 'starseer', seed: 7 });
   run.loadout.sets.rightHand[0] = rightHand;
   run.loadout.sets.leftHand[0] = null;
@@ -29,7 +30,9 @@ function fight(rightHand, { mana = 10 } = {}) {
   const player = { id: 'player', classId: 'starseer', loadout: run.loadout, hp: 80, maxHp: 80, mana, maxMana: 10, stamina: 10, maxStamina: 10,
     energyMax: 10, drawPerTurn: 5, orderedDraw: true, relicIds: [],
     deck: cards.map(c => ({ cardId: c.id, instanceId: c.id })) };
-  return createCombat({ registries, rng: createRng(11), player, enemyIds: ['wanderingSoldier'] });
+  const combat = createCombat({ registries, rng: createRng(11), player, enemyIds: ['wanderingSoldier'] });
+  if (stance) combat.player.combatStance = { ...stance };
+  return combat;
 }
 
 test('a Focus sceptre takes 1 Mana off each card, floored at 0, and leaves Stamina alone', () => {
@@ -44,9 +47,9 @@ test('a Focus sceptre takes 1 Mana off each card, floored at 0, and leaves Stami
 
 test('a non-magic card that costs Mana gets no Focus discount; face, preview and paid cost agree', () => {
   const plain = fight('greatsword'), focus = fight('boneSceptre');
-  assert.equal(focusManaDiscount(registries, focus.loadout, 'starseer', registries.cards.get('wp2')), 0);
-  assert.equal(focusManaDiscount(registries, focus.loadout, 'starseer', registries.cards.get('mp2')), 1);
-  assert.equal(focusManaDiscount(registries, focus.loadout, 'starseer'), 0, 'no card given: no discount');
+  assert.equal(focusManaDiscount(registries, focus.loadout, 'starseer', registries.cards.get('wp2'), focus.player), 0);
+  assert.equal(focusManaDiscount(registries, focus.loadout, 'starseer', registries.cards.get('mp2'), focus.player), 1);
+  assert.equal(focusManaDiscount(registries, focus.loadout, 'starseer', undefined, focus.player), 0, 'no card given: no discount');
   assert.equal(cardPlayCosts(focus, 'wp2').mana, 2);
   assert.equal(cardPlayCosts(plain, 'wp2').mana, 2);
   assert.equal(previewCard(focus, 'wp2').manaCost, 2);
@@ -81,8 +84,8 @@ test('a card payable only after the discount is not blocked as unaffordable', ()
 });
 
 test('the discount does not stack and every shipped Focus armament and sceptre is known', () => {
-  assert.equal(focusManaDiscount(registries, fight('boneSceptre').loadout, 'starseer', registries.cards.get('mp2')), 1);
-  assert.equal(focusManaDiscount(registries, fight('greatsword').loadout, 'starseer', registries.cards.get('mp2')), 0);
+  assert.equal(focusManaDiscount(registries, fight('boneSceptre').loadout, 'starseer', registries.cards.get('mp2'), { combatStance: PREPARED }), 1);
+  assert.equal(focusManaDiscount(registries, fight('greatsword').loadout, 'starseer', registries.cards.get('mp2'), { combatStance: PREPARED }), 0);
   const focusIds = [...registries.equipment.armaments?.values?.() ?? []].filter(p => (p.itemTypeTags || []).includes(registries.balance.mana.focusItemType)).map(p => p.id).sort();
   for (const id of ['boneSceptre', 'emberlightSceptre', 'ashStaff', 'blightRod']) assert.ok(focusIds.includes(id), `${id} is a Focus armament`);
 });
@@ -94,9 +97,46 @@ test('two equipped Focus armaments still give a single -1 (owner, 2026-11-01: Fo
   run.loadout.active.rightHand = 0; run.loadout.active.leftHand = 0;
   const pieces = ['rightHand', 'leftHand'].map(slot => run.loadout.sets[slot][0]);
   assert.deepEqual(pieces, ['boneSceptre', 'emberlightSceptre']);
-  assert.equal(focusManaDiscount(registries, run.loadout, 'starseer', registries.cards.get('mp2')), 1);
+  assert.equal(focusManaDiscount(registries, run.loadout, 'starseer', registries.cards.get('mp2'), { combatStance: PREPARED }), 1);
   const player = { id: 'player', classId: 'starseer', loadout: run.loadout, hp: 80, maxHp: 80, mana: 10, maxMana: 10, stamina: 10, maxStamina: 10,
     energyMax: 10, drawPerTurn: 5, orderedDraw: true, relicIds: [], deck: cards.map(c => ({ cardId: c.id, instanceId: c.id })) };
   const combat = createCombat({ registries, rng: createRng(11), player, enemyIds: ['wanderingSoldier'] });
+  combat.player.combatStance = { ...PREPARED };
   for (const [id, reduced] of [['mp2', 1], ['mp1', 0], ['mp0', 0], ['mp5', 4]]) assert.equal(cardPlayCosts(combat, id).mana, reduced, id);
+});
+
+test('Focus discounts only in the Prepared stance (owner, 2026-11-01)', () => {
+  const mp2 = registries.cards.get('mp2'), wp2 = registries.cards.get('wp2');
+  const sceptre = fight('boneSceptre'), plain = fight('greatsword');
+  // Prepared + Focus + magic card: discounted.
+  assert.equal(cardPlayCosts(sceptre, 'mp2').mana, 1);
+  assert.equal(focusManaDiscount(registries, sceptre.loadout, 'starseer', mp2, sceptre.player), 1);
+  // The Core "prepared" id reads the same as the stored "casting" maneuver.
+  assert.equal(focusManaDiscount(registries, sceptre.loadout, 'starseer', mp2, { combatStance: { maneuver: 'prepared' } }), 1);
+  // Any other stance, or no stance, with Focus: no discount.
+  for (const stance of [{ maneuver: 'defend' }, { maneuver: 'attack' }, { maneuver: 'neutral' }, null]) {
+    const other = fight('boneSceptre', { stance });
+    assert.equal(cardPlayCosts(other, 'mp2').mana, 2, `stance ${stance?.maneuver ?? 'none'}: full price`);
+    assert.equal(previewCard(other, 'mp2').manaCost, 2);
+  }
+  // Prepared without Focus: none.
+  assert.equal(cardPlayCosts(plain, 'mp2').mana, 2);
+  // Prepared + Focus + non-magic card: none.
+  assert.equal(cardPlayCosts(sceptre, 'wp2').mana, 2);
+  assert.equal(focusManaDiscount(registries, sceptre.loadout, 'starseer', wp2, sceptre.player), 0);
+});
+
+test('Focus follows a mid-turn stance change; face, preview and paid cost agree', () => {
+  const combat = fight('boneSceptre', { stance: { maneuver: 'defend' } });
+  const face = () => playingCardModel(registries, { cardId: 'mp2', instanceId: 'mp2' }, { preview: previewCard(combat, 'mp2') }).costs.mana;
+  assert.equal(face(), 2);
+  combat.player.combatStance = { ...PREPARED };
+  assert.equal(face(), 1, 'entering Prepared lowers the face');
+  assert.equal(cardPlayCosts(combat, 'mp2').mana, 1);
+  combat.player.combatStance = { maneuver: 'attack' };
+  assert.equal(face(), 2, 'leaving Prepared restores the price');
+  combat.player.combatStance = { ...PREPARED };
+  const before = combat.player.mana, shown = face();
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'mp2' });
+  assert.equal(before - combat.player.mana, shown, 'paid Mana equals the face');
 });
