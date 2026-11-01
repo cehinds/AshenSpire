@@ -1,5 +1,5 @@
-// Owner ruling 2026-11-01: Defend, Counter and Evade (physical or spell) are one defensive family for the
-// Core 2 Adept same-stance cut ("Any defensive card").
+// Owner ruling 2026-11-01: in Defend stance (physical or spell) every defensive card (Defend, Counter, Evade) takes the
+// Core 2 Adept same-stance cut ("Any defensive card"; "To be clear just for defense stance").
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { stanceStaminaCost, stanceManaCost, stanceOf, defensiveFamily } from '../src/model/stanceRules.js';
@@ -20,13 +20,21 @@ test('in Defend stance an Evade card (cost 2) costs 1 for a Martial Adept', () =
   assert.equal(stanceOf(evade).maneuver, 'evade');
   assert.equal(stanceStaminaCost(2, c.player, evade, c), 1);
 });
-test('in Evade stance a cost-1 Defend stays at the floor of 1', () => {
-  const c = ctxFor('reaver', evade);
-  assert.equal(stanceStaminaCost(1, c.player, defend, c), 1);
+test('in Defend stance a Counter card takes the cut but the floor of 1 holds', () => {
+  const c = ctxFor('reaver', defend);
+  assert.equal(stanceStaminaCost(2, c.player, counter, c), 1);
+  assert.equal(stanceStaminaCost(1, c.player, counter, c), 1);
 });
-test('in Counter stance an Evade card is discounted', () => {
+test('in Evade stance a Defend card gets no cut beyond the exact match', () => {
+  const c = ctxFor('reaver', evade);
+  assert.equal(defensiveFamily(c.player, defend), false);
+  assert.equal(stanceStaminaCost(2, c.player, defend, c), 2);
+  assert.equal(stanceStaminaCost(2, c.player, evade, c), 1, 'exact match still cuts');
+});
+test('in Counter stance an Evade card is not discounted', () => {
   const c = ctxFor('rogue', counter);
-  assert.equal(stanceStaminaCost(2, c.player, evade, c), 1);
+  assert.equal(defensiveFamily(c.player, evade), false);
+  assert.equal(stanceStaminaCost(2, c.player, evade, c), 2);
 });
 test('in Attack stance an Evade card is not discounted', () => {
   const c = ctxFor('reaver', attack);
@@ -41,7 +49,7 @@ test('without the Adept entitlement there is no cut', () => {
   const c = ctxFor('reaver', defend); c.player.classUnequipped = true;
   assert.equal(stanceStaminaCost(2, c.player, evade, c), 2);
 });
-test('physical Defend stance discounts a Ward cantrip by 1 MP for a Magic Adept, and the reverse holds', () => {
+test('physical Defend stance discounts a Ward cantrip by 1 MP for a Magic Adept; spell Defend discounts a physical card', () => {
   const c = ctxFor('starseer', defend);
   assert.equal(stanceManaCost(2, c.player, ward, c), 1);
   const r = ctxFor('reaver', ward);

@@ -907,7 +907,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
         + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
-        + (['defend', 'counter', 'evade'].includes(stance.maneuver) ? ' Defend, Counter and Evade count as one defensive family for Adept discounts.' : '')
+        + (stance.maneuver === 'defend' ? ' While in Defend stance, Defend, Counter and Evade cards all take Adept discounts.' : '')
         + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
         + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';
     }

@@ -56,16 +56,14 @@ export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);
 }
-// Owner 2026-11-01: for the Core 2 Adept same-stance cut, Defend, Counter and Evade (physical or spell) are one
-// defensive family: "Any defensive card" played from any defensive stance takes the cut. Camp is ignored.
+// Owner 2026-11-01 ("Any defensive card"; narrowed: "To be clear just for defense stance"): for the Core 2 Adept
+// same-stance cut, while the actor is already in Defend stance (either camp) every defensive card (Defend, Counter,
+// Evade) takes the cut. Counter and Evade stances do not extend it; they keep the exact match.
 const DEFENSIVE_FAMILY = ['defend', 'counter', 'evade'];
 export function defensiveFamily(entity, carrier) {
   const next = stanceOf(carrier, entity);
   if (!next || !DEFENSIVE_FAMILY.includes(next.maneuver)) return false;
-  return [...(entity?.concurrentStances || []), entity?.combatStance].some(row => {
-    const stance = row ? stanceOf(row) : null;
-    return !!stance && DEFENSIVE_FAMILY.includes(stance.maneuver);
-  });
+  return [...(entity?.concurrentStances || []), entity?.combatStance].some(row => (row ? stanceOf(row) : null)?.maneuver === 'defend');
 }
 function hasAdept(ctx, entity, tag) {
   if (entity?.kind === 'enemy' || entity?.classUnequipped) return false;
