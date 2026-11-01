@@ -72,10 +72,9 @@
 // It serves the SOURCE tree (no build, no LFS).
 //
 // BOUNDARY. It proves what the three surfaces OFFER and what a choice on the
-// map DOES. It does not drive co-op's flask intent or the host's refusal (the
-// contract's co-op half and tools/coop-hud-top.mjs do), nor combat's confirm
-// beyond the one Azure drink it needs to reach an empty flask (every other Use
-// it taps there is cancelled at the question).
+// map DOES. It does not drive combat's confirm beyond the one Azure drink it
+// needs to reach an empty flask (every other Use it taps there is cancelled at
+// the question).
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';

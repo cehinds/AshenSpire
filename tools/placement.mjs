@@ -128,7 +128,7 @@
 //     are a third hand-rolled site. Neither is measured here and neither is
 //     converted — `unknown`, named rather than implied.
 //   · AND THE FLASK MENU HAS A MOUNT SITE THIS TOOL CANNOT REACH. flask.js is
-//     mounted from combat.js, map.js and coop.js. `?shot=combat` is what P5
+//     mounted from combat.js and map.js. `?shot=combat` is what P5
 //     drives; the MAP surface is not in P5 — `unknown` for THIS tool.
 //     THE `unknown` UNDER IT IS RESOLVED, 2026-08-17, AND THE ANSWER IS THE
 //     OPPOSITE OF WHAT THE OLD WORDING IMPLIED. This line read "`?shot=map`
@@ -141,9 +141,6 @@
 //     surface is measured by tools/flaskbox.mjs, which uses that door and prints
 //     it. A NAMED `unknown` ON AN EMPTY SCREEN IS STILL A GUESS ABOUT WHY IT IS
 //     EMPTY, and this one was read as a missing feature for a night.
-//     Co-op was measured by hand
-//     (`?shot=coop`, last slot, both shapes: under, on screen, left-aligned) and
-//     is not in P5, because a by-hand receipt is not coverage.
 //   · P3 IS THE HAND AND NOTHING ELSE, AND THE REST IS NOW MEASURED ELSEWHERE.
 //     Every other attachTooltip caller passes `clear: el.parentElement` too and
 //     none is sampled HERE. It is no longer unknown: 160 tooltip-bearing controls

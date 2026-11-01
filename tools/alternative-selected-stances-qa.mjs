@@ -48,29 +48,6 @@ try{
   assert.ok(mobileLoaded,actor+' must load its selected Lite artwork on a fresh phone viewport');
   results.push(actor+':phone-lite');await phone.close();
  }
- const coop=await b.newPage({viewport:{width:1440,height:1000}});
- watch(coop);
- await coop.goto(base+'?shot=coop&shotSeats=2');
- await coop.waitForSelector('.alternative-card-stage[data-pose]');
- for(const [seq,playerId,cardId,cardType]of [[1,'p1','starstonePebble','spell'],[2,'p2','defend','skill']]){
-  await coop.evaluate(({seq,playerId,cardId,cardType})=>{
-   const s=structuredClone(window.__coopSnapshotForShot);
-   s.scene.receiptSeq=seq;s.scene.events=[{type:'cardPlayed',playerId,cardId,cardType,cardInstanceId:'qa-'+seq,targetId:cardId==='defend'?playerId:'e1'}];
-   window.__receiveCoopSnapshotForShot(s);
-  },{seq,playerId,cardId,cardType});
-  await coop.waitForFunction(({actor,stance})=>document.querySelector(`[data-animation-set="class-cards-${actor}"]`)?.dataset.pose==='stance-'+stance,{actor:playerId==='p1'?'starseer':'reaver',stance:playerId==='p1'?'casting':'defensive'});
- }
- assert.equal(await coop.locator('[data-animation-set="class-cards-starseer"]').getAttribute('data-pose'),'stance-casting');
- assert.equal(await coop.locator('[data-animation-set="class-cards-reaver"]').getAttribute('data-pose'),'stance-defensive');
- await coop.screenshot({path:out+'coop-selected-game.png'});
- await coop.evaluate(()=>{
-  const s=structuredClone(window.__coopSnapshotForShot);s.scene.receiptSeq=3;
-  s.scene.events=[{type:'playerTurnStart',playerId:'p1'}];window.__receiveCoopSnapshotForShot(s);
- });
- await coop.waitForFunction(()=>document.querySelector('[data-animation-set="class-cards-starseer"]')?.dataset.pose==='ready');
- assert.equal(await coop.locator('[data-animation-set="class-cards-reaver"]').getAttribute('data-pose'),'stance-defensive');
- await coop.setViewportSize({width:390,height:844});await coop.screenshot({path:out+'coop-selected-game-phone.png'});
- results.push('coop:independent-seats','coop:own-turn-reset');await coop.close();
  writeFileSync(out+'game-qa.json',JSON.stringify({base,results,errors,httpErrors,optionalAudioRequests,browserNotices,viewports:['1440x1000','390x844']},null,2));console.log(JSON.stringify({results,errors,httpErrors,optionalAudioRequests,browserNotices}));assert.deepEqual(errors,[]);assert.deepEqual(httpErrors,[]);
 }finally{await b.close();}
 

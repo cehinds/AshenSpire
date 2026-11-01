@@ -281,17 +281,14 @@ function appHandModes() {
 // word, one did not); since the renderer collapse (2026-08-15) they are in
 // for the SAME reason, and that sameness is the point:
 //
-//   'combat' and 'coop' — both mount src/ui/components/hand.js, the one hand
-//     renderer, which reads <html data-hand-layout>. Each mode is a different
-//     arrangement on both surfaces, so each is its own cell to judge. The two
-//     surfaces are now indistinguishable here — same travel under paging, no
-//     container at all under overlap — and a divergence between them is
-//     itself the finding: it would mean the fork came back.
+//   'combat' — mounts src/ui/components/hand.js, the one hand renderer, which
+//     reads <html data-hand-layout>. Each mode is a different arrangement, so
+//     each is its own cell to judge.
 //
 // This list is still TYPED and still the weak edge Vega named: a THIRD
 // surface that mounts a hand sweeps at the boot default only until it is
 // added here. `grep -rn "mountHand" src/` is the population it should equal.
-const MODE_SURFACES = ['combat', 'coop'];
+const MODE_SURFACES = ['combat'];
 
 const BROWSERS = [
   process.env.CHROME,
@@ -473,9 +470,9 @@ const SCAN = `(() => {
     // comment above judge() warns about.
     // AND THAT INCLUDES A HIDDEN ONE, deliberately: a declaration on a container
     // this surface no longer renders is a reason that died by a different route,
-    // and it reaches A4 as a ratchet failure rather than disappearing. Two
-    // exemptions ship today — the paging hand (combat.js) and the coop hand
-    // (coop.js), both from src/ui/handAxis.js — so this arm is live, not
+    // and it reaches A4 as a ratchet failure rather than disappearing. One
+    // exemption ships today — the paging hand (combat.js), from
+    // src/ui/handAxis.js — so this arm is live, not
     // latent: it is what forces a person back if a strip ever stops
     // travelling or a hand leaves a surface with its declaration behind.
     const declared = e.hasAttribute('data-scroll-axis');
@@ -652,8 +649,7 @@ async function main() {
   }
   console.log(`\nMODE AXIS — balance.ui.handLayoutModes, DERIVED: ${handModes.join(', ')}`);
   console.log(`  ${MODE_SURFACES.map((s) => `'?shot=${s}'`).join(' and ')} are swept once per mode through the settings door;`);
-  console.log(`  combat because it READS the word, coop because its hand does NOT — its unscoped`);
-  console.log(`  declaration claims mode-inertness and the overlap cells are that claim's wake (A4).`);
+  console.log(`  combat because it READS the word.`);
   console.log(`  Every other surface renders the boot default.`);
   console.log(`\nPOPULATION 2 — driven overlays · TYPED, ${DRIVEN.length} entries, the weakest edge here`);
   for (const d of DRIVEN) console.log(`  ${d.name.padEnd(18)} ${d.why}`);
@@ -844,11 +840,9 @@ async function main() {
       reason are audited above. The dedicated map-two-axis-pan gate proves that
       mouse, touch and pen can actually move the resulting extent, while
       map-pan-ownership proves the vertical-only setting removes that ownership.
-  (g) THE MODE AXIS IS TWO SURFACES. balance.ui.handLayoutModes (${handModes.join('/')}) is
+  (g) THE MODE AXIS IS ONE SURFACE. balance.ui.handLayoutModes (${handModes.join('/')}) is
       swept both ways on ${MODE_SURFACES.map((s) => `'?shot=${s}'`).join(' and ')} — combat because it reads
-      the word, coop because its hand renderer does NOT (its unscoped declaration
-      claims mode-inertness; the overlap cells are the wake that fails A4 the day
-      that stops being true). Any FURTHER reader or renderer of the hand on
+      the word. Any FURTHER reader or renderer of the hand on
       another surface is NOT swept in its other mode until MODE_SURFACES grows
       with it, and the driven overlays open OVER combat at the boot default only.`);
 
@@ -1047,82 +1041,7 @@ async function selftest(evalIn, cdp, S, base, settingsQ) {
   expect('M3  declaration removed under paging — the strip travels undeclared',
     handP ? judge(handP, scanP.mode).verdict : 'NEVER COLLECTED', 'FAIL');
 
-  // ---------------------------------------------------------------------------
-  // 19-23 — THE SECOND SURFACE. Written by Vega 2026-08-14 as THE SECOND
-  // RENDERER (coop.js rendered its own .hand; combat's exemption never
-  // travelled to it — one fact, two renderers, one home), REWRITTEN by Viki
-  // 2026-08-15 when the collapse gave both surfaces one renderer and CM2 went
-  // red on its own dead premise.
-  //
-  // WHAT CHANGED AND WHY BOTH HALVES SURVIVE. Vega's CM2 planted an UNSCOPED
-  // declaration on the coop hand UNDER OVERLAP and required EXCUSED, because
-  // that renderer had no overlap arm and the strip travelled in every mode.
-  // It has one now, so the strip lays flat and the same plant is an A4 ratchet
-  // instead — her wake, exactly as she wrote it. The mechanism is not deleted
-  // and is not merely re-pointed: it SPLITS, because the two things it was
-  // holding are two things.
-  //   CM2  — an unscoped declaration over REAL travel is still lawful and must
-  //          still go GREEN. judge() supports unscoped declarations whether or
-  //          not a renderer ships one today, and a check that can only go red
-  //          is one somebody eventually turns off. Its home moves to the cell
-  //          where the strip actually travels: coop under PAGING.
-  //   CM2b — an unscoped declaration LEFT BEHIND on a strip that no longer
-  //          travels is the ratchet, and it is the exact shape that caught the
-  //          renderer collapse. This is the wake, kept as a mechanism rather
-  //          than as a memory of one.
-  const SCOPED_COPY = `(() => { const e = document.querySelector('.hand'); if (!e) throw new Error('no .hand');
-    e.setAttribute('data-scroll-axis', 'x');
-    e.setAttribute('data-scroll-axis-mode', 'paging');
-    e.setAttribute('data-scroll-axis-why', 'planted: the scoped combat string, copied onto the coop hand (selftest)');
-    return true; })()`;
-  const UNSCOPED = `(() => { const e = document.querySelector('.hand'); if (!e) throw new Error('no .hand');
-    e.setAttribute('data-scroll-axis', 'x'); e.removeAttribute('data-scroll-axis-mode');
-    e.setAttribute('data-scroll-axis-why', 'planted: this renderer implements only the pager (selftest)');
-    return true; })()`;
-
-  // 19 — the overlap door on the coop surface (the app's own resolution).
-  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${encodeURIComponent('{"handLayout":"overlap"}')}` }, S);
-  await wait(1600);
-  const scanCO = await evalIn(SCAN);
-  expect('CM0 the settings door renders overlap on coop  (must go GREEN)', scanCO.mode, 'overlap');
-
-  // 20 — THE COPY TRAP: combat's mode-scoped declaration pasted onto the coop
-  // hand. coop has no overlap arm, so the strip still travels under overlap and
-  // the scoped copy sits in a DOM whose word it contradicts — A5 must refuse it.
-  await evalIn(SCOPED_COPY);
-  const coopO = handFrom(await evalIn(SCAN));
-  console.log(`    (coop .hand under overlap: H ${coopO ? Math.round(coopO.hx) : '?'}px at 390x844 — no overlap arm in coop.js)`);
-  expect('CM1 combat\'s scoped string copied onto the coop hand, judged under overlap',
-    coopO ? judge(coopO, scanCO.mode).verdict : 'NEVER COLLECTED', 'FAIL');
-
-  // 21 — CM2b, THE WAKE AS A MECHANISM. The unscoped declaration planted where
-  // the strip no longer travels — the state Vega's wake predicted and the one
-  // that actually fired on the collapse. A4 must refuse it, or a stale
-  // exemption could outlive the renderer that justified it.
-  await evalIn(UNSCOPED);
-  const coopO2 = handFrom(await evalIn(SCAN));
-  console.log(`    (coop .hand under overlap now: ${coopO2 ? `H ${Math.round(coopO2.hx)}px — the overlap arm reached this surface in the collapse` : 'not a scroll container at all — zero travel, nothing to excuse'})`);
-  expect('CM2b unscoped declaration left on a strip that no longer travels (THE WAKE)',
-    coopO2 ? judge(coopO2, scanCO.mode).verdict : 'NOT COLLECTED — zero travel, no declaration to strand', 'FAIL');
-
-  // 22 — the head's own defect, planted: no declaration at all, boot default.
-  await cdp.send('Page.navigate', { url: `${base}?shot=coop${settingsQ}` }, S);
-  await wait(1600);
-  const scanCP = await evalIn(SCAN);
-  await evalIn(UNDECL);
-  const coopP = handFrom(await evalIn(SCAN));
-  expect('CM3 coop hand undeclared under paging — travels undeclared',
-    coopP ? judge(coopP, scanCP.mode).verdict : 'NEVER COLLECTED', 'FAIL');
-
-  // 23 — CM2, RE-HOMED: the GREEN half. An unscoped declaration over REAL
-  // travel is lawful, and the cell where the coop strip actually travels is
-  // paging. Same plant, same door, a mode where the premise is alive.
-  await evalIn(UNSCOPED);
-  const coopP2 = handFrom(await evalIn(SCAN));
-  expect('CM2  unscoped declaration + the strip\'s real travel under paging  (must go GREEN)',
-    coopP2 ? judge(coopP2, scanCP.mode).verdict : 'NEVER COLLECTED', 'EXCUSED');
-
-  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 25 mechanisms, 9 green and 16 red, each observed'}`);
+  console.log(`\n  ${fails.length ? `SELFTEST FAIL — ${fails.length} mechanism(s) did not behave` : 'SELFTEST PASS — 20 mechanisms, 7 green and 13 red, each observed'}`);
   for (const f of fails) console.log(`    - ${f}`);
 }
 
