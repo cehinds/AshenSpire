@@ -31,7 +31,7 @@ export function projectLanSnapshot(snapshot, memberIds) {
     delete knowledge.privateSeed; delete knowledge.readCounters;
     knowledge.owners = Object.fromEntries(Object.entries(knowledge.owners || {}).filter(([id]) => owned.has(id)));
     view.scene.events = (view.scene.events || []).filter(event => !event.ownerId || owned.has(event.ownerId)
-      || !['intentPredictionAccepted', 'perceptionGained', 'enemyKnowledgeCounterBonus'].includes(event.type));
+      || !['intentPredictionAccepted', 'perceptionGained', 'perceptionRolled', 'enemyKnowledgeCounterBonus'].includes(event.type));
   }
   for (const enemy of view.scene.enemies || []) {
     const intent = enemy.intent || { kind: 'unknown', moveId: null };

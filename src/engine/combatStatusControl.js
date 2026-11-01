@@ -400,12 +400,16 @@ export function effectiveChance(chance, { advantage = false, disadvantage = fals
   return advantage === disadvantage ? chance : 100 * (advantage ? 1 - (1 - p) ** 2 : p ** 2);
 }
 
-export function rollStatusChance(ctx, chance, { advantage = false, disadvantage = false, stream = 'statusRecovery' } = {}) {
+// `event` (optional) is the label of a roll worth logging: { status, targetId, sourceId }. It emits
+// statusChanceRolled (owner, 2026-10-31) and never changes the draws; recovery logs its own statusRecoveryRolled.
+export function rollStatusChance(ctx, chance, { advantage = false, disadvantage = false, stream = 'statusRecovery', event = null } = {}) {
   const first = ctx.rng.int(stream, 1, 100);
   const rolls = [first];
   if (advantage !== disadvantage) rolls.push(ctx.rng.int(stream, 1, 100));
   const roll = advantage === disadvantage ? first : advantage ? Math.min(...rolls) : Math.max(...rolls);
-  return { rolls, roll, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: roll <= chance };
+  const receipt = { rolls, roll, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: roll <= chance };
+  if (event) ctx.emit?.('statusChanceRolled', { ...event, ...receipt });
+  return receipt;
 }
 
 /** Call after mandatory turn-start ticks. Owner cycle is entity-relative. */
