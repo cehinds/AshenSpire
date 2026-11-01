@@ -80,7 +80,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     square.className = 'combat-health-badge combat-health-ac';
     square.dataset.defenseKind = 'ac';
     square.dataset.ac = String(values.ac.value);
-    square.setAttribute('aria-label', [text.title, ...text.lines].join('. '));
+    square.setAttribute('aria-label', [text.title, ...text.lines].map(line => line.replace(/\.$/, '')).join('. ') + '.');
     const number = document.createElement('span');
     number.className = 'combat-health-badge-value';
     number.textContent = String(values.ac.value);

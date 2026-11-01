@@ -91,3 +91,8 @@ test('the Precision badge glyph is the reticle, not the ranged arrow the card-ra
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { precision: 2 }, { tooltips: false });
   assert.equal(row.querySelector('.combat-health-precision-icon svg').outerHTML, reticle);
 }));
+
+test('a Ward badge keeps its Barrier provenance when it is shown', () => {
+  const ward = combatHealthModel({ ward: 12, barrier: 4 }).badges.find(b => b.kind === 'ward');
+  assert.equal(ward.barrier, 4);
+});
