@@ -852,6 +852,7 @@
       "source:spell",
       "maneuver:casting",
       "classification.skill",
+      "element:divine",
       "rank.cantrip",
       "fx:heal",
       "lifecycle.exhaust"
@@ -3267,6 +3268,191 @@
           "target": "enemy",
           "status": "vulnerable",
           "stacks": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.steadyHands",
+    "name": "Steady Hands",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "heal",
+        "target": "self",
+        "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "element:divine",
+      "rank.cantrip",
+      "fx:heal",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Heal {heal} HP. Gain {regen} Regen. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "heal",
+          "target": "self",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 2
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.guidingWhisper",
+    "name": "Guiding Whisper",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "precision",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "element:divine",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Gain {precision} Precision.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "precision",
+          "stacks": 4
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.hallowedWard",
+    "name": "Hallowed Ward",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 3
+      },
+      {
+        "op": "gainBarrier",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "element:divine",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 4
+        },
+        {
+          "op": "gainBarrier",
+          "target": "self",
+          "amount": 3
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.dawnFlame",
+    "name": "Dawn Flame",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4
+      }
+    ],
+    "mirrors": "attack",
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "element:divine",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
         }
       ]
     },
