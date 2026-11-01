@@ -61,3 +61,9 @@ test('Smith data rows carry no grey sub-label under their titles', () => {
   assert.doesNotMatch(modal, /sr-hint/);
   assert.doesNotMatch(modal, /Selected item/);
 });
+
+test('Smith item header: tier beside the name, type and tags in one row', () => {
+  assert.match(modal, /smith-title-row[\s\S]*sr-name[\s\S]*dc-meta/);
+  assert.match(modal, /smith-tag-row[\s\S]*smith-item-type-row[\s\S]*smith-weapon-tags/);
+  assert.match(css, /\.smith-tag-row \{ display: flex; flex-wrap: wrap/);
+});

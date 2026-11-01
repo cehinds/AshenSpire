@@ -339,9 +339,9 @@ async function main() {
             valuesClientWidth:document.querySelector('.smith-economy-values').clientWidth,
           }:null,
           selectedType:document.querySelector('.smith-selected-head .smith-item-type-row')?.textContent.trim()||'',
-          selectedNameStyle:document.querySelector('.smith-selected-head > b')?{
-            color:getComputedStyle(document.querySelector('.smith-selected-head > b')).color,
-            fontSize:getComputedStyle(document.querySelector('.smith-selected-head > b')).fontSize,
+          selectedNameStyle:document.querySelector('.smith-selected-head .sr-name')?{
+            color:getComputedStyle(document.querySelector('.smith-selected-head .sr-name')).color,
+            fontSize:getComputedStyle(document.querySelector('.smith-selected-head .sr-name')).fontSize,
             // The fold's title is the kit StatRow's name (.sr-name) since the 2026-09-04 sweep; it was summary > span:first-child > b.
             foldColor:getComputedStyle(document.querySelector('.smith-upgrade-row > summary .sr-name')).color,
             foldFontSize:getComputedStyle(document.querySelector('.smith-upgrade-row > summary .sr-name')).fontSize,

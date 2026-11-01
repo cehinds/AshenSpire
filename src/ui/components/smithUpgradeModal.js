@@ -246,10 +246,15 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const head = el('div', { class: 'smith-summary-grid' }, [
       el('div', { class: 'smith-summary-cell smith-selected-head' }, [
         itemArt(selected),
-        el('b', { class: 'sr-name', text: selected.name }),
-        el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
-        el('span', { class: 'smith-item-type-row' }, types),
-        selected.tags.length ? el('span', { class: 'smith-weapon-tags' }, selected.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))) : null,
+        el('span', { class: 'smith-title-row' }, [
+          el('b', { class: 'sr-name', text: selected.name }),
+          el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
+        ]),
+        // One row for the item type and every tag; the spans stay for the tools that read them.
+        el('span', { class: 'smith-tag-row' }, [
+          el('span', { class: 'smith-item-type-row' }, types),
+          selected.tags.length ? el('span', { class: 'smith-weapon-tags' }, selected.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))) : null,
+        ]),
       ]),
     ]);
     const folds = el('div', { class: 'smith-upgrade-folds' }, selected.affectedRows.map((row, index) => {

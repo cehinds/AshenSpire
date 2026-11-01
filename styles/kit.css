@@ -2210,7 +2210,9 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-row-text > .card-upgrade-indeck { align-self: flex-start; padding: 0 0.4rem; font-size: 0.85rem; line-height: 1.35; }
 .smith-candidate-card > .smith-weapon-count { flex: 0 0 auto; }
 .smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: 8px; left: auto; transform: translateY(-50%); }
-.smith-item-type-row, .smith-weapon-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.smith-item-type-row, .smith-weapon-tags { display: contents; }
+.smith-tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.smith-title-row { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.9rem; row-gap: 0.1rem; min-width: 0; }
 .smith-item-type-row > .as-tag { color: var(--gold); }
 .smith-preview-region.as-pane { gap: 0.6rem; min-height: 0; overflow: hidden; background: var(--panel); }
 .smith-pane-status { flex: 0 0 auto; text-align: left; }
@@ -2266,7 +2268,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-summary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding-bottom: 0.6rem; }
 .smith-summary-cell { min-width: 0; }
 .smith-selected-head { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1rem; row-gap: 0.2rem; align-items: start; }
-.smith-selected-head > .as-artwell { grid-row: 1 / span 5; width: 6rem; height: 6rem; overflow: hidden; }
+.smith-selected-head > .as-artwell { grid-row: 1 / span 2; width: 6rem; height: 6rem; overflow: hidden; }
 .smith-selected-head > :not(.as-artwell) { grid-column: 2; min-width: 0; }
 /* W1i/W1j/W1k "Cost / available stones": the last slot, pinned under the facts. */
 .smith-cost-strip {
@@ -2274,7 +2276,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   margin-top: 0.9rem; padding: 0.8rem 0 1.28rem; border-top: 1px solid var(--line); background: var(--panel);
 }
 .smith-cost-strip > .as-blocker.pinned { margin: 0; }
-.smith-selected-head > .sr-name,
+.smith-selected-head .smith-title-row > .sr-name,
 .smith-upgrade-modal .smith-upgrade-fold > summary .sr-name,
 .smith-upgrade-modal .smith-economy-values {
   font-family: var(--font-body); font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1)));
