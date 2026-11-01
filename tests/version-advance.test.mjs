@@ -118,13 +118,30 @@ test('reconcile: only earlier lost runs are applied, in order, current last', ()
   // queued then cancelled by release #12. #10 must not take #11, or the minor bump lands
   // before the candidate bump (0.7.2 -> 0.8.2 instead of 0.8.1).
   const runs = [r(8, 'release', 'r0', 'cancelled'), r(9, 'main', 'm0', 'failure'), r(11, 'main', 'm1', 'cancelled'), r(7, 'release', 'ok', 'success')];
-  assert.deepEqual(reconcileCuts(runs, cur), [
+  const pick = (cuts) => cuts.map(({ branch, sha }) => ({ branch, sha }));
+  assert.deepEqual(pick(reconcileCuts(runs, cur)), [
     { branch: 'release', sha: 'r0' }, { branch: 'main', sha: 'm0' }, { branch: 'release', sha: 'r2' },
   ]);
   // The later run (#12) reconciles #11 and #10's lost work in order.
   assert.deepEqual(reconcileCuts([...runs, r(10, 'release', 'r2', 'cancelled')], { number: 12, branch: 'release', sha: 'r3' }).map((c) => c.sha),
     ['r0', 'm0', 'r2', 'm1', 'r3']);
   // De-duplicates on branch+sha, and keeps the same sha on two branches as two cuts.
-  assert.deepEqual(reconcileCuts([r(1, 'release', 'x', 'cancelled'), r(2, 'release', 'x', 'failure'), r(3, 'main', 'x', 'cancelled')], { number: 5, branch: 'release', sha: 'x' }),
+  assert.deepEqual(pick(reconcileCuts([r(1, 'release', 'x', 'cancelled'), r(2, 'release', 'x', 'failure'), r(3, 'main', 'x', 'cancelled')], { number: 5, branch: 'release', sha: 'x' })),
     [{ branch: 'main', sha: 'x' }, { branch: 'release', sha: 'x' }]);
+});
+
+test('reconcile: each cut carries the branch\'s previous push head as its before', () => {
+  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
+  const runs = [r(1, 'release', 'r1', 'success'), r(2, 'main', 'm1', 'success'), r(3, 'release', 'r2', 'cancelled'), r(4, 'main', 'm2', 'cancelled')];
+  const cuts = reconcileCuts(runs, { number: 5, branch: 'release', sha: 'r3', before: 'r2' });
+  assert.deepEqual(cuts, [
+    { branch: 'release', sha: 'r2', before: 'r1' },
+    { branch: 'main', sha: 'm2', before: 'm1' },
+    { branch: 'release', sha: 'r3', before: 'r2' },
+  ]);
+  // No earlier run on the branch: before is null (treated as a cut). The current event's own
+  // before wins; without one, the list answers.
+  assert.equal(reconcileCuts([r(3, 'release', 'x', 'cancelled')], { number: 4, branch: 'release', sha: 'y' })[0].before, null);
+  assert.equal(reconcileCuts(runs, { number: 5, branch: 'main', sha: 'm3' }).at(-1).before, 'm2');
+  assert.equal(reconcileCuts(runs, { number: 5, branch: 'main', sha: 'm3', before: 'zz' }).at(-1).before, 'zz');
 });

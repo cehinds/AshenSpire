@@ -99,11 +99,11 @@ jobs:
             # this one itself. reconcileCuts sorts by run number and puts the current cut last.
             gh run list --repo "$GITHUB_REPOSITORY" --workflow version-advance.yml --event push --limit 100 \
               --json number,headBranch,headSha,conclusion \
-              | node tools/version-advance.mjs --reconcile "$RUN_NUMBER" "$SRC_BRANCH" "${GITHUB_SHA}" \
+              | node tools/version-advance.mjs --reconcile "$RUN_NUMBER" "$SRC_BRANCH" "${GITHUB_SHA}" "${BEFORE:-}" \
               >> "$RUNNER_TEMP/cuts"
           else
             git fetch -q origin "+refs/heads/$SRC_BRANCH:refs/remotes/origin/$SRC_BRANCH"
-            echo "$SRC_BRANCH $(git rev-parse "origin/$SRC_BRANCH")" >> "$RUNNER_TEMP/cuts"
+            echo "$SRC_BRANCH $(git rev-parse "origin/$SRC_BRANCH") -" >> "$RUNNER_TEMP/cuts"
           fi
           echo "Cuts to reconcile, oldest first:"; cat "$RUNNER_TEMP/cuts"
 
@@ -123,25 +123,24 @@ jobs:
             echo "::error::dev-preview could not be dispatched for dev after 3 tries. Rerun this workflow to dispatch it."
             return 1
           }
-          while read -r branch src_sha <&3; do
+          while read -r branch src_sha before <&3; do
             case "$branch" in
               release) kind=candidate ;;
               main)    kind=minor ;;
               *) echo "::error::source_ref must be release or main, got '$branch'."; exit 1 ;;
             esac
 
-            # A push made only of github-actions[bot] commits is not a cut. Only the
-            # current event carries a before; a new branch (all-zero) or an unreachable
-            # before is treated as a cut.
-            if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "$src_sha" = "${GITHUB_SHA}" ] && [[ "${BEFORE:-}" =~ [1-9a-f] ]]; then
+            # A push made only of github-actions[bot] commits is not a cut. Every cut, recovered
+            # or current, carries its `before` (reconcileCuts); "-" or an unreachable sha means
+            # unknown, and an unknown before is treated as a cut.
+            if [[ "$before" =~ ^[0-9a-f]{7,40}$ ]]; then
               git fetch -q origin "+refs/heads/$branch:refs/remotes/origin/$branch" || true
-              if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null && git cat-file -e "${src_sha}^{commit}" 2>/dev/null; then
-                # git log runs on its own line so a failure stops the job under set -e; inside
-                # a pipeline or $( | ) its status would be lost and a real cut read as bot-only.
-                authors="$(git log --format='%an' "${BEFORE}..${src_sha}")"
+              if git cat-file -e "${before}^{commit}" 2>/dev/null && git cat-file -e "${src_sha}^{commit}" 2>/dev/null; then
+                # git log runs on its own line so a failure stops the job under set -e.
+                authors="$(git log --format='%an' "${before}..${src_sha}")"
                 humans="$(printf '%s\n' "$authors" | grep -v '^$' | grep -vc '^github-actions\[bot\]$' || true)"
                 if [ "$humans" = "0" ]; then
-                  echo "Every commit in ${BEFORE}..${src_sha} is a bot commit; not a cut."
+                  echo "Every commit in ${before}..${src_sha} is a bot commit; not a cut."
                   continue
                 fi
               fi

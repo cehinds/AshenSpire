@@ -85,20 +85,31 @@ export function recordsSource(subjects, branch, sha) {
  * reconciles this one in turn. Taking a later run would apply its bump before the
  * current event's (a main minor bump landing before an earlier release candidate bump
  * turns 0.7.2 into 0.8.2 instead of 0.8.1). Sorted by run number, de-duplicated on
- * branch+sha, current last.
+ * branch+sha, current last. Each cut carries `before`, the branch's previous push head
+ * (null when unknown), so the caller can run the bot-only check on before..sha for
+ * recovered cuts exactly as for the current one.
  */
 export function reconcileCuts(runs, current) {
   const lost = new Set(['cancelled', 'failure', 'timed_out']);
+  const byNumber = [...runs].sort((x, y) => x.number - y.number);
+  // The branch's push BEFORE a run is the head sha of the previous push run on that
+  // branch (any outcome: consecutive pushes chain). null when the list has none.
+  const beforeOf = (branch, number) => {
+    const prev = byNumber.filter((r) => r.branch === branch && r.number < number).pop();
+    return prev ? prev.sha : null;
+  };
   const seen = new Set([`${current.branch} ${current.sha}`]);
   const out = [];
-  for (const r of [...runs].sort((a, b) => a.number - b.number)) {
+  for (const r of byNumber) {
     const key = `${r.branch} ${r.sha}`;
     if (r.number >= current.number || !lost.has(r.conclusion)) continue;
     if (!/^(release|main)$/.test(r.branch) || seen.has(key)) continue;
     seen.add(key);
-    out.push({ branch: r.branch, sha: r.sha });
+    out.push({ branch: r.branch, sha: r.sha, before: beforeOf(r.branch, r.number) });
   }
-  return [...out, { branch: current.branch, sha: current.sha }];
+  // The current event knows its own before (github.event.before); fall back to the list.
+  const before = current.before ?? beforeOf(current.branch, current.number);
+  return [...out, { branch: current.branch, sha: current.sha, before }];
 }
 
 /** The commit subject the workflow writes. One home for the format. */
@@ -112,11 +123,12 @@ function main(argv, root = ROOT) {
   }
   const rc = argv.indexOf('--reconcile');
   if (rc >= 0) {
-    const [number, branch, sha] = argv.slice(rc + 1);
+    const [number, branch, sha, beforeArg] = argv.slice(rc + 1);
+    const cb = /[1-9a-f]/.test(beforeArg || '') ? beforeArg : undefined; // all-zero or absent: ask the list
     const runs = JSON.parse(readFileSync(0, 'utf8') || '[]').map((r) => ({
       number: r.number, branch: r.headBranch, sha: r.headSha, conclusion: r.conclusion,
     }));
-    for (const c of reconcileCuts(runs, { number: Number(number), branch, sha })) console.log(`${c.branch} ${c.sha}`);
+    for (const c of reconcileCuts(runs, { number: Number(number), branch, sha, before: cb })) console.log(`${c.branch} ${c.sha} ${c.before ?? '-'}`);
     return 0;
   }
   const sj = argv.indexOf('--subject');
