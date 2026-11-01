@@ -161,7 +161,8 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
     try {
       let summarized = 0;
       for (const card of registries.cards.all()) {
-        const variants = [{}, { upgraded: true }, ...(card.gradeProfiles ? [0, 1, 2, 3, 4, 5].map(abilityRank => ({ abilityRank })) : [])];
+        const variants = [{}, { upgraded: true }, ...(card.gradeProfiles ? [0, 1, 2, 3, 4, 5].map(abilityRank => ({ abilityRank })) : []),
+          ...(card.legacyFace ? [{ legacyAbility: true }, { legacyAbility: true, upgraded: true }] : [])];
         for (const extra of variants) {
           const ref = { cardId: card.id, ...extra }, label = `${name}: ${card.id} ${JSON.stringify(extra)}`;
           const el = renderCard(registries, ref, { inspection: false, rules });
@@ -220,4 +221,11 @@ test('Blight Bloom shows its 3-stack cap only under the expanded combat rules', 
     assert.ok(/Double/.test(v1) && !/stops at|\[v2|Inspect/.test(v1), `v1 ${JSON.stringify(extra)}: ${v1}`);
     if (!extra.upgraded) assert.ok(/Double Blight, stops at 3/.test(v2), `v2: ${v2}`);
   }
+}));
+
+test('a legacy-resolved card never keeps the current card summary', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  const legacy = facesOf(dom, reg, { cardId: 'reclamation', legacyAbility: true }, rules).join(' | ');
+  assert.doesNotMatch(legacy, /max 5/, legacy);
+  assert.equal(resolveCard(reg, { cardId: 'reclamation', legacyAbility: true }).faceTemplate, undefined);
 }));

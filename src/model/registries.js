@@ -618,7 +618,9 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const legacyCards = registries.legacyProgressionSource?.cards;
   const definition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
     ? legacyCards.get(cardId) : registries.cards.get(cardId);
-  const authored = instanceOrRef.legacyAbility && definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition;
+  // A legacy card keeps only a summary written for its legacy face; the current card's faceTemplate describes other effects.
+  const legacyResolved = instanceOrRef.legacyAbility && (definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition !== registries.cards.get(cardId) ? definition : null);
+  const authored = legacyResolved ? {...legacyResolved,faceTemplate:definition.legacyFace?.faceTemplate} : definition;
   const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
   const usesAbilityGrade = Array.isArray(authored.gradeProfiles) && (instanceOrRef.abilityRank !== undefined || instanceOrRef.rank === undefined);
   const base = usesAbilityGrade ? deepFreeze(applyAbilityGrade(legacyBase, instanceOrRef.abilityRank)) : legacyBase;
