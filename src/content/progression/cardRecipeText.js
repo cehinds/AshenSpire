@@ -86,13 +86,16 @@ export function recipeFace(effects, { counterMode = null } = {}) {
       case 'grantCardCharge': options = e.damage ? [`Next ${e.abilityKind === 'spell' ? 'spell' : 'attack'} deals +${token('chargeDamage')}`] : [`Next spell costs ${token('chargeManaDiscount')} less`]; break;
       default: options = [];
     }
-    phrases.push({ conditional: !!(e.if || e.oncePerTurn), cost: e.op === 'discard' || e.op === 'loseHp', options });
+    // A debuff gated on one of the caster's own statuses is still an effect the face must name ("Starstone: Apply 4 Weak").
+    const gated = e.op === 'applyStatus' && e.target !== 'self' && e.if?.p === 'hasStatus' && !e.oncePerTurn;
+    if (gated) options = [`${statusName(e.if.status).replace(/ Charge$/, '')}: Apply ${t} ${statusName(e.status)}`];
+    phrases.push({ conditional: !gated && !!(e.if || e.oncePerTurn), gated, cost: e.op === 'discard' || e.op === 'loseHp', debuff: e.op === 'applyStatus' && e.target !== 'self', options });
   }
   const plainOnes = phrases.filter(p => !p.conditional);
   // A payment or mandatory discard is always said on the face; the other effects fill what is left.
   const pool = plainOnes.length ? plainOnes : phrases;
   const costs = pool.filter(p => p.cost), others = pool.filter(p => !p.cost);
-  const chosen = new Set([...costs, ...others].slice(0, 2));
+  const chosen = new Set([...costs, ...others].slice(0, 2).concat(others.filter(p => p.gated || p.debuff)));
   const lines = [...costs, ...others].filter(p => chosen.has(p)).map(p => p.options.find(o => words(o) <= 5)).filter(Boolean);
   return lines.length ? lines : undefined;
 }

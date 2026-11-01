@@ -45,12 +45,18 @@ export const QUALIFIERS = [
   ['cost', /(?<!\b(?:whenever|when|if) you )\b(?:take|lose|loses|pay|offer|skip)\b|\bcosts? \+|\bunplayable\b/i],
   ['discard', /\bdiscards?\b/i],
   ['consume', /\bremoves?\b|\bconsum/i],
-  ['cap', /\bcapped?\b|\bmax(?:imum)?\b|\bstops? at\b|\bat most\b/i],
-  ['random', /\brandom\b/i],
+  ['cap', /\bcap(?:s|ped)?\b|\bmax(?:imum)?\b|\bstops? at\b|\bat most\b/i],
+  // "random cards in your draw pile" only picks which of the pile to shuffle (up to 100, the whole pile): not a random outcome.
+  ['random', /\brandom\b(?! cards in your draw pile)/i],
   ['chance', /\bchance\b/i],
   ['lock', /\block\b|become vulnerable|\breveals?\b/i],
+  ['frequency', /\bonce per (?:turn|combat)\b(?! from this family)|\bfirst\b[^.]*\beach turn\b|\bfirst time\b|\bper combat\b/i, /\bonce per (?:turn|combat)\b|\bper combat\b|\bfirst time\b|\beach turn\b/i],
+  ['selfDebuff', /\bbecome (?:vulnerable|weak|frail)\b/i],
   ['exhaust', /\bexhaust|\bethereal/i],
 ];
+// A status the full rules apply or grant ("Apply 4 weak", "gain Sleep"), not one merely mentioned ("Blight still accumulates").
+export const statusApplied = (text, name) => new RegExp(`(?:\\d+|apply|applies|gain|inflict)\\s+${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text);
+export const statusNamed = (name, text) => String(name).toLowerCase().split(/\s+/).some(word => text.toLowerCase().includes(word.replace(/(?:ed|s)$/, '')));
 const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 // A line of five words or fewer is one clause. A longer list of complete
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
@@ -143,12 +149,17 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
       if ((def.keywords || []).includes(keyword) && !downsides.some(clause => plain(clause.html).includes(word)))
         downsides.push({ kind: 'cost', html: word });
     }
-    // A downside plus a short summary stays within two lines, so a narrow hand card still fits it; the downside wins the room.
-    const clauses = [...downsides, ...summary].slice(0, downsides.length ? 2 : FACE_EFFECT_CLAUSES);
+    // Up to the face cap of clauses; a line the cap would drop sends the card back to the cue (below).
+    const wanted = [...downsides, ...summary], clauses = wanted.slice(0, FACE_EFFECT_CLAUSES);
+    // A line the cap would drop is an effect the face no longer names: the cue stands instead (owner review, 2026-11-01).
+    if (clauses.length < wanted.length) return projection;
     // Every qualifier of the full rules must survive on the face as it will be printed; otherwise the cue stands.
     const faceText = [...clauses.map(clause => plain(clause.html)), summaryText.includes('exhaust') ? 'exhaust' : '', summaryText.includes('ethereal') ? 'ethereal' : ''].join(' ');
     const fullText = plain(authoredHtml || '');
-    if (QUALIFIERS.some(([, re]) => re.test(fullText) && !re.test(faceText))) return projection;
+    if (QUALIFIERS.some(([, re, faceRe = re]) => re.test(fullText) && !faceRe.test(faceText))) return projection;
+    // Every status the full rules name (an enemy debuff on a condition, say) must be named on the face too.
+    const lowerFace = faceText.toLowerCase();
+    if ((registries?.statuses?.all?.() || []).some(status => status.name && statusApplied(fullText, status.name) && !statusNamed(status.name, lowerFace))) return projection;
     return { ...projection, clauses, omitted: true, summarized: true };
   }
   return projection;

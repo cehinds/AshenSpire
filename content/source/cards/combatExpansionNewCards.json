@@ -1057,7 +1057,7 @@
       }
     ],
     "textTemplate": "Gain {sleep} Sleep: lock ordinary cards and become vulnerable. Rest next turn within the combat healing and Ward caps.",
-    "faceTemplate": ["Gain {sleep} Sleep: lock cards.", "Heals next turn."],
+    "faceTemplate": ["Gain {sleep} Sleep, lock cards.", "Become Vulnerable.", "Heals next turn, capped."],
     "minCombatExpansionVersion": 2
   },
   {

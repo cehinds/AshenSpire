@@ -2918,7 +2918,7 @@ function checkFaceTemplate(card, path, err) {
   for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate ?? card.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
   for (const [at, lines, effects] of sets) {
     if (lines === undefined) continue;
-    if (!Array.isArray(lines) || lines.length < 1 || lines.length > 2) { err(at, 'must be one or two short lines'); continue; }
+    if (!Array.isArray(lines) || lines.length < 1 || lines.length > 3) { err(at, 'must be one to three short lines'); continue; }
     const bound = new Set(computeTokenBindings(effects).map((bd) => bd.token));
     for (const line of lines) {
       if (typeof line !== 'string') { err(at, 'lines must be strings'); continue; }

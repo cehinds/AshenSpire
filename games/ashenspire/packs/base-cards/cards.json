@@ -2395,7 +2395,7 @@
           }
         ],
         "textTemplate": "Shuffle up to 100 random cards in your draw pile.",
-        "faceTemplate": ["Shuffle 100 random draw cards."],
+        "faceTemplate": ["Shuffle draw pile."],
         "icon": "shield",
         "flavor": "An ordering exercise of the Observatory's apprentices.\n\nThe students sorted loose charts until each could name their place by touch. Their teachers then scattered the stack and ordered them to begin again. The exercise continued after the charts ceased to describe the sky outside.\n\nNo arrangement was permitted to become certain."
       },
@@ -5295,7 +5295,7 @@
           }
         ],
         "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn.",
-        "faceTemplate": ["Hold two stances."],
+        "faceTemplate": ["Many Forms: hold two stances."],
         "icon": "shield",
         "flavor": "A divided discipline of the road's wandering instructors.\n\nNo tower trained a pupil to hold two answers at once. The travelers who taught between the seats had fewer certainties and more scars. They learned to keep one motion ready while the body seemed committed to another.\n\nThe road required room for a second lesson."
       },

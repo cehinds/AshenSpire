@@ -135,13 +135,17 @@ test('qualifier table: chance, payment, discard, hits and plain cards', () => wi
     const live = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
       resolvedDefinition: applyCardTraits(applyCombatExpansionCard(resolveCard(reg, { cardId }))) });
     const table = [
-      ['Hex v2 keeps its 50% chance', () => face({ cardId: 'hex' }, live('hex')), /50% chance/],
       ['Silent Exchange rank 4 keeps its discard', () => face({ cardId: 'progression-silent-exchange', abilityRank: 4 }), /discard/i],
       ['Silent Exchange rank 5 keeps its discard', () => face({ cardId: 'progression-silent-exchange', abilityRank: 5 }), /discard/i],
       ['Arrow Volley reads uneven hits', () => face({ cardId: 'arrowVolley' }, { combatExpansionVersion: 2, tokens: {}, values: [], damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 5], totalDamage: 6 }] }), /1 \+ 5/],
       ['a plain card still gets its summary', () => face({ cardId: 'base.foresight' }), /^Gain 3 Foresight\./],
       ['another plain card still gets its summary', () => face({ cardId: 'base.recover-exile' }), /^Return 1 exhausted card\.$/],
     ];
+    // Hex names both its debuffs with their chance; a face that would drop either line falls back to the cue instead.
+    const hex = face({ cardId: 'hex' }, live('hex'));
+    assert.match(hex, /Weak/, hex); assert.match(hex, /Vulnerable/, hex); assert.match(hex, /50% chance/, hex);
+    const dream = face({ cardId: 'restfulDream' });
+    assert.match(dream, /Vulnerable/, dream); assert.match(dream, /capped/, dream);
     for (const [name, run, expected] of table) { const text = run(); assert.match(text, expected, `${name}: ${text}`); assert.doesNotMatch(text, /Inspect full effect/, name); }
   } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
 }));
@@ -149,7 +153,7 @@ test('qualifier table: chance, payment, discard, hits and plain cards', () => wi
 // Census (owner review, 2026-11-01): a face that carries a summary keeps every cost, downside, consume, cap, chance,
 // lock and "random" the full rules state, and never says "1 cards".
 test('census: every summarized face keeps its qualifiers, in both profiles at every rank', async () => {
-  const { QUALIFIERS } = await import('../src/model/cardFaceProjection.js');
+  const { QUALIFIERS, statusApplied, statusNamed } = await import('../src/model/cardFaceProjection.js');
   for (const { name, registries, rules } of await profiles()) withKitDom(dom => {
     const proto = Object.getPrototypeOf(dom.document.body), descriptor = Object.getOwnPropertyDescriptor(proto, 'innerHTML'), markup = new WeakMap();
     Object.defineProperty(proto, 'innerHTML', { configurable: true, set(value) { markup.set(this, value); descriptor.set.call(this, value); } });
@@ -167,10 +171,12 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
           const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def);
           const full = (def.textTemplate || '').replace(tokenRe(), (m, k) => tokens[k] ?? m).replace(/<[^>]+>/g, '');
           const shown = `${face} ${(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word)).join(' ')}`;
-          // A literal number on a summary can drift from the graded values: every digit must appear in the full text (a Barrier split into Block + Ward counts as its sum; a status's own "N% chance" comes from the status rules, not the card).
+          // A literal number on a summary can drift from the graded values: every digit must appear in the full text (a Barrier split into Block + Ward counts as its sum).
           const spelled = full.replace(/\b(?:a|an|one)\b/gi, '1').replace(/\b(?:twice|two)\b/gi, '2').replace(/\b(?:three)\b/gi, '3');
-          for (const n of face.replace(/\(\d+% chance\)/g, '').replace(/(\d+) Block, (\d+) Ward/g, (m, x, y) => String(+x + +y)).match(/\d+/g) || []) assert.ok(new RegExp(`(^|\\D)${n}(\\D|$)`).test(spelled), `${label}: face "${face}" shows ${n}, absent from "${full}"`);
-          for (const [kind, re] of QUALIFIERS) if (re.test(full)) assert.ok(re.test(shown), `${label}: face "${face}" lost its ${kind} qualifier from "${full}"`);
+          const chances = (def.effects || []).filter(e => e.chance !== undefined && e.chance < 100).map(e => String(e.chance)); // a chance comes from the card's own effect data
+          for (const n of face.replace(/(\d+) Block, (\d+) Ward/g, (m, x, y) => String(+x + +y)).match(/\d+/g) || []) if (!chances.includes(n)) assert.ok(new RegExp(`(^|\\D)${n}(\\D|$)`).test(spelled), `${label}: face "${face}" shows ${n}, absent from "${full}"`);
+          for (const status of registries.statuses.all()) if (statusApplied(full, status.name)) assert.ok(statusNamed(status.name, shown), `${label}: face "${face}" never names ${status.name} from "${full}"`);
+          for (const [kind, re, faceRe = re] of QUALIFIERS) if (re.test(full)) assert.ok(faceRe.test(shown), `${label}: face "${face}" lost its ${kind} qualifier from "${full}"`);
         }
       }
       assert.ok(summarized > 0, name);
