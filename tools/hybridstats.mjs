@@ -200,9 +200,9 @@ check('Hybrid Stats panel uses shared data plans', () => {
   assert(/hybridStatsPlan\s*\(/.test(overlay), 'overlay Stats still hard-codes its rows');
   assert(/run\.stats[\s\S]*Fights won[\s\S]*Damage dealt[\s\S]*Damage taken/.test(equipment),
     'Armoury Stats does not preserve the active run telemetry removed from the menu');
-  // Ruleset 7 made the draw row the one per-turn draw, solo and co-op alike;
+  // Ruleset 7 made the draw row the one per-turn draw;
   // only a run born before it still reads two meanings, and says which.
-  assert(/This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value\./.test(projection),
+  assert(/This run was born before the hand rows: its fights draw by its hand rules\./.test(projection),
     'projection does not state the pre-ruleset-7 draw meaning');
 });
 

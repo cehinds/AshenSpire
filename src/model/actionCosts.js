@@ -324,7 +324,7 @@ function withFundedRestores(effects, funded) {
 
 /**
  * The part of a card's price its own restores pay (owner, 2026-10-13): { stamina, mana }. The engine's one card
- * pricing (combat.js resolvedCardPlayCosts, coopCombat.js) charges the price less this, and the restore op gives back
+ * pricing (combat.js resolvedCardPlayCosts) charges the price less this, and the restore op gives back
  * its amount less its `funded` part, so a break-even restore card is castable at 0 of that pool and changes it by 0.
  */
 export function ownRestoreFunds(def) {

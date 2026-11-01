@@ -522,7 +522,7 @@ function derivedRowNote(id) {
   if (id === 'poise') return ' Armour and relic Poise add on top.';
   if (id === 'draw') return ' Cards drawn at the start of each turn after the first (a fixed draw), never past the hand size.';
   if (id === 'openingHand') return ' Cards drawn when a fight begins, never past the hand size. Each class opens on its own base and attribute (the per-class rows); the shared Base and weights apply only to a fight with no class.';
-  if (id === 'handSize') return ' The most cards a hand holds, in solo and co-op alike.';
+  if (id === 'handSize') return ' The most cards a hand holds.';
   return '';
 }
 

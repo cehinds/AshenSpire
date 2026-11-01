@@ -2,9 +2,9 @@ import { gameModule, gameContent } from '../model/gameProfile.js';
 // src/engine/actmap.js — the ONE act-boot path: generate the act's map, then
 // pre-roll every unknown (?) node (EldenSpire#54).
 //
-// WHY THIS FILE EXISTS. This sequence used to live three times — main.js
-// buildActMap(), tools/runsim.mjs's per-act loop, tools/session.mjs buildMap()
-// — three copies of one fact with nothing checking they agree. When
+// WHY THIS FILE EXISTS. This sequence used to live in several places — main.js
+// buildActMap(), tools/runsim.mjs's per-act loop and a session builder
+// — several copies of one fact with nothing checking they agree. When
 // resolveUnknownNode grew its required `act` argument, the change reached
 // main.js and neither harness: the game was fine while the completability
 // evidence machine exited 1 on every run (fix/harness-act-plumbing, 5caf115).

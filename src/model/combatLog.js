@@ -62,7 +62,7 @@ function nameLookup({ registries, players = [], enemies = [] }) {
   return id => names.get(id) || (id === 'player' ? 'Forsaken' : 'Enemy');
 }
 
-/** The log's own words for one combatReactionUnavailable, without the co-op seat prefix. */
+/** The log's own words for one combatReactionUnavailable, without a seat prefix. */
 export function reactionUnavailableNote(event, { registries, players = [], enemies = [] } = {}) {
   if (event.type === 'combatRangeReturnUnavailable') return rangeReturnUnavailableText(event);
   if (event.type === 'combatRangeActionUnavailable') return rangeActionUnavailableText(event);
@@ -102,7 +102,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
   let round = 1;
   events.forEach((event, id) => {
     if (event.type === 'playerTurnStart' && Number.isSafeInteger(event.turn)) round = Math.max(round, event.turn);
-    // Seats first: in co-op every player entity is 'player', and the seat id tells them apart.
+    // Seats first: where several players share one fight every player entity is 'player', and the seat id tells them apart.
     const sourceKey = event.sourcePlayerId || event.sourceId || event.playerId;
     const targetKey = event.targetPlayerId || (event.targetId === 'player' ? event.playerId || event.sourcePlayerId || 'player' : event.targetId);
     const source = name(sourceKey);
@@ -117,7 +117,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       const card = row(registries?.cards, event.cardId)?.name;
       if (card) return { actorKey: sourceKey, label: card };
       if (event.moveId) return { actorKey: sourceKey, label: moveName(event.sourceId, event.moveId) };
-      // A trigger's owner, by seat when it is this event's target or source (co-op players are all 'player').
+      // A trigger's owner, by seat when it is this event's target or source (a multi-seat fight's players are all 'player').
       if (origin?.id) return { actorKey: origin.ownerId === event.targetId ? targetKey : origin.ownerId === event.sourceId ? sourceKey : origin.ownerId,
         label: originName(registries, origin) };
       if (event.statusId) return { actorKey: null, label: `${statusName(registries, event.statusId)} flux` };

@@ -7,8 +7,8 @@
 // class owns no stance is offered the card's own class's stances, so a card
 // carried across classes still has something to choose. The choice rides the
 // play intent (`choice`), the same way a target does, and the engine refuses a
-// play without a legal one before anything is spent. Solo (engine/combat.js),
-// co-op (engine/coopCombat.js) and the screens all read this one function.
+// play without a legal one before anything is spent. The engine (engine/combat.js)
+// and the screens all read this one function.
 
 /** The closed set of choice selectors an `enterStance` effect may carry. */
 export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance','maneuver']);
