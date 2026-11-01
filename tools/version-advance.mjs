@@ -101,23 +101,25 @@ export function reconcileCuts(runs, current) {
     const prev = byNumber.filter((r) => r.branch === branch && r.number < number).pop();
     return prev ? prev.sha : null;
   };
-  const seen = new Set([`${current.branch} ${current.sha}`]);
-  const out = [];
+  // The ordered list of earlier unrecorded runs: by run number, de-duplicated on branch+sha,
+  // keeping the EARLIEST occurrence and its own predecessor as `before`.
+  const seen = new Set();
+  const list = [];
   for (const r of byNumber) {
     const key = `${r.branch} ${r.sha}`;
     if (r.number >= current.number || r.conclusion === 'success') continue;
     if (!/^(release|main)$/.test(r.branch) || seen.has(key)) continue;
     seen.add(key);
     const b = beforeOf(r.branch, r.number);
-    out.push({ branch: r.branch, sha: r.sha, before: b === r.sha ? null : b });
+    list.push({ branch: r.branch, sha: r.sha, before: b === r.sha ? null : b });
   }
-  // The current event knows its own before (github.event.before); fall back to the list.
-  // A dispatch of an unchanged head that a failed push run already carried takes that push's
-  // before (its own head is not a predecessor); a before equal to the sha is unknown.
-  const same = byNumber.find((r) => r.branch === current.branch && r.sha === current.sha && r.number < current.number);
-  let before = current.before ?? (same ? beforeOf(same.branch, same.number) : beforeOf(current.branch, current.number));
+  // The current cut stays where it is when an earlier run already carried it (a dispatch
+  // reselecting that head); otherwise it comes last, with its own before (github.event.before)
+  // or the branch's previous head from the list. A before equal to the sha is unknown.
+  if (seen.has(`${current.branch} ${current.sha}`)) return list;
+  let before = current.before ?? beforeOf(current.branch, current.number);
   if (before === current.sha) before = null;
-  return [...out, { branch: current.branch, sha: current.sha, before }];
+  return [...list, { branch: current.branch, sha: current.sha, before }];
 }
 
 /** The commit subject the workflow writes. One home for the format. */

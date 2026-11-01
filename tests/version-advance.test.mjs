@@ -127,7 +127,7 @@ test('reconcile: only earlier lost runs are applied, in order, current last', ()
     ['r0', 'm0', 'r2', 'm1', 'r3']);
   // De-duplicates on branch+sha, and keeps the same sha on two branches as two cuts.
   assert.deepEqual(pick(reconcileCuts([r(1, 'release', 'x', 'cancelled'), r(2, 'release', 'x', 'failure'), r(3, 'main', 'x', 'cancelled')], { number: 5, branch: 'release', sha: 'x' })),
-    [{ branch: 'main', sha: 'x' }, { branch: 'release', sha: 'x' }]);
+    [{ branch: 'release', sha: 'x' }, { branch: 'main', sha: 'x' }]); // the current cut keeps its earliest run's position
 });
 
 test('reconcile: each cut carries the branch\'s previous push head as its before', () => {
@@ -183,4 +183,22 @@ test('reconcile: a dispatch of a failed push head keeps that push\'s before; bef
   const lone = reconcileCuts([r(10, 'main', 'B', 'failure')], { number: 11, branch: 'main', sha: 'B' });
   assert.equal(lone[0].before, null);
   assert.equal(reconcileCuts([], { number: 1, branch: 'main', sha: 'B', before: 'B' })[0].before, null);
+});
+
+test('reconcile (property): order follows original run numbers, no duplicates, each before is its predecessor', () => {
+  for (let n = 1; n <= 4; n++) {
+    for (let mask = 0; mask < (1 << n); mask++) {
+      const runs = Array.from({ length: n }, (_, i) => ({ number: i + 1, branch: (mask >> i) & 1 ? 'main' : 'release', sha: `s${i + 1}`, conclusion: 'failure' }));
+      const pred = (i) => runs.slice(0, i).reverse().find((r) => r.branch === runs[i].branch)?.sha ?? null;
+      const expected = runs.map((r, i) => ({ branch: r.branch, sha: r.sha, before: pred(i) }));
+      // A new push comes last with its own before.
+      for (const branch of ['release', 'main']) {
+        const prev = [...runs].reverse().find((r) => r.branch === branch)?.sha ?? null;
+        assert.deepEqual(reconcileCuts(runs, { number: n + 1, branch, sha: 'new', before: prev }), [...expected, { branch, sha: 'new', before: prev }]);
+        assert.deepEqual(reconcileCuts(runs, { number: n + 1, branch, sha: 'new' }).at(-1), { branch, sha: 'new', before: prev });
+      }
+      // A dispatch reselecting any earlier head leaves the list as is.
+      for (const r of runs) assert.deepEqual(reconcileCuts(runs, { number: n + 1, branch: r.branch, sha: r.sha }), expected, `n=${n} mask=${mask} ${r.sha}`);
+    }
+  }
 });
