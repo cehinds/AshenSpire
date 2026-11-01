@@ -1,9 +1,10 @@
 # content/source/equipSlots.csv — what you can wear and when you can change it.
 #
 # Slots are data so the layout is not welded into the UI: add a row, get a
-# slot. `sets` is how many switchable loadouts that slot carries (the Right
-# Hand's three sets are three weapons you cycle between, as in an armament
-# rack). `swap` is the rule the engine enforces:
+# slot. `sets` is how many switchable loadouts that slot carries (hands carry
+# one since 2026-11-01, so there is no second or third weapon set to cycle to;
+# raise it and add `slot` rungs in unlocks.csv to bring a rack back).
+# `swap` is the rule the engine enforces:
 #
 #   combat        may be switched mid-fight, at balance.equipment.swapCost
 #   outOfCombat   may only be changed on the map, at rest, or in a shop
@@ -21,8 +22,8 @@
 #          A slot that accepts pieces naming a hand must name one itself, or
 #          validateEquipment() fails by name at that row.
 id,label,positionLabel,positionCode,kinds,hand,sets,swap,storage,order,blurb
-rightHand,Main Hand,Main Hand Slot {n},MH{n},weapon|shield|staff,right,3,combat,true,1,"Your active main-hand armament. Rewrites Strike."
-leftHand,Off Hand,Off Hand Slot {n},OH{n},weapon|shield|staff,left,3,combat,true,2,"Your active off-hand armament. Rewrites Defend."
+rightHand,Main Hand,Main Hand Slot {n},MH{n},weapon|shield|staff,right,1,combat,true,1,"Your active main-hand armament. Rewrites Strike."
+leftHand,Off Hand,Off Hand Slot {n},OH{n},weapon|shield|staff,left,1,combat,true,2,"Your active off-hand armament. Rewrites Defend."
 armor,Armour,Armour Slot {n},BODY,armor,,1,outOfCombat,false,3,"Your set. Repaints you and steadies the numbers."
 head,Head,Head Slot {n},HEAD,head,,1,outOfCombat,false,4,"What you wear on your head. Empty until head pieces are authored."
 hands,Hands,Hands Slot {n},HANDS,hands,,1,outOfCombat,false,5,"What you wear on your hands. Empty until hand pieces are authored."
