@@ -12,7 +12,7 @@ export function applyAbilityGrade(card, rank) {
   const profile = card.gradeProfiles.find(row => row.rank === chosen);
   if (!profile) throw new Error(`${card.id}: missing authored ability grade ${chosen}`);
   return { ...card, cost: profile.actionCost, manaCost: profile.manaCost,
-    effects: profile.effects, ...(profile.textTemplate ? { textTemplate: profile.textTemplate } : {}), ...(profile.traits || {}), abilityRank: chosen };
+    effects: profile.effects, ...(profile.textTemplate ? { textTemplate: profile.textTemplate } : {}), ...(profile.faceTemplate ? { faceTemplate: profile.faceTemplate } : {}), ...(profile.traits || {}), abilityRank: chosen };
 }
 // Migration is authored, never a guessed 1..10 -> 0..5 conversion. An absent
 // mapping keeps the old instance and resolves its old printed face.

@@ -1152,6 +1152,7 @@
           }
         ],
         "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
+        "faceTemplate": ["Gain {base.foresight} Foresight.", "Draw {draw} cards."],
         "icon": "skill",
         "flavor": "An exercise of the Observatory's night students.\n\nApprentices watched a candle's reflection through a bowl of dark water before they were allowed near the lenses. The practice taught them to notice a movement before seeking its cause. Few saw farther than the next breath.\n\nThat breath was sometimes sufficient."
       },
@@ -3079,6 +3080,7 @@
           }
         ],
         "textTemplate": "Choose an exhausted card to return to hand.",
+        "faceTemplate": ["Return 1 exhausted card."],
         "icon": "shield",
         "flavor": "An old retrieval practiced at the Observatory's refuse stair.\n\nBroken instruments were cast into a pit beneath the workshops. Poor apprentices climbed down for pieces the masters considered spent. Sometimes a discarded lens revealed a star the great glass had missed for an entire season.\n\nThe refuse retained its own small light."
       },

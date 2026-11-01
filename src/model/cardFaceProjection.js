@@ -88,7 +88,19 @@ function authoredClauses(html) {
 }
 
 /** At most two whole qualified clauses; omitted facts remain in Information. */
-export function cardFaceProjection(def, { lines = null, authoredHtml = '', registries = null, effects = def.effects || [] } = {}) {
+export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceHtml = null, registries = null, effects = def.effects || [] } = {}) {
+  const projection = computedFaceProjection(def, { lines, authoredHtml, registries, effects });
+  // The Inspect cue is a last resort: a card that authors a `faceTemplate` says its main effect in place of it
+  // (owner, 2026-11-01). Downsides the computed face reserved (Exhaust, a payment) stay ahead of the summary.
+  if (faceHtml?.length && projection.clauses.some(clause => clause.kind === 'detail')) {
+    const downsides = projection.clauses.filter(clause => clause.kind !== 'detail' && (clause.kind === 'cost' || COST_RE.test(plain(clause.html))));
+    const summary = faceHtml.map(html => ({ kind: 'effect', html }));
+    return { ...projection, clauses: [...downsides, ...summary].slice(0, FACE_EFFECT_CLAUSES), omitted: true };
+  }
+  return projection;
+}
+
+function computedFaceProjection(def, { lines, authoredHtml, registries, effects }) {
   let candidates = lines ? lines.map(line => ({ ...line, ...('faceHtml' in line ? { faceHtml: undefined } : {}),
     // Entry bonuses and the Defend restore are stance explanations, outside
     // the ordinary effect budget. Their complete reading stays in Information.
