@@ -37,3 +37,11 @@ export function recordWeaknessDiscoveries(ledger, events, enemies) {
   }
   return changed;
 }
+
+/** Run `preview(target, ...args)` with only the discovered weaknesses on the target's enemies, then restore every row.
+ *  A card preview must not use or name an undiscovered weakness; real resolution never goes through here. */
+export function withDiscoveredWeaknessesOnly(preview, target, ledger, ...args) {
+  const held = (target.enemies || []).filter(enemy => Array.isArray(enemy.weaknesses)).map(enemy => [enemy, enemy.weaknesses]);
+  for (const [enemy] of held) enemy.weaknesses = discoveredWeaknesses(enemy.weaknesses, ledger, enemy.enemyId);
+  try { return preview(target, ...args); } finally { for (const [enemy, rows] of held) enemy.weaknesses = rows; }
+}

@@ -91,3 +91,43 @@ test('the inspector and bestiary rows follow the same discovery gate', () => {
   assert.deepEqual(names().filter(name => name.startsWith('Weak to')), weaknessTraitRows([enemy.weaknesses[0]]).map(row => row.name));
   assert.ok(!projectEnemyKnowledge(def, record, { registries: reg, weaknesses: [] }).traits.some(row => row.name.startsWith('Weak to')), 'the bestiary passes none');
 });
+
+import { readFileSync } from 'node:fs';
+import { previewCard } from '../src/engine/combat.js';
+import { withDiscoveredWeaknessesOnly } from '../src/model/weaknessDiscovery.js';
+
+// The first hand card whose preview against the soldier names its weakness (the soldier is weak to blunt; the reaver's attacks hit blunt or slashing).
+function previewsAgainst(ledger) {
+  const run = newRun(), combat = fight(run), enemy = combat.enemies[0];
+  enemy.weaknesses = ['blunt', 'slashing', 'piercing'].map(to => ({ to, effect: 'damage', amount: 25 }));
+  const before = JSON.stringify(enemy.weaknesses);
+  const out = combat.piles.hand.map(card => {
+    const shown = withDiscoveredWeaknessesOnly(previewCard, combat, ledger, card.instanceId, enemy.id);
+    return JSON.stringify(shown);
+  });
+  assert.equal(JSON.stringify(enemy.weaknesses), before, 'every row is restored after a preview');
+  return out;
+}
+test('a card preview names and uses no undiscovered weakness; a discovered one appears with its bonus', () => {
+  const hidden = previewsAgainst({});
+  assert.ok(!hidden.some(text => text.includes('Weak to')), 'undiscovered: no "Weak to" line');
+  const all = ['blunt', 'slashing', 'piercing'].map(to => `${to}:damage`);
+  const shown = previewsAgainst({ wanderingSoldier: all });
+  assert.ok(shown.some(text => text.includes('Weak to')), 'discovered: the line shows');
+  const total = text => [...text.matchAll(/"totalDamage":(\d+)/g)].map(m => Number(m[1]));
+  const base = hidden.flatMap(total), seen = shown.flatMap(total);
+  assert.ok(seen.some((value, i) => value > base[i]), 'discovered: the previewed number carries the bonus');
+});
+
+test('real resolution still applies an undiscovered weakness, and combat.js keeps discovery wired', () => {
+  const run = newRun(), combat = fight(run), enemy = combat.enemies[0];
+  enemy.weaknesses = [{ to: 'blunt', effect: 'damage', amount: 25 }];
+  withDiscoveredWeaknessesOnly(() => assert.equal(enemy.weaknesses.length, 0), combat, {});
+  assert.equal(enemy.weaknesses.length, 1, 'the live fight keeps its rows');
+  // The screen is DOM-and-browser bound (tests/*.browser.mjs), so guard its wiring by source: the enemy paint syncs the
+  // ledger before it reads it, and every card preview goes through the discovery-gated wrapper.
+  const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(screen, /syncWeaknessDiscovery\(\);\s*\n\s*for \(const enemy of combat\.enemies\) \{/, 'the enemy paint calls syncWeaknessDiscovery before drawing chips');
+  assert.match(screen, /createPreviewMemo\(\{ combat, preview: previewWithKnownWeaknesses,/, 'previews are discovery-gated');
+  assert.match(screen, /recordWeaknessDiscoveries\(run\.weaknessDiscovery \|\|= \{\}, combat\.eventLog\.slice\(/, 'the ledger is fed from the event log');
+});

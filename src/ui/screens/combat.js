@@ -139,7 +139,7 @@ import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { weaknessChips } from '../components/weaknessChips.js';
-import { discoveredWeaknesses, recordWeaknessDiscoveries } from '../../model/weaknessDiscovery.js';
+import { discoveredWeaknesses, recordWeaknessDiscoveries, withDiscoveredWeaknessesOnly } from '../../model/weaknessDiscovery.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -221,7 +221,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     () => playerSprite(customization, classId, configuredArt ? 'default' : armourId, presentation), { enemy: false });
   const profileEnemySprite = (definition, entity) => profileArt(
     () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
-  const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
+  // Weakness discovery (SPEC 5.3): a card preview must not use, or name, a weakness the player has not discovered. The preview runs on
+  // the fight with only the discovered rows in place (restored at once); real resolution keeps every row, which is how it is found.
+  const knownWeaknesses = enemy => discoveredWeaknesses(enemy.weaknesses, run.weaknessDiscovery, enemy.enemyId);
+  const previewWithKnownWeaknesses = (target, ...args) => withDiscoveredWeaknessesOnly(enginePreviewCard, target, run.weaknessDiscovery, ...args);
+  const previewMemo = createPreviewMemo({ combat, preview: previewWithKnownWeaknesses, dispatch: engineDispatch });
   const { dispatch, previewCard: memoPreviewCard } = previewMemo;
   // An enemy's projected intent reads only the fight, so it is kept like a preview until the next change.
   const projectCombatIntent = (target, enemyId) => target === combat
@@ -998,9 +1002,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let weaknessScanned = 0;
   const syncWeaknessDiscovery = () => {
     const upTo = disp?.logLength ?? combat.eventLog.length;
-    if (upTo > weaknessScanned) { recordWeaknessDiscoveries(run.weaknessDiscovery ||= {}, combat.eventLog.slice(weaknessScanned, upTo), combat.enemies); weaknessScanned = upTo; }
+    if (upTo > weaknessScanned) {
+      // A new discovery changes what a preview may show, so the kept previews are dropped.
+      if (recordWeaknessDiscoveries(run.weaknessDiscovery ||= {}, combat.eventLog.slice(weaknessScanned, upTo), combat.enemies)) previewMemo.invalidate();
+      weaknessScanned = upTo;
+    }
   };
-  const knownWeaknesses = enemy => discoveredWeaknesses(enemy.weaknesses, run.weaknessDiscovery, enemy.enemyId);
   // The "?" row survives the playback record: a reaction window opens mid-turn with `disp` cleared, and the resumed
   // dispatch snapshots again. The plan and the row on screen stay here, per enemy, until the turn ends.
   const followMemo = createFollowMemo();
