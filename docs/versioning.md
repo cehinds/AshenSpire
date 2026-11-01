@@ -13,8 +13,8 @@ lives only in `src/content/index.js` (`contentBundle.version`), and
 | Segment | Who moves it | How |
 |---|---|---|
 | MAJOR | Constantine (Tier 2 decision) | hand-edit the one home, via PR |
-| MINOR | Constantine, proposed in the delivering PR | advanced by the PR that follows a `release` → `main` merge |
-| CANDIDATE (third component) | Constantine, proposed in the delivering PR | advanced by the PR that follows a `test` → `release` cut |
+| MINOR | nobody — `version-advance.yml` | advanced automatically by version-advance.yml on a push to `main` (`release` → `main`); candidate resets to 0 |
+| CANDIDATE (third component) | nobody — `version-advance.yml` | advanced automatically by version-advance.yml on a push to `release` (the `test` → `release` cut) |
 | ordinal | nobody — `tools/bundle.mjs` writes `buildordinal.json` | derived, every rebuild |
 | digest | nobody — derived from the covered source set | derived, every rebuild |
 
@@ -40,7 +40,8 @@ line in the PR body ("Version: no bump" / "Version: 0.7.2 after the 0.7.1.1848 c
 ```
 
 Rules 2 and 3 move MINOR and the candidate by branch events, not by PR content
-(owner, 2026-10-30); see the two bullets under *Release candidates*.
+(owner, 2026-10-30), and since 2026-11-01 `version-advance.yml` makes the move,
+not a PR; see the two bullets under *Release candidates*. A PR never hand-bumps.
 
 Rule 4 is why #508 (the whole framework candidate) and #509 (the first port
 tranche) did not move `0.4.0`: both are proven behavior-preserving, so the
@@ -69,7 +70,7 @@ The answer is semver's own pre-release segment, not a bent ladder:
   this is its first candidate"; it orders BELOW `0.5.0`, so the final stamp
   still marks the milestone (the cutover gate SUCCESS) and nothing is
   claimed early.
-- **`rc.<n>` advances when the owner names a new candidate for QA** (historical; since 2026-10-30 the candidate advances by the PR after each release cut) — every
+- **`rc.<n>` advances when the owner names a new candidate for QA** (historical; since 2026-11-01 version-advance.yml advances the candidate on each release cut) — every
   candidate QA receives is distinguishable by its stamp, and the ordinal keeps
   ordering builds within it. It once advanced at every `dev → test` promotion;
   since 2026-09-26 every session promotes `dev` to `test` after each merge
@@ -83,13 +84,15 @@ The answer is semver's own pre-release segment, not a bent ladder:
   owner-exclusive). The cut advances the CANDIDATE (third component) for the
   line that follows (see "A release cut advances the candidate" below); MINOR
   moves when `release` merges to `main`. Nothing else removes it.
-- **A main merge advances the minor (owner, 2026-10-30).** When `release` is
-  merged to `main`, the PR that follows the merge moves the MINOR (second
+- **A main merge advances the minor (owner, 2026-10-30; automatic since 2026-11-01).** When `release` is
+  merged to `main`, `.github/workflows/version-advance.yml` commits to `dev`
+  that moves the MINOR (second
   component) in `contentBundle.version` by one and resets the candidate to `0`,
   so the next build reads `<major>.<minor+1>.0.0`. Example: after 0.7.x reaches
   `main`, the next build is 0.8.0.0. MAJOR stays the owner's Tier 2 decision.
-- **A release cut advances the candidate (owner, 2026-10-30).** When `test` is
-  cut to `release`, the PR that follows the cut moves the candidate (third
+- **A release cut advances the candidate (owner, 2026-10-30; automatic since 2026-11-01).** When `test` is
+  cut to `release`, `.github/workflows/version-advance.yml` commits to `dev`
+  that moves the candidate (third
   component) in `contentBundle.version` by one, so the next build after the
   release reads `<major>.<minor>.<candidate+1>.0`; `bumpOrdinal` restarts the
   tail on its own. Example: 0.7.1.1848 was released on 2026-10-25 (PR #2316,
@@ -222,7 +225,21 @@ Saves are not invalidated by a stamp change: on load, a run whose
 `contentVersion` differs is re-stamped when every id it holds still resolves,
 and archived with a named reason only when one does not (`engine/save.js`).
 
-## Mechanics of a bump (one PR, one commit sequence)
+## The automatic bump (owner, 2026-11-01)
+
+`.github/workflows/version-advance.yml` runs on a push to `release` (candidate
++1, tail to 0: 0.7.2.93 → 0.7.3.0) or to `main` (MINOR +1, candidate and tail to
+0: 0.7.3.x → 0.8.0.0). It runs `tools/version-advance.mjs`, which rewrites only
+the `version:` literal and the `// version-advance:` marker beside it in
+`src/content/index.js` (plus the `SERIES` constant in `tools/release-series.mjs`
+on a minor bump), then writes the box through `bumpOrdinal`, which restarts the
+ordinal at 0. It commits to `dev` as `version-advance: <triple> after
+<release|main> <source sha> [version-advance]`. A commit on `dev` that already
+records the source sha stops a re-run, and a push of bot commits alone is not a
+cut. A session never hand-edits the triple for these two events. MAJOR stays
+a hand edit.
+
+## Mechanics of a hand bump (MAJOR only now; one PR, one commit sequence)
 
 1. Edit `contentBundle.version` in `src/content/index.js` — the only edit.
 2. Add the CHANGELOG receipt naming the PR and, per convention, the ordinal

@@ -48,12 +48,13 @@ pull requests into `dev` opened ready for review, and only the owner merging to
 `main` — live in CONTRIBUTING.md under *Coordination and release boundary*,
 *Branch model* and *Commits & PRs*.)
 
-**Release numbering** (owner, 2026-10-31): after every release cut the third number of the
-version goes up by one and the fourth (the build ordinal) restarts at 0, so after a
-`0.7.2.<n>` release the next builds are `0.7.3.0`, `0.7.3.1`, … The PR that follows the
-`test` → `release` cut advances the candidate in `src/content/index.js` (CONTRIBUTING.md, *A pull request is not done…*;
-docs/versioning.md); `tools/buildversion.mjs` restarts the ordinal at 0 when it sees the new
-candidate. Never skip that PR.
+**Release numbering** (owner, 2026-10-31; automated 2026-11-01): the bump is automatic. A merge
+to `release` (the `test` → `release` cut) raises the third number by one and restarts the fourth
+(the build ordinal) at 0, so after `0.7.2.93` comes `0.7.3.0`; a merge of `release` to `main`
+raises the second number by one and resets the third and fourth to 0, so `0.7.3.x` is followed by
+`0.8.0.0`. `.github/workflows/version-advance.yml` does it, committing to `dev`
+(docs/versioning.md, *The automatic bump*). A session must not hand-bump the triple in
+`src/content/index.js` for either event, and there is no bump PR to open. MAJOR stays a hand edit.
 
 **Never commit built HTML on `dev`** (`AshenSpire.html`, `AshenSpire-mobile.html`,
 `build/*.html`, `dist/*.html`). It exhausted the Git LFS budget; it is ignored,
