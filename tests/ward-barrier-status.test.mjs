@@ -115,3 +115,38 @@ test('Mote Shield gains Block, Barrier and Ward, and says so', () => {
   const up = def.upgrade.effects.map(e => `${e.op}:${e.status || ''}:${e.amount ?? e.stacks ?? ''}`);
   assert.ok(up.includes('applyStatus:barrier:2')); assert.ok(up.includes('applyStatus:ward:2'), up.join());
 });
+
+test('the roll log shows where a warded hit went: Poise first, then Block, then HP', async () => {
+  const { combatLogEntries } = await import('../src/model/combatLog.js');
+  const enemies = [{ id: 'e1', enemyId: 'graveWisp' }];
+  const [line] = combatLogEntries([{ type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 3, blockRemaining: 0,
+    poiseAbsorbed: 4, poiseRemaining: 0, wardRouted: true }], { enemies }).map(row => row.text);
+  assert.match(line, /Ward: Poise absorbed 4 \(4 → 0\), Block absorbed 3 \(3 → 0\)/);
+  assert.match(line, /3 HP dealt\.$/);
+});
+
+test('a live warded hit reports wardRouted, Poise, Block and HP on damageDealt', () => {
+  const combat = liveCore(), target = combat.enemies[0];
+  Object.assign(target, { block: 3, persistentWard: null, persistentPoise: { value: 4, max: 20 }, gameProfilePoise: 0, statuses: { ward: { stacks: 1 } } });
+  delete target.combatStance; delete target.weaknesses;
+  target.hp = target.maxHp = 100;
+  const start = combat.eventLog.length;
+  A.applyAttackDamage(combat, combat.player, target, 10, [], { ...physical, skipRatingBonus: true });
+  const hit = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === target.id);
+  assert.ok(hit, 'a damageDealt event');
+  assert.equal(hit.wardRouted, true);
+  assert.equal(hit.poiseAbsorbed, 4);
+  assert.equal(hit.blocked, 3);
+  assert.equal(100 - target.hp, 3, 'the rest reaches HP');
+});
+
+test('old saves: a combat snapshot holding the numeric barrier loads and drops it', async () => {
+  const { serializeCombatSnapshot, restoreCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
+  const combat = liveCore();
+  combat.player.barrier = 7; combat.enemies[0].barrier = 3;
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries: reg, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
+  assert.equal('barrier' in restored.player, false, 'the old pool is dropped');
+  assert.equal('barrier' in restored.enemies[0], false);
+  assert.equal(restored.player.hp, combat.player.hp);
+});
