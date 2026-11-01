@@ -1104,6 +1104,15 @@
       ]
     },
     {
+      "id": "status.bedrock",
+      "tag": "status.bedrock",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.bleed",
       "tag": "status.bleed",
       "family": "status",
@@ -1207,6 +1216,15 @@
     {
       "id": "status.crimsonBlight",
       "tag": "status.crimsonBlight",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.damp",
+      "tag": "status.damp",
       "family": "status",
       "portability": "legacy",
       "modules": [
@@ -1549,6 +1567,15 @@
     {
       "id": "status.sanguinePact",
       "tag": "status.sanguinePact",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.shocked",
+      "tag": "status.shocked",
       "family": "status",
       "portability": "legacy",
       "modules": [

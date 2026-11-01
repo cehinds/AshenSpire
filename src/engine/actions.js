@@ -1,4 +1,3 @@
-import { dealElementalHit } from './elementLightning.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
@@ -83,6 +82,7 @@ import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCa
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
+import { dealElementalHit } from './elementLightning.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)

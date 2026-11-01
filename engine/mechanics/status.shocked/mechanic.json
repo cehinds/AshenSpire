@@ -1,0 +1,26 @@
+{
+  "id": "status.shocked",
+  "tag": "status.shocked",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Shocked",
+  "description": "Each stack is -1 Precision. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.shocked"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementLightning.js",
+    "symbol": "shockContestPreview"
+  }
+}
