@@ -107,6 +107,21 @@ jobs:
           echo "Cuts to reconcile, oldest first:"; cat "$RUNNER_TEMP/cuts"
 
           pushed=0
+          recorded=0
+          # dev-preview for the tip, three tries (2 and 4 seconds of backoff), as build-stamp does.
+          dispatch_preview() {
+            local try
+            for try in 1 2 3; do
+              if gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref dev; then
+                echo "Dispatched dev-preview on dev (try $try)."
+                return 0
+              fi
+              echo "dev-preview dispatch failed (try $try)."
+              if [ "$try" -lt 3 ]; then sleep $((2 ** try)); fi
+            done
+            echo "::error::dev-preview could not be dispatched for dev after 3 tries. Rerun this workflow to dispatch it."
+            return 1
+          }
           while read -r branch src_sha <&3; do
             case "$branch" in
               release) kind=candidate ;;
@@ -135,6 +150,7 @@ jobs:
               if node tools/version-advance.mjs --done "$branch" "$src_sha"; then
                 echo "dev already records version-advance for $branch $src_sha."
                 done_here=1
+                recorded=1
                 break
               fi
 
@@ -168,6 +184,8 @@ jobs:
           # No push-triggered run starts from GITHUB_TOKEN, so build the new tip the way
           # build-stamp does. A failure fails the job; the commits are already on dev, and a
           # rerun stops at the idempotence guard without bumping again.
-          if [ "$pushed" = "1" ]; then
-            gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref dev
+          # A RERUN WHOSE PUSH LANDED BUT WHOSE DISPATCH FAILED finds every cut recorded and
+          # pushes nothing, so it dispatches here too (build-stamp's no-diff recovery).
+          if [ "$pushed" = "1" ] || [ "$recorded" = "1" ]; then
+            dispatch_preview
           fi
