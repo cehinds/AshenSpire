@@ -2915,7 +2915,7 @@ function checkWardOffTemplate(card, path, err) {
 function checkFaceTemplate(card, path, err) {
   const sets = [[`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects(card)]];
   if (card.upgrade?.effects) sets.push([`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects({ effects: card.upgrade.effects, onTurnEndInHand: card.onTurnEndInHand })]);
-  for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate ?? card.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
   for (const [at, lines, effects] of sets) {
     if (lines === undefined) continue;
     if (!Array.isArray(lines) || lines.length < 1 || lines.length > 2) { err(at, 'must be one or two short lines'); continue; }

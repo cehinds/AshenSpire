@@ -2231,7 +2231,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies {hits} times.",
-    "faceTemplate": ["{damage} damage to all, {hits}×."],
+    "faceTemplate": ["{damage} to all, {hits}×."],
     "upgrade": {
       "effects": [
         {

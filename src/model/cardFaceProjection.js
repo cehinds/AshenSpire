@@ -97,6 +97,9 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
     const named = text => (text.match(/\b(?:take|lose|exhaust|discard|ethereal|unplayable|pay|offer|skip)\b|\bone play\b/gi) || [])
       .every(word => summaryText.includes(word.toLowerCase().split(' ')[0]));
     if (!(projection.hiddenDownsides || []).every(named)) return projection;
+    // Mandatory downsides read from the effects themselves, not only from the face clauses.
+    const required = (effects || []).filter(effect => effect && !effect.if && ['discard', 'loseHp'].includes(effect.op)).map(effect => effect.op === 'discard' ? 'discard' : 'lose');
+    if (!required.every(word => summaryText.includes(word) || (word === 'lose' && /offer|pay/.test(summaryText)) || projection.clauses.some(clause => plain(clause.html).toLowerCase().includes(word)))) return projection;
     const downsides = projection.clauses.filter(clause => clause.downside || clause.kind === 'cost');
     // A reserved clause may already carry part of the payoff ("Heal 8 HP, Exhaust, Retain"): a summary line it contains is dropped.
     const wordsOf = html => new Set((plain(html).toLowerCase().match(/[\p{L}\p{N}%+]+/gu) || []).filter(word => !/^cards?$/.test(word)));

@@ -97,3 +97,25 @@ test('an upgraded card summary never states a base-only number', () => withKitDo
     assert.ok(face.some(line => /discard/i.test(line)), `rank ${abilityRank}: ${face.join(' | ')}`);
   }
 }));
+
+test('a summary that does not name a payment the face could not carry leaves the cue', () => {
+  const lines = [{ kind: 'cost', html: 'Pay 2 HP. Discard 1. Offer 1 HP' }, { kind: 'damage', html: 'Inflict 9 Fire damage' }];
+  assert.deepEqual(cardFaceProjection({}, { lines, faceHtml: ['Deal 9 Fire damage'] }).clauses.map(line => line.html), ['Inspect full effect']);
+  // A summary that says the payments itself may stand in for the cue.
+  const named = cardFaceProjection({}, { lines, faceHtml: ['Pay 2 HP, discard 1, offer 1 HP', 'Deal 9 Fire damage'] });
+  assert.ok(named.clauses.every(line => line.kind !== 'detail'));
+});
+
+test('a summary reads uneven hit damage from the preview, not the base number', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  const proto = Object.getPrototypeOf(dom.document.body), descriptor = Object.getOwnPropertyDescriptor(proto, 'innerHTML'), markup = new WeakMap();
+  Object.defineProperty(proto, 'innerHTML', { configurable: true, set(value) { markup.set(this, value); descriptor.set.call(this, value); } });
+  try {
+    const preview = { combatExpansionVersion: 2, tokens: {}, values: [], damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 5], totalDamage: 6 }] };
+    const el = renderCard(reg, { cardId: 'arrowVolley' }, { inspection: false, rules, preview });
+    const text = (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
+    assert.doesNotMatch(text, /Inspect full effect/);
+    assert.match(text, /1 \+ 5/, text);
+    assert.doesNotMatch(text, /\b2\b.*times|×/, text);
+  } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
+}));
