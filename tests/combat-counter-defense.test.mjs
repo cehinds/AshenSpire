@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { persistedEventLog } from '../src/model/runStorage.js';
 import { contentBundle } from '../src/content/index.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -65,7 +66,7 @@ test('saved committed Counter remembers primed defense without replaying it afte
   finishTurn(loaded);
   finishTurn(combat);
   assert.equal(loaded.enemies[0].block, 0);
-  assert.deepEqual(loaded.eventLog, combat.eventLog);
+  assert.deepEqual(persistedEventLog(loaded.eventLog), persistedEventLog(combat.eventLog));
   for (const value of ['true', 1, null]) {
     const malformed = structuredClone(snapshot);
     malformed.enemies[0].intent.counterDefensePrimed = value;
