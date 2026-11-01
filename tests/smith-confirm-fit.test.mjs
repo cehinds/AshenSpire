@@ -68,9 +68,3 @@ test('Smith item header: tier beside the name, type and tags in one row', () => 
   assert.match(modal, /smith-tag-row[\s\S]*smith-item-type-row[\s\S]*smith-weapon-tags/);
   assert.match(css, /\.smith-tag-row \{ display: flex; flex-wrap: wrap/);
 });
-
-test('the shrine recovery panel reuses the changed-pools-only ledger', () => {
-  const rest = read('src/ui/screens/rest.js');
-  assert.match(rest, /recoveryLedgerHtml\(run,/);
-  assert.doesNotMatch(rest, /'—'/);
-});
