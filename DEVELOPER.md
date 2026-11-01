@@ -643,6 +643,28 @@ no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
 and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `tests/debug-banner.test.mjs` holds both edges.
 
+## OpenRouter for dev tools (`tools/lib/openrouter.mjs`)
+
+A zero-dependency, server-side OpenRouter client for Node tools and the Workbench
+server. It must never be imported from `src/` or browser code (the game references
+no AI service; `node tools/ai-disclosure.mjs --check` enforces it).
+
+- Key: `OPENROUTER_API_KEY` in your shell, or in `.env` at the repo root. `.env` is
+  gitignored (`*.env`); never commit the key. `.env.local` is not ignored, so do not use it.
+- Check it: `node tools/openrouter.mjs --check` (prints usage and limit, never the key or its label).
+  Ask a model: `node tools/openrouter.mjs --model <slug> --system "..." "prompt"`.
+- Default model is `$OPENROUTER_MODEL` or `openrouter/auto`.
+
+```js
+import { openRouterKey, chat } from './lib/openrouter.mjs';
+const key = openRouterKey(); // throws a clear message when unset
+const { text } = await chat({ key, messages: [{ role: 'user', content: 'Name a boss.' }] });
+console.log(text);
+```
+
+Browser UIs (Workbench panels) must call a local server route that uses this module,
+never OpenRouter directly, so the key stays on the machine running the server.
+
 ## Deterministic gate: tools/jev.mjs
 
 `node tools/jev.mjs <triage|checks|regen|restamp|devmerge>` is a zero-dependency gate that applies fixed rules before any model sees a failure. `triage [log]` matches a CI or local log against `tools/jev.rules.json` (stale generated files, conflict markers in generated files, receipt order, golden hashes, sparse-checkout ENOENT, runner loss, uistrings and mechanics-generate drift); `checks` runs the fast-check list and triages each failure; `regen` rebuilds every generated file, including the token and HUD-layout CSS projections (config-build and framework-data-build before content-build, which refuses config whose source hashes do not match `src/config/generated/ui.js` and framework JSON with no generated mirror); `restamp` (orchestrator only) re-points a PR's receipt at `buildordinal.json`; `devmerge` merges `origin/dev` into the current branch, resolving the derived files, and never pushes. Each command prints one JSON line (`--human` for text); exit 0 is resolved, 1 is explained with no safe fix, 2 needs a model. To add a rule, append it to the JSON and add a fixture to `tests/jev.test.mjs`. Skill: `.claude/skills/jev/SKILL.md`.
