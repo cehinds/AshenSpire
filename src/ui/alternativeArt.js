@@ -104,9 +104,20 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   if (!scene) return null;
   const mobile = phoneArt();
   const device = scene.devices[mobile ? 'phone' : 'desktop'];
+  const layers = combatSceneLayers(device);
+  // The fill's sources are set when the backdrop is fitted (first paint loads each file once).
+  const image = (layer, attr) => `<image ${attr}="${layer.id}" ${attr === 'data-layer' ? `href="${alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], mobile))}" ` : ''}x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/>`;
+  // Zooming the art out can leave bare edges. `fill` repeats the far sky and the
+  // ground at the old, closer framing, blurred once and static, behind the sharp
+  // layers; `edge` feathers the sharp layers into it only where an edge shows.
+  const fill = layers.filter(layer => ['far', 'ground'].includes(alternativeArtCatalog.sceneLayers[layer.id].kind));
   return `<div class="backdrop alternative-backdrop" data-region="${scene.region}" data-scene="${sceneId}" aria-hidden="true">
     <svg class="alternative-scene" viewBox="0 0 ${device.width} ${device.height}" focusable="false">
-      ${combatSceneLayers(device).map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}"><image data-layer="${layer.id}" href="${alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[layer.id], mobile))}" x="${layer.x}" y="${layer.y}" width="${layer.width}" height="${layer.height}"/></g>`).join('')}
+      <defs><filter id="alternative-scene-fill-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="8"/></filter>
+        <filter id="alternative-scene-edge-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="20"/></filter>
+        <mask id="alternative-scene-edge" maskUnits="userSpaceOnUse" x="-6000" y="-6000" width="14000" height="14000"><rect class="alternative-scene-edge" x="-5000" y="-5000" width="12000" height="12000" fill="#fff" filter="url(#alternative-scene-edge-blur)"/></mask></defs>
+      <g class="alternative-scene-fill" display="none" filter="url(#alternative-scene-fill-blur)">${fill.map(layer => image(layer, 'data-fill-layer')).join('')}</g>
+      <g class="alternative-scene-main">${layers.map(layer => `<g class="alternative-scene-layer" data-depth="${layer.depth}">${image(layer, 'data-layer')}</g>`).join('')}</g>
     </svg></div>${alternativeCardFadeHtml()}`;
 }
 
@@ -134,7 +145,10 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const svg = backdrop.querySelector('svg');
   const framing = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.scene;
   const previewTop = narrow ? fieldTop * .5 : combat.clientHeight * framing.topHeightFraction;
-  const scale = Math.max(width / device.width, (coverFloor ? fieldTop + height - previewTop : height) / device.height);
+  const coverScale = Math.max(width / device.width, (coverFloor ? fieldTop + height - previewTop : height) / device.height);
+  // Combat zooms the art out (owner 2026-11-01: too close, looks pixelated) about
+  // the ground anchor, so the floor stays under the grid where it was.
+  const scale = coverScale * (coverFloor ? framing.backdropZoom ?? 1 : 1);
   // Combat follows the fitted enemies while keeping the floor canvas beneath
   // the entire battlefield; moving it farther up exposes its lower edge.
   // Other callers (dialogue) keep their own floor line.
@@ -147,11 +161,12 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     ? Math.max(framed, height - (1 - device.groundAnchor) * device.height * scale) : framed;
   const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
-    : coverFloor ? previewTop : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
+    : coverFloor ? previewTop + device.groundAnchor * device.height * (coverScale - scale) : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;
-  [...svg.querySelectorAll(':scope > .alternative-scene-layer')].forEach((group, index) => {
+  let groundBottom = Infinity, fillGround = null;
+  [...svg.querySelectorAll('.alternative-scene-layer')].forEach((group, index) => {
     let layer = combatSceneLayers(device)[index];
     if (coverFloor && Number.isFinite(floorShadowTop)) {
       const floor = framing.mobileFloor;
@@ -161,11 +176,17 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
         // The ground never starts below the back rank's cell top (`floorTop`, owner 2026-10-31): the grid's back edge
         // stands on painted ground, not in the sky. The shadow rule still wins where the shadows rise higher.
         const paintCeiling = Number.isFinite(floorTop) ? Math.min(floorShadowTop - floor.shadowClearancePx / zoom, floorTop) : floorShadowTop - floor.shadowClearancePx / zoom;
-        const maximumPaintTop = (paintCeiling - top) / scale;
         // Continue only the authored ground behind the hand to the footer;
         // its painted horizon remains constrained by the back-row shadows.
-        const minimumBottom = (combat.clientHeight - top) / scale;
-        layer = mobileFloorLayer(layer, { paintStart, maximumPaintTop, minimumBottom });
+        const fitFloor = (frameTop, frameScale) => mobileFloorLayer(layer, { paintStart, maximumPaintTop: (paintCeiling - frameTop) / frameScale,
+          minimumBottom: (combat.clientHeight - frameTop) / frameScale });
+        // The ground is sized by the screen (horizon to footer), not by the canvas
+        // scale, so the backdrop zoom shrinks the fitted ground about its horizon.
+        const closer = fitFloor(previewTop, coverScale);
+        if (scale < coverScale) fillGround = closer;
+        layer = scale < coverScale ? zoomOutFloor(closer, { paintStart, device, width, coverScale, scale, top, previewTop })
+          : fitFloor(top, scale);
+        groundBottom = top + (layer.y + layer.height) * scale;
         backdrop.dataset.mobileFloorPaintTop = String((top + (layer.y + layer.height * paintStart) * scale) * zoom);
         backdrop.dataset.mobileFloorShadowTop = String(floorShadowTop * zoom);
       }
@@ -179,8 +200,48 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     if (image.getAttribute('href') !== href) image.setAttribute('href', href);
     group.style.visibility = ['far', 'landmark'].includes(art.kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : '';
   });
+  fitBackdropFill(svg, { device, scale, coverScale, left: (width - device.width * scale) / 2, top, width, bottom: combat.clientHeight || fieldTop + height, groundBottom, fillGround, narrow });
   const fade = combat.querySelector('.alternative-card-fade');
   if (fade) fade.style.backgroundImage = `url('${alternativeArtUrl((narrow ? alternativeArtCatalog.mobileLayers : alternativeArtCatalog.layers)['card-section-texture'])}')`;
+}
+
+function zoomOutFloor(fitted, { paintStart, device, width, coverScale, scale, top, previewTop }) {
+  const k = scale / coverScale;
+  const centre = (width - device.width * coverScale) / 2 + (fitted.x + fitted.width / 2) * coverScale;
+  const horizon = previewTop + (fitted.y + fitted.height * paintStart) * coverScale;
+  const w = fitted.width * coverScale * k, h = fitted.height * coverScale * k;
+  return { ...fitted, x: (centre - w / 2 - (width - device.width * scale) / 2) / scale, width: w / scale,
+    y: (horizon - h * paintStart - top) / scale, height: h / scale };
+}
+
+// The blurred fill is the old, closer framing (zoomed about the ground anchor);
+// the sharp layers fade into it along each edge that no longer reaches the screen.
+function fitBackdropFill(svg, { device, scale, coverScale, left, top, width, bottom, groundBottom, fillGround, narrow }) {
+  const fill = svg.querySelector?.(':scope > .alternative-scene-fill');
+  if (!fill) return;
+  const grow = coverScale / scale;
+  const bare = grow > 1.001;
+  fill.setAttribute('display', bare ? '' : 'none');
+  svg.querySelector(':scope > .alternative-scene-main')?.removeAttribute('mask');
+  if (!bare) return;
+  const anchor = device.groundAnchor * device.height;
+  fill.setAttribute('transform', `translate(${device.width * (1 - grow) / 2} ${anchor * (1 - grow)}) scale(${grow})`);
+  for (const image of fill.querySelectorAll('image')) {
+    // Same ground as the sharp layer had before the zoom: its horizon stays level across the seam.
+    const place = fillGround?.id === image.dataset.fillLayer ? fillGround : combatSceneLayers(device).find(layer => layer.id === image.dataset.fillLayer);
+    for (const prop of ['x', 'y', 'width', 'height']) image.setAttribute(prop, place[prop]);
+    const href = alternativeArtUrl(sceneArtPath(alternativeArtCatalog.sceneLayers[image.dataset.fillLayer], narrow));
+    if (image.getAttribute('href') !== href) image.setAttribute('href', href);
+  }
+  const fade = 72 / scale, far = 5000;
+  const exposed = [left > .5, top > .5, left + device.width * scale < width - .5, Math.min(top + device.height * scale, groundBottom) < bottom - .5];
+  if (!exposed.some(Boolean)) return;
+  const edge = svg.querySelector('.alternative-scene-edge');
+  const x0 = exposed[0] ? fade : -far, y0 = exposed[1] ? fade : -far;
+  const x1 = exposed[2] ? device.width - fade : far, y1 = exposed[3] ? (Math.min(top + device.height * scale, groundBottom) - top) / scale - fade : far;
+  for (const [name, value] of [['x', x0], ['y', y0], ['width', x1 - x0], ['height', y1 - y0]]) edge.setAttribute(name, value);
+  svg.querySelector('#alternative-scene-edge-blur feGaussianBlur')?.setAttribute('stdDeviation', String(fade / 2));
+  svg.querySelector(':scope > .alternative-scene-main').setAttribute('mask', 'url(#alternative-scene-edge)');
 }
 
 export function wireAlternativeBackdrop(combat) {
