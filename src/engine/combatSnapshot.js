@@ -1,3 +1,4 @@
+import { persistedEventLog } from '../model/runStorage.js';
 import { pinGameProfileCopy } from '../model/ownedGameProfile.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
 import { clampStackCounts } from '../model/combatTacticsRules.js';
@@ -54,6 +55,21 @@ function carryRelicGateKeys(entries) {
 
 const snapshotProfilesValidated = new WeakSet();
 
+/**
+ * THE EVENT LOG IS PERSISTED WITHOUT THE EVALUATION CONTEXT EACH EVENT CARRIED.
+ *
+ * `emitEvent` stamps every event raised inside a card play with `abilityBefore`
+ * (the per-turn counters) and `abilityEntities` (a structuredClone of the
+ * player and every enemy) so triggers scanned DURING that event can read the
+ * pre-play state. That context is read only while the event is being scanned
+ * (triggers.js, abilityRiders.js) and never again from the log, but at 5-9 KB
+ * an event it made a long boss fight's save grow ~100 KB a turn (3.6 MB at turn
+ * 40) and the browser's 5 MB quota refuse the autosave. A committed snapshot has
+ * no event mid-scan (an in-flight choice resumes from the ability queue, not
+ * the log), so the two fields are dropped from the rows written. The live
+ * `combat.eventLog` is not touched; every other field of every row, and so the
+ * combat log a resumed fight shows, is unchanged.
+ */
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
@@ -132,7 +148,7 @@ export function serializeCombatSnapshot(combat) {
       ...(hasCardChoice(combat) ? { ...(combat.pendingAbilityDiscard ? {pendingAbilityDiscard:combat.pendingAbilityDiscard} : {pendingCardChoice:combat.pendingCardChoice}), pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
       abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     } : {}),
-    eventLog: combat.eventLog,
+    eventLog: persistedEventLog(combat.eventLog),
     triggerState: [...combat.triggerState.entries()],
     idCounter: combat._idCounter,
     emitDepth: combat._emitDepth,
