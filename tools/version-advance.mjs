@@ -14,12 +14,13 @@
 // marker comment beside it. A minor bump also moves `const SERIES = 'X.Y'` in
 // tools/release-series.mjs, the series gate, so that gate stays green.
 //
-// `--read-current` prints the triple the file holds now; `--subject <triple> <branch> <sha>`
-// prints the commit subject the workflow writes.
+// `--read-current` prints the triple the file holds now.
 //
-// IDEMPOTENCE: `--done <branch> <sha>` exits 0 when a commit on HEAD already records that
-// branch and source sha as `version-advance: <triple> after <release|main> <sha>`, else 1.
-// The workflow runs it first, so a re-run of a push never bumps twice.
+// THE CUTS: `--plan` prints the feed events (GET /repos/{repo}/activity on release and main) after
+// the newest one dev records, oldest first (see planCuts). IDEMPOTENCE: `--done-event <id>` exits 0
+// when a commit on HEAD carries `Version-Advance-Event: <id> ...`, else 1; the workflow runs it
+// before each bump, so a re-run never bumps twice. `--message <triple> <branch> <sha> <id> <ts>`
+// prints the commit message (subject plus that trailer).
 // .github/workflows/version-advance.yml is the caller; a person never runs it.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -64,66 +65,6 @@ export function advanceSource(text, kind) {
 export function advanceSeries(text, next) {
   if (!SERIES.test(text)) throw new Error(`no "const SERIES = 'X.Y';" line found in ${SERIES_FILE}`);
   return text.replace(SERIES, (_, a, e) => `${a}${next.split('.').slice(0, 2).join('.')}${e}`);
-}
-
-/**
- * True when any subject records THIS branch and sha as an advance. Pure. The record is
- * keyed on both: a sha cut to release and later fast-forwarded to main is a different
- * event (candidate, then minor), so release's record must not satisfy main.
- */
-export function recordsSource(subjects, branch, sha) {
-  if (!/^(release|main)$/.test(branch)) throw new Error(`'${branch}' is not release or main`);
-  if (!/^[0-9a-f]{7,40}$/.test(sha)) throw new Error(`'${sha}' is not a commit sha`);
-  return subjects.some((s) => new RegExp(`^version-advance: \\d+\\.\\d+\\.\\d+ after ${branch} ${sha}\\b`).test(s));
-}
-
-/**
- * The cuts one run must apply, oldest first. Pure. `runs` are earlier push runs of the
- * workflow as {number, branch, sha, conclusion}; `current` is {number, branch, sha}.
- * Only runs that PRECEDE the current one and did not succeed are taken: a cancelled or
- * failed run lost its cut, and a run still pending (conclusion empty or null: queued,
- * in progress) may be overtaken, because GitHub concurrency does not guarantee order, so
- * a newer run can acquire the group first. The older run, when it finally executes, finds
- * its own cut recorded (the workflow checks `--done` for every cut, the current one
- * included) and does nothing. A run with a higher number is left to its own run, which
- * reconciles this one in turn. Taking a later run would apply its bump before the
- * current event's (a main minor bump landing before an earlier release candidate bump
- * turns 0.7.2 into 0.8.2 instead of 0.8.1). Sorted by run number, de-duplicated on
- * branch+sha, current last. Each cut carries `before`, the branch's previous push head
- * (null when unknown), so the caller can run the bot-only check on before..sha for
- * recovered cuts exactly as for the current one.
- */
-export function reconcileCuts(runs, current) {
-  const byNumber = [...runs].sort((x, y) => x.number - y.number);
-  // The branch's push BEFORE a run is the head sha of the previous push run on that
-  // branch (any outcome: consecutive pushes chain). null when the list has none.
-  const beforeOf = (branch, number) => {
-    const prev = byNumber.filter((r) => r.branch === branch && r.number < number).pop();
-    return prev ? prev.sha : null;
-  };
-  // The ordered list of earlier unrecorded runs: by run number, de-duplicated on branch+sha,
-  // keeping the EARLIEST occurrence and its own predecessor as `before`.
-  const seen = new Set();
-  const list = [];
-  for (const r of byNumber) {
-    const key = `${r.branch} ${r.sha}`;
-    if (r.number >= current.number || r.conclusion === 'success') continue;
-    if (!/^(release|main)$/.test(r.branch) || seen.has(key)) continue;
-    seen.add(key);
-    const b = beforeOf(r.branch, r.number);
-    list.push({ branch: r.branch, sha: r.sha, before: b === r.sha ? null : b });
-  }
-  // The current cut stays where it is when an earlier run already carried it (a dispatch
-  // reselecting that head); otherwise it comes last, with its own before (github.event.before)
-  // or the branch's previous head from the list. A before equal to the sha is unknown.
-  if (seen.has(`${current.branch} ${current.sha}`)) return list;
-  // With no explicit before, the earliest earlier push run of the same branch+sha in ALL runs,
-  // success included (a bot-only push that succeeded wrote no record), names the real
-  // predecessor; the list above stays limited to runs that did not succeed.
-  const same = byNumber.find((r) => r.branch === current.branch && r.sha === current.sha && r.number < current.number);
-  let before = current.before ?? beforeOf(current.branch, same ? same.number : current.number);
-  if (before === current.sha) before = null;
-  return [...list, { branch: current.branch, sha: current.sha, before }];
 }
 
 // ---- THE ACTIVITY FEED AND THE CURSOR (replaces the run-list reconciliation) ------------------
@@ -324,31 +265,6 @@ async function main(argv, root = ROOT) {
       return 2;
     }
     process.stdout.write(advanceMessage(next, branch, sha, { id, timestamp }));
-    return 0;
-  }
-  const d = argv.indexOf('--done');
-  if (d >= 0) {
-    const subjects = execFileSync('git', ['log', '--format=%s'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
-    return recordsSource(subjects, argv[d + 1] || '', argv[d + 2] || '') ? 0 : 1;
-  }
-  const rc = argv.indexOf('--reconcile');
-  if (rc >= 0) {
-    const [number, branch, sha, beforeArg] = argv.slice(rc + 1);
-    const cb = /[1-9a-f]/.test(beforeArg || '') ? beforeArg : undefined; // all-zero or absent: ask the list
-    const runs = JSON.parse(readFileSync(0, 'utf8') || '[]').map((r) => ({
-      number: r.number, branch: r.headBranch, sha: r.headSha, conclusion: r.conclusion,
-    }));
-    for (const c of reconcileCuts(runs, { number: Number(number), branch, sha, before: cb })) console.log(`${c.branch} ${c.sha} ${c.before ?? '-'}`);
-    return 0;
-  }
-  const sj = argv.indexOf('--subject');
-  if (sj >= 0) {
-    const [next, branch, sha] = argv.slice(sj + 1);
-    if (!/^\d+\.\d+\.\d+$/.test(next || '') || !/^(release|main)$/.test(branch || '') || !/^[0-9a-f]{7,40}$/.test(sha || '')) {
-      console.error('version-advance: --subject wants <triple> <release|main> <sha>');
-      return 2;
-    }
-    console.log(advanceSubject(next, branch, sha));
     return 0;
   }
   const k = argv.indexOf('--kind');

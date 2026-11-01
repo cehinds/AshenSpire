@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { planCuts, parseRecords, latestRecord, recordsEvent, advanceMessage, cmpEvents, reconcileCuts, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, recordsSource, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
+import { planCuts, parseRecords, latestRecord, recordsEvent, advanceMessage, cmpEvents, advanceSeries, advanceSource, advanceSubject, nextTriple, parseTriple, VERSION_FILE, SERIES_FILE } from '../tools/version-advance.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = `  // version-advance: 0.7.2\n  version: '0.7.2',\n  balance,\n`;
@@ -49,25 +49,6 @@ test('advanceSeries follows a minor bump only through the one SERIES line', () =
   advanceSeries(real, '0.8.0');
 });
 
-test('idempotence guard: a recorded source sha is skipped, another is not', () => {
-  const sha = 'a'.repeat(40);
-  const subjects = ['feat: x', advanceSubject('0.7.3', 'release', sha), 'build: stamp 0.7.3.0 [build-stamp]'];
-  assert.equal(recordsSource(subjects, 'release', sha), true);
-  assert.equal(recordsSource(subjects, 'release', 'b'.repeat(40)), false);
-  assert.equal(recordsSource(['version-advance: 0.8.0 after main ' + sha], 'main', sha), true);
-  assert.equal(recordsSource(['mentions version-advance: 0.7.3 after release ' + sha], 'release', sha), false, 'only a subject that starts with it counts');
-  assert.throws(() => recordsSource([], 'release', 'not a sha'));
-});
-
-test('idempotence is keyed on branch AND sha: a release record does not satisfy main', () => {
-  const sha = 'd'.repeat(40);
-  const cut = [advanceSubject('0.7.3', 'release', sha)];
-  assert.equal(recordsSource(cut, 'release', sha), true);
-  assert.equal(recordsSource(cut, 'main', sha), false, 'main fast-forwarded to a cut sha still owes its minor bump');
-  assert.equal(recordsSource([...cut, advanceSubject('0.8.0', 'main', sha)], 'main', sha), true);
-  assert.throws(() => recordsSource(cut, 'dev', sha));
-});
-
 test('CLI dry run in a temp copy: prints the next triple, --write moves both files', () => {
   const dir = mkdtempSync(join(tmpdir(), 'va-'));
   try {
@@ -99,133 +80,18 @@ test('CLI dry run in a temp copy: prints the next triple, --write moves both fil
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('CLI: --read-current and --subject, and the subject round-trips through the guard', () => {
+test('CLI: --read-current and --message, and the message round-trips through the guard', () => {
   const run = (...args) => spawnSync(process.execPath, [join(ROOT, 'tools/version-advance.mjs'), ...args], { encoding: 'utf8' });
   const sha = 'c'.repeat(40);
   const cur = parseTriple(readFileSync(join(ROOT, VERSION_FILE), 'utf8')).join('.');
   assert.equal(run('--kind', 'candidate', '--read-current').stdout.trim(), cur);
-  const subject = run('--subject', '0.7.3', 'release', sha);
-  assert.equal(subject.status, 0);
-  assert.equal(subject.stdout.trim(), `version-advance: 0.7.3 after release ${sha} [version-advance]`);
-  assert.equal(recordsSource([subject.stdout.trim()], 'release', sha), true);
-  assert.equal(run('--subject', '0.7.3', 'dev', sha).status, 2);
+  const message = run('--message', '0.7.3', 'release', sha, '41', '2026-11-02T00:00:00Z');
+  assert.equal(message.status, 0);
+  assert.equal(message.stdout, `version-advance: 0.7.3 after release ${sha} [version-advance]\n\nVersion-Advance-Event: 41 2026-11-02T00:00:00Z\n`);
+  assert.equal(recordsEvent([message.stdout], 41), true);
+  assert.equal(recordsEvent([message.stdout], 42), false);
+  assert.equal(run('--message', '0.7.3', 'dev', sha, '41', 'x').status, 2);
 });
-
-test('reconcile: only earlier lost runs are applied, in order, current last', () => {
-  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
-  const cur = { number: 10, branch: 'release', sha: 'r2' };
-  // The coordinator's scenario: release #10 is still setting up, a later main #11 was
-  // queued then cancelled by release #12. #10 must not take #11, or the minor bump lands
-  // before the candidate bump (0.7.2 -> 0.8.2 instead of 0.8.1).
-  const runs = [r(8, 'release', 'r0', 'cancelled'), r(9, 'main', 'm0', 'failure'), r(11, 'main', 'm1', 'cancelled'), r(7, 'release', 'ok', 'success')];
-  const pick = (cuts) => cuts.map(({ branch, sha }) => ({ branch, sha }));
-  assert.deepEqual(pick(reconcileCuts(runs, cur)), [
-    { branch: 'release', sha: 'r0' }, { branch: 'main', sha: 'm0' }, { branch: 'release', sha: 'r2' },
-  ]);
-  // The later run (#12) reconciles #11 and #10's lost work in order.
-  assert.deepEqual(reconcileCuts([...runs, r(10, 'release', 'r2', 'cancelled')], { number: 12, branch: 'release', sha: 'r3' }).map((c) => c.sha),
-    ['r0', 'm0', 'r2', 'm1', 'r3']);
-  // De-duplicates on branch+sha, and keeps the same sha on two branches as two cuts.
-  assert.deepEqual(pick(reconcileCuts([r(1, 'release', 'x', 'cancelled'), r(2, 'release', 'x', 'failure'), r(3, 'main', 'x', 'cancelled')], { number: 5, branch: 'release', sha: 'x' })),
-    [{ branch: 'release', sha: 'x' }, { branch: 'main', sha: 'x' }]); // the current cut keeps its earliest run's position
-});
-
-test('reconcile: each cut carries the branch\'s previous push head as its before', () => {
-  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
-  const runs = [r(1, 'release', 'r1', 'success'), r(2, 'main', 'm1', 'success'), r(3, 'release', 'r2', 'cancelled'), r(4, 'main', 'm2', 'cancelled')];
-  const cuts = reconcileCuts(runs, { number: 5, branch: 'release', sha: 'r3', before: 'r2' });
-  assert.deepEqual(cuts, [
-    { branch: 'release', sha: 'r2', before: 'r1' },
-    { branch: 'main', sha: 'm2', before: 'm1' },
-    { branch: 'release', sha: 'r3', before: 'r2' },
-  ]);
-  // No earlier run on the branch: before is null (treated as a cut). The current event's own
-  // before wins; without one, the list answers.
-  assert.equal(reconcileCuts([r(3, 'release', 'x', 'cancelled')], { number: 4, branch: 'release', sha: 'y' })[0].before, null);
-  assert.equal(reconcileCuts(runs, { number: 5, branch: 'main', sha: 'm3' }).at(-1).before, 'm2');
-  assert.equal(reconcileCuts(runs, { number: 5, branch: 'main', sha: 'm3', before: 'zz' }).at(-1).before, 'zz');
-});
-
-test('reconcile: an older run still pending is taken before the current cut', () => {
-  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
-  const pick = (cuts) => cuts.map(({ branch, sha }) => ({ branch, sha }));
-  for (const pending of ['', null, undefined, 'in_progress', 'queued']) {
-    assert.deepEqual(pick(reconcileCuts([r(10, 'release', 'A', pending)], { number: 11, branch: 'main', sha: 'B' })),
-      [{ branch: 'release', sha: 'A' }, { branch: 'main', sha: 'B' }], `conclusion ${JSON.stringify(pending)}`);
-  }
-  // A successful earlier run is not retaken; a later pending run is left to its own run.
-  assert.deepEqual(pick(reconcileCuts([r(9, 'release', 'S', 'success'), r(12, 'release', 'L', null)], { number: 11, branch: 'main', sha: 'B' })),
-    [{ branch: 'main', sha: 'B' }]);
-});
-
-test('overtaken older run: once the newer run recorded its work, the older cut is skipped by --done', () => {
-  // Run 11 (main B) reconciled pending run 10 (release A) and applied both, in order.
-  const subjects = [advanceSubject('0.8.0', 'main', 'b'.repeat(40)), advanceSubject('0.7.3', 'release', 'a'.repeat(40))];
-  // Run 10 finally executes: its own (current) cut is already recorded, so the workflow
-  // loop `continue`s on --done and applies no second bump.
-  assert.equal(recordsSource(subjects, 'release', 'a'.repeat(40)), true);
-  assert.equal(recordsSource(subjects, 'main', 'b'.repeat(40)), true);
-});
-
-test('reconcile: a manual dispatch is reconciled like a push (earlier lost cuts first, current de-duplicated)', () => {
-  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
-  const runs = [r(10, 'release', 'A', 'failure'), r(11, 'main', 'B', 'failure')];
-  const cuts = reconcileCuts(runs, { number: 12, branch: 'main', sha: 'B', before: undefined });
-  assert.deepEqual(cuts.map(({ branch, sha }) => ({ branch, sha })), [{ branch: 'release', sha: 'A' }, { branch: 'main', sha: 'B' }]);
-});
-
-test('reconcile: a dispatch of a failed push head keeps that push\'s before; before never equals sha', () => {
-  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
-  const runs = [r(9, 'main', 'A', 'success'), r(10, 'main', 'B', 'failure')];
-  const cuts = reconcileCuts(runs, { number: 11, branch: 'main', sha: 'B' });
-  assert.deepEqual(cuts, [{ branch: 'main', sha: 'B', before: 'A' }]);
-  // No predecessor: unknown (null), never the sha itself, so the workflow cannot see an empty range.
-  const lone = reconcileCuts([r(10, 'main', 'B', 'failure')], { number: 11, branch: 'main', sha: 'B' });
-  assert.equal(lone[0].before, null);
-  assert.equal(reconcileCuts([], { number: 1, branch: 'main', sha: 'B', before: 'B' })[0].before, null);
-});
-
-test('reconcile (property): order follows original run numbers, no duplicates, each before is its predecessor', () => {
-  for (let n = 1; n <= 4; n++) {
-    for (let mask = 0; mask < (1 << n); mask++) {
-      const runs = Array.from({ length: n }, (_, i) => ({ number: i + 1, branch: (mask >> i) & 1 ? 'main' : 'release', sha: `s${i + 1}`, conclusion: 'failure' }));
-      const pred = (i) => runs.slice(0, i).reverse().find((r) => r.branch === runs[i].branch)?.sha ?? null;
-      const expected = runs.map((r, i) => ({ branch: r.branch, sha: r.sha, before: pred(i) }));
-      // A new push comes last with its own before.
-      for (const branch of ['release', 'main']) {
-        const prev = [...runs].reverse().find((r) => r.branch === branch)?.sha ?? null;
-        assert.deepEqual(reconcileCuts(runs, { number: n + 1, branch, sha: 'new', before: prev }), [...expected, { branch, sha: 'new', before: prev }]);
-        assert.deepEqual(reconcileCuts(runs, { number: n + 1, branch, sha: 'new' }).at(-1), { branch, sha: 'new', before: prev });
-      }
-      // A dispatch reselecting any earlier head leaves the list as is.
-      for (const r of runs) assert.deepEqual(reconcileCuts(runs, { number: n + 1, branch: r.branch, sha: r.sha }), expected, `n=${n} mask=${mask} ${r.sha}`);
-    }
-  }
-});
-
-test('reconcile: dispatch of a head whose push succeeded (bot-only, unrecorded) carries that push\'s before', () => {
-  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
-  const runs = [r(8, 'main', 'A', 'success'), r(9, 'main', 'B', 'success')];
-  assert.deepEqual(reconcileCuts(runs, { number: 10, branch: 'main', sha: 'B' }), [{ branch: 'main', sha: 'B', before: 'A' }]);
-});
-
-test('reconcile (property): a dispatch reselecting any earlier head, successful or not, carries its own predecessor', () => {
-  for (let n = 1; n <= 4; n++) {
-    for (let bm = 0; bm < (1 << n); bm++) {
-      for (let sm = 0; sm < (1 << n); sm++) {
-        const runs = Array.from({ length: n }, (_, i) => ({ number: i + 1, branch: (bm >> i) & 1 ? 'main' : 'release', sha: `s${i + 1}`, conclusion: (sm >> i) & 1 ? 'success' : 'failure' }));
-        const pred = (i) => runs.slice(0, i).reverse().find((x) => x.branch === runs[i].branch)?.sha ?? null;
-        runs.forEach((x, i) => {
-          const out = reconcileCuts(runs, { number: n + 1, branch: x.branch, sha: x.sha });
-          const mine = out.find((c) => c.branch === x.branch && c.sha === x.sha);
-          assert.equal(out.filter((c) => c.branch === x.branch && c.sha === x.sha).length, 1);
-          assert.equal(mine.before, pred(i), `n=${n} bm=${bm} sm=${sm} ${x.sha}`);
-        });
-      }
-    }
-  }
-});
-
 // ---- planCuts: the activity feed and the cursor -------------------------------------------------
 
 const ev = (id, branch, before, after, type = 'push', ts) => ({
