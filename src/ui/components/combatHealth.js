@@ -1,7 +1,8 @@
 import { tagSymbolSvg } from './cardTagSymbols.js';
-import { combatHealthModel } from '../models/CombatHealthModel.js';
+import { combatHealthModel, visibleBadges } from '../models/CombatHealthModel.js';
 import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { acBadgeText } from '../models/acBadge.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Keep the shared resource renderer's HP amount, fill and total trough length.
@@ -9,6 +10,8 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 // Poise has a gold numeric badge and retains the HP trim, tooltip and aria-label.
 /** The badge tooltip's HTML; the Evade badge shows the holder's own Evade text when given, else the generic line. */
 export function badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp = null }) {
+  // The +N overflow badge lists the hidden badges, each as "label value" (the same text its own aria-label would carry).
+  if (badge.kind === 'overflow') return `<div class="tt-title">${esc(badge.label)}</div>${badge.names.map(esc).join('<br>')}`;
   return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.help ? badge.help : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
 }
 export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward'), poiseHelp = tFull('combat.protection.poise'), evadeHelp = null } = {}) {
@@ -41,12 +44,13 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     hp.tabIndex = 0;
     attachTooltip(hp, () => `<div class="tt-title">${esc(model.poiseLabel)}</div>${esc(poiseHelp)}`);
   }
-  for (const badge of model.badges) {
+  const { shown, overflow } = visibleBadges(model.badges);
+  for (const badge of overflow ? [...shown, overflow] : shown) {
     const node = document.createElement('span');
     node.className = `combat-health-badge combat-health-${badge.kind}${badge.barrier > 0 ? ' combat-health-ward-barrier' : ''}`;
     if (badge.barrier > 0) node.dataset.barrier = String(badge.barrier);
     node.dataset.defenseKind = badge.kind;
-    node.setAttribute('aria-label', badge.kind === 'stance' ? badge.help : `${badge.label} ${badge.value}`);
+    node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : badge.kind === 'stance' ? badge.help : `${badge.label} ${badge.value}`);
     if (badge.help) node.title = badge.help; // native hover help for the stack badges, same text as the tooltip
     const value = document.createElement('span');
     value.className = 'combat-health-badge-value';
@@ -67,6 +71,33 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       attachTooltip(node, () => badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp }));
     }
     row.append(node);
+  }
+  // The player's AC (owner 2026-11-01): a square left of the bar on the bar's line (a sibling of the meter), with a small "AC" caption under it at the head
+  // of the badge row. `values.ac` is { value, evade, base } from acFor; enemies never carry it.
+  if (values?.ac) {
+    const text = acBadgeText(values.ac);
+    const square = document.createElement('span');
+    square.className = 'combat-health-badge combat-health-ac';
+    square.dataset.defenseKind = 'ac';
+    square.dataset.ac = String(values.ac.value);
+    square.setAttribute('aria-label', [text.title, ...text.lines].map(line => line.replace(/\.$/, '')).join('. ') + '.');
+    const number = document.createElement('span');
+    number.className = 'combat-health-badge-value';
+    number.textContent = String(values.ac.value);
+    square.append(number);
+    if (tooltips) {
+      square.tabIndex = 0;
+      attachTooltip(square, () => `<div class="tt-title">${esc(text.title)}</div>${text.lines.map(esc).join('<br>')}`);
+    }
+    // The caption is decoration, not a badge: no data-defense-kind, so badge readers (and the HUD QA) never mistake it for one.
+    const caption = document.createElement('span');
+    caption.className = 'combat-health-badge combat-health-ac-caption';
+    caption.dataset.acCaption = '';
+    caption.setAttribute('aria-hidden', 'true');
+    caption.textContent = 'AC';
+    row.insertBefore(caption, row.firstChild);
+    // A sibling just before the meter, which stays a direct child of the row so its row-scoped styling still applies.
+    row.append(square);
   }
   row.append(hp);
   return row;
