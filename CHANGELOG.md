@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Version bumps itself at each release** ([#2452](https://github.com/cehinds/AshenSpire/pull/2452), `0.7.2.103`). Merging into release now raises the third version number and restarts the build number at 0; merging into main raises the second number and resets the rest.
-- **Long fights no longer fill browser storage** ([#2449](https://github.com/cehinds/AshenSpire/pull/2449), `0.7.2.103`). Autosave could fail with "browser storage is full" late in a long fight because every saved combat-log line carried a full copy of the fighters; saves now drop those copies, so a 40-turn fight's log shrinks from about 3.6 MB to about 0.5 MB and older saves still load.
+- **Version bumps itself at each release** ([#2452](https://github.com/cehinds/AshenSpire/pull/2452), `0.7.2.105`). Merging into release now raises the third version number and restarts the build number at 0; merging into main raises the second number and resets the rest.
+- **Long fights no longer fill browser storage** ([#2449](https://github.com/cehinds/AshenSpire/pull/2449), `0.7.2.105`). Autosave could fail with "browser storage is full" late in a long fight because every saved combat-log line carried a full copy of the fighters; saves now drop those copies, so a 40-turn fight's log shrinks from about 3.6 MB to about 0.5 MB and older saves still load.
 - **Focus armaments make spells cheaper** ([#2450](https://github.com/cehinds/AshenSpire/pull/2450), `0.7.2.103`). While you wear an armament with the Focus tag (most sceptres and staves), every card costs 1 less Mana, to a minimum of 0; carrying more than one Focus still gives a single −1.
 - **Windows test fix for jev paths** ([#2451](https://github.com/cehinds/AshenSpire/pull/2451), `0.7.2.101`). A jev self-test no longer fails on Windows runners whose temp folder uses a short 8.3 name.
 - **Enemies no longer "miss" when they Advance** ([#2445](https://github.com/cehinds/AshenSpire/pull/2445), `0.7.2.99`). Moving closer is not an attack: an enemy's Advance no longer rolls a hit that is logged as "missed: out of range".
