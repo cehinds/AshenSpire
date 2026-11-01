@@ -10,6 +10,17 @@
 // play without a legal one before anything is spent. The engine (engine/combat.js)
 // and the screens all read this one function.
 
+import { uiStrings } from '../content/generated/uiStrings.js';
+import { configuredModule } from './profileModule.js';
+
+// The maneuver pick's label. The id stays 'casting' (the engine maps it); a profile whose configured stances module
+// names the stance 'prepared' (Core, owner 2026-11-01) shows the stance.name.prepared string instead.
+function maneuverLabel(registries, id) {
+  const stances = configuredModule(registries, 'stances');
+  const shown = id === 'casting' && stances?.include?.includes('prepared') && !stances.include.includes('casting') ? 'prepared' : id;
+  return uiStrings.find(r => r.id === `stance.name.${shown}`)?.short || shown[0].toUpperCase() + shown.slice(1);
+}
+
 /** The closed set of choice selectors an `enterStance` effect may carry. */
 export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance','maneuver']);
 
@@ -27,7 +38,7 @@ export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance','maneuver'])
 export function cardChoice(registries, def, classId, activeStanceId = null) {
   const effect = (def && def.effects || []).find((e) => e && e.op === 'enterStance' && e.choose);
   if (!effect) return null;
-  if(effect.choose==='maneuver') return {kind:'stance',options:['attack','smash','defend','sweep','counter','casting','evade'].map(id=>({id,name:id[0].toUpperCase()+id.slice(1),icon:'',tooltip:id,active:activeStanceId===id}))};
+  if(effect.choose==='maneuver') return {kind:'stance',options:['attack','smash','defend','sweep','counter','casting','evade'].map(id=>({id,name:maneuverLabel(registries,id),icon:'',tooltip:id,active:activeStanceId===id}))};
   const rows = registries.stances.all();
   let owned = rows.filter((s) => s.class && s.class === classId);
   if (!owned.length) owned = rows.filter((s) => s.class && s.class === def.class);
