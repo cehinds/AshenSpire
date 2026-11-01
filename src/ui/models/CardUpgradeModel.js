@@ -6,6 +6,7 @@ import { upgradeCount, upgradeStepsOf } from '../../model/cardUpgrade.js';
 import { cardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { upgradeChoiceCount } from '../../model/cardUpgradeLimits.js';
+import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
 import { t } from '../strings.js';
@@ -31,13 +32,21 @@ const statusText = (registries, stacks) => (stacks.size
 const cap = (word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : '');
 
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
-export function cardUpgradeChanges(registries, before, after) {
+export function cardUpgradeChanges(registries, before, after, playsEver = 0) {
   if (!before || !after) return [];
   const out = [];
   const a = staticTokens(before, registries), b = staticTokens(after, registries);
   const push = (label, from, to) => { if (String(from) !== String(to)) out.push(freeze({ label, before: String(from), after: String(to) })); };
-  push('DAMAGE', num(a.damage), num(b.damage));
-  push('GUARD', num(a.block), num(b.block));
+  // A ramped stat reads as its retained base plus the growth the upgrade adds, never as the formula's text (which is 0).
+  const stat = (name, token, label) => {
+    const from = rampParts(before, name, playsEver), to = rampParts(after, name, playsEver);
+    const base = (parts, tokens) => (parts ? parts.base : num(tokens[token]));
+    const grown = to && (!from || from.perUse !== to.perUse || from.scope !== to.scope);
+    const text = grown ? t(to.scope === 'run' ? 'cardUpgrade.change.rampRun' : 'cardUpgrade.change.rampCombat', { n: to.base, per: to.perUse }) : base(to, b);
+    push(label, base(from, a), text);
+  };
+  stat('damage', 'damage', 'DAMAGE');
+  stat('block', 'block', 'GUARD');
   push('HITS', hitsOf(before), hitsOf(after));
   push('STAMINA', num(before.staminaCost), num(after.staminaCost));
   push('MANA', num(before.manaCost), num(after.manaCost));
@@ -105,9 +114,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
-      changes: cardUpgradeChanges(registries, plan.before, plan.after),
+      changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance)),
       options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
-        index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after),
+        index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after, playsEverOf(instance)),
       }))),
       tags: cardTags(registries, plan.before || base, rarity),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',
