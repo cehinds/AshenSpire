@@ -7,9 +7,10 @@ import { fixCoreEnabled } from '../../model/fixCoreMechanics.js';
 // here re-derives the formula. The Evade part is the difference between the live value and the value with Evade switched off.
 const shown = (ctx, value) => fixCoreEnabled(ctx) ? Math.floor(value) : value;
 
-/** { value, evade, base } for the player's AC, or null off Core 2 / for anyone but the player. */
+/** { value, evade, base } for the player's AC, or null off Core 2 FixCore / for anyone but the player. */
 export function acFor(ctx, entity) {
-  if (!ctx || ctx.combatExpansionVersion !== 2 || entity?.kind !== 'player') return null;
+  // Evasion is a fixed DC only under FixCore (the same gate stanceHit.js uses); elsewhere the hit roll is not 'd20 + Precision >= AC'.
+  if (!ctx || ctx.combatExpansionVersion !== 2 || !fixCoreEnabled(ctx) || entity?.kind !== 'player') return null;
   const value = shown(ctx, effectiveEvasion(ctx, entity));
   const without = shown(ctx, effectiveEvasion(ctx, entity, { evadeDisabled: true }));
   return { value, evade: value - without, base: without };
