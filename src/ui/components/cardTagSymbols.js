@@ -43,6 +43,10 @@ const SHAPES = Object.freeze({
   piercing: '<path d="m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z"/>',
   blunt: SHAPES_BLUNT,
   guard: '<path d="M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z"/>',
+  // Weakness chips (SPEC 5.3): marks for the triggers no card face carries yet.
+  poison: '<path d="M16 1C13 8 6 14 6 21a10 10 0 0 0 20 0C26 14 19 8 16 1ZM10 19a2 2 0 1 0 4 0 2 2 0 1 0-4 0ZM18 19a2 2 0 1 0 4 0 2 2 0 1 0-4 0ZM13 26h6v-2h-6Z"/>',
+  paralysis: '<path d="M16 2a14 14 0 1 0 0 28 14 14 0 0 0 0-28Zm0 4a10 10 0 1 1 0 20 10 10 0 0 1 0-20Z"/><path d="M18 8 10 18h5l-1 6 8-10h-5Z"/>',
+  cracked: '<path d="M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-1 5 3 6-4 3 4 6-2 3-5-7 3-3-4-6Z"/>',
   guile: '<path d="M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z"/>',
 });
 
@@ -158,6 +162,12 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
     const status = tag.id.startsWith('status:') && registries?.statuses?.get(tag.id.slice(7));
     return status?.tooltip ? { ...tag, representedRules: [...(tag.representedRules || []), tag.id] } : tag;
   });
+}
+
+/** True when the tag id has its own mark (not the generic Skill fallback). */
+export function hasTagSymbol(tagId) {
+  const art = shapeFor({ id: tagId });
+  return ![SHAPES.skill, ACTION_SIGILS.skill.shape, ACTION_SIGILS.spell.shape].includes(art);
 }
 
 /** The card rail's solid symbol for one tag id (e.g. 'effect:evade') as a bare SVG element. */
