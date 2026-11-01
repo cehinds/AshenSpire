@@ -1,3 +1,4 @@
+import { rollD20Check } from './d20Chance.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
@@ -404,11 +405,9 @@ export function effectiveChance(chance, { advantage = false, disadvantage = fals
 // `event` (optional) is the label of a roll worth logging: { status, targetId, sourceId }. It emits
 // statusChanceRolled (owner, 2026-10-31) and never changes the draws; recovery logs its own statusRecoveryRolled.
 export function rollStatusChance(ctx, chance, { advantage = false, disadvantage = false, stream = 'statusRecovery', event = null } = {}) {
-  const first = ctx.rng.int(stream, 1, 100);
-  const rolls = [first];
-  if (advantage !== disadvantage) rolls.push(ctx.rng.int(stream, 1, 100));
-  const roll = advantage === disadvantage ? first : advantage ? Math.min(...rolls) : Math.max(...rolls);
-  const receipt = { rolls, roll, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: roll <= chance };
+  // Rolled as a d20 (owner, 2026-11-01): success on d20 >= 21 - round(chance% / 5); advantage keeps the higher die.
+  const check = rollD20Check(ctx.rng, stream, chance, { advantage, disadvantage });
+  const receipt = { rolls: check.rolls, roll: check.roll, target: check.target, mode: check.mode, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: check.success };
   if (event) ctx.emit?.('statusChanceRolled', { ...event, ...receipt });
   return receipt;
 }

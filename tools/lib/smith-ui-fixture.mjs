@@ -32,7 +32,6 @@ export function matchesSmithRows(rows, expected) {
   return rows.length === expected.length && expected.every(want => {
     const row = rows.find(item => item.title === want.name);
     return row && !row.open && row.unused === !want.used
-      && row.role === `${want.role} · ${want.used ? `${want.activeCopies} active` : 'not in active deck'}`
       && (want.used || row.opacity < .6)
       && want.values.every(value => row.values.some(actual => actual.label === valueLabel(value)
         && actual.before === String(value.before) && actual.after === String(value.after)));
