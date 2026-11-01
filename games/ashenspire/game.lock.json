@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:a5c84b2109553a15fff8aa92cb4cad8e53fcd08f790d9592ac61885ead74a604",
+      "hash": "sha256:33a90daf8be98bc3c94725657929dec3823ce4ab7d6b5b10cfaf3c9e6bccf6c8",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -634,7 +634,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:2e4155453ffdc7824a125051bbacce0d687190aba5c64694373dd2778344809b"
+          "hash": "sha256:b9999074a6292a6d4cf1a4d61bfd408cad7e318d676c9a0052d20296d3a7efe7"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -682,7 +682,7 @@
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:453ceeffe6130f3b7cc88ad711ee60d2643bb8fdac6f487a520b1cc93003a97b"
+          "hash": "sha256:cc419f85fc8194974547c404d5b7200fba2999a9202c5d4d3334e2f31c6457a8"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:90750818d2d5e94ed699a58f54765513a378302e22337b4d0ee6d1bdddd9a9c9"
     },
     "core": {
-      "hash": "sha256:a5c84b2109553a15fff8aa92cb4cad8e53fcd08f790d9592ac61885ead74a604",
+      "hash": "sha256:33a90daf8be98bc3c94725657929dec3823ce4ab7d6b5b10cfaf3c9e6bccf6c8",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1358,7 +1358,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:2e4155453ffdc7824a125051bbacce0d687190aba5c64694373dd2778344809b"
+          "hash": "sha256:b9999074a6292a6d4cf1a4d61bfd408cad7e318d676c9a0052d20296d3a7efe7"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -1406,7 +1406,7 @@
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:453ceeffe6130f3b7cc88ad711ee60d2643bb8fdac6f487a520b1cc93003a97b"
+          "hash": "sha256:cc419f85fc8194974547c404d5b7200fba2999a9202c5d4d3334e2f31c6457a8"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",

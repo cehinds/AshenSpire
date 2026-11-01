@@ -2862,6 +2862,7 @@
       "maneuver:casting",
       "classification.attack",
       "school:frost",
+      "element:frost",
       "rank.cantrip"
     ],
     "textTemplate": "Deal {damage} damage. Apply {frost} Frost.",
@@ -3140,5 +3141,137 @@
       ]
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.rimeBite",
+    "name": "Rime Bite",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frost",
+        "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
+      }
+    ],
+    "mirrors": "attack",
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "element:frost",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {frost} Frost. Apply {weak} Weak.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frost",
+          "stacks": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.brittleTouch",
+    "name": "Brittle Touch",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frost",
+        "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 1
+      }
+    ],
+    "mirrors": "attack",
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "element:frost",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {frost} Frost. Apply {vulnerable} Vulnerable.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frost",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
   }
 ]
