@@ -290,8 +290,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const cost = selected.affordable ? null : el('div', { class: 'smith-cost-strip' }, [
       blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
     ]);
-    const servicePreview = currentModel.properties.servicePreviewHtml ? el('div', { html: currentModel.properties.servicePreviewHtml }) : null;
-    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [servicePreview, cost].filter(Boolean) };
+    // No recovery rows here: every change this upgrade makes already stands in the rows above (Equipment Stats, Requirements, the affected cards), each as "old → new" with the new value green.
+    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [cost].filter(Boolean) };
     return detailCard({
       attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
       children: slots.flatMap((name) => slot[name] || []),

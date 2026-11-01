@@ -81,3 +81,9 @@ test('the Stone cost sits on the item row, compact, with no footer strip when af
   assert.match(modal, /selected\.affordable \? null : el\('div', \{ class: 'smith-cost-strip'/);
   assert.match(css, /\.smith-head-cost \{[^}]*margin-left: auto/);
 });
+
+test('the Smith item pane draws no recovery rows; the confirmation keeps its ledger', () => {
+  const pane = modal.slice(modal.indexOf('function previewCard'), modal.indexOf('function draw'));
+  assert.doesNotMatch(pane, /servicePreviewHtml|rest-recovery/);
+  assert.match(modal, /class: 'smith-confirm-recovery'/);
+});
