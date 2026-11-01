@@ -77,19 +77,33 @@ test('a status roll draws the same dice as before; the advantage figure is worke
   assert.equal(shown.dcParts[0].value, 30);
 });
 
-test('a distance avoidance preview shows the 5% step it rolls, and keeps eligibility', async () => {
-  const { distancePreview } = await import('../src/engine/combatAvoidance.js');
-  const ctx = { combatExpansionRules: { matchups: { distance: { rangedChance: 32, reachChance: 20, maximumBaseChance: 50 } } } };
+test('a distance avoidance preview keeps the authored base; the receipt shows the 5% step it rolls', async () => {
+  const { distancePreview, resolveAvoidance } = await import('../src/engine/combatAvoidance.js');
+  const { distanceRollReceipt } = await import('../src/model/rollReceipts.js');
+  const ctx = { combatExpansionRules: { matchups: { distance: { rangedChance: 32, reachChance: 22, maximumBaseChance: 50 } } } };
   const entity = { combatStance: { maneuver: 'ranged', range: 'ranged' } };
   const melee = { range: 'melee' };
   const shown = distancePreview(ctx, entity, melee);
   assert.equal(shown.eligible, true);
-  assert.equal(shown.baseChance, 30);
-  assert.equal(shown.chance, 30);
-  const tight = distancePreview({ combatExpansionRules: { matchups: { distance: { rangedChance: 33, reachChance: 0, maximumBaseChance: 50 } } } }, entity, melee);
-  assert.equal(tight.baseChance, 35);
-  const none = distancePreview({ combatExpansionRules: { matchups: { distance: { rangedChance: 0, reachChance: 0, maximumBaseChance: 50 } } } }, entity, melee);
-  assert.equal(none.eligible, false);
+  assert.equal(shown.baseChance, 32);
+  assert.equal(distancePreview({ combatExpansionRules: { matchups: { distance: { rangedChance: 0, reachChance: 0, maximumBaseChance: 50 } } } }, entity, melee).eligible, false);
+  // Receipt: 32% is shown as the 30% it rolls (target 15).
+  const receipt = distanceRollReceipt({ dice: [15], roll: 15, target: chanceToD20Target(32), chance: 32 });
+  assert.equal(receipt.dcParts[0].value, 30);
+});
+
+test('an avoidance event payload keeps the authored distance chance (reachChance 22 stays 22, not 20)', async () => {
+  const { resolveAvoidance } = await import('../src/engine/combatAvoidance.js');
+  const ctx = { rng: seq(10), combatExpansionRules: { matchups: {
+    distance: { rangedChance: 0, reachChance: 22, maximumBaseChance: 50 },
+    evade: { baseDC: 10, die: 20, armorPenalty: { light: 0 }, areaDifficulty: {} } } } };
+  const target = { id: 'player', combatStance: { maneuver: 'ranged', range: 'reach' }, statuses: {} };
+  const outcome = resolveAvoidance(ctx, { id: 'e1' }, target, { range: 'melee' }, 5);
+  assert.equal(outcome.distance.chance, 22, 'payload keeps the authored chance');
+  assert.equal(outcome.chance, 22, 'the combined payload chance keeps it too');
+  assert.equal(outcome.distance.target, chanceToD20Target(22), 'the roll still meets the 5% step');
+  assert.equal(outcome.distance.success, false);
+  assert.equal(outcome.distance.target, 17);
 });
 
 test('the Crit chance row shows the 5% step the crit d20 rolls', async () => {

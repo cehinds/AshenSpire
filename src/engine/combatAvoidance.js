@@ -1,7 +1,7 @@
 // Chance calculations are pure; only resolveAvoidance owns a committed draw.
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Statuses from './statuses.js';
-import { effectiveD20Percent, rollD20Check } from './d20Chance.js';
+import { rollD20Check } from './d20Chance.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 export function chanceMode({ advantage = false, disadvantage = false } = {}) {
@@ -67,11 +67,10 @@ export function distancePreview(ctx, entity, incomingProfile) {
     && !trait(incomingProfile, 'closing') && !trait(incomingProfile, 'adequateReach')
     && !trait(incomingProfile, 'unavoidable');
   const base = position === 'ranged' ? cfg.rangedChance : position === 'reach' ? cfg.reachChance : 0;
-  const authored = eligible ? Math.max(0, Math.min(cfg.maximumBaseChance, base + finite(entity.distanceAvoidanceBonus))) : 0;
-  // The shown base is the 5% step the d20 rolls (owner, 2026-11-01); eligibility still reads the authored value, so no draw moves.
-  const baseChance = effectiveD20Percent(authored);
+  // The authored base stays in the preview and event payloads; the receipt shows the 5% step the d20 rolls (rollD20Check rounds too).
+  const baseChance = eligible ? Math.max(0, Math.min(cfg.maximumBaseChance, base + finite(entity.distanceAvoidanceBonus))) : 0;
   const flags = { advantage: entity?.distanceAdvantage, disadvantage: entity?.distanceDisadvantage };
-  return { eligible: eligible && authored > 0, baseChance, chance: effectiveChance(baseChance, flags), flags };
+  return { eligible: eligible && baseChance > 0, baseChance, chance: effectiveChance(baseChance, flags), flags };
 }
 
 export function previewAvoidance(ctx, entity, profile, incomingDamage, options = {}) {
