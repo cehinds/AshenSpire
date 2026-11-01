@@ -19,6 +19,8 @@ function unit(classId, card = physical) {
 function native(classId) {
   const run = createRunState({ registries: baseRegistries, classId, seed: 511,
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
+  run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
   return createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
 }
 

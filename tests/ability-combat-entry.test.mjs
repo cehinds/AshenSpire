@@ -42,7 +42,8 @@ for(const abilityRank of [0,5])test(`solo combat entry and snapshot retain earne
   previewCard(combat,card.instanceId);assert.deepEqual(combat.skillXp,prior);
   const face=resolveCard(reg,card);
   dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:combat.enemies[0].id});
-  assert.equal(combat.player.mana,beforeMana-mana);
+  // The starseer's staff is a Focus armament: it takes 1 Mana off the payment, while the printed Mana (and its XP) stay.
+  assert.equal(combat.player.mana,beforeMana-Math.max(0,mana-1));
   assert.equal(combat.player.energy,beforeActions-face.cost);
   const resolved=combat.eventLog.filter(event=>event.type==='cardResolved'&&event.cardInstanceId===card.instanceId);
   assert.equal(resolved.length,1);assert.equal(resolved[0].printedManaCost,mana);
