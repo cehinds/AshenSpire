@@ -169,6 +169,9 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Enemy weaknesses (SPEC 5.3): a hit met a weakness { targetId, to, effect, amount }; a weakness took enemy Mana.
+  'weaknessTriggered',
+  'manaLost',
   // The player's poise meter filled (plan phase 8): { targetId, actionLoss,
   // statuses } — what balance.stagger.player took from them.
   'playerStaggered',
@@ -1109,6 +1112,8 @@ export const SCHEMAS = Object.freeze({
     damageResistanceBySchool: opt(obj(Object.fromEntries(
       DAMAGE_SCHOOLS.map((school) => [school, opt(num)])
     ))),
+    // Weaknesses (owner, 2026-10-31): [{ to, effect, amount? }], validated by model/enemyWeaknessRules.js in validate.js.
+    weaknesses: opt(arr(obj({ to: str, effect: str, amount: opt(num) }))),
     script: opt(ref('scripts')),
   }),
 
