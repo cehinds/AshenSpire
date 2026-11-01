@@ -638,6 +638,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage. Starstone: {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Starstone: {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1065,6 +1066,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage."],
     "upgrade": {
       "effects": [
         {
@@ -1141,6 +1143,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage. Starstone: {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Starstone: {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1222,6 +1225,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Starstone: {damage.2} again.",
+    "faceTemplate": ["Deal {damage} damage to all.", "Starstone: {damage.2} again."],
     "upgrade": {
       "effects": [
         {
@@ -1296,6 +1300,7 @@
       }
     ],
     "textTemplate": "Apply {vulnerable} Vulnerable to ALL enemies. Starstone: apply {weak} Weak to ALL.",
+    "faceTemplate": ["Apply {vulnerable} Vulnerable to all.", "Starstone: {weak} Weak to all."],
     "upgrade": {
       "effects": [
         {
@@ -1403,6 +1408,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Starstone: deal {damage.2} more.",
+    "faceTemplate": ["Deal {damage} damage, {poiseDamage} Poise.", "Starstone: {damage.2} more."],
     "upgrade": {
       "effects": [
         {
@@ -1484,6 +1490,7 @@
       }
     ],
     "textTemplate": "Deal {damage} to ALL enemies. Apply {vulnerable} Vulnerable to ALL. Starstone: deal {damage.2} to ALL again.",
+    "faceTemplate": ["Deal {damage} damage to all.", "Apply {vulnerable} Vulnerable to all."],
     "upgrade": {
       "effects": [
         {
@@ -1556,6 +1563,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies, scaling with Stamina spent.",
+    "faceTemplate": ["Deal {damage} damage to all.", "Scales with Stamina spent."],
     "upgrade": {
       "effects": [
         {
@@ -1738,6 +1746,7 @@
       }
     ],
     "textTemplate": "Whenever you gain Starstone Charge, deal 4 damage to a random enemy.",
+    "faceTemplate": ["On Charge: 4 random damage."],
     "upgrade": {
       "cost": 1
     }
@@ -1792,6 +1801,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Starstone: {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage to all.", "Starstone: {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1874,6 +1884,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage, scaling with Stamina spent. Starstone: deal {damage.2} more.",
+    "faceTemplate": ["Deal {damage} damage, scales Stamina.", "Starstone: {damage.2} more."],
     "upgrade": {
       "effects": [
         {
@@ -2023,6 +2034,7 @@
       }
     ],
     "textTemplate": "At the start of your turn, apply 2 Vulnerable to ALL enemies.",
+    "faceTemplate": ["Turn start: Vulnerable all enemies."],
     "upgrade": {
       "cost": 1
     }
@@ -2309,6 +2321,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage. Starstone: {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Starstone: {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -2373,6 +2386,7 @@
       }
     ],
     "textTemplate": "At the start of your turn, gain Starstone Charge and draw a card.",
+    "faceTemplate": ["Turn start: Charge and draw."],
     "upgrade": {
       "manaCost": 0
     }
@@ -3169,6 +3183,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies {hits} times. Starstone: apply {burn} Burn to ALL.",
+    "faceTemplate": ["{damage} to all, {hits} times.", "Starstone: {burn} Burn to all."],
     "upgrade": {
       "effects": [
         {
@@ -3240,6 +3255,7 @@
       }
     ],
     "textTemplate": "Heal {heal} HP. Gain {block} Block. Exhaust.",
+    "faceTemplate": ["Heal {heal} HP, Retain.", "Gain {gainBarrier} Barrier, Exhaust."],
     "upgrade": {
       "effects": [
         {

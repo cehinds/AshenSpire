@@ -433,6 +433,7 @@
       }
     ],
     "textTemplate": "Gain {block} Block. If in Bulwark Stance: gain {block.2} instead.",
+    "faceTemplate": ["Gain {block} Block.", "Bulwark: gain {block.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -820,6 +821,7 @@
       }
     ],
     "textTemplate": "Heal 2 HP for every 4 Bleed on all enemies. Exhaust.",
+    "faceTemplate": ["Heal 2 per 4 Bleed.", "Exhaust."],
     "upgrade": {
       "effects": [
         {
@@ -935,6 +937,7 @@
       }
     ],
     "textTemplate": "Gain {block} Block. If in Bulwark Stance: gain 4 Block next turn.",
+    "faceTemplate": ["Gain {block} Block.", "Bulwark: +4 Block next turn."],
     "upgrade": {
       "effects": [
         {
@@ -1154,6 +1157,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage. If the target is Staggered: deal {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Staggered: deal {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1206,6 +1210,7 @@
       }
     ],
     "textTemplate": "Poise thresholds no longer increase after filling.",
+    "faceTemplate": ["Poise thresholds stop rising."],
     "upgrade": {
       "cost": 2
     }
@@ -1234,6 +1239,7 @@
       }
     ],
     "textTemplate": "Block no longer expires at the start of your turn. (Block capped at 30.)",
+    "faceTemplate": ["Block lasts between turns."],
     "upgrade": {
       "effects": [
         {
@@ -1272,6 +1278,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to a random enemy, scaling with Stamina spent.",
+    "faceTemplate": ["Random enemy takes {damage}.", "Scales with Stamina spent."],
     "upgrade": {
       "effects": [
         {
@@ -1310,6 +1317,7 @@
       }
     ],
     "textTemplate": "Ethereal. Gain Block equal to your missing HP (max 20).",
+    "faceTemplate": ["Block equals missing HP."],
     "upgrade": {
       "effects": [
         {
@@ -1346,6 +1354,7 @@
       }
     ],
     "textTemplate": "Innate. Enter a Stance of your choice. Exhaust.",
+    "faceTemplate": ["Enter a stance of choice."],
     "upgrade": {
       "effects": [
         {
@@ -1395,6 +1404,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage."],
     "upgrade": {
       "effects": [
         {
@@ -1437,6 +1447,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage, plus 1 for each Bleed on the target.",
+    "faceTemplate": ["Deal {damage} damage.", "Plus 1 per target Bleed."],
     "upgrade": {
       "effects": [
         {
@@ -1481,6 +1492,7 @@
       }
     ],
     "textTemplate": "Whenever Bleed bursts on an enemy, gain 2 Strength.",
+    "faceTemplate": ["Bleed burst: gain 2 Strength."],
     "upgrade": {
       "cost": 1
     }
@@ -1715,6 +1727,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage, plus double the Bleed on the target. Apply {bleed} Bleed.",
+    "faceTemplate": ["Damage plus double Bleed.", "Apply {bleed} Bleed."],
     "upgrade": {
       "effects": [
         {
@@ -2095,6 +2108,7 @@
       }
     ],
     "textTemplate": "Gain {block} Block. If in Bulwark Stance: gain {strength} Strength.",
+    "faceTemplate": ["Gain {block} Block.", "Bulwark: gain {strength} Strength."],
     "upgrade": {
       "effects": [
         {

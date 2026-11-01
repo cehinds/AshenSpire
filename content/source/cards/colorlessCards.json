@@ -209,6 +209,7 @@
       }
     ],
     "textTemplate": "Apply {weak} Weak and {vulnerable} Vulnerable. Exhaust.",
+    "faceTemplate": ["Apply {weak} Weak, {vulnerable} Vulnerable."],
     "upgrade": {
       "effects": [
         {

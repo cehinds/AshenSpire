@@ -39,6 +39,8 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
 // A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
 const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
+// A downside the summary keeps ahead of it: a bare keyword or a payment, never a clause that also carries a payoff.
+const PURE_DOWNSIDE = /^(?:(?:Exhaust|Ethereal|Retain|Innate)(?:, (?:Exhaust|Ethereal|Retain|Innate))*\.?$|(?:Pay|Offer|Take|Lose|Skip|Cannot)\b)/i;
 const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 // A line of five words or fewer is one clause. A longer list of complete
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
@@ -93,7 +95,7 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
   // The Inspect cue is a last resort: a card that authors a `faceTemplate` says its main effect in place of it
   // (owner, 2026-11-01). Downsides the computed face reserved (Exhaust, a payment) stay ahead of the summary.
   if (faceHtml?.length && projection.clauses.some(clause => clause.kind === 'detail')) {
-    const downsides = projection.clauses.filter(clause => clause.kind !== 'detail' && (clause.kind === 'cost' || COST_RE.test(plain(clause.html))));
+    const downsides = projection.clauses.filter(clause => clause.kind === 'cost' || PURE_DOWNSIDE.test(plain(clause.html)));
     const summary = faceHtml.map(html => ({ kind: 'effect', html }));
     return { ...projection, clauses: [...downsides, ...summary].slice(0, FACE_EFFECT_CLAUSES), omitted: true };
   }

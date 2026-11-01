@@ -1370,6 +1370,7 @@
       }
     ],
     "textTemplate": "Every third card you play grants 3 Block.",
+    "faceTemplate": ["Every third card: 3 Block."],
     "upgrade": {
       "cost": 0
     }
@@ -1726,6 +1727,7 @@
       }
     ],
     "textTemplate": "At the start of your turn, become Prepared and draw a card.",
+    "faceTemplate": ["Turn start: Prepared, draw 1."],
     "upgrade": {
       "cost": 1
     }
@@ -1754,6 +1756,7 @@
       }
     ],
     "textTemplate": "Whenever an enemy Staggers, become Prepared and draw a card.",
+    "faceTemplate": ["On Stagger: Prepared, draw 1."],
     "upgrade": {
       "cost": 0
     }
@@ -1811,6 +1814,7 @@
       }
     ],
     "textTemplate": "Apply {venom} Venom and {weak} Weak to ALL enemies.",
+    "faceTemplate": ["Apply {venom} Venom to all.", "Apply {weak} Weak to all."],
     "upgrade": {
       "effects": [
         {
@@ -2089,6 +2093,7 @@
       }
     ],
     "textTemplate": "Deal 6 damage plus 4 times the target's Venom, then remove its Venom. Exhaust.",
+    "faceTemplate": ["Damage scales with Venom.", "Remove Venom, Exhaust."],
     "upgrade": {
       "effects": [
         {
@@ -2225,6 +2230,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies {hits} times.",
+    "faceTemplate": ["{damage} damage to all, {hits}×."],
     "upgrade": {
       "effects": [
         {
