@@ -448,6 +448,11 @@ test('resolveChangelogConflict escalates when ours edited a receipt\'s wording t
   assert.throws(() => resolveChangelogConflict(text), /edited on both sides/);
 });
 
+test('classifyConflicts treats config-build output as generated', () => {
+  assert.deepEqual(classifyConflicts(['src/config/generated/ui.js']).generated, ['src/config/generated/ui.js']);
+  assert.deepEqual(classifyConflicts(['content/config/ui/screens/title.json']).other, ['content/config/ui/screens/title.json']);
+});
+
 test('resolveChangelogConflict refuses a non-receipt change on our side', () => {
   const text = ['# Changelog', '<<<<<<< HEAD', 'Intro paragraph we rewrote.', '=======', 'Intro paragraph.', '>>>>>>> origin/dev', '## 2026-10-31', ''].join('\n');
   assert.throws(() => resolveChangelogConflict(text), /non-receipt line/);

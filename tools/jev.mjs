@@ -349,6 +349,7 @@ const GENERATED_PATHS = [
   /^(.+\/)?game\.lock\.json$/,
   /^src\/content\/changelog\.generated\.js$/,
   /^src\/framework\/data\/[^/]+\.js$/,
+  /^src\/config\/generated\/[^/]+\.js$/,
   /^buildordinal\.json$/,
 ];
 
