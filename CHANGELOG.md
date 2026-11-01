@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.101`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
-- **Focus armaments make spells cheaper** ([#2450](https://github.com/cehinds/AshenSpire/pull/2450), `0.7.2.101`). While you wear an armament with the Focus tag (most sceptres and staves), every card costs 1 less Mana, to a minimum of 0; carrying more than one Focus still gives a single −1.
+- **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.103`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
+- **Focus armaments make spells cheaper** ([#2450](https://github.com/cehinds/AshenSpire/pull/2450), `0.7.2.103`). While you wear an armament with the Focus tag (most sceptres and staves), every card costs 1 less Mana, to a minimum of 0; carrying more than one Focus still gives a single −1.
 - **Windows test fix for jev paths** ([#2451](https://github.com/cehinds/AshenSpire/pull/2451), `0.7.2.101`). A jev self-test no longer fails on Windows runners whose temp folder uses a short 8.3 name.
 - **Enemies no longer "miss" when they Advance** ([#2445](https://github.com/cehinds/AshenSpire/pull/2445), `0.7.2.99`). Moving closer is not an attack: an enemy's Advance no longer rolls a hit that is logged as "missed: out of range".
 - **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.97`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
