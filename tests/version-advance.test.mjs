@@ -88,6 +88,8 @@ test('CLI dry run in a temp copy: prints the next triple, --write moves both fil
     assert.equal(run('--kind', 'bogus').status, 2);
     // Pin a known start so the examples in the owner's request are exact.
     writeFileSync(join(dir, VERSION_FILE), before.replaceAll(cur.join('.'), '0.7.2'));
+    // The series gate is pinned too: the repo's own SERIES moves with every real minor bump.
+    writeFileSync(join(dir, SERIES_FILE), readFileSync(join(dir, SERIES_FILE), 'utf8').replace(/^(const SERIES = ')\d+\.\d+(';)$/m, (_, a, e) => `${a}0.7${e}`));
     assert.equal(run('--kind', 'candidate', '--write').status, 0);
     assert.equal(parseTriple(readFileSync(join(dir, VERSION_FILE), 'utf8')).join('.'), '0.7.3');
     assert.match(readFileSync(join(dir, SERIES_FILE), 'utf8'), /const SERIES = '0\.7';/);
