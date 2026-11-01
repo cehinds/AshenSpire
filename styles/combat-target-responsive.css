@@ -71,7 +71,7 @@
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-label { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-badge {
   position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
-  font-size:calc(9px / var(--ui-zoom,1)); flex:0 0 calc(16px / var(--ui-zoom,1)); width:calc(16px / var(--ui-zoom,1)); height:calc(16px / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
+  font-size:calc(7.2px / var(--ui-zoom,1)); flex:0 0 calc(12.8px / var(--ui-zoom,1)); width:calc(12.8px / var(--ui-zoom,1)); height:calc(12.8px / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
 }
 :root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#f07870))!important;
@@ -152,6 +152,10 @@
   flex:0 0 100%!important; width:100%!important; margin-inline:0!important;
 }
 :root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-meter .m-track { width:100%!important; }
+/* Owner 2026-11-01: the player's AC square leads the bar's line (the bar loses only its width); its caption leads the badge row. */
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row:has(> .combat-health-ac) > .combat-health-meter { flex:1 1 0!important; width:auto!important; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-ac { order:-1; }
+:root .combat :is(.combatant .target-hud-overhead-meters,.combatant .combatant-mini-hud,.target-hud-detail .target-hud-meters) .combat-health-row > .combat-health-ac-caption { display:grid; order:0; }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .m-plate,
 :root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
   right:0!important;
@@ -161,7 +165,7 @@
    at the fixed 1.8em square; they stay square for one digit and grow to hug icon and number for two. Poise and Block stay round. */
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge:is(.combat-health-precision, .combat-health-evade) {
   display:inline-flex; align-items:center; justify-content:center; gap:.2em; aspect-ratio:auto;
-  flex:0 0 auto; width:auto !important; min-width:1.8em !important; max-width:none !important; padding-inline:0; box-sizing:border-box;
+  flex:0 0 auto; width:auto !important; min-width:1.44em !important; max-width:none !important; padding-inline:0; box-sizing:border-box;
 }
 
 /* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
@@ -177,9 +181,9 @@
     inset: calc(18px / var(--ui-zoom,1)) 0 auto auto !important;
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
-  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.28; }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
-    width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
+    width: calc(7.2px / var(--ui-zoom,1)); height: calc(7.2px / var(--ui-zoom,1)); font-size: calc(7.2px / var(--ui-zoom,1));
   }
 }
 
@@ -202,7 +206,7 @@
     inset: calc(14px / var(--ui-zoom,1)) 0 auto auto !important;
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(12px / var(--ui-zoom,1)); }
-  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.25; }
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1; }
 }
 
 /* Counter / Reflect stack badges (owner 2026-10-31): with up to five badges (shield, precision, counter, reflect, poise) the row
