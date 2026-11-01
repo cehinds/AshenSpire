@@ -1602,9 +1602,9 @@ function resolvedCardPriceReceipt(combat,def,claimed=null) {
   result.paid={...result.paid,energy:result.paid.energy+status.staminaTax,stamina:result.paid.stamina+status.staminaTax,mana:result.paid.mana+status.manaTax};
   result.display={...result.display,action:result.display.action+status.staminaTax,stamina:result.display.stamina+status.staminaTax,mana:result.display.mana+status.manaTax};
  }
- // Focus (owner, 2026-11-01): a held Focus armament takes Mana off a magic card's final price, floored at 0, so the face badge,
+ // Focus (owner, 2026-11-01): in the Prepared stance a held Focus armament takes Mana off a magic card's final price, floored at 0, so the face badge,
  // affordability checks, the bot and the payment all read the same number.
- const focus=focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def);
+ const focus=focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId,def,combat.player);
  if(focus>0) {
   result.paid={...result.paid,mana:applyFocusManaDiscount(result.paid.mana,focus)};
   result.display={...result.display,mana:applyFocusManaDiscount(result.display.mana,focus)};
