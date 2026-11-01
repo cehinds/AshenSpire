@@ -49,18 +49,18 @@ test('Poise has a numeric badge and retains the HP trim and accessible value', (
   assert.equal(none.querySelector('.combat-health-meter').dataset.poised, 'false');
 }));
 
-test('PIP badges preserve actual Evasion stacks independently of other defenses', () => withKitDom(() => {
+test('PIP badges preserve actual Evasion stacks independently of other defenses (fourth+ collapse into +N)', () => withKitDom(() => {
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }),
     { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
   assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
     [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
-  [['shield', '5'], ['evade', '2'], ['poise', '3'], ['ward', '4']]);
+  [['shield', '5'], ['poise', '3'], ['overflow', '+2']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 
-test('Precision badge sits right after Evade and is hidden at zero, negative or null', () => withKitDom(() => {
+test('Precision badge sits after Ward and is hidden at zero, negative or null', () => withKitDom(() => {
   const kinds = values => combatHealthModel(values).badges.map(b => b.kind);
-  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'evade', 'precision', 'poise', 'ward']);
+  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'poise', 'evade', 'ward', 'precision']);
   for (const precision of [0, -2, null, undefined, NaN]) assert.ok(!kinds({ precision }).includes('precision'));
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { evasion: 2, precision: 3 }, { tooltips: false });
   const badge = row.querySelector('.combat-health-precision');
@@ -90,4 +90,17 @@ test('the Precision badge glyph is the reticle, not the ranged arrow the card-ra
   assert.notEqual(reticle, tagSymbolSvg('status:precision').outerHTML, 'card-rail precision keeps its ranged glyph');
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { precision: 2 }, { tooltips: false });
   assert.equal(row.querySelector('.combat-health-precision-icon svg').outerHTML, reticle);
+}));
+
+test('a Ward badge keeps its Barrier provenance when it is shown', () => {
+  const ward = combatHealthModel({ ward: 12, barrier: 4 }).badges.find(b => b.kind === 'ward');
+  assert.equal(ward.barrier, 4);
+});
+
+test('a shown Ward badge renders its Barrier rim and data-barrier', () => withKitDom(() => {
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { ward: 12, barrier: 4 }, { tooltips: false });
+  const ward = row.querySelector('.combat-health-badge[data-defense-kind="ward"]');
+  assert.ok(ward, 'the Ward badge is drawn');
+  assert.equal(ward.dataset.barrier, '4');
+  assert.ok(ward.classList.contains('combat-health-ward-barrier'));
 }));

@@ -118,17 +118,17 @@
     1px 0 var(--combat-symbol-trim, var(--combat-symbol-black-trim));
 }
 
-/* Mini HUD Evade badge: the symbol is 15.3px centered in its 22px box, with
+/* Mini HUD Evade badge: the symbol is 12.24px centered in its 17.6px box (20% smaller, owner 2026-11-01), with
    the count inside the badge's lower-right corner (owner 2026-10-31: every count renders inside, like Block and Poise). */
 :root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) {
   position: relative;
   display: block;
   box-sizing: border-box;
-  width: calc(22px / var(--ui-zoom, 1)) !important;
-  min-width: calc(22px / var(--ui-zoom, 1)) !important;
-  max-width: calc(22px / var(--ui-zoom, 1)) !important;
-  height: calc(22px / var(--ui-zoom, 1)) !important;
-  flex: 0 0 calc(22px / var(--ui-zoom, 1)) !important;
+  width: calc(17.6px / var(--ui-zoom, 1)) !important;
+  min-width: calc(17.6px / var(--ui-zoom, 1)) !important;
+  max-width: calc(17.6px / var(--ui-zoom, 1)) !important;
+  height: calc(17.6px / var(--ui-zoom, 1)) !important;
+  flex: 0 0 calc(17.6px / var(--ui-zoom, 1)) !important;
   display: block !important;
   grid-template-columns: none;
   padding: 0;
@@ -136,10 +136,10 @@
 }
 :root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) {
   position: absolute;
-  left: calc(3.35px / var(--ui-zoom, 1));
-  top: calc(3.35px / var(--ui-zoom, 1));
-  width: calc(15.3px / var(--ui-zoom, 1));
-  height: calc(15.3px / var(--ui-zoom, 1));
+  left: calc(2.68px / var(--ui-zoom, 1));
+  top: calc(2.68px / var(--ui-zoom, 1));
+  width: calc(12.24px / var(--ui-zoom, 1));
+  height: calc(12.24px / var(--ui-zoom, 1));
   font-size: 0;
 }
 :root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) > svg {
@@ -150,16 +150,23 @@
 }
 :root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
   position: absolute;
-  left: calc(11.5px / var(--ui-zoom, 1));
-  top: calc(11.5px / var(--ui-zoom, 1));
+  left: calc(9.2px / var(--ui-zoom, 1));
+  top: calc(9.2px / var(--ui-zoom, 1));
   display: grid;
   place-items: center;
-  width: calc(10px / var(--ui-zoom, 1));
-  height: calc(10px / var(--ui-zoom, 1));
+  width: calc(8px / var(--ui-zoom, 1));
+  height: calc(8px / var(--ui-zoom, 1));
   transform: none;
-  font-size: calc(9px / var(--ui-zoom, 1));
+  font-size: calc(7.2px / var(--ui-zoom, 1));
   line-height: 1;
   overflow: visible;
+}
+
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-overflow, .combat-health-ac, .combat-health-ac-caption) {
+  display: grid !important; place-items: center; box-sizing: border-box; padding: 0;
+  width: calc(17.6px / var(--ui-zoom, 1)) !important; min-width: calc(17.6px / var(--ui-zoom, 1)) !important;
+  max-width: calc(17.6px / var(--ui-zoom, 1)) !important; height: calc(17.6px / var(--ui-zoom, 1)) !important;
+  flex: 0 0 calc(17.6px / var(--ui-zoom, 1)) !important; aspect-ratio: 1;
 }
 
 /* The status rail shares the mini HUD's 22px group geometry. A dedicated glyph
