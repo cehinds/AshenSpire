@@ -1,0 +1,11 @@
+/* Enemy weakness chips (owner, 2026-11-01): a fixed square the size of a combat badge, the icon centred and always sized
+   (the old chip sat in an unsized inline pill, so its icon collapsed to 0x0 and drew an empty box). */
+:root .combat .combatant .weakness-chip {
+  --weakness-chip-size: calc(26px / var(--ui-zoom, 1));
+  box-sizing: border-box; display: inline-grid; place-items: center; flex: 0 0 auto;
+  width: var(--weakness-chip-size); height: var(--weakness-chip-size); margin: 2px 2px 0 0; padding: 0;
+  border: 1px solid var(--gold); border-radius: 6px; background: color-mix(in srgb, black 78%, transparent); color: var(--parchment, currentColor); cursor: help;
+}
+:root .combat .combatant .weakness-chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat .combatant .weakness-chip-icon { display: grid; place-items: center; width: 68%; height: 68%; }
+:root .combat .combatant .weakness-chip-icon > svg { display: block; width: 100%; height: 100%; }

@@ -48,6 +48,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { snapshotEnemyKnowledgeRules } from './enemyKnowledgeRules.js';
+import { weaknessDiscoveryProblems } from './weaknessDiscovery.js';
 import { openRunEnemyKnowledge, enemyKnowledgeRunProblems } from './enemyKnowledgeRun.js';
 import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
@@ -702,6 +703,8 @@ export const RUN_SHAPE = [
   { key: 'collectedCardIds', type: 'array', optional: true },
   { key: 'gameProfile', type: 'object', optional: true },
   { key: 'rangePolicy', type: 'object', optional: true },
+  // Weakness discovery (SPEC 5.3): { enemyId: ['piercing:damage'] }, set when the player triggers an enemy's weakness.
+  { key: 'weaknessDiscovery', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
   { key: 'gameProfileRestVisits', type: 'object', optional: true },
   { key: 'rewardOfferHistory', type: 'object', optional: true },
@@ -1140,6 +1143,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   problems.push(...enemyKnowledgeRunProblems(run));
   if (!run.enemyKnowledgeRules && run.skills?.perception !== undefined) problems.push('Run Perception requires enemy knowledge rules');
+  problems.push(...weaknessDiscoveryProblems(run.weaknessDiscovery));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
