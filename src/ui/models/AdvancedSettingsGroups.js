@@ -29,7 +29,7 @@ export function advancedSection(row) {
 // while a switch is on. Named once: `statsSection` files into them and
 // `advancedSubgroups` draws them after every row that is in force.
 export const WITHOUT_RATINGS = 'Without ratings (legacy poise)';
-export const DRAW_FALLBACK = 'Co-op & legacy fallback';
+export const DRAW_FALLBACK = 'Legacy fallback';
 
 // ---- ONE TOPIC PER TRAIT (owner, 2026-09-21) --------------------------------
 //
@@ -200,7 +200,6 @@ function topic(row, section) {
     if (/^rest\.|shrineMultiUse/.test(path)) return 'Rest & shrines';
     if (/^(atlas|seatTiers|bossTiers)/.test(path)) return 'Atlas & seats';
     if (/^customMods/.test(path)) return 'Run modifiers';
-    if (/^coop/.test(path)) return 'Co-op';
     return words(path.split('.')[0]);
   }
   if (section === 'Equipment') {

@@ -538,7 +538,7 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
     assert.equal(where(key), 'Stats → Draw & hand');
     assert.equal(statsSection(rows.find(row => row.key === key)), section);
   }
-  assert.ok(!rows.some(row => statsSection(row) === DRAW_FALLBACK), 'the co-op & legacy fallback subsection is gone');
+  assert.ok(!rows.some(row => statsSection(row) === DRAW_FALLBACK), 'the legacy fallback subsection is gone');
   assert.equal(where('swapCostRule'), 'Equipment → Equipment swapping', 'the swap rule sits with its numbers');
   assert.equal(where('gameConfig.balance.equipment.swapCost'), 'Equipment → Equipment swapping');
   assert.equal(where('gameConfig.progression.cinderMultiplier'), 'Rewards → Combat rewards', 'the Cinder multiplier sits with the Cinders');
