@@ -234,11 +234,22 @@ export function critChance(rules, attributes, tags) {
 // The roll: only the player's attacks, only with a crit rule that matches, on
 // the combatProcs stream (nothing is drawn without a rule, so a run with no
 // such feat draws exactly what it always drew).
-export function rollCrit(ctx, source, tags) {
+// The roll is logged as critRolled (owner, 2026-10-31): `roll` and `chance` are percentages, the crit lands when roll < chance.
+// `info` ({ targetId, cardId }) only labels the event; it never changes the draw.
+export function rollCrit(ctx, source, tags, info = {}) {
   if (!source || source.kind !== 'player' || !Array.isArray(source.critRules) || !source.critRules.length) return 0;
   const { chance, multiplier } = critChance(source.critRules, ctx.attributes, tags);
   if (!(chance > 0) || !(multiplier > 1)) return 0;
-  return ctx.rng.float('combatProcs') < chance ? multiplier : 0;
+  const draw = ctx.rng.float('combatProcs');
+  const success = draw < chance;
+  // Shown to 0.01, rounded so the displayed comparison agrees with the verdict: on a crit the roll rounds down and the
+  // chance up, on a miss the roll rounds up and the chance down (a draw of 0.149996 against 0.15 reads 14.99 vs 15).
+  const shown = (value, up) => (up ? Math.ceil(value * 1e4 - 1e-9) : Math.floor(value * 1e4 + 1e-9)) / 100;
+  ctx.emit?.('critRolled', { sourceId: source.id, targetId: info.targetId, cardId: info.cardId,
+    // Seats like critHit: all player entities share 'player', so a co-op log names the roller by seat.
+    ...(info.target ? critSeats(ctx, source, info.target) : ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}), roll: shown(draw, !success),
+    chance: shown(chance, success), multiplier, success });
+  return success ? multiplier : 0;
 }
 
 /**
@@ -1732,7 +1743,7 @@ function runOpcode(ctx, action, eff) {
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
           // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
-          const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags);
+          const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags, { targetId: t.id, target: t, cardId: carrier?.cardId });
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
@@ -1806,7 +1817,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'buildup': {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure' }).success) continue;
+        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure', event: { status: eff.status, targetId: t.id, sourceId: action.source?.id } }).success) continue;
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
           { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;
