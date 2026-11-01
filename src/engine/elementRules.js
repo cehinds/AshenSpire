@@ -70,3 +70,19 @@ export function wearsMetal(ctx, entity) {
 /** +1 Precision on a lightning hit whose target uses metal equipment; 0 otherwise. */
 export const lightningPrecisionBonus = (ctx, target, carrier) => (fixCoreEnabled(ctx) && isLightning(carrier) && wearsMetal(ctx, target) ? lightningRules().metalPrecision : 0);
 
+
+/**
+ * Elemental affinity (SPEC 4.7): an armament with `affinity: { element, count }` adds `count` element tags
+ * (`element:<element>`, one per count, not deduplicated) to its card. An enemy's attuned weapon gets floor(count x 1.25).
+ */
+export function affinityTags(piece, { enemy = false } = {}) {
+  const row = piece?.affinity;
+  if (!row?.element || !(Number(row.count) > 0)) return [];
+  const count = enemy ? ownElementAmount(Math.floor(Number(row.count)), row.element, row.element) : Math.floor(Number(row.count));
+  return Array.from({ length: count }, () => `element:${row.element}`);
+}
+/** Infuse an element into an armament: a copy of the piece with the affinity set (a repeat of the same element adds to its count). */
+export function withAffinity(piece, element, count = 1) {
+  const prior = piece?.affinity?.element === element ? Number(piece.affinity.count) || 0 : 0;
+  return { ...piece, affinity: { element, count: prior + Math.max(1, Math.floor(count)) } };
+}

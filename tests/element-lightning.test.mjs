@@ -14,7 +14,8 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { beginLightningHit, finishLightningHit, wearsMetal, lightningPrecisionBonus, shockContestPreview, seedElementStatuses } from '../src/engine/elementLightning.js';
-import { isLightning, ownElementAmount, dampBurnStacks, shockedPenalty, carrierElement } from '../src/engine/elementRules.js';
+import { equipmentCardModel } from '../src/model/equipmentCard.js';
+import { isLightning, affinityTags, withAffinity, ownElementAmount, dampBurnStacks, shockedPenalty, carrierElement } from '../src/engine/elementRules.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -254,4 +255,19 @@ test('authored enemies: the Charred Colossus (earth) spawns with 3 Bedrock, the 
   assert.equal(getStacks(colossus, 'bedrock'), 3);
   assert.equal(getStacks(crab, 'damp'), 2);
   assert.equal(getStacks(soldier, 'bedrock') + getStacks(soldier, 'damp'), 0);
+});
+
+test('elemental affinity: an infused armament adds N element tags to its card; an enemy\'s attuned weapon gets floor(N x 1.25)', () => {
+  const sword = reg.equipment.armaments.find(x => x.id === 'straightSword');
+  assert.deepEqual(affinityTags(sword), [], 'no affinity, no tags');
+  const infused = withAffinity(withAffinity(sword, 'lightning', 2), 'lightning', 2);
+  assert.deepEqual(infused.affinity, { element: 'lightning', count: 4 });
+  assert.deepEqual(affinityTags(infused), Array(4).fill('element:lightning'));
+  assert.equal(affinityTags(infused, { enemy: true }).length, 5, 'floor(4 x 1.25)');
+  assert.equal(affinityTags(withAffinity(sword, 'fire', 3), { enemy: true }).length, 3, 'floor(3.75)');
+  const before = equipmentCardModel(reg, sword).tags.length;
+  const card = equipmentCardModel(reg, infused);
+  assert.equal(card.tags.length, before + 4);
+  assert.equal(card.tags.filter(t => t.value === 'element:lightning').length, 4);
+  assert.equal(sword.affinity, undefined, 'the original piece is untouched');
 });

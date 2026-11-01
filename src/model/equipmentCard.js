@@ -4,11 +4,14 @@ import { parseMod } from './loadout.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
+import { affinityTags } from '../engine/elementRules.js';
 
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
   const armor = piece.kind === 'armor';
   const tags = [...new Set([...(piece.tags || []), ...(gameModule(registries, 'effects')?.fixCoreVersion === 1 ? piece.propertyTags || [] : [])])];
+  // Elemental affinity (SPEC 4.7): N element tags, one per count, so they are added after the de-duplication.
+  tags.push(...affinityTags(piece));
   const tag = id => (registries.tags || []).find(row => row.id === id);
   const className = armor ? (piece.sharedSet ? 'All classes' : registries.classes.get(piece.classId)?.name || piece.classId) : '';
   const types = (piece.itemTypes || []).map(t => t.label).join(' / ');
