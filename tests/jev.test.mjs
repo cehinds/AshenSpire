@@ -82,7 +82,7 @@ test('CLI: stdin triage and --human', () => {
 });
 
 test('fast-check list names every required check, in order', () => {
-  assert.deepEqual(FAST_CHECKS.map(c => c.id), ['style-lint', 'content-build', 'config-build', 'game-config', 'tokens-css', 'hud-layout-css', 'framework-data-build', 'build-game', 'bundle-cycles', 'mechanics-generate', 'uistrings', 'run-node', 'runsim']);
+  assert.deepEqual(FAST_CHECKS.map(c => c.id), ['style-lint', 'content-build', 'config-build', 'game-config', 'tokens-css', 'hud-layout-css', 'framework-data-build', 'build-game', 'bundle-cycles', 'enemy-sheets', 'mechanics-generate', 'uistrings', 'run-node', 'runsim']);
 });
 
 test('runChecks: pass is 0, an auto-fixable failure is 1, an unmatched one is 2; exit is the max', () => {
