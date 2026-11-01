@@ -52,9 +52,11 @@ export function digest(combat) {
 // Core 2 accuracy: Precision = 1 + stat mix + stacks, Evasion = 8 + DEX + 2/stack moves the seeded hit rolls.
 // Re-pinned again 2026-10-31 on merging #2430 (enemy weaknesses) with #2436 (Core 2 accuracy): both change the
 // seeded fights, #2436 through the hit rolls and #2430 through the weakness damage stage (reaver rows only; turn unchanged).
+// Re-pinned 2026-11-01 on merging #2434 (roll log): it adds six roll-receipt log entries per fight and
+// itemised perception dcParts on the enemy's read; RNG counters, HP, turn and every other state field match dev.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'f67c0c74cd2f931d', state: '0756148501735137', events: 190, turn: 6 }],
-  [[4242, 'reaver'], { log: '30e2c23e0af18e3b', state: '7aa9717752e4d146', events: 228, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '1bb7a14785574ec3', state: '95f05cf25b2cb35a', events: 196, turn: 6 }],
+  [[4242, 'reaver'], { log: 'f8fac21d378c1d8e', state: 'a025baec4945d4b4', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

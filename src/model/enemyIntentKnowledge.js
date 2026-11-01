@@ -39,7 +39,9 @@ export function rollKnowledgeRead(rng, rules, observer, category, { ctx = null, 
     const dc = cfg.baseDC + (Number(target.attributes?.intelligence) || 0) + (Number(target.attributes?.wisdom) || 0) + bonus;
     const total = roll + wisdom, passed = total >= dc;
     return {visibility:passed ? 'exact' : 'unknown',label:passed ? null : '?',
-      perception:{roll,wisdom,dc,total,passed},prediction:null,resolved:false,correct:null,credited:false};
+      perception:{roll,wisdom,dc,total,passed,
+        // The DC itemised for the combat log (owner, 2026-10-31).
+        dcParts:[{label:'base',value:cfg.baseDC},{label:'INT',value:Number(target.attributes?.intelligence) || 0},{label:'WIS',value:Number(target.attributes?.wisdom) || 0},...(bonus ? [{label:'bonus',value:bonus}] : [])]},prediction:null,resolved:false,correct:null,credited:false};
   }
   // Both draws are unconditional; an exact success never shifts future clues.
   const exact = rng.float('enemyIntentVisibility');
