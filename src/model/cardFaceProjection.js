@@ -93,6 +93,10 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
   // The Inspect cue is a last resort: a card that authors a `faceTemplate` says its main effect in place of it
   // (owner, 2026-11-01). Downsides the computed face reserved (Exhaust, a payment) stay ahead of the summary.
   if (faceHtml?.length && projection.clauses.some(clause => clause.kind === 'detail')) {
+    const summaryText = [...faceHtml.map(plain), ...(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word))].join(' ').toLowerCase();
+    const named = text => (text.match(/\b(?:take|lose|exhaust|discard|ethereal|unplayable|pay|offer|skip)\b|\bone play\b/gi) || [])
+      .every(word => summaryText.includes(word.toLowerCase().split(' ')[0]));
+    if (!(projection.hiddenDownsides || []).every(named)) return projection;
     const downsides = projection.clauses.filter(clause => clause.downside || clause.kind === 'cost');
     // A reserved clause may already carry part of the payoff ("Heal 8 HP, Exhaust, Retain"): a summary line it contains is dropped.
     const wordsOf = html => new Set((plain(html).toLowerCase().match(/[\p{L}\p{N}%+]+/gu) || []).filter(word => !/^cards?$/.test(word)));
@@ -178,6 +182,9 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.
   if (!clauses.length) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
-  return { clauses, maxLines: FACE_EFFECT_LINES,
+  // A required downside the face could not carry (a long payment, a mandatory discard): a summary may replace the cue
+  // only when it names that downside itself.
+  const hiddenDownsides = reserved.filter(entry => !chosen.has(entry)).map(entry => plain(entry.line.html));
+  return { clauses, hiddenDownsides, maxLines: FACE_EFFECT_LINES,
     omitted: !lines || shown < lines.length || candidates.length > shown };
 }

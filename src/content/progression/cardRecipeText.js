@@ -85,9 +85,13 @@ export function recipeFace(effects, { counterMode = null } = {}) {
       case 'grantCardCharge': options = e.damage ? [`Next ${e.abilityKind === 'spell' ? 'spell' : 'attack'} deals +${token('chargeDamage')}`] : [`Next spell costs ${token('chargeManaDiscount')} less`]; break;
       default: options = [];
     }
-    phrases.push({ conditional: !!(e.if || e.oncePerTurn), options });
+    phrases.push({ conditional: !!(e.if || e.oncePerTurn), cost: e.op === 'discard' || e.op === 'loseHp', options });
   }
   const plainOnes = phrases.filter(p => !p.conditional);
-  const lines = (plainOnes.length ? plainOnes : phrases).map(p => p.options.find(o => words(o) <= 5)).filter(Boolean).slice(0, 2);
+  // A payment or mandatory discard is always said on the face; the other effects fill what is left.
+  const pool = plainOnes.length ? plainOnes : phrases;
+  const costs = pool.filter(p => p.cost), others = pool.filter(p => !p.cost);
+  const chosen = new Set([...costs, ...others].slice(0, 2));
+  const lines = pool.filter(p => chosen.has(p)).map(p => p.options.find(o => words(o) <= 5)).filter(Boolean);
   return lines.length ? lines : undefined;
 }

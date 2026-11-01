@@ -1162,7 +1162,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage, scaling with Stamina spent, then heal 2 per Stamina.",
-    "faceTemplate": ["Deal {damage} damage, scales Stamina.", "Heal 2 per Stamina."],
+    "faceTemplate": ["Deal {damage} damage, scales Stamina.", "Heal {heal}."],
     "upgrade": {
       "effects": [
         {
@@ -1226,7 +1226,7 @@
       }
     ],
     "textTemplate": "Deal damage equal to twice the target's Blight.",
-    "faceTemplate": ["Damage is twice target Blight."],
+    "faceTemplate": ["Damage scales with Blight."],
     "upgrade": {
       "effects": [
         {
