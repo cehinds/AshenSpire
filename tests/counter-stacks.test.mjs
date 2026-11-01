@@ -199,3 +199,46 @@ test('outside Core 2 (default bundle) a Counter gains no stacks', () => {
   try { dispatch(combat, { type: 'playCard', cardInstanceId: 'lg1', targetId: combat.enemies[0].id }); } catch { /* unplayable here: still no stacks */ }
   assert.ok(!combat.player.counterStacks);
 });
+
+// Per-root reaction policy (saved Core 2 fights: contactPolicy absent) stacks cards before the hit lands (Codex on #2431).
+function stackingFight(cardId, stance = 'counter') {
+  const { combat } = live();
+  delete combat.reactionRules.contactPolicy;
+  combat.piles.hand.length = 0;
+  combat.piles.hand.push({ instanceId: 'st1', cardId });
+  combat.player.combatStance = { maneuver: stance, camp: 'physical', range: 'melee' };
+  combat.player.counterStacks = 10;
+  combat.player.energy = 4;
+  dispatch(combat, { type: 'endTurn' });
+  return combat;
+}
+const stackAnswer = (combat, cardId) => dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: combat.pendingReaction.options.find(row => row.cardId === cardId).id });
+test('per-root policy: a stacked stance-changing card (Defend) means no auto-Counter is offered or charged', () => {
+  const combat = stackingFight('core.defend');
+  assert.ok(combat.pendingReaction.options.some(row => row.autoCounter), 'offered before anything is stacked');
+  const start = combat.eventLog.length;
+  stackAnswer(combat, 'core.defend');
+  if (combat.pendingReaction) {
+    assert.equal(combat.pendingReaction.options.some(row => row.autoCounter), false, 'Defend would drop Counter stance before the hit');
+    dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  }
+  const events = combat.eventLog.slice(start);
+  assert.equal(returnEvent(events), undefined, 'no Counter return');
+  const spent = events.filter(e => e.type === 'staminaSpent').map(e => e.amount);
+  assert.equal(spent.length, 1, 'only Defend paid: no SP wasted on an auto-Counter');
+});
+test('auto-Counter eligibility reads the stance after the stack: stance-keeping cards leave it open', () => {
+  const { combat } = live();
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  combat.player.energy = 3;
+  const keeps = [{ combatProfile: { maneuver: 'counter', camp: 'physical', range: 'melee' } }, { combatProfile: { stanceTrigger: false, maneuver: 'defend' } }, { cardTags: [] }];
+  assert.equal(autoCounterAvailable(combat, combat.player, 0, keeps), true);
+  assert.equal(autoCounterAvailable(combat, combat.player, 0, [{ combatProfile: { maneuver: 'defend', camp: 'physical', range: 'melee' } }]), false);
+  assert.equal(autoCounterAvailable(combat, combat.player, 0, [...keeps, { combatProfile: { maneuver: 'attack', camp: 'physical' } }]), false);
+});
+test('per-root policy: with nothing stacked the auto-Counter still fires once with a Counter return', () => {
+  const combat = stackingFight('core.defend');
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: 'autoCounter' });
+  assert.equal(combat.eventLog.slice(start).filter(e => e.type === 'combatCounterTriggered').length, 1);
+});

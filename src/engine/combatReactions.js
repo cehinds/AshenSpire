@@ -201,7 +201,10 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
   }
   // Auto-Counter (owner 2026-10-31): in Counter stance a covered hit may be answered with no card, for the data-set SP.
   const owner = ctx.players ? ctx.players.get(seat)?.entity : ctx.player;
-  if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner, entries.filter(entry => entry.side === 'player' && entry.ownerId === seat).reduce((sum, entry) => sum + (entry.staminaCost || 0), 0))
+  const seatEntries = entries.filter(entry => entry.side === 'player' && entry.ownerId === seat);
+  const stackedCards = seatEntries.map(entry => (ctx.players ? ctx.players.get(seat)?.piles.hand : ctx.piles.hand)?.find(card => card.instanceId === entry.cardInstanceId))
+    .filter(Boolean).map(card => resolveCombatCard(ctx, card));
+  if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner, seatEntries.reduce((sum, entry) => sum + (entry.staminaCost || 0), 0), stackedCards)
     && threats.some(threat => threat.row.contacts.some(contact => counterCoversAttack(ctx, Matchups.autoCounterCarrier(), contact, contact.effect || 'damage')))) {
     options.push({ id: 'autoCounter', name: 'Counter', cardId: null, autoCounter: true, play: { autoCounter: true },
       staminaCost: Matchups.autoCounterCost(), manaCost: 0, choiceName: null, ...(captureIncoming ? { incoming: {} } : {}) });
