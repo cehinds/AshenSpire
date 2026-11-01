@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Lightning, Shocked, Damp and Bedrock** ([#2477](https://github.com/cehinds/AshenSpire/pull/2477), `0.7.3.22`). Added Spark, a lightning cantrip, with Shocked, Damp and Bedrock statuses, metal gear conducting lightning, and a 1.25x bonus for enemies using their own element.
 - **Stance glyph after a Poise break** ([#2473](https://github.com/cehinds/AshenSpire/pull/2473), `0.7.3.22`). The figure no longer shows a stance glyph (for example Smash) at turn start after a Poise break has already ended the stance; it shows the resting mark.
 - **Upgrade list shows only what you can upgrade** ([#2468](https://github.com/cehinds/AshenSpire/pull/2468), `0.7.3.20`). Items that cannot be upgraded are hidden; items that need a Blacksmith sit at the bottom, greyed out with "Needs a Blacksmith"; the first upgradeable item is selected.
 - **Smith upgrade confirmation fits on screen** ([#2464](https://github.com/cehinds/AshenSpire/pull/2464), `0.7.3.20`). Change values are right-aligned, unchanged recovery rows collapse to "No recovery changes", and "None" no longer wraps, so the upgrade confirmation no longer needs scrolling.
