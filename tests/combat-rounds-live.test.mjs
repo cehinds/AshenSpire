@@ -340,6 +340,10 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   // origin/dev b506bf55, seeds 1 and 2 are byte-identical and seed 3 differs only in the last End Turn's four cardDrawn
   // events (the three cards left in the draw pile are drawn before the reshuffled discard instead of after it). Every
   // play, hit, outcome and end state matches.
+  // Re-recorded for D20Everywhere (owner, 2026-11-01): status buildup and recovery chances are d20s now. Compared entry by
+  // entry with origin/dev aba92c631: the only differences are the status chance events (new `target` and `mode` fields; roll,
+  // rolls and success values from the d20 draws) and the gauge, removal and buildup numbers those outcomes feed. The three
+  // end-state outcomes asserted above are unchanged and the fresh-fight repeat passed before the hash was recorded.
   const previousTotals = [], endedMoves = [], projectedRanges = [];
   const forecastCounts = { actor: 0, move: 0, action: 0 };
   const legacy = logs.map(text => {
@@ -418,7 +422,7 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
     return counts;
   }, {}), { '0-7': 11, '0-9': 6 }, 'projected HP ranges are present only on the public attacking forecasts');
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
-    { sha256: '7ae61b7bedb9ccad09e9f732ce0650c130d34c3f350eec866b1e7460546e80fe', length: 414757 });
+    { sha256: 'd3f99b652a64ce11bda7dc192a5c2d644c7bd92098d2b8257e7d3d3280de79df', length: 415337 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.
@@ -673,7 +677,14 @@ test('in an expanded fight, a Frozen stack takes a queued enemy\'s action at its
     const c = fight({ seed: s, expansion: 2 });
     const enemy = liveEnemy(c);
     const { events } = dispatch(c, { type: 'endTurn' });
-    if (events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id)) seed = s;
+    if (!events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id)) continue;
+    // Status recovery is a d20 now (owner, 2026-11-01): the seed must also keep both Frozen stacks past the first round's
+    // recovery roll, or the second stack would be recovered instead of spent on the action.
+    const probe = fight({ seed: s, expansion: 2 });
+    const target = liveEnemy(probe);
+    applyStatus(probe, target, 'frozen', 2, probe.player);
+    dispatch(probe, { type: 'endTurn' });
+    if (target.statuses?.frozen?.stacks === 1 && endTurnDeclining(probe).events.some((e) => e.type === 'statusRemoved' && e.targetId === target.id && e.reason === 'actionDenied')) seed = s;
   }
   assert.ok(seed !== null, 'fixture: the enemy acts in an expanded fight');
 

@@ -1,6 +1,8 @@
 // Pure lifecycle/impact plans for the authored base-card statuses. Engine
 // adapters execute ordinary effects and apply statusChanges; these functions
 // never mutate actors, spend resources, roll randomness or execute reactions.
+// Chance checks take a d20 roll (owner, 2026-11-01) and pass on roll >= 21 - round(chance% / 5).
+import { chanceToD20Target } from '../engine/d20Chance.js';
 const stacksOf = instance => Math.max(0, Number(typeof instance === 'number' ? instance : instance?.stacks) || 0);
 const idOf = actor => actor?.id ?? actor?.actorId ?? 'player';
 const tagsOf = card => card?.cardTags ?? card?.tags ?? [];
@@ -38,7 +40,7 @@ export function proposalTurnRules({ actor, phase, rules = {}, capabilities, roll
     if (b.kind === 'turnChance' && b.phase === phase) {
       const check = { actorId: idOf(actor), status, chance: b.chance, kind: 'status' };
       checks.push(check);
-      if (typeof roll === 'function' && roll(check) < b.chance) effects.push(effect(actor, actor, { op: 'applyStatus', status: b.status, stacks: b.stacks }));
+      if (typeof roll === 'function' && roll(check) >= chanceToD20Target(b.chance)) effects.push(effect(actor, actor, { op: 'applyStatus', status: b.status, stacks: b.stacks }));
     }
   }
   for (const [status, instance] of Object.entries(actor?.statuses || {})) {
@@ -110,7 +112,7 @@ export function proposalTargetRules({ actor, target, card, rules = {}, capabilit
         b.baseChance + (perception(actor, rules, capabilities) - perception(target, rules, capabilities)) * b.perceptionScale - stacks * b.penaltyPerStack));
       out.perceptionChance = chance;
       out.checks.push({ kind: 'perception', chance, status, actorId: idOf(actor), targetId: idOf(target) });
-      if (perceptionRoll != null && !(perceptionRoll < chance)) out.allowed = false;
+      if (perceptionRoll != null && !(perceptionRoll >= chanceToD20Target(chance))) out.allowed = false;
     }
   }
   if (!out.allowed || out.unavoidable || !direct) return out;
@@ -119,7 +121,7 @@ export function proposalTargetRules({ actor, target, card, rules = {}, capabilit
       out.evadeChance = Math.max(out.evadeChance, b.chance);
       out.checks.push({ kind: 'evade', chance: b.chance, status, actorId: idOf(target) });
       if (evadeRoll != null) {
-        out.avoided ||= evadeRoll < b.chance;
+        out.avoided ||= evadeRoll >= chanceToD20Target(b.chance);
         out.statusChanges.push(change(target, status, -Math.min(stacks, b.consumeStacks)));
       }
     }
