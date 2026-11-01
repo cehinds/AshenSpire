@@ -164,6 +164,7 @@ export const FAST_CHECKS = [
   { id: 'framework-data-build', args: ['tools/framework-data-build.mjs', '--check'] },
   { id: 'build-game', args: ['tools/build-game.mjs', '--check'] },
   { id: 'bundle-cycles', args: ['tools/bundle-cycles.mjs'] },
+  { id: 'enemy-sheets', args: ['tools/enemy-sheets.mjs', '--check'] },
   { id: 'mechanics-generate', args: ['tools/mechanics-generate.mjs', '--check'] },
   { id: 'uistrings', args: ['tools/uistrings.mjs', '--check'] },
   { id: 'run-node', args: ['tests/run-node.mjs', '--no-selftests', '--no-discovered'], slow: true },
@@ -221,6 +222,9 @@ export const REGEN_STEPS = [
   ['tools/tokens-css.mjs', '--write'],
   ['tools/hud-layout-css.mjs', '--write'],
   ['tools/framework-data-build.mjs'],
+  // Enemy sheets own the enemy rows of characters.json, so they build before content-build reads it.
+  ['tools/enemy-sheets.mjs', '--write'],
+  ['tools/derived-tables.mjs'],
   ['tools/content-build.mjs'],
   ['tools/game-config.mjs', 'build'],
   ['tools/build-game.mjs'],
