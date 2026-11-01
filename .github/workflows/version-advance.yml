@@ -101,7 +101,8 @@ jobs:
           # A RERUN OF A PUSH WHOSE RECORD LANDED BUT WHOSE PREVIEW DISPATCH FAILED has nothing owed
           # (its event is behind the cursor), so it recognises its own record by the pushed sha
           # and dispatches below (build-stamp's no-diff recovery).
-          if [ "$EVENT_NAME" = "push" ] && git log --format=%s | grep -Eq "^version-advance: [0-9.]+ after (release|main) ${EVENT_AFTER}( |$)"; then
+          # NOT grep -q: it exits at the first match, git log dies of SIGPIPE, and pipefail reports 141.
+          if [ "$EVENT_NAME" = "push" ] && git log --format=%s | grep -E "^version-advance: [0-9.]+ after (release|main) ${EVENT_AFTER}( |$)" >/dev/null; then
             recorded=1
           fi
           # dev-preview for the tip, three tries (2 and 4 seconds of backoff), as build-stamp does.
