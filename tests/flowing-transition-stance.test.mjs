@@ -23,7 +23,7 @@ function fight(profileId) {
 const current = c => c.player.combatStance && c.player.combatStance.maneuver;
 
 for (const profile of ['core', 'current']) {
-  for (const maneuver of ['attack', 'smash', 'defend', 'sweep', 'counter', 'casting', 'evade']) {
+  for (const maneuver of ['attack', 'smash', 'defend', 'sweep', 'counter', 'casting']) {
     test(`Flowing Transition (${profile}) choosing ${maneuver} enters ${maneuver}`, () => {
       const c = fight(profile);
       assert.ok(c.piles.hand.some(x => x.instanceId === 'ft'), 'card in opening hand');
@@ -34,6 +34,13 @@ for (const profile of ['core', 'current']) {
     });
   }
 }
+
+// Owner 2026-11-01: Evade is a tag, never a stance, so it is not an offered pick and a forged choice is refused.
+test('Flowing Transition offers no Evade stance', () => {
+  const c = fight('core');
+  assert.ok(!cardChoicePlan(c, 'ft').options.some(o => o.id === 'evade'));
+  assert.throws(() => dispatch(c, { type: 'playCard', cardInstanceId: 'ft', choice: 'evade' }), /Choose a stance/);
+});
 
 // Label: the Casting pick shows "Prepared" in Core (owner 2026-11-01); other profiles keep "Casting".
 const label = (c, id) => cardChoicePlan(c, 'ft').options.find(o => o.id === id).name;
