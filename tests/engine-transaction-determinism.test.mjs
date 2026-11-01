@@ -57,9 +57,10 @@ export function digest(combat) {
 // Re-pinned 2026-11-01 for Precision swift decay (accuracy.precisionDecayPerTurn 1 -> 3): the PERF1/reaver fight's hit
 // chances change, so one log entry fewer (196 -> 195); log 1bb7a14785574ec3 -> c53a18793f401fb2, state 95f05cf25b2cb35a -> ff21e46141b6f702.
 // The 4242/reaver fight is unchanged.
+// Re-pinned 2026-11-01 for the per-stat Precision receipt lines (precisionParts only; events, turn and RNG unchanged).
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'c53a18793f401fb2', state: 'ff21e46141b6f702', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: 'f8fac21d378c1d8e', state: 'a025baec4945d4b4', events: 234, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '41d31943f4e744b2', state: '21e2b430b4ab3fd7', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: '8e23e63573e8aa0d', state: '4c2b11aa3a881265', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
