@@ -8,6 +8,7 @@ import * as Proposal from './proposalStatusRuntime.js';
 
 import * as Counter from './counterRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { effectiveD20Percent } from './d20Chance.js';
 
 const sum = values => values.reduce((total, value) => total + value, 0);
 const unknown = reason => ({ basis: 'hp', min: null, max: null, label: '?', tone: 'red', stanceReduced: false, uncertain: true, reason });
@@ -40,9 +41,10 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
   const proposal = Proposal.proposalTargetPlan(ctx, source, player, carrier);
   // Dynamic perception/charge consumption and reactive damage are not a
   // deterministic HP promise; the shared attack-only projection reports a range.
+  // Perception and evade are d20 checks at 5% steps (owner, 2026-11-01): the projection uses the step they really roll.
   const proposalChance = (proposal.allowed === false ? 0 : 1)
-    * (proposal.perceptionChance == null ? 1 : proposal.perceptionChance / 100)
-    * (1 - (proposal.evadeChance || 0) / 100);
+    * (proposal.perceptionChance == null ? 1 : effectiveD20Percent(proposal.perceptionChance) / 100)
+    * (1 - effectiveD20Percent(proposal.evadeChance || 0) / 100);
   let max, chance;
   if (ProfileCombat.configuredCombat(ctx)) {
     // A miss preserves the target's defenses for the next hit. Enumerate/merge the reachable
