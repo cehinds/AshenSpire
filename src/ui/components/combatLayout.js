@@ -162,6 +162,8 @@ export function wireCombatLayout(combatEl) {
     combatEl.style.setProperty('--w4-band-hud', hudBand + 'px');
     combatEl.style.setProperty('--w4-band-context', handBand + 'px');
     combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
+    // Owner (2026-11-01): on a phone the battlefield runs under the top of the cards (the gap above them plus ~12% of a card).
+    combatEl.style.setProperty('--combat-field-overlap', (formFactor === 'mobile' ? uiConfig.scenes.w4a.sizing.mobileFieldHandOverlapPx / zoom : 0) + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
     // WCM0: every combatant's meter rows share one geometry.
     const meters = combatantMeterGeometry({ zoom, rem });
