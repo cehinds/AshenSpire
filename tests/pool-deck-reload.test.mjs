@@ -33,8 +33,9 @@ import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { commitExtraction, commitInstall, mountRows, ownedMountItems } from '../src/model/cardExtraction.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
-const registries = createRegistries(contentBundle);
+const registries = createRegistries(withWeaponRack(contentBundle));
 const SEED = 5;
 const BASE = ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
 
