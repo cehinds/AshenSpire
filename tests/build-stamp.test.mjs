@@ -14,6 +14,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { advanceSubject } from '../tools/version-advance.mjs';
 import { BOT_AUTHOR as BOT, WORKFLOW_PATH, converge, firstParentLine, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp, stampIsCurrent } from '../tools/build-stamp.mjs';
 
 // A throwaway repository whose first-parent line is the given commit subjects,
@@ -586,4 +587,11 @@ test('the real about-changelog --write refuses a stale landed receipt across a n
     const accepted = write();
     assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a stamp with the subject version-advance.yml writes on top is still current', () => {
+  const stamp = { sha: 's', author: BOT, subject: 'build: stamp 0.7.2.93 [build-stamp]' };
+  const va = { sha: 'v', author: BOT, subject: advanceSubject('0.7.3', 'release', 'e'.repeat(40)) };
+  assert.equal(stampIsCurrent([va, stamp]), true);
+  assert.equal(stampIsCurrent([{ ...va, author: 'dev' }, stamp]), false);
 });

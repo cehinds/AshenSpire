@@ -241,9 +241,10 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
    - A promotion does not advance the release candidate (the third
-     component of `contentBundle.version`). The PR that follows a `test` →
-     `release` cut advances the candidate, and the PR after a `release` →
-     `main` merge advances MINOR ([docs/versioning.md](docs/versioning.md)).
+     component of `contentBundle.version`). A push to `release` (the cut)
+     advances the candidate, and a push to `main` advances MINOR, both
+     automatically through `version-advance.yml`; do not open a bump PR or
+     hand-edit the triple ([docs/versioning.md](docs/versioning.md)).
    - Every `dev` → `test` promotion also starts `sync-alternatives.yml`.
      Existing named pairs such as `alternative/art/dev` → `alternative/art/test` receive
      the promoted snapshot, then the alternative dev result is merged into its
