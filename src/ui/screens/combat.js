@@ -136,6 +136,8 @@ import { combatVitals } from '../models/StaminaOrbModel.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
+import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
+import { weaknessChips } from '../components/weaknessChips.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -1076,7 +1078,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
-    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules, weaknesses: entity.weaknesses }) : null;
     const currentMoveId = intent.moveId;
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
@@ -1120,7 +1122,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
-      traits: learning ? learning.traits : (def.tags || []).map((tag) => ({ name: words(tag) })),
+      traits: learning ? learning.traits : [...weaknessTraitRows(entity.weaknesses), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
       // No authored lore exists for enemies yet; unknown, not none.
       lore: learning ? learning.lore : null,
     };
@@ -2502,7 +2504,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
-        chips: '',
+        chips: JSON.stringify(enemy.weaknesses || null),
       };
       const build = {
         classNames,
@@ -2553,7 +2555,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         meters: () => meterBars(enemy, { inputs: meterIn }),
         statuses: () => statusRow(enemy, {}, statusIn),
-        chips: () => [],
+        chips: () => weaknessChips(enemy.weaknesses),
       };
       const slots = record ? null : {
         role: 'enemy',
@@ -2563,7 +2565,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         sprite: profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
         name: build.name(),
         meters: build.meters(),
-        trailing: [build.statuses()],
+        trailing: [build.statuses(), ...build.chips()],
       };
       const box = record ? record.box : combatantFrame(slots);
       const rowWrote = record ? writeSlots(box, record, keys, build) : true;

@@ -61,7 +61,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "lightning",
+        "effect": "stagger"
+      }
+    ]
   },
   {
     "id": "blightHound",
@@ -100,7 +110,17 @@
         "hits": 2,
         "weight": 40
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage"
+      },
+      {
+        "to": "blunt",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "huskBrute",
@@ -155,7 +175,22 @@
         "weight": 25,
         "maxConsecutive": 1
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage"
+      },
+      {
+        "to": "burn",
+        "effect": "tick"
+      },
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      }
+    ]
   },
   {
     "id": "graveWisp",
@@ -205,7 +240,18 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage",
+        "amount": 50
+      },
+      {
+        "to": "magic",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "wyrmAspirant",
@@ -278,7 +324,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "piercing",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "fellWarden",
@@ -371,6 +427,13 @@
           "twinDaggers"
         ]
       }
+    ],
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      }
     ]
   },
   {
@@ -416,7 +479,21 @@
         "weight": 65,
         "hits": 3
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "slashing",
+        "effect": "damage"
+      },
+      {
+        "to": "burn",
+        "effect": "stacks"
+      }
+    ]
   },
   {
     "id": "briarHermit",
@@ -474,7 +551,22 @@
         ]
       }
     },
-    "firstMove": "rootShelter"
+    "firstMove": "rootShelter",
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage",
+        "amount": 50
+      },
+      {
+        "to": "slashing",
+        "effect": "damage"
+      },
+      {
+        "to": "burn",
+        "effect": "tick"
+      }
+    ]
   },
   {
     "id": "chainScavenger",
@@ -531,7 +623,17 @@
           }
         }
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "stamina"
+      },
+      {
+        "to": "blunt",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "bellKeeper",
@@ -603,6 +705,13 @@
         "unlockMoves": [
           "crackedPeal"
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "lightning",
+        "effect": "stagger",
+        "amount": 20
       }
     ]
   },
@@ -685,6 +794,12 @@
             "stacks": 2
           }
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "burn",
+        "effect": "stacks"
       }
     ]
   }

@@ -34,7 +34,8 @@ function clearRangeContactIds(group) {
   }
 }
 
-const restore = (combat, snapshot) => restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot });
+// A restore refills enemy weaknesses (SPEC 5.3); this fixture's live() drops them, so it drops them again to compare like with like.
+const restore = (combat, snapshot) => { const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot }); for (const enemy of restored.enemies) delete enemy.weaknesses; return restored; };
 
 test('new Core runs pin explicit settings while historical profiles keep their shape', () => {
   const run = createRunState({ registries, classId: 'reaver', seed: 1, profileMeta: { settings: { rangeMechanics: false, rangeAdvanceSpPerBand: 3, rangeReachPrecisionBonus: 2, rangeThrowPrecisionPenalty: 4 } } });

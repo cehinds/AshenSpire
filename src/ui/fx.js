@@ -535,6 +535,8 @@ export const CALLOUT_KINDS = {
   wardResisted: { string: 'combat.callout.resisted', tone: 'ward' },
   blocked: { string: 'combat.callout.blocked', tone: 'block' },
   immune: { string: 'combat.callout.immune', tone: 'immune' },
+  // An enemy weakness met (SPEC 5.3). There is no "resisted" counterpart for it.
+  weak: { string: 'combat.callout.weak', tone: 'gold' },
 };
 export const CALLOUT_MS = 900; // legacy base; live words use calloutLifeMs() (animationPace.js)
 export const CALLOUT_INSTANT_MS = COMBAT_TIMING.calloutInstantMs;
@@ -1929,7 +1931,8 @@ export function calloutForEvent(e = {}) {
     case 'contestFailed': kind = 'contestFailed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
-    case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
+    case 'enemyStaggered': if (!e.cause || e.cause === 'weakness') kind = 'staggered'; break;
+    case 'weaknessTriggered': kind = 'weak'; break;
     case 'playerStaggered': kind = 'staggered'; break;
     case 'enemyInterrupted': kind = 'interrupted'; break;
     // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
