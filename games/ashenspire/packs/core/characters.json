@@ -377,7 +377,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "lightning",
+          "effect": "stagger"
+        }
+      ]
     }
   },
   {
@@ -444,7 +454,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -516,7 +536,22 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "tick"
+        },
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
     }
   },
   {
@@ -585,7 +620,18 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage",
+          "amount": 50
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -668,7 +714,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "piercing",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -798,7 +854,14 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
     }
   },
   {
@@ -868,7 +931,21 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
     }
   },
   {
@@ -941,7 +1018,22 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage",
+          "amount": 50
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        },
+        {
+          "to": "burn",
+          "effect": "tick"
+        }
+      ]
     }
   },
   {
@@ -1022,7 +1114,17 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "stamina"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -1133,7 +1235,14 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "stagger",
+          "amount": 20
+        }
+      ]
     }
   },
   {
@@ -1244,7 +1353,13 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "burn",
+          "effect": "stacks"
+        }
+      ]
     }
   },
   {
@@ -1318,7 +1433,18 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "lightning",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -1393,7 +1519,21 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "piercing",
+          "effect": "damage"
+        },
+        {
+          "to": "paralysis",
+          "effect": "stacks"
+        },
+        {
+          "to": "magic",
+          "effect": "mana"
+        }
+      ]
     }
   },
   {
@@ -1459,7 +1599,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "fire",
+          "effect": "damage"
+        },
+        {
+          "to": "bleed",
+          "effect": "tick"
+        }
+      ]
     }
   },
   {
@@ -1524,7 +1674,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "damage"
+        },
+        {
+          "to": "lightning",
+          "effect": "stamina"
+        }
+      ]
     }
   },
   {
@@ -1606,7 +1766,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger"
+        },
+        {
+          "to": "lightning",
+          "effect": "stamina"
+        }
+      ]
     }
   },
   {
@@ -1692,7 +1862,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "paralysis",
+          "effect": "stacks"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -1810,7 +1990,13 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "burn",
+          "effect": "tick"
+        }
+      ]
     }
   },
   {
@@ -1886,7 +2072,21 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "piercing",
+          "effect": "damage"
+        },
+        {
+          "to": "magic",
+          "effect": "mana"
+        },
+        {
+          "to": "paralysis",
+          "effect": "stacks"
+        }
+      ]
     }
   },
   {
@@ -1960,7 +2160,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "blunt",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -2079,7 +2289,13 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger"
+        }
+      ]
     }
   },
   {
@@ -2191,7 +2407,13 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -2258,7 +2480,18 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage",
+          "amount": 50
+        },
+        {
+          "to": "burn",
+          "effect": "tick"
+        }
+      ]
     }
   },
   {
@@ -2324,7 +2557,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "stacks"
+        }
+      ]
     }
   },
   {
@@ -2389,7 +2632,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        },
+        {
+          "to": "magic",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -2466,7 +2719,19 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "blunt",
+          "effect": "stagger",
+          "amount": 20
+        },
+        {
+          "to": "frost",
+          "effect": "damage",
+          "amount": 50
+        }
+      ]
     }
   },
   {
@@ -2552,7 +2817,17 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "piercing",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -2694,7 +2969,13 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "sacred",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -2767,7 +3048,21 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        },
+        {
+          "to": "slashing",
+          "effect": "damage"
+        },
+        {
+          "to": "frost",
+          "effect": "stacks"
+        }
+      ]
     }
   },
   {
@@ -2842,7 +3137,21 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "piercing",
+          "effect": "damage"
+        },
+        {
+          "to": "paralysis",
+          "effect": "stacks"
+        },
+        {
+          "to": "magic",
+          "effect": "mana"
+        }
+      ]
     }
   },
   {
@@ -2952,7 +3261,13 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "frost",
+          "effect": "damage"
+        }
+      ]
     }
   },
   {
@@ -3064,7 +3379,14 @@
       },
       "startingRange": "melee",
       "rangeClosingMove": "advance",
-      "rangeRoutePolicy": "advance"
+      "rangeRoutePolicy": "advance",
+      "weaknesses": [
+        {
+          "to": "magic",
+          "effect": "mana",
+          "amount": 2
+        }
+      ]
     }
   },
   {
@@ -3197,7 +3519,13 @@
       "startingRange": "reach",
       "rangeClosingMove": "advance",
       "rangeRoutePolicy": "advance",
-      "rangeRetreatMove": "retreat"
+      "rangeRetreatMove": "retreat",
+      "weaknesses": [
+        {
+          "to": "lightning",
+          "effect": "damage"
+        }
+      ]
     }
   }
 ]

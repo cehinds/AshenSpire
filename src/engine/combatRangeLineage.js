@@ -27,7 +27,7 @@ function possible(pred,event,sourceKey,targetKey,carrier) {
   return true;
 }
 function rawEventsFor(ctx,effect,target) {
-  if (effect.op==='damage') return [{type:'damageDealt'},{type:'hpLost'},{type:'attackHit'},{type:'attackMissed'},{type:'enemyStaggered'},{type:'enemyDied'},{type:'blockBroken'},...(target?.arcaneExposure ? [{type:'arcaneBreak'}] : []),{type:'statusApplied',status:'vulnerable'}];
+  if (effect.op==='damage') return [{type:'damageDealt'},{type:'weaknessTriggered'},{type:'manaLost'},{type:'hpLost'},{type:'attackHit'},{type:'attackMissed'},{type:'enemyStaggered'},{type:'enemyDied'},{type:'blockBroken'},...(target?.arcaneExposure ? [{type:'arcaneBreak'}] : []),{type:'statusApplied',status:'vulnerable'}];
   if (effect.op==='applyStatus' || effect.op==='buildup') return [{type:'statusApplied',status:effect.status}];
   if (effect.op==='arcaneBuildup') return target?.arcaneExposure ? [{type:'arcaneBreak'},{type:'statusApplied',status:target.arcaneExposure.onBreak?.status}] : [];
   if (effect.op==='poiseDamage' || effect.op==='stagger') return [{type:'poiseBroken'},{type:'enemyStaggered'},{type:'statusApplied',status:'vulnerable'}];

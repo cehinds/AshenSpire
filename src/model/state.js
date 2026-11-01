@@ -1954,7 +1954,7 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, weaknesses, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
@@ -1977,6 +1977,8 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     ? { ...structuredClone(arcaneExposure), value: 0 }
     : { mode: 'immune' };
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  // Authored weaknesses (SPEC 5.3, model/enemyWeaknessRules.js): read by engine/weaknesses.js.
+  if (Array.isArray(weaknesses) && weaknesses.length) entity.weaknesses = structuredClone(weaknesses);
   // A fight-wide move-damage scale (SPEC §13.3 balance.bossTiers). Stamped
   // only when it is not 1, so every unscaled enemy — and every snapshot
   // written before the row existed — keeps its exact shape.

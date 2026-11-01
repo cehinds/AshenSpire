@@ -61,7 +61,18 @@
           "minIncoming": 8
         }
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger",
+        "amount": 20
+      },
+      {
+        "to": "lightning",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "courtSurgeon",
@@ -131,7 +142,21 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "piercing",
+        "effect": "damage"
+      },
+      {
+        "to": "paralysis",
+        "effect": "stacks"
+      },
+      {
+        "to": "magic",
+        "effect": "mana"
+      }
+    ]
   },
   {
     "id": "stitchedHound",
@@ -176,7 +201,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "fire",
+        "effect": "damage"
+      },
+      {
+        "to": "bleed",
+        "effect": "tick"
+      }
+    ]
   },
   {
     "id": "courtMarionette",
@@ -221,7 +256,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "damage"
+      },
+      {
+        "to": "lightning",
+        "effect": "stamina"
+      }
+    ]
   },
   {
     "id": "livingArmor",
@@ -279,7 +324,17 @@
           }
         ]
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger"
+      },
+      {
+        "to": "lightning",
+        "effect": "stamina"
+      }
+    ]
   },
   {
     "id": "courtDuelist",
@@ -351,7 +406,17 @@
           "chance": 0.5
         }
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "paralysis",
+        "effect": "stacks"
+      },
+      {
+        "to": "blunt",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "stitchedKing",
@@ -436,6 +501,12 @@
           "thousandHands"
         ]
       }
+    ],
+    "weaknesses": [
+      {
+        "to": "burn",
+        "effect": "tick"
+      }
     ]
   },
   {
@@ -486,7 +557,21 @@
         "weight": 20,
         "maxConsecutive": 1
       }
-    }
+    },
+    "weaknesses": [
+      {
+        "to": "piercing",
+        "effect": "damage"
+      },
+      {
+        "to": "magic",
+        "effect": "mana"
+      },
+      {
+        "to": "paralysis",
+        "effect": "stacks"
+      }
+    ]
   },
   {
     "id": "stitchCrab",
@@ -539,7 +624,17 @@
         "maxConsecutive": 1
       }
     },
-    "firstMove": "shellFold"
+    "firstMove": "shellFold",
+    "weaknesses": [
+      {
+        "to": "frost",
+        "effect": "damage"
+      },
+      {
+        "to": "blunt",
+        "effect": "damage"
+      }
+    ]
   },
   {
     "id": "glassRegent",
@@ -615,6 +710,12 @@
         "unlockMoves": [
           "shatteredCourt"
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "blunt",
+        "effect": "stagger"
       }
     ]
   },
@@ -699,6 +800,12 @@
             "stacks": 6
           }
         ]
+      }
+    ],
+    "weaknesses": [
+      {
+        "to": "sacred",
+        "effect": "damage"
       }
     ]
   }
