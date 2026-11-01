@@ -224,6 +224,7 @@ export const REGEN_STEPS = [
   ['tools/framework-data-build.mjs'],
   // Enemy sheets own the enemy rows of characters.json, so they build before content-build reads it.
   ['tools/enemy-sheets.mjs', '--write'],
+  ['tools/derived-tables.mjs'],
   ['tools/content-build.mjs'],
   ['tools/game-config.mjs', 'build'],
   ['tools/build-game.mjs'],
