@@ -28,6 +28,7 @@
           }
         ],
         "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
+        "faceTemplate": ["Gain Persistent Block {base.persistent-block}.", "Gain Persistent Barrier {base.persistent-barrier}."],
         "icon": "skill",
         "flavor": "Armor charm of the Bastion watch.\n\nThe ridge gates were held through long winters by guards too few to relieve one another. Their warding knots were tied into the lining, renewing a thin defense whenever the wearer could stand and breathe.\n\nThe cloth outlasted several suits of iron."
       },
@@ -149,6 +150,7 @@
           }
         ],
         "textTemplate": "Apply Greased {base.greased}: fire detonates the coating.",
+        "faceTemplate": ["Apply Greased {base.greased}."],
         "icon": "skill",
         "flavor": "Lamp oil prepared for the lower city's alleys.\n\nBefore the Burning, porters spread this heavy mixture beneath wheels to move stone uphill. The desperate later poured it across thresholds instead. Those who slipped could rise again, provided no one brought a torch.\n\nThe stair keeps both kinds of stain.",
         "damageSchool": "fire"
@@ -291,6 +293,7 @@
           }
         ],
         "textTemplate": "Deal {damage} weapon damage and {damage.2} Sacred damage.",
+        "faceTemplate": ["Deal {damage} weapon damage.", "Deal {damage.2} Sacred damage."],
         "icon": "skill",
         "flavor": "Consecrated stroke of the Citadel knights.\n\nA knight once carried the Court Flame's promise along the edge of a plain weapon. The oath was spoken before each watch, whether anyone remained to hear it or not. Some blades still answer the gesture.\n\nThe promise survived its intended keeper.",
         "damageSchool": "physical",
@@ -417,6 +420,7 @@
           }
         ],
         "textTemplate": "Apply {base.poison} Poison: 15 total Necrotic damage as it decays.",
+        "faceTemplate": ["Apply {base.poison} Poison."],
         "icon": "skill",
         "flavor": "Bitter preparation of the weald's abandoned gardens.\n\nThe gardeners marked dangerous roots with white stakes so children could gather safely. When the Field Flame failed, the stakes were burned for warmth and the beds grew together. Their harvest now travels in stoppered bottles.\n\nNothing on the label promises a cure.",
         "damageSchool": "magic"
@@ -542,6 +546,7 @@
           }
         ],
         "textTemplate": "Apply Blight {base.blight}: lethal when its stacks reach current HP.",
+        "faceTemplate": ["Apply Blight {base.blight}."],
         "icon": "skill",
         "flavor": "A wasting drawn from the Field Flame's ruins.\n\nThe first dark patches were cut from the orchards and buried beyond the walls. Shoots rose from the burial ground the following spring. By winter, the fruit within the city bore the same marks beneath its skin.\n\nThe gardeners ran out of clean ground."
       },
@@ -1624,6 +1629,7 @@
           }
         ],
         "textTemplate": "Enchant your weapon with Fire for {base.elemental-weapon} turns.",
+        "faceTemplate": ["Fire weapon for {base.elemental-weapon} turns."],
         "icon": "skill",
         "flavor": "A furnace blessing carried on ordinary steel.\n\nThe Saints warmed the tools of workers assigned to the Observatory's outer stair. When the fuel carts stopped, a few tools retained their borrowed heat. Their owners discovered that the same blessing could be laid upon a blade.\n\nThe furnace asks no purpose of iron.",
         "damageSchool": "fire"
@@ -2020,6 +2026,7 @@
           }
         ],
         "textTemplate": "Convert incoming Necrotic damage to healing for {base.necrotic-healing} turns.",
+        "faceTemplate": ["Necrotic damage heals you.", "Lasts {base.necrotic-healing} turns."],
         "icon": "skill",
         "flavor": "A forbidden recovery of the Furnace Chapel.\n\nThe sick were once kept apart from the Chapel's warm stones. A few learned to draw sustenance from the very cold that gathered around their beds. They survived to leave the rooms, carrying no warmth that others could share.\n\nThe cure did not restore their welcome.",
         "damageSchool": "magic"
@@ -2143,6 +2150,7 @@
           }
         ],
         "textTemplate": "Convert the enemy\u2019s Sacred healing into damage for {base.divine-harm} turns.",
+        "faceTemplate": ["Sacred healing harms enemy.", "Lasts {base.divine-harm} turns."],
         "icon": "skill",
         "flavor": "An inversion found beneath the river city's shrines.\n\nThe shrines offered comfort to those whom the Court would not hear. After the Burning, their bowls filled with black water and the comforting words turned bitter. A practiced hand can direct that bitterness toward another's blessing.\n\nThe prayer arrives with its meaning reversed.",
         "damageSchool": "holy"
@@ -2272,6 +2280,7 @@
           }
         ],
         "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3.",
+        "faceTemplate": ["Shuffle up to {draw} cards.", "Draw {draw} cards."],
         "icon": "shield",
         "flavor": "A road lesson taught with a traveler's worn cards.\n\nCaravan guards changed their watches whenever the same sequence grew familiar. A dangerous habit could be broken by putting every expected duty aside and taking another. The method survived on roads where there were no caravans left.\n\nFamiliarity is a route an enemy learns."
       },
@@ -2386,6 +2395,7 @@
           }
         ],
         "textTemplate": "Shuffle up to 100 random cards in your draw pile.",
+        "faceTemplate": ["Shuffle your draw pile."],
         "icon": "shield",
         "flavor": "An ordering exercise of the Observatory's apprentices.\n\nThe students sorted loose charts until each could name their place by touch. Their teachers then scattered the stack and ordered them to begin again. The exercise continued after the charts ceased to describe the sky outside.\n\nNo arrangement was permitted to become certain."
       },
@@ -2611,6 +2621,7 @@
           }
         ],
         "textTemplate": "Choose up to 2 hand cards to retain.",
+        "faceTemplate": ["Retain up to 2 cards."],
         "icon": "shield",
         "flavor": "A keeper's habit from the Bastion granaries.\n\nWhen the harvest was sound, each storekeeper set aside a measure that could not be touched at market. The custom remained after the stores were emptied. Fighters learned to reserve a useful movement with the same stubborn care.\n\nHunger is not the only thing to anticipate."
       },
@@ -2729,6 +2740,7 @@
           }
         ],
         "textTemplate": "Look at the top 3 cards. Choose their order.",
+        "faceTemplate": ["Look at top 3 cards.", "Reorder them."],
         "icon": "shield",
         "flavor": "A pathfinder's method on the old viaducts.\n\nThe first travelers after the Burning tested each arch with a weighted cord before bringing the others forward. They marked the sound stones in an order the wind could not erase. Later parties sometimes found the marks rearranged.\n\nA known road must still be examined."
       },
@@ -2966,6 +2978,7 @@
           }
         ],
         "textTemplate": "Choose a discarded card to return to hand.",
+        "faceTemplate": ["Return 1 discarded card."],
         "icon": "shield",
         "flavor": "A recovery drill of the Bastion's shield yard.\n\nNovices were made to repeat a failed movement after every other student had taken a turn. The delay stripped away haste and left the motion clear. Veterans carried the drill into fights that offered no patient teacher.\n\nWhat was abandoned need not be lost."
       },
@@ -3197,6 +3210,7 @@
           }
         ],
         "textTemplate": "Choose a hand card to exhaust.",
+        "faceTemplate": ["Exhaust 1 hand card."],
         "icon": "shield",
         "flavor": "A deliberate sacrifice of the road's traveling schools.\n\nA climber cannot carry every lesson into every chamber. Teachers made their pupils lay one practiced movement aside before opening a difficult door. The empty place left room for attention, though the surrendered habit sometimes proved hard to recover.\n\nReadiness has always required a leaving behind."
       },
@@ -3314,6 +3328,7 @@
           }
         ],
         "textTemplate": "Transform a chosen hand card into Strike for this combat.",
+        "faceTemplate": ["Transform 1 card into Strike."],
         "icon": "skill",
         "flavor": "A simplifying art of the Bastion's oldest instructors.\n\nThe instructors stripped elaborate exercises back to the first straight blow whenever a pupil grew confused. Finer details could be learned again after the hands stopped trembling. In the towers, that patient correction became a swift and necessary spell.\n\nA beginning can still serve an ending."
       },
@@ -3429,6 +3444,7 @@
           }
         ],
         "textTemplate": "Add 2 Stagger burdens to the enemy deck.",
+        "faceTemplate": ["Add 2 Stagger to enemy."],
         "icon": "skill",
         "flavor": "A stumbling curse carried in the Court's broken bells.\n\nThe bridge bells once kept the procession moving at a measured pace. When their towers fell, the sound arrived in uneven fragments. Those who caught its rhythm faltered in midstride, as though the next stone had been taken away.\n\nThe missing beat leaves a place for steel."
       },
@@ -3549,6 +3565,7 @@
           }
         ],
         "textTemplate": "Add 2 Paralysis burdens to the enemy deck.",
+        "faceTemplate": ["Add 2 Paralysis to enemy."],
         "icon": "skill",
         "flavor": "A locking curse of the river city's empty cells.\n\nThe gaolers kept certain prisoners still without tightening their chains. Its pattern was scratched into the doorframes for a replacement watch to learn. The cells are open now, but the old instruction can still seize a living limb.\n\nAn open door does not release everything."
       },
@@ -3901,6 +3918,7 @@
           }
         ],
         "textTemplate": "Gain {strength} Strength for this combat.",
+        "faceTemplate": ["Gain {strength} Strength."],
         "icon": "shield",
         "flavor": "A strengthening rite of the Bastion's stone carriers.\n\nLaborers pressed both palms against the first block before beginning the morning's lift. The gesture steadied tired arms through a day on the ridge. Their descendants found the same borrowed resolve useful beneath a weapon's weight.\n\nStone taught the hand before steel did."
       },
@@ -4160,6 +4178,7 @@
           }
         ],
         "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses.",
+        "faceTemplate": ["Damage rises per affliction."],
         "icon": "attack",
         "flavor": "A cruel calculation of the river city's interrogators.\n\nThe interrogators kept separate marks for cold, hunger, and the smaller pains inflicted between questions. Each new mark narrowed a prisoner's remaining resistance. Their successors learned to strike where several afflictions had already begun their work.\n\nThe ledger counted injuries as opportunities.",
         "damageSchool": "physical",
@@ -4287,6 +4306,7 @@
           }
         ],
         "textTemplate": "Deal {damage} damage, scaling with HP lost this turn.",
+        "faceTemplate": ["Damage rises with HP lost."],
         "icon": "attack",
         "flavor": "A reprisal taught among the Bastion's battered gate guards.\n\nRelief seldom came before the second assault. The guards learned to turn the force that drove them backward into the next blow forward. Those who survived could tell the cost of a watch by its last strike.\n\nThe gate remembered every attempt to break it.",
         "damageSchool": "physical",
@@ -4414,6 +4434,7 @@
           }
         ],
         "textTemplate": "Gain {block} Block, scaling with distinct types played this turn.",
+        "faceTemplate": ["Block rises per card type."],
         "icon": "shield",
         "flavor": "A defense assembled from the ring road's scattered schools.\n\nThe towers once demanded separate loyalties from their fighters. On the roads between them, survivors exchanged the movements that had kept them alive. A guard became stronger when it could answer more than one kind of danger.\n\nNo ruined school could afford its old pride."
       },
@@ -4662,6 +4683,7 @@
           }
         ],
         "textTemplate": "Deal {damage} damage, increasing each time this card is played.",
+        "faceTemplate": ["Damage rises each play."],
         "icon": "attack",
         "flavor": "A relentless exercise of the Bastion's quarry fighters.\n\nStone breakers struck along one line until the hidden fault yielded. Their children brought the practice into the shield yard, refusing to change a stroke that had not yet found its depth. Each return carried the weight of the last.\n\nThe fracture arrives before the stone admits it.",
         "damageSchool": "physical",
@@ -5273,6 +5295,7 @@
           }
         ],
         "textTemplate": "Gain {base.many-forms} Many Forms: hold up to 2 stances until next turn.",
+        "faceTemplate": ["Hold two stances."],
         "icon": "shield",
         "flavor": "A divided discipline of the road's wandering instructors.\n\nNo tower trained a pupil to hold two answers at once. The travelers who taught between the seats had fewer certainties and more scars. They learned to keep one motion ready while the body seemed committed to another.\n\nThe road required room for a second lesson."
       },
@@ -5538,6 +5561,7 @@
           }
         ],
         "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block.",
+        "faceTemplate": ["Paid MP: deal {damage} damage.", "Otherwise gain 8 Block."],
         "icon": "skill",
         "flavor": "A borrowed cadence of the Observatory's armed attendants.\n\nSome attendants could kindle a spell along the motion of a blade. Others repeated the same motion without its light and found it settled into a serviceable guard. Both remained in the drills after the teachers stopped distinguishing them.\n\nThe hand remembers whether it carried fire.",
         "damageSchool": "physical",
@@ -5688,6 +5712,7 @@
           }
         ],
         "textTemplate": "Deal {damage} damage, then choose a maneuver stance.",
+        "faceTemplate": ["Deal {damage} damage.", "Then choose a stance."],
         "icon": "attack",
         "flavor": "A returning stroke of the Bastion's gate watches.\n\nThe first instruction was never to leave the weapon where the blow ended. Guards practiced finding a new footing while the edge was still returning. Those who forgot were corrected by a wooden staff across the unprotected ribs.\n\nA strike ends only when its bearer is ready.",
         "damageSchool": "physical",
@@ -6043,6 +6068,7 @@
           }
         ],
         "textTemplate": "Gain {base.extra-weapon} extra weapon action this turn.",
+        "faceTemplate": ["Gain an extra weapon action."],
         "icon": "shield",
         "flavor": "A second opening of the Bastion's veteran guards.\n\nThe newest recruits counted attacks as separate exertions. Veterans learned to keep the weapon moving while the first opponent still recoiled, finding another opening before the line closed. The extra stroke depended on preparation made before either enemy moved.\n\nThe interval belonged to the ready hand."
       },
@@ -6158,6 +6184,7 @@
           }
         ],
         "textTemplate": "Gain {base.extra-shield} extra shield action this turn.",
+        "faceTemplate": ["Gain an extra shield action."],
         "icon": "shield",
         "flavor": "A returning defense of the Citadel's bridge watches.\n\nTwo guards once shared each narrow post, turning their shields in a practiced sequence. After the watches thinned, a survivor had to answer both parts alone. Their descendants learned the second turn without ever seeing the partner it replaced.\n\nThe empty post still has its appointed movement."
       },
@@ -6273,6 +6300,7 @@
           }
         ],
         "textTemplate": "Prepare one automatic counterattack. base.auto-counter: {base.auto-counter}.",
+        "faceTemplate": ["Prepare an automatic Counter."],
         "icon": "shield",
         "flavor": "A waiting answer of the Bastion's shield masters.\n\nPupils stood behind a raised board while the instructor struck it without a count. They were forbidden to pursue the staff and taught instead to answer its contact. Years later, some could begin the reply before knowing they had been attacked.\n\nThe lesson waited in the arm."
       },
@@ -6387,6 +6415,7 @@
           }
         ],
         "textTemplate": "Prepare one automatic sweep. base.auto-sweep: {base.auto-sweep}.",
+        "faceTemplate": ["Prepare an automatic Sweep."],
         "icon": "shield",
         "flavor": "A prepared circle of the ring road's caravan guards.\n\nAn escort surrounded by thieves could not watch every approach. Guards planted their feet and learned to turn at the first touch of a blade. The motion cleared space for the travelers, even when its bearer never saw the attacker.\n\nThe road was measured by the weapon's return."
       },
@@ -6501,6 +6530,7 @@
           }
         ],
         "textTemplate": "Reflect eligible incoming damage for {base.reflect} turn.",
+        "faceTemplate": ["Reflect damage for {base.reflect} turn."],
         "icon": "skill",
         "flavor": "A returning ward of the Observatory's polished chambers.\n\nThe lens workers fitted their masks with silvered plates against sudden flares. A few plates sent more than light back toward its origin. The attendants preserved the pattern after the workshops emptied, though the reflected pain had no brightness.\n\nWhat strikes the surface finds its way home."
       },
@@ -6623,6 +6653,7 @@
           }
         ],
         "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
+        "faceTemplate": ["Gain {block} Block.", "Guard allies for {base.guard-allies} turn."],
         "icon": "shield",
         "flavor": "A sheltering oath of the Bastion's road wardens.\n\nThe Wardens walked between the wagons and the tree line, keeping their shields toward the unseen ground. An escort was judged by who arrived behind them, rather than by wounds received. The oath endured after the wagons stopped coming.\n\nAn empty road can still be guarded."
       },
@@ -7092,6 +7123,7 @@
           }
         ],
         "textTemplate": "Give an ally {strength} Strength for this combat.",
+        "faceTemplate": ["Ally gains {strength} Strength."],
         "icon": "shield",
         "flavor": "An encouragement kept by the Bastion's shared watches.\n\nThe guards touched a companion's shoulder before exchanging places at the gate. A small working grew around the gesture, lending tired arms some of the giver's resolve. It passed between survivors long after the gate ceased to stand.\n\nThe hand is withdrawn; the steadiness remains."
       },
@@ -7437,6 +7469,7 @@
           }
         ],
         "textTemplate": "Add a temporary Smash to hand.",
+        "faceTemplate": ["Add a temporary Smash."],
         "icon": "shield",
         "flavor": "A recalled stroke of the Citadel's heavy weapon drills.\n\nA recruit carried a wooden mallet before being trusted with the armory's iron. Instructors made its simple downward path the last exercise of every watch. Even an empty hand could remember the weight when no suitable weapon remained.\n\nThe practiced burden waits for another shape."
       },
@@ -8017,6 +8050,7 @@
         ],
         "effects": [],
         "textTemplate": "Skip your next action when drawn. Ethereal.",
+        "faceTemplate": ["Skip next action when drawn."],
         "icon": "shield",
         "flavor": "An interruption carried by a broken bell's cadence.\n\nThe body seeks the missing beat and finds no footing. By the time its balance returns, the opening has already passed.\n\nThe next step belongs to someone else.",
         "burden": {
@@ -8155,6 +8189,7 @@
           }
         ],
         "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total.",
+        "faceTemplate": ["Strike {hits} times for {damage}."],
         "wardOffTextTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Poise damage total.",
         "icon": "attack",
         "flavor": "A repeated stroke of the weald's short-blade escorts.\n\nIn a crowded passage, there was no room to draw back for a great blow. Escorts learned to strike along the returning path, turning small openings into a succession of wounds. The enemy's guard had to answer every movement separately.\n\nA narrow space need not mean a single chance.",
@@ -8272,6 +8307,7 @@
         ],
         "effects": [],
         "textTemplate": "Skip your next action when drawn. Ethereal.",
+        "faceTemplate": ["Skip next action when drawn."],
         "icon": "shield",
         "flavor": "A lingering command of the river city's gaolers.\n\nThe fingers close without taking hold of anything. The old restraint needs neither a chain nor a prisoner who remembers the charge.\n\nRelease comes after the moment it was needed.",
         "burden": {
@@ -8394,6 +8430,7 @@
         ],
         "effects": [],
         "textTemplate": "Your actions cost +1 SP while this burden is held. Ethereal.",
+        "faceTemplate": ["Actions cost +1 SP."],
         "icon": "shield",
         "flavor": "A remembered weight from the Court's holding rooms.\n\nThe cord is gone, but each movement still pays its toll. Prisoners learned to make fewer gestures while waiting for a door to open.\n\nThe burden has outlived its fastening.",
         "burden": {
