@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Merge train: rank-ups, Core weapon arts, enemy sheets** ([#2482](https://github.com/cehinds/AshenSpire/pull/2482), `0.7.3.28`). Lands #2472, #2474 and #2478 together in one merge to shorten the queue; no change beyond those three.
 - **Enemy character sheets** ([#2478](https://github.com/cehinds/AshenSpire/pull/2478), `0.7.3.28`). Each Core enemy now has an editable JSON character sheet (stats, equipment, deck and reserve deck) using typed id references, with a generated table of what every id means.
 - **Core weapon arts** ([#2474](https://github.com/cehinds/AshenSpire/pull/2474), `0.7.3.28`). Core classes now open with their starting weapon's art in place of the class special card, and swapping weapons swaps the art. The Starseer opens with one fewer Star Spark and the Herald with one fewer Ethereal, to hold the 10-card start.
 - **Rank-ups offer a bonus** ([#2472](https://github.com/cehinds/AshenSpire/pull/2472), `0.7.3.28`). Raising a card's rank now also lets you pick one of 2-3 bonus upgrades (damage, Block, Poise, cost or tags) at double the usual size, on top of the wider upgrade range.
