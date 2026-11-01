@@ -2,6 +2,7 @@
 // (cardUpgradeModal.js), so both read the same. `.smith-*` classes and the b/i/strong delta tags stay:
 // tools/armament-smithing-ui.mjs reads them.
 import { el, glyph } from '../kit/index.js';
+import { t } from '../strings.js';
 
 /** A StatPair whose key and value are separated by a space, so the text reads "AR 5". */
 export const pairSpaced = (key, valueNode, className = '') => el('span', { class: `as-statpair${className ? ` ${className}` : ''}` }, [
@@ -35,5 +36,5 @@ export const costPairNode = (selected) => el('span', { class: 'as-statpair smith
 
 export const economyNode = (selected) => el('span', { class: 'smith-economy-values' }, [
   glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
-  el('b', { text: 'Smithing Stone Cost' }), ' ', costPairNode(selected),
+  el('b', { text: t('smith.cost.label') }), ' ', costPairNode(selected),
 ]);

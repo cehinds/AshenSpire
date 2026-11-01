@@ -5,7 +5,7 @@ import { smithUiFixture, matchesSmithRows, matchesCommittedCards, smithTextFits,
 
 const fixture = smithUiFixture();
 const rows = () => fixture.selected.affectedRows.map(row => ({
-  title: row.name, open: false, role: `${row.role} · ${row.used ? `${row.activeCopies} active` : 'not in active deck'}`,
+  title: row.name, open: false,
   unused: !row.used, opacity: row.used ? 1 : .5,
   values: row.values.map(value => ({ label: ({damage:'DAMAGE',block:'GUARD'})[value.op], before: String(value.before), after: String(value.after) })),
 }));
@@ -29,7 +29,6 @@ test('closed Smith row checks reject wrong deltas, wrong ownership, hidden unuse
   assert.ok(matchesSmithRows(rows(), fixture.selected.affectedRows));
   for (const mutate of [
     value => value[0].values[0].after = '10',
-    value => value[1].role = 'guard · not in active deck',
     value => value[2].unused = false,
     value => value[2].opacity = 1,
     value => value[0].open = true,

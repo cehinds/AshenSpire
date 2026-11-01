@@ -158,7 +158,7 @@ test('Read Intent overrides observer concealment only for its authored duration'
 });
 test('one Veil perception decision gates every hit of the same hostile action',()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.registries={...combat.registries,proposalStatusRules:{weak:{behaviors:[{kind:'veil',minimum:50,maximum:50,baseChance:50,perceptionScale:0,penaltyPerStack:0}]}}};
- const target=combat.enemies[0];target.statuses.weak={stacks:1};let rolls=0;const original=combat.rng.float;combat.rng.float=stream=>stream==='misc' ? (++rolls===1 ? .9 : 0) : original(stream);
+ const target=combat.enemies[0];target.statuses.weak={stacks:1};let rolls=0;const original=combat.rng.int;combat.rng.int=(stream,lo,hi)=>stream==='misc' ? (++rolls===1 ? 1 : 20) : original(stream,lo,hi);
  executeAction(combat,{effect:{op:'damage',amount:8,hits:2,target:'enemy'},source:combat.player,owner:combat.player,target,card:{combatProfile:{maneuver:'attack',camp:'physical',range:'melee'}}});
  assert.equal(rolls,1);assert.equal(target.hp,1000);
 });
