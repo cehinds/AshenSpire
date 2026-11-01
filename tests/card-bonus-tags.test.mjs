@@ -29,7 +29,7 @@ test('automatic Precision has an honest static formula, exact live count and com
   assert.equal(staticTag.countFormula, undefined); // Rule: the entry grant is exactly 1 stack, no stat-mix formula (owner, 2026-10-31)
   assert.match(staticTag.blurb, /On changing stance, gain 1 Precision/);
   assert.match(staticTag.blurb, /Repeating the same stance grants none/);
-  assert.match(staticTag.blurb, /Loses 1 stack at the start of your turn/); // Rule: Precision decays per turn; badge text is the statuses.json tooltip
+  assert.match(staticTag.blurb, /Loses 3 stacks at the start of your turn/); // Rule: Precision decays per turn; badge text is the statuses.json tooltip
   const [live] = cardBonusTags(def, { entryPrecision: 8 }, core);
   assert.equal(live.count, 8);
   assert.equal(live.countFormula, undefined);

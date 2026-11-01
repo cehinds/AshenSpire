@@ -132,8 +132,11 @@ export function resolveStatusPresentationDefinition(def, context = {}) {
     ? statusPresentationDefinition(context, def.id, def, context.statusHolder ?? null) : def;
 }
 
-// Evade and (Core 2, owner 2026-10-31) Precision lose stacks at owner turn start.
-const clockFor = def => def.decay === 'perTurnEnd' || def.id === 'evade' || def.id === 'precision' ? 'stackOwnerTurnStart'
+// Evade loses stacks at owner turn start. Precision (Core 2, owner 2026-11-01)
+// loses accuracy.precisionDecayPerTurn temporary stacks there, so it gets its
+// own clock instead of the shared decayAmount.
+const clockFor = def => def.id === 'precision' ? 'precisionOwnerTurnStart'
+  : def.decay === 'perTurnEnd' || def.id === 'evade' ? 'stackOwnerTurnStart'
     : typeof def.decay === 'object' && Number.isFinite(def.decay?.duration) ? 'timerOwnerTurnStart' : null;
 
 export function coreStatusLifecycle(def, context = {}) {

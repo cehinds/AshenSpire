@@ -28,7 +28,7 @@ function live(enemyId = 'wanderingSoldier') {
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, ''));
 
 test('constants live in the editable accuracy block of mechanics.json', () => {
-  assert.deepEqual({ ...mechanics.accuracy, note: undefined, precisionTooltip: undefined }, { evasionBase: 8, evadePerStack: 2, precisionStackValue: 1, precisionDecayPerTurn: 1, note: undefined, precisionTooltip: undefined });
+  assert.deepEqual({ ...mechanics.accuracy, note: undefined, precisionTooltip: undefined }, { evasionBase: 8, evadePerStack: 2, precisionStackValue: 1, precisionDecayPerTurn: 3, note: undefined, precisionTooltip: undefined });
 });
 
 test('Precision = 1 + statMix + stacks and Evasion = 8 + DEX + 2 per Evade stack', () => {
@@ -75,22 +75,22 @@ test('an offensive stance entry grants exactly one stack; preview equals live', 
   assert.equal(previewCardAttackHit(combat, player, enemy, carrier).accuracy, base + 1);
 });
 
-test('Precision decays 3 -> 2 -> 1 -> 0 across owner turn starts, once per turn, not at turn end', () => {
+test('Precision loses 3 per owner turn start (5 -> 2 -> 0, 2 -> 0), floored at 0, once per turn, not at turn end', () => {
   const { combat, player, enemy } = live();
   player.statuses = {}; enemy.statuses = {};
-  applyStatus(combat, player, 'precision', 3, player);
+  applyStatus(combat, player, 'precision', 5, player);
   applyStatus(combat, enemy, 'precision', 2, enemy);
   decayAtTurnEnd(combat, player);
-  assert.equal(player.statuses.precision.stacks, 3, 'turn end does not decay');
+  assert.equal(player.statuses.precision.stacks, 5, 'turn end does not decay');
   const seen = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     combat.turn++; decayAtTurnStart(combat, player); decayAtTurnStart(combat, player); // idempotent within a turn
     seen.push(player.statuses.precision?.stacks ?? 0);
   }
-  assert.deepEqual(seen, [2, 1, 0]);
+  assert.deepEqual(seen, [2, 0]);
   assert.equal(enemy.statuses.precision.stacks, 2, "another owner's boundary does not touch the enemy's stacks");
   decayAtTurnStart(combat, enemy);
-  assert.equal(enemy.statuses.precision.stacks, 1);
+  assert.equal(enemy.statuses.precision, undefined, 'enemy Precision 2 -> 0 (floored, never negative)');
 });
 
 test('Persistent Precision stacks are exempt from decay', () => {
@@ -119,7 +119,7 @@ test('buff cards grant their authored Precision, the face prints +N Precision, a
     assert.ok(entry <= 1);
     const view = statusInstancePresentation(reg.statuses.get('precision'), player.statuses.precision, combat);
     assert.equal(view.valueText, String(stacks), `${id} badge value`);
-    assert.match(view.tooltip, /^Each stack adds 1 Precision\. Loses 1 stack at the start of your turn\./);
+    assert.match(view.tooltip, /^Each stack adds 1 Precision\. Loses 3 stacks at the start of your turn\./);
   }
 });
 

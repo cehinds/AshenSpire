@@ -74,9 +74,9 @@
     "evasionBase": 8,
     "evadePerStack": 2,
     "precisionStackValue": 1,
-    "precisionDecayPerTurn": 1,
-    "precisionTooltip": "Each stack adds 1 Precision. Loses 1 stack at the start of your turn.",
-    "note": "Owner's call, 2026-10-31 (Core 2 only): Precision = 1 + statMix + stacks x precisionStackValue; Evasion = evasionBase + DEX + gear + evadePerStack x Evade stacks. Replaces mix x (stacks + 1) and (1 + DEX) x stacks, which put every Precision >= 1 at a 95% hit chance. Precision stacks lose precisionDecayPerTurn at the owner's turn start."
+    "precisionDecayPerTurn": 3,
+    "precisionTooltip": "Each stack adds 1 Precision. Loses 3 stacks at the start of your turn.",
+    "note": "Owner's call, 2026-10-31 (Core 2 only): Precision = 1 + statMix + stacks x precisionStackValue; Evasion = evasionBase + DEX + gear + evadePerStack x Evade stacks. Replaces mix x (stacks + 1) and (1 + DEX) x stacks, which put every Precision >= 1 at a 95% hit chance. Precision stacks lose precisionDecayPerTurn (1 -> 3, owner 2026-11-01: precision was growing too fast, so swift decay of 3) at the owner's turn start, floored at 0."
   },
   "unarmedPackage": {
     "strikeCardId": "framework.unarmedStrike",
