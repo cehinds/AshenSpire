@@ -2264,8 +2264,12 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   .card-upgrade-option { flex: 0 0 auto; text-align: left; }
   .card-upgrade-option-body { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; }
   .card-upgrade-option-title { flex: 0 0 100%; }
-  .card-upgrade-option-face { flex: 0 0 8.5rem; width: 8.5rem; }
-  .card-upgrade-option-changes { flex: 1 1 0; min-width: 0; font-size: 0.9rem; }
+  /* The face column is as wide as the card it holds (the small card is wider than 8.5rem on a 360px phone, so a fixed
+     column let it spill over the changes). The card's cost medallion hangs 1rem outside its top-left corner, so the
+     column pads that much to keep it clear of the "Option N" title and the left edge. */
+  .card-upgrade-option-face { flex: 0 0 auto; width: auto; max-width: 100%; padding: 1rem 0 0 1rem; box-sizing: content-box; }
+  /* The changes take the rest of the row and wrap; under 7rem free, they drop below the card instead of squeezing. */
+  .card-upgrade-option-changes { flex: 1 1 7rem; min-width: 0; font-size: 0.9rem; overflow-wrap: anywhere; }
 }
 /* The summary: the selected item — its art beside its name, tier, kind and
    tags — one column, the rows flush so the stats row follows. */
