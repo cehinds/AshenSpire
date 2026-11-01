@@ -1262,11 +1262,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       mechanicBindings: e.mechanicBindings ? structuredClone(e.mechanicBindings) : undefined,
       ratingSources: e.ratingSources ? structuredClone(e.ratingSources) : undefined,
       ...(e.kind === 'enemy' ? { intentPreview: projectCombatIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
-      hp: e.hp,
+      hp: e.hp, maxHp: e.maxHp,
       energy: e.energy, energyMax: e.energyMax, stamina: e.stamina, maxStamina: e.maxStamina, maxMana: e.maxMana,
       mana: e.mana,
       block: e.block,
-      barrier: e.barrier || 0,
       persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
       persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
       combatStance: e.combatStance ? { ...e.combatStance } : null,
@@ -1394,9 +1393,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'persistentPoiseChanged':
           if (t?.persistentPoise) { t.persistentPoise.value = e.value; if (Number.isFinite(e.max)) t.persistentPoise.max = e.max; }
           break;
-        case 'barrierGained':
-          if (t) t.barrier = e.total;
-          break;
         case 'arcaneExposureChanged':
           if (t && t.arcaneExposure) t.arcaneExposure.value = e.value;
           disp.arcaneEvents.push(e);
@@ -1411,7 +1407,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'damageDealt':
           if (t) {
             t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
-            if (e.barrierRemaining !== undefined) t.barrier = e.barrierRemaining;
             if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
             if (e.poiseRemaining !== undefined && t.persistentPoise) t.persistentPoise.value = e.poiseRemaining;
             if (e.wardRemaining !== undefined && t.persistentWard) t.persistentWard.value = e.wardRemaining;

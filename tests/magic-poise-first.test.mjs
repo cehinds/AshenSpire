@@ -80,15 +80,15 @@ test('(d) mixed arcane 10 (5 physical, 5 magic) vs Poise 6, Block 5: physical th
   assert.equal(b.poiseAfter, 0);
 });
 
-test('Barrier meets the magic left after Poise and Block; the preview mirror equals the live apply', () => {
-  const r = hit(spell, { poise: 3, block: 2, barrier: 3 });
+test('the numeric Barrier pool is gone: the magic left after Poise and Block meets HP; the preview mirror equals the live apply', () => {
+  const r = hit(spell, { poise: 3, block: 2 });
   assert.equal(r.receipt.magicPoise, 3);
   assert.equal(r.receipt.blocked, 2);
-  assert.equal(r.receipt.barrierMitigated, 3);
-  assert.equal(r.receipt.hpLoss, 2);
-  const defender = { block: 2, barrier: 3, persistentPoise: { value: 3, max: 20 } };
+  assert.equal(r.receipt.barrierMitigated, 0);
+  assert.equal(r.receipt.hpLoss, 5);
+  const defender = { block: 2, persistentPoise: { value: 3, max: 20 } };
   applyReceiptToPreviewTarget(r.combat, defender, r.receipt);
-  assert.deepEqual([defender.block, defender.barrier, defender.persistentPoise.value], [0, 0, 0]);
+  assert.deepEqual([defender.block, defender.persistentPoise.value], [0, 0]);
 });
 
 test('the float splits magic Poise from absorbed Poise', () => {

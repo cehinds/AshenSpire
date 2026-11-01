@@ -18,7 +18,7 @@ export function live() {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   for (const entity of [combat.player, ...combat.enemies]) {
-    Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], persistentPoise: { value: 0, max: 0 } });
+    Object.assign(entity, { hp: 100, maxHp: 100, block: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
   }
   // This fixture authors three contacts, which cost 3 SP (1 SP per hit); fund that price and select

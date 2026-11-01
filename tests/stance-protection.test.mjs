@@ -31,20 +31,20 @@ for (const camp of ['physical', 'spell']) test(camp + ' Defense overflow keeps i
   syncWardMaximum(ctx, actor); syncPoiseMaximum(ctx, actor);
   for (const amount of [5, 7]) {
     ctx.stanceRules = { defenseRestore: amount };
-    actor.block = 0; actor.barrier = 0;
+    actor.block = 0; delete actor.statuses.barrier;
     actor.persistentPoise.value = actor.persistentPoise.max;
     actor.persistentWard.value = actor.persistentWard.max;
     setCombatStance(ctx, actor, carrier); drain();
     assert.equal(actor.block, amount, 'full Poise overflows into Block without DR or guard modifiers');
-    assert.equal(actor.barrier, amount, 'full Ward overflows into Barrier without PR or a second spell split');
-    actor.block = 0; actor.barrier = 0;
+    assert.equal((actor.statuses.barrier?.stacks || 0), amount, 'full Ward overflows into Barrier without PR or a second spell split');
+    actor.block = 0; delete actor.statuses.barrier;
     actor.persistentPoise.value = actor.persistentPoise.max - 2;
     actor.persistentWard.value = actor.persistentWard.max - 3;
     setCombatStance(ctx, actor, carrier); drain();
     assert.equal(actor.persistentPoise.value, actor.persistentPoise.max);
     assert.equal(actor.persistentWard.value, actor.persistentWard.max);
     assert.equal(actor.block, amount - 2);
-    assert.equal(actor.barrier, amount - 3);
+    assert.equal((actor.statuses.barrier?.stacks || 0), amount - 3);
   }
 });
 
@@ -52,13 +52,13 @@ for (const [school, block, barrier] of [['fire', 1, 2], ['frost', 2, 1], ['force
   test(school + ' stance entry preserves its pre-split Block and Barrier with missing Ward', () => {
     const { ctx, actor, carrier, drain } = fixture('spell', school);
     ctx.stanceRules = { defenseRestore: 0 };
-    actor.block = 0; actor.barrier = 0;
+    actor.block = 0; delete actor.statuses.barrier;
     setCombatStance(ctx, actor, carrier);
     assert.ok(actor.persistentWard.max > 0, 'fixture has a rated Ward pool');
     actor.persistentWard.value = 0;
     drain();
     assert.equal(actor.block, block);
-    assert.equal(actor.barrier, barrier);
+    assert.equal((actor.statuses.barrier?.stacks || 0), barrier);
     assert.equal(actor.persistentWard.value, 0, 'entry Barrier never refills Ward');
   });
 }

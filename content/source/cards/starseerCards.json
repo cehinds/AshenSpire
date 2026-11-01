@@ -2952,6 +2952,7 @@
       }
     ],
     "textTemplate": "Gain {block} Block. Starstone: apply {weak} Weak to ALL enemies.",
+    "faceTemplate": ["Gain {block} Block.", "Starstone: Weak {weak} to all."],
     "upgrade": {
       "effects": [
         {

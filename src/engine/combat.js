@@ -434,7 +434,6 @@ export function createCombat({
     for (const entity of [combat.player, ...combat.enemies]) {
       Control.initializePersistentWard(entity, configuredCombat(combat) && !fixCoreEnabled(combat) ? 0 : persistentWardMaximum(combat, entity));
       Control.initializePersistentPoise(entity, configuredCombat(combat) && !fixCoreEnabled(combat) ? 0 : persistentPoiseMaximum(combat, entity));
-      entity.barrier = 0;
     }
   }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
@@ -621,7 +620,6 @@ function startPlayerTurn(combat) {
   clearMeterGuards(p);
   clearCombatCounter(p);
   if (combat.combatExpansionVersion === 2) {
-    p.barrier = 0;
     const protection = startTacticalTurn(combat, p);
     if (protection.block) A.gainBlock(combat, p, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
     if (protection.barrier) A.gainBarrier(combat, p, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
@@ -740,7 +738,6 @@ function enemyTurnStart(combat) {
     clearMeterGuards(e);
     clearCombatCounter(e);
     if (combat.combatExpansionVersion === 2) {
-      e.barrier = 0;
       const protection = startTacticalTurn(combat, e);
       if (protection.block) A.gainBlock(combat, e, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
       if (protection.barrier) A.gainBarrier(combat, e, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
@@ -2771,7 +2768,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
           const d = shared.defender;
           faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
-            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, barrier: 0, wardBlock: 0,
+            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, wardBlock: 0,
               persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
               ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
               ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
@@ -2844,10 +2841,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         break;
       }
       case 'gainBarrier': {
+        // Barrier stacks, one per point (SPEC 4.1a); ratings do not scale a stack count.
         const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0);
-        entry.defenseSplit = A.computeSpellDefenseGain(combat, p, base, action.card);
-        entry.value = entry.defenseSplit ? entry.defenseSplit.block + entry.defenseSplit.ward
-          : A.computeBlockGain(combat, p, base, action.card);
+        entry.value = Math.max(0, Math.floor(base));
+        entry.status = 'barrier';
         break;
       }
       case 'gainPoise':

@@ -41,8 +41,8 @@ for (const mode of ['native', 'bundled']) test(`five remaining predicate familie
   assert.ok(executioner.every(row => row.selectedTargetId === 'e2'));
   assert.equal(executioner[1].after.target.statuses.staggered.stacks, 1);
   const ward = paired('umbralWard');
-  assert.deepEqual(ward.map(row => [row.after.player.block, row.after.player.barrier]), [[19, 8], [27, 12]],
-    'Counterstrike scales16/24→24/36, alteration splits70:30, entry adds2Block+1Barrier');
+  assert.deepEqual(ward.map(row => [row.after.player.block, row.after.player.barrier]), [[2, 25], [2, 37]],
+    'Counterstrike scales16/24→24/36 as Barrier stacks (the gainBarrier opcode is one stack per point, SPEC 4.1a), entry adds2Block+1Barrier');
   assert.deepEqual(ward.map(row => row.after.player.statuses.starstoneCharge.stacks), [1, 1],
     'unique Starstone coeffect occurs after the branch and cannot double-select protection');
   const rite = paired('desperateRite');

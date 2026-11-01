@@ -186,14 +186,11 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
   });
 });
 
-test('a summary keeps card identity so Sanctuary Cleanse splits Block and Ward without a preview', () => withKitDom(dom => {
+test('a summary keeps card identity so Sanctuary Cleanse reads Barrier stacks without a preview', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
   const def = resolveCard(reg, { cardId: 'sanctuaryCleanse' });
-  const split = spellDefenseSplit(def, 3);
-  assert.deepEqual(split, { block: 1, ward: 2 });
   const lines = facesOf(dom, reg, { cardId: 'sanctuaryCleanse' }, rules);
-  assert.ok(lines.includes('Gain 1 Block, 2 Ward.'), lines.join(' | '));
-  assert.ok(lines.every(line => !/Barrier/.test(line)), lines.join(' | '));
+  assert.ok(lines.includes('Gain 3 Barrier.'), lines.join(' | '));
 }));
 
 test('a status is named by its whole name or id, never by a stem of another word', async () => {

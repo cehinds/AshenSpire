@@ -63,8 +63,8 @@ test('actual card dispatch matches selected target receipt and card face after e
  assert.equal(receipt.totalDamage,preview.damageReceipt.totalDamage);
  assert.ok(receipt.hits[0].sources.some(row=>row.id.startsWith('ar:')));
 });
-test('mixed multihit receipt spends Block Barrier Ward and Poise sequentially and previews without RNG',()=>{
- const {combat,target}=live();Object.assign(target,{block:10,barrier:2,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
+test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG',()=>{
+ const {combat,target}=live();Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
  const carrier={skipRatingBonus:true,magicShare:.5,combatProfile:{camp:'physical',maneuver:'attack',range:'melee',damageComponents:[{damageType:'blunt',share:.5},{damageType:'magic',share:.5}]}};
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
@@ -72,7 +72,7 @@ test('mixed multihit receipt spends Block Barrier Ward and Poise sequentially an
  assert.deepEqual(preview.hitDamages,[6,19,25]);assert.equal(preview.totalDamage,50);// hit 2 meets 1 Poise (capped); the break then leaves Vulnerable x1.25
  const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
  assert.deepEqual(receipts.map(row=>row.hpLoss),preview.hitDamages);assert.equal(500-target.hp,50);
- assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[10,2,2,0],[0,0,0,1],[0,0,0,0]]);
+ assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
 });
 test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{
  const {combat}=live('starseer');const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};

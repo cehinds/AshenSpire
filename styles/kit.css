@@ -6119,7 +6119,6 @@ button[data-button-size] {
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow .combat-health-badge-value { white-space: nowrap; letter-spacing: -.02em; -webkit-text-stroke: 0; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
@@ -6616,6 +6615,11 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon, .combat-health-stance-icon) { font-size: .8em; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+/* Ward status (SPEC 4.1a): the Poise badge turns purple, and a purple bar over the HP bar shows current Poise in HP points (same scale as HP). */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise-ward { color: white; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise-ward::before { background: linear-gradient(135deg, var(--ward-purple), color-mix(in srgb, var(--ward-purple) 55%, black)); border: 1px solid color-mix(in srgb, var(--ward-purple) 50%, white); }
+:root .combat .combatant .combat-health-meter .m-track { position: relative; }
+:root .combat .combatant .combat-health-poise-overlay { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--ward-purple) 62%, transparent); border-right: 2px solid color-mix(in srgb, var(--ward-purple) 40%, white); border-radius: 5px 0 0 5px; pointer-events: none; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 /* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
    --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline

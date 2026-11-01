@@ -61,9 +61,11 @@ export function digest(combat) {
 // loadout's shape (one cell per hand, not three). Log hashes, event counts, turns and RNG counters are identical, and the same
 // fights built with three-set hands (tests/withWeaponRack.mjs) reproduce the previous state hashes exactly.
 // Re-pinned 2026-11-01 for the per-stat Precision receipt lines (precisionParts only; events, turn and RNG unchanged).
+// Re-pinned 2026-11-01 for Ward/Barrier as stacked statuses (SPEC 4.1a): the old numeric barrier pool is gone from
+// combat state and Barrier grants are stacks, so both reaver fights' state and log hashes move; event counts and turns are unchanged.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '41d31943f4e744b2', state: 'f72517673e978c73', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: '8e23e63573e8aa0d', state: '98fcbc9a036c6bd7', events: 234, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '9947cf9f564a155e', state: '6733dc4f56473cd5', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: 'ef12f893078113d6', state: '1787fb2ce9c92834', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

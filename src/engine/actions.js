@@ -424,7 +424,6 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   let poiseBefore = 0;
   target.block = receipt.blockRemaining;
   if (fixCoreEnabled(ctx)) {
-    target.barrier = Math.max(0, (target.barrier || 0) - receipt.barrierMitigated);
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
@@ -436,8 +435,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
-    advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block, barrierRemaining: target.barrier,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
@@ -474,30 +473,30 @@ function reflectBack(ctx, source, target, carrier, reflect) {
 }
 
 /**
- * Barrier is Ward added past full: gaining it refills Ward first and only the
- * rest becomes Barrier, the blue layer that lasts until the owner's next turn.
+ * Barrier (SPEC 4.1a) is a stacked status: each stack is +5 maximum and current Poise, and one stack is lost per
+ * turn. The `gainBarrier` opcode, a stance's entry protection and an enemy move's `barrier` all add `base`
+ * stacks, one per point (owner, 2026-11-01); a stack count is not scaled by ratings.
  */
 export function gainBarrier(ctx, entity, base, card = null) {
-  if (configuredCombat(ctx)) return gainBlock(ctx, entity, base, card);
   if (!entity?.alive) return 0;
-  const split = computeSpellDefenseGain(ctx, entity, base, card);
-  if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
-  return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
+  return gainBarrierAmount(ctx, entity, Math.max(0, Math.floor(base)), card);
 }
 
-// A SPELL refills Ward first; only the overflow becomes Barrier. Every other
-// source (a mana-costing skill, a non-magic move, turn-start protection) adds Barrier alone.
-function gainBarrierAmount(ctx, entity, amount, card = null, spell = isSpellCard(card)) {
-  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && spell) {
+function gainBarrierAmount(ctx, entity, amount, card = null) {
+  if (!(amount > 0)) return 0;
+  statuses.applyStatus(ctx, entity, 'barrier', amount, null);
+  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.statuses.barrier?.stacks || 0, ...(card?.logSource ? { source: card.logSource } : {}), ...seatOf(ctx, entity) });
+  return amount;
+}
+
+// A spell's Ward share (the `block` opcode's split) refills the Ward pool; what is past a full pool becomes Barrier stacks, one per point.
+function refillWardShare(ctx, entity, amount, card = null) {
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2) {
     syncWardMaximum(ctx, entity);
-    // restorePersistentWard refills Ward and emits the Barrier overflow itself. Ashen Blight's
-    // restore percent is already on the gain upstream, so it is not applied a second time here.
     const granted = Control.restorePersistentWard(ctx, entity, amount, { source: 'card', modifierPercent: 0 });
     return (granted.restored || 0) + (granted.missingRecovered || 0) + (granted.barrier || 0);
   }
-  entity.barrier = (entity.barrier || 0) + amount;
-  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...(card?.logSource ? { source: card.logSource } : {}), ...seatOf(ctx, entity) });
-  return amount;
+  return gainBarrierAmount(ctx, entity, amount, card);
 }
 
 /**
@@ -679,14 +678,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   // Magic meets Barrier, then Ward, once per action. Barrier is consumed in hit order and soaks
   // fully. Ward's budget is shared over the magic parts and spent by what it absorbs.
   syncWardMaximum(ctx, target);
-  let barrierLeft = Math.max(0, target.barrier || 0);
   const barrierSpent = hits.map(() => 0);
-  magicHits.forEach(index => {
-    const take = Math.min(barrierLeft, Math.max(0, magicToWard[index]));
-    barrierLeft -= take;
-    barrierSpent[index] = take;
-  });
-  const afterBarrier = magicHits.map(index => magicToWard[index] - barrierSpent[index]);
+  const afterBarrier = magicHits.map(index => magicToWard[index]);
   let wardBudget = Math.max(0, target.persistentWard?.value || 0);
   const legacyWardTotal = afterBarrier.reduce((sum, value) => sum + value, 0);
   const legacyWard = legacyWardTotal > 0 ? allocateInteger(Math.min(wardBudget, legacyWardTotal), afterBarrier) : afterBarrier.map(() => 0);
@@ -800,7 +793,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
     Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
     ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
-      immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+      immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0,
       magicAmount: 0, physicalAmount: 0, ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
       ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
     spendSilencedStack(ctx, target);
@@ -818,15 +811,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // The plan was made for the whole action. A status rider may have spent Barrier or
   // Ward between hits: what the live pool no longer holds is not absorbed for free,
   // so it goes back into this hit before Block.
-  const plannedBarrier = tactical.barrierSpentAmounts?.[contactIndex] || 0;
   const plannedWard = tactical.wardSpentAmounts?.[contactIndex] || 0;
-  const barrierSpent = Math.min(Math.max(0, target.barrier || 0), plannedBarrier);
   // Break events are collected here and emitted after damageDealt, so the log reads the hit first.
   const breaks = [];
-  if (barrierSpent > 0) {
-    target.barrier -= barrierSpent;
-    if (target.barrier === 0) breaks.push(['barrierBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }]);
-  }
   let wardSpent = 0;
   if (plannedWard > 0 && target.persistentWard?.value > 0) {
     const spend = Control.spendPersistentWard(ctx, target, plannedWard, { cause: 'damage', sourceId: source?.id, deferBreak: true });
@@ -836,7 +823,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const plannedReduction = fixCoreEnabled(ctx) ? tactical.wardReducedAmounts?.[contactIndex] ?? plannedWard : plannedWard;
   // Revalidate the current active pool: status riders between contacts can change it.
   const liveWardReduction = fixCoreEnabled(ctx) ? (plannedWard > 0 && wardSpent > 0 ? plannedReduction : 0) : wardSpent;
-  amount += (plannedBarrier - barrierSpent) + (plannedReduction - liveWardReduction);
+  amount += plannedReduction - liveWardReduction;
   // Block soaks the physical part first, then the magic part the plan assigned it (owner, 2026-10-25); a pierce bypass spends none of it.
   const pool = 'block';
   const blockable = tactical.blockableAmounts?.[contactIndex] ?? (spell ? 0 : amount);
@@ -892,13 +879,12 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     ...(Number.isFinite(split.splitBase) ? { base: split.splitBase + (Number(split.ratingBonus) || 0) } : {}),
     // The whole protection before Block (typed reduction, immunity, Barrier, Ward), when it differs from the Ward figure.
     ...(resisted !== ward ? { resisted } : {}),
-    ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
     ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
     ...(immune && amount === 0 ? { immune: true } : {}),
     // The Force (Arcane) part a Silenced target was immune to; the rest of the hit landed.
     ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
-    damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+    damageType: type, blockRemaining: target.block || 0,
     // The hit's typed parts before Barrier and Ward: magicAmount + physicalAmount is the hit.
     magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
@@ -1063,7 +1049,7 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
 // status modifiers were computed on the total; neither portion reapplies them.
 function gainSpellDefenseAmount(ctx, entity, split, card) {
   const block = split.block > 0 ? gainBlockAmount(ctx, entity, split.block, card, false) : 0;
-  const ward = split.ward > 0 ? gainBarrierAmount(ctx, entity, split.ward, card, true) : 0;
+  const ward = split.ward > 0 ? refillWardShare(ctx, entity, split.ward, card) : 0;
   return block + ward;
 }
 
@@ -1088,7 +1074,7 @@ export function gainBlock(ctx, entity, base, card = null) {
     if (share > 0) {
       const amount = computeBlockGain(ctx, entity, base, card);
       const magic = Math.floor(amount * share + 1e-9);
-      if (magic > 0) gainBarrierAmount(ctx, entity, magic, card, true);
+      if (magic > 0) refillWardShare(ctx, entity, magic, card);
       if (amount - magic > 0) gainBlockAmount(ctx, entity, amount - magic, card, false);
       return amount;
     }
@@ -1787,7 +1773,7 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
-          gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+          gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card);
         } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;
