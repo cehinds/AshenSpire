@@ -184,7 +184,7 @@ test('Core Precision loses a stack at owner turn start, preserves Persistent gra
   applyStatus(combat, combat.player, 'precision', 2, combat.player, { tags: ['trait:persistent'] });
   applyStatus(combat, combat.player, 'precision', 3);
   const text = statusTooltipText(core.statuses.get('precision'), combat);
-  assert.match(text, /^Each stack adds 1 Precision\. Loses 1 stack at the start of your turn\./);
+  assert.match(text, /^Each stack adds 1 Precision\. Loses 3 stacks at the start of your turn\./);
   assert.doesNotMatch(text, /expire at the end of the owner's turn|multiple of your Precision/);
   decayAtTurnEnd(combat, combat.player);
   assert.equal(combat.player.statuses.precision.stacks, 5, 'turn end does not clear Precision');
