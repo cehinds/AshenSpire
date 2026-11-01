@@ -3,6 +3,7 @@
 // UX, docs/FINISH.md §14 "Deck editor UI").
 //
 //   node tools/deck-editor-targets.mjs      exit 0 when every check holds
+//   node tools/deck-editor-targets.mjs --preview-fit-only   desktop resize regression
 //
 // In a real Chromium with touch emulation (so `(pointer: coarse)` matches) at
 // 360×640 and 390×844, each at UI zoom 1 and 0.62, it mounts the production
@@ -27,11 +28,11 @@ import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VIEWPORTS = [[360, 640], [390, 844]];
+const VIEWPORTS = process.argv.includes('--preview-fit-only') ? [] : [[360, 640], [390, 844]];
 const ZOOMS = [1, 0.62];
 const MIN_TARGET_PX = 48;
 const MIN_TEXT_PX = 11;
-const STYLES = ['base', 'ui', 'kit', 'responsive-type'];
+const STYLES = ['base', 'ui', 'kit', 'responsive-type', 'illustrated-cards'];
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
 function connectCdp(wsUrl) {
@@ -158,6 +159,47 @@ try {
       await cdp.send('Target.closeTarget', { targetId });
     }
   }
+  // The Reading Desk changes its preview width in ResizeObserver, after the
+  // render's first text fit. Check actual settled type, not just the CSS width.
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  await cdp.send('Page.enable', {}, sessionId);
+  await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false }, sessionId);
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${served.port}/__deck-editor-probe` }, sessionId);
+  await wait(400);
+  const ev = async expression => {
+    const result = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
+    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
+    return result.result.value;
+  };
+  await ev(MOUNT(1).replace('  return true;', `
+    document.documentElement.style.fontSize = '10px';
+    [...editor.root.querySelectorAll('.deck-editor-tile')].find(tile => tile.textContent.includes('Guard Counter'))
+      .querySelector('.deck-editor-inline-inspect').click();
+    return true;`));
+  const readingSize = async height => {
+    await ev(`document.querySelector('.deck-editor-reading').style.cssText = 'height:${height}px!important;min-height:0!important;max-height:none!important;flex:none!important'`);
+    await wait(150);
+    return ev(`(() => {
+      const face = document.querySelector('.deck-editor-reading .illustrated-card-face');
+      const rules = face.querySelector('[data-card-binding="rules"]');
+      const name = face.querySelector('[data-card-binding="name"]');
+      return { width:face.clientWidth, font:parseFloat(rules.style.fontSize), nameFont:parseFloat(name.style.fontSize),
+        lines:rules.scrollHeight / parseFloat(getComputedStyle(rules).lineHeight), text:rules.textContent };
+    })()`);
+  };
+  const wide = await readingSize(800), narrow = await readingSize(300);
+  check(wide.width > narrow.width && narrow.font < wide.font && narrow.nameFont < wide.nameFont,
+    'READING-DESK SHRINK', JSON.stringify({ wide, narrow }));
+  await ev(`(async () => { const {fitCardFace} = await import('/src/ui/components/card.js');
+    fitCardFace(document.querySelector('.deck-editor-reading .card')); })()`);
+  const settled = await readingSize(300);
+  check(Math.abs(settled.font - narrow.font) < .05 && settled.lines <= 2.1,
+    'READING-DESK FIT', 'automatic fit matches explicit fitting at the final width');
+  const restored = await readingSize(800);
+  check(restored.width === wide.width && Math.abs(restored.font - wide.font) < .05 && restored.text === wide.text,
+    'READING-DESK RESTORE', 'larger preview restores its type and keeps full inspection text');
+  await cdp.send('Target.closeTarget', { targetId });
 } catch (error) {
   failures += 1;
   console.error(`RED DECK-EDITOR-TARGETS - ${error.message}`);
