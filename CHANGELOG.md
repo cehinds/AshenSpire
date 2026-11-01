@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.95`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
+- **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.97`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
 - **Precision fades fast** ([#2448](https://github.com/cehinds/AshenSpire/pull/2448), `0.7.2.95`). Temporary Precision stacks now drop by 3 (was 1) at the start of their owner's turn, for players and enemies alike, so buff cards give a short burst instead of a growing pile; Persistent Precision still never decays.
 - **Flowing Transition's Evade pick enters Evade** ([#2446](https://github.com/cehinds/AshenSpire/pull/2446), `0.7.2.93`). Choosing Evade no longer leaves you in Prepared, so the stance visibly changes.
 - **Counter and Reflect are stacked badges** ([#2431](https://github.com/cehinds/AshenSpire/pull/2431), `0.7.2.91`). Playing a Counter card turns the Block it stands behind into Counter stacks that fade two per turn, and every counter returns the card's damage plus 10% of the incoming hit per stack; in Counter stance a card-less auto-Counter costs 1 SP and Counter reactions cost one less. New Reflect stacks (Mirror Guard) cut an incoming hit by 30% per stack and throw the same share back.
