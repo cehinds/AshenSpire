@@ -34,7 +34,7 @@ That object is only meaningful when the module is supported by the selected bund
 Settings live in `engine/modules/stances/settings.schema.json`; shipped defaults are in `defaults.json`. Every listed setting is required after resolution unless the schema marks it otherwise.
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Validated setting; no configured gameplay behavior is promised unless listed in Runtime scope above.
 - `/include` (type array; default `["attack","smash","defend","counter","sweep","prepared"]`): Unique supported maneuver IDs.
-- `/matchups` (type object; default `{"attack":["smash","prepared"],"counter":["smash","attack"],"smash":["defend","prepared"],"sweep":["counter"],"prepared":["defend","counter"]}`): Directed edges: key is attacker, array lists the stances it beats.
+- `/matchups` (type object; default `{"attack":["smash","prepared"],"counter":["smash","attack"],"smash":["defend","prepared"],"sweep":["counter","smash"],"prepared":["defend","counter"]}`): Directed edges: key is attacker, array lists the stances it beats.
 - `/advantageMultiplier` (type number; default `1.25`; range 0..100): Provisional advantage damage multiplier.
 - `/defenseMitigation` (type number; default `0.25`; range 0..1): Reduce incoming direct damage by this fraction when the defender's included stance beats the incoming maneuver in `matchups`. `0` disables mitigation. Applies once before Block/Poise in Core and the Current grouped defense adapter; existing offensive bonuses remain. Old saved resolved profiles missing this setting retain zero mitigation.
 - `/evadeFailureMultiplier` (type integer; default `2`; range 0..1000000): Damage multiplier when an evade fails.
