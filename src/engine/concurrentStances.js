@@ -33,7 +33,7 @@ export function defensiveCombatStance(ctx,entity,carrier={}) {
  const rawIncoming=carrier.combatProfile?.maneuver || carrier.maneuver,incoming=rawIncoming==='casting' ? 'prepared' : rawIncoming;
  const profile=ctx.gameProfile?.modules?.stances;
  const priority=policy(ctx,entity).defensePriority || ['counter','defend','casting','attack','smash','sweep'];
- const penalty=stance=>profile?.mode==='configured' ? (profile.matchups?.[incoming]?.includes(stance.maneuver) ? profile.advantageMultiplier || 2 : 1) : incoming==='smash' && ['defend','casting'].includes(stance.maneuver) || incoming==='counter' && ['attack','smash','defend'].includes(stance.maneuver) || incoming==='sweep' && stance.maneuver==='counter' ? 2 : 1;
+ const penalty=stance=>profile?.mode==='configured' ? (profile.matchups?.[incoming]?.includes(stance.maneuver) ? profile.advantageMultiplier || 2 : 1) : incoming==='smash' && ['defend','casting'].includes(stance.maneuver) || incoming==='counter' && ['attack','smash'].includes(stance.maneuver) || incoming==='sweep' && stance.maneuver==='counter' ? 2 : 1;
  const damageFactor=stance=>penalty(stance)*stanceMitigation(ctx,incoming,stance.maneuver).multiplier;
  return [...rows].sort((a,b)=>damageFactor(a)-damageFactor(b) || priority.indexOf(a.maneuver==='prepared' ? 'casting' : a.maneuver)-priority.indexOf(b.maneuver==='prepared' ? 'casting' : b.maneuver))[0];
 }

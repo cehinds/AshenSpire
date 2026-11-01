@@ -118,7 +118,7 @@ test('configured X spends remaining SP and scales actual damage and target count
 });
 test('Many Forms uses one best defensive receipt for each attack and expires back to the primary stance',()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.gameProfile=resolveGameProfile('core');
- combat.registries={...combat.registries,proposalStatusRules:{'weak':{behaviors:[{kind:'stanceCapacity',additionalPerStack:1,maxStances:2,defensePriority:['counter','defend','evade','casting','attack','smash','sweep']}]}}};
+ combat.registries={...combat.registries,proposalStatusRules:{'weak':{behaviors:[{kind:'stanceCapacity',additionalPerStack:1,maxStances:2,defensePriority:['counter','defend','casting','attack','smash','sweep']}]}}};
  combat.player.statuses['weak']={stacks:1};
  const carrier=maneuver=>({combatProfile:{maneuver,camp:'physical',range:'melee'}});
  setProfileStance(combat,combat.player,carrier('counter'));setProfileStance(combat,combat.player,carrier('defend'));
