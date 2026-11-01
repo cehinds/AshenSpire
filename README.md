@@ -1,17 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — physical Reach and Ranged weapons
-
-[Feature build publication — current build verification pending](https://cehinds.github.io/AshenSpire/branches/Feature/NewCardArt/latest/) · [Verified art release v26](https://github.com/cehinds/AI-Art/releases/tag/ashenspire-hd-assets-v26)
-
-Physical Reach weapon actions use a larger spear and physical Ranged uses a bow. Weapons have a thin contrasting ivory outline. Counter keeps its shield and foreground weapon; magical Counter retains the shield-and-hammer assembly with magical colors and cues. The four images below are production-renderer source-fixture captures, not packaged-build screenshots. [Capture identity and verification](docs/preview/features/physical-range-weapons/capture-record.md).
-
-| Mobile source fixture | Desktop source fixture | Wide source fixture | Tablet source fixture |
-| --- | --- | --- | --- |
-| ![Mobile source fixture: enlarged spear, bow and Counter comparison](docs/preview/features/physical-range-weapons/mobile.jpg) | ![Desktop source fixture: enlarged spear, bow and Counter comparison](docs/preview/features/physical-range-weapons/desktop.jpg) | ![Wide source fixture: enlarged spear, bow and Counter comparison](docs/preview/features/physical-range-weapons/wide.jpg) | ![Tablet source fixture: enlarged spear, bow and Counter comparison](docs/preview/features/physical-range-weapons/tablet.jpg) |
-<!-- feature-preview:end -->
-
 
 
 
