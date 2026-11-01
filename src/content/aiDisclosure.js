@@ -170,7 +170,7 @@ export const AI_DISCLOSURE = Object.freeze({
   runtimeCheck: Object.freeze({
     claim: RUNTIME_CLAIM,
     verifyWith: `node tools/ai-disclosure.mjs --evidence`,
-    networkNote: `A separate grep for network primitives finds no AI endpoint: every site fetches the game's own files or the player's own data — src/ui/audio.js (the music folder: the player's own, or the shipped music/ beside the page), src/ui/bootArt.js and src/ui/components/offlinePlay.js (files beside the page), src/ui/screens/prologueSceneEditor.js (the local dev editor server) and src/model/settingsSync.js (the player's own opt-in GitHub settings repo).`,
+    networkNote: `A separate grep for network primitives finds no AI endpoint: every site fetches the game's own files or the player's own data — src/ui/audio.js (the music folder: the player's own, or the shipped music/ beside the page), src/ui/bootArt.js (art files beside the page), src/ui/components/offlinePlay.js (the game's own GitHub Pages site, cehinds.github.io/AshenSpire, for the latest build), src/ui/offlineInstall.js (registers the game's own service worker, which caches the build), src/ui/screens/prologueSceneEditor.js (the local dev editor server) and src/model/settingsSync.js (the player's own opt-in GitHub settings repo).`,
   }),
 });
 
