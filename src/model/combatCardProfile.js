@@ -5,8 +5,8 @@ import { RANGES, normalizeRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
 const CAMP = new Set(['physical', 'spell']);
-const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
-const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']);
+export const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
+export const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']);
 const COUNTER = new Set(['melee', 'ranged', 'spell']);
 const RANGE = new Set(RANGES);
 const TARGETING = new Set(['single', 'area']);
