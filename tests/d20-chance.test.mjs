@@ -87,3 +87,11 @@ test('a distance avoidance preview shows the 5% step it rolls, and keeps eligibi
   const none = distancePreview({ combatExpansionRules: { matchups: { distance: { rangedChance: 0, reachChance: 0, maximumBaseChance: 50 } } } }, entity, melee);
   assert.equal(none.eligible, false);
 });
+
+test('the Crit chance row shows the 5% step the crit d20 rolls', async () => {
+  const { combatStatRows } = await import('../src/ui/models/CombatantStatRows.js');
+  const text = key => key;
+  const rules = [{ tags: ['strike'], base: 0.32, cap: 1, multiplier: 2 }];
+  const row = combatStatRows({ kind: 'player', critRules: rules, attributes: {}, attackTagSets: [['strike']] }, text).find(r => r.tipId === 'critChance');
+  assert.equal(row.value, '30%');
+});
