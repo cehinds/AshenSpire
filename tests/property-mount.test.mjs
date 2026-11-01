@@ -6,6 +6,7 @@
 // card: the herald's own arcane attack, whose buildup does not come from the
 // weapon, so "the same break" exists before and after the weapon changes.
 
+import { focusManaDiscount } from '../src/model/focusMana.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -61,7 +62,9 @@ function playIntoBreak(combat, card, { value = null, extra = {}, startMana = 0 }
   cfg.value = value == null ? cfg.threshold - 1 : value;
   // startMana is the intended pool after payment, before any siphon refund.
   // The card's Mana is the cost formula's (SPEC §4.3a), read from the resolved face.
-  p.mana = startMana + (resolveCard(combat.registries, { cardId: card.id }).manaCost || 0);
+  // A held Focus armament (the sceptre) takes 1 off the payment, so the pool is seeded with the live price.
+  const face = resolveCard(combat.registries, { cardId: card.id }).manaCost || 0;
+  p.mana = startMana + Math.max(0, face - focusManaDiscount(combat.registries, combat.loadout, p.classId));
   p.stamina = card.staminaCost || 0;
   p.maxStamina = Math.max(p.maxStamina || 0, p.stamina);
   p.energy = 99;

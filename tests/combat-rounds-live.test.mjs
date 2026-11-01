@@ -36,9 +36,12 @@ function registriesWithMoveSpeeds(speeds) {
 
 // Expanded (v2) runs route endTurn through a foundation transaction, which rebuilds the RNG from its
 // counters, so the roll fixtures below use the legacy (v1) expansion. The adapter is the same for both.
-function fight({ preview = true, seed = SEED, classId = 'reaver', reg = registries, expansion = 1, momentum = false } = {}) {
+// `noFocus`: swap a caster's Focus staff for a plain weapon so the printed Mana prices these fixtures assert are not
+// reduced by the Focus Mana discount (SPEC §4.3a; the discount has its own tests in focus-mana-discount.test.mjs).
+function fight({ preview = true, seed = SEED, classId = 'reaver', reg = registries, expansion = 1, momentum = false, noFocus = false } = {}) {
   // Momentum is its own toggle (SPEC §4.11), off by default: a fight that tests momentum turns it on.
   const run = createRunState({ seed, classId, registries: reg, combatExpansionVersion: expansion, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: preview, [MOMENTUM_KEY]: momentum } } });
+  if (noFocus) { run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null; }
   return createRunCombat({ registries: reg, rng: createRng(seed), run, enemyIds: [ENEMY], settings: {} });
 }
 
@@ -481,7 +484,7 @@ test('a commit that throws part way leaves the fight exactly as it was before En
 function manaCardFixture() {
   for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
     for (let seed = 1; seed <= 20; seed++) {
-      const c = fight({ classId, seed, expansion: 2 });
+      const c = fight({ noFocus: true, classId, seed, expansion: 2 });
       const card = c.piles.hand.find((x) => cardPlayCosts(c, x.instanceId).mana >= 1);
       if (card) return { classId, seed, cardId: card.cardId };
     }
@@ -492,7 +495,7 @@ function manaCardFixture() {
 test('two queued cards cannot both use one Mana-discount charge; unqueueing hands the claim back', () => {
   const found = manaCardFixture();
   assert.ok(found, 'fixture: a Mana card is in some opening hand');
-  const c = fight({ classId: found.classId, seed: found.seed, expansion: 2 });
+  const c = fight({ noFocus: true, classId: found.classId, seed: found.seed, expansion: 2 });
   const first = c.piles.hand.find((x) => x.cardId === found.cardId);
   c.piles.hand = [first, { ...first, instanceId: 'second' }];
   const targetId = c.enemies.find((e) => e.alive)?.id;
@@ -598,7 +601,7 @@ test('a stagger that lands after an enemy has acted persists into its next turn,
 function missFixture() {
   for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
     for (let seed = 1; seed <= 40; seed++) {
-      const c = fight({ classId, seed, expansion: 1 });
+      const c = fight({ noFocus: true, classId, seed, expansion: 1 });
       const attack = c.piles.hand.find((x) => cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana >= 1);
       if (!attack) continue;
       const block = c.piles.hand.find((x) => x.instanceId !== attack.instanceId && cardKind(resolveCard(registries, x)) !== 'attack' && cardPlayCosts(c, x.instanceId).mana === 0);
@@ -613,7 +616,7 @@ function missFixture() {
 test('a card that misses consumes the Mana-discount charge it claimed, so a later card in the round cannot take it', () => {
   const found = missFixture();
   assert.ok(found, 'fixture: a Mana attack and a 0-Mana skill are in some opening hand');
-  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0);
+  const c = fixRoundRoll(fight({ noFocus: true, classId: found.classId, seed: found.seed, expansion: 1 }), 0);
   const targetId = liveEnemy(c).id;
   c.player.abilityRiders = { ...(c.player.abilityRiders || {}), charges: { ...(c.player.abilityRiders?.charges || {}), discount: { manaDiscount: 1 } } };
   dispatch(c, { type: 'playCard', cardInstanceId: found.attackId, targetId });
@@ -631,7 +634,7 @@ test('a card that misses consumes the Mana-discount charge it claimed, so a late
 function claimPairFixture() {
   for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
     for (let seed = 1; seed <= 40; seed++) {
-      const c = fight({ classId, seed, expansion: 1 });
+      const c = fight({ noFocus: true, classId, seed, expansion: 1 });
       const free = c.piles.hand.find((x) => cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana === 0);
       const mana = c.piles.hand.find((x) => x.instanceId !== free?.instanceId && cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana >= 1);
       if (free && mana) return { classId, seed, freeId: free.instanceId, manaId: mana.instanceId, freeCardId: free.cardId, manaCardId: mana.cardId };
@@ -643,7 +646,7 @@ function claimPairFixture() {
 test('an earlier queued card cannot take a Mana-discount charge that a later queued card claimed', () => {
   const found = claimPairFixture();
   assert.ok(found, 'fixture: a 0-Mana attack and a Mana attack are in some opening hand');
-  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
+  const c = fixRoundRoll(fight({ noFocus: true, classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
   const targetId = liveEnemy(c).id;
   dispatch(c, { type: 'playCard', cardInstanceId: found.freeId, targetId });
   c.player.abilityRiders = { ...(c.player.abilityRiders || {}), charges: { ...(c.player.abilityRiders?.charges || {}), discount: { manaDiscount: 1, damage: 2 } } };
@@ -886,14 +889,14 @@ test('the queue prices a card after its cardPreparing triggers, as cardPlayCosts
   let found = null;
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     for (let seed = 1; seed <= 40 && !found; seed++) {
-      const c = fight({ classId, seed, expansion: 1 });
+      const c = fight({ noFocus: true, classId, seed, expansion: 1 });
       const card = c.piles.hand.find((x) => cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana >= 1);
       if (card) found = { classId, seed, id: card.instanceId };
     }
     if (found) break;
   }
   assert.ok(found, 'fixture: a Mana attack in some opening hand');
-  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
+  const c = fixRoundRoll(fight({ noFocus: true, classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
   const discount = { op: 'grantCardCharge', target: 'self', key: 'feat:prep-discount', manaDiscount: 9 };
   c.propertyMounts[triggerOwnerKey(c, c.player)].prepDiscount = { kind: 'feat', id: 'prep-discount',
     rules: [{ triggers: [{ on: 'cardPreparing', if: { p: 'eventSourceIsOwner' }, do: [discount] }] }] };
@@ -913,14 +916,14 @@ test('a once-per-turn preparing discount prices only the first of two queued Man
   let found = null;
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     for (let seed = 1; seed <= 60 && !found; seed++) {
-      const c = fight({ classId, seed, expansion: 1 });
+      const c = fight({ noFocus: true, classId, seed, expansion: 1 });
       const mana = c.piles.hand.filter((x) => cardPlayCosts(c, x.instanceId).mana >= 1);
       if (mana.length >= 2) found = { classId, seed, ids: mana.slice(0, 2).map((x) => x.instanceId) };
     }
     if (found) break;
   }
   assert.ok(found, 'fixture: two Mana cards in some opening hand');
-  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
+  const c = fixRoundRoll(fight({ noFocus: true, classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
   const full = found.ids.map((id) => cardPlayCosts(c, id).mana);
   const discount = { op: 'grantCardCharge', target: 'self', key: 'feat:prep-once', manaDiscount: 9 };
   c.propertyMounts[triggerOwnerKey(c, c.player)].prepOnce = { kind: 'feat', id: 'prep-once',
