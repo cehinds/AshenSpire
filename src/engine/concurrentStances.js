@@ -2,7 +2,7 @@ import { stanceMitigation } from './stanceMitigation.js';
 import { proposalCardPlan, proposalContext } from './proposalStatusRuntime.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import * as StatusHelpers from '../framework/statusSemantics.js';
-export const MANEUVERS=Object.freeze(['attack','smash','defend','sweep','counter','casting','evade']);
+export const MANEUVERS=Object.freeze(['attack','smash','defend','sweep','counter','casting']);
 function policy(ctx,entity) {
  const {rules}=proposalContext(ctx);
  for(const [id,row] of Object.entries(rules)) if((entity.statuses?.[id]?.stacks || 0)>0) {
@@ -32,8 +32,8 @@ export function defensiveCombatStance(ctx,entity,carrier={}) {
  const rows=activeCombatStances(ctx,entity);if(rows.length<2)return entity?.combatStance;
  const rawIncoming=carrier.combatProfile?.maneuver || carrier.maneuver,incoming=rawIncoming==='casting' ? 'prepared' : rawIncoming;
  const profile=ctx.gameProfile?.modules?.stances;
- const priority=policy(ctx,entity).defensePriority || ['counter','defend','evade','casting','attack','smash','sweep'];
- const penalty=stance=>profile?.mode==='configured' ? (profile.matchups?.[incoming]?.includes(stance.maneuver) ? profile.advantageMultiplier || 2 : 1) : incoming==='smash' && ['defend','casting'].includes(stance.maneuver) || incoming==='counter' && ['attack','smash','evade'].includes(stance.maneuver) || incoming==='sweep' && stance.maneuver==='counter' ? 2 : 1;
+ const priority=policy(ctx,entity).defensePriority || ['counter','defend','casting','attack','smash','sweep'];
+ const penalty=stance=>profile?.mode==='configured' ? (profile.matchups?.[incoming]?.includes(stance.maneuver) ? profile.advantageMultiplier || 2 : 1) : incoming==='smash' && ['defend','casting'].includes(stance.maneuver) || incoming==='counter' && ['attack','smash','defend'].includes(stance.maneuver) || incoming==='sweep' && stance.maneuver==='counter' ? 2 : 1;
  const damageFactor=stance=>penalty(stance)*stanceMitigation(ctx,incoming,stance.maneuver).multiplier;
  return [...rows].sort((a,b)=>damageFactor(a)-damageFactor(b) || priority.indexOf(a.maneuver==='prepared' ? 'casting' : a.maneuver)-priority.indexOf(b.maneuver==='prepared' ? 'casting' : b.maneuver))[0];
 }

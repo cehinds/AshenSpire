@@ -1313,7 +1313,6 @@
       "portability": "legacy",
       "modules": [
         "deck-training",
-        "stances",
         "statuses"
       ]
     },
