@@ -445,6 +445,9 @@ export function cardTrackLevel(registries, run, def) {
 
 // The tracks that earn a flat now, with their schools: read once per stamp.
 function trackSchools(registries, run) {
+  // Core ranks cards instead (card ranks, SPEC 13.4o). A lent legacy weapon art carries the school tags the flat
+  // reads, so without this gate the weapon track would also add the legacy flat to it (owner 2026-11-01).
+  if (coreCardRanks(run)) return [];
   const every = draftRows(registries).flatEvery;
   if (!Number.isInteger(every) || every < 1) return [];
   const out = [];
