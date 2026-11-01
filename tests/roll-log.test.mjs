@@ -188,3 +188,12 @@ test('FixCore natural 1 / 20 that overrode the total shows the natural die in th
   const agree = one({ type: 'attackMissed', sourceId: 'player', targetId: 'e1', fixedDefense: true, dice: [1], attackTotal: 3, accuracy: 2, evasion: 9, evasionTotal: 9, mode: 'normal' });
   assert.match(agree.text, /: 3 vs 9 · miss$/);
 });
+
+test('distance avoidance is a d20 that must meet a target, and an old d100 log still reads', () => {
+  const distance = { dice: [4, 15], roll: 15, mode: 'advantage', chance: 40, target: 13, success: true };
+  const [row] = rows([{ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', distance }]);
+  assert.match(row.text, /distance d20 roll 15, needed 13 or more\./);
+  assert.deepEqual(rollReceiptLines(row.rollReceipt || row.lineReceipts?.[0]), ['d20 [4, 15] → 15 · advantage', '= 15', 'needs ≥ 13 (Chance 40%)', 'success']);
+  const [old] = rows([{ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', distance: { roll: 30, chance: 40, success: true } }]);
+  assert.match(old.text, /distance roll 30, needed 40 or less\./);
+});

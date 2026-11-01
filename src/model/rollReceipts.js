@@ -95,6 +95,12 @@ export function percentRollReceipt(event, kind) {
     ...(finite(event.effectiveChance) && event.effectiveChance !== event.chance ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
 }
 
+// Distance avoidance: a d20 that must meet a target; an old log (d100, no target) has no itemised receipt.
+export function distanceRollReceipt(distance) {
+  if (!finite(distance?.roll) || !finite(distance.target) || !finite(distance.chance)) return null;
+  return d20ChanceReceipt({ ...distance, rolls: distance.dice }, 'distance');
+}
+
 export function dodgeRollReceipt(event) {
   const total = event.check ?? event.roll;
   if (!finite(total) || !finite(event.difficulty)) return null;
