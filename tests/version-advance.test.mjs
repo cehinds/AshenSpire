@@ -173,3 +173,14 @@ test('reconcile: a manual dispatch is reconciled like a push (earlier lost cuts 
   const cuts = reconcileCuts(runs, { number: 12, branch: 'main', sha: 'B', before: undefined });
   assert.deepEqual(cuts.map(({ branch, sha }) => ({ branch, sha })), [{ branch: 'release', sha: 'A' }, { branch: 'main', sha: 'B' }]);
 });
+
+test('reconcile: a dispatch of a failed push head keeps that push\'s before; before never equals sha', () => {
+  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
+  const runs = [r(9, 'main', 'A', 'success'), r(10, 'main', 'B', 'failure')];
+  const cuts = reconcileCuts(runs, { number: 11, branch: 'main', sha: 'B' });
+  assert.deepEqual(cuts, [{ branch: 'main', sha: 'B', before: 'A' }]);
+  // No predecessor: unknown (null), never the sha itself, so the workflow cannot see an empty range.
+  const lone = reconcileCuts([r(10, 'main', 'B', 'failure')], { number: 11, branch: 'main', sha: 'B' });
+  assert.equal(lone[0].before, null);
+  assert.equal(reconcileCuts([], { number: 1, branch: 'main', sha: 'B', before: 'B' })[0].before, null);
+});

@@ -139,9 +139,9 @@ jobs:
             esac
 
             # A push made only of github-actions[bot] commits is not a cut. Every cut, recovered
-            # or current, carries its `before` (reconcileCuts); "-" or an unreachable sha means
+            # or current, carries its `before` (reconcileCuts); "-", an unreachable sha or before == sha (an empty range) means
             # unknown, and an unknown before is treated as a cut.
-            if [[ "$before" =~ ^[0-9a-f]{7,40}$ ]]; then
+            if [[ "$before" =~ ^[0-9a-f]{7,40}$ && "$before" != "$src_sha" ]]; then
               git fetch -q origin "+refs/heads/$branch:refs/remotes/origin/$branch" || true
               if git cat-file -e "${before}^{commit}" 2>/dev/null && git cat-file -e "${src_sha}^{commit}" 2>/dev/null; then
                 # git log runs on its own line so a failure stops the job under set -e.

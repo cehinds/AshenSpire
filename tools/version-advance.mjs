@@ -108,10 +108,15 @@ export function reconcileCuts(runs, current) {
     if (r.number >= current.number || r.conclusion === 'success') continue;
     if (!/^(release|main)$/.test(r.branch) || seen.has(key)) continue;
     seen.add(key);
-    out.push({ branch: r.branch, sha: r.sha, before: beforeOf(r.branch, r.number) });
+    const b = beforeOf(r.branch, r.number);
+    out.push({ branch: r.branch, sha: r.sha, before: b === r.sha ? null : b });
   }
   // The current event knows its own before (github.event.before); fall back to the list.
-  const before = current.before ?? beforeOf(current.branch, current.number);
+  // A dispatch of an unchanged head that a failed push run already carried takes that push's
+  // before (its own head is not a predecessor); a before equal to the sha is unknown.
+  const same = byNumber.find((r) => r.branch === current.branch && r.sha === current.sha && r.number < current.number);
+  let before = current.before ?? (same ? beforeOf(same.branch, same.number) : beforeOf(current.branch, current.number));
+  if (before === current.sha) before = null;
   return [...out, { branch: current.branch, sha: current.sha, before }];
 }
 
