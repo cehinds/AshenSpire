@@ -87,3 +87,12 @@ test('the Smith item pane draws no recovery rows; the confirmation keeps its led
   assert.doesNotMatch(pane, /servicePreviewHtml|rest-recovery/);
   assert.match(modal, /class: 'smith-confirm-recovery'/);
 });
+
+test('shared kit rules are scoped so the card-upgrade and mount-service heads keep their layout', () => {
+  // display:contents only inside the new .smith-tag-row; the unscoped form flattens the old heads.
+  assert.match(css, /\.smith-tag-row > \.smith-item-type-row, \.smith-tag-row > \.smith-weapon-tags \{ display: contents; \}/);
+  assert.doesNotMatch(css, /^\.smith-item-type-row, \.smith-weapon-tags \{ display: contents/m);
+  // The span-2 art well applies only when the head uses the .smith-title-row structure.
+  assert.match(css, /\.smith-selected-head > \.as-artwell \{ grid-row: 1 \/ span 5;/);
+  assert.match(css, /\.smith-selected-head:has\(> \.smith-title-row\) > \.as-artwell \{ grid-row: 1 \/ span 2; \}/);
+});
