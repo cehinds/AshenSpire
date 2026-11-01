@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, readdirSync as readdirSyncFs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -154,6 +154,25 @@ test('the tools\' capital RED / FAILED verdicts are failures (real about-changel
   assert.deepEqual(s.matches.map(m => m.id), ['changelog-order']);
   // Prose "red" and an OK verdict are not failures.
   assert.equal(triage('the red banner shows\nabout-changelog check-order: OK — 1275 checks passed\n').exit, 0);
+});
+
+test('config-build REFUSED (Codex repro) and every non-pass `<tool>: VERDICT —` in tools/ count as failures', () => {
+  const refused = triage("config-build: REFUSED — 1 problem(s):\n  content/config/buttons.json: unknown section 'typoSection'\n");
+  assert.equal(refused.exit, 2);
+  // Scan the repo's own tools for their verdict words so a new one can't silently read as a pass.
+  const readdirSync = (u) => readdirSyncFs(u);
+  const words = new Set();
+  for (const f of readdirSync(new URL('../tools/', import.meta.url))) {
+    if (!f.endsWith('.mjs')) continue;
+    const src = readFileSync(new URL(`../tools/${f}`, import.meta.url), 'utf8');
+    for (const m of src.matchAll(/[a-z0-9-]+: ([A-Z][A-Z-]{1,}) —/g)) words.add(m[1]);
+  }
+  assert.ok(words.size >= 5, 'found the tools\' verdict words');
+  for (const w of words) {
+    const r = triage(`some-tool: ${w} — detail\n`);
+    if (['OK', 'PASS', 'PASSED', 'GREEN'].includes(w)) assert.equal(r.exit, 0, w);
+    else assert.equal(r.exit, 2, `${w} must not read as a pass`);
+  }
 });
 
 test('restampChangelog moves the restamped receipt to the top of its date group', () => {

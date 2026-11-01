@@ -46,11 +46,16 @@ const FAILURE_WORDS = /fail|error|fatal|not ok|stale|mismatch|ENOENT|ERR!|assert
 // The one shape that names a failure word but reports none: "# fail 0" / "ℹ fail 0".
 // Verdict words this repo's tools print in capitals without any failure word: about-changelog's
 // "check-order: RED — …", "verdict: … exited 1". Case-sensitive so prose "red" doesn't count.
-const VERDICT_WORDS = /(^|[\s:—-])(RED|FAILED|BROKEN|DRIFT)\b|\bexited\s+[1-9]/;
+const VERDICT_WORDS = /(^|[\s:—-])(RED|FAILED|BROKEN|DRIFT|REFUSED|STOPPED|INVALID|INCOMPLETE|KNOWN-BAD)\b|\bexited\s+[1-9]/;
+// The repo's tools print `<tool>: <VERDICT> — …`. Any capital verdict there that is not a pass
+// (OK / PASS / GREEN) is a failure for routing purposes, so a new verdict word can't read as a pass.
+const TOOL_VERDICT = /(^|\s)[\w./-]+: ([A-Z][A-Z-]{1,}) —/;
+const PASS_VERDICTS = new Set(['OK', 'PASS', 'PASSED', 'GREEN']);
+const isToolFailVerdict = (l) => { const m = TOOL_VERDICT.exec(l); return !!m && !PASS_VERDICTS.has(m[2]); };
 const ZERO_FAIL = /^\W*(fail|failed|failures?)\s+0\W*$/i;
 
 export function failureLines(text) {
-  return String(text).split(/\r?\n/).filter(l => (FAILURE_WORDS.test(l) || VERDICT_WORDS.test(l)) && !ZERO_FAIL.test(l));
+  return String(text).split(/\r?\n/).filter(l => (FAILURE_WORDS.test(l) || VERDICT_WORDS.test(l) || isToolFailVerdict(l)) && !ZERO_FAIL.test(l));
 }
 
 export function severityOf(matches) {
