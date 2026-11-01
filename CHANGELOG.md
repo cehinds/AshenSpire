@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-01
 
 - **Flowing Transition shows Prepared in Core** ([#2458](https://github.com/cehinds/AshenSpire/pull/2458), `0.7.3.2`). In the Core profile, Flowing Transition's stance pick that read "Casting" now reads "Prepared", matching the stance it enters.
+- **AI disclosure network note updated** ([#2459](https://github.com/cehinds/AshenSpire/pull/2459), `0.7.3.2`). The disclosure's network note no longer names the removed LAN co-op file and now lists every network site in the game, none of them AI.
 - **Version bumps itself at each release** ([#2452](https://github.com/cehinds/AshenSpire/pull/2452), `0.7.3.2`). Merging into release now raises the third version number and restarts the build number at 0; merging into main raises the second number and resets the rest.
 - **Badges back below the health bar** ([#2456](https://github.com/cehinds/AshenSpire/pull/2456), `0.7.2.117`). Block, Ward, Counter, Reflect and stance badges sit under a combatant's health bar again instead of above it; a row that wraps grows downward.
 - **Cantrips and basics cost no Mana** ([#2457](https://github.com/cehinds/AshenSpire/pull/2457), `0.7.2.115`). Mending Touch now costs 1 Stamina and no Mana, an upgrade that turns a card into a cantrip drops its Mana to 0, and Mana cuts or free-cantrip upgrades are no longer offered where they would do nothing.
