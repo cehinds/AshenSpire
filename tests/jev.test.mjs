@@ -726,3 +726,14 @@ test('devmerge --root acts on the named checkout, not the shell\'s (Codex repro)
     assert.match(r.stdout, /dirty-tree/, r.stdout + r.stderr);
   } finally { target.done(); caller.done(); }
 });
+
+test('stale CSS projections triage to regen, using both tools\' real messages (Codex repro)', () => {
+  for (const line of [
+    'STALE: styles/tokens.generated.css does not match content/config/ui/tokens.json — run node tools/tokens-css.mjs --write',
+    'STALE: styles/hud-layout.generated.css does not match content/hud-layout/ — run node tools/hud-layout-css.mjs --write',
+  ]) {
+    const r = triage(line);
+    assert.equal(r.exit, 0, JSON.stringify(r));
+    assert.ok(r.matches.some(m => m.id === 'generated-stale' && m.action === 'regen'), JSON.stringify(r));
+  }
+});
