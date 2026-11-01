@@ -20,6 +20,86 @@ import { playingCardDefinition } from '../src/model/playingCard.js';
 import { optionRowList } from '../src/ui/components/optionRowList.js';
 
 const recipe = (type = 'attack', tags = ['camp:physical'], rank = 1) => proceduralCardArt({ type, tags, rank });
+test('physical weapon actions select spear for Reach and bow for Ranged before Reach', () => {
+  const catalogs = JSON.stringify([base, reviewed]);
+  const shipped = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url)));
+  for (const action of ['attack', 'smash', 'sweep', 'counter']) {
+    const target = action === 'counter' ? 'secondaryObject' : 'object';
+    for (const [tags, asset, path] of [
+      [['range:reach'], 'weapon.spear', 'assets-display/card-cutouts/weapon.spear.png'],
+      [['range:reach', 'delivery:melee', 'delivery:projectile'], 'weapon.spear', 'assets-display/card-cutouts/weapon.spear.png'],
+      [['range:ranged'], 'weapon.bow', 'assets/equipment/icon_shortbow.webp'],
+      [['delivery:projectile'], 'weapon.bow', 'assets/equipment/icon_shortbow.webp'],
+      [['delivery:ranged'], 'weapon.bow', 'assets/equipment/icon_shortbow.webp'],
+      [['range:reach', 'range:ranged'], 'weapon.bow', 'assets/equipment/icon_shortbow.webp'],
+    ]) {
+      const art = recipe(action, ['camp:physical', ...tags, 'element:fire', 'status:burn'], 3);
+      const object = art.componentArt.sprites.find(sprite => sprite.id === target);
+      assert.equal(object.assetId, asset, `${action}/${tags}`);
+      assert.equal(object.path, path);
+      assert.ok(shipped.assets[path], 'the selected weapon must exist in the pinned runtime art manifest');
+      assert.equal(object.transform.width, object.transform.height, 'square cutout retains its proportions');
+      assert.equal(object.transform.rotationDeg, 0, 'native diagonal remains intact');
+      if (asset === 'weapon.spear') {
+        const size = action === 'counter' ? 459 : 548;
+        assert.equal(object.transform.width, size, 'spear is substantially larger than the original 432/340 placement');
+        for (const [position, low, high, limit] of [
+          [object.transform.x, 69, 1223, 512], [object.transform.y, 25, 1217, 640],
+        ]) {
+          assert.ok(position + (low / 1254 - 0.5) * size >= 0, 'accepted spear alpha starts inside the stage');
+          assert.ok(position + (high / 1254 - 0.5) * size <= limit, 'complete tip and handle stay inside the stage');
+        }
+      } else assert.equal(object.transform.width, action === 'counter' ? 340 : 432, 'bow scale is unchanged');
+      const ordinary = recipe(action, ['camp:physical', 'element:fire', 'status:burn'], 3);
+      assert.deepEqual(art.componentArt.backgroundColor, ordinary.componentArt.backgroundColor);
+      assert.deepEqual(art.componentArt.sprites.filter(sprite => sprite.id !== target),
+        ordinary.componentArt.sprites.filter(sprite => sprite.id !== target), 'only the weapon object changes');
+      assert.match(cardArtLayersHtml(art), new RegExp(path.replaceAll('.', '\\.')));
+      if (action === 'counter') {
+        const shield = art.componentArt.sprites.find(sprite => sprite.id === 'object');
+        assert.equal(shield.assetId, 'O.object.4');
+        assert.ok(Number(object.css.zIndex) > Number(shield.css.zIndex));
+      }
+    }
+  }
+  assert.equal(recipe('attack', ['camp:physical', 'maneuver:ranged']).componentArt.sprites.find(sprite => sprite.id === 'object').assetId, 'weapon.bow');
+  assert.equal(JSON.stringify([base, reviewed]), catalogs, 'approved catalogs are never mutated');
+});
+
+test('weapon range participates in semantic caching while defensive, utility and magical icons stay fixed', () => {
+  for (const rank of [1, 3, 5]) {
+    const melee = recipe('attack', ['camp:physical'], rank);
+    const reach = recipe('attack', ['camp:physical', 'range:reach'], rank);
+    const ranged = recipe('attack', ['camp:physical', 'range:ranged'], rank);
+    assert.notStrictEqual(melee, reach);
+    assert.notStrictEqual(reach, ranged);
+    assert.strictEqual(recipe('attack', ['range:reach', 'camp:physical'].map(id => ({ id })), rank), reach);
+    assert.strictEqual(recipe('attack', ['camp:physical'], rank), melee, 'ranged entries cannot contaminate melee');
+    assert.notEqual(reach.componentArt.code, ranged.componentArt.code);
+  }
+  for (const action of ['defend', 'evade', 'skill']) {
+    assert.strictEqual(recipe(action, ['camp:physical', 'range:reach']), recipe(action, ['camp:physical']));
+    assert.strictEqual(recipe(action, ['camp:physical', 'range:ranged']), recipe(action, ['camp:physical']));
+  }
+  for (const action of ['attack', 'smash', 'sweep', 'counter']) {
+    assert.deepEqual(recipe(action, ['camp:spell', 'range:reach']), recipe(action, ['camp:spell']));
+    assert.deepEqual(recipe(action, ['camp:spell', 'range:ranged']), recipe(action, ['camp:spell']));
+  }
+});
+
+test('magical Counter preserves the physical shield and hammer geometry beneath magical colors and cues', () => {
+  const objects = art => art.componentArt.sprites.filter(sprite => /^(object|secondaryObject)$/.test(sprite.id));
+  for (const rank of [1, 3, 5]) for (const tags of [[], ['range:reach'], ['range:ranged', 'delivery:projectile']]) {
+    const physical = recipe('counter', ['camp:physical'], rank);
+    const magical = recipe('counter', ['camp:spell', ...tags, 'element:fire', 'status:burn'], rank);
+    assert.deepEqual(objects(magical), objects(physical));
+    assert.deepEqual(objects(magical).map(sprite => sprite.assetId), ['O.object.4', 'O.object.1']);
+    assert.deepEqual(magical.componentArt.backgroundColor, { id: 'element:fire', color: PROCEDURAL_BACKGROUND_COLORS.element.fire });
+    assert.ok(magical.componentArt.sprites.some(sprite => sprite.id === 'element-cue'));
+    assert.ok(magical.componentArt.sprites.some(sprite => sprite.id.startsWith('status-burn-')));
+  }
+});
+
 test('element background takes precedence over magic and physical defaults, never status', () => {
   for (const camp of ['physical', 'spell']) {
     const plain = recipe('defend', [`camp:${camp}`]);
@@ -143,14 +223,23 @@ test('physical Sweep rotates only its separate slash arc along the fixed scythe 
     base.compositions.Y02.layers.find(row => row.id === 'foreground').transform);
 });
 
-test('all procedural objects receive one thin outline while effect PNGs keep their filters', () => {
+test('weapons receive one contrasting ivory outline while other objects and effect PNGs retain their tint', () => {
   const outline = 'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))';
+  const weaponOutline = 'drop-shadow(0 0 0.9px rgba(255,246,220,0.98))';
+  const weapons = ['O.object.0', 'O.object.1', 'L.object.4', 'V.object.0', 'weapon.spear', 'weapon.bow'];
   for (const camp of ['physical', 'spell']) for (const type of ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend', 'skill']) {
     const art = recipe(type, [`camp:${camp}`, 'status:burn']);
     for (const sprite of art.componentArt.sprites) {
-      const count = (sprite.css.filter || '').split(outline).length - 1;
-      assert.equal(count, /^(object|secondaryObject)(-|$)/.test(sprite.id) ? 1 : 0, `${camp}/${type}/${sprite.id}`);
+      const object = /^(object|secondaryObject)(-|$)/.test(sprite.id);
+      const tint = weapons.includes(sprite.assetId) ? weaponOutline : outline;
+      assert.equal((sprite.css.filter || '').split(tint).length - 1, object ? 1 : 0, `${camp}/${type}/${sprite.id}`);
+      assert.equal((sprite.css.filter || '').split(tint === weaponOutline ? outline : weaponOutline).length - 1, 0);
     }
+  }
+  for (const tag of ['range:reach', 'range:ranged']) for (const action of ['attack', 'counter']) {
+    const art = recipe(action, ['camp:physical', tag]);
+    const object = art.componentArt.sprites.find(sprite => sprite.id === (action === 'counter' ? 'secondaryObject' : 'object'));
+    assert.ok(object.css.filter.includes(weaponOutline));
   }
 });
 
