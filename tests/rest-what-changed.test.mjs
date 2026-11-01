@@ -35,7 +35,7 @@ test('a rest card upgrade diffs to an upgraded card row with before and after fa
 });
 
 test('main.js shows the receipt for smith and upgradeCard and skips level-up', () => {
-  const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const at = src.indexOf("const before = snapshotRunForDiff(run);\n      commitGameProfileRest");
   assert.ok(at > 0, 'the rest commit snapshots first');
   const block = src.slice(at, at + 900);

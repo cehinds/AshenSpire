@@ -3,7 +3,7 @@ import { CARD_ART_ELEMENTS } from '../cardArtComposition.js';
 import { proceduralCardArt } from '../proceduralCardArt.js';
 
 export const BUILDER_TYPES = Object.freeze(['attack', 'smash', 'sweep', 'counter', 'defend', 'evade', 'skill']);
-export const BUILDER_ELEMENTS = Object.freeze(Object.keys(CARD_ART_ELEMENTS));
+export const BUILDER_ELEMENTS = Object.freeze([...Object.keys(CARD_ART_ELEMENTS), 'blood']);
 export const BUILDER_RANK_MAX = MAX_CARD_RANK;
 export const BUILDER_PREVIEW_ID = 'card-art-builder-preview';
 const invalid = code => { const error = new Error(code); error.code = code; throw error; };
