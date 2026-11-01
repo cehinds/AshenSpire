@@ -66,3 +66,17 @@ test('the discount does not stack and every shipped Focus armament and sceptre i
   const focusIds = [...registries.equipment.armaments?.values?.() ?? []].filter(p => (p.itemTypeTags || []).includes(registries.balance.mana.focusItemType)).map(p => p.id).sort();
   for (const id of ['boneSceptre', 'emberlightSceptre', 'ashStaff', 'blightRod']) assert.ok(focusIds.includes(id), `${id} is a Focus armament`);
 });
+
+test('two equipped Focus armaments still give a single -1 (owner, 2026-11-01: Focus does not stack)', () => {
+  const run = createRunState({ registries, classId: 'starseer', seed: 7 });
+  run.loadout.sets.rightHand[0] = 'boneSceptre';
+  run.loadout.sets.leftHand[0] = 'emberlightSceptre';
+  run.loadout.active.rightHand = 0; run.loadout.active.leftHand = 0;
+  const pieces = ['rightHand', 'leftHand'].map(slot => run.loadout.sets[slot][0]);
+  assert.deepEqual(pieces, ['boneSceptre', 'emberlightSceptre']);
+  assert.equal(focusManaDiscount(registries, run.loadout, 'starseer'), 1);
+  const player = { id: 'player', classId: 'starseer', loadout: run.loadout, hp: 80, maxHp: 80, mana: 10, maxMana: 10, stamina: 10, maxStamina: 10,
+    energyMax: 10, drawPerTurn: 4, orderedDraw: true, relicIds: [], deck: cards.map(c => ({ cardId: c.id, instanceId: c.id })) };
+  const combat = createCombat({ registries, rng: createRng(11), player, enemyIds: ['wanderingSoldier'] });
+  for (const [id, reduced] of [['mp2', 1], ['mp1', 0], ['mp0', 0], ['mp5', 4]]) assert.equal(cardPlayCosts(combat, id).mana, reduced, id);
+});
