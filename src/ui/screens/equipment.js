@@ -10,6 +10,7 @@ import { levelProgress, skillProgressRows, staleSkillTracks } from '../../model/
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
+import { createToast } from '../components/toast.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
@@ -815,7 +816,8 @@ export function mountEquipment(host, {
   let armamentInspected = null;
   let picking = null; // { slotId, setIndex }
   let selectedInventoryKey = null;
-  let notice = ''; // a refusal to show in place, cleared on the next draw
+  let notice = ''; // a status or refusal, shown as a toast on the next draw
+  const toast = createToast();
   // ONE HOME for the breakpoint question. `draw()` stamps it onto
   // `panel.dataset.responsive` and the pane observer below asks it again to tell
   // a real breakpoint crossing from a height-only resize; a second copy of the
@@ -900,6 +902,7 @@ export function mountEquipment(host, {
     if (paneObserver) paneObserver.disconnect();
     cancelAnimationFrame(paneFrame);
     clearHoldDisarms();
+    toast.hide();
     wrap.remove();
     if (onClose) onClose();
   };
@@ -2481,7 +2484,7 @@ export function mountEquipment(host, {
       layout: L,
       subject: 'slots',
       picking: !!picking,
-      notice,
+      notice: '', // shown as a toast over the panel (below), not as a row
       regions: REGIONS.map((region) => ({
         id: region.id,
         label: region.label,
@@ -2661,6 +2664,7 @@ export function mountEquipment(host, {
     wrap.querySelector('.armoury-pane').scrollTop = previousScroll;
     const itemCollection = wrap.querySelector('.armoury-item-collection');
     if (itemCollection) itemCollection.scrollTop = previousCollectionScroll;
+    if (notice) toast.show(notice, panel); else toast.attach(panel);
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', leave);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {

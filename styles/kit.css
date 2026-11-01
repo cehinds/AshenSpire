@@ -6659,3 +6659,18 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .console-log-pane { display: flex; flex-direction: column; gap: var(--space-2, 8px); min-width: 0; }
 .console-log-text { box-sizing: border-box; width: 100%; min-width: 0; height: 48vh; height: 48dvh; min-height: 8rem; resize: none; white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; font-size: max(16px, 1rem); line-height: 1.4; user-select: text; touch-action: auto; }
 .combat-log-modal [data-console-shortcut][hidden] { display: none !important; }
+
+/* The shared toast (src/ui/components/toast.js): a short sentence that floats
+   over its screen for ~3 s, then fades. Never takes a click. */
+.as-toast {
+  position: absolute; left: 50%; bottom: 7rem; transform: translateX(-50%); z-index: var(--z-toast, 700);
+  max-width: min(60rem, calc(100% - 3.2rem)); box-sizing: border-box; pointer-events: none;
+  padding: 0.9rem 1.8rem; border: 1px solid var(--gold); border-radius: var(--r-3);
+  background: var(--bg-raise); color: var(--parchment); text-align: center;
+  font-size: max(1.3rem, calc(13px / var(--ui-zoom, 1))); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  opacity: 1; transition: opacity 300ms ease-out;
+}
+.as-toast[hidden] { display: none; }
+.as-toast.is-leaving { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .as-toast { transition: none; } }
+body.reduced-motion .as-toast { transition: none; }
