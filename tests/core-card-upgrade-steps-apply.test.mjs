@@ -72,3 +72,32 @@ test('unknown kinds and a late authored step throw', () => {
   assert.throws(() => applyUpgradeSteps(strike, [{ k: 'dmg', n: 1 }, { k: 'bogus' }]), /Unknown card upgrade step/);
   assert.throws(() => applyUpgradeSteps(strike, [{ k: 'dmg', n: 1 }, { k: 'authored' }]), /first step/);
 });
+
+test('poise and tag steps: poise grows, tags replace their family, retarget and element apply', () => {
+  const card = { ...strike, tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'], damageSchool: 'physical',
+    effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }] };
+  const run = (step) => applyUpgradeSteps(card, [step]);
+  assert.equal(run({ k: 'poise', n: 1 }).effects[1].amount, 4);
+  const reach = run({ k: 'tag', tag: 'range:reach' });
+  assert.deepEqual(reach.tags, ['camp:physical', 'maneuver:attack', 'targeting:single', 'range:reach']);
+  const area = run({ k: 'tag', tag: 'targeting:area', retarget: 'area' });
+  assert.equal(area.effects[0].target, 'allEnemies');
+  assert.equal(area.effects[0].amount, 6);
+  assert.ok(area.tags.includes('targeting:area') && !area.tags.includes('targeting:single'));
+  assert.equal(run({ k: 'tag', damageSchool: 'fire' }).damageSchool, 'fire');
+  assert.ok(run({ k: 'tag', tag: 'rank.cantrip' }).tags.includes('rank.cantrip'));
+  assert.equal(card.tags.length, 4, 'the base is never mutated');
+});
+
+test('tag and poise steps validate and round-trip the cache signature', async () => {
+  const { upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
+  const ok = (steps) => upgradeStepsProblems({ upgraded: true, upgradeSteps: steps }, 'x');
+  assert.deepEqual(ok([{ k: 'poise', n: 1 }, { k: 'tag', tag: 'range:ranged' }, { k: 'tag', tag: 'rank.cantrip' }, { k: 'tag', damageSchool: 'holy' },
+    { k: 'tag', tag: 'targeting:single', retarget: 'single' }]), []);
+  assert.equal(ok([{ k: 'tag', tag: 'range:far' }]).length, 1);
+  assert.equal(ok([{ k: 'tag', tag: 'school:plasma' }]).length, 1);
+  assert.equal(ok([{ k: 'tag' }]).length, 1);
+  assert.equal(ok([{ k: 'tag', damageSchool: 'physical' }]).length, 1);
+  assert.equal(ok([{ k: 'poise', n: 0 }]).length, 1);
+  assert.notEqual(upgradeSignature({ upgradeSteps: [{ k: 'tag', tag: 'range:reach' }] }), upgradeSignature({ upgradeSteps: [{ k: 'tag', tag: 'range:ranged' }] }));
+});
