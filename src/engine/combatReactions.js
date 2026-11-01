@@ -547,8 +547,8 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     const row = playerRootSeat(ctx, group) ? null : Object.values(group.targets).find(target => ctx.players ? target.playerId === ownerId : target.id === ctx.player.id);
     const canonical = optionsFor(ctx, row, group, hooks, null, ownerId).find(current => current.id === optionId);
     if (!canonical || JSON.stringify(canonical.play) !== JSON.stringify(option.play)
-      || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost
-      || canonical.manaCost !== option.manaCost) throw new Error('That reaction card is no longer playable');
+      || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost) throw new Error('That reaction card is no longer playable');
+    // The stored manaCost may predate a price rule (e.g. the Focus discount); the live price is the authority.
     option = canonical;
   }
   // The card-less auto-Counter pays and arms at once; it never stacks (nothing to re-offer or answer).

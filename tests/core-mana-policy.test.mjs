@@ -19,6 +19,8 @@ function fresh(classId = 'reaver', reg = registries) {
 }
 function fight(cardId, classId = 'reaver', reg = registries) {
   const run = fresh(classId, reg);
+  // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
+  run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
   const combat = createRunCombat({ registries: reg, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
   const card = { instanceId: 'mana-test-card', cardId, upgraded: false };
   combat.piles.hand = [card];
