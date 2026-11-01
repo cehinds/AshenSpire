@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Windows test fix for jev paths** ([#2451](https://github.com/cehinds/AshenSpire/pull/2451), `0.7.2.99`). A jev self-test no longer fails on Windows runners whose temp folder uses a short 8.3 name.
 - **Enemies no longer "miss" when they Advance** ([#2445](https://github.com/cehinds/AshenSpire/pull/2445), `0.7.2.99`). Moving closer is not an attack: an enemy's Advance no longer rolls a hit that is logged as "missed: out of range".
 - **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.97`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
 - **Precision fades fast** ([#2448](https://github.com/cehinds/AshenSpire/pull/2448), `0.7.2.95`). Temporary Precision stacks now drop by 3 (was 1) at the start of their owner's turn, for players and enemies alike, so buff cards give a short burst instead of a growing pile; Persistent Precision still never decays.
