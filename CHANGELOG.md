@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.91`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
+- **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.93`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
+- **Flowing Transition's Evade pick enters Evade** ([#2446](https://github.com/cehinds/AshenSpire/pull/2446), `0.7.2.93`). Choosing Evade no longer leaves you in Prepared, so the stance visibly changes.
 - **Counter and Reflect are stacked badges** ([#2431](https://github.com/cehinds/AshenSpire/pull/2431), `0.7.2.91`). Playing a Counter card turns the Block it stands behind into Counter stacks that fade two per turn, and every counter returns the card's damage plus 10% of the incoming hit per stack; in Counter stance a card-less auto-Counter costs 1 SP and Counter reactions cost one less. New Reflect stacks (Mirror Guard) cut an incoming hit by 30% per stack and throw the same share back.
 - **A deterministic gate sorts test failures before any agent spends tokens on them** ([#2440](https://github.com/cehinds/AshenSpire/pull/2440), `0.7.2.89`). `tools/jev.mjs` triages CI logs against known failure rules, runs the fast checks, regenerates generated files, restamps receipts and merges dev into a branch, and hands only the failures no rule explains to a model.
 - **Co-op (LAN multiplayer) is gone** ([#2441](https://github.com/cehinds/AshenSpire/pull/2441), `0.7.2.87`). The lobby, seats, LAN session tools, co-op screens, rules and docs are removed; solo play is unchanged, and a run saved while co-op existed still loads as a solo run.
