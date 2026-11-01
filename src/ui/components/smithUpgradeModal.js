@@ -164,6 +164,13 @@ export function mountSmithUpgradeModal(host, initialModel, {
       attrs: { role: 'option', 'aria-controls': 'smith-preview-region', dataset: item.armamentId ? { armamentId: item.armamentId } : {} },
     });
     card.dataset.itemRef = item.itemRef;
+    // A Blacksmith-gated item stays listed but disabled: dimmed, announced as
+    // such, still selectable (the pane then disables Upgrade) and still in the
+    // keyboard order.
+    if (row.disabled) {
+      card.classList.add('is-needs-blacksmith');
+      card.setAttribute('aria-disabled', 'true');
+    }
     card.replaceChildren(
       itemArt(item, { small: true }),
       el('span', { class: 'smith-row-text' }, [
@@ -173,7 +180,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       pill({ label: String(item.inventoryCount), attrs: { class: 'smith-weapon-count', 'aria-label': `${item.inventoryCount} in inventory` } }),
     );
     const itemTypeText = item.itemTypes.map((type) => type.label).join(', ') || item.kindLabel;
-    card.setAttribute('aria-label', `${item.name}, ${itemTypeText}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone. Select to review its exact changes and requirements.`);
+    card.setAttribute('aria-label', `${item.name}, ${itemTypeText}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone.${row.disabled ? ' Needs a Blacksmith.' : ''} Select to review its exact changes and requirements.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · Tier ${item.currentLevel} → ${item.nextLevel}</div>`
       + `<div>Type: ${esc(itemTypeText)}.</div>`
       + `<div>Smith Stone Cost: ${item.cost}/${item.stones} available.</div>`

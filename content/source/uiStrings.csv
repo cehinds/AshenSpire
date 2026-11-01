@@ -399,6 +399,7 @@ smith.items.upgrade,,Items available to upgrade,The items the smith can upgrade.
 smith.items.mount,,Items with a mount to work on,The items with a mount the smith can work on.,
 smith.pane.status,,{purse} · {n} eligible,You hold {purse}; {n} items are eligible.,
 smith.row.tier,,Tier {from} → {to},Upgrading takes this item from tier {from} to tier {to}.,
+smith.row.needsBlacksmith,,Needs a Blacksmith,This item's next tier is above what a rest site's Smith can reach; a Blacksmith can upgrade it.,
 smith.row.mountOne,,{where} · 1 mount,This item is {where} and has one mount.,
 smith.row.mountMany,,{where} · {n} mounts,This item is {where} and has {n} mounts.,
 smith.preview.fallback,,The mount then shows {card}.,After extraction the mount shows its fallback card {card}.,
