@@ -167,7 +167,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
 /** True when the tag id has its own mark (not the generic Skill fallback). */
 export function hasTagSymbol(tagId) {
   const art = shapeFor({ id: tagId });
-  return art !== SHAPES.skill && art !== ACTION_SIGILS.skill.shape;
+  return ![SHAPES.skill, ACTION_SIGILS.skill.shape, ACTION_SIGILS.spell.shape].includes(art);
 }
 
 /** The card rail's solid symbol for one tag id (e.g. 'effect:evade') as a bare SVG element. */
