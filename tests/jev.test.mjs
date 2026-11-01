@@ -82,7 +82,7 @@ test('CLI: stdin triage and --human', () => {
 });
 
 test('fast-check list names every required check, in order', () => {
-  assert.deepEqual(FAST_CHECKS.map(c => c.id), ['style-lint', 'content-build', 'config-build', 'game-config', 'framework-data-build', 'build-game', 'bundle-cycles', 'mechanics-generate', 'uistrings', 'run-node', 'runsim']);
+  assert.deepEqual(FAST_CHECKS.map(c => c.id), ['style-lint', 'content-build', 'config-build', 'game-config', 'tokens-css', 'hud-layout-css', 'framework-data-build', 'build-game', 'bundle-cycles', 'mechanics-generate', 'uistrings', 'run-node', 'runsim']);
 });
 
 test('runChecks: pass is 0, an auto-fixable failure is 1, an unmatched one is 2; exit is the max', () => {
@@ -695,4 +695,14 @@ test('regen and restamp act on --root, else on the checkout the shell is in, not
     assert.equal(targetRoot(['--root', '/x/y']), '/x/y');
     assert.equal(targetRoot([], tmpdir()), ROOT, 'outside any checkout it falls back to jev\'s');
   } finally { f.done(); }
+});
+
+test('regen rebuilds the CSS projections after config-build, checks them, and treats them as generated (Codex repro)', () => {
+  const ids = REGEN_STEPS.map(a => a[0]);
+  for (const t of ['tools/tokens-css.mjs', 'tools/hud-layout-css.mjs']) {
+    assert.ok(ids.indexOf(t) > ids.indexOf('tools/config-build.mjs'), `${t} runs after config-build`);
+    assert.ok(FAST_CHECKS.some(c => c.args[0] === t && c.args.includes('--check')), `${t} --check is a fast check`);
+  }
+  assert.deepEqual(classifyConflicts(['styles/tokens.generated.css', 'styles/hud-layout.generated.css', 'styles/combat.css']),
+    { generated: ['styles/tokens.generated.css', 'styles/hud-layout.generated.css'], changelog: [], other: ['styles/combat.css'] });
 });

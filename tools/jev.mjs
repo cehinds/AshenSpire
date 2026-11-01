@@ -159,6 +159,8 @@ export const FAST_CHECKS = [
   { id: 'content-build', args: ['tools/content-build.mjs', '--check'] },
   { id: 'config-build', args: ['tools/config-build.mjs', '--check'] },
   { id: 'game-config', args: ['tools/game-config.mjs', 'check'] },
+  { id: 'tokens-css', args: ['tools/tokens-css.mjs', '--check'] },
+  { id: 'hud-layout-css', args: ['tools/hud-layout-css.mjs', '--check'] },
   { id: 'framework-data-build', args: ['tools/framework-data-build.mjs', '--check'] },
   { id: 'build-game', args: ['tools/build-game.mjs', '--check'] },
   { id: 'bundle-cycles', args: ['tools/bundle-cycles.mjs'] },
@@ -215,6 +217,9 @@ export const REGEN_STEPS = [
   // config-build and framework-data-build before content-build: content-build refuses config whose
   // source hashes do not match src/config/generated/ui.js, and framework JSON with no src/framework/data mirror.
   ['tools/config-build.mjs'],
+  // The stylesheets index.html loads are projections of authored config too; run-node checks both.
+  ['tools/tokens-css.mjs', '--write'],
+  ['tools/hud-layout-css.mjs', '--write'],
   ['tools/framework-data-build.mjs'],
   ['tools/content-build.mjs'],
   ['tools/game-config.mjs', 'build'],
@@ -358,6 +363,7 @@ const GENERATED_PATHS = [
   /^src\/content\/changelog\.generated\.js$/,
   /^src\/framework\/data\/[^/]+\.js$/,
   /^src\/config\/generated\/[^/]+\.js$/,
+  /^styles\/(tokens|hud-layout)\.generated\.css$/,
   /^buildordinal\.json$/,
 ];
 
@@ -506,7 +512,7 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
   // A restamped receipt is moved to the top of its date group, so it is checked, not exempted.
   const verify = runChecks([
     { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order'] },
-    ...FAST_CHECKS.filter(c => ['content-build', 'config-build', 'game-config', 'framework-data-build', 'build-game'].includes(c.id)),
+    ...FAST_CHECKS.filter(c => ['content-build', 'config-build', 'tokens-css', 'hud-layout-css', 'game-config', 'framework-data-build', 'build-game'].includes(c.id)),
   ], c => runNode(c.args, { cwd: top }));
   if (verify.exit !== 0) return { exit: verify.exit, verdict: 'checks-failed', branch, resolved, checks: verify.results.filter(r => r.status === 'fail'), hint: 'merge left uncommitted; `git merge --abort` to undo' };
   git(['add', '-u'], top);
