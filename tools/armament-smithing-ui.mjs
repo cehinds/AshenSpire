@@ -321,22 +321,16 @@ async function main() {
               ? rect(document.querySelector('.smith-intrinsic-stats')).top-rect(document.querySelector('.smith-summary-grid')).bottom
               : null,
           }:null,
-          economy:document.querySelector('.smith-preview-economy')?{
-            reference:[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair em')].map((node)=>node.textContent.trim()).join('/'),
-            icon:document.querySelector('.smith-stone-icon')?.textContent.trim()||'',
-            label:document.querySelector('.smith-economy-values b')?.textContent.trim()||'',
+          economy:document.querySelector('.smith-head-cost')?{
+            icon:document.querySelector('.smith-head-cost .smith-stone-icon')?.textContent.trim()||'',
+            label:document.querySelector('.smith-head-cost')?.getAttribute('aria-label')||'',
             required:document.querySelector('.smith-cost-required')?.textContent.trim()||'',
             available:document.querySelector('.smith-cost-available')?.textContent.trim()||'',
             availableColor:getComputedStyle(document.querySelector('.smith-cost-available')).color,
             requiredColor:getComputedStyle(document.querySelector('.smith-cost-required')).color,
-            costColor:getComputedStyle(document.querySelector('.smith-economy-values b')).color,
-            slashXs:[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair i')].map((node)=>{const r=rect(node);return (r.left+r.right)/2;}),
-            headerBottom:Math.max(...[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair em')].map((node)=>rect(node).bottom)),
-            numberTop:Math.min(...[...document.querySelectorAll('.smith-preview-economy .smith-cost-pair strong')].map((node)=>rect(node).top)),
-            labelHeight:rect(document.querySelector('.smith-economy-values b')).height,
-            labelLineHeight:Number.parseFloat(getComputedStyle(document.querySelector('.smith-economy-values b')).lineHeight),
-            valuesScrollWidth:document.querySelector('.smith-economy-values').scrollWidth,
-            valuesClientWidth:document.querySelector('.smith-economy-values').clientWidth,
+            height:rect(document.querySelector('.smith-head-cost')).height,
+            lineHeight:Number.parseFloat(getComputedStyle(document.querySelector('.smith-head-cost')).lineHeight),
+            onNameRow:document.querySelector('.smith-head-cost').parentElement.classList.contains('smith-title-row'),
           }:null,
           selectedType:document.querySelector('.smith-selected-head .smith-item-type-row')?.textContent.trim()||'',
           selectedNameStyle:document.querySelector('.smith-selected-head .sr-name')?{
@@ -371,9 +365,6 @@ async function main() {
               after:value.querySelector('strong')?.textContent.trim()||'',
             })),
           })),
-          summaryFonts:[
-            {label:getComputedStyle(document.querySelector('.smith-cost-pair em')).fontSize,value:getComputedStyle(document.querySelector('.smith-economy-values')).fontSize},
-          ],
           requirementRow:document.querySelector('.smith-requirements')?{
             border:getComputedStyle(document.querySelector('.smith-requirements')).borderTopWidth,
             borderLeft:getComputedStyle(document.querySelector('.smith-requirements')).borderLeftWidth,
@@ -438,7 +429,7 @@ async function main() {
       check(zero.selectedNameStyle?.color === zero.selectedNameStyle?.foldColor
           && zero.selectedNameStyle?.fontSize === zero.selectedNameStyle?.foldFontSize,
         `SMITH-UI-${upper}-SELECTED-NAME-TYPE`, `selected item name uses the same white display treatment and size as fold titles (${JSON.stringify(zero.selectedNameStyle)})`);
-      check(zero.text.includes('REQ/AVAIL') && zero.text.includes('Smithing Stone Cost REQ/AVAIL 1/0') && hasPreviewFacts(zero.text)
+      check(zero.economy?.label === 'Smithing Stone Cost 1 of 0 available' && hasPreviewFacts(zero.text)
           && zero.text.includes('Slashing Strike')
           && zero.text.includes('Weapon Guard')
           && expected.selected.affectedRows.every(row => zero.affected.some(actual => actual.title === row.name && actual.text.includes(`Uses the source item’s ${row.rating.label}.`)))
@@ -450,19 +441,13 @@ async function main() {
       // 1/0") under it. The old 3:1 two-cell row, the stacked pair whose two
       // slashes shared an x anchor, and the header-above-number geometry were
       // that bespoke layout's; what stays checked is every fact and colour.
-      check(zero.summaryHeights.length === 2
+      check(zero.summaryHeights.length === 1
           && zero.summaryBorders.every((width) => width === '0px')
-          && zero.economy?.reference === 'REQ/AVAIL' && zero.economy?.icon === '🪨'
-          && zero.economy?.label === 'Smithing Stone Cost' && zero.economy?.required === '1' && zero.economy?.available === '0'
-          && zero.economy.slashXs.length === 2
-          && zero.economy.labelHeight <= zero.economy.labelLineHeight + 1
-          && zero.economy.valuesScrollWidth <= zero.economy.valuesClientWidth + 1
-          && zero.economy.availableColor !== zero.economy.requiredColor && zero.economy.requiredColor === zero.economy.costColor,
-        `SMITH-UI-${upper}-SUMMARY-GRID`, `Selected Item and Cost are two borderless cells of one DetailCard; the cost is one inline REQ/AVAIL pair that does not overflow (${JSON.stringify({ heights: zero.summaryHeights, borders: zero.summaryBorders, economy: zero.economy })})`);
-      check(zero.summaryFonts.length === 1
-          && new Set(zero.summaryFonts.map((row) => row.label)).size === 1
-          && new Set(zero.summaryFonts.map((row) => row.value)).size === 1,
-        `SMITH-UI-${upper}-SUMMARY-TYPE`, `the cost summary shares one header size and one primary-value size (${JSON.stringify(zero.summaryFonts)})`);
+          && zero.economy?.icon === '🪨' && zero.economy.onNameRow
+          && zero.economy?.required === '1' && zero.economy?.available === '0'
+          && zero.economy.height <= zero.economy.lineHeight * 1.6
+          && zero.economy.availableColor !== zero.economy.requiredColor,
+        `SMITH-UI-${upper}-SUMMARY-GRID`, `Selected Item and Cost are two borderless cells of one DetailCard; the cost is one compact stone and required/available pair on the item's name row (${JSON.stringify({ heights: zero.summaryHeights, borders: zero.summaryBorders, economy: zero.economy })})`);
       const summaryColumns = zero.summaryGrid?.columns.trim().split(/\s+/).map((value) => Number.parseFloat(value)) || [];
       // One column since the sweep: the cost stands UNDER the selected item (it shared a 3:1 row).
       check(zero.summaryGrid && summaryColumns.length === 1
@@ -569,7 +554,7 @@ async function main() {
       await openSelected(1);
       const one = await reading();
       check(one.count === '1 Smithing Stone available'
-          && one.text.includes('Tier 0 → 1') && one.text.includes('REQ/AVAIL') && one.text.includes('Smithing Stone Cost REQ/AVAIL 1/1') && hasPreviewFacts(one.text)
+          && one.text.includes('Tier 0 → 1') && one.economy?.label === 'Smithing Stone Cost 1 of 1 available' && hasPreviewFacts(one.text)
           && one.text.includes('Slashing Strike')
           && one.text.includes('Weapon Technique'),
         `SMITH-UI-${upper}-ONE-DELTAS`, `one-purse selected review shows tier, cost, requirement, scaling, and every real grouped delta (${JSON.stringify(one.text)})`);

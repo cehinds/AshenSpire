@@ -74,3 +74,10 @@ test('the shrine recovery panel has no heading and keeps every pool row', () => 
   assert.match(rest, /\['health', 'HP'/);
   assert.match(rest, /\['mana', 'Mana'/);
 });
+
+test('the Stone cost sits on the item row, compact, with no footer strip when affordable', () => {
+  assert.match(modal, /smith-head-cost smith-preview-economy/);
+  assert.doesNotMatch(modal, /economyNode\(selected\)\),\n\s*selected\.affordable/);
+  assert.match(modal, /selected\.affordable \? null : el\('div', \{ class: 'smith-cost-strip'/);
+  assert.match(css, /\.smith-head-cost \{[^}]*margin-left: auto/);
+});

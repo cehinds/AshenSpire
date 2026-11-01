@@ -249,6 +249,14 @@ export function mountSmithUpgradeModal(host, initialModel, {
         el('span', { class: 'smith-title-row' }, [
           el('b', { class: 'sr-name', text: selected.name }),
           el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
+          // The Stone cost rides the item row's right end: a stone and "needed/available".
+          el('span', {
+            class: `smith-head-cost smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}`,
+            role: 'group', 'aria-label': t('smith.cost.aria', { cost: selected.cost, stones: selected.stones }), title: t('smith.cost.tip'),
+          }, [
+            glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
+            el('span', { class: 'smith-cost-pair' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
+          ]),
         ]),
         // One row for the item type and every tag; the spans stay for the tools that read them.
         el('span', { class: 'smith-tag-row' }, [
@@ -279,9 +287,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
       fold.append(summary, detail);
       return fold;
     }));
-    const cost = el('div', { class: 'smith-cost-strip' }, [
-      el('div', { class: `smith-summary-cell smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
-      selected.affordable ? null : blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
+    const cost = selected.affordable ? null : el('div', { class: 'smith-cost-strip' }, [
+      blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
     ]);
     const servicePreview = currentModel.properties.servicePreviewHtml ? el('div', { html: currentModel.properties.servicePreviewHtml }) : null;
     const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [servicePreview, cost].filter(Boolean) };
