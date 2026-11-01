@@ -1,17 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — automatic Reading Desk text fitting
-
-[Play verified feature build 0.7.2.92](https://cehinds.github.io/AshenSpire/branches/Feature/NewCardArt/latest/) · [Build artifact](https://github.com/cehinds/AshenSpire/actions/runs/41266006740/artifacts/13067173627)
-
-The published preview was verified at build 0.7.2.92, digest 26e23c090a, from the earlier bfdfaa833 candidate. The current branch also includes the later dev integration; that newer packaged build is pending publication. The Reading Desk automatically refits card names and rules after its preview becomes smaller, restoring larger type when space returns. The four captures below show the production Reading Desk in a local source fixture; they do not depict the packaged feature build. [Capture identity and verification](docs/preview/features/reading-desk-text-fit/capture-record.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile source fixture: fitted Guard Counter text](docs/preview/features/reading-desk-text-fit/mobile.jpg) | ![Desktop source fixture: fitted Guard Counter text](docs/preview/features/reading-desk-text-fit/desktop.jpg) | ![Wide source fixture: fitted Guard Counter text](docs/preview/features/reading-desk-text-fit/wide.jpg) | ![Tablet source fixture: fitted Guard Counter text](docs/preview/features/reading-desk-text-fit/tablet.jpg) |
-<!-- feature-preview:end -->
-
 
 
 
