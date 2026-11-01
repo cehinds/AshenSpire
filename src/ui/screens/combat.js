@@ -95,7 +95,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
+import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
 import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -388,6 +388,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       heldStances.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       heldKinds.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       heldCards.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
+      // The held glyph and pose follow the last card played, but a Poise break ends the real stance at this turn start:
+      // with none held by the engine, show the resting mark instead of a Smash the player no longer stands in.
+      if (event.type === 'playerTurnStart' && !holdsChosenStance(combat.player)) { heldStances.reset('player'); heldKinds.reset('player'); heldCards.reset('player'); }
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
       readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
