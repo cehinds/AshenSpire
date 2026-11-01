@@ -1662,10 +1662,6 @@ unlock,,beatFellWarden,classification.unlock
 unlock,,winTwice,classification.unlock
 unlock,,beatKingAsHerald,classification.unlock
 unlock,,reachStitchedCourt,classification.unlock
-unlock,,rack2Right,classification.unlock
-unlock,,rack3Right,classification.unlock
-unlock,,rack2Left,classification.unlock
-unlock,,rack3Left,classification.unlock
 unlock,,winAsRogue,classification.unlock
 unlock,,rogueBeatWarden,classification.unlock
 unlock,,rogueReachCrown,classification.unlock

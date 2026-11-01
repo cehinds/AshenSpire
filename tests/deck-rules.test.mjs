@@ -22,8 +22,9 @@ import { dispatch } from '../src/engine/combat.js';
 import { drawCards } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
-const REG = createRegistries(contentBundle);
+const REG = createRegistries(withWeaponRack(contentBundle));
 const ENEMY = contentBundle.enemies[0].id;
 const freshRun = (seed = 0x10a5) => createRunState({ seed, classId: 'reaver', registries: REG });
 const ordinary = (run) => run.deck.find((c) => !c.equipmentRole && !c.grantedBy);

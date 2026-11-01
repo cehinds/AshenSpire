@@ -9,6 +9,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRng } from '../src/engine/rng.js';
 import { flickPreferences, flickVerdict, nearestFlickTarget } from '../src/ui/models/TouchFlickModel.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
 export function runCardRemovalFlickTests() {
   let checks = 0;
@@ -31,7 +32,7 @@ export function runCardRemovalFlickTests() {
   check(nearestFlickTarget([{ id: 'b', x: 0, y: 0 }, { id: 'a', x: 2, y: 0 }], { x: 1, y: 0 }).id === 'a', 'equidistant targets have a stable tie-break');
   check(nearestFlickTarget([], end) === null, 'no legal target returns none');
 
-  const registries = createRegistries(contentBundle);
+  const registries = createRegistries(withWeaponRack(contentBundle));
   // A Starseer: its bound cards leave three basic attacks under the cap, so a
   // middle one exists (a sword-and-shield Reaver's kits and Dodge Roll leave one).
   // This regression constructs the original headless combat/swap contract.

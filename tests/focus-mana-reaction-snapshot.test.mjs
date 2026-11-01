@@ -1,4 +1,5 @@
-// A snapshot saved before the Focus Mana discount stores the printed manaCost on a pending reaction option; answering must pay the live price.
+// A snapshot saved before the Focus Mana discount stores a stale manaCost on a pending reaction option; answering must pay the live price.
+// Focus discounts magic cards only (owner, 2026-11-01), and guardCounter is a physical card, so its live price is the printed 2 with no discount.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -13,7 +14,7 @@ const registries = createRegistries({ ...contentBundle,
     ? { ...e, firstMove: 'slash', equipmentSp: 0, moves: { slash: { intent: 'attack', damage: 1, hits: 1, weight: 1,
       tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : e) });
 
-test('a snapshot paused on a Mana reaction with the printed manaCost still answers, at the Focus price', () => {
+test('a snapshot paused on a Mana reaction with the printed manaCost still answers, at the live price', () => {
   const run = createRunState({ registries, classId: 'reaver', seed: 7 });
   run.loadout.sets.rightHand[0] = 'boneSceptre';
   run.loadout.sets.leftHand[0] = null;
@@ -25,12 +26,12 @@ test('a snapshot paused on a Mana reaction with the printed manaCost still answe
   dispatch(combat, { type: 'endTurn' });
   const option = combat.pendingReaction.options.find(row => row.id === 'r0:1:default');
   assert.ok(option, 'the Mana reaction card is offered');
-  assert.equal(option.manaCost, 1, 'live price is the printed 2 minus the Focus discount');
+  assert.equal(option.manaCost, 2, 'live price is the printed 2: a non-magic card gets no Focus discount');
   const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
   const stored = snapshot.pendingReaction.options.find(row => row.id === option.id);
   stored.manaCost = option.manaCost + 1; // what a pre-deploy save holds: the printed cost
   const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot });
   const before = restored.player.mana;
   dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: option.id });
-  assert.equal(before - restored.player.mana, 1, 'pays the discounted price, not the stale one');
+  assert.equal(before - restored.player.mana, 2, 'pays the live price, not the stale one');
 });

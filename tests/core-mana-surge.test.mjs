@@ -33,9 +33,10 @@ import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const reg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
 const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const start = (classId, seed = 511) => createRunState({ registries: reg, classId, seed, profileMeta: meta });
 const surges = (run) => run.deck.filter((c) => c.cardId === 'core.manaSurge');

@@ -17,6 +17,7 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { isPoolDeckMode } from '../src/model/cardRemoval.js';
+import { withWeaponRack } from '../tests/withWeaponRack.mjs';
 
 // Fixed four-slot migration corpus: preserve its pre-kit catalogue. The shipped
 // kit composer is covered exhaustively by tests/armament-combat-kits.test.mjs.
@@ -33,7 +34,7 @@ const contentBundle = { ...shippedBundle, equipment: { ...shippedBundle.equipmen
   }),
 } };
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const baseRegistries = createRegistries(contentBundle);
+const baseRegistries = createRegistries(withWeaponRack(contentBundle)); // the swap below needs a second set, which the shipped hands no longer carry
 const ownsEverything = { has: () => true };
 const atCamp = { inCombat: false, classId: 'reaver', attributes: { strength: 20, dexterity: 20, constitution: 20, wisdom: 20, intelligence: 20 } };
 let failed = 0;
@@ -60,12 +61,12 @@ function registriesWith({ armamentPatches = {}, extraCards = [], attackCopies = 
       roleCopies: { ...contentBundle.balance.equipment.roleCopies, attack: attackCopies },
     },
   };
-  return createRegistries({
+  return createRegistries(withWeaponRack({
     ...contentBundle,
     cards: [...contentBundle.cards, ...extraCards],
     balance,
     equipment: { ...contentBundle.equipment, armaments },
-  });
+  }));
 }
 
 function makeRun(registries, rightHand, leftHand) {
