@@ -61,9 +61,11 @@ export function digest(combat) {
 // loadout's shape (one cell per hand, not three). Log hashes, event counts, turns and RNG counters are identical, and the same
 // fights built with three-set hands (tests/withWeaponRack.mjs) reproduce the previous state hashes exactly.
 // Re-pinned 2026-11-01 for the per-stat Precision receipt lines (precisionParts only; events, turn and RNG unchanged).
+// Re-pinned 2026-11-01 for Core weapon arts (#2474): the Reaver's starter deck trades its class special for the
+// greatsword's Sundering Hew, so both reaver fights draw and play a different card (PERF1 195 -> 197 events; turns unchanged).
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '41d31943f4e744b2', state: 'f72517673e978c73', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: '8e23e63573e8aa0d', state: '98fcbc9a036c6bd7', events: 234, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '87e9ec39fed407aa', state: 'efa9a96c2fbf1f1b', events: 197, turn: 6 }],
+  [[4242, 'reaver'], { log: 'bf86ffe4ed19237e', state: '2633aac2cb5fb869', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
