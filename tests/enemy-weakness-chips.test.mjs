@@ -77,3 +77,17 @@ test('a discovery holds for every enemy of that type, on later fights, and throu
   assert.deepEqual(weaknessDiscoveryProblems({ wanderingSoldier: ['blunt:damage'] }), []);
   assert.ok(weaknessDiscoveryProblems({ wanderingSoldier: 'blunt' }).length);
 });
+
+import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
+import { weaknessTraitRows } from '../src/model/enemyWeaknessRules.js';
+
+test('the inspector and bestiary rows follow the same discovery gate', () => {
+  const run = newRun(), enemy = fight(run).enemies[0], def = reg.enemies.get(enemy.enemyId);
+  const record = { target: 30, receipts: Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`r${i}`, { bonus: false }])) };
+  const names = () => projectEnemyKnowledge(def, record, { registries: reg, weaknesses: shown(run, enemy) }).traits.map(row => row.name);
+  assert.ok(!names().some(name => name.startsWith('Weak to')), 'undiscovered: the inspector does not spoil it');
+  run.weaknessDiscovery = {};
+  recordWeaknessDiscoveries(run.weaknessDiscovery, [{ type: 'weaknessTriggered', targetId: enemy.id, to: enemy.weaknesses[0].to, effect: enemy.weaknesses[0].effect }], [enemy]);
+  assert.deepEqual(names().filter(name => name.startsWith('Weak to')), weaknessTraitRows([enemy.weaknesses[0]]).map(row => row.name));
+  assert.ok(!projectEnemyKnowledge(def, record, { registries: reg, weaknesses: [] }).traits.some(row => row.name.startsWith('Weak to')), 'the bestiary passes none');
+});
