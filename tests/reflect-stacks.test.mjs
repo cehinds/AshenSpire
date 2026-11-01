@@ -233,3 +233,27 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
     assert.equal(view.hitChance, liveChance, `${stacks} Reflect stack(s): preview chance == live receipt chance`);
   }
 });
+
+test('Counter forecast under Reflect equals live: a return that kills the attacker forecasts no Counter; a survivable one forecasts live\'s damage', async () => {
+  const { previewCard } = await import('../src/engine/combat.js');
+  const run = enemyHp => {
+    const { combat, enemy } = live();
+    enemy.hp = enemyHp;
+    combat.player.reflectStacks = 1;
+    combat.piles.hand.push({ instanceId: 'rcx', cardId: 'core.counter' });
+    const forecast = previewCard(combat, 'rcx').counterReturn;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'rcx' });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    const events = combat.eventLog.slice(start);
+    return { forecast, reflected: events.find(e => e.type === 'reflectTriggered'), counter: events.find(e => e.type === 'combatCounterTriggered') };
+  };
+  const kill = run(1);
+  assert.ok(kill.reflected, 'live: the Reflect return fired');
+  assert.equal(kill.counter, undefined, 'live: the dead attacker is never Countered');
+  assert.ok(!kill.forecast?.hp, `forecast Counter hp ${kill.forecast?.hp} must be 0/absent when the attacker dies to Reflect`);
+  const survive = run(500);
+  assert.ok(survive.reflected && survive.counter, 'control: Reflect does not kill, the Counter lands');
+  assert.equal(survive.forecast.hp, survive.counter.amount, 'forecast == live Counter damage');
+});

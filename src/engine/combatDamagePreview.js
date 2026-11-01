@@ -127,7 +127,9 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
   if (ProfileCombat.configuredCombat(ctx)) {
     const receipts = [];
-    const attacker = cloneDetachedAttacker(source);
+    // One detached attacker per preview state, so a Reflect return's damage carries across successive calls (the Counter forecast prices one hit per call).
+    if (local.attackerSource !== source) { local.attackerSource = source; local.attacker = cloneDetachedAttacker(source); }
+    const attacker = local.attacker;
     const previewCtx = bindDetachedAttacker(local.previewCtx, source, attacker);
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
@@ -141,6 +143,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       hitDamages: receipts.map(receipt => fixCoreEnabled(ctx) ? receipt.hpLoss : receipt.amount),
       totalDamage: receipts.reduce((sum, receipt) => sum + (fixCoreEnabled(ctx) ? receipt.hpLoss : receipt.amount), 0),
       hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
+      attackerDead: !!attacker && attacker !== source && !(attacker.hp > 0),
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
   }

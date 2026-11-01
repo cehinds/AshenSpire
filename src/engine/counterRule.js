@@ -125,7 +125,9 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
     const row = counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
     const granted = counterBlockGrant(state.previewCtx, state.defender, row.block);
     state.defender.block = (state.defender.block || 0) + granted;
-    previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, 1, state);
+    const landed = previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, 1, state);
+    // Live rejects the whole Counter once its attacker is dead (completeTacticalAction), e.g. to a Reflect return: nothing is forecast.
+    if (landed.attackerDead) return { uncovered: true, attackerDies: true };
     incoming += seen; total.hp += row.hp; total.poise += row.poise; total.block += granted;
   }
   return { incoming, advantaged, hits, stacks, base: baseHp, ...total };
