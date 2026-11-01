@@ -197,7 +197,8 @@
       "maneuver:casting",
       "classification.power"
     ],
-    "textTemplate": "Apply {frail} Frail to the enemy. Shuffle Slimed into the enemy's discard."
+    "textTemplate": "Apply {frail} Frail to the enemy. Shuffle Slimed into the enemy's discard.",
+    "faceTemplate": ["Apply {frail} Frail.", "Shuffle Slimed into discard."]
   },
   {
     "id": "huskBrute.brace",
@@ -252,7 +253,8 @@
       "maneuver:casting",
       "classification.power"
     ],
-    "textTemplate": "Shuffle Dazed into the enemy's draw."
+    "textTemplate": "Shuffle Dazed into the enemy's draw.",
+    "faceTemplate": ["Shuffle Dazed into draw."]
   },
   {
     "id": "graveWisp.drain",
@@ -1120,6 +1122,7 @@
       "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Shuffle Wound into the enemy's discard.",
+    "faceTemplate": ["Deal {damage} damage.", "Shuffle Wound into discard."],
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -1719,7 +1722,8 @@
       "maneuver:casting",
       "classification.power"
     ],
-    "textTemplate": "Shuffle Dazed into the enemy's discard."
+    "textTemplate": "Shuffle Dazed into the enemy's discard.",
+    "faceTemplate": ["Shuffle Dazed into discard."]
   },
   {
     "id": "mirrorScribe.shardVolley",
@@ -2803,6 +2807,7 @@
       "classification.attack"
     ],
     "textTemplate": "Deal {damage} damage. Shuffle Dazed into the enemy's discard.",
+    "faceTemplate": ["Deal {damage} damage.", "Shuffle Dazed into discard."],
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   },
@@ -2914,7 +2919,8 @@
       "maneuver:casting",
       "classification.power"
     ],
-    "textTemplate": "Shuffle Dazed into the enemy's discard."
+    "textTemplate": "Shuffle Dazed into the enemy's discard.",
+    "faceTemplate": ["Shuffle Dazed into discard."]
   },
   {
     "id": "hollowAstronomer.orbitalShards",
