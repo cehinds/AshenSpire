@@ -692,7 +692,7 @@ test('regen and restamp act on --root, else on the checkout the shell is in, not
   try {
     const sub = join(f.work, 'deep'); mkdirSync(sub, { recursive: true });
     assert.equal(realpathSync.native(targetRoot([], sub)), realpathSync.native(f.work));
-    assert.equal(targetRoot(['--root', '/x/y']), '/x/y');
+    assert.equal(targetRoot(['--root', '/x/y']), resolve('/x/y'));
     assert.equal(targetRoot([], tmpdir()), ROOT, 'outside any checkout it falls back to jev\'s');
   } finally { f.done(); }
 });
