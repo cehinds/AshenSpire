@@ -54,7 +54,7 @@ export function persistedEventLog(eventLog) {
 // A checkpoint written by an older build (or resumed from one) still carries the
 // context in its log; strip it on every write so a knowledge-only autosave, which
 // never re-serializes the checkpoint, cannot keep a legacy save over the quota.
-function withLeanCheckpoints(run) {
+export function withLeanCheckpoints(run) {
   let out = run;
   for (const key of SNAPSHOT_HOLDERS) {
     const snapshot = run[key] && run[key].snapshot;

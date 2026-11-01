@@ -10,6 +10,8 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
+import { createSaveManager, runKey } from '../src/engine/save.js';
+import { RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { compactRun, expandStoredRun } from '../src/model/runStorage.js';
 
@@ -101,4 +103,41 @@ test('a knowledge-only autosave of a legacy checkpoint stores it lean and it res
   const trimmed = restoreCombatSnapshot({ registries, rng: b, snapshot: expandStoredRun(JSON.parse(JSON.stringify(stored))).combatEntered.snapshot });
   assert.equal(state(trimmed, b), state(full, a));
   for (let i = 0; i < 3; i++) { playTurn(full); playTurn(trimmed); assert.equal(state(trimmed, b), state(full, a)); }
+});
+
+test('an older inline slot whose checkpoint log carries the context is still recompacted when the store is full', () => {
+  const { run, rng, combat } = startFight(17);
+  for (let i = 0; i < 6; i++) playTurn(combat);
+  const legacy = JSON.parse(JSON.stringify({ ...serializeCombatSnapshot(combat), eventLog: combat.eventLog }));
+  assert.ok(legacy.eventLog.some(e => e.abilityEntities || e.abilityBefore));
+  const old = JSON.stringify({ ...JSON.parse(JSON.stringify(run)), combatEntered: { nodeId: 'n', encounterId: 'e', snapshot: legacy }, schemaVersion: RUN_SCHEMA_VERSION - 1 });
+  assert.ok(old.includes('"gameProfile"') && !old.includes('gameProfileRef'));
+  const map = new Map();
+  const quota = () => Object.assign(new Error('quota'), { name: 'QuotaExceededError', code: 22 });
+  const store = {
+    map, budget: Infinity,
+    getItem: k => (map.has(k) ? map.get(k) : null),
+    removeItem: k => map.delete(k),
+    key: i => [...map.keys()][i] ?? null,
+    get length() { return map.size; },
+    used: () => [...map].reduce((n, [k, v]) => n + k.length + v.length, 0),
+    setItem(k, v) {
+      const next = store.used() - (map.has(k) ? k.length + map.get(k).length : 0) + k.length + String(v).length;
+      if (next > store.budget) throw quota();
+      map.set(k, String(v));
+    },
+  };
+  map.set(runKey(2), old);
+  store.budget = store.used() + 665000; // room for the shared profile copy, not for a slot after it
+  const save = createSaveManager(store);
+  const fresh = createRunState({ registries, seed: 18, classId: 'reaver' });
+  save.saveRun(fresh, createRng(18), 1);
+  const stored = map.get(runKey(2));
+  assert.ok(stored.length < old.length / 2, `slot 2 was recompacted (${old.length} -> ${stored.length})`);
+  const parsed = JSON.parse(stored);
+  assert.ok(parsed.gameProfileRef && !parsed.gameProfile, 'the profile is a reference');
+  assert.ok(parsed.combatEntered.snapshot.eventLog.every(e => !('abilityEntities' in e) && !('abilityBefore' in e)));
+  const loaded = save.loadRun(registries, 2);
+  assert.ok(loaded, save.runStatus().reason);
+  assert.equal(loaded.combatEntered.snapshot.eventLog.length, legacy.eventLog.length);
 });
