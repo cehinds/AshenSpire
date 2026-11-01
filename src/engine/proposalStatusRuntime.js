@@ -1,5 +1,6 @@
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { canonicalDamageType, magicDamageTypeOf, isPhysicalDamageType } from '../model/combatRatings.js';
+import { rollD20Check } from './d20Chance.js';
 import * as Plans from '../model/proposalStatusRules.js';
 export function proposalContext(ctx) {
  const profile=ctx.gameProfile;
@@ -40,11 +41,11 @@ export function proposalTargetPlan(ctx,actor,target,card,{resolve=false}={}) {
  const data={actor:proposalActor(ctx,actor),target:proposalActor(ctx,target),card:{...card,range:card?.range || card?.combatProfile?.range,camp:card?.combatProfile?.camp,damageType:proposalDamageType(card)},...proposalContext(ctx)};
  const preview=Plans.proposalTargetRules(data);
  if(!resolve)return preview;
- return Plans.proposalTargetRules({...data,...(preview.perceptionChance!==null ? {perceptionRoll:Math.floor(ctx.rng.float('misc')*100)} : {}),...(preview.evadeChance>0 ? {evadeRoll:Math.floor(ctx.rng.float('misc')*100)} : {})});
+ return Plans.proposalTargetRules({...data,...(preview.perceptionChance!==null ? {perceptionRoll:rollD20Check(ctx.rng,'misc',preview.perceptionChance).roll} : {}),...(preview.evadeChance>0 ? {evadeRoll:rollD20Check(ctx.rng,'misc',preview.evadeChance).roll} : {})});
 }
 export function proposalHitPlan(ctx,source,target,amount,card={},options={}) {return Plans.proposalHitRules({...options,actor:proposalActor(ctx,source),target:proposalActor(ctx,target),card,amount,damageType:proposalDamageType(card),camp:card?.combatProfile?.camp || 'physical',range:card?.range || card?.combatProfile?.range,direct:!card.proposalReactive,reactive:!!card.proposalReactive,allies:proposalAllies(ctx,target).map(a=>proposalActor(ctx,a)),...proposalContext(ctx)});}
 export function proposalAfterHit(ctx,source,target,amount,hpDamage,card={}) {applyProposalPlan(ctx,Plans.proposalAfterHitRules({actor:proposalActor(ctx,source),target:proposalActor(ctx,target),incomingDamage:amount,hpDamage,damageType:proposalDamageType(card),camp:card?.combatProfile?.camp || 'physical',range:card?.range || card?.combatProfile?.range,direct:!card.proposalReactive,reactive:!!card.proposalReactive,opponents:proposalAllies(ctx,source).map(a=>proposalActor(ctx,a)),...proposalContext(ctx)}),source,target,card);}
-export function proposalTurn(ctx,actor,phase) {applyProposalPlan(ctx,Plans.proposalTurnRules({actor:proposalActor(ctx,actor),phase,...proposalContext(ctx),roll:()=>Math.floor(ctx.rng.float('misc')*100)}),actor,actor,{skipRatingBonus:true,proposalProtectionFloor:true});}
+export function proposalTurn(ctx,actor,phase) {applyProposalPlan(ctx,Plans.proposalTurnRules({actor:proposalActor(ctx,actor),phase,...proposalContext(ctx),roll:check=>rollD20Check(ctx.rng,'misc',check.chance).roll}),actor,actor,{skipRatingBonus:true,proposalProtectionFloor:true});}
 export function proposalThreshold(ctx,actor) {applyProposalPlan(ctx,Plans.proposalThresholdRules({actor:proposalActor(ctx,actor),...proposalContext(ctx)}),actor,actor);}
 export function proposalRetained(ctx,actor,pool='block') {return Plans.proposalRetainProtection({actor:proposalActor(ctx,actor),pool,...proposalContext(ctx)});}
 export function proposalHealingPlan(ctx,target,amount,card) {return Plans.proposalHealingRules({target:proposalActor(ctx,target),amount,damageType:proposalDamageType(card),...proposalContext(ctx)});}
