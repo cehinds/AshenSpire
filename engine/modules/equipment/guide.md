@@ -35,6 +35,7 @@ Settings live in `engine/modules/equipment/settings.schema.json`; shipped defaul
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Validated setting; no configured gameplay behavior is promised unless listed in Runtime scope above.
 - `/editorEnabled` (type boolean; default `true`): Whether equipment editing is available.
 - `/editorWhere` (type string; default `"noncombat"`; minLength 1): Availability policy; timing is independent of rest-only deck editing.
+- `/weaponArts` (type boolean; optional, absent means off; Core bundle: `true`): A worn weapon lends its default weapon-art cards to the deck as item-owned cards (owner 2026-11-01). Kits and the Dodge Roll stay off.
 - `/fixedAppearance` (type boolean; default `true`): Keep class appearance fixed when equipment changes.
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.

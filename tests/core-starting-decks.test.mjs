@@ -14,28 +14,28 @@ const start = (classId) => createRunState({ registries: reg, classId, seed: 511,
 test('Core Reaver starts with exactly 4 Strike, 4 Defend, 1 Counter and its weapon art', () => {
   const run = start('reaver');
   assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.strike': 4, 'core.defend': 4, 'core.counter': 1, 'core.reaverSpecial': 1 });
+  assert.deepEqual(counts(run.deck), { 'core.strike': 4, 'core.defend': 4, 'core.counter': 1, 'greatswordSunderingHew': 1 });
   assert.deepEqual(run.sideboard, []);
 });
 
 test('Core Rogue starts with exactly 2 Strike, 2 Defend, 2 Counter, 2 Evade, 1 Draw and its weapon art', () => {
   const run = start('rogue');
   assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.strike': 2, 'core.defend': 2, 'core.counter': 2, 'core.evade': 2, 'base.draw': 1, 'core.rogueSpecial': 1 });
+  assert.deepEqual(counts(run.deck), { 'core.strike': 2, 'core.defend': 2, 'core.counter': 2, 'core.evade': 2, 'base.draw': 1, 'twinFang': 1 });
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Core Starseer starts with 3 Arcane Spark, 2 Star Spark, 4 Ethereal and a Bone Sceptre-granted Mana Surge', () => {
+test('Core Starseer starts with 3 Arcane Spark, 1 Star Spark, 4 Ethereal, a Bone Sceptre-granted Mana Surge and its weapon art (Blight Touch)', () => {
   const run = start('starseer');
   assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.cantrip': 3, 'core.starseerSpecial': 2, 'base.ethereal': 4, 'core.manaSurge': 1 });
+  assert.deepEqual(counts(run.deck), { 'core.cantrip': 3, 'core.starseerSpecial': 1, 'base.ethereal': 4, 'core.manaSurge': 1, blightTouch: 1 });
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Core Herald starts with 4 Resource Echo, 3 Ethereal, 1 Smash, 1 Exhaust and a Bone Sceptre-granted Mana Surge', () => {
+test('Core Herald starts with 4 Resource Echo, 2 Ethereal, 1 Smash, 1 Exhaust, a Bone Sceptre-granted Mana Surge and its weapon art (Blight Touch)', () => {
   const run = start('herald');
   assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'base.paid-resource-variant': 4, 'base.ethereal': 3, 'core.smash': 1, 'base.exhaust': 1, 'core.manaSurge': 1 });
+  assert.deepEqual(counts(run.deck), { 'base.paid-resource-variant': 4, 'base.ethereal': 2, 'core.smash': 1, 'base.exhaust': 1, 'core.manaSurge': 1, blightTouch: 1 });
   assert.deepEqual(run.sideboard, []);
 });
 
@@ -186,7 +186,8 @@ test('sweep: every Core class deck row and a legacy deck badge Basic iff the Bas
     // A card the face prints no rank for (a Starseer spell) has no badge to disagree.
     if (badges.length === 0) continue;
     const zero = badges.filter((b) => b.rank === 0 && !b.magical);
-    assert.ok(zero.length > 0, `${name}: has rank-0 rows`);
+    // The Starseer's and Herald's only rank-badged rows are now their magical weapon art (Blight Touch), which has no Basic badge to disagree.
+    assert.ok(zero.length > 0 || badges.every((b) => b.magical), `${name}: has rank-0 rows`);
     for (const b of zero) assert.equal(b.text === 'Basic', b.shown, `${name}: ${b.row.cardId} (${b.row.source}) badge "${b.text}" vs Basic filter ${b.shown}`);
   }
 });
