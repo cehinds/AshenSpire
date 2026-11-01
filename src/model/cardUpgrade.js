@@ -84,6 +84,14 @@ export function upgradeCount(instance) {
   return upgradeStepsOf(instance).length;
 }
 
+/**
+ * How many upgrades the instance has paid for or earned from its allowance: a rank-up bonus step (`bonus: true`,
+ * SPEC card ranks, owner 2026-11-01) is a gift on top of the rank, so it does not use up a free upgrade.
+ */
+export function paidUpgradeCount(instance) {
+  return upgradeStepsOf(instance).filter((step) => !(step && step.bonus === true)).length;
+}
+
 /** A short cache-key part: 0 and 1 (authored only) match the old `upgraded ? 1 : 0`. */
 export function upgradeSignature(instance) {
   const steps = upgradeStepsOf(instance);
