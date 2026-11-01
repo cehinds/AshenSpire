@@ -135,7 +135,10 @@ jobs:
             if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "$src_sha" = "${GITHUB_SHA}" ] && [[ "${BEFORE:-}" =~ [1-9a-f] ]]; then
               git fetch -q origin "+refs/heads/$branch:refs/remotes/origin/$branch" || true
               if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null && git cat-file -e "${src_sha}^{commit}" 2>/dev/null; then
-                humans="$(git log --format='%an' "${BEFORE}..${src_sha}" | grep -vc '^github-actions\[bot\]$' || true)"
+                # git log runs on its own line so a failure stops the job under set -e; inside
+                # a pipeline or $( | ) its status would be lost and a real cut read as bot-only.
+                authors="$(git log --format='%an' "${BEFORE}..${src_sha}")"
+                humans="$(printf '%s\n' "$authors" | grep -v '^$' | grep -vc '^github-actions\[bot\]$' || true)"
                 if [ "$humans" = "0" ]; then
                   echo "Every commit in ${BEFORE}..${src_sha} is a bot commit; not a cut."
                   continue
