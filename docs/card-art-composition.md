@@ -12,13 +12,28 @@ tags, type and rank. Returned recipes and their nested transforms are frozen.
 An explicit physical/spell camp is required. Maneuver tags override type;
 attack, smash, counter, evade, sweep, defend, skill and power are supported,
 including defense/evasion aliases. Explicit element wins over school and then
-singleton damage tags; existing element aliases and wind are supported.
+damage tags; aliases deduplicate before combining canonical elements. Blood is also supported; its foreground uses the approved Force template.
 Cast/projectile delivery selects approved elemental projectiles; explicit melee
-retains the ethereal weapon. Counter uses the separate sword and shield; Evade
+retains the ethereal weapon. Counter paints the approved hammer in front of the shield for both camps; Evade
 uses the approved feather. Utility effect tags select healing, draw and cleanse
 objects. Status tags select approved PNG marks/glows (a restrained approved
 generic cue for other registered statuses). Action plus element and statuses
 never exceeds four visual identities.
+
+`PROCEDURAL_BACKGROUND_COLORS` maps element identities to background hue and
+saturation. Explicit element wins over the camp: physical cards without an
+element keep neutral gray smoke, while non-elemental magic defaults to Force blue.
+Explicit Force and Blood are red; untyped magic remains blue with a distinct cache identity. Fire uses the approved orange-brown (#88552f), Earth a muted brown (#705440), Lightning yellow, Alteration green, Frost pale blue
+with white highlights, Psychic violet, Divine warm ivory/gold, Necrotic purple,
+and Wind pale teal. Fire + Frost is purple (#9455c7), and Lightning + Alteration lime (#9aca35). Other combinations equally average the sRGB palette channels after alias deduplication and canonical sorting. All elements contribute to the background; at most two elemental PNG cues and one status cue accompany the action for mixed identities. The first canonical element selects the foreground template, retaining stable weapon geometry across tag order and ranks. Invalid explicit element/school tags fail safely; physical damage tags do not suppress recognized elemental damage tags. The builder includes Blood in its element selector; its additional-tag field accepts mixed elements. All main object PNGs use a thin warm gold 0.9px outline, including weapons, shields, books and the Evade feather; existing sprite filters are preserved. Physical Sweep rotates its two separate slash arc PNGs +90 degrees to follow the fixed scythe blade; the combined magical scythe PNG is unchanged. Status glow/mark PNGs paint above the entire weapon and shield assembly. Their cloned base opacity is multiplied by 1.3 and capped at 0.65 before rank intensity is applied, retaining rank variation and the approved catalog unchanged. Burn and other statuses retain their PNG effects but never
+override the background element or category color. CSS
+`mix-blend-mode:color` preserves the original background PNG's per-pixel
+luminosity, texture and lighting instead of adding a translucent flat wash.
+The treatment paints before the component stacking context, inside the isolated
+artwork well; weapons, shields and effects keep their original colors. Native
+cards, deck thumbnails, row lists and the builder share this renderer. Rank
+changes decorative intensity only. Reviewed and Legacy art retain their
+existing colors and counter placement.
 
 Ranks 1, 3 and 5 change actual decorative PNG opacity without changing weapon
 geometry or recoloring art. Higher ranks retain rank-5 decorative intensity.
@@ -104,7 +119,9 @@ Each JSON asset includes its PNG reference, dimensions, hash, source references,
 
 All ten approved ethereal weapon/color combinations remain in the runtime JSON, including the scimitar. The melee mapping can select any of the five digit choices without regenerating art. Earth, alteration, necrotic and wind choose pale mint; the other schools use blue. All ten element projectiles are supported. Spell Counter and Evade retain the prior Simple bases until a matching cutout assembly is approved. Other unsupported identities retain Legacy; this pass does not invent additional status, power or consumable object art.
 
-## Selection and rendering
+## Retained compatibility selection and shared rendering
+
+The following selection rules describe the retained `simpleCardArt` compatibility resolver. Default procedural Simple mode uses the multi-element rules above: recognized elemental damage tags combine even alongside physical damage types, while invalid explicit element/school tags fail safely.
 
 `simpleCardArt(def, {ref, registries, large, variant})` accepts an already-resolved definition. Identity follows `cardTags ?? tags ?? activeRegistryJunction`. Explicit empty tags are authoritative. Conflicting camps/maneuvers fall back; names and profile IDs never guess a weapon. Cast skills/powers use utility objects; explicit maneuvers still take precedence. A legacy Attack type with an authored camp and no explicit maneuver remains Attack. An evade payload or direct `dodgeRoll` selects Evade; a block effect alone does not.
 
