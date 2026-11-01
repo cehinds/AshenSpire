@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
+import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { cardFaceProjection } from '../src/model/cardFaceProjection.js';
+import { tokenRe } from '../src/model/validate.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 // Owner, 2026-11-01: "inspect full effect shouldn't be there all the time". A face that cannot say its
@@ -57,4 +61,27 @@ test('an authored face keeps a downside the card pays and carries every rank', (
   assert.ok(lines.some(line => /Exhaust/.test(line)), lines.join(' | '));
   assert.ok(lines.some(line => /Heal/.test(line)), lines.join(' | '));
   assert.ok(facesOf(dom, reg, { cardId: 'kickOff', abilityRank: 5 }, rules).every(line => !line.includes(CUE)));
+}));
+
+test('a summary that replaces the cue keeps every downside the computed face reserved', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  const silent = facesOf(dom, reg, { cardId: 'progression-silent-exchange', abilityRank: 4 }, rules);
+  assert.ok(silent.some(line => /discard/i.test(line)), silent.join(' | '));
+  const norm = text => text.replace(/<[^>]+>/g, '').replace(/[.\s]+$/g, '').trim();
+  let kept = 0;
+  for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }, { abilityRank: 1 }, { abilityRank: 4 }, { abilityRank: 5 }]) {
+    const def = playingCardDefinition(reg, { cardId: card.id, ...extra }, { rules });
+    const tokens = staticCardTokens(def);
+    const authoredHtml = def.textTemplate.replace(tokenRe(), (m, k) => tokens[k] ?? m);
+    const computed = cardFaceProjection({ ...def, faceTemplate: undefined }, { lines: card.id.startsWith('base.') ? null : cardFaceLines(def, null, reg), authoredHtml, registries: reg, effects: def.effects });
+    const reserved = computed.clauses.filter(clause => clause.downside && clause.kind !== 'detail');
+    if (!reserved.length || !computed.clauses.some(clause => clause.kind === 'detail')) continue;
+    const face = facesOf(dom, reg, { cardId: card.id, ...extra }, rules);
+    for (const clause of reserved) {
+      assert.ok(face.some(line => norm(line).includes(norm(clause.html).replace(/ card\(s\)/, ''))), `${card.id} ${JSON.stringify(extra)}: lost "${norm(clause.html)}" in ${face.join(' | ')}`);
+      kept++;
+    }
+    assert.ok(face.length <= 3 && face.every(line => wordsIn(line) <= 5), `${card.id}: ${face.join(' | ')}`);
+  }
+  assert.ok(kept > 0);
 }));
