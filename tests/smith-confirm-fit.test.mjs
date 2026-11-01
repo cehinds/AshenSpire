@@ -53,3 +53,9 @@ test('confirmation rows are name-left, change-right grids, scoped to the Smith c
   // The intro sentence is shrunk only for this confirmation, never the shared modal.
   assert.match(css, /\.confirmation-modal:has\(\.smith-confirm-details\) \.confirmation-copy/);
 });
+
+test('Smith data rows carry no grey sub-label under their titles', () => {
+  assert.doesNotMatch(modal, /text: 'Equipment Stats'\}\), el\('small'/);
+  assert.doesNotMatch(modal, /text: 'attribute'/);
+  assert.doesNotMatch(modal, /text: selected\.kindLabel\}\)\]\)/);
+});

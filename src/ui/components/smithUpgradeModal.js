@@ -105,7 +105,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     if (!hasStats && !changes.length) return null;
     const rowNode = statRow({
       flat: true,
-      nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: 'Equipment Stats' }), el('small', { class: 'sr-hint', text: selected.kindLabel })]),
+      nameNode: el('b', { class: 'sr-name', text: 'Equipment Stats' }),
       values: [
         changes.length ? changeSummary({ values: changes }) : null,
         ...(hasStats ? [
@@ -127,7 +127,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
 
   const requirementsRow = (selected) => statRow({
     flat: true,
-    nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: 'Requirements' }), el('small', { class: 'sr-hint', text: 'attribute' })]),
+    nameNode: el('b', { class: 'sr-name', text: 'Requirements' }),
     values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)),
     className: 'smith-data-row smith-requirements',
   });

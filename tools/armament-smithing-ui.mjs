@@ -347,7 +347,7 @@ async function main() {
             foldFontSize:getComputedStyle(document.querySelector('.smith-upgrade-row > summary .sr-name')).fontSize,
           }:null,
           intrinsic:document.querySelector('.smith-intrinsic-stats')?{
-            title:document.querySelector('.smith-intrinsic-stats .smith-data-heading b')?.textContent.trim()||'',
+            title:document.querySelector('.smith-intrinsic-stats .sr-name')?.textContent.trim()||'',
             text:(document.querySelector('.smith-intrinsic-stats')?.textContent||'').replace(/\\s+/g,' ').trim(),
             deltas:[...document.querySelectorAll('.smith-intrinsic-stats .as-statpair')].filter(node=>node.querySelector('.d-from')).map(node=>({
               label:node.querySelector('em')?.textContent.trim()||'',
