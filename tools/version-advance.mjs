@@ -202,7 +202,130 @@ export const advanceSubject = (next, branch, sha) => `version-advance: ${next} a
 export const advanceMessage = (next, branch, sha, event) =>
   `${advanceSubject(next, branch, sha)}\n\nVersion-Advance-Event: ${event.id} ${event.timestamp}\n`;
 
-function main(argv, root = ROOT) {
+/** A run that must stop and write nothing: the feed cannot be trusted this time. */
+export class FailClosed extends Error {}
+
+/**
+ * The events of one ref newer than the cursor, paged newest-first until the cursor is reached.
+ * `fetchPage(ref, token)` -> {events, next}; `next` is null on the last page. The ref that owns
+ * the cursor (cursor.branch) must show the cursor id before the feed runs out, else FailClosed
+ * (a feed that lost the cursor would silently drop cuts). The other ref stops at the first event at
+ * or before the cursor, or at the end of the feed. With no cursor it stops at SINCE.
+ */
+export async function collectEvents({ fetchPage, ref, cursor, since = SINCE }) {
+  const floor = cursor ?? { id: '0', timestamp: since };
+  const owns = Boolean(cursor) && `refs/heads/${cursor.branch}` === ref;
+  const out = [];
+  let token = null;
+  for (;;) {
+    const page = await fetchPage(ref, token);
+    out.push(...page.events);
+    const reached = page.events.some((e) => cmpEvents(e, floor) <= 0);
+    if (owns) {
+      if (page.events.some((e) => String(e.id) === String(cursor.id))) return out;
+      if (reached) throw new FailClosed(`the cursor event ${cursor.id} is not in the feed of ${ref}`);
+    } else if (reached) return out;
+    if (!page.next) {
+      if (owns) throw new FailClosed(`the feed of ${ref} ran out before the cursor event ${cursor.id}`);
+      return out;
+    }
+    token = page.next;
+  }
+}
+
+/** Wait (backoff) until the feed of `ref` lists `after`, else FailClosed. */
+export async function awaitLag({ fetchPage, ref, after, sleep, tries = 5, firstDelayMs = 10000 }) {
+  for (let i = 0; i < tries; i++) {
+    const page = await fetchPage(ref, null);
+    if (page.events.some((e) => e.after === after)) return;
+    if (i < tries - 1) await sleep(firstDelayMs * 2 ** i);
+  }
+  throw new FailClosed(`the activity feed of ${ref} does not list ${after} after ${tries} tries (feed lag)`);
+}
+
+/**
+ * Everything one run decides, with the I/O injected: the cuts to apply, oldest first. Throws
+ * FailClosed (and the caller writes nothing) on feed lag or a lost cursor. `trigger` is
+ * {ref, after} for a push event, null for a dispatch.
+ */
+export async function planRun({ fetchPage, messages, trigger = null, isBotOnly, sleep, since = SINCE }) {
+  const cursor = latestRecord(parseRecords(messages));
+  if (trigger && trigger.after && !ZERO_SHA.test(trigger.after)) await awaitLag({ fetchPage, ref: trigger.ref, after: trigger.after, sleep });
+  const events = [];
+  for (const ref of ['refs/heads/release', 'refs/heads/main']) events.push(...await collectEvents({ fetchPage, ref, cursor, since }));
+  return planCuts(events, cursor, isBotOnly);
+}
+
+function gh(args, input) {
+  return execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 1 << 28, input });
+}
+
+/** The real feed page: `gh api -i`, the next page from the Link header. */
+function realFetchPage(repo) {
+  return async (ref, token) => {
+    const path = token ?? `repos/${repo}/activity?ref=${encodeURIComponent(ref)}&per_page=100`;
+    const raw = gh(['api', '-i', path]);
+    const at = raw.search(/\r?\n\r?\n/);
+    const head = raw.slice(0, at);
+    const body = raw.slice(at).trim();
+    const link = /^link:.*<([^>]+)>;\s*rel="next"/im.exec(head);
+    return { events: JSON.parse(body || '[]'), next: link ? link[1].replace(/^https:\/\/[^/]+\//, '') : null };
+  };
+}
+
+/** True when every commit in before..after is a github-actions[bot] one. Fails loudly, never guesses. */
+function realIsBotOnly(repo, root) {
+  const git = (...a) => execFileSync('git', a, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
+  const authorsOf = (e) => {
+    try { return git('log', '--format=%an', `${e.before}..${e.after}`); } catch { /* fall through */ }
+    try {
+      git('fetch', '-q', 'origin', e.before);
+      git('fetch', '-q', 'origin', e.after);
+      return git('log', '--format=%an', `${e.before}..${e.after}`);
+    } catch { /* fall through */ }
+    return gh(['api', `repos/${repo}/compare/${e.before}...${e.after}`, '--jq', '.commits[].commit.author.name']);
+  };
+  return (e) => {
+    const authors = authorsOf(e).split('\n').filter(Boolean);
+    return authors.every((a) => a === 'github-actions[bot]');
+  };
+}
+
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function plan(root) {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo) throw new Error('GITHUB_REPOSITORY is required for --plan');
+  const messages = execFileSync('git', ['log', '--format=%B%x1e'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\x1e');
+  const trigger = process.env.EVENT_NAME === 'push' ? { ref: process.env.EVENT_REF, after: process.env.EVENT_AFTER } : null;
+  try {
+    const cuts = await planRun({ fetchPage: realFetchPage(repo), messages, trigger, isBotOnly: realIsBotOnly(repo, root), sleep: sleepMs });
+    for (const c of cuts) console.log(`${c.id} ${c.timestamp} ${c.branch} ${c.after}`);
+    return 0;
+  } catch (error) {
+    if (!(error instanceof FailClosed)) throw error;
+    console.error(`::error::version-advance: ${error.message}; nothing was written.`);
+    return 1;
+  }
+}
+
+async function main(argv, root = ROOT) {
+  if (argv.includes('--plan')) return plan(root);
+  const de = argv.indexOf('--done-event');
+  if (de >= 0) {
+    const messages = execFileSync('git', ['log', '--format=%B%x1e'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\x1e');
+    return recordsEvent(messages, argv[de + 1] || '') ? 0 : 1;
+  }
+  const mg = argv.indexOf('--message');
+  if (mg >= 0) {
+    const [next, branch, sha, id, timestamp] = argv.slice(mg + 1);
+    if (!/^\d+\.\d+\.\d+$/.test(next || '') || !/^(release|main)$/.test(branch || '') || !/^[0-9a-f]{7,40}$/.test(sha || '') || !/^\d+$/.test(id || '') || !timestamp) {
+      console.error('version-advance: --message wants <triple> <release|main> <sha> <event id> <timestamp>');
+      return 2;
+    }
+    process.stdout.write(advanceMessage(next, branch, sha, { id, timestamp }));
+    return 0;
+  }
   const d = argv.indexOf('--done');
   if (d >= 0) {
     const subjects = execFileSync('git', ['log', '--format=%s'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
@@ -260,6 +383,8 @@ function main(argv, root = ROOT) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  try { process.exit(main(process.argv.slice(2), process.env.VERSION_ADVANCE_ROOT || ROOT)); }
-  catch (error) { console.error(`version-advance: ${error.message}`); process.exit(2); }
+  main(process.argv.slice(2), process.env.VERSION_ADVANCE_ROOT || ROOT).then(process.exit, (error) => {
+    console.error(`version-advance: ${error.message}`);
+    process.exit(2);
+  });
 }

@@ -277,3 +277,43 @@ test('records: the trailer round-trips and the cursor is the newest by (timestam
   assert.equal(recordsEvent([m1, m2], 8), false);
   assert.equal(cmpEvents({ id: '2', timestamp: '2026-11-02T00:00:00Z' }, { id: '10', timestamp: '2026-11-02T00:00:00Z' }), -1);
 });
+
+// ---- planRun: paging, lag, fail closed -----------------------------------------------------------
+import { FailClosed, collectEvents, planRun } from '../tools/version-advance.mjs';
+
+/** A fake feed: per-ref arrays (any order); pages of `size` newest-first. */
+const feedOf = (events, size = 100) => async (ref, token) => {
+  const all = events.filter((e) => e.ref === ref).sort((a, b) => cmpEvents(b, a));
+  const at = token ? Number(token) : 0;
+  return { events: all.slice(at, at + size), next: at + size < all.length ? String(at + size) : null };
+};
+const msgFor = (e, branch = 'release') => advanceMessage('0.7.3', branch, 'a'.repeat(40), e);
+
+test('planRun: pages past 100 events to the cursor; a bot-only event aged past a page still skipped', async () => {
+  const events = [ev(1, 'release', 'a', 'bot'), ...Array.from({ length: 250 }, (_, i) => ev(i + 2, 'main', `m${i}`, `m${i + 1}`, 'push', `2026-11-02T01:${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}Z`))];
+  const cuts = await planRun({ fetchPage: feedOf(events, 100), messages: [], isBotOnly: (e) => e.after === 'bot', sleep: async () => {} });
+  assert.equal(cuts.length, 250);
+  const cursor = events[100];
+  const after = await planRun({ fetchPage: feedOf(events, 100), messages: [msgFor(cursor, 'main')], isBotOnly: noBots, sleep: async () => {} });
+  assert.ok(after.every((c) => cmpEvents(c, cursor) > 0));
+});
+
+test('planRun: no record yet stops at SINCE; a lost cursor fails closed', async () => {
+  const old = ev(1, 'release', 'a', 'b', 'push', '2026-10-01T00:00:00Z');
+  const cuts = await planRun({ fetchPage: feedOf([old, ev(2, 'release', 'b', 'c')], 1), messages: [], isBotOnly: noBots, sleep: async () => {} });
+  assert.deepEqual(cuts.map((c) => c.id), ['2']);
+  const lost = { id: '77', timestamp: '2026-11-02T00:00:50Z' };
+  await assert.rejects(planRun({ fetchPage: feedOf([ev(2, 'release', 'b', 'c')]), messages: [msgFor(lost)], isBotOnly: noBots, sleep: async () => {} }), FailClosed);
+  await assert.rejects(collectEvents({ fetchPage: feedOf([ev(60, 'release', 'b', 'c')]), ref: 'refs/heads/release', cursor: { ...lost, branch: 'release' } }), FailClosed);
+});
+
+test('planRun: feed lag retries with backoff then fails closed; it recovers when the event shows up', async () => {
+  const sleeps = [];
+  const e = ev(2, 'release', 'b', 'c');
+  await assert.rejects(planRun({ fetchPage: feedOf([]), messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async (ms) => sleeps.push(ms) }), FailClosed);
+  assert.deepEqual(sleeps, [10000, 20000, 40000, 80000]);
+  let calls = 0;
+  const lagging = async (ref, t) => (++calls < 3 ? { events: [], next: null } : feedOf([e])(ref, t));
+  const cuts = await planRun({ fetchPage: lagging, messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {} });
+  assert.deepEqual(cuts.map((c) => c.id), ['2']);
+});
