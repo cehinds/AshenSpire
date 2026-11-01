@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Focus discount is for magic cards** ([#2465](https://github.com/cehinds/AshenSpire/pull/2465), `0.7.3.8`). A Focus armament now lowers the Mana cost of magic (spell) cards only; other cards that cost Mana pay full price.
+- **Focus discount is for magic cards** ([#2465](https://github.com/cehinds/AshenSpire/pull/2465), `0.7.3.10`). A Focus armament now lowers the Mana cost of magic (spell) cards only; other cards that cost Mana pay full price.
 - **Hit receipts list each Precision stat** ([#2461](https://github.com/cehinds/AshenSpire/pull/2461), `0.7.3.8`). The single "stat mix" line in a hit receipt is now one line per stat (DEX, STR, INT, WIS) plus level, with a rounding line so the parts add up to the total.
 - **Flowing Transition shows Prepared in Core** ([#2458](https://github.com/cehinds/AshenSpire/pull/2458), `0.7.3.6`). In the Core profile, Flowing Transition's stance pick that read "Casting" now reads "Prepared", matching the stance it enters.
 - **AI disclosure network note updated** ([#2459](https://github.com/cehinds/AshenSpire/pull/2459), `0.7.3.4`). The disclosure's network note no longer names the removed LAN co-op file and now lists every network site in the game, none of them AI.
