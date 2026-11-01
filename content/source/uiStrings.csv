@@ -46,6 +46,11 @@ combat.protection.wardBlock,,Warded Block,"The part of this turn's Block raised 
 # ---- optional defensive reactions and public combat receipts --------------
 combat.log.title,,Combat log,,
 combat.log.roll,,{what}: {total} vs {dc} · {verdict},,
+combat.log.rollNatural,,{what}: {total} vs {dc} · {natural} · {verdict},,
+combat.roll.nat1,,nat 1,,
+combat.roll.nat20,,nat 20,,
+combat.roll.natural1,,natural 1 misses,,
+combat.roll.natural20,,natural 20 hits,,
 combat.roll.hit,,lands,,
 combat.roll.miss,,miss,,
 combat.roll.success,,success,,

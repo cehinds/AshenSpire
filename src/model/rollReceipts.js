@@ -26,7 +26,13 @@ export function accuracyRollReceipt(event) {
       dcParts: [{ label: 'd20', value: num(event.evasionDie) }, { label: 'Evasion', value: num(event.evasion) }], dc: num(event.evasionTotal) };
   }
   if (event.fixedDefense && finite(event.attackTotal)) {
-    return { ...base, parts: precision, total: num(event.attackTotal), dcParts: [{ label: 'Evasion', value: num(event.evasion) }], dc: num(event.evasionTotal ?? event.evasion) };
+    // The kept die (stanceHit.diceHit, strict natural): a kept 1 always misses and a kept 20 always hits, whatever the total.
+    const kept = mode === 'disadvantage' ? Math.min(...dice) : mode === 'advantage' ? Math.max(...dice) : dice[0];
+    const natural = kept === 1 || kept === 20 ? kept : null;
+    const total = num(event.attackTotal), dc = num(event.evasionTotal ?? event.evasion);
+    // Decided: the natural die overrode what the total alone would have said.
+    const decided = natural != null && (total >= dc) !== (natural === 20);
+    return { ...base, ...(natural ? { note: t(natural === 20 ? 'combat.roll.natural20' : 'combat.roll.natural1') } : {}), ...(decided ? { natural } : {}), parts: precision, total: num(event.attackTotal), dcParts: [{ label: 'Evasion', value: num(event.evasion) }], dc: num(event.evasionTotal ?? event.evasion) };
   }
   if (!finite(event.need)) return null;
   // Legacy: the used die must reach the number Precision and Evasion leave it needing.
@@ -88,4 +94,4 @@ export function evadeRollReceipt(evade) {
 const VERDICT = { accuracy: ['hit', 'miss'], contest: ['success', 'fail'], crit: ['crit', 'noCrit'], perception: ['read', 'unread'] };
 export const rollVerdictWord = (kind, success) => t(`combat.roll.${(VERDICT[kind] || ['success', 'fail'])[success ? 0 : 1]}`);
 /** The compact log line: "Strike: 18 vs 9 · hit". */
-export const rollCompactText = (what, receipt) => t('combat.log.roll', { what, total: Number(receipt.total.toFixed(2)), dc: Number(receipt.dc.toFixed(2)), verdict: rollVerdictWord(receipt.kind, receipt.success) });
+export const rollCompactText = (what, receipt) => t(receipt.natural ? 'combat.log.rollNatural' : 'combat.log.roll', { natural: receipt.natural ? t(receipt.natural === 20 ? 'combat.roll.nat20' : 'combat.roll.nat1') : '', what, total: Number(receipt.total.toFixed(2)), dc: Number(receipt.dc.toFixed(2)), verdict: rollVerdictWord(receipt.kind, receipt.success) });

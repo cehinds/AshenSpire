@@ -158,3 +158,15 @@ test('legacy disadvantage with a natural 20 shows the 20 that hit, with a note',
   assert.match(plain.text, /: 3 vs 17 · miss$/);
   assert.equal(plain.rollReceipt.note, undefined);
 });
+
+test('FixCore natural 1 / 20 that overrode the total shows the natural die in the compact row and the receipt', () => {
+  const miss = one({ type: 'attackMissed', sourceId: 'player', targetId: 'e1', fixedDefense: true, dice: [1], attackTotal: 12, accuracy: 11, evasion: 8, evasionTotal: 8, mode: 'normal' });
+  assert.match(miss.text, /: 12 vs 8 · nat 1 · miss$/);
+  assert.equal(rollReceiptLines(miss.rollReceipt)[0], 'd20 [1] · natural 1 misses');
+  const hit = one({ type: 'attackHit', sourceId: 'player', targetId: 'e1', fixedDefense: true, dice: [20], attackTotal: 7, accuracy: -13, evasion: 15, evasionTotal: 15, mode: 'normal' });
+  assert.match(hit.text, /: 7 vs 15 · nat 20 · lands$/);
+  assert.equal(rollReceiptLines(hit.rollReceipt)[0], 'd20 [20] · natural 20 hits');
+  // A natural die the total already agrees with is not called out in the compact row.
+  const agree = one({ type: 'attackMissed', sourceId: 'player', targetId: 'e1', fixedDefense: true, dice: [1], attackTotal: 3, accuracy: 2, evasion: 9, evasionTotal: 9, mode: 'normal' });
+  assert.match(agree.text, /: 3 vs 9 · miss$/);
+});
