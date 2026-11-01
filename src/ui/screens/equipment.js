@@ -1531,14 +1531,14 @@ export function mountEquipment(host, {
           : { column: key, direction: 'asc' };
         redrawFocus(`.equip-picker-sort[data-sort="${key}"]`);
       });
-      return el('th', { 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
+      return el('th', { role: 'columnheader', 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
     };
-    const thead = el('thead', {}, [el('tr', {}, [
+    const thead = el('thead', { role: 'rowgroup' }, [el('tr', { role: 'row' }, [
       sortHead('name', t('armoury.picker.col.item')),
       sortHead('status', t('armoury.picker.col.status')),
-      el('th', {}, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
+      el('th', { role: 'columnheader' }, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
     ])]);
-    const tbody = el('tbody', {});
+    const tbody = el('tbody', { role: 'rowgroup' });
     let openShown = false;
     for (const r of shown) {
       const open = selectedInventoryKey === r.key;
@@ -1554,12 +1554,12 @@ export function mountEquipment(host, {
       // The cell stays a table cell; its flex layout lives on an inner wrapper.
       // Phones drop the Status column, so the pill also rides under the name.
       const statusPill = () => pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } });
-      const itemCell = el('td', {}, [el('div', { class: 'equip-picker-item' }, [img, el('div', {}, [
+      const itemCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-item' }, [img, el('div', {}, [
         el('strong', { class: 'equip-picker-name' }, [r.name]),
         el('span', { class: 'equip-picker-meta' }, [metaBits.join(' · ')]),
         el('span', { class: 'equip-picker-inline-status' }, [statusPill()]),
       ])])]);
-      const statusCell = el('td', { class: 'equip-picker-status' }, [statusPill()]);
+      const statusCell = el('td', { role: 'cell', class: 'equip-picker-status' }, [statusPill()]);
       const inspect = button({
         label: open ? t('armoury.picker.hide') : t('armoury.action.inspect'),
         className: 'equip-picker-inspect',
@@ -1586,10 +1586,10 @@ export function mountEquipment(host, {
         else act.addEventListener('click', () => requestEquip(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
         actions.push(act);
       }
-      const actionsCell = el('td', {}, [el('div', { class: 'equip-picker-actions' }, actions)]);
+      const actionsCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-actions' }, actions)]);
       // Buttons are taps, not drag handles: keep the row's pointer capture off them.
       actionsCell.addEventListener('pointerdown', (event) => event.stopPropagation());
-      const tr = el('tr', {
+      const tr = el('tr', { role: 'row',
         class: `equip-picker-row is-${r.status}${open ? ' is-open' : ''}`,
         dataset: { itemId: r.id, rowKey: r.key, status: r.status },
       }, [itemCell, statusCell, actionsCell]);
@@ -1603,14 +1603,14 @@ export function mountEquipment(host, {
         const body = r.fits
           ? parts.revealed
           : inventoryReveal(registries, r.row, { holdDuration, registerHold, classModel: layout.cardClasses.armamentItem });
-        const cell = el('td', {}, [body]);
+        const cell = el('td', { role: 'cell' }, [body]);
         cell.colSpan = 3;
-        tbody.append(el('tr', { class: 'equip-picker-detail', dataset: { detailFor: r.key } }, [cell]));
+        tbody.append(el('tr', { role: 'row', class: 'equip-picker-detail', dataset: { detailFor: r.key } }, [cell]));
         setFooterPrimary(footerAction(footerPlans.get(r.key)) || null);
       }
     }
     if (!openShown) setFooterPrimary(null);
-    root.append(el('table', { class: 'equip-picker-table' }, [
+    root.append(el('table', { role: 'table', class: 'equip-picker-table' }, [
       el('caption', { class: 'sr-only' }, [t('armoury.picker.caption', { slot: `${selectedSlot.label} · ${picking.setIndex + 1}` })]),
       thead,
       tbody,
