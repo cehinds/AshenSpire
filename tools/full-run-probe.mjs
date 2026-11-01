@@ -11,9 +11,7 @@
 //
 // THE DOOR. A normal boot of the SOURCE tree (no `?shot=`, so durable
 // localStorage, the startup gate and the real title), served the way
-// `node tools/launch.mjs` serves local play: tools/serve.mjs with its LAN layer
-// on, so the title's /api/lan/info question is answered as on a player's
-// machine. Every step is a trusted CDP pointer press on the control a player
+// `node tools/launch.mjs` serves local play: tools/serve.mjs. Every step is a trusted CDP pointer press on the control a player
 // presses (a hold where the control owes one: End Turn, Continue):
 //
 //   TITLE      the startup gate, then the title's New Game door (slot 1).

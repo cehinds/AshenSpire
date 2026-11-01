@@ -141,7 +141,6 @@ const SCREENS = [
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'victory', query: '?shot=victory', landmark: '.stats-table', state: 'victory' },
   { name: 'history', query: '?shot=history', landmark: '.history .as-row', state: 'history' },
-  { name: 'lobby', query: '?shot=lobby', landmark: '#lb-name', state: 'lobby' },
   { name: 'about', query: '?shot=about', landmark: '.settings-modal .about-ai', state: 'about' },
   // The Custom Climb — a SCREENS entry and NOT an EXCLUDED_STATES line, for the
   // reason written below about the Shrine and the event. `?shot=customrun` is

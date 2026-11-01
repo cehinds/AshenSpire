@@ -65,7 +65,7 @@ import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
-import { grantSmithingReward, smithingPlan, smithingRewardId, smithingRewardPays } from './model/smithing.js';
+import { grantSmithingReward, smithingRewardId, smithingRewardPays } from './model/smithing.js';
 import { applyNodeRefill, refillFlasksAtActChange } from './model/nodeRefill.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
@@ -175,10 +175,7 @@ import { inspectControlCss } from './ui/models/InspectControlModel.js';
 import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, cardShelfCssProperties, restingWidthPx } from './ui/models/CardSizeModel.js';
 import { refreshCardDoorShape } from './ui/components/cardInspection.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
-import { mountLobby } from './ui/screens/lobby.js';
-import { mountCoop } from './ui/screens/coop.js';
 import { mountQuitScreen } from './ui/quitGame.js';
-import { lanInfo } from './net/lan.js';
 import { setCombatPacing } from './ui/animationPace.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
@@ -1167,7 +1164,6 @@ function persist() {
   // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
   stampSkillBonuses(registries, run);
   saves.saveRun(run, rng, activeSlot);
-  sendLanStatus();
 }
 
 // ---- A FAILED AUTOSAVE NEVER UNDOES A LEGAL MOVE (browser storage full) -------
@@ -1250,40 +1246,6 @@ function saveNow({ returnFocusElement = null } = {}) {
     });
     return false;
   }
-}
-
-// ---- Forsaken Together (LAN) -------------------------------------------------
-// The run is server-authoritative (the launcher owns it via tools/session.mjs);
-// the browser is a thin client that renders snapshots and sends intents. Solo
-// play never touches any of this.
-let inCoop = false;
-
-// A no-op in solo (kept so persist() stays simple); the co-op client, not the
-// orchestrator, owns the LAN socket and rendering.
-function sendLanStatus() { /* server-authoritative co-op needs no client push */ }
-function dropLanLink() { inCoop = false; }
-
-function showLobby() {
-  audio.music('title');
-  mountLobby(app, {
-    registries,
-    meta: saves.loadMeta(),
-    defaultSeedString: randomSeedString(),
-    onBack: () => showTitle(),
-    onStart: ({ conn, myId, myIds }) => {
-      inCoop = true;
-      // `meta` because the ACT MAP is now one renderer and the map-zoom
-      // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
-      // is a viewer, and it was opening at a literal while the same player's
-      // solo map honoured their setting.
-      mountCoop(app, {
-        registries, conn, myId, myIds, meta: saves.loadMeta(), readSettings: () => saves.loadMeta().settings || {},
-        bankEnemyKnowledge: saves.bankEnemyKnowledge ? value => saves.bankEnemyKnowledge(value) : null,
-        onSettingsChange: persistSettingsChange,
-        onLeave: () => showTitle(),
-      });
-    },
-  });
 }
 
 function randomSeedString() {
@@ -1933,7 +1895,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   resetArmouryTraySession();
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
-  dropLanLink(); // a LAN session spans one run; back at the title it's over
   if (startupGatePending && !skipStartup) {
     showStartupGate();
     return;
@@ -1979,7 +1940,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       const empty = slots.find((s) => !s.summary);
       showCustomRun(empty ? empty.slot : 1);
     },
-    onLan: showLobby,
     artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
@@ -2023,11 +1983,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       }),
     });
   }
-  // Forsaken Together needs the launcher's server behind the page.
-  lanInfo().then((info) => {
-    const btn = app.querySelector('#lan-play');
-    if (info && btn) btn.hidden = false;
-  });
 }
 
 function showProfile() {
@@ -2340,7 +2295,6 @@ function quitGame() {
   // Use the existing save failure/retry door; a failed save must keep the run.
   if (run && saveNow({ returnFocusElement: document.activeElement }) === false) return;
   closeOverlay();
-  dropLanLink();
   audio.stopMusic();
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
@@ -3095,7 +3049,7 @@ function leaveLegacyDungeon() {
   if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
   delete run.legacyDungeon;
   if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
-    audio.music('victory'); sendLanStatus({ victory: true });
+    audio.music('victory');
     return showFinishedRun(true);
   }
   if (run.journey) { persist(); showMap(); } else advanceAct();
@@ -3517,7 +3471,6 @@ async function onCombatEnd(result, combat, enc) {
     audio.stopMusic();
     sfx.play('youDied');
     run.hp = 0;
-    sendLanStatus({ dead: true });
     if (skillProgression) {
       run.combatEntered = null;
       return beginGameProfileReward({ after: 'defeat', progression, noticeOnly: true });
@@ -3566,7 +3519,6 @@ async function onCombatEnd(result, combat, enc) {
     if (!run.legacyDungeon && ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn()))) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
-      sendLanStatus({ victory: true });
       return showFinishedRun(true);
     }
     // Act boss down: boss rewards, then the climb continues.
@@ -4388,173 +4340,6 @@ function poseFxShowcase() {
   }
 }
 
-// Co-op screenshot states (?shot=coop|coopmap): mount the LAN thin client with
-// a canned server snapshot through a stub socket — no server/second player
-// needed — so the co-op board/map can be photographed like the solo shots.
-function coopStubMount(snapshot, myId, myIds = null) {
-  const sent = [];
-  window.__coopSentForShot = sent;
-  const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
-  mountCoop(app, {
-    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(), readSettings: () => saves.loadMeta().settings || {},
-    onSettingsChange: persistSettingsChange,
-    onLeave() {},
-  });
-  if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
-  window.__coopSnapshotForShot = snapshot;
-  window.__receiveCoopSnapshotForShot = next => stub._h.onMessage({ t: 'state', snapshot: next });
-}
-function coopCombatShot() {
-  const hand = ['strike', 'rallyingBanner', 'defend', 'defend', 'stomp'].map((cardId, i) => ({ instanceId: `h${i}`, cardId, upgraded: i === 4 }));
-  const party = [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 3, maxStamina: 3, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
-  ];
-  const snapshot = {
-    actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
-    // THE SEAT, because the real host sends it (tools/session.mjs snapshot()).
-    // A canned snapshot that omits a field the producer sends is how a harness
-    // goes green about a screen no party can actually see — the exact trap the
-    // `columns` note on this shot's map sibling records.
-    seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
-    scene: {
-      kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
-      enemies: [
-        { id: 'e1', enemyId: 'blightHound', hp: 13, maxHp: 30, block: 0, alive: true, intent: { kind: 'attack', moveId: 'bite', damage: 6, hits: 1, delayed: false }, statuses: { bleed: { meter: { value: 4, max: 12 } } }, poiseMeter: { value: 4, max: 10 }, performedMoves: ['bite', 'howl'] },
-        { id: 'e2', enemyId: 'blightHound', hp: 30, maxHp: 30, block: 5, alive: true, intent: { kind: 'block', moveId: 'guard', block: 5 }, statuses: {}, poiseMeter: { value: 0, max: 10 }, performedMoves: ['bite'] },
-        { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 }, performedMoves: [] },
-      ],
-      players: [
-        { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 3, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, exhaustCount: 1, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
-        { id: 'p2', hp: 84, maxHp: 84, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, block: 0, energy: 3, energyMax: 3, connected: true, alive: true, ended: true, statuses: {}, stanceId: null, hand: [], drawCount: 6, discardCount: 1, exhaustCount: 0, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
-      ],
-    },
-    party,
-  };
-  if (shotParams.get('shotArcane') === 'matrix') {
-    const [locked, immune] = snapshot.scene.enemies;
-    locked.arcaneExposure = {
-      mode: 'configured', threshold: 8, value: 0, buildupMultiplier: 1,
-      resetMode: 'zero', overflowPolicy: 'discard', lockPolicy: 'whileMagicVulnerable',
-      onBreak: { status: 'magicVulnerable', value: 25, duration: 2 },
-    };
-    locked.statuses.magicVulnerable = { stacks: 25, duration: 2 };
-    immune.arcaneExposure = { mode: 'immune' };
-    snapshot.scene.events = [
-      { type: 'arcaneBreak', targetId: locked.id, status: 'magicVulnerable', value: 25, duration: 2 },
-      { type: 'arcaneExposureRefused', targetId: immune.id, reason: 'immune', school: 'magic', attempted: 1 },
-    ];
-  }
-  return snapshot;
-}
-// `?shot=coopmap[&shotWalk=N]` — the co-op act map, at the doors or MID-CLIMB.
-//
-// `shotWalk` is the same pose `?shotAt` / `?shotWalk` give the solo map, and it
-// is here for the same reason those exist: every co-op map measurement this repo
-// has taken was taken at the ENTRANCE ROW, because that was the only co-op map
-// position anything could open. That is why nobody noticed the co-op map never
-// drew `cursorId` — at the doors there IS no current node, so the missing mark
-// was invisible to every instrument and to every screenshot.
-//
-// The walk is the solo one's, deliberately not a second algorithm: from the
-// lowest-numbered entrance, take the lowest-numbered `next` each step. It uses
-// the graph's own edges, so a pose this produces is a pose a party could
-// actually be in. Running out of graph is LOUD.
-function coopMapShot(steps = 0) {
-  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
-  const g = run.mapGraph;
-  const nodeType = (n) => (n.type === 'event' ? 'unknown' : n.type);
-  let cursorId = null;
-  let reachableIds = g.startIds.slice();
-  let floor = 0;
-  if (steps > 0) {
-    let id = [...g.startIds].sort()[0];
-    for (let i = 1; i < steps; i++) {
-      const next = [...(g.nodes[id].next || [])].sort();
-      if (!next.length) throw new Error(`?shotWalk=${steps}: this act runs out at step ${i} (${id} has nowhere to go). The boss is the last node; ask for fewer steps.`);
-      id = next[0];
-    }
-    cursorId = id;
-    floor = g.nodes[id].floor;
-    reachableIds = [...(g.nodes[id].next || [])];
-  }
-  return {
-    actNumber: 1, floor, seedString: 'SHOWCASE', endless: false,
-    // The seat the plate names, as the real host sends it.
-    seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
-    // Fenn has already voted; Wren (you) is still deciding.
-    scene: { kind: 'map', votes: { p2: reachableIds[1] || reachableIds[0] } },
-    // THE PARTY'S POSITION, and it has always been on the real snapshot
-    // (tools/session.mjs) — the client just never drew it.
-    cursorId,
-    reachableIds,
-    map: { floors: g.floors, columns: g.columns, startIds: g.startIds, bossId: g.bossId, bossIds: g.bossIds,
-      nodes: Object.values(g.nodes).map((n) => ({ id: n.id, type: nodeType(n), floor: n.floor, col: n.col, next: n.next,
-        ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })) },
-    party: [
-      { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, catchupQueue: [] },
-      { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, catchupQueue: [] },
-    ],
-  };
-}
-
-function coopShotParty() {
-  return [
-    { id: 'p1', name: 'Wren', classId: 'starseer', connected: true, alive: true, hp: 61, maxHp: 72, cinders: 45, deckSize: 12, relics: 1, flasks: 1, catchup: 0, catchupQueue: [] },
-    { id: 'p2', name: 'Fenn', classId: 'reaver', connected: true, alive: true, hp: 84, maxHp: 84, cinders: 30, deckSize: 10, relics: 1, flasks: 0, catchup: 0, catchupQueue: [] },
-  ];
-}
-function coopRewardShot() {
-  return {
-    actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
-    seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
-    scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' } } },
-    party: coopShotParty(),
-  };
-}
-function coopShrineShot() {
-  // A real host-authored Smithing view, not a hand-built client fixture. The
-  // ephemeral shot run crosses the same creation/stamping door as play, owns
-  // exactly one Stone, and the modal receives the host plan it would receive
-  // over the session wire. Confirm still sends intent only through the stub.
-  newRun({ classId: 'reaver', seedString: 'SHOWCASE', slot: 1 });
-  run.smithingStones = 1;
-  const party = coopShotParty();
-  party[0] = {
-    ...party[0],
-    classId: run.class,
-    hp: run.hp,
-    maxHp: run.maxHp,
-    cinders: run.cinders,
-    smithingStones: run.smithingStones,
-    itemUpgradeLevels: { ...(run.itemUpgradeLevels || {}) },
-    armamentLevels: { ...run.armamentLevels },
-    deckSize: run.deck.length,
-  };
-  return {
-    actNumber: 1,
-    floor: 5,
-    seedString: 'SHOWCASE',
-    endless: false,
-    scene: {
-      kind: 'shrine',
-      done: {},
-      smithing: { p1: smithingPlan(registries, run) },
-      receipts: {},
-    },
-    party,
-  };
-}
-function coopCatchupShot() {
-  const party = coopShotParty();
-  party[0].catchup = 2;
-  party[0].catchupQueue = [
-    { type: 'reward', act: 1, floor: 2, offer: { pool: 'normal', cardIds: ['guardCounter', 'rend', 'gildedOath'], relicId: 'forsakenMedallion' } },
-    { type: 'treasure', act: 1, floor: 3, relicId: 'forsakenMedallion' },
-  ];
-  return { actNumber: 1, floor: 6, seedString: 'SHOWCASE', endless: false, scene: { kind: 'map' }, reachableIds: [], map: null, party };
-}
-
 // Dev-only float probe (#69). Screenshot modes are already dev-only, and this
 // hands the harness the REAL floatNum so a clipping assertion measures the
 // shipped path — including the multi-codepoint strings, where any width GUESS
@@ -5258,22 +5043,6 @@ if (shotState === 'combat-test') {
     else startFight(node.type === 'elite' ? 'elite' : 'normal', node.id);
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
-} else if (shotState === 'coop') {
-  // `&shotSeats=2`: couch co-op, both canned seats on this one screen (Tab
-  // switches the active seat), so a probe can drive a seat switch.
-  coopStubMount(coopCombatShot(), 'p1', shotParams.get('shotSeats') === '2' ? ['p1', 'p2'] : null);
-} else if (shotState === 'coopmap') {
-  const w = shotParams.get('shotWalk');
-  if (w != null && !(Number.isInteger(Number(w)) && Number(w) >= 1)) {
-    throw new Error(`?shotWalk=${w}: needs a positive whole number of steps. A silent fallback would photograph a different map than the one asked for.`);
-  }
-  coopStubMount(coopMapShot(w == null ? 0 : Number(w)), 'p1');
-} else if (shotState === 'coopreward') {
-  coopStubMount(coopRewardShot(), 'p1');
-} else if (shotState === 'coopshrine') {
-  coopStubMount(coopShrineShot(), 'p1');
-} else if (shotState === 'coopcatchup') {
-  coopStubMount(coopCatchupShot(), 'p1');
 } else if (shotState === 'compendium') {
   // A ?shot= STATE, AND THAT IS THE POINT (Marina's condition on #78, and Rune's
   // census). tools/release-shots.mjs derives its denominator from the states
@@ -5358,11 +5127,6 @@ if (shotState === 'combat-test') {
   saves.recordResult({ victory: false, className: 'Starseer', act: 1, floor: 4, fightsWon: 3, seed: 'GOLDBOUGH' });
   saves.recordResult({ victory: false, className: 'Reaver', act: 2, floor: 7, fightsWon: 6, seed: 'ASHFALL', custom: true, ascension: 2 });
   showHistory();
-} else if (shotState === 'lobby') {
-  // Forsaken Together's browse view. No launcher stands behind a ?shot= boot,
-  // so the fire list stays at "Scanning…" — which is the state a player who
-  // opened the page without run.bat sees, and the one worth photographing.
-  showLobby();
 } else if (shotState === 'about') {
   // Settings → About, opened through the real door: the category rides in
   // the profile the way a player's last-chosen tab does (settings.js CAT_KEY),

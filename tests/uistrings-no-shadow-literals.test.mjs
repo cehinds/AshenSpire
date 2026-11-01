@@ -56,14 +56,12 @@ const ALLOWED = [
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
   ['src/ui/screens/settings.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
-  ['src/ui/screens/coop.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
   ['src/ui/components/overlay.js', 'The', 'declared-tab diagnostic sentence; not a status value decay sentence'],
   ['src/ui/models/LocalServiceModel.js', 'The', 'relic-denied rest service sentence; not a status value decay sentence'],
   ['src/ui/models/PossessionVariantModel.js', 'The', 'missing resource-tier authoring diagnostic; not a status value decay sentence'],
-  ['src/ui/screens/coop.js', 'The', 'scene spoils fallback article and relic-denied rest sentence; neither describes status value decay'],
   ['src/ui/screens/equipment.js', 'The', 'declared-view layout diagnostic sentence; not a status value decay sentence'],
   ['src/ui/screens/rest.js', 'The', 'relic-denied rest sentence; not a status value decay sentence'],
   ['src/ui/screens/settings.js', 'The', 'settings section tooltip fallback sentence; not a status value decay sentence'],
@@ -86,7 +84,6 @@ const ALLOWED = [
   ['src/ui/screens/equipment.js', 'Consumable', 'an inventory category id compared against row data; not copy'],
   ['src/ui/screens/deckEditor.js', 'disabled', 'DOM attribute name; not reaction switch copy'],
   ['src/ui/audio.js', 'disabled', 'stored music status value; not the optional reaction switch face'],
-  ['src/ui/components/coopProgressionDoor.js', 'disabled', 'DOM property key; not reaction switch copy'],
   ['src/ui/components/holdconfirm.js', 'disabled', 'stored hold mode; not reaction switch copy'],
   ['src/ui/components/optionDecision.js', 'disabled', 'stored hold mode; not reaction switch copy'],
   ['src/ui/models/CombatToolsModel.js', 'Small', 'stable log size id; its rendered face reads combat.log.size.small'],
@@ -95,9 +92,6 @@ const ALLOWED = [
   ['src/ui/models/WireframeChoiceModel.js', 'Medium', 'wireframe preview size, separate from the combat log size'],
   ['src/ui/screens/combat.js', 'disabled', 'HTML disabled attribute; not reaction switch copy'],
   ['src/ui/screens/combat.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
-  ['src/ui/screens/coop.js', 'disabled', 'HTML disabled attribute; not reaction switch copy'],
-  ['src/ui/screens/coop.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
-  ['src/ui/components/coopUpcastControl.js', 'Upcast', 'ordinary hand-card default label, separate from the reaction option tier sentence'],
   ['src/ui/screens/settings.js', 'enabled', 'stored prologue property key; not reaction switch copy'],
   ['src/ui/screens/worldAtlas.js', 'disabled', 'HTML disabled attributes; not reaction switch copy'],
   ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
@@ -156,7 +150,6 @@ const ALLOWED = [
   ['src/ui/models/SmithSelectionModel.js', 'Discard', 'a card upgrade\'s discard value ("Discard +1"), not the combat Discard pile'],
   ['src/ui/screens/worldAtlas.js', 'Map zoom', 'the local map\'s live zoom readout, not the Settings row that sets the world map\'s default zoom'],
   ['src/ui/screens/combat.js', 'Poise', 'the stat meter and resistance sentence name the Poise stat; statsPreview.overview.poise labels one preview line'],
-  ['src/ui/screens/coop.js', 'Poise', 'the stat meter names the Poise stat, not the Stats preview line'],
   ['src/ui/screens/customize.js', 'Poise', 'character creation\'s Poise stat card, not the Stats preview line'],
   ['src/ui/components/creationCards.js', 'Poise', 'character creation\'s Poise chip, not the Stats preview line'],
   ['src/ui/components/equipmentCard.js', 'Requires', 'parses an attribute requirement string prefix from the card model; not the creation feat lock copy'],
@@ -293,7 +286,7 @@ test('every allowance still matches something, and gives a reason', () => {
 
 test('shared controls and hidden intent copy remain protected after promotion', () => {
   const ids = frozenMigrationIds('common-controls');
-  assert.equal(ids.length, 29);
+  assert.equal(ids.length, 27);
   for (const id of ids) {
     assert.ok(permanentMigratedIds().has(id), id);
     assert.ok(uiStrings.some(row => row.id === id), id);
@@ -306,8 +299,8 @@ test('shared controls and hidden intent copy remain protected after promotion', 
 
 test('all Core-default migration rows and semantic allowances survive an empty branch delta', () => {
   const frozen = frozenMigrationIds('core-profile');
-  assert.equal(frozen.length, 99, 'retain all97 added rows and both migrated Deck Editor rows from PR2023');
-  assert.equal(new Set(frozen).size, 99, 'each migration row is frozen once');
+  assert.equal(frozen.length, 97, 'retain all95 added rows and both migrated Deck Editor rows from PR2023');
+  assert.equal(new Set(frozen).size, 97, 'each migration row is frozen once');
   const permanent = permanentMigratedIds();
   for (const id of frozen) {
     assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);
