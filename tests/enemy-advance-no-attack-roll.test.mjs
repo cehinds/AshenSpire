@@ -60,9 +60,8 @@ test('a player Advance card still moves the pair and rolls no hit', () => {
   const combat = fight(7, 'wanderingSoldier'), enemy = combat.enemies[0];
   const key = rangePairKey('player:player', enemy.rangeActorKey || `enemy:${enemy.id}`);
   combat.rangeState.engagements[key] = 2;
-  const card = Object.values(combat.piles).flat().find(row => row.cardId === 'core.advance');
-  if (!card) return; // the class deck may not own one; the engine path is the same as the enemy test above
-  for (const pile of Object.values(combat.piles)) { const i = pile.indexOf(card); if (i >= 0) pile.splice(i, 1); }
+  // The Reaver starter deck owns no Advance, so put one in hand rather than skip the player path.
+  const card = { instanceId: 'advance-probe', cardId: 'core.advance', upgraded: false };
   combat.piles.hand.push(card);
   const begin = combat.eventLog.length;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
