@@ -440,18 +440,20 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
     }
   }
   const notes = [];
-  const g = doRegen(top);
-  if (g.exit !== 0) return { exit: g.exit, verdict: 'regen-failed', branch, resolved, failed: g.failed, tail: g.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
+  // Restamp the Markdown first (no projection): a clean merge can leave our receipt's build below
+  // dev's, which about-changelog --write (the first regen step) would reject before restamp ran.
   const prNumber = pr || detectPr([], top);
   if (prNumber) {
     try {
-      const r = doRestamp({ root: top, pr: prNumber });
+      const r = doRestamp({ root: top, pr: prNumber, noRegen: true });
       if (r.exit !== 0) return { exit: r.exit, verdict: 'restamp-failed', branch, resolved, failed: r.failed, tail: r.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
       notes.push(`restamped #${prNumber} ${r.from} -> ${r.to}`);
     } catch (error) {
       notes.push(`restamp skipped: ${error.message}`);
     }
   } else notes.push('restamp skipped: no PR known (pass --pr N)');
+  const g = doRegen(top);
+  if (g.exit !== 0) return { exit: g.exit, verdict: 'regen-failed', branch, resolved, failed: g.failed, tail: g.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
   // A restamped receipt is moved to the top of its date group, so it is checked, not exempted.
   const verify = runChecks([
     { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order'] },

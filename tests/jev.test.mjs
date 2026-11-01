@@ -496,6 +496,21 @@ test('devmerge: conflicting generated file takes dev side, conflicting CHANGELOG
   } finally { f.done(); }
 });
 
+test('devmerge restamps the Markdown (noRegen) before regen projects the changelog (Codex order repro)', () => {
+  const f = fixture({ 'CHANGELOG.md': CL_BASE, 'a.txt': 'a\n' });
+  try {
+    f.onDev(w => { f.put(w, 'a.txt', 'dev\n'); });
+    f.onFeature(w => { f.put(w, 'b.txt', 'mine\n'); });
+    const calls = [];
+    const r = devmerge({ base: 'dev', pr: 2, cwd: f.work, deps: OK_DEPS({
+      restamp: (o) => { calls.push(['restamp', o.noRegen === true]); return { exit: 0, from: 'a', to: 'b' }; },
+      regen: () => { calls.push(['regen']); return { exit: 0, steps: [] }; },
+    }) });
+    assert.equal(r.exit, 0, JSON.stringify(r));
+    assert.deepEqual(calls, [['restamp', true], ['regen']]);
+  } finally { f.done(); }
+});
+
 test('devmerge: a conflict in a non-generated file aborts the merge and exits 2', () => {
   const f = fixture({ 'src/model/combat.js': 'base\n' });
   try {
