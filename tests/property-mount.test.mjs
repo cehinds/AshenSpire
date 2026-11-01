@@ -16,8 +16,9 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { mountProperties, unmountProperties } from '../src/engine/properties.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
-const REG = createRegistries(contentBundle);
+const REG = createRegistries(withWeaponRack(contentBundle));
 const EXPOSURE = contentBundle.balance.exposure;
 const SCEPTRE_KEY = 'armament:armament/boneSceptre';
 
