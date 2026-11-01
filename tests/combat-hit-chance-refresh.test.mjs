@@ -177,7 +177,7 @@ test('standalone enemy render refreshes immediately unless its caller owns the f
   const calls = [], context = {
     combat: { enemies: [] }, enemyFrames: new Map(), selected: null, selectedFlask: null,
     $: () => ({}), targetLayer: () => ({ eligibleIds: [] }),
-    syncHitChances: () => calls.push('odds'), applyTargetLayer: () => calls.push('targets'),
+    syncHitChances: () => calls.push('odds'), applyTargetLayer: () => calls.push('targets'), syncWeaknessDiscovery: () => {},
   };
   runInNewContext(source.slice(start, end + 4) + '\nglobalThis.renderEnemies = renderEnemies;', context);
   context.renderEnemies(); assert.deepEqual(calls, ['odds', 'targets']);
