@@ -41,8 +41,17 @@ const totalOf = (effects, op) => {
   return index < 0 ? 0 : effects[index].amount * hitsOf(effects[index]);
 };
 
+// The largest amount from `plain` up to its rank-up scale (limits.scale, 1 for a blacksmith upgrade) that `ok`
+// still allows, 0 when even the plain amount is refused. A rank-up bonus is bigger than a normal upgrade
+// (owner, 2026-11-01), yet never past the guards a normal upgrade keeps.
+const biggest = (plain, scale, ok) => {
+  for (let n = Math.max(plain, Math.round(plain * (scale > 1 ? scale : 1))); n >= plain; n -= 1) if (ok(n)) return n;
+  return 0;
+};
+
 function options(base, current, applied, limits) {
   const type = base.type;
+  const scale = Number.isFinite(limits.scale) ? limits.scale : 1;
   const restricted = RESTRICTED_TYPES.has(type);
   const found = {};
   const spMin = Math.max(1, limits.minStaminaCost | 0);
@@ -51,13 +60,19 @@ function options(base, current, applied, limits) {
   // cost: once per card; SP never below 1, MP never below 1, cost tracks staminaCost.
   if (!applied.some((s) => s.k === 'cost')) {
     const pools = [];
-    if (Number.isInteger(current.staminaCost) && current.staminaCost - 1 >= spMin && current.cost === current.staminaCost
-      && current.cost - 1 >= actionMin
+    const by = {};
+    if (Number.isInteger(current.staminaCost) && current.cost === current.staminaCost) {
       // a multi-hit card pays at least its hit floor, so a cheaper printed SP would buy nothing
-      && hitFloor(current, currentHits(current.effects || [])) <= current.staminaCost - 1) pools.push('sp');
+      const floor = hitFloor(current, currentHits(current.effects || []));
+      by.sp = biggest(1, scale, (n) => current.staminaCost - n >= spMin && current.cost - n >= actionMin && floor <= current.staminaCost - n);
+      if (by.sp) pools.push('sp');
+    }
     // A cantrip or basic costs no Mana (owner, 2026-11-01), so a Mana cut is pointless on one, or on a copy that becomes one.
-    if (Number.isInteger(current.manaCost) && current.manaCost >= 2 && !basicDef(base) && !tagsOf(current).includes(RANK_DOWN_TAG)) pools.push('mp');
-    if (pools.length) found.cost = { pools };
+    if (Number.isInteger(current.manaCost) && !basicDef(base) && !tagsOf(current).includes(RANK_DOWN_TAG)) {
+      by.mp = biggest(1, scale, (n) => current.manaCost - n >= 1);
+      if (by.mp) pools.push('mp');
+    }
+    if (pools.length) found.cost = { pools, by };
   }
   if (restricted) return found;
 
@@ -70,15 +85,14 @@ function options(base, current, applied, limits) {
   const dmgIndex = firstPlainIndex(effects, 'damage');
   if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
-    const n = Math.max(2, Math.ceil(baseTotal * 0.15));
-    const after = (effects[dmgIndex].amount + n) * hitsOf(effects[dmgIndex]);
-    if (after - baseTotal <= baseTotal) found.dmg = { n };
+    const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.15)), scale, (k) => (effects[dmgIndex].amount + k) * hitsOf(effects[dmgIndex]) - baseTotal <= baseTotal);
+    if (n) found.dmg = { n };
   }
   const blkIndex = firstPlainIndex(effects, 'block');
   if (blkIndex >= 0) {
     const baseTotal = totalOf(baseEffects, 'block') || totalOf(effects, 'block');
-    const n = Math.max(2, Math.ceil(baseTotal * 0.2));
-    if (effects[blkIndex].amount + n - baseTotal <= baseTotal) found.blk = { n };
+    const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.2)), scale, (k) => effects[blkIndex].amount + k - baseTotal <= baseTotal);
+    if (n) found.blk = { n };
   }
   // apply raises the FIRST plain effect of a status, so only that one is a candidate. It is judged on the
   // FINAL face, rank applied: a status the rank already holds at its cap gains nothing from a step.
@@ -95,7 +109,11 @@ function options(base, current, applied, limits) {
     const stepped = applyUpgradeSteps(base, [...applied, { k: 'stk', status: e.status, n: 1 }]);
     return finalStacks(stepped, e.status) > finalStacks(current, e.status);
   });
-  if (stackable) found.stk = { status: stackable.status };
+  if (stackable) {
+    const n = biggest(1, scale, (k) => stackable.stacks + k <= STACK_CAPS[stackable.status]
+      && finalStacks(applyUpgradeSteps(base, [...applied, { k: 'stk', status: stackable.status, n: k }]), stackable.status) > finalStacks(current, stackable.status));
+    found.stk = { status: stackable.status, n };
+  }
 
   if (!effects.some((e) => e.op === 'applyStatus') && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
     // The card's school: its damage school, else its `camp:` tag (kept unquoted so the
@@ -143,8 +161,8 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
   if (poiseIndex >= 0 && !counterReturn) {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
-    const n = Math.max(1, Math.ceil(baseTotal * 0.2));
-    if (effects[poiseIndex].amount + n - baseTotal <= baseTotal) found.poise = { n };
+    const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
+    if (n) found.poise = { n };
   }
   if (attacking && !counterReturn) {
     const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
@@ -193,9 +211,13 @@ const stepOf = (kind, option, choice) => {
   switch (kind) {
     case 'dmg': return { k: 'dmg', n: option.n };
     case 'blk': return { k: 'blk', n: option.n };
-    case 'stk': return { k: 'stk', status: option.status, n: 1 };
+    case 'stk': return { k: 'stk', status: option.status, n: option.n || 1 };
     case 'addStatus': return { k: 'addStatus', status: pickOf(option.statuses), stacks: 1 };
-    case 'cost': return { k: 'cost', pool: pickOf(option.pools) };
+    case 'cost': {
+      // A bigger cut (a rank-up bonus) names its amount; the plain -1 stays the bare step every save already holds.
+      const pool = pickOf(option.pools);
+      return option.by?.[pool] > 1 ? { k: 'cost', pool, n: option.by[pool] } : { k: 'cost', pool };
+    }
     case 'poise': return { k: 'poise', n: option.n };
     case 'range': case 'rankDown': return { k: 'tag', tag: option.tag };
     case 'targeting': return { k: 'tag', tag: option.tag, retarget: option.retarget };
