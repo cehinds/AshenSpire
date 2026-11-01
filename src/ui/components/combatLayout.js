@@ -1,4 +1,4 @@
-import { desktopFooterEnabled, desktopFooterLayout, desktopFieldBottom } from '../models/DesktopCombatFooter.js';
+import { desktopFooterEnabled, desktopFooterLayout, desktopFieldBottom, mobileFieldOverlap } from '../models/DesktopCombatFooter.js';
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { footerSizing } from '../../content/footerLayout.js';
@@ -162,6 +162,9 @@ export function wireCombatLayout(combatEl) {
     combatEl.style.setProperty('--w4-band-hud', hudBand + 'px');
     combatEl.style.setProperty('--w4-band-context', handBand + 'px');
     combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
+    // Owner (2026-11-01): on a phone the battlefield runs under the top of the cards (the gap above them plus ~12% of a card).
+    combatEl.style.setProperty('--combat-field-overlap', (formFactor === 'mobile' ? mobileFieldOverlap({ natural: clientHeight - hudBand - handBand - bands.footer, width, handHeight: handBand, rem, zoom, compact,
+      controlsHeight: parseFloat(combatEl.querySelector('.hand')?.style.getPropertyValue('--hand-controls-height')) || 0 }) : 0) + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
     // WCM0: every combatant's meter rows share one geometry.
     const meters = combatantMeterGeometry({ zoom, rem });
@@ -231,6 +234,8 @@ export function wireCombatLayout(combatEl) {
     formFactorObserver = new MutationObserver(schedule);
     formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance'] });
   }
+  // The hand publishes its chooser reserve with its layout; the phone field's extension depends on it.
+  combatEl.addEventListener?.('handlayoutchange', schedule);
   apply();
-  return { apply, release };
+  return { apply, release: () => { combatEl.removeEventListener?.('handlayoutchange', schedule); release(); } };
 }

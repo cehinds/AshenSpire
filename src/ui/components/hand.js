@@ -169,6 +169,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
           { zoom, width: Math.max(0, clientWidth - 2 / zoom), cache: upcastMeasurements }));
       });
+      // The combat layout reads this to keep the phone battlefield's feet above the resting cards the chooser raises.
+      setVar(handEl, '--hand-controls-height', controlsHeight + 'px');
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
