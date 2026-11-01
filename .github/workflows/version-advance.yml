@@ -1,0 +1,137 @@
+name: version-advance
+
+# THE RELEASE TRIPLE ADVANCES ITSELF (owner, 2026-11-01).
+#
+# A push to `release` (the test -> release cut) moves the CANDIDATE, the third
+# number, by one: 0.7.2.93 -> 0.7.3.0. A push to `main` (release -> main) moves
+# MINOR, the second number, by one and resets the candidate: 0.7.3.x -> 0.8.0.0.
+# MAJOR is never touched. Until now a person did this in "the PR that follows the
+# cut"; nobody does that now, and a session must not hand-bump
+# (docs/versioning.md, "Release candidates"; CLAUDE.md, "Release numbering").
+#
+# WHAT IT COMMITS, AND WHERE. One commit on `dev` (the next candidate is built
+# from dev, not from the branch that was just cut), subject
+#   version-advance: <triple> after <release|main> <source sha> [version-advance]
+# touching src/content/index.js (the literal and its marker comment),
+# tools/release-series.mjs (minor only: the series gate) and buildordinal.json,
+# which restarts at 0 through tools/buildversion.mjs bumpOrdinal, the same function
+# the build calls. The pushed identity, token and retry loop are build-stamp.yml's.
+#
+# NO LOOP, NO DOUBLE BUMP.
+#  * The commit goes to dev with GITHUB_TOKEN, which starts no push-triggered
+#    workflow; this workflow listens to release and main only, never dev.
+#  * build-stamp.yml also skips a [version-advance] head by author and subject prefix,
+#    in case a different token ever pushes it, and pr-restamp only follows a build-stamp
+#    run that concluded success, so neither can chain off this commit.
+#  * IDEMPOTENCE. The subject records the source sha. Before bumping, the job asks
+#    `tools/version-advance.mjs --done <sha>` whether a commit on dev already records
+#    it; a re-run, a re-delivered push event or a manual re-dispatch stops there, and
+#    so does a retry whose first push actually landed.
+#  * A push whose commits are all github-actions[bot] commits is not a cut and is
+#    ignored, so a bot commit landing on release or main never bumps.
+#
+# This workflow's group is its own, not build-stamp's: GitHub keeps ONE pending run
+# per group, so a shared group would let a build-stamp run replace a queued bump and
+# lose it. Pushes racing build-stamp on dev are settled by the same non-fast-forward
+# retry loop build-stamp uses (each try starts from the current origin/dev).
+
+on:
+  push:
+    branches: [release, main]
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'release or main: the branch whose current head is the cut to advance for (re-run by hand)'
+        required: true
+        default: 'release'
+
+concurrency:
+  group: version-advance-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  advance:
+    runs-on: ubuntu-latest
+    env:
+      SRC_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.source_ref || github.ref_name }}
+      BEFORE: ${{ github.event.before }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out dev with its history
+        uses: actions/checkout@v5
+        with:
+          ref: refs/heads/dev
+          fetch-depth: 0
+          filter: blob:none
+          lfs: false
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Advance the triple on dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$SRC_BRANCH" in
+            release) kind=candidate ;;
+            main)    kind=minor ;;
+            *) echo "::error::source_ref must be release or main, got '$SRC_BRANCH'."; exit 1 ;;
+          esac
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch -q origin "+refs/heads/$SRC_BRANCH:refs/remotes/origin/$SRC_BRANCH"
+          src_sha="$(git rev-parse "origin/$SRC_BRANCH")"
+          # A push event names its own sha; use it when the branch has since moved on, so
+          # a later cut is never counted as an earlier one.
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then src_sha="${GITHUB_SHA}"; fi
+
+          # A push made only of github-actions[bot] commits is not a cut. A new branch
+          # (all-zero before) or a before we cannot reach is treated as a cut.
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [[ "${BEFORE:-}" =~ [1-9a-f] ]] \
+             && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            humans="$(git log --format='%an' "${BEFORE}..${src_sha}" | grep -vc '^github-actions\[bot\]$' || true)"
+            if [ "$humans" = "0" ]; then
+              echo "Every commit in ${BEFORE}..${src_sha} is a bot commit; not a cut, nothing to advance."
+              exit 0
+            fi
+          fi
+
+          delays=(2 4 8)
+          for attempt in 1 2 3 4; do
+            git fetch -q origin "+refs/heads/dev:refs/remotes/origin/dev"
+            git reset -q --hard origin/dev
+            if node tools/version-advance.mjs --done "$src_sha"; then
+              echo "dev already records version-advance for $SRC_BRANCH $src_sha; nothing to do."
+              exit 0
+            fi
+
+            node tools/version-advance.mjs --kind "$kind" --write
+            next="$(node tools/version-advance.mjs --kind "$kind" --read-current)"
+            # The generated changelog module is inside the digest; refresh it first, then
+            # write the box ONCE, so it restarts at 0 (bumpOrdinal resets on a new release).
+            node tools/about-changelog.mjs --write
+            node -e "import('./tools/buildversion.mjs').then((m) => console.log(JSON.stringify(m.bumpOrdinal())))"
+            node tools/release-series.mjs
+            node tools/about-changelog.mjs --check-order
+
+            git add -- src/content/index.js tools/release-series.mjs buildordinal.json CHANGELOG.md src/content/changelog.generated.js
+            node tools/version-advance.mjs --subject "$next" "$SRC_BRANCH" "$src_sha" > "$RUNNER_TEMP/msg"
+            git commit -q -F "$RUNNER_TEMP/msg"
+            if git push -q origin "HEAD:dev"; then
+              echo "Pushed $(head -1 "$RUNNER_TEMP/msg") to dev (attempt $attempt)."
+              # No push-triggered run starts from GITHUB_TOKEN, so build the new tip the way
+              # build-stamp does. A failure here fails the job; the commit is already on dev,
+              # and a rerun stops at the idempotence guard above without bumping again.
+              gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref dev
+              exit 0
+            fi
+            echo "Push to dev rejected (attempt $attempt)."
+            if [ "$attempt" -lt 4 ]; then sleep "${delays[$((attempt - 1))]}"; fi
+          done
+          echo "::error::The version advance could not be pushed to dev after 4 attempts."
+          exit 1
