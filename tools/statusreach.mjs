@@ -209,6 +209,36 @@ export const CODE_APPLIERS = [
     needle: `playerStatuses.push({ status: 'glassCannon'`,
     why: 'Custom Climb chaos mod: the mod id is data, the status it grants is code',
   },
+  {
+    status: 'barrier',
+    file: 'src/engine/actions.js',
+    needle: `statuses.applyStatus(ctx, entity, 'barrier', amount, null);`,
+    why: 'SPEC 4.1a: every gainBarrier point (and stance/enemy barrier grants) becomes one Barrier stack in code',
+  },
+  {
+    status: 'ward',
+    file: 'games/ashenspire/packs/core/cards.json',
+    needle: `"status": "ward"`,
+    why: 'SPEC 4.1a: Mote Shield applies Ward from the Core pack, which this walk of the default bundle does not read',
+  },
+  {
+    status: 'shocked',
+    file: 'src/engine/elementLightning.js',
+    needle: `applyStatus(ctx, target, 'shocked'`,
+    why: 'a passed lightning Shocked contest (SPEC 4.7); the 1 stack is a rule, not a card row',
+  },
+  {
+    status: 'bedrock',
+    file: 'src/engine/elementLightning.js',
+    needle: `applyStatus(ctx, enemy, rules.bedrockStatus`,
+    why: 'an earth-element enemy opens the fight with Bedrock (SPEC 4.7); the element is data, the status is the rule',
+  },
+  {
+    status: 'damp',
+    file: 'src/engine/elementLightning.js',
+    needle: `applyStatus(ctx, enemy, row.status, row.stacks`,
+    why: 'an enemy row\'s authored startStatuses (Stitch Crab opens Damp, SPEC 4.7) is seeded at spawn',
+  },
 ];
 
 // The op that applies a status. One string, in one place, on purpose — this is

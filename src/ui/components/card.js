@@ -126,7 +126,7 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
   let comparedTokens = baseTokens;
   // Complex cards retain authored clauses; their defensive amount still reads
   // the same allocation as the compact face and combat execution.
-  template = template.replace(/\{((?:gainBarrier|block)(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
+  template = template.replace(/\{(block(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
     if (token.startsWith('block') && def.defenseRulesVersion !== 2 && def.minCombatExpansionVersion !== 2) return match;
     const liveBlock = liveTokens[token + '.block'], liveWard = liveTokens[token + '.ward'];
     const split = Number.isFinite(liveBlock) && Number.isFinite(liveWard)

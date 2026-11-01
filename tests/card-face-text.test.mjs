@@ -15,10 +15,10 @@ test('a mixed damage and poise card reads one damage line with the poise joined'
   assert.match(first, /^Inflict 7 (\w+ )?damage, 4 Poise damage$/);
 });
 
-test('a cleanse card lists its removals, its Ward gain, and the usable-while detail last', () => {
+test('a cleanse card lists its removals, its Barrier gain, and the usable-while detail last', () => {
   const all = text('sanctuaryCleanse');
   assert.ok(all.includes('Remove 1 Sleep, 1 Paralysis, 1 Dazed'), all.join(' | '));
-  assert.ok(all.includes('Gain 1 Block, 2 Ward'), all.join(' | '));
+  assert.ok(all.includes('Gain 3 Barrier'), all.join(' | '));
   assert.match(all.at(-1), /^Usable through Sleep, Paralysis, Dazed$/);
 });
 
@@ -53,7 +53,7 @@ test('without a preview no number is marked up or down', () => {
 });
 
 test('a Defend card labels per-play gains separately from its Entry clause', () => {
-  assert.deepEqual(text('crystalBarrier'), ['Gain 2 Block, 1 Ward', 'Entry: +1 Precision, Retain']);
+  assert.deepEqual(text('crystalBarrier'), ['Gain 3 Barrier', 'Entry: +1 Precision, Retain']);
   // Owner 2026-10-31: Information keeps the Entry rider; the face reading of that line drops it.
   assert.equal(lines('crystalBarrier')[1].faceHtml, 'Retain');
 });
@@ -183,7 +183,7 @@ test('custom spell Counter coverage uses compact return and protection lines', (
     assert.ok(all, id + ' uses compact lines');
     const wording = all.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
     assert.match(wording, /Return/);
-    assert.match(wording, /Block.*Ward/);
+    assert.match(wording, /Barrier/);
     assert.doesNotMatch(wording, /after all covered damage/);
 
   }

@@ -198,7 +198,8 @@
             "requiresTag": "training.graduate",
             "pools": [],
             "excludeCards": [
-              "core.mendingTouch"
+              "core.mendingTouch",
+              "core.steadyHands"
             ],
             "cards": {
               "tagsAll": [

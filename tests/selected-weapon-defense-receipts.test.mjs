@@ -46,8 +46,8 @@ function contact({camp='physical',damage=5,block=0,barrier=0,ward=0,flat=0,statu
 }
 const reactions=events=>events.map(event=>selectedWeaponReactionFor(event,pilot)).filter(Boolean);
 
-test('real expanded Block, Barrier, Ward and typed reduction receipts earn protection only with zero HP loss',()=>{
-  for(const defense of [{block:5},{camp:'spell',barrier:5},{camp:'spell',ward:3,barrier:5},
+test('real expanded Block, Ward and typed reduction receipts earn protection only with zero HP loss',()=>{
+  for(const defense of [{block:5},{camp:'spell',block:5},{camp:'spell',ward:3,block:5},
     {flat:5}, {profiles:{player:{immunities:['blunt']}}}]) {
     const {combat,events}=contact(defense);
     assert.equal(combat.player.hp,100,JSON.stringify(defense));
@@ -56,17 +56,17 @@ test('real expanded Block, Barrier, Ward and typed reduction receipts earn prote
     reactions(events);assert.deepEqual(events,before);assert.deepEqual(combat.rng.getCounters(),rng);
   }
   // Ward is a pool that lets at least 1 through each hit it meets, so a hit that reaches Ward always costs HP.
-  for(const defense of [{camp:'spell',ward:5},{camp:'spell',ward:3,barrier:2}]) {
+  for(const defense of [{camp:'spell',ward:5}]) {
     const {combat,events}=contact(defense);
     const receipt=events.find(event=>event.type==='damageDealt');
     assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[1,0,4],JSON.stringify(defense));
     assert.equal(combat.player.hp,99,JSON.stringify(defense));
     assert.deepEqual(reactions(events),[],JSON.stringify(defense));
   }
-  const {combat,events}=contact({damage:10,camp:'spell',ward:8,barrier:1});
+  const {combat,events}=contact({damage:10,camp:'spell',ward:8,block:1});
   const receipt=events.find(event=>event.type==='damageDealt');
-  // blocked is Block alone; wardResisted is the magic part's Barrier (1) and Ward (8) absorption.
-  assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[1,0,9]);
+  // blocked is Block alone; wardResisted is the magic part's Ward (8) absorption; the 1 Block is reported as blocked.
+  assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[2,1,8]);
   assert.equal(combat.player.hp,99);assert.deepEqual(reactions(events),[],'resistance never hides remaining HP damage');
   assert.deepEqual(reactions(contact({damage:0,block:10,ward:10}).events),[],'a zero attack earns no protection reaction');
 });

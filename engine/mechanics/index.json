@@ -1104,6 +1104,25 @@
       ]
     },
     {
+      "id": "status.barrier",
+      "tag": "status.barrier",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "defenses",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bedrock",
+      "tag": "status.bedrock",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.bleed",
       "tag": "status.bleed",
       "family": "status",
@@ -1207,6 +1226,15 @@
     {
       "id": "status.crimsonBlight",
       "tag": "status.crimsonBlight",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.damp",
+      "tag": "status.damp",
       "family": "status",
       "portability": "legacy",
       "modules": [
@@ -1556,6 +1584,15 @@
       ]
     },
     {
+      "id": "status.shocked",
+      "tag": "status.shocked",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.silenced",
       "tag": "status.silenced",
       "family": "status",
@@ -1690,6 +1727,17 @@
       "portability": "portable",
       "modules": [
         "stagger",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.ward",
+      "tag": "status.ward",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "defenses",
+        "gear",
         "statuses"
       ]
     },

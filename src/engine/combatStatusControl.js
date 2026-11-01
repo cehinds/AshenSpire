@@ -193,8 +193,9 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   const increase = ward.value - valueBefore, missingRecovered = restored - increase;
   emit(ctx, 'persistentWardChanged', entity, { restored: increase, missingRecovered, credited: credit, value: ward.value, max: ward.max, source });
   if (barrier > 0) {
-    entity.barrier = (entity.barrier || 0) + barrier;
-    emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.barrier });
+    // The part past a full pool becomes Barrier stacks, one per point (SPEC 4.1a).
+    Statuses.applyStatus(ctx, entity, 'barrier', barrier, null);
+    emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.statuses?.barrier?.stacks || 0 });
   }
   return { restored: increase, missingRecovered, barrier, credited: credit, carry: s.wardRestoreCarry };
 }

@@ -18,8 +18,9 @@ const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
     // Owner 2026-11-01: order Block, Poise, Evade, Ward, Precision; three slots, so the first two show and `+3` lists the rest.
     expected:[['shield','12'],['poise','4'],['overflow','+3'],['ac',null]], hidden:['Evade 2','Arcane Ward 5','Precision 3'], ac:true },
-  { profile:'current', fixCore:false, views:[['legacy-desktop',1440,900]], wardBlock:3, barrier:4,
-    expected:[['shield','9'],['poise','4'],['overflow','+3']], hidden:['Evade 2','Arcane Ward 12','Precision 3'], ac:false },
+  // SPEC 4.1a (2026-11-01): the numeric barrier pool is gone (Barrier is a stacked status), so the legacy Ward total is persistent 5 + wardBlock 3.
+  { profile:'current', fixCore:false, views:[['legacy-desktop',1440,900]], wardBlock:3, barrier:0,
+    expected:[['shield','9'],['poise','4'],['overflow','+3']], hidden:['Evade 2','Arcane Ward 8','Precision 3'], ac:false },
 ];
 try {
   for (const fixture of fixtures) for (const [name, width, height] of fixture.views) {

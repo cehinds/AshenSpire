@@ -34,10 +34,10 @@ test('Block soaks a magic hit without pierce',()=>{
  assert.equal(r.blocked,4,'magic meets Block');
  assert.ok(r.damageReceipt.hits[0].blocked===4);
 });
-test('magic Block leaves meets Barrier next',()=>{
+test('the numeric Barrier pool is gone: it mitigates nothing (SPEC 4.1a)',()=>{
  const r=hit(magic,4,3);
  assert.equal(r.blocked,4);
- assert.equal(r.barrierMitigated,3);
+ assert.equal(r.barrierMitigated,0);
 });
 test('a pierce hit lets floor(0.2 x its damage) past Block',()=>{
  for (const carrier of [pierce,{...physical,tags:['pierce']},{...physical,authoredTags:['damage:piercing']}]) {

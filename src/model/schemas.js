@@ -982,6 +982,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
+    sharedWord: opt(bool), // the status name doubles as a card-text word (e.g. Ward pool, Barrier grant): face projection must not read the word as this status (SPEC 4.1a)
     fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (wired in src/engine/triggers.js)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
@@ -1124,6 +1125,9 @@ export const SCHEMAS = Object.freeze({
     ))),
     // Weaknesses (owner, 2026-10-31): [{ to, effect, amount? }], validated by model/enemyWeaknessRules.js in validate.js.
     weaknesses: opt(arr(obj({ to: str, effect: str, amount: opt(num) }))),
+    // Element (owner, 2026-10-31, SPEC 4.7): an earth enemy opens with Bedrock; own-element moves get x1.25. startStatuses seed at spawn (Core).
+    element: opt(str),
+    startStatuses: opt(arr(obj({ status: str, stacks: num }))),
     script: opt(ref('scripts')),
   }),
 

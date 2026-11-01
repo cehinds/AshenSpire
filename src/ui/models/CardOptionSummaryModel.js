@@ -63,7 +63,9 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
         } else add(counter ? 'return' : 'dmg', effect, { labelId, amount, base, hits: typeof hits === 'number' && hits > 1 ? hits : 0 });
         break;
       }
-      case 'block': case 'gainBarrier': {
+      // Barrier is a stacked status (SPEC 4.1a): its figure is stacks, never a Block/Ward split.
+      case 'gainBarrier': add('barrier', effect, { labelId: 'cardOption.label.barrier', amount, base }); break;
+      case 'block': {
         const split = defenseValue(effect, index) || (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2 ? spellDefenseSplit({ ...def, combatProfile: profile }, amount) : null);
         if (split) {
           // Each share compares with the same split of the authored base, as the card face does, so only a share

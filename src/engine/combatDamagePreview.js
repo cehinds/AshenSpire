@@ -74,7 +74,6 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   // A reflected hit spends one Reflect stack, as live does (SPEC §17).
   if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
   if (!fixCoreEnabled(ctx)) return;
-  defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;

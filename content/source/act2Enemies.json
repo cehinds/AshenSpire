@@ -634,6 +634,12 @@
         "to": "blunt",
         "effect": "damage"
       }
+    ],
+    "startStatuses": [
+      {
+        "status": "damp",
+        "stacks": 2
+      }
     ]
   },
   {
