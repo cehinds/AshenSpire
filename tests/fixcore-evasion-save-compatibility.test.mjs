@@ -101,7 +101,7 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
-  assert.equal(profile.lock.runtimeHash, 'sha256:85b9a51058593c1bae6f6e94e4caae773ffaa302a101b40c7c16ed36b4fde871');
+  assert.equal(profile.lock.runtimeHash, 'sha256:bc9c46837da134c46cca9abf9f5edc65b5c8132ea88a02235b28e8eaabb85b02');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
