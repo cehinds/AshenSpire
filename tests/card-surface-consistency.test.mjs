@@ -12,7 +12,7 @@ test('compact and inspection use the same projected Counter definition and canon
   const ref = { cardId: 'fireCounter' };
   const compact = cardPlainText(registries, ref, { rules });
   const detail = cardDetailHtml(registries, ref, { rules });
-  assert.match(compact, /2 Block.*3 Ward/);
+  assert.match(compact, /Gain 5 Barrier/);
   assert.match(detail, /SPELL · Prepare/);
   assert.match(detail, /Counter coverage:.*Spell/);
   assert.match(detail, /Defense range:.*Ranged/);
@@ -21,12 +21,12 @@ test('compact and inspection use the same projected Counter definition and canon
   assert.match(detail, /Prepare a fire Counter: 2 Ward return/);
   assert.match(detail, /Return once after all covered damage and status pressure is resisted/);
 });
-test('inspection keeps exact live Block/Ward token parts instead of re-splitting total', () => {
+test('inspection keeps the live Barrier stack count (no Block/Ward split)', () => {
   const ref = { cardId: 'fireCounter' };
   const preview = { cost: 1, manaCost: 0, staminaCost: 0, tokens: { gainBarrier: 11, 'gainBarrier.block': 5, 'gainBarrier.ward': 6 } };
   const detail = cardDetailHtml(registries, ref, { rules, preview });
-  assert.match(detail, /5.*Block.*6.*Ward/);
-  assert.match(cardPlainText(registries, ref, { rules, preview }), /5 Block.*6 Ward/);
+  assert.match(detail, /11.*Barrier/);
+  assert.match(cardPlainText(registries, ref, { rules, preview }), /11 Barrier/);
 });
 
 test('version-two Poise-only Counter returns show their offensive range', () => {

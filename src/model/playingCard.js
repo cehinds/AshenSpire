@@ -191,11 +191,9 @@ export function combatCardSummary(def, preview = null, registries = null) {
         text = split ? uiText('combat.card.splitBlock', { verb, block: defense ? defense.block : split.physical, ward: defense ? defense.ward : split.magic }) : `${verb} ${n} Block`;
         break;
       }
-      // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
+      // Barrier is a stacked status (SPEC 4.1a): the figure is its stacks.
       case 'gainBarrier': {
-        const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
-        text = split ? uiText('combat.card.splitBlock', { verb: effect.target === 'ally' ? 'Ally gains' : 'Gain', block: split.block, ward: split.ward })
-          : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
+        text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Barrier`;
         break;
       }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;

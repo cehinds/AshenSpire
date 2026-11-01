@@ -13,8 +13,9 @@ export function statusControlProblems(entity, path, { required = false, rules = 
   const poise = entity?.persistentPoise;
   if (poise !== undefined) {
     if (!record(poise) || !whole(poise.max) || !whole(poise.value) || poise.value > poise.max) problems.push(`${path}.persistentPoise must contain whole max/value with 0 <= value <= max`);
-    else if (Object.keys(poise).some(key => !['max', 'value', 'missing'].includes(key))) problems.push(`${path}.persistentPoise contains unknown fields`);
+    else if (Object.keys(poise).some(key => !['max', 'value', 'missing', 'barrierBonus'].includes(key))) problems.push(`${path}.persistentPoise contains unknown fields`);
     else if (poise.missing !== undefined && (!whole(poise.missing) || poise.value !== 0)) problems.push(`${path}.persistentPoise.missing is kept only while the pool is empty`);
+    else if (poise.barrierBonus !== undefined && (!whole(poise.barrierBonus) || poise.barrierBonus > poise.max)) problems.push(`${path}.persistentPoise.barrierBonus is the whole Poise Barrier stacks add (SPEC 4.1a)`);
   }
   const s = entity?.statusControl;
   if (s === undefined && !required) return problems;

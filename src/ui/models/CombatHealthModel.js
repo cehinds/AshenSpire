@@ -11,12 +11,15 @@ import { healthGuardTone } from '../../model/blockPresentation.js';
 // retains its gold HP trim and value/max accessible label.
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
-export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, reflectStacks = 0, stance = null } = {}) {
+export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, reflectStacks = 0, stance = null } = {}) {
   const shield = count(defense);
   const arcaneWard = count(ward);
   const warded = count(wardBlock);
   const charged = count(barrier);
   const poised = count(poise);
+  // Ward status (SPEC 4.1a): the Poise badge turns purple, and Poise is drawn over the HP bar in HP points (10 Poise on a 50 HP bar = 20%).
+  const wardActive = count(wardStacks) > 0;
+  const poiseOverlayPct = wardActive && poised > 0 && count(maxHp) > 0 ? Math.min(100, Math.round(1000 * poised / count(maxHp)) / 10) : 0;
   // Without the Barrier-free pool, the badge total less Barrier is the Ward pool.
   const pool = wardPool === undefined ? Math.max(0, arcaneWard - charged) : count(wardPool);
   return Object.freeze({
@@ -25,11 +28,12 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
     protected: shield > 0,
     warded: arcaneWard > 0,
     poised: poised > 0,
+    wardActive, wardStacks: count(wardStacks), poiseOverlayPct,
     poiseLabel: poised > 0 ? t('combat.protection.poiseValue', { value: poised, max: Math.max(poised, count(poiseMax)) }) : null,
     badges: [
       // Row order (owner 2026-11-01): Block, Poise, Evasion, then the status-like stacks (Ward, Precision, Counter, Reflect), stance last.
       ...(shield > 0 ? [{ kind: 'shield', label: t('combat.protection.block'), value: shield }] : []),
-      ...(poised > 0 ? [{ kind: 'poise', label: t('combat.protection.poise'), value: poised }] : []),
+      ...(poised > 0 ? [{ kind: 'poise', label: t('combat.protection.poise'), value: poised, ...(wardActive ? { ward: true, wardStacks: count(wardStacks) } : {}) }] : []),
       ...(Number.isFinite(evasion) && count(evasion) > 0 ? [{ kind: 'evade', label: t('card.tags.evade'), value: count(evasion) }] : []),
       ...(arcaneWard > 0 ? [{ kind: 'ward', label: t('combat.protection.ward'), value: arcaneWard, barrier: charged, wardBlock: warded }] : []),
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),

@@ -339,6 +339,11 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `constellation` | 2 | card | The owner's floor for a status. |
 | `azureCoil` | 2 | card | The owner's floor for a status. |
 | `waxingMoon` | 2 | card | The owner's floor for a status. |
+| `ward` | 2 | card | The owner's floor for a status. |
+| `barrier` | 2 | card | The owner's floor for a status. |
+| `shocked` | 2 | card | The owner's floor for a status. |
+| `damp` | 2 | card | The owner's floor for a status. |
+| `bedrock` | 2 | card | The owner's floor for a status. |
 | `moonlitShield` | 2 | card | The owner's floor for a status. |
 | `astromancer` | 2 | card | The owner's floor for a status. |
 | `thornHalo` | 2 | card | The owner's floor for a status. |

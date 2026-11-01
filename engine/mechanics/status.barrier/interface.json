@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.barrier",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

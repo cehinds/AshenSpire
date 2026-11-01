@@ -33,6 +33,16 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   // The fill's colour: the highest layer still standing (see healthGuardTone). Poise trims the bar in gold while it lasts.
   hp.dataset.guard = model.guard;
   hp.dataset.poised = String(model.poised);
+  // Ward status: a purple bar over the HP bar shows current Poise on the HP scale (SPEC 4.1a).
+  hp.dataset.wardActive = String(model.wardActive);
+  if (model.poiseOverlayPct > 0 && track) {
+    const overlay = document.createElement('span');
+    overlay.className = 'combat-health-poise-overlay';
+    overlay.dataset.poiseOverlay = String(model.poise);
+    overlay.style.width = `${model.poiseOverlayPct}%`;
+    overlay.setAttribute('aria-hidden', 'true');
+    track.append(overlay);
+  }
   const healthValue = hp.querySelector('.m-value');
   if (healthValue) {
     // Narrow phone lanes show current HP; the full fraction remains the
@@ -47,8 +57,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   const { shown, overflow } = visibleBadges(model.badges);
   for (const badge of overflow ? [...shown, overflow] : shown) {
     const node = document.createElement('span');
-    node.className = `combat-health-badge combat-health-${badge.kind}${badge.barrier > 0 ? ' combat-health-ward-barrier' : ''}`;
-    if (badge.barrier > 0) node.dataset.barrier = String(badge.barrier);
+    node.className = `combat-health-badge combat-health-${badge.kind}${badge.ward ? ' combat-health-poise-ward' : ''}`;
+    if (badge.ward) node.dataset.ward = String(badge.wardStacks);
     node.dataset.defenseKind = badge.kind;
     node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : badge.kind === 'stance' ? badge.help : `${badge.label} ${badge.value}`);
     if (badge.help) node.title = badge.help; // native hover help for the stack badges, same text as the tooltip

@@ -159,7 +159,25 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null;
-  if (modern) {
+  // Ward (owner, 2026-11-01, SPEC 4.1a): while the target holds Ward stacks ALL damage, physical and magical, goes to Poise first (100%),
+  // the overflow spills to Block, and what is left reaches HP. A pierce hit still lets its fraction of what Block soaked through.
+  const wardRouted = modern && (target?.statuses?.ward?.stacks || 0) > 0;
+  if (wardRouted) {
+    const total = physical + magical;
+    const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
+    // A Smash against a defensive stance has no absorption (its Poise loss is Poise damage, below).
+    const toPoise = smashRule ? 0 : Math.min(total, poisePool);
+    const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
+    blockSpent = blockSoak;
+    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    pierceBypassed = Math.min(bypassAmount, blockSoak);
+    blocked = blockSoak - pierceBypassed;
+    poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
+    poiseMitigated = toPoise;
+    transition('ward-poise', 'Poise (Ward: all damage meets Poise first)', total, total - toPoise, 'mitigation');
+    transition('block', 'Block (after Poise)', total - toPoise, total - toPoise - blocked, 'mitigation');
+    amount = total - toPoise - blocked;
+  } else if (modern) {
     // Owner: Block soaks the whole hit (physical first, then magic); the magic Block leaves meets Barrier, then Ward.
     // Block is spent exactly as the same hit without pierce would spend it (so the invariant holds over a whole action). A pierce hit then
     // lets up to floor(fraction x its damage) of what Block soaked go through instead (owner, 2026-10-26); a reaction carries none.
@@ -202,7 +220,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     if (poiseMeetsMagic) magicBlocked = Math.min(magicBlocked,magicAfterPoise);
     blocked = physicalBlocked+magicBlocked;
     const magicAfterBlock = magicAfterPoise-magicBlocked;
-    barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magicAfterBlock);
+    barrierMitigated = 0;
     const magicToHp = poiseMeetsMagic ? magicAfterBlock-barrierMitigated : 0;
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magicAfterBlock-barrierMitigated);
     // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
@@ -237,6 +255,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   return { raw, weaknesses, pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
+    ...(wardRouted ? { wardRouted: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
