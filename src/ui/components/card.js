@@ -398,14 +398,15 @@ export function renderCard(registries, ref, opts = {}) {
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, textTemplate: line.replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
-        model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/[.,]\s*$/, '')) : null;
+        model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, '')) : null;
     const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, faceHtml: summaryHtml, registries,
       effects: opts.preview?.chargedEffects || def.effects || [] });
-    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '))
+    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '))
       + `<span data-face-fallback style="display:none">${esc(t('card.face.inspectEffect'))}.</span>`
       + `<span data-face-fallback-short style="display:none" aria-label="${esc(t('card.face.inspectEffect'))}">${esc(t('deckEditor.inspect'))}.</span>`;
     el.dataset.faceLines = String(projection.clauses.length);
     el.dataset.faceOmitted = String(projection.omitted);
+    if (projection.summarized) el.dataset.faceSummary = 'true'; else delete el.dataset.faceSummary;
     const faceHtml = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,

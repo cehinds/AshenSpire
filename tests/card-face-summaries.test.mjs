@@ -145,3 +145,32 @@ test('qualifier table: chance, payment, discard, hits and plain cards', () => wi
     for (const [name, run, expected] of table) { const text = run(); assert.match(text, expected, `${name}: ${text}`); assert.doesNotMatch(text, /Inspect full effect/, name); }
   } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
 }));
+
+// Census (owner review, 2026-11-01): a face that carries a summary keeps every cost, downside, consume, cap, chance,
+// lock and "random" the full rules state, and never says "1 cards".
+test('census: every summarized face keeps its qualifiers, in both profiles at every rank', async () => {
+  const { QUALIFIERS } = await import('../src/model/cardFaceProjection.js');
+  for (const { name, registries, rules } of await profiles()) withKitDom(dom => {
+    const proto = Object.getPrototypeOf(dom.document.body), descriptor = Object.getOwnPropertyDescriptor(proto, 'innerHTML'), markup = new WeakMap();
+    Object.defineProperty(proto, 'innerHTML', { configurable: true, set(value) { markup.set(this, value); descriptor.set.call(this, value); } });
+    try {
+      let summarized = 0;
+      for (const card of registries.cards.all()) {
+        const variants = [{}, { upgraded: true }, ...(card.gradeProfiles ? [0, 1, 2, 3, 4, 5].map(abilityRank => ({ abilityRank })) : [])];
+        for (const extra of variants) {
+          const ref = { cardId: card.id, ...extra }, label = `${name}: ${card.id} ${JSON.stringify(extra)}`;
+          const el = renderCard(registries, ref, { inspection: false, rules });
+          const face = (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
+          assert.doesNotMatch(face, /\b1 cards\b/i, label);
+          if (el.dataset.faceSummary !== 'true') continue;
+          summarized++;
+          const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def);
+          const full = (def.textTemplate || '').replace(tokenRe(), (m, k) => tokens[k] ?? m).replace(/<[^>]+>/g, '');
+          const shown = `${face} ${(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word)).join(' ')}`;
+          for (const [kind, re] of QUALIFIERS) if (re.test(full)) assert.ok(re.test(shown), `${label}: face "${face}" lost its ${kind} qualifier from "${full}"`);
+        }
+      }
+      assert.ok(summarized > 0, name);
+    } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
+  });
+});

@@ -58,6 +58,7 @@ function predicateText(p) {
 // most five words, never a conditional bonus or a once-per-turn family rider (those stay in Information). Tokens are
 // numbered exactly as recipeText numbers them so both bind to the same effect values.
 const words = text => text.replace(/\{[^}]*\}/g, 'N').split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
+const cardsWord = amount => amount === 1 ? 'card' : 'cards';
 const statusName = id => String(id).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
 export function recipeFace(effects, { counterMode = null } = {}) {
   const counts = {};
@@ -72,8 +73,8 @@ export function recipeFace(effects, { counterMode = null } = {}) {
       case 'damage': { const hits = e.hits ? token('hits') : null;
         options = counterMode ? [`Prepare ${t} reply damage`] : [`Deal ${t} damage${all ? ' to all' : ''}${hits ? `, ${hits}×` : ''}`, `Deal ${t} damage${all ? ' to all' : ''}`, `Deal ${t} damage`]; break; }
       case 'block': options = [`Gain ${t} Block`]; break;
-      case 'draw': options = [`Draw ${t} cards`]; break;
-      case 'discard': options = [`Discard ${t} cards`]; break;
+      case 'draw': options = [`Draw ${t} ${cardsWord(e.amount)}`]; break;
+      case 'discard': options = [`Discard ${t} ${cardsWord(e.amount)}`]; break;
       case 'applyStatus': options = e.target === 'self' ? [`Gain ${t} ${statusName(e.status)}`] : [`Apply ${t} ${statusName(e.status)}${all ? ' to all' : ''}`, `Apply ${t} ${statusName(e.status)}`]; break;
       case 'poiseDamage': options = counterMode ? [`Prepare ${t} reply Poise damage`] : [`Deal ${t} Poise damage`]; break;
       case 'restoreMana': options = [`Restore ${t} Mana`]; break;

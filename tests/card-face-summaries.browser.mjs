@@ -22,7 +22,7 @@ await document.fonts?.ready; fitIllustratedCards(cards); window.__done = true;
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
 try {
-  const specs = [{ cardId: 'base.foresight' }, { cardId: 'base.recover-exile' }, { cardId: 'ironResolve' }, { cardId: 'phoenixChart' }, { cardId: 'progression-silent-exchange', abilityRank: 4 }, { cardId: 'progression-silent-exchange', abilityRank: 5 }];
+  const specs = [{ cardId: 'base.foresight' }, { cardId: 'base.recover-exile' }, { cardId: 'ironResolve' }, { cardId: 'phoenixChart' }, { cardId: 'progression-silent-exchange', abilityRank: 4 }, { cardId: 'progression-silent-exchange', abilityRank: 5 }, { cardId: 'base.restrained-status-card' }, { cardId: 'lethalDose' }];
   for (const [viewport, width] of [[{ width: 1280, height: 800 }, 200], [{ width: 360, height: 780 }, 108]]) {
     const page = await browser.newPage({ viewport });
     await page.goto(`${server.url}${page_}?w=${width}&cards=${encodeURIComponent(JSON.stringify(specs))}`);
@@ -32,7 +32,10 @@ try {
     assert.equal(visible.length, specs.length); if (process.env.DEBUG_FACES) console.log(viewport.width, JSON.stringify(visible));
     visible.forEach((text, i) => {
       // A 108px card may drop a face to the short cue on its own (existing fitter rule); the discard cards are checked at desktop width.
-      if (viewport.width < 600 && specs[i].cardId === 'progression-silent-exchange') return; assert.ok(text.length > 0, `${specs[i].cardId}: nothing visible`); assert.doesNotMatch(text, /Inspect/i, `${specs[i].cardId} at ${viewport.width}px: ${text}`); });
+      if (viewport.width < 600 && specs[i].cardId === 'progression-silent-exchange') return;
+      // A cost is never the clause the fitter hides: the face shows it, or the whole face is the Inspect cue.
+      if (specs[i].cardId === 'base.restrained-status-card') { assert.match(text, /cost \+1 SP|Inspect/, text); return; }
+      if (specs[i].cardId === 'lethalDose') { assert.match(text, /remove|Inspect/i, text); return; } assert.ok(text.length > 0, `${specs[i].cardId}: nothing visible`); assert.doesNotMatch(text, /Inspect/i, `${specs[i].cardId} at ${viewport.width}px: ${text}`); });
     await page.close();
   }
   console.log('card-face-summaries browser: ok');

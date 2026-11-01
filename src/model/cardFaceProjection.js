@@ -39,6 +39,18 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
 // A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
 const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
+// What a summary must never lose from the full text, by kind: a cost or downside, a discard, something consumed, a cap or
+// limit, "random", a chance, a lock or reveal rule, Exhaust/Ethereal. The check reads the full rules, not hand-picked cards.
+export const QUALIFIERS = [
+  ['cost', /(?<!\b(?:whenever|when|if) you )\b(?:take|lose|loses|pay|offer|skip)\b|\bcosts? \+|\bunplayable\b/i],
+  ['discard', /\bdiscards?\b/i],
+  ['consume', /\bremoves?\b|\bconsum/i],
+  ['cap', /\bcapped?\b|\bmax(?:imum)?\b|\bstops? at\b|\bat most\b/i],
+  ['random', /\brandom\b/i],
+  ['chance', /\bchance\b/i],
+  ['lock', /\block\b|become vulnerable|\breveals?\b/i],
+  ['exhaust', /\bexhaust|\bethereal/i],
+];
 const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 // A line of five words or fewer is one clause. A longer list of complete
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
@@ -118,9 +130,6 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
     const named = text => (text.match(/\b(?:take|lose|exhaust|discard|ethereal|unplayable|pay|offer|skip)\b|\bone play\b/gi) || [])
       .every(word => summaryText.includes(word.toLowerCase().split(' ')[0]));
     if (!(projection.hiddenDownsides || []).every(named)) return projection;
-    // Mandatory downsides read from the effects themselves, not only from the face clauses.
-    const required = (effects || []).filter(effect => effect && !effect.if && ['discard', 'loseHp'].includes(effect.op)).map(effect => effect.op === 'discard' ? 'discard' : 'lose');
-    if (!required.every(word => summaryText.includes(word) || (word === 'lose' && /offer|pay/.test(summaryText)) || projection.clauses.some(clause => plain(clause.html).toLowerCase().includes(word)))) return projection;
     const downsides = projection.clauses.filter(clause => clause.downside || clause.kind === 'cost');
     // A reserved clause may already carry part of the payoff ("Heal 8 HP, Exhaust, Retain"): a summary line it contains is dropped.
     const wordsOf = html => new Set((plain(html).toLowerCase().match(/[\p{L}\p{N}%+]+/gu) || []).filter(word => !/^cards?$/.test(word)));
@@ -128,14 +137,19 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
     // A chance, like a downside, is never dropped: a summary line that cannot carry it keeps the cue.
     const qualified = faceHtml.map(html => withChance(html, effects, registries));
     if (qualified.includes(null)) return projection;
-    const summary = qualified.filter(html => !covered(html)).map(html => ({ kind: 'effect', html }));
+    const summary = qualified.filter(html => !covered(html)).map(html => ({ kind: 'effect', html, ...(QUALIFIERS.some(([, re]) => re.test(plain(html))) ? { downside: true } : {}) }));
     // A card's Exhaust / Ethereal keyword is a downside the summary never has to repeat.
     for (const [keyword, word] of [['exhaust', 'Exhaust'], ['ethereal', 'Ethereal']]) {
       if ((def.keywords || []).includes(keyword) && !downsides.some(clause => plain(clause.html).includes(word)))
         downsides.push({ kind: 'cost', html: word });
     }
     // A downside plus a short summary stays within two lines, so a narrow hand card still fits it; the downside wins the room.
-    return { ...projection, clauses: [...downsides, ...summary].slice(0, downsides.length ? 2 : FACE_EFFECT_CLAUSES), omitted: true };
+    const clauses = [...downsides, ...summary].slice(0, downsides.length ? 2 : FACE_EFFECT_CLAUSES);
+    // Every qualifier of the full rules must survive on the face as it will be printed; otherwise the cue stands.
+    const faceText = [...clauses.map(clause => plain(clause.html)), summaryText.includes('exhaust') ? 'exhaust' : '', summaryText.includes('ethereal') ? 'ethereal' : ''].join(' ');
+    const fullText = plain(authoredHtml || '');
+    if (QUALIFIERS.some(([, re]) => re.test(fullText) && !re.test(faceText))) return projection;
+    return { ...projection, clauses, omitted: true, summarized: true };
   }
   return projection;
 }
