@@ -6097,8 +6097,8 @@ button[data-button-size] {
 }
 :root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge {
-  position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
-  color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
+  position: relative; flex: 0 0 max(11.428%, calc(20.8px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
+  color: #fff1d6; font: 500 calc(var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))) * .8)/1 var(--font-body);
   font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
 }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
@@ -6107,6 +6107,15 @@ button[data-button-size] {
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ac::before { border-radius: 4px; background: linear-gradient(135deg, var(--panel-2, var(--panel)), var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--gold); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ac .combat-health-badge-value { -webkit-text-stroke: 0; }
+/* Caption under the AC square: same footprint as a badge so it lines up under the square, no plate; shown only where the bar owns its own line. */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ac-caption { display: none; font-size: .7em; letter-spacing: .04em; color: var(--gold); opacity: .9; pointer-events: none; }
+:root .combat .combatant .combat-health-row > .combat-health-ac { flex: 0 0 auto; order: -1; }
+/* With the AC square beside it the bar takes the rest of the line instead of the whole line. */
+:root .combat .combatant .combat-health-row:has(> .combat-health-ac) > .combat-health-meter { flex: 1 1 0 !important; width: auto !important; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow::before { border-radius: 50%; background: linear-gradient(135deg, var(--panel-2, var(--panel)), var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--gold); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow .combat-health-badge-value { white-space: nowrap; letter-spacing: -.02em; -webkit-text-stroke: 0; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
@@ -6121,7 +6130,7 @@ button[data-button-size] {
 }
 @container game-viewport (max-width: 600px) {
   :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
-  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(12.8px / var(--ui-zoom, 1)); }
 }
 
 .character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
