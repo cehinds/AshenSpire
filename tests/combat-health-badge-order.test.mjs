@@ -48,3 +48,47 @@ test('the overflow aria-label and tooltip list the hidden badges as "label value
   for (const text of hidden) assert.ok(tip.includes(text), `${text} in the tooltip`);
   assert.match(tip, /\+3/);
 }));
+
+// Owner 2026-11-01: the player's AC badge, left of the bar. Its number is the engine's own Evasion DC ("vs Evasion N").
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRng } from '../src/engine/rng.js';
+import { createCombat } from '../src/engine/combat.js';
+import { attackHitPreview } from '../src/engine/stanceHit.js';
+import { acFor } from '../src/ui/models/acBadge.js';
+
+function fixture() {
+  const registries = createRegistries({ ...contentBundle });
+  const player = { classId: 'reaver', hp: 50, maxHp: 50, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
+    deck: [{ instanceId: 'a', cardId: 'twinbladeFlurry' }], relicIds: [] };
+  return createCombat({ registries, rng: createRng(7), player, combatExpansionVersion: 2, reactionRulesVersion: 2, enemyIds: ['wanderingSoldier'], ratingsRules: null });
+}
+
+test('AC is the hit preview\'s Evasion for the player, follows Evade stacks, and enemies have none', () => {
+  const combat = fixture();
+  const enemy = combat.enemies[0], me = combat.player;
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
+  const ac = acFor(combat, me);
+  assert.equal(combat.combatExpansionVersion, 2);
+  assert.equal(ac.value, attackHitPreview(combat, enemy, me, carrier).evasion);
+  assert.equal(ac.value, ac.base + ac.evade);
+  assert.equal(acFor(combat, enemy), null);
+  me.statuses = { ...(me.statuses || {}), evade: { stacks: 3 } };
+  const more = acFor(combat, me);
+  assert.equal(more.value, attackHitPreview(combat, enemy, me, carrier).evasion);
+  assert.ok(more.value > ac.value && more.evade > 0, 'Evade stacks raise AC');
+});
+
+test('the player row draws the AC badge with the number; an enemy row does not; the tooltip text carries title, rule and parts', () => withKitDom(() => {
+  const combat = fixture();
+  const ac = acFor(combat, combat.player);
+  const row = combatHealthRow(hp(), { defense: 2, ac }, { tooltips: false });
+  const node = row.querySelector('.combat-health-ac');
+  assert.equal(node.querySelector('.combat-health-badge-value').textContent, String(ac.value));
+  assert.equal(node.parentNode.className, 'combat-health-bar-line');
+  assert.ok(node.parentNode.querySelector('.combat-health-meter'), 'the bar shares the AC line');
+  assert.match(node.getAttribute('aria-label'), new RegExp(`AC ${ac.value} \\(Evasion\\)\\. Enemies hit when d20 \\+ their Precision ≥ ${ac.value}\\.`));
+  assert.equal(row.querySelector('.combat-health-ac-caption').textContent, 'AC');
+  const enemyRow = combatHealthRow(hp(), { defense: 2, ac: acFor(combat, combat.enemies[0]) }, { tooltips: false });
+  assert.equal(enemyRow.querySelector('.combat-health-ac'), null);
+}));

@@ -2,6 +2,7 @@ import { tagSymbolSvg } from './cardTagSymbols.js';
 import { combatHealthModel, visibleBadges } from '../models/CombatHealthModel.js';
 import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { acBadgeText } from '../models/acBadge.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Keep the shared resource renderer's HP amount, fill and total trough length.
@@ -70,6 +71,35 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       attachTooltip(node, () => badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp }));
     }
     row.append(node);
+  }
+  // The player's AC (owner 2026-11-01): a square left of the bar on the bar's line, with a small "AC" caption under it at the head
+  // of the badge row. `values.ac` is { value, evade, base } from acFor; enemies never carry it.
+  if (values?.ac) {
+    const line = document.createElement('div');
+    line.className = 'combat-health-bar-line';
+    const text = acBadgeText(values.ac);
+    const square = document.createElement('span');
+    square.className = 'combat-health-badge combat-health-ac';
+    square.dataset.defenseKind = 'ac';
+    square.dataset.ac = String(values.ac.value);
+    square.setAttribute('aria-label', [text.title, ...text.lines].join('. '));
+    const number = document.createElement('span');
+    number.className = 'combat-health-badge-value';
+    number.textContent = String(values.ac.value);
+    square.append(number);
+    if (tooltips) {
+      square.tabIndex = 0;
+      attachTooltip(square, () => `<div class="tt-title">${esc(text.title)}</div>${text.lines.map(esc).join('<br>')}`);
+    }
+    const caption = document.createElement('span');
+    caption.className = 'combat-health-badge combat-health-ac-caption';
+    caption.dataset.defenseKind = 'ac-caption';
+    caption.setAttribute('aria-hidden', 'true');
+    caption.textContent = 'AC';
+    row.insertBefore(caption, row.firstChild);
+    line.append(square, hp);
+    row.append(line);
+    return row;
   }
   row.append(hp);
   return row;

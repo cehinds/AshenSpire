@@ -162,7 +162,7 @@
   overflow: visible;
 }
 
-:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) .combat-health-overflow {
+:root .combat :is(.combatant-mini-hud, .target-hud-overhead-meters) :is(.combat-health-overflow, .combat-health-ac, .combat-health-ac-caption) {
   display: grid !important; place-items: center; box-sizing: border-box; padding: 0;
   width: calc(17.6px / var(--ui-zoom, 1)) !important; min-width: calc(17.6px / var(--ui-zoom, 1)) !important;
   max-width: calc(17.6px / var(--ui-zoom, 1)) !important; height: calc(17.6px / var(--ui-zoom, 1)) !important;
