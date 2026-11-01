@@ -14,18 +14,18 @@ import { previewTacticalAction } from '../src/engine/combatMatchups.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { live, registries } from './helpers/fixcore-combat-rules.mjs';
 
-// Rule (owner, 2026-10-31): Precision loses 1 stack at its owner's turn start (like Evade); turn end no longer clears it.
-test('temporary Precision loses one stack at its owner turn start, not at turn end or another owner boundary', () => {
+// Rule (owner, 2026-10-31): Precision loses 3 stacks at its owner's turn start (swift decay, owner 2026-11-01; was 1); turn end no longer clears it.
+test('temporary Precision loses three stacks at its owner turn start, not at turn end or another owner boundary', () => {
   const ctx = live(), enemy = ctx.enemies[0];
   applyStatus(ctx, ctx.player, 'precision', 4, ctx.player);
   applyStatus(ctx, enemy, 'precision', 3, enemy);
   decayAtTurnEnd(ctx, ctx.player);
   assert.equal(ctx.player.statuses.precision.stacks, 4, 'turn end no longer expires Precision');
   ctx.turn++; decayAtTurnStart(ctx, ctx.player);
-  assert.equal(ctx.player.statuses.precision.stacks, 3);
+  assert.equal(ctx.player.statuses.precision.stacks, 1);
   assert.equal(enemy.statuses.precision.stacks, 3, 'the enemy owner boundary is its own');
   decayAtTurnStart(ctx, enemy);
-  assert.equal(enemy.statuses.precision.stacks, 2);
+  assert.equal(enemy.statuses.precision, undefined, 'enemy 3 -> 0');
 });
 
 test('Precision expiry preserves valid spent Ward and Poise pools', () => {
@@ -40,7 +40,7 @@ test('Precision expiry preserves valid spent Ward and Poise pools', () => {
   ctx.player.persistentWard = { max: wardMax, value: wardMax - 2 };
   const before = structuredClone({ poise: ctx.player.persistentPoise, ward: ctx.player.persistentWard });
   ctx.turn++; decayAtTurnStart(ctx, ctx.player);
-  assert.equal(ctx.player.statuses.precision.stacks, 2);
+  assert.equal(ctx.player.statuses.precision, undefined);
   assert.deepEqual({ poise: ctx.player.persistentPoise, ward: ctx.player.persistentWard }, before);
 });
 
@@ -70,7 +70,7 @@ test('effect and carrier Persistent tags retain only their Precision through sav
   ctx = restoreCombatSnapshot({ registries, rng: createRng(511), snapshot: JSON.parse(JSON.stringify(snapshot)) });
   decayAtTurnEnd(ctx, ctx.player);
   assert.deepEqual(ctx.player.statuses.precision, { stacks: 9, persistentStacks: 5 }, 'turn end does not expire Precision');
-  for (let i = 0; i < 4; i++) { ctx.turn++; decayAtTurnStart(ctx, ctx.player); } // 4 temporary stacks lose 1 each turn
+  for (let i = 0; i < 2; i++) { ctx.turn++; decayAtTurnStart(ctx, ctx.player); } // 4 temporary stacks lose 3, then 1
   assert.deepEqual(ctx.player.statuses.precision, { stacks: 5, persistentStacks: 5 });
   ctx.turn++; decayAtTurnStart(ctx, ctx.player);
   assert.deepEqual(ctx.player.statuses.precision, { stacks: 5, persistentStacks: 5 });

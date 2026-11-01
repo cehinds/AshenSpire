@@ -54,8 +54,9 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     action.meta = { ...action.meta, expansionGroup: group };
     const eff = action.effect;
     const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined, expansionAuthoredAction: true } };
-    const targeted = ['enemy', 'allEnemies', 'otherEnemies', 'randomEnemy', 'player'].includes(eff.target)
-      || ['removeStatus', 'loseHp', 'stagger'].includes(eff.op);
+    // A pure movement (Advance, Retreat) is no attack: it makes no contact, rolls no hit and cannot miss for range.
+    const targeted = eff.op !== 'moveEngagement' && (['enemy', 'allEnemies', 'otherEnemies', 'randomEnemy', 'player'].includes(eff.target)
+      || ['removeStatus', 'loseHp', 'stagger'].includes(eff.op));
     if (!targeted && !['damage', 'buildup', 'applyStatus', 'poiseDamage', 'wardDamage'].includes(eff.op)) {
       Actions.executeAction(prefix, shadow);
       continue;

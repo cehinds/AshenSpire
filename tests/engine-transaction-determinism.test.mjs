@@ -54,8 +54,11 @@ export function digest(combat) {
 // seeded fights, #2436 through the hit rolls and #2430 through the weakness damage stage (reaver rows only; turn unchanged).
 // Re-pinned 2026-11-01 on merging #2434 (roll log): it adds six roll-receipt log entries per fight and
 // itemised perception dcParts on the enemy's read; RNG counters, HP, turn and every other state field match dev.
+// Re-pinned 2026-11-01 for Precision swift decay (accuracy.precisionDecayPerTurn 1 -> 3): the PERF1/reaver fight's hit
+// chances change, so one log entry fewer (196 -> 195); log 1bb7a14785574ec3 -> c53a18793f401fb2, state 95f05cf25b2cb35a -> ff21e46141b6f702.
+// The 4242/reaver fight is unchanged.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '1bb7a14785574ec3', state: '95f05cf25b2cb35a', events: 196, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'c53a18793f401fb2', state: 'ff21e46141b6f702', events: 195, turn: 6 }],
   [[4242, 'reaver'], { log: 'f8fac21d378c1d8e', state: 'a025baec4945d4b4', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
