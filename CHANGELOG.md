@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Card faces show a short summary instead of "Inspect full effect."** ([#2444](https://github.com/cehinds/AshenSpire/pull/2444), `0.7.2.91`). Every card names its main effect on its face, for example Foresight: "Gain 3 Foresight." and Exile Recovery: "Return 1 exhausted card."; the full details stay in Inspect.
 - **Counter and Reflect are stacked badges** ([#2431](https://github.com/cehinds/AshenSpire/pull/2431), `0.7.2.91`). Playing a Counter card turns the Block it stands behind into Counter stacks that fade two per turn, and every counter returns the card's damage plus 10% of the incoming hit per stack; in Counter stance a card-less auto-Counter costs 1 SP and Counter reactions cost one less. New Reflect stacks (Mirror Guard) cut an incoming hit by 30% per stack and throw the same share back.
 - **A deterministic gate sorts test failures before any agent spends tokens on them** ([#2440](https://github.com/cehinds/AshenSpire/pull/2440), `0.7.2.89`). `tools/jev.mjs` triages CI logs against known failure rules, runs the fast checks, regenerates generated files, restamps receipts and merges dev into a branch, and hands only the failures no rule explains to a model.
 - **Co-op (LAN multiplayer) is gone** ([#2441](https://github.com/cehinds/AshenSpire/pull/2441), `0.7.2.87`). The lobby, seats, LAN session tools, co-op screens, rules and docs are removed; solo play is unchanged, and a run saved while co-op existed still loads as a solo run.
