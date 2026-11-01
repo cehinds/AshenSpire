@@ -202,3 +202,26 @@ test('reconcile (property): order follows original run numbers, no duplicates, e
     }
   }
 });
+
+test('reconcile: dispatch of a head whose push succeeded (bot-only, unrecorded) carries that push\'s before', () => {
+  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
+  const runs = [r(8, 'main', 'A', 'success'), r(9, 'main', 'B', 'success')];
+  assert.deepEqual(reconcileCuts(runs, { number: 10, branch: 'main', sha: 'B' }), [{ branch: 'main', sha: 'B', before: 'A' }]);
+});
+
+test('reconcile (property): a dispatch reselecting any earlier head, successful or not, carries its own predecessor', () => {
+  for (let n = 1; n <= 4; n++) {
+    for (let bm = 0; bm < (1 << n); bm++) {
+      for (let sm = 0; sm < (1 << n); sm++) {
+        const runs = Array.from({ length: n }, (_, i) => ({ number: i + 1, branch: (bm >> i) & 1 ? 'main' : 'release', sha: `s${i + 1}`, conclusion: (sm >> i) & 1 ? 'success' : 'failure' }));
+        const pred = (i) => runs.slice(0, i).reverse().find((x) => x.branch === runs[i].branch)?.sha ?? null;
+        runs.forEach((x, i) => {
+          const out = reconcileCuts(runs, { number: n + 1, branch: x.branch, sha: x.sha });
+          const mine = out.find((c) => c.branch === x.branch && c.sha === x.sha);
+          assert.equal(out.filter((c) => c.branch === x.branch && c.sha === x.sha).length, 1);
+          assert.equal(mine.before, pred(i), `n=${n} bm=${bm} sm=${sm} ${x.sha}`);
+        });
+      }
+    }
+  }
+});

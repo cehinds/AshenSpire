@@ -117,7 +117,11 @@ export function reconcileCuts(runs, current) {
   // reselecting that head); otherwise it comes last, with its own before (github.event.before)
   // or the branch's previous head from the list. A before equal to the sha is unknown.
   if (seen.has(`${current.branch} ${current.sha}`)) return list;
-  let before = current.before ?? beforeOf(current.branch, current.number);
+  // With no explicit before, the earliest earlier push run of the same branch+sha in ALL runs,
+  // success included (a bot-only push that succeeded wrote no record), names the real
+  // predecessor; the list above stays limited to runs that did not succeed.
+  const same = byNumber.find((r) => r.branch === current.branch && r.sha === current.sha && r.number < current.number);
+  let before = current.before ?? beforeOf(current.branch, same ? same.number : current.number);
   if (before === current.sha) before = null;
   return [...list, { branch: current.branch, sha: current.sha, before }];
 }
