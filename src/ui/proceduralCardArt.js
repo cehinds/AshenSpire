@@ -5,7 +5,7 @@ import { cardRank } from '../model/cardRank.js';
 
 const actions = ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend'];
 const aliases = { defense: 'defend', evasion: 'evade' };
-const elements = ['force', 'fire', 'lightning', 'earth', 'frost', 'psychic', 'alteration', 'divine', 'necrotic', 'wind'];
+const elements = ['force', 'fire', 'lightning', 'earth', 'frost', 'psychic', 'alteration', 'divine', 'necrotic', 'wind', 'blood'];
 const elementAliases = { alternation: 'alteration', illusion: 'psychic', decay: 'necrotic', cold: 'frost', holy: 'divine', sacred: 'divine', arcane: 'force' };
 const elementOf = value => elements.includes(value) ? value : Object.hasOwn(elementAliases, value) ? elementAliases[value] : null;
 const freeze = value => {
@@ -15,6 +15,29 @@ const freeze = value => {
   return value;
 };
 const clone = value => structuredClone(value);
+// Color blending replaces hue/saturation while retaining the source luminance.
+// Element identity alone selects the background; statuses keep their own PNG cues.
+export const PROCEDURAL_BACKGROUND_COLORS = freeze({
+  physical: '#808080', magic: '#427ec7',
+  element: {
+    force: '#b3271b', blood: '#b3271b', fire: '#88552f', lightning: '#e7c63b', alteration: '#448956', earth: '#705440',
+    frost: '#b9deef', psychic: '#8862bd', divine: '#e3d4a1', necrotic: '#68476c', wind: '#a9d7ce',
+  },
+  mixed: { 'fire+frost': '#9455c7', 'alteration+lightning': '#9aca35' },
+});
+function backgroundColor(selected, category) {
+  if (!selected.length) return category === 'magical'
+    ? { id: 'camp:spell', color: PROCEDURAL_BACKGROUND_COLORS.magic }
+    : { id: 'camp:physical', color: PROCEDURAL_BACKGROUND_COLORS.physical };
+  const key = selected.join('+');
+  // Other combinations average the canonical palette's sRGB channels equally.
+  const color = PROCEDURAL_BACKGROUND_COLORS.mixed[key] || (selected.length === 1
+    ? PROCEDURAL_BACKGROUND_COLORS.element[selected[0]]
+    : '#' + [1, 3, 5].map(offset => Math.round(selected.reduce((sum, id) =>
+      sum + parseInt(PROCEDURAL_BACKGROUND_COLORS.element[id].slice(offset, offset + 2), 16), 0) / selected.length)
+      .toString(16).padStart(2, '0')).join(''));
+  return { id: `element:${key}`, color };
+}
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
 for (const recipe of Object.values(reviewed.records)) {
@@ -49,12 +72,14 @@ function elementIdentity(tags) {
       const raw = tag.slice(prefix.length);
       return elementOf(raw) || raw;
     }))];
-    // Mixed damage is a valid unthemed identity; conflicting explicit art
-    // elements/schools cannot silently become a lower-priority school.
-    if (values.length > 1) return { conflict: prefix !== 'damage:', element: null };
-    if (values.length && elementOf(values[0])) return { element: elementOf(values[0]) };
+    if (!values.length) continue;
+    if (prefix === 'damage:') return { elements: values.filter(value => elementOf(value)).sort() };
+    // Physical damage types remain valid unthemed contacts. Invalid explicit
+    // element/school identities cannot silently fall through to another school.
+    if (values.some(value => !elementOf(value))) return { conflict: true, elements: [] };
+    return { elements: values.sort() };
   }
-  return { element: null };
+  return { elements: [] };
 }
 function statusExists(registries, id) {
   const registry = registries?.statuses;
@@ -88,15 +113,18 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   const category = camp === 'spell' ? 'magical' : 'physical';
   const identityElement = elementIdentity(tags);
   if (identityElement.conflict) return null;
-  const element = identityElement.element || (category === 'magical' ? 'force' : null);
+  const selectedElements = identityElement.elements;
+  const element = selectedElements[0] || (category === 'magical' ? 'force' : null);
+  const templateElement = element === 'blood' ? 'force' : element;
+  const cueElements = selectedElements.length ? selectedElements : element ? [element] : [];
   rank = cardRank({ rank });
   const statuses = tags.filter(tag => tag.startsWith('status:')).map(tag => tag.slice(7))
-    .filter(id => statusExists(registries, id)).slice(0, element ? 2 : 3);
+    .filter(id => statusExists(registries, id)).slice(0, 3 - Math.min(cueElements.length, 2));
   // Explicit effect identities outrank compatibility aliases such as Retain.
   // Multiple explicit effects retain the approved catalog's deterministic order.
   const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
     || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
-  const key = JSON.stringify([category, maneuver, element, projectile, utility?.code, statuses, rank]);
+  const key = JSON.stringify([category, maneuver, selectedElements, projectile, utility?.code, statuses, rank]);
   let cache = globalCache;
   if (registries && typeof registries === 'object') {
     if (!registryCaches.has(registries)) registryCaches.set(registries, new Map());
@@ -107,30 +135,70 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   // Pass the chosen cue alone so the lower-level compatibility selector cannot
   // restore a generic alias's priority over the explicit semantic choice.
   const selectionTags = maneuver === 'skill' ? utility?.tags.filter(tag => tag.startsWith('effect:')) || [] : deliveryTags;
-  let art = approvedCardArt({ category, maneuver, element, tags: selectionTags, def: {} });
-  if (maneuver === 'counter') art = approvedCardArt({ category: 'physical', maneuver, element, tags: [], def: {} });
-  if (maneuver === 'skill' && !art) art = approvedCardArt({ category: 'magical', maneuver, element, tags: selectionTags, def: {} });
+  let art = approvedCardArt({ category, maneuver, element: templateElement, tags: selectionTags, def: {} });
+  if (maneuver === 'counter') art = approvedCardArt({ category: 'physical', maneuver, element: templateElement, tags: [], def: {} });
+  if (maneuver === 'skill' && !art) art = approvedCardArt({ category: 'magical', maneuver, element: templateElement, tags: selectionTags, def: {} });
   if (maneuver === 'evade') {
-    art = approvedCardArt({ category: 'magical', maneuver: 'skill', element, tags: [], def: {} });
+    art = approvedCardArt({ category: 'magical', maneuver: 'skill', element: templateElement, tags: [], def: {} });
     art = { ...art, code: 'procedural-evade', sprites: [art.sprites[0], { ...clone(spritesByAsset.get('symbol.feather')), id: 'object' }] };
   }
   if (!art) return null;
   art = clone(art);
+  art.backgroundColor = backgroundColor(selectedElements, category);
+  if (maneuver === 'counter') {
+    const shield = art.sprites.find(sprite => sprite.id === 'object');
+    const hammer = art.sprites.find(sprite => sprite.id === 'secondaryObject');
+    const source = approvedCardArt({ category: 'physical', maneuver: 'smash', tags: [], def: {} }).sprites.find(sprite => sprite.id === 'object');
+    // Change only the cloned procedural recipe, never the approved catalog.
+    Object.assign(hammer, { assetId: source.assetId, path: source.path, label: source.label, zIndex: Number(shield.zIndex) + 5 });
+    // The approved hammer points head-down; turn it head-up/right and size its
+    // complete silhouette inside the 512×640 well rather than reuse sword bounds.
+    Object.assign(hammer.transform, { x: 280, y: 310, width: 340, height: 425, rotationDeg: 180, scaleX: 1, scaleY: 1 });
+    hammer.affine = [-1, 0, 0, -1];
+    Object.assign(hammer.css, { left: '54.6875%', top: '48.4375%', width: '66.40625%', height: '66.40625%',
+      transform: 'translate(-50%, -50%) rotate(180deg) scale(1, 1)', zIndex: String(hammer.zIndex) });
+  }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
   if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
     art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
+  }
+  for (const sprite of art.sprites.filter(sprite => /^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
+    sprite.css.filter = [sprite.css.filter === 'none' ? '' : sprite.css.filter,
+      'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))'].filter(Boolean).join(' ');
+  }
+  // Physical Sweep has independent slash PNGs. Align their curve with the
+  // scythe blade without rotating its object or the combined magical blade.
+  if (maneuver === 'sweep' && category === 'physical') {
+    for (const sprite of art.sprites.filter(sprite => sprite.assetId === 'C.effect.0')) {
+      sprite.transform.rotationDeg = 90;
+      sprite.affine = [0, 1, -1, 0];
+      sprite.css.transform = 'translate(-50%, -50%) rotate(90deg) scale(1, 1)';
+    }
   }
   const cueSprites = [];
   // A projectile already carries its element. Every other action retains its
   // silhouette and adds the approved elemental PNG (blue/mint alone is not an
   // element identity, and Counter deliberately uses the separate real weapon).
-  if (element && !art.sprites.some(sprite => sprite.assetId === `Z.effect.${base.selection.projectiles[element]}`)) {
-    const source = base.compositions[`Z0${base.selection.projectiles[element]}`].layers.find(sprite => sprite.id === 'foreground');
-    cueSprites.push({ ...clone(source), id: 'element-cue', path: base.assets[source.assetId].path, css: { ...source.css, opacity: '0.23' } });
+  for (const selected of cueElements.slice(0, 2)) {
+    const cueElement = selected === 'blood' ? 'force' : selected;
+    if (art.sprites.some(sprite => sprite.assetId === `Z.effect.${base.selection.projectiles[cueElement]}`)) continue;
+    const source = base.compositions[`Z0${base.selection.projectiles[cueElement]}`].layers.find(sprite => sprite.id === 'foreground');
+    cueSprites.push({ ...clone(source), id: cueElements.length === 1 ? 'element-cue' : `element-cue-${selected}`,
+      path: base.assets[source.assetId].path, css: { ...source.css, opacity: String(0.23 / Math.min(cueElements.length, 2)) } });
   }
+  // Status overlays must paint over the complete weapon/shield assembly.
+  // Boost the cloned cue only; keep the approved catalog and rank scale intact.
+  let statusZ = Math.max(0, ...[...art.sprites, ...cueSprites].map(sprite => Number(sprite.css.zIndex ?? sprite.zIndex ?? 0))) + 1;
   for (const id of statuses) {
     const cues = statusesById.get(statusCueId(id)) || statusesById.get('prepared');
-    for (const source of cues || []) cueSprites.push({ ...clone(source), id: `status-${id}-${source.assetId.endsWith('.mark') ? 'mark' : 'glow'}` });
+    for (const source of cues || []) {
+      const cue = clone(source), opacity = Math.min(0.65, Number(cue.css.opacity ?? 1) * 1.3);
+      cue.id = `status-${id}-${source.assetId.endsWith('.mark') ? 'mark' : 'glow'}`;
+      cue.zIndex = statusZ++;
+      Object.assign(cue.css, { zIndex: String(cue.zIndex), opacity: String(opacity) });
+      if (cue.transform) cue.transform.opacity = opacity;
+      cueSprites.push(cue);
+    }
   }
   const intensity = 0.55 + (Math.min(rank, 5) - 1) * 0.1125;
   art.sprites = [...art.sprites, ...cueSprites].map(sprite => {
@@ -141,12 +209,12 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   if (!art.sprites.some(sprite => sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
     art.sprites.push({ ...withOpacity(spritesByAsset.get('I.effect.0'), intensity * 0.5), id: 'rank-aura' });
   }
-  art.code = `procedural-${maneuver}-${element || 'physical'}-${utility?.code || ''}`;
+  art.code = `procedural-${maneuver}-${selectedElements.join('+') || 'physical'}-${utility?.code || ''}`;
   art.path = art.sprites.find(sprite => sprite.id === 'background').path;
   const result = freeze({ kind: 'simple', path: art.path, fit: 'cover', position: '50% 50%', filter: '',
-    category, maneuver, element, rank, variant: Math.min(rank, 5), componentArt: art,
+    category, maneuver, element, elements: selectedElements, rank, variant: Math.min(rank, 5), componentArt: art,
     statuses: statuses.map(id => ({ id })), layers: [],
-    visualCues: [`action:${maneuver}`, ...(element ? [`element:${element}`] : []), ...statuses.map(id => `status:${id}`)] });
+    visualCues: [`action:${maneuver}`, ...cueElements.slice(0, 2).map(id => `element:${id}`), ...statuses.map(id => `status:${id}`)] });
   if (cache.size >= 512) cache.delete(cache.keys().next().value);
   cache.set(key, result);
   return result;
