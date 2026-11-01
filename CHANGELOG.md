@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Smith upgrade confirmation fits on screen** ([#2464](https://github.com/cehinds/AshenSpire/pull/2464), `0.7.3.18`). Change values are right-aligned, unchanged recovery rows collapse to "No recovery changes", and "None" no longer wraps, so the upgrade confirmation no longer needs scrolling.
 - **Every combat chance is a d20** ([#2471](https://github.com/cehinds/AshenSpire/pull/2471), `0.7.3.18`). Crits, status build-up and recovery, Veil, distance avoidance and weakness stagger now roll a d20 against a target in 5% steps, with advantage keeping the higher die.
 - **Smaller, reordered health badges and a player AC badge** ([#2462](https://github.com/cehinds/AshenSpire/pull/2462), `0.7.3.16`). Combat health badges are 20% smaller, read Block, Poise, Evade, then stacks, then stance, and show at most three slots with a +N badge for the rest; your health bar now has an AC badge on its left showing the Evasion an enemy hit roll must reach.
 - **Card inspection fits on one screen** ([#2466](https://github.com/cehinds/AshenSpire/pull/2466), `0.7.3.14`). The inspected card is smaller with its details beside it, each effect tag's text shows inline with the effect line first, and duplicate chips such as "Spell Spell Spell" are gone.

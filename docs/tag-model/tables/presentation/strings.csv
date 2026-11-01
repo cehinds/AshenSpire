@@ -1088,6 +1088,7 @@ book.read.complete,Book read,,uiStrings,content/source/uiStrings.csv,label,conte
 settings.manaRing,Mana ring,,uiStrings,content/source/uiStrings.csv,label,content/source/uiStrings.csv,,
 settings.manaRing.note,Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.,,uiStrings,content/source/uiStrings.csv,label,content/source/uiStrings.csv,,
 rest.recovery.heading,Recovery preview,,"uiStrings short=""Recovery preview""",content/source/uiStrings.csv,label,content/source/uiStrings.csv,,
+rest.recovery.none,No recovery changes,,uiStrings,content/source/uiStrings.csv,label,content/source/uiStrings.csv,,
 armoury.positions.title,Equipped positions,,uiStrings,content/source/uiStrings.csv,label,content/source/uiStrings.csv,,
 armoury.action.inspect,Inspect,,uiStrings,content/source/uiStrings.csv,label,content/source/uiStrings.csv,,
 armoury.action.inspectNamed,Inspect {name} in {slot},,uiStrings,content/source/uiStrings.csv,label,content/source/uiStrings.csv,,

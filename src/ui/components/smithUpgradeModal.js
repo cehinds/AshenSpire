@@ -95,7 +95,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       el('span', { class: 'smith-requirement-values as-statpair' }, [el('em', { class: 'sp-k', text: row.label }), deltaNode(String(row.currentRequired), String(row.nextRequired), { spaced: false })]),
       el('small', { text: `You have ${row.actual == null ? '?' : row.actual}` }),
     ]))
-    : [el('span', { class: 'smith-requirement met' }, el('span', { class: 'smith-requirement-values as-statpair' }, [el('em', { class: 'sp-k', text: 'NONE' }), ' ', el('b', { class: 'sp-v', text: 'No attribute requirement' })]))]);
+    : [el('span', { class: 'smith-requirement smith-requirement-none met' }, el('b', { class: 'sp-v', text: 'None' }))]);
 
   const intrinsicStatsNode = (selected) => {
     const stats = selected.intrinsicStats || {};
@@ -105,7 +105,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     if (!hasStats && !changes.length) return null;
     const rowNode = statRow({
       flat: true,
-      nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: 'Equipment Stats' }), el('small', { class: 'sr-hint', text: selected.kindLabel })]),
+      nameNode: el('b', { class: 'sr-name', text: 'Equipment Stats' }),
       values: [
         changes.length ? changeSummary({ values: changes }) : null,
         ...(hasStats ? [
@@ -127,18 +127,21 @@ export function mountSmithUpgradeModal(host, initialModel, {
 
   const requirementsRow = (selected) => statRow({
     flat: true,
-    nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: 'Requirements' }), el('small', { class: 'sr-hint', text: 'attribute' })]),
+    nameNode: el('b', { class: 'sr-name', text: 'Requirements' }),
     values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)),
     className: 'smith-data-row smith-requirements',
   });
 
   /** The decision door's details: the same cost and deltas, as kit rows. */
   const confirmationDetails = (selected) => html([
-    el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
-    ...(currentModel.properties.servicePreviewHtml ? [el('div', { html: currentModel.properties.servicePreviewHtml })] : []),
-    el('div', { class: 'confirmation-change-list' }, [
-      ...selected.affectedRows.map((row) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
-      statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
+    el('div', { class: 'smith-confirm-details' }, [
+      el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
+      ...(currentModel.properties.servicePreviewHtml ? [el('div', { class: 'smith-confirm-recovery', html: currentModel.properties.servicePreviewHtml })] : []),
+      // Name left, change right: each row is a two-column grid (CSS), the change on one line.
+      el('div', { class: 'confirmation-change-list' }, [
+        ...selected.affectedRows.map((row) => statRow({ flat: true, className: 'smith-confirm-row', nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
+        statRow({ flat: true, className: 'smith-confirm-row smith-confirm-requirements', nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
+      ]),
     ]),
   ]);
 
@@ -243,11 +246,23 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const head = el('div', { class: 'smith-summary-grid' }, [
       el('div', { class: 'smith-summary-cell smith-selected-head' }, [
         itemArt(selected),
-        eyebrow('Selected item', { class: 'smith-preview-label' }),
-        el('b', { class: 'sr-name', text: selected.name }),
-        el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
-        el('span', { class: 'smith-item-type-row' }, types),
-        selected.tags.length ? el('span', { class: 'smith-weapon-tags' }, selected.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))) : null,
+        el('span', { class: 'smith-title-row' }, [
+          el('b', { class: 'sr-name', text: selected.name }),
+          el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
+          // The Stone cost rides the item row's right end: a stone and "needed/available".
+          el('span', {
+            class: `smith-head-cost smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}`,
+            role: 'group', 'aria-label': t('smith.cost.aria', { cost: selected.cost, stones: selected.stones }), title: t('smith.cost.tip'),
+          }, [
+            glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
+            el('span', { class: 'smith-cost-pair' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
+          ]),
+        ]),
+        // One row for the item type and every tag; the spans stay for the tools that read them.
+        el('span', { class: 'smith-tag-row' }, [
+          el('span', { class: 'smith-item-type-row' }, types),
+          selected.tags.length ? el('span', { class: 'smith-weapon-tags' }, selected.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))) : null,
+        ]),
       ]),
     ]);
     const folds = el('div', { class: 'smith-upgrade-folds' }, selected.affectedRows.map((row, index) => {
@@ -255,7 +270,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
       const summary = el('summary', {}, statRow({
         tag: 'span',
         nameNode: el('b', { class: 'sr-name', text: row.name }),
-        hintNode: el('small', { class: 'sr-hint', text: `${row.role} · ${row.used === false ? 'not in active deck' : `${row.activeCopies || 1} active`}` }),
         values: [changeSummary(row), glyph(FOLD_GLYPH.collapsed, { class: 'caret smith-fold-caret' })],
       }));
       const facts = el('div', { class: 'smith-card-facts' }, [
@@ -273,12 +287,11 @@ export function mountSmithUpgradeModal(host, initialModel, {
       fold.append(summary, detail);
       return fold;
     }));
-    const cost = el('div', { class: 'smith-cost-strip' }, [
-      el('div', { class: `smith-summary-cell smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
-      selected.affordable ? null : blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
+    const cost = selected.affordable ? null : el('div', { class: 'smith-cost-strip' }, [
+      blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
     ]);
-    const servicePreview = currentModel.properties.servicePreviewHtml ? el('div', { html: currentModel.properties.servicePreviewHtml }) : null;
-    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [servicePreview, cost].filter(Boolean) };
+    // No recovery rows here: every change this upgrade makes already stands in the rows above (Equipment Stats, Requirements, the affected cards), each as "old → new" with the new value green.
+    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [cost].filter(Boolean) };
     return detailCard({
       attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
       children: slots.flatMap((name) => slot[name] || []),
