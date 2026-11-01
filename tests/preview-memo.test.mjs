@@ -77,7 +77,7 @@ test('a refused dispatch also drops the kept previews, and a throwing preview is
 
 test('the combat screen reads previews and dispatches through the memo', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(source, /createPreviewMemo\(\{ combat, preview: enginePreviewCard, dispatch: engineDispatch \}\)/);
+  assert.match(source, /createPreviewMemo\(\{ combat, preview: previewWithKnownWeaknesses, dispatch: engineDispatch \}\)/);
   assert.doesNotMatch(source, /import \{[^}]*(?:^|[{,]\s*)(?:previewCard|dispatch)\s*[,}][^}]*\} from '\.\.\/\.\.\/engine\/combat\.js'/, 'the engine functions are imported only under their own names');
   assert.doesNotMatch(source, /[^.\w]engineDispatch\(/, 'every dispatch goes through the memo');
 });
