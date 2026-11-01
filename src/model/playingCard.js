@@ -200,7 +200,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
-      case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effectiveD20Percent(effect.chance)}%)` : ''}`; break;
+      case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effectiveD20Percent(effect.chance) > 0 && effectiveD20Percent(effect.chance) < 100 ? ` (${effectiveD20Percent(effect.chance)}%)` : ''}`; break;
       case 'applyStatus': {
         if (['invulnerability', 'decoy', 'grounded', 'sleep'].includes(effect.status)) return null;
         if (effect.duration !== undefined && typeof effect.duration !== 'number') return null;

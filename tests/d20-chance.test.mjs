@@ -127,3 +127,17 @@ test('an authored buildup chance on a card reads the 5% step it rolls', async ()
   assert.ok(detail.some(line => /35% chance$/.test(line)), JSON.stringify(detail));
   assert.ok(!detail.some(line => /33% chance/.test(line)), JSON.stringify(detail));
 });
+
+test('an authored buildup chance that rolls as 100% or 0% prints no chance note', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const reg = createRegistries(contentBundle);
+  const card = applyCombatExpansionCard(reg.cards.get('cinderSigil'));
+  for (const authored of [98, 0]) {
+    const copy = JSON.parse(JSON.stringify(card), (key, value) => key === 'chance' && typeof value === 'number' ? authored : value);
+    const text = (cardFaceLines(copy, null, reg) || []).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
+    assert.doesNotMatch(text, /% chance/, `authored ${authored}: ${text}`);
+  }
+});
