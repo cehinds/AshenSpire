@@ -258,7 +258,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
       const summary = el('summary', {}, statRow({
         tag: 'span',
         nameNode: el('b', { class: 'sr-name', text: row.name }),
-        hintNode: el('small', { class: 'sr-hint', text: `${row.role} · ${row.used === false ? 'not in active deck' : `${row.activeCopies || 1} active`}` }),
         values: [changeSummary(row), glyph(FOLD_GLYPH.collapsed, { class: 'caret smith-fold-caret' })],
       }));
       const facts = el('div', { class: 'smith-card-facts' }, [

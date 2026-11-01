@@ -2307,7 +2307,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   .smith-upgrade-modal .smith-upgrade-fold > summary .sr-id,
   .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
   .smith-upgrade-modal .smith-upgrade-fold > summary .sr-name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; }
-  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-hint { overflow-wrap: normal; word-break: normal; }
   .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { margin-left: 0; justify-content: space-between; }
 }
 .smith-stat-costs > i { font-style: normal; }
@@ -2343,7 +2342,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-upgrade-fold { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--bg-raise); }
 .smith-upgrade-fold > summary { list-style: none; cursor: pointer; }
 .smith-upgrade-fold > summary::-webkit-details-marker { display: none; }
-.smith-upgrade-fold > summary > .as-statrow { display: flex; border: 0; background: transparent; padding: 0.9rem 1.2rem; min-height: var(--tap-floor); }
+.smith-upgrade-fold > summary > .as-statrow { display: flex; align-items: center; border: 0; background: transparent; padding: 0.6rem 1.2rem; min-height: var(--tap-floor); }
 .smith-upgrade-fold > summary > .as-statrow > .sr-vals { flex-direction: row; align-items: center; }
 .smith-fold-detail { padding: 0.9rem 1.2rem; border-top: 1px solid var(--line); }
 .smith-upgrade-fold.is-unused { opacity: 0.46; }

@@ -58,4 +58,5 @@ test('Smith data rows carry no grey sub-label under their titles', () => {
   assert.doesNotMatch(modal, /text: 'Equipment Stats'\}\), el\('small'/);
   assert.doesNotMatch(modal, /text: 'attribute'/);
   assert.doesNotMatch(modal, /text: selected\.kindLabel\}\)\]\)/);
+  assert.doesNotMatch(modal, /sr-hint/);
 });

@@ -362,7 +362,6 @@ async function main() {
           affected:[...document.querySelectorAll('.smith-upgrade-folds .smith-upgrade-row')].map((node)=>({
             open:node.open,
             title:node.querySelector('summary .sr-name')?.textContent.trim()||'',
-            role:node.querySelector('summary .sr-hint')?.textContent.trim()||'',
             unused:node.classList.contains('is-unused'),
             opacity:Number.parseFloat(getComputedStyle(node).opacity),
             text:(node.textContent||'').replace(/\\s+/g,' ').trim(),
@@ -442,7 +441,7 @@ async function main() {
         `SMITH-UI-${upper}-SELECTED-NAME-TYPE`, `selected item name uses the same white display treatment and size as fold titles (${JSON.stringify(zero.selectedNameStyle)})`);
       check(zero.text.includes('REQ/AVAIL') && zero.text.includes('Smithing Stone Cost REQ/AVAIL 1/0') && hasPreviewFacts(zero.text)
           && zero.text.includes('Slashing Strike')
-          && zero.text.includes('Weapon Guard') && zero.text.includes('not in active deck')
+          && zero.text.includes('Weapon Guard')
           && expected.selected.affectedRows.every(row => zero.affected.some(actual => actual.title === row.name && actual.text.includes(`Uses the source item’s ${row.rating.label}.`)))
           && zero.text.includes('Weapon Technique')
           && zero.text.includes('Short 1 Smithing Stone'),
@@ -519,7 +518,7 @@ async function main() {
           && armor.intrinsic?.deltas.some(value=>value.label === 'Poise threshold' && value.before === '8' && value.after === '9')
           && !/Weapon Art|Unique Skill|WEIGHT/.test(armor.intrinsic.text)
           && smithWordsFit(armor.wordGeometry)
-          && armor.affected.length === 1 && armor.affected[0].role.startsWith('armor')
+          && armor.affected.length === 1
           && !armor.affected[0].open
           && armor.affected[0].title === 'Poise threshold'
           && armor.affected[0].values.some((value)=>value.label === 'Poise threshold' && value.after === '9')
