@@ -341,3 +341,31 @@ test('Fire damage that costs HP dries a Damp target', () => {
   dispatch(f.combat, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: f.enemy.id });
   assert.equal(getStacks(f.enemy, 'damp'), 0);
 });
+
+// A Spark whose Accuracy die is pinned to a natural 1: it misses.
+function missSpark(f, ...dice) {
+  const hand = f.combat.piles.hand[0];
+  hand.cardId = 'core.spark'; hand.upgraded = false;
+  primeAccuracyRolls(f.combat, { die: 1 });
+  primeContestDice(f.combat, ...dice);
+  const hp = [f.player.hp, f.enemy.hp];
+  dispatch(f.combat, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: f.enemy.id });
+  return { enemyLoss: hp[1] - f.enemy.hp, playerLoss: hp[0] - f.player.hp, missed: f.combat.eventLog.some(e => e.type === 'attackMissed' || e.type === 'attackAvoided'),
+    contests: f.combat.eventLog.filter(e => e.type === 'contestPassed' || e.type === 'contestFailed').length };
+}
+test('a missed lightning attack keeps the Bedrock stack and rolls no contest', () => {
+  const f = fight(); f.enemy.statuses.bedrock = { stacks: 2 };
+  const r = missSpark(f, 20);
+  assert.equal(r.enemyLoss, 0); assert.equal(r.contests, 0);
+  assert.equal(getStacks(f.enemy, 'bedrock'), 2, 'Bedrock is spent only by a landed hit');
+});
+test('a missed lightning attack by a metal caster gets no backlash and no Shocked', () => {
+  const f = fight({ classId: 'reaver' });
+  const r = missSpark(f, 1, 12);
+  assert.equal(r.playerLoss, 0); assert.equal(r.contests, 0); assert.equal(getStacks(f.enemy, 'shocked'), 0);
+});
+test('element:lightning counts as a lightning tag (and so does a bare lightning tag)', () => {
+  assert.equal(isLightning({ tags: ['element:lightning'] }), true);
+  assert.equal(isLightning({ cardTags: ['lightning'] }), true);
+  assert.equal(isLightning({ tags: ['element:fire'] }), false);
+});

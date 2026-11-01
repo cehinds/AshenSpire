@@ -18,7 +18,7 @@ export const statusStacks = stacksOf;
 export function isLightning(carrier) {
   const tags = [...(carrier?.cardTags || []), ...(carrier?.tags || [])].map(tag => (typeof tag === 'string' ? tag : tag?.id));
   const profile = carrier?.combatProfile || {};
-  return tags.some(tag => tag === 'lightning' || tag === 'school:lightning' || tag === 'damage:lightning')
+  return tags.some(tag => tag === 'lightning' || tag === 'element:lightning' || tag === 'school:lightning' || tag === 'damage:lightning')
     || [carrier?.damageType, carrier?.school, carrier?.element, profile.damageType, profile.school].includes('lightning');
 }
 
