@@ -36,3 +36,19 @@ test('the generator never offers a Mana cut on a cantrip or a card that became o
   const becameOne = applyUpgradeSteps(spell(), [tagStep]);
   assert.ok(!pools(becameOne, [tagStep]).has('mp'));
 });
+
+test('rank down is not offered where zeroing Mana would raise the multi-hit Stamina floor, and a saved copy prints the floor', async () => {
+  const { multiHitSpFloor } = await import('../src/model/actionCosts.js');
+  const edge = () => ({ id: 't.edge', name: 'Edge', type: 'attack', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, keywords: [],
+    tags: ['source:spell', 'camp:spell'], effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }] });
+  assert.equal(multiHitSpFloor(edge()), 1);
+  assert.equal(multiHitSpFloor(edge(), { mana: 0 }), 2);
+  for (let i = 0; i < 300; i += 1) {
+    const s = rollUpgradeStep(edge(), [], 0, upgradeStepRng(i, 'x', i));
+    assert.ok(!(s?.k === 'tag' && s.tag === RANK_DOWN_TAG), 'no rank down on a 2-hit Mana card at 1 SP');
+  }
+  const saved = applyUpgradeSteps(edge(), [tagStep]);
+  assert.equal(saved.manaCost, 0);
+  assert.equal(saved.staminaCost, multiHitSpFloor(saved, { mana: saved.manaCost }));
+  assert.equal(saved.cost, saved.staminaCost);
+});

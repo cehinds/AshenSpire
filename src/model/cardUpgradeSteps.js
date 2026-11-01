@@ -7,10 +7,9 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
-import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG } from './cardUpgrade.js';
+import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
 import { normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
-import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 export { STACK_CAPS };
 // Owner ask 2026-10-31: poise, a range / targeting / stance / school / element change and a rank-down join the
@@ -41,17 +40,6 @@ const totalOf = (effects, op) => {
   const index = firstPlainIndex(effects, op);
   return index < 0 ? 0 : effects[index].amount * hitsOf(effects[index]);
 };
-
-// Core 2 charges a multi-hit card at least max(hits - offset, minimum) SP (SPEC 4.3a, model/actionCosts.js multiHitFloorFor):
-// offset 0, or 1 for a `finesse` card, or 2 for a Mana card. Mirrored here because this module must stay a leaf.
-const hitFloor = (card, hits) => {
-  if (!(hits > 1)) return 0;
-  const rule = MULTI_HIT_SP_FLOOR;
-  const finesse = [...(card.tags || []), ...(card.cardTags || []), ...(card.authoredTags || [])].includes('finesse');
-  const offset = Math.max(rule.baseOffset, finesse ? rule.finesseOffset : 0, card.manaCost > 0 ? rule.manaOffset : 0);
-  return Math.max(hits - offset, rule.minimum);
-};
-const currentHits = (effects) => effects.reduce((most, e) => (e.op === 'damage' ? Math.max(most, hitsOf(e)) : most), 1);
 
 function options(base, current, applied, limits) {
   const type = base.type;
@@ -184,7 +172,9 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   }
   if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
   // a card that pays no Stamina would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
-  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && !(current.staminaCost === 0 && current.manaCost > 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
+  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && !(current.staminaCost === 0 && current.manaCost > 0)
+    // zeroing Mana drops the multi-hit Stamina offset: never offer it when the floor would then exceed the printed SP
+    && hitFloor({ ...current, manaCost: 0 }, currentHits(current.effects || [])) <= (current.staminaCost || 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
 
 /**

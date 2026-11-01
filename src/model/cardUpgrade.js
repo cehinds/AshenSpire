@@ -1,4 +1,5 @@
 import { RANGES } from './combatRanges.js';
+import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 // A card definition with its authored upgrade merged over the base. A leaf
 // module: gameProfile.js and registries.js both use it, and importing
@@ -104,6 +105,19 @@ export function firstPlainIndex(effects, op) {
   return (effects || []).findIndex((effect) => isPlainEffect(effect, op));
 }
 
+const hitsOf = (effect) => (Number.isInteger(effect.hits) && effect.hits > 1 ? effect.hits : 1);
+// Core 2 charges a multi-hit card at least max(hits - offset, minimum) SP (SPEC 4.3a, model/actionCosts.js multiHitFloorFor):
+// offset 0, or 1 for a `finesse` card, or 2 for a Mana card. Mirrored here (not imported from actionCosts) because this module must stay a leaf.
+export const hitFloor = (card, hits) => {
+  if (!(hits > 1)) return 0;
+  const rule = MULTI_HIT_SP_FLOOR;
+  const finesse = [...(card.tags || []), ...(card.cardTags || []), ...(card.authoredTags || [])].includes('finesse');
+  const offset = Math.max(rule.baseOffset, finesse ? rule.finesseOffset : 0, card.manaCost > 0 ? rule.manaOffset : 0);
+  return Math.max(hits - offset, rule.minimum);
+};
+export const currentHits = (effects) => effects.reduce((most, e) => (e.op === 'damage' ? Math.max(most, hitsOf(e)) : most), 1);
+
+
 function applyStep(card, step) {
   const effects = (card.effects || []).map((effect) => ({ ...effect }));
   let out = { ...card, effects };
@@ -207,7 +221,16 @@ export function applyUpgradeSteps(base, steps) {
   }
   // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
   // order of the steps, so a saved instance resolves the same way (no migration).
-  if (steps.some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) card.manaCost = 0;
+  if (steps.some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
+    card.manaCost = 0;
+    // Zeroing Mana also drops the Mana offset of the Core 2 multi-hit Stamina floor, so the engine could charge more
+    // than the face prints: print the floor instead, so face, preview and combat agree.
+    const floor = hitFloor({ ...card, manaCost: 0 }, currentHits(card.effects || []));
+    if (Number.isInteger(card.staminaCost) && floor > card.staminaCost) {
+      card.cost = (card.cost ?? card.staminaCost) + (floor - card.staminaCost);
+      card.staminaCost = floor;
+    }
+  }
   if (steps.length >= 2) card.name = `${base.name}+${steps.length}`;
   return card;
 }
