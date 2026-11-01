@@ -36,7 +36,7 @@ import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLoc
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
-import { healMissingSlotCells, isItemOwned } from '../model/loadout.js';
+import { healMissingSlotCells, trimExtraSets, isItemOwned } from '../model/loadout.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from '../model/cardRemoval.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
@@ -1172,6 +1172,24 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           was: undefined,
           now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
           why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
+        });
+      }
+      // A hand slot carried three weapon sets until 2026-11-01 and carries one
+      // now. A save that holds a piece in set 2 or 3 (or an active set past the
+      // first) keeps the piece: it moves to storage, the extra cells are cut,
+      // and the active set is set 1. The fight's own loadout is trimmed too.
+      const trimmed = trimExtraSets(registries, run.loadout);
+      const trimmedSnapshots = [run.combatEntered, run.combatPendingOutcome]
+        .map((holder) => holder && holder.snapshot && holder.snapshot.loadout ? trimExtraSets(registries, holder.snapshot.loadout) : [])
+        .flat();
+      if (trimmed.length || trimmedSnapshots.length) {
+        note(run, {
+          kind: 'overwrite',
+          site: 'save.js:loadRun',
+          field: 'loadout.sets',
+          was: [...trimmed, ...trimmedSnapshots],
+          now: { sets: run.loadout.sets, storage: run.loadout.storage },
+          why: 'a hand slot now carries one set; armaments held in a later set were moved to storage and the active set was reset to the first',
         });
       }
       // The skill threshold's standing upgrade is retired (SPEC §13.4o card
