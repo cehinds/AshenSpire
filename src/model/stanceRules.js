@@ -28,11 +28,15 @@ export function enemyCounterPoiseDamage(move, profile, ctx) {
 }
 /** The maneuver a carrier is priced and recorded as: the mirrored basic's when it mirrors one, else its combat profile's. One source for stance, hit preview, live hit and mitigation. */
 export function effectiveManeuver(carrier) { return mirroredManeuver(carrier) ?? carrier?.combatProfile?.maneuver; }
-export function stanceOf(carrier, entity = null) {
-  if (!carrier) return null;
+// The combat profile a carrier is read through (its own, or the one its tags and effects derive).
+function profileOf(carrier) {
   const tags = carrier.cardTags ?? carrier.tags;
   const normalized = tags ? { ...carrier, cardTags: tags.map(tag => typeof tag === 'string' ? tag : tag.id) } : carrier;
-  const profile = carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(normalized));
+  return carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(normalized));
+}
+export function stanceOf(carrier, entity = null) {
+  if (!carrier) return null;
+  const profile = profileOf(carrier);
   if (profile.stanceTrigger === false) return null;
   const preparation = cardPreparationCategory(carrier);
   if (!preparation && !profile.maneuver) return null;
@@ -131,12 +135,15 @@ export function stanceEntryBonuses(carrier, ctx = null) {
   const amount = defensive ? cfg.entryProtection : 0;
   const share = cfg.schoolBlockShares?.[stance.school] ?? cfg.spellBlockShare;
   const block = stance.camp === 'spell' ? (fixCoreEnabled(ctx) ? Math.floor(amount * share) : Math.round(amount * share)) : amount;
-  const profile = carrier.combatProfile || carrier;
+  const profile = profileOf(carrier);
   const auxiliaryEvade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true);
+  // A card authored with stanceTrigger.stance 'evade' (the Core Evade cards) carries the Evade tag: it stands in Defend
+  // stance (stanceOf) and keeps the Evade entry grant. The authored key names the tag, not a stance.
+  const evadeTagged = carrier.stanceTrigger?.stance === 'evade' || profile.stanceTrigger?.stance === 'evade' || profile.maneuver === 'evade';
   // Core 2 reads the entry grant from its own rules (the Evade card's evadeStackBase: 3, or a resumed fight's snapshot value);
   // the global stanceRules.evadeStacks stays 1 for the non-Core expanded path.
-  return { precision: offensive ? cfg.offensivePrecision : 0, evade: auxiliaryEvade ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
+  return { precision: offensive ? cfg.offensivePrecision : 0, evade: auxiliaryEvade || evadeTagged ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
     block, barrier: amount - block };
 }
 
