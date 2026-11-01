@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
+import { desktopFieldBottom, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
+import { responsiveHandLayout } from '../src/ui/models/HandLayout.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
@@ -307,20 +309,35 @@ test('narrow phone strips keep sprite width and stay above the parent short prof
 });
 
 // Owner 2026-10-31: the battle grid sits lower so the back rank stands on the painted ground and the player's rank
-// ends above the hand. Measured in Chromium at 1280x800, 1200x730 and 390x844 (back rank top = ground paint top,
-// rank D bottom <= hand top). Desktop was top .3 / rowHeight .17, mobile .32 / .16; each profile still validates
-// (top + 4 * rowHeight <= 1) and keeps a clear margin for the hand under rank D.
+// ends above the hand. Owner 2026-11-01: the field runs under the top of the cards (handOverlapFraction of a card's
+// height), so rank D's bottom (top + 4 * rowHeight of the field) must stay above the resting top card edge, which is
+// the field's bottom minus that overlap. Desktop is checked against the model's own field bottom at three viewports
+// (1280x720 leaves about 1px).
 test('desktop and phone profiles stand the back rank lower and keep rank D above the hand', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.4, 0.13]);
-  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.43, 0.14]);
+  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.4, 0.14]);
+  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.43, 0.115]);
   for (const key of ['desktop', 'mobile']) {
     const p = grid.profiles[key];
     assert.ok(p.top >= 0.4, `${key}: the back rank starts at or below 40% of the field`);
-    // The hand reaches up to 94% of the desktop field and to the field's bottom edge on a phone (measured).
-    assert.ok(p.top + 4 * p.rowHeight <= (key === 'desktop' ? 0.94 : 1), `${key}: rank D ends above the hand`);
+    assert.ok(p.top + 4 * p.rowHeight <= 1, `${key}: the profile validates`);
   }
+  const footer = uiConfig.scenes.w4a.sizing.desktopFooter;
+  const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx;
+  const desktop = grid.profiles.desktop;
+  for (const [width, height] of [[1280, 720], [1280, 800], [1920, 980]]) {
+    const footerPlan = desktopFooterLayout({ width, height });
+    const fieldBottom = desktopFieldBottom(footerPlan, { width, zoom: 1, rem: 16, formFactor: 'desktop' });
+    const input = { width, height: footerPlan.handHeight, count: 5, rem: 16, zoom: 1, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'desktop' };
+    const fan = responsiveHandLayout(input, desktopHandLayout(input));
+    const cardTop = footerPlan.handTop + fan.restTop;
+    assert.ok(Math.abs(fieldBottom - cardTop - footer.handOverlapFraction * fan.cardHeight) < 1e-6, `${width}x${height}: the field runs handOverlapFraction of a card under the cards`);
+    const fieldHeight = fieldBottom - header;
+    assert.ok(header + fieldHeight * (desktop.top + 4 * desktop.rowHeight) <= cardTop + 0.5, `${width}x${height}: rank D ends above the resting cards`);
+  }
+  // Phone: the cards' top sits in the DOM (not in a model), so tests/battlefield-layout.browser.mjs and the measured
+  // 390x844 / 360x740 shots own that check; rank D ends at 89% of the field here.
   const formation = alternativeFormation(plan(3), 1280, 516, false, { formFactor: 'desktop' });
   const [back] = formation.visualBands;
-  assert.ok(Math.abs(back.top - 516 * 0.4) < 1e-6 && Math.abs(back.height - 516 * 0.13) < 1e-6);
+  assert.ok(Math.abs(back.top - 516 * 0.4) < 1e-6 && Math.abs(back.height - 516 * 0.14) < 1e-6);
 });
