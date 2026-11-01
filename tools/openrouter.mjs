@@ -5,7 +5,7 @@
 //   echo "prompt" | node tools/openrouter.mjs     prompt from stdin
 //   node tools/openrouter.mjs --model <slug> "p"  pick a model (default: $OPENROUTER_MODEL or openrouter/auto)
 //   node tools/openrouter.mjs --system "text" "p" add a system message
-//   node tools/openrouter.mjs --check             verify the key; print label, usage, limit
+//   node tools/openrouter.mjs --check             verify the key; print usage and limit
 //   node tools/openrouter.mjs --help
 //
 // The key is OPENROUTER_API_KEY in the shell or in .env at the repo root
@@ -41,8 +41,8 @@ async function main() {
   if (args.help) { console.log(HELP); return; }
   const key = openRouterKey();
   if (args.check) {
-    const { label, limit, usage } = await verifyKey({ key });
-    console.log(`label: ${label}\nusage: ${usage}\nlimit: ${limit ?? 'none'}`);
+    const { limit, usage } = await verifyKey({ key });
+    console.log(`usage: ${usage}\nlimit: ${limit ?? 'none'}`);
     return;
   }
   let prompt = args.rest.join(' ').trim();

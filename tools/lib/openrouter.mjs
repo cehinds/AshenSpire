@@ -33,6 +33,16 @@ function scrub(text, key) {
   return out;
 }
 
+// Wrap the network call: a malformed key (say, a stray newline) makes fetch
+// throw before any request, and its message quotes the header, key included.
+async function send(fetchImpl, url, init, key) {
+  try {
+    return await fetchImpl(url, init);
+  } catch (err) {
+    throw new Error(scrub(`OpenRouter request failed: ${err?.message ?? err}`, key));
+  }
+}
+
 async function failure(res, key) {
   let detail = res.statusText;
   try {
@@ -50,7 +60,7 @@ export async function chat({
   const payload = { model: useModel, messages };
   if (maxTokens !== undefined) payload.max_tokens = maxTokens;
   if (temperature !== undefined) payload.temperature = temperature;
-  const res = await fetchImpl(`${BASE}/chat/completions`, {
+  const res = await send(fetchImpl, `${BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${key}`,
@@ -60,7 +70,7 @@ export async function chat({
     },
     body: JSON.stringify(payload),
     signal,
-  });
+  }, key);
   if (!res.ok) throw await failure(res, key);
   const data = await res.json();
   return {
@@ -71,11 +81,12 @@ export async function chat({
 }
 
 export async function verifyKey({ key, fetchImpl = fetch, signal } = {}) {
-  const res = await fetchImpl(`${BASE}/key`, {
+  const res = await send(fetchImpl, `${BASE}/key`, {
     headers: { Authorization: `Bearer ${key}` },
     signal,
-  });
+  }, key);
   if (!res.ok) throw await failure(res, key);
   const { data } = await res.json();
-  return { label: scrub(data?.label, key), limit: data?.limit, usage: data?.usage };
+  // No label: OpenRouter's default label is a truncated copy of the key.
+  return { limit: data?.limit, usage: data?.usage };
 }

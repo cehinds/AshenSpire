@@ -651,7 +651,7 @@ no AI service; `node tools/ai-disclosure.mjs --check` enforces it).
 
 - Key: `OPENROUTER_API_KEY` in your shell, or in `.env` at the repo root. `.env` is
   gitignored (`*.env`); never commit the key. `.env.local` is not ignored, so do not use it.
-- Check it: `node tools/openrouter.mjs --check` (prints label, usage, limit, never the key).
+- Check it: `node tools/openrouter.mjs --check` (prints usage and limit, never the key or its label).
   Ask a model: `node tools/openrouter.mjs --model <slug> --system "..." "prompt"`.
 - Default model is `$OPENROUTER_MODEL` or `openrouter/auto`.
 

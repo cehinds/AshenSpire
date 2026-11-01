@@ -76,10 +76,18 @@ test('non-2xx with unparseable body falls back to statusText', async () => {
   await assert.rejects(chat({ messages: [], key: KEY, fetchImpl: async () => res, env: {} }), { message: 'OpenRouter 502: Bad Gateway' });
 });
 
-test('verifyKey returns label/limit/usage only', async () => {
+test('verifyKey returns limit/usage only', async () => {
   const { calls, fetchImpl } = recorder(reply({ data: { label: 'dev', limit: 10, usage: 1.5, extra: 'x' } }));
   const out = await verifyKey({ key: KEY, fetchImpl });
-  assert.deepEqual(out, { label: 'dev', limit: 10, usage: 1.5 });
+  assert.deepEqual(out, { limit: 10, usage: 1.5 });
   assert.equal(calls[0].url, 'https://openrouter.ai/api/v1/key');
   assert.ok(!JSON.stringify(out).includes(KEY));
+});
+
+test('a fetch that throws with the key in its message is scrubbed', async () => {
+  const key = 'sk-or-SECRET\nx';
+  const fetchImpl = async () => { throw new TypeError(`Headers.append: "Bearer ${key}" is an invalid header value.`); };
+  for (const call of [() => chat({ messages: [], key, fetchImpl, env: {} }), () => verifyKey({ key, fetchImpl })]) {
+    await assert.rejects(call, (err) => !err.message.includes(key) && err.message.includes('[redacted]'));
+  }
 });
