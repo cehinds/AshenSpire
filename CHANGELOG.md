@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Upgrade list shows only what you can upgrade** ([#2468](https://github.com/cehinds/AshenSpire/pull/2468), `0.7.3.10`). Items that cannot be upgraded are hidden; items that need a Blacksmith sit at the bottom, greyed out with "Needs a Blacksmith"; the first upgradeable item is selected.
 - **Smith upgrade confirmation fits on screen** ([#2464](https://github.com/cehinds/AshenSpire/pull/2464), `0.7.3.10`). Change values are right-aligned, unchanged recovery rows collapse to "No recovery changes", and "None" no longer wraps, so the upgrade confirmation no longer needs scrolling.
 - **Focus discount is for magic cards** ([#2465](https://github.com/cehinds/AshenSpire/pull/2465), `0.7.3.10`). A Focus armament now lowers the Mana cost of magic (spell) cards only; other cards that cost Mana pay full price.
 - **Hit receipts list each Precision stat** ([#2461](https://github.com/cehinds/AshenSpire/pull/2461), `0.7.3.8`). The single "stat mix" line in a hit receipt is now one line per stat (DEX, STR, INT, WIS) plus level, with a rounding line so the parts add up to the total.
