@@ -4,16 +4,15 @@
 // WHY THIS FILE EXISTS (owner, 2026-10-01: "What happened to my action bar at
 // the bottom. It looks so bad now"). Solo combat (screens/combat.js) built the
 // WGC6 footer — (Actions) [Draw] [End Turn] [Discard/Exhaust] (Potions) — in
-// its own template, and the co-op board (screens/coop.js) hand-rolled a
-// second, two-control rail plus a full-width row of flask buttons under it.
-// Same game, two bottom bars. Both screens now mount the markup below, the
-// layout adapter (components/combatLayout.js) sizes it, and one set of rules
-// in styles/kit.css lays it out. The co-op flasks went behind Potions, exactly
-// as solo's do; the potions list and the minis over the control live here too.
+// its own template, and a second board hand-rolled a second, two-control
+// rail plus a full-width row of flask buttons under it. Same game, two bottom
+// bars. The markup below is now the one footer, the layout adapter
+// (components/combatLayout.js) sizes it, and one set of rules in
+// styles/kit.css lays it out. The flasks sit behind Potions; the potions list
+// and the minis over the control live here too.
 //
-// What stays with each screen is the VIEWER half: where the counts come from
-// (the live engine in solo, the host snapshot in co-op) and what Use does
-// (local dispatch in solo, a network intent in co-op).
+// What stays with the screen is the VIEWER half: where the counts come from
+// (the live engine) and what Use does (local dispatch).
 
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -43,13 +42,12 @@ export function pileButton(kind, label) {
  * Discard with Exhaust, and Potions. End Turn is the primary with its Keycap
  * and, from the second-beat machinery, its HOLD hint. All five cells stay
  * present at zero so no control appears late or shifts the row.
- * `endTurnId` lets a screen keep the id its instruments address.
  */
-export function combatActionRowHtml({ endTurnId = null } = {}) {
+export function combatActionRowHtml() {
   return `<div class="combat-action-row as-btnrow" data-footer-art="pending" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${staminaOrbHtml()}
           ${html(pileButton('draw', 'Draw'))}
-          ${html(button({ label: t('combat.endTurn'), weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall', ...(endTurnId ? { id: endTurnId } : {}) }))}
+          ${html(button({ label: t('combat.endTurn'), weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall' }))}
           ${html(button({ label: t('combat.discard'), className: 'pile spent tall' }))}
           ${html(button({ label: t('potions.run.title'), className: 'combat-potions tall' }))}
           <!-- The Potions minis: the shared icon tray over the Potions control,
@@ -69,12 +67,10 @@ export function setPotionRevealTiming(row, reveal) {
 export const actionsTipHtml = (left, max) => `<div class="tt-title">${esc(t('combat.actions'))}</div>`
   + `${left} of ${max} left this turn.`
   + `<div class="ti-detail">Playing a card spends its cost. Stamina refills at the start of every turn.</div>`;
-export const drawTipHtml = (count, { browse = true } = {}) => `<div class="tt-title">Draw pile</div>`
+export const drawTipHtml = (count) => `<div class="tt-title">Draw pile</div>`
   + `${count} card${count === 1 ? '' : 's'} left to draw.`
-  + `<div class="ti-detail">${browse ? 'Tap to look through it. ' : ''}When it empties, the discard pile is shuffled back in.</div>`;
-// `browse: false` where the board has no pile viewer (co-op: the host sends
-// counts, not cards), the same switch drawTipHtml takes.
-export const spentTipHtml = ({ browse = true } = {}) => `<div class="tt-title">Discard and Exhaust</div>${browse ? 'Separate views and counts' : 'Separate counts'}. Discard can reshuffle; exhausted cards remain out for this fight.`;
+  + `<div class="ti-detail">Tap to look through it. When it empties, the discard pile is shuffled back in.</div>`;
+export const spentTipHtml = () => `<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.`;
 export const SPENT_TIP_HTML = spentTipHtml();
 // The title is the button's own row (potions.run.title, line 51), so a reword
 // moves the face and the tooltip that names it together.
@@ -97,10 +93,9 @@ export function paintEndTurnKey(endTurn, key) {
 /**
  * Fill the Actions, Draw and Discard/Exhaust cells from plain counts. The
  * accessible labels follow the values (#1436 review): Actions reads "Actions
- * 2 of 3" as solo's renderControls writes it, and `browse: false` (co-op, no
- * pile viewer) drops the "Open piles" promise from Discard/Exhaust.
+ * 2 of 3" as solo's renderControls writes it.
  */
-export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana, settings, draw, discard, exhaust, browse = true }) {
+export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana, settings, draw, discard, exhaust }) {
   if (!row) return;
   paintFooterArt(row, { sp: energy, draw, discard, exhaust });
   const orb = row.querySelector('.energy-orb');
@@ -120,7 +115,7 @@ export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana,
     const [discardWord, exhaustWord] = [t('combat.discard'), t('combat.exhaust')];
     const spentHtml = `<span>${esc(discardWord)} ${discard}</span><small>${esc(exhaustWord)} ${exhaust}</small>`;
     if (!row.dataset?.footerArt && spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
-    spent.setAttribute('aria-label', `${discardWord} ${discard}; ${exhaustWord} ${exhaust}${browse ? '. Open piles' : ''}`);
+    spent.setAttribute('aria-label', `${discardWord} ${discard}; ${exhaustWord} ${exhaust}. Open piles`);
   }
 }
 

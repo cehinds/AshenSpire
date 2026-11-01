@@ -161,7 +161,6 @@ const fakeRow = () => {
 
 for (const [board, options, counts] of [
   ['solo', {}, { energy: 2, energyMax: 3, draw: 5, discard: 4, exhaust: 1 }],
-  ['co-op', { endTurnId: 'coop-endturn' }, { energy: 1, energyMax: 3, draw: 7, discard: 2, exhaust: 0, browse: false }],
 ]) {
   test(`${board} action row: End Turn, Discard and Actions wear the reworded rows on first render and after a repaint`, () => {
     // First render (the kit serialises through a DOM, so build it under one).

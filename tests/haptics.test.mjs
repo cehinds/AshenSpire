@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, HAPTIC_BATCH_GAP_MS, HAPTIC_BATCH_MAX_MS, hapticPatternIssues } from '../src/content/haptics.js';
 import { createHaptics, hapticsEnabled, haptic, joinPatterns } from '../src/ui/haptics.js';
 import { sfx } from '../src/ui/sfx.js';
-import { playBeatCues, playTimeline, bigHitLanded } from '../src/ui/fx.js';
+import { playBeatCues, playTimeline } from '../src/ui/fx.js';
 
 const NAMED = ['cardPlay', 'damageTaken', 'turnStart', 'bigHit', 'poiseBreak', 'victory'];
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -214,8 +214,6 @@ test('main.js gives sfx and haptics separate sinks', () => {
   assert.match(main, /sfx\.sink\s*=\s*\(id\)\s*=>\s*audio\.sfx\(id\);/, 'sound ids reach audio only');
 });
 
-// ctx.isLocalPlayer scopes a paced timeline's beat haptics; absent (solo) every
-// player receipt is local.
 test('a paced solo timeline buzzes for its own player receipts', async () => {
   const { setAnimSpeed, getAnimSpeed } = await import('../src/ui/animationPace.js');
   const listeners = {};
@@ -229,13 +227,13 @@ test('a paced solo timeline buzzes for its own player receipts', async () => {
     { type: 'hpLost', targetId: 'p2', targetPlayerId: 'p2', amount: 3, cause: 'effect' },
     { type: 'playerTurnStart', playerId: 'p2', turn: 2 },
   ];
-  const run = async (speed, isLocalPlayer, skip) => {
+  const run = async (speed, skip) => {
     const ids = [];
     const before = haptic.sink; const was = getAnimSpeed();
     haptic.sink = (id) => ids.push(id);
     setAnimSpeed(speed);
     try {
-      const ctx = { layer: null, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {}, ...(isLocalPlayer ? { isLocalPlayer } : {}) };
+      const ctx = { layer: null, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {} };
       await new Promise((resolve) => {
         playTimeline(events, ctx, resolve);
         if (skip) { fire('pointerdown'); fire('pointerup'); }
@@ -247,7 +245,7 @@ test('a paced solo timeline buzzes for its own player receipts', async () => {
     for (const [speed, skip] of [['instant', false], ['normal', true], ['normal', false]]) {
       const label = `${speed}${skip ? ' (skipped)' : ''}`;
 
-      assert.deepEqual(await run(speed, undefined, skip), ['damageTaken', 'turnStart'], `${label}: solo (no predicate) is unchanged`);
+      assert.deepEqual(await run(speed, skip), ['damageTaken', 'turnStart'], `${label}: the player's own receipts buzz`);
     }
   } finally {
     globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.remove;
@@ -271,18 +269,12 @@ test('bigHit: an enemy losing 20%+ of its max HP to a hit buzzes once per beat',
   assert.deepEqual(felt(() => playBeatCues([hit(40)], {})), [], 'no max HP known: not measurable, not big');
   assert.deepEqual(felt(() => playBeatCues([{ type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 40, blocked: 0 }], { maxHpFor: () => 50 })),
     ['damageTaken'], 'a hit on the player is damageTaken, never bigHit');
-  // Co-op: only a seat this screen plays feels its own big hit.
-  const mine = (id) => id === 'p1';
-  assert.equal(bigHitLanded(hit(25, { sourcePlayerId: 'p1' }), { isLocalPlayer: mine, maxHpFor }), true);
-  assert.equal(bigHitLanded(hit(25, { sourcePlayerId: 'p2' }), { isLocalPlayer: mine, maxHpFor }), false, 'a teammate\'s hit');
-  assert.equal(bigHitLanded(hit(25), { isLocalPlayer: mine, maxHpFor }), false, 'no seat named: nobody\'s');
 });
 
 test('poiseBreak: an enemy\'s Poise breaking buzzes once per beat; a player\'s does not', () => {
   const broke = { type: 'poiseBroken', targetId: 'e1', sourceId: 'player', staminaLoss: 0, interrupted: true };
   assert.deepEqual(felt(() => playBeatCues([broke, { ...broke }])), ['poiseBreak']);
   assert.deepEqual(felt(() => playBeatCues([{ type: 'poiseBroken', targetId: 'player', sourceId: 'e1', staminaLoss: 1 }])), [], 'the player\'s own Poise break');
-  assert.deepEqual(felt(() => playBeatCues([broke], { isLocalPlayer: () => true })), [], 'the receipt names no seat');
 });
 
 test('victory: the win screen buzzes once; the defeat screen does not', async () => {
