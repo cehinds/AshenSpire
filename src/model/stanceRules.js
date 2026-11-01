@@ -56,6 +56,17 @@ export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);
 }
+// Owner 2026-11-01: for the Core 2 Adept same-stance cut, Defend, Counter and Evade (physical or spell) are one
+// defensive family: "Any defensive card" played from any defensive stance takes the cut. Camp is ignored.
+const DEFENSIVE_FAMILY = ['defend', 'counter', 'evade'];
+export function defensiveFamily(entity, carrier) {
+  const next = stanceOf(carrier, entity);
+  if (!next || !DEFENSIVE_FAMILY.includes(next.maneuver)) return false;
+  return [...(entity?.concurrentStances || []), entity?.combatStance].some(row => {
+    const stance = row ? stanceOf(row) : null;
+    return !!stance && DEFENSIVE_FAMILY.includes(stance.maneuver);
+  });
+}
 function hasAdept(ctx, entity, tag) {
   if (entity?.kind === 'enemy' || entity?.classUnequipped) return false;
   const character = gameContent(ctx, 'characters')?.find(row => row.id === entity?.classId);
@@ -73,7 +84,10 @@ function isCounterReaction(ctx, entity, carrier) {
 }
 // New fights use class-entitled resource lanes; existing active fights retain their accepted pricing.
 export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
-  if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
+  if (ctx?.combatExpansionVersion !== 2) return base;
+  const same = sameStance(entity, carrier);
+  // The defensive family reaches only the Core 2 Adept cut below; every other path still needs an exact match.
+  if (!same && !(fixCoreEnabled(ctx) && core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy' && defensiveFamily(entity, carrier))) return base;
   if (fixCoreEnabled(ctx)) {
     // Authored enemy plans budget moves through their existing one-lane rule.
     // The player's hand-card reaction restriction must not reprice that plan.
@@ -85,18 +99,20 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
     if (core2ActionPolicyEnabled(ctx)) {
       // Owner 2026-10-31 (SPEC §17): a Counter reaction played from Counter stance on the enemy's turn costs one less SP
       // (never below 0) whether or not the class is an Adept; every other card keeps the Adept gate below.
-      if (isCounterReaction(ctx, entity, carrier) && base > 0 && carrier?.cost !== 'X') {
+      if (same && isCounterReaction(ctx, entity, carrier) && base > 0 && carrier?.cost !== 'X') {
         return Math.max(0, base - fixCoreReactionRules(fixCoreRules(ctx, entity, carrier)).handCostDiscount);
       }
       if (!(base > 0) || carrier?.cost === 'X' || isSpellCard(carrier) || !hasAdept(ctx, entity, 'training.basic')) return base;
       const cfg = fixCoreRules(ctx, entity, carrier).stance;
       return Math.max(adeptMinimum(ctx, carrier, cfg.minimumCost), base - cfg.discount);
     }
+    if (!same) return base;
     const tags = carrier?.cardTags || carrier?.tags || [];
     if (!(base > 0) || carrier?.cost === 'X' || ctx.phase !== 'enemy'
       || !tags.some(tag => (typeof tag === 'string' ? tag : tag?.id) === 'trait:reaction')) return base;
     return Math.max(0, base - fixCoreReactionRules(fixCoreRules(ctx, entity, carrier)).handCostDiscount);
   }
+  if (!same) return base;
   const cfg = stanceRulesFor(ctx), magical = stanceOf(carrier).camp === 'spell';
   return Math.max(magical ? cfg.magicalMinimumSp : cfg.physicalMinimumSp, base - cfg.sameStanceDiscount);
 }
@@ -137,7 +153,7 @@ export function spellChain(entity, carrier) {
 export function stanceManaCost(base, entity, carrier, ctx) {
   if (!fixCoreEnabled(ctx) || !(base > 0)) return base;
   if (core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy') {
-    const adept = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate') && sameStance(entity, carrier);
+    const adept = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate') && (sameStance(entity, carrier) || defensiveFamily(entity, carrier));
     if (!adept && !spellChain(entity, carrier)) return base;
     const cfg = fixCoreRules(ctx, entity, carrier).stance;
     return Math.max(adept ? adeptMinimum(ctx, carrier, cfg.minimumCost) : cfg.minimumCost, base - cfg.discount);
