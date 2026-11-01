@@ -2314,6 +2314,24 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
 .smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
 .confirmation-change-list { display: flex; flex-direction: column; }
+/* Smith upgrade confirmation (scoped by .smith-confirm-details): fit without scrolling, name left, change right. */
+.confirmation-modal:has(.smith-confirm-details) .confirmation-copy { margin: 0; padding: 0.6rem 1.2rem 0.2rem; font-size: 1.3rem; line-height: 1.3; }
+.confirmation-modal:has(.smith-confirm-details) .confirmation-details { padding: 0.4rem 1.2rem 0.6rem; }
+.smith-confirm-details { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.smith-confirm-details .confirmation-cost { padding: 0.2rem 0; border-top: 0; }
+.smith-confirm-details .rest-recovery { margin: 0; }
+.smith-confirm-details .rest-recovery-row { grid-template-columns: 20px minmax(0, 1fr) auto auto; gap: 0.5rem; padding: 0.25rem 0; }
+.smith-confirm-details .rest-recovery-row .engraved-icon { width: 20px; height: 20px; }
+.smith-confirm-details .rest-recovery-none { margin: 0; padding: 0.2rem 0; color: var(--muted); font-size: 1.2rem; }
+.smith-confirm-row.as-statrow.flat { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 0.8rem; padding: 0.35rem 0; }
+.modal .smith-confirm-row.as-statrow > .sr-id { flex: none; width: auto; min-width: 0; max-width: 100%; }
+.smith-confirm-row .sr-name { font-size: 1.35rem; }
+.smith-confirm-row .as-statpair > .sp-k { letter-spacing: 0.1em; }
+.smith-confirm-row .sr-vals .as-delta { font-size: 1.25rem; }
+.smith-confirm-row .sr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.smith-confirm-row .sr-vals { margin-left: 0; justify-self: end; text-align: right; white-space: nowrap; }
+.smith-confirm-row .smith-fold-values { display: inline-flex; flex-wrap: nowrap; justify-content: flex-end; gap: 0 1rem; white-space: nowrap; }
+.smith-confirm-row .smith-requirement { display: inline; white-space: nowrap; }
 .what-changed-body { display: flex; flex-direction: column; gap: 1.2rem; padding: 1.8rem 2.1rem; min-width: 0; }
 .what-changed-body .what-changed-lead { margin: 0; font-style: italic; color: var(--muted); }
 .what-changed-row { display: flex; flex-direction: column; gap: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--line); }
