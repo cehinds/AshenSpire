@@ -60,3 +60,15 @@ test('a d20 chance receipt shows the rolled 5% chance, not the authored percent'
   assert.equal(adv.dcParts[0].value, 30);
   assert.equal(adv.chance, 51);
 });
+
+test('an advantage chance is worked from the rolled 5% chance, and the draw is unchanged', async () => {
+  const { rollStatusChance, effectiveChance } = await import('../src/engine/combatStatusControl.js');
+  // 32% rolls as 30%; with advantage the d20 succeeds 1 - 0.7^2 = 51% of the time, not the raw 53.76%.
+  assert.ok(Math.abs(effectiveChance(effectiveD20Percent(32), { advantage: true }) - 51) < 1e-9);
+  const rng = seq(4, 17);
+  const receipt = rollStatusChance({ rng, emit() {} }, 32, { advantage: true });
+  assert.deepEqual([receipt.roll, receipt.target, receipt.chance], [17, 15, 32]);
+  assert.ok(Math.abs(receipt.effectiveChance - 51) < 1e-9);
+  assert.equal(receipt.success, true);
+  assert.deepEqual(rng.calls, [['statusRecovery', 1, 20], ['statusRecovery', 1, 20]]);
+});
