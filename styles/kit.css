@@ -2212,7 +2212,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: 8px; left: auto; transform: translateY(-50%); }
 .smith-item-type-row, .smith-weapon-tags { display: contents; }
 .smith-tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.smith-head-cost { display: inline-flex; align-items: baseline; gap: 0.35rem; margin-left: auto; white-space: nowrap; font-weight: 600; }
+.smith-head-cost { display: inline-flex; align-items: baseline; gap: 0.35rem; margin-left: auto; white-space: nowrap; font-weight: 600; line-height: 1.2; }
 .smith-head-cost > .smith-cost-pair > i { font-style: normal; color: var(--muted); padding-inline: 0.1em; }
 .smith-title-row { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.9rem; row-gap: 0.1rem; min-width: 0; }
 .smith-item-type-row > .as-tag { color: var(--gold); }
