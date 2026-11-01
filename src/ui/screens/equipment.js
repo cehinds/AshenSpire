@@ -1306,6 +1306,8 @@ export function mountEquipment(host, {
     ]));
     if (selected && selected.position.state === 'occupied') {
       detail.append(renderEquipmentInspection(registries, selected.position.summary.item, { interactive: false, surface: 'armoury' }));
+      // Smithing tier and the last smithing receipt live in the details card.
+      if (selected.slot.kinds && !selected.slot.kinds.includes('armor')) detail.append(armamentDetail(selected.slot, selected.position.summary));
     } else if (selected) {
       detail.append(flavour(`${selected.position.label} is empty. Choose an item to fill it.`, { class: 'ep-hint armament-inspection-empty' }));
     }
