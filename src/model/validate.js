@@ -2910,7 +2910,7 @@ function checkWardOffTemplate(card, path, err) {
   }
 }
 
-// A card's `faceTemplate` (SPEC card face rules): one or two lines of at most five words, tokens bound like textTemplate's,
+// A card's `faceTemplate` (SPEC card face rules): one to three lines of at most five words, tokens bound like textTemplate's,
 // without the "every number is stated" rule (the face is a summary; Information carries the rest).
 function checkFaceTemplate(card, path, err) {
   const sets = [[`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects(card)]];
