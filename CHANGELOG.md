@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Cantrips and basics cost no Mana** ([#2457](https://github.com/cehinds/AshenSpire/pull/2457), `0.7.2.113`). Mending Touch now costs 1 Stamina and no Mana, an upgrade that turns a card into a cantrip drops its Mana to 0, and Mana cuts or free-cantrip upgrades are no longer offered where they would do nothing.
 - **Card faces show a short summary instead of "Inspect full effect."** ([#2444](https://github.com/cehinds/AshenSpire/pull/2444), `0.7.2.113`). Every card names its main effect on its face, for example Foresight: "Gain 3 Foresight." and Exile Recovery: "Return 1 exhausted card."; the full details stay in Inspect.
 - **Battle backdrop zoomed out** ([#2455](https://github.com/cehinds/AshenSpire/pull/2455), `0.7.2.111`). The combat scenery is drawn about 15% smaller so it looks less pixelated; the ground still lies under the whole battle grid and the edges blend into a soft blurred fill.
 - **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.109`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
