@@ -343,10 +343,13 @@ test('phone field extension keeps every ground at or above the resting cards', (
   const cases = [];
   for (const width of [360, 390, 467]) for (let natural = 200; natural <= 640; natural += 10) for (let hand = 150; hand <= 300; hand += 10) cases.push([width, natural, hand]);
   cases.push([360, 306.7, 201.3]);
-  for (const [width, natural, handHeight] of cases) {
-    const extension = mobileFieldOverlap({ natural, width, handHeight });
+  // The live chooser row (0, the reviewed 52px, and tall ones up to a third of the hand) raises the resting cards.
+  for (const controls of [52, 100, 150]) for (const width of [360, 467]) for (let natural = 260; natural <= 560; natural += 20) for (const hand of [200, 240, 290]) cases.push([width, natural, hand, controls]);
+  cases.push([360, 380, 260, 52]);
+  for (const [width, natural, handHeight, controlsHeight = 0] of cases) {
+    const extension = mobileFieldOverlap({ natural, width, handHeight, controlsHeight });
     assert.ok(extension >= 0 && extension <= sizing.mobileFieldHandOverlapPx, `${width}x${natural}/${handHeight}: extension ${extension} within the authored cap`);
-    const input = { width, height: handHeight, count: 5, rem: 16, zoom: 1, compact: true, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'mobile' };
+    const input = { width, height: handHeight, count: 5, rem: 16, zoom: 1, compact: true, controlsHeight, controlled: [], headroom: 0, formFactor: 'mobile' };
     const cardTop = natural + responsiveHandLayout(input, handLayout(input)).restTop;
     const field = natural + extension;
     const formation = alternativeFormation(combatFormation({ width, height: field, presentation: { perspectiveGrid: true, formationPreset: 'straight' },

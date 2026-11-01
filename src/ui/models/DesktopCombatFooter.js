@@ -69,9 +69,10 @@ export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor
 // extension is whatever that allows, between 0 and the authored cap; a field that would fall under shortBelowPx once
 // extended keeps its natural height (it then draws the short profile, whose rank D ends at 94% of that height).
 // Lengths are layout units; zoom converts to the viewport px the authored values use. Five cards stand for the hand
-// (the resting top moves under half a pixel with the count; the 1px margin covers it).
-export function mobileFieldOverlap({ natural, width, handHeight, rem = 16, zoom = 1, compact = true }, sizing = uiConfig.scenes.w4a.sizing) {
-  const input = { width, height: handHeight, count: 5, rem, zoom, compact, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'mobile' };
+// (the resting top moves under half a pixel with the count; the 1px margin covers it). controlsHeight is the hand's
+// live chooser reserve (hand.js publishes it as --hand-controls-height), which raises the resting cards.
+export function mobileFieldOverlap({ natural, width, handHeight, rem = 16, zoom = 1, compact = true, controlsHeight = 0 }, sizing = uiConfig.scenes.w4a.sizing) {
+  const input = { width, height: handHeight, count: 5, rem, zoom, compact, controlsHeight, controlled: [], headroom: 0, formFactor: 'mobile' };
   const { restTop } = responsiveHandLayout(input, handLayout(input));
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const profile = grid.profiles.mobile;
