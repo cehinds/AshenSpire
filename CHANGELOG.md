@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Physical range cards show their weapons clearly** ([#2454](https://github.com/cehinds/AshenSpire/pull/2454), `0.7.2.99`). Reach weapon actions use a larger spear and Ranged actions use a bow; a thin ivory outline improves weapon contrast. Counter retains its shield and foreground weapon, while magical Counter keeps the shared shield-and-hammer assembly with magical colors and cues.
 - **Enemies no longer "miss" when they Advance** ([#2445](https://github.com/cehinds/AshenSpire/pull/2445), `0.7.2.99`). Moving closer is not an attack: an enemy's Advance no longer rolls a hit that is logged as "missed: out of range".
 - **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.97`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
 - **Precision fades fast** ([#2448](https://github.com/cehinds/AshenSpire/pull/2448), `0.7.2.95`). Temporary Precision stacks now drop by 3 (was 1) at the start of their owner's turn, for players and enemies alike, so buff cards give a short burst instead of a growing pile; Persistent Precision still never decays.
