@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **A deterministic gate sorts test failures before any agent spends tokens on them** ([#2440](https://github.com/cehinds/AshenSpire/pull/2440), `0.7.2.77`). `tools/jev.mjs` triages CI logs against known failure rules, runs the fast checks, regenerates generated files, restamps receipts and merges dev into a branch, and hands only the failures no rule explains to a model.
+- **A deterministic gate sorts test failures before any agent spends tokens on them** ([#2440](https://github.com/cehinds/AshenSpire/pull/2440), `0.7.2.79`). `tools/jev.mjs` triages CI logs against known failure rules, runs the fast checks, regenerates generated files, restamps receipts and merges dev into a branch, and hands only the failures no rule explains to a model.
+- **Release numbering is written down: a release bumps the third number and restarts the build count at 0** ([#2439](https://github.com/cehinds/AshenSpire/pull/2439), `0.7.2.79`). The release after 0.7.2 is 0.7.3.0, and builds count up from there.
 - **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.77`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields, and weapons, shields and other main objects carry a fine warm gold outline. Status effects now layer over the weapon and shield, with slightly stronger marks and glows; the physical Sweep trail follows its scythe blade.
 
 ## 2026-10-31
