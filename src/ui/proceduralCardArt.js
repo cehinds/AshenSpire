@@ -15,6 +15,11 @@ const freeze = value => {
   return value;
 };
 const clone = value => structuredClone(value);
+const physicalWeapons = {
+  spear: { assetId: 'weapon.spear', path: 'assets-display/card-cutouts/weapon.spear.png' },
+  bow: { assetId: 'weapon.bow', path: 'assets/equipment/icon_shortbow.webp' },
+};
+const weaponAssets = new Set(['O.object.0', 'O.object.1', 'L.object.4', 'V.object.0', 'weapon.spear', 'weapon.bow']);
 // Color blending replaces hue/saturation while retaining the source luminance.
 // Element identity alone selects the background; statuses keep their own PNG cues.
 export const PROCEDURAL_BACKGROUND_COLORS = freeze({
@@ -111,6 +116,14 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   if (!actions.includes(maneuver) && maneuver !== 'skill') return null;
   if (tags.includes('delivery:melee')) projectile = false;
   const category = camp === 'spell' ? 'magical' : 'physical';
+  // Ranged identity wins over Reach on cards carrying both compatible ranges.
+  // Defensive and utility icons keep their action silhouette.
+  const rangedWeapon = tags.includes('range:ranged') || projectile
+    && tags.some(tag => ['delivery:projectile', 'delivery:ranged', 'maneuver:ranged'].includes(tag));
+  const weapon = category === 'physical' && ['attack', 'smash', 'sweep', 'counter'].includes(maneuver)
+    ? rangedWeapon ? 'bow'
+      : tags.includes('range:reach') ? 'spear' : null
+    : null;
   const identityElement = elementIdentity(tags);
   if (identityElement.conflict) return null;
   const selectedElements = identityElement.elements;
@@ -124,7 +137,7 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   // Multiple explicit effects retain the approved catalog's deterministic order.
   const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
     || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
-  const key = JSON.stringify([category, maneuver, selectedElements, projectile, utility?.code, statuses, rank]);
+  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, statuses, rank]);
   let cache = globalCache;
   if (registries && typeof registries === 'object') {
     if (!registryCaches.has(registries)) registryCaches.set(registries, new Map());
@@ -158,13 +171,34 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
     Object.assign(hammer.css, { left: '54.6875%', top: '48.4375%', width: '66.40625%', height: '66.40625%',
       transform: 'translate(-50%, -50%) rotate(180deg) scale(1, 1)', zIndex: String(hammer.zIndex) });
   }
+  if (weapon) {
+    const object = art.sprites.find(sprite => sprite.id === (maneuver === 'counter' ? 'secondaryObject' : 'object'));
+    Object.assign(object, physicalWeapons[weapon]);
+    delete object.label;
+    // Both reused assets are square transparent cutouts. Preserve the complete
+    // silhouette, its native diagonal and the Counter's front-of-shield order.
+    // The accepted spear's 1254px alpha bounds are x69..1223/y25..1217.
+    // Centering its enlarged silhouette keeps the complete tip and handle visible.
+    const size = weapon === 'spear' ? maneuver === 'counter' ? 459 : 548 : maneuver === 'counter' ? 340 : 432;
+    if (weapon === 'spear' && maneuver !== 'counter') {
+      object.transform.x = 248;
+      object.css.left = '48.4375%';
+    }
+    Object.assign(object.transform, { width: size, height: size, rotationDeg: 0, scaleX: 1, scaleY: 1 });
+    object.affine = [1, 0, 0, 1];
+    Object.assign(object.css, { width: `${size / 512 * 100}%`, height: `${size / 640 * 100}%`,
+      transform: 'translate(-50%, -50%) rotate(0deg) scale(1, 1)' });
+  }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
   if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
     art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
   }
   for (const sprite of art.sprites.filter(sprite => /^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
+    const outline = weaponAssets.has(sprite.assetId)
+      ? 'drop-shadow(0 0 0.9px rgba(255,246,220,0.98))'
+      : 'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))';
     sprite.css.filter = [sprite.css.filter === 'none' ? '' : sprite.css.filter,
-      'drop-shadow(0 0 0.9px rgba(242,211,153,0.95))'].filter(Boolean).join(' ');
+      outline].filter(Boolean).join(' ');
   }
   // Physical Sweep has independent slash PNGs. Align their curve with the
   // scythe blade without rotating its object or the combined magical blade.
@@ -209,7 +243,7 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   if (!art.sprites.some(sprite => sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
     art.sprites.push({ ...withOpacity(spritesByAsset.get('I.effect.0'), intensity * 0.5), id: 'rank-aura' });
   }
-  art.code = `procedural-${maneuver}-${selectedElements.join('+') || 'physical'}-${utility?.code || ''}`;
+  art.code = `procedural-${maneuver}-${selectedElements.join('+') || 'physical'}-${utility?.code || ''}${weapon ? `-${weapon}` : ''}`;
   art.path = art.sprites.find(sprite => sprite.id === 'background').path;
   const result = freeze({ kind: 'simple', path: art.path, fit: 'cover', position: '50% 50%', filter: '',
     category, maneuver, element, elements: selectedElements, rank, variant: Math.min(rank, 5), componentArt: art,

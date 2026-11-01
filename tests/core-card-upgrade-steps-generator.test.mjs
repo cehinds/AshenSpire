@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { rollUpgradeStep, rollUpgradeOptions, upgradeStepRng, upgradeSeed, STACK_CAPS } from '../src/model/cardUpgradeSteps.js';
-import { applyUpgradeSteps, UPGRADE_STEP_KINDS } from '../src/model/cardUpgrade.js';
+import { applyUpgradeSteps, UPGRADE_STEP_KINDS, RANK_DOWN_TAG } from '../src/model/cardUpgrade.js';
 
 const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
 const byId = (id) => cards.find((c) => c.id === id);
@@ -141,7 +141,7 @@ test('over many rolls, cost and hits each land at most once per card and cost ke
     assert.ok(steps.filter((s) => s.k === 'cost').length <= 1, 'cost once');
     assert.ok(steps.filter((s) => s.k === 'hits').length <= 1, 'hits once');
     assert.equal(face.cost, face.staminaCost, 'cost equals staminaCost');
-    assert.ok(face.staminaCost >= 1 && face.manaCost >= 1);
+    assert.ok(face.staminaCost >= 1 && (steps.some((s) => s.k === 'tag' && s.tag === RANK_DOWN_TAG) ? face.manaCost === 0 : face.manaCost >= 1));
     costs += steps.filter((s) => s.k === 'cost').length;
   }
   assert.ok(costs > 20, 'the cost step is actually exercised');

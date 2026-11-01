@@ -30,7 +30,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { storedGameProfile, compactRun, expandStoredRun } from '../model/runStorage.js';
+import { storedGameProfile, compactRun, expandStoredRun, withLeanCheckpoints } from '../model/runStorage.js';
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
@@ -761,8 +761,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     if (next.length >= json.length) return null;
     try {
       // The reference may point only at a copy that is written and verified.
+      // compactRun also strips the legacy ability context from checkpoint logs, so the original is compared in that lean form.
       if (writeCopy) ensureSharedProfile(parsed.gameProfile);
-      if (canonical({ ...expandStoredRun(JSON.parse(next), readSharedProfile), schemaVersion: parsed.schemaVersion }) !== canonical(parsed)) return null;
+      if (canonical({ ...expandStoredRun(JSON.parse(next), readSharedProfile), schemaVersion: parsed.schemaVersion }) !== canonical(withLeanCheckpoints(parsed))) return null;
     } catch { return null; }
     return next;
   }

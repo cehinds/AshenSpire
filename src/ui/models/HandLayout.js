@@ -122,6 +122,8 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
 }
 
 // Each form factor authors its own fan; all distances scale with the card.
+// The tool-row reserve every other form factor keeps below the fan.
+export const HAND_TOOL_ROW_RESERVE_PX = 66;
 export const RESPONSIVE_HAND = Object.freeze({
   mobile: { spread: .55, angle: 4, arc: .045, dock: .96, widthFraction: .277, minPx: 88, maxPx: 120 },
   tablet: { spread: .64, angle: 4, arc: .045, dock: .96, widthFraction: .168, minPx: 120, maxPx: 150 },
@@ -153,7 +155,8 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
   // The size plan may own the docking: the desktop footer plan docks the fan to the hand box's bottom with no
   // tool-row reserve (its handGapPx buffer above End Turn replaces it); every other plan keeps the 66 px reserve.
-  const reserve = sizePlan.reserve ?? 66, dock = sizePlan.dock ?? style.dock;
+  // Owner (2026-11-01): a phone's fan sits lower, into the band above its tool strip (mobileHandReservePx).
+  const reserve = sizePlan.reserve ?? (input.formFactor === 'mobile' ? uiConfig.scenes.w4a.sizing.mobileHandReservePx : HAND_TOOL_ROW_RESERVE_PX), dock = sizePlan.dock ?? style.dock;
   const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - reserve / zoom) * dock);
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;

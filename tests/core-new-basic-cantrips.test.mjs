@@ -49,11 +49,12 @@ test('basicOrCantripMatcher counts all ten new cards and not an ordinary common'
   assert.ok(!matches('core.advance'));
 });
 
-test('Mending Touch matches the heal-rules cheap shape (fx:heal, Exhaust, 1 SP + 1 MP) at both grades', () => {
+test('Mending Touch matches the heal-rules cheap shape (fx:heal, Exhaust) at both grades, as a cantrip (1 SP, 0 MP: cantrips cost no Mana, owner 2026-11-01)', () => {
   const card = profile.content.cards.find(row => row.id === 'core.mendingTouch'), shapes = profile.modules['heal-rules'].shapes;
   const shape = shapes.filter(s => s.tags.every(t => card.tags.includes(t))).sort((a, b) => b.tags.length - a.tags.length)[0];
   assert.equal(shape.id, 'cheap');
-  assert.deepEqual([card.staminaCost, card.manaCost], [shape.cost.sp, shape.cost.mp]);
+  // The shape prices a non-cantrip heal at 1 SP + 1 MP; a cantrip keeps its SP and pays no Mana.
+  assert.deepEqual([card.staminaCost, card.manaCost], [shape.cost.sp, 0]);
   assert.ok(card.keywords.includes('exhaust'));
   assert.equal(card.effects[0].amount, 4);
   assert.equal(card.upgrade.effects[0].amount, 6);

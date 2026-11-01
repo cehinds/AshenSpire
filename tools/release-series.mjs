@@ -11,9 +11,14 @@
 import assert from 'node:assert/strict';
 import { release, readOrdinal } from './buildversion.mjs';
 
+// The one place the series is written. tools/version-advance.mjs moves this line
+// when `release` merges to `main` (owner, 2026-11-01); nobody hand-edits it.
+const SERIES = '0.7';
+const [S_MAJOR, S_MINOR] = SERIES.split('.').map(Number);
+
 function checkSeries(sourceRelease, record) {
-  if (!/^0\.7\.(0|[1-9]\d*)$/.test(sourceRelease)) {
-    throw new Error(`Expected release 0.7.x, received ${sourceRelease}`);
+  if (!new RegExp(`^${S_MAJOR}\\.${S_MINOR}\\.(0|[1-9]\\d*)$`).test(sourceRelease)) {
+    throw new Error(`Expected release ${SERIES}.x, received ${sourceRelease}`);
   }
   if (record.release !== sourceRelease || !Number.isSafeInteger(record.ordinal) || record.ordinal < 0) {
     throw new Error('Rebuild the artifacts: release metadata must match the source and use a nonnegative integer build number');
@@ -22,20 +27,20 @@ function checkSeries(sourceRelease, record) {
 }
 
 if (process.argv.includes('--selftest')) {
-  for (const [candidate, ordinal] of [['0.7.0', 0], ['0.7.2', 17]]) {
+  for (const [candidate, ordinal] of [[`${SERIES}.0`, 0], [`${SERIES}.2`, 17]]) {
     assert.equal(checkSeries(candidate, { release: candidate, ordinal }), `${candidate}.${ordinal}`);
   }
-  for (const candidate of ['0.6.5', '0.8.0', '0.7.x', '0.7.0-rc.1', '0.7.0.0']) {
+  for (const candidate of [`${S_MAJOR}.${S_MINOR - 1}.5`, `${S_MAJOR}.${S_MINOR + 1}.0`, `${SERIES}.x`, `${SERIES}.0-rc.1`, `${SERIES}.0.0`]) {
     assert.throws(() => checkSeries(candidate, { release: candidate, ordinal: 0 }));
   }
-  assert.throws(() => checkSeries('0.7.0', { release: '0.6.5', ordinal: 0 }));
+  assert.throws(() => checkSeries(`${SERIES}.0`, { release: `${S_MAJOR}.${S_MINOR - 1}.5`, ordinal: 0 }));
   for (const ordinal of [-1, 1.5, '0', Number.MAX_SAFE_INTEGER + 1]) {
-    assert.throws(() => checkSeries('0.7.0', { release: '0.7.0', ordinal }));
+    assert.throws(() => checkSeries(`${SERIES}.0`, { release: `${SERIES}.0`, ordinal }));
   }
   console.log('release-series: PASS 12/12 valid, outdated, malformed, and mismatched build cases');
 } else {
   try {
-    console.log(`release-series: PASS 1/1 current build ${checkSeries(release(), readOrdinal())} uses 0.7.x.x`);
+    console.log(`release-series: PASS 1/1 current build ${checkSeries(release(), readOrdinal())} uses ${SERIES}.x.x`);
   } catch (error) {
     console.error(`release-series: FAIL ${error.message}`);
     process.exitCode = 1;

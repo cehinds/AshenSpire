@@ -4,7 +4,8 @@
 
 Simple is the default, including existing saved Simple preferences. Its pure
 `proceduralCardArt({type, tags, rank}, {registries})` factory selects only from
-the shipped 28 compositions, 44 base PNGs and 108 reviewed PNG/template pool.
+the shipped 28 compositions, 44 base PNGs and 108 reviewed PNG/template pool,
+plus the pinned spear cutout and existing shortbow artwork for physical range.
 It never routes by card ID, name, equipment profile, costs or effects. Semantic
 templates are indexed once; a bounded cache uses canonical sorted/deduplicated
 tags, type and rank. Returned recipes and their nested transforms are frozen.
@@ -14,7 +15,13 @@ attack, smash, counter, evade, sweep, defend, skill and power are supported,
 including defense/evasion aliases. Explicit element wins over school and then
 damage tags; aliases deduplicate before combining canonical elements. Blood is also supported; its foreground uses the approved Force template.
 Cast/projectile delivery selects approved elemental projectiles; explicit melee
-retains the ethereal weapon. Counter paints the approved hammer in front of the shield for both camps; Evade
+retains the ethereal weapon. Physical attack, smash, sweep and counter use a spear
+for `range:reach` and a bow for ranged delivery or `range:ranged`; Ranged wins
+over Reach. Explicit melee delivery suppresses compatibility projectile aliases.
+The chosen weapon participates in the semantic cache. Counter keeps its shield;
+un-ranged physical and all magical Counters paint the approved hammer in front
+with the same geometry. Range-tagged physical Counters replace only that foreground
+weapon. Magical elements and statuses retain their own backgrounds and cues. Evade
 uses the approved feather. Utility effect tags select healing, draw and cleanse
 objects. Status tags select approved PNG marks/glows (a restrained approved
 generic cue for other registered statuses). Action plus element and statuses
@@ -25,7 +32,7 @@ saturation. Explicit element wins over the camp: physical cards without an
 element keep neutral gray smoke, while non-elemental magic defaults to Force blue.
 Explicit Force and Blood are red; untyped magic remains blue with a distinct cache identity. Fire uses the approved orange-brown (#88552f), Earth a muted brown (#705440), Lightning yellow, Alteration green, Frost pale blue
 with white highlights, Psychic violet, Divine warm ivory/gold, Necrotic purple,
-and Wind pale teal. Fire + Frost is purple (#9455c7), and Lightning + Alteration lime (#9aca35). Other combinations equally average the sRGB palette channels after alias deduplication and canonical sorting. All elements contribute to the background; at most two elemental PNG cues and one status cue accompany the action for mixed identities. The first canonical element selects the foreground template, retaining stable weapon geometry across tag order and ranks. Invalid explicit element/school tags fail safely; physical damage tags do not suppress recognized elemental damage tags. The builder includes Blood in its element selector; its additional-tag field accepts mixed elements. All main object PNGs use a thin warm gold 0.9px outline, including weapons, shields, books and the Evade feather; existing sprite filters are preserved. Physical Sweep rotates its two separate slash arc PNGs +90 degrees to follow the fixed scythe blade; the combined magical scythe PNG is unchanged. Status glow/mark PNGs paint above the entire weapon and shield assembly. Their cloned base opacity is multiplied by 1.3 and capped at 0.65 before rank intensity is applied, retaining rank variation and the approved catalog unchanged. Burn and other statuses retain their PNG effects but never
+and Wind pale teal. Fire + Frost is purple (#9455c7), and Lightning + Alteration lime (#9aca35). Other combinations equally average the sRGB palette channels after alias deduplication and canonical sorting. All elements contribute to the background; at most two elemental PNG cues and one status cue accompany the action for mixed identities. The first canonical element selects the foreground template, retaining stable weapon geometry across tag order and ranks. Invalid explicit element/school tags fail safely; physical damage tags do not suppress recognized elemental damage tags. The builder includes Blood in its element selector; its additional-tag field accepts mixed elements. Weapons use a contrasting pale ivory 0.9px outline; shields, books and the Evade feather retain their thin warm gold outline. Existing sprite filters are preserved. The spear is enlarged to a 548px square for main weapons and 459px for Counter; its measured alpha bounds keep the full tip and handle inside the stage. Bow scale is unchanged. Physical Sweep rotates its two separate slash arc PNGs +90 degrees to follow the fixed scythe blade; the combined magical scythe PNG is unchanged. Status glow/mark PNGs paint above the entire weapon and shield assembly. Their cloned base opacity is multiplied by 1.3 and capped at 0.65 before rank intensity is applied, retaining rank variation and the approved catalog unchanged. Burn and other statuses retain their PNG effects but never
 override the background element or category color. CSS
 `mix-blend-mode:color` preserves the original background PNG's per-pixel
 luminosity, texture and lighting instead of adding a translucent flat wash.

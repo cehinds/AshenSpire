@@ -831,7 +831,7 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 1,
+    "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
     "mirrors": "defend",

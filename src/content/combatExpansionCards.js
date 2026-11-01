@@ -112,7 +112,7 @@ export function applyCombatExpansionCard(def) {
     || (def.type === 'attack' ? 'casting' : null));
   const card = { ...def, tags: rewriteTags(def, row, maneuver), cardTags: rewriteTags(def, row, maneuver),
     damageSchool: 'magic', range: spellRange(def, row), targeting: AREA.has(def.id) ? 'area' : 'single',
-    attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
+    attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate), ...(def.faceTemplate ? { faceTemplate: def.faceTemplate.map(barrierText) } : {}) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');
   const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'necroticBlight' }[row.school];

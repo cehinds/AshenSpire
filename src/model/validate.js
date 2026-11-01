@@ -582,6 +582,11 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
+    // Cantrips cost no Mana (owner, 2026-11-01, SPEC card upgrades): a card tagged rank.cantrip, base or authored upgrade.
+    if (card && [...(card.tags || []), ...(card.cardTags || [])].includes('rank.cantrip')) {
+      if (Number.isInteger(card.manaCost) && card.manaCost > 0) err(`cards.${card.id || '?'}.manaCost`, 'a cantrip costs no Mana');
+      if (card.upgrade && Number.isInteger(card.upgrade.manaCost) && card.upgrade.manaCost > 0) err(`cards.${card.id || '?'}.upgrade.manaCost`, 'a cantrip costs no Mana');
+    }
     if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
       err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
     }
@@ -657,7 +662,9 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     const mana = b.balance.mana;
     if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { minActionCost, minStaminaCost } — the card cost rule reads it (plan phase 8)');
     else {
-      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost', 'focusManaDiscount', 'focusItemType'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      if (!(Number.isInteger(mana.focusManaDiscount) && mana.focusManaDiscount >= 0)) err('balance.mana.focusManaDiscount', `must be a non-negative integer, got ${JSON.stringify(mana.focusManaDiscount)}`);
+      if (typeof mana.focusItemType !== 'string' || !mana.focusItemType) err('balance.mana.focusItemType', 'must be an item-type tag id');
       for (const key of ['minActionCost', 'minStaminaCost']) {
         if (!(Number.isInteger(mana[key]) && mana[key] >= 0)) err(`balance.mana.${key}`, `must be a non-negative integer, got ${JSON.stringify(mana[key])}`);
       }
@@ -2910,6 +2917,24 @@ function checkWardOffTemplate(card, path, err) {
   }
 }
 
+// A card's `faceTemplate` (SPEC card face rules): one to three lines of at most five words, tokens bound like textTemplate's,
+// without the "every number is stated" rule (the face is a summary; Information carries the rest).
+function checkFaceTemplate(card, path, err) {
+  const sets = [[`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects(card)]];
+  if (card.upgrade?.effects) sets.push([`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects({ effects: card.upgrade.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate ?? card.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  for (const [at, lines, effects] of sets) {
+    if (lines === undefined) continue;
+    if (!Array.isArray(lines) || lines.length < 1 || lines.length > 3) { err(at, 'must be one to three short lines'); continue; }
+    const bound = new Set(computeTokenBindings(effects).map((bd) => bd.token));
+    for (const line of lines) {
+      if (typeof line !== 'string') { err(at, 'lines must be strings'); continue; }
+      if (line.replace(/\{[^}]*\}/g, 'N').split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length > 5) err(at, `'${line}' is longer than five words`);
+      for (const token of extractTemplateTokens(line)) if (!bound.has(token)) err(at, `Face token '{${token}}' does not bind to any effect value`);
+    }
+  }
+}
+
 // A card's `ramp` (SPEC §4.3): per is a whole number 1..3; the stat must name an effect the card (or its upgrade) has.
 function validateCardRamp(card, path, err) {
   for (const [at, ramp, effects] of [[`${path}.ramp`, card.ramp, card.effects], [`${path}.upgrade.ramp`, card.upgrade?.ramp, card.upgrade?.effects ?? card.effects]]) {
@@ -2933,6 +2958,7 @@ function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
   checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
   checkWardOffTemplate(card, path, err);
+  checkFaceTemplate(card, path, err);
   if (card.singleBreak) checkTemplate(card.singleBreak.textTemplate, cardTokenEffects(card.singleBreak), `${path}.singleBreak.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;

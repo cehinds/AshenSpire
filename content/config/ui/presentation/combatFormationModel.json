@@ -47,7 +47,7 @@
         "playerRowHeight": 0.26,
         "skew": 0.6,
         "top": 0.3,
-        "rowHeight": 0.17,
+        "rowHeight": 0.16,
         "hudWidthFraction": 0.5,
         "hudCenterOnBody": true
       },
@@ -148,6 +148,7 @@
       "miniHudScale": 1.8,
       "scene": {
         "topHeightFraction": -0.1556,
+        "backdropZoom": 0.85,
         "widthScale": 1,
         "heightPerWidth": 0.6666666666666666,
         "mobileFloor": {
@@ -181,7 +182,7 @@
           "playerRowHeight": 0.28,
           "skew": 0.15,
           "top": 0.43,
-          "rowHeight": 0.14
+          "rowHeight": 0.115
         },
         "tablet": {
           "left": 0.06,
@@ -203,7 +204,7 @@
           "playerRowHeight": 0.26,
           "skew": 0.6,
           "top": 0.4,
-          "rowHeight": 0.13,
+          "rowHeight": 0.14,
           "hudWidthFraction": 0.5,
           "hudCenterOnBody": true
         }

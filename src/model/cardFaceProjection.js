@@ -39,6 +39,42 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
 // A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
 const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
+// What a summary must never lose from the full text, by kind: a cost or downside, a discard, something consumed, a cap or
+// limit, "random", a chance, a lock or reveal rule, Exhaust/Ethereal. The check reads the full rules, not hand-picked cards.
+export const QUALIFIERS = [
+  ['cost', /(?<!\b(?:whenever|when|if) you )\b(?:take|lose|loses|pay|offer|skip)\b|\bcosts? \+|\bunplayable\b/i],
+  ['discard', /\bdiscards?\b/i],
+  ['consume', /\bremoves?\b|\bconsum/i],
+  ['cap', /\bcap(?:s|ped)?\b|\bmax(?:imum)?\b|\bstops? at\b|\bat most\b/i],
+  // "random cards in your draw pile" only picks which of the pile to shuffle (up to 100, the whole pile): not a random outcome.
+  ['random', /\brandom\b(?! cards in your draw pile)/i],
+  ['chance', /\bchance\b/i],
+  ['lock', /\block\b|become vulnerable|\breveals?\b/i],
+  ['frequency', /\bonce per (?:turn|combat)\b(?! from this family)|\bfirst\b[^.]*\beach turn\b|\bfirst time\b|\bper combat\b/i, /\bonce per (?:turn|combat)\b|\bper combat\b|\bfirst time\b|\beach turn\b/i],
+  ['selfDebuff', /\bbecome (?:vulnerable|weak|frail)\b/i],
+  ['exhaust', /\bexhaust|\bethereal/i],
+];
+const escapeRe = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// The spellings a status prints under: its display name and its id (recipe text prints "starstoneCharge"), spaced and joined.
+const statusForms = status => {
+  const name = typeof status === 'string' ? status : status?.name, id = typeof status === 'string' ? '' : status?.id;
+  const forms = new Set();
+  for (const [raw, shortenable] of [[name, true], [String(id || '').replace(/^.*\./, ''), false]]) {
+    if (!raw) continue;
+    const spaced = String(raw).replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/[-_.]+/g, ' ').trim().toLowerCase();
+    forms.add(spaced); forms.add(spaced.replace(/\s+/g, ''));
+    // A face may shorten a multi-word name to its leading words ("Gain 1 Starstone"), never to a stem of one word.
+    const words = spaced.split(' ');
+    if (shortenable) for (let n = 1; n < words.length; n++) forms.add(words.slice(0, n).join(' '));
+  }
+  return [...forms].filter(Boolean);
+};
+// A status the full rules apply or grant ("Apply 4 weak", "gain Sleep"), not one merely mentioned ("Blight still accumulates").
+export const statusApplied = (text, status) => statusForms(status).some(form =>
+  new RegExp(`(?:\\d+|apply|applies|gain|inflict)\\s+${escapeRe(form).replace(/ /g, '\\s+')}\\b`, 'i').test(text));
+// The whole status name (or id) as a word, with a plural; never a stem, so "Prepared" is not "Prepare Melee Counter".
+export const statusNamed = (status, text) => statusForms(status).some(form =>
+  new RegExp(`\\b${escapeRe(form).replace(/ /g, '\\s+')}(?:e?s)?\\b`, 'i').test(text));
 const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 // A line of five words or fewer is one clause. A longer list of complete
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
@@ -87,8 +123,67 @@ function authoredClauses(html) {
   return out.map(html => ({ kind: 'effect', html: shorten(html) }));
 }
 
+// Attach probability to its own status amount ("Weak 2 (50% chance)"). Null when a chance-based status is named but its
+// amount or probability cannot be read unambiguously: that line stays in Information.
+function withChance(html, effects, registries) {
+  const chanceIds = new Set(effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op)
+    && effect.chance !== undefined && effect.chance < 100).map(effect => effect.status));
+  for (const id of chanceIds) {
+    const name = esc(registries?.statuses?.get?.(id)?.name || id);
+    if (!html.includes(name)) continue;
+    const sources = effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op) && effect.status === id);
+    const chances = new Set(sources.map(effect => effect.chance ?? 100));
+    if (chances.size !== 1) return null;
+    const chance = [...chances][0];
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
+    if (!amount.test(html)) return null;
+    amount.lastIndex = 0;
+    html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
+  }
+  return html;
+}
+
 /** At most two whole qualified clauses; omitted facts remain in Information. */
-export function cardFaceProjection(def, { lines = null, authoredHtml = '', registries = null, effects = def.effects || [] } = {}) {
+export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceHtml = null, registries = null, effects = def.effects || [] } = {}) {
+  const projection = computedFaceProjection(def, { lines, authoredHtml, registries, effects });
+  // The Inspect cue is a last resort: a card that authors a `faceTemplate` says its main effect in place of it
+  // (owner, 2026-11-01). Downsides the computed face reserved (Exhaust, a payment) stay ahead of the summary.
+  if (faceHtml?.length && projection.clauses.some(clause => clause.kind === 'detail')) {
+    const summaryText = [...faceHtml.map(plain), ...(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word))].join(' ').toLowerCase();
+    const named = text => (text.match(/\b(?:take|lose|exhaust|discard|ethereal|unplayable|pay|offer|skip)\b|\bone play\b/gi) || [])
+      .every(word => summaryText.includes(word.toLowerCase().split(' ')[0]));
+    if (!(projection.hiddenDownsides || []).every(named)) return projection;
+    const downsides = projection.clauses.filter(clause => clause.downside || clause.kind === 'cost');
+    // A reserved clause may already carry part of the payoff ("Heal 8 HP, Exhaust, Retain"): a summary line it contains is dropped.
+    const wordsOf = html => new Set((plain(html).toLowerCase().match(/[\p{L}\p{N}%+]+/gu) || []).filter(word => !/^cards?$/.test(word)));
+    const covered = html => downsides.some(clause => { const have = wordsOf(clause.html); return [...wordsOf(html)].every(word => have.has(word)); });
+    // A chance, like a downside, is never dropped: a summary line that cannot carry it keeps the cue.
+    const qualified = faceHtml.map(html => withChance(html, effects, registries));
+    if (qualified.includes(null)) return projection;
+    const summary = qualified.filter(html => !covered(html)).map(html => ({ kind: 'effect', html, ...(QUALIFIERS.some(([, re]) => re.test(plain(html))) ? { downside: true } : {}) }));
+    // A card's Exhaust / Ethereal keyword is a downside the summary never has to repeat.
+    for (const [keyword, word] of [['exhaust', 'Exhaust'], ['ethereal', 'Ethereal']]) {
+      if ((def.keywords || []).includes(keyword) && !downsides.some(clause => plain(clause.html).includes(word)))
+        downsides.push({ kind: 'cost', html: word });
+    }
+    // Up to the face cap of clauses; a line the cap would drop sends the card back to the cue (below).
+    const wanted = [...downsides, ...summary], clauses = wanted.slice(0, FACE_EFFECT_CLAUSES);
+    // A line the cap would drop is an effect the face no longer names: the cue stands instead (owner review, 2026-11-01).
+    if (clauses.length < wanted.length) return projection;
+    // Every qualifier of the full rules must survive on the face as it will be printed; otherwise the cue stands.
+    const faceText = [...clauses.map(clause => plain(clause.html)), summaryText.includes('exhaust') ? 'exhaust' : '', summaryText.includes('ethereal') ? 'ethereal' : ''].join(' ');
+    const fullText = plain(authoredHtml || '');
+    if (QUALIFIERS.some(([, re, faceRe = re]) => re.test(fullText) && !faceRe.test(faceText))) return projection;
+    // Every status the full rules name (an enemy debuff on a condition, say) must be named on the face too.
+    const lowerFace = faceText.toLowerCase();
+    if ((registries?.statuses?.all?.() || []).some(status => (status.name || status.id) && statusApplied(fullText, status) && !statusNamed(status, lowerFace))) return projection;
+    return { ...projection, clauses, omitted: true, summarized: true };
+  }
+  return projection;
+}
+
+function computedFaceProjection(def, { lines, authoredHtml, registries, effects }) {
   let candidates = lines ? lines.map(line => ({ ...line, ...('faceHtml' in line ? { faceHtml: undefined } : {}),
     // Entry bonuses and the Defend restore are stance explanations, outside
     // the ordinary effect budget. Their complete reading stays in Information.
@@ -106,23 +201,8 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   // would falsely make both uncertain. Ambiguous repeated grants stay in
   // Information rather than borrowing another grant's probability.
   if (lines) candidates = candidates.map(line => {
-    let html = shorten(line.html);
-    const chanceIds = new Set(effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op)
-      && effect.chance !== undefined && effect.chance < 100).map(effect => effect.status));
-    for (const id of chanceIds) {
-      const name = esc(registries?.statuses?.get?.(id)?.name || id);
-      if (!html.includes(name)) continue;
-      const sources = effects.filter(effect => ['buildup', 'applyStatus'].includes(effect.op) && effect.status === id);
-      const chances = new Set(sources.map(effect => effect.chance ?? 100));
-      if (chances.size !== 1) return null;
-      const chance = [...chances][0];
-      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const amount = new RegExp(`${escapedName}\\s+(?:<span\\b[^>]*>)*\\d+(?:<\\/span>)*(?=[\\s,.(]|$)`, 'g');
-      if (!amount.test(html)) return null;
-      amount.lastIndex = 0;
-      html = html.replace(amount, match => `${match} (${esc(chance)}% chance)`);
-    }
-    return { ...line, html };
+    const html = withChance(shorten(line.html), effects, registries);
+    return html === null ? null : { ...line, html };
   }).filter(Boolean);
   // A payment cannot disappear while its payoff remains. Include authored
   // Ashen Blight payments too: those costs are intentionally outside effects.
@@ -146,7 +226,8 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
     chosen.add(entry); count += entry.parts.length; used += size + 2;
   };
   if (reservedCount <= FACE_EFFECT_CLAUSES) { reserved.forEach(take); fitted.forEach(entry => { if (count < FACE_EFFECT_CLAUSES && !chosen.has(entry)) take(entry); }); }
-  const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => entry.parts);
+  // `downside` marks what the face reserved as a payment or requirement; a summary that replaces the cue keeps it.
+  const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => reserved.includes(entry) ? entry.parts.map(part => payments.includes(entry.line) || COST_RE.test(plain(part.html)) ? { ...part, downside: true } : part) : entry.parts);
   const shown = chosen.size;
   // The primary effect that cannot be said in five words is named by the cue, never silently dropped behind a minor line.
   const primary = fitted.find(entry => !reserved.includes(entry));
@@ -157,6 +238,9 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', regis
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.
   if (!clauses.length) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
-  return { clauses, maxLines: FACE_EFFECT_LINES,
+  // A required downside the face could not carry (a long payment, a mandatory discard): a summary may replace the cue
+  // only when it names that downside itself.
+  const hiddenDownsides = reserved.filter(entry => !chosen.has(entry)).map(entry => plain(entry.line.html));
+  return { clauses, hiddenDownsides, maxLines: FACE_EFFECT_LINES,
     omitted: !lines || shown < lines.length || candidates.length > shown };
 }
