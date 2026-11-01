@@ -1779,6 +1779,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury .armament-compact-row .armament-position-actions > button { flex: 0 1 auto; min-width: 0; padding-inline: 1rem; font-size: max(1.3rem, calc(13px / var(--ui-zoom, 1))); }
 .armoury .armament-compact-row .armament-unequip { margin-left: auto; order: 2; }
 .armoury .armament-compact-row .armament-action-reason { order: 3; }
+/* The row is one stretched button (Inspect select); Replace, Unequip and Activate sit above it. */
+.armoury .armoury-position-card:is(.armament-compact-row, .armament-vacant-row.is-empty) { position: relative; }
+.armoury .armament-row-select { position: absolute; inset: 0; z-index: 0; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; border-radius: inherit; background: transparent; box-shadow: none; cursor: pointer; }
+.armoury .armament-row-select:hover { background: color-mix(in srgb, var(--parchment) 6%, transparent); }
+.armoury .armament-row-select:focus-visible { outline: 2px solid var(--parchment); outline-offset: 2px; }
+.armoury .armoury-position-card > :not(.armament-row-select) { position: relative; z-index: 1; pointer-events: none; }
+.armoury .armoury-position-card .armament-position-actions { pointer-events: none; }
+.armoury .armoury-position-card .armament-position-actions > * { pointer-events: auto; }
+.armoury .armoury-position-card.is-inspected { outline: 2px solid var(--green); outline-offset: -2px; }
 .armoury .armament-vacant-row { border: 1px solid var(--line); border-radius: .7rem; padding: .8rem 1rem; background: var(--bg-raise); }
 .armoury .armament-vacant-row.is-locked { padding-block: .7rem; color: var(--muted); }
 .armoury .armament-unlock-requirement { margin-left: auto; font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
