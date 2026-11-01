@@ -24,4 +24,5 @@ test('a ledger reset returns the glyph to nothing held', () => {
 test('the combat screen clears the held glyph, pose and card at a player turn start with no engine stance', () => {
   const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(src, /event\.type === 'playerTurnStart' && !holdsChosenStance\(combat\.player\)\) \{ heldStances\.reset\('player'\); heldKinds\.reset\('player'\); heldCards\.reset\('player'\); \}/);
+  assert.match(src, /heldKinds\.replay\([^\n]*\n[^\n]*\n  if \(!holdsChosenStance\(combat\.player\)\) heldKinds\.reset\('player'\);/, 'a reload after a Poise break keeps the resting mark');
 });

@@ -368,6 +368,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const heldCards = createStanceLedger(card => card);
   // A loaded fight starts with empty ledgers: rebuild each seat's last stance from the restored cardPlayed receipts.
   heldKinds.replay(combat.eventLog, receipt => receipt.cardInstance ? resolveCombatCard(combat, receipt.cardInstance) : undefined);
+  // The replay has no turn-start reset: a reload after a Poise break must not bring back the stance the engine already ended.
+  if (!holdsChosenStance(combat.player)) heldKinds.reset('player');
   function smashProfile() {
     return combatWeaponProfilesFor({appearance:displayAppearance(), classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)}).smashProfile;
   }
