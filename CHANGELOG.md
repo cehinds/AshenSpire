@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-01
 
 - **The Blacksmith offers a choice of card upgrades** ([#2435](https://github.com/cehinds/AshenSpire/pull/2435), `0.7.2.77`). A Blacksmith card upgrade shows two options to pick from, three for a ranked card, drawn from damage, cost, Poise and identity steps (range, targeting, stance, school, element); stance and school change at most once per card, and the picked option is the one that commits. The rest-site Smith keeps its single free upgrade.
+- **Release numbering is written down: a release bumps the third number and restarts the build count at 0** ([#2439](https://github.com/cehinds/AshenSpire/pull/2439), `0.7.2.77`). The release after 0.7.2 is 0.7.3.0, and builds count up from there.
 - **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.77`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields, and weapons, shields and other main objects carry a fine warm gold outline. Status effects now layer over the weapon and shield, with slightly stronger marks and glows; the physical Sweep trail follows its scythe blade.
 
 ## 2026-10-31
