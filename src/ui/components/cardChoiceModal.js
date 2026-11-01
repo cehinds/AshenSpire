@@ -1,6 +1,5 @@
 // The pending choice a card offers before it plays (model/cardChoices.js;
-// SPEC §5.2 Warrior's Vow: "Enter a Stance of your choice"). One dialog for
-// solo (screens/combat.js) and co-op (screens/coop.js): one button per
+// SPEC §5.2 Warrior's Vow: "Enter a Stance of your choice"). One dialog (screens/combat.js): one button per
 // option (a uniform tile naming the stance and what it does); Cancel plays nothing. The
 // stance the player is already in (`option.active`) is shown but disabled and
 // marked, since re-entering it does nothing (#1449 review, Codex P2).

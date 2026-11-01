@@ -68,9 +68,6 @@
 //              (rollArmamentDrop: drops enabled, unlock '', dropWeight > 0, a
 //              source with chance > 0 weighting its rarity) or the shop shelf
 //              (armamentStock > 0 and an armamentCost row for its rarity).
-//     C-coop   a co-op-only card: with a living party of 2+, every combat
-//              reward adds one pick from COOP_CARD_IDS (tools/session.mjs
-//              rollRewardFor — the LAN host is the co-op engine door).
 //     C-inject op 'addCard' / 'addCardToDeck' inside a REACHED card (base or
 //              upgrade — transitive), a reached enemy, an available choice of a
 //              reached event, or a creation keepsake. This is how curses and
@@ -127,11 +124,17 @@ import { eligibleWeaponArts } from '../src/model/armamentTrading.js';
 import { WeaponCardPackageModel, boundGrantCardIds } from '../src/model/loadout.js';
 import { encounterFitsSeat, finalTier } from '../src/model/seats.js';
 import { eventChoiceHistoryRequirements as SHIPPED_CHOICE_REQUIREMENTS } from '../src/content/events.js';
-import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 import { eventChoiceRequirementProblems } from '../src/model/quests.js';
 
 // Declared-intentional orphans: { kind: 'cards'|'relics'|'events'|'encounters'|'enemies', id, why }.
-export const ALLOWED_UNREACHABLE = [];
+export const ALLOWED_UNREACHABLE = [
+  // Owner 2026-10-31 ("remove coop, we aren't doing that anymore"): the three
+  // party cards stay as inert legacy data (src/content/cards/coop.js; saves and
+  // fixtures name them) but their only door, the party combat reward, is gone.
+  { kind: 'cards', id: 'rallyingBanner', why: 'retired co-op party card; inert data' },
+  { kind: 'cards', id: 'sharedFlame', why: 'retired co-op party card; inert data' },
+  { kind: 'cards', id: 'ashOath', why: 'retired co-op party card; inert data' },
+];
 
 // R-profile: a game pack's reward eligibility (games/*/packs/*/rewards.json `eligibility.relics`) names extra relic
 // pools and a positive weight per relic id; a relic so weighted is dropped by that profile's reward rolls (Brimming
@@ -371,10 +374,6 @@ export function contentReach(bundle, opts = {}) {
     }
   }
 
-  if (pop.encounters.some((e) => witness.encounters.has(e.id))) {
-    for (const id of opts.coopCardIds || COOP_CARD_IDS) note('cards', id, 'C-coop party combat reward (tools/session.mjs rollRewardFor)');
-  }
-
   // Keepsakes: chosen at creation, so their ops are always available.
   for (const k of keepsakes) {
     for (const op of opsIn(k && k.effects, INJECTOR_OPS)) creditOp(op, `keepsake ${k.id}`);
@@ -508,9 +507,8 @@ NOT CHECKED — what a green from this tool does NOT mean (SPEC §8.5):
     credited on their own; a requirement needing both is not refused.
   · PRICES AND PURSES ARE NOT READ. A shop row or a priced event choice counts
     whatever it costs; a choice's cinder/HP requirement is not checked.
-  · ONLY THE SOLO MAP CLIMB IS ENUMERATED, plus one co-op door (the party
-    reward's co-op card). World Journey (model/worldAtlas.js), legacy
-    dungeons, the rest of co-op, Custom Climb chaos rules and Endless loops are
+  · ONLY THE SOLO MAP CLIMB IS ENUMERATED. World Journey (model/worldAtlas.js),
+    legacy dungeons, Custom Climb chaos rules and Endless loops are
     doors this file does not walk: a row they alone reach reads RED here.
   · CARD UPGRADES, flasks, statuses, armour and weapon arts as items are not
     populations here (statusreach owns statuses; flask and armour reach are

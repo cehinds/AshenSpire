@@ -23,6 +23,7 @@ export function live() {
   }
   // This fixture authors three contacts, which cost 3 SP (1 SP per hit); fund that price and select
   // that move explicitly instead of inheriting the one-SP native plan.
+  for (const row of combat.enemies) delete row.weaknesses; // enemy weaknesses (SPEC 5.3) are tested in enemy-weaknesses.test.mjs
   const enemy = combat.enemies[0];
   Object.assign(enemy, { maxStamina: 3, stamina: 3 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' };

@@ -963,6 +963,10 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       let run;
       try {
         run = deserializeRun(json, readSharedProfile);
+        // A run saved while LAN co-op existed may carry its host-held card
+        // receipts. Co-op is gone (owner, 2026-10-31); the run is a solo run, so
+        // the field is dropped here, once, and the save loads as it always did.
+        delete run.coopLevelCards;
         // SPEC §13.4: a save from before seats climbs the order it was already
         // climbing — the default — and nothing else about it moves, no draw.
         // A save that HAS an order must name every seat once, or it is a

@@ -1,30 +1,19 @@
 import { desktopHandLayout } from '../models/DesktopCombatFooter.js';
 import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
-// src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
+// src/ui/components/hand.js — THE hand strip. One renderer.
 //
-// Until 2026-08-15 the hand was rendered TWICE: combat.js's template (the
-// machinery — inspect hold, overlap arm, key hints, the mode word) and
-// coop.js's own `.hand` (a snapshot-fed twin with none of it). That fork is
-// how the co-op hand shipped at 27-device-px nodes' little sibling: no
-// inspect hold, no overlap arm, an unscoped Law 5 exemption whose why-string
-// named this collapse as the debt (Bjorn: "coop.js is two laws deep in
-// undelivered fixes — the map then, the hand"). Same ruling as the map
-// (mapboard.js): the STRIP is a property of the game — one renderer; WHO is
-// looking supplies only viewer data. What is legitimately different per
-// surface enters as parameters, never as a second template:
+// The hand was rendered twice until 2026-08-15 (combat.js's template and a
+// snapshot-fed twin); the collapse made the STRIP a property of the game: one
+// renderer, and WHO is looking supplies only viewer data. What differs per
+// caller enters as parameters, never as a second template:
 //
 //   cards     — the viewer's list: { inst, preview?, affordable, reason?,
-//               name?, selected?, stacked? }. Solo passes live previewCard numbers off
-//               the paced snapshot; co-op passes the host snapshot's hand
-//               with a spelled-out unavailability reason (its player cannot
-//               hover the engine for one).
-//   wireCard  — what a card DOES. Solo wires local dispatch (drag,
-//               click-to-target, self-arm); co-op wires network intents
-//               (send playCard / arm an ally target). The strip itself never
-//               plays a card — rendering and committing stay two hands.
-//   emptyHtml — the viewer's empty state (co-op's spectator note). Solo never
-//               renders a hand it cannot act in, so it passes nothing.
+//               name?, selected?, stacked? }. Combat passes live previewCard
+//               numbers off the paced snapshot.
+//   wireCard  — what a card DOES: local dispatch (drag, click-to-target,
+//               self-arm). The strip itself never plays a card — rendering
+//               and committing stay two hands.
 //
 // Everything else — fan transform, z-order, key-hint badges (both surfaces
 // honor 1-9/Q positionally), the inspect hold (armInspect BEFORE wireCard, in
@@ -262,7 +251,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // card width (Text size), and the narrow/wide word main.js writes. All three
   // observers reconcile through the same function, are attached only when the
   // layout word asks for them, and dispose themselves when the strip's DOM is
-  // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
+  // replaced (a re-mounting screen disposes it; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
   const observedCards = new Set();
@@ -356,8 +345,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     quieted.add(el);
     el.style.setProperty('transition', 'none');
   }
-  function renderCards({ cards = [], emptyHtml = null }) {
-    lastRender = { cards, emptyHtml };
+  function renderCards({ cards = [] }) {
+    lastRender = { cards };
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
     const entries = new Map(cards.map(entry => [entry.inst.instanceId, entry]));
     cards = presentationOrder.map(id => entries.get(id));
@@ -372,9 +361,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // Whether this pass changed anything the fan plan reads: a card made or
     // dropped, or the order. A pure selection change keeps every element, so the
     // plan (and its forced layout) is the one already applied.
-    let reshaped = !fanApplied || emptyHtml != null || n0 !== cards.length;
+    let reshaped = !fanApplied || n0 !== cards.length;
     let rebuilt = 0;
-    for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
+    for (const [id, record] of renderedCards) if (!reuseCards || !wanted.has(id)) {
       record.release?.(); record.el.remove(); renderedCards.delete(id); reshaped = true;
     }
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
@@ -383,14 +372,6 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     if (!renderedCards.size) handEl.replaceChildren();
     handEls = [];
     handFan = [];
-    // An empty hand fans nothing, so it reserves nothing — stated rather than
-    // left at the last render's value.
-    if (emptyHtml != null) {
-      handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml;
-      observeCards();
-      if (fitFan) applyHandLayout();
-      return { reshaped: true, rebuilt: 0 };
-    }
     const n = cards.length;
     // The legacy transform fan publishes its lift for CSS to reserve. The
     // fitted wireframe hand instead gives every card an absolute top position
@@ -499,7 +480,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       setHandFaceBudget(el, !!entry.selected);
       // Already committed to an open reaction stack: muted until it resolves.
       if (entry.stacked) el.classList.add('is-stacked');
-      // The spelled-out unavailability reason is VIEWER data (co-op supplies
+      // The spelled-out unavailability reason is VIEWER data (a host-driven screen could supply
       // it; solo's player reads live previews and the hint bar instead). When
       // present it rides the card as a badge and as assistive text.
       if (entry.reason) {

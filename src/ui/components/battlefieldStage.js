@@ -843,7 +843,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
       left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
     });
-    const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
+    const solo = actors.filter(actor => actor.side === 'player').length === 1;
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     // Short landscape needs a lower foot line to reserve the full intent row.

@@ -1,5 +1,6 @@
 import { pinGameProfileCopy } from '../model/ownedGameProfile.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
+import { clampStackCounts } from '../model/combatTacticsRules.js';
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
@@ -25,6 +26,7 @@ import { controlRestrictions, backfillPersistentPoise } from './combatStatusCont
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
+import { refillWeaknesses } from './weaknesses.js';
 import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
@@ -189,6 +191,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
   bringRangesForward(saved);
+  // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
+  for (const entity of [saved.player, ...(saved.enemies || [])]) clampStackCounts(entity);
   if (saved.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
@@ -251,6 +255,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // Absent on a fight saved before ruleset 7, whose rows read no level.
     ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
     player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.energyMax ?? saved.player.maxStamina }),
+    // A fight saved before enemy weaknesses: its enemies take their definition's (SPEC 5.3).
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
@@ -339,6 +344,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     }).value);
   }
   // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
+  refillWeaknesses(combat, combat.enemies, registries);
   for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
   const formationErrors = formationOccupancyProblems(combat);
   if (formationErrors.length) throw new Error(formationErrors.join('; '));

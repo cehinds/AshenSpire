@@ -1,10 +1,7 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRng } from '../src/engine/rng.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { cardNeedsEnemyTarget, friendlyTargetPlan } from '../src/model/friendlyTargets.js';
 import { cardTargetPlan, immediateCardEffects } from '../src/model/cardTargets.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
@@ -49,19 +46,3 @@ test('Counter immediate hostile support and preview charges retain enemy aiming'
   assert.deepEqual(friendlyTargetPlan(ally, 'a', players).legalIds, ['b']);
 });
 
-test('real co-op Counter prepares without an enemy target and rejects enemy aiming', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const c = createCoopCombat({ registries, rng: createRng(50), players: [{ id: 'a', classId: 'reaver',
-    hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
-    deck: [{ instanceId: 'counter1', cardId: 'riposte' }], relicIds: [] }],
-    enemyIds: ['wanderingSoldier'], ratingsRules: null });
-  const def = registries.cards.get('riposte'), hp = c.enemies[0].hp;
-  assert.equal(cardNeedsEnemyTarget(def), false);
-  assert.equal(friendlyTargetPlan(def, 'a', players).active, false, 'default Counter protection needs no aim transaction');
-  assert.deepEqual(cardTargetPlan(def, 'a', enemies, players).legalIds, ['a']);
-  assert.throws(() => playCard(c, 'a', 'counter1', c.enemies[0].id), /Invalid friendly target/);
-  playCard(c, 'a', 'counter1');
-  assert.equal(c.enemies[0].hp, hp);
-  assert.equal(c.players.get('a').entity.block, 6);
-  assert.equal(c.players.get('a').entity.wardBlock, 2);
-  assert.equal(c.players.get('a').entity.combatCounter.charges, 1);
-});

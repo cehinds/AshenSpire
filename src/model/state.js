@@ -6,7 +6,6 @@ import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
-import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
@@ -870,10 +869,8 @@ export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
  * The ONE writer of `zones` and `collection`. Called at createRunState, in
  * serializeRun (so what is written is what the legacy fields say at that
  * moment, whatever a writer did between), at the migration door, at the end
- * of the two load doors that heal and re-stamp after the migration
- * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
- * session's serialize, which emits member runs without serializeRun. Until
- * phase 3b, nothing else may write these two fields.
+ * of the load door that heals and re-stamps after the migration (save.js
+ * loadRun). Until phase 3b, nothing else may write these two fields.
  */
 export function syncZones(run) {
   recordCollectedCards(run);
@@ -1143,7 +1140,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   problems.push(...enemyKnowledgeRunProblems(run));
   if (!run.enemyKnowledgeRules && run.skills?.perception !== undefined) problems.push('Run Perception requires enemy knowledge rules');
-  problems.push(...coopProgressionProblems(run));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
@@ -1954,7 +1950,7 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, weaknesses, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
@@ -1977,6 +1973,8 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     ? { ...structuredClone(arcaneExposure), value: 0 }
     : { mode: 'immune' };
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  // Authored weaknesses (SPEC 5.3, model/enemyWeaknessRules.js): read by engine/weaknesses.js.
+  if (Array.isArray(weaknesses) && weaknesses.length) entity.weaknesses = structuredClone(weaknesses);
   // A fight-wide move-damage scale (SPEC §13.3 balance.bossTiers). Stamped
   // only when it is not 1, so every unscaled enemy — and every snapshot
   // written before the row existed — keeps its exact shape.

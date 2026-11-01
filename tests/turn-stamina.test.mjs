@@ -1,12 +1,10 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { validateContent } from '../src/model/validate.js';
 import { executeAction } from '../src/engine/actions.js';
@@ -95,17 +93,6 @@ test('legacy combat snapshots retain the saved action maximum and refill it next
   assert.equal(restored.player.maxStamina, 3);
   dispatch(restored, { type: 'endTurn' });
   assert.equal(restored.player.stamina, 3);
-});
-
-test('co-op spends only the acting seat stamina and refills both seats next round', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const c = createCoopCombat({ registries, rng: createRng(5), players: [player('p1'), player('p2')], enemyIds: ['wanderingSoldier'] });
-  const one = c.players.get('p1'), two = c.players.get('p2');
-  playCard(c, 'p1', one.piles.hand[0].instanceId, 'e1');
-  assert.equal(one.entity.stamina, 2);
-  assert.equal(two.entity.stamina, 3);
-  endTurn(c, 'p1'); endTurn(c, 'p2');
-  assert.equal(one.entity.stamina, 3);
-  assert.equal(two.entity.stamina, 3);
 });
 
 test('X costs spend all remaining stamina; zero-cost cards stay playable at zero', () => {

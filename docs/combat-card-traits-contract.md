@@ -72,8 +72,8 @@ summary read "Impact N" / "Flux N".
 - An entry that can no longer be played when it is reached (the instance left
   the hand, the payment no longer fits, its seat died or disconnected) **fizzles**: it emits
   `combatReactionFizzled` and pays nothing. Because the offer check replays the
-  whole stack, a solo run cannot reach this; it is a guard for co-op, where a
-  later seat's entries resolve first and can change state an earlier seat's
+  whole stack, a solo run cannot reach this; it is a guard for a stack where a
+  later entry resolves first and can change state an earlier entry's
   check assumed. The acceptance test reaches it that way.
 - **Root ended.** If resolving an entry kills the root's attacker (or, for a
   player-card root, leaves its acting seat dead or disconnected), every entry
@@ -89,7 +89,7 @@ summary read "Impact N" / "Flux N".
   positive incoming contact. Version 1 keeps its Counter / `defensiveReaction`
   Sweep rule.
 - The stack, the pending offer's depth and the resolution cursor are saved and
-  resume exactly, solo and co-op.
+  resume exactly.
 
 ## Enemy reactions
 
@@ -303,10 +303,8 @@ and `src/content/combatExpansionCards.js`. T is the tier above.
   contact; Back with an empty stack equals version 1's Back; stacked instances
   are not re-offered; the LIFO affordability check; depth cap; fizzle pays
   nothing; save/restore mid-offer and mid-resolution with identical RNG counters;
-  co-op seat order, per-seat cap, one Counter per seat, a co-op fizzle, and
   stale/foreign offers rejected; enemy reactions: Gilded Guard pushes before a
-  heavy player hit and resolves first, the acting seat can answer it (and only
-  that seat in co-op), Binding Riposte answers any player reaction, a pure Block included, at its chance,
+  heavy player hit and resolves first, the acting player can answer it, Binding Riposte answers any player reaction, a pure Block included, at its chance,
   no window on Counter-return roots or reaction plays, one reaction per enemy
   per turn, a memoised roll and a committed plan survive save/restore, offer
   checks never draw, a fight without reaction moves keeps its RNG counters and

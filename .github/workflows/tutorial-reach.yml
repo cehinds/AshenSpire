@@ -24,7 +24,7 @@
 # On a push to `release` it runs only when that tree differs from origin/test (the
 # `stage` job decides); the test stage already ran the same code.
 #
-# A JOB OF ITS OWN, like map-camera.yml and coop-hud.yml: `core` is a no-browser
+# A JOB OF ITS OWN, like map-camera.yml: `core` is a no-browser
 # lane. It serves the SOURCE tree, so it needs no build and no LFS. With no
 # browser the tool throws and the door reads it as HARNESS (exit 2), never as a
 # pass. The verdict door requires the tool's counted "N passed, M failed" line.

@@ -21,7 +21,6 @@
 //   node tools/combat-action-row.mjs
 //   node tools/combat-action-row.mjs --only 884x1326 --text XL --hand 7
 //   node tools/combat-action-row.mjs --standalone
-//   node tools/combat-action-row.mjs --coop-only
 //   node tools/combat-action-row.mjs --shots docs/preview --label before
 //   node tools/combat-action-row.mjs --selftest
 //
@@ -42,9 +41,7 @@ const onlyText = argOf('--text');
 const onlyHand = argOf('--hand');
 const shots = argOf('--shots');
 const evidenceLabel = argOf('--label') || 'evidence';
-const coopOnly = args.includes('--coop-only');
-const soloOnly = args.includes('--solo-only');
-if (coopOnly && soloOnly) throw new Error('--coop-only and --solo-only are mutually exclusive');
+const soloOnly = args.includes('--solo-only'); // accepted for the selftest argv; solo is the only board
 
 if (args.includes('--selftest') || args.includes('--selftest-source')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -112,31 +109,13 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'Exhaust is hidden until it has content',
       file: 'styles/combat.css',
-      // !important because `:root .combat:not(.coop) .combat-action-row .spent
+      // !important because `:root .combat .combat-action-row .spent
       // { display: flex }` outranks a plain append; without it the plant never
       // armed (measured: the tool stayed green).
       append: '.combat-action-row > .pile.spent { display: none !important; }',
       expectRed: /combat-action-row: RED/,
     },
-    // The co-op board mounts solo's own footer (src/ui/screens/coop.js,
-    // components/combatActionRow.js); the two plants below break the two
-    // clauses that made the owner's "it looks so bad now": a control lost
-    // from the co-op row, and a co-op row laid out apart from the plan.
-    {
-      // !important because the kit button's display outranks a plain append.
-      name: 'co-op loses its Draw control',
-      file: 'styles/combat.css',
-      append: '.combat.coop .combat-action-row > .pile.draw { display: none !important; }',
-      expectRed: /FAIL co-op mounts solo's five controls/,
-    },
-    {
-      name: 'co-op lays its row out as its own flex rail again',
-      file: 'styles/combat.css',
-      append: ':root .combat.coop[data-layout] .combat-action-row[data-footer-geometry] { display: flex !important; justify-content: space-between !important; }',
-      expectRed: /FAIL co-op footer takes the layout adapter's plan/,
-    },
   ];
-  const coopPlants = sourcePlants.splice(-2);
   const narrowPlants = sourcePlants.filter((plant) => !plant.wide);
   const widePlants = sourcePlants.filter((plant) => plant.wide);
   const NARROW_ARGS = ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '7'];
@@ -153,13 +132,6 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     args: WIDE_ARGS,
     timeoutMs: 600000,
     plants: widePlants,
-  });
-  if (code) process.exit(code);
-  code = await doorSelftest({
-    tool: 'combat-action-row.mjs',
-    args: ['--coop-only'],
-    timeoutMs: 600000,
-    plants: coopPlants,
   });
   if (code) process.exit(code);
   if (args.includes('--selftest-source')) process.exit(0);
@@ -182,20 +154,12 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     plants: artifactPlants(narrowPlants),
   });
   if (code) process.exit(code);
-  code = await doorSelftest({
+  process.exit(await doorSelftest({
     tool: 'combat-action-row.mjs',
     args: ['--standalone', ...WIDE_ARGS],
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],
     plants: artifactPlants(widePlants),
-  });
-  if (code) process.exit(code);
-  process.exit(await doorSelftest({
-    tool: 'combat-action-row.mjs',
-    args: ['--standalone', '--coop-only'],
-    timeoutMs: 600000,
-    extraCopy: ['AshenSpire.html'],
-    plants: artifactPlants(coopPlants),
   }));
 }
 
@@ -285,7 +249,6 @@ async function main() {
   let sessionId;
   let failures = 0;
   let soloRan = 0;
-  let coopRan = 0;
   const check = (value, label, detail = '') => {
     console.log(`    ${value ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
     if (!value) failures++;
@@ -352,7 +315,7 @@ async function main() {
       };
       const rect = (node) => { const r=node.getBoundingClientRect(); return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; };
       const intersects = (a,b) => a.left < b.right-0.25 && a.right > b.left+0.25 && a.top < b.bottom-0.25 && a.bottom > b.top+0.25;
-      const combat=document.querySelector('.combat:not(.coop)');
+      const combat=document.querySelector('.combat');
       const owner=document.querySelector('.combat-action-row');
       // The plan's custom properties are local (pre-zoom) px; rects are visual
       // px. The zoom is read the way the layout adapter reads it
@@ -420,7 +383,7 @@ async function main() {
       const arrangement=combat?.dataset.combatArrangement||null;
       const rails=arrangement==='rails';
       // The hand's own lane: the rails wrap it, the packed row sits under it.
-      const laneNode=document.querySelector('.combat:not(.coop) .hand-overlay')||document.querySelector('.combat:not(.coop) .hand');
+      const laneNode=document.querySelector('.combat .hand-overlay')||document.querySelector('.combat .hand');
       const lane=laneNode&&visible(laneNode)?rect(laneNode):null;
       const ownerBox=owner?rect(owner):null;
       const authored=owner?.dataset.footerArt==='true'&&owner.dataset.footerCompact==='false';
@@ -506,7 +469,6 @@ async function main() {
         mobile: false,
       }, sessionId);
       for (const text of texts) {
-        if (!coopOnly) {
         for (const hand of hands) {
           const settings = encodeURIComponent(JSON.stringify({ textSize: text, holdConfirm: 'off' }));
           const url = `${base}?shot=combat&shotHand=${hand}&shotSettings=${settings}`;
@@ -677,94 +639,6 @@ async function main() {
             }
           }
         }
-        }
-
-        const representativeCoop = (shape.width === 390 && shape.height === 844 && text === 'XL')
-          || (shape.width === 1200 && shape.height === 730 && text === 'M');
-        if (!soloOnly && representativeCoop) {
-          const settings = encodeURIComponent(JSON.stringify({ textSize: text, holdConfirm: 'off' }));
-          await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${settings}` }, sessionId);
-          await waitFor(`document.querySelectorAll('.combat.coop .hand .card').length===5`, 'five-card co-op combat');
-          await new Promise((pass) => setTimeout(pass, 240));
-          // THE CO-OP ROW IS SOLO'S ROW (owner, 2026-10-01: "What happened to
-          // my action bar at the bottom"): coop.js mounts the same WGC6 footer
-          // (src/ui/components/combatActionRow.js) under its hand, sized by the
-          // same layout adapter, with the flasks behind Potions. The co-op cell
-          // holds it to the same plan the solo cells read back.
-          // tools/coop-hud-top.mjs compares it against solo, control by
-          // control, on every push to test and release.
-          const coop = await evaluate(`(() => {
-            const combat=document.querySelector('.combat.coop');
-            const area=combat?.querySelector(':scope > .hand-area');
-            const hand=area?.querySelector(':scope > .hand');
-            const row=area?.querySelector(':scope > .combat-action-row');
-            if (!area||!hand||!row) return {missing:{area:!!area,hand:!!hand,row:!!row}};
-            const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
-            const intersects=(a,b)=>a.left<b.right-0.25&&a.right>b.left+0.25&&a.top<b.bottom-0.25&&a.bottom>b.top+0.25;
-            const hit=(node)=>{const r=rect(node),hits=[];for(let y=0;y<9;y++)for(let x=0;x<5;x++){const n=document.elementFromPoint(r.left+r.width*((x+.5)/5),r.top+r.height*((y+.5)/9));hits.push(!!(n&&(n===node||node.contains(n))))}return hits.filter(Boolean).length};
-            const selectors=${JSON.stringify(CONTROL_SELECTORS)};
-            const shown=(node)=>{const c=getComputedStyle(node),r=node.getBoundingClientRect();return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0};
-            const order=[...row.children].filter((node)=>!node.matches('.footer-art-rails,.combat-potion-tray')&&shown(node)).map((node)=>selectors.find((sel)=>node.matches(sel))||String(node.className));
-            const nodes=selectors.map((sel)=>row.querySelector(':scope > '+sel));
-            if (nodes.some((node)=>!node)) return {missing:Object.fromEntries(selectors.map((sel,i)=>[sel,!!nodes[i]]))};
-            const boxes=nodes.map(rect);
-            const zoom=combat.clientWidth?combat.getBoundingClientRect().width/combat.clientWidth:1;
-            const planVar=(name)=>parseFloat(row.style.getPropertyValue(name))*zoom;
-            const plan={circle:planVar('--footer-circle'),pileWidth:planVar('--footer-pile-width'),spentWidth:planVar('--footer-spent-width')||planVar('--footer-pile-width'),endWidth:planVar('--footer-end-width')};
-            const near=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=${PLAN_TOLERANCE_PX};
-            const [energy,draw,end,spent,potions]=boxes;
-            const cards=[...hand.querySelectorAll('.card')].map(rect);
-            const pairs=[];
-            for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++) if(intersects(boxes[i],boxes[j])) pairs.push([selectors[i],selectors[j]]);
-            const handBox=rect(hand);
-            const authored=row.dataset.footerArt==='true'&&row.dataset.footerCompact==='false', rowBox=rect(row);
-            const authoredPlanned=authored&&getComputedStyle(row).display==='block'&&nodes.every((node,i)=>{
-              const pct=name=>parseFloat(node.style.getPropertyValue(name))/100,box=boxes[i];
-              return near(box.left,rowBox.left+pct('--art-x')*rowBox.width)&&near(box.top,rowBox.top+pct('--art-y')*rowBox.height)&&near(box.width,Math.max(44,pct('--art-w')*rowBox.width))&&near(box.height,Math.max(44,pct('--art-h')*rowBox.height));
-            });
-            return {
-              order, authored, geometry:row.dataset.footerGeometry||null, arrangement:combat.dataset.combatArrangement||null,
-              strayFlasks:document.querySelectorAll('.combat .coop-flasks, .combat .coop-flask, .combat [data-coop-flask-slot]').length,
-              plan, boxes,
-              planned:authored?authoredPlanned:getComputedStyle(row).display==='grid'&&near(energy.width,plan.circle)&&near(potions.width,plan.circle)&&near(draw.width,plan.pileWidth)&&near(spent.width,plan.spentWidth)&&near(end.width,plan.endWidth),
-              pairs, cardsClear:cards.every((card)=>boxes.every((box)=>!intersects(card,box))),
-              onGlass:boxes.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
-              smallest:Math.min(...boxes.map((r)=>Math.min(r.width,r.height))),
-              oneRow:boxes.every((r)=>Math.min(r.bottom,energy.bottom)-Math.max(r.top,energy.top)>=0.5*r.height),
-              below:boxes.every((r)=>r.top>=handBox.bottom-0.5),
-              endHits:hit(nodes[2]),
-            };
-          })()`);
-          coopRan++;
-          const tag = `${shape.width}x${shape.height} Text ${text}, co-op, ${standalone ? 'root' : 'source'}`;
-          console.log(`\n  ${tag}`);
-          if (coop.missing) {
-            check(false, 'co-op hand area, hand and the five action-row controls are all present', JSON.stringify(coop.missing));
-          } else {
-            check(coop.order.join() === CONTROL_SELECTORS.join() && coop.strayFlasks === 0,
-              'co-op mounts solo\'s five controls in one action row, with no flask row of its own', JSON.stringify({order:coop.order,strayFlasks:coop.strayFlasks}));
-            check(coop.geometry === 'supported' && coop.planned,
-              'co-op footer takes the layout adapter\'s plan: authored boxes or compact widths', JSON.stringify({geometry:coop.geometry,authored:coop.authored,plan:coop.plan,boxes:coop.boxes.map((b)=>Math.round(b.width))}));
-            check(!coop.pairs.length && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairs:coop.pairs,cardsClear:coop.cardsClear}));
-            check(coop.onGlass && coop.smallest >= TAP_FLOOR_PX && coop.endHits === 45,
-              'co-op controls are on glass, at least 44px, and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,smallest:coop.smallest,endHits:coop.endHits}));
-            check(coop.arrangement === 'rails' || ((coop.authored || coop.oneRow) && coop.below),
-              'co-op row is one row under the hand, as solo\'s is', JSON.stringify({arrangement:coop.arrangement,oneRow:coop.oneRow,below:coop.below}));
-          }
-
-          if (shots) {
-            await evaluate(`(() => {
-              document.querySelector('.evidence-caption')?.remove();
-              const n=document.createElement('div'); n.className='evidence-caption';
-              n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';
-              n.textContent=${JSON.stringify(`#21 ${evidenceLabel.toUpperCase()} · ${standalone ? 'SELECTED ROOT' : 'SOURCE'} · CO-OP · ${shape.width}x${shape.height} · Text ${text}`)};
-              document.body.appendChild(n); return true;
-            })()`);
-            const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
-            const file = `action-row-${evidenceLabel}-${standalone?'root':'source'}-coop-${shape.width}x${shape.height}-text-${text.toLowerCase()}.png`;
-            writeFileSync(resolve(ROOT, shots, file), Buffer.from(data, 'base64'));
-          }
-        }
       }
     }
   } finally {
@@ -773,11 +647,11 @@ async function main() {
     if (served) await new Promise((pass) => served.server.close(pass));
   }
 
-  if (!soloRan && !coopRan) {
+  if (!soloRan) {
     console.error('combat-action-row: no acceptance cell ran');
     return 2;
   }
-  console.log(`\ncombat-action-row: ${failures ? `RED — ${failures} finding(s)` : `GREEN — solo ${soloRan}, co-op ${coopRan}`}`);
+  console.log(`\ncombat-action-row: ${failures ? `RED — ${failures} finding(s)` : `GREEN — solo ${soloRan}`}`);
   return failures ? 1 : 0;
 }
 

@@ -69,7 +69,7 @@ export function createLocationVisit({ run, registries, rng }, locationId, { heal
     opts: { healMult, refillCounts, restBonus },
     ctx,
     // `arrived: true` REBUILDS a visit whose arrival already happened — a
-    // saved session restored at the place (tools/session.mjs) — so `arrived`
+    // saved run restored at the place — so `arrived`
     // is not emitted again: a rule that pours, grants or rolls on arrival
     // runs once per stay, not once per host restart. The refill receipt of
     // that first arrival is not saved, so a rebuilt visit reports none.

@@ -150,21 +150,6 @@ try {
     }
     await page.screenshot({ path: resolve(out, `targeting-${width}.png`) });
     console.log('PASS overhead input and geometry', width, height);
-    await page.goto(`${base}?shot=coop`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.__coopSnapshotForShot);
-    await page.waitForTimeout(1200);
-    assert.equal(await visibleInfo(), 0, 'co-op shows no Information at rest');
-    for (const role of ['player','enemy']) {
-      await tapCombatant(page.locator(`.combatant.${role}`).first());
-      assert.equal(await visibleInfo(), 1, `co-op ${role} selection shows exactly its Information`);
-      assert(await page.locator(`.${role} .combatant-info`).first().isVisible(), 'the tapped combatant owns Information');
-      await page.locator(`.${role} .combatant-info`).first().click();
-      await page.locator('.combatant-door').waitFor();
-      await page.keyboard.press('Escape');
-    }
-    await tapCombatant(page.locator('.combatant.enemy').first());
-    await page.screenshot({ path: resolve(out, `coop-${width}.png`) });
-    console.log('PASS co-op inspection', width, height);
     await page.close();
   }
   assert.deepEqual(errors, []);

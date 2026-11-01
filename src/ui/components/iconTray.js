@@ -5,7 +5,7 @@
 // the reference". So the combatant card's status row is lifted out of combat
 // and every row of small round things with a count is this component:
 //
-//   · status effects on a combatant card (screens/combat.js, screens/coop.js)
+//   · status effects on a combatant card (screens/combat.js)
 //   · the relic rail under the run HUD (components/relicRail.js, every screen)
 //   · the Potions minis over the combat footer's Potions control (combat.js)
 //

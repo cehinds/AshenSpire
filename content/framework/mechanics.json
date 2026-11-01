@@ -86,6 +86,19 @@
   "deckComposition": {
     "uniquePreference": "RIGHT_THEN_LEFT"
   },
+  "counter": {
+    "stackFraction": 0.1,
+    "autoCounterStamina": 1,
+    "autoCounterTags": ["camp:physical", "maneuver:counter", "counter:melee", "range:melee", "targeting:single", "trait:reaction"],
+    "decayPerTurn": 2
+  },
+  "reflect": {
+    "reducePerStack": 0.3,
+    "returnPerStack": 0.3,
+    "reduceCap": 0.9,
+    "stackCap": 10,
+    "unreflectableTag": "trait:unreflectable"
+  },
   "sourcePrecedence": [
     "TEMPORARY_COMBAT_RESTRICTION",
     "EXPLICIT_CARD_EXCEPTION",

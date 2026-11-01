@@ -262,7 +262,7 @@ export function statProjection(registries, run) {
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
         + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
+      note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: its fights draw by its hand rules.' : '',
     };
   });
   // The rating rows this run reads (its own, or its retired formula restated),

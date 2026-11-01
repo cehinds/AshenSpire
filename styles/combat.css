@@ -131,13 +131,6 @@
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
    Remove unrelated player/action chrome so all conditional enemy states remain
    readable in one phone still. This selector is unreachable in ordinary play. */
-:root[data-shot-arcane='matrix'] .combat.coop .topbar,
-:root[data-shot-arcane='matrix'] .combat.coop .player-zone,
-:root[data-shot-arcane='matrix'] .combat.coop .hand-area { display: none; }
-:root[data-shot-arcane='matrix'] .combat.coop .field { overflow: visible; padding: 1rem; }
-:root[data-shot-arcane='matrix'] .combat.coop .enemy-row {
-  width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
-}
 
 .combatant {
   display: flex; flex-direction: column; align-items: center; position: relative;
@@ -802,35 +795,6 @@
    that the battlefield receives a real row rather than collapsing to zero.
    Card faces keep their complete information hierarchy, while box dimensions
    shrink only in this wide, height-constrained composition. */
-:root[data-composition='short-wide'] .combat.coop .hand { padding-bottom: 2rem; }
-:root[data-composition='short-wide'] .combat.coop .hand .card {
-  --card-name-h: 1.3rem; --card-art-h: 2.2rem; --card-band-h: 1.1rem;
-  --card-row: 0.75rem; --card-gap: 0.2rem;
-  width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
-  transform: translateY(calc(-1 * var(--fan-lift, 0px))) !important;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card .cost {
-  top: -0.6rem; left: -0.6rem; width: 2.4rem; height: 2.4rem;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card .mana-cost {
-  top: -0.4rem; right: -0.4rem; min-width: 2.8rem; height: 2rem;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card .cname {
-  font-size: 0.75rem; min-height: 1.3rem;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card .art {
-  width: 6.8rem; height: 2.2rem; margin: 0.1rem 0; font-size: 1.7rem;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card .ctype {
-  width: 6.8rem; padding: 0.1rem 0; font-size: 0.65rem;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card .ctext {
-  margin-top: 0.15rem; font-size: 0.68rem; line-height: 1.15;
-}
-:root[data-composition='short-wide'] .combat.coop .hand .card:hover,
-:root[data-composition='short-wide'] .combat.coop .hand .card.selected {
-  transform: translateY(-12px) scale(1.1) !important;
-}
 :root[data-composition='short-wide'] .combat { --action-row-drop: 11.2rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
@@ -1078,57 +1042,55 @@
 }
 
 /* Readable cards and controls occupy separate flow rows.
-   BOTH BOARDS (owner, 2026-10-01): the co-op board mounts this same footer
-   (components/combatActionRow.js), so the footer and hand-area rules below
-   that were solo-only (`:not(.coop)`) now read `:is(.coop,:not(.coop))`:
-   every combat board, at the SAME specificity the solo-only selector had, so
-   the solo cascade is unchanged. */
-:root .combat:is(.coop,:not(.coop)) > .hand-area {
+   The footer and hand-area rules below are written `.combat.combat` (the
+   doubled class keeps the specificity the former solo-only gate had), so
+   the cascade order is unchanged. */
+:root .combat.combat > .hand-area {
  height: auto; margin-bottom: 0; display: grid;
  grid-template-areas: "hand" "actions"; grid-template-columns: minmax(0, 1fr);
  gap: calc(20px / var(--ui-zoom,1)); padding: 0 12px max(16px, var(--safe-bottom-local));
 }
-:root .combat:not(.coop) .hand-overlay { width: 100%; height: auto; grid-area: hand; }
-:root .combat:not(.coop) .hand {
+:root .combat.combat .hand-overlay { width: 100%; height: auto; grid-area: hand; }
+:root .combat.combat .hand {
  height: auto; justify-content: safe center; align-items: end;
  padding: calc(48px / var(--ui-zoom,1)) 24px calc(12px / var(--ui-zoom,1)); gap: 0; overflow-x: auto; scrollbar-width: thin;
 }
-:root .combat:not(.coop) .hand .card {
+:root .combat.combat .hand .card {
  --card-w: max(178px, calc(178px / var(--ui-zoom, 1))); --card-name-h: max(32px, calc(32px / var(--ui-zoom, 1))); --card-art-h: max(70px, calc(70px / var(--ui-zoom, 1)));
  --card-band-h: max(22px, calc(22px / var(--ui-zoom, 1))); --card-row: max(22px, calc(22px / var(--ui-zoom, 1))); --card-pad: max(8px, calc(8px / var(--ui-zoom, 1))); --card-gap: max(5px, calc(5px / var(--ui-zoom, 1)));
  margin: 0; touch-action: pan-x;
 }
-:root .combat:is(.coop,:not(.coop)) > .hand-area > .combat-action-row {
+:root .combat.combat > .hand-area > .combat-action-row {
  position: relative; inset: auto; grid-area: actions; width: 100%;
   --combat-control-size: max(64px, calc(64px / var(--ui-zoom, 1)));
  grid-template-columns: var(--combat-control-size) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr) var(--combat-control-size); align-items: center; gap: 6px;
 }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row > :is(.end-turn, .energy-orb, .combat-potions) { height: var(--combat-control-size); min-height: var(--combat-control-size); box-sizing: border-box; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row > :is(.energy-orb, .combat-potions) { width: var(--combat-control-size); min-width: 0; border-radius: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row > .combat-potions { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
+:root .combat.combat .combat-action-row > :is(.end-turn, .energy-orb, .combat-potions) { height: var(--combat-control-size); min-height: var(--combat-control-size); box-sizing: border-box; }
+:root .combat.combat .combat-action-row > :is(.energy-orb, .combat-potions) { width: var(--combat-control-size); min-width: 0; border-radius: 50%; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+:root .combat.combat .combat-action-row > .combat-potions { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+:root .combat.combat .combat-action-row .spent { display: flex; flex-direction: column; justify-content: center; }
 /* Focus the figure, never paint the full-height combatant layout box. */
-.combat:not(.coop) .combatant { border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; }
+.combat.combat .combatant { border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; }
 .combat .combatant:focus-visible .sprite { filter: drop-shadow(0 0 3px var(--gold)); }
-:root .combat:not(.coop) .hand .card:hover,
-:root .combat:not(.coop) .hand .card.inspection-selected,
-:root .combat:not(.coop) .hand .card.selected { transform: translateY(-28px) !important; z-index: 50 !important; }
-:root .combat:not(.coop) .hand { padding-top:calc(84px / var(--ui-zoom,1)); }
+:root .combat.combat .hand .card:hover,
+:root .combat.combat .hand .card.inspection-selected,
+:root .combat.combat .hand .card.selected { transform: translateY(-28px) !important; z-index: 50 !important; }
+:root .combat.combat .hand { padding-top:calc(84px / var(--ui-zoom,1)); }
 .hand .card.beat-hold[data-hold='holding']::after { content:''; position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,rgba(72,166,98,.42),rgba(121,204,132,.22)); clip-path:inset(calc((1 - var(--hold,0)) * 100%) 0 0 0); }
 .hand .card > .hold-hint { position:absolute; bottom:10px; left:0; right:0; margin:0; text-align:center; pointer-events:none; }
 
 @container game-viewport (max-width: 480px) {
-  :root .combat:not(.coop) .hand { padding-inline: 16px; }
-  :root .combat:not(.coop) .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
+  :root .combat.combat .hand { padding-inline: 16px; }
+  :root .combat.combat .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
 }
 
 /* Give the enemy group the right edge; stage fitting reserves each fighter's cell. */
-:root .combat:not(.coop) .field { padding-inline: 8px; gap: 6px; }
-:root .combat:not(.coop) .player-zone { width: 28%; flex: 0 0 28%; min-width:0; }
-:root .combat:not(.coop) .enemy-row { justify-content: center; min-width: 0; gap: 6px; }
-:root .combat:not(.coop) .enemy-row > .combatant { flex: 1 1 0; min-width: 0; max-width:calc(180px / var(--ui-zoom,1)); }
-:root .combat:not(.coop) .combatant-card { width: max-content; }
-:root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
+:root .combat.combat .field { padding-inline: 8px; gap: 6px; }
+:root .combat.combat .player-zone { width: 28%; flex: 0 0 28%; min-width:0; }
+:root .combat.combat .enemy-row { justify-content: center; min-width: 0; gap: 6px; }
+:root .combat.combat .enemy-row > .combatant { flex: 1 1 0; min-width: 0; max-width:calc(180px / var(--ui-zoom,1)); }
+:root .combat.combat .combatant-card { width: max-content; }
+:root .combat.combat .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
 
 /* Normal encounters fit the viewport. Only four or more enemies may scroll.
    `data-wide-enemy-row` (set in combat.js renderEnemies) replaces the old
@@ -1137,70 +1099,70 @@
 @container game-viewport (max-width:640px) {
   /* The shared fitter still owns the row. Art may cross adjacent cells a
      little; scale only the figures so meters, labels and intent stay readable. */
-  :root .combat:not(.coop) .combatant .sprite { scale:0.9; transform-origin:bottom center; }
-  :root .combat:not(.coop) .combatant-card { width:80px; }
-  :root .combat:not(.coop) .combatant .meters { width:80px; }
-  :root .combat:not(.coop) .combatant .sprite { width:80px; min-width:0; }
-  :root .combat:not(.coop) .combatant .sprite > :first-child { flex-shrink:0; }
-  :root .combat:not(.coop) .field:not([data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true']) { overflow-x:clip; overflow-clip-margin:4px; }
-  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row { flex:0 0 auto; min-width:max-content; }
-  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
+  :root .combat.combat .combatant .sprite { scale:0.9; transform-origin:bottom center; }
+  :root .combat.combat .combatant-card { width:80px; }
+  :root .combat.combat .combatant .meters { width:80px; }
+  :root .combat.combat .combatant .sprite { width:80px; min-width:0; }
+  :root .combat.combat .combatant .sprite > :first-child { flex-shrink:0; }
+  :root .combat.combat .field:not([data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true']) { overflow-x:clip; overflow-clip-margin:4px; }
+  :root .combat.combat .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+  :root .combat.combat .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row { flex:0 0 auto; min-width:max-content; }
+  :root .combat.combat .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
 /* A hand card has one portrait profile; viewport changes never resize one axis
    alone. The profile itself is authored once, in card.json, and reaches here as
    --card-ratio / --card-height-per-width (src/ui/models/CardSizeModel.js): the
    1.4 that used to sit in this calc was 7/5 written out by hand. */
-:root .combat:not(.coop) .hand .card {
+:root .combat.combat .hand .card {
   height: calc(var(--card-w) * var(--card-height-per-width)); aspect-ratio: var(--card-ratio);
   --card-art-h: calc(var(--card-w) * 0.30);
   --card-name-h: calc(var(--card-w) * 0.18);
 }
-:root .combat:not(.coop) .hand .card .art { overflow: hidden; contain: layout paint; }
-:root .combat:not(.coop) .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
+:root .combat.combat .hand .card .art { overflow: hidden; contain: layout paint; }
+:root .combat.combat .hand .card .art img { width: 100%; height: 100%; object-fit: contain; }
 
 /* Scale the complete playing face, including costs and text, in one step. */
-:root .combat:not(.coop) .hand .card {
+:root .combat.combat .hand .card {
   zoom:var(--hand-card-zoom,1); --card-w:178px; width:var(--card-w); padding:20px 8px 8px;
   --card-name-h:32px; --card-art-h:53.4px; --card-band-h:17px;
   --card-row:22px; --card-pad:8px; --card-gap:4px;
 }
-:root .combat:not(.coop) .hand .card .cname {
+:root .combat.combat .hand .card .cname {
   font-size:16px; line-height:16px; white-space:normal; overflow-wrap:anywhere;
   display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
 }
-:root .combat:not(.coop) .hand .card .ctext { font-size:16px; line-height:20px; }
-:root .combat:not(.coop) .hand .card .card-costs {
+:root .combat.combat .hand .card .ctext { font-size:16px; line-height:20px; }
+:root .combat.combat .hand .card .card-costs {
   display:flex; align-items:center; gap:4px; position:absolute; top:-10px; left:-6px; right:22px;
 }
-:root .combat:not(.coop) .hand .card .card-costs > :is(.cost,.mana-cost,.stamina-cost) {
+:root .combat.combat .hand .card .card-costs > :is(.cost,.mana-cost,.stamina-cost) {
   position:static; flex:0 0 auto; box-sizing:border-box; margin:0; height:24px;
   min-width:24px; padding:0 5px; font-size:12px; line-height:1;
 }
-:root .combat:not(.coop) .hand .card .card-costs > .cost { width:24px; padding:0; }
-:root .combat:not(.coop) .hand .card .ctype { font-size:10px; }
-:root .combat:not(.coop) .hand .card .ctag { font-size:10px; }
-:root .combat:not(.coop) .hand .card .art { width:100%; height:var(--card-art-h); margin:0; }
+:root .combat.combat .hand .card .card-costs > .cost { width:24px; padding:0; }
+:root .combat.combat .hand .card .ctype { font-size:10px; }
+:root .combat.combat .hand .card .ctag { font-size:10px; }
+:root .combat.combat .hand .card .art { width:100%; height:var(--card-art-h); margin:0; }
 
 /* A short landscape viewport gets a scrollable battle, not miniature cards. */
 @container game-viewport (max-height:620px) {
-  :root .combat:not(.coop) { overflow-y:auto; }
-  :root .combat:not(.coop) .field { flex:1 0 calc(300px / var(--ui-zoom,1)); min-height:calc(300px / var(--ui-zoom,1)); }
-  :root .combat:not(.coop) > .hand-area { flex:0 0 auto; }
+  :root .combat.combat { overflow-y:auto; }
+  :root .combat.combat .field { flex:1 0 calc(300px / var(--ui-zoom,1)); min-height:calc(300px / var(--ui-zoom,1)); }
+  :root .combat.combat > .hand-area { flex:0 0 auto; }
 }
 
 /* Increase the reading inside the existing five fixed HUD tracks. */
-:root .combat:is(.coop,:not(.coop)) .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row > .end-turn { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat.combat .combat-action-row .sp-k { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.1; letter-spacing: 0; }
+:root .combat.combat .combat-action-row .sp-v { font-size: max(1.5rem, calc(17px / var(--ui-zoom, 1))); line-height: 1.1; }
+:root .combat.combat .combat-action-row > .end-turn { font-size: max(1.38rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.1; }
 /* The round Potions face is --combat-control-size wide; at End Turn's size the
    word overran the circle and read "Potion" with a sliver. It keeps its own
    smaller step (declared above) and never wraps or clips. */
-:root .combat:is(.coop,:not(.coop)) .combat-action-row > .combat-potions { line-height: 1.1; letter-spacing: 0; padding-inline: 2px; white-space: nowrap; overflow: visible; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row .spent small { font-size: inherit; }
-:root .combat:is(.coop,:not(.coop)) .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
+:root .combat.combat .combat-action-row > .combat-potions { line-height: 1.1; letter-spacing: 0; padding-inline: 2px; white-space: nowrap; overflow: visible; }
+:root .combat.combat .combat-action-row .spent { padding-inline: 2px; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.15; }
+:root .combat.combat .combat-action-row .spent small { font-size: inherit; }
+:root .combat.combat .combat-action-row :is(.hold-hint, .et-key) { font-size: max(0.85rem, calc(10px / var(--ui-zoom, 1))); line-height: 1; }
 
 /* Painted frames own their alpha-shaped glow; do not add the generic gold or
    white cast halo around their parent (which also contains HUD elements). */
@@ -1208,8 +1170,8 @@
 .sprite.act-move[data-action-motion="brace"][data-painted-stage] { animation-name: none; }
 
 /* Selection reveals the same card without rebuilding or relocating the fan. */
-:root .combat:not(.coop) .hand .card.selected { transform: var(--card-fan-transform) !important; z-index: 100 !important; }
-:root .combat:not(.coop) .hand[data-has-selection='true'] .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
+:root .combat.combat .hand .card.selected { transform: var(--card-fan-transform) !important; z-index: 100 !important; }
+:root .combat.combat .hand[data-has-selection='true'] .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
 .combat .hand .card.drag-source { opacity: .2; }
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }
@@ -1230,7 +1192,7 @@
 
 /* A horizontal body needs room to the right of the leftmost solo player. */
 @container game-viewport (max-width: 600px) {
-  .combat:not(.coop) .player .defeated-frame { left: 100% !important; }
+  .combat.combat .player .defeated-frame { left: 100% !important; }
 }
 
 /* Stable combat composition. Percent tracks share one viewport-sized parent;
@@ -1427,16 +1389,6 @@
 }
 
 /* The snapshot party uses the same complete card face and fixed hand tracks. */
-:root .combat.coop[data-layout='formation'] .hand .card {
- zoom:var(--hand-card-zoom,1); --card-w:178px; padding:20px 8px 8px;
- --card-name-h:32px; --card-art-h:53.4px; --card-band-h:17px;
- --card-row:22px; --card-pad:8px; --card-gap:4px;
-}
-:root .combat.coop[data-layout='formation'] .hand .card .cname { font-size:16px; }
-:root .combat.coop[data-layout='formation'] .hand .card .ctext { font-size:18px; line-height:24px; }
-:root .combat.coop[data-layout='formation'] .hand .card .ctype,
-:root .combat.coop[data-layout='formation'] .hand .card .ctag { font-size:10px; }
-:root .combat.coop[data-layout='formation'] > .coop-arm-host { position:absolute; bottom:0; left:25%; z-index:20; max-width:50%; }
 :root .combat[data-layout='formation'] .hand[inert] .card { animation:none; }
 
 :root .combat[data-layout='formation'] .combatant .nm {
@@ -1461,8 +1413,6 @@
 
 :root .combat[data-layout='formation'] > .hand-area { grid-template-columns:minmax(0,1fr); justify-content:stretch; }
 :root .combat[data-layout='formation'] .hand .card { margin-right:0; }
-:root .combat.coop[data-layout='formation'] .combatant { outline:none !important; box-shadow:none !important; border:0 !important; }
-:root .combat.coop[data-layout='formation'] .combatant.selected-target .sprite { filter:drop-shadow(0 0 3px var(--gold)); }
 
 /* Names stay above every silhouette, including the shallow rear row. Frames
    do not create stacking contexts; only sprite art participates in depth. */
@@ -1489,15 +1439,6 @@
 }
 :root .combat[data-layout='formation'] .hand::-webkit-scrollbar { display:none; }
 
-/* Co-op uses its own HUD markup, without the shared-hud grid. Keep Leave
-   beside the resources so the fixed formation band also contains the label. */
-:root .combat.coop[data-layout='formation'] .topbar .hud-top {
- display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
- column-gap:calc(8px / var(--ui-zoom,1)); width:100%;
-}
-:root .combat.coop[data-layout='formation'] .topbar .resbars-host { grid-column:1; min-width:0; }
-:root .combat.coop[data-layout='formation'] .topbar .fight-label { grid-column:1; }
-:root .combat.coop[data-layout='formation'] .topbar .coop-leave { grid-column:2; grid-row:1 / span 2; }
 
 /* Short landscape keeps meters inline in the left resource column.
    Relics remain below them; the compact band preserves battlefield space. */
@@ -1507,19 +1448,6 @@
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
- /* INTENDED, measured in Chromium (#1368; D29 in docs/FINISH.md). The co-op
-    board's `.hud-top` (src/ui/screens/coop.js) is not the shared run HUD: it
-    has no `.shared-hud` ancestor, so kit.css's `.shared-hud > .hud-top` grid
-    never applies. The co-op grid above serves taller screens; short landscape
-    needs its resources and Leave inline to preserve battlefield space.
-    This row keeps the bars
-    (flex:1) and Leave on one row, fight label hidden: the compact band above.
-    tools/coop-hud-top.mjs holds it (overlap, clipping, lost parts, horizontal
-    overflow at 390x844, 844x390, 1280x800; one row at 844x390). */
- :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
- :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
- :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }
- :root .combat.coop[data-layout='formation'] .topbar .coop-leave { height:calc(32px / var(--ui-zoom,1)); min-height:0; }
 }
 
 @container game-viewport (max-height:500px) {
@@ -1776,8 +1704,7 @@
   font-size: calc(12px / var(--ui-zoom,1));
 }
 .combat-tools > button { min-height: calc(44px / var(--ui-zoom,1)); padding: calc(5px / var(--ui-zoom,1)); font-size:inherit; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand-overlay,
-:root .combat.coop[data-layout='formation'] > .hand-area > .hand { width: calc(100% - var(--combat-tools-reserve, 0px)); }
+:root .combat[data-layout='formation'].combat .hand-overlay { width: calc(100% - var(--combat-tools-reserve, 0px)); }
 .combat-tools .reaction-switch { display:flex; align-items:center; justify-content:space-between; gap:4px; color:white; }
 .reaction-switch, .reaction-switch-value { text-shadow: var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000); }
 .reaction-switch-track { position:relative; display:flex; align-items:center; border:1px solid var(--gold); border-radius:20px; width:calc(72px / var(--ui-zoom,1)); height:calc(24px / var(--ui-zoom,1)); background:#397342; color:white; }
@@ -1880,17 +1807,17 @@
   content:''; position:absolute; inset:var(--desktop-background-top) 0 0; pointer-events:none;
   background:linear-gradient(to bottom, rgb(33 29 22 / 0), #211d16 var(--desktop-background-fade-height));
 }
-:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand-overlay {
+:root .combat[data-layout='formation'][data-desktop-footer='true'].combat .hand-overlay {
   position:absolute; inset:var(--desktop-hand-top) 0 auto; height:var(--desktop-hand-height); width:100%; overflow:visible;
 }
-:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] {
+:root .combat[data-layout='formation'][data-desktop-footer='true'].combat .hand[data-wireframe-hand='true'] {
   width:100%; height:100%; background:transparent; pointer-events:none;
 }
 :root .combat[data-layout='formation'][data-desktop-footer='true'] .hand .card { pointer-events:auto; }
-:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) > .hand-area > .combat-action-row[data-footer-art] {
+:root .combat[data-layout='formation'][data-desktop-footer='true'].combat > .hand-area > .combat-action-row[data-footer-art] {
   grid-area:auto !important; position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; max-width:none !important; margin:0 !important; padding:0; pointer-events:none;
 }
-:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+:root .combat[data-layout='formation'][data-desktop-footer='true'].combat .combat-action-row[data-footer-art] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
   left:var(--desktop-x) !important; top:calc(var(--desktop-y) - var(--desktop-area-top, 0px)) !important;
   width:var(--desktop-w) !important; height:var(--desktop-h) !important; min-width:0 !important; min-height:0 !important; max-width:none; max-height:none; pointer-events:auto;
 }

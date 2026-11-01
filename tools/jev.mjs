@@ -1,0 +1,564 @@
+#!/usr/bin/env node
+// tools/jev.mjs — the deterministic-first gate (zero dependencies, zero model tokens).
+//
+// Modelled on the idea of jev-harness (a deterministic-first test-failure triage
+// gate for AI coding agents: offline heuristics first, a model only when no rule
+// matches). External code is not installed here; this is our own small Node tool.
+//
+//   node tools/jev.mjs triage [file|-] [--human]   rule-match a CI or local log
+//   node tools/jev.mjs checks [--fast] [--human]   run the fast checks, triage each failure
+//   node tools/jev.mjs regen                       regenerate every generated file
+//   node tools/jev.mjs restamp [--pr N]            restamp this PR's receipt (orchestrator only)
+//   node tools/jev.mjs devmerge [--base dev] [--pr N]   merge origin/<base> into this branch
+//
+// Every command prints ONE JSON line on stdout (--human prints text instead).
+// Exit codes: 0 = resolved / pass (or a rule names a safe auto-fix),
+//             1 = a failure a rule explains but with no safe auto-fix,
+//             2 = needs a model (no rule matched, or a rule says judgement is needed).
+// The rule table is data: tools/jev.rules.json.
+
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+export const ROOT = resolve(HERE, '..');
+export const RULES_PATH = resolve(HERE, 'jev.rules.json');
+
+// Actions that have a safe, mechanical fix (or need none): severity 0.
+const SAFE_ACTIONS = new Set(['regen', 'restamp', 'rerun-once', 'ignore-local']);
+
+export function loadRules(path = RULES_PATH) {
+  const doc = JSON.parse(readFileSync(path, 'utf8'));
+  return doc.rules.map(rule => ({
+    ...rule, re: new RegExp(rule.regex, rule.flags || ''),
+    covers: rule.covers ? new RegExp(rule.covers, rule.flags || '') : null,
+  }));
+}
+
+// ---- triage: ordered rules, each reported once (first matching line) ----
+
+// Anything that looks like a failure, matched anywhere in a line and case-insensitively,
+// so TypeError, AssertionError, "Failed", "not ok", "# fail 2", "npm ERR!" and a
+// non-zero exit code all count. A false "pass" is the worst outcome, so this is broad.
+const FAILURE_WORDS = /fail|error|fatal|not ok|stale|mismatch|ENOENT|ERR!|assertion|exception|panic|traceback|✖|<{7}|\bexit(ed)?\s+(with\s+)?(status|code)\W{0,3}[1-9]|\bcode\s+[1-9]\d*\b[^\n]*\bexit|\bnon-?zero\b/i;
+// The one shape that names a failure word but reports none: "# fail 0" / "ℹ fail 0".
+// Verdict words this repo's tools print in capitals without any failure word: about-changelog's
+// "check-order: RED — …", "verdict: … exited 1". Case-sensitive so prose "red" doesn't count.
+const VERDICT_WORDS = /(^|[\s:—-])(RED|FAILED|BROKEN|DRIFT|REFUSED|STOPPED|INVALID|INCOMPLETE|KNOWN-BAD)\b|\bexited\s+[1-9]/;
+// The repo's tools print `<tool>: <VERDICT> — …`. Any capital verdict there that is not a pass
+// (OK / PASS / GREEN) is a failure for routing purposes, so a new verdict word can't read as a pass.
+const TOOL_VERDICT = /(^|\s)[\w./-]+: ([A-Z][A-Z-]{1,}) —/;
+const PASS_VERDICTS = new Set(['OK', 'PASS', 'PASSED', 'GREEN']);
+const isToolFailVerdict = (l) => { const m = TOOL_VERDICT.exec(l); return !!m && !PASS_VERDICTS.has(m[2]); };
+// What a passing run of this repo's tools and node:test prints. Triage only says "pass" when
+// at least one of these is present and no failure line is.
+const SUCCESS_EVIDENCE = /: (OK|PASS|PASSED|GREEN) —|^\W*(fail|failed|failures?)\s+0\W*$|\b\d+ passed, 0 failed\b|generated files are current|\bup to date\b|\bbuild ok\b|\b0 hazards\b|^\s*ok \d+ - /im;
+const ZERO_FAIL = /^\W*(fail|failed|failures?)\s+0\W*$|^\W*\d+ passed, 0 failed\W*$/i;
+
+export function failureLines(text) {
+  return String(text).split(/\r?\n/).filter(l => (FAILURE_WORDS.test(l) || VERDICT_WORDS.test(l) || isToolFailVerdict(l)) && !ZERO_FAIL.test(l));
+}
+
+export function severityOf(matches) {
+  let sev = 0;
+  for (const m of matches) {
+    if (!m.deterministic) return 2;
+    if (!SAFE_ACTIONS.has(m.action)) sev = Math.max(sev, 1);
+  }
+  return sev;
+}
+
+// Rule f (a file missing from a sparse checkout) only holds locally, and only with
+// evidence: core.sparseCheckout is on AND git marks every tracked copy of the named
+// file skip-worktree ('S' in `git ls-files -t`), i.e. sparse checkout excluded it.
+// A plain deletion in a full checkout is a real failure. Under CI, never. Injectable.
+export function sparseLocal(line, { env = process.env, git: g = (args) => run('git', args, { cwd: callerRoot() }) } = {}) {
+  if (env.CI) return false;
+  if (g(['config', '--get', 'core.sparseCheckout']).out.trim() !== 'true') return false;
+  const file = (String(line).match(/(component-catalog\.html|attack-source-audit\.csv)/) || [])[1];
+  if (!file) return false;
+  const rows = g(['ls-files', '-t', '--', `**/${file}`, file]).out.split('\n').filter(Boolean);
+  return rows.length > 0 && rows.every(r => r.startsWith('S '));
+}
+const DEFAULT_CTX = { 'sparse-local': line => sparseLocal(line) };
+
+export function triage(text, rules = loadRules(), ctx = DEFAULT_CTX) {
+  const lines = String(text).split(/\r?\n/);
+  const matches = [];
+  for (const rule of rules) {
+    const hit = l => rule.re.test(l) && (!rule.requires || (ctx[rule.requires] ? ctx[rule.requires](l) : false));
+    const line = lines.find(hit);
+    if (line === undefined) continue;
+    matches.push({
+      id: rule.id, category: rule.category, deterministic: rule.deterministic,
+      action: rule.action, command: rule.command, note: rule.note,
+      'evidence-line': line.trim().slice(0, 240),
+    });
+  }
+  const failing = failureLines(text);
+  if (matches.length) {
+    // A matched rule only vouches for the lines it matches; any other failure line
+    // is unexplained and forces a model (a safe fix must never hide a real failure).
+    const matched = rules.filter(r => matches.some(m => m.id === r.id));
+    const uncovered = failing.filter(l => !matched.some(r => (r.re.test(l) && (!r.requires || (ctx[r.requires] ? ctx[r.requires](l) : false))) || (r.covers && r.covers.test(l))));
+    if (uncovered.length) {
+      matches.push({
+        id: 'unmatched', category: 'unknown', deterministic: false, action: 'model', command: '',
+        note: `${uncovered.length} failure line(s) no matched rule explains.`,
+        'evidence-line': uncovered[0].trim().slice(0, 240),
+      });
+    }
+    const exit = severityOf(matches);
+    return { matches, verdict: exit === 0 ? 'autofix' : exit === 1 ? 'explained' : 'needs-model', exit };
+  }
+  // No failure line is not proof of success: tools print diagnostics in shapes no word list
+  // can enumerate. A pass needs explicit success evidence; otherwise the log goes to a model.
+  if (!failing.length) {
+    if (lines.some(l => SUCCESS_EVIDENCE.test(l))) return { matches, verdict: 'pass', exit: 0 };
+    return { matches, verdict: 'unknown', exit: 2, note: 'no failure line and no success evidence' };
+  }
+  return { matches, verdict: 'unmatched', exit: 2 };
+}
+
+// ---- process helpers ----
+
+export function run(cmd, args, opts = {}) {
+  const r = spawnSync(cmd, args, { cwd: opts.cwd || callerRoot(), encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, input: opts.input });
+  return { status: r.status === null ? 1 : r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
+}
+const node = (args, opts) => run(process.execPath, args, opts);
+
+// ---- CLI ----
+
+function emit(obj, human, toText) {
+  process.stdout.write(human ? `${toText(obj)}\n` : `${JSON.stringify(obj)}\n`);
+}
+
+function triageText(r) {
+  const out = r.matches.map(m => `  [${m.deterministic ? 'det' : 'MODEL'}] ${m.id} -> ${m.action}${m.command ? ` (${m.command})` : ''}\n      ${m.note}\n      > ${m['evidence-line']}`);
+  return [`jev triage: ${r.verdict} (exit ${r.exit}), ${r.matches.length} match(es)`, ...out].join('\n');
+}
+
+const COMMANDS = {};
+
+COMMANDS.triage = async (args) => {
+  const human = args.includes('--human');
+  const file = args.find(a => !a.startsWith('--') || a === '-');
+  const text = !file || file === '-' ? readFileSync(0, 'utf8') : readFileSync(file, 'utf8');
+  const r = triage(text);
+  emit({ cmd: 'triage', ...r }, human, triageText);
+  return r.exit;
+};
+
+// ---- checks: the fast-check list, run in order, every failure triaged ----
+
+export const FAST_CHECKS = [
+  { id: 'style-lint', args: ['tools/style-lint.mjs', '--check'] },
+  { id: 'content-build', args: ['tools/content-build.mjs', '--check'] },
+  { id: 'config-build', args: ['tools/config-build.mjs', '--check'] },
+  { id: 'game-config', args: ['tools/game-config.mjs', 'check'] },
+  { id: 'tokens-css', args: ['tools/tokens-css.mjs', '--check'] },
+  { id: 'hud-layout-css', args: ['tools/hud-layout-css.mjs', '--check'] },
+  { id: 'framework-data-build', args: ['tools/framework-data-build.mjs', '--check'] },
+  { id: 'build-game', args: ['tools/build-game.mjs', '--check'] },
+  { id: 'bundle-cycles', args: ['tools/bundle-cycles.mjs'] },
+  { id: 'mechanics-generate', args: ['tools/mechanics-generate.mjs', '--check'] },
+  { id: 'uistrings', args: ['tools/uistrings.mjs', '--check'] },
+  { id: 'run-node', args: ['tests/run-node.mjs', '--no-selftests', '--no-discovered'], slow: true },
+  { id: 'runsim', args: ['tools/runsim.mjs', '5'], slow: true },
+];
+
+// A failed check is never "resolved", so its severity is at least 1; triage can
+// raise it to 2. The exit of the whole run is the maximum.
+export function runChecks(list, runner, rules = loadRules(), ctx = DEFAULT_CTX) {
+  const results = [];
+  for (const check of list) {
+    const started = Date.now();
+    const { status, out } = runner(check);
+    const ms = Date.now() - started;
+    if (status === 0) { results.push({ id: check.id, status: 'pass', exit: 0, ms }); continue; }
+    const t = triage(out, rules, ctx);
+    // Tag the check name onto the text so a rule keyed on the tool name can see it.
+    const tagged = t.matches.length ? t : triage(`${check.id}: ${out}`, rules, ctx);
+    // No rule explains it: a nonzero exit with nothing recognised needs a model, never "explained".
+    const exit = tagged.matches.length ? Math.max(1, tagged.exit) : 2;
+    results.push({
+      id: check.id, status: 'fail', exit, ms, verdict: tagged.verdict,
+      matches: tagged.matches.map(m => m.id), fix: tagged.matches.map(m => m.command).filter(Boolean),
+      tail: out.trim().split('\n').slice(-6).join('\n').slice(0, 800),
+    });
+  }
+  return { results, exit: results.reduce((a, r) => Math.max(a, r.exit), 0) };
+}
+
+function checksText({ results, exit }) {
+  const rows = results.map(r => `  ${r.status === 'pass' ? 'PASS' : 'FAIL'}  ${r.id.padEnd(22)} ${String(r.ms).padStart(6)}ms${r.status === 'fail' ? `  exit ${r.exit}  ${r.matches.join(',') || 'no rule matched'}${r.fix.length ? `  fix: ${r.fix.join(' ; ')}` : ''}` : ''}`);
+  return [`jev checks: exit ${exit}`, ...rows].join('\n');
+}
+
+COMMANDS.checks = async (args) => {
+  const human = args.includes('--human');
+  const onlyAt = args.indexOf('--only');
+  const only = onlyAt >= 0 ? new Set(args[onlyAt + 1].split(',')) : null;
+  const fast = args.includes('--fast');
+  const list = FAST_CHECKS.filter(c => (!only || only.has(c.id)) && !(fast && c.slow));
+  const r = runChecks(list, c => node(c.args));
+  r.skipped = fast ? FAST_CHECKS.filter(c => c.slow).map(c => c.id) : [];
+  emit({ cmd: 'checks', exit: r.exit, skipped: r.skipped, verdict: r.exit === 0 ? 'pass' : r.exit === 1 ? 'explained' : 'needs-model', results: r.results }, human, () => checksText(r));
+  return r.exit;
+};
+
+// ---- regen ----
+
+export const REGEN_STEPS = [
+  ['tools/about-changelog.mjs', '--write'],
+  // config-build and framework-data-build before content-build: content-build refuses config whose
+  // source hashes do not match src/config/generated/ui.js, and framework JSON with no src/framework/data mirror.
+  ['tools/config-build.mjs'],
+  // The stylesheets index.html loads are projections of authored config too; run-node checks both.
+  ['tools/tokens-css.mjs', '--write'],
+  ['tools/hud-layout-css.mjs', '--write'],
+  ['tools/framework-data-build.mjs'],
+  ['tools/content-build.mjs'],
+  ['tools/game-config.mjs', 'build'],
+  ['tools/build-game.mjs'],
+];
+
+// Returns { exit, steps:[{cmd,status}], failed? }. Stops at the first failing step.
+export function regen(cwd = callerRoot()) {
+  const steps = [];
+  for (const args of REGEN_STEPS) {
+    const r = node(args, { cwd });
+    steps.push({ cmd: `node ${args.join(' ')}`, status: r.status });
+    if (r.status !== 0) {
+      const t = triage(r.out);
+      return { exit: Math.max(1, t.exit), steps, failed: args[0], tail: r.out.trim().split('\n').slice(-8).join('\n') };
+    }
+  }
+  return { exit: 0, steps };
+}
+
+// Every command defaults to the caller's checkout (see targetRoot), resolved once per process.
+let callerRootCache = null;
+export function callerRoot() {
+  if (!callerRootCache) callerRootCache = targetRoot(process.argv.slice(2));
+  return callerRootCache;
+}
+
+// The checkout a command acts on: --root when given, else the git checkout the shell is in,
+// so a jev copied from another worktree still regenerates and restamps the right tree.
+export function targetRoot(args = [], cwd = process.cwd()) {
+  const at = args.indexOf('--root');
+  if (at >= 0 && args[at + 1]) return resolve(args[at + 1]);
+  const top = run('git', ['rev-parse', '--show-toplevel'], { cwd });
+  return top.status === 0 && top.out.trim() ? top.out.trim() : ROOT;
+}
+
+COMMANDS.regen = async (args) => {
+  const r = regen(targetRoot(args));
+  emit({ cmd: 'regen', verdict: r.exit === 0 ? 'regenerated' : 'failed', ...r }, args.includes('--human'),
+    o => [`jev regen: ${o.verdict}`, ...o.steps.map(s => `  ${s.status === 0 ? 'ok  ' : 'FAIL'} ${s.cmd}`), o.tail || ''].join('\n').trim());
+  return r.exit;
+};
+
+// ---- restamp ----
+
+const DATE_HEADING = /^## \d{4}-\d{2}-\d{2}\b/;
+
+// Pure. Sets the first receipt under the newest date heading that names PR #pr to
+// `build`, and drops repeated identical receipt lines under that heading.
+export function restampChangelog(text, { pr, build }) {
+  const lines = text.split('\n');
+  const start = lines.findIndex(l => DATE_HEADING.test(l));
+  if (start < 0) throw new Error('CHANGELOG.md has no "## <date>" heading');
+  let end = lines.findIndex((l, i) => i > start && /^## /.test(l));
+  if (end < 0) end = lines.length;
+  const seen = new Set();
+  const kept = [];
+  let deduped = 0;
+  for (let i = start + 1; i < end; i++) {
+    const line = lines[i];
+    if (/^- /.test(line)) {
+      if (seen.has(line)) { deduped++; continue; }
+      seen.add(line);
+    }
+    kept.push(line);
+  }
+  // The receipt's own structured prefix, `([#N](…/pull/N), \``, as tools/pr-restamp.mjs's
+  // isReceiptLine reads it, never a mention of #N in another receipt's prose.
+  const own = new RegExp(`^- \\*\\*.*\\(\\[#${pr}\\]\\([^)\\s]*/pull/${pr}\\), \``);
+  const named = { test: l => own.test(l) };
+  let at = kept.findIndex(l => /^- /.test(l) && named.test(l));
+  let relocatedFrom = null;
+  let rest = lines.slice(end);
+  if (at < 0) {
+    // A PR open across a date change: dev added a newer heading, so the receipt sits under an
+    // older one. Take it from there into the newest group (as tools/pr-restamp.mjs does).
+    let heading = null;
+    const idx = rest.findIndex(l => { if (DATE_HEADING.test(l)) heading = l; return /^- /.test(l) && named.test(l) && heading; });
+    if (idx < 0) throw new Error(`no receipt in CHANGELOG.md names PR #${pr}`);
+    relocatedFrom = heading.replace(/^## /, '').trim();
+    kept.splice(kept.findIndex(l => /^- /.test(l)) < 0 ? kept.length : kept.findIndex(l => /^- /.test(l)), 0, rest[idx]);
+    rest = [...rest.slice(0, idx), ...rest.slice(idx + 1)];
+    at = kept.findIndex(l => /^- /.test(l) && named.test(l));
+  }
+  // The stamp is the field right after the PR link — `([#N](…/pull/N), \`X.Y.Z.W\`` — never a
+  // version that happens to appear in the receipt's own words.
+  const FIELD = new RegExp(`(\\(\\[#${pr}\\]\\([^)\\s]*/pull/${pr}\\), )\`(\\d+\\.\\d+\\.\\d+\\.\\d+)\``);
+  if (!FIELD.test(kept[at])) throw new Error(`the receipt for PR #${pr} carries no \`<release>.<ordinal>\` stamp to replace`);
+  const before = kept[at];
+  const after = before.replace(FIELD, (_m, head) => `${head}\`${build}\``);
+  // The receipt now carries the newest build, so it moves to the top of its date group
+  // (as tools/pr-restamp.mjs does); the order check then validates it like any other.
+  const first = kept.findIndex(l => /^- /.test(l));
+  const moved = at !== first;
+  kept.splice(at, 1);
+  kept.splice(first, 0, after);
+  const out = [...lines.slice(0, start + 1), ...kept, ...rest].join('\n');
+  return { text: out, deduped, moved: moved || relocatedFrom !== null, relocatedFrom, restamped: after !== before, from: (FIELD.exec(before) || [])[2] || '', to: build };
+}
+
+export function currentBuild(root = callerRoot()) {
+  const b = JSON.parse(readFileSync(resolve(root, 'buildordinal.json'), 'utf8'));
+  return `${b.release}.${b.ordinal}`;
+}
+
+// The PR this branch carries: --pr, else the branch's open PR via gh when present.
+export function detectPr(args, cwd = callerRoot()) {
+  const at = args.indexOf('--pr');
+  if (at >= 0) return Number(args[at + 1]);
+  const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd }).out.trim();
+  const r = run('gh', ['pr', 'list', '--head', branch, '--json', 'number', '-q', '.[0].number'], { cwd });
+  const n = Number(r.out.trim());
+  return r.status === 0 && n > 0 ? n : null;
+}
+
+// Rewrites CHANGELOG.md in root, then (unless noRegen) projects it and checks order.
+export function restamp({ root = callerRoot(), pr, noRegen = false }) {
+  const path = resolve(root, 'CHANGELOG.md');
+  const r = restampChangelog(readFileSync(path, 'utf8'), { pr, build: currentBuild(root) });
+  writeFileSync(path, r.text);
+  const info = { pr, from: r.from, to: r.to, deduped: r.deduped, moved: r.moved, relocatedFrom: r.relocatedFrom, restamped: r.restamped };
+  if (noRegen) return { exit: 0, ...info };
+  const w = node(['tools/about-changelog.mjs', '--write'], { cwd: root });
+  if (w.status !== 0) return { exit: 1, ...info, failed: 'about-changelog --write', tail: w.out.trim().split('\n').slice(-6).join('\n') };
+  // No --pending: the restamped receipt is ordered, not exempted.
+  const c = node(['tools/about-changelog.mjs', '--check-order'], { cwd: root });
+  if (c.status !== 0) return { exit: Math.max(1, triage(c.out).exit), ...info, failed: 'about-changelog --check-order', tail: c.out.trim().split('\n').slice(-6).join('\n') };
+  return { exit: 0, ...info };
+}
+
+COMMANDS.restamp = async (args) => {
+  const pr = detectPr(args, targetRoot(args));
+  if (!pr) throw new Error('cannot tell which PR this branch carries; pass --pr N');
+  const r = restamp({ pr, root: targetRoot(args), noRegen: args.includes('--no-regen') });
+  emit({ cmd: 'restamp', verdict: r.exit === 0 ? 'restamped' : 'failed', ...r }, args.includes('--human'),
+    o => `jev restamp: ${o.verdict} PR #${o.pr} ${o.from} -> ${o.to}, ${o.deduped} duplicate line(s) dropped${o.tail ? `\n${o.tail}` : ''}`);
+  return r.exit;
+};
+
+// ---- devmerge ----
+
+// Derived files a dev merge may resolve by taking dev's side, then regenerating.
+// buildordinal.json is derived too (tools/bundle.mjs writes it), so it is taken the same way.
+const GENERATED_PATHS = [
+  /^src\/content\/generated\//,
+  /^games\/[^/]+\/(build\.summary\.json|game\.lock\.json)$/,
+  /^(.+\/)?game\.lock\.json$/,
+  /^src\/content\/changelog\.generated\.js$/,
+  /^src\/framework\/data\/[^/]+\.js$/,
+  /^src\/config\/generated\/[^/]+\.js$/,
+  /^styles\/(tokens|hud-layout)\.generated\.css$/,
+  /^buildordinal\.json$/,
+];
+
+// Pure: sort conflicted paths into generated (take theirs), changelog (merge by
+// rule) and other (a person or model must resolve; the merge is aborted).
+export function classifyConflicts(paths) {
+  const out = { generated: [], changelog: [], other: [] };
+  for (const raw of paths) {
+    const path = String(raw).replace(/\\/g, '/');
+    if (path === 'CHANGELOG.md') out.changelog.push(path);
+    else if (GENERATED_PATHS.some(re => re.test(path))) out.generated.push(path);
+    else out.other.push(path);
+  }
+  return out;
+}
+
+// Pure: resolve every conflict block in CHANGELOG.md text. Ours (HEAD) receipt
+// block first, then theirs; a non-blank line of ours that theirs already holds is dropped.
+export function resolveChangelogConflict(text, baseText = null, oursText = null) {
+  // Receipt-level, not line-level: every conflict hunk takes theirs (dev's date groups and
+  // headings intact), and ours contributes only its new receipt bullets, which go to the top
+  // of the newest date group (restamp then orders them). diff3/zdiff3 base sections are dropped.
+  // Anything else ours changed (prose, a heading) is not a receipt we can place: throw, so
+  // devmerge aborts and a model decides.
+  const re = /^<{7}[^\n]*\n([\s\S]*?)(?:^\|{7}[^\n]*\n[\s\S]*?)?^={7}\n([\s\S]*?)^>{7}[^\n]*\n?/gm;
+  const extra = [];
+  const merged = text.replace(re, (_all, ours, theirs) => {
+    const have = new Set(theirs.split('\n'));
+    // A receipt's stable identity is its PR number, not its text: dev restamping a receipt
+    // changes the line but not the PR, so ours' copy of a PR theirs already has is dropped.
+    const prOf = (l) => (/^- \*\*.*?\(\[#(\d+)\]\(/.exec(l) || [])[1];
+    // Blank only the structured stamp field after the PR link, never a version in the prose.
+    const unstamped = (l) => l.replace(/(\(\[#\d+\]\([^)\s]*\/pull\/\d+\), )`\d+\.\d+\.\d+\.\d+`/, '$1`#`');
+    const theirByPr = new Map(theirs.split('\n').filter(prOf).map(l => [prOf(l), l]));
+    // The merge base tells a new receipt from one dev deleted: a receipt ours holds that the base
+    // already had, and theirs no longer has, was removed on dev. Keep the deletion when ours left
+    // it untouched; escalate when ours edited it (delete vs edit is a decision, not a merge).
+    const baseByPr = new Map(String(baseText ?? '').split('\n').filter(prOf).map(l => [prOf(l), l]));
+    for (const line of ours.split('\n')) {
+      if (!line.trim() || have.has(line) || /^## \d{4}-\d{2}-\d{2}\b/.test(line)) continue;
+      const pr = prOf(line);
+      if (pr && theirByPr.has(pr)) {
+        // Same receipt, only the stamp differs (dev restamped it): keep dev's copy.
+        if (unstamped(line) === unstamped(theirByPr.get(pr))) continue;
+        // Both sides changed the receipt's words: an authored edit a merge must not drop.
+        throw new Error(`CHANGELOG conflict: receipt #${pr} was edited on both sides; a model must merge the wording`);
+      }
+      if (pr && baseByPr.has(pr)) {
+        if (unstamped(line) === unstamped(baseByPr.get(pr))) continue;
+        throw new Error(`CHANGELOG conflict: receipt #${pr} was deleted on dev but edited on this branch; a model must decide`);
+      }
+      if (!/^- \*\*/.test(line)) throw new Error(`CHANGELOG conflict: ours changed a non-receipt line: ${line.slice(0, 80)}`);
+      if (!extra.includes(line)) extra.push(line);
+    }
+    return theirs;
+  });
+  // A receipt this branch deleted (in the base, gone from ours) must not come back with dev's
+  // hunk. Dev's copy unchanged from the base: drop it. Dev edited it: delete vs edit, escalate.
+  let out = merged;
+  if (baseText != null && oursText != null) {
+    const prOf = (l) => (/^- \*\*.*?\(\[#(\d+)\]\(/.exec(l) || [])[1];
+    const unstamped = (l) => l.replace(/(\(\[#\d+\]\([^)\s]*\/pull\/\d+\), )`\d+\.\d+\.\d+\.\d+`/, '$1`#`');
+    const byPr = (t) => new Map(String(t).split('\n').filter(prOf).map(l => [prOf(l), l]));
+    const base = byPr(baseText), ours = byPr(oursText);
+    const keep = [];
+    for (const line of out.split('\n')) {
+      const pr = prOf(line);
+      if (pr && base.has(pr) && !ours.has(pr) && !extra.includes(line)) {
+        if (unstamped(line) === unstamped(base.get(pr))) continue;
+        throw new Error(`CHANGELOG conflict: receipt #${pr} was deleted on this branch but edited on dev; a model must decide`);
+      }
+      keep.push(line);
+    }
+    out = keep.join('\n');
+  }
+  if (!extra.length) return out;
+  const lines = out.split('\n');
+  const at = lines.findIndex(l => /^## \d{4}-\d{2}-\d{2}\b/.test(l));
+  if (at < 0) throw new Error('CHANGELOG.md has no "## <date>" heading to receive the receipt');
+  const first = lines.findIndex((l, i) => i > at && l.trim() !== '');
+  const insertAt = first < 0 ? lines.length : first;
+  lines.splice(insertAt, 0, ...extra);
+  return lines.join('\n');
+}
+
+const git = (args, cwd) => run('git', args, { cwd });
+
+// deps: injectable regen/restamp/node runner, so tests need not run the full repo tools.
+export function devmerge({ base = 'dev', pr = null, cwd = callerRoot(), deps = {} }) {
+  const doRegen = deps.regen || regen;
+  const doRestamp = deps.restamp || restamp;
+  const runNode = deps.node || node;
+  if (typeof base !== 'string' || !base || base.startsWith('-')) return { exit: 2, verdict: 'bad-base', reason: `--base must name a branch, got ${JSON.stringify(base)}` };
+  const top = git(['rev-parse', '--show-toplevel'], cwd).out.trim() || cwd;
+  const dirty = git(['status', '--porcelain', '--untracked-files=no'], top).out.trim();
+  if (dirty) return { exit: 1, verdict: 'dirty-tree', files: dirty.split('\n') };
+  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], top).out.trim();
+  const untrackedBefore = new Set(git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean));
+  const fetched = git(['fetch', '--filter=blob:none', 'origin', `+refs/heads/${base}:refs/remotes/origin/${base}`], top); // explicit destination: a single-branch clone's refspec would leave origin/<base> stale
+  if (fetched.status !== 0) return { exit: 2, verdict: 'fetch-failed', tail: fetched.out.trim().slice(-400) };
+  const merged = git(['merge', '--no-edit', '--no-ff', '--no-commit', `origin/${base}`], top);
+  if (merged.status === 0 && /Already up to date/i.test(merged.out)) return { exit: 0, verdict: 'up-to-date', branch };
+  const resolved = { generated: [], changelog: [] };
+  if (merged.status !== 0) {
+    const unmerged = git(['diff', '--name-only', '--diff-filter=U'], top).out.split('\n').filter(Boolean);
+    const cls = classifyConflicts(unmerged);
+    if (!unmerged.length || cls.other.length) {
+      git(['merge', '--abort'], top);
+      return { exit: 2, verdict: 'needs-model', reason: unmerged.length ? 'conflicts outside the derived files' : 'merge failed without a file conflict', files: cls.other.length ? cls.other : [], tail: unmerged.length ? '' : merged.out.trim().slice(-400) };
+    }
+    for (const f of cls.generated) {
+      const co = git(['checkout', '--theirs', '--', f], top);
+      if (co.status === 0) git(['add', '--', f], top); else git(['rm', '-f', '--', f], top);
+      resolved.generated.push(f);
+    }
+    for (const f of cls.changelog) {
+      const path = resolve(top, f);
+      let text;
+      // Index stages 1 (merge base) and 2 (ours) tell new receipts from deleted ones on either side.
+      const baseCopy = git(['show', `:1:${f}`], top);
+      const oursCopy = git(['show', `:2:${f}`], top);
+      try { text = resolveChangelogConflict(readFileSync(path, 'utf8'), baseCopy.status === 0 ? baseCopy.out : null, oursCopy.status === 0 ? oursCopy.out : null); } catch (error) {
+        git(['merge', '--abort'], top);
+        return { exit: 2, verdict: 'needs-model', reason: error.message, files: [f] };
+      }
+      writeFileSync(path, text);
+      git(['add', '--', f], top);
+      resolved.changelog.push(f);
+    }
+  }
+  const notes = [];
+  // Restamp the Markdown first (no projection): a clean merge can leave our receipt's build below
+  // dev's, which about-changelog --write (the first regen step) would reject before restamp ran.
+  const prNumber = pr || detectPr([], top);
+  if (prNumber) {
+    try {
+      const r = doRestamp({ root: top, pr: prNumber, noRegen: true });
+      if (r.exit !== 0) return { exit: r.exit, verdict: 'restamp-failed', branch, resolved, failed: r.failed, tail: r.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
+      notes.push(`restamped #${prNumber} ${r.from} -> ${r.to}`);
+    } catch (error) {
+      notes.push(`restamp skipped: ${error.message}`);
+    }
+  } else notes.push('restamp skipped: no PR known (pass --pr N)');
+  const g = doRegen(top);
+  if (g.exit !== 0) return { exit: g.exit, verdict: 'regen-failed', branch, resolved, failed: g.failed, tail: g.tail, hint: 'merge left uncommitted; `git merge --abort` to undo' };
+  // A restamped receipt is moved to the top of its date group, so it is checked, not exempted.
+  const verify = runChecks([
+    { id: 'about-changelog', args: ['tools/about-changelog.mjs', '--check-order'] },
+    ...FAST_CHECKS.filter(c => ['content-build', 'config-build', 'tokens-css', 'hud-layout-css', 'game-config', 'framework-data-build', 'build-game'].includes(c.id)),
+  ], c => runNode(c.args, { cwd: top }));
+  if (verify.exit !== 0) return { exit: verify.exit, verdict: 'checks-failed', branch, resolved, checks: verify.results.filter(r => r.status === 'fail'), hint: 'merge left uncommitted; `git merge --abort` to undo' };
+  git(['add', '-u'], top);
+  const fresh = git(['ls-files', '--others', '--exclude-standard'], top).out.split('\n').filter(Boolean);
+  // Only files the regen created: an untracked generated file that was already here is not ours to stage.
+  for (const f of classifyConflicts(fresh.filter(p => !untrackedBefore.has(p))).generated) git(['add', '--', f], top);
+  const c = git(['commit', '--no-edit'], top);
+  if (c.status !== 0) return { exit: 2, verdict: 'commit-failed', tail: c.out.trim().slice(-400), hint: 'merge left uncommitted; `git merge --abort` to undo' };
+  const sha = git(['rev-parse', '--short', 'HEAD'], top).out.trim();
+  return { exit: 0, verdict: 'merged', branch, sha, resolved, notes, push: `git push origin ${branch}` };
+}
+
+COMMANDS.devmerge = async (args) => {
+  const baseAt = args.indexOf('--base');
+  if (baseAt >= 0 && (args[baseAt + 1] === undefined || args[baseAt + 1].startsWith('-'))) { emit({ cmd: 'devmerge', exit: 2, verdict: 'bad-base', reason: '--base needs a branch name' }, args.includes('--human'), o => `jev devmerge: ${o.verdict} (exit 2)\n${o.reason}`); return 2; }
+  const prAt = args.indexOf('--pr');
+  const r = devmerge({ base: baseAt >= 0 ? args[baseAt + 1] : 'dev', pr: prAt >= 0 ? Number(args[prAt + 1]) : null, cwd: targetRoot(args) });
+  emit({ cmd: 'devmerge', ...r }, args.includes('--human'),
+    o => [`jev devmerge: ${o.verdict} (exit ${o.exit})`, o.reason || '', ...(o.files || []).map(f => `  ${f}`), ...(o.notes || []), o.tail || '', o.hint || '', o.push ? `next (not run): ${o.push}` : ''].filter(Boolean).join('\n'));
+  return r.exit;
+};
+
+// ---- entry ----
+
+async function main(argv) {
+  const [cmd, ...args] = argv;
+  const fn = COMMANDS[cmd];
+  if (!fn) {
+    process.stderr.write(`usage: jev.mjs ${Object.keys(COMMANDS).join('|')} [--human]\n`);
+    return 2;
+  }
+  try {
+    return await fn(args);
+  } catch (error) {
+    process.stdout.write(`${JSON.stringify({ cmd, verdict: 'error', exit: 2, error: error.message })}\n`);
+    return 2;
+  }
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = await main(process.argv.slice(2));
+}

@@ -66,6 +66,11 @@ function adeptMinimum(ctx, carrier, ownTurnMinimum) {
   return ctx.phase === 'enemy' && tags.some(tag => (typeof tag === 'string' ? tag : tag?.id) === 'trait:reaction')
     ? 0 : ownTurnMinimum;
 }
+function isCounterReaction(ctx, entity, carrier) {
+  if (ctx.phase !== 'enemy' || entity?.kind === 'enemy' || entity?.combatStance?.maneuver !== 'counter') return false;
+  const tags = (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag?.id);
+  return tags.includes('trait:reaction') && (tags.includes('maneuver:counter') || carrier?.combatProfile?.maneuver === 'counter');
+}
 // New fights use class-entitled resource lanes; existing active fights retain their accepted pricing.
 export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
@@ -78,6 +83,11 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
       return Math.max(cfg.minimumCost, base - cfg.discount);
     }
     if (core2ActionPolicyEnabled(ctx)) {
+      // Owner 2026-10-31 (SPEC §17): a Counter reaction played from Counter stance on the enemy's turn costs one less SP
+      // (never below 0) whether or not the class is an Adept; every other card keeps the Adept gate below.
+      if (isCounterReaction(ctx, entity, carrier) && base > 0 && carrier?.cost !== 'X') {
+        return Math.max(0, base - fixCoreReactionRules(fixCoreRules(ctx, entity, carrier)).handCostDiscount);
+      }
       if (!(base > 0) || carrier?.cost === 'X' || isSpellCard(carrier) || !hasAdept(ctx, entity, 'training.basic')) return base;
       const cfg = fixCoreRules(ctx, entity, carrier).stance;
       return Math.max(adeptMinimum(ctx, carrier, cfg.minimumCost), base - cfg.discount);

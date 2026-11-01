@@ -119,11 +119,6 @@ try {
         report.scenes.push(observation);
         console.log(`${device}: ${id}`);
       }
-      // The co-op mount uses the same selector and fitting, with actual seat input.
-      await page.goto(`${base}?shot=coop&shotSeats=2`, { waitUntil: 'networkidle' });
-      report.layouts.push({ phase: 'coop', viewport: device, ...await checkArt(page, { verifyGround: true }) });
-      await page.keyboard.press('Tab');
-      await page.screenshot({ path: resolve(out, `${device}-coop.png`) });
       // Resize a mounted scene: independent phone/desktop transforms must switch.
       await page.setViewportSize({ width: device === 'phone' ? 1440 : 390, height: 844 });
       await page.waitForFunction(expected => document.querySelector('.alternative-backdrop')?.dataset.device === expected, device === 'phone' ? 'desktop' : 'phone');

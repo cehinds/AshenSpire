@@ -117,7 +117,7 @@ it is not the generic implementation of new typed damage. Existing special proc
 payloads retain their explicit impact effects through migration.
 
 One resolver supplies live combat, previews, logs, and automated assertions in
-solo and co-op. Tests cover mixed damage, Block, immunity, rounding, and empty hits.
+solo play. Tests cover mixed damage, Block, immunity, rounding, and empty hits.
 
 Acceptance example with explicit fixture values: an 8-Slashing + 3-Fire hit,
 25% armor mitigation, 50% Fire resistance, no other modifiers, and floor-per-component
@@ -288,7 +288,7 @@ Before tuning, capture current-dev behavior with analogous legal equipment/decks
 Then run both versions against: an unarmored single enemy; an armored high-poise
 enemy; a three-enemy encounter; an explicitly Bleed-resistant enemy; a boss with
 control resistance; and three encounters without mana refill. Also exercise full
-Block, mixed damage, death mid-flurry, missing mana, and simultaneous co-op triggers.
+Block, mixed damage, death mid-flurry, and missing mana.
 
 For each build/scenario, use the same 100 seeds and publish all results, including
 losses. The deterministic agent policy is shared (same targeting/defense heuristic,
@@ -302,7 +302,7 @@ This small corpus does not establish full-run balance or replace human playtesti
 
 Gate to content expansion:
 
-- All mechanics invariants and solo/co-op parity pass, including preview equality.
+- All mechanics invariants pass, including preview equality.
 - Every build has an affordable offensive line at zero mana; no regeneration loop
   produces unlimited actions, damage, resources, or permanent control.
 - Every build clears the basic encounter under a documented reasonable policy;
@@ -368,7 +368,7 @@ selection weights, and quality weights; each is configurable by encounter tier.
 Aggregate multi-enemy drops through a configured encounter cap. Weapons, armor,
 relics, runes, and affinity materials keep their own compatibility and quality
 rules. Better copies remain eligible after base-item discovery. Rolls are seeded
-and persisted once; reward claims, reloads, and co-op collection cannot reroll or
+and persisted once; reward claims and reloads cannot reroll or
 duplicate them. Merchants/smithing offer a dependable alternative to rare drops.
 Prices, drop rates, capacity behavior, and quality curves are tuned to a measured
 full-run loot budget; this spec does not claim a particular drop rate is balanced.
@@ -460,6 +460,6 @@ an implementation contract, not a parallel ticket/status system.
 For runtime changes run the node suite, focused mechanics tests, content/framework
 builders as needed, `node tools/launch.mjs --build-only`,
 `node tools/buildversion.mjs --check`, `node tools/verify-shipped.mjs`, and
-`git diff --check`. Check desktop, phone, keyboard/touch inspection, reduced motion,
-and co-op. Update the component catalog when its surfaces change. Publish concrete
+`git diff --check`. Check desktop, phone, keyboard/touch inspection, and reduced motion.
+Update the component catalog when its surfaces change. Publish concrete
 results and baseline limitations; build success is not deployment or game balance.

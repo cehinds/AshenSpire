@@ -95,10 +95,13 @@ test("the combat log shows the owner's example contest line", () => {
   const result = rollContest({ rng: stub(5), caster, target: enemy, kind: 'mental', rank: 1, ctx, read });
   const event = { type: 'contestPassed', sourceId: 'player', targetId: 'e1', contest: result, ...result };
   const [entry] = combatLogEntries([event], { registries: reg, players: [], enemies: [] });
-  assert.match(JSON.stringify(entry), /Contest: d20 \[5\] \+ INT 1 \+ WIS 2 \+ rank 1 = 9 vs Poise 7 \+ WIS 1 \+ level 1 = 9 · success/);
+  // Re-pinned (owner, 2026-10-31): the compact line is "contest: 9 vs 9 · success"; the itemised
+  // d20 [5] + INT 1 + WIS 2 + rank 1 vs Poise 7 + WIS 1 + level 1 is the row's rollReceipt.
+  assert.match(entry.text, /contest: 9 vs 9 · success$/);
+  assert.deepEqual(entry.rollReceipt.dcParts.map(part => `${part.label} ${part.value}`), ['Poise 7', 'WIS 1', 'level 1']);
   const failed = rollContest({ rng: stub(4), caster, target: enemy, kind: 'mental', rank: 1, ctx, read });
   const [no] = combatLogEntries([{ type: 'contestFailed', sourceId: 'player', targetId: 'e1', contest: failed, ...failed }], { registries: reg, players: [], enemies: [] });
-  assert.match(JSON.stringify(no), /= 8 vs Poise 7 \+ WIS 1 \+ level 1 = 9 · failure/);
+  assert.match(no.text, /contest: 8 vs 9 · fail$/);
 });
 test('callouts: Read when it passes, Resisted when it fails', () => {
   assert.deepEqual(calloutForEvent({ type: 'contestPassed', targetId: 'e1' }), { kind: 'contestPassed', targetId: 'e1' });
@@ -136,19 +139,9 @@ test('on the default (Current) bundle Read Intent keeps the Accuracy roll and ne
   assert.ok((combat.rng.getCounters().combatAvoidance || 0) > 0, 'Accuracy drew on combatAvoidance');
 });
 
-// ---- both badges (solo and co-op) share rangeHitLabel ---------------------------------------------------------------
+// ---- the range badge reads DC for a contest preview ---------------------------------------------------------------
 import { rangeHitLabel } from '../src/ui/models/CombatRangeActionModel.js';
-import { coopCardHitPreview } from '../src/ui/models/CoopHitPreviewModel.js';
 test('rangeHitLabel shows DC N for a contest preview, never a percentage', () => {
   assert.equal(rangeHitLabel({ hitChance: 100, inRange: true, contest: { dc: 9 } }), 'DC 9');
   assert.equal(rangeHitLabel({ hitChance: 100, inRange: true }), '100%');
-});
-test('the co-op preview of a contest card under Core 2 carries the contest, so co-op badges read DC', () => {
-  const scene = { combatExpansionVersion: 2, gameProfile: { modules: { effects: { fixCoreVersion: 1 } } }, enemies: [] };
-  const actor = { id: 'seatA', kind: 'player', attributes: { intelligence: 1, wisdom: 1 }, level: 1 };
-  const enemy = { id: 'e1', kind: 'enemy', hp: 10, level: 1, attributes: { wisdom: 0 }, persistentPoise: { max: 5, value: 5 } };
-  const card = { id: 'base.reveal-opponent-hand', contest: 'mental', effects: [{ op: 'revealIntent', target: 'enemy', amount: 1 }] };
-  const preview = coopCardHitPreview(scene, reg, actor, enemy, card, { selected: false });
-  if (preview?.contest) assert.equal(rangeHitLabel(preview), `DC ${preview.contest.dc}`);
-  else assert.fail('co-op preview lost the contest: ' + JSON.stringify(preview));
 });

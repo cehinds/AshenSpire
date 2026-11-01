@@ -1,15 +1,12 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardPlayCosts, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard as playCoopCard, endTurn as endCoopTurn } from '../src/engine/coopCombat.js';
-import { applyStatus } from '../src/engine/statuses.js';
 import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { live, registries, baseRegistries, profile } from './helpers/fixcore-combat-rules.mjs';
+import { live, registries, baseRegistries } from './helpers/fixcore-combat-rules.mjs';
 
 test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   const ctx = live(), enemy = ctx.enemies[0];
@@ -96,18 +93,3 @@ test('an actual enemy-turn matching Counter remains affordable and pays the disc
   assert.ok(!result.events.some(row => row.type === 'staminaSpent' && row.amount > 0));
 });
 
-test('co-op pays authored own-turn SP and expires only the acting owner Precision', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10,
-    maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1,
-    deck: [{ cardId: 'core.counter', instanceId: `${id}-counter` }] });
-  const ctx = createCoopCombat({ registries, rng: createRng(511), gameProfile: profile, combatExpansionVersion: 2,
-    players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] });
-  const a = ctx.players.get('a').entity, b = ctx.players.get('b').entity;
-  a.stamina = 1; b.stamina = 1;
-  playCoopCard(ctx, 'a', 'a-counter', 'a');
-  assert.equal(a.stamina, 0);
-  applyStatus(ctx, b, 'precision', 3, b);
-  endCoopTurn(ctx, 'a');
-  assert.equal(a.statuses.precision, undefined);
-  assert.equal(b.statuses.precision.stacks, 3);
-});

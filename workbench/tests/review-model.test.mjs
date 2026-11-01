@@ -20,7 +20,7 @@ const grey = (n, v = 10) => Array.from({ length: n }, () => [v, v, v, 255]);
 test('the screen list is the ?shot= table of tools/screenshot.mjs, name for name and query for query', () => {
   const src = fs.readFileSync(path.join(ROOT, 'tools/screenshot.mjs'), 'utf8');
   const table = [...src.matchAll(/\{ name: '([^']+)', query: '([^']+)'/g)].map((m) => [m[1], m[2]]);
-  assert.ok(table.length >= 20, 'the SHOTS table is found');
+  assert.ok(table.length >= 15, 'the SHOTS table is found');
   assert.deepEqual(SCREENS.map((s) => [s.id, s.query]), table);
 });
 

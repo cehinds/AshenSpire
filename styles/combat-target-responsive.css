@@ -44,7 +44,7 @@
 :root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
 /* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
    with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
-   Solo (target HUD) and co-op share one size so neither role drifts. */
+   Every role (target HUD included) shares one size so none drifts. */
 :root .combat { --intent-content-scale: .8; --intent-value-size: calc(22px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 /* Owner (2026-10-26): desktop and widescreen read smaller than the phone. */
 :root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat { --intent-value-size: calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); }
@@ -178,7 +178,7 @@
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.6; }
-  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision) .combat-health-badge-value {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
     width: calc(9px / var(--ui-zoom,1)); height: calc(9px / var(--ui-zoom,1)); font-size: calc(9px / var(--ui-zoom,1));
   }
 }
@@ -203,4 +203,29 @@
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(12px / var(--ui-zoom,1)); }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.25; }
+}
+
+/* Counter / Reflect stack badges (owner 2026-10-31): with up to five badges (shield, precision, counter, reflect, poise) the row
+   wraps instead of overlapping; the HP trough takes the remaining width of its own line. Badge sizes are untouched. */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
+  flex-wrap: wrap; row-gap: calc(2px / var(--ui-zoom, 1)); column-gap: calc(3px / var(--ui-zoom, 1));
+}
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) > .combat-health-meter {
+  flex: 1 1 calc(72px / var(--ui-zoom, 1)); order: 1;
+}
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) > .combat-health-badge {
+  order: 0; flex: 0 0 calc(22px / var(--ui-zoom, 1)); min-width: calc(22px / var(--ui-zoom, 1));
+}
+
+/* Stance badge: same plate as the others, tinted by maneuver. */
+:root .combat .combat-health-stance { color: white; }
+:root .combat .combat-health-stance[data-stance='attack'], :root .combat .combat-health-stance[data-stance='smash'], :root .combat .combat-health-stance[data-stance='sweep'] { color: salmon; }
+:root .combat .combat-health-stance[data-stance='counter'] { color: var(--gold, goldenrod); }
+:root .combat .combat-health-stance[data-stance='defend'] { color: var(--block-silver, silver); }
+:root .combat .combat-health-stance[data-stance='evade'] { color: mediumseagreen; }
+:root .combat .combat-health-stance[data-stance='casting'], :root .combat .combat-health-stance[data-stance='prepared'] { color: mediumpurple; }
+
+/* A wrapped badge row sizes to its children so nothing below overlaps it (the fixed desktop row heights above are minimums here). */
+:root .combat.combat.combat[data-layout='formation'] .combatant :is(.target-hud-overhead-meters, .combatant-mini-hud, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
+  height: auto !important;
 }

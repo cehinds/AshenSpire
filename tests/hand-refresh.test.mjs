@@ -1,12 +1,9 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, endTurn } from '../src/engine/coopCombat.js';
-import { createRunState } from '../src/model/state.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { handStatRows } from '../src/model/statRows.js';
 import { resolveHandRules, handDrawCount, handRulesProblems } from '../src/model/handRules.js';
@@ -138,39 +135,3 @@ test('an exhausted draw supply deals only available cards without duplicating Re
   assert.equal(c.piles.draw.length, 0);
 });
 
-test('each co-op seat refreshes its own cards and respects the 15-card cap', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const players = ['reaver','herald'].map((classId, i) => {
-    const run = createRunState({ seed: 5, classId, registries });
-    return { ...run, id: `p${i}`, classId, hp: 10000, maxHp: 10000,
-      deck: Array.from({ length: 25 }, (_, n) => card(`p${i}c${n}`)), relicIds: [], flasks: [] };
-  });
-  const c = createCoopCombat({ registries, rng: createRng(5), players, enemyIds: ['wanderingSoldier'] });
-  for (const [id, p] of c.players) {
-    p.piles.draw.push(...p.piles.hand);
-    const retained = id === 'p0' ? 2 : p.handMax + 1;
-    p.piles.hand = [...Array.from({ length: retained }, (_, i) => card(`${id}r${i}`, 'urgentHeal')), card(`${id}ordinary`)];
-  }
-  const cap = c.players.get('p1').handMax;
-  endTurn(c, 'p0');
-  endTurn(c, 'p1');
-  for (const [id, p] of c.players) {
-    assert.equal(p.piles.hand.length, id === 'p0' ? 6 : cap);
-    assert.equal(p.piles.discard.length, id === 'p0' ? 0 : 1);
-    if (id === 'p1') assert.deepEqual(ids(p.piles.discard), [`p1r${cap}`]);
-    assert(ids(Object.values(p.piles).flat()).every(cid => cid.startsWith(id)), 'no cross-seat cards');
-  }
-});
-
-test('a co-op seat with a dry draw pile recycles its own discard at turn end', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const run = createRunState({ seed: 5, classId: 'reaver', registries });
-  const c = createCoopCombat({ registries, rng: createRng(5), players: [{ ...run, id: 'p0', classId: 'reaver', hp: 10000, maxHp: 10000,
-    deck: Array.from({ length: 25 }, (_, n) => card(`p0c${n}`)), relicIds: [], flasks: [] }], enemyIds: ['wanderingSoldier'] });
-  const p = c.players.get('p0');
-  p.piles.draw = [];
-  p.piles.hand = Array.from({ length: 4 }, (_, i) => card(`p0h${i}`));
-  p.piles.discard = Array.from({ length: 9 }, (_, i) => card(`p0d${i}`));
-  endTurn(c, 'p0');
-  assert.equal(p.piles.discard.length, 0, 'the seat discard joined the refresh');
-  assert.equal(p.piles.draw.length + p.piles.hand.length, 13);
-  assert(ids(Object.values(p.piles).flat()).every(cid => cid.startsWith('p0')), 'no cross-seat cards');
-});

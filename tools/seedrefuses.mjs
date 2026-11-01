@@ -51,12 +51,8 @@
 // exit codes and failing-line counts.
 //
 // BOUNDARY, and it is the honest one. Linux headless Chromium, two shapes.
-// This is a claim about THREE screens — customize, Custom Climb, the co-op
-// lobby — and nothing at all about any other. The lobby is reached by lighting
-// a real fire on this machine (`serve({ lan: true })`), so the lobby rows are a
-// LOCALHOST host-side claim: no second launcher, no guest, no wire between two
-// machines. The wire boundary itself (tools/lan.mjs's `seed` message) is not
-// tested here — it is a node-side path and has no pixels.
+// This is a claim about TWO screens — customize and Custom Climb — and nothing
+// at all about any other.
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
@@ -113,9 +109,7 @@ async function main() {
   if (MUTATE && !MUTATIONS.includes(MUTATE)) {
     console.error(`seedrefuses: --mutate ${MUTATE} is not one of ${MUTATIONS.join(', ')}`); process.exit(2);
   }
-  // `lan: true` so the co-op lobby is reachable — it is the third seed field
-  // and the only one whose value crosses a wire.
-  const s = await serve({ root: ROOT, port: 8641, open: false, lan: true });
+  const s = await serve({ root: ROOT, port: 8641, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`seedrefuses — ${base}${MUTATE ? `  [KNOWN-BAD ARMED: ${MUTATE}]` : ''}`);
   console.log(`  one home: SEED_MAX_LEN = ${SEED_MAX_LEN} (src/engine/rng.js)`);
@@ -231,32 +225,6 @@ async function main() {
       ok(true, `${label}: and the run starts`);
     }
 
-    // ---- screen 3 · the co-op lobby (the field that crosses a wire) ----
-    await cdp.send('Page.navigate', { url: base }, S);
-    await until(`!!document.querySelector('#lan-play')`, 'title (lobby)');
-    await until(`!document.querySelector('#lan-play').hidden`, 'lan button un-hidden');
-    await click('#lan-play');
-    await until(`!!document.querySelector('#lb-host')`, 'lobby browse');
-    await click('#lb-host');
-    await until(`!!document.querySelector('#lb-seed')`, 'lobby room', 25000);
-    await wait(250);
-    console.log('\n    — co-op lobby (host side, this machine)');
-    const lobbyClean = await readState('#lb-seed', '#lb-start');
-    ok(lobbyClean.maxLength === SEED_MAX_LEN, `lobby: the field's length bound is the one home's (${lobbyClean.maxLength})`);
-    await type('#lb-seed', BAD);
-    await wait(150);
-    await mutate('#lb-seed', '#lb-start');
-    const lobbyBad = await readState('#lb-seed', '#lb-start');
-    ok(lobbyBad.noteShown && !!lobbyBad.note && lobbyBad.note.includes(BAD_CHAR),
-      `lobby: "${BAD}" renders a refusal naming the character`);
-    ok(lobbyBad.invalid === 'true', 'lobby: the input is marked aria-invalid');
-    ok(!!lobbyBad.refusal && lobbyBad.note === lobbyBad.refusal,
-      'lobby: the field and BEGIN THE CLIMB say ONE sentence');
-    await type('#lb-seed', GOOD);
-    await wait(150);
-    const lobbyGood = await readState('#lb-seed', '#lb-start');
-    ok(!lobbyGood.noteShown && !lobbyGood.refusal, 'lobby: a good seed lets go');
-
     // ---- the promise, end to end -------------------------------------------
     // Six boots of one URL. This is the exact sentence the tooltip makes, and
     // the exact shape the defect took.
@@ -300,8 +268,8 @@ async function main() {
 
   console.log(`\n  ${checks} checks over ${ran} shape(s)`);
   console.log(`  ${fails ? `FAIL — ${fails} finding(s)` : 'PASS — every seed field refuses what it cannot reproduce, says why where it was typed, and lets go'}`);
-  console.log('  boundary: three screens, this machine, headless Linux. Silent on every other screen,'
-    + '\n            on Windows, on a real two-machine wire, and on tools/lan.mjs (no pixels).');
+  console.log('  boundary: two screens, this machine, headless Linux. Silent on every other screen'
+    + '\n            and on Windows.');
   cdp.close(); await dropBrowser(); s.server.close();
   process.exit(fails ? 1 : 0);
 }

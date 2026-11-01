@@ -161,7 +161,7 @@ export they compile to: `heraldCards.json`, `reaverCards.json`, `rogueCards.json
 `armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`. `tools/content-build.mjs` compiles each
 to `src/content/generated/cards/<name>.js`, and the old `src/content/cards/{herald,reaver,starseer,armaments,
 colorless,corrupted}.js` are shims that re-export it (the pools were unfrozen before and still are).
-`coop.js` stays JS: it holds builder functions, which JSON cannot carry. `rogue.js` is now a shim too; its shared helpers (`one`, `PREPARED`, `TARGET_*`, `prepare()`, `spendPrepared()`) are written out inline in every row that used them. These are the design
+`coop.js` is retained as inert data (the retired co-op cards). `rogue.js` is now a shim too; its shared helpers (`one`, `PREPARED`, `TARGET_*`, `prepare()`, `spendPrepared()`) are written out inline in every row that used them. These are the design
 notes that lived as comments in the old JS files (JSON has no comments); keep a note under the card id when
 you change one. The shared constants the old files declared (`one = { f: 'add', args: [1] }`, and in the
 Starseer file `CHARGED` and `GAIN_CHARGE`) are written out inline in every row that used them; the values are
@@ -910,7 +910,7 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     src/content/derivedStats.js — shipping authority for derived-stat rules.
 
     The content registry validates this table, and run creation snapshots its
-    resolved rules so saves, sessions, and co-op keep the same derived values.
+    resolved rules so saves and sessions keep the same derived values.
 
     RULESET 6 — ONE FORMAT FOR EVERY STAT AND RESOURCE (owner, 2026-09-21).
 
@@ -1000,7 +1000,7 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     ---- D26: how each row READS, authored beside the row it describes -------
 
     WHY IT IS A SIBLING OF `rules` AND NOT A FIELD ON EACH RULE. A rule row is
-    SNAPSHOTTED into every save and every co-op handshake (createDerivedStat-
+    SNAPSHOTTED into every save (createDerivedStat-
     RuleSnapshot): putting a label and a sentence in there would write prose
     into save bytes and make a copy-edit a save-compatibility question. So
     presentation sits outside the snapshot and inside the same FILE — one
@@ -1562,7 +1562,7 @@ _No comments were written beside these numbers in the old balance.js._
   
   Enemy bounds and act/floor target bands are authored by #238. The pure
   resolver in model/levels.js accepts those rows without activating them in
-  encounter creation, saves, co-op, or the UI.
+  encounter creation, saves, or the UI.
 - **`levels.enemyScaling`** — Inert #238 content. The pure level planner consumes these coefficients
   only when a later activation story supplies a resolved enemy level.
   Every row states its rounding and hard result caps; hits, statuses,
@@ -1603,13 +1603,6 @@ _No comments were written beside these numbers in the old balance.js._
   and belongs beside `typeWeights`, per act. A flat global here could not vary
   per act while the map it describes does, and nothing said so.
   M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
-
-### balanceCoop.json — coop
-
-- **`coop`** — ---- Forsaken Together (co-op) ------------------------------------------
-- **`coop.headcountHpFactor`** — enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
-- **`coop.mendHealPct`** — Mend at a shrine heals an ally this % of their max HP
-- **`coop.reviveHp`** — downed-but-not-dead members revive next floor at this HP (StS2)
 
 ### balanceEndless.json — endless
 
@@ -2020,7 +2013,7 @@ _No comments were written beside these numbers in the old balance.js._
   The shared solo HUD uses this share of the room left after its action
   cells. The old 40vw cap typed a viewport answer before those controls
   had taken their space; 82% keeps a deliberate gutter without making a
-  second breakpoint. Co-op still consumes maxViewportPct below.
+  second breakpoint.
 - **`ui.hudPresentation`** — Shared HUD presentation tokens. These are screen-pixel intentions;
   main.js projects them through --ui-zoom so Map and Combat consume the
   same answer. Component backgrounds are transparent by current design,

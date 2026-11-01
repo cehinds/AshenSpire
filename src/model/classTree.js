@@ -87,7 +87,7 @@ export function pickInitialClassTreeNode(registries, run, nodeId) {
 /**
  * awardClassXp(registries, run, { victory, pool }) → the award, or null: the
  * class track's pay for a fight, made by the RUN'S OWNER (main.js,
- * tools/runsim.mjs, tools/session.mjs), who knows the door's pool — the
+ * tools/runsim.mjs), who knows the door's pool — the
  * combat does not. A lost fight pays nothing; a boss pays `bossKill` on top
  * of `perWin`.
  */

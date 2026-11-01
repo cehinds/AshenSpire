@@ -12,6 +12,9 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
+import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
+import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -231,11 +234,22 @@ export function critChance(rules, attributes, tags) {
 // The roll: only the player's attacks, only with a crit rule that matches, on
 // the combatProcs stream (nothing is drawn without a rule, so a run with no
 // such feat draws exactly what it always drew).
-export function rollCrit(ctx, source, tags) {
+// The roll is logged as critRolled (owner, 2026-10-31): `roll` and `chance` are percentages, the crit lands when roll < chance.
+// `info` ({ targetId, cardId }) only labels the event; it never changes the draw.
+export function rollCrit(ctx, source, tags, info = {}) {
   if (!source || source.kind !== 'player' || !Array.isArray(source.critRules) || !source.critRules.length) return 0;
   const { chance, multiplier } = critChance(source.critRules, ctx.attributes, tags);
   if (!(chance > 0) || !(multiplier > 1)) return 0;
-  return ctx.rng.float('combatProcs') < chance ? multiplier : 0;
+  const draw = ctx.rng.float('combatProcs');
+  const success = draw < chance;
+  // Shown to 0.01, rounded so the displayed comparison agrees with the verdict: on a crit the roll rounds down and the
+  // chance up, on a miss the roll rounds up and the chance down (a draw of 0.149996 against 0.15 reads 14.99 vs 15).
+  const shown = (value, up) => (up ? Math.ceil(value * 1e4 - 1e-9) : Math.floor(value * 1e4 + 1e-9)) / 100;
+  ctx.emit?.('critRolled', { sourceId: source.id, targetId: info.targetId, cardId: info.cardId,
+    // Seats like critHit: all player entities share 'player', so a co-op log names the roller by seat.
+    ...(info.target ? critSeats(ctx, source, info.target) : ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}), roll: shown(draw, !success),
+    chance: shown(chance, success), multiplier, success });
+  return success ? multiplier : 0;
 }
 
 /**
@@ -359,9 +373,27 @@ export function drainFixCorePoise(ctx, source, target, amount) {
   return spent;
 }
 
+// Owner, 2026-10-31 (SPEC 5.3): the non-damage weakness effects of a landed hit. `damage` was in the receipt; here the hit also
+// costs the weak enemy Mana or Stamina, or may stagger it (one stagger per target per round, as every other source).
+function applyWeaknessEffects(ctx, source, target, receipt) {
+  if (!weaknessesActive(ctx) || receipt.evaded || target.kind !== 'enemy' || !receipt.weaknesses?.length) return;
+  const tell = row => ctx.emit('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: row.to, effect: row.effect, amount: row.amount, ...seatOf(ctx, target) });
+  for (const row of receipt.weaknesses) {
+    if (!target.alive) break;
+    if (row.effect === 'damage') { if (receipt.amount > 0) tell(row); }
+    else if (row.effect === WEAKNESS_MANA) {
+      const lost = Math.min(Math.max(0, target.mana || 0), row.amount);
+      if (lost > 0) { target.mana -= lost; ctx.emit('manaLost', { targetId: target.id, amount: lost, source: 'weakness' }); tell(row); }
+    } else if (row.effect === WEAKNESS_STAMINA) {
+      target.pendingStaminaLoss = (target.pendingStaminaLoss || 0) + row.amount; tell(row);
+    } else if (row.effect === 'stagger' && ctx.rng.chance('combatProcs', row.amount) && claimStagger(ctx, target) && staggerEnemy(ctx, target, { cause: 'weakness' })) tell(row);
+  }
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
-  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
+  // A reflected hit is sent back, not thrown: it needs no hit roll (SPEC §17, Reflect).
+  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && !carrier?.reflectedHit && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
   // Automatic returns share the owner-cycle limit. A newly paid per-contact
@@ -406,7 +438,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
     poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
-    advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
+    advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
@@ -417,8 +449,29 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
+  applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
+  if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
   return receipt.amount;
+}
+
+// Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
+// same damage type and costs the reflector one stack. The return is flagged so it can neither reflect nor counter again.
+function reflectBack(ctx, source, target, carrier, reflect) {
+  // The holder's own survival is irrelevant: a landed eligible hit always spends the stack and sends its share back (SPEC §17).
+  if (!source?.alive || source === target) return;
+  const amount = reflectReturned(reflect.original, reflect.stacks);
+  const left = (spendReflectStacks(ctx, target, 1), target.reflectStacks || 0);
+  ctx.emit('reflectTriggered', { sourceId: target.id, targetId: source.id, amount, stacks: reflect.stacks, stacksLeft: left, original: reflect.original,
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(target) } : {}) });
+  if (amount <= 0) return;
+  const profile = { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true };
+  applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [],
+    // The incoming hit's damage-routing overrides ride along so the return keeps its physical/magical split (SPEC §17).
+    ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}),
+    ...(carrier?.physicalDamageType ? { physicalDamageType: carrier.physicalDamageType } : {}),
+    ...(carrier?.attack ? { attack: carrier.attack } : {}) });
 }
 
 /**
@@ -1587,7 +1640,25 @@ function plannedStatusTargets(ctx, action, eff) {
     && !action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
 }
 
+// Counter and Reflect stacks (owner 2026-10-31, SPEC §17) are host ops outside the portable opcode catalogue
+// (engine/runtime/ops.json), so they dispatch here, not through runOpcode's switch. Returns true when it handled eff.op.
+function runGuardStackOpcode(ctx, action, eff) {
+  if (eff.op === 'gainCounterStacks') {
+    if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
+    // A Counter card adds the Block it stands behind, after its own Block grant.
+    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
+    return true;
+  }
+  if (eff.op === 'applyReflect') {
+    if (!fixCoreEnabled(ctx)) return true;
+    for (const t of resolveTargets(ctx, action, eff.target)) gainReflectStacks(ctx, t, evalNum(ctx, action, eff.amount, 1, t));
+    return true;
+  }
+  return false;
+}
+
 function runOpcode(ctx, action, eff) {
+  if (runGuardStackOpcode(ctx, action, eff)) return;
   if(eff.op==='addCinders' && ctx.player && !ctx.run) {
     const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;if(ctx.playerKey){ctx.proposalRewards.byPlayer ||= {};ctx.proposalRewards.byPlayer[ctx.playerKey]=(ctx.proposalRewards.byPlayer[ctx.playerKey] || 0)+amount;}ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
   }
@@ -1672,7 +1743,7 @@ function runOpcode(ctx, action, eff) {
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
           // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
-          const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags);
+          const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags, { targetId: t.id, target: t, cardId: carrier?.cardId });
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
@@ -1746,7 +1817,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'buildup': {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure' }).success) continue;
+        if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure', event: { status: eff.status, targetId: t.id, sourceId: action.source?.id } }).success) continue;
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
           { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;
@@ -1958,7 +2029,11 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
         // record can attribute the loss — display + instruments read it.
-        const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        let amount = Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+        // Enemy weaknesses (SPEC 5.3): a burn or venom tick (its stacks formula) and a bleed or frost burst (its proc cause) hit a weak enemy harder.
+        const tickStatus = eff.amount?.f === 'stacks' ? eff.amount.status : String(eff.cause || '').startsWith('proc:') ? eff.cause.slice(5) : null;
+        const tickMultiplier = tickStatus && amount > 0 ? weaknessTickMultiplier(ctx, t, tickStatus) : 1;
+        if (tickMultiplier !== 1) { amount = Math.floor(amount * tickMultiplier); ctx.emit('weaknessTriggered', { targetId: t.id, to: tickStatus, effect: 'tick', amount: Math.round((tickMultiplier - 1) * 100) }); }
         if (eff.nonlethal && amount >= t.hp) throw new Error('Not enough HP for a nonlethal offering');
         applyLoseHp(ctx, t, amount, eff.cause || 'effect', action.meta?.killReceipt || { targetStatusesBefore: structuredClone(t.statuses || {}), sourceId: action.source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}) });
         if (eff.offering && amount > 0) {

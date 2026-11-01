@@ -143,7 +143,6 @@ test('panning does not re-frame the painting: the cache key and frame ignore the
   assert.notEqual(wider, keyAt(217, false).key);
 });
 
-test('solo and co-op hand the act its seatOrder (the biome framing wiring)', () => {
+test('the map hands the act its seatOrder (the biome framing wiring)', () => {
   assert.match(readFileSync(new URL('../src/ui/screens/map.js', import.meta.url), 'utf8'), /act: \{[^\n]*seatOrder: run\.seatOrder/);
-  assert.match(readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8'), /seatOrder: snap\.seatOrder/);
 });
