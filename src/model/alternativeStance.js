@@ -60,6 +60,15 @@ export function stanceForPublicIntent(intent = {}) {
 }
 
 /** Each seat keeps its last confirmed card until its next confirmed card (only combatStarted clears). Failed/preparing plays do nothing. */
+/**
+ * Whether the engine still holds a chosen stance for this entity. A Staggered stance is forced and temporary,
+ * and ends when its owner's next turn begins, leaving none. The figure's held-card ledgers must not outlive the real stance.
+ */
+export function holdsChosenStance(entity) {
+  const maneuver = entity?.combatStance?.maneuver;
+  return !!maneuver && maneuver !== 'staggered' && maneuver !== 'neutral';
+}
+
 export function createStanceLedger(classify = stanceForCard) {
   const actors = new Map();
   return Object.freeze({
