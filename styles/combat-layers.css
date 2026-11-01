@@ -81,6 +81,9 @@
 :root .combat[data-layout='formation'] .combatant .combatant-leading {
   z-index: calc(var(--combat-layer-selection) + 3) !important;
 }
+:root .combat[data-layout='formation'] :is(.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls) {
+  z-index: calc(var(--combat-layer-selection) + 4) !important;
+}
 :root .combat[data-layout='formation'] .hand-overlay,
 :root .combat[data-layout='formation'] > .hand-area > .hand { z-index: var(--combat-layer-cards); }
 :root .combat[data-layout='formation'] > .combat-hud,
