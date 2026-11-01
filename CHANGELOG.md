@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Co-op (LAN multiplayer) is gone** ([#2441](https://github.com/cehinds/AshenSpire/pull/2441), `0.7.2.79`). The lobby, seats, LAN session tools, co-op screens, rules and docs are removed; solo play is unchanged, and a run saved while co-op existed still loads as a solo run.
 - **Release numbering is written down: a release bumps the third number and restarts the build count at 0** ([#2439](https://github.com/cehinds/AshenSpire/pull/2439), `0.7.2.79`). The release after 0.7.2 is 0.7.3.0, and builds count up from there.
 - **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.77`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields, and weapons, shields and other main objects carry a fine warm gold outline. Status effects now layer over the weapon and shield, with slightly stronger marks and glows; the physical Sweep trail follows its scythe blade.
 
