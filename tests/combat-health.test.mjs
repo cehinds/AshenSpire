@@ -96,3 +96,11 @@ test('a Ward badge keeps its Barrier provenance when it is shown', () => {
   const ward = combatHealthModel({ ward: 12, barrier: 4 }).badges.find(b => b.kind === 'ward');
   assert.equal(ward.barrier, 4);
 });
+
+test('a shown Ward badge renders its Barrier rim and data-barrier', () => withKitDom(() => {
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { ward: 12, barrier: 4 }, { tooltips: false });
+  const ward = row.querySelector('.combat-health-badge[data-defense-kind="ward"]');
+  assert.ok(ward, 'the Ward badge is drawn');
+  assert.equal(ward.dataset.barrier, '4');
+  assert.ok(ward.classList.contains('combat-health-ward-barrier'));
+}));
