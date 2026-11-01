@@ -31,3 +31,49 @@ test('a chip is a labelled square icon with the badge tooltip attached', () => {
     assert.equal(weaknessChipText({ to: 'burn', effect: 'tick' }).full, 'Weak to Burn: ticks harder');
   });
 });
+
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { discoveredWeaknesses, recordWeaknessDiscoveries, weaknessDiscoveryProblems } from '../src/model/weaknessDiscovery.js';
+
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const newRun = () => createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+const fight = (run, enemyIds = ['wanderingSoldier']) => createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds });
+const shown = (run, enemy) => discoveredWeaknesses(enemy.weaknesses, run.weaknessDiscovery, enemy.enemyId);
+
+test('an undiscovered weakness shows nothing; a weaknessTriggered event reveals it, with the right icon and tooltip text', () => {
+  withKitDom(() => {
+    const run = newRun(), combat = fight(run), enemy = combat.enemies[0];
+    const [authored] = enemy.weaknesses;
+    assert.deepEqual(shown(run, enemy), [], 'nothing before discovery');
+    assert.deepEqual(weaknessChips(shown(run, enemy)), []);
+    run.weaknessDiscovery ||= {};
+    combat.emit('weaknessTriggered', { sourceId: 'player', targetId: enemy.id, to: authored.to, effect: authored.effect, amount: authored.amount });
+    assert.equal(recordWeaknessDiscoveries(run.weaknessDiscovery, combat.eventLog, combat.enemies), true);
+    assert.equal(recordWeaknessDiscoveries(run.weaknessDiscovery, combat.eventLog, combat.enemies), false, 'idempotent');
+    const chips = weaknessChips(shown(run, enemy));
+    assert.equal(chips.length, 1, 'only the triggered weakness');
+    assert.equal(chips[0].dataset.weakness, authored.to);
+    assert.equal(chips[0].getAttribute('aria-label'), weaknessChipText(authored).full);
+    assert.match(chips[0].getAttribute('aria-label'), /^Weak to \w+: /);
+  });
+});
+
+test('a discovery holds for every enemy of that type, on later fights, and through save and load', () => {
+  const run = newRun(), first = fight(run).enemies[0];
+  run.weaknessDiscovery = {};
+  recordWeaknessDiscoveries(run.weaknessDiscovery, [{ type: 'weaknessTriggered', targetId: first.id, to: first.weaknesses[0].to, effect: first.weaknesses[0].effect }], [first]);
+  const next = fight(run, ['wanderingSoldier', 'wanderingSoldier']);
+  for (const enemy of next.enemies) assert.equal(shown(run, enemy).length, 1, 'same type, later fight');
+  const loaded = deserializeRun(serializeRun(run));
+  assert.deepEqual(loaded.weaknessDiscovery, run.weaknessDiscovery, 'save and load keep it');
+  assert.equal(shown(loaded, next.enemies[0]).length, 1);
+  const other = fight(run, ['lanternMoth']).enemies[0];
+  assert.deepEqual(shown(run, other), [], 'another enemy type learns nothing');
+  assert.deepEqual(weaknessDiscoveryProblems({ wanderingSoldier: ['blunt:damage'] }), []);
+  assert.ok(weaknessDiscoveryProblems({ wanderingSoldier: 'blunt' }).length);
+});
