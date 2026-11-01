@@ -244,7 +244,6 @@ COMMANDS.regen = async (args) => {
 
 // ---- restamp ----
 
-const STAMP_RE = /`\d+\.\d+\.\d+\.\d+`/;
 const DATE_HEADING = /^## \d{4}-\d{2}-\d{2}\b/;
 
 // Pure. Sets the first receipt under the newest date heading that names PR #pr to
@@ -284,9 +283,12 @@ export function restampChangelog(text, { pr, build }) {
     rest = [...rest.slice(0, idx), ...rest.slice(idx + 1)];
     at = kept.findIndex(l => /^- /.test(l) && named.test(l));
   }
-  if (!STAMP_RE.test(kept[at])) throw new Error(`the receipt for PR #${pr} carries no \`<release>.<ordinal>\` stamp to replace`);
+  // The stamp is the field right after the PR link — `([#N](…/pull/N), \`X.Y.Z.W\`` — never a
+  // version that happens to appear in the receipt's own words.
+  const FIELD = new RegExp(`(\\(\\[#${pr}\\]\\([^)\\s]*/pull/${pr}\\), )\`(\\d+\\.\\d+\\.\\d+\\.\\d+)\``);
+  if (!FIELD.test(kept[at])) throw new Error(`the receipt for PR #${pr} carries no \`<release>.<ordinal>\` stamp to replace`);
   const before = kept[at];
-  const after = before.replace(STAMP_RE, `\`${build}\``);
+  const after = before.replace(FIELD, (_m, head) => `${head}\`${build}\``);
   // The receipt now carries the newest build, so it moves to the top of its date group
   // (as tools/pr-restamp.mjs does); the order check then validates it like any other.
   const first = kept.findIndex(l => /^- /.test(l));
@@ -294,7 +296,7 @@ export function restampChangelog(text, { pr, build }) {
   kept.splice(at, 1);
   kept.splice(first, 0, after);
   const out = [...lines.slice(0, start + 1), ...kept, ...rest].join('\n');
-  return { text: out, deduped, moved: moved || relocatedFrom !== null, relocatedFrom, restamped: after !== before, from: (before.match(STAMP_RE) || [''])[0].replace(/`/g, ''), to: build };
+  return { text: out, deduped, moved: moved || relocatedFrom !== null, relocatedFrom, restamped: after !== before, from: (FIELD.exec(before) || [])[2] || '', to: build };
 }
 
 export function currentBuild(root = ROOT) {
@@ -378,7 +380,8 @@ export function resolveChangelogConflict(text) {
     // A receipt's stable identity is its PR number, not its text: dev restamping a receipt
     // changes the line but not the PR, so ours' copy of a PR theirs already has is dropped.
     const prOf = (l) => (/^- \*\*.*?\(\[#(\d+)\]\(/.exec(l) || [])[1];
-    const unstamped = (l) => l.replace(/`\d+\.\d+\.\d+\.\d+`/, '`#`');
+    // Blank only the structured stamp field after the PR link, never a version in the prose.
+    const unstamped = (l) => l.replace(/(\(\[#\d+\]\([^)\s]*\/pull\/\d+\), )`\d+\.\d+\.\d+\.\d+`/, '$1`#`');
     const theirByPr = new Map(theirs.split('\n').filter(prOf).map(l => [prOf(l), l]));
     for (const line of ours.split('\n')) {
       if (!line.trim() || have.has(line) || /^## \d{4}-\d{2}-\d{2}\b/.test(line)) continue;

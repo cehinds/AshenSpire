@@ -232,6 +232,16 @@ test('restampChangelog matches the receipt\'s own PR field, not a prose mention 
   assert.ok(lines.some(l => l.includes('Follow-up') && l.includes('`0.7.2.80`')), '#2600 untouched');
 });
 
+test('restampChangelog rewrites the build field, not a version in the receipt\'s words (Codex repro)', () => {
+  const text = ['# Changelog', '', '## 2026-10-31', '',
+    '- **Fix `0.7.2.60` display** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.2.79`). Text.', ''].join('\n');
+  const r = restampChangelog(text, { pr: 2501, build: '0.7.2.80' });
+  const line = r.text.split('\n').find(l => l.includes('#2501'));
+  assert.ok(line.includes('**Fix `0.7.2.60` display**'), 'summary untouched');
+  assert.ok(line.includes('/pull/2501), `0.7.2.80`'), 'build field restamped');
+  assert.equal(r.from, '0.7.2.79');
+});
+
 test('restampChangelog refuses a PR with no receipt under the newest heading', () => {
   assert.throws(() => restampChangelog(CHANGELOG, { pr: 9999, build: '0.7.2.72' }), /names PR #9999/);
 });
