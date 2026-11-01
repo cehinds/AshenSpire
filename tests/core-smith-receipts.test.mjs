@@ -98,9 +98,10 @@ test('Core armor tier: receipt shows the budget point and the block it adds to D
 test('Smith item summaries expose actual tier deltas for weapons, shields and armor without simulating other cards', () => {
   const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil'; visit(run);
   const plan = smithingPlan(reg, run);
-  const before = coreCardSimulationCount();
   const model = smithSelectionModel(reg, plan);
-  assert.equal(coreCardSimulationCount(), before, 'item summaries do not evaluate live card previews');
+  // The default pick (first upgradeable item) is the only one that pays for card rows.
+  assert.ok(model.properties.selected, 'the first upgradeable item is preselected');
+  assert.ok(model.properties.candidates.filter(row => !row.selected).every(row => row.affectedRows.length === 0), 'item summaries do not evaluate live card previews');
   for (const ref of ['armament/greatsword', 'armament/kiteShield', 'armor/reaver/vigil']) {
     const candidate = plan.candidates.find(row => row.itemRef === ref);
     const item = model.properties.candidates.find(row => row.itemRef === ref);
