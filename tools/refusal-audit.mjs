@@ -219,7 +219,7 @@ async function main() {
   if (!browserPath) { console.error('refusal-audit: no chromium found — pass --browser PATH or set $CHROME'); process.exit(2); }
   if (!SHAPES.length) { console.error(`refusal-audit: --shape ${ONLY_SHAPE} matched no shape of ${[[390, 844], [1200, 730]].map((s) => s.join('x')).join(', ')}`); process.exit(2); }
 
-  const s = await serve({ root: ROOT, port: PORT, open: false, lan: false });
+  const s = await serve({ root: ROOT, port: PORT, open: false });
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
   const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({

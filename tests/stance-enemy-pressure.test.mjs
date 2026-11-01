@@ -1,11 +1,8 @@
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, endTurn } from '../src/engine/coopCombat.js';
 import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
 import { learnedEnemyMoveCards } from '../src/model/enemyKnowledgeView.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -71,8 +68,8 @@ test('enemy Smash fallback is configured, idempotent and excludes support-only c
   assert.equal(move.effects?.some(effect => effect.op === 'poiseDamage') || false, false, 'projection does not mutate authored content');
 });
 
-for (const coop of COOP_MODES) for (const die of [1, 20]) {
-  test(`${coop ? 'co-op' : 'solo'} charging Smash gates fallback Poise with its ${die === 1 ? 'miss' : 'hit'}`, () => {
+for (const die of [1, 20]) {
+  test(`solo charging Smash gates fallback Poise with its ${die === 1 ? 'miss' : 'hit'}`, () => {
     const move = { intent: 'attack', damage: 10, weight: 1,
       tags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'],
       delay: { turns: 1, whileCharging: { effects: [{ op: 'damage', target: 'player', amount: 2 }] } } };
@@ -85,9 +82,9 @@ for (const coop of COOP_MODES) for (const die of [1, 20]) {
       mana: 20, maxMana: 20, stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 0, deck: [], combatExpansionVersion: 2 };
     const options = { registries: reg, rng: createRng(811), combatExpansionVersion: 2,
       reactionRulesVersion: 1, enemyIds: ['fellWarden'] };
-    const combat = coop ? createCoopCombat({ ...options, players: [player] }) : createCombat({ ...options, player });
+    const combat = createCombat({ ...options, player });
     combat.stanceRules = { fallbackPoise: 7 };
-    const target = coop ? combat.players.get('p1').entity : combat.player;
+    const target = combat.player;
     target.statuses = {}; target.block = target.barrier = 0;
     target.evasion = 0; target.combatStance = { camp: 'physical', maneuver: 'attack', range: 'melee' };
     delete target.combatCounter;
@@ -96,9 +93,9 @@ for (const coop of COOP_MODES) for (const die of [1, 20]) {
     combat.enemies[0].plannedMoves = [];
     primeAccuracyRolls(combat, { die });
     const before = combat.eventLog.length;
-    if (coop) endTurn(combat, 'p1'); else dispatch(combat, { type: 'endTurn' });
+    dispatch(combat, { type: 'endTurn' });
     const events = combat.eventLog.slice(before);
-    const live = coop ? combat.players.get('p1').entity : combat.player;
+    const live = combat.player;
     assert.ok(combat.enemies[0].pendingMove, 'the real turn committed the charging stage');
     assert.equal(events.filter(event => ['attackHit', 'attackMissed'].includes(event.type)).length, 1, 'one decision gates the whole charging payload');
     assert.equal(live.poiseMeter.value, die === 1 ? 0 : 9, 'a hit applies 7 fallback plus 2 ordinary hit pressure; a miss applies neither');

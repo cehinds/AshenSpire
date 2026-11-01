@@ -1,23 +1,18 @@
 // tests/stat-rows.test.mjs — derived-stat ruleset 7: one row format, one table,
 // one formula for every stat (owner, 2026-09-24).
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { DERIVED_STAT_IDS, statRowValue, deriveStat, resolvedRuleRow } from '../src/model/derivedStats.js';
 import { attributeRatingReceipt } from '../src/model/ratingFormula.js';
 import { scaledCards } from '../src/model/handRules.js';
 import { validateContent } from '../src/model/validate.js';
-import {
-  LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, legacyRatingRow, migrateLegacyStatSettings,
-  statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes,
-} from '../src/model/statRows.js';
+import { LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, migrateLegacyStatSettings, statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes } from '../src/model/statRows.js';
 import { configuredContentBundle, normalizeAdvancedSettings, parseAdvancedConfigFile, hasLegacyAdvancedSettings } from '../src/model/advancedConfig.js';
 
 const ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
@@ -233,24 +228,6 @@ test('legacy settings keys convert on import and on load: ratings, multiplier, h
   const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { 'gameConfig.combatRatings.ratings.pr.intelligence': 1, 'gameConfig.balance.handMax': 6 } });
   const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], []);
   assert.equal(imported['gameConfig.derivedStatRules.rules.pr.intelligence'], 1);
-});
-
-test('co-op reads the same rows: each seat counts cards and ratings by its own run', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const seats = ['starseer', 'reaver'].map((classId, index) => {
-    const run = createRunState({ seed: 20 + index, classId, registries });
-    return { id: `p${index + 1}`, classId, maxHp: run.maxHp, hp: run.hp, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
-      attributes: run.attributes, derivedStatRuleSnapshot: run.derivedStatRuleSnapshot, deck: run.deck, relicIds: [], flasks: [], level: 1 };
-  });
-  const C = createCoopCombat({ registries, rng: createRng(9), players: seats, enemyIds: ['wanderingSoldier'] });
-  for (const seat of seats) {
-    const P = C.players.get(seat.id);
-    const own = (id) => statRowCount(statRow(registries, seat, id), seat.attributes);
-    assert.equal(P.handMax, own('handSize'), `${seat.classId} hand size`);
-    assert.equal(P.piles.hand.length, Math.min(own('openingHand'), own('handSize')), `${seat.classId} opening hand`);
-    assert.equal(P.entity.drawPerTurn, own('draw'), `${seat.classId} draw row`);
-    assert.deepEqual(P.ratingRows.ar, statRow(registries, seat, 'ar'));
-  }
 });
 
 test('a pre-ruleset-7 draw or poise row is read as what it meant then; a marked one as what it means now', () => {

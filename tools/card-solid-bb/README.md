@@ -4,7 +4,7 @@ Implementation notes for `feature/card-solid-bb`. The screenshots and `report.js
 that recorded the tested revision were removed from the tree on 2026-10-11; CI
 artifacts hold new runs.
 
-Run `node tools/serve.mjs --port 4397 --no-open --no-lan`, then open
+Run `node tools/serve.mjs --port 4397 --no-open`, then open
 `http://localhost:4397/tools/card-solid-bb/preview.html`.
 The preview uses the native renderer, canonical cards and pinned artwork.
 

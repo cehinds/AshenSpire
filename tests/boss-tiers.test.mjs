@@ -1,11 +1,9 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/boss-tiers.test.mjs — SPEC §13.3 balance.bossTiers: a boss is scaled
 // by the tier it is MET at, whichever seat holds it (#1284).
 //   node --test tests/boss-tiers.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRng } from '../src/engine/rng.js';
@@ -156,37 +154,6 @@ test('a randomized seat order scales each boss by the tier it is met at', () => 
     }
   }
   assert.ok(seen.size >= 4, `the draw covers several orders (${seen.size})`);
-});
-
-test('co-op: the scene projects a boss’s damageMult, so a client’s move cards show the scaled damage', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createSession } = await import('../tools/session.mjs');
-  // This historical boss-damage fixture starts after character setup.
-  const host = createSession({ registries: createRegistries(legacyContentBundle), seedString: 'BOSSTIER' });
-  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
-  host.start();
-  const graph = host.session.mapGraph;
-  const bossId = (graph.bossIds || [graph.bossId])[0];
-  host.session.reachableIds = [bossId];
-  assert.equal(host.chooseNode('p1', bossId).ok, true);
-  const snap = host.snapshot();
-  assert.equal(snap.scene.kind, 'combat');
-  const [projected] = snap.scene.enemies;
-  const encounter = REG.encounters.get(graph.nodes[bossId].encounterId);
-  const scale = bossTierScale(REG, { encounter, tier: host.contentAct() });
-  assert.ok(scale.damage !== 1, `this seed meets a scaled boss (${projected.enemyId} at tier ${host.contentAct()})`);
-  assert.equal(projected.damageMult, scale.damage, 'the projection carries the stamp');
-  const def = REG.enemies.get(projected.enemyId);
-  const cards = enemyMoveCards(def, { enemy: projected, registries: REG });
-  let checked = 0;
-  for (const [moveId, move] of Object.entries(def.moves)) {
-    if (move.damage == null) continue;
-    const card = cards.find((c) => c.moveId === moveId || c.id === moveId);
-    assert.ok(card, moveId);
-    assert.match(JSON.stringify(card), new RegExp(`\\b${enemyMoveDamage(projected, move)}\\b`), `${moveId}: the client card shows the scaled base`);
-    assert.notEqual(enemyMoveDamage(projected, move), move.damage, `${moveId}: scaled differs from authored`);
-    checked++;
-  }
-  assert.ok(checked >= 2);
 });
 
 test('the solo inspector reads skills and Previous actions through the scaled move damage', async () => {

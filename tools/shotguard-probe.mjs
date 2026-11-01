@@ -312,7 +312,7 @@ function check(name, ok, detail) {
   if (!ok) failures.push(name);
 }
 
-const { server, port } = await serve({ root: ROOT, port: 8127, open: false, lan: false });
+const { server, port } = await serve({ root: ROOT, port: 8127, open: false });
 
 // Port 0, not a hard-coded 9333. Two reasons, and the first is a flake I had not
 // noticed until the port timing made me look: a fixed port collides with anything

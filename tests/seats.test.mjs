@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/seats.test.mjs — SPEC §13 Seats: the falsifying commands, as a suite.
 //   node --test tests/seats.test.mjs
 import assert from 'node:assert/strict';
@@ -16,7 +15,6 @@ import { createRunState, validateRunShape, serializeRun, deserializeRun, RUN_SCH
 import { defaultSeatOrder, seatAtTier, seatTierHpMult, seatOrderProblems, encounterFitsSeat, finalTier } from '../src/model/seats.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { regionForRun, combatEnvironment } from '../src/model/environmentArt.js';
-import { createSession, restoreSession } from '../tools/session.mjs';
 import { createCombat } from '../src/engine/combat.js';
 import { actTitle } from '../src/ui/uiContent.js';
 
@@ -231,28 +229,6 @@ test('13.2 the act title names the tier and the seat; without a seat the authore
   assert.equal(actTitle(2, 'The Pale Marches'), 'ACT II — THE PALE MARCHES');
   assert.equal(actTitle(5, 'The Cinder Reach'), 'ACT II — THE CINDER REACH · CYCLE 2');
   assert.equal(actTitle(1), 'ACT I — THE FALLOW MARCHES');
-});
-
-test('13.4 a co-op session draws, carries and restores the party\'s order', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const host = createSession({ registries: REG, seedString: 'CAUSEWAY' });
-  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
-  host.start();
-  const saved = host.serialize();
-  assert.deepEqual([...saved.seatOrder].sort(), [...ORDER].sort());
-  assert.ok(saved.members.every((m) => JSON.stringify(m.run.seatOrder) === JSON.stringify(saved.seatOrder)));
-  const back = restoreSession(REG, structuredClone(saved));
-  assert.deepEqual(back.serialize().seatOrder, saved.seatOrder);
-  // Plan phase 3a: a member record is emitted as it is, not through
-  // serializeRun, so the session draws the projection itself — a stale one
-  // in the file is re-drawn on restore and again on the next serialize.
-  const stale = structuredClone(saved); stale.members[0].run.collection = []; stale.members[0].run.zones.passive = ['warhorn'];
-  const emitted = restoreSession(REG, stale).serialize().members[0].run;
-  assert.deepEqual(emitted.zones.passive, emitted.relics, 'the emitted passive zone is the member\'s relics');
-  assert.deepEqual(emitted.collection, emitted.deck, 'and the emitted collection is the member\'s deck');
-  assert.equal(emitted.reprojectedZones, undefined, 'no marker rides a member record');
-  const legacySave = structuredClone(saved); delete legacySave.seatOrder; legacySave.actNumber = 1;
-  legacySave.mapGraph = buildActMap(REG, createRng(9), ORDER[0], 1); legacySave.cursorId = null; legacySave.reachableIds = legacySave.mapGraph.startIds.slice();
-  assert.deepEqual(restoreSession(REG, legacySave).serialize().seatOrder, ORDER, 'a pre-seat party save climbs the default order');
 });
 
 test('seatOrderProblems names every defect', () => {

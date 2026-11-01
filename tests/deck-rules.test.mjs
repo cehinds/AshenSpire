@@ -6,7 +6,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { contentBundle } from '../src/content/index.js';
 import { deckRules as DECK_RULES } from '../src/content/deckRules.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -21,7 +20,6 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { drawCards } from '../src/engine/actions.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 
@@ -287,16 +285,6 @@ test('a saved fight keeps the rule it started with; a snapshot without it resume
   assert.equal(restoreCombatSnapshot({ registries: REG, rng: createRng(9), snapshot: older }).orderedDraw, null);
 });
 
-test('each co-op seat draws in its own owner\'s order', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const run = freshRun();
-  const C = createCoopCombat({ registries: REG, rng: createRng(11), enemyIds: [ENEMY],
-    players: [{ ...run, id: 'p1', classId: run.class, relicIds: run.relics, orderedDraw: true }] });
-  const seat = C.players.get('p1');
-  assert.ok(seat.orderedDraw);
-  const opened = [...seat.piles.hand, ...seat.piles.draw].map((c) => c.instanceId);
-  assert.deepEqual(opened, run.deck.map((c) => c.instanceId));
-});
-
 test(`the sideboard rides the save: a fresh run carries it, and schema 10 loads with an empty one (schema ${RUN_SCHEMA_VERSION})`, () => {
   assert.deepEqual(freshRun().sideboard, []);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
@@ -375,15 +363,6 @@ test('review fixes: a merchant-retired slot is reused, a malformed ordered snaps
   const saves = createSaveManager(storage);
   saves.saveRun(saved, createRng(1));
   assert.equal(createSaveManager(storage).loadRun(REG), null, 'a dangling sideboard card archives the save');
-});
-
-test('a LAN seat carries its owner\'s Play in deck order into the fight', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createSession } = await import('../tools/session.mjs');
-  const game = createSession({ registries: REG, seedString: 'ORDER' });
-  const m = game.addMember({ id: 'p1', name: 'Wren', classId: 'reaver', playInDeckOrder: true });
-  assert.equal(m.playInDeckOrder, true);
-  const restored = JSON.parse(JSON.stringify(game.serialize()));
-  assert.equal(restored.members[0].playInDeckOrder, true, 'the seat keeps it across a host save');
 });
 
 test('Settings paints the min-above-max refusal on both rows', async () => {

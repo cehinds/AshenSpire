@@ -56,20 +56,6 @@ jobs:
           tests/enemy-knowledge-integration.test.mjs tests/combat-reactions.test.mjs
           tests/combat-rounds-live.test.mjs
           tests/card-tag-explanation.test.mjs
-      - name: Read authored co-op test scope
-        id: coop
-        run: |
-          node --input-type=module <<'NODE'
-          import { appendFileSync } from 'node:fs';
-          import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './tests/feature-scopes.js';
-          appendFileSync(process.env.GITHUB_OUTPUT, `enabled=${COOP_TESTS_ENABLED}\n`);
-          if (!COOP_TESTS_ENABLED) console.log(`SKIP co-op preview: ${COOP_TEST_SKIP_REASON}`);
-          NODE
-      - name: Co-op hit preview (when enabled)
-        id: coopTests
-        if: steps.coop.outputs.enabled == 'true'
-        continue-on-error: true
-        run: node --test tests/coop-hit-preview.test.mjs
       - name: Export exact compact and inspection card text
         id: text
         continue-on-error: true
@@ -116,9 +102,7 @@ jobs:
         if: always()
         env:
           TEST_RESULT: ${{ steps.tests.outcome }}
-          COOP_SCOPE_RESULT: ${{ steps.coop.outcome }}
-          COOP_TEST_RESULT: ${{ steps.coopTests.outcome }}
           TEXT_RESULT: ${{ steps.text.outcome }}
           CAPTURE_RESULT: ${{ steps.capture.outcome }}
           STANCE_RESULT: ${{ steps.stance.outcome }}
-        run: test "$TEST_RESULT" = success && test "$COOP_SCOPE_RESULT" = success && { test "$COOP_TEST_RESULT" = skipped || test "$COOP_TEST_RESULT" = success; } && test "$TEXT_RESULT" = success && test "$CAPTURE_RESULT" = success && test "$STANCE_RESULT" = success
+        run: test "$TEST_RESULT" = success && test "$TEXT_RESULT" = success && test "$CAPTURE_RESULT" = success && test "$STANCE_RESULT" = success

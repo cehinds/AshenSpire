@@ -66,7 +66,6 @@ export const SCREENS = [
   // Review of #1463 (Codex): the Equipment stage paints its card-info button
   // in the top layer as popover="manual"; that is not a layer, so Back runs.
   { id: 'customize-info', shot: 'customize', open: ['#cz-tab-equipment', '#cz-equipment-fold summary', '#cz-armours .card-inspection-target'], needs: '.creation-info-popover:popover-open', expect: 'back', back: '#cz-back' },
-  { id: 'lobby', shot: 'lobby', expect: 'back', back: '#lb-back' },
   { id: 'atlas', shot: 'atlas', expect: 'none', why: 'the world atlas is the run itself; its exits (Save & quit) end the session' },
   { id: 'armoury', shot: 'atlas', open: '[data-atlas-armoury]', expect: 'peel' },
   { id: 'map', shot: 'map', expect: 'none', why: 'the act map is the run itself; its exits (Save & quit) end the session' },
@@ -102,7 +101,6 @@ export const READY = {
   compendium: '.screen.compendium',
   customrun: '.screen.customrun',
   customize: '.screen.customize',
-  lobby: '.screen.lobby',
   atlas: '.world-atlas-screen',
   map: '.mapscreen.map-fog',
   combat: '.combat',
@@ -158,7 +156,6 @@ export const NOT_DRIVEN = [
   ['dialogue Back (after the first line)', 'tests/escape-back.test.mjs — the [data-back] rule; a dropped hold over it is the hold row here'],
   ['reward detail and chooser Back', 'tests/escape-back.test.mjs — the [data-back] rule'],
   ['menu overlay, quick nav, confirmation, tutorial', 'their own window-capture Escape (overlay.js, quicknav.js, confirmationModal.js, tutorial.js); tools/confirmation-modal.mjs drives pad B'],
-  ['co-op board and LAN room', 'no Back by design: Leave ends the co-op session (D41)'],
 ];
 
 function connectCdp(wsUrl) {

@@ -1,5 +1,4 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
-import { executeAction, applyAttackDamage } from '../src/engine/actions.js';
+import { executeAction } from '../src/engine/actions.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { setProfileStance,profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { trimCombatStances } from '../src/engine/concurrentStances.js';
@@ -9,7 +8,6 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts, previewIntent } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, chooseDiscard, endTurn, previewCoopCard, coopOutcome } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
@@ -19,12 +17,12 @@ import { computeTokenBindings, validateEffects, validatePredicate } from '../src
 import { skillXpReceipt } from '../src/engine/skillXp.js';
 
 // The fixture pins its own Stamina and Mana: costRule 'fixed' opts it out of the cost formula (SPEC §4.3a).
-function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = false, definition = {} } = {}) {
+function fixture(effects, { manaCost = 0, cost = 1, expanded = false, definition = {} } = {}) {
   const base = createRegistries(contentBundle);
   const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Rider fixture', costRule: 'fixed', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'], ...definition };
   const registries = { ...base, progressionEnabled: expanded, cards: { ...base.cards, get: id => id === 'defend' ? card : base.cards.get(id) } };
   const player = { id: 'p1', classId: 'herald', maxHp: 80, hp: 50, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck: Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false })) };
-  const combat = coop ? createCoopCombat({ registries, rng: createRng(9), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] }) : createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
+  const combat = createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
   for (const enemy of combat.enemies) { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; }
   return combat;
 }
@@ -118,14 +116,6 @@ test('configured X spends remaining SP and scales actual damage and target count
  dispatch(combat,{type:'playCard',cardInstanceId:id});assert.equal(combat.player.stamina,0);
  assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[6,6,0]);
 });
-test('co-op choices and hidden cards belong to the acting seat and return only to that seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
- const combat=fixture([{op:'modifyCards',from:'hand',amount:1,selection:'choose',changes:{hideTurns:1,retain:true}}],{coop:true});
- const a=combat.players.get('a'),b=combat.players.get('b');for(const P of [a,b])for(const pile of Object.values(P.piles))for(const card of pile)card.instanceId=`${P.id}-${card.instanceId}`;
- playCard(combat,'a',a.piles.hand[0].instanceId);const chosen=combat.pendingCardChoice.candidateIds[0];
- assert.throws(()=>chooseDiscard(combat,'b',[chosen]),/another player/);chooseDiscard(combat,'a',[chosen]);
- assert.equal(combat.hiddenCards[0].playerId,'a');endTurn(combat,'a');endTurn(combat,'b');
- assert.ok(a.piles.hand.some(c=>c.instanceId===chosen));assert.ok(!b.piles.hand.some(c=>c.instanceId===chosen));assert.equal(combat.hiddenCards.length,0);
-});
 test('Many Forms uses one best defensive receipt for each attack and expires back to the primary stance',()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.gameProfile=resolveGameProfile('core');
  combat.registries={...combat.registries,proposalStatusRules:{'weak':{behaviors:[{kind:'stanceCapacity',additionalPerStack:1,maxStances:2,defensePriority:['counter','defend','evade','casting','attack','smash','sweep']}]}}};
@@ -189,17 +179,3 @@ test('MP-only configured growth does not reintroduce disabled Stamina through ac
  const next=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,next).stamina,0);assert.equal(cardPlayCosts(combat,next).mana,2);
 });
 
-test('co-op Transmute receipts credit the acting seat without sharing or dropping Cinders', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
- const combat=fixture([{op:'addCinders',amount:10}],{coop:true});
- for(const seat of ['a','b'])playCard(combat,seat,combat.players.get(seat).piles.hand[0].instanceId);
- assert.deepEqual(coopOutcome(combat).earnedCinders,{a:10,b:10});assert.equal(combat.proposalRewards.cinders,20);
-});
-
-test('co-op guard redirects to the actual protecting teammate and consumes only that seat status', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
- const combat=fixture([{op:'block',amount:1,target:'self'}],{coop:true});
- combat.registries={...combat.registries,proposalStatusRules:{weak:{behaviors:[{kind:'guard',amountPerStack:4,consumeStacks:1}]}}};
- const a=combat.players.get('a').entity,b=combat.players.get('b').entity;b.statuses.weak={stacks:3};const beforeA=a.hp,beforeB=b.hp;
- applyAttackDamage(combat,combat.enemies[0],a,12,[],{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}});
- let n=0;while(combat.queue.length){assert.ok(n++<100);executeAction(combat,combat.queue.shift());}
- assert.equal(a.hp,beforeA);assert.equal(b.hp,beforeB-12);assert.equal(b.statuses.weak.stacks,2);assert.equal(a.statuses.weak,undefined);
-});

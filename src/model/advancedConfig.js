@@ -355,10 +355,18 @@ export function bringProfileForward(meta, bundle, save, warnings = null) {
 //                                           and its bounds retired with them.
 const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
+// Co-op (Forsaken Together) was removed; a configuration file written while it
+// existed may still carry its three balance numbers. They are skipped on import.
+const REMOVED_COOP_KEYS = /^(settings\.)?gameConfig\.balance\.coop\.(headcountHpFactor|mendHealPct|reviveHp)$/;
+const REMOVED_COOP_WARNING = 'Co-op settings were removed with the multiplayer mode. Those entries were skipped; everything else in the file was imported.';
+
 function withoutRetired(entries, warnings) {
   const upgradeAt = entries.filter(([key]) => !RETIRED_UPGRADE_AT_KEYS.includes(key));
   if (upgradeAt.length !== entries.length) warnings.push(RETIRED_UPGRADE_AT_WARNING);
   entries = upgradeAt;
+  const noCoop = entries.filter(([key]) => !REMOVED_COOP_KEYS.test(key));
+  if (noCoop.length !== entries.length) warnings.push(REMOVED_COOP_WARNING);
+  entries = noCoop;
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
     warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
@@ -430,7 +438,7 @@ function balanceGroup(path) {
   if (/^(level|xp\.|skill\.|classTree\.|progressionFeats\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
-  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
+  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|endless|customMods)/.test(path)) return 'World';
   return 'Combat';
 }
 
@@ -456,7 +464,7 @@ function balanceGroup(path) {
 // File` abort the file on an unknown key, which is the defect #1238 fixed for
 // the preset cells. `retired` is the same flag a hidden creation mode's pool
 // row carries, and settings.js filters on it.
-const OFF_SCREEN_BALANCE_PATH = /^(coop|gauntlet)\./;
+const OFF_SCREEN_BALANCE_PATH = /^gauntlet\./;
 const RETIRED_BALANCE_PATHS = new Set([
   'energy',
   'draw',

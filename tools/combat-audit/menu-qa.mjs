@@ -53,7 +53,6 @@ try {
     }
     const entries = await page.locator('.title-menu > li > button').evaluateAll((buttons) => buttons.map(b => ({ label: b.textContent.trim(), action: b.dataset.titleAction, disabled: b.disabled })));
     report.entries = entries;
-    if (entries.some(e => e.action === 'lan')) throw new Error('Paused co-op entry is visible');
     if (phase !== 'before' && entries.at(-1)?.action !== 'quit') throw new Error('Quit is not the final main-menu panel');
     await page.waitForTimeout(1100);
     await page.screenshot({ path: `${out}/${phase}-${device}-menu.png` });

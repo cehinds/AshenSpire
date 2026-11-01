@@ -12,7 +12,6 @@
 // as noted Settings rows, the `sigils` stream appended last and silent at the
 // defaults, the snapshot and co-op carriage, and the load door's refusals.
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
@@ -23,7 +22,6 @@ import { advancedConfigRows, configuredContentBundle } from '../src/model/advanc
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 import { buildMarketStock, buildBlacksmithStock } from '../src/engine/shopKinds.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { syncLoadoutProperties } from '../src/engine/properties.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems, combatSnapshotReferenceProblems } from '../src/model/combatSnapshot.js';
@@ -251,20 +249,6 @@ test('the snapshot carries attunedSigils: a restore mounts them, an older snapsh
   assert.ok(combatSnapshotProblems({ ...snap, attunedSigils: [VIGIL, VIGIL] }).some((p) => /attunedSigils/.test(p)));
   assert.ok(combatSnapshotReferenceProblems({ ...snap, attunedSigils: ['noSuchSigil'] }, REG).some((p) => /noSuchSigil/.test(p)));
   assert.ok(combatSnapshotReferenceProblems({ ...snap, attunedSigils: [COMMON] }, REG).some((p) => p.includes(COMMON) && /legendary/.test(p)));
-});
-
-test('co-op: each seat mounts its own attuned sigils under its own key', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const run = lowHp(freshRun());
-  run.sigils = [VIGIL];
-  attuneSigil(REG, run, VIGIL);
-  const other = lowHp(freshRun(REG, 8));
-  const seat = (r, id) => ({ ...r, id, classId: r.class, relicIds: r.relics, attunedSigils: r.attunedSigils });
-  const enemyId = REG.enemies.all().find((def) => def.hp && def.hp[1] < 200).id;
-  const C = createCoopCombat({ registries: REG, rng: createRng(9), enemyIds: [enemyId], players: [seat(run, 'p1'), seat(other, 'p2')] });
-  const keys = Object.entries(C.propertyMounts || {}).filter(([, mounts]) => mounts[`sigil:${VIGIL}`]).map(([key]) => key);
-  assert.equal(keys.length, 1, `exactly one seat holds the sigil (got ${keys.join(', ')})`);
-  assert.deepEqual(C.players.get('p1').attunedSigils, [VIGIL]);
-  assert.deepEqual(C.players.get('p2').attunedSigils, []);
 });
 
 // ---------------------------------------------------------------------------
@@ -597,26 +581,6 @@ test('rarity at every door: no never-legendary position may hold a legendary, at
   const either = freshRun();
   either.sigils = [L, COMMON];
   assert.deepEqual(sigilRarityProblems(REG, either), []);
-});
-
-test('rarity at every door: the co-op member restore refuses a member that breaks it, by name, and keeps the record', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createSession, restoreSession } = await import('../tools/session.mjs');
-  const host = createSession({ registries: REG, seedString: 'VIGIL' });
-  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
-  host.addMember({ id: 'p2', name: 'Two', classId: 'reaver' });
-  host.start();
-  const saved = host.serialize();
-  const [one, two] = saved.members;
-  one.run.sigils = [LEGENDARIES[0], COMMON];
-  one.run.attunedSigils = [COMMON];
-  two.run.sigils = [LEGENDARIES[0]];
-  two.run.attunedSigils = [LEGENDARIES[0]];
-  const back = restoreSession(REG, structuredClone(saved));
-  const refused = back.refusedMembers();
-  assert.equal(refused.length, 1);
-  assert.equal(refused[0].id, one.id);
-  assert.match(refused[0].reason, new RegExp(`${COMMON}.*legendary`));
-  assert.equal(back.serialize().refusedMembers.length, 1, 'the record is kept');
 });
 
 test('defence in depth: sigilPurchasePlan refuses a legendary by name', () => {

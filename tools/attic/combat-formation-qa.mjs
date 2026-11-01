@@ -48,28 +48,16 @@ try {
   for (const size of [{width:1440,height:900},{width:794,height:893},{width:390,height:844},{width:844,height:390}].filter(s=>!process.env.QA_WIDTH || s.width===Number(process.env.QA_WIDTH))) {
     const page = await browser.newPage({ viewport: size });
     page.on('pageerror', e => errors.push(e.message));
-    for (const mode of ['duel','enemies','party'].filter(m=>!process.env.QA_MODE || m===process.env.QA_MODE)) {
-      await page.goto(`${base}?shot=${mode==='party'?'coop':'combat'}&shotScene=cinder-reach-4`, { waitUntil:'domcontentloaded', timeout:60000 });
+    for (const mode of ['duel','enemies'].filter(m=>!process.env.QA_MODE || m===process.env.QA_MODE)) {
+      await page.goto(`${base}?shot=combat&shotScene=cinder-reach-4`, { waitUntil:'domcontentloaded', timeout:60000 });
       await page.waitForSelector('.combatant');
       if (mode === 'duel') await page.evaluate(() => { window.__combat.enemies.splice(1); window.__renderCombatForShot(); });
-      if (mode === 'party') await page.evaluate(() => {
-        const s = structuredClone(window.__coopSnapshotForShot);
-        s.party.push({ ...s.party[1], id:'p3', name:'Aster', classId:'starseer' });
-        s.scene.players.push({ ...s.scene.players[1], id:'p3', ended:false });
-        window.__coopSnapshotForShot=s; window.__receiveCoopSnapshotForShot(s);
-      });
       await page.waitForTimeout(1600);
       const label = `${mode}-${size.width}`;
       const before = await geometry(page, label+'-player');
       await page.screenshot({ path:resolve(out,label+'-player.png') });
-      if (mode !== 'party') {
-        await page.locator('.end-turn').hover(); await page.mouse.down();
-        await page.waitForTimeout(1800); await page.mouse.up();
-      } else await page.evaluate(() => {
-        const s = structuredClone(window.__coopSnapshotForShot); s.scene.turn++;
-        s.scene.events = s.scene.enemies.map(e => ({ type:'enemyMoveStarted', sourceId:e.id, enemyId:e.enemyId, moveId:e.intent.moveId, kind:e.intent.kind }));
-        window.__receiveCoopSnapshotForShot(s);
-      });
+      await page.locator('.end-turn').hover(); await page.mouse.down();
+      await page.waitForTimeout(1800); await page.mouse.up();
       await page.waitForFunction(()=>document.querySelector('.combat').dataset.turn==='enemy',null,{timeout:7000});
       const during = await geometry(page,label+'-enemy');
       if (!during.handLocked) throw Error(label+': hand accepts enemy-turn input');

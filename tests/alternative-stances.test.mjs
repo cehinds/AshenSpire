@@ -5,7 +5,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { stanceForCard, stanceForPublicIntent, createStanceLedger, stanceArtFor } from '../src/model/alternativeStance.js';
 import { concealIntent } from '../src/model/combatIntentVisibility.js';
-import { coopEnemyIntent } from '../src/ui/models/CoopIntentModel.js';
 import { stanceInventory } from '../tools/alternative-stances-inventory.mjs';
 import { validate } from '../src/model/presentationSequence.js';
 
@@ -42,14 +41,6 @@ test('only confirmed plays replace the latest stance; a new turn keeps it until 
   assert.equal(ledger.get(),'casting');
   ledger.accept({type:'playerTurnStart'});assert.equal(ledger.get(),'casting');
 });
-test('co-op seats are independent and a new combat clears both',()=>{
-  const ledger=createStanceLedger();
-  ledger.accept({type:'cardPlayed',playerId:'a'},card('defend'));
-  ledger.accept({type:'cardPlayed',playerId:'b'},card('smash'));
-  ledger.accept({type:'playerTurnStart',playerId:'a'});
-  assert.equal(ledger.get('a'),'defensive');assert.equal(ledger.get('b'),'smash');
-  ledger.accept({type:'combatStarted'});assert.deepEqual(ledger.snapshot(),{});
-});
 test('an untyped latest card is prepare (casting) and replaces a previous defensive stance',()=>{
   const ledger=createStanceLedger();ledger.accept({type:'cardPlayed'},card('defend'));
   ledger.accept({type:'cardPlayed'},{type:'skill',cardTags:[]});assert.equal(ledger.get(),'casting');
@@ -69,12 +60,6 @@ test('stance selection never reads private identity, effects, school, damage or 
   assert.equal(stanceForPublicIntent({kind:'attack',combatProfile:{camp:'spell'}}),null);
   assert.equal(stanceForPublicIntent({stance:'staggered'}),null);
   assert.equal(stanceForPublicIntent(null),null);
-});
-test('co-op observers reuse their host visibility roll without revealing a move',()=>{
-  const enemy={intent:{kind:'attack',moveId:'secret',damage:777,combatProfile:{camp:'spell',maneuver:'ranged'}},intentReads:{a:true,b:false}};
-  const a=coopEnemyIntent(enemy,'a'),b=coopEnemyIntent(enemy,'b');
-  assert.equal(a.hidden,false);assert.equal(b.hidden,true);assert.equal(b.moveId,null);assert.equal('damage' in b,false);
-  assert.equal(stanceForPublicIntent(a),'casting');assert.equal(stanceForPublicIntent(b),'casting');
 });
 test('unpainted canonical armour never aliases another class or the default outfit',()=>{
   const catalog={actors:{'reaver-default':{frames:{offensive:{path:'base.webp'}}}}};

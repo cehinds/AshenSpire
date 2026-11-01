@@ -13,10 +13,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createCombat } from '../src/engine/combat.js';
-import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { RESOURCE_SOURCE_IDS, resourceBarPlan, resourceDomains } from '../src/model/resources.js';
-import { createSession } from './session.mjs';
 import { statProjection } from '../src/model/statProjection.js';
 import { derivedStatRules } from '../src/content/derivedStats.js';
 
@@ -153,20 +151,6 @@ check('solo combat consumes run Energy/Draw and transports real Stamina without 
   assert(combat.piles.hand.length <= combat.handMax, 'derived draw overflowed handMax');
 });
 
-check('host session snapshot is authoritative for derived rules and every current/max pool', () => {
-  const S = createSession({ registries: REG, seedString: 'HYBRIDRULES' });
-  S.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
-  S.start();
-  const party = S.snapshot().party[0];
-  // The lean Reaver again, ruleset 7: the numbers worked in the second check.
-  equal(party.derivedStatRuleSnapshot && party.derivedStatRuleSnapshot.rulesetVersion, 7, 'party ruleset');
-  equal(party.maxStamina, 2, 'party Stamina max');
-  equal(party.stamina, 2, 'party Stamina current');
-  equal(party.maxMana, 1, 'party derived Mana max');
-  equal(party.energyMax, 3, 'party derived Energy');
-  equal(party.drawPerTurn, 3, 'party derived draw');
-});
-
 check('shared main-HUD plan shows Mana and real Stamina, never a fabricated trough', () => {
   assert(RESOURCE_SOURCE_IDS.includes('stamina'), 'stamina source reader is absent');
   const run = fresh();
@@ -209,48 +193,17 @@ check('Mana semantic constant scan refuses legacy class-scale authority', () => 
   assert(!/"id":\s*"azureFlask"[\s\S]*?"restoreMana"[\s\S]*?"amount":\s*20\b/.test(flaskSource), 'legacy Azure restore remains');
 });
 
-check('co-op UI affordability and host execution agree for all three Mana signatures', () => {
-  const coopSource = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
-  assert(/meP\.mana\s*>=\s*(\(def\.manaCost\s*\|\|\s*0\)|costs\.mana)/.test(coopSource), 'co-op hand omits Mana from affordability');
-  for (const cardId of ['gorefireSlash', 'starstoneArc', 'urgentHeal']) {
-    const fight = (mana) => createCoopCombat({
-      registries: REG,
-      rng: createRng(0x6d616e61),
-      players: [{
-        id: 'p1', classId: REG.cards.get(cardId).class, maxHp: 84, hp: 84,
-        maxMana: 2, mana, maxStamina: 2, stamina: 2,
-        energyMax: 3, drawPerTurn: 5,
-        deck: [{ instanceId: `i-${cardId}`, cardId, upgraded: false }], relicIds: [], flasks: [],
-      }],
-      enemyIds: ['blightHound'],
-    });
-    const empty = fight(0);
-    let refusal = '';
-    // A self-only card (Urgent Heal) takes no enemy target; the host refuses one.
-    const target = REG.cards.get(cardId).effects.every((effect) => effect.target === 'self') ? undefined : 'e1';
-    try { playCoopCard(empty, 'p1', `i-${cardId}`, target); } catch (error) { refusal = error.message; }
-    assert(/Not enough mana/.test(refusal), `${cardId} host did not refuse zero Mana`);
-    const funded = fight(1);
-    playCoopCard(funded, 'p1', `i-${cardId}`, target);
-    equal(funded.players.get('p1').entity.mana, 0, `${cardId} host Mana after spend`);
-    assert(funded.eventLog.some((event) => event.type === 'manaSpent' && event.amount === 1), `${cardId} missing spend receipt`);
-  }
-});
-
-check('Hybrid Stats panel and co-op active-seat HUD use shared data plans', () => {
+check('Hybrid Stats panel uses shared data plans', () => {
   const overlay = readFileSync(resolve(ROOT, 'src/ui/components/overlay.js'), 'utf8');
   const equipment = readFileSync(resolve(ROOT, 'src/ui/screens/equipment.js'), 'utf8');
   const projection = readFileSync(resolve(ROOT, 'src/model/statProjection.js'), 'utf8');
-  const coop = readFileSync(resolve(ROOT, 'src/ui/screens/coop.js'), 'utf8');
   assert(/hybridStatsPlan\s*\(/.test(overlay), 'overlay Stats still hard-codes its rows');
   assert(/run\.stats[\s\S]*Fights won[\s\S]*Damage dealt[\s\S]*Damage taken/.test(equipment),
     'Armoury Stats does not preserve the active run telemetry removed from the menu');
-  // Ruleset 7 made the draw row the one per-turn draw, solo and co-op alike;
+  // Ruleset 7 made the draw row the one per-turn draw;
   // only a run born before it still reads two meanings, and says which.
-  assert(/This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value\./.test(projection),
+  assert(/This run was born before the hand rows: its fights draw by its hand rules\./.test(projection),
     'projection does not state the pre-ruleset-7 draw meaning');
-  assert(/resourceBarPlan\s*\(registries,\s*['"]main['"]/.test(coop), 'co-op never calls the shared main-HUD plan');
-  assert(/resourceBars\s*\(/.test(coop), 'co-op never renders the shared resource plan');
 });
 
 check('one projection exports attribute scaling receipts for Overlay, Armoury and creation', () => {

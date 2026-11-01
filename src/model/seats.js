@@ -77,7 +77,7 @@ export function seatTierHpMult(registries, seatId, tier) {
  * A boss's damage follows the tier ratio as its HP does, so the Marches boss
  * met first hits like a first boss, not like the second one it was authored
  * as; then the tier's own boss multiplier. The ONE reader of the row:
- * main.js, session.mjs and the sims all ask here.
+ * main.js and the sims all ask here.
  */
 export function bossTierScale(registries, { encounter, tier }) {
   if (!encounter || encounter.pool !== 'boss') return null;

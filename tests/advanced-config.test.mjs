@@ -253,6 +253,22 @@ test('an export naming a retired stat tier imports, skipping only that entry', (
   assert.match(warnings[0], /direct attribute weights/);
 });
 
+// The multiplayer mode and its three balance numbers were removed. A file
+// exported while they existed still imports: only those entries are skipped.
+test('an export naming a removed co-op balance number imports, skipping only that entry', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  Object.assign(file.overrides, {
+    'gameConfig.balance.coop.headcountHpFactor': 0.9,
+    'gameConfig.balance.coop.mendHealPct': 50,
+    'gameConfig.balance.coop.reviveHp': 3,
+  });
+  const warnings = [];
+  const imported = parseAdvancedConfigFile(JSON.stringify(file), contentBundle, {}, [], warnings);
+  assert.deepEqual(imported, { 'gameConfig.derivedStatRules.rules.hp.constitution': 5 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Co-op settings were removed/);
+});
+
 // Codex (#1253): only the six real stat ids are retired. A misspelt id is a
 // typo, and a typo must still refuse the whole file rather than be skipped.
 test('a misspelt stat id under a retired tier key is refused, not skipped', () => {

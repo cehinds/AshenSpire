@@ -60,7 +60,7 @@ For the stance review or source game, use either command in another terminal:
 
 ```powershell
 node tools/alternative-stances-serve.mjs --asset-root C:\Projects\AI-Art
-node tools/serve.mjs --asset-root C:\Projects\AI-Art --no-lan --host 127.0.0.1
+node tools/serve.mjs --asset-root C:\Projects\AI-Art --host 127.0.0.1
 ```
 
 The stance URL is `http://127.0.0.1:4329/pose-studio/stances/index.html`.
@@ -97,7 +97,7 @@ browser tooling. These commands do not install dependencies or publish a release
    ```powershell
    Remove-Item Env:ASHEN_ART_CHECKOUT -ErrorAction SilentlyContinue
    node tools/art-manifest.mjs --check
-   node tools/serve.mjs --no-lan --host 127.0.0.1
+   node tools/serve.mjs --host 127.0.0.1
    ```
 
 The verified runtime download lives under `.art-cache/<tag>/<pack>/`. Treat it

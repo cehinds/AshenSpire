@@ -34,7 +34,6 @@ import { balanceCustomMods } from './generated/balanceCustomMods.js';
 import { balanceBossTiers } from './generated/balanceBossTiers.js';
 import { balanceSeatTiers } from './generated/balanceSeatTiers.js';
 import { balanceEndless } from './generated/balanceEndless.js';
-import { balanceCoop } from './generated/balanceCoop.js';
 import { balanceGauntlet } from './generated/balanceGauntlet.js';
 import { balanceLevelUp } from './generated/balanceLevelUp.js';
 import { balanceXp } from './generated/balanceXp.js';
@@ -272,7 +271,6 @@ export const balance = {
   graceRefill: balanceCore.graceRefill,
   graceRefillAtRunStart: balanceCore.graceRefillAtRunStart,
   gauntlet: balanceGauntlet,
-  coop: balanceCoop,
   endless: balanceEndless,
   seatTiers: balanceSeatTiers,
   bossTiers: balanceBossTiers,

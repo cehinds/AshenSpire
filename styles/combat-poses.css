@@ -25,12 +25,7 @@
 @media(prefers-reduced-motion:reduce) { .combat-pose-aura svg { animation:none; opacity:.28; } .pose-frame { transition:none; } }
 /* The new extended arms/blades need more width than the old narrow idle.
    Keep one scale for every frame of these outfits on the compact solo board. */
-.combat:not(.coop) .player-zone .readiness-outfit { transform:translateX(3%); }
+.combat.combat .player-zone .readiness-outfit { transform:translateX(3%); }
 @container game-viewport (max-width:640px) {
-  .combat:not(.coop) .player-zone .readiness-outfit { transform:translateX(18%) scale(.6); transform-origin:50% 100%; }
-  :root[data-layout='narrow'] .combat.coop .player-zone { gap:.5rem; padding-top:2rem; flex-shrink:0; }
-  :root[data-layout='narrow'] .combat.coop .coop-seat { flex:1 1 0; min-width:0; }
-  :root[data-layout='narrow'] .combat.coop .coop-seat .sprite { width:100%; height:110px; }
-  :root[data-layout='narrow'] .combat.coop .coop-seat .painted-outfit { width:85px!important; height:100px!important; }
-  :root[data-layout='narrow'] .combat.coop .coop-seat .meters { width:100%; }
+  .combat.combat .player-zone .readiness-outfit { transform:translateX(18%) scale(.6); transform-origin:50% 100%; }
 }

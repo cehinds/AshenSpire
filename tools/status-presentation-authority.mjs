@@ -46,11 +46,11 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'a combat surface stops stamping the semantic token attribute',
-        file: 'src/ui/screens/coop.js',
+        file: 'src/ui/screens/combat.js',
         find: 'statusInstanceSemanticAttrs',
         replace: 'plantedStatusAttrs',
         all: true,
-        expectRed: /FAIL solo and co-op consume the same semantic status receipt/,
+        expectRed: /FAIL the combat surface consumes the semantic status receipt/,
       },
     ],
   }));
@@ -138,14 +138,12 @@ if (typeof present === 'function' && magic) {
 
 const uiSource = fs.readFileSync('src/ui/uiContent.js', 'utf8');
 const solo = fs.readFileSync('src/ui/screens/combat.js', 'utf8');
-const coop = fs.readFileSync('src/ui/screens/coop.js', 'utf8');
 check('shared presenter contains no status-id/name regex branch',
   !/(?:magicVulnerable|Magic Vulnerable|\.test\(def\.(?:id|name)\)|match\(.*def\.(?:id|name))/i.test(uiSource));
-check('solo and co-op consume the same semantic status receipt',
-  /statusInstanceSemanticAttrs/.test(solo) && /statusInstanceSemanticAttrs/.test(coop));
-check('both combat surfaces stamp stable semantic status selectors',
-  /data-status-id/.test(solo) && /data-status-value-token/.test(solo)
-  && /data-status-id/.test(coop) && /data-status-value-token/.test(coop));
+check('the combat surface consumes the semantic status receipt',
+  /statusInstanceSemanticAttrs/.test(solo));
+check('the combat surface stamps stable semantic status selectors',
+  /data-status-id/.test(solo) && /data-status-value-token/.test(solo));
 
 const plants = [
   ['name regex', 'const token=def.instancePresentation.valueToken', "const token=/magic|vulnerable/i.test(def.name)?'percent':'stacks'", (s) => !/magic\|vulnerable|test\(def\.name/.test(s)],
