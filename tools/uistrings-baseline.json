@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 240,
-  "distinct": 205,
+  "sites": 239,
+  "distinct": 204,
   "files": {
     "src/ui/screens/customize.js": 43,
     "src/ui/components/offlinePlay.js": 20,
@@ -30,7 +30,6 @@
     "src/ui/components/ashenBlight.js": 3,
     "src/ui/components/debugChrome.js": 3,
     "src/ui/components/menuComponents.js": 3,
-    "src/ui/components/smithPaneParts.js": 3,
     "src/ui/models/ArmouryModels.js": 3,
     "src/ui/models/SmithSelectionModel.js": 3,
     "src/ui/screens/event.js": 3,
@@ -38,6 +37,7 @@
     "src/ui/components/creationCards.js": 2,
     "src/ui/components/holdconfirm.js": 2,
     "src/ui/components/mountServiceModal.js": 2,
+    "src/ui/components/smithPaneParts.js": 2,
     "src/ui/models/QuickAccessPanelModel.js": 2,
     "src/ui/previews/tooltipReviewScene.js": 2,
     "src/ui/screens/title.js": 2,

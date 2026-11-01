@@ -1919,6 +1919,7 @@ smith.upgrade.aria.one,,Upgrade {name} for {cost} Smithing Stone,Upgrade {name} 
 smith.upgrade.aria.many,,Upgrade {name} for {cost} Smithing Stones,Upgrade {name} for {cost} Smithing Stones,
 smith.cost.aria,,Smithing Stone Cost {cost} of {stones} available,Smithing Stone Cost {cost} of {stones} available,
 smith.cost.tip,,Smithing Stones: needed / available,Smithing Stones: needed / available,
+smith.cost.label,,Smithing Stone Cost,Smithing Stone Cost,
 cardUpgrade.short.one,,Short by {n} Smithing Stone.,Short by {n} Smithing Stone.,
 cardUpgrade.short.many,,Short by {n} Smithing Stones.,Short by {n} Smithing Stones.,
 smith.upgrade.fold,,Current → upgraded,Current → upgraded,
