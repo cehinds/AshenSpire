@@ -6,6 +6,7 @@ import { statProjection } from '../../model/statProjection.js';
 import { runHandRules } from '../../model/handRules.js';
 import { esc } from './tooltip.js';
 import { engravedIconHtml } from './engravedIcon.js';
+import { recoveryLedgerHtml } from './recoveryLedger.js';
 import { mountRestFrame, restPresentation } from './restFrame.js';
 import { renderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
@@ -45,23 +46,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
 
   // The recovery ledger is projected from the final transaction, including
   // newly derived maxima after a selected attribute/equipment upgrade.
-  const recoveryHtml = after => {
-    const rows = [
-      ['health', t('gameProfile.rest.pool.hp'), run.hp, after.hp],
-      ['mana', t('gameProfile.rest.pool.mp'), run.mana, after.mana],
-      ['stamina', t('gameProfile.rest.pool.sp'), run.stamina, after.stamina],
-      ...(run.flaskCharges ? [
-        ['flask-health', t('gameProfile.rest.pool.healingFlask'), run.flaskCharges.hpCurrent, after.flaskCharges.hpCurrent],
-        ['flask-mana', t('gameProfile.rest.pool.mpFlask'), run.flaskCharges.manaCurrent, after.flaskCharges.manaCurrent],
-      ] : []),
-    ];
-    // Only pools that change draw a row (with their gain); when nothing changes one line says so.
-    const changed = rows.filter(([, , before, next]) => next !== before);
-    const body = changed.length
-      ? changed.map(([icon, label, before, next]) => `<div class="rest-recovery-row">${engravedIconHtml(icon)}<span>${esc(label)}</span><span>${before} → <strong>${next}</strong></span><span class="rest-recovery-gain">${next > before ? `+${next - before}` : `${next - before}`}</span></div>`).join('')
-      : `<p class="rest-recovery-none">${esc(t('rest.recovery.none'))}</p>`;
-    return `<section class="rest-recovery" aria-label="${esc(t('rest.recovery.heading'))}"><h3 class="as-eyebrow">${esc(t('rest.recovery.heading'))}</h3>${body}</section>`;
-  };
+  const recoveryHtml = after => recoveryLedgerHtml(run, after);
   // Core: one line, since arrival always restores HP and MP in full. The recovery table, intro and
   // availability list are gone; each option card already says what it does or why it cannot be used.
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') }, [
