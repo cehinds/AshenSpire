@@ -11,7 +11,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { compactRun } from '../src/model/runStorage.js';
+import { compactRun, expandStoredRun } from '../src/model/runStorage.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -45,7 +45,11 @@ test('a 40-turn fight saves under the byte budget and no saved row carries the a
   for (let turn = 1; turn <= 40 && !combat.result; turn++) {
     playTurn(combat);
     if ([15, 40].includes(turn)) {
+      const liveBefore = structuredClone(combat.eventLog);
       const snapshot = serializeCombatSnapshot(combat);
+      assert.deepEqual(combat.eventLog, liveBefore, 'serializing leaves the live rows unchanged');
+      assert.equal(snapshot.eventLog.length, combat.eventLog.length);
+      assert.deepEqual(snapshot.eventLog, liveBefore.map(({ abilityBefore, abilityEntities, ...rest }) => rest), 'saved log = live log minus the two fields');
       const stored = JSON.stringify({ ...compactRun({ ...run, combatEntered: { snapshot } }) });
       sizes[turn] = stored.length;
       assert.ok(snapshot.eventLog.length > 0);
@@ -77,4 +81,24 @@ test('an old save whose log still carries the full context loads and continues',
   const restored = restoreCombatSnapshot({ registries, rng: rng2, snapshot });
   for (let i = 0; i < 3; i++) { playTurn(combat); playTurn(restored); }
   assert.equal(state(restored, rng2), state(combat, rng));
+});
+
+test('a knowledge-only autosave of a legacy checkpoint stores it lean and it restores identically', () => {
+  const { run, rng, combat } = startFight(13);
+  for (let i = 0; i < 10; i++) playTurn(combat);
+  const legacy = JSON.parse(JSON.stringify({ ...serializeCombatSnapshot(combat), eventLog: combat.eventLog }));
+  assert.ok(legacy.eventLog.some(e => e.abilityEntities));
+  const held = { ...run, combatEntered: { nodeId: 'n', encounterId: 'e', snapshot: legacy } };
+  const before = JSON.stringify(held);
+  const stored = compactRun(held);
+  assert.equal(JSON.stringify(held), before, 'the run in memory is not touched');
+  const lean = stored.combatEntered.snapshot;
+  assert.ok(lean.eventLog.every(e => !('abilityEntities' in e) && !('abilityBefore' in e)));
+  assert.deepEqual(lean.eventLog, legacy.eventLog.map(({ abilityBefore, abilityEntities, ...rest }) => rest));
+  assert.ok(JSON.stringify(stored.combatEntered).length < JSON.stringify(held.combatEntered).length / 2, 'stored size drops');
+  const a = createRng(13, rng.getCounters()), b = createRng(13, rng.getCounters());
+  const full = restoreCombatSnapshot({ registries, rng: a, snapshot: JSON.parse(JSON.stringify(legacy)) });
+  const trimmed = restoreCombatSnapshot({ registries, rng: b, snapshot: expandStoredRun(JSON.parse(JSON.stringify(stored))).combatEntered.snapshot });
+  assert.equal(state(trimmed, b), state(full, a));
+  for (let i = 0; i < 3; i++) { playTurn(full); playTurn(trimmed); assert.equal(state(trimmed, b), state(full, a)); }
 });
