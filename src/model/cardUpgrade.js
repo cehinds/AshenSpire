@@ -84,6 +84,14 @@ export function upgradeCount(instance) {
   return upgradeStepsOf(instance).length;
 }
 
+/**
+ * How many upgrades the instance has paid for or earned from its allowance: a rank-up bonus step (`bonus: true`,
+ * SPEC card ranks, owner 2026-11-01) is a gift on top of the rank, so it does not use up a free upgrade.
+ */
+export function paidUpgradeCount(instance) {
+  return upgradeStepsOf(instance).filter((step) => !(step && step.bonus === true)).length;
+}
+
 /** A short cache-key part: 0 and 1 (authored only) match the old `upgraded ? 1 : 0`. */
 export function upgradeSignature(instance) {
   const steps = upgradeStepsOf(instance);
@@ -137,8 +145,11 @@ function applyStep(card, step) {
       effects.push({ op: 'applyStatus', target: 'enemy', status: step.status, stacks: step.stacks });
       break;
     case 'cost':
-      if (step.pool === 'mp') out.manaCost = (card.manaCost || 0) - 1;
-      else { out.staminaCost = (card.staminaCost || 0) - 1; out.cost = (card.cost ?? 0) - 1; }
+      {
+        const cut = isCount(step.n, 9) ? step.n : 1;
+        if (step.pool === 'mp') out.manaCost = (card.manaCost || 0) - cut;
+        else { out.staminaCost = (card.staminaCost || 0) - cut; out.cost = (card.cost ?? 0) - cut; }
+      }
       break;
     case 'hits': {
       const index = firstPlainIndex(effects, 'damage');
@@ -256,6 +267,7 @@ export function upgradeStepsProblems(instance, path) {
     if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
+    if (step.k === 'cost' && step.n !== undefined && !isCount(step.n, 9)) bad('n');
     if (step.k === 'hits' && !(isCount(step.hits, 3) && step.hits >= 2)) bad('hits');
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
     if (step.k === 'tag') {

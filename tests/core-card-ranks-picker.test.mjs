@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
+import { rankUpBonusOptions } from '../src/model/rankUpBonus.js';
 import { awardSkillXp, xpToNext, pendingRankUpRows, coreCardRanks } from '../src/model/skills.js';
 
 const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -45,10 +46,22 @@ test('the reward door shows the Core card at its next rank and raises it', async
     const mine = [...app.querySelectorAll('.reward-row .card')].find((face) => face.dataset.pickId === strike.instanceId);
     assert.ok(mine, 'a Core Strike is offered');
     assert.match(mine.getAttribute('aria-label'), /rank 2$/);
+    const expected = rankUpBonusOptions(registries, run, strike)[1].step;
     mine.click();
+    // The rank-up also offers 2-3 bonus options; Confirm waits for one pick.
+    const bonuses = [...app.querySelectorAll('.reward-bonus-option')];
+    assert.ok(bonuses.length >= 2 && bonuses.length <= 3, `bonus options: ${bonuses.length}`);
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, true, 'no bonus picked, no Confirm');
+    bonuses[1].click();
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, false);
+    const shown = [...app.querySelectorAll('.reward-row .card')].find((face) => face.dataset.pickId === strike.instanceId);
+    assert.ok(shown, 'the card stays on the strip with the bonus applied');
     app.querySelector('#reward-card-confirm').click();
     app.querySelector('#reward-card-confirm').click();
     assert.equal(strike.rank, 2);
+    assert.equal(strike.upgradeSteps.length, 1, 'exactly the one picked bonus landed');
+    assert.equal(strike.upgradeSteps[0].bonus, true);
+    assert.deepEqual(strike.upgradeSteps[0], expected, 'the second option, the one picked');
     assert.equal(run.skills['item:blade'].pendingRankUps, 1);
     assert.ok(persisted > 0);
   } finally { Object.assign(globalThis, saved); }
@@ -103,6 +116,7 @@ test('a reload after a rank-up claim resumes the same door and offers no second 
     first.app.querySelector('.reward-kind[data-kind="skillRankUp"]').click();
     const strike = run.deck.find((c) => c.cardId === 'core.strike');
     [...first.app.querySelectorAll('.reward-row .card')].find((face) => face.dataset.pickId === strike.instanceId).click();
+    first.app.querySelector('.reward-bonus-option').click();
     first.app.querySelector('#reward-card-confirm').click();
     first.app.querySelector('#reward-card-confirm').click();
     assert.equal(strike.rank, 2);

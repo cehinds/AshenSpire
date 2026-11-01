@@ -42,6 +42,7 @@
     "equipment": {
       "version": "1.0.0",
       "settings": {
+        "weaponArts": true,
         "upgradeBonuses": {
           "weaponARPerTier": 1,
           "armorDRPerTier": 1,

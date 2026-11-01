@@ -61,11 +61,14 @@ export function digest(combat) {
 // loadout's shape (one cell per hand, not three). Log hashes, event counts, turns and RNG counters are identical, and the same
 // fights built with three-set hands (tests/withWeaponRack.mjs) reproduce the previous state hashes exactly.
 // Re-pinned 2026-11-01 for the per-stat Precision receipt lines (precisionParts only; events, turn and RNG unchanged).
+// Re-pinned 2026-11-01 for Core weapon arts (#2474): the Reaver's starter deck trades its class special for the
+// greatsword's Sundering Hew, so both reaver fights draw and play a different card (PERF1 195 -> 197 events; turns unchanged).
 // Re-pinned 2026-11-01 for Ward/Barrier as stacked statuses (SPEC 4.1a): the old numeric barrier pool is gone from
 // combat state and Barrier grants are stacks, so both reaver fights' state and log hashes move; event counts and turns are unchanged.
+// Combined (#2483 after #2474): Sundering Hew plus Barrier stacks; re-pinned from the merged run.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '9947cf9f564a155e', state: '6733dc4f56473cd5', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: 'ef12f893078113d6', state: '1787fb2ce9c92834', events: 234, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '15cd1b41837367fc', state: '180616407c0995f0', events: 197, turn: 6 }],
+  [[4242, 'reaver'], { log: 'ec80bd01180853d4', state: '7f7b1dd21b8ccf30', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
