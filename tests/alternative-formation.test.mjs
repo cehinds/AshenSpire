@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
-import { desktopFieldBottom, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
+import { mobileFieldOverlap, desktopFieldBottom, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
 import { responsiveHandLayout } from '../src/ui/models/HandLayout.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
@@ -331,6 +331,24 @@ test('widescreen player feet stay above the resting cards', () => {
     }
   }
   assert.ok(footer.handOverlapFraction > 0);
+});
+
+// Short portrait phones: the 36px extension is only granted to a field of at least mobileFieldOverlapMinFieldPx, so the
+// player's feet (rank D ground, measured from the field's top) never pass the row's bottom, the hand's top, on either
+// side of the 280px shortBelowPx profile switch and the gate itself. 360x620 (natural field ~296px) was the regression:
+// the extension flipped it to the phone profile and the feet landed 20px inside the first card.
+test('phone field extension never puts the player feet below the hand, either side of shortBelowPx', () => {
+  const sizing = uiConfig.scenes.w4a.sizing;
+  const below = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortBelowPx;
+  assert.equal(mobileFieldOverlap(sizing.mobileFieldOverlapMinFieldPx - 1), 0);
+  assert.equal(mobileFieldOverlap(sizing.mobileFieldOverlapMinFieldPx), sizing.mobileFieldHandOverlapPx);
+  for (const natural of [150, below - 10, below - 1, below, below + 1, 296, sizing.mobileFieldOverlapMinFieldPx - 1,
+    sizing.mobileFieldOverlapMinFieldPx, 320, 364, 431, 600]) {
+    const field = natural + mobileFieldOverlap(natural);
+    const formation = alternativeFormation(combatFormation({ width: 360, height: field, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+      friends: ['p0'], enemies: ['e0', 'e1', 'e2'] }), 360, field, true, { formFactor: 'mobile' });
+    for (const slot of formation.slots) assert.ok(slot.ground <= natural + 1e-6, `natural ${natural}: ${slot.side} ${slot.cell} feet ${slot.ground} below the hand at ${natural}`);
+  }
 });
 
 test('desktop and phone profiles stand the back rank lower and keep rank D above the hand', () => {

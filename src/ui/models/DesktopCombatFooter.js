@@ -55,3 +55,11 @@ export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor
   // Owner (2026-11-01): the cards overlap the battlefield's lower edge by handOverlapFraction of their height.
   return plan.handTop + fan.restTop + (config.handOverlapFraction || 0) * fan.cardHeight;
 }
+
+// Heights are layout units; zoom converts them to the viewport px the thresholds are authored in.
+// Phone (owner, 2026-11-01): the field runs mobileFieldHandOverlapPx under the cards, but only when the field's own
+// height (the grid row, before the extension) is at least mobileFieldOverlapMinFieldPx. A shorter field would put the
+// player's feet (about 89% of the extended field on the phone profile, 94% on the short one) inside the first card.
+export function mobileFieldOverlap(naturalFieldHeight, zoom = 1, sizing = uiConfig.scenes.w4a.sizing) {
+  return naturalFieldHeight * zoom >= sizing.mobileFieldOverlapMinFieldPx ? sizing.mobileFieldHandOverlapPx / zoom : 0;
+}
