@@ -3,8 +3,9 @@
 // hidden state, and never draws a number:
 //   { kind, die, dice?, mode?, parts: [{label, value, note?}], total, dcParts: [{label, value}], dc,
 //     success, chance?, compare? }
-// `compare` is how the total meets the DC: 'gte' (default, d20 rolls), 'lte' (a d100 under a
-// percentage chance) or 'lt' (a crit roll under its chance).
+// `compare` is how the total meets the DC: 'gte' (default, d20 rolls), 'lte' (an old d100 under a
+// percentage chance) or 'lt' (an old crit roll under its chance). Percentage chances are now d20s that
+// meet a target: 'gte' with dc = the target and dcParts = the source chance.
 import { t } from '../ui/strings.js';
 import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
 
@@ -76,9 +77,16 @@ export function perceptionRollReceipt(event) {
     dcParts: (event.dcParts || []).map(({ label, value }) => ({ label, value: num(value) })), dc: num(event.dc), success: !!event.passed };
 }
 
-// A d100 that must land at or under a percentage (status buildup chance, status recovery).
+// A status buildup or recovery chance, rolled as a d20 that must meet a target (owner, 2026-11-01).
+// Events logged before that carry a d100 (low roll wins) and no target; they keep the percentile receipt.
 export function percentRollReceipt(event, kind) {
   if (!finite(event.roll) || !finite(event.chance)) return null;
+  if (finite(event.target)) {
+    const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode
+      : Array.isArray(event.rolls) && event.rolls.length > 1 && event.rolls[0] !== event.rolls[1]
+        ? (num(event.roll) === Math.max(...event.rolls) ? 'advantage' : 'disadvantage') : null;
+    return d20ChanceReceipt({ ...event, mode }, kind);
+  }
   const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
   // The kept die says which mode it was (advantage keeps the lower d100, disadvantage the higher); equal dice cannot tell, so no label.
   const mode = event.mode || (rolls.length > 1 && rolls[0] !== rolls[1] ? (num(event.roll) === Math.min(...rolls) ? 'advantage' : 'disadvantage') : null);

@@ -53,11 +53,19 @@ test('crit, perception, status chance and status recovery log total vs DC', () =
     dcParts: [{ label: 'base', value: 5 }, { label: 'INT', value: 2 }, { label: 'WIS', value: 1 }] });
   assert.match(perception.text, /Perception: 12 vs 8 · identified$/);
   assert.deepEqual(rollReceiptLines(perception.rollReceipt).slice(0, 4), ['d20 [9]', '+ WIS 3', '= 12', 'vs base 5']);
-  const buildup = one({ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [34], roll: 34, chance: 45, effectiveChance: 45, success: true });
-  assert.match(buildup.text, /Burn buildup: 34 vs 45 · success$/);
-  const recovery = one({ type: 'statusRecoveryRolled', status: 'burn', targetId: 'e1', rolls: [60, 20], roll: 20, chance: 30, effectiveChance: 51, success: true });
-  assert.match(recovery.text, /Burn recovery: 20 vs 30 · success$/);
+  const buildup = one({ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [14], roll: 14, target: 12, mode: 'normal', chance: 45, effectiveChance: 45, success: true });
+  assert.match(buildup.text, /Burn buildup: 14 vs 12 · success$/);
+  assert.deepEqual(rollReceiptLines(buildup.rollReceipt), ['d20 [14]', '= 14', 'needs ≥ 12 (Chance 45%)', 'success']);
+  const recovery = one({ type: 'statusRecoveryRolled', status: 'burn', targetId: 'e1', rolls: [4, 18], roll: 18, target: 15, mode: 'advantage', chance: 30, effectiveChance: 51, success: true });
+  assert.match(recovery.text, /Burn recovery: 18 vs 15 · success$/);
   assert.equal(recovery.rollReceipt.mode, 'advantage');
+  assert.equal(recovery.rollReceipt.die, 'd20');
+  // Logs written before the d20 change (a d100 under the chance, no target) still render.
+  const oldBuildup = one({ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [34], roll: 34, chance: 45, effectiveChance: 45, success: true });
+  assert.match(oldBuildup.text, /Burn buildup: 34 vs 45 · success$/);
+  const oldRecovery = one({ type: 'statusRecoveryRolled', status: 'burn', targetId: 'e1', rolls: [60, 20], roll: 20, chance: 30, effectiveChance: 51, success: true });
+  assert.match(oldRecovery.text, /Burn recovery: 20 vs 30 · success$/);
+  assert.equal(oldRecovery.rollReceipt.mode, 'advantage');
 });
 
 // ---- engine events ---------------------------------------------------------------------------------------------
@@ -90,14 +98,14 @@ test('rollCrit emits critRolled and keeps its single combatProcs draw', () => {
 import { rollStatusChance } from '../src/engine/combatStatusControl.js';
 test('rollStatusChance emits statusChanceRolled only when labelled, with the same draws', () => {
   const make = () => { const events = [], draws = []; return { events, draws, ctx: { emit: (type, payload) => events.push({ type, ...payload }),
-    rng: { int: (stream, lo, hi) => { draws.push([stream, lo, hi]); return 34; } } } }; };
+    rng: { int: (stream, lo, hi) => { draws.push([stream, lo, hi]); return 14; } } } }; };
   const quiet = make(), loud = make();
   const a = rollStatusChance(quiet.ctx, 45, { stream: 'statusPressure' });
   const b = rollStatusChance(loud.ctx, 45, { stream: 'statusPressure', event: { status: 'burn', targetId: 'e1' } });
   assert.deepEqual(a, b);
   assert.deepEqual(quiet.draws, loud.draws);
   assert.equal(quiet.events.length, 0);
-  assert.deepEqual(loud.events, [{ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [34], roll: 34, chance: 45, effectiveChance: 45, success: true }]);
+  assert.deepEqual(loud.events, [{ type: 'statusChanceRolled', status: 'burn', targetId: 'e1', rolls: [14], roll: 14, target: 12, mode: 'normal', chance: 45, effectiveChance: 45, success: true }]);
 });
 
 test('Dodge and Evade keep their sentences and add an itemised receipt', () => {
@@ -128,6 +136,11 @@ test('status roll mode comes from the kept die, never from the chance', () => {
   assert.equal(mode({ rolls: [60, 20], roll: 60 }), 'disadvantage');
   assert.equal(mode({ rolls: [40, 40], roll: 40 }), undefined, 'equal dice cannot tell the mode');
   assert.equal(mode({ rolls: [40], roll: 40 }), undefined);
+  // A d20 event keeps the higher die for advantage and says its mode.
+  const d20 = event => one({ type: 'statusRecoveryRolled', status: 'burn', targetId: 'e1', chance: 100, target: 1, success: true, ...event }).rollReceipt.mode;
+  assert.equal(d20({ rolls: [4, 18], roll: 18 }), 'advantage');
+  assert.equal(d20({ rolls: [4, 18], roll: 4 }), 'disadvantage');
+  assert.equal(d20({ rolls: [9], roll: 9, mode: 'normal' }), undefined);
 });
 
 test('Evade keeps both dice and the mode; a failed distance row never shows the Evade receipt', () => {
