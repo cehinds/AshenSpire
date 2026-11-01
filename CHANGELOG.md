@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Battle backdrop zoomed out** ([#2455](https://github.com/cehinds/AshenSpire/pull/2455), `0.7.2.109`). The combat scenery is drawn about 15% smaller so it looks less pixelated; the ground still lies under the whole battle grid and the edges blend into a soft blurred fill.
+- **Battle backdrop zoomed out** ([#2455](https://github.com/cehinds/AshenSpire/pull/2455), `0.7.2.111`). The combat scenery is drawn about 15% smaller so it looks less pixelated; the ground still lies under the whole battle grid and the edges blend into a soft blurred fill.
 - **The battlefield is taller and the hand slightly overlaps it** ([#2447](https://github.com/cehinds/AshenSpire/pull/2447), `0.7.2.109`). The ground reaches down under the top of the cards on desktop and phone, and fighters stand lower without touching the hand.
 - **Physical range cards show their weapons clearly** ([#2454](https://github.com/cehinds/AshenSpire/pull/2454), `0.7.2.107`). Reach weapon actions use a larger spear and Ranged actions use a bow; a thin ivory outline improves weapon contrast. Counter retains its shield and foreground weapon, while magical Counter keeps the shared shield-and-hammer assembly with magical colors and cues.
 - **Long fights no longer fill browser storage** ([#2449](https://github.com/cehinds/AshenSpire/pull/2449), `0.7.2.105`). Autosave could fail with "browser storage is full" late in a long fight because every saved combat-log line carried a full copy of the fighters; saves now drop those copies, so a 40-turn fight's log shrinks from about 3.6 MB to about 0.5 MB and older saves still load.
