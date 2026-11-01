@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Long fights no longer fill browser storage** ([#2449](https://github.com/cehinds/AshenSpire/pull/2449), `0.7.2.97`). Autosave could fail with "browser storage is full" late in a long fight because every saved combat-log line carried a full copy of the fighters; saves now drop those copies, so a 40-turn fight's log shrinks from about 3.6 MB to about 0.5 MB and older saves still load.
+- **Long fights no longer fill browser storage** ([#2449](https://github.com/cehinds/AshenSpire/pull/2449), `0.7.2.99`). Autosave could fail with "browser storage is full" late in a long fight because every saved combat-log line carried a full copy of the fighters; saves now drop those copies, so a 40-turn fight's log shrinks from about 3.6 MB to about 0.5 MB and older saves still load.
+- **Enemies no longer "miss" when they Advance** ([#2445](https://github.com/cehinds/AshenSpire/pull/2445), `0.7.2.99`). Moving closer is not an attack: an enemy's Advance no longer rolls a hit that is logged as "missed: out of range".
 - **Card text fits the resized Reading Desk preview** ([#2443](https://github.com/cehinds/AshenSpire/pull/2443), `0.7.2.97`). Names and rules automatically shrink when the preview becomes smaller and regain their larger type when space returns, keeping the full reading available in Information.
 - **Precision fades fast** ([#2448](https://github.com/cehinds/AshenSpire/pull/2448), `0.7.2.95`). Temporary Precision stacks now drop by 3 (was 1) at the start of their owner's turn, for players and enemies alike, so buff cards give a short burst instead of a growing pile; Persistent Precision still never decays.
 - **Flowing Transition's Evade pick enters Evade** ([#2446](https://github.com/cehinds/AshenSpire/pull/2446), `0.7.2.93`). Choosing Evade no longer leaves you in Prepared, so the stance visibly changes.
