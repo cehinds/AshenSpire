@@ -72,3 +72,18 @@ test('an advantage chance is worked from the rolled 5% chance, and the draw is u
   assert.equal(receipt.success, true);
   assert.deepEqual(rng.calls, [['statusRecovery', 1, 20], ['statusRecovery', 1, 20]]);
 });
+
+test('a distance avoidance preview shows the 5% step it rolls, and keeps eligibility', async () => {
+  const { distancePreview } = await import('../src/engine/combatAvoidance.js');
+  const ctx = { combatExpansionRules: { matchups: { distance: { rangedChance: 32, reachChance: 20, maximumBaseChance: 50 } } } };
+  const entity = { combatStance: { maneuver: 'ranged', range: 'ranged' } };
+  const melee = { range: 'melee' };
+  const shown = distancePreview(ctx, entity, melee);
+  assert.equal(shown.eligible, true);
+  assert.equal(shown.baseChance, 30);
+  assert.equal(shown.chance, 30);
+  const tight = distancePreview({ combatExpansionRules: { matchups: { distance: { rangedChance: 33, reachChance: 0, maximumBaseChance: 50 } } } }, entity, melee);
+  assert.equal(tight.baseChance, 35);
+  const none = distancePreview({ combatExpansionRules: { matchups: { distance: { rangedChance: 0, reachChance: 0, maximumBaseChance: 50 } } } }, entity, melee);
+  assert.equal(none.eligible, false);
+});
