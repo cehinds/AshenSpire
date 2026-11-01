@@ -75,6 +75,7 @@ import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { gameModule } from '../model/gameProfile.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { focusManaDiscount, applyFocusManaDiscount } from '../model/focusMana.js';
 import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
@@ -1600,6 +1601,13 @@ function resolvedCardPriceReceipt(combat,def,claimed=null) {
  if(status.staminaTax || status.manaTax) {
   result.paid={...result.paid,energy:result.paid.energy+status.staminaTax,stamina:result.paid.stamina+status.staminaTax,mana:result.paid.mana+status.manaTax};
   result.display={...result.display,action:result.display.action+status.staminaTax,stamina:result.display.stamina+status.staminaTax,mana:result.display.mana+status.manaTax};
+ }
+ // Focus (owner, 2026-11-01): a held Focus armament takes Mana off the final price, floored at 0, so the face badge,
+ // affordability checks, the bot and the payment all read the same number.
+ const focus=focusManaDiscount(combat.registries,combat.loadout,combat.player?.classId);
+ if(focus>0) {
+  result.paid={...result.paid,mana:applyFocusManaDiscount(result.paid.mana,focus)};
+  result.display={...result.display,mana:applyFocusManaDiscount(result.display.mana,focus)};
  }
  return result;
 }
