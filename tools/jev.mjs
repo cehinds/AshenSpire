@@ -378,10 +378,17 @@ export function resolveChangelogConflict(text) {
     // A receipt's stable identity is its PR number, not its text: dev restamping a receipt
     // changes the line but not the PR, so ours' copy of a PR theirs already has is dropped.
     const prOf = (l) => (/^- \*\*.*?\(\[#(\d+)\]\(/.exec(l) || [])[1];
-    const theirPrs = new Set(theirs.split('\n').map(prOf).filter(Boolean));
+    const unstamped = (l) => l.replace(/`\d+\.\d+\.\d+\.\d+`/, '`#`');
+    const theirByPr = new Map(theirs.split('\n').filter(prOf).map(l => [prOf(l), l]));
     for (const line of ours.split('\n')) {
       if (!line.trim() || have.has(line) || /^## \d{4}-\d{2}-\d{2}\b/.test(line)) continue;
-      if (prOf(line) && theirPrs.has(prOf(line))) continue;
+      const pr = prOf(line);
+      if (pr && theirByPr.has(pr)) {
+        // Same receipt, only the stamp differs (dev restamped it): keep dev's copy.
+        if (unstamped(line) === unstamped(theirByPr.get(pr))) continue;
+        // Both sides changed the receipt's words: an authored edit a merge must not drop.
+        throw new Error(`CHANGELOG conflict: receipt #${pr} was edited on both sides; a model must merge the wording`);
+      }
       if (!/^- \*\*/.test(line)) throw new Error(`CHANGELOG conflict: ours changed a non-receipt line: ${line.slice(0, 80)}`);
       if (!extra.includes(line)) extra.push(line);
     }

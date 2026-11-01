@@ -426,6 +426,18 @@ test('resolveChangelogConflict keeps dev\'s copy of a receipt dev restamped (ide
   assert.ok(r.includes('#2501'), 'our new receipt kept');
 });
 
+test('resolveChangelogConflict escalates when ours edited a receipt\'s wording that dev restamped (Codex repro)', () => {
+  const text = [
+    '# Changelog', '', '## 2026-10-31', '',
+    '<<<<<<< HEAD',
+    '- **One** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.7.2.60`). Corrected wording.',
+    '=======',
+    '- **One** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.7.2.70`). Old wording.',
+    '>>>>>>> origin/dev', '',
+  ].join('\n');
+  assert.throws(() => resolveChangelogConflict(text), /edited on both sides/);
+});
+
 test('resolveChangelogConflict refuses a non-receipt change on our side', () => {
   const text = ['# Changelog', '<<<<<<< HEAD', 'Intro paragraph we rewrote.', '=======', 'Intro paragraph.', '>>>>>>> origin/dev', '## 2026-10-31', ''].join('\n');
   assert.throws(() => resolveChangelogConflict(text), /non-receipt line/);
