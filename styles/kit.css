@@ -6661,7 +6661,8 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-log-modal [data-console-shortcut][hidden] { display: none !important; }
 
 /* The rank-up bonus choice (owner, 2026-11-01): 2-3 option buttons under the card strip. */
-.reward-door .reward-rank-bonus { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; align-items: stretch; width: 100%; max-width: 60rem; margin: .4rem auto 0; }
+.reward-door .reward-rank-bonus { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; align-items: stretch; width: 100%; max-width: 60rem; margin: .4rem auto 0; position: sticky; bottom: 0; z-index: 2; padding: .6rem .4rem; background: var(--bg-raise, #14110e); border-top: 1px solid var(--line, rgba(201, 162, 39, .35)); }
+/* sticky: the choices stay in view while the player scrolls the cards */
 .reward-door .reward-rank-bonus[hidden] { display: none; }
 .reward-door .reward-rank-bonus-title { flex: 0 0 100%; margin: 0; text-align: center; font-weight: 600; }
 .reward-door .reward-bonus-option { flex: 1 1 12rem; min-width: 0; max-width: 20rem; min-height: var(--tap-floor); white-space: normal; overflow-wrap: anywhere; line-height: 1.25; padding: .6rem .8rem; }
