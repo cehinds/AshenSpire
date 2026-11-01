@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Every combat roll reads total vs DC** ([#2434](https://github.com/cehinds/AshenSpire/pull/2434), `0.7.2.75`). Accuracy, contests, crits, Intent-read Perception and status buildup and recovery rolls now log as total versus DC with the verdict, and the log's Full detail itemises the die, each bonus and the DC parts; Dodge and Evade keep their sentences and gain the same itemised receipt.
+- **Every combat roll reads total vs DC** ([#2434](https://github.com/cehinds/AshenSpire/pull/2434), `0.7.2.77`). Accuracy, contests, crits, Intent-read Perception and status buildup and recovery rolls now log as total versus DC with the verdict, and the log's Full detail itemises the die, each bonus and the DC parts; Dodge and Evade keep their sentences and gain the same itemised receipt.
+- **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.77`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields, and weapons, shields and other main objects carry a fine warm gold outline. Status effects now layer over the weapon and shield, with slightly stronger marks and glows; the physical Sweep trail follows its scythe blade.
 
 ## 2026-10-31
 
