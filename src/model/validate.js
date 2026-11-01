@@ -870,7 +870,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
-      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'rankMax', 'flatEvery', 'attributeEvery', 'featEvery', 'linkedAttributes', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'rankMax', 'rankUpBonusScale', 'flatEvery', 'attributeEvery', 'featEvery', 'linkedAttributes', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
       // The class card's leaning (plan phase 5a): a multiplier of 1 or more.
       if (!(Number.isFinite(skill.favoredXpMult) && skill.favoredXpMult >= 1)) err('balance.skill.favoredXpMult', `must be a number ≥ 1, got ${JSON.stringify(skill.favoredXpMult)}`);
       // The draft rows (plan phase 4b), each present and refused by name.
@@ -892,6 +892,8 @@ function collectContentProblems(bundle, errors = [], options = {}) {
           }
         }
       }
+      // The rank-up bonus's multiplier (owner, 2026-11-01): optional, 1 to 10 (a bonus is never smaller than an upgrade).
+      if (skill.rankUpBonusScale !== undefined && !(Number.isFinite(skill.rankUpBonusScale) && skill.rankUpBonusScale >= 1 && skill.rankUpBonusScale <= 10)) err('balance.skill.rankUpBonusScale', `must be a number from 1 to 10, got ${JSON.stringify(skill.rankUpBonusScale)}`);
       // A save refuses a rank above state.js MAX_CARD_RANK (99), so no setting may roll one.
       if (Number.isInteger(skill.rankMax) && skill.rankMax > 99) err('balance.skill.rankMax', `must be at most 99, got ${skill.rankMax}`);
       if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {

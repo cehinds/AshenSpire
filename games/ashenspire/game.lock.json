@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:1e8bdea3049bb23d152ba16ccba0c796db743302be85bf686c7de9e82da5f57e",
+      "hash": "sha256:3861768f7301be908dfe4feaab5a56215dca993a47b80222b937396ec1e56696",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -286,7 +286,7 @@
           "path": "engine/modules/equipment/settings.schema.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:13f0e016fd193d3775b85bc917045d2b1cbafb2494aec349f00503a536bccc6b"
+          "hash": "sha256:c9750c107f1ba8b51680e8891742279e61598c831a84d8ff2d976ca66236ce2d"
         },
         {
           "path": "engine/modules/formation/defaults.json",
@@ -586,7 +586,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:7c8b882b82a1501c821422bd7d083ae9bd41c42e5495e2f0e25dc75ce1dab99e"
+          "hash": "sha256:d9d4b90bac194239499f63fe262c66b8352077219a8fa4ba3f0b9888324de369"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -712,7 +712,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:095ddb998e1d11e13aac6ebacd552de1695191059795ec145d8f54334448e6c1"
+          "hash": "sha256:2e96307bc4463280f1a8d9c821abf6007d7c69466ee7578276f23a41cd92d874"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:90750818d2d5e94ed699a58f54765513a378302e22337b4d0ee6d1bdddd9a9c9"
     },
     "core": {
-      "hash": "sha256:1e8bdea3049bb23d152ba16ccba0c796db743302be85bf686c7de9e82da5f57e",
+      "hash": "sha256:3861768f7301be908dfe4feaab5a56215dca993a47b80222b937396ec1e56696",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1010,7 +1010,7 @@
           "path": "engine/modules/equipment/settings.schema.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:13f0e016fd193d3775b85bc917045d2b1cbafb2494aec349f00503a536bccc6b"
+          "hash": "sha256:c9750c107f1ba8b51680e8891742279e61598c831a84d8ff2d976ca66236ce2d"
         },
         {
           "path": "engine/modules/formation/defaults.json",
@@ -1310,7 +1310,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:7c8b882b82a1501c821422bd7d083ae9bd41c42e5495e2f0e25dc75ce1dab99e"
+          "hash": "sha256:d9d4b90bac194239499f63fe262c66b8352077219a8fa4ba3f0b9888324de369"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -1436,7 +1436,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:095ddb998e1d11e13aac6ebacd552de1695191059795ec145d8f54334448e6c1"
+          "hash": "sha256:2e96307bc4463280f1a8d9c821abf6007d7c69466ee7578276f23a41cd92d874"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -1450,7 +1450,7 @@
       "runtimeHash": "sha256:90750818d2d5e94ed699a58f54765513a378302e22337b4d0ee6d1bdddd9a9c9"
     },
     "current": {
-      "hash": "sha256:97b3a734d424f0b31568914f7c72fc2545e37f44d95802231f4e9e1c820db5d4",
+      "hash": "sha256:b9b9abec2992c1bc6b6eb7e39749d7aca4c8746eb3c072180d5c792bfe0b34ca",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1716,7 +1716,7 @@
           "path": "engine/modules/equipment/settings.schema.json",
           "id": "equipment",
           "version": "1.0.0",
-          "hash": "sha256:13f0e016fd193d3775b85bc917045d2b1cbafb2494aec349f00503a536bccc6b"
+          "hash": "sha256:c9750c107f1ba8b51680e8891742279e61598c831a84d8ff2d976ca66236ce2d"
         },
         {
           "path": "engine/modules/formation/defaults.json",

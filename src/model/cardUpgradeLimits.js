@@ -2,7 +2,7 @@
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardRank } from './cardRank.js';
-import { upgradeCount, upgradeStepsOf, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeCount, paidUpgradeCount, upgradeStepsOf, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
 import { rollUpgradeOptions, upgradeStepRng } from './cardUpgradeSteps.js';
@@ -49,15 +49,17 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false } = {}) {
  * add, [] when the card is maxed. A first upgrade of a card with an upgrade block lists `authored` (the card's
  * designed upgrade) first, then one rolled alternative when count > 1; otherwise the seeded roll's options.
  * The first entry is always what nextUpgradeStep returns. Stateless.
+ * `scale` (> 1) makes the amounts bigger, `salt` gives the roll its own stream and `noAuthored` skips the card's
+ * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js).
  */
-export function nextUpgradeOptions(run, instance, base, registries, count = 1) {
+export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false } = {}) {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
-  const limits = { ...mana, rank, exposure: registries?.balance?.exposure?.buildupPerManaSpell };
-  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, instance.instanceId, applied.length), limits, n);
-  const authored = applied.length === 0 && base.upgrade;
+  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell };
+  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, salt ? `${instance.instanceId}#${salt}` : instance.instanceId, applied.length), limits, n);
+  const authored = applied.length === 0 && base.upgrade && !noAuthored;
   if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
@@ -91,10 +93,10 @@ export function nextUpgradeStep(run, instance, base, registries) {
  * the card is at the 10-upgrade cap or maxed (no step is eligible any more).
  */
 export function upgradeCost(run, instance, def, registries) {
-  const n = upgradeCount(instance) + 1;
-  if (n > MAX_CARD_UPGRADES) return null;
+  if (upgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
   if (def && instance && nextUpgradeStep(run, instance, def, registries) === null) return null;
-  return n <= freeAllowance(instance, def) ? 0 : 1;
+  // A rank-up bonus step does not use a free upgrade (paidUpgradeCount).
+  return paidUpgradeCount(instance) + 1 <= freeAllowance(instance, def) ? 0 : 1;
 }
 
 const stonesOf = (run) => (Number.isSafeInteger(run && run.smithingStones) ? run.smithingStones : 0);

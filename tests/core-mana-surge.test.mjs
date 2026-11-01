@@ -71,11 +71,11 @@ test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; R
 test('Starseer replaces Resource Gain and both sceptre classes start with ten cards', () => {
   const run = start('starseer');
   assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
-  assert.equal(run.deck.length, 10);
-  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
+  assert.equal(run.deck.length, 10, 'the starting weapon art replaces the class special');
+  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 8);
   const herald = start('herald');
   assert.equal(herald.deck.length, 10, 'Herald trades one Ethereal for granted Mana Surge');
-  assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 3);
+  assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 2);
 });
 
 test('a Reaver gains Mana Surge on equipping a Bone Sceptre, loses it on unequip, never duplicates', () => {
@@ -99,14 +99,15 @@ test('a Reaver gains Mana Surge on equipping a Bone Sceptre, loses it on unequip
   assert.equal(run.deck.length, authored);
 });
 
-test('Core runs still do not mint legacy weapon cards on equip (no arts, kits, Dodge Roll)', () => {
+test('Core mints only weapon arts from a weapon, never kits or the Dodge Roll (owner 2026-11-01)', () => {
   const run = start('reaver');
-  const before = run.deck.map((c) => c.cardId).sort();
+  const before = run.deck.filter((c) => !isItemOwned(c)).map((c) => c.cardId).sort();
   equip(run, 'boneSceptre');
   stampDeck(reg, run);
-  const after = run.deck.filter((c) => c.cardId !== 'core.manaSurge').map((c) => c.cardId).sort();
+  const after = run.deck.filter((c) => !isItemOwned(c)).map((c) => c.cardId).sort();
   assert.deepEqual(after, before);
-  assert.ok(run.deck.every((c) => !isItemOwned(c) || c.cardId === 'core.manaSurge'));
+  assert.ok(run.deck.every((c) => !isItemOwned(c) || c.cardId === 'core.manaSurge' || c.equipmentRole === 'weaponArt'));
+  assert.ok(run.deck.every((c) => !c.kitRole && !String(c.grantedBy || '').startsWith('unarmed:')));
 });
 
 test('an older Core save without the card gets it on the next reconcile', () => {
@@ -147,7 +148,8 @@ test('a mid-fight swap to a sceptre lends the card to the pile, and away again',
   assert.equal(piles.discard.filter((c) => c.cardId === 'core.manaSurge').length, 1, 'idempotent');
   equip(run, 'greatsword');
   reconcileGrantedCardsInCombat(reg, synthetic(run.loadout), piles);
-  assert.equal(piles.discard.length, 0);
+  assert.equal(piles.discard.filter((c) => c.cardId === 'core.manaSurge').length, 0);
+  assert.deepEqual(piles.discard.map((c) => c.cardId), ['greatswordSunderingHew'], 'the greatsword lends only its art');
 });
 
 test('deck editor shows the granted card with the existing equipment presentation and mints nothing unowned', async () => {
