@@ -183,3 +183,84 @@ test('planRun: feed lag retries with backoff then fails closed; it recovers when
   const cuts = await planRun({ fetchPage: lagging, messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {} });
   assert.deepEqual(cuts.map((c) => c.id), ['2']);
 });
+
+// ---- simulation: random histories against a simulated feed and dev -------------------------------
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+test('simulation: recorded events are always an ordered prefix of the non-bot events; a clean run completes them', async () => {
+  for (let seed = 1; seed <= 300; seed++) {
+    const rand = rng(seed);
+    const pick = (xs) => xs[Math.floor(rand() * xs.length)];
+    const feed = [];
+    const bots = new Set();
+    const dev = { messages: [], triple: [0, 7, 2] };
+    let nextId = 100 + Math.floor(rand() * 5);
+    const noSleep = async () => {};
+    const humanEvents = () => feed.filter((e) => !bots.has(e.after)).sort(cmpEvents);
+    const recordedIds = () => dev.messages.flatMap((m) => parseRecords([m]).map((r) => r.id));
+    const push = () => {
+      const id = nextId++;
+      const branch = pick(['release', 'main']);
+      const type = pick(['push', 'push', 'push', 'force_push', 'pr_merge']);
+      const e = { id, activity_type: type, ref: `refs/heads/${branch}`, before: `b${id - 1}`, after: `a${id}`, timestamp: `2026-11-02T00:00:${String(Math.floor(id / 3) % 60).padStart(2, '0')}Z` };
+      if (rand() < 0.3) bots.add(e.after);
+      feed.push(e);
+      return e;
+    };
+    const apply = (cuts, crashAfter = Infinity) => {
+      let n = 0;
+      for (const c of cuts) {
+        if (n++ >= crashAfter) return;
+        if (recordsEvent(dev.messages, c.id)) continue;
+        dev.triple = nextTriple(dev.triple, c.branch === 'release' ? 'candidate' : 'minor');
+        dev.messages.push(advanceMessage(dev.triple.join('.'), c.branch, c.after.padEnd(7, '0').replace(/[^0-9a-f]/g, '0'), c));
+      }
+    };
+    const plan = (view, trigger) => planRun({ fetchPage: feedOf(view, 4), messages: [...dev.messages], trigger, isBotOnly: (e) => bots.has(e.after), sleep: noSleep });
+    const check = (where) => {
+      const ids = recordedIds();
+      assert.equal(new Set(ids).size, ids.length, `${where} seed ${seed}: duplicate record`);
+      assert.deepEqual(ids, humanEvents().map((e) => String(e.id)).slice(0, ids.length), `${where} seed ${seed}: not an ordered prefix`);
+    };
+    let pendingPlan = null;
+    for (let step = 0; step < 25; step++) {
+      const r = rand();
+      if (r < 0.4) push();
+      else if (r < 0.7) {
+        // A run for the newest push (or a dispatch), which may crash part way.
+        const last = feed.at(-1);
+        const trigger = last && rand() < 0.7 ? { ref: last.ref, after: last.after } : null;
+        apply(await plan(feed, trigger), rand() < 0.4 ? Math.floor(rand() * 3) : Infinity);
+      } else if (r < 0.8 && feed.length) {
+        // Feed lag: the run cannot see the newest event; it must fail and write nothing.
+        const last = feed.at(-1);
+        const before = dev.messages.length;
+        await assert.rejects(plan(feed.filter((e) => e !== last), { ref: last.ref, after: last.after }), FailClosed);
+        assert.equal(dev.messages.length, before);
+      } else if (r < 0.88 && dev.messages.length) {
+        // A feed that lost the cursor: fail closed, write nothing.
+        const cur = latestRecord(parseRecords(dev.messages));
+        const before = dev.messages.length;
+        await assert.rejects(plan(feed.filter((e) => cmpEvents(e, cur) > 0), null), FailClosed);
+        assert.equal(dev.messages.length, before);
+      } else if (r < 0.95) {
+        // A race: run A plans, run B plans and applies everything, then A applies its stale plan.
+        pendingPlan = await plan(feed, null);
+        apply(await plan(feed, null));
+        apply(pendingPlan);
+      } else {
+        apply(await plan(feed, null), 1);
+      }
+      check(`step ${step}`);
+    }
+    // A final clean run applies everything still owed; the triple is the fold of every non-bot event.
+    apply(await plan(feed, null));
+    check('final');
+    assert.deepEqual(recordedIds(), humanEvents().map((e) => String(e.id)), `final seed ${seed}`);
+    const expected = humanEvents().reduce((t, e) => nextTriple(t, e.ref === 'refs/heads/release' ? 'candidate' : 'minor'), [0, 7, 2]);
+    assert.deepEqual(dev.triple, expected, `seed ${seed}`);
+  }
+});
