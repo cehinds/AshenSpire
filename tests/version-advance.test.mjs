@@ -118,6 +118,28 @@ test('planCuts: types, force push, branch creation, deletion, duplicates', () =>
   assert.equal(cuts[3].before, null);
 });
 
+test('planCuts: duplicate feed copies of one merge cause one bump, under the lowest id', () => {
+  const ts = '2026-11-05T03:09:36Z';
+  const a = ev(43159342186, 'main', '5cffd4d9', 'e5f0dd6c', 'pr_merge', ts);
+  const b = ev(43160345761, 'main', '5cffd4d9', 'e5f0dd6c', 'pr_merge', ts);
+  assert.deepEqual(planCuts([b, a], null, noBots).map((c) => c.id), ['43159342186']);
+  assert.deepEqual(planCuts([a, b], null, noBots).map((c) => c.id), ['43159342186']);
+  // A different ref, before, after or timestamp is a different event.
+  const other = ev(43160345762, 'main', '5cffd4d9', 'e5f0dd6c', 'pr_merge', '2026-11-05T03:09:37Z');
+  assert.equal(planCuts([a, b, other], null, noBots).length, 2);
+});
+
+test('planCuts: a cursor on one copy covers the other copies', () => {
+  const ts = '2026-11-05T03:09:36Z';
+  const a = ev(100, 'main', 'p', 'q', 'pr_merge', ts);
+  const b = ev(200, 'main', 'p', 'q', 'pr_merge', ts);
+  assert.deepEqual(planCuts([a, b], { id: '100', timestamp: ts }, noBots), []);
+  assert.deepEqual(planCuts([a, b], { id: '200', timestamp: ts }, noBots), []);
+  // The copy with the higher id would sort after the cursor, yet is not owed.
+  const later = ev(300, 'main', 'q', 'r', 'push', '2026-11-05T03:10:00Z');
+  assert.deepEqual(planCuts([a, b, later], { id: '100', timestamp: ts }, noBots).map((c) => c.id), ['300']);
+});
+
 test('planCuts: a bot-only event is skipped, however many events follow it', () => {
   const events = [ev(1, 'release', 'a', 'bot'), ...Array.from({ length: 150 }, (_, i) => ev(i + 2, 'main', `m${i}`, `m${i + 1}`))];
   const cuts = planCuts(events, null, (e) => e.after === 'bot');
@@ -199,7 +221,7 @@ test('simulation: recorded events are always an ordered prefix of the non-bot ev
     const dev = { messages: [], triple: [0, 7, 2] };
     let nextId = 100 + Math.floor(rand() * 5);
     const noSleep = async () => {};
-    const humanEvents = () => feed.filter((e) => !bots.has(e.after)).sort(cmpEvents);
+    const humanEvents = () => feed.filter((e) => !bots.has(e.after)).sort(cmpEvents).filter((e, i, all) => all.findIndex((x) => x.ref === e.ref && x.before === e.before && x.after === e.after && x.timestamp === e.timestamp) === i);
     const recordedIds = () => dev.messages.flatMap((m) => parseRecords([m]).map((r) => r.id));
     const push = () => {
       const id = nextId++;
@@ -208,6 +230,8 @@ test('simulation: recorded events are always an ordered prefix of the non-bot ev
       const e = { id, activity_type: type, ref: `refs/heads/${branch}`, before: `b${id - 1}`, after: `a${id}`, timestamp: `2026-11-02T00:00:${String(Math.floor(id / 3) % 60).padStart(2, '0')}Z` };
       if (rand() < 0.3) bots.add(e.after);
       feed.push(e);
+      // The feed sometimes lists one event twice under a later id (same ref, before, after, timestamp).
+      if (rand() < 0.25) feed.push({ ...e, id: nextId++ });
       return e;
     };
     const apply = (cuts, crashAfter = Infinity) => {
@@ -238,7 +262,7 @@ test('simulation: recorded events are always an ordered prefix of the non-bot ev
         // Feed lag: the run cannot see the newest event; it must fail and write nothing.
         const last = feed.at(-1);
         const before = dev.messages.length;
-        await assert.rejects(plan(feed.filter((e) => e !== last), { ref: last.ref, after: last.after }), FailClosed);
+        await assert.rejects(plan(feed.filter((e) => e.after !== last.after), { ref: last.ref, after: last.after }), FailClosed);
         assert.equal(dev.messages.length, before);
       } else if (r < 0.88 && dev.messages.length) {
         // A feed that lost the cursor: fail closed, write nothing.

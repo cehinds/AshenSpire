@@ -118,20 +118,30 @@ export const eventBranch = (e) => ((e.ref === 'refs/heads/release' && 'release')
  * `cursor` is the newest recorded {id, timestamp} or null (then SINCE). An event is a cut when it
  * is after the cursor, on release or main, of a pushing type (branch_creation counts; its
  * all-zero before is a cut, not a bot check) and not bot-only per `isBotOnly(event)`.
- * branch_deletion and other types are dropped. Each cut: {id, timestamp, branch, before, after}.
+ * branch_deletion and other types are dropped. Copies of one event (same ref, before, after,
+ * timestamp) are one cut, under the lowest id. Each cut: {id, timestamp, branch, before, after}.
  */
 export function planCuts(events, cursor, isBotOnly) {
   const floor = cursor ?? { id: '0', timestamp: SINCE };
-  const seen = new Set();
-  const cuts = [];
+  // The feed sometimes lists one push/merge twice under different ids. Copies share
+  // (ref, before, after, timestamp); the lowest id speaks for the group. The group is formed
+  // BEFORE the cursor test, so a cursor on any copy covers every copy (a crash between copies
+  // must not bump twice) because the lowest id sorts at or before the cursor's.
+  const groups = new Map();
   for (const e of [...events].sort(cmpEvents)) {
     const branch = eventBranch(e);
-    if (!branch || !CUT_TYPES.has(e.activity_type) || seen.has(String(e.id))) continue;
+    if (!branch || !CUT_TYPES.has(e.activity_type)) continue;
+    const key = [e.ref, e.before, e.after, Date.parse(e.timestamp)].join('|');
+    const rep = groups.get(key);
+    if (!rep) groups.set(key, e);
+    else if (cmpEvents(e, rep) < 0) groups.set(key, e);
+  }
+  const cuts = [];
+  for (const e of [...groups.values()].sort(cmpEvents)) {
     if (cmpEvents(e, floor) <= 0) continue;
-    seen.add(String(e.id));
     const created = !e.before || ZERO_SHA.test(e.before);
     if (!created && isBotOnly(e)) continue;
-    cuts.push({ id: String(e.id), timestamp: e.timestamp, branch, before: created ? null : e.before, after: e.after });
+    cuts.push({ id: String(e.id), timestamp: e.timestamp, branch: eventBranch(e), before: created ? null : e.before, after: e.after });
   }
   return cuts;
 }
