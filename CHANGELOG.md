@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Rank-ups offer a bonus** ([#2472](https://github.com/cehinds/AshenSpire/pull/2472), `0.7.3.12`). Raising a card's rank now also lets you pick one of 2-3 bonus upgrades (damage, Block, Poise, cost or tags) at double the usual size, on top of the wider upgrade range.
 - **One weapon set per hand** ([#2463](https://github.com/cehinds/AshenSpire/pull/2463), `0.7.3.12`). Main and off hand each carry a single set (MH1 and OH1); anything saved in the removed extra sets moves to storage when the save loads.
 - **Focus discount is for magic cards** ([#2465](https://github.com/cehinds/AshenSpire/pull/2465), `0.7.3.10`). A Focus armament now lowers the Mana cost of magic (spell) cards only; other cards that cost Mana pay full price.
 - **Hit receipts list each Precision stat** ([#2461](https://github.com/cehinds/AshenSpire/pull/2461), `0.7.3.8`). The single "stat mix" line in a hit receipt is now one line per stat (DEX, STR, INT, WIS) plus level, with a rounding line so the parts add up to the total.
