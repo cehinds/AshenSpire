@@ -117,11 +117,11 @@ test('Smith renders calculated item and card deltas outside the closed details',
   const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
   const host = dom.document.createElement('main'); dom.document.body.append(host);
   const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
-  const stone = host.querySelector('.smith-economy-values .smith-stone-icon');
+  const stone = host.querySelector('.smith-head-cost .smith-stone-icon');
   assert.equal(stone.querySelector('[data-engraved-icon]')?.dataset.engravedIcon, 'weight');
   assert.equal(stone.getAttribute('aria-hidden'), 'true', 'cost text names the decorative stone');
   assert.doesNotMatch(stone.textContent, /weight/);
-  assert.match(host.querySelector('.smith-economy-values').outerHTML, /Smithing Stone Cost/);
+  assert.match(host.querySelector('.smith-head-cost').getAttribute('aria-label'), /Smithing Stone Cost/);
   const stats = host.querySelector('.smith-intrinsic-stats');
   const deltas = node => node.querySelectorAll('.as-statpair').map(pair => [
     pair.querySelector('em')?.textContent, pair.querySelector('b')?.textContent, pair.querySelector('strong')?.textContent,
