@@ -6,7 +6,7 @@
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
 import { t } from '../ui/strings.js';
-import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
+import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, distanceRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -262,16 +262,23 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const e = event.evade, d = event.distance, attack = attackText();
         const lines = [];
         if (event.prevention) lines.push(`${target} avoided ${attack} (${PREVENTION_WORDS[event.prevention] || word(event.prevention)}).`);
-        if (d) lines.push(d.success ? `${target} avoided ${attack} at range: distance roll ${d.roll}, needed ${d.chance} or less.`
-          : `${target}'s range failed against ${attack}: distance rolled ${d.roll}, needed ${d.chance} or less.`);
+        const receipts = lines.map(() => null);
+        if (d) {
+          // Distance is a d20 against a target (owner, 2026-11-01); a log written before that holds a d100 under the chance.
+          const needs = Number.isFinite(d.target) ? `${d.target} or more` : `${d.chance} or less`, die = Number.isFinite(d.target) ? 'd20 ' : '';
+          lines.push(d.success ? `${target} avoided ${attack} at range: distance ${die}roll ${d.roll}, needed ${needs}.`
+            : `${target}'s range failed against ${attack}: distance ${die}rolled ${d.roll}, needed ${needs}.`);
+          receipts.push(distanceRollReceipt(d));
+        }
         if (e) {
           const roll = Number.isFinite(e.total) && e.total !== e.roll ? `${e.roll} + ${e.total - e.roll} = ${e.total}` : `${e.roll}`;
           lines.push(e.success ? `${target} evaded ${attack}: Evade roll ${roll} beat ${e.difficulty}.`
             : `${target}'s Evade failed against ${attack}: rolled ${roll}, needed more than ${e.difficulty}.`);
+          receipts.push(evadeRollReceipt(e));
         }
         text = lines.length ? lines : null;
         // Each receipt belongs to its own row only: a failed distance row never shows the Evade's d20.
-        lineReceipts = lines.map(line => (e && line === lines[lines.length - 1] ? evadeRollReceipt(e) : null));
+        lineReceipts = receipts;
         break;
       }
       case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;

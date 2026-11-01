@@ -19,7 +19,11 @@ export function rollReceiptLines(receipt) {
   lines.push(`= ${fmt(receipt.total)}`);
   const dcParts = receipt.dcParts || [];
   const needs = { lte: '≤', lt: '<' }[receipt.compare];
-  if (needs) lines.push(`${t('combat.roll.needs')} ${needs} ${dcParts.length ? dcParts.map(part => `${part.label} ${fmt(part.value)}`).join(' + ') : fmt(receipt.dc)}`);
+  if (receipt.compare === 'gte' && dcParts.some(part => part.label === 'Chance %')) {
+    // A percentage chance rolled as a d20: "Needs ≥ 18 (Chance 15%)".
+    const chance = dcParts.find(part => part.label === 'Chance %');
+    lines.push(`${t('combat.roll.needs')} ≥ ${fmt(receipt.dc)} (Chance ${fmt(chance.value)}%)`);
+  } else if (needs) lines.push(`${t('combat.roll.needs')} ${needs} ${dcParts.length ? dcParts.map(part => `${part.label} ${fmt(part.value)}`).join(' + ') : fmt(receipt.dc)}`);
   else if (dcParts.length) {
     dcParts.forEach((part, index) => lines.push(index ? signed(part.value, part.label) : `vs ${part.label} ${fmt(part.value)}`));
     if (dcParts.length > 1) lines.push(`= ${fmt(receipt.dc)}`);
