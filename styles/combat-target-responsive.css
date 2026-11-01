@@ -206,15 +206,10 @@
 }
 
 /* Counter / Reflect stack badges (owner 2026-10-31): with up to five badges (shield, precision, counter, reflect, poise) the row
-   wraps instead of overlapping; the HP trough takes the remaining width of its own line. Badge sizes are untouched. */
+   wraps instead of overlapping. The HP bar keeps its own full-width line and the badges stay BELOW it, the row growing downward
+   (owner 2026-11-01: order:0/1 overrides here had put the badges above the bar). Badge sizes are untouched. */
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
   flex-wrap: wrap; row-gap: calc(2px / var(--ui-zoom, 1)); column-gap: calc(3px / var(--ui-zoom, 1));
-}
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) > .combat-health-meter {
-  flex: 1 1 calc(72px / var(--ui-zoom, 1)); order: 1;
-}
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) > .combat-health-badge {
-  order: 0; flex: 0 0 calc(22px / var(--ui-zoom, 1)); min-width: calc(22px / var(--ui-zoom, 1));
 }
 
 /* Stance badge: same plate as the others, tinted by maneuver. */
