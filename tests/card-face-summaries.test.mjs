@@ -8,6 +8,7 @@ import { renderCard } from '../src/ui/components/card.js';
 import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection } from '../src/model/cardFaceProjection.js';
+import { spellDefenseSplit } from '../src/model/spellDefense.js';
 import { tokenRe } from '../src/model/validate.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
@@ -183,3 +184,13 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
     } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
   });
 });
+
+test('a summary keeps card identity so Sanctuary Cleanse splits Block and Ward without a preview', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  const def = resolveCard(reg, { cardId: 'sanctuaryCleanse' });
+  const split = spellDefenseSplit(def, 3);
+  assert.deepEqual(split, { block: 1, ward: 2 });
+  const lines = facesOf(dom, reg, { cardId: 'sanctuaryCleanse' }, rules);
+  assert.ok(lines.includes('Gain 1 Block, 2 Ward.'), lines.join(' | '));
+  assert.ok(lines.every(line => !/Barrier/.test(line)), lines.join(' | '));
+}));
