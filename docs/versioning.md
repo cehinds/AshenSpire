@@ -234,10 +234,38 @@ the `version:` literal and the `// version-advance:` marker beside it in
 `src/content/index.js` (plus the `SERIES` constant in `tools/release-series.mjs`
 on a minor bump), then writes the box through `bumpOrdinal`, which restarts the
 ordinal at 0. It commits to `dev` as `version-advance: <triple> after
-<release|main> <source sha> [version-advance]`. A commit on `dev` that already
-records the source sha stops a re-run, and a push of bot commits alone is not a
-cut. A session never hand-edits the triple for these two events. MAJOR stays
-a hand edit.
+<release|main> <source sha> [version-advance]`, with a trailer
+`Version-Advance-Event: <id> <timestamp>`. A session never hand-edits the triple
+for these two events. MAJOR stays a hand edit.
+
+### Version advance: the cursor model
+
+The cuts come from the repository activity feed, not from workflow run history:
+`GET /repos/{repo}/activity?ref=refs/heads/release` (and `main`) lists every
+update of those refs whether or not a workflow ran for it. `tools/version-advance.mjs --plan`:
+
+- **Cursor.** The newest `Version-Advance-Event` recorded on `dev`, ordered by
+  (timestamp, id). Events at or before it are never reconsidered. With no record
+  yet, the floor is `SINCE` in the tool (raise it to the merge time of the
+  automation so older cuts, already hand-bumped, are not replayed).
+- **Plan.** Every later event on `release` or `main` of type `push`,
+  `force_push`, `pr_merge`, `merge_queue_merge` or `branch_creation`
+  (`branch_deletion` is dropped), oldest first. Release then main gives 0.8.0 from 0.7.2;
+  main then release gives 0.8.1. The workflow applies them in that order, each as one
+  commit, skipping any whose event id `dev` already records, so a re-run or a race
+  never bumps twice.
+- **Bot-only events** (every commit in the event's own before..after is a
+  github-actions[bot] commit) write no record; they are re-checked on each run from that
+  event's own range, so nothing ages out. The range is read with `git log`, else after
+  `git fetch origin <before>`, else from the compare API; if all fail the job fails.
+- **Dispatch.** `workflow_dispatch` takes no input: it runs the same plan from any head, so
+  a manual run recovers every lost cut in order.
+- **Fail closed (nothing is written).** On a push the pushed `after` sha must appear in the
+  feed: if it does not (feed lag) the job retries five times (10 s to 80 s) and then fails. If
+  `dev` has records and the feed no longer shows the cursor event (it ran out, or passed it)
+  the job fails with an error. Re-run the workflow once the feed catches up.
+- **Permissions.** The activity API needs only `contents: read`; the job already has
+  `contents: write` for the push to `dev` and `actions: write` for the preview dispatch.
 
 ## Mechanics of a hand bump (MAJOR only now; one PR, one commit sequence)
 
