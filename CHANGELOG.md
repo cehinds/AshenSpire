@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Enemy character sheets** ([#2478](https://github.com/cehinds/AshenSpire/pull/2478), `0.7.3.28`). Each Core enemy now has an editable JSON character sheet (stats, equipment, deck and reserve deck) using typed id references, with a generated table of what every id means.
+- **Enemy character sheets** ([#2478](https://github.com/cehinds/AshenSpire/pull/2478), `0.7.3.30`). Each Core enemy now has an editable JSON character sheet (stats, equipment, deck and reserve deck) using typed id references, with a generated table of what every id means.
+- **OpenRouter client for dev tools** ([#2481](https://github.com/cehinds/AshenSpire/pull/2481), `0.7.3.30`). Developer tooling only: a server-side OpenRouter client (`tools/lib/openrouter.mjs`) and `node tools/openrouter.mjs` command; the key stays in your environment or a gitignored `.env`, and the game itself still calls no AI service.
 - **Armoury: compact rows, toast and Replace comparison** ([#2470](https://github.com/cehinds/AshenSpire/pull/2470), `0.7.3.28`). Equipment rows are selectable with a green outline driving the Inspect panel, the status line is a fading toast, and Replace shows the equipped and new item side by side (green better, red worse) with Back and Equip.
 - **Focus discount needs Prepared stance** ([#2469](https://github.com/cehinds/AshenSpire/pull/2469), `0.7.3.26`). A Focus armament now lowers magic cards by 1 Mana only while you are in Prepared stance.
 - **Weakness chips show once discovered** ([#2467](https://github.com/cehinds/AshenSpire/pull/2467), `0.7.3.24`). An enemy's weakness chip appears only after you trigger that weakness, with a proper icon (the empty Frost box is fixed) and a tooltip such as "Weak to Piercing: +25% damage"; the inspector no longer spoils undiscovered weaknesses.
