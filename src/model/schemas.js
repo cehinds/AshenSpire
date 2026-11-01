@@ -891,7 +891,7 @@ export const SCHEMAS = Object.freeze({
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
     targetLimit: opt({k:'formulaOrNum'}),
-    gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
+    gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),
     attack: opt(any),
@@ -904,6 +904,8 @@ export const SCHEMAS = Object.freeze({
     // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
     onTurnEndInHand: opt(effects),
     textTemplate: str,
+    // The glance face's authored summary: at most two short lines (five words each), same {tokens} as textTemplate. The face shows it in place of the Inspect cue when the computed face cannot be said in five-word clauses (SPEC card face rules).
+    faceTemplate: opt(arr(str)),
     // Core 2 with Ward off: the rules text when this card's Ward damage reads as Poise damage; {poiseDamage} is all of its Poise (model/wardOffCardText.js).
     wardOffTextTemplate: opt(str),
     upgrade: opt(

@@ -21,6 +21,7 @@ export const coopCards = [
     keywords: ['exhaust'], icon: 'health',
     effects: [{ op: 'heal', target: 'ally', amount: 7 }],
     textTemplate: 'An ally heals {heal} HP. Exhaust.',
+    faceTemplate: ['Ally heals {heal} HP.'],
     upgrade: { effects: [{ op: 'heal', target: 'ally', amount: 11 }] },
     flavor: "Warmth passed between two climbers.\n\nHands over one coal, breath beneath one coat, with no hearth and no ledger. The Chapel would have named it theft. It is the only warmth upon the ring owed to no one.\n\nWarmth passed between two outlives the fire.",
   },
