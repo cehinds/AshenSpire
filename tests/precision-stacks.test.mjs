@@ -49,8 +49,9 @@ test('Precision = 1 + statMix + stacks and Evasion = 8 + DEX + 2 per Evade stack
   const hit = attackHitPreview(combat, player, enemy, carrier);
   assert.equal(hit.need, 11 - 4);
   // The itemised Precision the combat log receipt reads sums to the accuracy.
-  assert.deepEqual(hit.precisionParts.filter(p => ['base', 'stat mix', 'stacks'].includes(p.label)).map(p => [p.label, p.value]), [['base', 1], ['stat mix', 2], ['stacks', 1]]);
-  assert.equal(hit.precisionParts.reduce((n, p) => n + p.value, 0), hit.accuracy);
+  assert.deepEqual(hit.precisionParts.map(p => [p.label, p.value]), [['base', 1], ['DEX', 1], ['level', 1], ['stacks', 1]]);
+  assert.ok(!hit.precisionParts.some(p => p.label === 'stat mix'), 'the single stat mix line is gone');
+  assert.equal(Math.round(hit.precisionParts.reduce((n, p) => n + p.value, 0) * 100) / 100, hit.accuracy);
   assert.equal(hit.hitChance, Math.floor(100 * 14 / 20), 'need 7: d20 7..20 hit');
 });
 
@@ -161,4 +162,21 @@ test('legacy (default contentBundle, no Core 2 profile) is unchanged: linear Pre
   assert.equal(player.statuses.precision.stacks, 3, 'legacy Precision does not decay');
   const hit = resolveAttackHit(combat, player, enemy, carrier);
   assert.deepEqual([hit.d20, hit.hit, hit.accuracy, hit.evasion, hit.need], [10, true, 8, 7, 7]);
+});
+
+test('the receipt itemises the stat mix one stat per line and the lines sum to the total', () => {
+  const { combat, player, enemy } = live();
+  // STR 5 x0.1 = 0.5, INT 3 x0.2 = 0.6, WIS 2 x0.2 = 0.4, DEX 0 skipped, level 14: 15.5 floors to 15, so rounding is -0.5.
+  Object.assign(player, { attributes: { dexterity: 0, strength: 5, wisdom: 2, intelligence: 3 }, level: 14, statuses: {} });
+  Object.assign(enemy, { attributes: { dexterity: 3 }, statuses: {} });
+  const hit = attackHitPreview(combat, player, enemy, carrier);
+  const by = Object.fromEntries(hit.precisionParts.map(p => [p.label, p]));
+  assert.equal(by.STR.value, 0.5); assert.equal(by.STR.note, '5 ×0.1');
+  assert.equal(by.INT.value, 0.6); assert.equal(by.WIS.value, 0.4); assert.equal(by.level.value, 14);
+  assert.ok(!('DEX' in by), 'a zero stat is skipped');
+  assert.equal(by.rounding.value, -0.5);
+  assert.ok(!('stat mix' in by));
+  const sum = Math.round(hit.precisionParts.reduce((n, p) => n + p.value, 0) * 100) / 100;
+  assert.equal(sum, hit.accuracy);
+  assert.equal(hit.accuracy, 1 + precisionStatMix(combat, player));
 });

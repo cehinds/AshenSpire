@@ -891,6 +891,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
+  const commonStart = html.length;
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
   if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
@@ -930,15 +931,36 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
+  // KEY FIRST (owner, 2026-11-01): the card's effect line and its effect-tag
+  // definitions lead; the common type, school, stance and element explanations
+  // follow, then the chips.
+  const common = html.slice(commonStart);
+  html = html.slice(0, commonStart);
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
-  const lines = [];
+  // ONE CHIP PER DISTINCT TAG. Three authored ids carry the label "Spell"
+  // (camp:spell, source:spell, maneuver:casting), so a spell card used to print
+  // "Spell Spell Spell" — the old Set only removed byte-identical markup, and
+  // each chip's tooltip differs. Chips are keyed by label; the tooltips of the
+  // ids that share a label are merged into the one chip.
+  // EFFECT TAGS (keywords and applied statuses) also list their tooltip text
+  // inline, under the chips; card type, stance and element tags stay tooltip-only.
+  const chips = new Map();
+  const addChip = (label, tip, effect = false) => {
+    const key = String(label).trim().toLowerCase();
+    const chip = chips.get(key) || { label, tips: [], effectTips: [], effect: false };
+    if (tip && !chip.tips.includes(tip)) chip.tips.push(tip);
+    // Only effect sources (keyword, applied status) feed the inline text.
+    if (effect && tip && !chip.effectTips.includes(tip)) chip.effectTips.push(tip);
+    chip.effect ||= effect;
+    chips.set(key, chip);
+  };
   for (const kw of def.keywords || []) {
     // Words resolve through the framework TermRegistry (one vocabulary home);
     // an id outside the keyword vocabulary is skipped, as before.
     const k = registries.framework.keywordDisplay(kw);
-    if (k) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(k.tooltip)}">${esc(k.name)}</span>`);
+    if (k) addChip(k.name, k.tooltip, true);
   }
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
@@ -961,22 +983,26 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
       const s = glossaryEntry(registries, 'status', eff.status, statusContext);
-      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
+      if (s && !def.textTemplate.includes(s.name)) addChip(s.name, s.tooltip, true);
     }
     if (eff.op === 'enterStance') {
       // A chosen stance (Warrior's Vow) explains every stance it can offer.
       const ids = eff.choose ? (cardChoice(registries, def, def.class)?.options || []).map((o) => o.id) : [eff.stance];
       for (const id of ids) {
         const s = glossaryEntry(registries, 'stance', id, statusContext);
-        if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
+        if (s && !def.textTemplate.includes(s.name)) addChip(s.name, s.tooltip);
       }
     }
   }
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row, registries))}">${esc(row.label)}</span>`); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag, registries))}">${esc(tag.label)}</span>`);
-  if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, registries)); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, registries));
+  const rows = [...chips.values()];
+  const effects = rows.filter((chip) => chip.effect && chip.effectTips.length);
+  if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.effectTips.join(' '))}</dd>`).join('')}</dl>`;
+  html += common;
+  if (rows.length) html += `<div class="inspection-tags">${rows.map((chip) => `<span class="inspection-tag${chip.effect ? ' inspection-tag-effect' : ''}" role="button" tabindex="0" data-tip="${esc(chip.tips.join(' '))}">${esc(chip.label)}</span>`).join('')}</div>`;
   return html;
 }

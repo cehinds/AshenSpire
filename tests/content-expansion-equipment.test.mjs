@@ -78,7 +78,7 @@ for (const id of ['frostSpear', 'cinderAxe', 'duskChime', 'straightSword', 'shor
   assert.ok(SHIPPED.has(expected));
   const row = { item: piece, id, key: id, name: piece.name, category: 'Weapon', equippedLabels: [] };
   assert.equal(inventoryItemCardModel(row).properties.artAsset, expected);
-  const candidate = { itemKind: 'armament', itemId: id, itemRef: `armament/${id}`, mounts: [], affectedCards: [], requirements: [] };
+  const candidate = { itemKind: 'armament', itemId: id, itemRef: `armament/${id}`, currentLevel: 0, nextLevel: 1, mounts: [], affectedCards: [], requirements: [] };
   for (const service of ['extract', 'install']) {
     assert.equal(mountServiceModel(r, { service, candidates: [candidate], stones: 1 }).properties.candidates[0].artAsset, expected);
   }

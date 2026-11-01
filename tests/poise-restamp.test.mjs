@@ -13,7 +13,8 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { dealPoiseDamage, executeAction } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
-const registries = createRegistries(contentBundle);
+import { withWeaponRack } from './withWeaponRack.mjs';
+const registries = createRegistries(withWeaponRack(contentBundle));
 function fight() {
   const run = createRunState({ seed: 4242, classId: 'reaver', registries });
   run.loadout.sets.rightHand = ['straightSword', 'boneSceptre', null];

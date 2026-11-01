@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { smithingPlan, commitSmithing } from '../src/model/smithing.js';
+import { defaultSmithSelection } from '../src/ui/models/smithCandidateOrder.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
 
 const registries = createRegistries(contentBundle);
@@ -22,8 +23,9 @@ test('a repeat upgrade session refreshes the purse and candidates after each com
     const receipt = commitSmithing(registries, run, candidate.itemRef);
     assert.equal(run.smithingStones, remaining - receipt.cost);
     const next = smithSelectionModel(registries, smithingPlan(registries, run), null, { repeatUpgrades: true });
-    assert.equal(next.properties.selected, null);
-    assert.equal(next.properties.canConfirm, false);
+    // Nothing chosen falls to the first upgradeable item (owner, 2026-11-01).
+    assert.equal(next.properties.selected?.itemRef ?? null, defaultSmithSelection(next.properties.candidates));
+    assert.equal(next.properties.canConfirm, Boolean(next.properties.selected?.affordable));
     const updated = next.properties.candidates.find(item => item.itemRef === candidate.itemRef);
     if (updated) assert.equal(updated.currentLevel, receipt.afterLevel);
   }
