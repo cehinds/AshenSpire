@@ -51,7 +51,9 @@ for (const [id, line, deterministic, action] of FIXTURES) {
 }
 
 test('exit-code contract: pass 0, explained-no-fix 1, model 2, unmatched failure 2', () => {
-  assert.deepEqual([triage('all green').verdict, triage('all green').exit], ['pass', 0]);
+  assert.deepEqual([triage('about-changelog check-order: OK — 12 checks passed').verdict, triage('about-changelog check-order: OK — 12 checks passed').exit], ['pass', 0]);
+  // No failure word but no success evidence either: unknown, a model decides.
+  assert.deepEqual([triage('all green').verdict, triage('all green').exit], ['unknown', 2]);
   assert.equal(triage('content-build --check: x is stale').exit, 0);
   assert.equal(triage("ops.json case-name test failed").exit, 1);
   assert.equal(triage('engine-transaction-determinism golden hash mismatch').exit, 2);
@@ -172,6 +174,14 @@ test('config-build REFUSED (Codex repro) and every non-pass `<tool>: VERDICT —
     const r = triage(`some-tool: ${w} — detail\n`);
     if (['OK', 'PASS', 'PASSED', 'GREEN'].includes(w)) assert.equal(r.exit, 0, w);
     else assert.equal(r.exit, 2, `${w} must not read as a pass`);
+  }
+});
+
+test('a diagnostic with no failure word and no success evidence goes to a model (Codex repro)', () => {
+  const r = triage("content-build: reviewProbe.csv: duplicate column 'id'\n");
+  assert.equal(r.exit, 2);
+  for (const ok of ['154 passed, 0 failed', 'content-build: generated files are current', '# fail 0', 'mechanics-generate: up to date', 'ok 3 - a test']) {
+    assert.equal(triage(ok + '\n').exit, 0, ok);
   }
 });
 
@@ -397,6 +407,23 @@ test('resolveChangelogConflict keeps date groups intact when dev adds a newer da
   assert.ok(mine > firstHeading && mine < lines.indexOf('## 2026-10-31'), 'our receipt sits inside the newest date group');
   assert.equal(lines.filter(l => l === '## 2026-10-31').length, 1, 'one 2026-10-31 heading');
   assert.ok(lines.some(l => l.includes('#2599')) && lines.some(l => l.includes('#2600')));
+});
+
+test('resolveChangelogConflict keeps dev\'s copy of a receipt dev restamped (identity by PR)', () => {
+  const text = [
+    '# Changelog', '', '## 2026-10-31', '',
+    '<<<<<<< HEAD',
+    '- **Mine** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.2.70`). New.',
+    '- **One** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.7.2.60`). Old stamp.',
+    '=======',
+    '- **One** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.7.2.70`). Old stamp.',
+    '>>>>>>> origin/dev', '',
+  ].join('\n');
+  const r = resolveChangelogConflict(text);
+  const ones = r.split('\n').filter(l => l.includes('[#1]'));
+  assert.deepEqual(ones.length, 1);
+  assert.ok(ones[0].includes('`0.7.2.70`'), "dev's restamped copy kept");
+  assert.ok(r.includes('#2501'), 'our new receipt kept');
 });
 
 test('resolveChangelogConflict refuses a non-receipt change on our side', () => {

@@ -52,7 +52,10 @@ const VERDICT_WORDS = /(^|[\s:—-])(RED|FAILED|BROKEN|DRIFT|REFUSED|STOPPED|INV
 const TOOL_VERDICT = /(^|\s)[\w./-]+: ([A-Z][A-Z-]{1,}) —/;
 const PASS_VERDICTS = new Set(['OK', 'PASS', 'PASSED', 'GREEN']);
 const isToolFailVerdict = (l) => { const m = TOOL_VERDICT.exec(l); return !!m && !PASS_VERDICTS.has(m[2]); };
-const ZERO_FAIL = /^\W*(fail|failed|failures?)\s+0\W*$/i;
+// What a passing run of this repo's tools and node:test prints. Triage only says "pass" when
+// at least one of these is present and no failure line is.
+const SUCCESS_EVIDENCE = /: (OK|PASS|PASSED|GREEN) —|^\W*(fail|failed|failures?)\s+0\W*$|\b\d+ passed, 0 failed\b|generated files are current|\bup to date\b|\bbuild ok\b|\b0 hazards\b|^\s*ok \d+ - /im;
+const ZERO_FAIL = /^\W*(fail|failed|failures?)\s+0\W*$|^\W*\d+ passed, 0 failed\W*$/i;
 
 export function failureLines(text) {
   return String(text).split(/\r?\n/).filter(l => (FAILURE_WORDS.test(l) || VERDICT_WORDS.test(l) || isToolFailVerdict(l)) && !ZERO_FAIL.test(l));
@@ -110,7 +113,12 @@ export function triage(text, rules = loadRules(), ctx = DEFAULT_CTX) {
     const exit = severityOf(matches);
     return { matches, verdict: exit === 0 ? 'autofix' : exit === 1 ? 'explained' : 'needs-model', exit };
   }
-  if (!failing.length) return { matches, verdict: 'pass', exit: 0 };
+  // No failure line is not proof of success: tools print diagnostics in shapes no word list
+  // can enumerate. A pass needs explicit success evidence; otherwise the log goes to a model.
+  if (!failing.length) {
+    if (lines.some(l => SUCCESS_EVIDENCE.test(l))) return { matches, verdict: 'pass', exit: 0 };
+    return { matches, verdict: 'unknown', exit: 2, note: 'no failure line and no success evidence' };
+  }
   return { matches, verdict: 'unmatched', exit: 2 };
 }
 
@@ -367,8 +375,13 @@ export function resolveChangelogConflict(text) {
   const extra = [];
   const merged = text.replace(re, (_all, ours, theirs) => {
     const have = new Set(theirs.split('\n'));
+    // A receipt's stable identity is its PR number, not its text: dev restamping a receipt
+    // changes the line but not the PR, so ours' copy of a PR theirs already has is dropped.
+    const prOf = (l) => (/^- \*\*.*?\(\[#(\d+)\]\(/.exec(l) || [])[1];
+    const theirPrs = new Set(theirs.split('\n').map(prOf).filter(Boolean));
     for (const line of ours.split('\n')) {
       if (!line.trim() || have.has(line) || /^## \d{4}-\d{2}-\d{2}\b/.test(line)) continue;
+      if (prOf(line) && theirPrs.has(prOf(line))) continue;
       if (!/^- \*\*/.test(line)) throw new Error(`CHANGELOG conflict: ours changed a non-receipt line: ${line.slice(0, 80)}`);
       if (!extra.includes(line)) extra.push(line);
     }
