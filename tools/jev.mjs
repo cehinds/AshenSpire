@@ -235,8 +235,17 @@ export function regen(cwd = ROOT) {
   return { exit: 0, steps };
 }
 
+// The checkout a command acts on: --root when given, else the git checkout the shell is in,
+// so a jev copied from another worktree still regenerates and restamps the right tree.
+export function targetRoot(args = [], cwd = process.cwd()) {
+  const at = args.indexOf('--root');
+  if (at >= 0 && args[at + 1]) return resolve(args[at + 1]);
+  const top = run('git', ['rev-parse', '--show-toplevel'], { cwd });
+  return top.status === 0 && top.out.trim() ? top.out.trim() : ROOT;
+}
+
 COMMANDS.regen = async (args) => {
-  const r = regen();
+  const r = regen(targetRoot(args));
   emit({ cmd: 'regen', verdict: r.exit === 0 ? 'regenerated' : 'failed', ...r }, args.includes('--human'),
     o => [`jev regen: ${o.verdict}`, ...o.steps.map(s => `  ${s.status === 0 ? 'ok  ' : 'FAIL'} ${s.cmd}`), o.tail || ''].join('\n').trim());
   return r.exit;
@@ -330,10 +339,9 @@ export function restamp({ root = ROOT, pr, noRegen = false }) {
 }
 
 COMMANDS.restamp = async (args) => {
-  const pr = detectPr(args);
+  const pr = detectPr(args, targetRoot(args));
   if (!pr) throw new Error('cannot tell which PR this branch carries; pass --pr N');
-  const rootAt = args.indexOf('--root');
-  const r = restamp({ pr, root: rootAt >= 0 ? resolve(args[rootAt + 1]) : ROOT, noRegen: args.includes('--no-regen') });
+  const r = restamp({ pr, root: targetRoot(args), noRegen: args.includes('--no-regen') });
   emit({ cmd: 'restamp', verdict: r.exit === 0 ? 'restamped' : 'failed', ...r }, args.includes('--human'),
     o => `jev restamp: ${o.verdict} PR #${o.pr} ${o.from} -> ${o.to}, ${o.deduped} duplicate line(s) dropped${o.tail ? `\n${o.tail}` : ''}`);
   return r.exit;

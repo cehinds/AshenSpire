@@ -476,7 +476,7 @@ test('resolveChangelogConflict drops the diff3 base section', () => {
 
 // ---- devmerge real paths, on a temp git fixture ----
 import { devmerge } from '../tools/jev.mjs';
-import { mkdirSync, existsSync } from 'node:fs';
+import { mkdirSync, existsSync, realpathSync } from 'node:fs';
 
 const OK_DEPS = (over = {}) => ({
   regen: () => ({ exit: 0, steps: [] }),
@@ -683,5 +683,16 @@ test('devmerge: a receipt this branch deleted is not restored by dev\'s neighbou
     devmerge({ base: 'dev', pr: 9, cwd: f.work, deps: OK_DEPS() });
     const cl = readFileSync(join(f.work, 'CHANGELOG.md'), 'utf8');
     assert.ok(cl.includes('#9]') && cl.includes('#8]') && !cl.includes('#5]'), cl);
+  } finally { f.done(); }
+});
+
+test('regen and restamp act on --root, else on the checkout the shell is in, not jev\'s own', async () => {
+  const { targetRoot, ROOT } = await import('../tools/jev.mjs');
+  const f = fixture({ 'a.txt': 'a\n' });
+  try {
+    const sub = join(f.work, 'deep'); mkdirSync(sub, { recursive: true });
+    assert.equal(realpathSync(targetRoot([], sub)), realpathSync(f.work));
+    assert.equal(targetRoot(['--root', '/x/y']), '/x/y');
+    assert.equal(targetRoot([], tmpdir()), ROOT, 'outside any checkout it falls back to jev\'s');
   } finally { f.done(); }
 });
