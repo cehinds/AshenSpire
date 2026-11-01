@@ -290,7 +290,7 @@
       }
     ],
     "textTemplate": "Gain {block} Block. Gain {regen} Regen. Exhaust.",
-    "faceTemplate": ["Gain {gainBarrier} Barrier.", "Gain {regen} Regen."],
+    "faceTemplate": ["Gain {block} Block.", "Gain {regen} Regen."],
     "upgrade": {
       "effects": [
         {

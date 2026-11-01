@@ -617,7 +617,7 @@
       }
     ],
     "textTemplate": "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each. Exhaust.",
-    "faceTemplate": ["Double target Blight, Exhaust."],
+    "faceTemplate": ["Double target Blight."],
     "upgrade": {
       "keywords": [
         "retain"
@@ -1055,7 +1055,7 @@
       }
     ],
     "textTemplate": "Heal half of your missing HP. Exhaust.",
-    "faceTemplate": ["Heal half missing HP, Exhaust."],
+    "faceTemplate": ["Heal half missing HP."],
     "upgrade": {
       "cost": 1
     }
@@ -1288,7 +1288,7 @@
       }
     ],
     "textTemplate": "Heal 20% of your max HP. Draw {draw} cards. Exhaust.",
-    "faceTemplate": ["Heal 20% max HP, Exhaust.", "Draw {draw} cards."],
+    "faceTemplate": ["Heal 20% max HP.", "Draw {draw} cards."],
     "upgrade": {
       "keywords": [
         "retain"

@@ -821,7 +821,7 @@
       }
     ],
     "textTemplate": "Heal 2 HP for every 4 Bleed on all enemies. Exhaust.",
-    "faceTemplate": ["Heal 2 per 4 Bleed.", "Exhaust."],
+    "faceTemplate": ["Heal 2 per 4 Bleed."],
     "upgrade": {
       "effects": [
         {

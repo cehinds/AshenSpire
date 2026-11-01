@@ -97,6 +97,11 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
   if (faceHtml?.length && projection.clauses.some(clause => clause.kind === 'detail')) {
     const downsides = projection.clauses.filter(clause => clause.kind === 'cost' || PURE_DOWNSIDE.test(plain(clause.html)));
     const summary = faceHtml.map(html => ({ kind: 'effect', html }));
+    // A card's Exhaust / Ethereal keyword is a downside the summary never has to repeat.
+    for (const [keyword, word] of [['exhaust', 'Exhaust'], ['ethereal', 'Ethereal']]) {
+      if ((def.keywords || []).includes(keyword) && !downsides.some(clause => plain(clause.html).includes(word)))
+        downsides.push({ kind: 'cost', html: word });
+    }
     return { ...projection, clauses: [...downsides, ...summary].slice(0, FACE_EFFECT_CLAUSES), omitted: true };
   }
   return projection;

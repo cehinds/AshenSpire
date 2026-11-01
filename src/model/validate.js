@@ -2913,13 +2913,13 @@ function checkWardOffTemplate(card, path, err) {
 // A card's `faceTemplate` (SPEC card face rules): one or two lines of at most five words, tokens bound like textTemplate's,
 // without the "every number is stated" rule (the face is a summary; Information carries the rest).
 function checkFaceTemplate(card, path, err) {
-  const sets = [[`${path}.faceTemplate`, card.faceTemplate, card.effects]];
-  if (card.upgrade?.effects) sets.push([`${path}.faceTemplate`, card.faceTemplate, card.upgrade.effects]);
-  for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate, profile.effects]);
+  const sets = [[`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects(card)]];
+  if (card.upgrade?.effects) sets.push([`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects({ effects: card.upgrade.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
   for (const [at, lines, effects] of sets) {
     if (lines === undefined) continue;
     if (!Array.isArray(lines) || lines.length < 1 || lines.length > 2) { err(at, 'must be one or two short lines'); continue; }
-    const bound = new Set(computeTokenBindings(Array.isArray(effects) ? effects : []).map((bd) => bd.token));
+    const bound = new Set(computeTokenBindings(effects).map((bd) => bd.token));
     for (const line of lines) {
       if (typeof line !== 'string') { err(at, 'lines must be strings'); continue; }
       if (line.replace(/\{[^}]*\}/g, 'N').split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length > 5) err(at, `'${line}' is longer than five words`);

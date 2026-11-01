@@ -972,7 +972,7 @@
       }
     ],
     "textTemplate": "Gain {invulnerability} Invulnerability: avoid the next direct damaging action. Status buildup still applies. Exhaust.",
-    "faceTemplate": ["Gain {invulnerability} Invulnerability.", "Avoids next hit. Exhaust."],
+    "faceTemplate": ["Gain {invulnerability} Invulnerability.", "Avoids next direct hit."],
     "minCombatExpansionVersion": 2
   },
   {

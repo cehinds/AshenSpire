@@ -3255,7 +3255,7 @@
       }
     ],
     "textTemplate": "Heal {heal} HP. Gain {block} Block. Exhaust.",
-    "faceTemplate": ["Heal {heal} HP, Retain.", "Gain {gainBarrier} Barrier, Exhaust."],
+    "faceTemplate": ["Heal {heal} HP, Retain.", "Gain {block} Block."],
     "upgrade": {
       "effects": [
         {

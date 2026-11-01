@@ -2094,7 +2094,7 @@
       }
     ],
     "textTemplate": "Deal 6 damage plus 4 times the target's Venom, then remove its Venom. Exhaust.",
-    "faceTemplate": ["Damage scales with Venom.", "Remove Venom, Exhaust."],
+    "faceTemplate": ["Damage scales with Venom.", "Then remove Venom."],
     "upgrade": {
       "effects": [
         {

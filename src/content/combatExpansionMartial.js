@@ -47,7 +47,19 @@ function tagsFor(tags, row, range, targeting) {
   return preserved;
 }
 
+// A rewritten rules sentence makes an authored `faceTemplate` stale. A Counter rewrite says its own summary (its Block
+// and the Counter it prepares); any other rewrite drops the old summary with the old sentence.
 export function applyCombatExpansionMartial(def) {
+  const card = martialProjection(def);
+  if (card === def || !card.faceTemplate || card.textTemplate === def.textTemplate) return card;
+  const { faceTemplate, ...rest } = card;
+  const counter = /Prepare (one Evade and )?(Ranged|Melee) Counter/.exec(card.textTemplate);
+  if (!counter) return rest;
+  const gain = /^Gain \{block\} Block\./.test(card.textTemplate) ? ['Gain {block} Block.'] : [];
+  return { ...rest, faceTemplate: [...gain, `Prepare ${counter[1] ? 'Evade, ' : ''}${counter[2]} Counter.`] };
+}
+
+function martialProjection(def) {
   const row = combatExpansionMartialOverlay[def.id];
   const tags = def.cardTags ?? def.tags ?? objectTagIds('card', def.id);
   if (!row || !tags.includes('camp:physical')) return def;
