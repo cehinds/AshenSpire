@@ -121,7 +121,7 @@
 }
 .shop-workspace.blacksmith-workspace { background-image:linear-gradient(90deg, #0d0b0810, #0d0b0855), url('../assets/player-polish/scenes/forge-desktop.webp'); }
 .shop-workspace.master-workspace { background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/armoury-still-life-master.webp'); }
-.rest-screen, .lobby, .lobby-screen {
+.rest-screen {
   background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/chapel-rest-master.webp');
   background-size:cover; background-position:center 38%; background-repeat:no-repeat;
 }
@@ -454,12 +454,12 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
 :root[data-layout='narrow'] .title-screen .title-traveler { top:17%; height:28%; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand {
+:root .combat[data-layout='formation'].combat .hand {
  overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
  overscroll-behavior-x:contain;
 }
 /* Horizontal swipes scroll excess cards; vertical drags still aim a card. */
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] .card { touch-action:pan-x; }
+:root .combat[data-layout='formation'].combat .hand[data-wireframe-hand='true'] .card { touch-action:pan-x; }
 /* Its complete controls stay below the selected face, above the footer. */
 :root[data-layout='narrow'] .combat[data-layout='formation'] .combat-tools {
   /* Owner (2026-10-11): on a phone the Combat log / Reaction row sits a little

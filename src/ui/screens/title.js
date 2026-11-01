@@ -48,7 +48,6 @@ export function mountTitle(app, {
   onCollapse,
   onQuit,
   onCustom,
-  onLan,
   onCompendium,
   onBestiary,
   reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
@@ -134,7 +133,7 @@ export function mountTitle(app, {
     list.className = 'title-menu';
     list.dataset.component = UI.titleMenu;
     list.setAttribute('aria-label', 'Ashen Spire main menu');
-    for (const [action, icon] of Object.entries({ history: 'history', collection: 'compendium', settings: 'settings', lan: 'coop' })) {
+    for (const [action, icon] of Object.entries({ history: 'history', collection: 'compendium', settings: 'settings' })) {
       list.querySelector(`[data-title-action="${action}"]`)?.insertAdjacentHTML('afterbegin', engravedIconHtml(icon));
     }
     // W3b: an available Continue is highlighted and its exact save sits beside
@@ -247,7 +246,6 @@ export function mountTitle(app, {
         else if (action === 'history') onHistory?.();
         else if (action === 'profile') onProfile?.();
         else if (action === 'custom') onCustom?.();
-        else if (action === 'lan') onLan?.();
         else if (action === 'settings') onSettings();
         else if (action === 'offline') onOffline?.();
         else if (action === 'quit' && onQuit) onQuit();

@@ -109,11 +109,6 @@
 //     wholly inside the viewport. Shared-shell available-width authority belongs
 //     to `node tools/hud-potion-followup.mjs --browser`, which proves the authored
 //     82 percent and its applied geometry rather than duplicating it here.
-//   · THE UNDER-MODEL SURFACE IS UNTOUCHED. `src/ui/screens/coop.js`
-//     `meterBars()` still hand-writes `.bar.hpbar` for the co-op combatant
-//     strips — a THIRD renderer for this grammar, named in styles/combat.css's
-//     own comment since before this change. Out of E9's scope, still there,
-//     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
 //   · WHETHER 200/20/20 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
 //   · Headless Chromium, four shapes, one text size, no accent theme, no
@@ -694,8 +689,6 @@ function boundary() {
   console.log('    `node tools/hud-potion-followup.mjs --browser`, not a duplicate host cap here.');
   console.log('  · P1 holds top-HUD HP/MP/SP equality. Combat poise is dynamic on the player character card;');
   console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
-  console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
-  console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
   console.log('  · WHETHER 200/20/20 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
   console.log(`  · Headless Chromium on ${process.platform}, one text size, default accent, no colourblind palette.`);
   console.log('  · NOT WIRED INTO ci.yml — between hand-runs SOP 2\'s silence guard makes this `unknown`.');

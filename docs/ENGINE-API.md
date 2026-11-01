@@ -442,10 +442,8 @@ picking it does nothing, so a client should prefer another. A play that needs
 a choice and gets none, or gets one that is not offered, is refused before
 anything is spent (`Choose a stance: …`). A `choice` sent with a card that asks
 none is refused too. A bot that always plays the leftmost card must therefore
-supply a choice, or it will retry the same refused card. In co-op the same
-offer is `cardChoicePlan(C, playerId, cardInstanceId)` from
-`engine/coopCombat.js`, and the pick is `playCard(C, playerId, cardInstanceId,
-targetId, choice)`. Both read `model/cardChoices.js`.
+supply a choice, or it will retry the same refused card. The offer is
+`cardChoicePlan` (`engine/combat.js`) and reads `model/cardChoices.js`.
 
 Enemy phase order (per SPEC §4.1(5)): `enemyTurnStart` → all living enemies
 lose block (unless `retainBlock`) → for each enemy in row order:
@@ -529,11 +527,11 @@ current dispatch's `events`.
 | `enemyStaggered` | `{ targetId, enemyId, cancelledMove: moveId\|null }` |
 | `playerStaggered` | `{ targetId, actionLoss, statuses }` — the player's poise meter filled (SPEC §13.4k) |
 | `energyGained` / `energySpent` | `{ amount }` |
-| `staminaSpent` / `staminaRecovered` | `{ amount }` on a spend; `{ amount, reason: 'idle' }` (co-op adds `playerId`) when the framework Mana & Stamina rule recovers an idle turn's stamina at the player's turn end |
+| `staminaSpent` / `staminaRecovered` | `{ amount }` on a spend; `{ amount, reason: 'idle' }` when the framework Mana & Stamina rule recovers an idle turn's stamina at the player's turn end |
 | `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |
 | `combatReactionOffered` | `{ offerId, ownerId, sourceId }` — an optional reaction prompt opened for seat `ownerId` against enemy `sourceId` (SPEC §4.10); the choice follows as `combatReactionChosen { offerId, ownerId, cardInstanceId\|null }` |
 | `combatReactionUnavailable` | `{ ownerId, sourceId, reason, cardId, cardIds, attackKind, need?, have?, resource? }` — once per incoming root and seat that holds a Counter or defensive Sweep (`cardIds`, every candidate) but is offered none; `cardId` is the candidate whose refusal is reported. After a seat answers or skips the one offer for a root that has further hits, it gets one `'alreadyAnswered'` receipt for the rest of that root. `reason`: `'switchOff'\|'attackerStaggered'\|'attackerControlled'\|'notCovered'\|'cost'\|'controlled'\|'unplayable'\|'alreadyAnswered'\|'other'`, the first failing check of the candidate that got furthest; `attackKind`: `'sweep'\|'ranged'\|'spell'\|'area'\|'statusOnly'\|'attack'`; `cost` adds `resource` (`'stamina'\|'mana'\|'hp'`), `need` and `have`; `'hp'` is a nonlethal HP payment the seat cannot survive (`need` is the current HP required (HP cost + 1), `have` the current HP). No event for a seat with no candidate, a dead seat or a disconnected seat |
-| `combatGuardBroken` | `{ targetId, sourceId, poise, sourcePlayerId?, targetPlayerId? }` — a Smash broke the target's physical Guard; `poise` is the break's bonus Poise damage (0 when the bonus is 0; the receipt still fires). Fires even when the Smash kills the target; a dead target gets no bonus Poise. Once per break, both combat rule versions. Co-op adds the seat ids (every seat's entity id is `player`), as other matchup receipts do |
+| `combatGuardBroken` | `{ targetId, sourceId, poise, sourcePlayerId?, targetPlayerId? }` — a Smash broke the target's physical Guard; `poise` is the break's bonus Poise damage (0 when the bonus is 0; the receipt still fires). Fires even when the Smash kills the target; a dead target gets no bonus Poise. Once per break, both combat rule versions. |
 | `meterGuardGained` | `{ targetId, meter: 'poise'\|'ward', amount, total }` — the `gainPoise` / `gainWard` opcodes' receipt |
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |

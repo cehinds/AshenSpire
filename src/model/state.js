@@ -6,7 +6,6 @@ import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
-import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
@@ -870,10 +869,8 @@ export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
  * The ONE writer of `zones` and `collection`. Called at createRunState, in
  * serializeRun (so what is written is what the legacy fields say at that
  * moment, whatever a writer did between), at the migration door, at the end
- * of the two load doors that heal and re-stamp after the migration
- * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
- * session's serialize, which emits member runs without serializeRun. Until
- * phase 3b, nothing else may write these two fields.
+ * of the load door that heals and re-stamps after the migration (save.js
+ * loadRun). Until phase 3b, nothing else may write these two fields.
  */
 export function syncZones(run) {
   recordCollectedCards(run);
@@ -1143,7 +1140,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   problems.push(...enemyKnowledgeRunProblems(run));
   if (!run.enemyKnowledgeRules && run.skills?.perception !== undefined) problems.push('Run Perception requires enemy knowledge rules');
-  problems.push(...coopProgressionProblems(run));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {

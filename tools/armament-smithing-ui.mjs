@@ -678,34 +678,12 @@ async function main() {
       check((errors.get(sessionId) || []).length === 0,
         `SMITH-UI-${upper}-RUNTIME`, 'both affordability states and Confirm completed without an uncaught runtime exception');
 
-      // The same source shot block owns two additional issue-211 reach doors.
-      // Exercise them once at desktop size: the co-op fixture must be a real
-      // host plan with one Stone, and the non-empty reward fixture must show
+      // The same source shot block owns an additional issue-211 reach door.
+      // Exercise it once at desktop size: the non-empty reward fixture must show
       // the real, already-claimed elite faucet receipt. The empty reward pose
       // remains empty rather than being silently granted a Stone.
       if (!shape.mobile) {
         errors.set(sessionId, []);
-        await cdp.send('Page.navigate', {
-          url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=coopshrine`,
-        }, sessionId);
-        await until(`!!document.querySelector('#coop-smith')`, 'co-op Shrine Smith option');
-        const coopDoor = await evaluate(`(() => {
-          const button=document.querySelector('#coop-smith');
-          return {name:button?.querySelector('.on')?.textContent.trim()||'',description:button?.querySelector('.od')?.textContent.trim()||'',disabled:!!button?.disabled};
-        })()`);
-        check(coopDoor.name === 'Upgrade an item' && coopDoor.description === '1 Stone' && coopDoor.disabled === false,
-          'SMITH-UI-COOP-SHOT-DOOR', `co-op Shrine shot exposes the real one-Stone host plan (${JSON.stringify(coopDoor)})`);
-        await click('#coop-smith');
-        await until(`!!document.querySelector('.smith-upgrade-modal')`, 'co-op Smith modal');
-        await pick('armament/straightSword');
-        const coopModal = await evaluate(`(() => ({
-          count:(document.querySelector('.smith-header-stones')?.textContent||'').replace(/\\s+/g,' ').trim(),
-          text:(document.querySelector('.smith-preview-card')?.textContent||'').replace(/\\s+/g,' ').trim(),
-        }))()`);
-        check(coopModal.count === '1 Smithing Stone available'
-            && hasPreviewFacts(coopModal.text),
-          'SMITH-UI-COOP-SHOT-MODAL', `co-op Shrine shot opens the shared real-delta review (${JSON.stringify(coopModal)})`);
-
         await cdp.send('Page.navigate', {
           url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=reward`,
         }, sessionId);
@@ -762,7 +740,7 @@ async function main() {
         check(await evaluate(`!document.querySelector('.reward-kind[data-kind="smithingStone"]') && document.querySelectorAll('.reward-kind').length===0`),
           'SMITH-UI-REWARD-SHOT-EMPTY', 'empty reward shot remains empty and does not cross the elite faucet');
         check((errors.get(sessionId) || []).length === 0,
-          'SMITH-UI-SHOT-DOORS-RUNTIME', 'co-op Shrine and full/empty reward shot doors completed without an uncaught runtime exception');
+          'SMITH-UI-SHOT-DOORS-RUNTIME', 'full/empty reward shot doors completed without an uncaught runtime exception');
       }
       await cdp.send('Target.closeTarget', { targetId });
     }
@@ -771,7 +749,7 @@ async function main() {
     for (const receipt of receipts) {
       console.log(`    ${receipt.path} | ${receipt.width}x${receipt.height} | ${receipt.bytes} bytes | SHA256 ${receipt.sha256}`);
     }
-    console.log('  Boundary: source Shrine and post-Smith Armoury DOM at 1200x730, 390x844, 375x667 and 320x568, plus desktop co-op Shrine and reward shot reach doors; no built bundle, persistent browser storage, networked co-op host, or human aesthetic approval was checked.');
+    console.log('  Boundary: source Shrine and post-Smith Armoury DOM at 1200x730, 390x844, 375x667 and 320x568, plus the desktop reward shot reach doors; no built bundle, persistent browser storage, or human aesthetic approval was checked.');
     if (failures) console.log(`armament-smithing-ui: ${checks - failures} passed, ${failures} failed`);
     else console.log(`armament-smithing-ui: OK — ${checks} checks passed`);
     return failures ? 1 : 0;

@@ -15,7 +15,7 @@ const shot = async (page,name) => {
   if(!/keyword|status|tooltip/.test(name)) await page.mouse.move(0,0);
   await page.waitForTimeout(700); await page.screenshot({path:join(output,`${name}.png`)});
 };
-const route = scene => `${base}/tooltip-review-scene.html?shot=${['combat','coop','reward','shop','customize','map','combat-test'].includes(scene)?scene:'combat'}&tooltipReview=${scene}`;
+const route = scene => `${base}/tooltip-review-scene.html?shot=${['combat','reward','shop','customize','map','combat-test'].includes(scene)?scene:'combat'}&tooltipReview=${scene}`;
 const open = async(page,scene) => {
   await page.goto(route(scene),{waitUntil:'domcontentloaded'});
   await page.locator('#app > *').first().waitFor();
@@ -88,7 +88,7 @@ try {
     const context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1440,height:1000},isMobile:phone,hasTouch:phone});
     const page=await context.newPage();page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
     page.on('pageerror',e=>consoleErrors.push(`${shape}: ${e.message}`));
-    for(const scene of ['combat','coop','potion','reward','shop','equipment','smith','customize','map','compendium','catalog','lab','combat-test']) await attempt(`${shape} ${scene} screen`,async()=>{
+    for(const scene of ['combat','potion','reward','shop','equipment','smith','customize','map','compendium','catalog','lab','combat-test']) await attempt(`${shape} ${scene} screen`,async()=>{
       await open(page,scene);
       check((await page.locator('#app').innerText()).length>30,`${shape} ${scene} meaningful content`);
       check(/^Ashen\s?Spire/.test(await page.title()),`${shape} ${scene} identity`);
@@ -143,14 +143,6 @@ try {
         await page.locator('.end-turn').click();await page.getByRole('button',{name:'END TURN',exact:true}).click();
         await page.waitForFunction(()=>window.__combat.turn===2);
         check(await page.evaluate(()=>window.__combat.turn===2),`${shape} end turn confirmation advances gameplay`);
-      }
-      if(scene==='coop') {
-        const status=page.locator('[data-status-id=bleed]').first();await status.waitFor();
-        if(phone)await status.tap();else await status.hover();
-        await page.waitForFunction(()=>document.querySelector('#tooltip[data-open=true]')?.textContent.includes('At 7'));
-        check(await page.locator('#tooltip[data-open=true]').count()===1,`${shape} co-op status definition reachable`);
-        check((await page.locator('#tooltip').innerText()).includes('At 7'),`${shape} co-op status uses resolved mechanics`);
-        await shot(page,`coop-status-${shape}`);await page.keyboard.press('Escape');
       }
       if(scene==='catalog') {
         const potion=page.locator('.equipment-poker-card').filter({hasText:'Blood Unction'});

@@ -83,7 +83,7 @@ permissions:
 
 # The game server the Workbench starts (tools/serve.mjs) serves /assets/ from
 # the fetched art packs (docs/EXTERNAL-ASSETS-PLAN.md, step 13), so the
-# screenshots fetch all three packs, as coop-hud.yml does.
+# screenshots fetch all three packs.
 env:
   ASHEN_ART_SOURCE: cache
   ART_PACKS: all

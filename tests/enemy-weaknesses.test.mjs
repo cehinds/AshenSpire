@@ -13,9 +13,6 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { calloutForEvent } from '../src/ui/fx.js';
 import { weaknessTraitRows, describeWeakness } from '../src/model/enemyWeaknessRules.js';
 import { projectEnemyKnowledge } from '../src/model/enemyKnowledgeView.js';
-import { createCoopCombat, endTurn } from '../src/engine/coopCombat.js';
-import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
-import { runCombatPlayer } from '../src/engine/runCombat.js';
 import { createCombat } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
@@ -24,10 +21,6 @@ import { proposalContext, applyProposalPlan } from '../src/engine/proposalStatus
 import { proposalRuleEnabled } from '../src/model/proposalStatusRules.js';
 import { hitWeaknessTriggers, refillWeaknesses } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
-import { createSession } from '../tools/session.mjs';
-import { projectLanSnapshot } from '../tools/lan-state.mjs';
-import { initialClassTreeChoices } from '../src/model/classTree.js';
-import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 
 const registries = createRegistries(contentBundle);
 const pack = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/characters.json', import.meta.url), 'utf8'))
@@ -326,36 +319,6 @@ test('a legacy (no profile) combat carries no weaknesses: 1 burn stack, x1 ticks
   assert.ok(projectEnemyKnowledge(def, record, { registries }).traits.some(row => row.name.startsWith('Weak to')), 'the bestiary still reads the definition');
 });
 
-// ---- co-op ----
-const coreProfile = resolveGameProfile('core');
-const coopReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, coreProfile)), coreProfile);
-function coopFight(extra = {}) {
-  const runs = ['reaver', 'herald'].map(id => createRunState({ registries: coopReg, classId: id, seed: 2, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }));
-  return createCoopCombat({ registries: coopReg, rng: createRng(2), gameProfile: coreProfile, rangePolicy: runs[0].rangePolicy, combatExpansionVersion: 2, ratingsRules: null,
-    enemyIds: ['wanderingSoldier'], players: runs.map((run, i) => ({ ...runCombatPlayer(run), id: String(i), level: run.level.level, combatExpansionVersion: run.combatExpansionVersion })), ...extra });
-}
-
-test('a co-op fight saved before weaknesses restores them, and a new co-op fight carries them', () => {
-  const combat = coopFight();
-  assert.deepEqual(combat.enemies[0].weaknesses, coopReg.enemies.get('wanderingSoldier').weaknesses);
-  delete combat.enemies[0].weaknesses; // a fight written before the field existed
-  const snapshot = JSON.parse(JSON.stringify(serializeCoopCombatSnapshot(combat)));
-  const restored = coopFight({ snapshot });
-  assert.deepEqual(restored.enemies[0].weaknesses, coopReg.enemies.get('wanderingSoldier').weaknesses);
-});
-
-test('a co-op Stamina weakness costs the enemy SP next turn even with range mechanics off', () => {
-  const combat = coopFight();
-  delete combat.rangeState;
-  const enemy = combat.enemies[0];
-  enemy.pendingStaminaLoss = 1; // what a landed stamina-weakness hit queues (applyWeaknessEffects)
-  for (const seat of combat.players.values()) { seat.entity.hp = seat.entity.maxHp = 500; }
-  const max = enemy.maxStamina;
-  endTurn(combat, '0'); endTurn(combat, '1');
-  assert.equal(enemy.fixCoreStaminaRemaining, max - 1);
-  assert.equal(enemy.pendingStaminaLoss ?? 0, 0);
-});
-
 // ---- restore keeps queued references live ----
 // Queued actions and pending reactions point at the restored enemy objects, so the refill must mutate them, never swap in copies.
 // (A saved queue needs a real pending choice to pass snapshot validation, so the identity is pinned on the shared helper both restores call.)
@@ -370,42 +333,4 @@ test('refillWeaknesses fills enemies in place and keeps the array and the object
   assert.deepEqual(first.weaknesses, reg.enemies.get('huskBrute').weaknesses);
   assert.notEqual(first.weaknesses, reg.enemies.get('huskBrute').weaknesses, 'a clone, not the shared definition');
   assert.deepEqual(second.weaknesses, [{ to: 'fire', effect: 'damage' }], 'an enemy that has weaknesses keeps them');
-});
-
-function coopFightScene(profileId) {
-  const profile = profileId ? resolveGameProfile(profileId) : null;
-  const regs = profile ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile) : createRegistries(contentBundle);
-  const host = createSession({ registries: regs, seedString: 'WEAKHOST', combatExpansionVersion: 2 });
-  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver', playInDeckOrder: true });
-  host.start();
-  for (const member of host.session.members.values()) while (member.run.classMasteryState?.initialTreeTiers.length) {
-    const choices = initialClassTreeChoices(registriesForClassMastery(regs, member.run), member.run);
-    assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
-  }
-  for (const id of ['p1', 'p2']) assert.equal(host.chooseNode(id, host.session.mapGraph.startIds[0]).ok, true);
-  assert.equal(host.scene.kind, 'combat');
-  return { host, regs, wire: projectLanSnapshot(host.snapshot(), ['p1']).scene };
-}
-
-test('the co-op scene carries each enemy\'s weaknesses (Core) and none in a legacy fight', () => {
-  const core = coopFightScene('core');
-  assert.ok(core.host.live.combat.enemies.length);
-  for (const live of core.host.live.combat.enemies) {
-    const sent = core.wire.enemies.find(row => row.id === live.id);
-    assert.ok(live.weaknesses.length);
-    assert.deepEqual(sent.weaknesses, live.weaknesses);
-    assert.notEqual(sent.weaknesses, live.weaknesses, 'a copy, not the live array');
-  }
-  const legacy = coopFightScene(null);
-  for (const live of legacy.host.live.combat.enemies) assert.equal(live.weaknesses, undefined);
-  for (const row of legacy.wire.enemies) assert.equal(Object.hasOwn(row, 'weaknesses'), false);
-});
-
-test('a co-op client enemy with weaknesses yields Weak-to rows in the inspector view', () => {
-  const { regs, wire } = coopFightScene('core');
-  const sent = wire.enemies[0];
-  const def = regs.enemies.get(sent.enemyId);
-  const view = projectEnemyKnowledge(def, undefined, { registries: regs, weaknesses: sent.weaknesses });
-  assert.ok(sent.weaknesses.length);
-  assert.deepEqual((view.traits || weaknessTraitRows(sent.weaknesses)).filter(row => row.name.startsWith('Weak to')).length > 0, true);
 });

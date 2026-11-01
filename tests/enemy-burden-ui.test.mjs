@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
-import { coopEnemyIntent } from '../src/ui/models/CoopIntentModel.js';
 
 const registries = { cards: new Map([
   ['base.stagger-status-card', { name: 'Stagger', type: 'Status' }],
@@ -29,19 +28,6 @@ test('hand identities and pile counts disappear exactly at expiry, and missing t
   for (const turn of [4, 5, undefined]) assert.equal(projectEnemyBurdenHand(enemy, { turn, registries, ownerId: 'scout' }), null);
   assert.equal(projectEnemyBurdenHand({ ...enemy, proposalIntentRevealedUntilByOwner: {} }, { turn: 3, registries, ownerId: 'scout' }), null);
 });
-
-test('host redacted explicit read is shared between seats, then normal private gates resume', () => {
-  const burdenRead = projectEnemyBurdenHand(enemy, { turn: 3, registries, ownerId: 'scout' });
-  const revealed = coopEnemyIntent({ ...enemy, burdenRead }, 'scout');
-  assert.equal(revealed.hidden, false);
-  assert.equal(revealed.moveId, 'secretMove');
-  assert.deepEqual(revealed.burdenRead, burdenRead);
-  const expired = coopEnemyIntent({ ...enemy, burdenRead: null }, 'scout');
-  assert.equal(expired.hidden, true);
-  assert.equal(expired.moveId, null);
-  assert.equal(expired.burdenRead, undefined);
-});
-
 
 test('an active empty hand is explicit; unknown instances never disclose internal IDs', () => {
   const empty = projectEnemyBurdenHand({ ...enemy, burdenPiles: {} }, { turn: 3, registries, ownerId: 'scout' });

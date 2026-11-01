@@ -99,7 +99,6 @@ Checked items are implemented; build channels and older saves can differ.
 - [x] Card combat with enemy intentions, equipment and statuses
 - [x] Deck building, skill training, attributes and rewards
 - [x] Saved runs, offline play and phone layouts
-- [x] Optional LAN co-op
 - [x] Alternative appearance by default; optional Classic appearance with the debug flag on
 - [ ] Complete 1.0 release acceptance — [remaining work](docs/FINISH.md)
 

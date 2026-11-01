@@ -7,14 +7,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { enemyTargetGrid } from '../src/ui/models/EnemyTargetGridModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
-import { characterLevel, levelOf } from '../src/model/levelup.js';
+import { levelOf } from '../src/model/levelup.js';
 import { packCombatTargetsWithHud } from '../src/ui/components/battlefieldStage.js';
 
 const overlaps = (a, b) => a.left < b.left + b.width && a.left + a.width > b.left
   && a.top < b.top + b.height && a.top + a.height > b.top;
 const picker = readFileSync(new URL('../src/ui/components/enemyTargetPicker.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
-const coop = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
 const footer = readFileSync(new URL('../src/ui/components/footerArt.js', import.meta.url), 'utf8');
 
 // Crowded narrow phone: a player/intent band above and cards below leave one
@@ -52,13 +51,6 @@ test('picker hides any button the grid did not place and unhides placed ones', (
   assert.match(picker, /button\.hidden = !placed\.has\(button\.dataset\.eid\);/);
   assert.match(picker, /const placed = new Set\(placements\.map\(placement => placement\.id\)\);/);
   assert.match(css, /\.enemy-target-button\[hidden\] \{ display: none; \}/);
-});
-
-test('co-op nameplate level reads the real seat ledger row (memberView sends level as a row)', () => {
-  assert.match(coop, /characterLevel\(\{ level: m\.level \}\)/);
-  const row = { ...levelOf({}), level: 4, xp: 120 };
-  assert.equal(characterLevel({ level: row }), 4);
-  assert.equal(characterLevel({ level: null }), 1);
 });
 
 test('footer compact label aria separates "end" and "discard" with a space', () => {

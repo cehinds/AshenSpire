@@ -2680,9 +2680,8 @@ export function gripRefusal(registries, loadout, classId, slotId, setIndex, item
  * were absent and are now present, empty. A save written before a slot row
  * existed (phase 3b added head, hands and feet) carries no cells for it, so
  * the Armoury drew no position and equipPiece refused the slot; this gives it
- * what createLoadout gives a fresh run, and nothing else. Both load doors
- * call it (save.js loadRun, which notes it on the ledger; tools/session.mjs
- * restoreSession, which has no ledger).
+ * what createLoadout gives a fresh run, and nothing else. The load door
+ * calls it (save.js loadRun, which notes it on the ledger).
  */
 export function healMissingSlotCells(registries, loadout) {
   if (!loadout || typeof loadout !== 'object') return [];

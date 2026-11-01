@@ -10,8 +10,6 @@
     "progression.chooseRank",
     "creation.chooseSection",
     "event.defaultOption",
-    "lobby.ready",
-    "lobby.beginWaiting",
     "sceneEditor.grid",
     "common.back",
     "common.continue",

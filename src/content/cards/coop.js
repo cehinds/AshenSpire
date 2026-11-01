@@ -2,9 +2,9 @@
 //
 // Support cards built around the 'ally' target (a chosen living teammate;
 // resolves to self in solo, so every card here is engine-valid everywhere).
-// Rarity 'special' keeps them out of class pools AND merchant stock — the
-// co-op session injects one as an extra option into combat rewards whenever
-// the party has 2+ living members (see tools/session.mjs rollRewardFor).
+// Rarity 'special' keeps them out of class pools AND merchant stock. Co-op is
+// removed (owner, 2026-10-31): these three are inert legacy data, kept because
+// saves and fixtures name them, and unreachable in play.
 // Pure data: block / heal / applyStatus are the same generic opcodes solo uses.
 
 export const coopCards = [

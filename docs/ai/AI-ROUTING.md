@@ -176,7 +176,7 @@ Stopped because (only if it stopped):
 
 | Diff touches | Reviewer |
 |---|---|
-| `src/engine/`, saves and run schema, co-op parity, progression or XP, SPEC contracts | `ashen-reviewer` (Opus 5.5) |
+| `src/engine/`, saves and run schema, progression or XP, SPEC contracts | `ashen-reviewer` (Opus 5.5) |
 | UI layout, CSS, docs, tools, tests only, mechanical renames | Haiku 5.5 reviewer |
 | Security, destructive git, CI permissions | `ashen-reviewer`, and the orchestrator reads the diff line by line |
 
@@ -205,8 +205,7 @@ Skip Haiku and Sonnet and brief an Opus subagent from the start when the task is
 
 - interpreting an ambiguous SPEC or contract;
 - designing a save or schema migration;
-- an engine change where solo and co-op must stay in step and the brief cannot pin the
-  rule;
+- an engine change whose rule the brief cannot pin;
 - tracing a behaviour across several subsystems whose cause is still unknown;
 - security-sensitive.
 

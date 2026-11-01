@@ -132,9 +132,8 @@ export function attunedSigilProblems(run) {
  *                   shopStock.sigils, journey.serviceStates[*].stock.sigils
  *   either          run.sigils (the inventory)
  * and the attuned list fits the run's own attuneMax and is what a fight in
- * progress carries. A position added later is assigned a class here. Both
- * restore doors read it: engine/save.js loadRun and tools/session.mjs's
- * member restore.
+ * progress carries. A position added later is assigned a class here. The
+ * restore door reads it: engine/save.js loadRun.
  */
 export function sigilRarityProblems(registries, run) {
   const problems = [];

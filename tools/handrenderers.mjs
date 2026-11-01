@@ -70,7 +70,7 @@ const SELFTEST = args.includes('--selftest');
 // THE DECLARED DEBT. One row, because there is one. Its `cite` is what a reader
 // follows to find out who owns it and what closes it.
 // ---------------------------------------------------------------------------
-const DECLARED = 2;
+const DECLARED = 1;
 const DEBT = {
   what: 'hand renderers — the player\'s hand is built in two places',
   cite: 'commons/status-packets/2026-08-15-falk-wave-four-board.json · scaryBlockerFirst '

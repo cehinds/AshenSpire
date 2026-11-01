@@ -12,7 +12,7 @@ import { statusTooltipText } from '../uiContent.js';
 export async function mountTooltipReview(scene) {
   const r = createRegistries(contentBundle), app = document.querySelector('#app');
   configureTooltipGlossary(r); hideTooltip();
-  if (['combat', 'coop', 'reward', 'shop', 'customize', 'map', 'combat-test'].includes(scene)) return;
+  if (['combat', 'reward', 'shop', 'customize', 'map', 'combat-test'].includes(scene)) return;
   const run = createRunState({ seed: 671, classId: 'reaver', registries: r });
   window.__tooltipReviewRun = run;
   const meta = { settings: { holdConfirm: 'off' }, found: r.equipment.armaments.map(i => i.id) };

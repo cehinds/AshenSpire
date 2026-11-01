@@ -8,8 +8,6 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { previewCardHit } from '../src/engine/combat.js';
 import { previewTargetFor, hitReadExact } from '../src/engine/stanceHit.js';
-import { coopCardHitPreview } from '../src/ui/models/CoopHitPreviewModel.js';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 
 // Owner ruling D8: the hit-% badge has no Perception gate, but it must not leak the
 // telegraphed stance. A failed read prices the target stance-neutral; an exact read does not.
@@ -71,15 +69,6 @@ test('the preview never edits the live target, and no observer means the unchang
   assert.deepEqual(target.combatStance, stances.ranged);
   assert.equal(target.matchingStanceCardMultiplier, 0.25);
   assert.notEqual(odds(combat, target, 'core.strike', stances.melee, 'hidden', null), odds(combat, target, 'core.strike', stances.ranged, 'hidden', null));
-});
-test('co-op helper: each seat prices by its own read of the enemy', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { combat, target } = live();
-  const actor = { ...combat.player, id: 'seatA' }, carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 6 }] };
-  const scene = { ...combat, enemies: [target], combatExpansionVersion: 2 };
-  const price = (stance, reads, seat) => coopCardHitPreview(scene, reg, actor, { ...target, combatStance: stance, matchingStanceCardMultiplier: stance === stances.ranged ? 0.25 : 0, knowledgeAction: { reads } }, carrier, { selected: false, observerId: seat }).hitChance;
-  const reads = { seatA: { visibility: 'hidden' }, seatB: { visibility: 'exact' } };
-  assert.equal(price(stances.melee, reads, 'seatA'), price(stances.ranged, reads, 'seatA'), 'failed read leaks nothing');
-  assert.notEqual(price(stances.melee, reads, 'seatB'), price(stances.ranged, reads, 'seatB'), 'an exact seat sees the telegraph');
 });
 test('helper returns the same object on an exact read and a neutral copy otherwise', () => {
   const t = { combatStance: stances.ranged, knowledgeAction: read('exact') };

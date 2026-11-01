@@ -4,7 +4,7 @@
 // framework's weight class (which armour track the wearer is in) and the grip
 // (dual-wielding), and pays balance.skill.xp's rows into a receipt on the
 // combat. The RUN is written once, when the fight is over, by whoever owns
-// the run (main.js, tools/session.mjs, tools/runsim.mjs) through applySkillXp
+// the run (main.js, tools/runsim.mjs) through applySkillXp
 // — combat never touches a run.
 //
 //   damageDealt / blockGained by a card a piece lent   → perHit to that piece's

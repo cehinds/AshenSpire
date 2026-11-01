@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Arcane Exposure visual truth: source/dist x solo/co-op x 320/390.
+// Arcane Exposure visual truth: source/dist x solo x 320/390.
 // The browser only asks the product for authored host-snapshot poses. It does
 // not fabricate client DOM or mutate state after mount.
 
@@ -21,7 +21,7 @@ const OUT = resolve(ROOT, arg('--out', 'audit-evidence/arcane-exposure-visual'))
 const CHROME = process.env.CHROME;
 const SHAPES = [{ tag: '320x640', width: 320, height: 640 }, { tag: '390x844', width: 390, height: 844 }];
 const TREES = ['source', 'dist'];
-const SURFACES = ['solo', 'coop'];
+const SURFACES = ['solo'];
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
 function connect(wsUrl) {
@@ -121,25 +121,15 @@ function contract(surface, reading) {
     need(reading.configuredZero >= 1, 'configured 0 / threshold is visible');
     need(reading.configuredNonzero >= 1, 'configured nonzero buildup is visible');
     need(reading.absent >= 1, 'an absent config reserves no meter');
-  } else {
-    need(reading.lockedTruth >= 1, 'locked meter names Magic Vulnerable 25% for 2 turns');
-    need(reading.immune >= 1, 'immune enemy uses a badge, not a fake meter');
-    need(reading.absent >= 1, 'an absent config reserves no meter');
-    need(reading.refusal >= 1, 'immune refusal receipt shows attempted magic buildup');
-    need(reading.breaking >= 1, 'break receipt shows 25% and 2-turn duration');
   }
   return failures;
 }
 
 function proveMutants() {
   const solo = { mounted:true, horizontalOverflow:0, geometryOk:true, ariaOk:true, configuredZero:1, configuredNonzero:1, absent:1 };
-  const coop = { mounted:true, horizontalOverflow:0, geometryOk:true, ariaOk:true, lockedTruth:1, immune:1, absent:1, refusal:1, breaking:1 };
   const plants = [
     ['zero hidden','solo',solo,(x)=>{x.configuredZero=0;}], ['nonzero hidden','solo',solo,(x)=>{x.configuredNonzero=0;}],
-    ['absence gap','solo',solo,(x)=>{x.absent=0;}], ['locked truth conflates value and duration','coop',coop,(x)=>{x.lockedTruth=0;}],
-    ['immunity faked as zero','coop',coop,(x)=>{x.immune=0;}], ['attempted missing','coop',coop,(x)=>{x.refusal=0;}],
-    ['break receipt missing','coop',coop,(x)=>{x.breaking=0;}], ['geometry overlap','coop',coop,(x)=>{x.geometryOk=false;}],
-    ['color only','coop',coop,(x)=>{x.ariaOk=false;}],
+    ['absence gap','solo',solo,(x)=>{x.absent=0;}],
   ];
   for (const [name,surface,seed,mutate] of plants) {
     const copy=structuredClone(seed); mutate(copy);
@@ -160,7 +150,7 @@ async function main() {
     for (const shape of SHAPES) {
       await b.cdp.send('Emulation.setDeviceMetricsOverride', { width:shape.width, height:shape.height, deviceScaleFactor:1, mobile:true }, b.sessionId);
       for (const tree of TREES) for (const surface of SURFACES) {
-        const url = `${bases[tree]}?shot=${surface==='solo'?'combat':'coop'}&shotArcane=matrix`;
+        const url = `${bases[tree]}?shot=combat&shotArcane=matrix`;
         await b.cdp.send('Page.navigate', { url }, b.sessionId);
         await b.until('document.querySelectorAll(".combatant.enemy").length>=1', `${surface} enemies`);
         await wait(180);
@@ -182,7 +172,7 @@ async function main() {
   }
   writeFileSync(resolve(OUT,'arcane-exposure-visual.json'),JSON.stringify(rows,null,2));
   const red=rows.filter((x)=>x.failures.length);
-  console.log(`\narcane-exposure-visual: ${rows.length-red.length}/8 green, ${red.length}/8 red; 8/8 screenshots written`);
+  console.log(`\narcane-exposure-visual: ${rows.length-red.length}/${rows.length} green, ${red.length}/${rows.length} red; ${rows.length}/${rows.length} screenshots written`);
   console.log('BOUNDARY: posed host snapshots and rendered read-only UI at two phone shapes; no capture-time client mutation.');
   process.exit(red.length?1:0);
 }

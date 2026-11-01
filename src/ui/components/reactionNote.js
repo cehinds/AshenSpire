@@ -1,8 +1,7 @@
 // The "no reaction: why" note (owner, 2026-10-11): when a Counter or Sweep in
 // hand could not be offered, a small toast just above the Reaction switch says
 // why, in the combat log's own words (model/combatLog.js). One at a time — the
-// newest replaces the last — for ~2.5 s; polite to a screen reader; never takes
-// a click. Only the local seat's notes show (co-op passes its local seat ids).
+// newest replaces the last — for ~2.5 s; polite to a screen reader; never takes a click.
 import { reactionUnavailableNote } from '../../model/combatLog.js';
 import { anchorLocalBox, clampBox } from '../fx.js';
 
@@ -32,12 +31,12 @@ export function avoidRects(box, rects = [], gap = 6) {
 
 /**
  * The newest combatReactionUnavailable in `events` (from index `after` + 1)
- * that belongs to a local seat → { index, text } | null. `isLocal(ownerId)`.
+ * that → { index, text } | null.
  */
-export function latestReactionNote(events = [], { after = -1, isLocal = () => true, registries, players, enemies } = {}) {
+export function latestReactionNote(events = [], { after = -1, registries, players, enemies } = {}) {
   for (let i = events.length - 1; i > after; i--) {
     const event = events[i];
-    if (!['combatReactionUnavailable', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable'].includes(event?.type) || !isLocal(event.ownerId)) continue;
+    if (!['combatReactionUnavailable', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable'].includes(event?.type)) continue;
     return { index: i, text: reactionUnavailableNote(event, { registries, players, enemies }) };
   }
   return null;
@@ -45,8 +44,8 @@ export function latestReactionNote(events = [], { after = -1, isLocal = () => tr
 
 /**
  * One note controller per combat screen. `attach(combatEl)` (re)places the
- * note in the combat box — co-op rebuilds its DOM per render, so the same node
- * is re-attached while it still has time left; `show(text)` replaces it.
+ * note in the combat box — the same node is re-attached across a re-render
+ * while it still has time left; `show(text)` replaces it.
  */
 export function createReactionNote({ now = () => Date.now() } = {}) {
   let node = null, until = 0, timer = null, host = null;

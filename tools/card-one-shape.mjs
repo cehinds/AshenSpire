@@ -10,7 +10,6 @@
 //   shop cards shelf   140x224   5 / 8     armoury card gallery   192x268   5 / 7
 //   reward card pick   140x224   5 / 8     cc starting-card fold            5 / 7
 //   card inspection    320x512   5 / 8
-//   co-op hand/reward            5 / 8
 //
 // Nothing caught it, because nothing asked. `content/config/ui/components/
 // card.json` declared the shape, but its only readers were the hand's geometry
@@ -53,10 +52,8 @@ const SHAPES = [
   { w: 390, h: 844, d: 3, mobile: true },
 ];
 
-// Every `?shot=` state that puts a playing card in the DOM. `coopshrine` is
-// listed because a prior audit named it a playing-card screen; it renders none,
-// and this reports that rather than quietly dropping it.
-const SCREENS = ['combat', 'shop', 'reward', 'customize', 'map', 'coop', 'coopreward', 'coopshrine'];
+// Every `?shot=` state that puts a playing card in the DOM.
+const SCREENS = ['combat', 'shop', 'reward', 'customize', 'map'];
 
 const browserPath = [process.env.CHROME,
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',

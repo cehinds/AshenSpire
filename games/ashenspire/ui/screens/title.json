@@ -2,9 +2,6 @@
   "id": "title",
   "description": "Title screen. Mounted by src/ui/screens/title.js (mountTitle).",
   "route": "title",
-  "layout": {
-    "ref": "content/config/ui/screens/title.json"
-  },
   "viewModel": {
     "props": {
       "slots": "array",

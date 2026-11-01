@@ -244,7 +244,7 @@ test('the tree is one tree: paths derive from parents, roots are domains, and th
 });
 
 test('the engine reads a card\'s kind, and the kind is the type for every shipped card', () => {
-  // The switch: combat.js, coopCombat.js, triggers.js, combatAnimation.js,
+  // The switch: combat.js, triggers.js, combatAnimation.js,
   // consequence.js and the combat screen ask cardKind(def) — the kind tag —
   // instead of def.type. Feel-neutral because validate.js refuses a card whose
   // kind and type disagree; this is that refusal asserted the other way round.

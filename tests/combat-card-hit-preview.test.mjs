@@ -1,16 +1,13 @@
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, previewCoopCard } from '../src/engine/coopCombat.js';
 import { armCombatCounter } from '../src/engine/combatMatchups.js';
 import { playingCardModel, combatCardSummary } from '../src/model/playingCard.js';
 
-function fight(coop, { split = false, smash = false } = {}) {
+function fight({ split = false, smash = false } = {}) {
   const registries = createRegistries({ ...contentBundle,
     tagging: contentBundle.tagging.map(row => smash && row.family === 'card' && row.objectId === 'twinbladeFlurry'
       && row.tagId === 'maneuver:attack' ? { ...row, tagId: 'maneuver:smash' } : row),
@@ -25,23 +22,21 @@ function fight(coop, { split = false, smash = false } = {}) {
   const actor = { classId: 'reaver', hp: 500, maxHp: 500, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'flurry', cardId: 'twinbladeFlurry' }], relicIds: [] };
   const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null };
-  const combat = coop ? createCoopCombat({ ...options, players: [{ id: 'p1', ...actor }] })
-    : createCombat({ ...options, player: actor });
+  const combat = createCombat({ ...options, player: actor });
   const enemy = combat.enemies[0];
   enemy.hp = enemy.maxHp = 1000;
   enemy.block = smash ? 1 : 10;
   enemy.poiseMeter = { value: 0, max: 1000 };
   if (!smash) armCombatCounter(combat, enemy, { combatProfile: { camp: 'physical', maneuver: 'counter' } }, { damage: 6 });
   return { combat, enemy, registries,
-    preview: () => coop ? previewCoopCard(combat, 'p1', 'flurry', enemy.id) : previewCard(combat, 'flurry', enemy.id),
-    resolve: () => coop ? playCard(combat, 'p1', 'flurry', enemy.id)
-      : dispatch(combat, { type: 'playCard', cardInstanceId: 'flurry', targetId: enemy.id }),
+    preview: () => previewCard(combat, 'flurry', enemy.id),
+    resolve: () => dispatch(combat, { type: 'playCard', cardInstanceId: 'flurry', targetId: enemy.id }),
   };
 }
 
-for (const coop of COOP_MODES) for (const split of [false, true]) for (const smash of [false, true]) {
-  test(`${coop ? 'co-op' : 'solo'} card preview evolves ${smash ? 'Guard' : 'Counter'} across ${split ? 'effects' : 'hits'}`, () => {
-    const f = fight(coop, { split, smash });
+for (const split of [false, true]) for (const smash of [false, true]) {
+  test(`solo card preview evolves ${smash ? 'Guard' : 'Counter'} across ${split ? 'effects' : 'hits'}`, () => {
+    const f = fight({ split, smash });
     const before = JSON.stringify({ enemy: f.enemy, queue: f.combat.queue, events: f.combat.eventLog, rng: f.combat.rng.getCounters() });
     const shown = f.preview();
     const values = shown.values.filter(value => value.op === 'damage');

@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/card-reward-schedule.test.mjs — SPEC §15.1, the card reward schedule.
 //
 // One test per Falsify line of §15.1, plus the doors the schedule passes
@@ -15,20 +14,12 @@ import { createRunState, validateRunShape, serializeRun, deserializeRun } from '
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 import { rollCardRewardIds, rollCombatCardOffer } from '../src/engine/encounters.js';
 import { rewardPlan, resolveContinue, rewardClaimStatus, rewardNotes, REWARD_KIND_ORDER, rowKey, cardRewardPlan, cardRewardSchedule } from '../src/model/rewardplan.js';
-import { resolveCard } from '../src/model/registries.js';
-import { playCard, endTurn } from '../src/engine/coopCombat.js';
-import { createSession } from '../tools/session.mjs';
-import { createLevelCardPicks, levelCardStrips } from '../src/ui/screens/coop.js';
-import { xpToNext } from '../src/model/levelup.js';
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { t } from '../src/ui/strings.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
 const REG = createRegistries(contentBundle);
-// These established co-op schedule cases exercise the automatic level award
-// contract of older saves. Expanded banking is covered by coop-progression-claims.
-const legacySessionRegistry=reg=>({...reg.legacyProgressionSource,balance:{...reg.balance,progression:undefined}});
 
 /** A guaranteed-offer fixture, with the requested schedule patch applied. */
 function withSchedule(patch) {
@@ -182,61 +173,7 @@ test('cardRewardPlan is the one door: rowKey spells levelCard, and a waiting dra
   assert.equal(offer.levelCards.length, 1);
 });
 
-// One member's greedy turn in a live co-op fight: play what can be paid for
-// at the first living enemy, else end the turn.
-function botTurn(combat, memberId) {
-  const P = combat.players.get(memberId);
-  if (!P || !P.connected || !P.entity.alive || P.ended) return;
-  let guard = 0;
-  while (combat.phase === 'player' && !P.ended && !combat.result && guard++ < 50) {
-    const card = P.piles.hand.find((h) => {
-      const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
-      if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana && (def.staminaCost || 0) <= (P.entity.stamina || 0);
-    });
-    const def = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
-    const tgt = def && (def.effects || []).some((eff) => eff.target === 'enemy') ? combat.enemies.find((e) => e.alive) : null;
-    try {
-      if (card) playCard(combat, memberId, card.instanceId, tgt ? tgt.id : undefined);
-      else { endTurn(combat, memberId); break; }
-    } catch { endTurn(combat, memberId); break; }
-  }
-  if (!P.ended && combat.phase === 'player' && !combat.result) endTurn(combat, memberId);
-}
-
 /** A one-seat co-op session through its first fight, won, with `reg`'s schedule. */
-function coopFirstSpoils(reg, seedString) {
-  const host = createSession({ registries: legacySessionRegistry(reg), seedString, combatExpansionVersion: 1 });
-  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
-  host.start();
-  // This test is about the reward door. Prime the ledger so one modest fight
-  // crosses the level threshold regardless of the currently tuned XP rate.
-  host.livingMembers()[0].run.level.xp = xpToNext(reg, 1) - 1;
-  host.chooseNode('p1', host.session.mapGraph.startIds[0]);
-  for (const enemy of host.live.combat.enemies) enemy.hp = 1;
-  host.autoResolveCombat(botTurn);
-  return host;
-}
-
-test('co-op reads the schedule through cardRewardPlan: a pool turned off offers no card, and a level card is offered and taken', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const off = coopFirstSpoils(withSchedule({ afterCombat: { normal: false }, onLevelUp: true }), 'SCHEDULE');
-  assert.equal(off.scene.kind, 'reward');
-  const offer = off.scene.offers.p1;
-  assert.deepEqual(offer.cardIds, [], 'no card row at a normal door that is off');
-  assert.equal(offer.levelCards.length, 1, 'the first fight levels, so one level card row');
-  const deckBefore = off.livingMembers()[0].run.deck.length;
-  const picked = offer.levelCards[0].cardIds[1];
-  assert.equal(off.chooseReward('p1', { levelCardIds: { 0: picked } }).ok, true);
-  const deck = off.livingMembers()[0].run.deck;
-  assert.equal(deck.length, deckBefore + 1);
-  assert.equal(deck.at(-1).cardId, picked);
-  // The shipped schedule rolls one 10% card chance and still grants a level card.
-  const shipped = coopFirstSpoils(REG, 'SCHEDULE');
-  assert.ok([0, REG.balance.rewards.cardChoices].includes(shipped.scene.offers.p1.cardIds.length));
-  assert.equal(shipped.scene.offers.p1.levelCards.length, 1);
-  assert.equal(!!shipped.scene.offers.p1.cardMissed, shipped.scene.offers.p1.cardIds.length === 0);
-  assert.equal(shipped.livingMembers()[0].rng.getCounters().rewardRolls, 1);
-});
 
 test('a waiting draft still takes the card row\'s seat, and rolls no chance', () => {
   const reg = withSchedule({ chancePct: { normal: 50 } });
@@ -456,63 +393,6 @@ test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by 
   assert.ok(validateRunShape({ ...run, pendingReward }).some((m) => /levelCard:0 Taken state requires its chosen card/.test(m)));
 });
 
-test('a co-op seat that was away claims its level card through the catch-up', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const reg = withSchedule({ onLevelUp: true });
-  const host = createSession({ registries: legacySessionRegistry(reg), seedString: 'AWAY', combatExpansionVersion: 1 });
-  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
-  host.start();
-  for (const member of host.livingMembers()) member.run.level.xp = xpToNext(reg, 1) - 1;
-  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
-  for (const enemy of host.live.combat.enemies) enemy.hp = 1;
-  host.setConnected('p2', false);
-  host.autoResolveCombat(botTurn);
-  const p2 = host.livingMembers().find((m) => m.id === 'p2');
-  const debt = p2.catchup.find((item) => item.type === 'reward');
-  assert.ok(debt, 'the away seat owes a reward');
-  assert.equal(debt.offer.levelCards?.length, 1, "the away seat levelled in the fight and is owed a level card");
-  const picked = debt.offer.levelCards[0].cardIds[0];
-  const before = p2.run.deck.length;
-  host.setConnected('p2', true);
-  assert.equal(host.resolveCatchup('p2', p2.catchup.indexOf(debt), { levelCardIds: { 0: picked } }).ok, true);
-  assert.equal(p2.run.deck.length, before + 1);
-  assert.equal(p2.run.deck.at(-1).cardId, picked);
-});
-
-test('co-op: a level-card pick survives a redraw, and a row left unpicked is picked for the seat on close', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    const offer = { cardIds: ['stomp'], levelCards: [{ ordinal: 0, cardIds: ['rend', 'gildedOath', 'stomp'] }] };
-    const store = createLevelCardPicks();
-    const draw = (snapshotOffer) => {
-      const app = document.createElement('main'); document.body.append(app);
-      app.append(...levelCardStrips(REG, snapshotOffer, store.picksFor('p1|reward|1', snapshotOffer)));
-      return app;
-    };
-    const first = draw(offer);
-    first.querySelectorAll('.coop-level-card .card')[1].click();
-    first.remove();
-    // Another seat chooses: a fresh snapshot (a new object, same offer) redraws the door.
-    const redrawn = draw(structuredClone(offer));
-    assert.deepEqual(redrawn.querySelectorAll('.coop-level-card .is-chosen').map((c) => c.dataset.cardId), ['gildedOath'], 'the tap is still lit');
-    assert.deepEqual(store.picksFor('p1|reward|1', offer), { 0: 'gildedOath' }, 'and still rides with the close');
-    redrawn.remove();
-    // A new offer starts clean.
-    assert.deepEqual(store.picksFor('p1|reward|2', { levelCards: [{ ordinal: 0, cardIds: ['rend'] }] }), {});
-  } finally {
-    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
-  }
-  // The host: closing with the plain card only still grants the level card.
-  const host = coopFirstSpoils(withSchedule({ onLevelUp: true }), 'SCHEDULE');
-  const spoils = host.scene.offers.p1;
-  const deck = host.livingMembers()[0].run.deck;
-  const before = deck.length;
-  assert.equal(host.chooseReward('p1', { cardId: spoils.cardIds[0] }).ok, true);
-  assert.equal(deck.length, before + 2, 'the card and the auto-picked level card');
-  assert.ok(spoils.levelCards[0].cardIds.includes(deck.at(-1).cardId));
-});
-
 test('a taken level card never reuses an instance id a sideboarded card holds', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
@@ -564,65 +444,3 @@ test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchange
   assert.deepEqual(back.pendingReward.rewards.levelCards, run.pendingReward.rewards.levelCards);
 });
 
-test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    const offerA = { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['rend', 'gildedOath', 'stomp'] }] };
-    const offerB = { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend', 'gildedOath'] }] };
-    const store = createLevelCardPicks();
-    // renderReward's own key for a seat: `${seat}|reward|${floor}`.
-    const draw = (seat, offer) => {
-      const app = document.createElement('main'); document.body.append(app);
-      const picks = store.picksFor(`${seat}|reward|3`, offer);
-      app.append(...levelCardStrips(REG, structuredClone(offer), picks));
-      return { app, picks };
-    };
-    const a = draw('p1', offerA);
-    a.app.querySelectorAll('.coop-level-card .card')[2].click();
-    a.app.remove();
-    const b = draw('p2', offerB); // the Tab: seat B's door
-    b.app.querySelectorAll('.coop-level-card .card')[0].click();
-    b.app.remove();
-    const back = draw('p1', offerA); // and back to seat A
-    assert.deepEqual(back.app.querySelectorAll('.coop-level-card .is-chosen').map((c) => c.dataset.cardId), ['stomp'], 'A\'s pick is still lit');
-    assert.deepEqual(back.picks, { 0: 'stomp' }, 'and is what A\'s close sends');
-    assert.deepEqual(store.picksFor('p2|reward|3', offerB), { 0: 'stomp' }, 'B kept its own pick');
-    back.app.remove();
-    // Seat A's offer resolves (A chose): its entry goes; B's open door keeps its own.
-    store.retain((key) => key !== 'p1|reward|3');
-    assert.deepEqual(store.keys(), ['p2|reward|3']);
-    assert.deepEqual(store.picksFor('p1|reward|3', offerA), {}, 'a resolved door leaves no pick behind');
-  } finally {
-    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
-  }
-});
-
-test('co-op: a repeat choice while another seat still chooses grants nothing twice', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const host = createSession({ registries: legacySessionRegistry(withSchedule({ onLevelUp: true })), seedString: 'SCHEDULE', combatExpansionVersion: 1 });
-  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
-  host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });
-  host.setConnectedMany(['p1', 'p2'], true);
-  host.start();
-  for (const member of host.livingMembers()) member.run.level.xp = xpToNext(REG, 1) - 1;
-  host.chooseNode('p1', host.session.mapGraph.startIds[0]);
-  if (host.scene.kind !== 'reward') {
-    for (const id of ['p2']) { try { host.chooseNode(id, host.session.mapGraph.startIds[0]); } catch {} }
-  }
-  if (host.live && host.live.combat) {
-    for (const enemy of host.live.combat.enemies) enemy.hp = 1;
-    host.autoResolveCombat(botTurn);
-  }
-  assert.equal(host.scene.kind, 'reward', 'both seats are at the spoils');
-  const p1 = host.livingMembers().find((m) => m.id === 'p1');
-  const before = p1.run.deck.length;
-  const offer = host.scene.offers.p1;
-  const picks = Object.fromEntries((offer.levelCards || []).map((row, i) => [row.ordinal ?? i, row.cardIds[0]]));
-  assert.equal(host.chooseReward('p1', { levelCardIds: picks }).ok, true);
-  const once = p1.run.deck.length;
-  assert.ok(once > before, 'the level card is taken once');
-  assert.equal(host.scene.kind, 'reward', 'p2 is still choosing');
-  assert.deepEqual(host.chooseReward('p1', { levelCardIds: picks }), { ok: false, error: 'already chosen' });
-  assert.equal(p1.run.deck.length, once, 'the repeat grants nothing');
-});
