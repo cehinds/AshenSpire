@@ -14,6 +14,9 @@
 // marker comment beside it. A minor bump also moves `const SERIES = 'X.Y'` in
 // tools/release-series.mjs, the series gate, so that gate stays green.
 //
+// `--read-current` prints the triple the file holds now; `--subject <triple> <branch> <sha>`
+// prints the commit subject the workflow writes.
+//
 // IDEMPOTENCE: `--done <sha>` exits 0 when a commit on HEAD already records that
 // source sha as `version-advance: <triple> after <release|main> <sha>`, else 1.
 // The workflow runs it first, so a re-run of a push never bumps twice.
@@ -78,6 +81,16 @@ function main(argv, root = ROOT) {
     const subjects = execFileSync('git', ['log', '--format=%s'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
     return recordsSource(subjects, argv[d + 1] || '') ? 0 : 1;
   }
+  const sj = argv.indexOf('--subject');
+  if (sj >= 0) {
+    const [next, branch, sha] = argv.slice(sj + 1);
+    if (!/^\d+\.\d+\.\d+$/.test(next || '') || !/^(release|main)$/.test(branch || '') || !/^[0-9a-f]{7,40}$/.test(sha || '')) {
+      console.error('version-advance: --subject wants <triple> <release|main> <sha>');
+      return 2;
+    }
+    console.log(advanceSubject(next, branch, sha));
+    return 0;
+  }
   const k = argv.indexOf('--kind');
   const kind = k >= 0 ? argv[k + 1] : undefined;
   if (kind !== 'candidate' && kind !== 'minor') {
@@ -87,6 +100,10 @@ function main(argv, root = ROOT) {
   const file = resolve(root, VERSION_FILE);
   const src = readFileSync(file, 'utf8');
   const cur = fmt(parseTriple(src));
+  if (argv.includes('--read-current')) {
+    console.log(cur);
+    return 0;
+  }
   const { next, text } = advanceSource(src, kind);
   if (argv.includes('--check')) {
     console.log(`version-advance: ${cur} -> ${next} (${kind}) is pending`);

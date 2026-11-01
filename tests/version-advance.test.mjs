@@ -87,3 +87,15 @@ test('CLI dry run in a temp copy: prints the next triple, --write moves both fil
     assert.match(readFileSync(join(dir, SERIES_FILE), 'utf8'), /const SERIES = '0\.8';/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('CLI: --read-current and --subject, and the subject round-trips through the guard', () => {
+  const run = (...args) => spawnSync(process.execPath, [join(ROOT, 'tools/version-advance.mjs'), ...args], { encoding: 'utf8' });
+  const sha = 'c'.repeat(40);
+  const cur = parseTriple(readFileSync(join(ROOT, VERSION_FILE), 'utf8')).join('.');
+  assert.equal(run('--kind', 'candidate', '--read-current').stdout.trim(), cur);
+  const subject = run('--subject', '0.7.3', 'release', sha);
+  assert.equal(subject.status, 0);
+  assert.equal(subject.stdout.trim(), `version-advance: 0.7.3 after release ${sha} [version-advance]`);
+  assert.equal(recordsSource([subject.stdout.trim()], sha), true);
+  assert.equal(run('--subject', '0.7.3', 'dev', sha).status, 2);
+});
