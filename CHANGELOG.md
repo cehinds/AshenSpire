@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.75`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields, and weapons, shields and other main objects carry a fine warm gold outline. Status effects now layer over the weapon and shield, with slightly stronger marks and glows; the physical Sweep trail follows its scythe blade.
+- **Card backgrounds follow their elements** ([#2433](https://github.com/cehinds/AshenSpire/pull/2433), `0.7.2.77`). Simple artwork keeps gray smoke for Physical and blue for untyped Magic; elements take priority, with orange Fire, red Force and Blood, muted brown Earth, purple Fire + Frost and lime Lightning + Alteration. Other elemental combinations blend consistently. Counter hammers sit in front of their shields, and weapons, shields and other main objects carry a fine warm gold outline. Status effects now layer over the weapon and shield, with slightly stronger marks and glows; the physical Sweep trail follows its scythe blade.
 
 ## 2026-10-31
 
