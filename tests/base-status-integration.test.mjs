@@ -204,11 +204,11 @@ test('one-MP Poison delivers its authored recurring payoff; Blight executes at t
 
 test('Veil checks the actual target action once; a failed check prevents damage and an area attack bypasses it', () => {
   const c = fight(); status(c, c.enemies[0], 'base.veil', 2);
-  c.rng.float = () => 0.99;
+  c.rng.int = () => 1;
   assert.equal(hit(c), 0);
-  c.rng.float = () => 0;
+  c.rng.int = () => 20;
   assert.ok(hit(c) > 0);
-  c.rng.float = () => 0.99;
+  c.rng.int = () => 1;
   assert.ok(hit(c, 12, { ...physical, targeting: 'area' }) > 0);
 });
 
@@ -230,7 +230,7 @@ test('core explicitly disables elemental Poison and Grease mechanics while retai
 test('one multi-hit action reuses its failed Veil perception check instead of rerolling contact', () => {
   const c = fight(), target = c.enemies[0]; status(c, target, 'base.veil', 2);
   let checks = 0;
-  c.rng.float = () => (++checks === 1 ? 0.99 : 0);
+  c.rng.int = () => (++checks === 1 ? 1 : 20);
   executeAction(c, { effect: { op: 'damage', target: 'enemy', amount: 4, hits: 2 },
     source: c.player, owner: c.player, target, card: physical, meta: {} }); drain(c);
   assert.equal(target.hp, 200, 'a later hit cannot retry a failed target check');

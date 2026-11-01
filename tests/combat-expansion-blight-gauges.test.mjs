@@ -51,11 +51,11 @@ test('a card that prints Crimson Blight keeps its printed Crimson Blight buildup
 
 // ---- Engine: one Necrotic Blight application per hit; no passive recovery ----
 const REG = createRegistries(contentBundle);
-// Every status-recovery roll is a 1, so any row that allows a recovery roll recovers.
+// Every status-recovery roll is a natural 20 (the top of the d20), so any row that allows a recovery roll recovers.
 const recoveringRng = seed => {
   const rng = createRng(seed);
   return new Proxy(rng, { get: (target, key) => key === 'int'
-    ? (stream, lo, hi) => stream === 'statusRecovery' ? lo : target.int(stream, lo, hi)
+    ? (stream, lo, hi) => stream === 'statusRecovery' ? hi : target.int(stream, lo, hi)
     : typeof target[key] === 'function' ? target[key].bind(target) : target[key] });
 };
 const v2Combat = ({ cardId = 'flagellation', rng = createRng(1) } = {}) => createCombat({ registries: REG, rng, combatExpansionVersion: 2,
@@ -94,7 +94,9 @@ test('passive recovery never removes Necrotic Blight; it still removes Crimson B
 
 for (const cardId of ['plagueBearer', 'scourge', 'rotMote', 'blightwardLash', 'witheringTouch']) {
   test(`a v2 ${cardId} hit fills Crimson Blight only: the printed Crimson also suppresses the Necrotic matchup rider`, () => {
-    const c = v2Combat({ cardId });
+    // Re-pinned (owner, 2026-11-01): the card's buildup chance is a d20 now. Seed 1 rolled a 2 against a 50% chance (target 11), so
+    // seed 2 (a 15) is the first seed that lands the printed Crimson Blight for every card here.
+    const c = v2Combat({ cardId, rng: createRng(2) });
     const enemy = c.enemies[0];
     enemy.combatStance = { ...enemy.combatStance, range: 'melee' };
     primeAccuracyRolls(c, { die: 20 });
