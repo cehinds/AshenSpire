@@ -49,12 +49,12 @@ test('Poise has a numeric badge and retains the HP trim and accessible value', (
   assert.equal(none.querySelector('.combat-health-meter').dataset.poised, 'false');
 }));
 
-test('PIP badges preserve actual Evasion stacks independently of other defenses', () => withKitDom(() => {
+test('PIP badges preserve actual Evasion stacks independently of other defenses (fourth+ collapse into +N)', () => withKitDom(() => {
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }),
     { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
   assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
     [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
-  [['shield', '5'], ['poise', '3'], ['evade', '2'], ['ward', '4']]);
+  [['shield', '5'], ['poise', '3'], ['overflow', '+2']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 

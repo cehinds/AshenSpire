@@ -44,6 +44,23 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
   });
 }
 
+export const BADGE_SLOTS = 3;
+
+/**
+ * Which badges a row draws (owner 2026-11-01): at most 3 slots. With 3 or fewer, all show; with more, the first 2 show and the
+ * third slot is a `+N` overflow badge (N = total - 2) whose text lists the hidden badges as "label value". Pure; `badges` stays whole.
+ * Returns { shown, overflow } where overflow is null or { kind: 'overflow', label: '+N', value: '', count, hidden, text }.
+ */
+export function visibleBadges(badges, slots = BADGE_SLOTS) {
+  const list = Array.isArray(badges) ? badges : [];
+  if (list.length <= slots) return { shown: list, overflow: null };
+  const shown = list.slice(0, slots - 1);
+  const hidden = list.slice(slots - 1);
+  const names = hidden.map(b => `${b.label}${b.value === '' || b.value == null ? '' : ` ${b.value}`}`);
+  const label = `+${hidden.length}`;
+  return { shown, overflow: { kind: 'overflow', label, value: label, count: hidden.length, hidden, names, text: names.join(', ') } };
+}
+
 /**
  * The stance badge's input for one fighter, or null (no stance, or not Core 2): { maneuver, label, help } with
  * help "Stance: Counter · +1 AR, +3 DR" built from the same rating bonuses the card inspector words.
