@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
-- **Merge train: Ward/Barrier, lightning elements, elemental cantrips** ([#2483](https://github.com/cehinds/AshenSpire/pull/2483), `0.7.3.32`). Lands #2476, #2477 and #2479 together in one merge to shorten the queue; no change beyond those three.
+- **Merge train: Ward/Barrier, lightning elements, elemental cantrips** ([#2483](https://github.com/cehinds/AshenSpire/pull/2483), `0.7.3.34`). Lands #2476, #2477 and #2479 together in one merge to shorten the queue; no change beyond those three.
 - **Merge train: rank-ups, Core weapon arts, enemy sheets** ([#2482](https://github.com/cehinds/AshenSpire/pull/2482), `0.7.3.32`). Lands #2472, #2474 and #2478 together in one merge to shorten the queue; no change beyond those three.
 - **Enemy character sheets** ([#2478](https://github.com/cehinds/AshenSpire/pull/2478), `0.7.3.30`). Each Core enemy now has an editable JSON character sheet (stats, equipment, deck and reserve deck) using typed id references, with a generated table of what every id means.
 - **Core weapon arts** ([#2474](https://github.com/cehinds/AshenSpire/pull/2474), `0.7.3.30`). Core classes now open with their starting weapon's art in place of the class special card, and swapping weapons swaps the art. The Starseer opens with one fewer Star Spark and the Herald with one fewer Ethereal, to hold the 10-card start.
