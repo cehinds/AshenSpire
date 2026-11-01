@@ -140,6 +140,7 @@ import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { weaknessChips } from '../components/weaknessChips.js';
+import { discoveredWeaknesses, recordWeaknessDiscoveries, withDiscoveredWeaknessesOnly } from '../../model/weaknessDiscovery.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -221,7 +222,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     () => playerSprite(customization, classId, configuredArt ? 'default' : armourId, presentation), { enemy: false });
   const profileEnemySprite = (definition, entity) => profileArt(
     () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
-  const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
+  // Weakness discovery (SPEC 5.3): a card preview must not use, or name, a weakness the player has not discovered. The preview runs on
+  // the fight with only the discovered rows in place (restored at once); real resolution keeps every row, which is how it is found.
+  const knownWeaknesses = enemy => discoveredWeaknesses(enemy.weaknesses, run.weaknessDiscovery, enemy.enemyId);
+  const previewWithKnownWeaknesses = (target, ...args) => withDiscoveredWeaknessesOnly(enginePreviewCard, target, run.weaknessDiscovery, ...args);
+  const previewMemo = createPreviewMemo({ combat, preview: previewWithKnownWeaknesses, dispatch: engineDispatch });
   const { dispatch, previewCard: memoPreviewCard } = previewMemo;
   // An enemy's projected intent reads only the fight, so it is kept like a preview until the next change.
   const projectCombatIntent = (target, enemyId) => target === combat
@@ -999,6 +1004,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
   // the HUD updates one actor at a time instead of jumping to the outcome.
   let disp = null;
+  // Weakness discovery (SPEC 5.3): a weakness shows once its event has played; the ledger lives on the run so a save keeps it.
+  let weaknessScanned = 0;
+  const syncWeaknessDiscovery = () => {
+    const upTo = disp?.logLength ?? combat.eventLog.length;
+    if (upTo > weaknessScanned) {
+      // A new discovery changes what a preview may show, so the kept previews are dropped.
+      if (recordWeaknessDiscoveries(run.weaknessDiscovery ||= {}, combat.eventLog.slice(weaknessScanned, upTo), combat.enemies)) previewMemo.invalidate();
+      weaknessScanned = upTo;
+    }
+  };
   // The "?" row survives the playback record: a reaction window opens mid-turn with `disp` cleared, and the resumed
   // dispatch snapshots again. The plan and the row on screen stay here, per enemy, until the turn ends.
   const followMemo = createFollowMemo();
@@ -1085,7 +1100,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
-    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules, weaknesses: entity.weaknesses }) : null;
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules, weaknesses: knownWeaknesses(entity) }) : null;
     const currentMoveId = intent.moveId;
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
@@ -1129,7 +1144,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
-      traits: learning ? learning.traits : [...weaknessTraitRows(entity.weaknesses), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
+      traits: learning ? learning.traits : [...weaknessTraitRows(knownWeaknesses(entity)), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
       // No authored lore exists for enemies yet; unknown, not none.
       lore: learning ? learning.lore : null,
     };
@@ -2485,6 +2500,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // WGC4: one eligibility home; a defeated enemy is never highlighted.
     const eligibleTargets = targetLayer({ armed: !!targeting, enemies: combat.enemies }).eligibleIds;
     const living = combat.enemies.filter((e) => e.alive);
+    syncWeaknessDiscovery();
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
       const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance, displayAppearance()]);
@@ -2510,7 +2526,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
-        chips: JSON.stringify(enemy.weaknesses || null),
+        chips: JSON.stringify(knownWeaknesses(enemy)),
       };
       const build = {
         classNames,
@@ -2561,7 +2577,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         meters: () => meterBars(enemy, { inputs: meterIn }),
         statuses: () => statusRow(enemy, {}, statusIn),
-        chips: () => weaknessChips(enemy.weaknesses),
+        chips: () => weaknessChips(knownWeaknesses(enemy)),
       };
       const slots = record ? null : {
         role: 'enemy',

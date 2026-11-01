@@ -23,7 +23,9 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
     .sort((a, b) => a.name.localeCompare(b.name));
   // Unencountered definitions are not projected into DOM/accessible labels.
   const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], {
-    registries, ratingsRules: registries.balance?.combatRatings || null, combatExpansionVersion, stanceRules }));
+    // Weaknesses are discovery-gated (SPEC 5.3) and the ledger lives on the run, which the title-screen bestiary has no
+    // access to: it lists none rather than spoil them.
+    registries, ratingsRules: registries.balance?.combatRatings || null, combatExpansionVersion, stanceRules, weaknesses: [] }));
   let selectedId = views.find(view => view.id === initialEnemyId)?.id || views[0]?.id || null;
   const detail = el('div', { class: 'cp-detail bestiary-detail', role: 'region', 'aria-label': t('knowledge.details') });
   const list = options([], { class: 'cp-grid cp-scroll bestiary-list', 'aria-label': t('knowledge.encountered') });
