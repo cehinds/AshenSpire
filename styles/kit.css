@@ -6084,7 +6084,7 @@ button[data-button-size] {
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow::before { border-radius: 50%; background: linear-gradient(135deg, #5a5348, #2d2a25 70%); box-shadow: inset 0 0 0 1px #d9c9a0aa; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow::before { border-radius: 50%; background: linear-gradient(135deg, var(--panel-2, var(--panel)), var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--gold); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow .combat-health-badge-value { white-space: nowrap; letter-spacing: -.02em; -webkit-text-stroke: 0; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
