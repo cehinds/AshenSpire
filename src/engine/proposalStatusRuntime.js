@@ -1,5 +1,5 @@
 import { combatProfileFor } from '../model/combatCardProfile.js';
-import { canonicalDamageType, magicDamageTypeOf } from '../model/combatRatings.js';
+import { canonicalDamageType, magicDamageTypeOf, isPhysicalDamageType } from '../model/combatRatings.js';
 import * as Plans from '../model/proposalStatusRules.js';
 export function proposalContext(ctx) {
  const profile=ctx.gameProfile;
@@ -8,6 +8,14 @@ export function proposalContext(ctx) {
 export function proposalActor(ctx,actor) {return actor && ctx.playerIdForEntity?.(actor) ? {...actor,id:ctx.playerIdForEntity(actor)} : actor;}
 export function proposalActors(ctx) {return [...(ctx.players ? [...ctx.players.values()].map(p=>p.entity) : [ctx.player]),...(ctx.enemies || [])].filter(Boolean);}
 export function proposalAllies(ctx,actor) {return proposalActors(ctx).filter(row=>row.kind===actor?.kind && row.alive);}
+// A typed rider (Elemental Weapon's fire) is its own hit: its profile carries the rider's element and school only, never the
+// weapon's physical type or components, so it meets the element's protections and weaknesses, not the weapon's.
+function riderCombatProfile(card,damageType,camp) {
+ // A physical rider (Auto Counter, Auto Sweep: blunt, slashing, piercing) keeps the card's own profile and stays physical.
+ if(!damageType || isPhysicalDamageType(canonicalDamageType(damageType)))return null;
+ const {damageComponents,physicalDamageType,magicShare,tags,...rest}=card?.combatProfile || {};
+ return {...rest,camp:camp || 'spell',damageType,school:damageType,magicShare:1};
+}
 export function applyProposalPlan(ctx,plan,source=null,target=null,card=null) {
  const actors=proposalActors(ctx),find=id=>actors.find(a=>(ctx.playerIdForEntity?.(a) || a.id)===id) || target || source;
  for(const change of plan.statusChanges || []) {
@@ -16,7 +24,8 @@ export function applyProposalPlan(ctx,plan,source=null,target=null,card=null) {
  }
  for(const job of plan.effects || []) {
   const {sourceId,targetId,proposalReactive,damageType,camp,direct,...effect}=job,actor=find(sourceId) || source,recipient=find(targetId) || target;
-  ctx.enqueue({effect,source:actor,owner:actor,target:recipient,card:{...card,proposalReactive:!!proposalReactive,damageType,damageSchool:damageType || card?.damageSchool,combatProfile:{...card?.combatProfile,camp:camp || card?.combatProfile?.camp || 'physical'},skipRatingBonus:!!proposalReactive || !!card?.skipRatingBonus},meta:{proposalReactive:!!proposalReactive,direct:direct!==false}});
+  const riderProfile=riderCombatProfile(card,damageType,camp);
+  ctx.enqueue({effect,source:actor,owner:actor,target:recipient,card:{...card,...(riderProfile ? {physicalDamageType:undefined,attack:undefined} : {}),proposalReactive:!!proposalReactive,damageType,damageSchool:damageType || card?.damageSchool,combatProfile:riderProfile || {...card?.combatProfile,camp:camp || card?.combatProfile?.camp || 'physical'},skipRatingBonus:!!proposalReactive || !!card?.skipRatingBonus},meta:{proposalReactive:!!proposalReactive,direct:direct!==false}});
  }
 }
 export function proposalDamageType(card={}) {

@@ -50,10 +50,13 @@ export function digest(combat) {
 // Re-pinned 2026-10-31 after merging dev cf6417b4d9: the same fights on the dev tree
 // (no transaction caches) give these digests, so the rules moved, not the caches.
 // Core 2 accuracy: Precision = 1 + stat mix + stacks, Evasion = 8 + DEX + 2/stack moves the seeded hit rolls.
-// Re-recorded again for #2434: the roll receipts add six events to each log on top of the #2436 Core 2 accuracy base (turn unchanged).
+// Re-pinned again 2026-10-31 on merging #2430 (enemy weaknesses) with #2436 (Core 2 accuracy): both change the
+// seeded fights, #2436 through the hit rolls and #2430 through the weakness damage stage (reaver rows only; turn unchanged).
+// Re-pinned 2026-11-01 on merging #2434 (roll log): it adds six roll-receipt log entries per fight and
+// itemised perception dcParts on the enemy's read; RNG counters, HP, turn and every other state field match dev.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'e02c9e3ed73ab0ed', state: '3955f498c6dd4ecf', events: 196, turn: 6 }],
-  [[4242, 'reaver'], { log: '2b753f0dbf095cf7', state: 'b32b43c9723233a6', events: 234, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '1bb7a14785574ec3', state: '95f05cf25b2cb35a', events: 196, turn: 6 }],
+  [[4242, 'reaver'], { log: 'f8fac21d378c1d8e', state: 'a025baec4945d4b4', events: 234, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
