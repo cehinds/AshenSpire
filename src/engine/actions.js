@@ -2074,7 +2074,7 @@ function runOpcode(ctx, action, eff) {
       if(eff.maneuver || eff.choose==='maneuver') {
         const maneuver=eff.maneuver || stanceId;if(!MANEUVERS.includes(maneuver))throw new Error('Choose a valid maneuver');
         for(const entity of resolveTargets(ctx,action,eff.target || 'self')) {
-          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
+          const carrier={...action.card,...(maneuver==='evade' && action.card?.evade==null ? {evade:{}} : {}),combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
           Matchups.setCombatStance(ctx,entity,carrier);
         }
         break;
