@@ -184,7 +184,9 @@ test('Core Precision loses a stack at owner turn start, preserves Persistent gra
   applyStatus(combat, combat.player, 'precision', 2, combat.player, { tags: ['trait:persistent'] });
   applyStatus(combat, combat.player, 'precision', 3);
   const text = statusTooltipText(core.statuses.get('precision'), combat);
-  assert.match(text, /^Each stack adds 1 Precision\. Loses 1 stack at the start of your turn\./);
+  assert.match(text, /^Each stack adds 1 Precision\. Loses 3 stacks at the start of your turn\./);
+  assert.match(text, /Temporary stacks lose 3 at the start of the owner's turn; Persistent stacks remain\./);
+  assert.doesNotMatch(text, /decreases by 1/);
   assert.doesNotMatch(text, /expire at the end of the owner's turn|multiple of your Precision/);
   decayAtTurnEnd(combat, combat.player);
   assert.equal(combat.player.statuses.precision.stacks, 5, 'turn end does not clear Precision');
@@ -215,7 +217,7 @@ test('Core preview authority collects nested status sources without copying the 
   }, [grant('vulnerable')]);
   assert.deepEqual(Object.keys(receipt.definitions).sort(), ['crimsonBlight', 'evade', 'precision', 'vulnerable', 'weak']);
   assert.deepEqual(Object.keys(receipt).sort(), ['clocks', 'decayAmount', 'definitions', 'enabled', 'overrideIds']);
-  assert.equal(receipt.clocks.precision, 'stackOwnerTurnStart'); // Rule: Precision decays per turn at owner turn start (owner, 2026-10-31)
+  assert.equal(receipt.clocks.precision, 'precisionOwnerTurnStart'); // Rule: Precision loses accuracy.precisionDecayPerTurn temporary stacks at owner turn start (owner, 2026-11-01)
   assert.equal(receipt.clocks.evade, 'stackOwnerTurnStart');
 });
 
