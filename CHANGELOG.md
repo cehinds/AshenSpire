@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Merge train: Ward/Barrier, lightning elements, elemental cantrips** ([#2483](https://github.com/cehinds/AshenSpire/pull/2483), `0.7.3.28`). Lands #2476, #2477 and #2479 together in one merge to shorten the queue; no change beyond those three.
 - **Elemental cantrip families** ([#2479](https://github.com/cehinds/AshenSpire/pull/2479), `0.7.3.28`). Added 17 cantrips across fire, frost, healing, rot and lightning: Dazzle Flare, Palm Flame, Cinder Ward, Rime Bite, Brittle Touch, Steady Hands, Guiding Whisper, Hallowed Ward, Dawn Flame, Venom Spray, Grave Toll, Wearying Touch, Rending Hex, Acid Splash, Jolt, Shocking Grasp and Storm Lash.
 - **Lightning, Shocked, Damp and Bedrock** ([#2477](https://github.com/cehinds/AshenSpire/pull/2477), `0.7.3.28`). Added Spark, a lightning cantrip, with Shocked, Damp and Bedrock statuses, metal gear conducting lightning, and a 1.25x bonus for enemies using their own element.
 - **Ward and Barrier stacks** ([#2476](https://github.com/cehinds/AshenSpire/pull/2476), `0.7.3.28`). Ward and Barrier are now stacked statuses: Ward sends all damage to Poise first, then Block, then HP, with a purple Poise badge and HP overlay; each Barrier stack adds 5 Poise and fades by one per turn; Mote Shield gives both.
