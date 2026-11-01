@@ -695,7 +695,9 @@ id only (§3.3).
   **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
   `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
   piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. A live event buffer, or an
+  record restores it without replaying combat start, draws, or enemy rolls. The saved event log keeps every row
+  but not the per-event `abilityBefore`/`abilityEntities` evaluation context (entity clones read only while that event is
+  scanned), which kept a 40-turn fight's save under the browser quota; the live log keeps it. A live event buffer, or an
   action queue that no pending reaction or ability discard holds, is not a committed
   boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { persistedEventLog } from '../src/model/runStorage.js';
 import { contentBundle } from '../src/content/index.js';
 import { combatMatchups, combatIntent } from '../src/content/combatMatchups.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -88,11 +89,11 @@ test('reload keeps armed Counter, per-seat intent reads, receipts and original t
   assert.deepEqual(loaded.player.combatCounter, combat.player.combatCounter);
   assert.deepEqual(loaded.enemies[0].intentReads, { seatA: false, seatB: true });
   assert.equal(loaded.enemies[0].intentRevealed, false);
-  assert.deepEqual(loaded.eventLog, combat.eventLog);
+  assert.deepEqual(persistedEventLog(loaded.eventLog), persistedEventLog(combat.eventLog));
   assert.deepEqual(serializeCombatSnapshot(loaded), snapshot);
   dispatch(combat, { type: 'endTurn' });
   dispatch(loaded, { type: 'endTurn' });
-  assert.deepEqual(loaded.eventLog, combat.eventLog);
+  assert.deepEqual(persistedEventLog(loaded.eventLog), persistedEventLog(combat.eventLog));
   assert.deepEqual(loaded.player.combatCounter, combat.player.combatCounter);
   assert.deepEqual(loaded.rng.getCounters(), combat.rng.getCounters());
 });
