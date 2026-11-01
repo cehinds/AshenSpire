@@ -42,9 +42,11 @@ export function createToast({ ms = TOAST_MS, fadeMs = TOAST_FADE_MS, reduced = r
       const el = ensure();
       clearTimeout(timer); clearTimeout(fadeTimer); fadeTimer = null;
       el.classList.remove('is-leaving');
-      el.textContent = String(text);
       el.hidden = false;
+      // Insert the (empty) live region first and write the words after, so a screen reader sees the change.
+      el.textContent = '';
       if (parent) parent.appendChild(el);
+      el.textContent = String(text);
       timer = setTimeout(leave, ms);
       return el;
     },
