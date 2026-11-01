@@ -20,6 +20,8 @@ export function activeCombatStances(ctx,entity) {
 }
 // Staggered is a forced, temporary condition (owner D13): it is never a chosen stance, so it is never remembered.
 export function rememberCombatStance(ctx,entity,previous) {
+ // A resumed fight can pin a profile that still lists 'evade'; no row of it is ever written (Evade is not a stance, owner 2026-11-01).
+ for(const row of [entity.combatStance,previous]) if(row?.maneuver==='evade') row.maneuver='defend';
  if(stanceCapacity(ctx,entity)<=1){delete entity.concurrentStances;return;}
  const existing=[...(entity.concurrentStances || []),previous,entity.combatStance].filter(row=>row && row.maneuver!=='staggered'),unique=new Map();
  for(const stance of existing) unique.set(`${stance.camp}:${stance.maneuver}`,stance);

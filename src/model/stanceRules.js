@@ -49,7 +49,7 @@ export function stanceOf(carrier, entity = null) {
   // Owner 2026-11-01: "All the evade stance cards were acting as defend cards so just migrate them all as defend cards".
   // There is no Evade stance: an Evade card (or a legacy 'evade' maneuver) is a Defend-stance card that keeps its
   // Evade stacks; a Counter card that carries an evade profile stays in Counter stance.
-  if (maneuver === 'evade') maneuver = 'defend';
+  if (maneuver === 'evade') maneuver = profile.maneuver === 'counter' ? 'counter' : 'defend';
   if (camp === 'spell' && !mirrored && !['defend', 'counter'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';

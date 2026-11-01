@@ -36,13 +36,16 @@ export const COMBAT_SNAPSHOT_VERSION = 1;
  */
 export function bringStancesForward(snapshot) {
   let changed = false;
+  // A hybrid saved before the counterStance flag (2026-10-14) has no flag; its armed combatCounter is the detectable mark.
+  let armedCounter = false;
   const row = (stance) => {
     if (!record(stance)) return;
-    if (stance.maneuver === 'evade') { stance.maneuver = stance.counterStance === true ? 'counter' : 'defend'; changed = true; }
+    if (stance.maneuver === 'evade') { stance.maneuver = stance.counterStance === true || armedCounter ? 'counter' : 'defend'; changed = true; }
     if ('counterStance' in stance) { delete stance.counterStance; changed = true; }
   };
   for (const entity of [snapshot?.player, ...(Array.isArray(snapshot?.enemies) ? snapshot.enemies : [])]) {
     if (!record(entity)) continue;
+    armedCounter = record(entity.combatCounter);
     row(entity.combatStance);
     if (Array.isArray(entity.concurrentStances)) entity.concurrentStances.forEach(row);
   }

@@ -14,9 +14,11 @@ export const mirroredStance = mirroredManeuver;
 export function configuredStance(carrier) {
   if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';
-  const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
+  const trigger = carrier?.stanceTrigger?.stance;
+  const raw = (trigger === 'evade' && carrier?.combatProfile?.maneuver === 'counter' ? 'counter' : trigger) || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
-  return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack' })[raw] || raw || 'neutral';
+  // Owner 2026-11-01: Evade is a tag, not a stance, so an authored 'evade' stance trigger (core.evade and kin) stands in Defend.
+  return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' })[raw] || raw || 'neutral';
 }
 // A Spell that carries Counter coverage (frostCounter and its school siblings) is a Counter in Core (owner 2026-10-19):
 // its effective maneuver is counter (profile or maneuver tag) and it authors counterCoverage. It keeps the prepared stance.
