@@ -46,7 +46,7 @@ export function statusLifecycleText(def, context = {}) {
 }
 
 function coreDecayText(def, core, value) {
-  if (core.clock === 'temporaryOwnerTurnEnd') return tFull('status.lifecycle.corePrecision');
+  if (core.clock === 'precisionOwnerTurnStart') return tFull('status.lifecycle.corePrecision');
   if (core.clock === 'stackOwnerTurnStart') return tFull('status.lifecycle.coreDecay', {
     value, amount: core.decayAmount, clock: t('status.lifecycle.turnStart'),
   });
