@@ -151,7 +151,8 @@ export function fitIllustratedCards(cards) {
   const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*row.lineHeight*row.lines)+1
     ||row.text.scrollWidth>row.text.clientWidth+1;
   for(const row of bounded)row.omitSecondary=overBudget(row);
-  for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1)row.clauses.at(-1).style.display='none';
+  // A clause that states a cost or downside is never hidden: when it cannot fit, the whole face falls to the Inspect cue.
+  for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1&&row.clauses.at(-1).dataset?.faceDownside!=='true')row.clauses.at(-1).style.display='none';
   for(const row of bounded)row.needsFallback=overBudget(row);
   for(const row of bounded){
     if(row.needsFallback&&row.fallback){
