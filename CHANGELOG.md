@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Defend stance discounts every defensive card** ([#2486](https://github.com/cehinds/AshenSpire/pull/2486), `0.7.3.38`). While you are already in Defend stance, Defend, Counter and Evade cards all take the Adept cost cut, so an upgraded Evade drops from 2 SP to 1. Counter and Evade stances still discount only their own cards.
 - **Upgrade options fit on phones** ([#2485](https://github.com/cehinds/AshenSpire/pull/2485), `0.7.3.38`). The small card in each upgrade option no longer covers the list of changes or the "Option N" title on a narrow screen.
 - **Chance readouts show the d20 step** ([#2480](https://github.com/cehinds/AshenSpire/pull/2480), `0.7.3.36`). Chance readouts for crits, status buildups, avoidance and card buildup chances now show the 5% step a d20 really rolls (32% reads 30%).
 - **Merge train: Ward/Barrier, lightning elements, elemental cantrips** ([#2483](https://github.com/cehinds/AshenSpire/pull/2483), `0.7.3.34`). Lands #2476, #2477 and #2479 together in one merge to shorten the queue; no change beyond those three.
