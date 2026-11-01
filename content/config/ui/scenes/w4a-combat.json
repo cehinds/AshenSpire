@@ -5,7 +5,8 @@
   "sizing": {
     "bands": { "hud": 6, "scene": 61, "context": 20, "footer": 13 },
     "floorPercent": 80,
-    "mobileFieldHandOverlapPx": 36,
+    "mobileHandReservePx": 36,
+    "mobileFieldHandOverlapPx": 66,
     "mobileFieldOverlapMinFieldPx": 300,
     "desktopHeader": { "heightPx": 56,
         "splitHeightPx": 44.8, "stackedHeightPx": 76, "singleRowMinWidthPx": 640 },

@@ -5,7 +5,7 @@ import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, per
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { mobileFieldOverlap, desktopFieldBottom, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
-import { responsiveHandLayout } from '../src/ui/models/HandLayout.js';
+import { responsiveHandLayout, HAND_TOOL_ROW_RESERVE_PX } from '../src/ui/models/HandLayout.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
@@ -334,7 +334,8 @@ test('widescreen player feet stay above the resting cards', () => {
 });
 
 // Short portrait phones: the 36px extension is only granted to a field of at least mobileFieldOverlapMinFieldPx, so the
-// player's feet (rank D ground, measured from the field's top) never pass the row's bottom, the hand's top, on either
+// player's feet (rank D ground, measured from the field's top) never pass the resting cards' top: the row's bottom plus the
+// drop the phone fan takes (HAND_TOOL_ROW_RESERVE_PX less mobileHandReservePx), on either
 // side of the 280px shortBelowPx profile switch and the gate itself. 360x620 (natural field ~296px) was the regression:
 // the extension flipped it to the phone profile and the feet landed 20px inside the first card.
 test('phone field extension never puts the player feet below the hand, either side of shortBelowPx', () => {
@@ -347,7 +348,8 @@ test('phone field extension never puts the player feet below the hand, either si
     const field = natural + mobileFieldOverlap(natural);
     const formation = alternativeFormation(combatFormation({ width: 360, height: field, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
       friends: ['p0'], enemies: ['e0', 'e1', 'e2'] }), 360, field, true, { formFactor: 'mobile' });
-    for (const slot of formation.slots) assert.ok(slot.ground <= natural + 1e-6, `natural ${natural}: ${slot.side} ${slot.cell} feet ${slot.ground} below the hand at ${natural}`);
+    const cardTop = natural + HAND_TOOL_ROW_RESERVE_PX - sizing.mobileHandReservePx;
+    for (const slot of formation.slots) assert.ok(slot.ground <= cardTop + 1e-6, `natural ${natural}: ${slot.side} ${slot.cell} feet ${slot.ground} below the cards at ${cardTop}`);
   }
 });
 
