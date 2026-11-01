@@ -2,6 +2,7 @@ import { engravedIcon } from '../components/engravedIcon.js';
 import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
+import { acFor } from '../models/acBadge.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
@@ -2154,6 +2155,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         stance: entity.kind === 'player' && fixCoreEnabled(combat) ? stanceBadgeFor(entity, { registries, combatExpansionVersion: combat.combatExpansionVersion, stanceRules: registries.balance?.stanceRules }) : null,
+        ac: acFor(combat, entity),
         counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,

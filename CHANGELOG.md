@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-01
 
 - **Stance glyph after a Poise break** ([#2473](https://github.com/cehinds/AshenSpire/pull/2473), `0.7.3.14`). The figure no longer shows a stance glyph (for example Smash) at turn start after a Poise break has already ended the stance; it shows the resting mark.
+- **Smaller, reordered health badges and a player AC badge** ([#2462](https://github.com/cehinds/AshenSpire/pull/2462), `0.7.3.14`). Combat health badges are 20% smaller, read Block, Poise, Evade, then stacks, then stance, and show at most three slots with a +N badge for the rest; your health bar now has an AC badge on its left showing the Evasion an enemy hit roll must reach.
 - **Card inspection fits on one screen** ([#2466](https://github.com/cehinds/AshenSpire/pull/2466), `0.7.3.14`). The inspected card is smaller with its details beside it, each effect tag's text shows inline with the effect line first, and duplicate chips such as "Spell Spell Spell" are gone.
 - **One weapon set per hand** ([#2463](https://github.com/cehinds/AshenSpire/pull/2463), `0.7.3.12`). Main and off hand each carry a single set (MH1 and OH1); anything saved in the removed extra sets moves to storage when the save loads.
 - **Focus discount is for magic cards** ([#2465](https://github.com/cehinds/AshenSpire/pull/2465), `0.7.3.10`). A Focus armament now lowers the Mana cost of magic (spell) cards only; other cards that cost Mana pay full price.
