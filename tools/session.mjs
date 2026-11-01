@@ -903,6 +903,9 @@ export function createSession({ registries, seedString, endless = false, restore
         intentPreviews: Object.fromEntries([...c.players.keys()].map(id => [id, previewCoopIntent(c, id, e.id)])),
         ...(e.wardMeter ? { wardMeter: e.wardMeter } : {}),
         ...(e.ratings ? { ratings: { ...e.ratings } } : {}),
+        // Enemy weaknesses (SPEC 5.3), present only on a Core fight: clients read
+        // them for the HUD chips and the inspector's Weak-to rows.
+        ...(Array.isArray(e.weaknesses) ? { weaknesses: structuredClone(e.weaknesses) } : {}),
         // WHAT IT HAS ALREADY DONE. The engine records every move that
         // RESOLVED on `performedMoves` (coopCombat.js, beside combat.js's own
         // line), and solo's inspector reads it straight off the entity. This

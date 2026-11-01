@@ -98,6 +98,8 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
+import { weaknessChips } from '../components/weaknessChips.js';
+import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { haptic } from '../haptics.js';
 import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, callout, calloutForEvent, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
@@ -1217,7 +1219,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const owner = snap.scene.enemyKnowledge?.owners?.[me];
       const moveCardOptions = { registries, combatMatchupRules: snap.scene.combatMatchupRules,
         combatExpansionVersion: snap.scene.combatExpansionVersion, stanceRules: snap.scene.stanceRules };
-      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: registries.balance?.combatRatings || null }) : null;
+      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: registries.balance?.combatRatings || null, weaknesses: entity.weaknesses }) : null;
       const moveCards = learning ? learning.moveCards : def ? enemyMoveCards(def, { ...moveCardOptions, enemy: entity, preview: intent }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the
@@ -1236,7 +1238,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         })
         : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards, history, ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
+        ? { moveCards, history, traits: learning ? learning.traits : weaknessTraitRows(entity.weaknesses), ...(learning ? { learning, perception: snap.party.find(member => member.id === me)?.skills?.perception?.level || 0,
           prediction: entity.intentPredictions?.[me], onPredict: (actionSerial, maneuver) => {
             conn.send({ t: 'predictIntent', as: me, enemyInstanceId: entity.id, actionSerial, maneuver });
             return { accepted: false };
@@ -1551,6 +1553,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
       box.appendChild(statusRow(e.statuses, coopBadgedStatusIds(e, true, me)));
+      for (const chip of weaknessChips(e.weaknesses)) box.appendChild(chip);
       if (!dead) {
         wireCombatantContext(box, def.name);
         box.addEventListener('click', () => {
