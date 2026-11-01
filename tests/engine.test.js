@@ -134,6 +134,7 @@ import { settingOn, resolveTapSize, resolveLevelUpValue, settingsRow, categoryHa
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
 import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, MENU_TABS, MENU, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -200,14 +201,14 @@ function testBundle() {
   // withKindRows: every fixture card and enemy states its kind, as shipped
   // content must (model/tree.js) — the engine reads a card's kind tag, never
   // its `type`, so a fixture without the row would be no kind at all.
-  return withKindRows({
+  return withKindRows(withWeaponRack({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     // Fixture cards pin their own costs: they opt out of the cost formula (costRule 'fixed', SPEC §4.3a).
     cards: [...contentBundle.cards, ...TEST_CARDS.map((card) => ({ costRule: 'fixed', ...card }))],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
-  });
+  }));
 }
 
 const REG = createRegistries(testBundle());
@@ -232,7 +233,7 @@ function legacyKitFixture(bundle) {
     return copy;
   }) } };
 }
-const legacyBundle = legacyKitFixture(contentBundle);
+const legacyBundle = legacyKitFixture(withWeaponRack(contentBundle));
 const legacyTestBundle = () => legacyKitFixture(testBundle());
 const LEGACY_REG = createRegistries(legacyTestBundle());
 
@@ -3544,7 +3545,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       : piece));
     b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
     b.scripts = contentBundle.scripts;
-    const reg = createRegistries(b);
+    const reg = createRegistries(withWeaponRack(b));
     const run = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 23, classId: 'reaver', registries: reg });
     const sword = 'armament/straightSword';
     const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');

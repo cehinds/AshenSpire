@@ -62,12 +62,19 @@ let doorShapeWatched = false;
 // looked like it was working. Only a bare px length is read; anything else
 // falls back to the authored sum rather than being half-understood.
 const PX = /^(\d+(?:\.\d+)?)px$/;
+function modalCardScale() {
+  const raw = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-modal-scale'));
+  return Number.isFinite(raw) && raw > 0 && raw <= 1 ? raw : 1;
+}
 function doorStackBelowPx() {
   const projected = getComputedStyle(document.documentElement).getPropertyValue('--card-w-inspect').trim();
   const match = PX.exec(projected);
   const inspect = match ? Number(match[1]) : NaN;
   if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
-  return inspect + doorReadableMinPx();
+  // The modal draws the card at a share of the inspect width (--card-modal-scale,
+  // kit.css) so card and details fit one screen; the door is two columns when
+  // THAT card plus the readable measure fit.
+  return inspect * modalCardScale() + doorReadableMinPx();
 }
 // MEASURE THE DOOR, NOT THE WINDOW. This compared `logicalViewport().width`, and the
 // door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
@@ -243,7 +250,7 @@ function watchCardDoorShape() {
 }
 
 /** Read-only composition shared by equipment and playing-card detail surfaces. */
-export function cardInspectionLayout(card, details) {
+export function cardInspectionLayout(card, details, { chipsWithDetails = false } = {}) {
   // Resolved as the layout is built, so a door opened on any host — the game,
   // the weapon preview, the wireframe gallery — reads the same shape.
   watchCardDoorShape();
@@ -257,7 +264,9 @@ export function cardInspectionLayout(card, details) {
   bindNativeCardTooltips(card);
   art.append(card);
   const tags = details.querySelector('.inspection-tags');
-  if (tags) art.append(tags);
+  // The reading modal keeps the chips with the details so a narrow card column
+  // does not wrap them into a tall strip; embedded hosts keep them under the card.
+  if (tags && !chipsWithDetails) art.append(tags);
   details.classList.add('card-inspection-details');
   decorateKeywords(details);
   body.append(art, details);
@@ -317,7 +326,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
     secondary: buttons.slice(1),
-    body: cardInspectionLayout(card, details) });
+    body: cardInspectionLayout(card, details, { chipsWithDetails: true }) });
   for (const button of buttons) {
     button.addEventListener('click', () => {
       // Re-read rather than trusting the row this button was drawn from: the
