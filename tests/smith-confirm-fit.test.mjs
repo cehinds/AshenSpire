@@ -13,7 +13,6 @@ const same = (r) => ({ hp: r.hp, mana: r.mana, stamina: r.stamina, flaskCharges:
 test('recovery preview: nothing changing collapses to one line, no rows and no dash column', () => {
   const html = recoveryLedgerHtml(run(), same(run()));
   assert.match(html, /class="rest-recovery-none"[^>]*>No recovery changes</);
-  assert.doesNotMatch(html, /<h3|Recovery preview/);
   assert.doesNotMatch(html, /rest-recovery-row/);
   assert.doesNotMatch(html, /rest-recovery-gain|—/);
 });

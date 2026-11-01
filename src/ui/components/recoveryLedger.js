@@ -20,5 +20,5 @@ export function recoveryLedgerHtml(run, after) {
   const body = changed.length
     ? changed.map(([icon, label, before, next]) => `<div class="rest-recovery-row">${engravedIconHtml(icon)}<span>${esc(label)}</span><span>${before} → <strong>${next}</strong></span><span class="rest-recovery-gain">${next > before ? '+' : ''}${next - before}</span></div>`).join('')
     : `<p class="rest-recovery-none">${esc(t('rest.recovery.none'))}</p>`;
-  return `<section class="rest-recovery" aria-label="${esc(t('rest.recovery.heading'))}">${body}</section>`;
+  return `<section class="rest-recovery" aria-label="${esc(t('rest.recovery.heading'))}"><h3 class="as-eyebrow">${esc(t('rest.recovery.heading'))}</h3>${body}</section>`;
 }
