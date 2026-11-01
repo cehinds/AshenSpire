@@ -338,6 +338,36 @@ test('CLI under CI: a sparse-missing-file log exits 2', () => {
   assert.equal(r.status, 2);
 });
 
+test('resolveChangelogConflict keeps date groups intact when dev adds a newer date (Codex repro)', () => {
+  const text = [
+    '# Changelog', '',
+    '<<<<<<< HEAD',
+    '## 2026-10-31', '',
+    '- **Mine** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.2.70`). PR receipt.',
+    '=======',
+    '## 2026-11-01', '',
+    '- **Dev new day** ([#2600](https://github.com/cehinds/AshenSpire/pull/2600), `0.7.2.80`). Dev.', '',
+    '## 2026-10-31', '',
+    '- **Dev yesterday** ([#2599](https://github.com/cehinds/AshenSpire/pull/2599), `0.7.2.79`). Dev.',
+    '>>>>>>> origin/dev', '',
+    '## 2026-10-30', '', '- **Old** ([#2400](https://github.com/cehinds/AshenSpire/pull/2400), `0.7.2.10`). History.', '',
+  ].join('\n');
+  const r = resolveChangelogConflict(text);
+  const lines = r.split('\n');
+  assert.ok(!r.includes('<<<<<<<') && !r.includes('>>>>>>>'));
+  const firstHeading = lines.findIndex(l => l.startsWith('## '));
+  const mine = lines.findIndex(l => l.includes('#2501'));
+  assert.equal(lines[firstHeading], '## 2026-11-01');
+  assert.ok(mine > firstHeading && mine < lines.indexOf('## 2026-10-31'), 'our receipt sits inside the newest date group');
+  assert.equal(lines.filter(l => l === '## 2026-10-31').length, 1, 'one 2026-10-31 heading');
+  assert.ok(lines.some(l => l.includes('#2599')) && lines.some(l => l.includes('#2600')));
+});
+
+test('resolveChangelogConflict refuses a non-receipt change on our side', () => {
+  const text = ['# Changelog', '<<<<<<< HEAD', 'Intro paragraph we rewrote.', '=======', 'Intro paragraph.', '>>>>>>> origin/dev', '## 2026-10-31', ''].join('\n');
+  assert.throws(() => resolveChangelogConflict(text), /non-receipt line/);
+});
+
 test('resolveChangelogConflict drops the diff3 base section', () => {
   const text = [
     '## 2026-10-31', '',

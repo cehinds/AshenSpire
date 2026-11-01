@@ -350,15 +350,30 @@ export function classifyConflicts(paths) {
 // Pure: resolve every conflict block in CHANGELOG.md text. Ours (HEAD) receipt
 // block first, then theirs; a non-blank line of ours that theirs already holds is dropped.
 export function resolveChangelogConflict(text) {
-  // diff3/zdiff3 add a `||||||| base` section between ours and `=======`; it is dropped.
+  // Receipt-level, not line-level: every conflict hunk takes theirs (dev's date groups and
+  // headings intact), and ours contributes only its new receipt bullets, which go to the top
+  // of the newest date group (restamp then orders them). diff3/zdiff3 base sections are dropped.
+  // Anything else ours changed (prose, a heading) is not a receipt we can place: throw, so
+  // devmerge aborts and a model decides.
   const re = /^<{7}[^\n]*\n([\s\S]*?)(?:^\|{7}[^\n]*\n[\s\S]*?)?^={7}\n([\s\S]*?)^>{7}[^\n]*\n?/gm;
-  return text.replace(re, (_all, ours, theirs) => {
-    const have = new Set(theirs.split('\n').filter(l => l.trim()));
-    const kept = ours.split('\n').filter(l => !l.trim() || !have.has(l));
-    // blank separators from ours add nothing once its receipts are gone
-    const oursText = kept.join('\n').replace(/^\n+|\n+$/g, '');
-    return `${oursText ? `${oursText}\n` : ''}${theirs}`;
+  const extra = [];
+  const merged = text.replace(re, (_all, ours, theirs) => {
+    const have = new Set(theirs.split('\n'));
+    for (const line of ours.split('\n')) {
+      if (!line.trim() || have.has(line) || /^## \d{4}-\d{2}-\d{2}\b/.test(line)) continue;
+      if (!/^- \*\*/.test(line)) throw new Error(`CHANGELOG conflict: ours changed a non-receipt line: ${line.slice(0, 80)}`);
+      if (!extra.includes(line)) extra.push(line);
+    }
+    return theirs;
   });
+  if (!extra.length) return merged;
+  const lines = merged.split('\n');
+  const at = lines.findIndex(l => /^## \d{4}-\d{2}-\d{2}\b/.test(l));
+  if (at < 0) throw new Error('CHANGELOG.md has no "## <date>" heading to receive the receipt');
+  const first = lines.findIndex((l, i) => i > at && l.trim() !== '');
+  const insertAt = first < 0 ? lines.length : first;
+  lines.splice(insertAt, 0, ...extra);
+  return lines.join('\n');
 }
 
 const git = (args, cwd) => run('git', args, { cwd });
@@ -393,7 +408,12 @@ export function devmerge({ base = 'dev', pr = null, cwd = ROOT, deps = {} }) {
     }
     for (const f of cls.changelog) {
       const path = resolve(top, f);
-      writeFileSync(path, resolveChangelogConflict(readFileSync(path, 'utf8')));
+      let text;
+      try { text = resolveChangelogConflict(readFileSync(path, 'utf8')); } catch (error) {
+        git(['merge', '--abort'], top);
+        return { exit: 2, verdict: 'needs-model', reason: error.message, files: [f] };
+      }
+      writeFileSync(path, text);
       git(['add', '--', f], top);
       resolved.changelog.push(f);
     }
