@@ -1490,7 +1490,7 @@
       }
     ],
     "textTemplate": "Deal {damage} to ALL enemies. Apply {vulnerable} Vulnerable to ALL. Starstone: deal {damage.2} to ALL again.",
-    "faceTemplate": ["Deal {damage} damage to all.", "Apply {vulnerable} Vulnerable to all."],
+    "faceTemplate": ["Deal {damage} damage to all.", "Apply {vulnerable} Vulnerable to all.", "Gain Starstone Charge."],
     "upgrade": {
       "effects": [
         {
@@ -1746,7 +1746,7 @@
       }
     ],
     "textTemplate": "Whenever you gain Starstone Charge, deal 4 damage to a random enemy.",
-    "faceTemplate": ["On Charge: 4 random damage."],
+    "faceTemplate": ["Gain Starstone: 4 random damage."],
     "upgrade": {
       "cost": 1
     }
@@ -2386,7 +2386,7 @@
       }
     ],
     "textTemplate": "At the start of your turn, gain Starstone Charge and draw a card.",
-    "faceTemplate": ["Turn start: Charge and draw."],
+    "faceTemplate": ["Turn start: Starstone, draw 1."],
     "upgrade": {
       "manaCost": 0
     }

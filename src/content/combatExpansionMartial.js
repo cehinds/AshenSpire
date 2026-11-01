@@ -56,7 +56,9 @@ export function applyCombatExpansionMartial(def) {
   const counter = /Prepare (one Evade and )?(Ranged|Melee) Counter/.exec(card.textTemplate);
   if (!counter) return rest;
   const gain = /^Gain \{block\} Block\./.test(card.textTemplate) ? ['Gain {block} Block.'] : [];
-  return { ...rest, faceTemplate: [...gain, `Prepare ${counter[1] ? 'Evade, ' : ''}${counter[2]} Counter.`] };
+  // A rewrite that still has the card Become Prepared says so on the face too.
+  const prepared = /Apply \{(\w+)\} prepared\b/.exec(card.textTemplate);
+  return { ...rest, faceTemplate: [...gain, `Prepare ${counter[1] ? 'Evade, ' : ''}${counter[2]} Counter.`, ...(prepared ? [`Gain {${prepared[1]}} Prepared.`] : [])] };
 }
 
 function martialProjection(def) {

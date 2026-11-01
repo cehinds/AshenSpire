@@ -7,7 +7,7 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { renderCard } from '../src/ui/components/card.js';
 import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
-import { cardFaceProjection } from '../src/model/cardFaceProjection.js';
+import { cardFaceProjection, statusApplied, statusNamed } from '../src/model/cardFaceProjection.js';
 import { spellDefenseSplit } from '../src/model/spellDefense.js';
 import { tokenRe } from '../src/model/validate.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -176,7 +176,7 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
           const spelled = full.replace(/\b(?:a|an|one)\b/gi, '1').replace(/\b(?:twice|two)\b/gi, '2').replace(/\b(?:three)\b/gi, '3');
           const chances = (def.effects || []).filter(e => e.chance !== undefined && e.chance < 100).map(e => String(e.chance)); // a chance comes from the card's own effect data
           for (const n of face.replace(/(\d+) Block, (\d+) Ward/g, (m, x, y) => String(+x + +y)).match(/\d+/g) || []) if (!chances.includes(n)) assert.ok(new RegExp(`(^|\\D)${n}(\\D|$)`).test(spelled), `${label}: face "${face}" shows ${n}, absent from "${full}"`);
-          for (const status of registries.statuses.all()) if (statusApplied(full, status.name)) assert.ok(statusNamed(status.name, shown), `${label}: face "${face}" never names ${status.name} from "${full}"`);
+          for (const status of registries.statuses.all()) if (statusApplied(full, status)) assert.ok(statusNamed(status, shown), `${label}: face "${face}" never names ${status.name} from "${full}"`);
           for (const [kind, re, faceRe = re] of QUALIFIERS) if (re.test(full)) assert.ok(faceRe.test(shown), `${label}: face "${face}" lost its ${kind} qualifier from "${full}"`);
         }
       }
@@ -194,3 +194,21 @@ test('a summary keeps card identity so Sanctuary Cleanse splits Block and Ward w
   assert.ok(lines.includes('Gain 1 Block, 2 Ward.'), lines.join(' | '));
   assert.ok(lines.every(line => !/Barrier/.test(line)), lines.join(' | '));
 }));
+
+test('a status is named by its whole name or id, never by a stem of another word', async () => {
+  const prepared = { id: 'prepared', name: 'Prepared' }, charge = { id: 'starstoneCharge', name: 'Starstone Charge' };
+  assert.ok(statusApplied('Gain 12 Block. Apply 1 prepared to yourself.', prepared));
+  assert.ok(!statusNamed(prepared, 'gain 12 block. prepare melee counter.'), 'Prepare Melee Counter is not Prepared');
+  assert.ok(statusNamed(prepared, 'gain 1 prepared.'));
+  // Recipe text prints the id; a face may shorten a multi-word name to its leading words.
+  assert.ok(statusApplied('Apply 1 starstoneCharge to yourself.', charge));
+  assert.ok(!statusNamed(charge, 'deal 13 damage to all. apply 4 vulnerable to all.'));
+  assert.ok(statusNamed(charge, 'gain starstone 1.') && statusNamed(charge, 'gain starstone charge.'));
+  const [def] = await profiles();
+  withKitDom(dom => {
+    for (const ref of [{ cardId: 'radiantSpray' }, { cardId: 'radiantSpray', abilityRank: 4 }, { cardId: 'radiantSpray', abilityRank: 5 }]) {
+      const lines = facesOf(dom, def.registries, ref, def.rules);
+      assert.ok(lines.some(line => /starstone/i.test(line)), `${JSON.stringify(ref)}: ${lines.join(' | ')}`);
+    }
+  });
+});

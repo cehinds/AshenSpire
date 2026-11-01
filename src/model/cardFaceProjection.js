@@ -54,9 +54,27 @@ export const QUALIFIERS = [
   ['selfDebuff', /\bbecome (?:vulnerable|weak|frail)\b/i],
   ['exhaust', /\bexhaust|\bethereal/i],
 ];
+const escapeRe = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// The spellings a status prints under: its display name and its id (recipe text prints "starstoneCharge"), spaced and joined.
+const statusForms = status => {
+  const name = typeof status === 'string' ? status : status?.name, id = typeof status === 'string' ? '' : status?.id;
+  const forms = new Set();
+  for (const [raw, shortenable] of [[name, true], [String(id || '').replace(/^.*\./, ''), false]]) {
+    if (!raw) continue;
+    const spaced = String(raw).replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/[-_.]+/g, ' ').trim().toLowerCase();
+    forms.add(spaced); forms.add(spaced.replace(/\s+/g, ''));
+    // A face may shorten a multi-word name to its leading words ("Gain 1 Starstone"), never to a stem of one word.
+    const words = spaced.split(' ');
+    if (shortenable) for (let n = 1; n < words.length; n++) forms.add(words.slice(0, n).join(' '));
+  }
+  return [...forms].filter(Boolean);
+};
 // A status the full rules apply or grant ("Apply 4 weak", "gain Sleep"), not one merely mentioned ("Blight still accumulates").
-export const statusApplied = (text, name) => new RegExp(`(?:\\d+|apply|applies|gain|inflict)\\s+${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text);
-export const statusNamed = (name, text) => String(name).toLowerCase().split(/\s+/).some(word => text.toLowerCase().includes(word.replace(/(?:ed|s)$/, '')));
+export const statusApplied = (text, status) => statusForms(status).some(form =>
+  new RegExp(`(?:\\d+|apply|applies|gain|inflict)\\s+${escapeRe(form).replace(/ /g, '\\s+')}\\b`, 'i').test(text));
+// The whole status name (or id) as a word, with a plural; never a stem, so "Prepared" is not "Prepare Melee Counter".
+export const statusNamed = (status, text) => statusForms(status).some(form =>
+  new RegExp(`\\b${escapeRe(form).replace(/ /g, '\\s+')}(?:e?s)?\\b`, 'i').test(text));
 const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
 // A line of five words or fewer is one clause. A longer list of complete
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
@@ -159,7 +177,7 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
     if (QUALIFIERS.some(([, re, faceRe = re]) => re.test(fullText) && !faceRe.test(faceText))) return projection;
     // Every status the full rules name (an enemy debuff on a condition, say) must be named on the face too.
     const lowerFace = faceText.toLowerCase();
-    if ((registries?.statuses?.all?.() || []).some(status => status.name && statusApplied(fullText, status.name) && !statusNamed(status.name, lowerFace))) return projection;
+    if ((registries?.statuses?.all?.() || []).some(status => (status.name || status.id) && statusApplied(fullText, status) && !statusNamed(status, lowerFace))) return projection;
     return { ...projection, clauses, omitted: true, summarized: true };
   }
   return projection;
