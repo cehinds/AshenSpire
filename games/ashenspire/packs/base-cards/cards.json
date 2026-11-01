@@ -2280,7 +2280,7 @@
           }
         ],
         "textTemplate": "Shuffle up to {draw} random hand cards into draw. Draw 3.",
-        "faceTemplate": ["Shuffle up to {draw} cards.", "Draw {draw} cards."],
+        "faceTemplate": ["Shuffle {draw} random hand cards.", "Draw {draw} cards."],
         "icon": "shield",
         "flavor": "A road lesson taught with a traveler's worn cards.\n\nCaravan guards changed their watches whenever the same sequence grew familiar. A dangerous habit could be broken by putting every expected duty aside and taking another. The method survived on roads where there were no caravans left.\n\nFamiliarity is a route an enemy learns."
       },
@@ -2395,7 +2395,7 @@
           }
         ],
         "textTemplate": "Shuffle up to 100 random cards in your draw pile.",
-        "faceTemplate": ["Shuffle your draw pile."],
+        "faceTemplate": ["Shuffle 100 random draw cards."],
         "icon": "shield",
         "flavor": "An ordering exercise of the Observatory's apprentices.\n\nThe students sorted loose charts until each could name their place by touch. Their teachers then scattered the stack and ordered them to begin again. The exercise continued after the charts ceased to describe the sky outside.\n\nNo arrangement was permitted to become certain."
       },

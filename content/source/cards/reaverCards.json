@@ -1239,7 +1239,7 @@
       }
     ],
     "textTemplate": "Block no longer expires at the start of your turn. (Block capped at 30.)",
-    "faceTemplate": ["Block lasts between turns."],
+    "faceTemplate": ["Block persists, capped."],
     "upgrade": {
       "effects": [
         {
@@ -1317,7 +1317,7 @@
       }
     ],
     "textTemplate": "Ethereal. Gain Block equal to your missing HP (max 20).",
-    "faceTemplate": ["Block equals missing HP."],
+    "faceTemplate": ["Block equals missing HP, capped."],
     "upgrade": {
       "effects": [
         {

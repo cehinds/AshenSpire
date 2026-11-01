@@ -1000,7 +1000,7 @@
       }
     ],
     "textTemplate": "Gain {decoy} Decoy: avoid a Single Reach/Ranged damaging action. Status buildup still applies; Sweep and Holy reveal it.",
-    "faceTemplate": ["Gain {decoy} Decoy.", "Dodges one ranged attack."],
+    "faceTemplate": ["Gain {decoy} Decoy.", "Sweep, Holy reveal it."],
     "minCombatExpansionVersion": 2
   },
   {
@@ -1057,7 +1057,7 @@
       }
     ],
     "textTemplate": "Gain {sleep} Sleep: lock ordinary cards and become vulnerable. Rest next turn within the combat healing and Ward caps.",
-    "faceTemplate": ["Gain {sleep} Sleep.", "Heals next turn."],
+    "faceTemplate": ["Gain {sleep} Sleep: lock cards.", "Heals next turn."],
     "minCombatExpansionVersion": 2
   },
   {

@@ -617,7 +617,7 @@
       }
     ],
     "textTemplate": "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each. Exhaust.",
-    "faceTemplate": ["Double target Blight."],
+    "faceTemplate": ["Double Blight, stops at 3."],
     "upgrade": {
       "keywords": [
         "retain"
@@ -994,7 +994,7 @@
       }
     ],
     "textTemplate": "Heal 1 HP for every 2 Blight (Crimson or Necrotic) on all enemies. Exhaust.",
-    "faceTemplate": ["Heal per Blight on enemies."],
+    "faceTemplate": ["Heal per Blight, max 5."],
     "upgrade": {
       "keywords": [
         "exhaust",
@@ -1321,7 +1321,7 @@
       }
     ],
     "textTemplate": "Whenever you lose HP, deal 3 damage to a random enemy.",
-    "faceTemplate": ["On HP loss: deal 3."],
+    "faceTemplate": ["Hurt: 3 damage, random enemy."],
     "upgrade": {
       "cost": 1
     }
