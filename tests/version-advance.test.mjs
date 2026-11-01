@@ -166,3 +166,10 @@ test('overtaken older run: once the newer run recorded its work, the older cut i
   assert.equal(recordsSource(subjects, 'release', 'a'.repeat(40)), true);
   assert.equal(recordsSource(subjects, 'main', 'b'.repeat(40)), true);
 });
+
+test('reconcile: a manual dispatch is reconciled like a push (earlier lost cuts first, current de-duplicated)', () => {
+  const r = (number, branch, sha, conclusion) => ({ number, branch, sha, conclusion });
+  const runs = [r(10, 'release', 'A', 'failure'), r(11, 'main', 'B', 'failure')];
+  const cuts = reconcileCuts(runs, { number: 12, branch: 'main', sha: 'B', before: undefined });
+  assert.deepEqual(cuts.map(({ branch, sha }) => ({ branch, sha })), [{ branch: 'release', sha: 'A' }, { branch: 'main', sha: 'B' }]);
+});

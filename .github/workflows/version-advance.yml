@@ -88,23 +88,31 @@ jobs:
           # THE WORK LIST IS RECONCILED, NOT JUST THIS EVENT'S SHA. GitHub keeps one
           # pending run per group, so a third queued push cancels the second and that
           # cut would be lost for good. Every earlier push run of this workflow that did
-          # not conclude success (cancelled, failed, timed out) names a cut whose head
-          # sha is its head_sha; those that precede this run are added to the list, oldest first,
-          # and the current event last. A cut already recorded on dev (branch AND sha), the current one included, is skipped
-          # below, so an overtaken older run that finally executes finds its cut done and bumps nothing; so including a run that actually finished is harmless, and a cancelled
-          # pending run costs nothing.
+          # not conclude success (cancelled, failed, timed out, or still pending: concurrency does
+          # not guarantee order, so an older run can be overtaken) names a cut whose head sha is
+          # its head_sha; those that precede this run are added to the list, oldest first, and the
+          # current event last, for a manual dispatch as well as a push. A cut already recorded on
+          # dev (branch AND sha), the current one included, is skipped below, so an overtaken older
+          # run that finally executes finds its cut done and bumps nothing, and including a run that
+          # actually finished is harmless.
           : > "$RUNNER_TEMP/cuts"
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            # Only runs that PRECEDE this one (lower run_number) are taken; a later run reconciles
-            # this one itself. reconcileCuts sorts by run number and puts the current cut last.
-            gh run list --repo "$GITHUB_REPOSITORY" --workflow version-advance.yml --event push --limit 100 \
-              --json number,headBranch,headSha,conclusion \
-              | node tools/version-advance.mjs --reconcile "$RUN_NUMBER" "$SRC_BRANCH" "${GITHUB_SHA}" "${BEFORE:-}" \
-              >> "$RUNNER_TEMP/cuts"
+            cur_sha="${GITHUB_SHA}"
+            cur_before="${BEFORE:-}"
           else
+            # A manual dispatch is reconciled the same way: its selected cut is the current one, at the
+            # resolved head of source_ref, so every earlier unrecorded push run is applied first (a main
+            # dispatch must not bump before an earlier failed release cut). No `before` is known.
             git fetch -q origin "+refs/heads/$SRC_BRANCH:refs/remotes/origin/$SRC_BRANCH"
-            echo "$SRC_BRANCH $(git rev-parse "origin/$SRC_BRANCH") -" >> "$RUNNER_TEMP/cuts"
+            cur_sha="$(git rev-parse "origin/$SRC_BRANCH")"
+            cur_before=""
           fi
+          # Only runs that PRECEDE this one (lower run_number) are taken; a later run reconciles
+          # this one itself. reconcileCuts sorts by run number and puts the current cut last.
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow version-advance.yml --event push --limit 100 \
+            --json number,headBranch,headSha,conclusion \
+            | node tools/version-advance.mjs --reconcile "$RUN_NUMBER" "$SRC_BRANCH" "$cur_sha" "$cur_before" \
+            >> "$RUNNER_TEMP/cuts"
           echo "Cuts to reconcile, oldest first:"; cat "$RUNNER_TEMP/cuts"
 
           pushed=0
