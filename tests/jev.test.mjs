@@ -139,6 +139,23 @@ test('generated-stale matches each generator\'s real diagnostic (tool name after
   assert.ok(!o.matches.some(m => m.id === 'generated-stale'));
 });
 
+test('the tools\' capital RED / FAILED verdicts are failures (real about-changelog output)', () => {
+  for (const line of [
+    'about-changelog check-order: RED — receipt #2501: cites build 90 but buildordinal.json is at 80',
+    "about-changelog check-order: RED — heading '## 2026-10-30' sits below '## 2026-10-29' but is newer",
+    'tool: FAILED',
+    'verdict: node tools/pages-site.mjs exited 1 — propagated verbatim',
+  ]) {
+    const r = triage(line + '\n');
+    assert.equal(r.exit, 2, line);
+  }
+  // A stamp-order RED that restamp fixes still routes to restamp.
+  const s = triage('about-changelog check-order: RED — build rises within 2026-10-31: #1 cites 0.7.2.5\n');
+  assert.deepEqual(s.matches.map(m => m.id), ['changelog-order']);
+  // Prose "red" and an OK verdict are not failures.
+  assert.equal(triage('the red banner shows\nabout-changelog check-order: OK — 1275 checks passed\n').exit, 0);
+});
+
 test('restampChangelog moves the restamped receipt to the top of its date group', () => {
   const r = restampChangelog(CHANGELOG, { pr: 2500, build: '0.7.2.72' });
   assert.equal(r.moved, true);
