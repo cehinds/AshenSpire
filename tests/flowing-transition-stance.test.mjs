@@ -34,3 +34,12 @@ for (const profile of ['core', 'current']) {
     });
   }
 }
+
+// Label: the Casting pick shows "Prepared" in Core (owner 2026-11-01); other profiles keep "Casting".
+const label = (c, id) => cardChoicePlan(c, 'ft').options.find(o => o.id === id).name;
+test('Flowing Transition shows "Prepared" for the casting pick in Core', () => {
+  assert.equal(label(fight('core'), 'casting'), 'Prepared');
+});
+test('Flowing Transition keeps "Casting" for the casting pick in the current profile', () => {
+  assert.equal(label(fight('current'), 'casting'), 'Casting');
+});
