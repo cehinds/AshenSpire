@@ -2735,6 +2735,45 @@ export function healMissingSlotCells(registries, loadout) {
 }
 
 /**
+ * trimExtraSets(registries, loadout) → [{ slotId, setIndex, id }] for every
+ * armament that sat in a set the slot no longer has. A hand carried three sets
+ * until 2026-11-01 and carries one now (equipSlots.csv `sets`), so an older
+ * save can hold a weapon in MH2/MH3 or OH2/OH3 and an `active` index past the
+ * last set. Each such piece moves to `loadout.storage` (never deleted, and never
+ * duplicated if storage already lists it), the array is cut to the slot's
+ * `sets`, and `active` is reset to set 1 if it pointed past the cut. Works on any slot whose
+ * cap shrinks, not only the hands. The load door calls it and notes the result.
+ */
+export function trimExtraSets(registries, loadout) {
+  if (!loadout || typeof loadout !== 'object' || !loadout.sets) return [];
+  loadout.active = loadout.active || {};
+  loadout.storage = Array.isArray(loadout.storage) ? loadout.storage : [];
+  const moved = [];
+  for (const slot of (((registries || {}).equipment || {}).slots || [])) {
+    const ids = loadout.sets[slot.id];
+    if (!Array.isArray(ids)) continue;
+    const cap = Math.max(1, Number(slot.sets) || 1);
+    if (ids.length > cap) {
+      for (let setIndex = cap; setIndex < ids.length; setIndex += 1) {
+        const id = ids[setIndex];
+        if (!id) continue;
+        moved.push({ slotId: slot.id, setIndex, id });
+        if (!loadout.storage.includes(id) && !ids.slice(0, cap).includes(id)) loadout.storage.push(id);
+      }
+      loadout.sets[slot.id] = ids.slice(0, cap);
+      // Only a slot that really lost cells has its active set reset: an
+      // out-of-range index on a slot of the right size is a corrupt save, and
+      // the load door's shape check still refuses it by name.
+      if (loadout.active[slot.id] !== 0) {
+        if (Number.isInteger(loadout.active[slot.id]) && loadout.active[slot.id] >= cap) moved.push({ slotId: slot.id, setIndex: loadout.active[slot.id], id: null });
+        if (!Number.isInteger(loadout.active[slot.id]) || loadout.active[slot.id] >= cap) loadout.active[slot.id] = 0;
+      }
+    }
+  }
+  return moved;
+}
+
+/**
  * deckMinimum(registries, run) → the fewest cards a run may leave the Armoury
  * with (plan phase 3b, proposal §5). balance.deck is the one home of the
  * numbers; character level (phase 6) is read as 0 until it exists.
