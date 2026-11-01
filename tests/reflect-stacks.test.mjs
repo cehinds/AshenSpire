@@ -19,9 +19,9 @@ import { mechanics } from '../src/framework/data/mechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live() {
-  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+function live(registries = reg) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
   combat.player.basePrecisionBonus = 1000;
   Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: { poise: 20 }, ratingSources: [], attributes: { dexterity: 0 }, basePrecisionBonus: 1000, persistentPoise: { value: 0, max: 0 } });
@@ -256,4 +256,38 @@ test('Counter forecast under Reflect equals live: a return that kills the attack
   const survive = run(500);
   assert.ok(survive.reflected && survive.counter, 'control: Reflect does not kill, the Counter lands');
   assert.equal(survive.forecast.hp, survive.counter.amount, 'forecast == live Counter damage');
+});
+
+// Codex on #2431: per-root reaction policy, a Reflect return that breaks a multi-hit attacker's Poise ends its matching-stance bonus,
+// so later hits (and the Counter Block they grant) are priced from the evolving detached attacker, not the original enemy.
+test('per-root Counter forecast prices later contacts from the Poise-broken attacker, forecast == live', async () => {
+  const { previewCard } = await import('../src/engine/combat.js');
+  const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage: 20, hits: 3, weight: 45 } } } : e) };
+  const triple = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, profile)), profile);
+  const run = poise => {
+    const { combat, enemy } = live(triple);
+    delete combat.reactionRules.contactPolicy;
+    combat.player.reflectStacks = 1;
+    combat.player.counterStacks = 10;
+    if (poise) { enemy.ratings = { poise }; enemy.persistentPoise = { value: poise, max: poise }; }
+    enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
+    Object.assign(enemy, { maxStamina: 3, stamina: 3, plannedMoves: [] });
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 20, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+    combat.piles.hand.push({ instanceId: 'rcp', cardId: 'core.counter' });
+    const forecast = previewCard(combat, 'rcp').counterReturn;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'rcp' });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    const all = combat.eventLog.slice(start);
+    const counters = all.filter(e => e.type === 'combatCounterTriggered');
+    return { forecast, liveHp: counters.reduce((s, e) => s + (e.amount || 0), 0), n: counters.length };
+  };
+  const broken = run(1);
+  assert.equal(broken.n, 1, 'live: one Counter return');
+  assert.equal(broken.forecast.hp, broken.liveHp, 'Reflect breaks the attacker\'s Poise: forecast == live return damage');
+  const control = run(0);
+  assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
+  assert.equal(control.forecast.hp, 111, 'control forecast unchanged');
+  assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');
 });

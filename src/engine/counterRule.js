@@ -7,7 +7,7 @@
 import { fixCoreEnabled, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { configuredModule, armsAsCoreCounter, isSpellCounter, configuredStance, profileDamageReceipt } from './gameProfileCombat.js';
-import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
+import { previewDamageHits, damagePreviewState, previewAttackerView } from './combatDamagePreview.js';
 // Tactics reaches Counter through Matchups; bundled named imports snapshot
 // incomplete exports during that cycle. Read them when the preview runs.
 import * as Tactics from './combatCardTactics.js';
@@ -121,7 +121,9 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   // Playing the Counter adds the Block it leaves as stacks first (SPEC §17); an already armed Counter holds what it has.
   const stacks = card ? counterStacksAfterCard(ctx.player, base.block) : counterStackCount(ctx.player);
   for (let hit = 0; hit < hits; hit++) {
-    const seen = profileDamageReceipt(state.previewCtx, enemy, state.defender, enemy.intent.damage, carrier).damageReceipt?.hits?.[0]?.incoming ?? 0;
+    // Later contacts are priced from the evolving detached attacker: a Reflect return that broke its Poise ended its stance bonus.
+    const view = previewAttackerView(state, enemy);
+    const seen = profileDamageReceipt(view.previewCtx, view.attacker, state.defender, enemy.intent.damage, carrier).damageReceipt?.hits?.[0]?.incoming ?? 0;
     const row = counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
     const granted = counterBlockGrant(state.previewCtx, state.defender, row.block);
     state.defender.block = (state.defender.block || 0) + granted;

@@ -120,6 +120,15 @@ function bindDetachedAttacker(previewCtx, source, attacker) {
     ...(lookup ? { playerIdForEntity: entity => lookup(entity === attacker ? source : entity) } : {}) };
 }
 
+/**
+ * The attacker and context the next contact of `state` is priced from: the detached attacker once a previewed Reflect return
+ * has been applied to it (so a broken Poise ends its matching-stance bonus), else `source` itself.
+ */
+export function previewAttackerView(state, source) {
+  const attacker = state.attackerSource === source && state.attacker ? state.attacker : source;
+  return { attacker, previewCtx: bindDetachedAttacker(state.previewCtx, source, attacker) };
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
