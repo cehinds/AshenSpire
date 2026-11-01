@@ -115,9 +115,18 @@ export function checkRef(tag, want, where, catalog) {
   return [];
 }
 
+const SHEET_KEYS = ['id', 'name', 'tags', 'stats', 'derived', 'equipment', 'relics', 'deck', 'reserve', 'ai', 'behaviour', 'keyOrder'];
+const STATS_KEYS = ['attributes', 'attributePriority', 'levelProfile', 'poiseMax', 'spFloor'];
+const SLOT_KEYS = ['slot', 'ref'];
+const unknownKeys = (obj, allowed, where, hint) => (obj && typeof obj === 'object' && !Array.isArray(obj) ? Object.keys(obj).filter(k => !allowed.includes(k))
+  .map(k => `${where}: unknown key "${k}". Allowed keys: ${allowed.join(', ')}.${hint || ''}`) : []);
+
 export function validateSheet(sheet, file, catalog) {
   const problems = [];
   const at = path => `${file} ${path}`;
+  problems.push(...unknownKeys(sheet, SHEET_KEYS, file, ' Extra enemy fields go under "behaviour".'));
+  problems.push(...unknownKeys(sheet.stats, STATS_KEYS, `${file} stats`, ' Extra enemy fields go under "behaviour".'));
+  for (const list of ['equipment', 'relics']) (sheet[list] || []).forEach((g, i) => problems.push(...unknownKeys(g, SLOT_KEYS, `${file} ${list}[${i}]`)));
   for (const k of ['id', 'name', 'tags', 'stats', 'equipment', 'relics', 'deck', 'reserve', 'ai', 'behaviour']) if (sheet[k] === undefined) problems.push(`${file}: missing field "${k}"`);
   if (problems.length) return problems;
   if (`${sheet.id}.json` !== file) problems.push(`${file}: id "${sheet.id}" must match the file name`);
@@ -133,6 +142,9 @@ export function validateSheet(sheet, file, catalog) {
   }
   if (sheet.behaviour.firstCard !== undefined) problems.push(...checkRef(sheet.behaviour.firstCard, 'card', at('behaviour.firstCard'), catalog));
   (sheet.behaviour.phases || []).forEach((p, i) => (p.unlockCards || []).forEach((c, j) => problems.push(...checkRef(c, 'card', at(`behaviour.phases[${i}].unlockCards[${j}]`), catalog))));
+  const unlocked = new Set((sheet.behaviour.phases || []).flatMap(p => p.unlockCards || []));
+  for (const c of sheet.reserve) if (!unlocked.has(c)) problems.push(`${file}: reserve card "${c}" is not listed in any behaviour.phases[].unlockCards, so it would never enter play`);
+  for (const c of unlocked) if (!sheet.reserve.includes(c)) problems.push(`${file}: phase unlocks "${c}" but it is not in reserve; add it to reserve`);
   return problems;
 }
 
@@ -165,7 +177,9 @@ export const sheetsDir = pack => join(pack, 'enemies');
 export function loadSheets(pack) {
   const dir = sheetsDir(pack);
   if (!existsSync(dir)) return [];
-  return readdirSync(dir).filter(f => f.endsWith('.json') && !f.startsWith('_')).sort().map(file => ({ file, sheet: json(join(dir, file)) }));
+  return readdirSync(dir).filter(f => f.endsWith('.json') && !f.startsWith('_')).sort().map(file => {
+    try { return { file, sheet: json(join(dir, file)) }; } catch (e) { throw new Error(`enemies/${file}: ${e.message}`); }
+  });
 }
 
 // Merge built rows into the existing array: non-enemy rows and order untouched, new enemies appended by id.
@@ -263,8 +277,11 @@ export function check(pack = DEFAULT_PACK) {
   const dir = sheetsDir(pack);
   const onDisk = new Map(p.data.rows.map(r => [r.id, r]));
   const built = new Map(p.rows.map(r => [r.id, r]));
+  const sheetIds = new Set(p.sheets.map(s => s.sheet.id));
+  for (const id of onDisk.keys()) if (onDisk.get(id).tags.includes(ENEMY_TAG) && !sheetIds.has(id)) problems.push(`enemies/${id}.json is missing; restore it, or run --write to REMOVE enemy ${id} from characters.json`);
   for (const id of new Set([...onDisk.keys(), ...built.keys()])) {
-    if (!sameJson(onDisk.get(id), built.get(id))) problems.push(`characters.json row "${id}" disagrees with enemies/${id}.json`);
+    if (onDisk.has(id) && built.has(id) && !sameJson(onDisk.get(id), built.get(id))) problems.push(`characters.json row "${id}" disagrees with enemies/${id}.json (if another tool rewrote the rows, run --extract --force to rebuild the sheets from them)`);
+    else if (!onDisk.has(id)) problems.push(`enemies/${id}.json is a new enemy not in characters.json; run --write`);
   }
   if (!problems.length && text(p.rows) !== readFileSync(join(pack, 'characters.json'), 'utf8')) problems.push('characters.json differs from the sheets in key order or formatting');
   for (const { file, sheet } of p.sheets) {

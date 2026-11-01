@@ -91,3 +91,54 @@ test('the reference table lists every referenced id', () => {
     for (const g of s.relics) assert.ok(ref.relics[g.ref], g.ref);
   }
 });
+
+test('unknown sheet and stats keys are rejected, naming file and key', () => {
+  const dir = clone();
+  try {
+    edit(dir, 'huskBrute', s => { s.stats.maxHp = 50; });
+    assert.match(plan(dir).problems.join('\n'), /huskBrute\.json stats: unknown key "maxHp"\. Allowed keys: attributes, attributePriority, levelProfile, poiseMax, spFloor/);
+    edit(dir, 'huskBrute', s => { delete s.stats.maxHp; s.loot = []; });
+    assert.match(check(dir).join('\n'), /huskBrute\.json: unknown key "loot"/);
+    edit(dir, 'huskBrute', s => { delete s.loot; s.behaviour.loot = []; });
+    write(dir);
+    assert.deepEqual(check(dir), []);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a JSON syntax error names the file', () => {
+  const dir = clone();
+  try {
+    writeFileSync(join(dir, 'enemies', 'huskBrute.json'), '{ "id": ');
+    assert.throws(() => check(dir), /^Error: enemies\/huskBrute\.json: /);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a deleted sheet is reported as missing, with the removal warning', () => {
+  const dir = clone();
+  try {
+    rmSync(join(dir, 'enemies', 'huskBrute.json'));
+    assert.match(check(dir).join('\n'), /enemies\/huskBrute\.json is missing; restore it, or run --write to REMOVE enemy huskBrute from characters\.json/);
+    assert.equal(rows(dir).some(r => r.id === 'huskBrute'), true);
+    write(dir);
+    assert.equal(rows(dir).some(r => r.id === 'huskBrute'), false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a stale characters.json row hints at --extract --force', () => {
+  const dir = clone();
+  try {
+    const r = rows(dir); r.find(x => x.id === 'huskBrute').enemy.poiseMax = 1;
+    writeFileSync(join(dir, 'characters.json'), `${JSON.stringify(r, null, 2)}\n`);
+    assert.match(check(dir).join('\n'), /row "huskBrute" disagrees.*--extract --force/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('reserve and phase unlocks must agree', () => {
+  const dir = clone();
+  try {
+    edit(dir, 'fellWarden', s => { s.behaviour.phases[0].unlockCards = []; });
+    assert.match(plan(dir).problems.join('\n'), /reserve card "card:fellWarden\.twinDaggers" is not listed in any behaviour\.phases\[\]\.unlockCards/);
+    edit(dir, 'fellWarden', s => { s.behaviour.phases[0].unlockCards = ['card:fellWarden.twinDaggers']; s.reserve = []; });
+    assert.match(plan(dir).problems.join('\n'), /phase unlocks "card:fellWarden\.twinDaggers" but it is not in reserve/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
