@@ -217,7 +217,7 @@
 }
 
 /* Stance badge: same plate as the others, tinted by maneuver. */
-:root .combat .combat-health-stance { color: white; }
+:root .combat .combat-health-stance { color: var(--parchment); }
 :root .combat .combat-health-stance[data-stance='attack'], :root .combat .combat-health-stance[data-stance='smash'], :root .combat .combat-health-stance[data-stance='sweep'] { color: salmon; }
 :root .combat .combat-health-stance[data-stance='counter'] { color: var(--gold, goldenrod); }
 :root .combat .combat-health-stance[data-stance='defend'] { color: var(--block-silver, silver); }
