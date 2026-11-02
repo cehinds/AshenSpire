@@ -131,3 +131,20 @@ test('a spell Poise absorbed with the rest blocked keeps the BLOCKED callout and
   assert.equal(outcomeKindForEvent(event), 'blocked');
   assert.equal(guardHitFloatParts(event).magicPoise.text, 'Poise 6');
 });
+
+test('the damage floater floats the whole hit, and equals the combat log number (engine-shaped events)', async () => {
+  const { combatLogEntries, hitAsLayered } = await import('../src/model/combatLog.js');
+  const ev = r => ({ type: 'damageDealt', sourceId: 'p', targetId: 'e', amount: r.receipt.amount, blocked: r.receipt.blocked, hpLoss: r.receipt.hpLoss, poiseAbsorbed: r.receipt.poiseMitigated, magicPoise: r.receipt.magicPoise, wardAbsorbed: r.receipt.wardMitigated, barrierAbsorbed: r.receipt.barrierMitigated, ...(r.receipt.pierceBypassed ? { pierced: r.receipt.pierceBypassed, piercePoise: r.receipt.piercePoise } : {}) });
+  const logFor = event => JSON.stringify(combatLogEntries([event], { registries: reg }));
+  for (const [name, carrier] of [['spell', spell], ['physical', physical]]) {
+    const event = ev(hit(carrier, { poise: 6, block: 5 }));
+    const parts = guardHitFloatParts(event);
+    const text = (parts.damage ? parts.damage.text : parts.fullHit.text).replace('-', '');
+    assert.equal(text, '10', `${name} 10 into Poise 6 / Block 5 floats the full 10`);
+    assert.equal(hitAsLayered(event), 10);
+    assert.match(logFor(event), /for 10/, `${name}: the combat log says the same number`);
+  }
+  const pierced = ev(hit({ ...arcane, tags: ['pierce'] }, { poise: 20, block: 100 }));
+  assert.ok(pierced.pierced > 0 && pierced.hpLoss === 0, 'fixture: a pierced hit that cost no HP');
+  assert.equal(guardHitFloatParts(pierced).fullHit.text, String(hitAsLayered(pierced)), 'a pierced zero-HP hit still has its full number');
+});
