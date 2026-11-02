@@ -101,10 +101,10 @@ test('an upgraded card summary never states a base-only number', () => withKitDo
   }
 }));
 
-test('a summary that does not name a payment the face could not carry leaves the cue', () => {
+test('a summary that does not name a payment the face could not carry leaves the real rules text', () => {
   const lines = [{ kind: 'cost', html: 'Pay 2 HP. Discard 1. Offer 1 HP' }, { kind: 'damage', html: 'Inflict 9 Fire damage' }];
-  assert.deepEqual(cardFaceProjection({}, { lines, faceHtml: ['Deal 9 Fire damage'] }).clauses.map(line => line.html), ['Inspect full effect']);
-  // A summary that says the payments itself may stand in for the cue.
+  assert.deepEqual(cardFaceProjection({}, { lines, faceHtml: ['Deal 9 Fire damage'] }).clauses.map(line => line.html), ['Pay 2 HP. Discard 1. Offer 1 HP', 'Deal 9 Fire damage']);
+  // A summary that says the payments itself replaces the real text.
   const named = cardFaceProjection({}, { lines, faceHtml: ['Pay 2 HP, discard 1, offer 1 HP', 'Deal 9 Fire damage'] });
   assert.ok(named.clauses.every(line => line.kind !== 'detail'));
 });

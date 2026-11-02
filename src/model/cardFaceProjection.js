@@ -235,7 +235,7 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => reserved.includes(entry) ? entry.parts.map(part => payments.includes(entry.line) || COST_RE.test(plain(part.html)) ? { ...part, downside: true } : part) : entry.parts);
   const shown = chosen.size;
   // Owner 2026-11-02: a line too long for the clause budget shows its real words (the fitter shrinks them), never an Inspect cue.
-  const addReal = entry => { if (!clauses.some(clause => clause.html === entry.line.html)) clauses.push({ kind: 'effect', html: entry.line.html }); };
+  const addReal = entry => { if (!clauses.some(clause => clause.html === entry.line.html)) clauses.push({ kind: 'detail', html: entry.line.html }); };
   const primary = fitted.find(entry => !reserved.includes(entry));
   if (primary && !primary.parts && clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail')) addReal(primary);
   // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
