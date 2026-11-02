@@ -100,7 +100,7 @@
   .pse-fields{padding:.6rem}
 }
 .set-prologue-text{width:100%;min-height:5rem;resize:vertical;font:inherit;line-height:1.4;padding:.65rem;background:var(--bg);color:var(--text);border:1px solid var(--line-soft);border-radius:4px}
-@container game-viewport (max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto}.prologue-controls button:last-child{order:-1;flex-basis:100%}.prologue-preview-body .prologue-screen{height:calc(75 * var(--view-vh, 1dvh))}.set-row-prologue .r-trail{width:100%;min-width:0}}
+@container game-viewport (max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto}.prologue-controls > button:last-child{order:-1;flex-basis:100%}.prologue-preview-body .prologue-screen{height:calc(75 * var(--view-vh, 1dvh))}.set-row-prologue .r-trail{width:100%;min-width:0}}
 @container game-viewport (max-height:500px) and (orientation:landscape){.prologue-screen{grid-template-columns:1fr minmax(18rem,45%);grid-template-rows:1fr}.prologue-caption{overflow:auto}.prologue-preview-body .prologue-screen{min-height:15rem;height:calc(65 * var(--view-vh, 1dvh))}}
 
 /* ---- the opening's wireframes and text plate -------------------------------
@@ -243,3 +243,17 @@
 .prologue-dot{display:inline-block;width:.55rem;height:.55rem;margin:0 .22rem;border-radius:50%;background:currentColor;opacity:.35}
 .prologue-dot.on{opacity:1;box-shadow:0 0 6px currentColor}
 @container game-viewport (max-width:760px) and (orientation:portrait){.prologue-screen{grid-template-rows:minmax(14rem,1fr) auto auto}}
+/* Continue is centred in the band on every screen (owner, 2026-11-02): the counter
+   takes the left column, Pause and Skip the right, and Continue the middle one, so
+   the counter's width can no longer push it off-centre. A narrow portrait phone
+   keeps the stacked layout (counter above, Continue full width). */
+.prologue-controls-aux{display:flex;gap:.6rem}
+.prologue-bar-centered{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);justify-items:center}
+.prologue-bar-centered .prologue-progress{grid-column:1;justify-self:start}
+.prologue-bar-centered .prologue-controls{display:contents}
+.prologue-bar-centered .prologue-controls > button:last-child{grid-column:2;grid-row:1}
+.prologue-bar-centered .prologue-controls-aux{grid-column:3;grid-row:1;justify-self:end}
+@container game-viewport (max-width:760px) and (orientation:portrait){
+  .prologue-bar-centered{display:flex}
+  .prologue-bar-centered .prologue-controls{display:flex}
+}
