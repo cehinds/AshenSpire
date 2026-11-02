@@ -3,6 +3,7 @@
 // and the bare edges are filled by a blurred copy of the closer framing.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { fitAlternativeBackdrop } from '../src/ui/alternativeArt.js';
 import { alternativeArtCatalog as catalog } from '../src/ui/alternativeArtCatalog.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -83,4 +84,16 @@ test('the Never-drawn skyline setting hides the fill\'s far image too, and showi
   document.documentElement.dataset.wireframeSceneSkyline = 'on';
   fitAlternativeBackdrop(combat, args);
   assert.equal(far.attrs.visibility, 'visible');
+});
+
+test('the fill blur is light (stdDeviation 3) and the sharp layer feathers over 36/scale', t => {
+  const src = readFileSync(new URL('../src/ui/alternativeArt.js', import.meta.url), 'utf8');
+  assert.match(src, /id="alternative-scene-fill-blur"[^>]*><feGaussianBlur stdDeviation="3"\/>/);
+  const { combat, edge, blur } = fixture(t);
+  const width = 1920, height = 900;
+  fitAlternativeBackdrop(combat, { width, height, fieldTop: 180, ground: 600, narrow: false, coverFloor: true });
+  const cover = Math.max(width / device.width, (180 + height - combat.clientHeight * framing.topHeightFraction) / device.height);
+  const fade = 36 / (cover * framing.backdropZoom);
+  assert.ok(Math.abs(blur.attrs.stdDeviation - fade / 2) < 1e-9, `edge blur ${blur.attrs.stdDeviation}`);
+  assert.ok(Math.abs(edge.attrs.x - fade) < 1e-9 || edge.attrs.x < 0, 'feather inset is fade wide where the left edge is exposed');
 });
