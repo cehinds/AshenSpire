@@ -71,7 +71,7 @@ export function cardSequenceTiming(sequence, speed) {
   const hold = Number(speed?.minFrameMs) || 0, count = sequence.durations.length;
   // With a frame hold every frame gets the same time (the hold, or an equal share of the paced total when longer).
   if (hold > 0 && count > 1) {
-    const frameMs = Math.round(Math.max(hold, durationFor(sequence, speed) / count));
+    const frameMs = Math.max(hold, durationFor(sequence, speed) / count);
     return { totalMs: frameMs * count, impactMs: frameMs * sequence.impact };
   }
   const totalMs = Math.max(durationFor(sequence, speed), hold * count);
