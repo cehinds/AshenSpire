@@ -15,7 +15,7 @@ import { t } from '../ui/strings.js';
 export function hitAsLayered(event = {}) {
   const magicPoise = Number(event.magicPoise) || 0;
   const poise = Math.max(0, (Number(event.poiseAbsorbed) || 0) - magicPoise);
-  return Math.max(0, Number(event.amount) || 0) + (Number(event.barrierAbsorbed) || 0) + (Number(event.wardAbsorbed) || 0) + poise + magicPoise;
+  return Math.max(0, Number(event.amount) || 0) + (Number(event.barrierAbsorbed) || 0) + (Number(event.wardAbsorbed ?? event.wardMitigated) || 0) + poise + magicPoise;
 }
 import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, distanceRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
 
