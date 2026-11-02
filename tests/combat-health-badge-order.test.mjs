@@ -112,6 +112,7 @@ test('the player Block takes the square slot before the bar; with no Block the s
   const none = combatHealthRow(hp(), { defense: 0, poise: 3, ac }, { tooltips: false });
   assert.equal(none.querySelector('.combat-health-block-slot'), null);
   assert.equal(none.querySelector('[data-defense-kind="shield"]'), null);
+  assert.deepEqual([...none.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['caption', 'ac', 'poise', 'hp'], 'zero Block: caption and AC still lead the badge row, the bar follows alone');
   const enemy = combatHealthRow(hp(), { defense: 7, poise: 3 }, { tooltips: false });
   assert.equal(enemy.querySelector('.combat-health-block-slot'), null);
   assert.deepEqual(kinds(enemy), ['shield', 'poise']);
