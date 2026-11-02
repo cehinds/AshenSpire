@@ -246,7 +246,6 @@ export function mountCardUpgradeModal(host, initialModel, {
       const on = Boolean(selected) && card.dataset.instanceId === selected.instanceId;
       card.classList.toggle('selected', on);
       card.setAttribute('aria-selected', String(on));
-      if (on) card.setAttribute('aria-current', 'true'); else card.removeAttribute('aria-current');
       markUiComponent(card, UI.smithCandidateCard, on ? 'selected' : 'available');
     }
     purse.textContent = t('cardUpgrade.stones', { n: model.stones });
