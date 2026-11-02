@@ -55,6 +55,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     attachTooltip(hp, () => `<div class="tt-title">${esc(model.poiseLabel)}</div>${esc(poiseHelp)}`);
   }
   const { shown, overflow } = visibleBadges(model.badges);
+  // The player's Block (owner 2026-11-02) takes the square slot left of the bar, where AC used to sit; enemies (no `values.ac`) keep it in the stack.
+  let blockSquare = null;
   for (const badge of overflow ? [...shown, overflow] : shown) {
     const node = document.createElement('span');
     node.className = `combat-health-badge combat-health-${badge.kind}${badge.ward ? ' combat-health-poise-ward' : ''}`;
@@ -80,10 +82,13 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       node.tabIndex = 0;
       attachTooltip(node, () => badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp }));
     }
-    row.append(node);
+    if (values?.ac && badge.kind === 'shield') {
+      node.classList.add('combat-health-block-slot');
+      blockSquare = node;
+    } else row.append(node);
   }
-  // The player's AC (owner 2026-11-01): a square left of the bar on the bar's line (a sibling of the meter), with a small "AC" caption under it at the head
-  // of the badge row. `values.ac` is { value, evade, base } from acFor; enemies never carry it.
+  // The player's AC (owner 2026-11-01, swapped with Block 2026-11-02): the first badge of the badge row, with the small "AC" caption just before it.
+  // `values.ac` is { value, evade, base } from acFor; enemies never carry it.
   if (values?.ac) {
     const text = acBadgeText(values.ac);
     const square = document.createElement('span');
@@ -105,10 +110,11 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     caption.dataset.acCaption = '';
     caption.setAttribute('aria-hidden', 'true');
     caption.textContent = 'AC';
-    row.insertBefore(caption, row.firstChild);
-    // A sibling just before the meter, which stays a direct child of the row so its row-scoped styling still applies.
-    row.append(square);
+    row.insertBefore(square, row.firstChild);
+    row.insertBefore(caption, square);
   }
+  // A sibling just before the meter, which stays a direct child of the row so its row-scoped styling still applies.
+  if (blockSquare) row.append(blockSquare);
   row.append(hp);
   return row;
 }
