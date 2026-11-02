@@ -46,23 +46,19 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
-  // Full-grid fitting can leave a two-enemy encounter as thumbnails. Lift the
-  // enemy group uniformly, preserving its relative stature and depth ratios.
-  const enemyFloor = Math.min(120, width * .17, Math.max(64, height * .26));
-  const enemyFactor = Math.max(.5, enemyFloor / Math.min(...enemyFits.map(f => f.visibleHeight)));
   return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
-    const factor = player ? (solo ? Math.max(1.28, Math.min(240, width * .32, height * .6) / size.visibleHeight) : 1) : enemyFactor;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7));
-    const ratio = visibleHeight / size.visibleHeight;
-    const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
+    // Composition places; it never resizes. Size is the viewport rule's alone
+    // (CombatViewportSizeModel): no enemy lift, no solo-player growth, no cap.
+    const visibleHeight = size.visibleHeight;
+    const halfWidth = actor.visibleWidth * size.scale / 2;
     const proposedX = player ? (solo ? width * .32 : size.x) : (size.x - center) * .72 + width * .76;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     const ground = player && solo && Number.isFinite(handTop)
       ? handTop + visibleHeight * .12
       : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground) : height * .34);
-    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio };
+    return { ...size, x, ground, visibleHeight, scale: size.scale, multiplier: size.multiplier };
   });
 }
 
@@ -99,10 +95,13 @@ function perspectiveGridComposition({ sizes, actors, width }) {
     // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
     // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
     const halfWidth = actor.visibleWidth * size.scale / 2;
-    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
+    // The sizing rule may have slid a figure sideways to clear a neighbour
+    // (size.x); the foot inset then only keeps the ground inside the cell.
+    const moved = Number.isFinite(size.x) && Math.abs(size.x - actor.slot.x) > .5;
+    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
     const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
       { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
-    return { ...size, ...foot };
+    return { ...size, ...foot, ...(moved ? { x } : {}) };
   });
 }
 
@@ -140,12 +139,9 @@ function legacyAlternativeComposition({ sizes, actors, width, height, handTop, h
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
-    const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
-    const availablePlayerHeight = player && solo && Number.isFinite(handTop)
-      ? Math.max(1, handTop - actor.leading - 32) : Infinity;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight);
-    const ratio = visibleHeight / size.visibleHeight;
-    const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
+    // Placement only: size is the viewport rule's alone (CombatViewportSizeModel).
+    const visibleHeight = size.visibleHeight;
+    const halfWidth = actor.visibleWidth * size.scale / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
       : (size.x - center) * spread + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
@@ -171,7 +167,7 @@ function legacyAlternativeComposition({ sizes, actors, width, height, handTop, h
     // the backdrop then keeps the back-row feet on its floor.
     const sceneryGround = !player && backRow && !spacious ? nearRow : undefined;
     const standingGround = lift ? backGround : undefined;
-    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
+    return { ...size, x, ground, visibleHeight, scale: size.scale, multiplier: size.multiplier,
       ...(sceneryGround === undefined ? {} : { sceneryGround }),
       ...(standingGround === undefined ? {} : { standingGround }),
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };

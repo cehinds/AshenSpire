@@ -1097,9 +1097,8 @@
    `.field:has(.enemy-row > .combatant:nth-child(4))`; it is repeated three times
    because that :has() argument carried three classes of specificity. */
 @container game-viewport (max-width:640px) {
-  /* The shared fitter still owns the row. Art may cross adjacent cells a
-     little; scale only the figures so meters, labels and intent stay readable. */
-  :root .combat.combat .combatant .sprite { scale:0.9; transform-origin:bottom center; }
+  /* The viewport-share rule (CombatViewportSizeModel) owns figure size; no
+     container override may scale a sprite. */
   :root .combat.combat .combatant-card { width:80px; }
   :root .combat.combat .combatant .meters { width:80px; }
   :root .combat.combat .combatant .sprite { width:80px; min-width:0; }

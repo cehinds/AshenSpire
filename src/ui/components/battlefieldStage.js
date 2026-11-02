@@ -10,7 +10,7 @@ import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift,
 import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
-import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
+import { combatSpriteRatio } from '../models/CombatSpriteScaleModel.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
@@ -21,7 +21,9 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
-import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { alternativeFormation } from '../models/AlternativeFormationModel.js';
+import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
+import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
 import { perspectiveCellContains, overheadGroupHeightPx } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
@@ -778,7 +780,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // not push the overhead into the ribbon or resize art during an attack.
       if (frame.classList.contains('player') && classicAppearance()) {
         const ratio = Number(sprite.querySelector('.painted-stage')?.dataset.maximumHeightRatio || 0);
-        geometry.visibleHeight = Math.max(geometry.visibleHeight, geometry.boxHeight * ratio);
+        if (!sprite.querySelector('[data-body-height-ratio]')) geometry.visibleHeight = Math.max(geometry.visibleHeight, geometry.boxHeight * ratio);
       }
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
@@ -853,15 +855,17 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const fitFormation = () => {
       // Classic and alternative compositions differ; choose per fit, not at import.
       const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
+      const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
+        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow) });
+      combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         perspectiveGrid: !classicAppearance(),
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && logicalViewport().height > 480,
-        sizes: classicAppearance()
-          ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
-            minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
-          : fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
+        // One size rule for both appearances (CombatViewportSizeModel): a share
+        // of the viewport's height, whatever the count, hand or HUD band.
+        sizes: viewportSizes });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
         .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
       const growthFor = (actor, fitted) => {

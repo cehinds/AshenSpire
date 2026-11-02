@@ -25,10 +25,9 @@
 :root .combat[data-layout='formation'] .combatant.player .sprite {
   z-index: calc(var(--combat-layer-player) + var(--combat-depth, 0)) !important;
 }
-/* Reading selection is a temporary visual emphasis. Independent scale leaves
-   the fitted zoom, action transforms and cached artwork dimensions untouched. */
+/* Reading selection raises the figure's layer only. It never grows it: every
+   combatant keeps its viewport-share body size (owner, 2026-11-02). */
 :root .combat[data-layout='formation'] .combatant.context-selected .sprite {
-  scale: 1.05;
   transform-origin: center bottom;
   z-index: calc(var(--combat-layer-player) + 50 + var(--combat-depth, 0)) !important;
 }
