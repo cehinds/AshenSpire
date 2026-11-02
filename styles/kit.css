@@ -6678,6 +6678,13 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   border-color: #ff8b94;
   color: #fff7f3;
 }
+/* A selected card offers Skip, Edit deck, Add to library and Add to deck. On a phone four equal tracks truncate the
+   labels, so the foot wraps to two rows of two (Skip and Edit deck above, Add to library and Add to deck below). */
+@media (max-width: 600px) {
+  .reward-door .reward-chooser-foot .modal-foot-actions[data-action-count='4'] {
+    grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-columns: auto;
+  }
+}
 /* Author display:flex otherwise overrides the browser's hidden attribute. */
 .reward-door .reward-choice-option[hidden] { display: none; }
 .reward-door .reward-choice-grid[inert] {
