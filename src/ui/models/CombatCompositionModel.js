@@ -97,7 +97,7 @@ function perspectiveGridComposition({ sizes, actors, width }) {
     const halfWidth = actor.visibleWidth * size.scale / 2;
     // The sizing rule may have slid a figure sideways to clear a neighbour
     // (size.x); the foot inset then only keeps the ground inside the cell.
-    const moved = Number.isFinite(size.x) && Math.abs(size.x - actor.slot.x) > .5;
+    const moved = size.slid === true && Number.isFinite(size.x);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
     const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
       { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };

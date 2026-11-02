@@ -64,7 +64,7 @@ export function fitViewportSprites({ width, actors, viewportHeight, portraitPhon
     solved = solve(factor);
   }
   const result = solved.rows.map(r => ({ id: r.a.slot.id, scale: r.height / r.a.visibleHeight, visibleHeight: r.height,
-    multiplier: 1, x: r.x }));
+    multiplier: 1, x: r.x, ...(Math.abs(r.x - r.a.slot.x) > .5 ? { slid: true } : {}) }));
   result.lastResort = factor < 1 ? factor : null;
   return result;
 }
