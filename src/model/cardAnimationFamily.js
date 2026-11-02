@@ -59,22 +59,10 @@ export function alternativeCardAnimationFamily(classId, { weaponProfile = null, 
   return { family, selected, pilotFrames, classSmash, heldFrames, frames };
 }
 
-/** The same sequence with every frame weighted equally, so a swing steps at one even rate (pilot clips already do). */
-export function evenSequence(sequence) {
-  if (!sequence || sequence.pilot || sequence.durations.length < 2 || sequence.durations.every(ms => ms === sequence.durations[0])) return sequence;
-  return { ...sequence, durations: sequence.durations.map(() => 1) };
-}
-
 export function cardSequenceTiming(sequence, speed) {
   if (!sequence) return null;
   if (sequence.pilot || sequence.timingUnits) return selectedWeaponSequenceTiming(sequence, speed);
-  const hold = Number(speed?.minFrameMs) || 0, count = sequence.durations.length;
-  // With a frame hold every frame gets the same time (the hold, or an equal share of the paced total when longer).
-  if (hold > 0 && count > 1) {
-    const frameMs = Math.max(hold, durationFor(sequence, speed) / count);
-    return { totalMs: frameMs * count, impactMs: frameMs * sequence.impact };
-  }
-  const totalMs = Math.max(durationFor(sequence, speed), hold * count);
+  const totalMs = Math.max(durationFor(sequence, speed), (Number(speed?.minFrameMs) || 0) * sequence.durations.length);
   const base = sequence.durations.reduce((sum, ms) => sum + ms, 0);
   return { totalMs, impactMs: sequence.durations.slice(0, sequence.impact).reduce((sum, ms) => sum + ms, 0) / base * totalMs };
 }

@@ -17,7 +17,7 @@ import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { warmImageBoundsWhenIdle } from './artBounds.js';
 
-import { alternativeCardAnimationFamily, cardSequenceTiming, evenSequence, CARD_ANIMATION_ALIASES } from '../model/cardAnimationFamily.js';
+import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES } from '../model/cardAnimationFamily.js';
 const cached = new Map();
 function load(url) {
   if (!cached.has(url)) {
@@ -301,7 +301,6 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       let sequence=family.sequences[key];
       if(!sequence)return false;
       if(pilotFrames&&key==='counterPrepare'&&stance==='evade')sequence={...sequence,poses:['pilot-evade']};
-      sequence=evenSequence(sequence);
       bodyReaction=null;
       if(still||reducedMotionRequested()||ms<=0){settle();return true;}
       // Materialize the first independent aura before the unchanged action clock,
