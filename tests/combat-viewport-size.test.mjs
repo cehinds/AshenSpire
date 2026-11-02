@@ -41,7 +41,7 @@ test('neighbours in a row are spaced apart before anything is scaled', () => {
   const sizes = fit([actor('a', 'enemy', 900, 0), actor('b', 'enemy', 905, 0)]);
   assert.equal(sizes.lastResort, null);
   assert.equal(sizes[1].slid, true, 'a slid figure is flagged for composition');
-  assert.ok(sizes[1].x - sizes[0].x >= sizes[0].visibleHeight * 120 / 190 * .75 - 1e-6);
+  assert.ok(sizes[1].x - sizes[0].x >= sizes[0].visibleHeight * 120 / 190 * .6 - 1e-6);
   assert.equal(sizes[0].visibleHeight, sizes[1].visibleHeight);
 });
 

@@ -33,7 +33,8 @@ export function fitViewportSprites({ width, actors, viewportHeight, portraitPhon
   const valid = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0);
   const margin = config.edgeMarginPx;
   const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio }, config) }));
-  const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.row ?? Math.round(a.slot.ground)}`;
+  // A row is one depth band on one side (visualBand); lanes within it share the floor.
+  const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
   const solve = factor => {
     const rows = targets.map(({ a, height }) => ({ a, height: height * factor, width: height * factor * a.visibleWidth / a.visibleHeight, x: a.slot.x }));
     let ok = rows.every(r => r.height <= (r.a.slot.fitGround ?? r.a.slot.ground) - 2 && r.width <= width - 2 * margin);

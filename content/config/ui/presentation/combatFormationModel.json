@@ -35,7 +35,7 @@
         "landscape": 0.26
       },
       "statureCap": 1.3,
-      "overlapAllowance": 0.25,
+      "overlapAllowance": 0.4,
       "edgeMarginPx": 6,
       "minCommonFactor": 0.35
     }
