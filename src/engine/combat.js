@@ -1080,6 +1080,39 @@ function rollIntents(combat, isFirstTurn = false) {
   }
 }
 
+// Core 2 commitment (SPEC §4.6, owner 2026-11-02): the plan rolled at the start of the player's turn is what the enemy
+// plays. What the player does can still make part of it impossible (a Poise break or a weakness takes the enemy's SP, a
+// range change adds an Advance surcharge), so after each player action the committed plan is re-quoted and trimmed,
+// and the shown intent follows at once instead of the enemy refusing or swapping the move silently at act time.
+// Nothing is re-picked: dropped moves leave the plan (and movesHistory), and no enemyAI roll is drawn.
+function revalidateEnemyPlans(combat) {
+  if (combat.phase !== 'player' || combat.combatRounds || !core2ActionPolicyEnabled(combat)) return;
+  for (const enemy of combat.enemies) {
+    const head = enemy.intent;
+    if (!enemy.alive || !enemy.planDue || enemy.pendingMove || enemy.skipNextTurn || !head?.moveId || head.resolved) continue;
+    const def = combat.registries.enemies.get(enemy.enemyId);
+    const before = [{ moveId: head.moveId }, ...(enemy.plannedMoves ?? [])];
+    const kept = Rounds.trimEnemyPlan(enemy, def, before, { combat });
+    const ids = rows => rows.map(row => row.moveId).join(',');
+    if (ids(kept) === ids(before)) { enemy.plannedMoves = kept.slice(1); continue; }
+    // The plan is the tail of movesHistory (each pick was recorded when made): rewrite it so maxConsecutive sees what will play.
+    const history = enemy.movesHistory, start = history.length - before.length;
+    if (start >= 0 && ids(before) === history.slice(start).join(',')) history.splice(start, before.length, ...kept.map(row => row.moveId));
+    enemy.plannedMoves = kept.slice(1);
+    if (kept[0]?.moveId === head.moveId) continue;
+    delete enemy.actorIntentRevealed;
+    if (!kept.length) {
+      clearCombatCounter(enemy);
+      delete enemy.intentRevealed;
+      enemy.intent = { kind: 'unknown', moveId: null };
+      enemy.planDue = false;
+      continue;
+    }
+    presentIntent(combat, enemy, def, kept[0].moveId);
+    drainQueue(combat);
+  }
+}
+
 // Shows a move as the enemy's intent: its box, stance, visibility roll and counter priming. The head of a turn and
 // each follow-up that plays both go through here, so a revealed follow-up reads like the first move.
 function presentIntent(combat, enemy, def, moveId) {
@@ -1288,6 +1321,7 @@ export function dispatch(combat, intent) {
       default:
         throw new Error(`Unknown combat intent '${intent.type}'`);
     }
+    if (!combat.result && !combat.pendingReaction) revalidateEnemyPlans(combat);
     return { events: combat._buffer };
   } finally {
     combat._buffer = null;
