@@ -1758,6 +1758,11 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    options, each column capped at 16rem and the row centred, so a lone option
    sits in the middle rather than stretching across the door. */
 .reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+/* Owner (2026-11-02): desktop cards are 20% larger (--card-w-glance 152 to 182.4). The grid column was capped at 16rem
+   (160px) and the door at its 57rem rung, which held the card at 158px at 1280x720; both now follow the card width.
+   A phone keeps its two-column rule below (the narrow layout never reaches here). */
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 152px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 152px) + (var(--choice-count, 3) - 1) * 12px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 152px) + (var(--choice-count, 3) - 1) * 12px + 2 * var(--modal-inset) + 20px)); }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
