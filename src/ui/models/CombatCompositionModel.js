@@ -90,6 +90,10 @@ export function alternativeCombatComposition(options) {
 // sprite's feet stand on the cell's shadow. The shared fit already sized each
 // body to its lane and its headroom; composition only keeps it in the field.
 function perspectiveGridComposition({ sizes, actors, width }) {
+  // Once the sizing rule slid any figure to clear a neighbour, its x for every
+  // figure is authoritative: the cell footprint clamp below would pull a
+  // neighbour back across the cleared gap.
+  const trustSizeX = sizes.some(size => size.slid === true);
   return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
@@ -97,7 +101,7 @@ function perspectiveGridComposition({ sizes, actors, width }) {
     const halfWidth = actor.visibleWidth * size.scale / 2;
     // The sizing rule may have slid a figure sideways to clear a neighbour
     // (size.x); the foot inset then only keeps the ground inside the cell.
-    const moved = size.slid === true && Number.isFinite(size.x);
+    const moved = (size.slid === true || trustSizeX) && Number.isFinite(size.x);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
     const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
       { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
