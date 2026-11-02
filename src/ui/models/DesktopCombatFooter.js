@@ -43,7 +43,10 @@ export function desktopHandLayout({ width, height, count, zoom = 1 }, config = u
   const restTop = Math.min(...cards.map(c => top + c.y + cardHeight / 2 - (Math.abs(Math.sin(c.angle * Math.PI / 180)) * cardWidth + Math.cos(c.angle * Math.PI / 180) * cardHeight) / 2), top);
   return { cardWidth, cardHeight, cards, capacity: Math.max(1, count), span, start, step, top, lift: 18 * unit,
     // Owner (2026-10-31): the fan docks to the hand box's bottom; handGapPx above End Turn is its only buffer.
-    restLeft: start - 12 * unit, restTop, clearanceTop: -10 * unit, controlsReserve: 0, reserve: 0, dock: 1 };
+    restLeft: start - 12 * unit,
+    // Owner (2026-11-02): desktop cards are 20% larger (cap 128.04 viewport px). The fan docks to the box bottom, so only the
+    // arc and tilt need headroom (16 px, not the phone's 40 px lift room); handHeightPx grew 270 to 285 with it.
+    fitReservePx: 16, restTop, clearanceTop: -10 * unit, controlsReserve: 0, reserve: 0, dock: 1 };
 }
 
 // The battlefield's bottom edge, in combat-root px: the fan's clearance line (its resting top

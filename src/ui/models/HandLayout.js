@@ -137,7 +137,7 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const profileWidth = style.widthFraction
     ? Math.max(style.minPx / zoom, Math.min(style.maxPx / zoom, width * style.widthFraction))
     : sizePlan.cardWidth;
-  const cardWidth = Math.min(profileWidth, (height - sizePlan.controlsReserve - 40 / zoom) * wireframeUi.card.ratio);
+  const cardWidth = Math.min(profileWidth, (height - sizePlan.controlsReserve - (sizePlan.fitReservePx ?? 40) / zoom) * wireframeUi.card.ratio);
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   const angle = style.angle * Math.PI / 180;
   const edge = (Math.cos(angle) * cardWidth + Math.sin(angle) * cardHeight - cardWidth) / 2;
