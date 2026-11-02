@@ -46,7 +46,7 @@ test('combat frames the art backdropZoom smaller than the cover fit, about the g
   // The ground anchor stays on the screen line the cover fit gave it.
   assert.ok(Math.abs((top + device.groundAnchor * device.height * scale) - (previewTop + device.groundAnchor * device.height * cover)) < 1e-6);
   assert.equal(fill.attrs.display, '', 'the blurred fill is shown once the art is smaller than the screen');
-  assert.match(fill.attrs.transform, new RegExp(`scale\\(${1 / framing.backdropZoom}`));
+  assert.ok(Math.abs(parseFloat(fill.attrs.transform.match(/scale\(([\d.]+)\)/)[1]) - 1 / framing.backdropZoom) < 1e-9);
   assert.equal(main.attrs.mask, 'url(#alternative-scene-edge)', 'the sharp layers feather into the fill where an edge shows');
 });
 
