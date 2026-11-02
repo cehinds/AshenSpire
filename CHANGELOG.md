@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
-- **Scene Continue button centred** ([#2490](https://github.com/cehinds/AshenSpire/pull/2490), `0.7.3.42`). In the opening scenes the Continue button now stays centred, with the scene counter on the left and Pause, Settings and Skip on the right.
+- **Scene Continue button centred** ([#2490](https://github.com/cehinds/AshenSpire/pull/2490), `0.7.3.44`). In the opening scenes the Continue button now stays centred, with the scene counter on the left and Pause, Settings and Skip on the right.
 
 ## 2026-11-01
 
