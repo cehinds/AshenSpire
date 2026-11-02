@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
+- **Intents stay up; floaters queue** ([#2499](https://github.com/cehinds/AshenSpire/pull/2499), `0.7.3.52`). An enemy's intent now stays on screen until its attack's damage and effects have landed, and non-damage floaters (Block, heals, statuses) queue up to three at a time above the HUD with space between them.
 - **Hand reprices right after a play** ([#2497](https://github.com/cehinds/AshenSpire/pull/2497), `0.7.3.52`). After you play a card, the hand now shows the new costs at once, so Evade+ shows and charges 1 SP in Defend stance instead of refusing with "Not enough stamina".
 - **Block and AC swap places on the HUD** ([#2495](https://github.com/cehinds/AshenSpire/pull/2495), `0.7.3.50`). Your Block now sits in the square left of the health bar, and AC leads the badge row beside its "AC" label.
 - **Scene counter moves into the button row on phones** ([#2493](https://github.com/cehinds/AshenSpire/pull/2493), `0.7.3.48`). On a narrow phone, Continue now stands alone, full width and centred, and the scene counter sits at the left of the Pause, Settings and Skip row below it.
