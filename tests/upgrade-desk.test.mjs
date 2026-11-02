@@ -62,7 +62,7 @@ test('the chosen item is the one outlined row, and a click routes the choice to 
   const other = [...host.querySelectorAll('.smith-candidate-card')].find(row => row.dataset.itemRef !== 'armament/greatsword');
   other.click();
   assert.deepEqual(picks, [other.dataset.itemRef]);
-  assert.ok(css.includes('.upgrade-desk .deck-editor-main.smith-candidate-card.selected'), 'the outline is styled');
+  assert.ok(css.includes('.deck-editor-main[aria-pressed="true"], .deck-editor-main[aria-selected="true"] {'), 'the editor\'s own outline rule covers the selected row');
   door.close();
 }));
 
