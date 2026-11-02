@@ -415,35 +415,32 @@ function adoptTitle(el) {
   el.removeAttribute('title');
 }
 
+const INSPECTOR = '.card-inspection-modal, .card-inspection-layout';
 /**
- * A tooltip trigger inside a hand card (keyword, tag symbol, inspection tag, any detail on the face)
- * explains only once that card is selected or in inspect mode (owner, 2026-10-31); until then the
- * card's own tap selects it and the trigger stays quiet. The card's own tooltip and triggers anywhere
- * else (inspector, rewards, shop, deck view) are not held back.
+ * Card tooltips explain only while the card inspector is open (owner, 2026-11-02, replacing the
+ * 2026-10-31 "selected or inspected" gate). A tooltip trigger on a card face (keyword, tag symbol,
+ * inspection tag, any detail) or the card itself is held back on every other card surface (hand,
+ * rewards, shop, deck view, upgrade previews): hover, focus, selection and long-press open nothing,
+ * and the card's own tap selects or plays as normal. Non-card elements are never held back.
  */
 function heldBackInCard(el) {
-  const card = el?.closest?.('.hand .card');
-  return !!card && card !== el && !card.matches('.selected, .inspection-selected');
+  return !!el?.closest?.('.card') && !el.closest(INSPECTOR);
 }
 
 /**
- * oneClickContext(el) — owner, 2026-10-31: while a card is selected or being inspected, or inside the (i)
- * inspection modal, every keyword, tag and face part explains on ONE click. An unselected hand card keeps
- * the held-back gate (heldBackInCard) and everything else keeps tap-to-select, tap-again-to-explain.
+ * oneClickContext(el) — inside the (i) inspection modal every keyword, tag and face part explains on ONE
+ * click. Everywhere else a card's triggers are held back (heldBackInCard) and other details keep
+ * tap-to-select, tap-again-to-explain.
  */
 function oneClickContext(el) {
-  if (el?.closest?.('.card-inspection-modal, .card-inspection-layout')) return true;
-  const card = el?.closest?.('.card.selected, .card.inspection-selected');
-  // A hold or press selects the card at pointerdown, before the click: a hand card pressed while it was NOT
-  // selected (`data-pressed-selected="0"`, stamped below) is still on its first tap, which selects only.
-  return !!card && !(card.closest('.hand') && card.dataset.pressedSelected === '0');
+  return !!el?.closest?.(INSPECTOR);
 }
 
 const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
 /**
  * syncHeldTriggers(root) — triggers held back inside an unselected hand card leave the tab order
  * (tabindex -1, so DOM focus and Enter never reach a control that does nothing); they get tabindex 0
- * back once the card is selected or inspected.
+ * back inside the card inspector.
  */
 export function syncHeldTriggers(root) {
   for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
