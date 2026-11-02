@@ -32,8 +32,8 @@ test('floaters on one anchor take separate lanes, reset after the life, and are 
     flushMeasureJobs();
     assert.deepEqual([one, two, three, four, other].map((n) => n.dataset.floatLane), ['0', '1', '2', '0', '0']);
     assert.equal(one.props['--float-lane'], undefined, 'lane 0 is not lifted');
-    assert.equal(two.props['--float-lane'], '22px', 'lane 1 lifts one line (20 x 1.1)');
-    assert.equal(three.props['--float-lane'], '44px');
+    assert.equal(two.props['--float-lane'], '27px', 'lane 1 lifts one line (20 x 1.35)');
+    assert.equal(three.props['--float-lane'], '54px');
     t.mock.timers.tick(floaterLifeMs() + 1);
     const later = floatNum(fx, a, '-9', 'dmg', null, opts);
     assert.equal(later.dataset.floatLane, '0', 'the lanes reset once the life has expired');
@@ -105,16 +105,16 @@ test('a lane lifts by the measured heights of the lanes below it', (t) => {
     const third = floatNum(fx, a, '-3', 'dmg small', null, opts);
     flushMeasureJobs();
     assert.equal(crit.props['--float-lane'], undefined);
-    assert.equal(small.props['--float-lane'], '22px', 'lane 1 lifts by its own height: its bottom lands on the crit top');
-    assert.equal(third.props['--float-lane'], '44px', 'lane 2 lifts by its own height plus lane 1 (22 + 22)');
+    assert.equal(small.props['--float-lane'], '27px', 'lane 1 lifts by its own height: its bottom lands on the crit top');
+    assert.equal(third.props['--float-lane'], '54px', 'lane 2 lifts by its own height plus lane 1 (27 + 27)');
     // Reversed: a crit over a small number must lift by the crit's own height.
     const b = document.createElement('div'); b.box = { left: 300, top: 100, width: 80, height: 120 };
     nextHeight = 20; floatNum(fx, b, '-2', 'dmg small', null, opts);
     nextHeight = 60; const bigOver = floatNum(fx, b, '-40', 'dmg crit', null, opts);
     nextHeight = 20; const smallOver = floatNum(fx, b, '-3', 'dmg small', null, opts);
     flushMeasureJobs();
-    assert.equal(bigOver.props['--float-lane'], '66px', 'the 60px crit in lane 1 clears lane 0 by its own height');
-    assert.equal(smallOver.props['--float-lane'], '88px', 'lane 2 sits above the crit (66 + 22)');
+    assert.equal(bigOver.props['--float-lane'], '81px', 'the 60px crit in lane 1 clears lane 0 by its own height');
+    assert.equal(smallOver.props['--float-lane'], '108px', 'lane 2 sits above the crit (81 + 27)');
   });
 });
 
@@ -145,15 +145,15 @@ test('a taller number reusing a lower lane re-lifts the live floaters above it (
     const upper = floatNum(fx, a, '-3', 'dmg small', null, opts);
     flushMeasureJobs();
     assert.equal(upper.dataset.floatLane, '2');
-    assert.equal(upper.props['--float-lane'], '44px');
+    assert.equal(upper.props['--float-lane'], '54px');
     // Lanes 0 and 1 expire; lane 2 is still showing. A small number takes lane 0, a crit lane 1.
     t.mock.timers.tick(life - step + 1);
     floatNum(fx, a, '-4', 'dmg small', null, opts);
     nextHeight = 60; const crit = floatNum(fx, a, '-40', 'dmg crit', null, opts);
     flushMeasureJobs();
     assert.equal(crit.dataset.floatLane, '1');
-    assert.equal(crit.props['--float-lane'], '66px');
-    assert.equal(upper.props['--float-lane'], '88px', 'the surviving lane-2 number rises above the taller crit (66 + 22)');
+    assert.equal(crit.props['--float-lane'], '81px');
+    assert.equal(upper.props['--float-lane'], '108px', 'the surviving lane-2 number rises above the taller crit (81 + 27)');
   });
 });
 
@@ -177,13 +177,13 @@ test('with motion, a number that has risen past its own height no longer blocks:
     floatNum(fx, a, '-1', 'dmg', null, opts);
     flushMeasureJobs();
     // A quarter of a life in, the first number has risen about 9 px: still in the way, so the second
-    // is lifted past its current top (9 + 22), not a bare lane height.
+    // is lifted past its current top (9 + 27), not a bare lane height.
     t.mock.timers.tick(Math.round(life * 0.25));
     const second = floatNum(fx, a, '-2', 'dmg', null, opts);
     flushMeasureJobs();
     assert.equal(second.dataset.floatLane, '1');
     const lift = parseFloat(second.props['--float-lane']);
-    assert.ok(lift > 28 && lift < 36, `lifted past the risen first number: ${lift}`);
+    assert.ok(lift > 33 && lift < 41, `lifted past the risen first number: ${lift}`);
     // Two thirds in, the first has risen 30 px, past its 20 px height: it no longer blocks, and the
     // second (risen ~9 px, lifted ~31) sits far above, so the third starts at lane 0 under both.
     t.mock.timers.tick(Math.round(life * 0.42));
