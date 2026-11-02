@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
+- **Scene counter moves into the button row on phones** ([#2493](https://github.com/cehinds/AshenSpire/pull/2493), `0.7.3.48`). On a narrow phone, Continue now stands alone, full width and centred, and the scene counter sits at the left of the Pause, Settings and Skip row below it.
 - **Card rewards: Edit deck, Add to library, Add to deck** ([#2491](https://github.com/cehinds/AshenSpire/pull/2491), `0.7.3.46`). Picking a reward card now offers Edit deck, Add to library (keeps it out of your deck) and Add to deck in place of Inspect; the card's (i) still shows its details.
 - **Scene Continue button centred** ([#2490](https://github.com/cehinds/AshenSpire/pull/2490), `0.7.3.44`). In the opening scenes the Continue button now stays centred, with the scene counter on the left and Pause, Settings and Skip on the right.
 

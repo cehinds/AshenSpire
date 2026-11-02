@@ -760,6 +760,13 @@ test('the controls stand in a band at the bottom, whatever the words do', () => 
   assert.match(screen, /el\('div',\{class:'prologue-controls-aux'\},\[pause,skip\]\)/);
   assert.match(css, /\.prologue-bar-centered\{display:grid;grid-template-columns:minmax\(0,1fr\) auto minmax\(0,1fr\)/);
   assert.match(css, /\.prologue-bar-centered \.prologue-controls > button:last-child\{grid-column:2;grid-row:1\}/);
+  // Narrow portrait: the wrapper dissolves; Continue is the full-width top row and
+  // the counter leads the button row (owner, 2026-11-02).
+  assert.match(css, /@container game-viewport \(max-width:760px\) and \(orientation:portrait\)\{\s*\/\*[\s\S]*?\*\/\s*\.prologue-bar-centered\{display:flex\}/);
+  assert.match(css, /\.prologue-bar \.prologue-controls\{display:contents\}/);
+  assert.match(css, /\.prologue-bar \.prologue-controls > button:last-child\{order:-2;flex-basis:100%\}/);
+  assert.match(css, /\.prologue-bar \.prologue-progress\{order:-1;/);
+  assert.match(css, /\.prologue-bar \.prologue-controls-aux\{order:0;/);
   // The safe-area inset is a FLOOR under the authored padding, not a value that
   // replaces it: a container padding of 0 must still be 0 under the text.
   assert.match(css, /\.prologue-controls-text \.prologue-caption\{padding-bottom:max\(var\(--prologue-box-padding,1rem\),env\(safe-area-inset-bottom\)\)\}/);
