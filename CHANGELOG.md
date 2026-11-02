@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
+- **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.52`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
 - **Hand reprices right after a play** ([#2497](https://github.com/cehinds/AshenSpire/pull/2497), `0.7.3.52`). After you play a card, the hand now shows the new costs at once, so Evade+ shows and charges 1 SP in Defend stance instead of refusing with "Not enough stamina".
 - **Block and AC swap places on the HUD** ([#2495](https://github.com/cehinds/AshenSpire/pull/2495), `0.7.3.50`). Your Block now sits in the square left of the health bar, and AC leads the badge row beside its "AC" label.
 - **Scene counter moves into the button row on phones** ([#2493](https://github.com/cehinds/AshenSpire/pull/2493), `0.7.3.48`). On a narrow phone, Continue now stands alone, full width and centred, and the scene counter sits at the left of the Pause, Settings and Skip row below it.
