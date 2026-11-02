@@ -457,10 +457,10 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const view = anchorLocalBoxCached(layer, layer, zoom);
   const ceiling = overheadCeiling(layer, anchor, b, zoom);
   const line = floaterLineHeight(layer, cls);
-  const fit = ceiling == null ? FLOATER_QUEUE_MAX : floaterLanesFit(ceiling - view.top, line);
+  const fit = ceiling == null ? FLOATER_QUEUE_MAX : floaterLanesFit(ceiling - floaterRoomTop(layer, view, zoom), line);
   const side = fit < 1 ? (b.left + b.width / 2 < view.left + view.width / 2 ? 'right' : 'left') : null;
   queue.max = Math.max(1, Math.min(FLOATER_QUEUE_MAX, fit));
-  const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: ceiling != null, side } };
+  const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: ceiling != null && !side, side } };
   if (queue.push(item)) return spawnQueued(queue, item);
 }
 // How many lanes of `line`-tall floaters fit in `room` px above the HUD (see FLOAT_EDGE_PX,
@@ -468,6 +468,14 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 // A floater rises about 30 px before it fades (num-life, styles/combat.css), so the top lane keeps that much
 // clear of the battlefield top besides the 4 px gap above the HUD and the 6 px margin.
 const FLOAT_EDGE_PX = 40;
+// The top of the room a queued floater may use: the battlefield top, or the bottom of the combat top bar
+// (cinders, icon buttons, turn banner) when that sits lower. Layer px.
+function floaterRoomTop(layer, view, zoom) {
+  const bar = layer.closest?.('.combat')?.querySelector?.('.topbar');
+  if (!bar) return view.top;
+  const box = anchorLocalBoxCached(layer, bar, zoom);
+  return box.height > 0 ? Math.max(view.top, box.top + box.height) : view.top;
+}
 export function floaterLanesFit(room, line) {
   if (room - FLOAT_EDGE_PX - line < 0) return 0;
   return Math.floor((room - FLOAT_EDGE_PX - line) / (line * 1.35)) + 1;
@@ -580,7 +588,7 @@ function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = n
     let wanted = centre - half;
     if (placement.side) wanted = placement.side === 'right' ? b.left + b.width + 6 : b.left - 6 - width;
     const at = clampBox({ left: wanted, top: placed, width, height }, view, { pad: 6 });
-    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - view.top - (FLOAT_EDGE_PX - 4)); }
+    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - floaterRoomTop(layer, view, zoom) - (FLOAT_EDGE_PX - 4)); }
     return () => {
       el.style.left = `${at.left + half}px`;
       if (ceiling != null) el.style.top = `${at.top}px`;
