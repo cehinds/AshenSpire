@@ -30,8 +30,8 @@ function fixture(t) {
   return { combat, svg, fill, main, edge, blur, fillImages, nodes: [fill, main, edge, blur, ...fillImages] };
 }
 
-test('the zoom factor is authored config, below 1 and within the owner\'s 15-20% window', () => {
-  assert.ok(framing.backdropZoom >= 0.8 && framing.backdropZoom <= 0.85, `backdropZoom ${framing.backdropZoom}`);
+test('the zoom factor is authored config, below 1 and near the cover fit (owner 2026-11-02: 0.94)', () => {
+  assert.ok(framing.backdropZoom >= 0.9 && framing.backdropZoom < 1, `backdropZoom ${framing.backdropZoom}`);
 });
 
 test('combat frames the art backdropZoom smaller than the cover fit, about the ground anchor', t => {
