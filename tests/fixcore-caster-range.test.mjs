@@ -75,7 +75,7 @@ test('historical physical Reach and Far stances still keep melee out of range', 
 test('new Core fights keep equipment/authored engagement distance through actual stance changes', () => {
   const stances = [
     { maneuver: 'attack', camp: 'physical', range: 'reach' },
-    { maneuver: 'evade', camp: 'physical', range: 'ranged' },
+    { maneuver: 'defend', camp: 'physical', range: 'ranged' },
     { maneuver: 'casting', camp: 'spell', range: 'reach' },
     { maneuver: 'casting', camp: 'spell', range: 'ranged' },
   ];

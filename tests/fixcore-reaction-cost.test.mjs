@@ -62,7 +62,9 @@ test('Martial Adept discounts matching nonspell SP on both turns, with a zero fl
   assert.equal(cost({ ...reaction, staminaCost: 1 }), 0);
   assert.equal(cost({ ...reaction, staminaCost: 0 }), 0);
   assert.equal(cost({ ...reaction, manaCost: 2 }), 2, 'MP cost does not disable the conditional SP discount');
-  ctx.player.combatStance.maneuver = 'defend'; assert.equal(cost(reaction), 3);
+  // Owner 2026-11-01: Defend stance discounts every defensive card, so a Counter reaction from Defend stance takes the cut.
+  ctx.player.combatStance.maneuver = 'defend'; assert.equal(cost(reaction), 2);
+  ctx.player.combatStance.maneuver = 'attack'; assert.equal(cost(reaction), 3);
   delete ctx.player.combatStance; assert.equal(cost(reaction), 3);
 });
 

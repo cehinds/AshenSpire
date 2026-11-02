@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-01
 
+- **Evade joins Defend stance** ([#2486](https://github.com/cehinds/AshenSpire/pull/2486), `0.7.3.42`). Evade is now a card tag, not a stance: Evade cards play in Defend stance (an Evade-tagged Counter stays in Counter) and still grant their Evade stacks, and saves in the old Evade stance load in Defend. While you are already in Defend stance, Defend, Counter and Evade cards all take the Adept cost cut, so an upgraded Evade drops from 2 SP to 1. The stances are Attack, Smash, Sweep, Counter, Defend, Prepared and Idle. Sweep now beats Counter and Smash.
+- **Armory rows readable on phones** ([#2488](https://github.com/cehinds/AshenSpire/pull/2488), `0.7.3.40`). Opening an item in the Armory list on a phone keeps the list full width, with its buttons below the item's name instead of covering it.
 - **Upgrade options fit on phones** ([#2485](https://github.com/cehinds/AshenSpire/pull/2485), `0.7.3.38`). The small card in each upgrade option no longer covers the list of changes or the "Option N" title on a narrow screen.
 - **Chance readouts show the d20 step** ([#2480](https://github.com/cehinds/AshenSpire/pull/2480), `0.7.3.36`). Chance readouts for crits, status buildups, avoidance and card buildup chances now show the 5% step a d20 really rolls (32% reads 30%).
 - **Merge train: Ward/Barrier, lightning elements, elemental cantrips** ([#2483](https://github.com/cehinds/AshenSpire/pull/2483), `0.7.3.34`). Lands #2476, #2477 and #2479 together in one merge to shorten the queue; no change beyond those three.

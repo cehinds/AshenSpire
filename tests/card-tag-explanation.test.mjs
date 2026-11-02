@@ -9,5 +9,5 @@ test('version-two defensive tag help describes both ratings and card-specific co
   assert.match(help, /Physical.*Melee.*Reach.*Ranged.*Single/);
   assert.doesNotMatch(help, /incoming physical ranged moves or spells/);
   assert.equal(cardTagExplanation({}, { id: 'maneuver:defend', blurb: 'legacy' }), 'legacy');
-  assert.match(cardTagExplanation({ ...def, evade: {} }, { id: 'maneuver:counter' }), /^Evade stance/);
+  assert.match(cardTagExplanation({ ...def, evade: {} }, { id: 'maneuver:counter' }), /^Counter stance with Evade/);
 });

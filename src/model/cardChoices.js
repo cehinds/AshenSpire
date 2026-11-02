@@ -38,7 +38,7 @@ export const STANCE_CHOICE_SELECTORS = Object.freeze(['classStance','maneuver'])
 export function cardChoice(registries, def, classId, activeStanceId = null) {
   const effect = (def && def.effects || []).find((e) => e && e.op === 'enterStance' && e.choose);
   if (!effect) return null;
-  if(effect.choose==='maneuver') return {kind:'stance',options:['attack','smash','defend','sweep','counter','casting','evade'].map(id=>({id,name:maneuverLabel(registries,id),icon:'',tooltip:id,active:activeStanceId===id}))};
+  if(effect.choose==='maneuver') return {kind:'stance',options:['attack','smash','defend','sweep','counter','casting'].map(id=>({id,name:maneuverLabel(registries,id),icon:'',tooltip:id,active:activeStanceId===id}))};
   const rows = registries.stances.all();
   let owned = rows.filter((s) => s.class && s.class === classId);
   if (!owned.length) owned = rows.filter((s) => s.class && s.class === def.class);

@@ -16,7 +16,8 @@ export function combatIntentStance(intent = {}, profile = intent.profile || {}) 
   if (intent.stance) return intent.stance;
   if (intent.kind === 'staggered') return 'staggered';
   if (profile.maneuver === 'counter') return 'countering';
-  if (profile.maneuver === 'defend') return 'defending';
+  // Owner 2026-11-01: there is no Evade stance; a move with the evade maneuver stands in Defend and keeps its evade stacks.
+  if (profile.maneuver === 'defend' || profile.maneuver === 'evade') return 'defending';
   if (profile.maneuver === 'sweep') return 'sweeping';
   if (profile.camp === 'spell' || profile.camp === 'spells' || profile.camp === 'magic') return 'casting';
   if (profile.maneuver === 'ranged') return 'ranged';

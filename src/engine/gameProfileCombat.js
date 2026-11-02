@@ -129,17 +129,13 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   amount=transition('stance-defense','Defensive stance advantage',amount,amount*(flatReturn?1:defense.multiplier),'stance',flatReturn?1:defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
-  const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
-  let hitChance = evade ? Math.max(stances.minimumHitChance ?? 0.05,
-    Math.min(stances.maximumHitChance ?? 0.95, (stances.accuracyBase ?? 0.75)
-      + (rating(source, stances.accuracyStat || 'ar') - rating(target, stances.evasionStat || 'dr'))
-        * (stances.accuracyWeight ?? 0.02))) : 1;
+  // Owner 2026-11-01: Evade is a tag and a status, not a stance, so no stance rolls the configured hit chance any more.
+  let hitChance = 1;
   hitChance=targeting.unavoidable ? 1 : Math.max(0.05,Math.min(1,hitChance+targeting.accuracyDelta/100));
   if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier)?.hitChance ?? 100) / 100;
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
-  else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
   let smashBlockBonus = 0;
   if (smashRule && !evaded && target) {
     // Read from the Block held before this hit's own absorption.
@@ -256,8 +252,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}),
-    hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
-    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
+    hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null,
+    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
     ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,

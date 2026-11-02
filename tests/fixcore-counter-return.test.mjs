@@ -689,7 +689,7 @@ function overrideLive(include) {
   Object.assign(combat.player, { mana: 9, maxMana: 9 });
   return { combat, enemy, registries };
 }
-for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'counter', 'sweep', 'evade']], ['counter', ['attack', 'smash', 'defend', 'sweep', 'prepared', 'evade']]]) {
+for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'counter', 'sweep']], ['counter', ['attack', 'smash', 'defend', 'sweep', 'prepared']]]) {
   test(`a Core profile whose stances omit ${name}: a spell Counter shows no return, no face text, and live never returns`, () => {
     const { combat, enemy, registries } = overrideLive(include);
     const view = previewCard(combat, 'co1', enemy.id);

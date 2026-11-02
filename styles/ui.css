@@ -1825,9 +1825,17 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury .equip-picker-detail > td { background: var(--bg-raise); padding: 1rem; }
 .armoury[data-responsive="phone"] .equip-picker-table :is(th:nth-child(2), td.equip-picker-status) { display: none; }
 .armoury[data-responsive="phone"] .equip-picker-inline-status { display: block; padding-top: .3rem; }
-.armoury[data-responsive="phone"] .equip-picker-table th:nth-child(3) { width: 8.5em; }
-.armoury[data-responsive="phone"] .equip-picker-actions { flex-direction: column; align-items: stretch; }
-.armoury[data-responsive="phone"] .equip-picker-actions > button { min-height: 44px; padding-inline: .6rem; white-space: normal; }
+/* Phone rows: the list keeps the whole width when a row opens. The table's fixed layout counted the
+   open row's colspan=3 detail cell as a phantom third column (the Status column is hidden), which
+   left the item column half width with the buttons laid over its name. Rows are blocks instead:
+   icon, name, type and tag on top, the action buttons wrapped in a row beneath, never over text. */
+.armoury[data-responsive="phone"] .equip-picker-table :is(thead, tbody, tr, th, td) { display: block; }
+.armoury[data-responsive="phone"] .equip-picker-table th:nth-child(1) { width: auto; }
+.armoury[data-responsive="phone"] .equip-picker-table th:nth-child(3) { display: none; }
+.armoury[data-responsive="phone"] .equip-picker-row > td { border-bottom: 0; }
+.armoury[data-responsive="phone"] .equip-picker-row > td:last-child { padding-top: 0; border-bottom: 1px solid var(--line); }
+.armoury[data-responsive="phone"] .equip-picker-actions { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
+.armoury[data-responsive="phone"] .equip-picker-actions > button { flex: 1 1 8rem; min-height: 44px; padding-inline: .6rem; white-space: normal; }
 .armoury[data-responsive="phone"] .armament-inspection-back { display: inline-flex; }
 .armoury[data-responsive="phone"] .armament-list-inspection > .equipment-poker-inspection { max-width: calc(var(--armament-inspection-width) * 1px); margin-inline: auto; }
 .armoury .armament-position-group { min-width: 0; border: 1px solid var(--line); border-radius: .7rem; padding: .6rem; background: var(--bg-raise); }
