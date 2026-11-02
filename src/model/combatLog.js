@@ -6,6 +6,17 @@
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
 import { t } from '../ui/strings.js';
+
+/**
+ * What reached the layers (Barrier, Ward, Poise, Block, then HP) after typed resistance or weakness.
+ * `event.amount` is what is left after Barrier, Ward and Poise, so the whole hit is the sum. The combat
+ * log's "for N" and the damage floater both read this, so the two always agree.
+ */
+export function hitAsLayered(event = {}) {
+  const magicPoise = Number(event.magicPoise) || 0;
+  const poise = Math.max(0, (Number(event.poiseAbsorbed) || 0) - magicPoise);
+  return Math.max(0, Number(event.amount) || 0) + (Number(event.barrierAbsorbed) || 0) + (Number(event.wardAbsorbed) || 0) + poise + magicPoise;
+}
 import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, distanceRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
@@ -226,7 +237,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const blocked = event.blocked || 0;
         const hp = Math.max(0, event.amount - blocked);
         // What reached the layers (Barrier, Ward, Block, Poise, then HP), after typed resistance or weakness.
-        const layered = event.amount + barrier + ward + poise + magicPoise;
+        const layered = hitAsLayered(event);
         // The hit as it arrived. Newer events say so (`incoming`); an older one's typed reduction is
         // the whole protection before Block (`resisted`) less what Barrier and Ward took.
         const incoming = Number.isFinite(event.incoming) ? event.incoming

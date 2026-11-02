@@ -20,6 +20,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 import { t } from './strings.js';
+import { hitAsLayered } from '../model/combatLog.js';
 import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 
 
@@ -760,6 +761,9 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
+  // The whole hit as it reached the layers. `event.amount` is what is left AFTER Barrier, Ward and Poise,
+  // so the floater reads the same sum the combat log does (owner, 2026-11-02: show the actual hit).
+  const full = hitAsLayered(event);
   // What Barrier (blue) and Ward (purple) absorbed before the hit reached
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
@@ -783,11 +787,13 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    // The number floats the FULL hit before Block / Poise / Ward (owner, 2026-11-02); the Block badge drops by
-    // the guard on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome
-    // words key off HP loss as before; `fullHit` is the number a fully guarded hit floats beside its BLOCKED word.
-    damage: residual > 0 ? { text: `-${amount}`, cls: dmgClass(amount, targetMaxHp) } : null,
-    fullHit: amount > 0 ? { text: `-${amount}`, cls: `${dmgClass(amount, targetMaxHp)} blk` } : null,
+    // The number floats the FULL hit before Block / Poise / Ward / Barrier; the Block badge drops by the guard
+    // on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome words key off
+    // HP loss as before; `fullHit` is the number a guarded hit that cost no HP floats (beside BLOCKED or Pierced).
+    full,
+    damage: residual > 0 ? { text: `-${full}`, cls: dmgClass(full, targetMaxHp) } : null,
+    // Unsigned and not `dmg`: no HP was lost, so it must not read as HP loss (guard colour, damage size tier).
+    fullHit: full > 0 ? { text: String(full), cls: `blk ${dmgClass(full, targetMaxHp).replace(/^dmg\s*/, '')}`.trim() } : null,
   };
 }
 
@@ -2014,8 +2020,6 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       // relying on random jitter, so phone and desktop read the same grammar.
       const parts = guardHitFloatParts(e);
       const outcome = outcomeKindForEvent(e);
-      // The guard consumed is no longer a float of its own, so a guarded hit is one number, not a pair.
-      const paired = false;
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
         if (parts.guard) sfx.play('block');
@@ -2063,18 +2067,20 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
           // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
-          const lane = parts.barrier || parts.ward || parts.poise || parts.magicPoise || parts.pierced || parts.immune || paired ? false : undefined;
+          const lane = parts.barrier || parts.ward || parts.poise || parts.magicPoise || parts.pierced || parts.immune ? false : undefined;
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
           if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
           if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: parts.poise ? -48 : -34, jitter: false, lane });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
+          // A pierced hit that cost no HP has no outcome word, so its full number floats here.
+          if (!parts.damage && parts.fullHit && parts.pierced) floatNum(ctx.layer, anchor, parts.fullHit.text, parts.fullHit.cls, null, { x: 0, jitter: false, lane });
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.amount, maxHp), null,
-              { x: 0, jitter: !paired, lane });
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.full, maxHp), null,
+              { x: 0, jitter: true, lane });
           }
         },
       };
