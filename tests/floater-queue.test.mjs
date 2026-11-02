@@ -48,3 +48,13 @@ test('lane fit above a HUD: one line, then 1.35 lines per extra lane, minus the 
   assert.equal(floaterLanesFit(40 + 20 + 27, 20), 2);
   assert.equal(floaterLanesFit(40 + 20 + 54, 20), 3);
 });
+
+test('dropWaiting clears the waiting floaters and keeps the visible ones', () => {
+  const q = createFloaterQueue(1);
+  const a = { id: 'a' };
+  q.push(a); q.push({ id: 'b' }); q.push({ id: 'c' });
+  q.dropWaiting();
+  assert.deepEqual(q.visible, [a]);
+  assert.deepEqual(q.waiting, []);
+  assert.equal(q.release(a), null);
+});

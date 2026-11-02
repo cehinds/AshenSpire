@@ -449,6 +449,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (placement.lane === false || isDamageFloater(cls)) return spawnFloater(layer, anchor, text, cls, tint, placement);
   let queue = floaterQueues.get(anchor);
   if (!queue) floaterQueues.set(anchor, queue = createFloaterQueue());
+  let layerSet = floaterQueuesByLayer.get(layer);
+  if (!layerSet) floaterQueuesByLayer.set(layer, layerSet = new Set());
+  layerSet.add(queue);
   // Where they go (owner, 2026-11-02): above the combatant's overhead HUD, as many lanes as fit between the HUD and
   // the battlefield top (at most 3, the rest stay queued); when not even one fits, a single lane beside the figure,
   // on the side away from the battlefield edge. They never sit over the HUD.
@@ -458,7 +461,7 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const ceiling = overheadCeiling(layer, anchor, b, zoom);
   // Probe the line height only when there is a HUD to fit under (the probe briefly joins the layer).
   const fit = ceiling == null ? FLOATER_QUEUE_MAX
-    : floaterLanesFit(ceiling - floaterRoomTop(layer, view, zoom), floaterLineHeight(layer, cls));
+    : floaterLanesFit(ceiling - floaterRoomTop(layer, view, zoom, anchor, b, ceiling), floaterLineHeight(layer, cls));
   const side = fit < 1 ? (b.left + b.width / 2 < view.left + view.width / 2 ? 'right' : 'left') : null;
   queue.max = Math.max(1, Math.min(FLOATER_QUEUE_MAX, fit));
   const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: ceiling != null && !side, side } };
@@ -471,11 +474,28 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 const FLOAT_EDGE_PX = 40;
 // The top of the room a queued floater may use: the battlefield top, or the bottom of the combat top bar
 // (cinders, icon buttons, turn banner) when that sits lower. Layer px.
-function floaterRoomTop(layer, view, zoom) {
-  const bar = layer.closest?.('.combat')?.querySelector?.('.topbar');
-  if (!bar) return view.top;
-  const box = anchorLocalBoxCached(layer, bar, zoom);
-  return box.height > 0 ? Math.max(view.top, box.top + box.height) : view.top;
+// Another combatant standing wholly above this one's HUD and overlapping its column (a back-rank enemy over
+// the player on a phone) also caps the room, so a lane never rises into that figure or its badges.
+function floaterRoomTop(layer, view, zoom, anchor = null, b = null, ceiling = null) {
+  const combat = layer.closest?.('.combat');
+  let top = view.top;
+  const bar = combat?.querySelector?.('.topbar');
+  if (bar) {
+    const box = anchorLocalBoxCached(layer, bar, zoom);
+    if (box.height > 0) top = Math.max(top, box.top + box.height);
+  }
+  if (anchor && b && ceiling != null && combat?.querySelectorAll) {
+    const own = anchor.closest?.('.combatant');
+    for (const other of combat.querySelectorAll('.combatant')) {
+      if (other === own || other.contains?.(anchor)) continue;
+      const box = anchorLocalBoxCached(layer, other, zoom);
+      if (!(box.width > 0 && box.height > 0)) continue;
+      const bottom = box.top + box.height;
+      const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+      if (overlapsX && bottom <= ceiling) top = Math.max(top, bottom);
+    }
+  }
+  return top;
 }
 export function floaterLanesFit(room, line) {
   if (room - FLOAT_EDGE_PX - line < 0) return 0;
@@ -521,6 +541,16 @@ export function overheadCeiling(layer, anchor, b, zoom) {
   return ceiling;
 }
 const floaterQueues = new WeakMap();
+// Every queue that has fed a layer, so a click-skip can drop the floaters still waiting there.
+const floaterQueuesByLayer = new WeakMap();
+// Queued floaters sit above the HUD, apart from the damage numbers on the figure, so they keep their own
+// lane records: sharing them let a live damage number push two queued floaters onto one clamped lift.
+const queuedLaneKeys = new WeakMap();
+function queuedLaneKey(anchor) {
+  let key = queuedLaneKeys.get(anchor);
+  if (!key) queuedLaneKeys.set(anchor, key = {});
+  return key;
+}
 function spawnQueued(queue, item) {
   const { layer, anchor, text, cls, tint, placement } = item;
   const el = spawnFloater(layer, anchor, text, cls, tint, placement, () => {
@@ -568,7 +598,8 @@ function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = n
   // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
   // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
   // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
-  const entry = placement.lane === false ? null : floaterLaneFor(anchor, life);
+  const laneKey = placement.overhead || placement.side ? queuedLaneKey(anchor) : anchor;
+  const entry = placement.lane === false ? null : floaterLaneFor(laneKey, life);
   const lane = entry?.lane ?? 0;
   el.dataset.floatLane = String(lane);
   layer.appendChild(el);
@@ -589,11 +620,11 @@ function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = n
     let wanted = centre - half;
     if (placement.side) wanted = placement.side === 'right' ? b.left + b.width + 6 : b.left - 6 - width;
     const at = clampBox({ left: wanted, top: placed, width, height }, view, { pad: 6 });
-    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - floaterRoomTop(layer, view, zoom) - (FLOAT_EDGE_PX - 4)); }
+    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - floaterRoomTop(layer, view, zoom, anchor, b, ceiling) - (FLOAT_EDGE_PX - 4)); }
     return () => {
       el.style.left = `${at.left + half}px`;
       if (ceiling != null) el.style.top = `${at.top}px`;
-      if (entry) reliftFloaterLanes(anchor);
+      if (entry) reliftFloaterLanes(laneKey);
     };
   });
   setTimeout(() => el.remove(), life + 60);
@@ -847,6 +878,8 @@ export function clearCallouts(layer) {
   // The waiting queue goes with the visible words. Numbers keep their lifetime through a skip
   // (combat-readout-layer test), so their lane records stay with them until they expire.
   if (layer) calloutQueues.delete(layer);
+  // Queued non-damage floaters still waiting for a lane go too; the visible ones keep their lifetime.
+  for (const queue of (layer && floaterQueuesByLayer.get(layer)) || []) queue.dropWaiting();
 }
 
 /**

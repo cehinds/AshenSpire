@@ -35,6 +35,8 @@ export function createFloaterQueue(max = FLOATER_QUEUE_MAX) {
       visible.push(next);
       return next;
     },
+    /** Drop the waiting items; visible ones keep their lifetime (a click-skip). */
+    dropWaiting() { waiting.length = 0; },
     /** Drop everything (the anchor went away). */
     clear() { visible.length = 0; waiting.length = 0; },
   };
