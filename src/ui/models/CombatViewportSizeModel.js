@@ -17,8 +17,10 @@ export function statureMultiplier(ratio, config = CONFIG) {
   return Math.min(config.statureCap, Number.isFinite(ratio) && ratio > 0 ? ratio : 1);
 }
 
-export function targetBodyHeight({ viewportHeight, portraitPhone, ratio, multiplier = 1 }, config = CONFIG) {
-  const requested = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
+// userScale is the player's own Settings choice (player / enemy sprite scale,
+// 1 by default). Row, depth and display scales no longer resize a figure.
+export function targetBodyHeight({ viewportHeight, portraitPhone, ratio, userScale = 1 }, config = CONFIG) {
+  const requested = Number.isFinite(userScale) && userScale > 0 ? userScale : 1;
   return viewportHeight * bodyHeightFraction(portraitPhone, config) * statureMultiplier(ratio, config) * requested;
 }
 
@@ -30,7 +32,7 @@ export function targetBodyHeight({ viewportHeight, portraitPhone, ratio, multipl
 export function fitViewportSprites({ width, actors, viewportHeight, portraitPhone = false, config = CONFIG }) {
   const valid = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0);
   const margin = config.edgeMarginPx;
-  const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio, multiplier: a.multiplier }, config) }));
+  const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio, userScale: a.userScale }, config) }));
   const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.row ?? Math.round(a.slot.ground)}`;
   const solve = factor => {
     const rows = targets.map(({ a, height }) => ({ a, height: height * factor, width: height * factor * a.visibleWidth / a.visibleHeight, x: a.slot.x }));

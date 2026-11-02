@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fitViewportSprites, targetBodyHeight, statureMultiplier, bodyHeightFraction } from '../src/ui/models/CombatViewportSizeModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
-const actor = (id, side, x, row, ratio = 1, over = {}) => ({ side, ratio, multiplier: 1, visibleHeight: 190, visibleWidth: 120,
+const actor = (id, side, x, row, ratio = 1, over = {}) => ({ side, ratio, multiplier: .5, userScale: 1, visibleHeight: 190, visibleWidth: 120,
   slot: { id, side, x, row, ground: 600, fitGround: 600 }, ...over });
 const fit = (actors, extra = {}) => fitViewportSprites({ width: 1280, actors, viewportHeight: 720, ...extra });
 
@@ -49,4 +49,10 @@ test('a crowded phone row scales every combatant by one common factor', () => {
   const sizes = fitViewportSprites({ width: 360, actors, viewportHeight: 780, portraitPhone: true });
   assert.ok(sizes.lastResort > 0 && sizes.lastResort < 1);
   for (const f of sizes) assert.ok(Math.abs(f.visibleHeight - 780 * .22 * sizes.lastResort) < 1e-6, 'one common factor, player included');
+});
+
+test('row and display multipliers never resize a figure; the Settings scale does', () => {
+  const sizes = fit([actor('p', 'player', 200, 0, 1, { multiplier: 2, userScale: 1 }), actor('e', 'enemy', 900, 0, 1, { userScale: 1.5 })]);
+  assert.equal(sizes[0].visibleHeight, 720 * .26);
+  assert.equal(sizes[1].visibleHeight, 720 * .26 * 1.5);
 });
