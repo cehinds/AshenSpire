@@ -376,7 +376,14 @@ test('a damage float sizes by its share of the target max HP; no max HP keeps th
   assert.equal(dmgClass(4, 10), 'dmg pct35', 'a chip that is 40 percent of a small target is a big hit');
   assert.equal(dmgClass(10, 0), 'dmg', 'no max HP known: the absolute rule');
   assert.equal(guardHitFloatParts({ amount: 30, blocked: 0 }, 60).damage.cls, 'dmg pct35');
-  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct20', 'the share is of the HP residual the number shows');
+  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct35', 'the tier keys off the full hit the number shows (owner, 2026-11-02)');
+  const intoBlock = guardHitFloatParts({ amount: 8, blocked: 5 }, 100);
+  assert.equal(intoBlock.damage.text, '-8', 'an 8 hit into 5 Block floats the full 8, not the 3 that got through');
+  assert.equal(intoBlock.residual, 3, 'HP loss stays the residual for flinch, shake and sound');
+  assert.equal(guardHitFloatParts({ amount: 8, blocked: 8 }).damage, null, 'a fully blocked hit costs no HP');
+  assert.equal(guardHitFloatParts({ amount: 8, blocked: 8 }).fullHit.text, '-8', 'a fully blocked hit still floats the full number');
+  assert.equal(guardHitFloatParts({ amount: 8, blocked: 8 }).fullHit.cls, 'dmg blk');
+  assert.equal(guardHitFloatParts({ amount: 8, blocked: 0, poiseAbsorbed: 5 }).damage.text, '-8', 'Poise absorbed does not shrink the number');
   const css = src('styles/combat.css');
   assert.match(css, /\.float-num\.pct20 \{ --pop: 1\.6; font-size: 3\.6rem; \}/);
   assert.match(css, /\.float-num\.pct35 \{ --pop: 1\.9; font-size: 4\.6rem; \}/);

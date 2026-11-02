@@ -783,7 +783,11 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
+    // The number floats the FULL hit before Block / Poise / Ward (owner, 2026-11-02); the Block badge drops by
+    // the guard on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome
+    // words key off HP loss as before; `fullHit` is the number a fully guarded hit floats beside its BLOCKED word.
+    damage: residual > 0 ? { text: `-${amount}`, cls: dmgClass(amount, targetMaxHp) } : null,
+    fullHit: amount > 0 ? { text: `-${amount}`, cls: `${dmgClass(amount, targetMaxHp)} blk` } : null,
   };
 }
 
@@ -2006,11 +2010,12 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
     }
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
-      // only the HP residual as damage. Paired results sit side-by-side without
+      // the full hit as damage (HP residual drives flinch and shake). Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
       const parts = guardHitFloatParts(e);
       const outcome = outcomeKindForEvent(e);
-      const paired = !!(parts.guard && parts.damage);
+      // The guard consumed is no longer a float of its own, so a guarded hit is one number, not a pair.
+      const paired = false;
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
         if (parts.guard) sfx.play('block');
@@ -2051,6 +2056,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
           if (outcome) {
+            if (outcome === 'blocked' && parts.fullHit) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.fullHit.text, parts.fullHit.cls, null, { x: 0, y: -34, jitter: false, lane: false });
             if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: -34, jitter: false, lane: false });
             return;
           }
@@ -2064,13 +2070,11 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: parts.poise ? -48 : -34, jitter: false, lane });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
-          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false, lane });
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
-              { x: paired ? 26 : 0, jitter: !paired, lane });
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.amount, maxHp), null,
+              { x: 0, jitter: !paired, lane });
           }
         },
       };
