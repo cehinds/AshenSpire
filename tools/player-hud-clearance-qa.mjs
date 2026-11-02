@@ -17,7 +17,7 @@ const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tabl
 const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
     // Owner 2026-11-01: order Block, Poise, Evade, Ward, Precision; three slots, so the first two show and `+3` lists the rest.
-    expected:[['shield','12'],['poise','4'],['overflow','+3'],['ac',null]], hidden:['Evade 2','Arcane Ward 5','Precision 3'], ac:true },
+    expected:[['ac',null],['poise','4'],['overflow','+3'],['shield','12']], hidden:['Evade 2','Arcane Ward 5','Precision 3'], ac:true },
   // SPEC 4.1a (2026-11-01): the numeric barrier pool is gone (Barrier is a stacked status), so the legacy Ward total is persistent 5 + wardBlock 3.
   { profile:'current', fixCore:false, views:[['legacy-desktop',1440,900]], wardBlock:3, barrier:0,
     expected:[['shield','9'],['poise','4'],['overflow','+3']], hidden:['Evade 2','Arcane Ward 8','Precision 3'], ac:false },
@@ -105,7 +105,7 @@ try {
       assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
-      assert.deepEqual(geometry.order, fixture.ac ? ['shield','poise','overflow','ac','hp'] : ['shield','poise','overflow','hp'], name+': defense order');
+      assert.deepEqual(geometry.order, fixture.ac ? ['ac','poise','overflow','shield','hp'] : ['shield','poise','overflow','hp'], name+': defense order');
       assert.ok(!geometry.statusTrayIds.some(id=>['evade','precision'].includes(id)), name+': Evade and Precision live only in the defense badges, not the status tray');
       assert.deepEqual(errors, [], name+': no browser errors');
     } catch(error) { report.failures.push(error.message); }
