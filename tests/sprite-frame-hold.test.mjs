@@ -2,7 +2,7 @@
 // (owner, 2026-10-31). The Fast pace squeezed a 9-frame swing into ~20 ms a frame.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { actionPacing, frameHoldMs, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
+import { actionPacing, frameHoldMs, idleFrameMs, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
 import { animationTiming } from '../src/model/equipmentAnimation.js';
 import { reaverAttackTiming, REAVER_ATTACK_RUNS } from '../src/ui/reaverAttack.js';
 
@@ -11,11 +11,16 @@ const component = { normalLungeMs: 260, references: { attack: 'a' }, clips: { a:
 
 test('frame hold follows the step duration and the Combat speed; Instant drops it', () => {
   setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1 });
-  assert.equal(frameHoldMs(), 109, '390 ms step at x1 -> 109 ms (target 90-120)');
+  // Re-pinned 2026-11-02 (sprite pacing): the hold is 1000 / spriteActionFps (9 fps) = 111 ms at x1, not
+  // 0.28 of the step (109 ms), and it no longer drops below frameHoldMinMs (75 ms) at a short step or high speed.
+  assert.equal(frameHoldMs(), 111, '9 fps at x1 -> 111 ms');
   setCombatPacing({ combatSpeed: 1, animationStepDuration: 195 });
-  assert.equal(frameHoldMs(), 55, 'Mobile fast preset');
+  assert.equal(frameHoldMs(), 75, 'Mobile fast preset: floored at 75 ms (was 55 ms, 18 fps)');
   setCombatPacing({ combatSpeed: 2 });
-  assert.ok(frameHoldMs() < 109);
+  assert.equal(frameHoldMs(), 75, 'x2 reaches the floor, not 25 fps');
+  setCombatPacing({ combatSpeed: 1.25 });
+  assert.equal(frameHoldMs(), 89, 'the default x1.25: 11 fps');
+  assert.equal(idleFrameMs(), 114, 'idle: 7 fps at x1, 114 ms at x1.25');
   setAnimSpeed('instant'); assert.equal(frameHoldMs(), 0);
   setAnimSpeed('normal'); assert.equal(frameHoldMs({ reduced: true }), 0);
   setCombatPacing();
@@ -24,10 +29,10 @@ test('frame hold follows the step duration and the Combat speed; Instant drops i
 test('an authored clip never plays a frame faster than the hold, and the total grows to match', () => {
   setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1 });
   const speed = actionPacing().spriteSpeed;
-  assert.equal(speed.minFrameMs, 109);
+  assert.equal(speed.minFrameMs, 111); // re-pinned 2026-11-02: 9 fps (was 109 ms)
   const t = animationTiming(component, 'attack', speed);
-  assert.equal(t.totalMs, 109 * 9);
-  assert.equal(t.impactMs, 109 * 5);
+  assert.equal(t.totalMs, 111 * 9);
+  assert.equal(t.impactMs, 111 * 5);
   const before = animationTiming(component, 'attack', { ...speed, minFrameMs: 0 });
   assert.ok(before.totalMs / 9 < 40, `was ${before.totalMs / 9} ms a frame`);
   setAnimSpeed('instant'); setCombatPacing();
