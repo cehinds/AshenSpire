@@ -1321,7 +1321,8 @@ export function dispatch(combat, intent) {
       default:
         throw new Error(`Unknown combat intent '${intent.type}'`);
     }
-    if (!combat.result && !combat.pendingReaction) revalidateEnemyPlans(combat);
+    // Not while a choice or reaction holds the queue: re-showing the intent drains it, and the check runs again when it resolves.
+    if (!combat.result && !combat.pendingReaction && !hasCardChoice(combat) && !combat.queue.length) revalidateEnemyPlans(combat);
     return { events: combat._buffer };
   } finally {
     combat._buffer = null;
