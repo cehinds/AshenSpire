@@ -815,8 +815,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // must not briefly refit the settled artwork and backdrop between beats.
       const racked = hudWide && targetHud && !frame.classList.contains('player')
         ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) : 0;
-      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier,
-        userScale: frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale, ...geometry, leadingHost,
+      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.

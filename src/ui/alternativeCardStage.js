@@ -169,7 +169,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // and reaction frames are resized about their own feet so a jump keeps its lift.
     const normalized = !landmarks ? authored
       : heldRegistration && !bodyReaction ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding)
-        : bodyResize(authored, landmarks, bodyHeight);
+        : readyBody ? bodyResize(authored, landmarks, bodyHeight) : authored;
     const {left,top,width,height} = normalized;
     const body = normalized.body || (landmarks ? {
       headY: top + landmarks.headY * height / landmarks.height,

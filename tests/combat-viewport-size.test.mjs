@@ -51,8 +51,8 @@ test('a crowded phone row scales every combatant by one common factor', () => {
   for (const f of sizes) assert.ok(Math.abs(f.visibleHeight - 780 * .22 * sizes.lastResort) < 1e-6, 'one common factor, player included');
 });
 
-test('row and display multipliers never resize a figure; the Settings scale does', () => {
-  const sizes = fit([actor('p', 'player', 200, 0, 1, { multiplier: 2, userScale: 1 }), actor('e', 'enemy', 900, 0, 1, { userScale: 1.5 })]);
+test('row, display and Settings scale multipliers never resize a figure', () => {
+  const sizes = fit([actor('p', 'player', 200, 0, 1, { multiplier: 2, userScale: 1.5 }), actor('e', 'enemy', 900, 0, 1, { multiplier: .3, userScale: 2 })]);
   assert.equal(sizes[0].visibleHeight, 720 * .26);
-  assert.equal(sizes[1].visibleHeight, 720 * .26 * 1.5);
+  assert.equal(sizes[1].visibleHeight, 720 * .26);
 });
