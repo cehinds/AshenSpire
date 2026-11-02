@@ -2643,7 +2643,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderHand({ refreshHitChances = true } = {}) {
     globalThis.__perfCount?.('hand');
-    const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
+    // A card just played leaves the hand at once: the pre-play snapshot still lists it for the timeline's own lookups.
+    const handList = heldTurnHand || (disp ? (disp.leftHand?.size ? disp.hand.filter(inst => !disp.leftHand.has(inst.instanceId)) : disp.hand) : combat.piles.hand);
     // Each write below is skipped when it would repeat: an unchanged attribute or text node
     // still dirties style/layout for the board that hangs off it.
     const enemySide = enemyPlayback || combat.phase === 'enemy';
@@ -3847,13 +3848,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const instance=disp?.hand.find(c=>c.instanceId===instanceId);
     const definition=instance&&resolveCard(registries,instance);
     const effect=receipt&&definition&&combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},receipt);
-    const stopLayers=playCardEffectLayers(flight,effect?.kind,{duration:220});
+    const stopLayers=playCardEffectLayers(flight,effect?.kind,{duration:150});
     const dx = t.left + t.width / 2 - (at.left + b.width / 2);
     const dy = t.top + t.height / 2 - (at.top + b.height / 2);
     const animation = flight.animate([
       { transform: 'translate(0,0)', opacity: 0.85 },
       { transform: `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`, opacity: 0 },
-    ], { duration: 220, easing: 'ease-out', fill: 'forwards' });
+    ], { duration: 150, easing: 'ease-out', fill: 'forwards' });
     cardFlights.add(animation);
     const remove = () => { stopLayers();flight.remove();cardFlights.delete(animation); };
     animation.onfinish = remove;
@@ -3957,6 +3958,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId); rangeRoutesByCard.delete(instanceId);
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
+    // The played card leaves the hand NOW, before the first animation beat, and the rest close the gap: the
+    // player sees the play was accepted instead of a card that hangs there while the timeline runs.
+    disp.leftHand = new Set([instanceId]);
+    try { renderHand({ refreshHitChances: false }); } catch (e) { console.warn('[combat] hand repaint on play failed:', e && e.message); }
     sfx.play('cardPlay');
     haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
     busy = true;
