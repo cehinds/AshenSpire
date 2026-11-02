@@ -44,7 +44,7 @@ function fixture(document) {
   const context = {
     combat, registries, combatEl, enemyFrames, document, CSS: { escape: value => value },
     selected: null, selfArm: null, selectedFlask: null, lastTargetId: combat.enemies[0].id,
-    heldTurnHand: null, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
+    heldTurnHand: null, playQueue: [], inputBusy: () => false, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
     handRenderKey: null, handPreviewCache: { stateKey: null, cards: new Map() }, upcastRanksByCard: new Map(), rangeRoutesByCard: new Map(),
     resolveCombatCard, previewCard: (...args) => { calls.push('quote'); return previewCard(...args); }, previewCardHit, cardTargetPlan, cardAffectsEnemies, hitBadgeTargetIds,
     rangeHitLabel, upcastOptions, upcastChoicePlan, esc: value => String(value),
