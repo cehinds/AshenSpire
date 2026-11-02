@@ -14,6 +14,9 @@ export function combatSpriteRatio(stature, enemyId) {
   return 1;
 }
 
+// SUPERSEDED (owner, 2026-11-02): the live battlefield sizes every combatant with
+// CombatViewportSizeModel (a share of the viewport height). This shared-base fit
+// is no longer called by the app; it remains only for the legacy fit tests.
 // Fit once for the formation. Fitting each actor independently cancels stature
 // on cramped screens. Depth is applied to every actor in the same row.
 // minHeight (narrow layout, owner 2026-10-04): a second fit raises the shared
