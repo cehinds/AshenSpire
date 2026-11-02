@@ -38,52 +38,42 @@ function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
     resize: (nextWidth, nextHeight) => { width = nextWidth; height = nextHeight; } };
 }
 
-test('an overflowing primary switches whole to Information at the readable floor', () => {
+// Owner 2026-11-02: no Inspect replacement. Every clause stays on the face; the font shrinks to the floor.
+test('an overflowing primary keeps every clause and shrinks to the readable floor', () => {
   const f = faceFixture([80, 10]);
   fitIllustratedCards([f.card]);
-  assert.ok(f.clauses.every(clause => clause.style.display === 'none'));
-  // The full fallback renders in two lines at the floor, so it is chosen over "Inspect.".
-  assert.equal(f.fallback.style.display, 'inline');
+  assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
+  assert.equal(f.fallback.style.display, 'none');
   assert.equal(f.fallbackShort.style.display, 'none');
-  assert.equal(f.face.dataset.rulesFallback, 'true');
-  assert.equal(f.face.dataset.rulesExpanded, 'false');
   assert.equal(parseFloat(f.text.style.fontSize), 11);
-  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
+  assert.equal(f.face.dataset.rulesOverflow, 'true', 'the bay is short for the words: reported, not replaced');
+  assert.equal(f.text.dataset.rulesComplete, 'false');
 });
 
-test('three physical lines that exceed a short rules bay also switch whole', () => {
+test('three physical lines in a short bay keep their words', () => {
   const f = faceFixture([45], { width: 124, height: 27.61 });
   fitIllustratedCards([f.card]);
-  assert.equal(f.fallback.style.display, 'inline');
-  assert.equal(f.face.dataset.rulesFallback, 'true');
-  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
-});
-
-test('dropping a secondary keeps the complete primary when it fits', () => {
-  const f = faceFixture([15, 65]);
-  fitIllustratedCards([f.card]);
   assert.equal(f.clauses[0].style.display, '');
-  assert.equal(f.clauses[1].style.display, 'none');
   assert.equal(f.fallback.style.display, 'none');
-  assert.equal(f.face.dataset.rulesFallback, 'false');
+});
+
+test('a secondary clause stays when the font can shrink to fit both', () => {
+  const f = faceFixture([15, 15]);
+  fitIllustratedCards([f.card]);
+  assert.ok(f.clauses.every(clause => clause.style.display === ''));
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
   assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
 });
 
-test('120 to 240 to 120 restores both clauses and then the whole Information fallback', () => {
+test('resizing a face re-fits it and never swaps in the Inspect text', () => {
   const f = faceFixture([40, 10]);
   fitIllustratedCards([f.card]);
-  assert.equal(f.fallback.style.display, 'inline');
   f.resize(240, 80);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
-  assert.equal(f.fallback.style.display, 'none');
-  assert.equal(f.fallbackShort.style.display, 'none');
-  assert.equal(f.face.dataset.rulesFallback, 'false');
-  assert.ok(f.text.scrollHeight <= Math.min(f.layer.clientHeight, parseFloat(f.text.style.fontSize) * 1.05 * 2) + 1);
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
   f.resize(120, 25.66);
   fitIllustratedCards([f.card]);
-  assert.ok(f.clauses.every(clause => clause.style.display === 'none'), 'no selected first-clause fragment remains clipped');
-  assert.equal(f.fallback.style.display, 'inline');
-  assert.equal(f.face.dataset.rulesFallback, 'true');
-  assert.ok(f.text.scrollHeight <= Math.min(f.layer.clientHeight, parseFloat(f.text.style.fontSize) * 1.05 * 2) + 1);
+  assert.ok(f.clauses.every(clause => clause.style.display === ''));
+  assert.equal(f.fallback.style.display, 'none');
 });

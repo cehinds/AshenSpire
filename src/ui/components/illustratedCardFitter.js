@@ -54,25 +54,19 @@ export function fitIllustratedCards(cards) {
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
       const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
-        lines:bounded?GLANCE_LINES:rules?Infinity:Number(text.dataset.maxLines)||1,
+        lines:bounded?Infinity:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesHidden==='true'};
       // A glance face shows its rules in one or two rendered lines; the font
-      // shrinks (to the readable floor) to get there, and three or more lines
-      // at the floor become the Inspect cue instead.
+      // shrinks (to the readable floor) to get there. Rules that still need more
+      // keep their real words (owner 2026-11-02: no Inspect replacement text).
       if(row.compact&&!bounded)row.lines=GLANCE_LINES;
       if(bounded){
-        row.fallback=text.querySelector('[data-face-fallback]');
-        row.fallbackShort=text.querySelector('[data-face-fallback-short]');
         for(const clause of clauses)clause.style.display='';
-        if(row.fallback)row.fallback.style.display='none';
-        if(row.fallbackShort)row.fallbackShort.style.display='none';
       }
       if(rules){
         // A previous clipped fit must not constrain this fit's measurements.
         text.style.maxHeight='none';layer.style.justifyContent='';
-        row.cue=face.querySelector('.card-rules-inspect-cue');
-        if(bounded&&row.cue)row.cue.style.display='none';
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');
@@ -144,44 +138,18 @@ export function fitIllustratedCards(cards) {
     row.text.dataset.fittedFont=String(row.result/row.scale);
     if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
   }
-  // Cached font searches and page zoom keep their current-dev semantics.
-  // At that readable floor, omit only whole clauses, remeasure the primary,
-  // and switch the entire reading to Information if its fixed bay is short.
+  // Every clause stays on the face at the readable floor; nothing is swapped for an Inspect prompt.
+  // `rulesOverflow` still reports a bay too short for the words, for the Information door.
   const bounded=texts.filter(row=>row.bounded);
-  const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*row.lineHeight*row.lines)+1
-    ||row.text.scrollWidth>row.text.clientWidth+1;
-  for(const row of bounded)row.omitSecondary=overBudget(row);
-  // A clause that states a cost or downside is never hidden: when it cannot fit, the whole face falls to the Inspect cue.
-  for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1&&row.clauses.at(-1).dataset?.faceDownside!=='true')row.clauses.at(-1).style.display='none';
-  for(const row of bounded)row.needsFallback=overBudget(row);
+  const overBudget=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
   for(const row of bounded){
-    if(row.needsFallback&&row.fallback){
-      for(const clause of row.clauses)clause.style.display='none';
-      row.fallback.style.display='inline';
-    }
-    if(row.omitSecondary||row.needsFallback)row.face.dataset.faceOmitted='true';
+    row.omitSecondary=overBudget(row);
+    if(row.omitSecondary||row.hasHiddenRules)row.face.dataset.faceOmitted='true';
     row.face.dataset.rulesExpanded='false';
     row.face.dataset.rulesDense='false';
     row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
-    row.face.dataset.rulesFallback=String(row.needsFallback);
-    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.needsFallback||row.hasHiddenRules);
+    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.hasHiddenRules);
     row.text.dataset.rulesComplete=String(!row.omitSecondary&&!row.hasHiddenRules);
-  }
-  // At the zoom-aware 11px floor even the full instruction can need two
-  // lines in the smallest authored bays. Use the existing localized short
-  // Inspect label, retaining the full instruction as its accessible name.
-  for(const row of bounded)row.useShortFallback=row.needsFallback&&overBudget(row);
-  for(const row of bounded)if(row.useShortFallback&&row.fallbackShort){
-    if(row.fallback)row.fallback.style.display='none';
-    row.fallbackShort.style.display='inline';
-  }
-  for(const row of bounded)row.fallbackUnavailable=row.useShortFallback&&overBudget(row);
-  for(const row of bounded){
-    // A designer can author a bay shorter than a single readable line. Keep
-    // the existing Information button as the reading door in that case,
-    // rather than clipping an instruction or shrinking below the font floor.
-    if(row.fallbackUnavailable&&row.fallbackShort)row.fallbackShort.style.display='none';
-    row.face.dataset.rulesShortFallback=String(row.useShortFallback);
   }
   for(const row of rules){
     row.face.dataset.rulesExpanded='false';
@@ -190,7 +158,6 @@ export function fitIllustratedCards(cards) {
   // Content beyond the readable floor remains available through inspection.
   for(const row of rules){
     row.finalHeight=row.layer.clientHeight;
-    row.cueHeight=Math.min(row.finalHeight,row.cue?.offsetHeight||0);
     // Lines actually rendered at the settled size (guarding a zero line box).
     const lineBox=(parseFloat(row.text.style.fontSize)||0)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
     row.renderedLines=lineBox>0?Math.round(row.text.scrollHeight/lineBox):0;
@@ -200,7 +167,7 @@ export function fitIllustratedCards(cards) {
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }
   for(const row of rules){
-    row.text.style.maxHeight=row.overflow?`calc(100% - ${row.cueHeight}px)`:'100%';
+    row.text.style.maxHeight=row.overflow?'100%':'100%';
     row.layer.style.justifyContent=row.overflow?'flex-start':'';
     row.text.dataset.rulesComplete=String(!row.overflow);
     row.face.dataset.rulesOverflow=String(row.overflow);
