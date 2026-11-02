@@ -456,8 +456,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const b = anchorLocalBoxCached(layer, anchor, zoom);
   const view = anchorLocalBoxCached(layer, layer, zoom);
   const ceiling = overheadCeiling(layer, anchor, b, zoom);
-  const line = floaterLineHeight(layer, cls);
-  const fit = ceiling == null ? FLOATER_QUEUE_MAX : floaterLanesFit(ceiling - floaterRoomTop(layer, view, zoom), line);
+  // Probe the line height only when there is a HUD to fit under (the probe briefly joins the layer).
+  const fit = ceiling == null ? FLOATER_QUEUE_MAX
+    : floaterLanesFit(ceiling - floaterRoomTop(layer, view, zoom), floaterLineHeight(layer, cls));
   const side = fit < 1 ? (b.left + b.width / 2 < view.left + view.width / 2 ? 'right' : 'left') : null;
   queue.max = Math.max(1, Math.min(FLOATER_QUEUE_MAX, fit));
   const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: ceiling != null && !side, side } };
