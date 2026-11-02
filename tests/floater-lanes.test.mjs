@@ -193,3 +193,26 @@ test('with motion, a number that has risen past its own height no longer blocks:
     assert.equal(third.props['--float-lane'], undefined, 'lane 0 is not lifted: the risen numbers are above it');
   });
 });
+
+test('a non-damage floater starts just above the overhead HUD; damage and lane:false keep the figure spot', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    document.createElement = (name) => Object.assign(create(name), { offsetWidth: 40, offsetHeight: 20 });
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const hud = document.createElement('div'); hud.box = { left: 100, top: 120, width: 80, height: 20 };
+    const a = document.createElement('div'); a.box = { left: 100, top: 100, width: 80, height: 120 };
+    a.closest = () => ({ querySelectorAll: () => [hud] });
+    a.contains = () => false;
+    const opts = { jitter: false };
+    const block = floatNum(fx, a, '+5', 'blk', null, opts);
+    const dmg = floatNum(fx, a, '-3', 'dmg', null, opts);
+    const fixed = floatNum(fx, a, '+2', 'blk', null, { ...opts, lane: false });
+    flushMeasureJobs();
+    assert.equal(block.style.top, '96px', 'bottom edge 4px above the HUD top (120 - 4 - 20)');
+    assert.equal(dmg.style.top, '130px', 'damage keeps the figure spot (100 + 120 x 0.25)');
+    assert.equal(fixed.style.top, '130px');
+  });
+});

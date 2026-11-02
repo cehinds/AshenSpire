@@ -402,7 +402,7 @@ function floaterLaneFor(anchor, lifeMs) {
     lane = soonest.lane;
     live.splice(live.indexOf(soonest), 1);
   }
-  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, el: null };
+  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, maxLift: Infinity, el: null };
   live.push(entry);
   floaterLanes.set(anchor, live);
   return entry;
@@ -429,6 +429,7 @@ function reliftFloaterLanes(anchor) {
   const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now).sort((a, b) => a.lane - b.lane);
   for (const entry of live) {
     entry.lift = floaterLaneLift(anchor, entry, now);
+    if (entry.lane > 0 && entry.lift > entry.maxLift) entry.lift = entry.maxLift; // clamped: never past the battlefield top
     if (entry.el && entry.lane > 0) entry.el.style.setProperty('--float-lane', `${Math.round(entry.lift)}px`);
   }
 }
@@ -448,8 +449,26 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (placement.lane === false || isDamageFloater(cls)) return spawnFloater(layer, anchor, text, cls, tint, placement);
   let queue = floaterQueues.get(anchor);
   if (!queue) floaterQueues.set(anchor, queue = createFloaterQueue());
-  const item = { layer, anchor, text, cls, tint, placement };
+  const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: true } };
   if (queue.push(item)) return spawnQueued(queue, item);
+}
+// Non-damage floaters start above the combatant's overhead HUD (HP bar, badges, intent), not through it
+// (owner, 2026-11-02). The ceiling is the highest top edge of the HUD pieces over the figure's head, in
+// layer px, or null when none sits there. Same pieces and tests as overheadFloor, other edge.
+export function overheadCeiling(layer, anchor, b, zoom) {
+  const root = anchor.closest?.('.combatant');
+  if (!root?.querySelectorAll) return null;
+  let ceiling = null;
+  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
+    if (anchor.contains?.(node)) continue;
+    const box = anchorLocalBoxCached(layer, node, zoom);
+    if (!(box.width > 0 && box.height > 0)) continue;
+    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+    // Any piece of this combatant's HUD above the figure's middle counts, however far above the head (the
+    // intent sits a full row up); overheadFloor's 16 px reach would let a floater through it.
+    if (overlapsX && box.top < b.top + b.height / 2) ceiling = Math.min(ceiling ?? Infinity, box.top);
+  }
+  return ceiling;
 }
 const floaterQueues = new WeakMap();
 function spawnQueued(queue, item) {
@@ -513,10 +532,18 @@ function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = n
   measureThenMutate(el, () => {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
-    const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    if (entry) { entry.height = height; entry.el = el; }
+    // A queued non-damage floater sits with its bottom just above the overhead HUD; lanes stack upward from there.
+    // Three lanes (one height, then 1.35 heights apiece) must fit between the battlefield top and the HUD; when
+    // they cannot (a tall enemy HUD near the top edge), the floaters keep their old spot over the figure rather
+    // than overlap each other or leave the battlefield.
+    let ceiling = placement.overhead ? overheadCeiling(layer, anchor, b, zoom) : null;
+    if (ceiling != null && ceiling - 4 - view.top - 6 < height * (1 + 2 * 1.35)) ceiling = null;
+    const placed = ceiling == null ? top : ceiling - 4 - height;
+    const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: 6 });
+    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - view.top - 6); }
     return () => {
       el.style.left = `${at.left + half}px`;
+      if (ceiling != null) el.style.top = `${at.top}px`;
       if (entry) reliftFloaterLanes(anchor);
     };
   });
