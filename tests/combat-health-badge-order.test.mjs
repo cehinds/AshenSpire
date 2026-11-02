@@ -91,11 +91,30 @@ test('the player row draws the AC badge with the number; an enemy row does not; 
   const row = combatHealthRow(hp(), { defense: 2, ac }, { tooltips: false });
   const node = row.querySelector('.combat-health-ac');
   assert.equal(node.querySelector('.combat-health-badge-value').textContent, String(ac.value));
-  assert.equal(node.nextSibling, [...row.children].find(c => c.classList.contains('combat-health-meter')), 'the AC square sits right before the bar, a sibling, so row-scoped bar styling still applies');
+  assert.equal(row.firstChild.dataset.acCaption, '', 'the AC caption heads the badge row');
+  assert.equal(row.firstChild.nextSibling, node, 'the AC badge is first in the badge row, right after its caption');
   assert.match(node.getAttribute('aria-label'), new RegExp(`AC ${ac.value} \\(Evasion\\)\\. Enemies hit when d20 \\+ their Precision ≥ ${ac.value}\\.`));
   assert.equal(row.querySelector('.combat-health-ac-caption').textContent, 'AC');
   const enemyRow = combatHealthRow(hp(), { defense: 2, ac: acFor(combat, combat.enemies[0]) }, { tooltips: false });
   assert.equal(enemyRow.querySelector('.combat-health-ac'), null);
+}));
+
+test('the player Block takes the square slot before the bar; with no Block the slot is absent; enemies keep Block in the stack', () => withKitDom(() => {
+  const combat = fixture();
+  const ac = acFor(combat, combat.player);
+  const row = combatHealthRow(hp(), { defense: 7, poise: 3, evasion: 2, ac }, { tooltips: false });
+  const block = row.querySelector('.combat-health-block-slot');
+  assert.equal(block.dataset.defenseKind, 'shield');
+  assert.equal(block.querySelector('.combat-health-badge-value').textContent, '7');
+  assert.match(block.getAttribute('aria-label'), /Block 7/);
+  assert.equal(block.nextSibling, [...row.children].find(c => c.classList.contains('combat-health-meter')), 'Block sits right before the bar, a sibling');
+  assert.deepEqual([...row.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['caption', 'ac', 'poise', 'evade', 'shield', 'hp']);
+  const none = combatHealthRow(hp(), { defense: 0, poise: 3, ac }, { tooltips: false });
+  assert.equal(none.querySelector('.combat-health-block-slot'), null);
+  assert.equal(none.querySelector('[data-defense-kind="shield"]'), null);
+  const enemy = combatHealthRow(hp(), { defense: 7, poise: 3 }, { tooltips: false });
+  assert.equal(enemy.querySelector('.combat-health-block-slot'), null);
+  assert.deepEqual(kinds(enemy), ['shield', 'poise']);
 }));
 
 test('outside FixCore there is no AC badge (the hit roll is not a fixed DC there)', () => {
