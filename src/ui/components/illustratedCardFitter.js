@@ -167,7 +167,7 @@ export function fitIllustratedCards(cards) {
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }
   for(const row of rules){
-    row.text.style.maxHeight=row.overflow?'100%':'100%';
+    row.text.style.maxHeight='100%';
     row.layer.style.justifyContent=row.overflow?'flex-start':'';
     row.text.dataset.rulesComplete=String(!row.overflow);
     row.face.dataset.rulesOverflow=String(row.overflow);

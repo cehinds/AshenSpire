@@ -11,18 +11,16 @@ const fitIllustratedCards = cards => withKitDom(() => { invalidateLayoutMetrics(
 // the fitter's measurements and mutations; browser QA validates actual fonts.
 function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
   const clauses = lengths.map(length => ({ style: {}, length }));
-  const fallback = { style: { display: 'none' }, length: 'Inspect full effect.'.length };
-  const fallbackShort = { style: { display: 'none' }, length: 'Inspect.'.length };
   const layer = { style: { top: '60%', height: '20%' }, get clientHeight() { return height; } };
   const text = { style: {}, parentElement: layer,
     dataset: { cardBinding: 'rules', faceLines: 'true', maxLines: '3', minFont: '18', maxFont: '24' },
     querySelectorAll: selector => selector === '[data-face-clause]' ? clauses : [],
-    querySelector: selector => selector === '[data-face-fallback]' ? fallback : selector === '[data-face-fallback-short]' ? fallbackShort : null,
+    querySelector: () => null,
     get clientWidth() { return width * 5 / 6; },
     get scrollWidth() { return this.clientWidth; },
     get scrollHeight() {
       const size = parseFloat(this.style.fontSize) || 8;
-      const count = [...clauses, fallback, fallbackShort].filter(node => node.style.display !== 'none')
+      const count = clauses.filter(node => node.style.display !== 'none')
         .reduce((sum, node) => sum + node.length, 0);
       return Math.ceil(count / Math.floor(this.clientWidth / (size * 0.55))) * size * (parseFloat(this.style.lineHeight) || 1.25);
     },
@@ -34,7 +32,7 @@ function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
     querySelector: () => null,
   };
   const card = { querySelector: () => face };
-  return { card, face, text, clauses, fallback, fallbackShort, layer,
+  return { card, face, text, clauses, layer,
     resize: (nextWidth, nextHeight) => { width = nextWidth; height = nextHeight; } };
 }
 
@@ -43,8 +41,6 @@ test('an overflowing primary keeps every clause and shrinks to the readable floo
   const f = faceFixture([80, 10]);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
-  assert.equal(f.fallback.style.display, 'none');
-  assert.equal(f.fallbackShort.style.display, 'none');
   assert.equal(parseFloat(f.text.style.fontSize), 11);
   assert.equal(f.face.dataset.rulesOverflow, 'true', 'the bay is short for the words: reported, not replaced');
   assert.equal(f.text.dataset.rulesComplete, 'false');
@@ -54,7 +50,6 @@ test('three physical lines in a short bay keep their words', () => {
   const f = faceFixture([45], { width: 124, height: 27.61 });
   fitIllustratedCards([f.card]);
   assert.equal(f.clauses[0].style.display, '');
-  assert.equal(f.fallback.style.display, 'none');
 });
 
 test('a secondary clause stays when the font can shrink to fit both', () => {
@@ -75,5 +70,4 @@ test('resizing a face re-fits it and never swaps in the Inspect text', () => {
   f.resize(120, 25.66);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
-  assert.equal(f.fallback.style.display, 'none');
 });

@@ -6627,7 +6627,8 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 /* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
    --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline
-   is a text-shadow ring so Chromium and WebKit draw the same; it never takes a tap. */
+   is a text-shadow ring so Chromium and WebKit draw the same; it never takes a tap.
+   Deliberately pure white, not --parchment: owner-kept exception (2026-10-18) for legibility over art. */
 :root .combat .combatant > .combat-hit-chance {
   position: absolute; left: var(--combat-body-center-x, 50%); top: var(--combat-body-center-y, 50%);
   translate: -50% -50%; z-index: var(--combat-layer-hud, 700); pointer-events: none; white-space: nowrap;
@@ -6651,6 +6652,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 
 /* Selected-card odds share the engine preview and observer gate with the HUD. */
 .combat .hand .card .card-hit-chances { position: absolute; z-index: 8; inset-inline: 0; bottom: calc(100% + .35rem); display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .5rem; padding: .35rem; background: #15120fed; border: 1px solid #a58a4f; border-radius: .3rem; font: 700 1.1rem/1.2 var(--font-body); pointer-events: none; }
+/* Same owner-kept pure-white exception as .combat-hit-chance above. */
 .combat .card-hit-chance { color: white; -webkit-text-stroke: 1px black; paint-order: stroke fill; white-space: nowrap; }
 .combat .card-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
 .combat .card-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }

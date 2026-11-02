@@ -29,20 +29,18 @@ function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, 
       }
       return Math.min(this.scrollHeight, cap);
     } };
-  const cue = { offsetHeight: 9 };
   const face = { className: '', parentElement: { className: '' },
     dataset: { designWidth: '360', fullRules: String(full), rulesHidden: String(hidden) },
     get clientWidth() { return state.width; }, clientHeight: faceHeight,
     get textContent() { return 'x'.repeat(state.chars); },
     querySelector(selector) {
-      if (selector === '.card-rules-inspect-cue') return cue;
       if (selector === '[data-card-binding="name"]' && titleBottom) return { parentElement: { offsetTop: 0, clientHeight: titleBottom }, offsetTop: 0, offsetHeight: titleBottom };
       if (selector === '.card-tag-rail' && railBottom) return { offsetTop: 0, offsetHeight: railBottom };
       return null;
     },
     querySelectorAll(selector) { return selector === '.ic-text[data-auto-fit="true"]' ? [text] : []; } };
   const card = { querySelector: () => face };
-  return { state, face, text, layer, cue, fit: () => fitIllustratedCards([card]) };
+  return { state, face, text, layer, fit: () => fitIllustratedCards([card]) };
 }
 
 test('unfit inspection rules keep full text, reserve no cue and report incomplete', () => withKitDom(() => {
