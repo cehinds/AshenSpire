@@ -2,7 +2,7 @@ import { t } from './strings.js';
 import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
 import { bodyPlacement } from './models/CombatBodyModel.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
-import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
+import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS, HURT_CLIP_FRAMES } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
@@ -11,7 +11,7 @@ import { liteRendering, effectsOff, motionOff } from './performance.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
-import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
+import { ANIM_SPEEDS, getAnimSpeed, frameHoldMs } from './animationPace.js';
 import { builtInFor } from './highResArt.js';
 import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
@@ -218,7 +218,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   function endReaction() { if(flashAt===null&&!bodyReaction)return false;flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;if(!playing)pose=restPose();paint();return true; }
   function settleStage({reaction=false}={}) { if(reaction){flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;} settle(); }
   // Instant drops pacing and hit-stop but keeps fixed-duration effects, so the hurt clip still plays.
-  function hit(ms=220) { if (reducedMotionRequested() || still || motionOff('hit')) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
+  function hit(ms=220) { if (reducedMotionRequested() || still || motionOff('hit')) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220,HURT_CLIP_FRAMES*frameHoldMs());flashElapsed=0;wake();return true; }
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
