@@ -126,6 +126,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
+      playing.shown=sampled.index;
       // A swing leaves from and returns to the held stance, not the neutral ready frame.
       if(pose==='origin')pose=restPose();
       if (pose==='ready' && stance) pose='stance-'+stance;
@@ -194,6 +195,15 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     if (playing) {
       elapsed=Math.min(playing.duration,elapsed+Math.max(0,now-Math.max(last,holdUntil)));
       if(playing.awaitContact&&!reducedMotionRequested())elapsed=Math.min(elapsed,playing.contactMs);
+      // A late frame never skips a pose: show the next one, and let the clock carry on from its start so it keeps its hold.
+      if(!reducedMotionRequested()&&Number.isInteger(playing.shown)){
+        const {durations,poses}=playing.sequence,next=playing.shown+1;
+        const reached=elapsed>=playing.duration?poses.length:sampleSequence(playing.sequence,elapsed,playing.duration).index;
+        if(next<poses.length&&reached>next){
+          const base=durations.reduce((a,b)=>a+b,0);
+          elapsed=durations.slice(0,next).reduce((a,b)=>a+b,0)/base*playing.duration;
+        }
+      }
       if (elapsed>=playing.duration || reducedMotionRequested()) { playing=null;resources=[];pose=restPose(); }
     }
     if (flashAt!==null) {
