@@ -246,7 +246,7 @@
 /* Continue is centred in the band on every screen (owner, 2026-11-02): the counter
    takes the left column, Pause and Skip the right, and Continue the middle one, so
    the counter's width can no longer push it off-centre. A narrow portrait phone
-   keeps the stacked layout (counter above, Continue full width). */
+   moves the counter into the Pause / Settings / Skip row under Continue. */
 .prologue-controls-aux{display:flex;gap:.6rem}
 .prologue-bar-centered{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);justify-items:center}
 .prologue-bar-centered .prologue-progress{grid-column:1;justify-self:start}
@@ -254,6 +254,13 @@
 .prologue-bar-centered .prologue-controls > button:last-child{grid-column:2;grid-row:1}
 .prologue-bar-centered .prologue-controls-aux{grid-column:3;grid-row:1;justify-self:end}
 @container game-viewport (max-width:760px) and (orientation:portrait){
+  /* Narrow portrait (owner, 2026-11-02): Continue alone on the top row, full width;
+     the counter leads the second row, level with Pause / Settings / Skip. The
+     controls wrapper dissolves so all three are items of the one wrapping bar. */
   .prologue-bar-centered{display:flex}
-  .prologue-bar-centered .prologue-controls{display:flex}
+  .prologue-bar .prologue-controls{display:contents}
+  .prologue-bar .prologue-controls > button:last-child{order:-2;flex-basis:100%}
+  .prologue-bar .prologue-progress{order:-1;grid-column:auto;justify-self:auto}
+  .prologue-bar .prologue-controls-aux{order:0;grid-column:auto;grid-row:auto;justify-self:auto}
 }
+
