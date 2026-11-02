@@ -13,7 +13,7 @@ import { chooseReaction, chooseCardPlay, AUTOMATION_DEFAULTS, reactionAnswer, re
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
-import { applyCombatIntentReceipt } from '../models/CombatIntentProjectionModel.js';
+import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
@@ -1351,6 +1351,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
   }
 
+  // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears (a Map made with the
+  // playback snapshot) and flushDeferredIntentClears applies them from onResolution.
   function applyBeatToDisp(beat) {
     if (!disp) return;
     reduceFollowRows(beat.events);
@@ -1358,7 +1360,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
-      applyCombatIntentReceipt(disp.ents, e);
+      applyCombatIntentReceipt(disp.ents, e, (disp.intentClears ||= new Map()));
       if (applyCombatDisplayReceipt(disp.ents, e)) continue;
       switch (e.type) {
         case 'enemyMoveStarted': {
@@ -3724,6 +3726,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         onIntent: beat => {
           const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage({ fit: false }); }
+        },
+        onResolution: () => {
+          if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears)) renderCombatantStage({ fit: false });
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         onBeatApplied: (beat) => {
