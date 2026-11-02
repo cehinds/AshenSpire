@@ -74,3 +74,21 @@ test('the pilot attack (6 frames) holds each frame, so a phone swing is no longe
   assert.equal(held.impactMs, speed.minFrameMs * 3);
   setAnimSpeed('normal'); setCombatPacing();
 });
+
+import { cardSequenceTiming, evenSequence } from '../src/model/cardAnimationFamily.js';
+
+test('a card sequence with uneven authored weights steps at one even rate, contact at impact x hold', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
+  const speed = actionPacing().spriteSpeed;
+  const sequence = { poses: ['a', 'b', 'c', 'd', 'e'], durations: [100, 92, 84, 75, 84], impact: 2, travel: [0, 0, 0, 0, 0] };
+  const t = cardSequenceTiming(sequence, speed);
+  assert.equal(t.totalMs % 5, 0, 'a whole number of equal frames');
+  assert.ok(t.totalMs / 5 >= speed.minFrameMs, 'no frame under the hold');
+  assert.equal(t.impactMs, t.totalMs / 5 * 2, 'contact lands on the same frame boundary the stage samples');
+  assert.deepEqual(evenSequence(sequence).durations, [1, 1, 1, 1, 1]);
+  assert.equal(evenSequence({ ...sequence, pilot: true }).durations[0], 100, 'pilot clips are left as authored');
+  setAnimSpeed('instant'); setCombatPacing();
+  const none = cardSequenceTiming(sequence, actionPacing().spriteSpeed);
+  assert.equal(none.totalMs >= 0, true);
+  setAnimSpeed('normal');
+});
