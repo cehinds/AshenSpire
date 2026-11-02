@@ -419,7 +419,7 @@ function floaterLaneLift(anchor, entry, now) {
     if (other.lane >= entry.lane || other.until <= now) continue;
     clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
   }
-  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
+  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.35;
 }
 // A newcomer in a reused lower lane may be taller than the number it replaced, and the numbers
 // below it keep rising, so every live floater at the anchor is re-lifted, lane by lane, from the
