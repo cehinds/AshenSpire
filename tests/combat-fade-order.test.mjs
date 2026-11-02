@@ -33,7 +33,10 @@ test('declared fade covers idle and selected fighters below selection, cards and
   const layers = declaredLayers(css);
   assert.equal(layers.sprites.length, 6, 'enemy, player and context-selected rules are evaluated at both depths');
   assertCombatLayerOrder(layers);
-  assert.match(css, /\.combatant\.context-selected \.sprite\s*\{\s*scale: 1\.05;/);
+  // Re-pinned 2026-11-02 (owner: size is a fixed share of the viewport): selection
+  // raises the figure's layer but no longer grows it by 1.05.
+  assert.match(css, /\.combatant\.context-selected \.sprite\s*\{\s*transform-origin: center bottom;/);
+  assert.doesNotMatch(css, /\.combatant\.context-selected \.sprite\s*\{[^}]*\bscale:/);
 });
 
 test('picker, proxy and inspector must stay below cards while player HUD700 stays above', () => {
