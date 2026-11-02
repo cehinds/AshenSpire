@@ -527,7 +527,7 @@ export function receipt() {
     health: read('src/ui/components/combatHealth.js'),
     battlefieldStage: read('src/ui/components/battlefieldStage.js'),
     battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
-    spriteScale: read('src/ui/models/CombatSpriteScaleModel.js'),
+    spriteScale: read('src/ui/models/CombatViewportSizeModel.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
@@ -642,25 +642,15 @@ export function findings(r) {
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
-      // ONE SCALE FOR THE STAGE (2026-09-04; re-homed 2026-09-09 in
-      // models/CombatSpriteScaleModel.js `fitCombatSprites`). The stage used
-      // to divide each card by its OWN sprite's natural height, so every
-      // combatant rendered a different width. The fitter now reduces ONE
-      // `base` across every actor and derives each sprite's height from it —
-      // this asserts the reduce and the apply, so a return to per-frame
-      // scaling is red.
-      // The alternative camera has a separate, bounded silhouette fitter;
-      // its geometry is exercised by alternative-formation.test.mjs.
-      || !(/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors[,\s}]/.test(r.battlefieldStage)
-        || (/import \{ alternativeFormation, fitAlternativeSprites \} from '\.\.\/models\/AlternativeFormationModel\.js';/.test(r.battlefieldStage)
-          && /fitAlternativeSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors, narrow \}\)/.test(r.battlefieldStage)))
-      || (/alternativeFormation\(plan/.test(r.battlefieldStage)
-        && !(/import \{ alternativeFormation, fitAlternativeSprites \} from '\.\.\/models\/AlternativeFormationModel\.js';/.test(r.battlefieldStage)
-          && /fitAlternativeSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors, narrow \}\)/.test(r.battlefieldStage)))
-      || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
-      // A presentation multiplier (sprite scale settings) grows a figure after
-      // this shared height, capped per side to the screen (2026-09-27).
-      || !/const heightOf = a => base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
+      // ONE SIZE RULE FOR THE STAGE (owner, 2026-11-02; replaces the 2026-09-04 shared
+      // `base` fit). Every combatant's head-to-feet body is a share of the viewport
+      // height times a capped stature (models/CombatViewportSizeModel.js
+      // `fitViewportSprites`), whatever the enemy count, hand or HUD band. This
+      // asserts the stage calls it and the model keeps the percentage rule, so a
+      // return to per-frame or shared-base scaling is red.
+      || !(/import \{ fitViewportSprites \} from '\.\.\/models\/CombatViewportSizeModel\.js';/.test(r.battlefieldStage)
+        && /fitViewportSprites\(\{ width: fieldRect\.width, actors,/.test(r.battlefieldStage))
+      || !/viewportHeight \* bodyHeightFraction\(portraitPhone, config\) \* statureMultiplier\(ratio, config\)/.test(r.spriteScale)
       || !stableCombatStageRendering(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)
       || !/UI\.combatActionRail/.test(r.actionRow) || !/combatActionRowHtml\(/.test(r.combat)
