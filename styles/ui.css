@@ -1213,7 +1213,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-preview-heading { white-space: normal; overflow-wrap: anywhere; }
 [data-settings-host] .set-preview-lore { margin: 0; color: var(--parchment); font-family: var(--lore-font); font-size: var(--lore-size); line-height: var(--lore-leading); letter-spacing: var(--lore-tracking); font-style: var(--lore-slant); }
 [data-settings-host] .set-preview-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
-[data-settings-host] .set-preview-card { flex: 0 0 auto; width: min(var(--card-w-glance, 152px), 40%); min-width: 0; }
+[data-settings-host] .set-preview-card { flex: 0 0 auto; width: min(var(--card-w-glance, 182.4px), 40%); min-width: 0; }
 [data-settings-host] .set-preview-card > .card { width: 100%; max-width: 100%; margin: 0; }
 @container game-viewport (max-width: 600px) {
   [data-settings-host] .set-preview > .set-preview-body { padding: 0 .7rem .7rem; gap: .7rem; }

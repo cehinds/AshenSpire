@@ -21,9 +21,25 @@ export function projectCombatIntent(combat, enemyInstanceId) {
 
 // Playback advances only on public receipts. Clear a consumed contact before
 // its successor is announced; never paint its previous damage as a forecast.
-export function applyCombatIntentReceipt(entities, event) {
+//
+// `deferred` (a Map, optional): an enemy's intent stays on screen until its action has resolved
+// (owner, 2026-11-02: hit floater out, statuses applied). With it, a clearing receipt is parked
+// in the map under the actor's id instead of applied, and any receipt that announces another
+// contact for that actor drops the parked clear. flushDeferredIntentClears applies what is
+// parked once the beat's resolution is reached.
+export function applyCombatIntentReceipt(entities, event, deferred = null) {
   const actor = entities[event.sourceId];
   if (!actor || actor.kind !== 'enemy') return;
+  const announces = event.type === 'enemyActorTurnStarted'
+    || ['combatContactPrepared', 'combatHitStarted', 'enemyMoveStarted'].includes(event.type)
+    || event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy';
+  if (deferred && announces) deferred.delete(event.sourceId);
+  if (deferred && !announces && (event.type === 'enemyMoveEnded' || actor.intentInFlight
+    && (event.type === 'damageDealt' || event.type === 'attackMissed' || event.type === 'attackEvaded'
+      || event.type === 'combatAvoidanceResolved' && event.avoided))) {
+    deferred.set(event.sourceId, event);
+    return;
+  }
   if (event.type === 'enemyActorTurnStarted') {
     actor.intentPreview = event.intentPreview || { ...event.intent, profile: event.intent?.combatProfile || {}, revealed: true, hidden: false };
     actor.intentInFlight = false;
@@ -47,4 +63,13 @@ export function applyCombatIntentReceipt(entities, event) {
     actor.intentInFlight = false;
     delete actor.intentBeforeReaction;
   }
+}
+
+/** Apply the clears parked by applyCombatIntentReceipt(..., deferred), then empty the map. */
+export function flushDeferredIntentClears(entities, deferred) {
+  if (!deferred?.size) return false;
+  const parked = [...deferred.values()];
+  deferred.clear();
+  for (const event of parked) applyCombatIntentReceipt(entities, event);
+  return true;
 }
