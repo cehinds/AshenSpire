@@ -35,6 +35,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
+import { createFloaterQueue, isDamageFloater } from './floaterQueue.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -442,6 +443,26 @@ function reliftFloaterLanes(anchor) {
 export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
+  // Non-damage floaters (status, Block, heal, guarded...) queue per anchor, three at a time, first in first out
+  // (owner, 2026-11-02). Damage numbers and fixed-slot bundle parts (`lane: false`) show at once, as before.
+  if (placement.lane === false || isDamageFloater(cls)) return spawnFloater(layer, anchor, text, cls, tint, placement);
+  let queue = floaterQueues.get(anchor);
+  if (!queue) floaterQueues.set(anchor, queue = createFloaterQueue());
+  const item = { layer, anchor, text, cls, tint, placement };
+  if (queue.push(item)) return spawnQueued(queue, item);
+}
+const floaterQueues = new WeakMap();
+function spawnQueued(queue, item) {
+  const { layer, anchor, text, cls, tint, placement } = item;
+  const el = spawnFloater(layer, anchor, text, cls, tint, placement, () => {
+    const next = queue.release(item);
+    if (!next) return;
+    if (next.anchor.isConnected === false || next.layer.isConnected === false) { queue.clear(); return; }
+    spawnQueued(queue, next);
+  });
+  return el;
+}
+function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = null) {
   const x = Number.isFinite(placement.x) ? placement.x : 0;
   const y = Number.isFinite(placement.y) ? placement.y : 0;
   const jitter = placement.jitter !== false;
@@ -499,7 +520,7 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
       if (entry) reliftFloaterLanes(anchor);
     };
   });
-  setTimeout(() => el.remove(), life + 60);
+  setTimeout(() => { el.remove(); if (onDone) onDone(); }, life + 60);
   return el;
 }
 
