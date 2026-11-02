@@ -2149,7 +2149,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
-    if (selectedCard && !busy && !enemyPlayback && !combat.pendingReaction) {
+    if (selectedCard && !inputBusy() && !enemyPlayback && !combat.pendingReaction) {
       const targetId = lastTargetId ?? cardTargets(selected).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy');
       try {
         const quote = previewCard(combat, selected, targetId, upcastRanksByCard.get(selected));
@@ -3904,11 +3904,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       try { name = resolveCard(registries, findInst(entry.instanceId) || { cardId: entry.instanceId }).name; } catch {}
       return `<button type="button" class="play-queue-chip" data-queued-id="${esc(entry.instanceId)}" title="Take back"><b>${i + 1}</b> ${esc(name)}</button>`;
     });
-    if (endTurnAfterQueue) chips.push('<span class="play-queue-chip play-queue-end">then End Turn</span>');
+    if (endTurnAfterQueue) chips.push('<button type="button" class="play-queue-chip play-queue-end" data-cancel-end-turn title="Cancel End Turn">then End Turn</button>');
     queueEl.hidden = !chips.length;
     queueEl.innerHTML = chips.join('');
   }
   queueEl.addEventListener('click', event => {
+    if (event.target.closest?.('[data-cancel-end-turn]')) { endTurnAfterQueue = false; renderPlayQueue(); return; }
     const id = event.target.closest?.('[data-queued-id]')?.dataset.queuedId;
     const i = playQueue.findIndex(entry => entry.instanceId === id);
     if (i < 0) return;
@@ -4057,15 +4058,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
-    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId); rangeRoutesByCard.delete(instanceId);
+    sfx.play('cardPlay');
+    haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
+    // A card the player picked while earlier plays resolved keeps its selection; only the played card's own aim clears.
+    if ((selected && selected !== instanceId) || (selfArm && selfArm !== instanceId)) {
+      if (selected === instanceId) selected = null;
+      if (selfArm === instanceId) selfArm = null;
+      selectedFlask = null;
+    } else { selected = null; selectedFlask = null; selfArm = null; clearAim(); }
+    upcastRanksByCard.delete(instanceId); rangeRoutesByCard.delete(instanceId);
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
     // The played card leaves the hand NOW, before the first animation beat, and the rest close the gap: the
     // player sees the play was accepted instead of a card that hangs there while the timeline runs.
     disp.leftHand = new Set([instanceId]);
     try { renderHand({ refreshHitChances: false }); } catch (e) { console.warn('[combat] hand repaint on play failed:', e && e.message); }
-    sfx.play('cardPlay');
-    haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
     busy = true;
     afterDispatch(out.events);
   }

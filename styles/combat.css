@@ -2068,7 +2068,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   opacity: .92; cursor: pointer;
 }
 .combat .play-queue-chip b { color: var(--gold); margin-right: .3rem; }
-.combat .play-queue-end { cursor: default; opacity: .75; }
+.combat .play-queue-end { opacity: .75; }
 
 
 /* ---------- Effects off and the fighter-motion options (owner, 2026-10-30) ----------
