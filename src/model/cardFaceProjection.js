@@ -1,7 +1,6 @@
 // A face is a short reading of complete facts, never a clipped paragraph.
 // cardFaceLines and the Information pane retain the full card. Selection does
 // not promote this budget: every ordinary face owes the same three lines.
-import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from '../engine/d20Chance.js';
 
 export const FACE_EFFECT_LINES = 3;
@@ -235,15 +234,16 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   // `downside` marks what the face reserved as a payment or requirement; a summary that replaces the cue keeps it.
   const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => reserved.includes(entry) ? entry.parts.map(part => payments.includes(entry.line) || COST_RE.test(plain(part.html)) ? { ...part, downside: true } : part) : entry.parts);
   const shown = chosen.size;
-  // The primary effect that cannot be said in five words is named by the cue, never silently dropped behind a minor line.
+  // Owner 2026-11-02: a line too long for the clause budget shows its real words (the fitter shrinks them), never an Inspect cue.
+  const addReal = entry => { if (!clauses.some(clause => clause.html === entry.line.html)) clauses.push({ kind: 'effect', html: entry.line.html }); };
   const primary = fitted.find(entry => !reserved.includes(entry));
-  if (primary && !primary.parts && clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail')) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
+  if (primary && !primary.parts && clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail')) addReal(primary);
   // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
-  if (clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
+  if (clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) addReal(fitted.find(entry => !reserved.includes(entry)));
   // An unfamiliar long rule is named, never shortened mid-condition. Current
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.
-  if (!clauses.length) clauses.push({ kind: 'detail', html: esc(uiStrings.find(row => row.id === 'card.face.inspectEffect').short) });
+  if (!clauses.length) fitted.forEach(addReal);
   // A required downside the face could not carry (a long payment, a mandatory discard): a summary may replace the cue
   // only when it names that downside itself.
   const hiddenDownsides = reserved.filter(entry => !chosen.has(entry)).map(entry => plain(entry.line.html));
