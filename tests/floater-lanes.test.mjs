@@ -216,3 +216,30 @@ test('a non-damage floater starts just above the overhead HUD; damage and lane:f
     assert.equal(fixed.style.top, '130px');
   });
 });
+
+test('when no lane fits above the HUD the floater goes beside the figure, away from the nearer battlefield edge', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  setCombatPacing({ combatSpeed: 1 });
+  withKitDom(({ document }) => {
+    const create = document.createElement.bind(document);
+    document.createElement = (name) => Object.assign(create(name), { offsetWidth: 40, offsetHeight: 20 });
+    const fx = document.createElement('div'); fx.className = 'fx-layer';
+    fx.box = { left: 0, top: 0, width: 600, height: 700 };
+    const near = (left) => {
+      const hud = document.createElement('div'); hud.box = { left, top: 20, width: 80, height: 20 };
+      const a = document.createElement('div'); a.box = { left, top: 100, width: 80, height: 120 };
+      a.closest = () => ({ querySelectorAll: () => [hud] });
+      a.contains = () => false;
+      return a;
+    };
+    const right = floatNum(fx, near(100), '+5', 'blk', null, { jitter: false });
+    const anchor = near(100);
+    floatNum(fx, anchor, '+4', 'blk', null, { jitter: false });
+    const second = floatNum(fx, anchor, '+6', 'blk', null, { jitter: false });
+    const left = floatNum(fx, near(420), '+5', 'blk', null, { jitter: false });
+    flushMeasureJobs();
+    assert.equal(right.style.left, '206px', 'left-hand figure: beside it on the right (100 + 80 + 6 + 20)');
+    assert.equal(left.style.left, '394px', 'right-hand figure: beside it on the left (420 - 6 - 40 + 20)');
+    assert.equal(second, undefined, 'one lane only: the second waits in the queue');
+  });
+});

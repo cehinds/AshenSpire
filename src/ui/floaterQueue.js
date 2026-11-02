@@ -14,13 +14,14 @@ export function isDamageFloater(cls = '') {
 export function createFloaterQueue(max = FLOATER_QUEUE_MAX) {
   const visible = [];
   const waiting = [];
-  return {
+  const queue = {
+    // Writable: the screen lowers it to the lanes that fit above a combatant's HUD.
     max,
     get visible() { return visible.slice(); },
     get waiting() { return waiting.slice(); },
     /** Add an item. Returns it when it may show now, or null when it waits behind a full set. */
     push(item) {
-      if (visible.length < max) { visible.push(item); return item; }
+      if (visible.length < queue.max) { visible.push(item); return item; }
       waiting.push(item);
       return null;
     },
@@ -29,7 +30,7 @@ export function createFloaterQueue(max = FLOATER_QUEUE_MAX) {
       const at = visible.indexOf(item);
       if (at < 0) return null;
       visible.splice(at, 1);
-      if (!waiting.length) return null;
+      if (!waiting.length || visible.length >= queue.max) return null;
       const next = waiting.shift();
       visible.push(next);
       return next;
@@ -37,4 +38,5 @@ export function createFloaterQueue(max = FLOATER_QUEUE_MAX) {
     /** Drop everything (the anchor went away). */
     clear() { visible.length = 0; waiting.length = 0; },
   };
+  return queue;
 }

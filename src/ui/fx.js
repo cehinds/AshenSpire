@@ -35,7 +35,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
-import { createFloaterQueue, isDamageFloater } from './floaterQueue.js';
+import { createFloaterQueue, isDamageFloater, FLOATER_QUEUE_MAX } from './floaterQueue.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -449,8 +449,49 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (placement.lane === false || isDamageFloater(cls)) return spawnFloater(layer, anchor, text, cls, tint, placement);
   let queue = floaterQueues.get(anchor);
   if (!queue) floaterQueues.set(anchor, queue = createFloaterQueue());
-  const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: true } };
+  // Where they go (owner, 2026-11-02): above the combatant's overhead HUD, as many lanes as fit between the HUD and
+  // the battlefield top (at most 3, the rest stay queued); when not even one fits, a single lane beside the figure,
+  // on the side away from the battlefield edge. They never sit over the HUD.
+  const zoom = uiZoom();
+  const b = anchorLocalBoxCached(layer, anchor, zoom);
+  const view = anchorLocalBoxCached(layer, layer, zoom);
+  const ceiling = overheadCeiling(layer, anchor, b, zoom);
+  const line = floaterLineHeight(layer, cls);
+  const fit = ceiling == null ? FLOATER_QUEUE_MAX : floaterLanesFit(ceiling - view.top, line);
+  const side = fit < 1 ? (b.left + b.width / 2 < view.left + view.width / 2 ? 'right' : 'left') : null;
+  queue.max = Math.max(1, Math.min(FLOATER_QUEUE_MAX, fit));
+  const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: ceiling != null, side } };
   if (queue.push(item)) return spawnQueued(queue, item);
+}
+// How many lanes of `line`-tall floaters fit in `room` px above the HUD (see FLOAT_EDGE_PX,
+// then one line and 1.35 lines per lane after the first).
+// A floater rises about 30 px before it fades (num-life, styles/combat.css), so the top lane keeps that much
+// clear of the battlefield top besides the 4 px gap above the HUD and the 6 px margin.
+const FLOAT_EDGE_PX = 40;
+export function floaterLanesFit(room, line) {
+  if (room - FLOAT_EDGE_PX - line < 0) return 0;
+  return Math.floor((room - FLOAT_EDGE_PX - line) / (line * 1.35)) + 1;
+}
+// A floater's single-line height in layer px, read once per layer, class and zoom with a hidden probe.
+const floaterLineCache = new WeakMap();
+function floaterLineHeight(layer, cls) {
+  const zoom = uiZoom();
+  const key = `${zoom}|${cls}`;
+  let byKey = floaterLineCache.get(layer);
+  if (!byKey) floaterLineCache.set(layer, byKey = new Map());
+  if (byKey.has(key)) return byKey.get(key);
+  let h = 30;
+  try {
+    const probe = document.createElement('div');
+    probe.className = `float-num ${cls}`;
+    probe.textContent = '0';
+    probe.style.visibility = 'hidden';
+    layer.appendChild(probe);
+    h = probe.offsetHeight || h;
+    probe.remove();
+  } catch { /* keep the estimate */ }
+  byKey.set(key, h);
+  return h;
 }
 // Non-damage floaters start above the combatant's overhead HUD (HP bar, badges, intent), not through it
 // (owner, 2026-11-02). The ceiling is the highest top edge of the HUD pieces over the figure's head, in
@@ -532,15 +573,14 @@ function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = n
   measureThenMutate(el, () => {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
-    // A queued non-damage floater sits with its bottom just above the overhead HUD; lanes stack upward from there.
-    // Three lanes (one height, then 1.35 heights apiece) must fit between the battlefield top and the HUD; when
-    // they cannot (a tall enemy HUD near the top edge), the floaters keep their old spot over the figure rather
-    // than overlap each other or leave the battlefield.
-    let ceiling = placement.overhead ? overheadCeiling(layer, anchor, b, zoom) : null;
-    if (ceiling != null && ceiling - 4 - view.top - 6 < height * (1 + 2 * 1.35)) ceiling = null;
+    // A queued non-damage floater sits with its bottom just above the overhead HUD, lanes stacking upward from there
+    // (floatNum chose how many fit), or, when none fits, beside the figure on its roomier side.
+    const ceiling = placement.overhead ? overheadCeiling(layer, anchor, b, zoom) : null;
     const placed = ceiling == null ? top : ceiling - 4 - height;
-    const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: 6 });
-    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - view.top - 6); }
+    let wanted = centre - half;
+    if (placement.side) wanted = placement.side === 'right' ? b.left + b.width + 6 : b.left - 6 - width;
+    const at = clampBox({ left: wanted, top: placed, width, height }, view, { pad: 6 });
+    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - view.top - (FLOAT_EDGE_PX - 4)); }
     return () => {
       el.style.left = `${at.left + half}px`;
       if (ceiling != null) el.style.top = `${at.top}px`;
