@@ -686,6 +686,13 @@ function wireTitles() {
     if (ev.type === 'pointerover' && ev.pointerType !== 'touch') el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: ev.pointerType || 'mouse', clientX: ev.clientX, clientY: ev.clientY }));
     if (ev.type === 'focusin') el.dispatchEvent(new Event('gpfocus'));
   };
+  // Every card surface (rewards, shop, deck, upgrade previews) drops its held triggers from the tab order, not just the hand.
+  if (typeof MutationObserver !== 'undefined' && document.body) {
+    let queued = false;
+    new MutationObserver(() => { if (queued) return; queued = true; queueMicrotask(() => { queued = false; syncHeldTriggers(document.body); }); })
+      .observe(document.body, { childList: true, subtree: true });
+    syncHeldTriggers(document.body);
+  }
   document.addEventListener('pointerover', adopt, true);
   document.addEventListener('focusin', adopt, true);
   const explain = ev => {

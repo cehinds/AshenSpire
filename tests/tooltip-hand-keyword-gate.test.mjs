@@ -153,6 +153,16 @@ test('held-back triggers stay out of the tab order on a hand card, selected or n
   assert.equal(kw.tabIndex, -1);
 });
 
+test('held-back triggers leave the tab order on every card surface, not the inspector', async () => {
+  const { syncHeldTriggers } = await import('../src/ui/components/tooltip.js');
+  const held = ['reward-offers', 'shop-offers', 'deck-grid', 'upgrade-preview'].map(host => keywordIn(host, 'card'));
+  const free = ['card-inspection-modal', 'card-inspection-layout'].map(host => keywordIn(host, 'card'));
+  for (const kw of [...held, ...free]) kw.tabIndex = 0;
+  syncHeldTriggers(document.body);
+  for (const kw of held) assert.equal(kw.tabIndex, -1, kw.parentNode.parentNode.className);
+  for (const kw of free) assert.equal(kw.tabIndex, 0, kw.parentNode.parentNode.className);
+});
+
 // Owner 2026-11-02: one click explains anywhere in the (i) card inspector, and nowhere else on a card.
 function termIn(termClass, containerClass, cardClasses) {
   const host = document.createElement('div'); host.className = containerClass;
