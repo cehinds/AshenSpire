@@ -2662,7 +2662,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // previews instead of re-quoting the whole hand.
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
-    const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]);
+    // A play paints the hand from `disp.handPreviews`, the quotes taken BEFORE the dispatch, while `combat` is already
+    // post-dispatch, so stateKey alone is the same before and after the animation ends. The tag keeps those two paints
+    // apart: without it the repaint after `disp` clears is skipped and a card keeps its pre-play price and affordability
+    // (Evade+ stayed at 2 SP after Defend entered Defend stance, so a 1 SP tap refused).
+    const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]) + (disp?.handPreviews?.size ? '|disp' : '');
     if (handRenderKey === key || (combat.pendingReaction && handRenderKey === stateKey + '|paused')) { syncHandPager(handList); return; }
     // While a reaction offer is pending the hand is inert and the fight is mid-turn, so a repaint
     // of the same cards would only re-quote them against state that changes again when the offer
