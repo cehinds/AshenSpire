@@ -190,7 +190,7 @@ export function mountCardUpgradeModal(host, initialModel, {
       className: 'smith-data-row smith-intrinsic-stats',
     }) : null;
     // The plan's own before and after faces: the rolled step is already applied to `after`.
-    const fold = model.faces ? el('div', { class: 'smith-upgrade-folds' }, el('details', { class: 'smith-upgrade-fold smith-upgrade-row' }, [
+    const fold = model.faces ? el('div', { class: 'smith-upgrade-folds' }, el('details', { class: 'smith-upgrade-fold smith-upgrade-row', open: true }, [
       el('summary', {}, statRow({
         tag: 'span', nameNode: el('b', { class: 'sr-name', text: selected.name }),
         values: [changeSummary({ values: selected.changes }), glyph(FOLD_GLYPH.collapsed, { class: 'caret smith-fold-caret' })],
