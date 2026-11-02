@@ -2550,7 +2550,7 @@ export function validateEffects(effects, path, vctx) {
     // tests/warriors-vow.test.mjs pins the throw).
     if (eff.op === 'enterStance') {
       const named = eff.stance !== undefined || eff.maneuver!==undefined;
-      if(eff.maneuver!==undefined && !['attack','smash','defend','sweep','counter','casting','evade'].includes(eff.maneuver))err(`${p}.maneuver`,'Unknown maneuver');
+      if(eff.maneuver!==undefined && !['attack','smash','defend','sweep','counter','casting'].includes(eff.maneuver))err(`${p}.maneuver`,'Unknown maneuver');
       const chosen = eff.choose !== undefined;
       if (named === chosen) err(p, `Opcode 'enterStance' takes exactly one of 'stance' or 'choose'`);
       else if (chosen && !STANCE_CHOICE_SELECTORS.includes(eff.choose)) err(`${p}.choose`, `Opcode 'enterStance' choose must be one of: ${STANCE_CHOICE_SELECTORS.join(', ')}`);
@@ -2762,7 +2762,7 @@ export function validatePredicate(pred, path, vctx) {
       if (pred.atLeast !== undefined && pred.atMost !== undefined && pred.atLeast > pred.atMost) err(path, 'turn metric bounds are reversed');
       break;
     case 'inStance':
-      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared','evade'].includes(pred.stance)) {
+      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared'].includes(pred.stance)) {
         err(`${path}.stance`, `Dangling reference: unknown stance id '${pred.stance}'`);
       }
       break;

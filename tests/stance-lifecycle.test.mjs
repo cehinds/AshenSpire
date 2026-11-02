@@ -66,8 +66,8 @@ const hybrid = { combatProfile: { camp: 'physical', maneuver: 'counter', range: 
 const hybridEntity = { id: 'hybrid', alive: true, statuses: {} };
 setCombatStance(ctx, hybridEntity, hybrid);
 armCombatCounter(ctx, hybridEntity, hybrid, { payload: { hp: 4, poise: 3, ward: 0 } });
-assert.equal(hybridEntity.combatStance.maneuver, 'evade');
-assert.equal(liveCounterCovers(ctx, hybridEntity, { ...card('attack').combatProfile, targeting: 'single' }), true, 'authored Counter survives the Evade stance');
+assert.equal(hybridEntity.combatStance.maneuver, 'counter');
+assert.equal(liveCounterCovers(ctx, hybridEntity, { ...card('attack').combatProfile, targeting: 'single' }), true, 'a Counter card with an evade profile stays in Counter stance');
 setCombatStance(ctx, hybridEntity, { combatProfile: { camp: 'physical', maneuver: 'defend', range: 'melee', evade: { charges: 1 } } });
-assert.equal(hybridEntity.combatCounter, undefined, 'a non-Counter Evade play clears the previous reply');
+assert.equal(hybridEntity.combatCounter, undefined, 'a Defend-stance Evade play clears the previous reply');
 console.log('stance lifecycle assertions passed');

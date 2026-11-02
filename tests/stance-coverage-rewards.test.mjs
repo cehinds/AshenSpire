@@ -13,8 +13,9 @@ const bind = profile => bindGameProfileRegistries(createRegistries(applyGameProf
 const core = resolveGameProfile('core'), reg = bind(core);
 const off = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { 'reward-ranks': { stanceCoverage: { enabled: false } } } }), regOff = bind(off);
 const templates = new Map();
-// The Core Reaver now opens on strike/defend/counter + its smash art and lacks sweep, casting and evade. These tests
-// model the older premise (only evade missing), so `fresh` first adds the Sweep and Draw cards the old shared deck held.
+// The Core Reaver now opens on strike/defend/counter + its smash art and lacks sweep and casting. `fresh` first adds the
+// Sweep and Draw cards the old shared deck held, so it misses no stance. Owner 2026-11-01: Evade is a tag, not a stance, so
+// the Evade card is a Defend-stance card and no longer counts as its own stance for coverage.
 const bare = (r = reg) => createRunState({ seed: 1, classId: 'reaver', registries: r });
 const fresh = (r = reg) => {
   if (!templates.has(r)) { const run = bare(r); for (const cardId of ['core.sweep', 'base.draw']) run.deck.push({ instanceId: `t:${cardId}`, cardId, upgraded: false }); templates.set(r, run); }
@@ -25,26 +26,27 @@ const offer = (r, run, seed, source = 'combat') => gameProfileRewardOffers(r, ru
 const stanceOfId = id => stanceOf(reg.cards.get(id))?.maneuver ?? null;
 const SEEDS = Array.from({ length: 12 }, (_, i) => i);
 
-test('the Core Reaver opening deck lacks the sweep, casting and evade stances', () => {
-  assert.deepEqual(missingBasicStances(bare(), reg), ['sweep', 'casting', 'evade']);
+test('the Core Reaver opening deck lacks the sweep and casting stances (Evade is not a stance)', () => {
+  assert.deepEqual(missingBasicStances(bare(), reg), ['sweep', 'casting']);
 });
 test('missingBasicStances lists only stances with no owned card', () => {
   const run = fresh();
-  assert.deepEqual(missingBasicStances(run, reg), ['evade']);
+  assert.deepEqual(missingBasicStances(run, reg), []);
   const before = JSON.stringify(run);
   missingBasicStances(run, reg);
   assert.equal(JSON.stringify(run), before, 'pure');
   own(run, 'core.evade');
-  assert.deepEqual(missingBasicStances(run, reg), []);
+  assert.deepEqual(missingBasicStances(run, reg), [], 'an Evade card adds no stance');
   run.deck = run.deck.filter(card => card.cardId !== 'core.sweep');
   assert.deepEqual(missingBasicStances(run, reg), ['sweep']);
 });
-test('the Reaver starting deck: every combat and level offer holds the missing-stance basic', () => {
+test('the Reaver deck missing sweep: every combat and level offer holds a sweep-stance basic', () => {
   for (const seed of SEEDS) for (const source of ['combat', 'level']) {
-    const o = offer(reg, fresh(), seed, source), ids = o.options.map(row => row.id);
+    const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== 'core.sweep');
+    const o = offer(reg, run, seed, source), ids = o.options.map(row => row.id);
     assert.equal(o.options.length, 3);
     assert.equal(new Set(ids).size, 3, `seed ${seed}: duplicate ids`);
-    assert.ok(ids.includes('core.evade'), `seed ${seed} ${source}: ${ids}`);
+    assert.equal(stanceOfId(ids[0]), 'sweep', `seed ${seed} ${source}: ${ids}`);
   }
 });
 test('the reserved slot is never a stance already owned', () => {
@@ -54,12 +56,12 @@ test('the reserved slot is never a stance already owned', () => {
     const accepted = reg.cards.all().map(card => card.id).filter(id => stanceOfId(id) === stanceOfId(dropped));
     assert.ok(accepted.includes(dropped));
     const missing = missingBasicStances(run, reg);
-    assert.ok(missing.includes('evade') && missing.length === 2, `${dropped}: ${missing}`);
+    assert.ok(missing.length === 1, `${dropped}: ${missing}`);
     for (const seed of SEEDS) {
       const ids = offer(reg, run, seed).options.map(row => row.id);
-      assert.ok(ids[0] === 'core.evade' || accepted.includes(ids[0]), `${dropped} seed ${seed}: ${ids}`);
+      assert.ok(accepted.includes(ids[0]), `${dropped} seed ${seed}: ${ids}`);
       assert.ok(basicOrCantripMatcher(reg, run)(ids[0]), `${dropped} seed ${seed}: reserved ${ids[0]} is not a basic or cantrip`);
-      assert.ok(ids[0] === 'core.evade' || missingBasicStances(run, reg).includes(stanceOfId(ids[0])), `${dropped} seed ${seed}: reserved card is of an owned stance`);
+      assert.ok(missingBasicStances(run, reg).includes(stanceOfId(ids[0])), `${dropped} seed ${seed}: reserved card is of an owned stance`);
     }
   }
   const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== 'core.sweep'); own(run, 'core.evade');

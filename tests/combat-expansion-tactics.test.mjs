@@ -360,13 +360,13 @@ test('version2 tactical snapshots and tuning validate strictly while legacy coun
   }
 });
 
-test('saved Evade Counter requires an authored Counter carrier and retains strict stance validation', () => {
+test('saved Counter with an evade profile requires an authored Counter carrier and retains strict stance validation', () => {
   const f = fixture();
   prepare(f, { evade: { charges: 1 } });
-  assert.equal(f.target.combatStance.maneuver, 'evade');
+  assert.equal(f.target.combatStance.maneuver, 'counter');
   assert.deepEqual(combatExpansionEntityProblems(f.target), []);
   const forged = structuredClone(f.target);
-  forged.combatCounter.carrier.combatProfile.maneuver = 'attack';
+  forged.combatStance.maneuver = 'attack';
   assert.ok(combatExpansionEntityProblems(forged).some(problem => /requires Counter stance/.test(problem)));
   forged.combatStance.maneuver = 'unsupported';
   assert.ok(combatExpansionEntityProblems(forged).some(problem => /maneuver is unsupported/.test(problem)));

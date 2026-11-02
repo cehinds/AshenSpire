@@ -28,6 +28,30 @@ import { restoreDerivedStatRuleSnapshot, storedStatRowProblems } from './derived
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
+/**
+ * Owner 2026-11-01: "All the evade stance cards were acting as defend cards so just migrate them all as defend cards".
+ * There is no Evade stance. A saved combatStance or concurrentStances row with maneuver 'evade' loads as Defend; a
+ * hybrid (counterStance: true) loads as Counter, which carries the same offensive rating and Counter behaviour. The
+ * retired counterStance flag is dropped. Mutates the snapshot in memory; returns true when anything changed.
+ */
+export function bringStancesForward(snapshot) {
+  let changed = false;
+  // A hybrid saved before the counterStance flag (2026-10-14) has no flag; its armed combatCounter is the detectable mark.
+  let armedCounter = false;
+  const row = (stance) => {
+    if (!record(stance)) return;
+    if (stance.maneuver === 'evade') { stance.maneuver = stance.counterStance === true || armedCounter ? 'counter' : 'defend'; changed = true; }
+    if ('counterStance' in stance) { delete stance.counterStance; changed = true; }
+  };
+  for (const entity of [snapshot?.player, ...(Array.isArray(snapshot?.enemies) ? snapshot.enemies : [])]) {
+    if (!record(entity)) continue;
+    armedCounter = record(entity.combatCounter);
+    row(entity.combatStance);
+    if (Array.isArray(entity.concurrentStances)) entity.concurrentStances.forEach(row);
+  }
+  return changed;
+}
+
 const PHASES = Object.freeze(['player', 'enemy', 'ended']);
 const RESULTS = Object.freeze([null, 'victory', 'defeat']);
 const SNAPSHOT_PILES = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
@@ -72,7 +96,7 @@ function entityProblems(entity, path, { player = false } = {}) {
     }
   }
   for(const key of ['cardUsesCombat','instanceUsesCombat','typePlays']) if(record(entity.abilityRiders?.[key]) && Object.values(entity.abilityRiders[key]).some(v=>!Number.isSafeInteger(v) || v<0)) problems.push(`${path}.abilityRiders.${key} must contain nonnegative counts`);
-  if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','evade','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
+  if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';

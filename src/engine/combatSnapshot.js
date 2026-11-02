@@ -25,7 +25,7 @@ import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
-import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot, bringStancesForward } from '../model/combatSnapshot.js';
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
 import { refillWeaknesses } from './weaknesses.js';
 import { bringRangesForward } from '../model/combatRanges.js';
@@ -207,6 +207,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
   bringRangesForward(saved);
+  bringStancesForward(saved);
   // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
   for (const entity of [saved.player, ...(saved.enemies || [])]) clampStackCounts(entity);
   if (saved.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);

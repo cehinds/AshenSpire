@@ -60,15 +60,14 @@ test('defense order is selected JSON policy; defenses off passes damage through'
   assert.equal(profileDamageReceipt(world({ defenses: false, effects: { attackRatingWeight: 0 } }), source, target, 10).hpLoss, 10);
 });
 
-test('Evade uses probability and supplied roll, preview exposes bounds without RNG consumption', () => {
-  const ctx = world(), source = fighter('player'), target = fighter('foe', { combatStance: { maneuver: 'evade' } });
+// Owner 2026-11-01: Evade is a tag and a status, not a stance. A target in Defend stance (where Evade cards now play) is a
+// certain hit in the configured path: no stance rolls a hit chance, so a preview exposes no uncertainty and consumes no RNG.
+test('a Defend-stance target is a certain hit: no stance rolls a hit chance', () => {
+  const ctx = world(), source = fighter('player'), target = fighter('foe', { combatStance: { maneuver: 'defend' } });
   const counters = ctx.rng.getCounters();
   const preview = previewDamageHits(ctx, source, target, 5, [], carrier('attack'));
-  assert.equal(preview.uncertain, true); assert.ok(preview.hitChance > 0 && preview.hitChance < 1);
-  assert.deepEqual(preview.hpLossBounds, [0, 14]);
+  assert.equal(preview.uncertain, false); assert.equal(preview.hitChance, 1);
   assert.deepEqual(ctx.rng.getCounters(), counters);
-  assert.equal(profileDamageReceipt(ctx, source, target, 5, carrier('attack'), { roll: 0.999 }).hpLoss, 0);
-  assert.equal(profileDamageReceipt(ctx, source, target, 5, carrier('attack'), { roll: 0 }).hpLoss, 14);
 });
 
 test('stance relation comes from JSON and disabled stances remain neutral', () => {
@@ -194,22 +193,6 @@ test('a real run with only cards disabled gets attack/pass rather than stale sta
   assert.equal(run.deck.length, 0); assert.equal(combat.piles.hand.length, 0);
   dispatch(combat, { type: 'basicAttack', targetId: combat.enemies[0].id });
   assert.ok(combat.turn === 2 || combat.result);
-});
-
-test('live Evade uses seeded candidate RNG while card preview exposes only chance and bounds', () => {
-  const { combat } = live();
-  const card = combat.piles.hand.find(card => card.cardId === 'core.strike'), target = combat.enemies[0];
-  target.hp = target.maxHp = 200; target.combatStance = { maneuver: 'evade' };
-  const counters = combat.rng.getCounters();
-  const shown = previewCard(combat, card.instanceId, target.id).values.find(effect => effect.op === 'damage');
-  assert.equal(shown.uncertain, true); assert.ok(shown.hitChance > 0 && shown.hitChance < 1);
-  assert.deepEqual(combat.rng.getCounters(), counters);
-  const roll = createRng(combat.rng.seed, counters).float('combatAvoidance');
-  const expected = profileDamageReceipt(combat, combat.player, target, 6, carrier('attack'), { roll });
-  const before = target.hp;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: target.id });
-  assert.equal(before - target.hp, expected.hpLoss);
-  assert.notDeepEqual(combat.rng.getCounters(), counters);
 });
 
 test('failed configured transaction rolls back a consumed accuracy draw and HP', () => {

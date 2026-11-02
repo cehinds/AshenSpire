@@ -6,8 +6,7 @@
     "defend",
     "counter",
     "sweep",
-    "prepared",
-    "evade"
+    "prepared"
   ],
   "matchups": {
     "attack": [
@@ -24,7 +23,7 @@
     ],
     "sweep": [
       "counter",
-      "evade"
+      "smash"
     ],
     "prepared": [
       "defend",

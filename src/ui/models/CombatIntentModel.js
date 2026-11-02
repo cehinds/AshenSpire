@@ -17,7 +17,7 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
-  const stance = intent.profile?.maneuver === 'evade' && !intent.hidden ? 'evading' : combatIntentStance(intent);
+  const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
   if (unknown || (partial && !intent.stance && !intent.profile?.camp && !intent.profile?.maneuver)) {
@@ -44,7 +44,7 @@ export function combatIntentPresentation(intent = {}) {
   if (!(intent.counterPoiseDamage > 0) || intent.counterDamage > 0) counterParts.push(part('attack', intent.counterDamage));
   if (intent.counterPoiseDamage > 0) counterParts.push(part('smash', intent.counterPoiseDamage));
   const parts = family === 'countering' ? counterParts
-    : family === 'evading' ? [part('evade', intent.dodgeCharges ?? intent.evadeCharges)]
+    : family === 'defending' && intent.profile?.maneuver === 'evade' ? [part('evade', intent.dodgeCharges ?? intent.evadeCharges)]
     : family === 'defending' ? [part('defend', intent.block)]
     : family === 'smashing' ? [part('smash', damage)]
     : family === 'attacking' ? [part('attack', damage)]
