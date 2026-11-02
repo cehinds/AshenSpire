@@ -66,9 +66,14 @@ export function digest(combat) {
 // Re-pinned 2026-11-01 for Ward/Barrier as stacked statuses (SPEC 4.1a): the old numeric barrier pool is gone from
 // combat state and Barrier grants are stacks, so both reaver fights' state and log hashes move; event counts and turns are unchanged.
 // Combined (#2483 after #2474): Sundering Hew plus Barrier stacks; re-pinned from the merged run.
+// Re-pinned 2026-11-02 for enemy intent commitment (SPEC 4.6b, fix/EnemyIntentCommit). Each fight has two turns where a
+// Poise break took the Wandering Soldier's only SP: it used to show Slash/Warcry and then refuse it at act time
+// (enemyActorTurnStarted + enemyMoveUnavailable + enemyMoveEnded). The intent now drops to "no move" during the player's turn,
+// so the enemy turn logs one fewer event pair (event counts 197 -> 195 and 234 -> 232); turns and the RNG position are unchanged.
+// Verified by diffing the two event logs: those are the only differences.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '15cd1b41837367fc', state: '180616407c0995f0', events: 197, turn: 6 }],
-  [[4242, 'reaver'], { log: 'ec80bd01180853d4', state: '7f7b1dd21b8ccf30', events: 234, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4e6d01c955a6f0ef', state: 'ead936974b6fb555', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: 'd53eccb44b7816e0', state: 'fb524bba89d1c5e8', events: 232, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
