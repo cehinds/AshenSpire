@@ -35,7 +35,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const editDeck = button({ label: t('reward.configured.editDeck'), id: 'reward-edit-deck', className: 'reward-edit-deck' });
   const equip = button({ label: t('reward.configured.equipNow'), id: 'reward-equip-now', className: 'reward-equip-now' });
   equip.hidden = true;
-  const keep = button({ label: t('reward.configured.keep'), id: 'reward-keep', className: 'reward-keep' });
+  const keep = button({ label: t('reward.configured.addToLibrary'), id: 'reward-keep', className: 'reward-keep' });
   editDeck.hidden = true; keep.hidden = true;
   const next = button({ label: t('common.skip'), id: 'reward-continue', className: 'danger' });
   let selected = null;
@@ -55,6 +55,22 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     confirm.disabled = false; inspect.disabled = false;
     inspect.setAttribute('aria-label', t('deckEditor.inspectNamed', { name: choices[index].control.textContent }));
     status.textContent = '';
+    syncCardActions();
+  }
+  // Owner 2026-11-02: a selected card shows exactly [Edit deck, Add to library, Add to deck] at once (no review step);
+  // the card face's own inspection door replaces the Inspect button. Other kinds keep Confirm / Inspect.
+  function syncCardActions() {
+    const cardMode = !!(onAddToDeck && cardPick());
+    const changed = cardMode !== addToDeckMode;
+    addToDeckMode = cardMode;
+    inspect.hidden = cardMode;
+    editDeck.hidden = !(cardMode && onEditDeck && canEditDeck);
+    keep.hidden = !cardMode;
+    confirm.textContent = t(cardMode ? 'reward.configured.addToDeck' : 'common.confirm');
+    const refusal = cardMode && addRefusal ? addRefusal(selected) : '';
+    confirm.disabled = !!refusal;
+    if (refusal) status.textContent = refusalText(refusal);
+    if (changed) mountDoor();
   }
   for (const [index, option] of offer.options.entries()) {
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
@@ -82,7 +98,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const resetReview = () => {
     reviewing = false; addToDeckMode = false;
     for (const [index, { control }] of choices.entries()) control.disabled = offer.taken.includes(index) || offer.claimed !== null;
-    editDeck.hidden = true; keep.hidden = true; equip.hidden = true; status.textContent = '';
+    equip.hidden = true; status.textContent = '';
     confirm.disabled = selected === null;
     mountDoor();
   };
@@ -130,38 +146,25 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const refusalText = code => code === 'full' ? t('reward.configured.deckFull', { max: deckMax ?? '' }) : t('reward.configured.deckLimit');
   confirm.addEventListener('click', () => {
     if (pending || completed || selected === null || confirm.disabled) return;
+    if (addToDeckMode) return commit(index => onAddToDeck(index));
     if (!reviewing) {
       reviewing = true;
       // Keep the selected face's Information control available in review.
       for (const { control } of choices) control.disabled = true;
       for (const column of strip.children) column.hidden = Number(column.dataset.pickId) !== selected;
       next.textContent = t('common.back');
-      addToDeckMode = !!(onAddToDeck && cardPick());
-      if (!addToDeckMode) {
-        confirm.textContent = t('common.continue');
-        equip.hidden = !(onEditEquipment && canEditEquipment && ['weapons', 'armor'].includes(offer.options[selected]?.kind));
-        mountDoor(); return;
-      }
-      const refusal = addRefusal ? addRefusal(selected) : '';
-      confirm.textContent = t('reward.configured.addToDeck');
-      editDeck.hidden = !(onEditDeck && canEditDeck);
-      if (refusal) {
-        confirm.disabled = true;
-        status.textContent = refusalText(refusal);
-      }
-      // With no Edit deck door, a legal Add must not be the only way forward: the card can stay in the collection.
-      keep.hidden = !editDeck.hidden;
-      mountDoor(); confirm.focus?.({ preventScroll: true });
-      return;
+      confirm.textContent = t('common.continue');
+      equip.hidden = !(onEditEquipment && canEditEquipment && ['weapons', 'armor'].includes(offer.options[selected]?.kind));
+      mountDoor(); return;
     }
-    return commit(addToDeckMode ? index => onAddToDeck(index) : claimOnly);
+    return commit(claimOnly);
   });
   keep.addEventListener('click', () => commit(claimOnly));
   equip.addEventListener('click', () => commit(claimOnly, () => onEditEquipment(selected, proceed)));
   editDeck.addEventListener('click', () => commit(claimOnly, () => onEditDeck(selected, proceed)));
   // The footer drops hidden buttons when built, so the door is rebuilt (same owner: in place) whenever the review changes them.
   function mountDoor() {
-    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next, inspect, editDeck, equip, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
+    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next, inspect, equip, editDeck, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
   }
   mountDoor();
 }

@@ -754,6 +754,12 @@ test('the controls stand in a band at the bottom, whatever the words do', () => 
     assert.match(css, rows, 'a wireframe that states its rows leaves one for the band');
   }
   assert.equal(prologueConfig().presentation.controlsPosition, 'bar');
+  // Continue stays centred in the band whatever the counter measures (owner,
+  // 2026-11-02): counter left, Continue the middle column, Pause/Skip right.
+  assert.match(screen, /bar\.classList\.toggle\('prologue-bar-centered'/);
+  assert.match(screen, /el\('div',\{class:'prologue-controls-aux'\},\[pause,skip\]\)/);
+  assert.match(css, /\.prologue-bar-centered\{display:grid;grid-template-columns:minmax\(0,1fr\) auto minmax\(0,1fr\)/);
+  assert.match(css, /\.prologue-bar-centered \.prologue-controls > button:last-child\{grid-column:2;grid-row:1\}/);
   // The safe-area inset is a FLOOR under the authored padding, not a value that
   // replaces it: a container padding of 0 must still be 0 under the text.
   assert.match(css, /\.prologue-controls-text \.prologue-caption\{padding-bottom:max\(var\(--prologue-box-padding,1rem\),env\(safe-area-inset-bottom\)\)\}/);
