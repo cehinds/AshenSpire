@@ -1351,10 +1351,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
   }
 
-  // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears (a Map made with the
-  // playback snapshot) and flushDeferredIntentClears applies them from onResolution.
   function applyBeatToDisp(beat) {
     if (!disp) return;
+    // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears and
+    // flushDeferredIntentClears applies them from onResolution (playTimeline call below).
     reduceFollowRows(beat.events);
     for (const e of beat.events) {
       const eventIndex = combat.eventLog.indexOf(e);

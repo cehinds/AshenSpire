@@ -520,7 +520,8 @@ function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = n
       if (entry) reliftFloaterLanes(anchor);
     };
   });
-  setTimeout(() => { el.remove(); if (onDone) onDone(); }, life + 60);
+  setTimeout(() => el.remove(), life + 60);
+  if (onDone) setTimeout(onDone, life + 60);
   return el;
 }
 
