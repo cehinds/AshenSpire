@@ -1705,6 +1705,7 @@ reward.configured.note,,Choose {count}. Add the card to your deck or keep it in 
 reward.configured.noteArmoury,,Choose {count}. Add the card to your deck or edit your deck now; the rest stays in your collection.,,
 reward.configured.noteNoEditor,,Choose {count}. Add the card to your deck or keep it in your collection.,,
 reward.configured.addToDeck,,Add to deck,Add this card to your deck now.,
+reward.configured.addToLibrary,,Add to library,Keep this card in your library without adding it to your deck.,
 reward.configured.editDeck,,Edit deck,Keep this card and open the deck editor with it ready to place.,
 reward.configured.equipNow,,Equip now,Keep this item and open the Armoury so you can equip it now.,
 reward.configured.keep,,Keep in collection,Keep this card in your collection without adding it to your deck.,
