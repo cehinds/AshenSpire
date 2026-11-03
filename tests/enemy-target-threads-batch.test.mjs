@@ -5,7 +5,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { enemyTargetGrid } from '../src/ui/models/EnemyTargetGridModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 import { levelOf } from '../src/model/levelup.js';
 import { packCombatTargetsWithHud } from '../src/ui/components/battlefieldStage.js';
@@ -24,7 +23,7 @@ const crowded = {
 };
 const foes = n => Array.from({ length: n }, (_, index) => ({ id: `e${index}`, x: 180, y: 110 }));
 
-for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+for (const [label, grid] of [['Alternative', alternativeEnemyTargetGrid]]) {
   test(`${label} grid places all four crowded foes on non-overlapping cells of at least 44px`, () => {
     const targets = foes(4);
     const placements = grid({ ...crowded, targets });

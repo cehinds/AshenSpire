@@ -50,9 +50,9 @@ test('resolved starter Dodge chooses Evade preparation while mixed Evasive Guard
     const stance=selectedWeaponStanceFor({profile:pilot,stance:stanceForCard(definition),card:definition,entity:combat.player});
     assert.equal(stance,expected);
     assert.deepEqual(definition,before,'selecting a painting does not mutate mechanics or payloads');
-    const plan=resolveCombatAnimation(definition,[],{classId:'reaver',appearance:'alternative',combatExpansionVersion:2});
+    const plan=resolveCombatAnimation(definition,[],{classId:'reaver',combatExpansionVersion:2});
     assert.deepEqual([plan.technique,plan.rest],index===0?['evade','evade']:['counterPrepare','counter']);
-    assert.equal(resolveCombatAnimation(definition,[],{classId:'reaver',appearance:'alternative',combatExpansionVersion:2,counterTriggered:true}).technique,'counter');
+    assert.equal(resolveCombatAnimation(definition,[],{classId:'reaver',combatExpansionVersion:2,counterTriggered:true}).technique,'counter');
     combat.player.energy=combat.player.stamina=combat.player.mana=20;
     const out=dispatch(combat,{type:'playCard',cardInstanceId:instances[index].instanceId,targetId:combat.player.id});
     const receipt=out.events.find(event=>event.type==='cardPlayed');

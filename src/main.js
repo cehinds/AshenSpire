@@ -155,7 +155,7 @@ import { BUILD_VERSION } from './buildversion.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
-import { applyDisplayAppearance, publishDisplayAppearanceChange } from './ui/displayAppearance.js';
+import { applyDisplayAppearance } from './ui/displayAppearance.js';
 import { mountClassRespec } from './ui/components/classRespec.js';
 import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
@@ -935,7 +935,7 @@ function applyCardSizeSettings(settings) {
 
 function applyDisplaySettings(settings) {
   applyCardArtStyle(settings);
-  const appearanceChanged = applyDisplayAppearance(settings);
+  applyDisplayAppearance(settings);
   // Art quality: lay a local high-res source over the built-in art, or clear
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
   // resolves use the new tier, and anything the source lacks stays built-in.
@@ -1096,10 +1096,6 @@ function applyDisplaySettings(settings) {
   restampModalWireframes(document);
   restampWorkspaceFrames(document);
   replanCategoryNavs();
-  if (appearanceChanged) {
-    clearPosePreloads();
-    publishDisplayAppearanceChange();
-  }
 }
 // A new high-res source (Art quality) must not be undercut by pose preloads,
 // which are keyed by pose, not URL, and would keep serving the old art.
@@ -2624,7 +2620,7 @@ function showDraft() {
  * Potions action re-read the meta it was mounted with
  * (tools/flask-menu-probe.mjs, persistence).
  */
-const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'classicAppearance'];
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
 // Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
 // has no Potions control, and a remount drops its selected destination
 // (#1474 review).

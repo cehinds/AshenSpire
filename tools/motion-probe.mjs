@@ -92,7 +92,6 @@ const VIEWPORT = { width: 1440, height: 900 };
 const BOOT_TIMEOUT_MS = Math.max(20000, Math.min(120000, Number(process.env.MOTION_BOOT_TIMEOUT_MS) || 20000));
 const ALTERNATIVE = existsSync(new URL('../src/ui/alternativeArt.js', import.meta.url));
 const argv = process.argv.slice(2);
-const CLASSIC = argv.includes('--classic'); // style-specific negatives boot the actual Classic appearance
 const SEED = argv.includes('--seed') ? argv[argv.indexOf('--seed') + 1] : 'MOTION1';
 const DUMP = argv.includes('--dump'); // print every animation and scripted change seen
 
@@ -125,7 +124,6 @@ if (argv.includes('--selftest')) {
     plants: [
       {
         name: "a resting facing layer bobs",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -133,7 +131,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "the Rendered figure bobs",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite .rendered-stage { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -141,7 +138,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "the hidden Rendered rest layer bobs",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.rendered-stage .painted-stage { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -149,7 +145,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "a figure image bobs inside a stationary stage",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite :is(img,svg,canvas) { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -157,7 +152,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "a resting figure scales",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { scale:1.1; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -165,7 +159,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "the idle carriers are made transparent",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite :is(.facing,.pose-layer,.rendered-stage,.alternative-silhouette,.enemy-expansion-bob) { opacity:0 !important; }",
@@ -173,7 +166,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "the combatants are made transparent",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant { opacity:0 !important; }",
@@ -181,7 +173,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "a resting actor wrapper translates",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:4px 0; } }\n.combatant .sprite { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -189,7 +180,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "a resting figure rotates",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { rotate:5deg; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
@@ -197,7 +187,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "a companion shake moves resting art",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite .facing { animation: shake 3.1s infinite; }",
@@ -205,7 +194,6 @@ if (argv.includes('--selftest')) {
       },
       {
         name: "the resting figure artwork is hidden",
-        args: ['--classic'],
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
         replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite :is(img,svg,canvas) { display:none !important; }",
@@ -472,16 +460,16 @@ async function until(evaluate, expression, what, ms = 20000, onWait = null) {
   throw new Error(`timed out after ${ms} ms waiting for ${what}; screen ${JSON.stringify(await evaluate(`({url:location.href,text:document.body.innerText.slice(0,1200),combat:!!window.__combat,sampler:!!window.__motionProbe})`))}`);
 }
 
-async function boot({ send, evaluate }, base, { setting, os, classic = CLASSIC }) {
+async function boot({ send, evaluate }, base, { setting, os }) {
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: os ? 'reduce' : 'no-preference' }] });
-  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, effects: true, classicAppearance: classic }));
+  const settings = encodeURIComponent(JSON.stringify({ reducedMotion: setting, showPlayedCard: true, effects: true }));
   await send('Page.navigate', { url: `${base}?shot=combat&shotSeed=${encodeURIComponent(SEED)}&shotSettings=${settings}` });
   await wait(300);
   await until(evaluate, `!!(window.__combat && window.__motionProbe && document.querySelector('.combatant.enemy') && document.querySelector('.hand .card') && document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled)`, 'combat to mount', BOOT_TIMEOUT_MS);
   // The applied setting is the app's own, read back from the page.
   const applied = await evaluate(`({ cls: document.body.classList.contains('reduced-motion'), os: matchMedia('(prefers-reduced-motion: reduce)').matches, appearance: document.documentElement.dataset.displayAppearance })`);
   if (applied.cls !== setting || applied.os !== os) throw new Error(`reduced motion did not apply as asked: wanted setting=${setting} os=${os}, page has class=${applied.cls} media=${applied.os}`);
-  if (applied.appearance !== (classic ? 'classic' : 'alternative')) throw new Error('The requested display appearance did not apply');
+  if (applied.appearance !== 'alternative') throw new Error('The requested display appearance did not apply');
   await wait(800);
 }
 
@@ -731,7 +719,7 @@ try {
 
   // ---- §5: stationary visible rest in every style, motion on ----------------
   await boot(s, base, { setting: false, os: false });
-  const fixedDefault = ALTERNATIVE && !CLASSIC;
+  const fixedDefault = ALTERNATIVE;
   const resting = fixedDefault ? await fixedRest(s, 'IDLE') : [];
   const first = await idle(s, 'IDLE', { excludeCanvases: fixedDefault });
   const alternativeStageId = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-card-stage')?.dataset.animationSet || null`);
@@ -753,15 +741,6 @@ try {
     + (missing.length ? `never saw a ${missing.join(' or ')} over the limit — the sampler may be blind to it` : Object.entries(kinds).map(([k, a]) => `${k}: ${show(a)}`).join('; ')));
   if (fixedDefault) await fixedRest(s, 'IDLE-AFTER', resting);
   await idle(s, 'IDLE-AFTER', { excludeCanvases: fixedDefault });
-  // Rest coverage includes the actual Classic appearance, independently of
-  // Default's canvas. Guard/state changes must also settle without a bob.
-  if (fixedDefault) {
-    await boot(s, base, { setting: false, os: false, classic: true });
-    await idle(s, 'IDLE');
-    const classicTurn = await playTurn(s);
-    check(classicTurn.landed && classicTurn.turn >= 2, 'TURN classic-rest', `${classicTurn.attack} landed${passedNote(classicTurn)}, turn ${classicTurn.turn}`);
-    await idle(s, 'IDLE-AFTER');
-  }
   // The other figure styles a player can choose (customize.js SPRITE_STYLES):
   // the run's customization is part of the player frame's art key, so a
   // render after changing it draws the player afresh in that style.

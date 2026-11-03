@@ -13,7 +13,7 @@ const GLOBALS = ['document', 'getComputedStyle', 'requestAnimationFrame', 'cance
 const ORIGINAL = {};
 let frames = [];
 
-function fixture({ width, height, formFactor, appearance = 'alternative', sharedHud, layout }) {
+function fixture({ width, height, formFactor, sharedHud, layout }) {
   const props = {};
   const topbar = { querySelectorAll: () => [], getBoundingClientRect: () => ({ top: 0, bottom: 0, height: 0 }) };
   const combat = {
@@ -30,7 +30,7 @@ function fixture({ width, height, formFactor, appearance = 'alternative', shared
       return null;
     },
   };
-  return { combat, documentElement: { dataset: { formFactor, displayAppearance: appearance } } };
+  return { combat, documentElement: { dataset: { formFactor, displayAppearance: 'alternative' } } };
 }
 
 function run(options) {
@@ -82,8 +82,3 @@ test('the desktop split always takes the single row, however narrow the host', (
   assert.equal(result.hud, header.splitHeightPx);
 });
 
-test('the classic appearance keeps the measured band and writes no header row', () => {
-  const result = tablet(700, { appearance: 'classic' });
-  assert.equal(result.row, '');
-  assert.ok(result.hud < header.heightPx, `classic hud ${result.hud}`);
-});

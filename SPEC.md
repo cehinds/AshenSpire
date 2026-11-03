@@ -2041,7 +2041,11 @@ What the tabs hold, by area:
   is a lane, and the player's front column is not a perspective destination. Pressing anywhere
   in an occupied enemy cell acts on that enemy (select, or play the armed card or flask). Lane
   span, rank tops and heights, shear and foot fractions per phone, desktop and short strip are data
-  (`combatFormationModel.positioning.perspectiveGrid`). Classic keeps the grid below.
+  (`combatFormationModel.positioning.perspectiveGrid`). The Classic layout is deprecated and
+  removed (owner, 2026-11-03: "Classic layout can now be deprecated."): this perspective grid is the
+  only combat layout, the `classicAppearance` Settings row is gone, and a saved
+  `classicAppearance: true` is ignored, so an old profile loads as the grid. The columns-and-rows
+  grid described below survives only as the saved shape of the formation settings.
   The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
   Measurements remain responsive percentages; reference anchors at 1641×526 are checked
   against the exports. Explicit saved group edits take precedence.

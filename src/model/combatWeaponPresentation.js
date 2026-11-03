@@ -12,8 +12,7 @@ const starterHands = {
   herald: {mode:'one',right:'boneSceptre',left:null},
 };
 
-export function combatWeaponProfilesFor({classId,armourId,grip,appearance = 'alternative'} = {}) {
-  if (appearance !== 'alternative') return {weaponProfile:null,smashProfile:null};
+export function combatWeaponProfilesFor({classId,armourId,grip} = {}) {
   const presentation = {classId,armourId:DEFAULT_COMBAT_WEAPONS ? 'default' : armourId,
     grip:DEFAULT_COMBAT_WEAPONS ? starterHands[classId] : grip};
   return {weaponProfile:selectedWeaponProfileFor(presentation),smashProfile:classSmashProfileFor(presentation)};

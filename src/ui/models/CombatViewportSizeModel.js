@@ -50,25 +50,18 @@ export function separateRow(group, width, config = CONFIG) {
 // common factor, so relative sizes never change. The returned array carries
 // `lastResort` (the common factor, or null) so callers and tests can report it.
 //
-// Options that mirror what composition does after the fit, so the fit judges the
-// final positions: `enemyPlacement` ({ squeeze, centre }) is the classic
-// composition's pull of the enemies toward `centre` (a share of the width) and
-// all enemies then share one row (classic stands them on one ground line);
-// `handTop` (with `solo`) is the floor for the lone player's feet.
+// Option that mirrors what composition does after the fit, so the fit judges the
+// final positions: `handTop` (with `solo`) is the floor for the lone player's feet.
 export function fitViewportSprites({ width, actors, viewportHeight, portraitPhone = false, config = CONFIG,
-  enemyPlacement = null, handTop = null, solo = false }) {
+  handTop = null, solo = false }) {
   const valid = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0);
   const margin = config.edgeMarginPx;
   const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio }, config) }));
   // A row is one depth band on one side (visualBand); lanes within it share the floor.
-  const enemyXs = valid.filter(a => (a.side ?? a.slot.side) === 'enemy').map(a => a.slot.x);
-  const enemyCentre = enemyXs.length ? (Math.min(...enemyXs) + Math.max(...enemyXs)) / 2 : width * .55;
-  const startX = a => enemyPlacement && (a.side ?? a.slot.side) === 'enemy'
-    ? (a.slot.x - enemyCentre) * enemyPlacement.squeeze + width * enemyPlacement.centre : a.slot.x;
   const floor = a => solo && Number.isFinite(handTop) && handTop > 0 && (a.side ?? a.slot.side) === 'player' ? handTop : Infinity;
-  const rowOf = a => enemyPlacement && (a.side ?? a.slot.side) === 'enemy' ? 'enemy:shared' : `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
+  const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
   const solve = factor => {
-    const rows = targets.map(({ a, height }) => ({ a, height: height * factor, width: height * factor * a.visibleWidth / a.visibleHeight, x: startX(a) }));
+    const rows = targets.map(({ a, height }) => ({ a, height: height * factor, width: height * factor * a.visibleWidth / a.visibleHeight, x: a.slot.x }));
     let ok = rows.every(r => r.height <= (r.a.slot.fitGround ?? r.a.slot.ground) - 2 &&
       r.height + (r.a.leading ?? 0) + 6 <= floor(r.a) && r.width <= width - 2 * margin);
     const groups = new Map();
@@ -88,8 +81,7 @@ export function fitViewportSprites({ width, actors, viewportHeight, portraitPhon
     solved = solve(factor);
   }
   const result = solved.rows.map(r => ({ id: r.a.slot.id, scale: r.height / r.a.visibleHeight, visibleHeight: r.height,
-    multiplier: 1, x: r.x, ...(Math.abs(r.x - startX(r.a)) > .5 ? { slid: true } : {}),
-    ...(enemyPlacement && (r.a.side ?? r.a.slot.side) === 'enemy' ? { placed: true } : {}) }));
+    multiplier: 1, x: r.x, ...(Math.abs(r.x - r.a.slot.x) > .5 ? { slid: true } : {}) }));
   result.lastResort = factor < 1 ? factor : null;
   return result;
 }

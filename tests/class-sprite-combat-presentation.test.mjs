@@ -56,44 +56,6 @@ function sprite(animation, style = 'animated', view = 'combat') {
   return classSprite('reaver', '#c9a227', null, 'gold', style, null, 'default', { animation, view });
 }
 
-test('actual Classic class-default combat stage plays mounted Shield Counter and settles at guard', () => {
-  const { run, card, animation, context } = fixture();
-  const before = structuredClone({ run, card });
-  const definition = resolveCombatCard(context, card, { upcastTier: 2 });
-  const plan = resolveCombatAnimation(definition, equippedPieces(registries, run.loadout, run.class),
-    { combatExpansionVersion: 2, classId: run.class, appearance: 'classic' });
-  assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'guard', 'guard']);
-  const host = sprite(null); const stage = stageFor(host);
-  try {
-    assert.ok(stage.el.classList.contains('painted-stage'));
-    assert.equal(stage.el.classList.contains('rendered-stage'), false);
-    assert.equal(stage.animationSetId, null);
-    assert.equal(stage.play(plan.technique, 260), true, 'normal combat can play the class-default guard');
-    assert.equal(stage.pose, 'guard');
-    stage.setRestPose(resolveCombatPose({ hp: 20 }, plan.rest), { immediate: true });
-    assert.equal(stage.rest, 'guard');
-    assert.equal(stage.pose, 'guard');
-    assert.deepEqual({ run, card }, before, 'sprite presentation never edits the mounted card or run');
-  } finally { stage.dispose(); }
-});
-
-test('actual Classic combat Spell Counter can play casting before the configured ready rest', () => {
-  const { run, animation, context } = fixture();
-  const definition = resolveCombatCard(context, { cardId: 'barrageCounter' });
-  const plan = resolveCombatAnimation(definition, equippedPieces(registries, run.loadout, run.class),
-    { combatExpansionVersion: 2, classId: run.class, appearance: 'classic' });
-  assert.deepEqual([plan.group, plan.technique, plan.rest], ['cast', 'cast', 'cast']);
-  const stage = stageFor(sprite(animation));
-  try {
-    assert.equal(stage.play(plan.technique, 260), true);
-    assert.equal(stage.pose, animationClip(animation, 'cast').frames[0]);
-    stage.setRestPose(resolveCombatPose({ hp: 20 }, plan.rest), { immediate: true });
-    stage.settle(); // The combat flush preserves a playing cast until its action finishes.
-    assert.equal(stage.rest, 'idle', 'casting is a transient action, not a persistent resting pose');
-    assert.equal(stage.pose, animationClip(animation, 'idle').frames.at(-1));
-  } finally { stage.dispose(); }
-});
-
 for (const view of ['portrait', 'menu', 'stand']) test(`animated ${view} presentation remains a still stage`, () => {
   const { animation } = fixture(); const stage = stageFor(sprite(animation, 'animated', view));
   try {
