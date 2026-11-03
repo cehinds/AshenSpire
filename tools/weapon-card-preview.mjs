@@ -66,7 +66,7 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width:703, height:900, deviceScaleFactor:1, mobile:false });
   await send('Page.navigate', { url });
   await until("document.body?.dataset.previewReady==='true'", 'door-stack preview');
-  await evaluate("document.querySelector('.card-info-button').click()");
+  await evaluate("document.querySelector('.card, .equipment-poker-card').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))");
   await until("!!document.querySelector('.modal .card-inspection-layout')", 'door-stack source layout');
   await evaluate(`(()=>{const source=document.querySelector('.modal .card-inspection-layout');const mount=(host)=>{const layout=source.cloneNode(true);layout.removeAttribute('data-card-door');host.append(layout);return host;};
     document.querySelector('.modal-close').click();
@@ -128,7 +128,7 @@ try {
     await evaluate("document.querySelector('.epc-fact').focus()"); await wait(250);
     check(await evaluate("(()=>{const t=document.querySelector('#tooltip'),r=t?.getBoundingClientRect();return t?.dataset.open==='true' && t.textContent.includes('Attack') && r.left>=0 && r.right<=innerWidth+1 && r.top>=0 && r.bottom<=innerHeight+1})()"), `${name}: keyboard tooltip fits viewport`);
     await screenshot(`${name}-tooltip`);
-    await evaluate("document.querySelector('.card-info-button').click()");
+    await evaluate("document.querySelector('.card, .equipment-poker-card').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))");
     check(await evaluate("!!document.querySelector('.modal .card-inspection-layout')"), `${name}: enlarged production inspection`);
     await screenshot(`${name}-enlarged`);
     await evaluate("document.querySelector('.modal-close').click(); document.querySelector('form').reset()"); await wait(100);

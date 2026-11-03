@@ -303,10 +303,7 @@ async function inspectCard(cardId, label) {
   const card = page.locator('.hand .card[data-card-id="' + cardId + '"]').first();
   await card.waitFor({ state: 'visible', timeout: 20000 });
   await card.focus();
-  await card.press('Tab');
-  const info = page.locator('.card-info-button:visible').first();
-  await info.waitFor({ state: 'visible', timeout: 5000 });
-  await info.press('Enter');
+  await card.press('i');
   const detail = page.locator('.card-inspection-modal:visible, .card-inspection-details:visible, .deck-editor-inspector:visible').first();
   await waitStableVisible(detail);
   if (cardId === 'crystalBarrier') {

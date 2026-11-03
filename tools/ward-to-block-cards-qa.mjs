@@ -92,9 +92,9 @@ async function inspector(cardSelector = '.card, .equipment-poker-card, .reward-c
   }
   await wait(200);
   if (await page.locator('.card-inspection-modal').count() === 0) {
-    const info = page.locator('.card-info-button:visible').first();
-    await info.waitFor({ state: 'visible', timeout: 4000 });
-    if (strategy === 'keyboard') await info.press('Enter'); else await info.click();
+    const target = page.locator('.hand .card:visible, .card:visible').first();
+    await target.waitFor({ state: 'visible', timeout: 4000 });
+    if (strategy === 'keyboard') { await target.focus(); await page.keyboard.press('i'); } else await target.click({ button: 'right' });
   }
   const detail = page.locator('.card-inspection-modal, .card-inspection-details, .deck-editor-inspector').filter({ visible: true }).first();
   await waitForStableVisible(detail);

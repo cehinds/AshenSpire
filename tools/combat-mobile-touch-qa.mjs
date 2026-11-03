@@ -23,7 +23,7 @@ try {
         const r = node.getBoundingClientRect();
         const owns = (x, y) => {
           const top = document.elementFromPoint(x, y);
-          return top && (top === node || node.contains(top)) && !top.closest('.card-info-button');
+          return top && (top === node || node.contains(top));
         };
         const center = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
         if (owns(center.x, center.y)) return center;
@@ -153,23 +153,6 @@ try {
       assert(await stance.isVisible(), 'armed defend card reveals player stance icon');
       assert.match(await stance.getAttribute('aria-label'), /defend/i, 'stance derives from the selected defend action');
       assert(await stance.locator('svg path').count(), 'stance icon has visible authored geometry');
-      const cardInspect = page.locator('.card-info-button:visible').filter({ visible: true });
-      await cardInspect.first().waitFor({ state: 'visible' });
-      const cardInspectGeometry = await page.evaluate(() => {
-        const tools = document.querySelector('.combat-tools').getBoundingClientRect().toJSON();
-        const info = [...document.querySelectorAll('.card-info-button')].filter(node => {
-          const r = node.getBoundingClientRect(), style = getComputedStyle(node);
-          return r.width && r.height && style.visibility === 'visible' && style.display !== 'none';
-        }).map(node => ({ rect: node.getBoundingClientRect().toJSON(), ownsCenter: (() => {
-          const r = node.getBoundingClientRect(), top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-          return top === node || node.contains(top);
-        })() }));
-        return { tools, info };
-      });
-      assert(cardInspectGeometry.info.length > 0, 'selected card exposes Inspect');
-      assert(cardInspectGeometry.info.every(info => !overlaps(info.rect, cardInspectGeometry.tools) && info.ownsCenter),
-        `${width}: card Inspect overlaps toolbar or its center is blocked`);
-      result.steps.push({ route: 'card-inspect-clearance', ...cardInspectGeometry }); save();
       await page.screenshot({ path: `${out}/${width}-card-selected.png` });
       await tap('.player .combatant-mini-hud [data-res="hp"]');
       await assertConsumed(self, 'player-hp');

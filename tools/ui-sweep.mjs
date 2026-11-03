@@ -183,41 +183,6 @@ for (const state of wanted) {
       if (shape.mobile) {
         const order = await ev(`(()=>({classes:Math.round(document.querySelector('#cz-classes').getBoundingClientRect().top),preview:Math.round(document.querySelector('.cc-class-preview-host').getBoundingClientRect().top)}))()`);
         check(order.classes < order.preview, `R5 ${cell}: the class list stands above the preview pane`, JSON.stringify(order));
-      } else {
-        // THE BADGE IS ABOVE THE CARD, and the three facts that makes true are
-        // separate: it hangs clear of the face, it is WHOLE inside the scrollport
-        // (which clips at its padding box, so the head room is what is really
-        // asserted here), and it does not cross the section header it used to
-        // straddle. The old form read `.equip-chip.on .card-info-button` — a
-        // selector for a chip that carries no badge, so the check answered null
-        // and had been RED on dev rather than guarding anything (#994).
-        // TWICE, BECAUSE THE SWEEP'S OWN FIXTURE HIDES A CASE: this file asks
-        // for reduced motion, which drops the focus lift, and the head room has
-        // to clear the lift too. The second pass goes back through ?shotSettings
-        // — the real door — for normal motion at UI size S, the smallest named
-        // size and so the largest zoom-compensated badge. That pass is what
-        // caught the 0.8 px the first one could not see (#994).
-        for (const pass of [{ tag: 'reduced motion, Auto size', settings: null }, { tag: 'normal motion, UI size S', settings: { uiScale: 's' } }]) {
-          if (pass.settings) {
-            await send('Page.navigate', { url: `${served.url}?shot=${state.q}&shotSettings=${encodeURIComponent(JSON.stringify(pass.settings))}` }, sessionId);
-            if (!await until(state.ready)) { check(false, `R5 ${cell} (${pass.tag}): creation rendered`, 'landmark never appeared'); continue; }
-            await wait(700);
-          }
-          await click('[data-face="equipment"]'); await click('[data-face="armour"]'); await wait(300);
-          await click('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');
-          const info = await ev(`(()=>{const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');if(!card)return null;const b=card.querySelector('.card-info-button');if(!b)return {found:false};const cs=getComputedStyle(b);const shown=cs.visibility==='visible'&&cs.opacity!=='0';const r=b.getBoundingClientRect();const c=card.getBoundingClientRect();const port=card.closest('.cc-card-selectors');const ps=port&&getComputedStyle(port);const pr=port&&port.getBoundingClientRect();const clip=pr?pr.top+parseFloat(ps.borderTopWidth):null;const fold=card.closest('details');const face=fold&&fold.querySelector('summary.disc-face');const f=face&&face.getBoundingClientRect();return {found:true,shown,lift:getComputedStyle(card).transform,zoom:getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom').trim(),above:r.bottom<=c.top+1,whole:clip==null||r.top>=clip-0.5,clearsFace:!!f&&r.top>=f.bottom-0.5,face:face?face.textContent.trim().slice(0,16):null,slack:clip==null?null:Math.round((r.top-clip)*10)/10,top:Math.round(r.top),cardTop:Math.round(c.top),faceBottom:f?Math.round(f.bottom):null}})()`);
-          check(!!info && info.found && info.shown && info.above && info.whole && info.clearsFace,
-            `R5 ${cell} (${pass.tag}): the selected armour's information badge stands above its card, whole inside the scrollport and clear of the section face`, JSON.stringify(info));
-        }
-        // AND THE ROOM IS THE BADGE'S OWN, not a copy of today's numbers. The
-        // head and row gap read --inspect-size and --inspect-gap, which main.js
-        // writes from wireframeUi.inspect; typing those defaults into the rule
-        // instead let a bigger badge outgrow its room (at sizeRem 4 / gapPx 20 it
-        // clipped 17.3 px). This raises both tokens the way main.js does and
-        // asserts the room moved with them (#994).
-        const grown = await ev(`(()=>{const r=document.documentElement;const keep=[r.style.getPropertyValue('--inspect-size'),r.style.getPropertyValue('--inspect-gap')];r.style.setProperty('--inspect-size','calc(4 * max(16px / var(--ui-zoom, 1), 1rem))');r.style.setProperty('--inspect-gap','calc(20px / var(--ui-zoom, 1))');const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');const b=card&&card.querySelector('.card-info-button');const port=card&&card.closest('.cc-card-selectors');let out={found:!!b};if(b&&port){const ps=getComputedStyle(port);const clip=port.getBoundingClientRect().top+parseFloat(ps.borderTopWidth);const rr=b.getBoundingClientRect();out={found:true,badge:Math.round(rr.height),head:ps.paddingTop,rowGap:ps.rowGap,slack:Math.round((rr.top-clip)*10)/10,whole:rr.top>=clip-0.5};}keep[0]?r.style.setProperty('--inspect-size',keep[0]):r.style.removeProperty('--inspect-size');keep[1]?r.style.setProperty('--inspect-gap',keep[1]):r.style.removeProperty('--inspect-gap');return out})()`);
-        check(!!grown && grown.found && grown.whole,
-          `R5 ${cell}: a bigger shared badge takes the room with it — the head and row gap follow --inspect-size and --inspect-gap`, JSON.stringify(grown));
       }
     }
     if (state.name === 'armoury' && shape.mobile) {

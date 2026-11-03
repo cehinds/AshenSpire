@@ -34,7 +34,7 @@ try{
  cpSync(join(source,'src/content'),join(root,'src/content'),{recursive:true});
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('.hand .card [data-rules-complete="true"]').first().waitFor({timeout:120000});await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.images].filter(i=>i.getBoundingClientRect().width>0).map(i=>i.decode().catch(()=>{})));});
  await page.screenshot({path:join(output,'game-desktop.png')});
- const last=cards.last(),glyph=await last.locator('.combat-sigil-action').boundingBox();await page.mouse.click(glyph.x+glyph.width/2,glyph.y+glyph.height/2);await last.locator('.card-info-button').click();await page.locator('.card-inspection-modal').waitFor();await page.screenshot({path:join(output,'game-inspection.png')});await page.keyboard.press('Escape');
+ const last=cards.last(),glyph=await last.locator('.combat-sigil-action').boundingBox();await page.mouse.click(glyph.x+glyph.width/2,glyph.y+glyph.height/2);await last.click({button:'right'});await page.locator('.card-inspection-modal').waitFor();await page.screenshot({path:join(output,'game-inspection.png')});await page.keyboard.press('Escape');
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(output,'game-phone.png')});
  assert.deepEqual(errors,[]);console.log('PASS native in-game desktop, phone and inspection screenshots; no page errors.');
 }finally{await browser.close();server.server.closeAllConnections?.();server.server.close();}
