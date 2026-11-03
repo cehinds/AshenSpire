@@ -105,6 +105,10 @@ export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hoo
     const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx });
     if (quote.totalSp > Rounds.enemyAvailableSp(enemy)) return null;
     if (!Rounds.commitEnemySp(ctx, enemy, moveId, quote.sp)) return null;
+    // SPEC §4.6b (owner, 2026-11-02): SP spent reacting in the player's turn comes out of the enemy's next turn. It is
+    // owed once through pendingStaminaLoss (refill = max - loss at enemyOwnerTurnStart); the stamina spent now only
+    // gates further reactions this turn, since that refill replaces it.
+    if (ctx.phase === 'player' && quote.sp > 0) enemy.pendingStaminaLoss = (enemy.pendingStaminaLoss || 0) + quote.sp;
     spPayment = { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp };
   }
   const stack = ctx.reactionStack ||= { groupKey: group.key, entries: [], resolving: false };

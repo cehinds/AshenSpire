@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-03
+
+- **Enemy intents match what the enemy does** ([#2509](https://github.com/cehinds/AshenSpire/pull/2509), `0.7.3.64`). If a Poise break, range change or the enemy's own reaction leaves it short of SP during your turn, its intent updates at once and the queued moves it can no longer afford are dropped, so it never shows one move and does another.
+
 ## 2026-11-02
 
 - **Upgrade screens look like the deck editor** ([#2508](https://github.com/cehinds/AshenSpire/pull/2508), `0.7.3.64`). The card upgrade and weapon upgrade pickers now use the deck editor's layout: the same rows, selected outline, preview pane, footer buttons and phone behaviour.
