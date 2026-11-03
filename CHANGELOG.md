@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
+- **Upgrade screens look like the deck editor** ([#2508](https://github.com/cehinds/AshenSpire/pull/2508), `0.7.3.62`). The card upgrade and weapon upgrade pickers now use the deck editor's layout: the same rows, selected outline, preview pane, footer buttons and phone behaviour.
 - **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.62`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
 - **Sharper battlefield sides** ([#2504](https://github.com/cehinds/AshenSpire/pull/2504), `0.7.3.60`). The battle backdrop is framed closer and its side fill is much less blurred, so the edges of the battlefield read as real art again.
 - **Damage numbers show the full hit** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.3.58`). An 8 hit into 5 Block now floats 8, not the 3 that got through; a fully blocked hit floats its number beside BLOCKED.

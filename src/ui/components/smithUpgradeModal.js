@@ -19,9 +19,10 @@ import { renderCollectibleCard } from './collectibleCard.js';
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import {
-  el, html, modalHead, modalFooter, pill, button, eyebrow, prose, flavour, artWell, detailCard,
-  statRow, blocker, glyph, railItem, railed, statusText, categoryNav, stampModalSize,
+  el, html, pill, eyebrow, prose, flavour, artWell, detailCard,
+  statRow, blocker, glyph, statusText,
 } from '../kit/index.js';
+import { mountUpgradeDesk, deskRow, deskArt } from './upgradeDesk.js';
 import { renderCard } from './card.js';
 // The interaction router goes through the framework's adopted door.
 import { armOptionDecision } from '../../framework/optionDecision.js';
@@ -29,9 +30,8 @@ import { t } from '../strings.js';
 import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { FOLD_GLYPH } from './foldGlyph.js';
-import { workspaceFrame, markCurrent } from './w1Workspace.js';
 import { pairSpaced, deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
-import { smithWorkspaceVars, smithCandidateRows, smithSelectorFace, smithPaneSlots } from '../models/SmithWorkspaceModel.js';
+import { smithCandidateRows, smithPaneSlots } from '../models/SmithWorkspaceModel.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -59,33 +59,17 @@ export function mountSmithUpgradeModal(host, initialModel, {
   const returnFocus = returnFocusElement instanceof HTMLElement
     ? returnFocusElement
     : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil smith-modal-veil';
-  const modal = document.createElement('section');
-  modal.className = 'modal smith-upgrade-modal';
-  stampModalSize(modal, 'xl');
-  modal.dataset.wireframe = 'W1i';
-  modal.setAttribute('role', 'dialog');
-  modal.setAttribute('aria-modal', 'true');
-  modal.setAttribute('aria-labelledby', 'smith-modal-title');
-  modal.setAttribute('aria-describedby', 'smith-modal-consequence');
-  modal.tabIndex = -1;
-  // The W1 frame's shares, then the item column's own (it is W1i's 44 of 90,
-  // not a category rail's 21.6).
-  // The door's own three properties go THROUGH the frame, which remembers them:
-  // a later restamp (the Workspace frame choice) re-applies both halves.
-  workspaceFrame(modal, smithWorkspaceVars());
-  markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
-  // W1 header: title left, available stones immediately before the exit.
-  const purse = statusText('', { class: 'smith-header-stones', role: 'status' });
-  const head = modalHead({
-    title: initialModel.properties.title,
-    titleId: 'smith-modal-title',
-    closeLabel: initialModel.properties.backLabel,
-    extras: purse,
+  const desk = mountUpgradeDesk(host, {
+    title: initialModel.properties.title, titleId: 'smith-modal-title', listLabel: t('smith.items.upgrade'), describedBy: 'smith-modal-consequence',
+    paneId: 'smith-preview-region', paneLabel: 'Selected upgrade preview', backLabel: initialModel.properties.backLabel, backToListLabel: t('common.back'),
+    kind: 'item', hasSelection: Boolean(initialModel.properties.selected),
   });
+  const { veil, panel: modal, purse, reading: previewHost, reason: consequence, backBtn, confirmBtn } = desk;
+  modal.classList.add('smith-upgrade-modal');
+  markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
 
   let currentModel = initialModel;
+  let shownFor = null;
   let closed = false;
   let disarmDecision = null;
 
@@ -158,11 +142,16 @@ export function mountSmithUpgradeModal(host, initialModel, {
    * the inspection door hangs its own `i` control inside it.
    */
   function candidateCard(item, row) {
-    const card = railItem({
-      tag: 'div', label: '', member: item.itemRef, current: item.selected,
+    const { item: wrapper, main: card } = deskRow({
       className: `smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected' : ''}`,
-      attrs: { role: 'option', 'aria-controls': 'smith-preview-region', dataset: item.armamentId ? { armamentId: item.armamentId } : {} },
+      attrs: { role: 'option', tabindex: '0', 'aria-selected': String(Boolean(item.selected)), 'aria-controls': 'smith-preview-region', dataset: item.armamentId ? { armamentId: item.armamentId } : {} },
+      disabled: row.disabled,
+      art: deskArt(itemArt(item, { small: true })),
+      name: item.name,
+      meta: el('span', { class: 'deck-editor-meta smith-row-text' }, statusText(t(row.status.id, row.status.tokens), { class: 'smith-row-status' })),
+      side: [pill({ label: String(item.inventoryCount), attrs: { class: 'smith-weapon-count', 'aria-label': `${item.inventoryCount} in inventory` } })],
     });
+    card.wrapper = wrapper;
     card.dataset.itemRef = item.itemRef;
     // A Blacksmith-gated item stays listed but disabled: dimmed, announced as
     // such, still selectable (the pane then disables Upgrade) and still in the
@@ -171,14 +160,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       card.classList.add('is-needs-blacksmith');
       card.setAttribute('aria-disabled', 'true');
     }
-    card.replaceChildren(
-      itemArt(item, { small: true }),
-      el('span', { class: 'smith-row-text' }, [
-        el('strong', { class: 'smith-weapon-name', text: item.name }),
-        statusText(t(row.status.id, row.status.tokens), { class: 'smith-row-status' }),
-      ]),
-      pill({ label: String(item.inventoryCount), attrs: { class: 'smith-weapon-count', 'aria-label': `${item.inventoryCount} in inventory` } }),
-    );
+    card.addEventListener('click', () => onSelect(item.itemRef));
     const itemTypeText = item.itemTypes.map((type) => type.label).join(', ') || item.kindLabel;
     card.setAttribute('aria-label', `${item.name}, ${itemTypeText}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone.${row.disabled ? ' Needs a Blacksmith.' : ''} Select to review its exact changes and requirements.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · Tier ${item.currentLevel} → ${item.nextLevel}</div>`
@@ -214,27 +196,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
   // above) the selected item's pane -------------------------------------------
   const rows = smithCandidateRows(initialModel);
   const cards = initialModel.properties.candidates.map((item, index) => candidateCard(item, rows[index]));
-  // The kit's W1 category navigation (rail beside the pane, one selector above
-  // it on compact hosts); the Smith's items are a listbox, not tabs.
-  const nav = categoryNav({ items: cards, ariaLabel: t('smith.items.upgrade'), railAttrs: { role: 'listbox' },
-    face: () => currentModel.properties.selected?.name || t('smith.selector.none'),
-    choose: (itemRef) => onSelect(itemRef) });
-  const previewHost = el('div', { class: 'smith-preview-host' });
-  const consequence = el('p', { class: 'as-flavor smith-consequence', id: 'smith-modal-consequence' });
-  const previewRegion = el('section', {
-    class: 'as-pane smith-preview-region', id: 'smith-preview-region', 'aria-live': 'polite', 'aria-label': 'Selected upgrade preview',
-  }, [previewHost, consequence]);
-  const body = el('div', { class: 'modal-body smith-modal-body' }, railed(nav, previewRegion, { class: 'smith-candidate-region' }));
-  const backBtn = button({ label: initialModel.properties.backLabel, role: 'exit', className: 'subtle smith-back' });
-  const confirmBtn = button({ label: '', weight: 'primary', className: 'smith-confirm' });
-  previewRegion.append(confirmBtn);
-  const foot = modalFooter({ primary: backBtn, className: 'smith-modal-footer', size: 'fill' });
-  modal.append(head, body, foot);
-  veil.appendChild(modal);
-  host.appendChild(veil);
-
-  const back = modal.querySelector('.smith-back');
-  const confirm = modal.querySelector('.smith-confirm');
+  desk.setRows(cards.map((card) => card.wrapper));
+  const back = backBtn;
+  const confirm = confirmBtn;
   // A chosen item the purse cannot pay for says why under the foot (FINISH
   // §6); with nothing chosen the button's own label says "Select an item".
   let confirmBlocked = '';
@@ -310,17 +274,12 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const p = model.properties;
     markUiComponent(modal, UI.smithUpgradeModal, model.variant);
     const selected = p.selected;
-    markCurrent(cards, selected ? selected.itemRef : null);
+    if ((selected ? selected.itemRef : null) !== shownFor) { shownFor = selected ? selected.itemRef : null; desk.follow(selected); }
     for (const card of cards) {
       const on = Boolean(selected) && card.dataset.itemRef === selected.itemRef;
       card.classList.toggle('selected', on);
+      card.setAttribute('aria-selected', String(on));
       markUiComponent(card, UI.smithCandidateCard, on ? 'selected' : 'available');
-    }
-    const face = smithSelectorFace(model);
-    nav.sync(face.text ?? t(face.id));
-    if (!selected) {
-      nav.plan();
-      nav.setOpen(true);
     }
     purse.textContent = `${p.purseLabel} available`;
     consequence.textContent = p.consequence;
@@ -377,7 +336,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
   function close({ restoreFocus = true } = {}) {
     if (closed) return;
     closed = true;
-    nav.release();
     disarmDecision?.();
     disarmDecision = null;
     window.removeEventListener('keydown', onKeydown, true);
@@ -394,8 +352,6 @@ export function mountSmithUpgradeModal(host, initialModel, {
     if (event.defaultPrevented || event.repeat) return;
     if ([...document.querySelectorAll('[aria-modal="true"]')].at(-1) !== modal) return;
     if (event.key === 'Escape') {
-      // An open compact item list closes first; its own listener takes this key.
-      if (modal.querySelector('.as-railed[data-cat-open="true"]')) return;
       event.preventDefault();
       event.stopPropagation();
       backOut();
@@ -423,7 +379,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
 
   // The shell's close box is the same way out as Back.
 
-  modal.querySelector('.modal-close')?.addEventListener('click', backOut);
+  desk.closeBtn.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
