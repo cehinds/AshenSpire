@@ -6,9 +6,8 @@ import { alternativeCombatComposition } from '../src/ui/models/CombatComposition
 
 test('regular combat routes the default stage through the approved alternative perspective', () => {
   const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-  // The default (no classicAppearance) resolves to the alternative composition per fit.
-  assert.match(stage, /import\s*\{[^}]*\balternativeCombatComposition\b[,}]/);
-  assert.match(stage, /const combatComposition = classicAppearance\(\) \? classicCombatComposition : alternativeCombatComposition;/);
+  // The grid composition is the only one.
+  assert.match(stage, /import\s*\{[^}]*\balternativeCombatComposition as combatComposition\b/);
   assert.match(stage, /const sizes = combatComposition\(/);
   assert.equal(resolveDisplayAppearance({}), 'alternative');
   // 2026-10-12: the default perspective is a uniform grid; feet stand on the

@@ -12,7 +12,9 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, appearance = 'alternative', combatExpansionVersion, counterTriggered = false } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, combatExpansionVersion, counterTriggered = false } = {}) {
+  // The one appearance (Classic layout removed, owner 2026-11-03); the mechanics generator keys on this marker.
+  const appearance = 'alternative';
   const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
   if (classDefault) {
     const plan = playerAttackPlan(card, equipment, classId, classDefault);
@@ -20,7 +22,7 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation, c
     // Both queued snapshots and paced beats receive preparation, never retaliation.
     return plan.technique === 'counter' ? { ...plan, technique: 'counterPrepare' } : plan;
   }
-  // Classic keeps its own presentation, without borrowing equipped families.
+  // No class action plan: the equipment-driven presentation below.
   if (DEFAULT_COMBAT_WEAPONS) { equipment = []; animation = null; }
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);

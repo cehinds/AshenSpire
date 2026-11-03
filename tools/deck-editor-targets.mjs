@@ -175,7 +175,7 @@ try {
   await ev(MOUNT(1).replace('  return true;', `
     document.documentElement.style.fontSize = '10px';
     [...editor.root.querySelectorAll('.deck-editor-tile')].find(tile => tile.textContent.includes('Guard Counter'))
-      .querySelector('.deck-editor-inline-inspect').click();
+      .querySelector('.deck-editor-main').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
     return true;`));
   const readingSize = async height => {
     await ev(`document.querySelector('.deck-editor-reading').style.cssText = 'height:${height}px!important;min-height:0!important;max-height:none!important;flex:none!important'`);

@@ -6,7 +6,7 @@
 // by AVAILABLE PIXELS rather than by intent, and the three places that wanted
 // to say less each invented their own mechanism:
 //
-//   * kit.css hid `.card-info-button` on unfocused picker chips with a
+//   * kit.css hid the info badge on unfocused picker chips with a
 //     hand-rolled `:not(.choice-focused)` rule — one flag, one screen, in CSS;
 //   * the inspect modal reached "show everything" by rendering a SECOND
 //     element beside the face (`equipmentDetails`) rather than by the face

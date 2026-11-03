@@ -114,8 +114,7 @@ try {
         await page.locator('.hand .card').first().waitFor();
         const before=await page.evaluate(()=>JSON.stringify(window.__combat));
         const card=page.locator('.hand .card').first();
-        if(phone)await card.tap({position:{x:35,y:70}});else await card.focus();
-        await card.locator('.card-info-button').click();await page.locator('.card-inspection-modal').waitFor();
+        await card.click({button:'right',position:{x:35,y:70}});await page.locator('.card-inspection-modal').waitFor();
         check(await page.evaluate(()=>JSON.stringify(window.__combat))===before,`${shape} Information never plays card`);
         await shot(page,`playing-card-${shape}`);await page.locator('.card-inspection-modal .modal-close').click();
         await open(page,'combat');
@@ -136,8 +135,7 @@ try {
         await open(page,'combat');await page.locator('.hand .card').first().waitFor();
         const playBefore=await page.evaluate(()=>({hand:window.__combat.piles.hand.length,hp:window.__combat.enemies[0].hp}));
         const playable=page.locator('.hand .card').first();
-        if(phone)await playable.tap({position:{x:35,y:70}});else await playable.focus();
-        await playable.locator('.card-info-button').click();await page.locator('.card-inspection-play').click();
+        await playable.click({button:'right',position:{x:35,y:70}});await page.locator('.card-inspection-play').click();
         await page.locator('.combatant.enemy .resunit').first().click();await page.waitForTimeout(1500);
         check(await page.evaluate(before=>window.__combat.piles.hand.length===before.hand-1&&window.__combat.enemies[0].hp<before.hp,playBefore),`${shape} deliberate play and target confirmation resolves damage`);
         await page.locator('.end-turn').click();await page.getByRole('button',{name:'END TURN',exact:true}).click();
@@ -146,14 +144,14 @@ try {
       }
       if(scene==='catalog') {
         const potion=page.locator('.equipment-poker-card').filter({hasText:'Blood Unction'});
-        if(phone){await potion.tap({position:{x:70,y:90}});await potion.locator('.card-info-button').tap();}else await potion.click({position:{x:70,y:90}});
+        await potion.click({button:'right',position:{x:70,y:90}});
         await page.locator('.card-inspection-modal').waitFor();check(await page.locator('.card-inspection-details .tooltip-keyword').count()>0,`${shape} item gallery keyword definitions`);await page.locator('.card-inspection-modal .modal-close').click();
         for(const category of ['Armaments','Armor','Relics','Statuses','Stances','Keywords','Cards']) {
           await page.getByRole('button',{name:category,exact:true}).click();
           check(await page.locator('.review-grid > *').count()>0,`${shape} ${category} corpus renders`);
           if(['Armaments','Armor','Relics'].includes(category)) {
             const item=page.locator('.review-grid .equipment-poker-card').first();
-            if(phone){await item.tap({position:{x:70,y:90}});await item.locator('.card-info-button').tap();}else await item.click({position:{x:70,y:90}});
+            await item.click({button:'right',position:{x:70,y:90}});
             await page.locator('.card-inspection-modal').waitFor();await shot(page,`${category.toLowerCase()}-${shape}`);
             await page.locator('.card-inspection-modal .modal-close').click();
           }
@@ -188,7 +186,7 @@ try {
       }
       const host=document.createElement('div');document.body.append(host);
       for(const def of r.cards.all())for(const upgraded of def.upgrade?[false,true]:[false]){
-        const card=renderCard(r,{cardId:def.id,upgraded},{tooltip:false});host.replaceChildren(card);card.querySelector('.card-info-button').click();
+        const card=renderCard(r,{cardId:def.id,upgraded},{tooltip:false});host.replaceChildren(card);card.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}));
         const modal=document.querySelector('.card-inspection-modal');
         if(!modal?.querySelector('.ctext')?.textContent)bad.push(`card/${def.id}: no effect`);
         if(modal?.querySelector('.tt-kw'))bad.push(`card/${def.id}: expanded glossary`);

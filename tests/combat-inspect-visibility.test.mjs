@@ -60,12 +60,9 @@ test('the dead inspectReady timer is gone and nothing reads it', () => {
   assert.match(tools, /\.combatant-info\[data-placed="true"\]/);
 });
 
-test('A: a hand card Inspect is shown once, as the portal, never in place on the card', () => {
-  assert.match(kit, /\.hand \.card-inspection-target > \.card-info-button \{ visibility:hidden; pointer-events:none; \}/);
-  // The rule must come after the shared in-card visibility rule to win at equal specificity.
-  assert.ok(kit.indexOf(".hand .card-inspection-target > .card-info-button { visibility:hidden")
-    > kit.indexOf(".card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible"),
-  'the hand rule must follow the shared visible rule');
+test('A: no card surface styles or builds an (i) badge any more', () => {
+  assert.doesNotMatch(kit, /card-info-button|hand-info-portal/);
+  assert.doesNotMatch(combatLayers, /card-info-button|hand-info-portal/);
 });
 
 test('C: the stance chip and statuses are not in the rest-state hide list', () => {

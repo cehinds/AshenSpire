@@ -273,25 +273,10 @@
 }
 
 :root .combat[data-layout='formation'] :is(.hand-overlay,.hand) { pointer-events: none !important; }
-:root .combat[data-layout='formation'] .hand :is(.card,.card-info-button) { pointer-events: auto; }
-:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next,.hand-info-portal) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand .card { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { pointer-events: auto; }
 
-:root .combat[data-layout="formation"] .hand[data-wireframe-hand="true"] .card > .card-info-button { pointer-events: auto; }
 
-/* Combat leaves the toolbar outside the card and the reading door inside it.
-   Other card surfaces retain their shared above-card Inspect placement. */
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-info-button {
-  top: calc(4px / var(--ui-zoom, 1)); right: calc(4px / var(--ui-zoom, 1)); left: auto; bottom: auto;
-  transform: none; z-index: 21;
-}
-:root .combat[data-layout='formation'] :is(.card > .card-info-button,.hand-info-portal) {
-  --inspect-box: calc(44px / var(--ui-zoom, 1));
-  width: var(--inspect-box); height: var(--inspect-box);
-  min-width: var(--inspect-box); min-height: var(--inspect-box);
-  max-width: var(--inspect-box); max-height: var(--inspect-box);
-}
-/* The portal's left is the badge centre (handInfoPosition); kit.css centres it
-   with translateX(-50%), which this layout must not cancel. */
 
 /* Approved combat HUD: the actor owns every compact and expanded surface. */
 /* The legacy appearance adds a permanent faction-colored edge. Selection and
@@ -524,15 +509,3 @@
 :root[data-performance='lite'] .combat [data-target-outline='yellow'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--gold)) !important; }
 :root[data-performance='lite'] .combat [data-target-outline='red'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--ember)) !important; }
 
-/* Classic compact controls keep the complete scope label and follow-ups on one
-   line. Their measured width is packed by battlefieldStage; expanded/default
-   HUD intents retain their existing composition and sizing. */
-:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent {
-  flex-direction: row; width: max-content;
-  max-width: calc((100 * var(--view-vw, 1vw) - 16px) / var(--ui-zoom,1));
-}
-:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-damage-read {
-  flex-direction: row; align-items: center; gap: calc(4px / var(--ui-zoom,1));
-}
-:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-actions { flex-wrap: nowrap; }
-:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent :is(.intent-compact,.cr-followups) { flex: none; }

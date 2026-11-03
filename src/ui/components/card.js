@@ -265,7 +265,7 @@ export function renderCard(registries, ref, opts = {}) {
       rawModel.type.abilityLabel,
       rawModel.type.weaponArt,
       model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
-    ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
+    ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Click, tap or press Enter to inspect.' : '');
   };
   deriveModel();
   const sourcePiece = ref.sourceArmamentId

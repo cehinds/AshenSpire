@@ -71,8 +71,11 @@ export function digest(combat) {
 // (enemyActorTurnStarted + enemyMoveUnavailable + enemyMoveEnded). The intent now drops to "no move" during the player's turn,
 // so the enemy turn logs one fewer event pair (event counts 197 -> 195 and 234 -> 232); turns and the RNG position are unchanged.
 // Verified by diffing the two event logs: those are the only differences.
+// Re-pinned 2026-11-03 for raw-hit damage previews (owner: intents and quotes show the hit before Block/Poise/Ward/Counter/Reflect/defensive
+// stance): the stored enemy intent previews (hitDamages/totalDamage) carry the raw hit. Verified by running the fight on the previous engine:
+// player and enemy HP, turn and every RNG counter are identical (PERF1: player 60, enemy 4903, turn 6); only the preview figures differ.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '4e6d01c955a6f0ef', state: 'ead936974b6fb555', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'ad150271be11b3fc', state: '292a2497c42ba3fa', events: 195, turn: 6 }],
   [[4242, 'reaver'], { log: 'd53eccb44b7816e0', state: 'fb524bba89d1c5e8', events: 232, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {

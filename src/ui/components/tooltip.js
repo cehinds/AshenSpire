@@ -477,8 +477,7 @@ export function attachTooltip(el, contentFn, {
   const show = () => {
     pending = null;
     if (!el.isConnected || heldBackInCard(el) || el.closest('[inert], [data-page-locked], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
-    const information = el.querySelector('.card-info-button');
-    const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
+    const avoid = clear || el.parentElement;
     return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
   };
   const queue = (delay, origin = 'transient') => {

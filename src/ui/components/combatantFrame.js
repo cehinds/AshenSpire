@@ -3,7 +3,6 @@
 // role semantics, and component identity.
 import { markSpriteArt } from './spriteArtFlags.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { classicAppearance } from '../displayAppearance.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 
 const ownedClasses = new WeakMap();
@@ -40,7 +39,7 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(frame.classList.contains('enemy') && !classicAppearance() ? leadingHost : widget,
+  appendAll(frame.classList.contains('enemy') ? leadingHost : widget,
     trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   if (action) leadingHost.appendChild(action);
@@ -72,7 +71,7 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
   const card = frame.querySelector('.combatant-card');
   const spriteHost = [...card.children].find(node => node.classList.contains('sprite'));
   const widget = isPlayer ? [...leadingHost.children].find(node => node.classList.contains('combatant-mini-hud')) : card;
-  const statusHost = !isPlayer && !classicAppearance() ? leadingHost : widget;
+  const statusHost = !isPlayer ? leadingHost : widget;
   const isStatuses = (node) => node.classList?.contains('statuses');
   const isAction = (node) => node.classList?.contains('player-action-intent');
   const isName = (node) => node.dataset?.identityPart === 'name';
@@ -143,7 +142,7 @@ export function adoptCombatantFrame(frame) {
   if (name) markName(name, role);
   const sprite = card.querySelector(':scope > .sprite');
   if (sprite) markArtwork(sprite);
-  if (role === 'enemy' && !classicAppearance()) {
+  if (role === 'enemy') {
     for (const status of card.querySelectorAll(':scope > .statuses')) leading.append(status);
   }
   if (role === 'player') {
@@ -206,7 +205,7 @@ export function combatantFrame({
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(role === 'enemy' && !classicAppearance() ? leadingHost : widget,
+  appendAll(role === 'enemy' ? leadingHost : widget,
     trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);

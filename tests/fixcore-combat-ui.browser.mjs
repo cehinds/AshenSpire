@@ -43,7 +43,8 @@ try {
       return { targetId: id, faceHits: damage.hitDamages, total: damage.totalDamage, receipt: damage.damageReceipt };
     });
     assert.ok(fixture.receipt?.hits.length > 1);
-    assert.equal(fixture.total, fixture.receipt.totalDamage, 'Core 2 face and receipt share net HP damage');
+    // Owner, 2026-11-03: the face quotes the raw hit; the receipt's total is the resolved HP damage after Poise, Ward and Block.
+    assert.ok(fixture.total >= fixture.receipt.totalDamage, 'Core 2 face is the raw hit, never below the resolved HP damage');
     const card = page.locator('.hand .card[data-instance-id="qa.multi"]');
     const lane = await card.locator('.hand-hit-lane').boundingBox();
     await page.mouse.click(lane.x + lane.width / 2, lane.y + lane.height * .42);

@@ -215,8 +215,10 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
     applyAttackDamage(l.combat, l.enemy, l.combat.player, 20, [], carrier());
     liveHits.push(hp - l.combat.player.hp);
   }
-  assert.deepEqual(view.hitDamages, liveHits, 'preview hit-by-hit equals live');
-  assert.equal(view.totalDamage, liveHits.reduce((a, b) => a + b, 0));
+  // Owner, 2026-11-03: hitDamages/totalDamage quote the raw hit; the resolved HP loss (the receipt's hpLoss) is what equals live.
+  assert.deepEqual(view.damageReceipt.hits.map(hit => hit.hpLoss), liveHits, 'preview hit-by-hit HP loss equals live');
+  assert.equal(view.hpLoss, liveHits.reduce((a, b) => a + b, 0));
+  assert.equal(view.hitDamages.length, 3);
   assert.ok(liveHits[1] < liveHits[0] + 6 && liveHits[1] === liveHits[2], 'later hits are equal once the stance bonus is gone');
 });
 
@@ -317,7 +319,7 @@ test('a revive token keeps a solo attacker alive through a lethal Reflect return
   }
   assert.equal(liveRun.combat.eventLog.some(e => e.type === 'reviveSpent'), true, 'live spent the token');
   assert.equal(view.hits, liveHits, 'forecast hit count == live');
-  assert.equal(view.totalDamage, hpBefore - liveRun.enemy.hp, 'forecast damage == live');
+  assert.equal(view.hpLoss, hpBefore - liveRun.enemy.hp, 'forecast HP loss == live (totalDamage is the raw hit)');
   assert.equal(view.attackerDead, false);
   // Control: no token, the lethal return still cancels the later hits.
   const bare = prime(0);

@@ -56,10 +56,11 @@ function enemyHit(regs, { hits, block, poise }) {
   primeAccuracyRolls(combat, { count: hits });
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
-  const forecast = combat.eventLog.slice(start).find(e => e.type === 'enemyActorTurnStarted')?.intentPreview?.hitDamages;
+  const forecast = combat.eventLog.slice(start).find(e => e.type === 'enemyActorTurnStarted')?.intentPreview;
+  // Owner, 2026-11-03: hitDamages is the raw hit (never lowered by Block/Poise/pierce); `hpLoss` is the resolved forecast checked against apply.
   settle(combat);
   const events = combat.eventLog.slice(start);
-  return { combat, forecast, events, hits: events.filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id) };
+  return { combat, forecast: forecast?.hpLoss, rawForecast: forecast?.hitDamages, events, hits: events.filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id) };
 }
 
 test('dispatch: an enemy 5x3 piercing action on Block 40 loses 3 x floor(1) = 3 HP, and the forecast matches', () => {
@@ -68,7 +69,7 @@ test('dispatch: an enemy 5x3 piercing action on Block 40 loses 3 x floor(1) = 3 
   assert.deepEqual(hits.map(e => e.amount), [5, 5, 5], 'fixture: three 5-damage hits');
   assert.deepEqual(hits.map(e => e.hpLoss), [1, 1, 1]);
   assert.equal(100 - combat.player.hp, 3);
-  assert.deepEqual(forecast, [1, 1, 1], 'preview matches apply');
+  assert.equal(forecast, 3, 'preview HP loss matches apply');
 });
 
 // Owner, 2026-10-26: the pierced amount meets Poise first, 1:1; only what Poise cannot cover reaches HP.
@@ -78,7 +79,7 @@ test('owner example: a 15 pierce hit, fully Blocked otherwise, vs Poise 8 -> pie
   assert.equal(hits[0].pierced, 3); assert.equal(hits[0].piercePoise, 3);
   assert.equal(hits[0].hpLoss, 0);
   assert.equal(combat.player.persistentPoise.value, 5);
-  assert.deepEqual(forecast, [0], 'preview matches apply');
+  assert.equal(forecast, 0, 'preview HP loss matches apply');
 });
 
 test('owner example: the same hit vs Poise 2 -> Poise 0, Poise broken, HP loss 1', () => {
@@ -87,7 +88,7 @@ test('owner example: the same hit vs Poise 2 -> Poise 0, Poise broken, HP loss 1
   assert.equal(hits[0].hpLoss, 1);
   assert.equal(combat.player.persistentPoise.value, 0);
   assert.ok(events.some(e => e.type === 'poiseBroken' || e.type === 'staggered' || /stagger/i.test(e.type)), 'Poise broke');
-  assert.deepEqual(forecast, [1]);
+  assert.equal(forecast, 1);
 });
 
 test('no Poise pool: the pierce goes straight to HP', () => {
@@ -95,7 +96,7 @@ test('no Poise pool: the pierce goes straight to HP', () => {
   assert.equal(hits[0].pierced, 3); assert.equal(hits[0].piercePoise, 0);
   assert.equal(hits[0].hpLoss, 3);
   assert.equal(combat.player.hp, 97);
-  assert.deepEqual(forecast, [3]);
+  assert.equal(forecast, 3);
 });
 
 test('only what Block would have soaked is pierced: with Block 0 a pierce hit is an ordinary hit (no float, Poise 25% rule)', () => {
@@ -166,7 +167,7 @@ test('property: over a grid of damage, Block and Poise, pierce never lowers HP l
       if (block === 0) assert.ok(!pierceHit.pierceBypassed, `nothing to pierce with no Block: ${label}`);
       // Preview equals apply.
       const c = target(ctxs[2]), d = target(ctxs[3]);
-      const preview = previewDamageHits(c, c.enemies[0], c.player, dmg, [], mk('piercing')).hitDamages[0];
+      const preview = previewDamageHits(c, c.enemies[0], c.player, dmg, [], mk('piercing')).hpLoss;
       primeAccuracyRolls(d);
       const before = d.player.hp;
       applyAttackDamage(d, d.enemies[0], d.player, dmg, [], { ...mk('piercing'), tags: ['camp:physical', 'damage:piercing'] });
@@ -207,7 +208,7 @@ test('property: over multi-hit actions (2-4 hits, mixed damage, Ward on and off)
       const plain = total(ctxs[0], 'slashing');
       const pierce = total(ctxs[1], 'piercing');
       assert.ok(pierce >= plain, `pierce lowered total HP loss: ${label} (${pierce} < ${plain})`);
-      const forecastOf = damageType => previewDamageHits(reset(ctxs[2], state), ctxs[2].enemies[0], ctxs[2].player, dmg, [], carrier(damageType), hits).totalDamage;
+      const forecastOf = damageType => previewDamageHits(reset(ctxs[2], state), ctxs[2].enemies[0], ctxs[2].player, dmg, [], carrier(damageType), hits).hpLoss;
       // Known, older gap (it shows on plain hits too, e.g. 2x10 Block 0 Poise 2): when Poise breaks between hits, the forecast's Vulnerable
       // after the break is one off from the applied hit's. Those cases only get the HP invariant above.
       if (poise > 0 && ctxs[1].player.persistentPoise.value === 0 && hits > 1) { skipped++; continue; }

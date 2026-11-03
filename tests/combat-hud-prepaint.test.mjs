@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-// These source-slice fixtures exercise the retained Classic/co-op HUD path.
+// These source-slice fixtures exercise the expanded/co-op HUD path.
 // Alternative native body-head placement has its own real-pose browser tests.
 // HUD layout geometry tokens unset (getComputedStyle → {}): every offset is 0.
 import {hudGeometry,offsetPlacement} from '../src/ui/models/HudLayoutOffsetModel.js';
@@ -26,13 +26,13 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   const info={style:{},dataset:{},parentElement:leading,getBoundingClientRect:()=>visible?{width:44,height:44,
     left:leading.getBoundingClientRect().left+(parseFloat(info.style.left)||0)*zoom,
     top:leading.getBoundingClientRect().top+(parseFloat(info.style.top)||0)*zoom}:{width:0,height:0}};
-  const sprite={},player={classList:{contains:()=>false},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
+  const sprite={},player={classList:{contains:()=>true},dataset:{},querySelector:selector=>selector==='.sprite'?sprite:
     selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
   combat.querySelector=selector=>selector==='.combat-tools'?tools:selector==='.combat-hud'?{getBoundingClientRect:()=>({bottom:80+delta})}:null;
   combat.querySelectorAll=()=>[]; // The hidden reading door has no painted DOM rectangle.
   field.querySelectorAll=selector=>selector==='.combatant.player'?[player]:[];
   const settledTargets=[{id:'e1',x:264,y:200,width:88},{id:'e3',x:264,y:154,width:88}];
-  const context={hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
+  const context={hudGeometry,offsetPlacement,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
     combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,visibleCombatPanelRect,uiZoom:()=>zoom,
     currentSpriteArtBounds:()=>({left:50,right:130,top:230+delta,bottom:300+delta}),readRestingHand:()=>({clearanceTop:404+delta}),
     playerDetailsPlacement:input=>{options=input;return playerDetailsPlacement(input);},
@@ -80,7 +80,7 @@ test('the first co-op panel reserves every later independently anchored Info bef
   });
   const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),
     querySelectorAll:selector=>selector==='.combatant.player'?players:[]};
-  const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
+  const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
     field,uiZoom:()=>1,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,
     readRestingHand:()=>null,currentSpriteArtBounds:sprite=>({left:60+sprite.index*280,right:104+sprite.index*280,top:224,bottom:300}),
     combatPlayerInfoRect:node=>node.infoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,playerInfoRects:[],

@@ -34,6 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-03
 
+- **No more Inspect text on cards** ([#2515](https://github.com/cehinds/AshenSpire/pull/2515), `0.7.3.82`). Cards no longer show stray "Inspect" text or the (i) badge; right-click, long-press or the I key opens a card's full reading.
+- **Damage previews show the actual hit** ([#2514](https://github.com/cehinds/AshenSpire/pull/2514), `0.7.3.80`). Enemy intents, the reaction prompt, card quotes and target ranges now show the hit before your defenses: an enemy attacking for 13 still shows 13 when you Block or Counter; only stances, statuses and weaknesses change it.
+- **At most 3 enemies per fight** ([#2512](https://github.com/cehinds/AshenSpire/pull/2512), `0.7.3.78`). A fight never holds more than 3 enemies; new encounters with more are rejected when content is built.
+- **Classic layout removed** ([#2513](https://github.com/cehinds/AshenSpire/pull/2513), `0.7.3.76`). The Classic battle layout and its setting are gone; every fight uses the perspective-grid layout, and saves that had Classic on load in the grid.
+- **Enemies no longer hide behind each other** ([#2511](https://github.com/cehinds/AshenSpire/pull/2511), `0.7.3.74`). In the classic layout, enemies keep their spacing again instead of stacking on top of each other, and your character's feet stay above the hand of cards.
 - **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.72`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
 - **Sprites sized to the screen** ([#2507](https://github.com/cehinds/AshenSpire/pull/2507), `0.7.3.70`). The player and enemies are now a fixed share of the screen height (22% on phones, 26% on wider screens), so their sizes no longer jump between screens, enemy counts or poses.
 - **Sprite animation is steadier** ([#2506](https://github.com/cehinds/AshenSpire/pull/2506), `0.7.3.68`). Enemy attack frames now hold evenly at about 9 to 11 frames a second instead of blurring past at up to 45 on phones, and no frame is skipped.

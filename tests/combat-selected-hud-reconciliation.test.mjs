@@ -30,7 +30,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const combat={dataset:{targetHud:'false'},getBoundingClientRect:()=>viewport,querySelector:()=>null};
     const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),querySelectorAll:s=>s==='.combatant.player'?players:[]};
     const begin=source.indexOf('  function placePlayerHud('),end=source.indexOf('  function trackPlayerHud()',begin);
-    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
+    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
       field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
       readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
       combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,
@@ -40,7 +40,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     sync(true);
     assert.deepEqual(options.map(o=>o.gap),[3,4],'incoming compact selected/idle gaps survive');
     assert.equal(options[0].art.top,274,'selected preferred panel remains at artwork bottom');
-    assert.equal(options[1].art.top,287,'idle preferred panel remains below the art before obstacle search');
+    assert.equal(options[1].art.top,134,'idle preferred panel sits above the art before obstacle search');
     for(const input of options)for(const door of doors)assert.ok(input.obstacles.some(o=>o.left===door.left&&o.top===door.top&&o.width===door.width),
       'even the later hidden Info and action are precollected');
   }finally{if(oldStyle===undefined)delete globalThis.getComputedStyle;else globalThis.getComputedStyle=oldStyle;}

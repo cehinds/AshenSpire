@@ -1,7 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
 import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
-import { classicAppearance } from '../displayAppearance.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
@@ -161,7 +160,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
   function gate() {
     const next = targetHudEnabled({ formFactor: document.documentElement.dataset.formFactor,
-      classic: classicAppearance(), layout: combat.dataset.layout || 'formation' }, config);
+      layout: combat.dataset.layout || 'formation' }, config);
     enabled = next;
     if (combat.dataset.targetHud !== String(next)) combat.dataset.targetHud = String(next);
     if (layer.hidden === next) layer.hidden = !next;

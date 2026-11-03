@@ -29,13 +29,8 @@ try {
     }));
     check(geometry.length > 20 && geometry.every(g => Math.abs(g.ratio - 5/7) < .002 && Math.abs(g.split - .6) < .002), 'all canonical weapons: 5:7 and 60:40');
     const card = page.locator('.equipment-poker-card').first();
-    if (phone) {
-      await card.tap({ position:{x:70,y:90} });
-      check(await page.locator('.card-inspection-modal').count() === 0, 'first tap selects only');
-      await page.locator('.equipment-poker-card.inspection-selected.inspection-info-visible').waitFor();
-      check(await card.evaluate(c => c.classList.contains('inspection-selected') && c.classList.contains('inspection-info-visible')), 'first tap selects and reveals information');
-      await card.locator('.card-info-button').tap();
-    } else await card.click({ position:{x:70,y:90} });
+    // Inspection opens by right-click / long-press / the I key (no on-card cue or (i) badge any more).
+    await card.click({ button:'right', position:{x:70,y:90} });
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.locator('.card-inspection-details').innerText().then(t => t.includes('Straight Sword') && t.includes('Requirements')), 'complete details');
     check(await page.locator('.card-inspection-art').evaluate(e => e.getBoundingClientRect().width <= 221), 'half size card');
@@ -43,7 +38,7 @@ try {
     await page.screenshot({ path:resolve(output, `${phone?'phone':'desktop'}-inspection.png`) });
     await page.keyboard.press('Escape');
     check(await page.locator('.card-inspection-modal').count() === 0, 'escape closes');
-    check(await page.evaluate(() => document.activeElement.matches('.equipment-poker-card, .card-info-button')), 'focus restored');
+    check(await page.evaluate(() => document.activeElement.matches('.equipment-poker-card')), 'focus restored');
     await card.focus(); await page.keyboard.press('Enter');
     check(await page.locator('.card-inspection-modal').count() === 1, 'keyboard inspection');
     await page.keyboard.press('Escape');
@@ -88,8 +83,7 @@ try {
     await page.locator('#shop-cat-armaments').click();
     const merchantBefore = await page.evaluate(() => JSON.stringify(window.inspectionRun));
     const offer = page.locator('.shop-inspect-card').first();
-    if (phone) { await offer.tap({position:{x:70,y:90}}); await offer.locator('.card-info-button').tap(); }
-    else await offer.click({position:{x:70,y:90}});
+    await offer.click({button:'right',position:{x:70,y:90}});
     check(await page.locator('.modal .card-inspection-layout').count() === 1, 'merchant shared layout');
     // Scoped to the inspection modal: the W1d shop keeps its own footer primary underneath.
     check(await page.locator('.modal .modal-foot-actions .primary').isDisabled(), 'unaffordable purchase stays disabled while inspect works');
@@ -112,7 +106,7 @@ try {
     const inventoryBefore = await page.evaluate(() => JSON.stringify(window.inspectionRun));
     if (phone) await inventoryCard.tap({position:{x:50,y:85}});
     else await inventoryCard.click({position:{x:50,y:85}});
-    await inventoryCard.locator('.card-info-button').click();
+    await inventoryCard.click({button:'right',position:{x:50,y:85}});
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => JSON.stringify(window.inspectionRun)) === inventoryBefore, 'Inventory information never equips');
     await page.waitForTimeout(400);
@@ -134,7 +128,7 @@ try {
     const smithCard=page.locator('.smith-candidate-card').first();
     if (phone) { await smithCard.tap({position:{x:50,y:70}}); await smithCard.tap({position:{x:50,y:70}}); }
     await smithCard.focus();
-    await smithCard.locator('.card-info-button').click();
+    await smithCard.click({button:'right',position:{x:50,y:70}});
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => window.inspectionSmithCommits===0 && JSON.stringify(window.inspectionRun)) === inventoryBefore, 'Smith inspection never upgrades');
     await page.waitForTimeout(400);
@@ -156,8 +150,8 @@ try {
       await playing.tap({position:{x:35,y:70}});
       await playing.tap({position:{x:35,y:70}});
       check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'two inspection taps never play');
-      await playing.locator('.card-info-button').tap();
-    } else { await playing.focus(); await playing.locator('.card-info-button').click(); }
+      await playing.click({button:'right',position:{x:35,y:70}});
+    } else { await playing.focus(); await page.keyboard.press('i'); }
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'information never plays a card');
     await page.waitForTimeout(400);
@@ -182,8 +176,8 @@ try {
     });
     await page.locator('#app > .equipment-poker-card').focus();
     await page.keyboard.press('Tab');
-    await page.locator('#app > .equipment-poker-card .card-info-button').focus();
-    await page.keyboard.press('Enter');
+    await page.locator('#app > .equipment-poker-card').focus();
+    await page.keyboard.press('i');
     check((await page.locator('.card-inspection-details').innerText()).includes('Complete explanation remains accessible.'), 'long text preserved');
     check(await page.locator('.card-inspection-modal .modal-body').evaluate(e => {e.scrollTop=e.scrollHeight; return e.scrollTop>0;}), 'long inspector scrolls');
     check(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth+1), 'long text no horizontal overflow');
@@ -196,7 +190,7 @@ try {
   shipped.on('pageerror',error=>shippedErrors.push(error.message));
   await shipped.goto(`${base}/AshenSpire.html?shot=combat`);
   await shipped.locator('.hand .card').first().focus();
-  await shipped.locator('.hand .card .card-info-button').first().click();
+  await shipped.keyboard.press('i');
   await shipped.locator('.card-inspection-modal').waitFor();
   check(shippedErrors.length===0, 'regenerated standalone boots and opens inspection');
   await shipped.close();

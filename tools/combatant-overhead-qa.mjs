@@ -115,16 +115,7 @@ try {
     await page.keyboard.press('Tab');
     await card.focus();
     assert.equal(await visibleInfo(), await selectedInfo(), 'card selection shows only the selected combatant Information');
-    const motif = el => {
-      const s=getComputedStyle(el);
-      // CSS zoom can round computed lengths by a fraction of a pixel.
-      const px = value => Math.round(parseFloat(value) * 10) / 10;
-      let zoom = 1;
-      for (let node=el; node; node=node.parentElement) zoom *= Number(getComputedStyle(node).zoom) || 1;
-      return [px(s.width),px(s.height),s.borderTopColor,px(parseFloat(s.borderTopWidth)*zoom),s.backgroundColor,s.color,s.fontFamily,s.fontStyle,s.fontWeight,s.fontSize];
-    };
-    assert.deepEqual(await info.evaluate(motif), await card.locator('.card-info-button').evaluate(motif), 'card and combatant Information share the same motif');
-    await card.locator('.card-info-button').click();
+    await card.click({button:'right'});
     await page.getByRole('button', { name: 'Play card', exact: true }).click();
     assert(await page.locator('.enemy.targetable').count(), 'card is armed for a target');
     const before = await page.evaluate(() => JSON.stringify(window.__combat.piles));

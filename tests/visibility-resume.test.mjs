@@ -443,7 +443,6 @@ const KNOWN = {
   'src/ui/components/combatTools.js': ["'resize'"],
   'src/ui/components/combatRangeAction.js': [["'resize'", 'Schedules only attachment geometry; mount cleanup removes this same listener, disconnects observers and cancels its pending frame without run/combat mutation']],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
-  'src/ui/components/creationInfoLayer.js': ["'resize'"],
   'src/ui/components/dialogueStage.js': ["'resize'"],
   'src/ui/components/equipCompareModal.js': ["'keydown'"],
   'src/ui/components/flask.js': ["'keydown'", "'click'"],

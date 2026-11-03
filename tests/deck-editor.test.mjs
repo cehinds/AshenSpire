@@ -36,6 +36,12 @@ const withDom = fn => withBaseDom((...args) => {
     if (nativeElement === undefined) delete globalThis.HTMLElement; else globalThis.HTMLElement = nativeElement; }
 });
 
+// The (i) badge is gone (owner, 2026-11-03): a right-click on the card opens the inspector at once.
+const openInspector = (scope) => {
+  const main = scope.matches?.('.deck-editor-main') ? scope : scope.querySelector('.deck-editor-main');
+  main.dispatchEvent(new Event('contextmenu', { cancelable: true }));
+};
+
 const REG = createRegistries(contentBundle);
 // Keep the historical equipment filler allocation used by these edit plants.
 const freshRun = (seed = 0x5eed) => createRunState({ seed, classId: 'reaver', registries: REG, combatExpansionVersion: 1 });
@@ -358,7 +364,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     const card = ordinary(run);
     root.querySelector(`.deck-editor-row[data-instance-id="${card.instanceId}"] .deck-editor-main`).click();
     assert.equal(run.deck.length, n, 'inspecting a deck copy does not remove it');
-    root.querySelector('.deck-editor-row .deck-editor-inline-inspect:not([hidden])').click();
+    openInspector(root.querySelector('.deck-editor-row .deck-editor-main[aria-pressed="true"]'));
     root.querySelector('[data-focus-key="selected-remove"]').click();
     assert.equal(run.deck.length, n - 1);
     assert.equal(counter().textContent, `${n - 1} / ${n}–∞`);
@@ -373,7 +379,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     // Tap its collection tile: the same instance comes back.
     root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(card)}"] .deck-editor-main`).click();
     assert.equal(run.deck.length, n - 1, 'inspecting a collection copy does not add it');
-    root.querySelector('.deck-editor-tile .deck-editor-inline-inspect:not([hidden])').click();
+    openInspector(root.querySelector('.deck-editor-tile .deck-editor-main[aria-pressed="true"]'));
     root.querySelector('[data-focus-key="selected-add"]').click();
     assert.ok(run.deck.some((c) => c.instanceId === card.instanceId));
     assert.equal(refusal().hasAttribute('hidden'), true, 'back in bounds, no refusal');
@@ -397,7 +403,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main').focus();
     assert.equal(editor.dispatch({ family: 'controller', button: 0 }), true);
     assert.equal(run.deck.length, n, 'pad A inspects the row');
-    root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-inline-inspect').click();
+    openInspector(root.querySelector('.deck-editor-tile[data-key="basic:guard"]'));
     root.querySelector('[data-focus-key="selected-add"]').focus();
     editor.dispatch({ family: 'controller', button: 0 });
     assert.equal(run.deck.length, n + 1);
@@ -406,7 +412,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     const guardRow = run.deck.filter((c) => c.equipmentRole === 'guard').at(-1);
     root.querySelector(`.deck-editor-row[data-instance-id="${guardRow.instanceId}"] .deck-editor-main`).focus();
     editor.dispatch({ family: 'controller', button: 0 });
-    root.querySelector(`.deck-editor-row[data-instance-id="${guardRow.instanceId}"] .deck-editor-inline-inspect`).click();
+    openInspector(root.querySelector(`.deck-editor-row[data-instance-id="${guardRow.instanceId}"]`));
     root.querySelector('[data-focus-key="selected-remove"]').focus();
     editor.dispatch({ family: 'controller', button: 0 });
     assert.equal(run.deck.length, n);
@@ -433,7 +439,7 @@ test('DOM: Start confirms inside the bounds, and the Escape key cancels', async 
     let done = 0;
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: { deckMinSize: 1 }, onDone: () => { done += 1; } });
     editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main').click();
-    editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-inline-inspect').click();
+    openInspector(editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"]'));
     editor.root.querySelector('[data-focus-key="selected-add"]').click();
     const size = run.deck.length;
     editor.dispatch({ family: 'controller', button: 9 });
@@ -497,7 +503,7 @@ test('Reading Desk: inspector uses one artwork background with independent cutou
       const tiles = deckEditorModel({ registries: REG, run }).collection.filter(tile => tile.equipmentEligible !== false);
       for (const tile of tiles.slice(0, 3)) {
         editor.root.querySelector(`[data-focus-key="tile:${tile.key}"]`).click();
-        editor.root.querySelector(`[data-focus-key="inspect:collection:${tile.key}"]`).click();
+        openInspector(editor.root.querySelector(`[data-focus-key="tile:${tile.key}"]`));
         const face = editor.root.querySelector('.deck-editor-reading .card');
         const images = face.querySelectorAll('[data-component="art"] .playing-card-art');
         assert.equal(images.length, 1, tile.name);
@@ -545,7 +551,7 @@ test('Reading Desk: deck search and Cards mode preserve the run and Back returns
     editor.root.querySelector('[data-focus-key="display:cards"]').click();
     assert.ok(editor.root.querySelector('.deck-editor-row .deck-editor-art'));
     editor.root.querySelector('.deck-editor-row .deck-editor-main').click();
-    editor.root.querySelector('.deck-editor-row .deck-editor-inline-inspect').click();
+    openInspector(editor.root.querySelector('.deck-editor-row'));
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     editor.root.querySelector('[data-focus-key="inspect-back"]').click();
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection', 'Back returns to the list');
@@ -603,7 +609,7 @@ test('Reading Desk: an unordered phone has no mobile tabs; Inspect opens over th
     assert.equal(editor.root.querySelector('[data-mobile-tab]'), null, 'no phone tabs when the deck is not ordered');
     const tile = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
     tile.querySelector('.deck-editor-main').click();
-    tile.querySelector('.deck-editor-inline-inspect').click();
+    openInspector(tile);
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     assert.ok(editor.root.querySelector('.deck-editor-inspector [data-focus-key="inspect-back"]'), 'the inspector stands over the list with Back');
     editor.root.querySelector('[data-focus-key="inspect-back"]').click();
@@ -627,7 +633,7 @@ test('Reading Desk: the first press on a card selects it; pressing its art again
     };
     pressArt();
     assert.equal(view(), 'collection', 'the first press only selects');
-    assert.equal(tile().querySelector('.deck-editor-inline-inspect').textContent, 'i', 'the selected card shows its (i)');
+    assert.equal(tile().querySelector('.deck-editor-inline-inspect'), null, 'no (i) badge is drawn');
     pressArt();
     assert.equal(view(), 'inspect', 'pressing the selected card art opens Inspect');
     editor.close();
@@ -642,7 +648,7 @@ test('Reading Desk: removing the inspected final copy returns Back to the list',
     const reward = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === 'gorefireSlash');
     assert.equal(reward.count, 1);
     editor.root.querySelector(`[data-focus-key="row:${reward.groupKey}"]`).click();
-    editor.root.querySelector(`[data-focus-key="inspect:deck:${reward.groupKey}"]`).click();
+    openInspector(editor.root.querySelector(`[data-focus-key="row:${reward.groupKey}"]`));
     editor.root.querySelector('[data-focus-key="selected-remove"]').click();
     assert.equal(run.deck.some(card => card.instanceId === reward.instanceId), false);
     editor.root.querySelector('[data-focus-key="inspect-back"]').click();
@@ -693,7 +699,7 @@ test('Reading Desk: an equipment-granted card can be inspected and removed to th
     const granted = run.deck.find(card => card.grantedBy);
     const row = editor.root.querySelector(`.deck-editor-row[data-instance-id="${granted.instanceId}"] .deck-editor-main`);
     row.click();
-    row.closest('.deck-editor-item').querySelector('.deck-editor-inline-inspect').click();
+    openInspector(row.closest('.deck-editor-item'));
     assert.equal(editor.root.querySelector('[data-focus-key="selected-remove"]').disabled, false);
     assert.deepEqual(editState(run), before);
     editor.root.querySelector('[data-focus-key="selected-remove"]').click();
@@ -710,19 +716,29 @@ test('Reading Desk: shared glossary explains repeated keywords once', async () =
   assert.match(rows.find(row => row.name.toLowerCase() === 'block').explanation, /attack damage/i);
 });
 
-test('Reading Desk: selection reveals inline Inspect without navigating or changing the deck', async () => {
+test('Reading Desk: the I key on a focused card opens the inspector, with no (i) badge', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun() });
+    const main = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main');
+    main.dispatchEvent(new Event('keydown', { key: 'i', cancelable: true }));
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
+    assert.equal(editor.root.querySelector('.deck-editor-inline-inspect'), null);
+    editor.close();
+  });
+});
+
+test('Reading Desk: selecting a card draws no (i) and does not navigate or change the deck', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun(), before = editState(run);
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     const row = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
-    const inspect = row.querySelector('.deck-editor-inline-inspect');
-    assert.equal(inspect.hidden, true);
+    assert.equal(row.querySelector('.deck-editor-inline-inspect'), null, 'no (i) badge is drawn');
     row.querySelector('.deck-editor-main').click();
-    assert.equal(inspect.hidden, false);
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
     assert.deepEqual(editState(run), before);
-    inspect.click();
+    openInspector(row);
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend');
     assert.equal(editor.root.querySelector('.deck-editor-animation'), null, 'animation is hidden until requested');
@@ -962,7 +978,7 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
     assert.equal(stance.textContent, 'Stance · Attack');
     assert.equal(stance.dataset.stance, 'attack');
     row.querySelector('.deck-editor-main').click();
-    row.querySelector('.deck-editor-inline-inspect').click();
+    openInspector(row);
     const reason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
     // A refusal shown on the reason line (here the Strike is already in the
     // deck) leads the line, and the stance still follows it.
@@ -973,7 +989,7 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
     assert.ok(clean, 'a library card can be added');
     const cleanTile = editor.root.querySelector(`.deck-editor-tile[data-key="${clean.key}"]`);
     cleanTile.querySelector('.deck-editor-main').click();
-    cleanTile.querySelector('.deck-editor-inline-inspect').click();
+    openInspector(cleanTile);
     const cleanReason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
     const cleanStance = cleanTile.querySelector('.deck-editor-stance').textContent;
     assert.ok(cleanReason?.textContent.endsWith(` · ${cleanStance}`), 'the stance follows the count on the reason line');
@@ -1055,7 +1071,7 @@ test('DOM: a disabled inspector ＋ hands focus to its － partner in the same i
       { ...structuredClone(run.deck.find(c => deckVariantKey(c) === variant)), instanceId: 'loose-gorefire' }];
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-main`).click();
-    editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-inline-inspect`).click();
+    openInspector(editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"]`));
     const add = editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
     add.focus();
     add.click();
@@ -1074,7 +1090,7 @@ test('DOM: a basic deck row inspects with an enabled Add that adds a copy of its
     const strike = deckEditorModel({ registries: REG, run, settings: {} }).deck.find(row => row.tileKey === 'basic:attack');
     assert.ok(strike, 'a basic deck row names its own basic tile');
     editor.root.querySelector(`[data-focus-key="row:${strike.groupKey}"]`).click();
-    editor.root.querySelector(`[data-focus-key="inspect:deck:${strike.groupKey}"]`).click();
+    openInspector(editor.root.querySelector(`[data-focus-key="row:${strike.groupKey}"]`));
     const add = editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
     assert.equal(add.disabled === true || add.hasAttribute('disabled'), false, 'Add is on for a basic');
     add.click();
@@ -1159,7 +1175,7 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
     const off = (node) => !node || node.disabled === true || node.hasAttribute('disabled');
     const inspectDeckRow = (groupKey) => {
       editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`).click();
-      editor.root.querySelector(`[data-focus-key="inspect:deck:${groupKey}"]`).click();
+      openInspector(editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`));
     };
 
     // Every copy of Gorefire is in the deck: Remove works, Add waits.
@@ -1171,7 +1187,7 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
 
     // Its library tile now has a copy outside the deck: Add is on, Remove is off on the tile.
     editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-main`).click();
-    editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-inline-inspect`).click();
+    openInspector(editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"]`));
     assert.equal(off(add()), false, 'Add is on for a library copy');
     assert.equal(off(remove()), true, 'Remove is off with no copy in the deck');
     add().click();
@@ -1257,7 +1273,7 @@ test('DOM: a phone-width change keeps an open deck-row inspection; Back then lan
       const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
       const groupKey = deckEditorModel({ registries: REG, run, settings: {} }).deck.find(row => row.cardId === 'gorefireSlash').groupKey;
       editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`).click();
-      editor.root.querySelector(`[data-focus-key="inspect:deck:${groupKey}"]`).click();
+      openInspector(editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`));
       assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
       query.matches = true;
       for (const fn of [...listeners]) fn({ matches: true });
@@ -1284,7 +1300,7 @@ test('DOM: under the phone inspector the list is inert and hidden from assistive
       const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
       const tile = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
       tile.querySelector('.deck-editor-main').click();
-      tile.querySelector('.deck-editor-inline-inspect').click();
+      openInspector(tile);
       assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
       assert.ok(panes(editor).length >= 2);
       for (const node of panes(editor)) {
@@ -1304,7 +1320,7 @@ test('DOM: under the phone inspector the list is inert and hidden from assistive
       const wide = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
       const wideTile = wide.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
       wideTile.querySelector('.deck-editor-main').click();
-      wideTile.querySelector('.deck-editor-inline-inspect').click();
+      openInspector(wideTile);
       assert.equal(wide.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
       for (const node of panes(wide)) assert.equal(node.hasAttribute('inert'), false, 'desktop never sets inert');
       wide.close();
@@ -1644,7 +1660,7 @@ test('Reading Desk: selecting or focusing a new row immediately replaces a previ
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     const counter = editor.root.querySelector('.deck-editor-row[data-instance-id="' + run.deck.find(card => card.cardId === 'guardCounter').instanceId + '"]');
     counter.querySelector('.deck-editor-main').click();
-    counter.querySelector('.deck-editor-inline-inspect').click();
+    openInspector(counter);
     assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'guardCounter');
     const defend = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main');
     defend.focus();

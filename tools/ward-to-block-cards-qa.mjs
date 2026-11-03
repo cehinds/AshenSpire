@@ -92,9 +92,9 @@ async function inspector(cardSelector = '.card, .equipment-poker-card, .reward-c
   }
   await wait(200);
   if (await page.locator('.card-inspection-modal').count() === 0) {
-    const info = page.locator('.card-info-button:visible').first();
-    await info.waitFor({ state: 'visible', timeout: 4000 });
-    if (strategy === 'keyboard') await info.press('Enter'); else await info.click();
+    const target = page.locator('.hand .card:visible, .card:visible').first();
+    await target.waitFor({ state: 'visible', timeout: 4000 });
+    if (strategy === 'keyboard') { await target.focus(); await page.keyboard.press('i'); } else await target.click({ button: 'right' });
   }
   const detail = page.locator('.card-inspection-modal, .card-inspection-details, .deck-editor-inspector').filter({ visible: true }).first();
   await waitForStableVisible(detail);
@@ -153,9 +153,7 @@ try {
     await deckCard.waitFor({ state: 'visible', timeout: 20000 });
     await deckCard.click();
     await page.waitForFunction(element => element.getAttribute('aria-pressed') === 'true', await deckCard.elementHandle(), { timeout: 10000 });
-    const inspectButton = page.locator('.deck-editor-inline-inspect:visible').first();
-    await inspectButton.waitFor({ state: 'visible', timeout: 10000 });
-    await inspectButton.click();
+    await deckCard.click({ button: 'right' });
     const deckDetail = page.locator('.deck-editor-inspector:visible').first();
     await waitForStableVisible(deckDetail);
     const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });
