@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
+- **Sprite animation is steadier** ([#2506](https://github.com/cehinds/AshenSpire/pull/2506), `0.7.3.52`). Enemy attack frames now hold evenly at about 9 to 11 frames a second instead of blurring past at up to 45 on phones, and no frame is skipped.
 - **Hand reprices right after a play** ([#2497](https://github.com/cehinds/AshenSpire/pull/2497), `0.7.3.52`). After you play a card, the hand now shows the new costs at once, so Evade+ shows and charges 1 SP in Defend stance instead of refusing with "Not enough stamina".
 - **Block and AC swap places on the HUD** ([#2495](https://github.com/cehinds/AshenSpire/pull/2495), `0.7.3.50`). Your Block now sits in the square left of the health bar, and AC leads the badge row beside its "AC" label.
 - **Scene counter moves into the button row on phones** ([#2493](https://github.com/cehinds/AshenSpire/pull/2493), `0.7.3.48`). On a narrow phone, Continue now stands alone, full width and centred, and the scene counter sits at the left of the Pause, Settings and Skip row below it.
