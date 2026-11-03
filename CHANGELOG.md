@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
-## 2026-11-02
+## 2026-11-03
 
 - **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.64`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
+- **Enemy intents match what the enemy does** ([#2509](https://github.com/cehinds/AshenSpire/pull/2509), `0.7.3.64`). If a Poise break, range change or the enemy's own reaction leaves it short of SP during your turn, its intent updates at once and the queued moves it can no longer afford are dropped, so it never shows one move and does another.
+
+## 2026-11-02
+
 - **Upgrade screens look like the deck editor** ([#2508](https://github.com/cehinds/AshenSpire/pull/2508), `0.7.3.64`). The card upgrade and weapon upgrade pickers now use the deck editor's layout: the same rows, selected outline, preview pane, footer buttons and phone behaviour.
 - **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.62`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
 - **Sharper battlefield sides** ([#2504](https://github.com/cehinds/AshenSpire/pull/2504), `0.7.3.60`). The battle backdrop is framed closer and its side fill is much less blurred, so the edges of the battlefield read as real art again.

@@ -32,12 +32,14 @@ test('matching stance cannot reduce a multi-hit hound lunge below two SP', () =>
   const run = createRunState({ registries: baseRegistries, classId: 'reaver', seed: 511 });
   const ctx = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['blightHound'] });
   const enemy = ctx.enemies[0];
+  // Dispatch first: every player action re-checks the plan (SPEC 4.6b), so the unaffordable lunge is forced in after it
+  // and this test still exercises the act-time refusal that backs that check up.
+  dispatch(ctx, { type: 'setReactions', enabled: false });
   enemy.intent = { ...enemy.intent, moveId: 'lunge' };
   enemy.plannedMoves = [];
   enemy.combatStance = { camp: 'physical', maneuver: 'smash', range: 'melee' };
   Object.assign(enemy, { basePrecisionBonus: 1000, maxStamina: 1, stamina: 1 });
   ctx.player.block = 100;
-  dispatch(ctx, { type: 'setReactions', enabled: false });
   primeAccuracyRolls(ctx, { count: 3 });
   const start = ctx.eventLog.length;
   dispatch(ctx, { type: 'endTurn' });
