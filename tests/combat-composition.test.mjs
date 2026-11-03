@@ -71,7 +71,8 @@ test('solo player is raised above the hand and enemies recede toward the upper r
   // Re-pinned 2026-11-02 (owner: one size rule). Composition only places; it used to
   // grow a solo player x1.28 (192) and lift enemies to a floor (75). Sizes pass through.
   assert.equal(result[0].visibleHeight,150);
-  assert.equal(result[0].ground-result[0].visibleHeight*.12,440);
+  // Re-pinned 2026-11-03: feet stand on the hand's top edge, never inside the hand area.
+  assert.equal(result[0].ground,440);
   assert.equal(result[0].x,390*.32);
   assert.equal(result[1].visibleHeight,150);
   assert.equal((result[1].x+result[2].x)/2,390*.76);
