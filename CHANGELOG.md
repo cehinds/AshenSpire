@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-03
 
-- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.64`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
-- **Enemy intents match what the enemy does** ([#2509](https://github.com/cehinds/AshenSpire/pull/2509), `0.7.3.64`). If a Poise break, range change or the enemy's own reaction leaves it short of SP during your turn, its intent updates at once and the queued moves it can no longer afford are dropped, so it never shows one move and does another.
+- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.66`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
+- **Enemy intents match what the enemy does** ([#2509](https://github.com/cehinds/AshenSpire/pull/2509), `0.7.3.66`). If a Poise break, range change or the enemy's own reaction leaves it short of SP during your turn, its intent updates at once and the queued moves it can no longer afford are dropped, so it never shows one move and does another.
 
 ## 2026-11-02
 
