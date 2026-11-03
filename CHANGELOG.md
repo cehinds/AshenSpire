@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
-- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.60`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
-- **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.60`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
+- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.62`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
+- **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.62`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
 - **Sharper battlefield sides** ([#2504](https://github.com/cehinds/AshenSpire/pull/2504), `0.7.3.60`). The battle backdrop is framed closer and its side fill is much less blurred, so the edges of the battlefield read as real art again.
 - **Damage numbers show the full hit** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.3.58`). An 8 hit into 5 Block now floats 8, not the 3 that got through; a fully blocked hit floats its number beside BLOCKED.
 - **Readable reaction modal, bigger desktop cards** ([#2502](https://github.com/cehinds/AshenSpire/pull/2502), `0.7.3.56`). The reaction choice has larger, high-contrast text on a solid panel, and cards are 20% larger on desktops and laptops (phones unchanged).
