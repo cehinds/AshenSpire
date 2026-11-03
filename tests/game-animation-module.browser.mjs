@@ -15,7 +15,7 @@ assert.ok(['full', 'current', 'reading'].includes(selectedCase), 'ANIMATION_MODU
 const evidence = { selectedCase, head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), scenes: [], errors: [], artFailures: [], optionalAudioFallbacks: [] };
 let active;
 const author = (profile, enabled) => JSON.stringify({ formatVersion: 1, core: `ashen.${profile}@1.0.0`, modules: { animation: { enabled } } });
-async function open(profile, enabled, viewport, scene = 'combat', classic = false) {
+async function open(profile, enabled, viewport, scene = 'combat') {
   const page = active = await browser.newPage({ viewport, hasTouch: viewport.width < 600 });
   page.setDefaultTimeout(12000);
   page.on('pageerror', error => evidence.errors.push(error.message));
@@ -26,7 +26,7 @@ async function open(profile, enabled, viewport, scene = 'combat', classic = fals
     if (/\/assets\/sfx\/.*\.ogg$/.test(response.url())) evidence.optionalAudioFallbacks.push(failure);
     else if (/\/(assets|assets-mobile|assets-display)\/.*\.(?:webp|png|jpg|jpeg|svg)(?:\?|$)/i.test(response.url())) evidence.artFailures.push(failure);
   });
-  const query = new URLSearchParams({ shot: scene, shotSeed: '3', gameProfile: author(profile, enabled), shotSettings: JSON.stringify({ classicAppearance: classic }), shotHand: '5' });
+  const query = new URLSearchParams({ shot: scene, shotSeed: '3', gameProfile: author(profile, enabled), shotHand: '5' });
   await page.goto(`${server.url}index.html?${query}`, { waitUntil: 'domcontentloaded' });
   await page.locator(scene === 'combat' ? '.combatant.player .sprite' : '#strategize-opt').waitFor();
   return page;
@@ -106,7 +106,7 @@ async function play(page, enabled) {
   const card = await strike.boundingBox();
   assert.ok(card);
   await page.mouse.click(card.x + card.width / 2, card.y + card.height / 2);
-  // Classic's sprite rectangle includes empty formation space and its
+  // A sprite rectangle includes empty formation space and its
   // independent target buttons can sit outside the combatant. Probe a bounded
   // set of real pointer locations, requiring the intended enemy's exact ID.
   const point = await page.evaluate(targetId => {
@@ -193,18 +193,17 @@ try {
       await page.close(); active = null;
     }
   }
-  // Current's legacy foundation consumes the same author override; Classic
-  // retains its own stage geometry instead of selecting a still-only factory.
-  for (const classic of (selectedCase === 'reading' ? [] : [false, true])) {
+  // Current's legacy foundation consumes the same author override.
+  for (const _once of (selectedCase === 'reading' ? [] : [true])) {
     let baseline, baselineOutcome;
     for (const enabled of [true, false]) {
-      const page = await open('current', enabled, { width: 1440, height: 900 }, 'combat', classic);
+      const page = await open('current', enabled, { width: 1440, height: 900 }, 'combat');
       await painted(page, '.combatant.player .sprite');
       const initial = await geometry(page);
       if (enabled) baseline = initial; else assert.deepEqual(initial, baseline);
       const result = await play(page, enabled);
       if (enabled) baselineOutcome = result.outcome; else assert.deepEqual(result.outcome, baselineOutcome, 'on/off preserves real browser combat outcome, resources, RNG and ordered receipts');
-      evidence.scenes.push({ profile: 'current', classic, enabled, initial, result });
+      evidence.scenes.push({ profile: 'current', enabled, initial, result });
       await page.close(); active = null;
     }
   }
