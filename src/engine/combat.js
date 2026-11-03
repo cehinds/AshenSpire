@@ -93,6 +93,7 @@ export { playerWeightClass };
 import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { limitEnemyIds } from '../model/combatLimits.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
@@ -158,7 +159,7 @@ function recoverAtTurnEnd(combat) {
 }
 
 export function createCombat({
-  registries, rng, player, enemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
   // met at a later tier hits harder). Stamped on each enemy entity, so a
   // snapshot carries it; 1 stamps nothing.
@@ -187,6 +188,8 @@ export function createCombat({
   normalPreview = null,
   combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless', gameProfile = null, rangePolicy = null,
 }) {
+  // Owner (2026-11-03): a combat never has more than 3 enemies (model/combatLimits.js).
+  const enemyIds = limitEnemyIds(requestedEnemyIds);
   if (configuredCombat({ gameProfile })) {
     // Keep the existing orchestrator; new profile providers replace legacy v2 extras.
     combatExpansionVersion = 2;

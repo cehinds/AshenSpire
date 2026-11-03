@@ -23,12 +23,12 @@ try {
   for (const [width, height] of [[1440, 900], [1366, 768], [1920, 1080]]) {
     const page = await browser.newPage({ viewport: { width, height } });
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(`${base}${entry}?shot=combat&gameProfile=core&shotEnemyCount=6&shotEnemyContext=status`, { waitUntil: 'networkidle' });
+    await page.goto(`${base}${entry}?shot=combat&gameProfile=core&shotEnemyCount=3&shotEnemyContext=status`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(300);
     assert.equal(await page.locator('.combat').getAttribute('data-target-hud'), 'true');
     const played = await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length);
     await tapCard(page, 'core.strike');
-    assert.equal(await page.locator('.combatant.target-hud-candidate').count(), 6);
+    assert.equal(await page.locator('.combatant.target-hud-candidate').count(), 3);
     await page.waitForTimeout(750);
     const geometry = await page.evaluate(() => ({
       panels: [...document.querySelectorAll('.target-hud-detail.visible:not(.leaving)')].map(node => ({ id: node.dataset.eid, ...node.getBoundingClientRect().toJSON() })),
@@ -37,7 +37,7 @@ try {
       played: window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length,
       focused: [...document.querySelectorAll('.target-hud-focused')].map(node => node.dataset.eid),
     }));
-    assert.equal(geometry.panels.length, 6); assert.equal(geometry.played, played, 'eligibility previews never play a card');
+    assert.equal(geometry.panels.length, 3); assert.equal(geometry.played, played, 'eligibility previews never play a card');
     for (const a of geometry.panels) {
       assert.ok(a.left >= 0 && a.top >= 0 && a.right <= width && a.bottom <= height);
       for (const b of geometry.panels) if (a !== b) assert.equal(overlap(a, b), false, `${width} panel collision ${a.id}/${b.id}`);
