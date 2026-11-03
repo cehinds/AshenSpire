@@ -32,12 +32,14 @@ export const COMBAT_TIMING = Object.freeze({
   calloutLifeMs: 1400,
   calloutMinLifeMs: 700,
   calloutInstantMs: 500,   // the Instant pace keeps the classic short word
-  // Sprite frames: each pose frame is held at least this share of the Animation step duration
-  // (390 ms by default -> 109 ms at Combat speed 1), divided by the Combat speed, clamped below.
-  // Mobile fast (195 ms) therefore holds ~55 ms. Instant and Reduced motion hold nothing.
-  frameHoldShare: 0.28,
-  frameHoldMinMs: 40,
-  frameHoldMaxMs: 160,
+  // Sprite frame rates (owner, 2026-11-02: "Sprite Animation is too fast and looks twitchy"). Base rates at
+  // Combat speed 1 and the default 390 ms Animation step; the hold per frame is 1000 / fps, divided by the
+  // Combat speed once and scaled by the step duration setting, then clamped below. Every action frame is held
+  // for the same time, so a swing steps evenly. Instant and Reduced motion hold nothing.
+  spriteActionFps: 9,      // attack, defend, cast, enemy actions: 111 ms a frame at x1, 89 ms at the default x1.25
+  spriteIdleFps: 7,        // a looping idle (6-8 fps). No sprite idle loop ships today; idleFrameMs() is its clock
+  frameHoldMinMs: 75,      // fastest a frame may go at any speed: 13.3 fps (was 40 ms = 25 fps at high speed)
+  frameHoldMaxMs: 160,     // slowest: 6.3 fps at the lowest Combat speed
   reaverRunHoldShare: 0.6, // the 60-step Reaver painting changes image 18 times; each change holds this share of the floor
 });
 
@@ -93,12 +95,16 @@ export function calloutLifeMs() {
   if (getAnimSpeed() === 'instant') return COMBAT_TIMING.calloutInstantMs;
   return Math.round(Math.max(COMBAT_TIMING.calloutMinLifeMs, COMBAT_TIMING.calloutLifeMs / combatPacing.speed));
 }
-// The shortest time one sprite frame is shown, in ms (0 on Instant and Reduced motion).
-export function frameHoldMs({ reduced = false } = {}) {
+// The time one sprite frame is shown, in ms (0 on Instant and Reduced motion). The rate comes from
+// COMBAT_TIMING.spriteActionFps; the Combat speed divides it once and the Animation step duration scales it.
+function holdFor(fps, reduced) {
   if (reduced || !ANIM_SPEEDS[getAnimSpeed()]) return 0;
-  const hold = combatPacing.animationMs * COMBAT_TIMING.frameHoldShare / combatPacing.speed;
+  const hold = 1000 / fps * (combatPacing.animationMs / ACTION_PACING.animationStepDurationMs) / combatPacing.speed;
   return Math.round(Math.min(COMBAT_TIMING.frameHoldMaxMs, Math.max(COMBAT_TIMING.frameHoldMinMs, hold)));
 }
+export function frameHoldMs({ reduced = false } = {}) { return holdFor(COMBAT_TIMING.spriteActionFps, reduced); }
+// The same for a looping idle (slower than an action).
+export function idleFrameMs({ reduced = false } = {}) { return holdFor(COMBAT_TIMING.spriteIdleFps, reduced); }
 // The sprite services' timing object: every entry scaled, then the lunge and the reaction (the two a single
 // frame is shown for) lifted to the frame hold, so a recoil or hurt pose is never a flicker.
 function spriteSpeedFor(pace, spriteScale, minFrameMs) {
