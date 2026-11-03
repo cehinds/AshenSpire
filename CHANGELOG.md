@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-03
 
-- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.68`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
-- **Sprites sized to the screen** ([#2507](https://github.com/cehinds/AshenSpire/pull/2507), `0.7.3.68`). The player and enemies are now a fixed share of the screen height (22% on phones, 26% on wider screens), so their sizes no longer jump between screens, enemy counts or poses.
+- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.70`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
+- **Sprites sized to the screen** ([#2507](https://github.com/cehinds/AshenSpire/pull/2507), `0.7.3.70`). The player and enemies are now a fixed share of the screen height (22% on phones, 26% on wider screens), so their sizes no longer jump between screens, enemy counts or poses.
 - **Sprite animation is steadier** ([#2506](https://github.com/cehinds/AshenSpire/pull/2506), `0.7.3.68`). Enemy attack frames now hold evenly at about 9 to 11 frames a second instead of blurring past at up to 45 on phones, and no frame is skipped.
 - **Enemy intents match what the enemy does** ([#2509](https://github.com/cehinds/AshenSpire/pull/2509), `0.7.3.66`). If a Poise break, range change or the enemy's own reaction leaves it short of SP during your turn, its intent updates at once and the queued moves it can no longer afford are dropped, so it never shows one move and does another.
 
