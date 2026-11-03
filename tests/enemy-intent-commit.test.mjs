@@ -170,3 +170,33 @@ test('reaction SP is not counted twice: the next turn starts at pool minus the o
   const started = combat.eventLog.filter(row => row.type === 'enemyMoveStarted' && !row.reaction && row.sourceId === enemy.id);
   assert.equal(started.length, 1, 'one affordable move, not zero (a double count would leave 0 SP)');
 });
+
+// Version-1 action rules keep a player's Advance temporary to its action, so the knight's reaction still has a band to close.
+function farFight(band) {
+  const combat = fight('gildedKnight', 2);
+  combat.core2ActionRulesVersion = 1;
+  const enemy = combat.enemies[0];
+  combat.rangeState.engagements[rangePairKey('player:player', `enemy:${enemy.id}`)] = band;
+  return { combat, enemy };
+}
+
+test('an Advance an enemy pays reacting in the player turn is owed with its reaction SP, and the plan is trimmed', () => {
+  const { combat, enemy } = farFight(1);
+  assert.equal(enemy.maxStamina, 2);
+  play(combat, combat.piles.hand.find(row => row.cardId === 'core.strike'));
+  assert.equal(combat.eventLog.filter(row => row.type === 'combatEnemyReactionStacked').length, 1, 'the knight reacted');
+  assert.equal(enemy.stamina, 0, 'it paid 1 SP for the reaction and 1 SP to Advance');
+  assert.equal(enemy.pendingStaminaLoss, 2, 'both come out of its next turn (pool 2 - 2), not only the reaction SP');
+  assert.deepEqual(shown(enemy), [], 'nothing it can no longer afford stays in the plan');
+  dispatch(combat, { type: 'endTurn' });
+  settle(combat);
+  assert.equal(enemy.pendingStaminaLoss, 0, 'the debt was consumed at its turn start');
+  assert.deepEqual(combat.eventLog.filter(row => row.type === 'enemyMoveStarted' && !row.reaction && row.sourceId === enemy.id), [], 'it has no SP left to act');
+});
+
+test('an Advance paid in the enemy phase owes nothing against a later turn', () => {
+  const { combat, enemy } = farFight(2);
+  const { refused } = endTurn(combat);
+  assert.deepEqual(refused, []);
+  assert.ok(!enemy.pendingStaminaLoss, 'its own turn draws on that turn\'s pool and carries nothing');
+});

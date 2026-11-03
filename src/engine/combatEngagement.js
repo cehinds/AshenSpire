@@ -161,7 +161,12 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   const available = source.kind === 'enemy' ? source.fixCoreStaminaRemaining ?? source.stamina ?? source.maxStamina ?? 0 : source.energy;
   if (!carrier.rangePlan && !prepaidReturn && available < extra) throw Foundation.playRefusal('Not enough Stamina to Advance', 'cost', { resource: 'stamina', need: extra, have: available });
   if (!carrier.rangePlan && !prepaidReturn && extra > 0) {
-    if (source.kind === 'enemy') { source.fixCoreStaminaRemaining = available - extra; source.stamina = source.fixCoreStaminaRemaining; }
+    if (source.kind === 'enemy') {
+      source.fixCoreStaminaRemaining = available - extra; source.stamina = source.fixCoreStaminaRemaining;
+      // SPEC §4.6b C: an Advance an enemy pays reacting in the player's turn is owed from its next turn, like the
+      // reaction's own SP (enemyReactions.js); the next-turn refill would otherwise make it free. Enemy-phase moves owe nothing.
+      if (ctx.phase === 'player') source.pendingStaminaLoss = (source.pendingStaminaLoss || 0) + extra;
+    }
     else {
       source.energy -= extra;
       source.counters.staminaSpentThisTurn = (source.counters.staminaSpentThisTurn || 0) + extra;
