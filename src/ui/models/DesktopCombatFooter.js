@@ -2,8 +2,8 @@ import { uiConfig } from '../../config/generated/ui.js';
 import { responsiveHandLayout, handLayout } from './HandLayout.js';
 
 // Physical desktop geometry; UI zoom changes the ruler, never the art's shape.
-export function desktopFooterEnabled({ formFactor, appearance, layout }) {
-  return ['desktop', 'widescreen'].includes(formFactor) && appearance === 'alternative' && layout === 'formation';
+export function desktopFooterEnabled({ formFactor, layout }) {
+  return ['desktop', 'widescreen'].includes(formFactor) && layout === 'formation';
 }
 export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
   const scale = Math.max(config.minimumScale, Math.min(config.maximumScale, height * zoom / config.scaleHeightPx));

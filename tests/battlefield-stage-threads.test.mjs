@@ -6,14 +6,9 @@ const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', i
 const qa = readFileSync(new URL('../tools/combat-layer-qa.mjs', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8');
 
-test('stage selects the Classic or alternative composition per fit, not at import', () => {
-  assert.doesNotMatch(stage, /alternativeCombatComposition as combatComposition/);
-  assert.match(stage, /combatComposition as classicCombatComposition/);
-  assert.match(stage, /const combatComposition = classicAppearance\(\) \? classicCombatComposition : alternativeCombatComposition;/);
-  // The choice sits inside fitFormation, so an appearance change takes effect on refit.
-  const fit = stage.indexOf('const fitFormation = () =>');
-  const select = stage.indexOf('const combatComposition = classicAppearance()');
-  assert.ok(fit > 0 && select > fit, 'composition choice must be made inside fitFormation');
+test('stage composes with the perspective-grid composition only (Classic layout removed 2026-11-03)', () => {
+  assert.match(stage, /alternativeCombatComposition as combatComposition/);
+  assert.doesNotMatch(stage, /classicAppearance|classicCombatComposition|CLASSIC_ENEMY_PLACEMENT/);
 });
 
 test('tracking pass reserves the same settled target cores as the main placement', () => {

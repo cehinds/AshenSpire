@@ -3,7 +3,6 @@ import { matchViewMedia } from '../viewViewport.js';
 import { el, button } from '../kit/index.js';
 import { createPaintedStage } from '../paintedOutfits.js';
 import { createAlternativeCardStage } from '../alternativeCardStage.js';
-import { displayAppearance } from '../displayAppearance.js';
 import { sampleSequence } from '../../model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS, getAnimSpeed } from '../animationPace.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -26,11 +25,11 @@ export function deckCardAnimationPlan(registries, run, ref) {
   const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, classId);
   const armourId = figureSpec(registries, run.loadout, classId).armourId;
   const presentation = combatWeaponProfilesFor({ classId, armourId,
-    grip: gripOf(registries, run.loadout, classId), appearance: displayAppearance() });
+    grip: gripOf(registries, run.loadout, classId) });
   const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
   let plan = resolveCombatAnimation({ ...definition, cardTags: tags,
     animationTags: combatEffectTags(registries, definition), sourceArmamentId: ref.sourceArmamentId,
-  }, equippedPieces(registries, run.loadout, classId), { animation, classId, appearance: displayAppearance(),
+  }, equippedPieces(registries, run.loadout, classId), { animation, classId, 
     combatExpansionVersion: run.combatExpansionVersion });
   // Inspection demonstrates the conditional reply. Playing Counter first uses
   // counterPrepare; a triggered reply uses this same reviewed return sequence.

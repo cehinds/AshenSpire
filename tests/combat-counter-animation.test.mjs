@@ -20,20 +20,20 @@ function mounted(version, seed = 11) {
   run.deck = [card, ...run.deck.filter(entry => entry !== card)];
   return { run, card };
 }
+// No classId: the equipment-driven path used when a card has no class action plan.
 const route = (definition, run, version) => resolveCombatAnimation(definition,
-  equippedPieces(registries, run.loadout, run.class), { combatExpansionVersion: version, classId: run.class, appearance: 'classic' });
+  equippedPieces(registries, run.loadout, run.class), { combatExpansionVersion: version });
 
 test('triggered alternative counters use the selected return attack for every default class', () => {
   const attack = { type: 'attack', kindIds: ['classification.attack'], cardTags: ['camp:physical', 'maneuver:attack'] };
   for (const classId of ['reaver', 'starseer', 'herald', 'rogue']) {
     const preparation = resolveCombatAnimation({ ...attack, cardTags: ['camp:physical', 'maneuver:counter'] }, [],
-      { classId, appearance: 'alternative', combatExpansionVersion: 2 });
+      { classId, combatExpansionVersion: 2 });
     assert.equal(preparation.technique, 'counterPrepare', 'queued snapshots and paced card beats receive the same preparation pose');
     assert.equal(preparation.rest, 'counter');
-    const plan = resolveCombatAnimation(attack, [], { classId, appearance: 'alternative', combatExpansionVersion: 2, counterTriggered: true });
+    const plan = resolveCombatAnimation(attack, [], { classId, combatExpansionVersion: 2, counterTriggered: true });
     assert.equal(plan.technique, 'counter');
     assert.equal(plan.rest, null, 'the reaction does not replace the last confirmed stance');
-    assert.equal(resolveCombatAnimation(attack, [], { classId, appearance: 'classic', counterTriggered: true }).technique, 'attack');
   }
 });
 
@@ -64,7 +64,7 @@ for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version
     assert.deepEqual(definition.counterPayload, expected.counterPayload);
     assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'guard', 'guard']);
     const alternative = resolveCombatAnimation(definition, equippedPieces(registries, run.loadout, run.class),
-      { combatExpansionVersion: version, classId: run.class, appearance: 'alternative' });
+      { combatExpansionVersion: version, classId: run.class });
     assert.deepEqual([alternative.group, alternative.technique, alternative.rest], ['defend', 'counterPrepare', 'counter'],
       'the alternative class Counter braces without falling back to an attack');
     assert.equal(combat.enemies[0].hp, hp, 'preparation produces no immediate enemy attack');
