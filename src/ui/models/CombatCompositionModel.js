@@ -1,4 +1,9 @@
 import { uiConfig } from '../../config/generated/ui.js';
+import { separateRow } from './CombatViewportSizeModel.js';
+
+// Classic composition pulls the enemies toward this share of the width, by this
+// squeeze; the sizing fit takes the same options so it judges the final spacing.
+export const CLASSIC_ENEMY_PLACEMENT = Object.freeze({ squeeze: .72, centre: .76 });
 
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
@@ -53,10 +58,11 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
     // (CombatViewportSizeModel): no enemy lift, no solo-player growth, no cap.
     const visibleHeight = size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale / 2;
-    const proposedX = player ? (solo ? width * .32 : size.x) : (size.x - center) * .72 + width * .76;
+    const proposedX = player ? (solo ? width * .32 : size.x)
+      : size.placed ? size.x : (size.x - center) * CLASSIC_ENEMY_PLACEMENT.squeeze + width * CLASSIC_ENEMY_PLACEMENT.centre;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     const ground = player && solo && Number.isFinite(handTop)
-      ? handTop + visibleHeight * .12
+      ? Math.max(visibleHeight + actor.leading + 6, handTop)
       : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground) : height * .34);
     return { ...size, x, ground, visibleHeight, scale: size.scale, multiplier: size.multiplier };
   });
@@ -94,7 +100,7 @@ function perspectiveGridComposition({ sizes, actors, width }) {
   // figure is authoritative: the cell footprint clamp below would pull a
   // neighbour back across the cleared gap.
   const trustSizeX = sizes.some(size => size.slid === true);
-  return sizes.map(size => {
+  const placed = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
     // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
@@ -107,6 +113,20 @@ function perspectiveGridComposition({ sizes, actors, width }) {
       { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
     return { ...size, ...foot, ...(moved ? { x } : {}) };
   });
+  // The footprint clamp can pull two neighbours of one band back together;
+  // clear them again on the final positions, as the fit did.
+  const bands = new Map();
+  placed.forEach(size => {
+    const actor = actors.find(actor => actor.slot.id === size.id);
+    const key = `${actor.side}:${actor.slot.visualBand ?? actor.slot.row ?? Math.round(actor.slot.ground / 10)}`;
+    bands.set(key, [...(bands.get(key) || []), { size, x: size.x, width: actor.visibleWidth * size.scale }]);
+  });
+  for (const band of bands.values()) {
+    if (band.length < 2) continue;
+    separateRow(band, width);
+    for (const row of band) row.size.x = row.x;
+  }
+  return placed;
 }
 
 // Constrain the shadow's complete bounding envelope inside its skewed cell.
