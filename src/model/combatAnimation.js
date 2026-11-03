@@ -13,7 +13,9 @@ export const COMBAT_SEQUENCES = Object.freeze({
 });
 
 export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, combatExpansionVersion, counterTriggered = false } = {}) {
-  const classDefault = cardActionPlan(card, classId);
+  // The one appearance (Classic layout removed, owner 2026-11-03); the mechanics generator keys on this marker.
+  const appearance = 'alternative';
+  const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
   if (classDefault) {
     const plan = playerAttackPlan(card, equipment, classId, classDefault);
     if (counterTriggered) return { ...plan, technique: 'counter', rest: null };
