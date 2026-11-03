@@ -73,3 +73,19 @@ test('the raw hit is display only: real HP loss still honours Block', () => {
   assert.equal(read.hitDamages[0], raw);
   assert.equal(read.hpLoss, 0, 'resolution is unchanged');
 });
+
+test('rawHit on the receipt carries damage-type weakness but not Block or Poise', async () => {
+  const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
+  const { combat, enemy } = fixture();
+  const target = combat.enemies[0];
+  const blunt = { combatProfile: { camp: 'physical', damageType: 'blunt' } };
+  const slashing = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
+  const hit = (carrier, t) => profileDamageReceipt(combat, combat.player, t, 10, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+  target.weaknesses = [{ trigger: 'blunt', effect: 'damage', amount: 25, to: 'blunt' }];
+  const plain = hit(slashing, target), weak = hit(blunt, target);
+  assert.equal(weak.rawHit > plain.rawHit, true, 'type weakness raises the shown hit');
+  target.block = 400; target.persistentPoise = { value: 400, max: 400 };
+  assert.equal(hit(blunt, target).rawHit, weak.rawHit, 'Block and Poise leave it alone');
+  assert.equal(hit(blunt, target).hpLoss < weak.rawHit, true, 'while real HP loss is reduced');
+  void enemy;
+});
