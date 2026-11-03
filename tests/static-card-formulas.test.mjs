@@ -116,7 +116,9 @@ test('symbolic authored quantities are escaped and live numeric tokens replace t
       amount: { f: 'stacks', status: 'x</span><img src=x onerror=bad>', of: 'allEnemies', per: 2, max: 5 } }] };
   const custom = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, def] });
   const ref = { cardId: def.id }, authored = cardMarkup(custom, ref);
-  assert.match(authored, /Inspect full effect/,'the oversized symbolic clause moves wholly to Information');
+  // Owner, 2026-11-02: no Inspect replacement text on a card face; the real (escaped) rules line shows instead.
+  assert.doesNotMatch(authored, /Inspect full effect/, 'the face never swaps its rules for an Inspect cue');
+  assert.match(authored.replace(/<[^>]*>/g, ''), /Heal/, 'the face shows the real rules line');
   assert.match(authored, /data-max-lines="3" data-face-lines="true"/);
   assert.doesNotMatch(authored, /<img src=x onerror=bad>/);
   assert.doesNotMatch(authored, /class="val (?:up|down)"/);
