@@ -4,11 +4,11 @@
     "bands": [1, 4, 4, 1],
     "levels": {
       "glance": {
-        "widthPx": 152,
+        "widthPx": 182.4,
         "variants": { "compact": 108, "mobile": 152 }
       },
-      "focus": { "widthPx": 280 },
-      "inspect": { "widthPx": 320 }
+      "focus": { "widthPx": 336, "variants": { "mobile": 280 } },
+      "inspect": { "widthPx": 384, "variants": { "mobile": 320 } }
     },
     "shelf": { "maxColumns": 4, "gapPx": 12, "minTrackPx": 120 },
     "doorReadableMinPx": 384,
