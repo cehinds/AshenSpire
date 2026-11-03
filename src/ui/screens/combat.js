@@ -48,6 +48,7 @@ import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../..
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
+import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
 // docs/mockups/combat-screen.svg)
 //
@@ -591,6 +592,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const beatDirty = { on: false, geometry: false, hand: false, frame: 0 };
   let pileReceivedFrame = 0;
   let busy = false; // animating / resolving
+  // Plays the player queued while an earlier card's animations resolve (owner, 2026-11-02): each left the hand at once
+  // and waits here, in order. They live in this controller only; the engine sees a play when its turn comes.
+  const playQueue = [];
+  let endTurnAfterQueue = false;
+  // While a card the player just played animates, further cards may be played into the queue. Not during the enemy's
+  // turn, once the fight is decided, or while a reaction offer or a card choice owns the screen.
+  function canQueue() {
+    return busy && !!disp?.leftHand?.size && !enemyPlayback && !heldTurnHand && !combat.result && !combat.pendingReaction
+      && combat.phase === 'player' && !hasCardChoice(combat);
+  }
+  function inputBusy() {
+    return busy && !canQueue();
+  }
   // Diagnostic only. When a tap is ignored because the screen is busy, the log
   // line names every lock and how long busy has held: an input that "does
   // nothing" on a slow phone is either a long wait (busyForMs climbs and ends)
@@ -776,7 +790,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function previewAimedTarget(event) {
-    if (!selected || busy || enemyPlayback) return;
+    if (!selected || inputBusy() || enemyPlayback) return;
     const targetId = event.target.closest?.('.combatant.enemy')?.dataset.eid;
     if (!targetId || !cardTargets(selected).legalIds.includes(targetId)) return;
     if (combatEl.classList.contains('drag-targeting')) return;
@@ -893,9 +907,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const enemy = getEntity(combat, id);
         return { id, name: registries.enemies.get(enemy.enemyId).name, hp: enemy.hp, maxHp: enemy.maxHp };
       }),
-      disabled: busy || enemyPlayback || combat.phase !== 'player' || !!combat.result,
+      disabled: inputBusy() || enemyPlayback || combat.phase !== 'player' || !!combat.result,
       onActivate: id => {
-        if (busy || combat.phase !== 'player' || combat.result || !pendingTargetPlan().legalIds.includes(id)) {
+        if (inputBusy() || combat.phase !== 'player' || combat.result || !pendingTargetPlan().legalIds.includes(id)) {
           if (selected || selectedFlask != null) dlog('ignored', `target picker ${id}`, busy ? 'busy' : combat.result ? 'combat over' : combat.phase !== 'player' ? `phase ${combat.phase}` : 'not a legal target');
           return;
         }
@@ -1530,7 +1544,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // HUD. Eligibility comes from the real card plan, not a living-enemy shortcut.
   function activateTargetHud(id) {
     // Read live state: a paced panel can outlive the selection that showed it.
-    if (busy || enemyPlayback || combat.result || combat.phase !== 'player'
+    if (inputBusy() || enemyPlayback || combat.result || combat.phase !== 'player'
         || combat.pendingReaction || hasCardChoice(combat) || veilIsOpen()
         || !(selected || selfArm || selectedFlask != null)
         || !pendingTargetPlan().legalIds.includes(id)) {
@@ -2135,7 +2149,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
-    if (selectedCard && !busy && !enemyPlayback && !combat.pendingReaction) {
+    if (selectedCard && !inputBusy() && !enemyPlayback && !combat.pendingReaction) {
       const targetId = lastTargetId ?? cardTargets(selected).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy');
       try {
         const quote = previewCard(combat, selected, targetId, upcastRanksByCard.get(selected));
@@ -2479,7 +2493,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         unknownDetail: t('combat.targetHud.unknown') });
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {
-      if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) {
+      if (inputBusy() || !getEntity(combat, enemy.id)?.alive || selfArm) {
         if (selected || selectedFlask != null) dlog('ignored', `intent tap ${enemy.id}`, busy ? 'busy' : selfArm ? 'self-armed card' : 'dead target');
         return false;
       }
@@ -2645,14 +2659,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderHand({ refreshHitChances = true } = {}) {
     globalThis.__perfCount?.('hand');
-    const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
+    // A card just played leaves the hand at once: the pre-play snapshot still lists it for the timeline's own lookups.
+    // Cards waiting in the play queue have left the hand too.
+    const leftIds = new Set([...(disp?.leftHand || []), ...playQueue.map(entry => entry.instanceId)]);
+    const shownHand = disp ? disp.hand : combat.piles.hand;
+    const handList = heldTurnHand || (leftIds.size ? shownHand.filter(inst => !leftIds.has(inst.instanceId)) : shownHand);
     // Each write below is skipped when it would repeat: an unchanged attribute or text node
     // still dirties style/layout for the board that hangs off it.
     const enemySide = enemyPlayback || combat.phase === 'enemy';
     if (combatEl.dataset.turn !== (enemySide ? 'enemy' : 'player')) combatEl.dataset.turn = enemySide ? 'enemy' : 'player';
     const ribbon = $('.turn-ribbon');
     if (ribbon.textContent !== (enemySide ? 'Enemy Turn' : 'Player Turn')) ribbon.textContent = enemySide ? 'Enemy Turn' : 'Player Turn';
-    const handLocked = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
+    const handLocked = inputBusy() || enemyPlayback || !!combat.pendingReaction || !!combat.result;
     const handNode = $('.hand');
     if (handNode.inert !== handLocked) handNode.inert = handLocked;
     if (handNode.getAttribute('aria-disabled') !== String(handLocked)) handNode.setAttribute('aria-disabled', String(handLocked));
@@ -2743,7 +2761,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const unavailable = reason => ({ enabled: false, reason });
     if (!combatEl.isConnected) return unavailable('This combat is no longer active.');
     if (combat.result) return unavailable('Combat has ended.');
-    if (busy || combat.phase !== 'player') return unavailable('Wait for your turn.');
+    if (inputBusy() || combat.phase !== 'player') return unavailable('Wait for your turn.');
     // A queued card (Combat Rounds Preview) is answered by its unqueue: a click takes it back and refunds it.
     if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) return { enabled: true, needsTarget: false, play: () => unqueueCard(instanceId) };
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
@@ -2900,7 +2918,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // reason a beat can live on a control its own screen repaints every frame
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
-    const endTurnDisabled = busy || enemyPlayback || !!combat.pendingReaction || combat.phase !== 'player' || !!combat.result;
+    const endTurnDisabled = inputBusy() || enemyPlayback || !!combat.pendingReaction || combat.phase !== 'player' || !!combat.result;
     if (endTurn.disabled !== endTurnDisabled) endTurn.disabled = endTurnDisabled;
     paintActionCounts();
     const expandedHost = $('.combat-expansion-controls');
@@ -3146,7 +3164,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
 
     el.addEventListener('pointerdown', (ev) => {
-      if (busy || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;
+      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;
       // Mouse, trackpad, pen and touch share the practice area's recognizer.
       flickStart = touchPoint(ev);
       flickPoints = [flickStart];
@@ -3277,7 +3295,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
+      if (inputBusy() || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) { if (rangeSelectable) select(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       play();
@@ -3285,7 +3303,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const tap = () => {
       // A queued card is taken back before the affordable check: `affordable` reads the energy left after queueing.
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
+      if (inputBusy() || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) {
         if (rangeSelectable) { select(); return; }
         const reason = logUnaffordable('tap');
@@ -3327,7 +3345,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (busy || dragging) return;
+        if (inputBusy() || dragging) return;
         if (!affordable && !rangeSelectable) { logUnaffordable('confirm'); return; }
         // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
         // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
@@ -3438,7 +3456,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       return;
     }
-    if (busy || combat.result || combat.phase !== 'player') return;
+    if (inputBusy() || combat.result || combat.phase !== 'player') return;
 
     if (matchAction(ev, 'endTurn')) {
       ev.preventDefault();
@@ -3448,7 +3466,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     // Flask keys open the corresponding potion action menu; they
     // never auto-use.
-    for (let slot = 0; slot < 3; slot++) {
+    for (let slot = 0; slot < 3 && !busy; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
         openPotions(`flask${slot + 1}`);
@@ -3655,9 +3673,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
       $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
       decorateRoundsScreen();
-      $('.hand').inert = true;
-      $('.hand').setAttribute('aria-disabled', 'true');
-      $('.end-turn').disabled = true;
+      const queueing = canQueue();
+      $('.hand').inert = !queueing;
+      $('.hand').setAttribute('aria-disabled', String(!queueing));
+      $('.end-turn').disabled = !queueing;
       $('.combat-expansion-controls').querySelectorAll('button').forEach(button => { button.disabled = true; });
       renderCombatTools();
       syncCardSelection();
@@ -3704,6 +3723,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // battlefield re-lays out in the legacy HUD (field re-fit, every health bar
           // jumping to the top strip) for the ~0.8 s until the spoils veil mounts.
           // The screen is torn down by main.js next, so keep the layout mode it was drawn in.
+          playQueue.length = 0; endTurnAfterQueue = false; renderPlayQueue(); // a decided fight plays nothing more
           const hudMode = combatEl.dataset.targetHud;
           fightOver = true;
           targetHud.release();
@@ -3716,6 +3736,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
         } else {
           focusHandDefault(); // land on the leftmost playable card for kb/pad
+          drainPlayQueue();
         }
     };
     try {
@@ -3852,13 +3873,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const instance=disp?.hand.find(c=>c.instanceId===instanceId);
     const definition=instance&&resolveCard(registries,instance);
     const effect=receipt&&definition&&combatEffectPlan({...definition,cardTags:combatEffectTags(registries,definition)},receipt);
-    const stopLayers=playCardEffectLayers(flight,effect?.kind,{duration:220});
+    const stopLayers=playCardEffectLayers(flight,effect?.kind,{duration:150});
     const dx = t.left + t.width / 2 - (at.left + b.width / 2);
     const dy = t.top + t.height / 2 - (at.top + b.height / 2);
     const animation = flight.animate([
       { transform: 'translate(0,0)', opacity: 0.85 },
       { transform: `translate(${dx}px, ${dy}px) scale(0.35) rotate(6deg)`, opacity: 0 },
-    ], { duration: 220, easing: 'ease-out', fill: 'forwards' });
+    ], { duration: 150, easing: 'ease-out', fill: 'forwards' });
     cardFlights.add(animation);
     const remove = () => { stopLayers();flight.remove();cardFlights.delete(animation); };
     animation.onfinish = remove;
@@ -3867,6 +3888,78 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function isRoundQueued(instanceId) {
     return Boolean(combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId));
+  }
+
+  // ---- The play queue (owner, 2026-11-02: "allow players to queue their card plays") ----
+  const queueToast = createToast();
+  const queueEl = document.createElement('div');
+  queueEl.className = 'play-queue';
+  queueEl.hidden = true;
+  queueEl.setAttribute('role', 'status');
+  queueEl.setAttribute('aria-live', 'polite');
+  combatEl.append(queueEl);
+  function renderPlayQueue() {
+    const chips = playQueue.map((entry, i) => {
+      let name = entry.instanceId;
+      try { name = resolveCard(registries, findInst(entry.instanceId) || { cardId: entry.instanceId }).name; } catch {}
+      return `<button type="button" class="play-queue-chip" data-queued-id="${esc(entry.instanceId)}" title="Take back"><b>${i + 1}</b> ${esc(name)}</button>`;
+    });
+    if (endTurnAfterQueue) chips.push('<button type="button" class="play-queue-chip play-queue-end" data-cancel-end-turn title="Cancel End Turn">then End Turn</button>');
+    queueEl.hidden = !chips.length;
+    queueEl.innerHTML = chips.join('');
+  }
+  queueEl.addEventListener('click', event => {
+    if (event.target.closest?.('[data-cancel-end-turn]')) { endTurnAfterQueue = false; renderPlayQueue(); return; }
+    const id = event.target.closest?.('[data-queued-id]')?.dataset.queuedId;
+    const i = playQueue.findIndex(entry => entry.instanceId === id);
+    if (i < 0) return;
+    playQueue.splice(i, 1); // nothing was spent: the card is simply back in the hand
+    renderPlayQueue(); renderHand({ refreshHitChances: false });
+  });
+  function enqueuePlay(entry) {
+    if (playQueue.some(queued => queued.instanceId === entry.instanceId)) return;
+    playQueue.push(entry);
+    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(entry.instanceId); hideTooltip();
+    dlog('queued', `playCard ${entry.instanceId}`, { position: playQueue.length });
+    sfx.play('cardPlay');
+    renderPlayQueue();
+    renderHand({ refreshHitChances: false });
+  }
+  // Why a queued play can no longer go ahead (checked when its turn comes), or null.
+  function queuedPlayProblem({ instanceId, targetId, rank }) {
+    const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
+    if (!inst) return 'This card is no longer in your hand.';
+    const blocked = unplayableReason(inst);
+    if (blocked) return blocked;
+    if (targetId && (!getEntity(combat, targetId)?.alive || !cardTargets(instanceId).legalIds.includes(targetId))) return 'Its target is gone.';
+    let pv;
+    try { pv = previewCard(combat, instanceId, targetId, rank); } catch { return 'This card cannot be played now.'; }
+    const needEnergy = pv.costIsX ? 0 : pv.cost;
+    if (combat.player.energy < needEnergy) return `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`;
+    if (combat.player.mana < pv.manaCost) return `Not enough mana (needs ${pv.manaCost}, have ${combat.player.mana}).`;
+    if (combat.player.stamina < (pv.staminaCost || 0)) return `Not enough stamina (needs ${pv.staminaCost}, have ${combat.player.stamina}).`;
+    return null;
+  }
+  // Called whenever a playback ends. Plays the queue in order; a play that no longer works returns to the hand, unspent.
+  function drainPlayQueue() {
+    if (busy) return;
+    if (combat.result || combat.phase !== 'player') { playQueue.length = 0; endTurnAfterQueue = false; renderPlayQueue(); return; }
+    if (combat.pendingReaction || hasCardChoice(combat)) return; // the answer's own playback ends here again
+    while (playQueue.length) {
+      const entry = playQueue.shift();
+      const problem = queuedPlayProblem(entry);
+      if (problem) {
+        renderPlayQueue(); renderHand({ refreshHitChances: false });
+        refusePlay(entry.instanceId, `queued play returned: ${problem}`);
+        queueToast.show(problem + ' The card is back in your hand.', combatEl);
+        continue;
+      }
+      renderPlayQueue();
+      commitPlay(entry.instanceId, entry.targetId, entry.choice, entry.rank);
+      if (busy) return; // its playback ends here again, with the rest of the queue
+    }
+    renderPlayQueue();
+    if (endTurnAfterQueue) { endTurnAfterQueue = false; renderPlayQueue(); commitEndTurn(); }
   }
 
   // Takes a queued card back (SPEC §4.11): the engine refunds exactly what it paid.
@@ -3896,7 +3989,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const legalIds = cardTargets(instanceId).legalIds;
       if (!legalIds.includes(targetId)) { refusePlay(instanceId, `illegal target ${targetId}, legal [${legalIds.join(',')}]`, "That target can't be reached by this card."); return; }
     }
-    if (busy || combat.result) {
+    if (inputBusy() || combat.result) {
       const why = lockReport();
       console.debug('[combat] playCard ignored:', JSON.stringify(why));
       logIgnored(`playCard ${instanceId}`, why);
@@ -3947,6 +4040,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (combat.player.mana < finalPreview.manaCost) { refusePlay(instanceId, `cost ${finalPreview.manaCost} > mana ${combat.player.mana}`, `Not enough mana (needs ${finalPreview.manaCost}, have ${combat.player.mana}).`); return; }
     if (combat.player.stamina < needStamina) { refusePlay(instanceId, `cost ${needStamina} > stamina ${combat.player.stamina}`, `Not enough stamina (needs ${needStamina}, have ${combat.player.stamina}).`); return; }
     if (targetId) lastTargetId = targetId;
+    if (busy) { enqueuePlay({ instanceId, targetId, choice, rank }); return; }
+    commitPlay(instanceId, targetId, choice, rank);
+  }
+
+  // The accepted play: snapshot, dispatch, take the card out of the hand, then the animations.
+  function commitPlay(instanceId, targetId, choice, rank) {
     hideTooltip();
     disp = takeSnapshot();
     let out;
@@ -3959,11 +4058,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
-    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId); rangeRoutesByCard.delete(instanceId);
-    dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
-    flyCard(instanceId, targetId, out.events);
     sfx.play('cardPlay');
     haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
+    // A card the player picked while earlier plays resolved keeps its selection; only the played card's own aim clears.
+    if ((selected && selected !== instanceId) || (selfArm && selfArm !== instanceId)) {
+      if (selected === instanceId) selected = null;
+      if (selfArm === instanceId) selfArm = null;
+      selectedFlask = null;
+    } else { selected = null; selectedFlask = null; selfArm = null; clearAim(); }
+    upcastRanksByCard.delete(instanceId); rangeRoutesByCard.delete(instanceId);
+    dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
+    flyCard(instanceId, targetId, out.events);
+    // The played card leaves the hand NOW, before the first animation beat, and the rest close the gap: the
+    // player sees the play was accepted instead of a card that hangs there while the timeline runs.
+    disp.leftHand = new Set([instanceId]);
+    try { renderHand({ refreshHitChances: false }); } catch (e) { console.warn('[combat] hand repaint on play failed:', e && e.message); }
     busy = true;
     afterDispatch(out.events);
   }
@@ -3976,6 +4085,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // would say even less.
   function commitEndTurn() {
     if (hasCardChoice(combat)) { showPendingDiscard(); return; }
+    // Pressed while a play (and any queue behind it) is still resolving: end the turn once it has drained.
+    if (busy && canQueue()) { endTurnAfterQueue = true; renderPlayQueue(); return; }
     if (busy || combat.result || combat.phase !== 'player') {
       const why = lockReport();
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));

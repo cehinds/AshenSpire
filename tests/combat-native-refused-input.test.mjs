@@ -29,7 +29,7 @@ function harness({ affordable = false, range = false, queued = false, blocked = 
     logIgnored: (what, why) => logs.push({ what, why }), dlog: (...args) => logs.push(args),
     showTooltipFor: (_el, html) => tips.push(html), esc: value => value,
     isRoundQueued: () => queued, unqueueCard: () => calls.push('unqueue'),
-    busy, selected: null, selfArm: null, selectedFlask: 'old-flask',
+    busy, inputBusy: () => busy, selected: null, selfArm: null, selectedFlask: 'old-flask',
     armSelf: id => calls.push(`arm:${id}`), syncCardSelection: () => calls.push('sync'),
     focusTargeting: () => calls.push('focus'),
     meta: { settings: { oneTapPlay } }, readSettings: () => ({ oneTapPlay }),
