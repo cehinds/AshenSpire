@@ -5,6 +5,7 @@ import { ENEMY_POSES } from '../src/content/enemyArt.js';
 import { enemyActionPose } from '../src/model/enemyActionPose.js';
 import { enemyExpansionSprite } from '../src/ui/enemyExpansionStage.js';
 import { stageFor } from '../src/ui/services/PoseAnimator.js';
+import { installMockRaf, tickFrames } from './helpers/mock-raf.mjs';
 
 test('enemy expansion covers canonical enemies with complete 260ms sequences', () => {
   assert.deepEqual(Object.keys(enemyExpansion).sort(), [...ENEMY_POSES].sort());
@@ -33,17 +34,20 @@ test('enemy stage settles reactions, extends holds, and keeps defeat terminal', 
   globalThis.Image = Element;
   t.after(() => { globalThis.document = oldDocument; globalThis.Image = oldImage; });
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  installMockRaf(t);
   const el = enemyExpansionSprite({ id: 'wanderingSoldier', name: 'Soldier' }, { hp: 10, maxHp: 10 });
   const stage = stageFor(el);
   assert.equal(el.dataset.pose, 'idle');
   stage.play('attack', 260);
   assert.equal(el.dataset.pose, 'attack-01');
-  t.mock.timers.tick(71);
+  // Re-pinned 2026-11-02 (sprite pacing): the four frames are held evenly on a rAF clock, each for the frame hold
+  // (89 ms at the default speed) instead of the authored 70/60/60/70 weights over 260 ms.
+  tickFrames(t, 100);
   assert.equal(el.dataset.pose, 'attack-02');
   stage.hold(100);
-  t.mock.timers.tick(190);
-  assert.equal(el.dataset.pose, 'attack-02');
-  t.mock.timers.tick(100);
+  tickFrames(t, 340);
+  assert.equal(el.dataset.pose, 'attack-02', 'a hold freezes the frame and pushes the settle out');
+  tickFrames(t, 30);
   assert.equal(el.dataset.pose, 'idle');
   stage.setState({ hp: 10, maxHp: 10, block: 4 });
   assert.equal(el.dataset.pose, 'block-01', 'resting guard uses a painted frame, not a sequence asset name');
@@ -58,4 +62,32 @@ test('enemy stage settles reactions, extends holds, and keeps defeat terminal', 
   assert.equal(stage.play('attack'), false);
   assert.equal(el.dataset.pose, 'defeated');
   stage.dispose();
+});
+
+test('an enemy action holds every frame for the same time, never under the pace frame hold, and reserves that total', async t => {
+  const { actionPacing, setAnimSpeed, setCombatPacing } = await import('../src/ui/animationPace.js');
+  const oldDocument = globalThis.document, oldImage = globalThis.Image;
+  class Element { constructor() { this.dataset = {}; this.style = {}; } append() {} addEventListener() {} setAttribute() {} }
+  globalThis.document = { createElement: () => new Element(), body: { classList: { contains: () => false } } };
+  globalThis.Image = Element;
+  t.after(() => { globalThis.document = oldDocument; globalThis.Image = oldImage; setAnimSpeed('normal'); setCombatPacing(); });
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  installMockRaf(t);
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25 }); // the phone default: the 87 ms lunge used to give 22 ms a frame
+  const speed = actionPacing().spriteSpeed;
+  const el = enemyExpansionSprite({ id: 'wanderingSoldier', name: 'Soldier' }, { hp: 10, maxHp: 10 });
+  const stage = stageFor(el);
+  const timing = stage.actionTiming('attack', speed);
+  assert.equal(timing.totalMs, speed.minFrameMs * 4, 'four frames at the frame hold, not the 87 ms lunge');
+  assert.equal(timing.impactMs, Math.round(timing.totalMs * 0.55), 'contact stays at the lunge share of the total');
+  assert.equal(stage.actionTiming('ranged', speed).totalMs, speed.minFrameMs * 2);
+  assert.equal(stage.actionTiming('nonsense', speed), null);
+  const seen = [];
+  stage.play('attack', timing.totalMs);
+  for (let ms = 0; ms <= timing.totalMs + 32; ms += 4) { if (seen.at(-1)?.[0] !== el.dataset.pose) seen.push([el.dataset.pose, ms]); t.mock.timers.tick(4); }
+  assert.deepEqual(seen.map(row => row[0]), ['attack-01', 'attack-02', 'attack-03', 'attack-04', 'idle']);
+  const holds = seen.slice(1).map((row, i) => row[1] - seen[i][1]).slice(0, 3);
+  assert.ok(holds.every(ms => ms >= speed.minFrameMs - 16 && ms <= speed.minFrameMs + 16), `even holds, got ${holds}`);
+  setAnimSpeed('instant');
+  assert.equal(stage.actionTiming('attack', actionPacing().spriteSpeed).totalMs, 0, 'Instant plays nothing');
 });

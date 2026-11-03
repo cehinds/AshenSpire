@@ -11,6 +11,7 @@ import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import { concealIntent } from '../src/model/combatIntentVisibility.js';
 import { enemyExpansionSprite } from '../src/ui/enemyExpansionStage.js';
 import { stageFor } from '../src/ui/services/PoseAnimator.js';
+import { installMockRaf, tickFrames } from './helpers/mock-raf.mjs';
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
 // Execute the actual paced reducer case without mounting the screen's DOM.
@@ -102,6 +103,7 @@ test('planned stance persists through status changes and reactions, then follows
   globalThis.Image = Element;
   t.after(() => { globalThis.document = documentBefore; globalThis.Image = imageBefore; });
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  installMockRaf(t);
   const entity = { hp: 2, maxHp: 10, block: 5, statuses: { prepared: { stacks: 1 }, weak: { stacks: 1 } }, presentationStance: 'smash' };
   const el = enemyExpansionSprite({ id: 'stitchedHound' }, entity), stage = stageFor(el);
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.smash);
@@ -112,7 +114,7 @@ test('planned stance persists through status changes and reactions, then follows
   t.mock.timers.tick(200);
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
   stage.play('attack', 260);
-  t.mock.timers.tick(260);
+  tickFrames(t, 380); // 4 frames at the 89 ms frame hold (was 260 ms), re-pinned 2026-11-02
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
   stage.setState({ ...entity, presentationStance: 'preparing' });
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.preparing);
