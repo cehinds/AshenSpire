@@ -188,7 +188,7 @@ try {
       assert.equal(state.count, 3, 'a combat holds at most 3 enemies (owner, 2026-11-03)');
       await p.mouse.move(0, 0);
       await p.screenshot({
-        path: resolve(output, `${profile}-seven-${width}.png`),
+        path: resolve(output, `${profile}-three-${width}.png`),
       });
       if (profile === "current") {
         const actor = p.locator('.combatant.enemy[data-eid="e3"]');
@@ -242,8 +242,8 @@ try {
         );
       }
       assert.deepEqual(errors, []);
-      console.log(`${profile} seven ${width} passed`);
-      metrics.push({ profile, width, seven: state });
+      console.log(`${profile} three ${width} passed`);
+      metrics.push({ profile, width, three: state });
       await p.close();
     }
   }

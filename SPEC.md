@@ -216,7 +216,7 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
 | Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss, act? (default 1)` |
 
-**Enemy cap** (owner, 2026-11-03: "Limit to just 3 enemies max"). A combat never has more than 3 enemies, in every layout (classic and the default perspective grid). An encounter's `enemies[]` lists at most 3 ids (the content validator rejects more); `createCombat` and `createRunCombat` open a fight with the first 3 ids only; and any effect that would add an enemy mid-fight (summon, split, reinforcements) does nothing while 3 enemies are alive (`enemySlotFree`). The cap lives in one place, `MAX_ENEMIES_PER_COMBAT` in `src/model/combatLimits.js`; the screenshot fixtures `?shotEnemies` and `?shotEnemyCount` obey it too.
+**Enemy cap** (owner, 2026-11-03: "Limit to just 3 enemies max"). A combat never has more than 3 enemies, in every layout. An encounter's `enemies[]` lists at most 3 ids (the content validator rejects more); `createCombat` and `createRunCombat` open a fight with the first 3 ids only; no effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing while 3 enemies are alive. The cap lives in one place, `MAX_ENEMIES_PER_COMBAT` in `src/model/combatLimits.js`; the screenshot fixtures `?shotEnemies` and `?shotEnemyCount` obey it too.
 | Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
