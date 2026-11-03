@@ -62,16 +62,33 @@ test('a keyword in an unselected hand card opens no tooltip on hover or focus', 
   assert.equal(open(), false);
 });
 
-test('a keyword in a selected hand card opens its tooltip', () => {
-  assert.equal(hover(keywordIn('hand', 'card selected')), true);
+// Owner 2026-11-02: card tooltips appear only while the card inspector is open.
+test('a keyword in a selected or inspection-selected hand card still opens no tooltip', () => {
+  for (const cls of ['card selected', 'card inspection-selected']) {
+    clearControlSelection(); hideTooltip();
+    assert.equal(hover(keywordIn('hand', cls)), false, cls);
+  }
 });
 
-test('a keyword in an inspection-selected hand card opens its tooltip', () => {
-  assert.equal(hover(keywordIn('hand', 'card inspection-selected')), true);
+test('a keyword on a reward, shop or deck card opens no tooltip on hover', () => {
+  for (const host of ['reward-offers', 'shop-offers', 'deck-grid']) {
+    clearControlSelection(); hideTooltip();
+    assert.equal(hover(keywordIn(host, 'card')), false, host);
+  }
 });
 
-test('a keyword outside the hand opens its tooltip as before', () => {
-  assert.equal(hover(keywordIn('reward-offers', 'card')), true);
+test('a keyword inside the card inspector opens its tooltip on hover', () => {
+  assert.equal(hover(keywordIn('card-inspection-modal', 'card inspect')), true);
+  clearControlSelection(); hideTooltip();
+  assert.equal(hover(keywordIn('card-inspection-layout', 'card')), true);
+});
+
+test('a keyword that is not on a card keeps its tooltip', () => {
+  const host = document.createElement('div'); host.className = 'hud';
+  const kw = document.createElement('span'); kw.dataset.tip = 'Explained';
+  host.appendChild(kw); document.body.appendChild(host);
+  attachTooltip(kw, () => '<div>Explained</div>');
+  assert.equal(hover(kw), true);
 });
 
 test('a click on a held-back keyword is neither prevented nor stopped, so the card tap still works', () => {
@@ -108,10 +125,10 @@ test('a tag symbol click on an unselected hand card opens nothing and is not pre
   assert.equal(open(), false);
 });
 
-test('a tag symbol click on a selected hand card opens its tooltip', () => {
+test('a tag symbol click on a selected hand card opens nothing and is not prevented', () => {
   const { sym } = symbolIn('card selected');
-  clickOn(sym);
-  assert.equal(open(), true);
+  assert.equal(clickOn(sym), false);
+  assert.equal(open(), false);
 });
 
 test('a hit-lane press over a tag symbol on an unselected card is not redirected to the symbol', () => {
@@ -120,7 +137,7 @@ test('a hit-lane press over a tag symbol on an unselected card is not redirected
   assert.equal(open(), false);
 });
 
-test('held-back triggers leave the tab order and return to it when the card is selected or inspected', async () => {
+test('held-back triggers stay out of the tab order on a hand card, selected or not', async () => {
   const { syncHeldTriggers } = await import('../src/ui/components/tooltip.js');
   const kw = keywordIn('hand', 'card');
   const { sym } = symbolIn('card');
@@ -131,14 +148,22 @@ test('held-back triggers leave the tab order and return to it when the card is s
   assert.equal(kw.tabIndex, -1);
   assert.equal(sym.tabIndex, -1);
   card.className = 'card selected'; run(hand);
-  assert.equal(kw.tabIndex, 0);
-  card.className = 'card'; run(hand);
   assert.equal(kw.tabIndex, -1);
   card.className = 'card inspection-selected'; run(hand);
-  assert.equal(kw.tabIndex, 0);
+  assert.equal(kw.tabIndex, -1);
 });
 
-// Owner 2026-10-31: one click explains while a card is selected or inspected, and anywhere in the (i) modal.
+test('held-back triggers leave the tab order on every card surface, not the inspector', async () => {
+  const { syncHeldTriggers } = await import('../src/ui/components/tooltip.js');
+  const held = ['reward-offers', 'shop-offers', 'deck-grid', 'upgrade-preview'].map(host => keywordIn(host, 'card'));
+  const free = ['card-inspection-modal', 'card-inspection-layout'].map(host => keywordIn(host, 'card'));
+  for (const kw of [...held, ...free]) kw.tabIndex = 0;
+  syncHeldTriggers(document.body);
+  for (const kw of held) assert.equal(kw.tabIndex, -1, kw.parentNode.parentNode.className);
+  for (const kw of free) assert.equal(kw.tabIndex, 0, kw.parentNode.parentNode.className);
+});
+
+// Owner 2026-11-02: one click explains anywhere in the (i) card inspector, and nowhere else on a card.
 function termIn(termClass, containerClass, cardClasses) {
   const host = document.createElement('div'); host.className = containerClass;
   const card = document.createElement('div'); card.className = cardClasses;
@@ -146,12 +171,12 @@ function termIn(termClass, containerClass, cardClasses) {
   card.appendChild(term); host.appendChild(card); document.body.appendChild(host);
   return term;
 }
-test('one click on a keyword in a selected or inspection-selected hand card explains it', () => {
+test('a click on a keyword in a selected or inspection-selected hand card explains nothing', () => {
   for (const cls of ['card selected', 'card inspection-selected']) {
     clearControlSelection(); hideTooltip();
     const kw = termIn('tooltip-keyword', 'hand', cls);
-    clickOn(kw);
-    assert.equal(open(), true, cls);
+    assert.equal(clickOn(kw), false, cls);
+    assert.equal(open(), false, cls);
   }
 });
 
@@ -169,10 +194,9 @@ test('one click on a native face part inside the inspection modal explains it', 
   assert.equal(open(), true);
 });
 
-test('outside a selected card or the modal a keyword still needs a second click', () => {
+test('on a reward card outside the inspector a keyword click explains nothing', () => {
   const kw = termIn('tooltip-keyword', 'reward-offers', 'card');
   clickOn(kw);
-  assert.equal(open(), false, 'the first click only selects the term');
   clickOn(kw);
-  assert.equal(open(), true);
+  assert.equal(open(), false);
 });

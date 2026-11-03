@@ -58,7 +58,7 @@
 }
 :root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-cinders-strip > .hud-center { position: relative; top: 0; }
 :root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-cinders-strip :is(.ck,.cv,.hud-cinders) {
-  color: white; font-size: calc(12px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
+  color: var(--parchment); font-size: calc(12px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
   text-shadow: -1px -1px #000,1px -1px #000,-1px 1px #000,1px 1px #000;
 }
 :root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .act-route-strip { grid-area: route; }
