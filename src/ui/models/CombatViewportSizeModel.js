@@ -2,8 +2,10 @@ import { uiConfig } from '../../config/generated/ui.js';
 
 // One sizing rule for every combatant (owner, 2026-11-02): the figure's measured
 // body (head to feet) is a fixed share of the game viewport's height, times its
-// stature multiplier. Nothing else sets size: not the enemy count, the hand
-// position, the HUD band or the overhead stack. The shares and caps are tunable
+// stature multiplier. Nothing else sets size: not the enemy count, the HUD band or
+// the overhead stack. Only a common last-resort factor may shrink everyone, when
+// figures would overlap past the allowance or a lone player's feet would enter the
+// hand area. The shares and caps are tunable
 // in content/config/ui/presentation/combatFormationModel.json (sizing.viewportScale).
 const CONFIG = uiConfig.presentation.combatFormationModel.sizing.viewportScale;
 
@@ -63,7 +65,7 @@ export function fitViewportSprites({ width, actors, viewportHeight, portraitPhon
   const enemyCentre = enemyXs.length ? (Math.min(...enemyXs) + Math.max(...enemyXs)) / 2 : width * .55;
   const startX = a => enemyPlacement && (a.side ?? a.slot.side) === 'enemy'
     ? (a.slot.x - enemyCentre) * enemyPlacement.squeeze + width * enemyPlacement.centre : a.slot.x;
-  const floor = a => solo && Number.isFinite(handTop) && (a.side ?? a.slot.side) === 'player' ? handTop : Infinity;
+  const floor = a => solo && Number.isFinite(handTop) && handTop > 0 && (a.side ?? a.slot.side) === 'player' ? handTop : Infinity;
   const rowOf = a => enemyPlacement && (a.side ?? a.slot.side) === 'enemy' ? 'enemy:shared' : `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
   const solve = factor => {
     const rows = targets.map(({ a, height }) => ({ a, height: height * factor, width: height * factor * a.visibleWidth / a.visibleHeight, x: startX(a) }));

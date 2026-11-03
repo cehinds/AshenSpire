@@ -85,3 +85,11 @@ test('the hand top is a floor: a lone player shrinks (common factor) rather than
   assert.ok(p.visibleHeight + 40 + 6 <= 200 + 1e-6, 'feet (with headroom) end above the hand top');
   assert.equal(tight.find(f => f.id === 'e').visibleHeight, p.visibleHeight, 'everyone shrinks together');
 });
+
+test('a hidden or unmeasured hand (top 0 or below) never shrinks the figures', async () => {
+  // Review on #2511: getBoundingClientRect().top is 0 for a hidden hand, which once collapsed every figure to minCommonFactor.
+  const mod = await import('../src/ui/models/CombatViewportSizeModel.js');
+  const src = (await import('node:fs')).readFileSync(new URL('../src/ui/models/CombatViewportSizeModel.js', import.meta.url), 'utf8');
+  assert.match(src, /Number\.isFinite\(handTop\) && handTop > 0/);
+  assert.equal(typeof mod.fitViewportSprites, 'function');
+});
