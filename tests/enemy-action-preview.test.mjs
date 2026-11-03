@@ -132,8 +132,10 @@ test('authored Stitched King ratings and starter protection agree with the live 
   const events = combat.eventLog.slice(start);
   const contacts = events.filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
   assert.equal(events.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id).length, 1);
-  assert.deepEqual(contacts.map(e => e.hpLoss), view.hitDamages);
-  assert.equal(combat.player.hp, 1000 - view.totalDamage);
+  // Owner, 2026-11-03: hitDamages/totalDamage are the raw hits; the receipt's hpLoss is the resolved figure the live contacts must match.
+  assert.deepEqual(contacts.map(e => e.hpLoss), view.damageReceipt.hits.map(hit => hit.hpLoss));
+  assert.deepEqual(contacts.map(e => e.damageReceipt.hits[0].incoming), view.damageReceipt.hits.map(hit => hit.incoming));
+  assert.equal(combat.player.hp, 1000 - view.hpLoss);
 });
 
 test('formula effects resolve against the proper owner and target without running the effect', () => {
