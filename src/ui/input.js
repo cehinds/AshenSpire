@@ -969,7 +969,7 @@ function onKeydown(ev) {
   if (!enabled) return;
   // Inspection and route controls own native Enter/Space activation. The
   // game cursor may still point at their card, whose action must stay inert.
-  if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
+  if (ev.target?.closest?.('.combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
   // A focused target HUD panel opens its own inspection on Enter/Space the
   // same way; every other key (arrows) still drives the game cursor.
   if (ev.target?.closest?.('.target-hud-panel') && (ev.key === 'Enter' || ev.key === ' ')) return;

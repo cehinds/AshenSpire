@@ -2017,8 +2017,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .upgrade-desk .deck-editor-main.smith-candidate-card > .upgrade-desk-side { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-self: end; display: flex; gap: .4rem; }
 .upgrade-desk .deck-editor-main.smith-candidate-card .smith-row-status { text-align: left; font-size: max(1.2rem, var(--deck-min-text)); color: var(--muted); }
 .upgrade-desk .deck-editor-main.smith-candidate-card .card-upgrade-reason { color: var(--danger); }
-.upgrade-desk .deck-editor-main.smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: .8rem; left: auto; transform: translateY(-50%); }
-.upgrade-desk .deck-editor-main.smith-candidate-card:has(> .card-info-button) > .upgrade-desk-side { margin-right: 3.4rem; }
 .upgrade-desk .deck-editor-main.smith-candidate-card.locked,
 .upgrade-desk .deck-editor-main.smith-candidate-card.is-needs-blacksmith { cursor: not-allowed; }
 .upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: .55; }

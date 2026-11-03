@@ -10,7 +10,7 @@
 // could not outlive the screen that spent it. The mid-fight Armoury is a screen
 // that mounts OVER a live fight, on `document.body`, without remounting combat.
 // Its `clearSelection()` runs the hand card's `douse`, and that douse removes
-// `inspection-selected`, `inspection-info-visible` AND `selected`, and sets
+// `inspection-selected` AND `selected`, and sets
 // `aria-pressed="false"`.
 //
 // WHAT A PLAYER GOT: the card stopped saying it was armed, the enemies kept
@@ -94,7 +94,7 @@ ok(/releaseSelectionWatch\(\);/.test(combat.replace(/const releaseSelectionWatch
 // If the douse stopped removing `selected`, the desync would not arise — and
 // this test would be guarding nothing. Name the line it depends on.
 const inspection = strip(read('src/ui/components/cardInspection.js'));
-ok(/classList\.remove\('inspection-selected', 'inspection-info-visible', 'selected'\)/.test(inspection),
+ok(/classList\.remove\('inspection-selected', 'selected'\)/.test(inspection),
   "the douse still strips the combat hand card's `selected` class, which is why combat must be told");
 
 

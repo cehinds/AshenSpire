@@ -832,7 +832,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // store first, so the store's lit card is combat's `selected`. Empty the store
   // — which every card screen now does on mount, and the mid-fight Armoury is a
   // screen that mounts OVER a live fight — and the store runs that card's
-  // `douse`, stripping `inspection-selected`, `inspection-info-visible` AND
+  // `douse`, stripping `inspection-selected` AND
   // `selected` and setting `aria-pressed="false"` on the very node the player is
   // looking at. Closing the overlay does not remount combat, so without this the
   // module kept its `selected` while the card had stopped saying so: enemies
@@ -939,7 +939,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // only the armed card keeps it (owner, 2026-10-31: the hand shows one select state).
     combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => {
       if (active && card.dataset.instanceId === active) return;
-      card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current');
+      card.classList.remove('inspection-selected'); card.removeAttribute('aria-current');
     });
     combatEl.querySelectorAll('.hand .card').forEach(card => {
       const on = card.dataset.instanceId === active;
@@ -3169,7 +3169,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
 
     el.addEventListener('pointerdown', (ev) => {
-      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;
+      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || veilIsOpen()) return;
       // Mouse, trackpad, pen and touch share the practice area's recognizer.
       flickStart = touchPoint(ev);
       flickPoints = [flickStart];
@@ -3203,7 +3203,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           hideTooltip();
           dragGhost = el.cloneNode(true);
           dragGhost.classList.add('card-drag-ghost');
-          dragGhost.querySelector('.card-info-button')?.remove();
           dragGhost.setAttribute('aria-hidden', 'true');
           const verdict = document.createElement('span');
           verdict.className = 'drop-verdict';
@@ -3434,7 +3433,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     if (ev.key === 'Escape') {
       combatEl.querySelectorAll('.hand .card.inspection-selected').forEach(card => {
-        card.classList.remove('inspection-selected', 'inspection-info-visible');
+        card.classList.remove('inspection-selected');
         card.removeAttribute('aria-current');
       });
       refreshAim();

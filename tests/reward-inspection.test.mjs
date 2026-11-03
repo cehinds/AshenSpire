@@ -49,6 +49,9 @@ function withInspectionDom(fn) {
     cleanup(); return result;
   } catch (error) { cleanup(); throw error; }
 }
+// The (i) badge is gone (owner, 2026-11-03): a right-click on the face opens the same shared reading.
+const rightClick = node => (node.matches?.('.card-inspection-target') ? node : node.querySelector('.card-inspection-target'))
+  .dispatchEvent(new Event('contextmenu', { cancelable: true }));
 const reading = node => [node.textContent, node.inspectionMarkup, ...node.children.map(reading)].filter(Boolean).join(' ');
 
 function mount(kind, id, extra = {}) {
@@ -98,7 +101,7 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
       dialog.querySelector('.modal-close').click();
       assert.equal(document.querySelector('.card-inspection-modal'), null);
       assert.equal(document.activeElement, inspect, 'closing restores focus to Inspect');
-      chosen.querySelector('.card-info-button').click();
+      rightClick(chosen);
       const information = document.querySelector('.card-inspection-modal');
       assert.ok(information, `${stage} also keeps the face's shared Information door usable`);
       assert.equal(information.querySelector('.card-inspection-act'), null);
@@ -123,16 +126,16 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
   });
 });
 
-test('Information reads an unchosen or already taken reward without choosing it', () => {
+test('Right-click reads an unchosen or already taken reward without choosing it', () => {
   withInspectionDom(() => {
     const { app, run, offer, calls } = mount('weapons', weapon.id);
     const before = structuredClone({ run, offer });
     const faces = app.querySelectorAll('.reward-choice-face');
-    faces[0].querySelector('.card-info-button').click();
+    rightClick(faces[0]);
     document.querySelector('.card-inspection-modal .modal-close').click();
     assert.equal(app.querySelector('#reward-card-confirm').disabled, true);
     app.querySelectorAll('.reward-pick')[1].click();
-    faces[0].querySelector('.card-info-button').click();
+    rightClick(faces[0]);
     document.querySelector('.card-inspection-modal .modal-close').click();
     assert.equal(app.querySelectorAll('.reward-pick')[1].getAttribute('aria-checked'), 'true');
     assert.deepEqual({ run, offer }, before); assert.deepEqual(calls, []);
@@ -142,7 +145,7 @@ test('Information reads an unchosen or already taken reward without choosing it'
     // Rebuild against the taken option using the same production renderer.
     mountGameProfileOffers(taken.app, { registries, run: taken.run, offer: taken.offer, title: 'Rewards', onTake() { throw new Error('must not claim'); }, onContinue() {} });
     assert.equal(taken.app.querySelector('.reward-pick').disabled, true);
-    taken.app.querySelector('.card-info-button').click();
+    rightClick(taken.app);
     assert.ok(document.querySelector('.card-inspection-modal'));
     document.querySelector('.card-inspection-modal .modal-close').click();
     assert.deepEqual(taken.offer.taken, [0]); assert.equal(taken.offer.claimed, null);
@@ -274,7 +277,7 @@ for (const sample of normalCases) test(`normal ${sample.kind} inspection survive
       assert.equal(document.activeElement, inspect);
       assert.equal(app.querySelector('#reward-card-confirm').textContent, label);
       assert.equal(app.querySelector('.reward-selected').dataset.pickId, selectedId);
-      app.querySelector('.reward-selected .card-info-button').click();
+      rightClick(app.querySelector('.reward-selected'));
       const information = document.querySelector('.card-inspection-modal');
       assert.ok(information, 'shared Information also stays available during review');
       assert.equal(information.querySelector('.card-inspection-act'), null);

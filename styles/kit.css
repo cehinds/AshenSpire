@@ -2214,7 +2214,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-row-text > .as-status { text-align: left; }
 .smith-row-text > .card-upgrade-indeck { align-self: flex-start; padding: 0 0.4rem; font-size: 0.85rem; line-height: 1.35; }
 .smith-candidate-card > .smith-weapon-count { flex: 0 0 auto; }
-.smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: 8px; left: auto; transform: translateY(-50%); }
 .smith-candidate-card.is-needs-blacksmith { opacity: 0.55; }
 .smith-candidate-card.is-needs-blacksmith.selected, .smith-candidate-card.is-needs-blacksmith:focus-visible, .smith-candidate-card.is-needs-blacksmith:hover { opacity: 0.85; }
 .smith-tag-row > .smith-item-type-row, .smith-tag-row > .smith-weapon-tags { display: contents; }
@@ -4038,25 +4037,16 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    44 physical px target, with a 16 px label) unless the host declares its own
    --card-info-size, which nothing does today — the hook stays for a host that
    must pin the circle to a size the zoom does not choose. */
-.card-inspection-target > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 /* A clue is a word; the formation column must not clip it to a number badge. */
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
-.card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
-/* A hand card's Inspect is the portal above the card (handInspectionOverlay), shown
-   once it is moved there. The in-card copy stays hidden even while the card is
-   selected, so it never paints at a temporary spot and then moves (owner, 2026-10-11).
-   Non-hand card views keep the shared in-card rule above. */
-.hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
-/* WCF3: the selected card and its inspect control share one glow. The hand
-   moves that control into an overlay, so the portal wears the same filter. */
-.inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
+/* WCF3: the selected card glows. */
+.inspection-selected { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
 /* Owner, 2026-10-31: a hand card never wears the yellow select state, only the targeting colour (--selection-color).
-   Hold-start, keyboard focus, the (i) and a second press all add `.inspection-selected`; it glows like `.selected`.
+   Hold-start, keyboard focus and a second press all add `.inspection-selected`; it glows like `.selected`.
    Gold stays on the deck editor, rewards and every other card surface. */
 :root .hand .card { --focus-ring: 2px solid var(--selection-color, var(--green)); }
-:root .hand .card:is(.selected, .inspection-selected), :root .hand-overlay > .hand-info-portal {
+:root .hand .card:is(.selected, .inspection-selected) {
   --selection-glow: drop-shadow(0 0 6px var(--selection-color, var(--green)));
 }
 :root .hand .card.inspection-selected { border-color: var(--selection-color, var(--green)); }
@@ -4064,8 +4054,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   border-color: var(--selection-color, var(--green));
   box-shadow: 0 0 0 2px var(--selection-color, var(--green)), 0 0 18px color-mix(in srgb, var(--selection-color, var(--green)) 40%, transparent);
 }
-.card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
-.card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,384px)) minmax(0,1fr); }
 .card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:var(--card-ratio); box-sizing:border-box; }
 .playing-card-details { display:flex; flex-direction:column; gap:16px; padding:4px 0; }
@@ -4236,7 +4224,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 
 /* WHAT AN UNFOCUSED CHIP WITHHOLDS IS AUTHORED NOW, NOT HAND-ROLLED HERE.
-   A `:not(.choice-focused) .card-info-button { visibility:hidden }` rule stood
+   A `:not(.choice-focused)` rule hiding the old info badge stood
    here: one screen's private flag, in CSS, for the one field anybody had got
    round to hiding. That is the mechanism the presentation levels replace —
    `content/config/ui/components/card.json` says what each of glance / focus /
@@ -4374,7 +4362,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-starting-fold .cc-starting-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; }
 .cc-starting-fold .cc-starting-card { padding-top:34px; }
 .cc-starting-fold .cc-starting-card > .card { max-width:104px; }
-.cc-starting-fold .cc-starting-card .card-info-button { top:-36px; }
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
@@ -4382,7 +4369,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-card-quantity { font-size:13px; color:var(--gold); align-self:start; }
 .cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:var(--card-ratio); min-width:0; margin:0; transform:none; }
 .equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
-.cc-starting-card .card-info-button { top:-44px; }
 /* CARD LORE — the identity line in inspection and the lore modal behind it
    (components/loreLine.js). The player picks the face, size, spacing and slant
    under Advanced → Text & lore; models/LoreTypeModel.js writes the choice on
@@ -4752,28 +4738,12 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
 
-/* Equipment disclosure preserves the shared above-card placement. */
-.equipment-poker-card > .card-info-button { width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); }
-@media (pointer:coarse) {
-  .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
-  .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
-}
-@media (prefers-reduced-motion:reduce) { .equipment-poker-card > .card-info-button { transition:none; } }
-
-.equipment-poker-card:focus-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button { visibility:visible; pointer-events:auto; opacity:1; }
 
 /* Reserve room for the above-card control in Inventory scroll content. */
 .armoury .disc-faces:has(.poker-inventory-face) { padding-top:64px; }
 
 .armoury .disc-face:has(.poker-inventory-face) { overflow:visible; }
 
-/* Selected content keeps Information after a host redraw, including radio choices. */
-.card-inspection-target:is(.reward-selected, [aria-checked='true']) > .card-info-button {
-  visibility: visible; pointer-events: auto;
-}
-.equipment-poker-card:is(.selected, [aria-selected='true'], [aria-checked='true']) > .card-info-button {
-  visibility: visible; opacity: 1; pointer-events: auto;
-}
 /* Leave space inside scrollports for the above-card control, including wrapped rows. */
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
   padding-top: 64px; row-gap: 64px;
@@ -4791,13 +4761,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
   padding-top: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
   row-gap: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
 }
-.reward-door .reward-row .card[data-new='1'] > .card-info-button {
-  top: calc(-1 * var(--reward-status-stack-height));
-}
 .mount-row.card-inspection-target { position: relative; padding-right: 54px; }
-.mount-row.card-inspection-target > .card-info-button {
-  top: 50%; right: 8px; left: auto; transform: translateY(-50%);
-}
 /* Focusing a selected card must retain its inspection gutter in scrollports. */
 .card-inspection-target { scroll-margin-top: 64px; }
 
@@ -5462,15 +5426,6 @@ button[data-button-size] {
 .as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
 .modal-close { aspect-ratio: 1; flex: none; padding: 0; }
 .hand-overlay { position: relative; }
-.hand-overlay > .hand-info-portal {
-  position: absolute; z-index: 500; transform: translateX(-50%);
-  --inspect-box: var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)));
-  width: var(--inspect-box); height: var(--inspect-box);
-  min-width: var(--inspect-box); min-height: var(--inspect-box);
-  border: 1px solid var(--gold); border-radius: 50%; padding: 0;
-  display: grid; place-items: center; background: var(--bg); color: var(--gold);
-  visibility: visible; pointer-events: auto; font-size: var(--inspect-label, calc(16px / var(--ui-zoom, 1)));
-}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .hand-hit-lane {
@@ -5892,11 +5847,6 @@ button[data-button-size] {
 .customize .cc-card-selectors .equipment-choose { font-size:max(14px, calc(14px / var(--ui-zoom, 1))); }
 .customize .cc-card-selectors[data-view="list"] .equipment-choose { grid-column:1 / -1; }
 .customize .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
-.customize .card-info-button.creation-info-popover:popover-open {
-  position:fixed; inset:auto; margin:0; transform:none; visibility:visible; opacity:1;
-  pointer-events:auto; z-index:2147483647; overflow:visible;
-  box-shadow:0 0 16px #d0ac5d80;
-}
 
 /* Compact equipment selection: one header, one active section, one way forward. */
 .customize .cc-equipment-header { display:flex; align-items:center; gap:12px; padding:10px 6px; border-bottom:1px solid #74603c; }
