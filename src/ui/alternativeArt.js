@@ -113,7 +113,7 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
   const fill = layers.filter(layer => ['far', 'ground'].includes(alternativeArtCatalog.sceneLayers[layer.id].kind));
   return `<div class="backdrop alternative-backdrop" data-region="${scene.region}" data-scene="${sceneId}" aria-hidden="true">
     <svg class="alternative-scene" viewBox="0 0 ${device.width} ${device.height}" focusable="false">
-      <defs><filter id="alternative-scene-fill-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="8"/></filter>
+      <defs><filter id="alternative-scene-fill-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter>
         <filter id="alternative-scene-edge-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="20"/></filter>
         <mask id="alternative-scene-edge" maskUnits="userSpaceOnUse" x="-6000" y="-6000" width="14000" height="14000"><rect class="alternative-scene-edge" x="-5000" y="-5000" width="12000" height="12000" fill="#fff" filter="url(#alternative-scene-edge-blur)"/></mask></defs>
       <g class="alternative-scene-fill" display="none" filter="url(#alternative-scene-fill-blur)">${fill.map(layer => image(layer, 'data-fill-layer')).join('')}</g>
@@ -244,7 +244,7 @@ function fitBackdropFill(svg, { device, scale, coverScale, left, top, width, bot
     // Same rule as the sharp layers: "Never drawn" skyline hides far and landmark art here too.
     setAttr(image, 'visibility', ['far', 'landmark'].includes(alternativeArtCatalog.sceneLayers[image.dataset.fillLayer].kind) && document.documentElement.dataset.wireframeSceneSkyline === 'off' ? 'hidden' : 'visible');
   }
-  const fade = 72 / scale, far = 5000;
+  const fade = 36 / scale, far = 5000;
   const exposed = [left > .5, top > .5, left + device.width * scale < width - .5, Math.min(top + device.height * scale, groundBottom) < bottom - .5];
   if (!exposed.some(Boolean)) { if (main) clearAttr(main, 'mask'); return; }
   const edge = svg.querySelector('.alternative-scene-edge');
