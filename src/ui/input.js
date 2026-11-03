@@ -827,8 +827,7 @@ let backAim = null;
 // Only a LIGHT-DISMISS popover (`popover`, `popover="auto"`, `popover="hint"`)
 // is a layer the press belongs to: the browser closes it on a real Escape. A
 // `popover="manual"` one (any other value is manual too) is presentation —
-// character creation paints its card-info button in the top layer that way
-// (components/creationInfoLayer.js) — and the browser never closes it on
+// a layer painted in the top layer that way — and the browser never closes it on
 // Escape, so stepping aside for it would swallow every Escape and pad B would
 // hide the button. Review of #1463 (Codex).
 const LIGHT_DISMISS = new Set(['', 'auto', 'hint']);
