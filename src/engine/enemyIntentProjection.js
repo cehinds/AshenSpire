@@ -96,7 +96,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
   } else return null;
   chance = Math.max(0, Math.min(1, chance * proposalChance));
   if (chance === 0) max = 0;
-  return { min: max, max, hitChance: chance, expected: max * chance };
+  return { min: chance < 1 ? 0 : max, max, hitChance: chance, expected: max * chance };
 }
 
 // The caller must apply its observer gate before handing us a public intent.

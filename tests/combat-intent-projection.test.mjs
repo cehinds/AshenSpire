@@ -63,7 +63,11 @@ test('Core HP projection uses configured Block/Poise and has no evade-stance unc
   combat.player.gameProfilePoise = 1;
   const before = snapshot(combat);
   const shown = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(shown.min, shown.max); assert.ok(shown.max < 20);
+  // Owner, 2026-11-03: the shown number is the raw hit; configured Block and Poise no longer cut it (they still cut real HP loss).
+  assert.equal(shown.min, shown.max);
+  combat.player.block = 0; delete combat.player.gameProfilePoise;
+  assert.equal(shown.max, projectCombatIntent(combat, enemy.id).projectedDamage.max, 'Block and Poise leave the shown hit alone');
+  combat.player.block = 4; combat.player.gameProfilePoise = 1;
   assert.equal(snapshot(combat), before);
   // Owner 2026-11-01: Evade is not a stance; a Defend-stance player has a certain projection.
   combat.player.combatStance = { camp: 'physical', maneuver: 'defend' };
