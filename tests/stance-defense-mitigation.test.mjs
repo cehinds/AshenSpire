@@ -69,14 +69,17 @@ for (const mode of ['core', 'current']) test(`${mode} actual grouped damage matc
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   const before = JSON.stringify({ player: combat.player, enemies: combat.enemies, counters: combat.rng.getCounters() });
   const projected = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(projected.max, 14); assert.equal(projected.baseline.max, 20); assert.equal(projected.tone, 'green');
+  // Owner, 2026-11-03: Core quotes the raw hit (3 x 8 = 24) whatever the Counter stance and Block do; the real loss is still 14.
+  // The archived 'current' profile keeps its net projection.
+  if (mode === 'core') { assert.equal(projected.max, 24); assert.equal(projected.baseline.max, 24); assert.equal(projected.tone, 'red'); }
+  else { assert.equal(projected.max, 14); assert.equal(projected.baseline.max, 20); assert.equal(projected.tone, 'green'); }
   assert.equal(JSON.stringify({ player: combat.player, enemies: combat.enemies, counters: combat.rng.getCounters() }), before);
   const card = enemyMoveCarrier(enemy, registries.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
   combat.rng.int = () => 20; combat.rng.float = () => 0;
   const hp = combat.player.hp;
   enqueueExpandedAction(combat, [{ effect: { op: 'damage', target: 'player', amount: 8, hits: 3 }, source: enemy, owner: enemy, target: combat.player, card, meta: {} }], { source: enemy, target: combat.player, carrier: card });
   while (combat.queue.length) executeAction(combat, combat.queue.shift());
-  assert.equal(hp - combat.player.hp, projected.max);
+  assert.equal(hp - combat.player.hp, 14, 'real HP loss is unchanged');
 });
 
 test('missing resolved setting preserves old saves and concurrent stance chooses real mitigation', () => {

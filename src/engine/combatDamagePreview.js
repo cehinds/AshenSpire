@@ -158,14 +158,19 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
       if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }
+    // Owner, 2026-11-03: the quoted hit is the raw hit (receipt.rawHit), changed only by stances, statuses and damage-type weakness/resistance,
+    // never by the defender's defenses (Block, Poise, Ward, Barrier, Counter, Reflect, Evade/AC). hpLoss stays the real, resolved figure.
+    const modern = fixCoreEnabled(ctx);
+    const shown = receipt => modern ? receipt.rawHit : receipt.amount;
+    const rawTotal = receipts.reduce((sum, receipt) => sum + shown(receipt), 0);
     return { damageReceipt: damageReceipt(target?.id, receipts.flatMap(row => row.damageReceipt?.hits || [])),
-      damage: (fixCoreEnabled(ctx) ? receipts[0]?.hpLoss : receipts[0]?.amount) || 0, hits: receipts.length,
-      hitDamages: receipts.map(receipt => fixCoreEnabled(ctx) ? receipt.hpLoss : receipt.amount),
-      totalDamage: receipts.reduce((sum, receipt) => sum + (fixCoreEnabled(ctx) ? receipt.hpLoss : receipt.amount), 0),
+      damage: (receipts[0] && shown(receipts[0])) || 0, hits: receipts.length,
+      hitDamages: receipts.map(shown), totalDamage: rawTotal,
       hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
       attackerDead: !!attacker && attacker !== source && !(attacker.hp > 0),
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
-      hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
+      hpLossBounds: modern ? [rawTotal, rawTotal]
+        : [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
   }
   const { previewCtx } = local;
   const rules = Matchups.matchupRules(ctx);

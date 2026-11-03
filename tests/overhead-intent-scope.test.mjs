@@ -16,9 +16,9 @@ test('the compact overhead intent carries its own scoped total beside the per-hi
   document.documentElement ??= document.body;
   for (const node of surfaces(multi)) {
     assert.equal(node.querySelector('.intent-action-value').textContent, '5×3');
-    assert.equal(node.querySelector('.intent-damage-scope').textContent, 'Total 0–15 HP');
+    assert.equal(node.querySelector('.intent-damage-scope').textContent, 'Total 0–15 damage');
     assert.equal(node.querySelectorAll('.intent-damage-scope').length, 1, 'one scoped total per visible row');
-    assert.equal(node.querySelector('.intent-actions .intent-damage-read .intent-damage-scope').textContent, 'Total 0–15 HP',
+    assert.equal(node.querySelector('.intent-actions .intent-damage-read .intent-damage-scope').textContent, 'Total 0–15 damage',
       'the summary is inside the compact row itself, independent of hidden expanded .intent-values');
   }
 }));
@@ -29,7 +29,7 @@ test('current-contact scope survives in the compact overhead intent instead of c
     damageBasis: 'hp', damageScope: 'contact', contactIndex: 1, contactCount: 3 };
   for (const node of surfaces(contact)) {
     assert.equal(node.querySelector('.intent-action-value').textContent, '9');
-    assert.equal(node.querySelector('.intent-damage-scope').textContent, 'Hit 2/3 · next 9 HP');
+    assert.equal(node.querySelector('.intent-damage-scope').textContent, 'Hit 2/3 · next 9 damage');
   }
 }));
 
