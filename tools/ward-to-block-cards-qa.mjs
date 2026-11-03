@@ -153,9 +153,7 @@ try {
     await deckCard.waitFor({ state: 'visible', timeout: 20000 });
     await deckCard.click();
     await page.waitForFunction(element => element.getAttribute('aria-pressed') === 'true', await deckCard.elementHandle(), { timeout: 10000 });
-    const inspectButton = page.locator('.deck-editor-inline-inspect:visible').first();
-    await inspectButton.waitFor({ state: 'visible', timeout: 10000 });
-    await inspectButton.click();
+    await deckCard.click({ button: 'right' });
     const deckDetail = page.locator('.deck-editor-inspector:visible').first();
     await waitForStableVisible(deckDetail);
     const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });

@@ -244,10 +244,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     for (const node of panel.querySelectorAll('.deck-editor-main')) {
       const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
       node.setAttribute('aria-pressed', String(on));
-      const inspect = node.closest('.deck-editor-item')?.querySelector('.deck-editor-inline-inspect');
-      if (inspect) inspect.hidden = !on;
     }
-    trackInspect();
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
@@ -268,7 +265,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const back = chip(t('deckEditor.back'), false, () => {
       mobileView = inspectOrigin === 'deck' && model.ordered ? 'deck' : 'collection';
       pane = mobileView;
-      focusKey = selected ? `inspect:${inspectOrigin}:${selected.key}` : null;
+      focusKey = selected ? (inspectOrigin === 'deck' ? `row:${selected.key}` : `tile:${selected.key}`) : null;
       draw();
     }, 'inspect-back');
     back.classList.add('deck-editor-inspect-back');
@@ -500,56 +497,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     el('span', { class: 'deck-editor-count', title: extra, text: t('deckEditor.count', { count: grouped ? row.count : row.inDeck || 0 }) }),
   ].filter(Boolean);
 
-  // A selected card's art opens the inspector, as its (i) does (owner,
-  // 2026-10-11). The first press only selects: pointerdown records whether the
-  // card was already selected before focus selects it.
+  // THE CARD ITSELF OPENS THE INSPECTOR; there is no (i) badge (owner, 2026-11-03).
+  // The first press only selects: pointerdown records whether the card was
+  // already selected before focus selects it, and a second press on its art
+  // opens. A right-click, or the I key on a focused card, opens at once.
   function artOpens(main, row, source) {
     let armed = false;
     main.addEventListener('pointerdown', (event) => {
       armed = !!event.target?.closest?.('.deck-editor-art') && selected?.source === source && selected.key === selectionKey(row, source);
     });
     main.addEventListener('click', () => { const open = armed; armed = false; select(row, source, open); });
+    main.addEventListener('contextmenu', (event) => { event.preventDefault(); armed = false; select(row, source, true); });
+    main.addEventListener('keydown', (event) => {
+      if ((event.key === 'i' || event.key === 'I') && !event.ctrlKey && !event.metaKey && !event.altKey) { event.preventDefault(); armed = false; select(row, source, true); }
+    });
   }
-
-  // The (i) sits bottom-centre on the art (owner, 2026-10-11), measured from the art's own
-  // box so it needs no reserved space in any layout. Rows without art keep the
-  // stylesheet's position.
-  let inspectObserver = null;
-  function placeInspect(inspectButton) {
-    const item = inspectButton?.closest?.('.deck-editor-item');
-    const layoutDeckMain = item?.querySelector('.deck-editor-main');
-    const layoutDeckArt = layoutDeckMain?.querySelector('.deck-editor-art');
-    if (!layoutDeckArt || !Number.isFinite(layoutDeckArt.getBoundingClientRect().width) || !layoutDeckArt.getBoundingClientRect().width) return;
-    const artBox = anchorLocalBox(item, layoutDeckArt);
-    const buttonBox = anchorLocalBox(item, inspectButton);
-    const inset = 3;
-    inspectButton.classList.add('on-art');
-    inspectButton.style.left = `${artBox.left + (artBox.width - buttonBox.width) / 2}px`;
-    inspectButton.style.top = `${artBox.top + artBox.height - buttonBox.height - inset}px`;
-  }
-  function trackInspect() {
-    inspectObserver?.disconnect();
-    const node = [...panel.querySelectorAll('.deck-editor-inline-inspect')].find(n => !n.hidden);
-    if (!node) return;
-    placeInspect(node);
-    if (typeof ResizeObserver === 'function') {
-      inspectObserver = new ResizeObserver(() => placeInspect(node));
-      inspectObserver.observe(node.closest('.deck-editor-item'));
-    }
-  }
-
-  function inlineInspect(row, source) {
-    const active = selected?.source === source && selected.key === selectionKey(row, source);
-    const node = focusable(button({ label: t('deckEditor.inspectIcon'), className: 'deck-editor-inline-inspect deck-editor-inspect',
-      attrs: { 'aria-label': t('deckEditor.inspectNamed', { name: row.name }) } }), `inspect:${source}:${selectionKey(row, source)}`);
-    node.hidden = !active;
-    node.addEventListener('click', () => select(row, source, true));
-    return node;
-  }
-
-
-
-
 
   // The stepper's copy count, computed once: in deck, and owned (a basic is
   // unlimited; a kept set-aside tile owns its deck copies plus its sideboard copies).
@@ -605,7 +567,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       list.appendChild(el('div', {
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
-      }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [
+      }, [main, el('div', { class: 'deck-editor-actions' }, [
         minus, (() => {
           const count = stepperCount(tile);
           return el('span', { class: 'deck-editor-stepper-count', text: stepperText(count), title: stepperSpoken(count), 'aria-label': stepperSpoken(count) });
@@ -637,7 +599,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
         dataset: { instanceId: row.instanceId, source: row.source },
-      }, [main, inlineInspect(row, 'deck')]);
+      }, [main]);
       const actions = el('div', { class: 'deck-editor-actions' });
       item.appendChild(actions);
       if (model.ordered) {
@@ -875,7 +837,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
     syncInert();
     restoreFocus();
-    trackInspect();
   }
 
   // The first focus key in a pane that is not a text box. Focus never moves
@@ -1125,7 +1086,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function close() {
     if (closeConfirmationOpen) { closeConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
-    inspectObserver?.disconnect();
     previewFitObserver?.disconnect();
     previewFitObserver = null;
     animationPreview?.dispose();
