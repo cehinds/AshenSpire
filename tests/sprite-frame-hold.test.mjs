@@ -74,3 +74,12 @@ test('the pilot attack (6 frames) holds each frame, so a phone swing is no longe
   assert.equal(held.impactMs, speed.minFrameMs * 3);
   setAnimSpeed('normal'); setCombatPacing();
 });
+
+test('per-enemy tempo still scales the expansion-stage swing and its frame hold, never under the floor', async () => {
+  // Review on #2506: actionTiming became the beat total, so the tempo has to reach it.
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(src, /lungeMs: \(Number\(speed\.lungeMs\) \|\| 0\) \* tempo/);
+  assert.match(src, /minFrameMs: Math\.max\(COMBAT_TIMING\.frameHoldMinMs, \(Number\(speed\.minFrameMs\) \|\| 0\) \* tempo\)/);
+  assert.match(src, /stage\?\.actionTiming\?\.\(plan\.pose, tempoSpeed\)/);
+});

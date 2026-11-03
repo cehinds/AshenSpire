@@ -532,7 +532,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
     const direction = actorEl.closest('.enemy') ? -1 : 1;
-    const authoredTiming = stage?.actionTiming?.(plan.pose, speed);
+    // Per-enemy tempo (actionAnimations.json) still scales the swing: the lunge and the frame hold stretch with it,
+    // and the hold never drops under the pace floor (COMBAT_TIMING.frameHoldMinMs).
+    const tempoSpeed = tempo === 1 ? speed : { ...speed, lungeMs: (Number(speed.lungeMs) || 0) * tempo,
+      minFrameMs: Math.max(COMBAT_TIMING.frameHoldMinMs, (Number(speed.minFrameMs) || 0) * tempo) };
+    const authoredTiming = stage?.actionTiming?.(plan.pose, tempoSpeed);
     const totalMs = plan.family === 'neutral' ? 0 : authoredTiming?.totalMs ?? Math.round(speed.lungeMs * tempo);
     const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
     const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
