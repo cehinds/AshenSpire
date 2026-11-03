@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/combatAnimation.js",
-    "symbol": "resolveCombatAnimation"
+    "file": "src/model/displayAppearance.js",
+    "symbol": "resolveDisplayAppearance"
   }
 }
