@@ -121,6 +121,7 @@ import { mountBlacksmith } from './ui/screens/blacksmith.js';
 import { mountMaster } from './ui/screens/master.js';
 import { shopStockKind } from './model/shopKinds.js';
 import { commitQuestEvent } from './model/marketAdditions.js';
+import { MAX_ENEMIES_PER_COMBAT } from './model/combatLimits.js';
 import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
@@ -3131,12 +3132,13 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   if (shotEnemies) {
     const named = shotEnemies.split(',').filter(Boolean);
     if (!named.length || named.some(id => !registries.enemies.get(id))) throw new Error('?shotEnemies: expected known enemy ids, comma separated');
+    if (named.length > MAX_ENEMIES_PER_COMBAT) throw new Error(`?shotEnemies: at most ${MAX_ENEMIES_PER_COMBAT} enemies`);
     enemyIds = named;
   }
   const shotEnemyCount = shotState === 'combat' ? shotParams.get('shotEnemyCount') : null;
   if (shotEnemyCount !== null) {
     const count = Number(shotEnemyCount);
-    if (!Number.isInteger(count) || count < 1 || count > 12) throw new Error('?shotEnemyCount: expected a whole number from 1 to 12');
+    if (!Number.isInteger(count) || count < 1 || count > MAX_ENEMIES_PER_COMBAT) throw new Error(`?shotEnemyCount: expected a whole number from 1 to ${MAX_ENEMIES_PER_COMBAT}`);
     enemyIds = Array.from({ length: count }, (_, index) => enemyIds[index % enemyIds.length]);
   }
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
