@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { CLASSIC_ENEMY_PLACEMENT, combatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { fitViewportSprites, targetBodyHeight, statureMultiplier, bodyHeightFraction } from '../src/ui/models/CombatViewportSizeModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
@@ -56,4 +57,31 @@ test('row, display and Settings scale multipliers never resize a figure', () => 
   const sizes = fit([actor('p', 'player', 200, 0, 1, { multiplier: 2, userScale: 1.5 }), actor('e', 'enemy', 900, 0, 1, { multiplier: .3, userScale: 2 })]);
   assert.equal(sizes[0].visibleHeight, 720 * .26);
   assert.equal(sizes[1].visibleHeight, 720 * .26);
+});
+
+const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w / 2, b.x + b.w / 2) - Math.max(a.x - a.w / 2, b.x - b.w / 2)) / ((a.w + b.w) / 2);
+const VIEWPORTS = [[360, 780, true], [390, 844, true], [844, 390, false], [1280, 720, false], [1440, 900, false], [1920, 1080, false]];
+
+test('classic composition: enemies in different bands never hide behind one another after the squeeze', () => {
+  for (const [w, h, phone] of VIEWPORTS) for (const n of [1, 3, 5]) {
+    const actors = [actor('p', 'player', w * .1, 0, 1, { leading: 30 }), ...Array.from({ length: n }, (_, i) =>
+      actor('e' + i, 'enemy', w * (.5 + i * .09), i % 3, 1, { visibleWidth: 150 }))];
+    const sizes = fitViewportSprites({ width: w, actors, viewportHeight: h, portraitPhone: phone, enemyPlacement: CLASSIC_ENEMY_PLACEMENT });
+    const placed = combatComposition({ sizes, actors, width: w, height: h, solo: false });
+    const boxes = placed.filter(s => s.id !== 'p').map(s => ({ x: s.x, w: s.visibleHeight * 150 / 190 }));
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      assert.ok(overlap(boxes[i], boxes[j]) <= .4 + 1e-6, `${w}x${h} n=${n}: ${i}-${j} overlap ${overlap(boxes[i], boxes[j])}`);
+    }
+  }
+});
+
+test('the hand top is a floor: a lone player shrinks (common factor) rather than stand in the hand', () => {
+  const actors = [actor('p', 'player', 100, 0, 1, { leading: 40 }), actor('e', 'enemy', 900, 0)];
+  const free = fit(actors, { solo: true, handTop: 700 });
+  assert.equal(free.lastResort, null);
+  const tight = fit(actors, { solo: true, handTop: 200 });
+  assert.ok(tight.lastResort > 0 && tight.lastResort < 1);
+  const p = tight.find(f => f.id === 'p');
+  assert.ok(p.visibleHeight + 40 + 6 <= 200 + 1e-6, 'feet (with headroom) end above the hand top');
+  assert.equal(tight.find(f => f.id === 'e').visibleHeight, p.visibleHeight, 'everyone shrinks together');
 });
