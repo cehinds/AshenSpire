@@ -132,10 +132,10 @@ if (process.argv.includes('--selftest')) {
         expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
       },
       {
-        name: 'an extra card text button returns beside Information',
+        name: 'an extra card text button returns on the card face',
         file: 'src/ui/components/cardInspection.js',
-        find: 'card.append(info);',
-        replace: 'card.append(info, Object.assign(document.createElement("button"), { className: "card-more-button", textContent: "›" }));',
+        find: "card.setAttribute('aria-keyshortcuts', 'I');",
+        replace: "card.append(Object.assign(document.createElement('button'), { className: 'card-more-button', textContent: '›' }));",
         expectRed: /extra card text control returned/,
       },
       {
@@ -742,7 +742,7 @@ const PROBE = `(() => {
     // Information is the owner's one card-details control. Detect the removed
     // extra button through the rendered page, including a reintroduced box.
     if (document.querySelector('.card-more-button'))
-      visual.push('extra card text control returned; use Information');
+      visual.push('extra card text control returned; use the card face');
   }
   if (window.__settingsListenerBalance) {
     const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);

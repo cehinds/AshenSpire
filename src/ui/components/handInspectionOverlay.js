@@ -94,7 +94,10 @@ export function mountHandInspectionOverlay(hand) {
   // reveal only when the card it is about has changed (see revealedKey).
   const lazy = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position()); };
   const schedule = () => { forceReveal = true; lazy(); };
-  // A browser-owned pan already chose the viewport: scrolling never re-reveals.
+  // A browser-owned pan already chose the viewport. Following its scroll must
+  // not drag it back to an older pager cursor or selected card: the scroll
+  // cancels the pending reveal. Explicit focus, selection and layout changes reveal.
+  const followScroll = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false)); };
   const press = event => { awaitingClick = false; pointers.add(event.pointerId); };
   const release = event => {
     if (!pointers.delete(event.pointerId)) return;
@@ -110,6 +113,7 @@ export function mountHandInspectionOverlay(hand) {
   const observer = new MutationObserver(lazy);
   observer.observe(hand, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
   hand.addEventListener('handlayoutchange', schedule);
+  hand.addEventListener('scroll', followScroll);
   hand.addEventListener('pointerdown', press, true);
   hand.addEventListener('gpfocus', choose, true);
   hand.addEventListener('cardinspectionselect', choose, true);
@@ -122,6 +126,7 @@ export function mountHandInspectionOverlay(hand) {
   return () => {
     observer.disconnect(); cancelAnimationFrame(request);
     hand.removeEventListener('handlayoutchange', schedule);
+    hand.removeEventListener('scroll', followScroll);
     hand.removeEventListener('pointerdown', press, true);
     hand.removeEventListener('gpfocus', choose, true);
     hand.removeEventListener('cardinspectionselect', choose, true);
