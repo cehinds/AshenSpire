@@ -1537,7 +1537,7 @@
   border-radius: .2rem;
 }
 /* Perspective grid: uniform cells; the shadow is each body's foot anchor. */
-:root:not([data-display-appearance='classic'])[data-formation-grid='true'] .formation-grid[data-perspective='true'] { display: grid; }
+:root[data-formation-grid='true'] .formation-grid[data-perspective='true'] { display: grid; }
 .formation-grid[data-perspective='true'] .formation-grid-cell { transform: none; }
 .formation-grid[data-perspective='true'] .formation-grid-outline { display: none; }
 :root[data-formation-grid='true'] .formation-grid[data-perspective='true'] .formation-grid-outline { display: block; }

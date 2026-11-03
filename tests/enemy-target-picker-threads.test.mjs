@@ -30,8 +30,7 @@ test('hard obstacles include visible cards, combat tools and action buttons', ()
   assert.match(picker, /'\.combat-tools, \.combat-action-row button, \.hand \.card'/);
 });
 
-test('grid is chosen by classicAppearance: Classic uses EnemyTargetGridModel', () => {
-  assert.match(picker, /import \{ enemyTargetGrid as classicEnemyTargetGrid \} from '\.\.\/models\/EnemyTargetGridModel\.js'/);
-  assert.match(picker, /import \{ alternativeEnemyTargetGrid \} from '\.\.\/models\/AlternativeEnemyTargetGridModel\.js'/);
-  assert.match(picker, /const enemyTargetGrid = classicAppearance\(\) \? classicEnemyTargetGrid : alternativeEnemyTargetGrid;/);
+test('the picker uses the AlternativeEnemyTargetGridModel only (Classic grid removed 2026-11-03)', () => {
+  assert.match(picker, /import \{ alternativeEnemyTargetGrid as enemyTargetGrid \} from '\.\.\/models\/AlternativeEnemyTargetGridModel\.js'/);
+  assert.doesNotMatch(picker, /classicAppearance|EnemyTargetGridModel\.js'.*classic/);
 });

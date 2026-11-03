@@ -72,17 +72,15 @@ test('after-turn checks retain the original anchor/scale while allowing a legiti
   assert.equal(resized.verdicts.at(-1).ok, false, 'a turn cannot silently resize a fixed resting root');
 });
 
-test('Classic rest checks boot the actual display appearance rather than only changing sprite style', async () => {
+test('rest checks boot the one display appearance and never request the retired Classic setting', async () => {
   const bootCode = source.slice(source.indexOf('async function boot('), source.indexOf('\nconst point ='));
-  for (const classic of [false, true]) {
-    let navigation;
-    const boot = runInNewContext(`${bootCode}\nboot`, { CLASSIC: false, SEED: 'MOTION1', BOOT_TIMEOUT_MS: 20000,
-      wait: async () => {}, until: async () => {} });
-    await boot({ send: async (method, options) => { if (method === 'Page.navigate') navigation = options.url; },
-      evaluate: async () => ({ cls: false, os: false, appearance: classic ? 'classic' : 'alternative' }) },
-      'http://localhost/', { setting: false, os: false, classic });
-    const settings = JSON.parse(new URL(navigation).searchParams.get('shotSettings'));
-    assert.equal(settings.classicAppearance, classic);
-    assert.equal(settings.showPlayedCard, true);
-  }
+  let navigation;
+  const boot = runInNewContext(`${bootCode}\nboot`, { SEED: 'MOTION1', BOOT_TIMEOUT_MS: 20000,
+    wait: async () => {}, until: async () => {} });
+  await boot({ send: async (method, options) => { if (method === 'Page.navigate') navigation = options.url; },
+    evaluate: async () => ({ cls: false, os: false, appearance: 'alternative' }) },
+    'http://localhost/', { setting: false, os: false });
+  const settings = JSON.parse(new URL(navigation).searchParams.get('shotSettings'));
+  assert.equal('classicAppearance' in settings, false);
+  assert.equal(settings.showPlayedCard, true);
 });

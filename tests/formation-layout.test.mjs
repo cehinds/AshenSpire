@@ -85,17 +85,6 @@ test('small saved grids expand uniformly when needed, without stacking or losing
   }
 });
 
-test('movement accepts the whole selected player grid and rejects enemy or hidden cells', () => {
-  const settings = { classicAppearance: true, 'gameConfig.presentation.movementEnabled': true, 'gameConfig.presentation.formationColumns': 3, 'gameConfig.presentation.formationRows': 6 };
-  const combat = { player: { energy: 3, formationCell: 'F3' }, phase: 'player', enemies: [] };
-  assert.equal(formationMovePlan(combat, 'F2', settings).ok, true);
-  for (const cell of ['F3', 'F4', 'G1', 'A0', 'A7']) assert.equal(formationMovePlan(combat, cell, settings).ok, false);
-  const reduced = { ...settings, 'gameConfig.presentation.formationColumns': 1, 'gameConfig.presentation.formationRows': 2 };
-  assert.equal(formationMovePlan(combat, 'A1', reduced).current, 'B1');
-  assert.equal(formationMovePlan(combat, 'A1', reduced).ok, true);
-  assert.equal(formationMovePlan(combat, 'C1', reduced).ok, false);
-});
-
 test('layout configuration clamps whole grid dimensions and round trips through export', () => {
   const invalid = config({ formationColumns: 9, formationRows: 4.8, formationPreset: 'invalid', groundSkew: -100 });
   assert.equal(invalid.formationColumns, 3); assert.equal(invalid.formationRows, 5);
@@ -138,13 +127,7 @@ test('a player cell saved in a front column stands in the same lane on the persp
   const combat = { player: { energy: 3, formationCell: 'A2' }, phase: 'player', enemies: [] };
   assert.equal(formationMovePlan(combat, 'B1', settings).current, 'A1');
   assert.equal(formationMovePlan(combat, 'A1', settings).ok, false, 'already standing there');
-  assert.equal(formationMovePlan(combat, 'A1', { ...settings, classicAppearance: true }).current, 'A2', 'Classic keeps the saved cell');
+  assert.equal(formationMovePlan(combat, 'A1', { ...settings, classicAppearance: true }).current, 'A1', 'a saved classicAppearance setting changes nothing');
   assert.equal(formationMovePlan({ ...combat, player: { ...combat.player, formationCell: 'B3' } }, 'A1', settings).current, 'B1',
-    'a third Classic column collapses too');
-});
-
-test('a perspective lane past Classic\'s rows stands in Classic\'s last row', () => {
-  const settings = { 'gameConfig.presentation.movementEnabled': true, classicAppearance: true };
-  const combat = { player: { energy: 3, formationCell: 'C1' }, phase: 'player', enemies: [] };
-  assert.equal(formationMovePlan(combat, 'A1', settings).current, 'B1');
+    'a third saved column collapses too');
 });

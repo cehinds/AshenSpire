@@ -13,7 +13,6 @@ import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
 import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
 import { builtInFor } from './highResArt.js';
-import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { warmImageBoundsWhenIdle } from './artBounds.js';
 
@@ -34,7 +33,6 @@ function load(url) {
 
 /** Base armour actions with explicitly selected reviewed weapon attacks. */
 export function createAlternativeCardStage(classId, { still = false, weaponProfile = null, smashProfile = null } = {}) {
-  if (classicAppearance()) return null;
   const assembled = alternativeCardAnimationFamily(classId, { weaponProfile, smashProfile });
   if (!assembled) return null;
   const { family, selected, pilotFrames, classSmash, heldFrames, frames } = assembled;

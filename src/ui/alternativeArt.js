@@ -4,7 +4,6 @@ import { alternativeArtCatalog } from './alternativeArtCatalog.js';
 import { assetUrl } from './assetmap.js';
 import { markArtPlaceholder } from './artFallback.js';
 import { armourById } from '../content/equipment.js';
-import { classicAppearance } from './displayAppearance.js';
 import { reducedMotionRequested } from './motion.js';
 import { displaySceneryTier } from './artTier.js';
 import { ART_SOURCE_EVENT } from './highResArt.js';
@@ -47,7 +46,6 @@ function actorPicture(art, onError = null) {
 
 // This is an idle envelope, never an animation or weapon contact anchor.
 export function alternativeSprite(id, side = 'enemy') {
-  if (classicAppearance()) return null;
   const art = alternativeArtCatalog.sprites[id];
   if (!art) return null;
   const [w, h] = art.size, [x0, y0, x1, y1] = art.bounds;
@@ -99,7 +97,6 @@ export function alternativeCompanionIcon(id) {
 }
 
 export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
-  if (classicAppearance()) return null;
   const scene = alternativeArtCatalog.scenes[sceneId];
   if (!scene) return null;
   const mobile = phoneArt();
@@ -125,7 +122,6 @@ export function alternativeBackdropHtml(sceneId = 'hollow-weald-1') {
 const combatSceneLayers = device => device.layers.filter(layer => alternativeArtCatalog.sceneLayers[layer.id].kind !== 'foreground');
 
 export function alternativeCardFadeHtml() {
-  if (classicAppearance()) return '';
   return `<div class="alternative-card-fade" aria-hidden="true" style="background-image:url('${alternativeArtUrl((phoneArt() ? alternativeArtCatalog.mobileLayers : alternativeArtCatalog.layers)['card-section-texture'])}')"></div>`;
 }
 

@@ -4,9 +4,8 @@ import { uiConfig } from '../src/config/generated/ui.js';
 import { desktopFooterEnabled, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
 
 test('approved footer follows the chosen wide preset and alternative appearance only', () => {
-  for (const formFactor of ['desktop', 'widescreen']) assert.equal(desktopFooterEnabled({formFactor,appearance:'alternative',layout:'formation'}),true);
-  for (const formFactor of ['mobile', 'tablet']) assert.equal(desktopFooterEnabled({formFactor,appearance:'alternative',layout:'formation'}),false);
-  assert.equal(desktopFooterEnabled({formFactor:'desktop',appearance:'classic',layout:'formation'}),false);
+  for (const formFactor of ['desktop', 'widescreen']) assert.equal(desktopFooterEnabled({formFactor,layout:'formation'}),true);
+  for (const formFactor of ['mobile', 'tablet']) assert.equal(desktopFooterEnabled({formFactor,layout:'formation'}),false);
 });
 for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`desktop ${width}: fixed footer, smaller proportional cards, and variable fan`, () => {
   const footer=desktopFooterLayout({width:width/zoom,height:height/zoom,zoom});
