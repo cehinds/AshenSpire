@@ -136,6 +136,9 @@ const LOW_SILHOUETTES = ['blightHound', 'stitchedHound', 'lanternMoth', 'graveWi
 // tests may carry only the ratio combatSpriteRatio derived from it.
 const enemyClass = a => a.stature ?? a.frame?.dataset?.stature ?? (a.ratio >= 2 ? 'huge' : a.ratio > 1 ? 'large' : 'normal');
 
+// SUPERSEDED (owner, 2026-11-02): the live battlefield sizes every combatant with
+// CombatViewportSizeModel. The class sharing, spacious-rank floor and headroom
+// terms below no longer run in the app; kept only for the legacy fit tests.
 export function fitAlternativeSprites({ width, height, actors, narrow }) {
   const fits = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0).map(a => {
     const enemy = a.side !== 'player';

@@ -3130,6 +3130,13 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   let enemyIds = shotState === 'combat' && shotParams.get('shotReaction') === 'counter' ? ['wanderingSoldier', 'wanderingSoldier'] : enc.enemies;
   // Screenshot-only population fixture: initialize real enemies through the
   // normal combat factory; never add actors to a running fight or its DOM.
+  // ?shotEnemies=briarHermit,eclipseCantor names the fixture's enemies (sprite-size captures).
+  const shotEnemies = shotState === 'combat' ? shotParams.get('shotEnemies') : null;
+  if (shotEnemies) {
+    const named = shotEnemies.split(',').filter(Boolean);
+    if (!named.length || named.some(id => !registries.enemies.get(id))) throw new Error('?shotEnemies: expected known enemy ids, comma separated');
+    enemyIds = named;
+  }
   const shotEnemyCount = shotState === 'combat' ? shotParams.get('shotEnemyCount') : null;
   if (shotEnemyCount !== null) {
     const count = Number(shotEnemyCount);

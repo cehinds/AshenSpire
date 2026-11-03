@@ -9,6 +9,7 @@ import { registerStage } from './services/PoseAnimator.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { builtInFor } from './highResArt.js';
 import { warmImageBoundsWhenIdle } from './artBounds.js';
+import { bodyScaleFactor } from './models/CombatBodyModel.js';
 
 const aliases = { guard: 'block', guardHit: 'block', projectile: 'rangedWeaponAttack', ranged: 'rangedWeaponAttack', buff: 'magicAttack', casting: 'magicAttack', magic: 'magicAttack', hurt: 'hit', afflicted: 'wounded', counter: 'counterattack', prone: 'defeated', sleep: 'defeated' };
 
@@ -25,6 +26,9 @@ export function enemyExpansionSprite(definition, entity = {}) {
   const idleBody = COMBAT_BODY_LANDMARKS[`assets/enemy-poses/expansion/${definition.id}/idle.webp`];
   const referenceBodyHeight = idleBody ? idleBody.feetY - idleBody.headY : null;
   let currentBody = null;
+  // The idle body's share of the stage box: the battlefield sizes this figure by
+  // its head-to-feet body (combatSpriteGeometry reads it), whatever the pose.
+  if (referenceBodyHeight) root.dataset.bodyHeightRatio = String(referenceBodyHeight * scale / 190);
   root.style.cssText = `position:relative;width:${art.idleWidth * scale}px;height:190px;flex:none;overflow:visible`;
   const image = new Image();
   image.className = 'pose-frame';
@@ -66,13 +70,15 @@ export function enemyExpansionSprite(definition, entity = {}) {
   let presentation = enemyPresentation(entity), timer = null, raf = 0, disposed = false, due = 0;
   let generation = 0;
   const resolve = pose => aliases[pose] || pose;
-  function draw(pose, normalizeBody = false) {
+  // Every frame (idle, held stance, action, defeated) is drawn with the factor
+  // that brings its measured body to the idle body's height, so the figure
+  // keeps one on-screen size in every pose.
+  function draw(pose) {
     if (disposed) return;
     const frame = art.actions[pose]?.[0]?.pose || pose;
     root.dataset.pose = frame;
     const landmarks = COMBAT_BODY_LANDMARKS[path(frame)];
-    const factor = normalizeBody && referenceBodyHeight && landmarks
-      ? referenceBodyHeight / (landmarks.feetY - landmarks.headY) : 1;
+    const factor = bodyScaleFactor(referenceBodyHeight, landmarks);
     const drawScale = scale * factor;
     const floor = landmarks?.feetY ?? 480;
     image.style.width = `${512 * drawScale}px`;
@@ -84,7 +90,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
   }
   const active = () => timer !== null || raf !== 0;
   function stop() { clearTimeout(timer); timer = null; if (raf) cancelAnimationFrame(raf); raf = 0; generation++; }
-  function settle() { stop(); draw(resolve(presentation.rest), true); }
+  function settle() { stop(); draw(resolve(presentation.rest)); }
   function setState(next = {}) {
     presentation = enemyPresentation(next);
     const stances = enemyStanceSprites[definition.id];

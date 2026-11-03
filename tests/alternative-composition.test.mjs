@@ -184,3 +184,14 @@ test('impossibly wide custom footprints report the limit without silently shrink
   assert.equal(foot.footprintFits,false);
   assert.equal(foot.x,50,'impossible footprint remains centred in its owning cell');
 });
+
+test('a slid neighbour makes every size.x authoritative over the cell footprint clamp', () => {
+  const box = { left: 100, top: 100, width: 80, height: 60, skew: 0 };
+  const actors = ['a', 'b'].map((id, i) => ({ side: 'enemy', visibleWidth: 60, leading: 40,
+    slot: { id, x: 140 + i * 5, ground: 150, box } }));
+  const sizes = [{ id: 'a', x: 140, visibleHeight: 100, scale: 1, multiplier: 1 },
+    { id: 'b', x: 230, visibleHeight: 100, scale: 1, multiplier: 1, slid: true }];
+  const fit = alternativeCombatComposition({ actors, sizes, width: 390, perspectiveGrid: true });
+  assert.equal(fit[1].x, 230, 'the slid figure keeps the sizing rule\'s x');
+  assert.equal(fit[0].x, 140, 'its neighbour is not pulled back by the footprint clamp');
+});
