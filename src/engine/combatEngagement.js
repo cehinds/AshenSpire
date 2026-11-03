@@ -5,7 +5,7 @@ import { contestKindOf } from './contest.js';
 // inferred from a stance, screen coordinates, or another held weapon.
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
 import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
-import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { core2MultiHitRulesEnabled, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
@@ -165,7 +165,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
       source.fixCoreStaminaRemaining = available - extra; source.stamina = source.fixCoreStaminaRemaining;
       // SPEC §4.6b C: an Advance an enemy pays reacting in the player's turn is owed from its next turn, like the
       // reaction's own SP (enemyReactions.js); the next-turn refill would otherwise make it free. Enemy-phase moves owe nothing.
-      if (ctx.phase === 'player') source.pendingStaminaLoss = (source.pendingStaminaLoss || 0) + extra;
+      if (ctx.phase === 'player' && carrier.combatReaction && !ctx.combatRounds && core2ActionPolicyEnabled(ctx)) source.pendingStaminaLoss = (source.pendingStaminaLoss || 0) + extra;
     }
     else {
       source.energy -= extra;
