@@ -1,10 +1,6 @@
 import { uiConfig } from '../../config/generated/ui.js';
 import { separateRow } from './CombatViewportSizeModel.js';
 
-// Classic composition pulls the enemies toward this share of the width, by this
-// squeeze; the sizing fit takes the same options so it judges the final spacing.
-export const CLASSIC_ENEMY_PLACEMENT = Object.freeze({ squeeze: .72, centre: .76 });
-
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
 export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
@@ -17,8 +13,8 @@ export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
 // artwork. Only layout, presentation settings, art geometry or formation changes
 // invalidate the settled body sizes and foot positions. The measured header
 // keepout is layout geometry too, including captions outside its border box.
-export function combatArtworkKey({ width, height, zoom, wide = false, presentation, appearance, handAnchor, ceiling = 0, actors }) {
-  return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, ceiling, actors.map(actor => [
+export function combatArtworkKey({ width, height, zoom, wide = false, presentation, handAnchor, ceiling = 0, actors }) {
+  return JSON.stringify([width, height, zoom, wide, presentation, handAnchor, ceiling, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset, actor.artLeading,
@@ -47,27 +43,6 @@ export function combatStandingGround(sizes, actors, fallback) {
   return grounds.length ? Math.min(...grounds) : fallback;
 }
 
-export function combatComposition({ sizes, actors, width, height, handTop, solo = true }) {
-  const enemies = actors.filter(actor => actor.side === 'enemy');
-  const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
-  const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
-  return sizes.map(size => {
-    const actor = actors.find(actor => actor.slot.id === size.id);
-    const player = actor.side === 'player';
-    // Composition places; it never resizes. Size is the viewport rule's alone
-    // (CombatViewportSizeModel): no enemy lift, no solo-player growth, no cap.
-    const visibleHeight = size.visibleHeight;
-    const halfWidth = actor.visibleWidth * size.scale / 2;
-    const proposedX = player ? (solo ? width * .32 : size.x)
-      : size.placed ? size.x : (size.x - center) * CLASSIC_ENEMY_PLACEMENT.squeeze + width * CLASSIC_ENEMY_PLACEMENT.centre;
-    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
-    const ground = player && solo && Number.isFinite(handTop)
-      ? Math.max(visibleHeight + actor.leading + 6, handTop)
-      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground) : height * .34);
-    return { ...size, x, ground, visibleHeight, scale: size.scale, multiplier: size.multiplier };
-  });
-}
-
 // Attach the foreground player's feet to the battlefield edge, above the
 // health strip and card-band tools. Selection never changes this resting fit.
 // Share of the field height a short portrait phone lifts its enemies by, so
@@ -83,9 +58,9 @@ const SPACIOUS_SPREAD = 1.3;
 // Room the intent and HP plates need under the turn ribbon, above each figure.
 export const SPACIOUS_RIBBON_RESERVE = 30;
 
-// The perspective grid is the live path (the default appearance). The legacy
-// composition below is kept for the classic-field tests and any caller that
-// passes no perspectiveGrid; every form factor takes the same placement.
+// The perspective grid is the live path. The legacy composition below is kept
+// for any caller that passes no perspectiveGrid; every form factor takes the
+// same placement.
 export function alternativeCombatComposition(options) {
   return options.perspectiveGrid
     ? perspectiveGridComposition(options)

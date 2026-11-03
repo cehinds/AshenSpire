@@ -5,9 +5,8 @@ import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfi
 
 test('target details support every alternative formation form factor', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
-  for (const formFactor of ['mobile', 'tablet', 'desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor, classic: false }, config), true);
-  assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: true }), false);
-  assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: false, layout: 'cards' }), false);
+  for (const formFactor of ['mobile', 'tablet', 'desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor }, config), true);
+  assert.equal(targetHudEnabled({ formFactor: 'desktop', layout: 'cards' }), false);
   assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right'], 'no count: lane fallback');
   assert.equal(targetHudSide('enemy', 2, undefined, 1), 'left');
   assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane, undefined, 3)), ['below', 'below', 'below']);

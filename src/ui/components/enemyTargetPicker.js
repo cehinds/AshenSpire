@@ -1,9 +1,7 @@
 import { tFull } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
-import { enemyTargetGrid as classicEnemyTargetGrid } from '../models/EnemyTargetGridModel.js';
-import { alternativeEnemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
-import { classicAppearance } from '../displayAppearance.js';
+import { alternativeEnemyTargetGrid as enemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
 import { clearFocus, focusElement } from '../input.js';
 
 // Placement follows fitted figures without intercepting inspection controls.
@@ -42,7 +40,6 @@ function watchTargetPlacement(host, picker) {
     const hardObstacles = hardNodes.filter(Boolean)
       .map(node => (node.getBoundingClientRect ? node.getBoundingClientRect() : node))
       .filter(rect => rect.width && rect.height).map(localRect);
-    const enemyTargetGrid = classicAppearance() ? classicEnemyTargetGrid : alternativeEnemyTargetGrid;
     const targets = [...picker.children].map(button => {
       const figure = [...host.querySelectorAll('.combatant.enemy')].find(node => node.dataset.eid === button.dataset.eid);
       // The stage trims .sprite to the painted ink (its marginTop drops the
