@@ -95,7 +95,7 @@ export function alternativeCombatComposition(options) {
 // The perspective grid places every body on its cell's foot anchor: the
 // sprite's feet stand on the cell's shadow. The shared fit already sized each
 // body to its lane and its headroom; composition only keeps it in the field.
-function perspectiveGridComposition({ sizes, actors, width }) {
+function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true }) {
   // Once the sizing rule slid any figure to clear a neighbour, its x for every
   // figure is authoritative: the cell footprint clamp below would pull a
   // neighbour back across the cleared gap.
@@ -111,6 +111,9 @@ function perspectiveGridComposition({ sizes, actors, width }) {
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
     const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
       { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
+    // A lone player's feet never stand inside the hand area: the ground line
+    // moves up to the hand's top edge (the fit already sized the body for it).
+    if (actor.side === 'player' && solo && Number.isFinite(handTop)) foot.ground = Math.min(foot.ground, handTop);
     return { ...size, ...foot, ...(moved ? { x } : {}) };
   });
   // The footprint clamp can pull two neighbours of one band back together;

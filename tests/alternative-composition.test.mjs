@@ -195,3 +195,13 @@ test('a slid neighbour makes every size.x authoritative over the cell footprint 
   assert.equal(fit[1].x, 230, 'the slid figure keeps the sizing rule\'s x');
   assert.equal(fit[0].x, 140, 'its neighbour is not pulled back by the footprint clamp');
 });
+
+test('perspective grid: a lone player stands on the hand top, never inside the hand area', async () => {
+  const { alternativeCombatComposition } = await import('../src/ui/models/CombatCompositionModel.js');
+  const actors = [{ side: 'player', visibleWidth: 60, visibleHeight: 100, boxHeight: 100, leading: 30, slot: { id: 'p', x: 80, ground: 500 } }];
+  const sizes = [{ id: 'p', x: 80, visibleHeight: 100, scale: 1, multiplier: 1 }];
+  const run = handTop => alternativeCombatComposition({ perspectiveGrid: true, sizes, actors, width: 390, height: 600, handTop, solo: true })[0].ground;
+  assert.equal(run(420), 420);
+  assert.equal(run(560), 500, 'a hand lower than the cell leaves the cell ground alone');
+  assert.equal(run(null), 500);
+});
