@@ -20,7 +20,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { CLASSIC_ENEMY_PLACEMENT, alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
@@ -856,7 +856,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // Classic and alternative compositions differ; choose per fit, not at import.
       const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
       const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
-        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow) });
+        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow),
+        // Judge the fit on the positions composition will use: classic squeezes
+        // the enemies into one row; a solo player's feet stay above the hand.
+        enemyPlacement: classicAppearance() ? CLASSIC_ENEMY_PLACEMENT : null,
+        handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
+        solo: solo && logicalViewport().height > 480 });
       combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         perspectiveGrid: !classicAppearance(),
