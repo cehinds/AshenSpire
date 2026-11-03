@@ -1231,7 +1231,7 @@ input[type="range"] { min-height: var(--tap-floor); }
    the floor would otherwise be stretched to a floor wider than itself. */
 .card-shelf {
   --card-shelf-track: max(
-    min(var(--card-shelf-min, 120px), var(--card-w-glance, 152px)),
+    min(var(--card-shelf-min, 120px), var(--card-w-glance, 182.4px)),
     calc((100% - (var(--card-shelf-cols, 4) - 1) * var(--card-shelf-gap, 12px)) / var(--card-shelf-cols, 4))
   );
   display: flex;
@@ -1252,7 +1252,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card-shelf > * {
   flex: 0 1 var(--card-shelf-track);
   min-width: 0;
-  max-width: var(--card-w-glance, 152px);
+  max-width: var(--card-w-glance, 182.4px);
   margin: 0;
 }
 /* A line of prose on a shelf is not a card: an empty shelf's "nothing for sale
@@ -1758,11 +1758,16 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    options, each column capped at 16rem and the row centred, so a lone option
    sits in the middle rather than stretching across the door. */
 .reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+/* Owner (2026-11-02): desktop cards are 20% larger (--card-w-glance 152 to 182.4). The grid column was capped at 16rem
+   (160px) and the door at its 57rem rung, which held the card at 158px at 1280x720; both now follow the card width.
+   A phone keeps its two-column rule below (the narrow layout never reaches here). */
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 182.4px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px + 2 * var(--modal-inset) + 20px)); }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
    their common height, including when phone choices wrap onto a second row. */
-.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 152px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
+.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 182.4px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
 .reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
 .reward-door .reward-choice-option > .reward-pick { flex: 1 0 3.5rem; height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
 .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
@@ -3750,7 +3755,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    280 / uncapped, a 2.05x spread on one renderer, with INSPECT SMALLER THAN
    FOCUS. Do not add a per-surface `max-width` back; declare the level at the
    render call, or a variant of one in the JSON. */
-.equipment-poker-card { display:block; position:relative; width:100%; max-width:var(--epc-level-w, var(--card-w-focus, 280px)); aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
+.equipment-poker-card { display:block; position:relative; width:100%; max-width:var(--epc-level-w, var(--card-w-focus, 336px)); aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
 .epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
 .epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
@@ -4013,7 +4018,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    tests/card-door-stack.test.mjs holds this literal to the config. The modal
    keeps its grid and its measured `data-card-door` decision (rules below). */
 .card-inspection-layout { display:flex; flex-wrap:wrap; align-items:flex-start; gap:24px; min-width:0; width:100%; padding:16px; box-sizing:border-box; }
-.card-inspection-layout > .card-inspection-art { flex:0 1 var(--card-w-inspect,320px); }
+.card-inspection-layout > .card-inspection-art { flex:0 1 var(--card-w-inspect,384px); }
 .card-inspection-layout > .card-inspection-details { flex:1 1 384px; }
 /* A wrapped art line is centred, not left on a 320px box at the line start;
    the details' end margin takes any slack on a two-column line, so a wide host
@@ -4061,7 +4066,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
-.card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,320px)) minmax(0,1fr); }
+.card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,384px)) minmax(0,1fr); }
 .card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:var(--card-ratio); box-sizing:border-box; }
 .playing-card-details { display:flex; flex-direction:column; gap:16px; padding:4px 0; }
 .playing-card-details .tt-title { display:none; }
@@ -4569,10 +4574,10 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 }
 .cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
 .cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
-.cc-summary-empty { display:grid; place-items:center; aspect-ratio:var(--card-ratio); width:100%; max-width:var(--card-w-glance, 152px); border:1px dashed var(--line); border-radius:10px; color:var(--muted); }
+.cc-summary-empty { display:grid; place-items:center; aspect-ratio:var(--card-ratio); width:100%; max-width:var(--card-w-glance, 182.4px); border:1px dashed var(--line); border-radius:10px; color:var(--muted); }
 /* This summary sits beside equipment faces, whose frame is 5:7. The global
    --card-ratio describes illustrated playing cards and may be a different shape. */
-.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:6px; width:100%; max-width:var(--card-w-glance, 152px); aspect-ratio:5/7; overflow:visible; box-sizing:border-box; padding:10px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
+.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:6px; width:100%; max-width:var(--card-w-glance, 182.4px); aspect-ratio:5/7; overflow:visible; box-sizing:border-box; padding:10px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
 .cc-summary-eyebrow { color:var(--muted); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; }
 .cc-summary-name { margin:0; color:var(--gold); font:700 18px/1.15 var(--font-display); overflow-wrap:anywhere; }
 .cc-summary-character > .as-hairline { margin:0; }
@@ -4582,7 +4587,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .cc-summary-character[data-summary-level='glance'] > .cc-summary-stats:last-child { margin-top:auto; }
 .cc-summary-more { grid-column:1 / -1; color:var(--muted); font:700 16px/0.7 var(--font-body); letter-spacing:0.15em; }
 .card-inspection-art > .cc-summary-character {
-  width:100%; max-width:var(--card-w-inspect,320px); min-height:0; aspect-ratio:auto; overflow:visible; margin:0 auto; padding:14px; gap:10px;
+  width:100%; max-width:var(--card-w-inspect,384px); min-height:0; aspect-ratio:auto; overflow:visible; margin:0 auto; padding:14px; gap:10px;
   cursor:default;
 }
 .cc-summary-character[data-summary-level='inspect'] .cc-summary-stats { grid-template-columns:minmax(0,1fr); gap:8px; }
@@ -4803,7 +4808,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 .card-inspection-art > .card .ctext { display:block; flex:0 0 auto; overflow:visible; -webkit-line-clamp:unset; }
 @container game-viewport (max-width:600px) {
   .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
-  .card-inspection-modal .card-inspection-art { width:100%; max-width:var(--card-w-inspect, 320px); }
+  .card-inspection-modal .card-inspection-art { width:100%; max-width:var(--card-w-inspect,384px); }
 }
 /* Green means the primary action is ready; native/ARIA disabled states remain muted.
    A DANGER PRIMARY IS NOT GREEN. Green is "go" (Constantine, 2026-09-04); a
@@ -5314,10 +5319,10 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    glance card you tapped to open it. The track is the authored inspect width;
    the details take what is left. */
 .card-inspection-modal .card-inspection-layout {
-  display: grid; grid-template-columns: minmax(0, var(--card-w-inspect, 320px)) minmax(0, 1fr);
+  display: grid; grid-template-columns: minmax(0, var(--card-w-inspect,384px)) minmax(0, 1fr);
   min-height: 0; height: 100%; gap: 2%; padding: 1rem;
 }
-.card-inspection-modal .card-inspection-art { min-width: 0; max-width: var(--card-w-inspect, 320px); width: 100%; }
+.card-inspection-modal .card-inspection-art { min-width: 0; max-width: var(--card-w-inspect,384px); width: 100%; }
 .card-inspection-modal .card-inspection-art > .card[data-wireframe='WC1'] {
   width: 100%; height: auto; min-height: 0; aspect-ratio: var(--card-ratio);
 }
@@ -5357,7 +5362,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .equipment-poker-card,
 :root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .card {
-  width: 100%; max-width: var(--card-w-inspect, 320px); margin-inline: auto;
+  width: 100%; max-width: var(--card-w-inspect,384px); margin-inline: auto;
 }
 /* The column scrolls as ONE: the details stop owning a scrollport of their own
    and the body takes it, which is what "read down the page" means. */
@@ -5960,10 +5965,10 @@ button[data-button-size] {
 .customize .cc-compact-details .inspection-facts .inspection-tag { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
 
 /* Picker faces use the shared glance sizing, including the selected card. */
-.customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance,152px); }
+.customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance, 182.4px); }
 .customize .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px); }
-.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance,152px))); }
-.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-template-columns:none; grid-auto-columns:var(--card-w-glance,152px); }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance, 182.4px))); }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-template-columns:none; grid-auto-columns:var(--card-w-glance, 182.4px); }
 .customize .cc-card-selectors .epc-fact { white-space:nowrap; }
 
 /* Equipment uses the available page height; actions own a reserved bottom row. */
@@ -5976,7 +5981,7 @@ button[data-button-size] {
 .customize #cz-equipment-fold .disc-reveal { height:100%; min-height:0; padding:0; margin:0; box-sizing:border-box; }
 .customize .cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:12px 20px; width:100%; max-width:none; height:100%; min-height:0; padding:0 12px; box-sizing:border-box; }
 .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
-.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1 / -1; grid-auto-flow:row; grid-auto-columns:auto; grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance,152px))); align-content:start; justify-content:center; overflow:auto; min-height:0; padding:58px 6px 12px; scroll-padding-inline:6px; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1 / -1; grid-auto-flow:row; grid-auto-columns:auto; grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance, 182.4px))); align-content:start; justify-content:center; overflow:auto; min-height:0; padding:58px 6px 12px; scroll-padding-inline:6px; }
 .customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1 / -1; min-height:0; overflow:auto; }
 .customize .cc-equip-group > .cc-equipment-details { grid-column:2; grid-row:1; margin:0; padding:20px 0 0; min-height:0; overflow:auto; align-self:stretch; }
 .customize .cc-equipment-continue { grid-column:2; grid-row:2; align-self:end; margin:0 0 12px; width:100%; }
@@ -5989,7 +5994,7 @@ button[data-button-size] {
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
  .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1; grid-auto-flow:column; grid-template-columns:none; grid-auto-columns:calc((100% - 24px) / 3); justify-content:start; gap:12px; padding:54px 0 10px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
  .customize .cc-card-selectors[data-view="grid"] .poker-equipment-choice { padding:0; scroll-snap-align:start; }
- .customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance,152px); }
+ .customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance, 182.4px); }
  .customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1; max-height:calc(32 * var(--view-vh, 1vh)); }
  .customize .cc-equip-group > .cc-equipment-details { grid-column:1; grid-row:2; padding:2px 0; }
  .customize .cc-equipment-continue { grid-column:1; grid-row:3; margin:0 0 10px; }
@@ -6452,11 +6457,11 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
    and starter deck. A shelf must not promote its playing cards to focus size. */
 .cc-design-workspace .cc-review :is(.cc-summary-cards, .cc-starter-deck) {
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(min(100%, var(--card-w-glance, 152px)), var(--card-w-glance, 152px)));
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, var(--card-w-glance, 182.4px)), var(--card-w-glance, 182.4px)));
   justify-content:start;
   align-items:start;
 }
-.cc-design-workspace .cc-review .card { width:100%; max-width:var(--card-w-glance, 152px); }
+.cc-design-workspace .cc-review .card { width:100%; max-width:var(--card-w-glance, 182.4px); }
 @container game-viewport (max-width:960px) {
  .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
  .cc-feat-detail .cc-part-body { min-height:300px; }
@@ -6760,7 +6765,7 @@ body.reduced-motion .as-toast { transition: none; }
    token here, not a second authored width: the inspect level and its tuner are
    unchanged. */
 :root { --card-modal-scale: .625; }
-.card-inspection-modal { --card-w-modal: calc(var(--card-w-inspect, 320px) * var(--card-modal-scale)); }
+.card-inspection-modal { --card-w-modal: calc(var(--card-w-inspect,384px) * var(--card-modal-scale)); }
 .card-inspection-modal .card-inspection-layout { grid-template-columns: minmax(0, var(--card-w-modal)) minmax(0, 1fr); gap: 1.5rem; }
 .card-inspection-modal .card-inspection-art { max-width: var(--card-w-modal); }
 .card-inspection-modal .card-inspection-art > .card { min-height: 0; }
