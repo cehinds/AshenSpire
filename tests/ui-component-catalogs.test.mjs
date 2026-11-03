@@ -85,11 +85,12 @@ test('every reusable component contract of tools/ui-components.mjs holds on this
   assert.deepEqual(findings(receipt()), []);
 });
 
-test('alternative formation still requires the named bounded fitter and its model import', () => {
+// Re-pinned 2026-11-02: the stage's one size rule is the viewport-share fitter.
+test('the battlefield still requires the viewport-share fitter and its model import', () => {
   const r=receipt();
   for (const source of [
-    r.battlefieldStage.replace('fitAlternativeSprites({', 'unboundedSprites({'),
-    r.battlefieldStage.replace('../models/AlternativeFormationModel.js', '../models/UnknownModel.js'),
+    r.battlefieldStage.replace('fitViewportSprites({', 'unboundedSprites({'),
+    r.battlefieldStage.replace('../models/CombatViewportSizeModel.js', '../models/UnknownModel.js'),
   ]) {
     assert.match(findings({...r,battlefieldStage:source}).join('\n'), /C8 combat composition/);
   }

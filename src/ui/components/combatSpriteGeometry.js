@@ -60,13 +60,20 @@ export function combatSpriteGeometry(sprite, refresh) {
   // A self-target aim outline may precede the directly mounted pilot stage.
   const host = sprite.querySelector?.(':scope > .painted-stage[data-maximum-width-ratio]') || sprite.firstElementChild;
   const boxHeight = sprite.offsetHeight, boxWidth = sprite.offsetWidth;
+  // A stage that publishes its measured body (head to feet) is sized by that
+  // body, so the fit sees the same figure in every pose (owner, 2026-11-02).
+  const bodied = host.matches?.('[data-body-height-ratio]') ? host : host.querySelector?.('[data-body-height-ratio]');
+  const bodyRatio = Number(bodied?.dataset.bodyHeightRatio || 0);
+  if (bodyRatio > 0 && !bodied.matches('.painted-stage')) {
+    return { boxHeight, visibleHeight: Math.max(1, boxHeight * bodyRatio), visibleWidth: Math.max(1, bodied.offsetWidth || boxWidth), footOffset: 0 };
+  }
   const stage = host.matches?.('.painted-stage') && host.dataset.maximumWidthRatio
     ? host : host.querySelector('.painted-stage');
   if (stage && !host.querySelector('.rendered-stage')) {
     const maximumWidthRatio = Number(stage.dataset.maximumWidthRatio || 0);
     // A directly mounted pilot previously used its box geometry. Keep those
     // same dimensions (including DOM rounding), adding only the edge reserve.
-    return { boxHeight, visibleHeight: stage === host ? boxHeight : boxHeight * Number(stage.dataset.idleHeightRatio || 1),
+    return { boxHeight, visibleHeight: bodyRatio > 0 ? boxHeight * bodyRatio : stage === host ? boxHeight : boxHeight * Number(stage.dataset.idleHeightRatio || 1),
       visibleWidth: stage === host ? boxWidth : boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0,
       ...(maximumWidthRatio > 0 ? { edgeWidth: boxHeight * maximumWidthRatio } : {}) };
   }

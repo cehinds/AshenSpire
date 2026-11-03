@@ -1,6 +1,6 @@
 import { t } from './strings.js';
 import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
-import { bodyPlacement } from './models/CombatBodyModel.js';
+import { bodyPlacement, bodyResize } from './models/CombatBodyModel.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
 import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
@@ -49,6 +49,9 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const readyBody = COMBAT_BODY_LANDMARKS[family.frames.ready.path];
   const readyDrawHeight = family.frames.ready.size?.[1] || 512;
   const bodyHeight = readyBody ? (readyBody.feetY - readyBody.headY) * readyDrawHeight / readyBody.height : height;
+  // The ready body's share of the 190 px stage: the battlefield sizes the player
+  // by this head-to-feet body (combatSpriteGeometry), like every enemy.
+  if (readyBody) el.dataset.bodyHeightRatio = String(bodyHeight * scale / 190);
   el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>(frame.stageBounds || frame.bounds)[1])))/height);
   const width = Math.max(256-family.frames.ready.bounds[0], family.frames.ready.bounds[2]-256)*2*scale;
   el.dataset.idleWidthRatio = String(width/190);
@@ -161,8 +164,12 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // body registration while the action clock starts; only different action
     // images retain their authored transient crouch, jump and travel.
     const heldRegistration = !playing || frame?.path === frames[restPose()]?.path;
-    const normalized = landmarks && heldRegistration && !bodyReaction
-      ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding) : authored;
+    // Every measured frame is drawn at the ready body's height (owner, 2026-11-02:
+    // one size in every pose). Held bodies also register on the floor; action
+    // and reaction frames are resized about their own feet so a jump keeps its lift.
+    const normalized = !landmarks ? authored
+      : heldRegistration && !bodyReaction ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding)
+        : readyBody ? bodyResize(authored, landmarks, bodyHeight) : authored;
     const {left,top,width,height} = normalized;
     const body = normalized.body || (landmarks ? {
       headY: top + landmarks.headY * height / landmarks.height,

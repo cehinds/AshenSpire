@@ -97,6 +97,8 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
       stage = createAlternativeCardStage(classId);
       assert.equal(await stage.ready, true);
       const dimensions = stage.el.style.cssText;
+      const readyArt = stage.currentArt;
+      const readyBodyHeight = readyArt?.body ? readyArt.body.feetY - readyArt.body.headY : 0;
       stage.setStance('defensive');
       const beforeReadbacks = readbacks.length;
       stage.play('counter', 260); // Automatic counters use their selected return attack.
@@ -113,7 +115,9 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
         for (const fraction of [0, .2, .4, .6, .8, 1]) {
           stage.seek(action, fraction * 260);
           const art = stage.currentArt;
-          if (art.image !== heldArt.image || !(heldBodyHeight > 0)) positions.push(art.left);
+          // Re-pinned 2026-11-02: frames are resized about their anchor to the ready body
+          // height, so travel is read as the centre (a 512 px wide frame's left is centre - 256).
+          if (art.image !== heldArt.image || !(heldBodyHeight > 0)) positions.push(art.left + art.width / 2 - 256);
           assert.equal(stage.el.style.cssText, dimensions);
           if (art.image === heldArt.image) {
             assert.deepEqual([art.top, art.width, art.height],
@@ -128,9 +132,16 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
               assert.ok(Math.abs(cssTop + art.body.feetY * scale - 190) < 1e-8,
                 'held artwork remains on the semantic floor');
             }
+          } else if (readyBodyHeight > 0 && art.body) {
+            // Re-pinned 2026-11-02 (owner: one body size in every pose). Action
+            // frames used to keep their authored raster size; each measured frame is
+            // now resized about its own feet to the ready body's head-to-feet
+            // height, so a jump keeps its lift but the figure never changes size.
+            assert.ok(Math.abs((art.body.feetY - art.body.headY) - readyBodyHeight) < 1e-8,
+              `action frames keep the ready body height ${art.image.url} (${art.body.feetY - art.body.headY} vs ${readyBodyHeight})`);
           } else {
             assert.deepEqual([art.top, art.width, art.height], [16, 512, 512],
-              'transient action frames retain their authored raster geometry');
+              'unmeasured transient frames retain their authored raster geometry');
           }
           assert(!art.image.url.includes('-mobile.webp'), 'fixed foreground artwork uses the full source on phones');
           if (['counter', 'sweep'].includes(action) && fraction < .69) {
