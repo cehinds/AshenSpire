@@ -247,28 +247,54 @@ test('the preview shows the card\'s main lines only: no Entry bonus line, no rec
   assert.ok(open.length > 100 && !/servicePreviewHtml|recoveryHtml/.test(open), 'the Upgrade Card picker draws no recovery rows');
 });
 
-test('compact host: picking a row closes the list so the pane is not hidden', async () => {
+test('the picker is the deck editor\'s desk: same frame, rows, selection outline and footer', async () => {
   const { withKitDom } = await import('./helpers/kit-dom.mjs');
   const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
-    // The fixture has no layout: the player's own wireframe choice forces the compact selector.
-    dom.document.documentElement = { dataset: { wireframeMenuNav: 'selector' }, style: {}, getBoundingClientRect: () => ({ width: 390, height: 844 }) };
-    const savedStyle = globalThis.getComputedStyle;
-    globalThis.getComputedStyle = () => ({ fontSize: '16px', minHeight: '44px', getPropertyValue: () => '' });
     const run = newRun(); run.smithingStones = 1;
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     let door;
     const pick = id => door.update(cardUpgradeModel(registries, run, id));
     door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: pick, onBack() {}, onConfirm() {} });
-    const railed = () => host.querySelector('.as-railed');
-    assert.equal(railed().dataset.catNav, 'selector');
-    assert.equal(railed().dataset.catOpen, 'true', 'nothing chosen: the list is open');
+    const panel = () => host.querySelector('.deck-editor.upgrade-desk');
+    assert.ok(host.querySelector('.deck-editor-veil'), 'it stands in the editor\'s veil');
+    assert.ok(panel(), 'it wears the editor\'s panel');
+    assert.ok(host.querySelector('.deck-editor-panes .deck-editor-inspector'), 'the preview is the editor\'s inspector');
+    assert.ok(host.querySelector('.deck-editor-panes .deck-editor-list'), 'the cards are the editor\'s list');
+    assert.ok(host.querySelector('.deck-editor-item .deck-editor-main.card-upgrade-row'), 'each card is one of the editor\'s rows');
+    assert.ok(host.querySelector('.deck-editor-foot .deck-editor-cancel.smith-back'), 'Back stands where Cancel stands');
+    assert.ok(host.querySelector('.deck-editor-foot .deck-editor-done.smith-confirm'), 'the action stands where Accept stands');
+    assert.equal(panel().dataset.mobileView, 'collection', 'nothing chosen: the list shows');
+    assert.equal(host.querySelector('.smith-confirm').hidden, true);
+    assert.equal(host.querySelectorAll('.card-upgrade-row.selected').length, 0);
     host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).click();
-    assert.equal(railed().dataset.catOpen, 'false', 'a chosen card closes the list');
+    assert.equal(panel().dataset.mobileView, 'inspect', 'a chosen card opens its preview on a phone');
+    assert.equal(host.querySelectorAll('.card-upgrade-row.selected').length, 1, 'exactly one row is outlined');
+    assert.equal(host.querySelector('.card-upgrade-row.selected').getAttribute('aria-selected'), 'true');
     assert.ok(host.querySelector('#card-upgrade-preview-region'), 'the preview region is drawn');
     assert.equal(host.querySelector('.smith-confirm').hidden, false);
+    host.querySelector('.deck-editor-inspect-back').click();
+    assert.equal(panel().dataset.mobileView, 'collection', 'Back returns to the list');
     door.close();
-    if (savedStyle) globalThis.getComputedStyle = savedStyle; else delete globalThis.getComputedStyle;
+  });
+});
+
+test('the desk lists a blocked card dimmed and disabled, and choosing it does nothing', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  await withKitDom(dom => {
+    const run = newRun(); run.smithingStones = 0;
+    const paid = strike(run);
+    paid.upgraded = true; paid.upgradeSteps = [{ k: 'authored' }];
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const picks = [];
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, onSelect: id => picks.push(id), onBack() {}, onConfirm() {} });
+    const blocked = [...host.querySelectorAll('.card-upgrade-row')].filter(r => r.getAttribute('aria-disabled') === 'true');
+    assert.ok(blocked.length, 'a paid upgrade with no stones is listed');
+    assert.ok(blocked.every(r => r.className.includes('locked')), 'and dimmed');
+    blocked[0].click();
+    assert.deepEqual(picks, [], 'choosing a blocked card selects nothing');
+    door.close();
   });
 });
 
