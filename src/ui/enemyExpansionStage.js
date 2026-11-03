@@ -4,6 +4,7 @@ import { enemyStanceSprites } from '../content/enemyStanceSprites.js';
 import { assetUrl } from './assetmap.js';
 import { enemyPresentation, enemyAuraFilter } from './enemyStates.js';
 import { reducedMotionRequested } from './motion.js';
+import { COMBAT_TIMING, frameHoldMs } from './animationPace.js';
 import { registerStage } from './services/PoseAnimator.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { builtInFor } from './highResArt.js';
@@ -66,7 +67,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
     markArtPlaceholder(root, () => draw(root.dataset.pose || 'idle'));
   });
   const path = pose => `assets/enemy-poses/expansion/${definition.id}/${pose}.webp`;
-  let presentation = enemyPresentation(entity), timer = null, disposed = false, due = 0;
+  let presentation = enemyPresentation(entity), timer = null, raf = 0, disposed = false, due = 0;
   let generation = 0;
   const resolve = pose => aliases[pose] || pose;
   // Every frame (idle, held stance, action, defeated) is drawn with the factor
@@ -87,7 +88,8 @@ export function enemyExpansionSprite(definition, entity = {}) {
     currentBody = landmarks;
     image.src = assetUrl(path(frame));
   }
-  function stop() { clearTimeout(timer); timer = null; generation++; }
+  const active = () => timer !== null || raf !== 0;
+  function stop() { clearTimeout(timer); timer = null; if (raf) cancelAnimationFrame(raf); raf = 0; generation++; }
   function settle() { stop(); draw(resolve(presentation.rest)); }
   function setState(next = {}) {
     presentation = enemyPresentation(next);
@@ -97,7 +99,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
     if (stance && presentation.rest !== 'defeated') root.dataset.stance = next.presentationStance;
     else delete root.dataset.stance;
     root.style.filter = enemyAuraFilter(presentation.auraThemes);
-    if (presentation.rest === 'defeated' || !timer) settle();
+    if (presentation.rest === 'defeated' || !active()) settle();
   }
   const stancePoses = Object.values(enemyStanceSprites[definition.id] || {});
   for (const pose of new Set([...art.poses, ...stancePoses])) { const preload = new Image(); preload.addEventListener('load', () => warmImageBoundsWhenIdle(preload), { once: true }); preload.src = assetUrl(path(pose)); }
@@ -114,10 +116,20 @@ export function enemyExpansionSprite(definition, entity = {}) {
     },
     dispose() { stop(); disposed = true; },
     hold(ms) {
-      if (!timer || !(ms > 0)) return false;
+      if (!active() || !(ms > 0)) return false;
       stop(); due += ms;
       timer = setTimeout(settle, Math.max(0, due - Date.now()));
       return true;
+    },
+    // Every frame of an action is held for the same time: the pace's frame hold (animationPace.js), or an equal
+    // share of the lunge when that is longer. The total is the beat's reservation (combat.js reads totalMs), and the
+    // contact stays at the same share of it that the lunge used (COMBAT_TIMING.windupFraction).
+    actionTiming(pose, speed) {
+      const sequence = art.actions[resolve(pose)];
+      if (!sequence) return null;
+      const frameMs = Math.max(Number(speed?.minFrameMs) || 0, (Number(speed?.lungeMs) || 0) / sequence.length);
+      const totalMs = Math.round(frameMs * sequence.length);
+      return { totalMs, impactMs: Math.round(totalMs * COMBAT_TIMING.windupFraction) };
     },
     play(pose, ms = 260) {
       if (disposed || (presentation.rest === 'defeated' && pose !== 'defeated')) return false;
@@ -127,21 +139,26 @@ export function enemyExpansionSprite(definition, entity = {}) {
       if (!sequence && !art.poses.includes(selected)) return false;
       stop();
       if (reducedMotionRequested() || ms <= 0) { settle(); return true; }
-      due = Date.now() + ms;
-      const token = generation;
-      const start = Date.now();
-      const advance = () => {
+      if (!sequence) { due = Date.now() + ms; draw(selected); timer = setTimeout(settle, ms); return true; }
+      // One clock (requestAnimationFrame), one hold for every frame, and never a skipped frame: a late tick shows
+      // the next frame, and the later frames keep their full hold.
+      const frameMs = Math.max(frameHoldMs(), ms / sequence.length), total = frameMs * sequence.length, token = generation;
+      let startAt = performance.now(), shown = 0;
+      due = Date.now() + total;
+      draw(sequence[0].pose);
+      const tick = now => {
+        raf = 0;
         if (disposed || token !== generation) return;
-        const elapsed = Date.now() - start;
-        if (elapsed >= ms) { settle(); return; }
-        if (sequence) {
-          let boundary = 0;
-          const frame = sequence.find(frame => { boundary += frame.duration / 260 * ms; return elapsed < boundary; }) || sequence.at(-1);
-          draw(frame.pose);
-          timer = setTimeout(advance, Math.max(1, boundary - elapsed));
-        } else { draw(selected); timer = setTimeout(settle, ms); }
+        let index = Math.floor(Math.max(0, now - startAt) / frameMs);
+        if (index > shown + 1 || (index >= sequence.length && shown < sequence.length - 1)) {
+          index = shown + 1; startAt = now - index * frameMs;
+        }
+        if (index >= sequence.length) { settle(); return; }
+        if (index !== shown) { shown = index; draw(sequence[index].pose); }
+        raf = requestAnimationFrame(tick);
       };
-      advance(); return true;
+      raf = requestAnimationFrame(tick);
+      return true;
     },
   };
   setState(entity);

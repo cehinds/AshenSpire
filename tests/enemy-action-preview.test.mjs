@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
+import { hitAsLayered } from '../src/model/combatLog.js';
 const require = productionBundle();
 const { contentBundle } = require('src/content/index.js');
 const { createRegistries } = require('src/model/registries.js');
@@ -43,7 +44,7 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
     dispatch(combat, { type: 'endTurn' });
     const damage = combat.eventLog.slice(before).filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
     assert.deepEqual(damage.map(e => e.hpLoss), view.hitDamages);
-    assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage.text), view.hitDamages.map(n => `-${n}`));
+    assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage?.text ?? null), damage.map(e => e.hpLoss > 0 ? `-${hitAsLayered(e)}` : null), 'the float is the full hit, shown only when HP was lost');
     assert.equal(combat.player.hp, 1000 - view.totalDamage);
   });
 }

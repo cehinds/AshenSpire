@@ -520,6 +520,8 @@ export function receipt() {
     smithSelectionModel: read('src/ui/models/SmithSelectionModel.js'),
     saveSlotSelectionModel: read('src/ui/models/SaveSlotSelectionModel.js'),
     smithUpgradeModal: read('src/ui/components/smithUpgradeModal.js'),
+    // The Smith's door stands in the deck editor's desk, which owns the dialog frame and the two ways out.
+    upgradeDesk: read('src/ui/components/upgradeDesk.js'),
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
@@ -920,11 +922,12 @@ export function findings(r) {
       || !/affectedRows:\s*itemKind === 'armament'[\s\S]*groupedAffected\(candidate\.previewCards \|\| candidate\.affectedCards\)[\s\S]*genericAffected\(candidate\)/.test(r.smithSelectionModel)
       || !/canConfirm:\s*Boolean\(selected\?\.affordable && !selected\.needsBlacksmith\)/.test(r.smithSelectionModel)
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
-      || !/role', 'dialog'/.test(r.smithUpgradeModal)
-      || !/aria-modal/.test(r.smithUpgradeModal)
+      || !/mountUpgradeDesk\(/.test(r.smithUpgradeModal)
+      || !/role: 'dialog'/.test(r.upgradeDesk)
+      || !/aria-modal/.test(r.upgradeDesk)
       // The two ways out are kit buttons now (builder form), or literal markup.
-      || !/(<button[^>]+smith-back|className: '[^']*smith-back')/.test(r.smithUpgradeModal)
-      || !/(<button[^>]+smith-confirm|className: '[^']*smith-confirm')/.test(r.smithUpgradeModal)
+      || !/(<button[^>]+smith-back|className: '[^']*smith-back')/.test(r.upgradeDesk)
+      || !/(<button[^>]+smith-confirm|className: '[^']*smith-confirm')/.test(r.upgradeDesk)
       || !/attachTooltip\(card/.test(r.smithUpgradeModal)
       || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
       || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)
@@ -1049,7 +1052,7 @@ function selftest() {
     ['remove Armoury card gallery', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('gallery.appendChild(card)', 'gallery.remove()') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
-    ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
+    ['remove Smith Back control', 'C19 ', (r) => ({ ...r, upgradeDesk: r.upgradeDesk.replace('smith-back', 'smith-return') })],
     ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],
     ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
     ['list a component in the Markdown catalog only', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace('| `startup-gate` |', '| `markdown-only-component` | x | x | x | x |\n| `startup-gate` |') })],

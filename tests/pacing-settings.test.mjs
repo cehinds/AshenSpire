@@ -78,7 +78,9 @@ test('animation duration and combat interval independently control their timelin
   setCombatPacing({ combatSpeed: 1, animationStepDuration: Infinity });
   assert.equal(actionPacing().spriteSpeed.lungeMs, 390);
   setCombatPacing({ combatSpeed: 1, animationStepDuration: -5 });
-  assert.ok(Math.abs(actionPacing().spriteSpeed.lungeMs - 50) < 1e-9);
+  // Re-pinned 2026-11-02 (sprite pacing): the shortest step (50 ms) is lifted to the 75 ms frame-hold floor
+  // (animationPace.js COMBAT_TIMING.frameHoldMinMs, was 40 ms), so a lunge is never shorter than one held frame.
+  assert.ok(Math.abs(actionPacing().spriteSpeed.lungeMs - 75) < 1e-9);
   setCombatPacing({ combatSpeed: 1, animationStepDuration: 99999 });
   assert.equal(actionPacing().spriteSpeed.lungeMs, 3000);
   setCombatPacing();

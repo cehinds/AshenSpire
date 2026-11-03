@@ -127,7 +127,8 @@ test('B2 the model floors exactly as the control does', () => {
   // Every value here must keep the ladder valid on its own, or the refusal
   // path answers instead of the normalisation path — which is what the first
   // draft of this test got wrong, with `focus: 64.99` flooring under glance.
-  for (const raw of [200.9, '200.9', 279.99, 160.5]) {
+  // 160.5 became 190.5: the desktop glance is now 182.4, and a focus under it is refused (owner, 2026-11-02: cards 20% larger).
+  for (const raw of [200.9, '200.9', 279.99, 190.5]) {
     const viaControl = normalizeTunedNumber(raw, { min, max, def: 0 });
     const { levels } = cardLevelsWithOverrides({ cardWidth_focus: raw });
     assert.equal(levels.focus.widthPx, viaControl, `${raw} must resolve the same both ways`);
@@ -189,8 +190,12 @@ test('C3 the export names the path it belongs at, and says it is a fragment', ()
 
 // ── the resting width, and the door's threshold ─────────────────────────────
 
-test('D1 the mobile variant ships equal to glance, so nothing moves untuned', () => {
-  assert.equal(AUTHORED.glance.variants.mobile, AUTHORED.glance.widthPx);
+test('D1 the mobile variant keeps the phone size; the desktop is 20% larger', () => {
+  // Owner (2026-11-02): desktop and laptop cards are 1.2x (152 to 182.4, focus 280 to 336, inspect 320 to 384); phones stay put.
+  assert.equal(AUTHORED.glance.variants.mobile, 152);
+  assert.equal(AUTHORED.glance.widthPx, 152 * 1.2);
+  assert.equal(AUTHORED.focus.variants.mobile, 280);
+  assert.equal(AUTHORED.inspect.variants.mobile, 320);
 });
 
 test('D2 the resting width follows the kit token, strictly below', () => {

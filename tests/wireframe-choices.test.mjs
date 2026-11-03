@@ -213,8 +213,9 @@ test('no door writes its own rung: every modal goes through the one stamp', () =
     }
   }
   assert.deepEqual(offenders, [], 'these write a modal rung without stampModalSize');
-  // And the four doors that used to are on the stamp by name.
-  for (const rel of ['src/ui/components/armouryComponents.js', 'src/ui/components/smithUpgradeModal.js',
+  // And the doors that used to are on the stamp by name. (The Smith and card upgrade pickers left the
+  // list on 2026-11-02: they stand in the deck editor's full-bleed desk, which is not a `.modal`.)
+  for (const rel of ['src/ui/components/armouryComponents.js',
     'src/ui/components/confirmationModal.js', 'src/ui/kit/index.js']) {
     assert.match(read(rel), /stampModalSize\(/, `${rel} stamps its rung`);
   }
