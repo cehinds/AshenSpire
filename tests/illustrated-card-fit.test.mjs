@@ -29,23 +29,21 @@ function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, 
       }
       return Math.min(this.scrollHeight, cap);
     } };
-  const cue = { offsetHeight: 9 };
   const face = { className: '', parentElement: { className: '' },
     dataset: { designWidth: '360', fullRules: String(full), rulesHidden: String(hidden) },
     get clientWidth() { return state.width; }, clientHeight: faceHeight,
     get textContent() { return 'x'.repeat(state.chars); },
     querySelector(selector) {
-      if (selector === '.card-rules-inspect-cue') return cue;
       if (selector === '[data-card-binding="name"]' && titleBottom) return { parentElement: { offsetTop: 0, clientHeight: titleBottom }, offsetTop: 0, offsetHeight: titleBottom };
       if (selector === '.card-tag-rail' && railBottom) return { offsetTop: 0, offsetHeight: railBottom };
       return null;
     },
     querySelectorAll(selector) { return selector === '.ic-text[data-auto-fit="true"]' ? [text] : []; } };
   const card = { querySelector: () => face };
-  return { state, face, text, layer, cue, fit: () => fitIllustratedCards([card]) };
+  return { state, face, text, layer, fit: () => fitIllustratedCards([card]) };
 }
 
-test('unfit inspection rules keep full text but reserve an in-bay cue and report incomplete', () => withKitDom(() => {
+test('unfit inspection rules keep full text, reserve no cue and report incomplete', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture();
   f.fit();
@@ -53,7 +51,7 @@ test('unfit inspection rules keep full text but reserve an in-bay cue and report
   assert.equal(f.text.dataset.rulesComplete, 'false');
   assert.equal(f.face.dataset.rulesOverflow, 'true');
   assert.equal(f.layer.style.justifyContent, 'flex-start', 'clipped text cannot center above its bay');
-  assert.equal(f.text.clientHeight + f.cue.offsetHeight, f.layer.clientHeight);
+  assert.equal(f.text.clientHeight, f.layer.clientHeight, 'no Inspect cue takes space from the words');
   assert.equal(f.face.textContent.length, 500, 'full rules remain available to the Rules tooltip');
 }));
 
@@ -74,13 +72,13 @@ test('a later fit of shorter copy clears its previous cap and geometric overflow
   assert.deepEqual(f.text.style, settled, 'unchanged inputs retain the settled fit');
 }));
 
-test('compact hidden rules retain their cue even when visible copy fits', () => withKitDom(() => {
+test('compact hidden rules still report incomplete even when visible copy fits', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 3, full: false, hidden: true });
   f.fit();
   assert.equal(f.face.dataset.rulesOverflow, 'true');
   assert.equal(f.text.dataset.rulesComplete, 'false');
-  assert.equal(f.text.style.maxHeight, 'calc(100% - 9px)');
+  assert.equal(f.text.style.maxHeight, '100%', 'no cue reserves space');
 }));
 
 test('long rules shrink inside a fixed bay, preserving parchment and artwork geometry', () => withKitDom(() => {
@@ -127,7 +125,7 @@ test('a one-liner that needs shrinking to fit shows its rules with no Inspect cu
   assert.equal(f.text.dataset.rulesComplete, 'true');
 }));
 
-test('rules that still wrap to three rendered lines at the 11px floor get the Inspect cue', () => withKitDom(() => {
+test('rules that still wrap to three rendered lines at the 11px floor keep their words and report overflow', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 60, width: 180, top: 80, height: 45, full: false });
   f.fit();

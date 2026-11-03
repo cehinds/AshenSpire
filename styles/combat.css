@@ -1098,9 +1098,8 @@
    `.field:has(.enemy-row > .combatant:nth-child(4))`; it is repeated three times
    because that :has() argument carried three classes of specificity. */
 @container game-viewport (max-width:640px) {
-  /* The shared fitter still owns the row. Art may cross adjacent cells a
-     little; scale only the figures so meters, labels and intent stay readable. */
-  :root .combat.combat .combatant .sprite { scale:0.9; transform-origin:bottom center; }
+  /* The viewport-share rule (CombatViewportSizeModel) owns figure size; no
+     container override may scale a sprite. */
   :root .combat.combat .combatant-card { width:80px; }
   :root .combat.combat .combatant .meters { width:80px; }
   :root .combat.combat .combatant .sprite { width:80px; min-width:0; }
@@ -1706,9 +1705,9 @@
 }
 .combat-tools > button { min-height: calc(44px / var(--ui-zoom,1)); padding: calc(5px / var(--ui-zoom,1)); font-size:inherit; }
 :root .combat[data-layout='formation'].combat .hand-overlay { width: calc(100% - var(--combat-tools-reserve, 0px)); }
-.combat-tools .reaction-switch { display:flex; align-items:center; justify-content:space-between; gap:4px; color:white; }
+.combat-tools .reaction-switch { display:flex; align-items:center; justify-content:space-between; gap:4px; color:var(--parchment); }
 .reaction-switch, .reaction-switch-value { text-shadow: var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000); }
-.reaction-switch-track { position:relative; display:flex; align-items:center; border:1px solid var(--gold); border-radius:20px; width:calc(72px / var(--ui-zoom,1)); height:calc(24px / var(--ui-zoom,1)); background:#397342; color:white; }
+.reaction-switch-track { position:relative; display:flex; align-items:center; border:1px solid var(--gold); border-radius:20px; width:calc(72px / var(--ui-zoom,1)); height:calc(24px / var(--ui-zoom,1)); background:#397342; color:var(--parchment); }
 .reaction-switch-value { padding-left:calc(6px / var(--ui-zoom,1)); font-size:calc(11px / var(--ui-zoom,1)); }
 .reaction-switch-thumb { position:absolute; right:calc(2px / var(--ui-zoom,1)); width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); border-radius:50%; background:var(--gold); box-shadow:0 0 0 1px #17120b; }
 .reaction-switch[data-enabled='false'] .reaction-switch-track { background:#923d36; }
@@ -2094,6 +2093,21 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: var(--bg-raise); color: var(--parchment);
   touch-action: manipulation; pointer-events: auto;
 }
+/* The play queue (owner, 2026-11-02): cards played while an earlier one resolves wait here, in order, until their turn.
+   Small numbered chips under the turn ribbon; a tap takes one back. */
+.combat .play-queue {
+  position: absolute; left: 50%; top: 7.4rem; transform: translateX(-50%); z-index: 40;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; max-width: min(40rem, calc(100% - 3.2rem));
+}
+.combat .play-queue[hidden] { display: none; }
+.combat .play-queue-chip {
+  min-height: calc(32px / var(--ui-zoom, 1)); padding: .2rem .8rem; border: 1px solid var(--gold); border-radius: var(--r-3);
+  background: var(--bg-raise); color: var(--parchment); font: inherit; font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1)));
+  opacity: .92; cursor: pointer;
+}
+.combat .play-queue-chip b { color: var(--gold); margin-right: .3rem; }
+.combat .play-queue-end { opacity: .75; }
+
 
 /* ---------- Effects off and the fighter-motion options (owner, 2026-10-30) ----------
    `data-effects="off"` is the default (main.js, ui/performance.js; `data-performance="lite"` is its
@@ -2176,3 +2190,4 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
 :root[data-effects='off'] .reduced-motion .sprite.act-move,
 :root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-attack,
 :root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-move { animation: none; }
+

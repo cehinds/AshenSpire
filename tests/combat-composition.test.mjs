@@ -68,10 +68,12 @@ test('solo player is raised above the hand and enemies recede toward the upper r
   const before=structuredClone(sizes);
   const result=combatComposition({actors,sizes,width:390,height:400,handTop:440});
   assert.deepEqual(sizes,before);
-  assert.equal(result[0].visibleHeight,192);
+  // Re-pinned 2026-11-02 (owner: one size rule). Composition only places; it used to
+  // grow a solo player x1.28 (192) and lift enemies to a floor (75). Sizes pass through.
+  assert.equal(result[0].visibleHeight,150);
   assert.equal(result[0].ground-result[0].visibleHeight*.12,440);
   assert.equal(result[0].x,390*.32);
-  assert.equal(result[1].visibleHeight,75);
+  assert.equal(result[1].visibleHeight,150);
   assert.equal((result[1].x+result[2].x)/2,390*.76);
   assert(Math.abs(result[2].x-result[1].x-70*.72)<1e-10);
   assert(result[1].ground<300);

@@ -228,9 +228,9 @@
   overflow: visible;
 }
 
-/* Cinders remains a white counter with a crisp black keyline. */
+/* Cinders remains a cream counter with a crisp black keyline. */
 :root .combat .hud-cinders {
-  color: #fff;
+  color: var(--parchment);
   -webkit-text-stroke: .75px #000;
   paint-order: stroke fill;
 }

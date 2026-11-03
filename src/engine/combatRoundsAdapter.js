@@ -196,6 +196,42 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
   return queue;
 }
 
+// Re-quotes a committed Core 2 plan against what the enemy can afford now (owner, 2026-11-02: "The intent shown during
+// the player's turn is what the enemy does"; "if the enemy would lose sp reacting then the other actions they have queued
+// should be removed"). `entries` is the head then the planned follow-ups, in play order, as `{ moveId, sp? }`. The walk
+// mirrors execution (executeMovePayload): an entry that fits the SP left is kept, in order; one that does not is either
+// replaced by the enemy's own affordable range-closing move (the swap execution would make) or dropped, and the walk
+// goes on, because a refused move spends nothing. Nothing is picked and no RNG is drawn. Returns the kept entries.
+export function trimEnemyPlan(enemy, def, entries, { combat }) {
+  const pool = enemyTurnSp(enemy, def, combat);
+  const pricingEnemy = { ...enemy };
+  const pricing = { ...combat, rangeState: combat.rangeState && structuredClone(combat.rangeState) };
+  const closingId = def.rangeClosingMove, closing = def.moves[closingId];
+  const closingEligible = Boolean(closing) && !closing.reaction && (!closing.locked || enemy.unlockedMoves.includes(closingId))
+    && Boolean(closing.effects?.some(effect => effect.op === 'moveEngagement'));
+  const kept = [];
+  let spent = 0;
+  for (const entry of entries) {
+    let moveId = entry.moveId;
+    let quote = enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat: pricing });
+    if (spent + quote.totalSp > pool) {
+      const left = pool - spent;
+      if (!(quote.advanceSp > 0 && closingEligible && closingId !== moveId
+        && enemyMoveSp(closing, { enemy: pricingEnemy, moveId: closingId, combat: pricing }) <= left)) continue;
+      moveId = closingId;
+      quote = enemyMoveQuote(closing, { enemy: pricingEnemy, moveId, combat: pricing });
+      if (spent + quote.totalSp > pool) continue;
+    }
+    spent += quote.totalSp;
+    kept.push({ moveId, sp: quote.totalSp });
+    projectEnemyMovement(pricing, pricingEnemy, moveId);
+    const stance = stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId });
+    if (stance) pricingEnemy.combatStance = stance;
+    if (def.moves[moveId]?.delay) break;
+  }
+  return kept;
+}
+
 // Authored movement and a paid implicit Advance both persist (SPEC range rule): once an
 // attack has closed the distance, later attacks against that target quote no Advance until
 // something grows the distance again. The quote is taken before the move's own movement

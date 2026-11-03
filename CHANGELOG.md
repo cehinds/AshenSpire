@@ -32,8 +32,17 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-03
+
+- **Card tooltips only in the inspector, cream text** ([#2501](https://github.com/cehinds/AshenSpire/pull/2501), `0.7.3.72`). Card tag tooltips open only while inspecting a card, white text is now cream, and long card rules show their real words instead of "Inspect full effect".
+- **Sprites sized to the screen** ([#2507](https://github.com/cehinds/AshenSpire/pull/2507), `0.7.3.70`). The player and enemies are now a fixed share of the screen height (22% on phones, 26% on wider screens), so their sizes no longer jump between screens, enemy counts or poses.
+- **Sprite animation is steadier** ([#2506](https://github.com/cehinds/AshenSpire/pull/2506), `0.7.3.68`). Enemy attack frames now hold evenly at about 9 to 11 frames a second instead of blurring past at up to 45 on phones, and no frame is skipped.
+- **Enemy intents match what the enemy does** ([#2509](https://github.com/cehinds/AshenSpire/pull/2509), `0.7.3.66`). If a Poise break, range change or the enemy's own reaction leaves it short of SP during your turn, its intent updates at once and the queued moves it can no longer afford are dropped, so it never shows one move and does another.
+
 ## 2026-11-02
 
+- **Upgrade screens look like the deck editor** ([#2508](https://github.com/cehinds/AshenSpire/pull/2508), `0.7.3.64`). The card upgrade and weapon upgrade pickers now use the deck editor's layout: the same rows, selected outline, preview pane, footer buttons and phone behaviour.
+- **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.62`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
 - **Sharper battlefield sides** ([#2504](https://github.com/cehinds/AshenSpire/pull/2504), `0.7.3.60`). The battle backdrop is framed closer and its side fill is much less blurred, so the edges of the battlefield read as real art again.
 - **Damage numbers show the full hit** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.3.58`). An 8 hit into 5 Block now floats 8, not the 3 that got through; a fully blocked hit floats its number beside BLOCKED.
 - **Readable reaction modal, bigger desktop cards** ([#2502](https://github.com/cehinds/AshenSpire/pull/2502), `0.7.3.56`). The reaction choice has larger, high-contrast text on a solid panel, and cards are 20% larger on desktops and laptops (phones unchanged).

@@ -1372,7 +1372,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-list { padding: 0 .3rem .5rem 0; gap: .7rem; scrollbar-width: thin; }
 .deck-editor-item { flex-wrap: nowrap; gap: .3rem; }
 .deck-editor-main { background: #18140f; border-color: var(--line); border-radius: .6rem; padding: .7rem; row-gap: .4rem; }
-.deck-editor-main[aria-pressed="true"] { border-color: #d5af49; box-shadow: inset 0 0 0 1px #806020; background: #282012; }
+.deck-editor-main[aria-pressed="true"], .deck-editor-main[aria-selected="true"] { border-color: #d5af49; box-shadow: inset 0 0 0 1px #806020; background: #282012; }
 .deck-editor-tile .deck-editor-main { grid-template-columns: 7.8rem minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; }
 .deck-editor-art { width: 100%; height: 100%; object-fit: cover; border-radius: .3rem; }
 .deck-editor-tile .deck-editor-art { grid-column: 1; grid-row: 1 / 4; min-height: 8rem; max-height: 10rem; }
@@ -1568,12 +1568,12 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-costs .deck-editor-cost small { font: 700 max(.75rem, calc(8px / var(--ui-zoom, 1))) system-ui, sans-serif; line-height: 1; }
 .deck-editor .deck-editor-costs .deck-editor-cost > span { line-height: 1; }
 .deck-editor .deck-editor-costs .deck-editor-cost:has(.deck-editor-resource-icon) {
-  position: relative; border: 0; border-radius: 0; background: none; padding: 0; color: #fff;
+  position: relative; border: 0; border-radius: 0; background: none; padding: 0; color: var(--parchment);
 }
 .deck-editor .deck-editor-resource-icon { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 .deck-editor .deck-editor-cost:has(.deck-editor-resource-icon) .deck-editor-resource-value {
   position: relative; z-index: 1; font: 700 max(1.8rem, calc(16px / var(--ui-zoom, 1))) Georgia, serif; line-height: 1;
-  color: #fff; paint-order: stroke fill; -webkit-text-stroke: 1px #17202a; text-shadow: 0 1px 2px #000, 0 0 2px #000;
+  color: var(--parchment); paint-order: stroke fill; -webkit-text-stroke: 1px #17202a; text-shadow: 0 1px 2px #000, 0 0 2px #000;
 }
 .deck-editor .deck-editor-cost:has(.deck-editor-resource-icon) small {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
@@ -1593,8 +1593,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-main:has(.deck-editor-meta:not(:empty)) .deck-editor-row-rules { display: none; }
 .deck-editor .deck-editor-actions { align-self: stretch; align-items: center; }
 .deck-editor .deck-editor-actions > .deck-editor-step { height: var(--deck-editor-target); padding-inline: .3rem; }
-.deck-editor .deck-editor-item:has(.deck-editor-main[aria-pressed="true"]) { z-index: 1; }
-.deck-editor .deck-editor-main[aria-pressed="true"] {
+.deck-editor .deck-editor-item:has(.deck-editor-main:is([aria-pressed="true"], [aria-selected="true"])) { z-index: 1; }
+.deck-editor .deck-editor-main:is([aria-pressed="true"], [aria-selected="true"]) {
   transform: translateY(-2px); box-shadow: 0 5px 10px #0008, inset 0 0 0 1px #806020; background: #2c2315;
 }
 /* The (i): a round badge (owner, 2026-10-11). On a card with art,
@@ -2002,4 +2002,56 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 @container game-viewport (max-width: 1000px) {
   .deck-editor.deck-editor-reading-desk .deck-editor-reading > .deck-editor-preview > .card { width: min(24rem, 100%) !important; }
+}
+
+/* ---- THE UPGRADE DESK (src/ui/components/upgradeDesk.js) --------------------
+   The card upgrade and the Smith's item upgrade stand in the deck editor's own
+   frame (owner, 2026-11-02): its veil, panel, head, panes grid, list rows, back
+   chip and footer all come from the rules above. Only what the editor does not
+   have is set here: two panes instead of three, the purse where its counter
+   stands, and the preview's own panels sitting flat on the desk. The selected
+   row wears the editor's own outline (it marks `aria-pressed` and
+   `aria-selected`). */
+.upgrade-desk .deck-editor-panes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.upgrade-desk .deck-editor-head { align-items: center; }
+.upgrade-desk .deck-editor-counter { margin-left: auto; font-size: 1.6rem; }
+.upgrade-desk .upgrade-desk-close { flex: none; width: var(--deck-editor-target); height: var(--deck-editor-target); border: 1px solid var(--line-soft); border-radius: .6rem; background: var(--panel); color: var(--parchment); font: 2.4rem/1 Arial, sans-serif; cursor: pointer; }
+.upgrade-desk .deck-editor-inspector { overflow: hidden; }
+.upgrade-desk .deck-editor-reading { display: flex; flex-direction: column; padding: 1rem 0 .6rem; }
+.upgrade-desk .deck-editor-selected-reason { display: block; margin: .4rem 0 .6rem; }
+.upgrade-desk .deck-editor-reading .smith-preview-card { flex: 0 0 auto; overflow: visible; background: transparent; border: 0; padding: 0; }
+.upgrade-desk .deck-editor-reading .smith-preview-empty { margin-top: 3rem; }
+.upgrade-desk .deck-editor-list { gap: .5rem; }
+.upgrade-desk .deck-editor-item { flex-wrap: nowrap; }
+.upgrade-desk .deck-editor-main.smith-candidate-card {
+  position: relative; grid-template-columns: 5.6rem minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center;
+  min-height: 6.4rem; padding: .6rem .8rem; column-gap: .9rem; row-gap: .15rem;
+}
+.upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-art { grid-column: 1; grid-row: 1 / 3; width: 100%; height: auto; min-height: 0; max-height: 5.6rem; aspect-ratio: 1; align-self: center; overflow: hidden; display: grid; place-items: center; }
+.upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-art > .as-artwell { width: 100%; height: 100%; }
+.upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-heading { grid-column: 2; grid-row: 1; align-self: end; display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .6rem; min-width: 0; }
+.upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-meta { grid-column: 2; grid-row: 2; align-self: start; display: flex; flex-direction: column; gap: .1rem; max-height: none; min-width: 0; }
+.upgrade-desk .deck-editor-main.smith-candidate-card > .upgrade-desk-side { grid-column: 3; grid-row: 1 / 3; align-self: center; justify-self: end; display: flex; gap: .4rem; }
+.upgrade-desk .deck-editor-main.smith-candidate-card .smith-row-status { text-align: left; font-size: max(1.2rem, var(--deck-min-text)); color: var(--muted); }
+.upgrade-desk .deck-editor-main.smith-candidate-card .card-upgrade-reason { color: var(--danger); }
+.upgrade-desk .deck-editor-main.smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: .8rem; left: auto; transform: translateY(-50%); }
+.upgrade-desk .deck-editor-main.smith-candidate-card:has(> .card-info-button) > .upgrade-desk-side { margin-right: 3.4rem; }
+.upgrade-desk .deck-editor-main.smith-candidate-card.locked,
+.upgrade-desk .deck-editor-main.smith-candidate-card.is-needs-blacksmith { cursor: not-allowed; }
+.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: .55; }
+.upgrade-desk .deck-editor-tile.spent .deck-editor-name { color: inherit; }
+.upgrade-desk .deck-editor-foot { justify-content: flex-end; }
+.deck-editor.upgrade-desk .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+.deck-editor.upgrade-desk { --control-positive-fill: color-mix(in srgb, var(--green) 55%, black); --control-positive-border: var(--green); --control-positive-text: var(--parchment); }
+.upgrade-desk .deck-editor-foot .smith-confirm[hidden] { display: none; }
+.upgrade-desk .deck-editor-inspect-back { display: none; }
+@container game-viewport (max-width: 1000px) {
+  .upgrade-desk .deck-editor-panes { grid-template-columns: minmax(0, 1fr); }
+  .upgrade-desk .deck-editor-inspect-back { display: block; align-self: start; flex: none; margin: .4rem 0; }
+  .upgrade-desk[data-mobile-view="collection"] .deck-editor-inspector { display: none; }
+  .upgrade-desk[data-mobile-view="inspect"] .deck-editor-pane { display: none; }
+  .upgrade-desk[data-mobile-view="inspect"] .deck-editor-inspector { display: flex; position: static; inset: auto; background: transparent; padding: 0; border: 0; overflow-y: auto; }
+  .upgrade-desk[data-mobile-view="collection"] .smith-confirm { display: none; }
+  .upgrade-desk .deck-editor-main.smith-candidate-card { grid-template-columns: 4.4rem minmax(0, 1fr) auto; }
+  .upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-art { max-height: 4.4rem; }
 }

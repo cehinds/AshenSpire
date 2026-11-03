@@ -28,6 +28,16 @@
       "tileWidthFraction": 0.62,
       "tileRowFraction": 0.5,
       "legacyTileRowFraction": 0.7
+    },
+    "viewportScale": {
+      "bodyHeightFraction": {
+        "portraitPhone": 0.22,
+        "landscape": 0.26
+      },
+      "statureCap": 1.3,
+      "overlapAllowance": 0.4,
+      "edgeMarginPx": 6,
+      "minCommonFactor": 0.35
     }
   },
   "positioning": {
