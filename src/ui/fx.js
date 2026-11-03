@@ -20,6 +20,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 import { t } from './strings.js';
+import { hitAsLayered } from '../model/combatLog.js';
 import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 
 
@@ -35,6 +36,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
+import { createFloaterQueue, isDamageFloater, FLOATER_QUEUE_MAX } from './floaterQueue.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -401,7 +403,7 @@ function floaterLaneFor(anchor, lifeMs) {
     lane = soonest.lane;
     live.splice(live.indexOf(soonest), 1);
   }
-  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, el: null };
+  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, maxLift: Infinity, el: null };
   live.push(entry);
   floaterLanes.set(anchor, live);
   return entry;
@@ -418,7 +420,7 @@ function floaterLaneLift(anchor, entry, now) {
     if (other.lane >= entry.lane || other.until <= now) continue;
     clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
   }
-  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
+  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.35;
 }
 // A newcomer in a reused lower lane may be taller than the number it replaced, and the numbers
 // below it keep rising, so every live floater at the anchor is re-lifted, lane by lane, from the
@@ -428,6 +430,7 @@ function reliftFloaterLanes(anchor) {
   const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now).sort((a, b) => a.lane - b.lane);
   for (const entry of live) {
     entry.lift = floaterLaneLift(anchor, entry, now);
+    if (entry.lane > 0 && entry.lift > entry.maxLift) entry.lift = entry.maxLift; // clamped: never past the battlefield top
     if (entry.el && entry.lane > 0) entry.el.style.setProperty('--float-lane', `${Math.round(entry.lift)}px`);
   }
 }
@@ -442,6 +445,124 @@ function reliftFloaterLanes(anchor) {
 export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
+  // Non-damage floaters (status, Block, heal, guarded...) queue per anchor, three at a time, first in first out
+  // (owner, 2026-11-02). Damage numbers and fixed-slot bundle parts (`lane: false`) show at once, as before.
+  if (placement.lane === false || isDamageFloater(cls)) return spawnFloater(layer, anchor, text, cls, tint, placement);
+  let queue = floaterQueues.get(anchor);
+  if (!queue) floaterQueues.set(anchor, queue = createFloaterQueue());
+  let layerSet = floaterQueuesByLayer.get(layer);
+  if (!layerSet) floaterQueuesByLayer.set(layer, layerSet = new Set());
+  layerSet.add(queue);
+  // Where they go (owner, 2026-11-02): above the combatant's overhead HUD, as many lanes as fit between the HUD and
+  // the battlefield top (at most 3, the rest stay queued); when not even one fits, a single lane beside the figure,
+  // on the side away from the battlefield edge. They never sit over the HUD.
+  const zoom = uiZoom();
+  const b = anchorLocalBoxCached(layer, anchor, zoom);
+  const view = anchorLocalBoxCached(layer, layer, zoom);
+  const ceiling = overheadCeiling(layer, anchor, b, zoom);
+  // Probe the line height only when there is a HUD to fit under (the probe briefly joins the layer).
+  const fit = ceiling == null ? FLOATER_QUEUE_MAX
+    : floaterLanesFit(ceiling - floaterRoomTop(layer, view, zoom, anchor, b, ceiling), floaterLineHeight(layer, cls));
+  const side = fit < 1 ? (b.left + b.width / 2 < view.left + view.width / 2 ? 'right' : 'left') : null;
+  queue.max = Math.max(1, Math.min(FLOATER_QUEUE_MAX, fit));
+  const item = { layer, anchor, text, cls, tint, placement: { ...placement, overhead: ceiling != null && !side, side } };
+  if (queue.push(item)) return spawnQueued(queue, item);
+}
+// How many lanes of `line`-tall floaters fit in `room` px above the HUD (see FLOAT_EDGE_PX,
+// then one line and 1.35 lines per lane after the first).
+// A floater rises about 30 px before it fades (num-life, styles/combat.css), so the top lane keeps that much
+// clear of the battlefield top besides the 4 px gap above the HUD and the 6 px margin.
+const FLOAT_EDGE_PX = 40;
+// The top of the room a queued floater may use: the battlefield top, or the bottom of the combat top bar
+// (cinders, icon buttons, turn banner) when that sits lower. Layer px.
+// Another combatant standing wholly above this one's HUD and overlapping its column (a back-rank enemy over
+// the player on a phone) also caps the room, so a lane never rises into that figure or its badges.
+function floaterRoomTop(layer, view, zoom, anchor = null, b = null, ceiling = null) {
+  const combat = layer.closest?.('.combat');
+  let top = view.top;
+  const bar = combat?.querySelector?.('.topbar');
+  if (bar) {
+    const box = anchorLocalBoxCached(layer, bar, zoom);
+    if (box.height > 0) top = Math.max(top, box.top + box.height);
+  }
+  if (anchor && b && ceiling != null && combat?.querySelectorAll) {
+    const own = anchor.closest?.('.combatant');
+    for (const other of combat.querySelectorAll('.combatant')) {
+      if (other === own || other.contains?.(anchor)) continue;
+      const box = anchorLocalBoxCached(layer, other, zoom);
+      if (!(box.width > 0 && box.height > 0)) continue;
+      const bottom = box.top + box.height;
+      const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+      if (overlapsX && bottom <= ceiling) top = Math.max(top, bottom);
+    }
+  }
+  return top;
+}
+export function floaterLanesFit(room, line) {
+  if (room - FLOAT_EDGE_PX - line < 0) return 0;
+  return Math.floor((room - FLOAT_EDGE_PX - line) / (line * 1.35)) + 1;
+}
+// A floater's single-line height in layer px, read once per layer, class and zoom with a hidden probe.
+const floaterLineCache = new WeakMap();
+function floaterLineHeight(layer, cls) {
+  const zoom = uiZoom();
+  const key = `${zoom}|${cls}`;
+  let byKey = floaterLineCache.get(layer);
+  if (!byKey) floaterLineCache.set(layer, byKey = new Map());
+  if (byKey.has(key)) return byKey.get(key);
+  let h = 30;
+  try {
+    const probe = document.createElement('div');
+    probe.className = `float-num ${cls}`;
+    probe.textContent = '0';
+    probe.style.visibility = 'hidden';
+    layer.appendChild(probe);
+    h = probe.offsetHeight || h;
+    probe.remove();
+  } catch { /* keep the estimate */ }
+  byKey.set(key, h);
+  return h;
+}
+// Non-damage floaters start above the combatant's overhead HUD (HP bar, badges, intent), not through it
+// (owner, 2026-11-02). The ceiling is the highest top edge of the HUD pieces over the figure's head, in
+// layer px, or null when none sits there. Same pieces and tests as overheadFloor, other edge.
+export function overheadCeiling(layer, anchor, b, zoom) {
+  const root = anchor.closest?.('.combatant');
+  if (!root?.querySelectorAll) return null;
+  let ceiling = null;
+  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
+    if (anchor.contains?.(node)) continue;
+    const box = anchorLocalBoxCached(layer, node, zoom);
+    if (!(box.width > 0 && box.height > 0)) continue;
+    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+    // Any piece of this combatant's HUD above the figure's middle counts, however far above the head (the
+    // intent sits a full row up); overheadFloor's 16 px reach would let a floater through it.
+    if (overlapsX && box.top < b.top + b.height / 2) ceiling = Math.min(ceiling ?? Infinity, box.top);
+  }
+  return ceiling;
+}
+const floaterQueues = new WeakMap();
+// Every queue that has fed a layer, so a click-skip can drop the floaters still waiting there.
+const floaterQueuesByLayer = new WeakMap();
+// Queued floaters sit above the HUD, apart from the damage numbers on the figure, so they keep their own
+// lane records: sharing them let a live damage number push two queued floaters onto one clamped lift.
+const queuedLaneKeys = new WeakMap();
+function queuedLaneKey(anchor) {
+  let key = queuedLaneKeys.get(anchor);
+  if (!key) queuedLaneKeys.set(anchor, key = {});
+  return key;
+}
+function spawnQueued(queue, item) {
+  const { layer, anchor, text, cls, tint, placement } = item;
+  const el = spawnFloater(layer, anchor, text, cls, tint, placement, () => {
+    const next = queue.release(item);
+    if (!next) return;
+    if (next.anchor.isConnected === false || next.layer.isConnected === false) { queue.clear(); return; }
+    spawnQueued(queue, next);
+  });
+  return el;
+}
+function spawnFloater(layer, anchor, text, cls, tint, placement = {}, onDone = null) {
   const x = Number.isFinite(placement.x) ? placement.x : 0;
   const y = Number.isFinite(placement.y) ? placement.y : 0;
   const jitter = placement.jitter !== false;
@@ -478,7 +599,8 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
   // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
   // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
-  const entry = placement.lane === false ? null : floaterLaneFor(anchor, life);
+  const laneKey = placement.overhead || placement.side ? queuedLaneKey(anchor) : anchor;
+  const entry = placement.lane === false ? null : floaterLaneFor(laneKey, life);
   const lane = entry?.lane ?? 0;
   el.dataset.floatLane = String(lane);
   layer.appendChild(el);
@@ -492,14 +614,22 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   measureThenMutate(el, () => {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
-    const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    if (entry) { entry.height = height; entry.el = el; }
+    // A queued non-damage floater sits with its bottom just above the overhead HUD, lanes stacking upward from there
+    // (floatNum chose how many fit), or, when none fits, beside the figure on its roomier side.
+    const ceiling = placement.overhead ? overheadCeiling(layer, anchor, b, zoom) : null;
+    const placed = ceiling == null ? top : ceiling - 4 - height;
+    let wanted = centre - half;
+    if (placement.side) wanted = placement.side === 'right' ? b.left + b.width + 6 : b.left - 6 - width;
+    const at = clampBox({ left: wanted, top: placed, width, height }, view, { pad: 6 });
+    if (entry) { entry.height = height; entry.el = el; if (ceiling != null) entry.maxLift = Math.max(0, at.top - floaterRoomTop(layer, view, zoom, anchor, b, ceiling) - (FLOAT_EDGE_PX - 4)); }
     return () => {
       el.style.left = `${at.left + half}px`;
-      if (entry) reliftFloaterLanes(anchor);
+      if (ceiling != null) el.style.top = `${at.top}px`;
+      if (entry) reliftFloaterLanes(laneKey);
     };
   });
   setTimeout(() => el.remove(), life + 60);
+  if (onDone) setTimeout(onDone, life + 60);
   return el;
 }
 
@@ -749,6 +879,8 @@ export function clearCallouts(layer) {
   // The waiting queue goes with the visible words. Numbers keep their lifetime through a skip
   // (combat-readout-layer test), so their lane records stay with them until they expire.
   if (layer) calloutQueues.delete(layer);
+  // Queued non-damage floaters still waiting for a lane go too; the visible ones keep their lifetime.
+  for (const queue of (layer && floaterQueuesByLayer.get(layer)) || []) queue.dropWaiting();
 }
 
 /**
@@ -760,6 +892,9 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
+  // The whole hit as it reached the layers. `event.amount` is what is left AFTER Barrier, Ward and Poise,
+  // so the floater reads the same sum the combat log does (owner, 2026-11-02: show the actual hit).
+  const full = hitAsLayered(event);
   // What Barrier (blue) and Ward (purple) absorbed before the hit reached
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
@@ -783,7 +918,13 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
+    // The number floats the FULL hit before Block / Poise / Ward / Barrier; the Block badge drops by the guard
+    // on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome words key off
+    // HP loss as before; `fullHit` is the number a guarded hit that cost no HP floats (beside BLOCKED or Pierced).
+    full,
+    damage: residual > 0 ? { text: `-${full}`, cls: dmgClass(full, targetMaxHp) } : null,
+    // Unsigned and not `dmg`: no HP was lost, so it must not read as HP loss (guard colour, damage size tier).
+    fullHit: full > 0 ? { text: String(full), cls: `blk ${dmgClass(full, targetMaxHp).replace(/^dmg\s*/, '')}`.trim() } : null,
   };
 }
 
@@ -2006,11 +2147,10 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
     }
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
-      // only the HP residual as damage. Paired results sit side-by-side without
+      // the full hit as damage (HP residual drives flinch and shake). Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
       const parts = guardHitFloatParts(e);
       const outcome = outcomeKindForEvent(e);
-      const paired = !!(parts.guard && parts.damage);
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
         if (parts.guard) sfx.play('block');
@@ -2051,26 +2191,27 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
           if (outcome) {
+            if (outcome === 'blocked' && parts.fullHit) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.fullHit.text, parts.fullHit.cls, null, { x: 0, y: -34, jitter: false, lane: false });
             if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: -34, jitter: false, lane: false });
             return;
           }
           const anchor = ctx.anchorFor(e.targetId);
           // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
           // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
-          const lane = parts.barrier || parts.ward || parts.poise || parts.magicPoise || parts.pierced || parts.immune || paired ? false : undefined;
+          const lane = parts.barrier || parts.ward || parts.poise || parts.magicPoise || parts.pierced || parts.immune ? false : undefined;
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
           if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
           if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls, null, { x: 26, y: parts.poise ? -48 : -34, jitter: false, lane });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
-          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false, lane });
+          // A pierced hit that cost no HP has no outcome word, so its full number floats here.
+          if (!parts.damage && parts.fullHit && parts.pierced) floatNum(ctx.layer, anchor, parts.fullHit.text, parts.fullHit.cls, null, { x: 0, jitter: false, lane });
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
-              { x: paired ? 26 : 0, jitter: !paired, lane });
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.full, maxHp), null,
+              { x: 0, jitter: true, lane });
           }
         },
       };

@@ -3,6 +3,7 @@
 // and the bare edges are filled by a blurred copy of the closer framing.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { fitAlternativeBackdrop } from '../src/ui/alternativeArt.js';
 import { alternativeArtCatalog as catalog } from '../src/ui/alternativeArtCatalog.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -30,8 +31,8 @@ function fixture(t) {
   return { combat, svg, fill, main, edge, blur, fillImages, nodes: [fill, main, edge, blur, ...fillImages] };
 }
 
-test('the zoom factor is authored config, below 1 and within the owner\'s 15-20% window', () => {
-  assert.ok(framing.backdropZoom >= 0.8 && framing.backdropZoom <= 0.85, `backdropZoom ${framing.backdropZoom}`);
+test('the zoom factor is authored config, below 1 and near the cover fit (owner 2026-11-02: 0.94)', () => {
+  assert.ok(framing.backdropZoom >= 0.9 && framing.backdropZoom < 1, `backdropZoom ${framing.backdropZoom}`);
 });
 
 test('combat frames the art backdropZoom smaller than the cover fit, about the ground anchor', t => {
@@ -46,7 +47,7 @@ test('combat frames the art backdropZoom smaller than the cover fit, about the g
   // The ground anchor stays on the screen line the cover fit gave it.
   assert.ok(Math.abs((top + device.groundAnchor * device.height * scale) - (previewTop + device.groundAnchor * device.height * cover)) < 1e-6);
   assert.equal(fill.attrs.display, '', 'the blurred fill is shown once the art is smaller than the screen');
-  assert.match(fill.attrs.transform, new RegExp(`scale\\(${1 / framing.backdropZoom}`));
+  assert.ok(Math.abs(parseFloat(fill.attrs.transform.match(/scale\(([\d.]+)\)/)[1]) - 1 / framing.backdropZoom) < 1e-9);
   assert.equal(main.attrs.mask, 'url(#alternative-scene-edge)', 'the sharp layers feather into the fill where an edge shows');
 });
 
@@ -83,4 +84,16 @@ test('the Never-drawn skyline setting hides the fill\'s far image too, and showi
   document.documentElement.dataset.wireframeSceneSkyline = 'on';
   fitAlternativeBackdrop(combat, args);
   assert.equal(far.attrs.visibility, 'visible');
+});
+
+test('the fill blur is light (stdDeviation 3) and the sharp layer feathers over 36/scale', t => {
+  const src = readFileSync(new URL('../src/ui/alternativeArt.js', import.meta.url), 'utf8');
+  assert.match(src, /id="alternative-scene-fill-blur"[^>]*><feGaussianBlur stdDeviation="3"\/>/);
+  const { combat, edge, blur } = fixture(t);
+  const width = 1920, height = 900;
+  fitAlternativeBackdrop(combat, { width, height, fieldTop: 180, ground: 600, narrow: false, coverFloor: true });
+  const cover = Math.max(width / device.width, (180 + height - combat.clientHeight * framing.topHeightFraction) / device.height);
+  const fade = 36 / (cover * framing.backdropZoom);
+  assert.ok(Math.abs(blur.attrs.stdDeviation - fade / 2) < 1e-9, `edge blur ${blur.attrs.stdDeviation}`);
+  assert.ok(Math.abs(edge.attrs.x - fade) < 1e-9 || edge.attrs.x < 0, 'feather inset is fade wide where the left edge is exposed');
 });

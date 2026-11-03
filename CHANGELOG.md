@@ -34,7 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-02
 
-- **Sprite animation is steadier** ([#2506](https://github.com/cehinds/AshenSpire/pull/2506), `0.7.3.52`). Enemy attack frames now hold evenly at about 9 to 11 frames a second instead of blurring past at up to 45 on phones, and no frame is skipped.
+- **Sprite animation is steadier** ([#2506](https://github.com/cehinds/AshenSpire/pull/2506), `0.7.3.62`). Enemy attack frames now hold evenly at about 9 to 11 frames a second instead of blurring past at up to 45 on phones, and no frame is skipped.
+- **Played cards leave the hand at once, and plays queue** ([#2503](https://github.com/cehinds/AshenSpire/pull/2503), `0.7.3.62`). The card you play leaves your hand before its animation starts, and you can tap more cards while it resolves: they queue as numbered chips and play in order.
+- **Sharper battlefield sides** ([#2504](https://github.com/cehinds/AshenSpire/pull/2504), `0.7.3.60`). The battle backdrop is framed closer and its side fill is much less blurred, so the edges of the battlefield read as real art again.
+- **Damage numbers show the full hit** ([#2500](https://github.com/cehinds/AshenSpire/pull/2500), `0.7.3.58`). An 8 hit into 5 Block now floats 8, not the 3 that got through; a fully blocked hit floats its number beside BLOCKED.
+- **Readable reaction modal, bigger desktop cards** ([#2502](https://github.com/cehinds/AshenSpire/pull/2502), `0.7.3.56`). The reaction choice has larger, high-contrast text on a solid panel, and cards are 20% larger on desktops and laptops (phones unchanged).
+- **Intents stay up; floaters queue** ([#2499](https://github.com/cehinds/AshenSpire/pull/2499), `0.7.3.54`). An enemy's intent now stays on screen until its attack's damage and effects have landed, and non-damage floaters (Block, heals, statuses) queue up to three at a time above the HUD with space between them.
 - **Hand reprices right after a play** ([#2497](https://github.com/cehinds/AshenSpire/pull/2497), `0.7.3.52`). After you play a card, the hand now shows the new costs at once, so Evade+ shows and charges 1 SP in Defend stance instead of refusing with "Not enough stamina".
 - **Block and AC swap places on the HUD** ([#2495](https://github.com/cehinds/AshenSpire/pull/2495), `0.7.3.50`). Your Block now sits in the square left of the health bar, and AC leads the badge row beside its "AC" label.
 - **Scene counter moves into the button row on phones** ([#2493](https://github.com/cehinds/AshenSpire/pull/2493), `0.7.3.48`). On a narrow phone, Continue now stands alone, full width and centred, and the scene counter sits at the left of the Pause, Settings and Skip row below it.
