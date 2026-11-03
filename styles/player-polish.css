@@ -650,11 +650,9 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy) { min-height:calc(44px / var(--ui-zoom,1)); height:auto; padding:4px; font-size:calc(13px / var(--ui-zoom,1)); border:1px solid var(--control-positive-border); border-radius:3px; background-color:var(--control-positive-fill); background-image:none; color:var(--control-positive-text); }
 :root .shop-workspace.merchant-workspace :is(.merchant-offer-action,.shop-book-buy):disabled { opacity:.55; }
 .merchant-thumbnail.as-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-width:44px; min-height:44px; width:100%; height:100%; max-height:96px; padding:2px; border:1px solid var(--line-soft); border-radius:3px; background:var(--bg-raise); color:var(--ink-dim); }
-.merchant-thumbnail > :first-child { width:100%; height:calc(100% - 15px); min-height:0; object-fit:contain; flex:1 1 auto; }
-.merchant-inspect-label { font-size:10px; line-height:13px; flex:0 0 auto; }
+.merchant-thumbnail > :first-child { width:100%; height:100%; min-height:0; object-fit:contain; flex:1 1 auto; }
 :root .shop-workspace.merchant-workspace .merchant-offer-media { height:100%; min-height:0; grid-row:auto; }
 :root .shop-workspace.merchant-workspace .merchant-thumbnail { max-height:calc(90px / var(--ui-zoom,1)); min-width:0; min-height:calc(44px / var(--ui-zoom,1)); }
-:root .shop-workspace.merchant-workspace .merchant-inspect-label { font-size:calc(10px / var(--ui-zoom,1)); line-height:1.2; }
 :root .shop-workspace.merchant-workspace .merchant-offer-glyph { min-height:0; font-size:3rem; }
 .merchant-inspection { display:grid; justify-items:center; gap:1rem; }
 .merchant-inspection > :first-child { max-width:min(100%,28rem); }

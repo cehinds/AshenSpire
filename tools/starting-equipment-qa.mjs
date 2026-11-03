@@ -139,7 +139,7 @@ try {
   const page=await browser.newPage({viewport:{width:1024,height:1000}});page.on('pageerror',e=>errors.push(e.message));await open(page);
   const sword=page.locator('[data-hand=rightHand][data-armament-id=straightSword] .equipment-poker-card');
   await sword.focus();await page.keyboard.press('Enter');
-  await sword.locator('.card-info-button').click();
+  await sword.focus();await page.keyboard.press('i');
   check(await page.locator('.card-inspection-modal').isVisible(),'keyboard Information opens full equipment inspection');
   check((await page.locator('.card-inspection-modal .inspection-lore-line').innerText()).includes('Honest steel'),'inspection preserves complete flavor in the lore line');
   await page.keyboard.press('Escape');

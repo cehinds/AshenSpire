@@ -396,8 +396,8 @@ if (process.argv.includes('--selftest')) {
       // cell 4 existing: no amount of dispatchMouseEvent can see this.
       name: 'the card drag refuses every pointer that is not a mouse',
       file: 'src/ui/screens/combat.js',
-      find: "      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;",
-      replace: "      if (ev.pointerType !== 'mouse' || inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;",
+      find: "      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || veilIsOpen()) return;",
+      replace: "      if (ev.pointerType !== 'mouse' || inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || veilIsOpen()) return;",
       expectRed: /FAIL cell 4 the finger plays the selected card exactly once/,
     }, {
       // A READ OPENING ON TOP OF A LIVE DRAG — the inverse of the #311 plant

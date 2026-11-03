@@ -13,7 +13,6 @@ import { metadataFooter } from '../models/IdentityModel.js';
 import { loreLine } from './loreLine.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
 import { t } from '../strings.js';
-import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
 // Connection-owned sizing: removed inventory reveals cannot retain observers.
 //
@@ -52,7 +51,6 @@ function applyCardTokens(card, tokens) {
   set('--epc-bonus-lines', String(tokens.bonusMaxLines));
   set('--card-info-inset', `${tokens.info.insetPx}px`);
   set('--card-info-fade', `${tokens.info.fadeMs}ms`);
-  set('--card-info-delay', `${selectionRevealDelayMs()}ms`);
   for (const [key, value] of Object.entries(tokens.type)) set(`--epc-text-${key}`, value);
 }
 

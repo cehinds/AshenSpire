@@ -1,7 +1,4 @@
 import { viewViewportBox } from '../viewViewport.js';
-import { anchorLocalBox } from '../fx.js';
-import { inspectControlRisePx } from '../models/InspectControlModel.js';
-import { handInfoPosition } from '../models/HandLayout.js';
 
 // Focus cannot reveal an absolute control on the outside card of a fitted fan.
 // Prefer its scroller; an overflow-visible hand translates only its active
@@ -53,11 +50,9 @@ export function revealHandUpcastControl(hand, control, viewportWidth = viewViewp
   }
 }
 
-// The hand is the only horizontal scroller. Its inspection control lives in
-// the enclosing overlay so clipping the fan cannot clip the reading door.
+// The hand is the only horizontal scroller. This keeps a selected card's Upcast
+// controls revealed inside its clipped port (the card carries no (i) badge).
 export function mountHandInspectionOverlay(hand) {
-  let owner = null;
-  let control = null;
   let request = 0;
   const pointers = new Set();
   let awaitingClick = false;
@@ -67,17 +62,6 @@ export function mountHandInspectionOverlay(hand) {
   // same question of the same geometry measures (and forces layout) for nothing.
   let revealedKey = null;
   let forceReveal = false;
-  const restore = () => {
-    if (control) {
-      control.classList.remove('hand-info-portal');
-      control.style.removeProperty('left');
-      control.style.removeProperty('top');
-      if (owner?.isConnected) owner.appendChild(control);
-      else control.remove();
-    }
-    owner = control = null;
-  };
-  let recheck = false;
   const position = (reveal = true) => {
     request = 0;
     const upcast = hand.querySelector('.card:is(.selected,.inspection-selected) > .card-upcast-controls');
@@ -104,50 +88,15 @@ export function mountHandInspectionOverlay(hand) {
       } else revealedKey = null;
       forceReveal = false;
     }
-    const selected = hand.querySelector('.card.inspection-selected.inspection-info-visible');
-    if (selected !== owner) {
-      restore();
-      if (!selected) return;
-      const info = selected.querySelector('.card-info-button');
-      if (!info) return;
-      owner = selected; control = info; recheck = true;
-      control.classList.add('hand-info-portal');
-      hand.parentElement.appendChild(control);
-    }
-    if (!owner || !control) return;
-    const anchor = owner.getBoundingClientRect();
-    const infoSize = control.getBoundingClientRect().width || 44;
-    const hud = [...(hand.closest?.('.combat')?.querySelectorAll('.combatant .combatant-mini-hud, .combatant [data-meter-row="hp"], .combatant [data-res="hp"], .combatant .health-footer, .combatant .nm, .combatant .intent, .combatant .combatant-info') || [])]
-      .filter(node => node.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true }) !== false)
-      .map(node => ({ box: node.getBoundingClientRect(), style: getComputedStyle(node) }))
-      .filter(({ box, style }) => box.width && box.height && style.visibility !== 'hidden' && style.display !== 'none')
-      .map(({ box }) => box);
-    const placement = handInfoPosition({ card: anchor, port: hand.getBoundingClientRect(), size: infoSize,
-      gap: Math.max(0, inspectControlRisePx() - infoSize), viewportWidth: viewViewportBox().right, obstacles: hud });
-    const local = anchorLocalBox(hand.parentElement, {
-      ...placement,
-      width: 0,
-      height: 0,
-    });
-    control.style.left = `${local.left}px`;
-    control.style.top = `${local.top}px`;
-    // The card is usually still moving on the frame it is selected: once more
-    // on the next frame, so the badge follows the settled box.
-    if (recheck) { recheck = false; cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false)); }
   };
   // A gesture, key, focus, resize or fan re-fit always re-reveals (the viewer
   // may have panned away since). A DOM mutation burst does not: it re-asks the
   // reveal only when the card it is about has changed (see revealedKey).
-  // The selected card lifts and scales on a transition; read its settled box.
-  const settleSelected = event => {
-    if (!owner || event.target !== owner || !/transform|translate|scale|top|left/.test(event.propertyName || 'transform')) return;
-    cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false));
-  };
   const lazy = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position()); };
   const schedule = () => { forceReveal = true; lazy(); };
   // A browser-owned pan already chose the viewport. Following its scroll must
-  // not drag it back to an older pager cursor or selected card. Info still
-  // tracks its owner; explicit focus, selection and layout changes reveal.
+  // not drag it back to an older pager cursor or selected card: the scroll
+  // cancels the pending reveal. Explicit focus, selection and layout changes reveal.
   const followScroll = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position(false)); };
   const press = event => { awaitingClick = false; pointers.add(event.pointerId); };
   const release = event => {
@@ -163,9 +112,8 @@ export function mountHandInspectionOverlay(hand) {
   const choose = event => { revealOwner = event.target.closest('.card'); schedule(); };
   const observer = new MutationObserver(lazy);
   observer.observe(hand, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
-  hand.addEventListener('scroll', followScroll);
-  hand.addEventListener('transitionend', settleSelected);
   hand.addEventListener('handlayoutchange', schedule);
+  hand.addEventListener('scroll', followScroll);
   hand.addEventListener('pointerdown', press, true);
   hand.addEventListener('gpfocus', choose, true);
   hand.addEventListener('cardinspectionselect', choose, true);
@@ -177,9 +125,8 @@ export function mountHandInspectionOverlay(hand) {
   window.addEventListener('resize', schedule);
   return () => {
     observer.disconnect(); cancelAnimationFrame(request);
-    hand.removeEventListener('scroll', followScroll);
-    hand.removeEventListener('transitionend', settleSelected);
     hand.removeEventListener('handlayoutchange', schedule);
+    hand.removeEventListener('scroll', followScroll);
     hand.removeEventListener('pointerdown', press, true);
     hand.removeEventListener('gpfocus', choose, true);
     hand.removeEventListener('cardinspectionselect', choose, true);
@@ -189,6 +136,5 @@ export function mountHandInspectionOverlay(hand) {
     window.removeEventListener('keydown', settle, true);
     window.removeEventListener('blur', blur);
     window.removeEventListener('resize', schedule);
-    restore();
   };
 }

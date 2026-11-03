@@ -9,7 +9,6 @@ import {fitIllustratedCards} from './illustratedCardFitter.js';
 import {rankAnchor} from './cardLayout.js';
 import {cardArtLayersHtml} from '../cardArtLayers.js';
 import {FACE_EFFECT_LINES} from '../../model/cardFaceProjection.js';
-import {t} from '../strings.js';
 import {cardArtStyle,CARD_ART_LEGACY,CARD_ART_REVIEWED} from '../cardArtStyle.js';
 
 export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,registries,style}={}) {
@@ -87,7 +86,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
     }else{
       const text=l.bind==='rules'?renderedRules:values[l.bind]??esc(l.text||'');
       const font=`font-family:${esc(l.font||'Georgia')};font-size:${(l.fontSize||20)/doc.width*100}cqw;font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
-      body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}"${faceRules&&l.bind==='rules'?' data-face-lines="true"':''} style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>${l.bind==='rules'?`<span class="card-rules-inspect-cue" aria-hidden="true">${esc(t('deckEditor.inspect'))}</span>`:''}`;
+      body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}"${faceRules&&l.bind==='rules'?' data-face-lines="true"':''} style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>`;
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;
     if(interiors[l.id]){

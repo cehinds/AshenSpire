@@ -24,7 +24,7 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:output+(width===1180?'/rank-examples.png':'/rank-phone.png'),fullPage:true});
  }
- await page.locator('.sample .card').nth(1).click();await page.locator('.sample .card').nth(1).locator('.card-info-button').click();await page.locator('.card-inspection-modal').waitFor();
+ await page.locator('.sample .card').nth(1).click();await page.locator('.sample .card').nth(1).click({button:'right'});await page.locator('.card-inspection-modal').waitFor();
  assert.equal(await page.locator('.card-inspection-modal .card-rank').textContent(),'Rank 1');await page.keyboard.press('Escape');assert.deepEqual(errors,[]);
  console.log('PASS rank preview: desktop, phone, positive rank labels, hidden rank zero, panel alignment, layer z-order, no clipping, inspection.');
 }finally{await browser.close();launched.child.stdout?.destroy();launched.child.stderr?.destroy();await launched.close();server.server.closeAllConnections?.();server.server.close();}

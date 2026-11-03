@@ -7,7 +7,7 @@ import { openModal } from './modalShell.js';
 /** Small art target; the complete description and original visual stay inspectable. */
 export function merchantThumbnail({ visual, detail = visual, name, desc = '', inspect = null }) {
   const control = button({ label: '', className: 'merchant-thumbnail', attrs: { 'aria-label': t('deckEditor.inspectNamed', { name }) } });
-  control.append(visual, el('span', { class: 'merchant-inspect-label', text: t('deckEditor.inspectAction') }));
+  control.append(visual);
   control.addEventListener('keydown', event => event.stopPropagation());
   control.addEventListener('click', event => {
     event.stopPropagation();

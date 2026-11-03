@@ -71,7 +71,6 @@ import {
 // copy in code — the baseline counts it — but a NEW sentence does not join it.
 import { t, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
 import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
@@ -418,7 +417,6 @@ export function mountCustomize(app, {
     || null;
   const customizeScreen = $('.screen.customize');
   decorateCreationWorkspace(customizeScreen);
-  mountCreationInfoLayer(customizeScreen);
   // Every --creation-* the W1c CSS reads, from the model (uiConfig.screens.creation); kit.css names no number for this screen.
   for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
   const classBox = $('#cz-classes');
@@ -1280,7 +1278,7 @@ export function mountCustomize(app, {
         for (const row of choiceRows) {
           const active = row.piece === piece;
           row.node.classList.toggle('choice-focused', active);
-          if (!active) row.face.classList.remove('inspection-selected', 'inspection-info-visible');
+          if (!active) row.face.classList.remove('inspection-selected');
         }
         showDetails(piece);
       };

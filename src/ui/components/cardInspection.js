@@ -3,7 +3,6 @@ import { openModal } from './modalShell.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
-import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
@@ -357,8 +356,8 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   return shell;
 }
 
-// Hosts can expose a visible Inspect action without simulating the face's
-// Information button. The renderer owns the reading; opening it owns no choice.
+// Hosts can expose a visible Inspect action (a footer button) without the face
+// printing anything. The renderer owns the reading; opening it owns no choice.
 const boundInspections = new WeakMap();
 export function openBoundCardInspection(card, opener = card) {
   const open = boundInspections.get(card);
@@ -366,45 +365,20 @@ export function openBoundCardInspection(card, opener = card) {
   return open(opener);
 }
 
-/** Information owns only its own button; action/hold/drag handlers stay on hosts. */
+/** The card face is the door (right-click, I, a read-only tap); action/hold/drag handlers stay on hosts. */
 export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
   boundInspections.set(card, open);
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
-  // Keyboard focus selects the card before exposing its information control.
+  // Keyboard focus selects the card.
   card.addEventListener('focusin', () => {
     if (card.matches(':focus-visible')) select();
   });
   card.addEventListener('keydown', event => {
     if (event.key === 'Tab' && event.target === card) select();
   });
-  const info = document.createElement('button');
-  info.type = 'button';
-  info.className = 'card-info-button';
-  info.textContent = 'i';
-  info.setAttribute('aria-label', `Information about ${title}`);
   let touch = false;
-  let revealTimer = null;
-  // The delay is read from the card's own custom property so one authored
-  // number reaches CSS and JS alike; a card rendered without tokens still gets
-  // the documented default rather than an instant flash.
-  const revealDelayMs = () => {
-    // Only equipmentCard.js sets this property, inline on the card (no stylesheet
-    // declares it), so the inline read is the computed one without the style flush.
-    const raw = card.style.getPropertyValue('--card-info-delay').trim();
-    const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
-    return Number.isFinite(ms) && ms >= 0 ? ms : selectionRevealDelayMs();
-  };
-  const revealInfo = () => {
-    if (revealTimer !== null || card.classList.contains('inspection-info-visible')) return;
-    revealTimer = setTimeout(() => {
-      revealTimer = null;
-      if (card.isConnected && card.classList.contains('inspection-selected')) {
-        card.classList.add('inspection-info-visible');
-      }
-    }, revealDelayMs());
-  };
   // A CALLER MAY NAME THE CARD'S LOGICAL IDENTITY. Selection is page-wide and
   // keyed by identity, so two faces of the SAME item are one lit card — which
   // is right on a screen (a picker rebuilt under you keeps your choice) and
@@ -418,13 +392,12 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // reveal is cancelled with it: otherwise it lands after the card has lost
   // selection, showing an information button on a card nobody chose.
   const douse = () => {
-    card.classList.remove('inspection-selected', 'inspection-info-visible', 'selected');
+    card.classList.remove('inspection-selected', 'selected');
     // Keep combat.css's `.hand[data-has-selection]` (the old `.hand:has(.selected)`) true to the DOM.
     const hand = card.closest('.hand');
     if (hand && hand.getAttribute('data-has-selection') === 'true' && !hand.querySelector('.selected')) hand.setAttribute('data-has-selection', 'false');
     card.setAttribute('aria-pressed', 'false');
     card.removeAttribute('aria-current');
-    card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
     // HOW A FACE LEARNS IT MUST SAY LESS AGAIN. A card's presentation level
     // (src/model/cardFields.js) is `focus` while it is lit and its floor when
     // it is not, so the two cards whose level changed on any selection are
@@ -441,7 +414,6 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.classList.add('inspection-selected');
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
-    revealInfo();
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
   // A HOLD THAT BECOMES A DRAG TAKES ITS LIGHT BACK. A combat card's hold
@@ -455,24 +427,31 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   card.addEventListener('carddragstart', () => { if (litByHold && litCard() === identity) clearSelection(); litByHold = false; });
   card.addEventListener('pointerup', () => { litByHold = false; });
   card.addEventListener('pointercancel', () => { litByHold = false; });
-  card.addEventListener('cardinspectionrequest', () => { select(); revealInfo(); });
-  for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
-    info.addEventListener(type, event => event.stopImmediatePropagation());
-  }
-  // THE SELECTING BEAT IS SPENT, NOT RESET. This used to zero the count, so a
-  // player who read a card's information and then tapped it had their tap
-  // swallowed as a fresh selection — the card was already lit and the tap did
-  // nothing visible. Reading is something you do TO a selected card; the beat
-  // it stands on is still spent, so the next tap on the face is the action's.
-  info.addEventListener('click', event => {
-    event.preventDefault(); event.stopImmediatePropagation();
+  card.addEventListener('cardinspectionrequest', () => { select(); });
+  // THE CARD IS ITS OWN DOOR; THERE IS NO (i) BADGE (owner, 2026-11-03: "inspect
+  // is still on the cards" ... "remove the (i) entirely"). Reading is something
+  // you do TO a selected card, so it spends the selecting beat rather than
+  // resetting it: the next tap on the face is still the action's (the old
+  // button did the same, and a reset swallowed that tap as a fresh selection).
+  // Right-click and the I key on a focused card open the reading on every
+  // surface; a read-only face opens on a plain click or tap; the combat hand
+  // also has its press-and-hold (holdconfirm.js armInspect).
+  const read = (opener = card) => {
     spendSelectingBeat(identity, douse);
-    select(); open(info);
+    select(); open(opener);
+  };
+  card.setAttribute('aria-keyshortcuts', 'I');
+  card.addEventListener('contextmenu', event => {
+    if (event.target?.closest?.('input, textarea, select')) return;
+    event.preventDefault();
+    // A touch long-press raises this event too; where armInspect owns the press (the combat hand) its hold is the reading.
+    if (event.pointerType === 'touch' && card.dataset.inspect) return;
+    event.stopPropagation(); read();
   });
-  card.addEventListener('cardinspectioncancelreveal', () => {
-    clearTimeout(revealTimer);
-    revealTimer = null;
-    card.classList.remove('inspection-info-visible');
+  card.addEventListener('keydown', event => {
+    if (event.target !== card || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key !== 'i' && event.key !== 'I') return;
+    event.preventDefault(); event.stopPropagation(); read();
   });
   // A REBUILT CARD ADOPTS THE SELECTION IT ALREADY HELD.
   //
@@ -504,43 +483,18 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.classList.add('inspection-selected');
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
-    // The old node's pending reveal cannot paint after it is detached. The
-    // selected replacement owns its own delay, without a new selection event.
-    revealInfo();
   }
-  card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {
-    if (event.target === info) return;
     select();
-    revealInfo();
+    // A read-only face has no act to protect: a click or a tap reads it.
+    if (readOnly) { event.preventDefault(); event.stopPropagation(); open(card); return; }
     if (touch) {
       const touchTaps = countBeat(identity, douse);
-      // ONE PRESS REVEALS IT. This waited for touchTaps >= 2, so the button
-      // that explains a card could only be found by someone who already knew
-      // it was there — every first-time player selected a card and saw nothing.
-      // Selection is the signal; the reveal is a fade so it does not snap into
-      // place under a thumb already on the glass. Both the delay and the fade
-      // are authored in balance.ui.equipmentCard.info.
-      revealInfo();
-      // TWO TAPS, AND THE SECOND ONE IS THE ACTION'S (Constantine, 2026-09-12:
-      // *"it should be two taps. the first selects and the information icon (i)
-      // should appear after the set delay ... the second tap should select the
-      // card or press and hold should work as well"*).
-      //
-      // THIS LINE USED TO SWALLOW TWO, and that is the defect #980 answered
-      // from the wrong end. `touchTaps === 2` reserved the second tap for the
-      // information button nobody had asked for, so a card's own act — choose
-      // this candidate, arm this burn — could only be reached on the THIRD.
-      // #980 fixed the count by handing tap ONE to the action (`actionOwnsTouch`
-      // on the Smith and the merchant), which cost the selecting beat: a thumb
-      // committed to a candidate it had not yet been shown.
-      //
-      // The rule now is the one he asked for, and it is the same rule for every
-      // card that has an act: THE FIRST TAP SELECTS AND NOTHING ELSE; every tap
-      // after it on the SAME card reaches the host's own handler. The `i` the
-      // first tap reveals is a door beside the act, never in front of it, and a
-      // press-and-hold is unaffected — it never came through `click` at all.
+      // TWO TAPS, AND THE SECOND ONE IS THE ACTION'S (Constantine, 2026-09-12):
+      // THE FIRST TAP SELECTS AND NOTHING ELSE; every tap after it on the SAME
+      // card reaches the host's own handler. A press-and-hold is unaffected: it
+      // never came through `click` at all.
       //
       // `actionOwnsTouch` survives for the surfaces with no selecting beat to
       // spend (a card in the combat hand, the reward chooser whose click only
@@ -550,17 +504,15 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
         // The selecting tap cannot reach buy, equip, burn or play handlers.
         event.preventDefault(); event.stopImmediatePropagation();
       }
-    } else if (readOnly) open(card);
-    if (readOnly) { event.preventDefault(); event.stopPropagation(); }
+    }
   });
   if (readOnly) {
     card.tabIndex = 0;
     card.setAttribute('role', 'group');
-    card.setAttribute('aria-label', `${title}. Enter to inspect. On touch, tap then Information.`);
+    card.setAttribute('aria-label', `${title}. Click, tap or press Enter to inspect.`);
     card.addEventListener('keydown', event => {
       if (event.target !== card || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation(); select(); open(card);
     });
   }
-  return info;
 }

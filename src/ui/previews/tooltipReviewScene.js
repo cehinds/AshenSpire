@@ -37,7 +37,7 @@ export async function mountTooltipReview(scene) {
   } else {
     document.body.classList.add('tooltip-review-gallery');
     const style=document.createElement('style');
-    style.textContent='.tooltip-review-gallery{overflow:auto!important}.tooltip-review-gallery #app{overflow:visible!important;display:block;height:auto;padding:24px}.review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px;padding:20px 0}.review-grid>.equipment-poker-card{width:200px}.review-grid>.card{width:200px;height:280px;transform:none}.review-controls{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.review-grid .status-sample{min-height:70px;padding:12px;border:1px solid #806638;border-radius:6px}.review-grid .card-info-button{z-index:4}';
+    style.textContent='.tooltip-review-gallery{overflow:auto!important}.tooltip-review-gallery #app{overflow:visible!important;display:block;height:auto;padding:24px}.review-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px;padding:20px 0}.review-grid>.equipment-poker-card{width:200px}.review-grid>.card{width:200px;height:280px;transform:none}.review-controls{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.review-grid .status-sample{min-height:70px;padding:12px;border:1px solid #806638;border-radius:6px}';
     document.head.append(style);
     app.innerHTML='<h1>Card & keyword collection</h1><p>Choose a category. Select a card and use its Information button. Hover or tap tags to read their definitions.</p><div class="review-controls"></div><div class="review-grid"></div>';
     const controls=app.querySelector('.review-controls'), grid=app.querySelector('.review-grid');

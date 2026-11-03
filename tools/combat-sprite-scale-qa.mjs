@@ -46,7 +46,6 @@ try {
       if(enemyId==='stitchedKing') {
         const first=page.locator('.hand .card').last();
         await first.click();
-        if(!await page.locator('.card-info-button').count()) throw Error('card selection lost inspect control');
         await page.locator('.end-turn').hover(); await page.mouse.down(); await page.waitForTimeout(1600); await page.mouse.up();
         await page.waitForFunction(()=>document.querySelector('.combat').dataset.turn==='enemy',null,{timeout:7000});
         await page.waitForFunction(()=>document.querySelector('.combat').dataset.turn==='player',null,{timeout:30000});
