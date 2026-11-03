@@ -143,3 +143,30 @@ test('a fight saved without a committed plan loads, keeps its intent and plays i
   assert.deepEqual(refused, []);
   assert.deepEqual(started, [combat.enemies[0].intent.moveId]);
 });
+
+test('SP an enemy spends reacting in the player turn comes out of its next turn, and the plan is trimmed visibly', () => {
+  const combat = fight('gildedKnight', 2);
+  const enemy = combat.enemies[0];
+  assert.deepEqual(shown(enemy), ['thrust', 'thrust']);
+  assert.equal(enemy.maxStamina, 2);
+  play(combat, combat.piles.hand.find(row => row.cardId === 'core.strike'));
+  assert.equal(combat.eventLog.filter(row => row.type === 'combatEnemyReactionStacked').length, 1, 'the knight reacted');
+  assert.equal(enemy.stamina, 1, 'the reaction paid its 1 SP now');
+  assert.equal(enemy.pendingStaminaLoss, 1, 'and owes it once against the next turn');
+  assert.deepEqual(shown(enemy), ['thrust'], 'the queued thrust it can no longer afford leaves the plan');
+  assert.deepEqual(enemy.movesHistory.slice(-1), ['thrust']);
+  const { started, refused } = endTurn(combat);
+  assert.deepEqual([started, refused], [['thrust'], []], 'it plays only what it showed, without a silent refusal');
+});
+
+test('reaction SP is not counted twice: the next turn starts at pool minus the one reaction payment', () => {
+  const combat = fight('gildedKnight', 2);
+  const enemy = combat.enemies[0];
+  play(combat, combat.piles.hand.find(row => row.cardId === 'core.strike'));
+  assert.equal(enemy.pendingStaminaLoss, 1);
+  dispatch(combat, { type: 'endTurn' });
+  settle(combat);
+  assert.equal(enemy.pendingStaminaLoss, 0, 'the debt was consumed at the enemy turn start');
+  const started = combat.eventLog.filter(row => row.type === 'enemyMoveStarted' && !row.reaction && row.sourceId === enemy.id);
+  assert.equal(started.length, 1, 'one affordable move, not zero (a double count would leave 0 SP)');
+});
