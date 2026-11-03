@@ -36,6 +36,7 @@ import { resolveEnemyLevel } from '../model/levels.js';
 import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
 import { openKnowledgeEncounter } from '../model/enemyKnowledgeRun.js';
 import { emptyEnemyKnowledge, mergeEnemyKnowledge } from '../model/enemyKnowledgeProfile.js';
+import { limitEnemyIds } from '../model/combatLimits.js';
 import { reconcileCombatKnowledge } from './enemyKnowledge.js';
 import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
@@ -127,10 +128,11 @@ export function runCombatPlayer(run) {
  * (the screenshot door's Poise override).
  */
 export function createRunCombat({
-  registries, rng, run, enemyIds, encounter = null, settings = {},
+  registries, rng, run, enemyIds: requestedEnemyIds, encounter = null, settings = {},
   hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
   enemyKnowledgeProfile = emptyEnemyKnowledge(),
 }) {
+  const enemyIds = limitEnemyIds(requestedEnemyIds); // owner, 2026-11-03: at most 3 enemies per fight
   // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
   // here so the fight's copies carry the levels and hands it starts with.
   if (!configuredCombat(run)) stampSkillBonuses(registries, run);
