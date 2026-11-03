@@ -8,13 +8,12 @@ const freeze = (value) => {
 // A painting may continue behind the hand, but its ground belongs to the
 // battlefield window. Fitting against half the entire screen can place the
 // painted horizon BELOW the combatants' feet when the footer grows.
-export function battlefieldBackdropConfig({ height, fieldTop, fieldHeight, formation, appearance = 'classic' }, config = wireframeUi.scene) {
+export function battlefieldBackdropConfig({ height, fieldTop, fieldHeight, formation }, config = wireframeUi.scene) {
   // Use all possible cells, not just living actors: deaths must not pan the
-  // painting. Classic plates leave half a row above the furthest feet to keep
-  // the skyline clear of the HUD; layered scenery uses its authored ground.
+  // painting. Layered scenery uses its authored ground.
   const cells = formation?.cells || [];
   const groundTop = cells.length
-    ? Math.max(0, Math.min(...cells.map(cell => cell.ground)) - (appearance === 'classic' ? (formation.rowSpacing || 0) / 2 : 0))
+    ? Math.max(0, Math.min(...cells.map(cell => cell.ground)))
     : fieldHeight * (1 - config.floorFraction);
   const floorTop = fieldTop + groundTop;
   return freeze({ ...config, floorFraction: 1 - Math.max(0, Math.min(height, floorTop)) / height });

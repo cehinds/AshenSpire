@@ -19,9 +19,8 @@ test('all classes keep canonical held/Smash profiles with alternate, empty and m
     const input={classId,armourId,grip},before=structuredClone(input);
     assert.deepEqual(combatWeaponProfilesFor(input),{weaponProfile:classId==='reaver'?REAVER_GREATSWORD_PILOT:null,smashProfile:classId==='reaver'?null:classId});
     assert.deepEqual(input,before,'presentation must not change authoritative equipment');
-    assert.equal(combatEquipmentAnimationForLoadout(null,input,classId),null,'Classic combat borrows no equipped-family component');
+    assert.equal(combatEquipmentAnimationForLoadout(null,input,classId),null,'combat borrows no equipped-family component');
   }
-  assert.deepEqual(combatWeaponProfilesFor({classId:'reaver',appearance:'classic'}),{weaponProfile:null,smashProfile:null});
   assert.deepEqual(combatWeaponProfilesFor({classId:'unknown'}),{weaponProfile:null,smashProfile:null});
 });
 
@@ -45,9 +44,6 @@ test('melee, ranged, magic, guard and counter semantics survive equipment-indepe
       assert.equal(plan.technique,camp==='spell'?'rangedMagic':'ranged','untyped enemy ranged descriptors retain their projectile routing');
       assert.equal(plan.family,'projectile');
     }
-    const classic=resolveCombatAnimation({...card('attack'),cardTags:['blade','bow','ranged']},equipment,{classId,appearance:'classic',animation:{references:{bowAttack:'bow',bladeAttack:'blade'}}});
-    assert.equal(classic.technique,'attack');assert.equal(classic.family,'projectile');
-    assert.equal(resolveCombatAnimation({...card('defend'),type:'skill',kindIds:['classification.skill'],cardTags:['guard']},equipment,{classId,appearance:'classic'}).technique,'guard');
   }
 });
 
@@ -77,7 +73,5 @@ test('real stages expose canonical sequences and avoid loading dormant alternate
       }else assert.deepEqual(stage.reactionPoses,[]);
     }
     assert.equal(loaded.some(url=>url.includes('player-attacks')),false,'no alternate family preload');
-    applyDisplayAppearance({classicAppearance:true});
-    assert.equal(createAlternativeCardStage('reaver',combatWeaponProfilesFor({classId:'reaver'})),null);
   }finally{for(const s of stages)s.dispose();Object.assign(globalThis,before);applyDisplayAppearance({});}
 });

@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `7a02680aad1bd64b11d4c29e6436e0ae3e2010cd`
+- Source commit: `48da320aa48834089f92d4775597a54de958adb3`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,11 +21,11 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 265 |
+| Domain models and contracts | `src/model/` | 266 |
 | Headless simulation/services | `src/engine/` | 71 |
 | Screen presenters/hosts | `src/ui/screens/` | 32 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 128 |
+| Component models and behavior records | `src/ui/models/` | 127 |
 | DOM components and observer adapters | `src/ui/components/` | 153 |
 | Code-side content adapters | `src/content/` | 281 |
 | Authoritative JSON/CSV content | `content/source/` | 138 |

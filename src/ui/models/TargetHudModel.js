@@ -1,8 +1,8 @@
 import { uiConfig } from '../../config/generated/ui.js';
 
 export const targetHudConfig = () => uiConfig.components.combatTargetHud;
-export function targetHudEnabled({ formFactor, classic, layout = 'formation' }, config = targetHudConfig()) {
-  return !classic && layout === 'formation' && config.behavior.formFactors.includes(formFactor);
+export function targetHudEnabled({ formFactor, layout = 'formation' }, config = targetHudConfig()) {
+  return layout === 'formation' && config.behavior.formFactors.includes(formFactor);
 }
 // Owner 2026-10-31: a lone living enemy's card sits to its left; with several enemies it sits below the selected
 // one. The lane table is only the fallback when the config lacks the two keys or the count is unknown.

@@ -215,6 +215,8 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
 | Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss, act? (default 1)` |
+
+**Enemy cap** (owner, 2026-11-03: "Limit to just 3 enemies max"). A combat never has more than 3 enemies, in every layout. An encounter's `enemies[]` lists at most 3 ids (the content validator rejects more); `createCombat` and `createRunCombat` open a fight with the first 3 ids only; no effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing while 3 enemies are alive. The cap lives in one place, `MAX_ENEMIES_PER_COMBAT` in `src/model/combatLimits.js`; the screenshot fixtures `?shotEnemies` and `?shotEnemyCount` obey it too.
 | Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
@@ -1989,7 +1991,7 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies today. **TO BUILD** (owner, 2026-10-12): the enemy cap becomes a setting, default 3. Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** at most 3 enemies (owner, 2026-11-03: "Limit to just 3 enemies max"; supersedes the 2026-10-12 cap-setting plan; see the Enemy cap rule under the Encounter schema). Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
 - **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
 - **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
@@ -2039,7 +2041,11 @@ What the tabs hold, by area:
   is a lane, and the player's front column is not a perspective destination. Pressing anywhere
   in an occupied enemy cell acts on that enemy (select, or play the armed card or flask). Lane
   span, rank tops and heights, shear and foot fractions per phone, desktop and short strip are data
-  (`combatFormationModel.positioning.perspectiveGrid`). Classic keeps the grid below.
+  (`combatFormationModel.positioning.perspectiveGrid`). The Classic layout is deprecated and
+  removed (owner, 2026-11-03: "Classic layout can now be deprecated."): this perspective grid is the
+  only combat layout, the `classicAppearance` Settings row is gone, and a saved
+  `classicAppearance: true` is ignored, so an old profile loads as the grid. The columns-and-rows
+  grid described below survives only as the saved shape of the formation settings.
   The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
   Measurements remain responsive percentages; reference anchors at 1641×526 are checked
   against the exports. Explicit saved group edits take precedence.

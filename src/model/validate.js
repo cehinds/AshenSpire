@@ -1,4 +1,5 @@
 import { fixCoreModuleParameters } from './fixCoreMechanics.js';
+import { MAX_ENEMIES_PER_COMBAT } from './combatLimits.js';
 import { compileBindings } from './mechanicsKernel.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
@@ -1566,6 +1567,10 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   }
   for (const encounter of Array.isArray(b.encounters) ? b.encounters : []) {
     if (!encounter) continue;
+    // Owner (2026-11-03): "Limit to just 3 enemies max" (SPEC §4, Encounters).
+    if (Array.isArray(encounter.enemies) && encounter.enemies.length > MAX_ENEMIES_PER_COMBAT) {
+      err(`encounters.${encounter.id || '?'}.enemies`, `lists ${encounter.enemies.length} enemies; a combat holds at most ${MAX_ENEMIES_PER_COMBAT} (owner, 2026-11-03)`);
+    }
     for (const field of ['floorBand', 'targetBand']) {
       if (encounter[field] == null) continue;
       for (const problem of levelBandProblems(encounter[field], `encounters.${encounter.id || '?'}.${field}`)) {

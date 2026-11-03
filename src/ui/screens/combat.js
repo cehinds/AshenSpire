@@ -36,7 +36,6 @@ import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
 import { markSpriteArt } from '../components/spriteArtFlags.js';
-import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
 import { cardAffectsEnemies, hitBadgeTargetIds } from '../../model/hitBadge.js';
@@ -163,7 +162,7 @@ import { el, meter, meters, pill, labelStack, keycap, glyph, iconButton, button,
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 import { wireFormationMovement } from '../components/formationMovement.js';
 import { formationGridHtml } from '../components/formationGrid.js';
-import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../../model/formationMovement.js';
+import { formationMovePlan } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
 import { evalPredicate } from '../../engine/triggers.js';
@@ -348,7 +347,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // "No reaction: why", above the Reaction switch, for notes logged from now on.
   const reactionNote = createReactionNote();
   let reactionNoteSeen = combat.eventLog.length - 1;
-  let paintedAppearance = displayAppearance();
   const potionReveal = resolveTooltipSettings(meta.settings);
   const actionRow = $('.combat-action-row');
   // User interaction yields the automation seat immediately. A later idle
@@ -378,10 +376,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The replay has no turn-start reset: a reload after a Poise break must not bring back the stance the engine already ended.
   if (!holdsChosenStance(combat.player)) heldKinds.reset('player');
   function smashProfile() {
-    return combatWeaponProfilesFor({appearance:displayAppearance(), classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)}).smashProfile;
+    return combatWeaponProfilesFor({classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)}).smashProfile;
   }
   function selectedProfile() {
-    return combatWeaponProfilesFor({ appearance: displayAppearance(), classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) }).weaponProfile;
+    return combatWeaponProfilesFor({ classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) }).weaponProfile;
   }
   function playerStance(def) {
     return selectedWeaponStanceFor({ profile: selectedProfile(), stance: def ? stanceForCard(def) : heldStances.get(), card: def || heldCards.get(), entity: dv(combat.player) });
@@ -497,7 +495,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         availablePoses: stage?.poses || [],
       });
       if (played && definition) {
-        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: combatEquipmentAnimationForLoadout(registries, run.loadout, run.class), classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, counterTriggered: !!returned, action: plan });
+        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: combatEquipmentAnimationForLoadout(registries, run.loadout, run.class), classId: run.class, combatExpansionVersion: combat.combatExpansionVersion, counterTriggered: !!returned, action: plan });
         const pose = selectedCounter && stage?.poses?.includes(selectedCounter) ? selectedCounter : stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
@@ -647,17 +645,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     dlog('ignored', what, why);
     if (why.busyForMs > 3000) dlog('stuck', `${what} ignored: busy for ${why.busyForMs} ms`, why);
   };
-  // The appearance may already be Classic before this screen mounts, so the
-  // change notification below is not guaranteed to fire for this combat.
-  normalizeClassicPlayerFormationCell(combat, readSettings());
   previewMemo.invalidate();
-  onDisplayAppearanceChange(combatEl, () => {
-    // Classic must not merely paint an invalid perspective lane at its spawn:
-    // keep the combat state aligned with the cell that movement and saves use.
-    normalizeClassicPlayerFormationCell(combat, readSettings());
-    previewMemo.invalidate();
-    if (!busy) render();
-  });
   // The fight has resolved and this screen is handing off (see the
   // `combat.result` branch in the settle callback). Its menu is closed from
   // that moment: the run is mid-handoff and nothing the menu offers is sound.
@@ -1742,12 +1730,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function render() {
     globalThis.__perfCount?.('render');
-    if (paintedAppearance !== displayAppearance()) {
-      combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
-      combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
-      syncBackdropFlag(combatEl);
-      paintedAppearance = displayAppearance();
-    }
     handStrip.primeStripBox();
     renderTopbar();
     syncEditLock();
@@ -1782,13 +1764,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function finishRender() {
     globalThis.__perfCount?.('finishRender');
     let moved = false;
-    if (paintedAppearance !== displayAppearance()) {
-      combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
-      combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
-      syncBackdropFlag(combatEl);
-      paintedAppearance = displayAppearance();
-      moved = true;
-    }
     handStrip.primeStripBox();
     if (renderTopbar()) moved = true;
     syncEditLock();
@@ -2351,7 +2326,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return false;
@@ -2524,7 +2499,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     syncWeaknessDiscovery();
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance, displayAppearance()]);
+      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; wrote = true; }
       // `combat.player` is deliberately not part of this key, but the intent is: it reads the player through
@@ -3657,7 +3632,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, action }) }];
+      return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, combatExpansionVersion: combat.combatExpansionVersion, action }) }];
     })); } catch (e) { visualPlans = new Map(); console.warn('[combat] visual plan failed:', e && e.message); }
     // The fight is final until the next dispatch: quote the finish render's hand and intents in idle time.
     try { previewMemo.prewarm(fightPrewarmJobs({ combat, previewCard, projectIntent: projectCombatIntent, upcastRanks: id => upcastRanksByCard.get(id) })); } catch (e) { /* the finish render quotes as before */ }

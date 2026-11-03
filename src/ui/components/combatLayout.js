@@ -121,12 +121,11 @@ export function wireCombatLayout(combatEl) {
     // so the header is not measured: a first-pass measure would catch the old
     // layout (the data-header-row gate is written here) and the memo would keep
     // that tall band for the life of the fight.
-    const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
-    const alternative = document.documentElement.dataset.displayAppearance === 'alternative';
+    const split = desktopFooterEnabled({ formFactor, layout: combatEl.dataset.layout });
     const headerSizing = uiConfig.scenes.w4a.sizing.desktopHeader;
     // A board without the shared header keeps the measured band.
     const sharedHeader = !!combatEl.querySelector(':scope > .combat-hud.shared-hud');
-    const headerRow = !alternative || !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
+    const headerRow = !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
     if (combatEl.dataset.headerRow !== headerRow) combatEl.dataset.headerRow = headerRow;
     const hudBand = headerRow
       // Desktop (owner, 2026-10-31): the header band is its own height, not floored at the 6% share,
@@ -137,7 +136,7 @@ export function wireCombatLayout(combatEl) {
     combatEl.dataset.compactCombat = String(compact);
     combatEl.dataset.formFactor = formFactor || '';
     combatEl.dataset.desktopFooter = String(split);
-    desktopHeader.apply(document.documentElement.dataset.displayAppearance === 'alternative');
+    desktopHeader.apply(true);
     if (combatEl.dataset.desktopHeader === 'true') {
       const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / zoom || 0;
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
@@ -232,7 +231,7 @@ export function wireCombatLayout(combatEl) {
     headerObserver = new MutationObserver(schedule);
     headerObserver.observe(combatEl, { attributes: true, attributeFilter: ['data-target-hud', 'data-layout'], childList: true });
     formFactorObserver = new MutationObserver(schedule);
-    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance'] });
+    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor'] });
   }
   // The hand publishes its chooser reserve with its layout; the phone field's extension depends on it.
   combatEl.addEventListener?.('handlayoutchange', schedule);
