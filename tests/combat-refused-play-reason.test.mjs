@@ -21,7 +21,7 @@ function harness({ energy = 5, stamina = 5, mana = 9, legalIds = ['e1'], cost = 
     player: { energy, mana, stamina } };
   if (queued) combat.combatRounds = { playerQueue: [{ instanceId: 'c1' }] };
   const context = {
-    combat, busy: false, upcastRanksByCard: new Map(), CSS: { escape: v => v },
+    combat, busy: false, inputBusy: () => false, upcastRanksByCard: new Map(), CSS: { escape: v => v },
     hasCardChoice: () => choice, t: key => ({ 'combat.actions': 'Actions' })[key] || key, getEntity: () => ({ alive: true }),
     cardTargets: () => ({ legalIds }), unplayableReason: () => unplayable,
     resolveCombatCard: () => ({}), readSettings: () => ({}), upcastOptions: () => [],
