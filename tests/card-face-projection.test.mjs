@@ -225,3 +225,13 @@ test('no registry card face contains Inspect replacement text', () => {
     assert.doesNotMatch(text, /Inspect/, card.id);
   }
 });
+
+test('an unfamiliar rule of many long sentences still fills at most the face clause budget', async () => {
+  // Review on #2501: the real-text fallback once pushed every overlong sentence onto the face.
+  const { cardFaceProjection, FACE_EFFECT_CLAUSES } = await import('../src/model/cardFaceProjection.js');
+  const s = [1, 2, 3, 4].map(n => `Sentence ${n} describes a long new mechanic that has no authored face summary yet and keeps going for a while longer.`);
+  const def = { id: 'probe', type: 'skill', name: 'Probe', cost: 1, tags: [], keywords: [], effects: [], textTemplate: s.join(' '), text: s.join(' ') };
+  const face = cardFaceProjection(def, { lines: null, authoredHtml: s.join(' '), registries: null, effects: [] });
+  assert.ok(face.clauses.length >= 1 && face.clauses.length <= FACE_EFFECT_CLAUSES, `clauses: ${face.clauses.length}`);
+  assert.ok(face.clauses.every(clause => !/Inspect/.test(clause.html)));
+});

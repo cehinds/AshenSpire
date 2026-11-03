@@ -243,7 +243,8 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   // An unfamiliar long rule is named, never shortened mid-condition. Current
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.
-  if (!clauses.length) fitted.forEach(addReal);
+  // Still within the face's clause budget: the first lines show, the rest wait for Information.
+  if (!clauses.length) fitted.slice(0, FACE_EFFECT_CLAUSES).forEach(addReal);
   // A required downside the face could not carry (a long payment, a mandatory discard): a summary may replace the cue
   // only when it names that downside itself.
   const hiddenDownsides = reserved.filter(entry => !chosen.has(entry)).map(entry => plain(entry.line.html));
