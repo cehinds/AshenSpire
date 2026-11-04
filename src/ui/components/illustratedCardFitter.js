@@ -42,7 +42,9 @@ function fitSignature(face, width) {
 // growing, a modal opening) and every watched face once the fonts are ready; batched in one frame, and
 // faces that are off the page or hidden (width 0) are skipped by the fit itself. The observer measures the
 // face's layout box, which the hand's rotate/scale transforms do not change.
-const watched = new WeakSet(), pendingRefit = new Set(), faceCards = new Map();
+// face -> its CURRENT card (a reused face moves to a new card element); liveFaces is the strong set the fonts
+// pass walks, pruned whenever a face is found detached, so removed faces are released.
+const faceCards = new WeakMap(), liveFaces = new Set(), pendingRefit = new Set();
 let refitFrame = 0, sizeObserver = null, fontsAwaited = false;
 function scheduleRefit(card) {
   pendingRefit.add(card);
@@ -53,17 +55,31 @@ function scheduleRefit(card) {
     if (batch.length) fitIllustratedCards(batch);
   });
 }
+function releaseFace(face) {
+  liveFaces.delete(face); faceCards.delete(face); sizeObserver?.unobserve(face);
+}
 function watchFaces(pairs) {
   if (typeof ResizeObserver === 'function' && !sizeObserver) {
-    sizeObserver = new ResizeObserver(list => { for (const e of list) { const card = faceCards.get(e.target); if (card && e.contentRect.width > 0) scheduleRefit(card); } });
+    sizeObserver = new ResizeObserver(list => {
+      for (const e of list) {
+        const face = e.target;
+        if (!face.isConnected) { releaseFace(face); continue; }
+        const card = faceCards.get(face);
+        if (card && e.contentRect.width > 0) scheduleRefit(card);
+      }
+    });
   }
   for (const [card, face] of pairs) {
-    if (watched.has(face) || typeof face.nodeType !== 'number') continue;
-    watched.add(face); faceCards.set(face, card); sizeObserver?.observe(face);
+    if (typeof face.nodeType !== 'number') continue;
+    faceCards.set(face, card);                       // every call: a reused face now belongs to this card
+    if (!liveFaces.has(face)) { liveFaces.add(face); sizeObserver?.observe(face); }
   }
   if (!fontsAwaited && typeof document !== 'undefined' && document.fonts?.ready) {
     fontsAwaited = true;
-    document.fonts.ready.then(() => { fontEpoch++; for (const [face, card] of faceCards) if (card.isConnected) scheduleRefit(card); }).catch(() => {});
+    document.fonts.ready.then(() => {
+      fontEpoch++;
+      for (const face of [...liveFaces]) { if (!face.isConnected) { releaseFace(face); continue; } const card = faceCards.get(face); if (card?.isConnected) scheduleRefit(card); }
+    }).catch(() => {});
   }
 }
 
