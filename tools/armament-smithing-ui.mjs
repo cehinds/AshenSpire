@@ -280,7 +280,7 @@ async function main() {
           const r=rect(node), x=(r.left+r.right)/2, y=(r.top+r.bottom)/2, hit=document.elementFromPoint(x,y);
           return {name:node.dataset.itemRef||node.className,...r,centreHit:!!(hit&&(hit===node||node.contains(hit)))};
         });
-        const horizontal=[modal,document.querySelector('.smith-upgrade-modal .modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.smith-candidate-region'),document.querySelector('.smith-preview-region'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
+        const horizontal=[modal,document.querySelector('.smith-upgrade-modal .modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.confirmation-modal'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
         return {
           textGeometry,wordGeometry,
           text:(preview?.textContent||'').replace(/\\s+/g,' ').trim(),
