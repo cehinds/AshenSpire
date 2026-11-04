@@ -16,7 +16,7 @@ test('approved compact Inspect and HP shapes retain active paging', () => {
   assert(inspectSizes.length > 0, 'the Inspect size contract must be present');
   assert(inspectSizes.every(size => size === 22), 'player-specific overrides cannot enlarge the approved 22px Inspect control');
   assert.match(css, /\.combatant:not\(\.context-selected\) \.combat-health-row\s*\{[^}]*--health-row-h:\s*calc\(7px \/ var\(--ui-zoom,1\)\)/s);
-  assert.match(css, /\.hand-overlay > :is\(\.hand-prev,\.hand-next\)\s*\{\s*pointer-events:\s*auto;/);
+  assert.match(css, /\.hand-overlay > :is\(\.hand-prev,\.hand-next,\.hand-info-portal\)\s*\{\s*pointer-events:\s*auto;/);
 });
 
 test('expanded combat panels and selected details stay in the correct layer', () => {
@@ -90,8 +90,13 @@ test('One-tap play reads the setting live, so a mid-combat toggle changes the ne
   assert.match(combat, /readSettings = \(\) => meta\.settings \|\| \{\}/, 'mountCombat falls back to meta when no reader is passed');
 });
 
-test('the hand draws no info portal or (i) badge in combat', () => {
-  assert.doesNotMatch(css, /hand-info-portal|card-info-button/);
-  assert.doesNotMatch(read('../styles/kit.css'), /hand-info-portal/);
-  assert.doesNotMatch(hand, /hand-info-portal/);
+test('the hand info portal keeps its centring transform in combat', () => {
+  assert.doesNotMatch(css, /\.hand-info-portal\s*\{[^}]*transform:\s*none/);
+  assert.match(read('../styles/kit.css'), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
+});
+
+test('the combat hand asks for the (i) badge and no other card surface does', () => {
+  assert.match(hand, /infoBadge: true/);
+  assert.doesNotMatch(read('../src/ui/components/equipmentCard.js'), /infoBadge/);
+  assert.doesNotMatch(read('../src/ui/screens/deckEditor.js'), /infoBadge/);
 });
