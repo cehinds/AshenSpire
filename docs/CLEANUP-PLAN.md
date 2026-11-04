@@ -52,9 +52,10 @@ Owner's decisions (2026-11-04):
 
 - **Core 2 is the only game.** The `current` (legacy) profile and Core 1 (`ashen.core@1.0.0`) are deleted
   from code, content, tests and SPEC.
-- **Authoring tools move to their own repository**: `pose-studio/`, `workbench/`, `editor/`, `ui-studio/`,
-  `desktop/` (with the Windows installer workflows), the root `*-preview.html` pages and the tools/tests
-  that only serve them. `scratch/` is already untracked.
+- **Authoring tools leave `dev`**: `pose-studio/`, `workbench/`, `editor/`, `ui-studio/`, the root
+  `*-preview.html` pages and the tools/tests that only serve them. They are kept on the `tools-archive`
+  branch (a copy of `dev` at `ba101271c09`, 2026-11-04); check it out to use them. `desktop/` and the
+  Windows installer workflows stay. `scratch/` is already untracked.
 - **`docs/preview/` and `docs/design/` are deleted** (about 1.1 GB).
 - **Unity-port shape:** game rules are pure logic with no browser code; every input and output is a
   documented JSON shape; the browser game is a thin shell. The protected engine files
@@ -69,18 +70,18 @@ rather than the portable VM (`"portability":"legacy"` in `engine/mechanics`).
 
 | # | Change | Status |
 |---|--------|--------|
-| 1a | Rescue `docs/design/new-card-art/layer-math.js` (+ cutout manifest) to `tools/`, repoint `tests/layered-card-art.test.mjs` and `tools/export-layered-card-art.mjs` | todo |
-| 1b | Move `docs/preview/releases/` (README screenshots) to `docs/qa/releases/`; empty the `qa-evidence-size` allow-list | todo |
-| 1c | Drop the `docs/preview` copies from `dev-preview.yml`, `BASE_TREE_KEPT_DIRS` in `tools/pages-site.mjs` | todo |
-| 1d | Delete both folders | todo |
+| 1a | Rescue `docs/design/new-card-art/layer-math.js` (+ cutout manifest) to `tools/`, repoint `tests/layered-card-art.test.mjs` and `tools/export-layered-card-art.mjs` | done (this PR) |
+| 1b | Move `docs/preview/releases/` (README screenshots) to `docs/qa/releases/`; empty the `qa-evidence-size` allow-list | done (this PR) |
+| 1c | Drop the `docs/preview` copies from `dev-preview.yml`, `BASE_TREE_KEPT_DIRS` in `tools/pages-site.mjs` | done (this PR) |
+| 1d | Delete both folders | done (this PR) |
 
-### Step 2 — authoring tools to their own repository
+### Step 2 — authoring tools off `dev` (kept on `tools-archive`)
 
 | # | Change | Status |
 |---|--------|--------|
 | 2a | Cross-repo checks: `tools/linkcheck.mjs` roots, `tests/build-lock.test.mjs` lock paths, `tests/art-migrate-trigger.test.mjs`, pose-studio cases in `alternative-*` and `display-art-cache` tests, `tasks.vs.json`, `tests/README.md` | todo |
-| 2b | Workflows: move `workbench.yml`, the six `enemy-back-*`, `windows-installer.yml`, `windows-art-options.yml`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | todo |
-| 2c | Move the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`, `tests/windows-*.ps1`) | todo |
+| 2b | Workflows: delete `workbench.yml` and the six `enemy-back-*`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | todo |
+| 2c | Delete the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`) | todo |
 
 ### Step 3 — Core 2 only (about 700 checks in about 120 files)
 
