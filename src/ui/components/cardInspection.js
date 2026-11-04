@@ -366,7 +366,7 @@ export function openBoundCardInspection(card, opener = card) {
 }
 
 /** The card face is the door (right-click, I, a read-only tap); action/hold/drag handlers stay on hosts. */
-export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
+export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, infoBadge = false, identity: givenIdentity = null }) {
   boundInspections.set(card, open);
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
@@ -379,6 +379,23 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     if (event.key === 'Tab' && event.target === card) select();
   });
   let touch = false;
+  // THE COMBAT HAND ALONE KEEPS AN (i) BADGE (owner, 2026-11-04: "I meant for the (i)
+  // over cards to show up when selecting a card so that I don't accidentally inspect
+  // when I didn't want to"). It is built only for a card that asks (`infoBadge`), it is
+  // visible only while that card is selected (kit.css), and on touch it is the ONLY
+  // way in: a long press selects (the hold) and never inspects. handInspectionOverlay.js
+  // lifts it above the fan so a neighbouring card cannot cover it.
+  let info = null;
+  if (infoBadge) {
+    info = document.createElement('button');
+    info.type = 'button';
+    info.className = 'card-info-button';
+    info.textContent = 'i';
+    info.setAttribute('aria-label', `Information about ${title}`);
+    for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
+      info.addEventListener(type, event => event.stopImmediatePropagation());
+    }
+  }
   // A CALLER MAY NAME THE CARD'S LOGICAL IDENTITY. Selection is page-wide and
   // keyed by identity, so two faces of the SAME item are one lit card — which
   // is right on a screen (a picker rebuilt under you keeps your choice) and
@@ -428,7 +445,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   card.addEventListener('pointerup', () => { litByHold = false; });
   card.addEventListener('pointercancel', () => { litByHold = false; });
   card.addEventListener('cardinspectionrequest', () => { select(); });
-  // THE CARD IS ITS OWN DOOR; THERE IS NO (i) BADGE (owner, 2026-11-03: "inspect
+  // THE CARD IS ITS OWN DOOR; ONLY THE COMBAT HAND HAS AN (i) BADGE (owner, 2026-11-03: "inspect
   // is still on the cards" ... "remove the (i) entirely"). Reading is something
   // you do TO a selected card, so it spends the selecting beat rather than
   // resetting it: the next tap on the face is still the action's (the old
@@ -440,12 +457,20 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     spendSelectingBeat(identity, douse);
     select(); open(opener);
   };
+  if (info) {
+    info.addEventListener('click', event => {
+      event.preventDefault(); event.stopImmediatePropagation();
+      read(info);
+    });
+  }
   card.setAttribute('aria-keyshortcuts', 'I');
   card.addEventListener('contextmenu', event => {
     if (event.target?.closest?.('input, textarea, select')) return;
     event.preventDefault();
-    // A touch long-press raises this event too; where armInspect owns the press (the combat hand) its hold is the reading.
-    if (event.pointerType === 'touch' && card.dataset.inspect) return;
+    // A touch long-press raises this event too. Where armInspect owns the press its hold is the
+    // reading; a card with the (i) badge (the combat hand) is read through the badge alone, so a
+    // long press there selects and never inspects by accident.
+    if ((event.pointerType === 'touch' || (info && touch)) && (card.dataset.inspect || info)) { if (info) event.stopPropagation(); return; }
     event.stopPropagation(); read();
   });
   card.addEventListener('keydown', event => {
@@ -484,8 +509,10 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
   }
+  if (info) card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {
+    if (event.target === info) return;
     select();
     // A read-only face has no act to protect: a click or a tap reads it.
     if (readOnly) { event.preventDefault(); event.stopPropagation(); open(card); return; }
@@ -515,4 +542,5 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
       event.preventDefault(); event.stopPropagation(); select(); open(card);
     });
   }
+  return info;
 }

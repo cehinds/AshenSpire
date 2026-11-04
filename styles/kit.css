@@ -4037,16 +4037,23 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    44 physical px target, with a 16 px label) unless the host declares its own
    --card-info-size, which nothing does today — the hook stays for a host that
    must pin the circle to a size the zoom does not choose. */
+.card-inspection-target > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 /* A clue is a word; the formation column must not clip it to a number badge. */
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
-/* WCF3: the selected card glows. */
-.inspection-selected { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
+/* The (i) badge exists only on a combat-hand card (bindCardInspection `infoBadge`). A hand card's
+   Inspect is the portal above the card (handInspectionOverlay), made only while that card is
+   selected; the in-card copy stays hidden so it never paints at a temporary spot and then moves. */
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
+.hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
+/* WCF3: the selected card and its inspect control share one glow. The hand
+   moves that control into an overlay, so the portal wears the same filter. */
+.inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
 /* Owner, 2026-10-31: a hand card never wears the yellow select state, only the targeting colour (--selection-color).
    Hold-start, keyboard focus and a second press all add `.inspection-selected`; it glows like `.selected`.
    Gold stays on the deck editor, rewards and every other card surface. */
 :root .hand .card { --focus-ring: 2px solid var(--selection-color, var(--green)); }
-:root .hand .card:is(.selected, .inspection-selected) {
+:root .hand .card:is(.selected, .inspection-selected), :root .hand-overlay > .hand-info-portal {
   --selection-glow: drop-shadow(0 0 6px var(--selection-color, var(--green)));
 }
 :root .hand .card.inspection-selected { border-color: var(--selection-color, var(--green)); }
@@ -4054,6 +4061,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   border-color: var(--selection-color, var(--green));
   box-shadow: 0 0 0 2px var(--selection-color, var(--green)), 0 0 18px color-mix(in srgb, var(--selection-color, var(--green)) 40%, transparent);
 }
+.card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
+.card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,384px)) minmax(0,1fr); }
 .card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:var(--card-ratio); box-sizing:border-box; }
 .playing-card-details { display:flex; flex-direction:column; gap:16px; padding:4px 0; }
@@ -5426,6 +5435,15 @@ button[data-button-size] {
 .as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
 .modal-close { aspect-ratio: 1; flex: none; padding: 0; }
 .hand-overlay { position: relative; }
+.hand-overlay > .hand-info-portal {
+  position: absolute; z-index: 500; transform: translateX(-50%);
+  --inspect-box: var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
+  border: 1px solid var(--gold); border-radius: 50%; padding: 0;
+  display: grid; place-items: center; background: var(--bg); color: var(--gold);
+  visibility: visible; pointer-events: auto; font-size: var(--inspect-label, calc(16px / var(--ui-zoom, 1)));
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .hand-hit-lane {
