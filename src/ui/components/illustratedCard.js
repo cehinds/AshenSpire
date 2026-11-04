@@ -9,6 +9,7 @@ import {fitIllustratedCards} from './illustratedCardFitter.js';
 import {rankAnchor} from './cardLayout.js';
 import {cardArtLayersHtml} from '../cardArtLayers.js';
 import {FACE_EFFECT_LINES} from '../../model/cardFaceProjection.js';
+import {uiConfig} from '../../config/generated/ui.js';
 import {cardArtStyle,CARD_ART_LEGACY,CARD_ART_REVIEWED} from '../cardArtStyle.js';
 
 export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,registries,style}={}) {
@@ -27,6 +28,12 @@ export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,exten
 }
 
 
+// Owner 2026-11-04: the parchment rules box is taller by this fraction (config:
+// components.card.components.rulesFace.rulesBoxGrow), taken from the artwork
+// window it overlaps. The box grows upward; its bottom edge, the title band, the
+// cost badges and the type band stay where they were.
+export const rulesBoxGrow=()=>Math.max(0,Number(uiConfig.components.card.components?.rulesFace?.rulesBoxGrow)||0);
+const growBox=(l,grow)=>{const lift=l.h*grow;return {...l,y:l.y-lift,h:l.h+lift};};
 const polygon='polygon(12% 4%,88% 4%,95% 11%,95% 90%,88% 96.6%,12% 96.6%,5.2% 90%,5.2% 11%)';
 export const CARD_LAYERS=Object.freeze({background:1,art:2,backdrops:3,footerTrim:4,fills:5,trim:6,icons:7,text:8,rank:9});
 // Complementary clips split the existing painted components without replacing
@@ -68,6 +75,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
       if(l.bind==='artwork')l={...l,h:l.h-lift};
       if(l.bind==='tags')l={...l,x:doc.width*.1,y:doc.height*.858,w:doc.width*.8,h:doc.height*.116};
     }
+    if(l.id==='panel'||l.bind==='rules')l=growBox(l,rulesBoxGrow());
     const footer=l.bind==='tags'&&model.sigils;
     const position=`left:${l.x/doc.width*100}%;top:${l.y/doc.height*100}%;width:${l.w/doc.width*100}%;height:${l.h/doc.height*100}%;opacity:${l.opacity};filter:${footer||!l.hue||!Number.isFinite(l.hue)?'none':`hue-rotate(${l.hue}deg)`};transform:${footer||!l.rotation?'none':`rotate(${l.rotation}deg)`};`;
     let body='';
@@ -90,14 +98,17 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;
     if(interiors[l.id]){
-      const inside=interiors[l.id],outside=`evenodd,0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,${inside},${inside.split(',')[0]}`;
+      // The parchment's border keeps its thickness when the box grows: the vertical insets shrink by the old/new height.
+      let inside=interiors[l.id];
+      if(l.id==='panel'&&l.h>source.h){const k=source.h/l.h;inside=`5% ${(50-38*k).toFixed(2)}%,95% ${(50-38*k).toFixed(2)}%,95% ${(50+38*k).toFixed(2)}%,5% ${(50+38*k).toFixed(2)}%`;}
+      const outside=`evenodd,0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,${inside},${inside.split(',')[0]}`;
       return componentPlane(l,position,body,clip,l.id==='base'?CARD_LAYERS.background:CARD_LAYERS.fills,l.id,inside)
         +componentPlane(l,position,body,clip,CARD_LAYERS.trim,l.id==='base'?'card-trim':`${l.id}-trim`,outside);
     }
     return componentPlane(l,position,body,clip,l.bind==='artwork'?CARD_LAYERS.art:l.type==='text'?CARD_LAYERS.text:CARD_LAYERS.icons);
   }).join('');
   const panel=doc.layers.find(l=>l.id==='panel');
-  const panelTop=panel?panel.y-(model.sigils?doc.height*.061:0):doc.height*.58;
+  const panelTop=panel?growBox({...panel,y:panel.y-(model.sigils?doc.height*.061:0)},rulesBoxGrow()).y:doc.height*.58;
   const anchor=rankAnchor(doc,{...panel,y:panelTop});
   const r=anchor?.box,text=anchor?.text;
   const rank=model.rankBadge?`<span class="card-rank" data-card-layer="9" data-panel-inset="${r?(r.y-panelTop)/doc.height*100:0}" title="${esc(model.rankHelp)}" style="${r?`left:${r.x/doc.width*100}%;top:${r.y/doc.height*100}%;width:${r.w/doc.width*100}%;height:${r.h/doc.width*100}cqw;transform:none;`:''}"><span class="card-rank-bar" data-component="rank-bar" aria-hidden="true"></span><span class="card-rank-text" data-component="rank-text"${text?` style="position:absolute;left:${text.x}%;top:${text.y}%;width:${text.w}%;height:${text.h}%;display:grid;place-items:center;font-size:clamp(8px,${r.h*text.h/100/1.15/doc.width*100}cqw,20px);"`:''}>${esc(model.rankBadge)}</span></span>`:'';
