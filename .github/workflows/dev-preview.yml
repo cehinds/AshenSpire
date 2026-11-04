@@ -322,11 +322,6 @@ jobs:
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
           cp -r src "$W/src"
-          # Variant-only authoring material stays inside this branch's artifact.
-          if [[ "$GITHUB_REF_NAME" == alternative/* ]] && [ -d docs/design/combat-depth-2026-10-05 ]; then
-            mkdir -p "$W/docs/design"
-            cp -r docs/design/combat-depth-2026-10-05 "$W/docs/design/"
-          fi
           cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
           cp tools/serve-preview.mjs "$W/serve-preview.mjs"
           cp -r styles "$W/styles"
@@ -334,13 +329,6 @@ jobs:
           # workbench/assets/ (the light twins on dev); these copies only
           # add the files it does not ship, and never overwrite its art.
           cp -r --update=none "$HIGH_DIR/environments" "$W/assets/"
-          mkdir -p "$W/docs/preview"
-          cp -r docs/preview/world-atlas "$W/docs/preview/"
-          cp -r docs/preview/combat-ground "$W/docs/preview/"
-          cp -r docs/preview/combat-formation "$W/docs/preview/"
-          cp -r docs/preview/starting-equipment "$W/docs/preview/"
-          cp -r docs/preview/armament-kits "$W/docs/preview/"
-          cp -r docs/preview/book-library "$W/docs/preview/"
           cp -r pose-studio "$W/pose-studio"
           cp -r --update=none "$HIGH_DIR/pose-effects" "$W/assets/"
           cp -r --update=none "$HIGH_DIR/combat-effects" "$HIGH_DIR/painted-outfits" "$W/assets/"
@@ -359,10 +347,7 @@ jobs:
             echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
             echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
             echo "Use its class and screen-size controls to test hand choices and Continue."
-            echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
-            echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
-            echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
             echo "The art inspection pages (combat-effect catalog, readiness gallery) are"
             echo "published by cehinds/AshenSpire-art since the art left this repository."
             echo

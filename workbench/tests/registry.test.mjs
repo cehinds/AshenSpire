@@ -54,14 +54,12 @@ test('every HTML tool page in the checkout is registered', (t) => {
   assert.deepEqual(unregistered, [], 'add these to workbench/tools.json');
 });
 
-test('the named families are covered: editors under docs/design, the ateliers, the probe, root previews', (t) => {
+test('the named families are covered: the probe and root previews', (t) => {
   const tracked = trackedHtml();
   if (!tracked) return t.skip('not a git checkout');
-  const must = tracked.filter((p) => /^docs\/design\/.*\/editor[^/]*\.html$/.test(p) || /^docs\/design\/.*editor\/.*\.html$/.test(p)
-    || p.startsWith('docs/design/deck-row-editor/') || p.startsWith('docs/design/sp-orb-editor/')
-    || p === 'docs/preview/book-library/layers/atelier.html' || p === 'tools/palette-probe.html'
+  const must = tracked.filter((p) => p === 'tools/palette-probe.html'
     || /^[^/]+-preview\.html$/.test(p) || /^tooltip-review[^/]*\.html$/.test(p));
-  assert.ok(must.length >= 15, `expected the named pages, found ${must.length}`);
+  assert.ok(must.length >= 8, `expected the named pages, found ${must.length}`);
   const registered = new Set(registry.entries.map((e) => e.path));
   assert.deepEqual(must.filter((p) => !registered.has(p)), []);
 });
