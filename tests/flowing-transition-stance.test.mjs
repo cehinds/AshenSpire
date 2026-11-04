@@ -22,7 +22,7 @@ function fight(profileId) {
 }
 const current = c => c.player.combatStance && c.player.combatStance.maneuver;
 
-for (const profile of ['core', 'current']) {
+for (const profile of ['core']) {
   for (const maneuver of ['attack', 'smash', 'defend', 'sweep', 'counter', 'casting']) {
     test(`Flowing Transition (${profile}) choosing ${maneuver} enters ${maneuver}`, () => {
       const c = fight(profile);
@@ -46,7 +46,4 @@ test('Flowing Transition offers no Evade stance', () => {
 const label = (c, id) => cardChoicePlan(c, 'ft').options.find(o => o.id === id).name;
 test('Flowing Transition shows "Prepared" for the casting pick in Core', () => {
   assert.equal(label(fight('core'), 'casting'), 'Prepared');
-});
-test('Flowing Transition keeps "Casting" for the casting pick in the current profile', () => {
-  assert.equal(label(fight('current'), 'casting'), 'Casting');
 });

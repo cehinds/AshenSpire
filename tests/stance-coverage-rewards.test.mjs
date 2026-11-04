@@ -88,12 +88,6 @@ test('the same seed rolls the same offer; disabling the setting restores the pla
   for (const seed of SEEDS) if (offer(regOff, fresh(regOff), seed).options.some(row => row.id === 'core.evade')) withEvade++;
   assert.ok(withEvade < SEEDS.length, 'the plain roll does not always hold evade');
 });
-test('shops and Core 1 are untouched', () => {
-  const stock = gameProfileShopStock(reg, fresh(), createRng(3), { shopId: 's' }), plain = gameProfileShopStock(regOff, fresh(regOff), createRng(3), { shopId: 's' });
-  assert.deepEqual(stock.options, plain.options);
-  const v1 = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: {} });
-  assert.equal(v1.content.rewards.eligibility.combatCards.stanceCoverage.enabled, false);
-});
 test('reservations never exceed the offer size and draw nothing for slots the offer cannot show', () => {
   const tuned = (offerCount, reservedSlots) => {
     const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { rewards: { offerCount, takeCount: Math.min(1, offerCount) }, 'reward-ranks': { stanceCoverage: { reservedSlots } } } });

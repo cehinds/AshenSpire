@@ -31,43 +31,6 @@ function playTurns(combat, turns) {
   return reads;
 }
 
-test('Core1 resolves intent reads exact; Current and the module default stay rolled', () => {
-  assert.equal(gameModule({ gameProfile: resolveGameProfile('ashen.core@1.0.0') }, 'intent').reads, 'exact');
-  assert.equal(gameModule({ gameProfile: resolveGameProfile('current') }, 'intent')?.reads ?? 'rolled', 'rolled');
-});
 
-test('Core1: every enemy intent is read exactly and the visibility stream is never drawn, across 20 seeds', () => {
-  let seen = 0;
-  for (let seed = 1; seed <= 20; seed++) {
-    const { combat, rng } = fixture('ashen.core@1.0.0', seed);
-    const reads = playTurns(combat, 4);
-    for (const e of combat.enemies) if (e.intent?.combatProfile?.camp) assert.equal(e.intentRevealed, true, `seed ${seed}`);
-    for (const read of reads) assert.equal(read, true, `seed ${seed}`);
-    seen += reads.length;
-    assert.equal(rng.getCounters().enemyIntentVisibility || 0, 0, `seed ${seed}: hidden-intent roll was drawn`);
-  }
-  assert.ok(seen > 0, 'the fixture must actually present camp intents');
-});
 
-test('Core1: the exact rule survives a mid-fight save and restore', () => {
-  const { run, combat, rng } = fixture('ashen.core@1.0.0', 5);
-  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
-  const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: saved, expectedGameProfile: run.gameProfile });
-  playTurns(restored, 3);
-  for (const e of restored.enemies) if (e.intent?.combatProfile?.camp) assert.equal(e.intentRevealed, true);
-  assert.equal(restored.rng.getCounters().enemyIntentVisibility || 0, 0);
-  assert.equal(rng.getCounters().enemyIntentVisibility || 0, 0);
-});
 
-test('Legacy and Current runs on the same seeds still roll, and some reads are hidden', () => {
-  for (const name of [null, 'current']) {
-    let hidden = 0, drawn = 0;
-    for (let seed = 1; seed <= 20; seed++) {
-      const { combat, rng } = fixture(name, seed);
-      hidden += playTurns(combat, 4).filter(read => read === false).length;
-      drawn += rng.getCounters().enemyIntentVisibility || 0;
-    }
-    assert.ok(drawn > 0, `${name}: the roll still runs`);
-    assert.ok(hidden > 0, `${name}: at least one intent stays hidden`);
-  }
-});

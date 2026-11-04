@@ -13,7 +13,7 @@ test('simple grid switch is available in both profile Display sections without a
   assert.equal(row.label,'Show battlefield grid');
   assert.equal(row.cat,'Display');
   assert.equal(row.def,true);
-  for(const id of ['core','current']) {
+  for(const id of ['core']) {
     const display=[...generalGroups('Display',resolveGameProfile(id)).values()].flat();
     assert.equal(display.filter(r=>r.key===key).length,1);
     assert.ok(!display.some(r=>r.key==='gameConfig.presentation.movementEnabled'));

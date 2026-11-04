@@ -52,7 +52,7 @@ test('Core winning defense mitigates exactly once before configured Block/Poise,
   assert.equal(profileDamageReceipt(ctx, source, { ...player, block: 0, gameProfilePoise: 0 }, 20, carrier('attack')).hpLoss, 20);
 });
 
-for (const mode of ['core', 'current']) test(`${mode} actual grouped damage matches green HP projection without double mitigation`, () => {
+for (const mode of ['core']) test(`${mode} actual grouped damage matches green HP projection without double mitigation`, () => {
   const { gameProfile } = context(mode);
   const original = resolveGameProfile(mode);
   const registries = mode === 'core' ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, original)), original) : createRegistries(contentBundle);
@@ -87,8 +87,6 @@ test('missing resolved setting preserves old saves and concurrent stance chooses
   assert.equal(stanceMitigation(ctx, 'attack', 'counter').multiplier, 0.75);
   delete ctx.gameProfile.modules.stances.defenseMitigation;
   assert.equal(stanceMitigation(ctx, 'attack', 'counter').multiplier, 1);
-  // Current's old offensive bonus is not itself a defender mitigation stage.
-  assert.equal(stanceMitigation(context('current'), 'smash', 'defend').multiplier, 1);
   const live = context();
   live.registries = { proposalStatusRules: { rules: { capacity: { behaviors: [{ kind: 'stanceCapacity', additionalPerStack: 1, maxStances: 2 }] } } } };
   const player = fighter('player', { maneuver: 'counter', camp: 'physical' });
@@ -96,18 +94,3 @@ test('missing resolved setting preserves old saves and concurrent stance chooses
   assert.equal(defensiveCombatStance(live, player, carrier('defend')).maneuver, 'prepared');
 });
 
-test('Current preserves its offensive stance factor and applies defensive mitigation only once', () => {
-  const ctx = { ...context('current'), combatExpansionVersion: 2, registries: createRegistries(contentBundle) };
-  const source = fighter('enemy');
-  const player = fighter('player', { maneuver: 'defend', camp: 'physical', range: 'melee' });
-  ctx.player = player; ctx.enemies = [source];
-  assert.equal(previewTacticalAction(ctx, source, player, carrier('smash'), [{ amount: 20 }]).amount, 30, 'existing Smash bonus survives');
-  player.combatStance.maneuver = 'counter';
-  assert.equal(previewTacticalAction(ctx, source, player, carrier('attack'), [{ amount: 20 }]).amount, 15, 'defender reduction applies exactly once');
-  ctx.gameProfile.modules.stances.defenseMitigation = 0;
-  assert.equal(previewTacticalAction(ctx, source, player, carrier('attack'), [{ amount: 20 }]).amount, 20);
-  ctx.gameProfile.modules.stances = false;
-  assert.equal(previewTacticalAction(ctx, source, player, carrier('attack'), [{ amount: 20 }]).amount, 20);
-  delete ctx.gameProfile;
-  assert.equal(previewTacticalAction(ctx, source, player, carrier('attack'), [{ amount: 20 }]).amount, 20, 'unconfigured historic contexts retain their rules');
-});

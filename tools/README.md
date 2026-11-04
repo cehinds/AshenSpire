@@ -29,7 +29,6 @@ prefix; its callers are the union.
 | `alternative-art-qa.mjs` | Production combat, including actual input; output belongs outside tracked source. | docs DEVELOPER.md |
 | `alternative-branches.mjs` | Shared naming rules for optional alternative development/test pairs. | wf dev-preview, receipts; tests alternative-branches, settings-revamp; tools pages-site, sync-alternatives |
 | `alternative-selected-stances-export.mjs`, `alternative-selected-stances-qa.mjs`, `alternative-stances-inventory.mjs`, `alternative-stances-serve.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, docs/workbench/CONSOLIDATION.md, pose-studio/stances/README.md +1 |
-| `armament-smithing-ui.mjs` | Issue #211 — real-Chromium Shrine Smith UI proof at the two acceptance | other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/smithUpgradeModal.js +1 |
 | `armoury-arrival-figure.mjs` | Armoury tab reachability and visible character/card geometry in a real browser. | wf ci; tools gatelist, watched-probes.json, watched; other docs/architecture-handoff/wireframe-gallery.html, src/ui/screens/equipment.js |
 | `armoury-picked-up.mjs` | armoury-picked-up — the Armoury tells the truth about what you are | tools plantsites-baseline.json |
 | `art-authoring.mjs` | art-authoring — the authoring tools that still live here, and why | tools card-effect-art-build, card-effect-art-check, card-effect-layers-check +14; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +1 |

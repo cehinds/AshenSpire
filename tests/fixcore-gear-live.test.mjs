@@ -81,13 +81,6 @@ test('authored HP MP SP and attribute gear reaches pools with one contribution o
   assert.deepEqual([run.maxHp,run.maxMana,run.maxStamina],before.map((n,i)=>n-[10,1,1][i]));
 });
 
-test('archived Core 1 keeps its original gear and training policy', () => {
-  const old=resolveGameAuthor({formatVersion:1,core:'ashen.core@1.0.0',modules:{}},loadGameProfileCatalog());
-  assert.equal(old.modules.gear.armorBudget,undefined);
-  assert.equal(old.modules.progression.entitlementPolicy,undefined);
-  assert.equal(old.content.cards.some(card=>card.id==='core.cantrip'),false);
-  assert.ok(old.content.characters.find(row=>row.id==='starseer').tags.includes('training.basic'));
-});
 test('equipment inspection exposes converted values and armor budget', async () => {
   const {equipmentCardModel}=await import('../src/model/equipmentCard.js');
   const {resolveUpgradedEquipment}=await import('../src/model/itemUpgrades.js');

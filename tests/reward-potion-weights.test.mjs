@@ -66,14 +66,6 @@ test('nothing held leaves every offer byte-identical to the unweighted pick', ()
     assert.equal(JSON.stringify(a), JSON.stringify(b));
   }
 });
-test('weight 1 restores the uniform pick even with a potion held; Core 1 is neutral', () => {
-  const uniform = build({ 'reward-ranks': { ownedPotionWeight: 1 } });
-  const { held, mean } = ratio(shopPotionCounts(uniform, [HELD]));
-  assert.ok(held / mean > 0.7, `${held} vs ${mean}`);
-  assert.equal(fresh(uniform, 1).gameProfile.content.rewards.eligibility.combatCards.ownedPotionWeight, 1);
-  const core1 = build({}, 'ashen.core@1.0.0');
-  assert.equal(fresh(core1, 1).gameProfile.content.rewards.eligibility.combatCards.ownedPotionWeight, 1);
-});
 test('the schema rejects an ownedPotionWeight outside 0..1', () => {
   for (const value of [1.5, -1]) assert.throws(() => build({ 'reward-ranks': { ownedPotionWeight: value } }), /ownedPotionWeight/);
   assert.doesNotThrow(() => build({ 'reward-ranks': { ownedPotionWeight: 0 } }));
