@@ -12,6 +12,7 @@ import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
+import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
@@ -1554,6 +1555,14 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   // A refusal lands first (the title, or the in-run Load door), then says why:
   // the Settings notice when a host is mounted, else the title's failure banner,
   // the same fallback the run-start path uses. The save is never touched.
+  // A run from a retired game mode (legacy, Core 1, or no profile) is refused with its own sentence; its bytes stay.
+  const refuseRetired = reason => {
+    const message = t('save.retired.message');
+    dlog('ERROR', `resume refused: retired game mode (${reason})`);
+    const landed = refused();
+    if (!showSettingsNotice(message, 'profile')) failureBanner(`run:resume:retired`, 'THIS SAVE COULD NOT BE RESTORED', ` · ${message}`);
+    return landed;
+  };
   const refuseWith = error => {
     const message = `Saved game configuration could not be restored: ${error.message}`;
     dlog('ERROR', `resume refused: ${error.message}`);
@@ -1564,12 +1573,14 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   let savedGameProfile;
   try { savedGameProfile = saves.peekRunGameProfile(slot); }
   catch (error) { return refuseWith(error); }
-  const loadGameProfile = savedGameProfile || resolveGameProfile('current');
+  const retiredReason = saves.hasRun(slot) ? retiredProfileReason(savedGameProfile) : null;
+  if (retiredReason) return refuseRetired(retiredReason);
+  const loadGameProfile = savedGameProfile || resolveGameProfile('default'); // an empty slot only; loadRun reports it empty
   let authoredRegistries;
   try { authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile); }
   catch (error) { return refuseWith(error); }
   let loaded = saves.loadRun(authoredRegistries, slot);
-  if (!loaded) return refused();
+  if (!loaded) return saves.runStatus().reason?.startsWith('retired game mode') ? refuseRetired(saves.runStatus().reason) : refused();
   try { rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile); }
   catch (error) { return refuseWith(error); }
   loaded = saves.loadRun(registries, slot);
