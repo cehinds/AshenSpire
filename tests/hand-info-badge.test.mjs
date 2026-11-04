@@ -72,3 +72,19 @@ test('the badge is shown only for the selected hand card, lifted above neighbour
 test('no white Inspect cue returns to the card face', () => {
   assert.doesNotMatch(read('../src/ui/components/illustratedCard.js'), /inspect-cue/);
 });
+
+test('the (i) button keeps only Enter/Space; other keys reach the window handler', () => withGlobalDom(({ Event }) => {
+  const card = renderCard(reg, { cardId: 'strike' }, { infoBadge: true });
+  document.body.append(card);
+  const info = card.querySelector('.card-info-button');
+  const reached = [];
+  const onKey = event => reached.push(event.key);
+  card.addEventListener('keydown', onKey);
+  for (const key of ['ArrowRight', 'Escape', '1', 'Enter', ' ']) {
+    const event = new Event('keydown', { bubbles: true, cancelable: true });
+    event.key = key;
+    info.dispatchEvent(event);
+  }
+  card.removeEventListener('keydown', onKey);
+  assert.deepEqual(reached, ['ArrowRight', 'Escape', '1'], 'only activation keys are isolated');
+}));

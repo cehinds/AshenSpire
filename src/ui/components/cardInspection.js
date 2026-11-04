@@ -392,8 +392,15 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     info.className = 'card-info-button';
     info.textContent = 'i';
     info.setAttribute('aria-label', `Information about ${title}`);
-    for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
+    for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend']) {
       info.addEventListener(type, event => event.stopImmediatePropagation());
+    }
+    // Only the button's own activation keys stay here; arrows, Escape, card
+    // numbers and End Turn still reach combat's window-level key handler.
+    for (const type of ['keydown', 'keyup']) {
+      info.addEventListener(type, event => {
+        if (event.key === 'Enter' || event.key === ' ') event.stopImmediatePropagation();
+      });
     }
   }
   // A CALLER MAY NAME THE CARD'S LOGICAL IDENTITY. Selection is page-wide and
