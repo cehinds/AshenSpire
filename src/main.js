@@ -258,7 +258,19 @@ function reportContentValidationFailure(errors) {
 
 const profileQuery = new URLSearchParams(location.search);
 const askedGameProfile = profileQuery.get('gameProfile') || profileQuery.get('wb.gameProfile') || globalThis.__ASHEN_GAME_PROFILE_PREVIEW__ || 'default';
-let selectedGameProfile = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
+// An unknown, malformed or retired ?gameProfile= falls back to the default profile; it never stops boot.
+function resolveAskedGameProfile() {
+  try {
+    const asked = resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile);
+    const reason = retiredProfileReason(asked);
+    if (!reason) return asked;
+    console.warn(`[gameProfile] "${askedGameProfile.slice(0, 40)}" is retired (${reason}); using the default profile`);
+  } catch (error) {
+    console.warn(`[gameProfile] "${askedGameProfile.slice(0, 40)}" could not be resolved (${error.message}); using the default profile`);
+  }
+  return resolveGameProfile('default');
+}
+let selectedGameProfile = resolveAskedGameProfile();
 let registryGameProfile = selectedGameProfile;
 // The first rebuild below owns construction after saved profile/settings and
 // promoted defaults have settled. It also installs that registry's vocabulary
@@ -2066,7 +2078,7 @@ async function persistSettingsChange(changed) {
     }
     return res;
   }
-  if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));
+  if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveAskedGameProfile());
   applyDisplaySettings(activeSettings);
   refreshHudQuickSettings(app, activeSettings);
   remountMapIfShowing(changed);
@@ -2140,7 +2152,7 @@ function refreshAfterImport() {
     && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
   if (!settingsChoicePending) seedPromotedDefaults(activeMeta, settings);
   applyRestoredSettings(settings);
-  selectedGameProfile = readNewGameProfile(settings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));
+  selectedGameProfile = readNewGameProfile(settings, resolveAskedGameProfile());
   rebuildRegistries(activeSettings);
   settingsChoiceChecked = true;
   // The Settings door (opened from the title's Download & saves path) still shows the old profile.
