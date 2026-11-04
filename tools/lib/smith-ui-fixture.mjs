@@ -8,7 +8,7 @@ import { smithingPlan, commitSmithing } from '../../src/model/smithing.js';
 import { smithSelectionModel } from '../../src/ui/models/SmithSelectionModel.js';
 
 export function smithUiFixture() {
-  const profile = resolveGameProfile('current');
+  const profile = resolveGameProfile('core');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 211, gameProfile: profile });
   run.floor = 8;
