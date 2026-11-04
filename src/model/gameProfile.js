@@ -16,7 +16,7 @@ const resolveOnce = (key, make) => {
   if (first) return markVerifiedProfile(freezeGameData(dataClone(first)));
   const made = markVerifiedProfile(make()); resolvedById.set(key, made); return made;
 };
-export function resolveGameProfile(idOrAuthor = 'current') {
+export function resolveGameProfile(idOrAuthor = 'default') {
   if (typeof idOrAuthor === 'string') {
     if (Object.hasOwn(gameProfileCatalog.bundles, idOrAuthor)) {
       return resolveOnce('bundle:'+idOrAuthor, () => resolveGameAuthor({formatVersion:1,core:idOrAuthor,modules:{}},gameProfileCatalog));
@@ -160,7 +160,7 @@ function projectWeaponArtResources(bundle,profile) {
     return out;
   });
 }
-export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current') {
+export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
   if(profile.foundation.mode === 'legacy') return bundle;
   if(gameModule(profile,'cards')?.mode === 'configured') {

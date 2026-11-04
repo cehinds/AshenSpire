@@ -31,10 +31,87 @@ Areas that stay in JavaScript on purpose: art, animation and pose data generated
 
 ## Phase 2 — code into smaller named modules
 
+Runs after Phase 3 step 3 (legacy removal), so dead branches are deleted rather than split.
+
 | # | Area | Today | Status |
 |---|------|-------|--------|
 | 10 | `src/main.js` (5,300 lines): boot, routing, run flow, shot fixtures | split by responsibility | todo |
 | 11 | `src/ui/screens/settings.js` (4,300 lines) | one module per settings section | todo |
 | 12 | `src/ui/screens/combat.js` (3,900 lines) | hand, enemies, targeting, playback | todo |
 | 13 | `src/model/loadout.js` (3,900 lines) | by concern | todo |
-| 14 | Repo root: stray `*-preview.html`, `scratch/` | move under `tools/previews/` or remove | todo |
+| 14 | Repo root: stray `*-preview.html`, `scratch/` | superseded by Phase 3, step 2 | moved |
+
+## Phase 3 — Core only, standalone modules, JSON-driven, Unity-port ready
+
+Owner's ask (2026-11-04): "Clean up the code base and formatting so that I can easily update the code
+myself. Only keep files and code that are needed in core. Keep modules but make sure they are standalone
+and not hidden in core's code base. Structure it so that it's data driven, highly configurable via json
+and port ready for unity."
+
+Owner's decisions (2026-11-04):
+
+- **Core 2 is the only game.** The `current` (legacy) profile and Core 1 (`ashen.core@1.0.0`) are deleted
+  from code, content, tests and SPEC.
+- **Authoring tools leave `dev`**: `pose-studio/`, `workbench/`, `editor/`, `ui-studio/`, the root
+  `*-preview.html` pages and the tools/tests that only serve them. They are kept on the `tools-archive`
+  branch (a copy of `dev` at `ba101271c09`, 2026-11-04); check it out to use them. `desktop/` and the
+  Windows installer workflows stay. `scratch/` is already untracked.
+- **`docs/preview/` and `docs/design/` are deleted** (about 1.1 GB).
+- **Unity-port shape:** game rules are pure logic with no browser code; every input and output is a
+  documented JSON shape; the browser game is a thin shell. The protected engine files
+  (`engine/kernel`, `engine/runtime`, `engine/contracts`, `src/model/formulas.js`, `mechanicsKernel.js`)
+  may be restructured for this, with the runtime-hash compatibility edge bumped in the same PR.
+
+Words: "legacy" in this repo means three things. Only (a) is removed here.
+(a) the `current` profile; (b) old save shapes (`migrateLegacy*`); (c) a mechanic implemented in JS
+rather than the portable VM (`"portability":"legacy"` in `engine/mechanics`).
+
+### Step 1 — delete `docs/preview/` and `docs/design/`
+
+| # | Change | Status |
+|---|--------|--------|
+| 1a | Rescue `docs/design/new-card-art/layer-math.js` (+ cutout manifest) to `tools/`, repoint `tests/layered-card-art.test.mjs` and `tools/export-layered-card-art.mjs` | done (this PR) |
+| 1b | Move `docs/preview/releases/` (README screenshots) to `docs/qa/releases/`; empty the `qa-evidence-size` allow-list | done (this PR) |
+| 1c | Drop the `docs/preview` copies from `dev-preview.yml`, `BASE_TREE_KEPT_DIRS` in `tools/pages-site.mjs` | done (this PR) |
+| 1d | Delete both folders | done (this PR) |
+
+### Step 2 — authoring tools off `dev` (kept on `tools-archive`)
+
+| # | Change | Status |
+|---|--------|--------|
+| 2a | Cross-repo checks: `tools/linkcheck.mjs` roots, `tests/build-lock.test.mjs` lock paths, `tests/art-migrate-trigger.test.mjs`, pose-studio cases in `alternative-*` and `display-art-cache` tests, `tasks.vs.json`, `tests/README.md` | todo |
+| 2b | Workflows: delete `workbench.yml` and the six `enemy-back-*`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | todo |
+| 2c | Delete the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`) | todo |
+
+### Step 3 — Core 2 only (about 700 checks in about 120 files)
+
+Each PR is one area and stays green. Most tests build registries without a profile and so run the
+legacy path today; each area PR moves its tests onto the Core 2 helper (3c) or deletes them.
+
+| # | Change | Status |
+|---|--------|--------|
+| 3a | Save guard: refuse a run whose profile is missing, legacy, Core 1 or not `fixCoreVersion` 1, with a "retired profile" message; never delete or overwrite it. `?gameProfile=current` falls back to the default. Drop `current` from the selector and `resolveGameProfile`'s default | todo |
+| 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | todo |
+| 3c | Core 2 test helper (registries and runs bound to the default profile) | todo |
+| 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | todo |
+| 3e | Settings: legacy Advanced rows, `advancedConfig` run overrides | todo |
+| 3f | Map: legacy `actmap` branch, `mapgen`, world atlas/journey, legacy dungeons, Custom Climb | todo |
+| 3g | Progression: class mastery, feats/class tree, keepsakes, manual level-up, legacy stat rows (prologue stays) | todo |
+| 3h | Rewards and shops: legacy offer and merchant flows | todo |
+| 3i | Combat (2-3 PRs): combat rounds, normal preview, recovery rules; `ruleset`/ratings and the legacy expansion projection; make the configured path unconditional. Snapshot version fields stay | todo |
+| 3j | UI leftovers: combat, equipment, character sheet, card, compendium | todo |
+| 3k | Dead save migrations (`migrateLegacy*`, `hasLegacy*Settings`) | todo |
+| 3l | SPEC and docs: §16 rewrite, §4 trimmed to Core 2, legacy asides, module guides | todo |
+| 3m | Kernel legacy branches, the nine legacy-only engine modules, `base.current-rewards`, with the runtime-hash edge bump | todo |
+
+### Step 4 — standalone modules and the Unity seam
+
+| # | Change | Status |
+|---|--------|--------|
+| 4a | Each `engine/modules/<id>/` owns its settings schema, defaults JSON, guide and rules; nothing in `src/` reaches into a module except through the module's exported entry | todo |
+| 4b | Game rules (`engine/`, `src/model/`) import nothing from the browser (`document`, `window`, `localStorage`, `src/ui/`); a test enforces it | todo |
+| 4c | One documented JSON contract per seam: game profile, run state/save, combat state, player action, combat result/receipt, content bundle (`engine/contracts/*.schema.json`), validated in tests | todo |
+| 4d | Tunable numbers still in JS move to `content/config` or a module's defaults JSON | todo |
+| 4e | `docs/UNITY-PORT.md`: which folders are rules (port to C#), which are shell (rebuild in Unity), and the contracts between them | todo |
+
+Phase 2 (splitting the four largest files) runs after step 3 and before step 4.

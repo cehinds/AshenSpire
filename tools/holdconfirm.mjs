@@ -483,7 +483,7 @@ async function main() {
 
   // Owner, 2026-10-06: the first tap opens the upgrade preview. Spending
   // still belongs to the separate Upgrade confirmation/hold action below.
-  const smithHolds = () => ev(`!!document.querySelector('.smith-preview-card')`);
+  const smithHolds = () => ev(`!!document.querySelector('.upgrade-desk')`);
   const openSmithList = async () => {
     const open = await ev(`document.querySelector('.smith-upgrade-modal .as-catnav-toggle')?.getAttribute('aria-expanded') === 'true'`);
     const p = await pointOf('.smith-upgrade-modal .as-catnav-toggle');
@@ -1093,7 +1093,7 @@ async function main() {
       // third reaches the card's own choose) — measured 2026-09-11, and a
       // finding for the owner, not this census's to hide: the census presses
       // the card as many times as a thumb has to, and the count is on record.
-      for (const opener of ['#shop-cat-services', '#smith-opt', '.smith-candidate-region .as-catnav-toggle', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '#shop-cat-sell', '[data-title-action="load"]']) {
+      for (const opener of ['#shop-cat-services', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '#shop-cat-sell', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting

@@ -6,7 +6,7 @@ import { allResettableKeys, resetKeys, generalGroups } from '../src/ui/screens/s
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { validateResolvedGameProfile, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
 
-const author = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 5, restFloors: [2, 4] } } };
+const author = { formatVersion: 1, core: 'ashen.core@2.0.0', modules: { cards: { handBase: 3 } } };
 
 test('new-game rule preferences persist author JSON and resolve after reload', () => {
   const storage = createMemoryStorage();
@@ -21,7 +21,7 @@ test('new-game rule preferences persist author JSON and resolve after reload', (
   assert.equal(JSON.parse(reloaded.newGameProfile).runtimeHash, undefined);
   assert.equal(readNewGameProfile(reloaded).hash, resolveGameProfile(author).hash);
   reloaded.newGameProfile = 'current';
-  assert.equal(readNewGameProfile(reloaded).id, 'current');
+  assert.equal(readNewGameProfile(reloaded).id, 'core', 'a stored retired choice falls back to the default');
   assert.equal(reloaded.importedGameProfile, text, 'the imported author survives choosing a built-in');
 });
 

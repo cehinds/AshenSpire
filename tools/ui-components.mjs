@@ -932,8 +932,8 @@ export function findings(r) {
       || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
       || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)
       || !/selected\.affectedRows\.map/.test(r.smithUpgradeModal)
-      || !/confirm\.disabled = !selected/.test(r.smithUpgradeModal)
-      || !/confirm\.setAttribute\('aria-disabled', String\(!model\.properties\.canConfirm\)\)/.test(r.smithUpgradeModal)
+      // A tapped row opens its confirmation modal (the control it is armed on is not in the page).
+      || !/review\?\.\(\)/.test(r.smithUpgradeModal)
       || !/canCommit: \(\) => Boolean\(currentModel\.properties\.canConfirm\)/.test(r.smithUpgradeModal)
       || !/blockedTitle: `Cannot upgrade \$\{selected\.name\}`/.test(r.smithUpgradeModal)
       || !/onConfirm\(selectedId\)/.test(r.smithUpgradeModal)
@@ -941,12 +941,12 @@ export function findings(r) {
       || !/const smith = smithingPlan\(registries, run\)/.test(r.rest)
       // #522: the Shrine hands the model its multi-use mode, and the model —
       // never the modal — derives every stay/leave sentence from it.
-      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse, repeatUpgrades: true \}\)/.test(r.rest)
+      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse, repeatUpgrades: true, autoSelect: false \}\)/.test(r.rest)
       || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
       || !/commitSmithing\(registries, run, itemRef\)/.test(r.rest)
       || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
-    bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');
+    bad.push('C19 Smith selection no longer uses its model-driven list/confirmation modal contract');
   }
   if (!/export function saveSlotSelectionModel/.test(r.saveSlotSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.saveSlotSelectionModel)

@@ -14,6 +14,10 @@
     "doorReadableMinPx": 384,
     "tuning": { "minPx": 64, "maxPx": 640, "slidered": ["mobile"] }
   },
+  "components": { "rulesFace": {
+    "rulesBoxGrow": 0.3,
+    "rulesText": { "minPx": 6, "lineHeightFloor": 0.92, "lineHeightStep": 0.04 }
+  } },
   "behavior": {
     "fields": {
       "levels": {

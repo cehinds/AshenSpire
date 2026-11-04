@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, placeTargetHudPanels, targetHudIntentObstacle, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, targetHudPinnedWidth, placeTargetHudPanels, targetHudIntentObstacle, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
 
 test('target details support every alternative formation form factor', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
@@ -22,6 +22,47 @@ test('player panel stays right of the player in every lane, even when enemies cr
     const placed = placeTargetHudPanels({ bounds, panels: [...enemies, player], obstacles }).find(row => row.id === 'p');
     assert.ok(placed.left >= player.anchor.left + player.anchor.width - 1, `lane ${lane}: player HUD at ${placed.left} left of the player`);
   }
+});
+test('phone: a player panel too wide for the room on its right narrows to fit and stays right of the body, not over the player or up the field', () => {
+  const bounds = { left: 0, top: 0, width: 360, height: 480 };
+  const config = targetHudConfig();
+  const anchor = { left: 6, top: 340, width: 130, height: 120 };
+  const width = targetHudPinnedWidth({ bounds, anchor, width: 223, config });
+  assert.ok(width < 223 && width >= config.positioning.pinnedMinWidthPx, `narrowed to ${width}`);
+  const player = { id: 'p', role: 'player', lane: 0, anchor, width, height: 70 };
+  const enemy = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 236, top: 159, width: 118, height: 161 }, width: 223, height: 70 };
+  const obstacles = [{ id: 'p', left: 6, top: 304, width: 166, height: 176 }, { id: 'e', left: 236, top: 159, width: 118, height: 161 }, { left: 252, top: 135, width: 102, height: 19 }];
+  const placed = placeTargetHudPanels({ bounds, panels: [enemy, player], obstacles }).find(row => row.id === 'p');
+  assert.ok(placed.left >= anchor.left + anchor.width, `panel at ${placed.left} is right of the body edge ${anchor.left + anchor.width}`);
+  assert.ok(placed.left + placed.width <= bounds.width && placed.top >= 0, 'inside the field');
+  assert.ok(placed.top >= anchor.top - 1 && placed.top > 280, `top ${placed.top} stays at the player's overhead, not shifted up over the enemy`);
+});
+test('an enemy panel never overlaps its own sprite (the own-sprite exemption is player-only)', () => {
+  const bounds = { left: 0, top: 0, width: 360, height: 480 };
+  const anchor = { left: 200, top: 180, width: 110, height: 140 };
+  const enemy = { id: 'e', role: 'enemy', lane: 2, anchor, width: 223, height: 100 };
+  const placed = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e', ...anchor }] })[0];
+  assert.ok(!targetHudOverlaps(placed, anchor), `panel ${JSON.stringify(placed)} overlaps its own enemy sprite`);
+});
+test('reviewer repro: a lone enemy panel never sits over its own sprite; player-only obstacles do not move it', () => {
+  const bounds = { left: 0, top: 0, width: 800, height: 600 };
+  const sprite = { left: 40, top: 300, width: 118, height: 161 };
+  const enemy = { id: 'e0', role: 'enemy', lane: 0, anchor: sprite, width: 249, height: 142 };
+  const base = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e0', ...sprite }], enemyCount: 1 })[0];
+  assert.ok(!targetHudOverlaps(base, sprite), 'not over its own sprite');
+  const withMeter = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e0', ...sprite }, { ...base, playerOnly: true }], enemyCount: 1 })[0];
+  assert.deepEqual([withMeter.left, withMeter.top], [base.left, base.top]);
+});
+test('player panel: floor applies to the visible panel; with no room right at the floor it goes above the player', () => {
+  const config = targetHudConfig(), floor = config.positioning.pinnedMinWidthPx;
+  const bounds = { left: 0, top: 0, width: 360, height: 480 };
+  const fit = targetHudPinnedWidth({ bounds, anchor: { left: 6, top: 340, width: 130, height: 120 }, width: 223, config });
+  assert.ok(fit - 25 >= floor, 'visible panel at least the floor');
+  const anchor = { left: 150, top: 340, width: 130, height: 120 };
+  const width = targetHudPinnedWidth({ bounds, anchor, width: 223, config });
+  const placed = placeTargetHudPanels({ bounds, panels: [{ id: 'p', role: 'player', lane: 0, anchor, width, height: 70 }] })[0];
+  assert.ok(placed.top + placed.height <= anchor.top, 'entirely above the player');
+  assert.ok(placed.left >= 0 && placed.left + placed.width <= bounds.width, 'on screen');
 });
 test('a lone enemy gets its card left of it; a crowd gets it below, shifted in from the edge; the player stays right', () => {
   const bounds = { left: 0, top: 0, width: 1000, height: 600 };

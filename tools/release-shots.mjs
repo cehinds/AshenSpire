@@ -172,7 +172,7 @@ const SCREENS = [
   { name: 'shrine', query: '?shot=rest', landmark: '#smith-opt', state: 'rest' },
   // The Smith with its upgrade transaction open — a state since 2026-09-11, so
   // the review sheet stops photographing the title for it.
-  { name: 'smith', query: '?shot=smith', landmark: '.smith-candidate-region', state: 'smith' },
+  { name: 'smith', query: '?shot=smith', landmark: '.upgrade-desk', state: 'smith' },
   // The blacksmith (SPEC §14.4, §14.6 step 6): the atlas smith's own screen,
   // its rail drawn from the offerings the visit laid out.
   { name: 'blacksmith', query: '?shot=blacksmith', landmark: '.blacksmith-workspace .shop-rail [data-shop-category]', state: 'blacksmith' },
@@ -289,7 +289,7 @@ const SCREENS = [
     // whose landmark never resolved is Bjorn's animated-title finding pointed
     // the other way, and the instrument that catches it has to assert the
     // landmark RESOLVED before it is allowed to hash anything.
-    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.smith-preview-card',
+    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.confirmation-modal',
     drive: `(()=>{const smith=document.querySelector('#smith-opt');if(!smith)return 'Smith option missing';smith.click();const card=document.querySelector('.smith-candidate-card');if(!card)return 'Smith armament candidate missing';card.click();return true})()`,
   },
   // THE COMPENDIUM — photographed in the act that creates it (Marina's condition

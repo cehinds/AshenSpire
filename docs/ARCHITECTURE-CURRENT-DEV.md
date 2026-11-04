@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `1725173dff6444f6835748d40f4d58eddfe3c703`
+- Source commit: `de92ed5252a78e59b9882d77e2c1e6b08d22982a`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 266 |
+| Domain models and contracts | `src/model/` | 267 |
 | Headless simulation/services | `src/engine/` | 71 |
 | Screen presenters/hosts | `src/ui/screens/` | 32 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
 | Component models and behavior records | `src/ui/models/` | 127 |
-| DOM components and observer adapters | `src/ui/components/` | 152 |
+| DOM components and observer adapters | `src/ui/components/` | 153 |
 | Code-side content adapters | `src/content/` | 281 |
 | Authoritative JSON/CSV content | `content/source/` | 138 |
 | Transport | `src/net/` | 0 |
-| Tests | `tests/` | 1137 |
-| Architecture/tooling | `tools/` | 981 |
+| Tests | `tests/` | 1142 |
+| Architecture/tooling | `tools/` | 983 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **8383**.
-Extensions: `.bat` 1, `.cjs` 15, `.cmd` 4, `.cs` 5, `.css` 79, `.csv` 59, `.gitattributes` 5, `.gitignore` 6, `.gz` 1, `.html` 96, `.jpg` 67, `.js` 1115, `.json` 3133, `.md` 676, `.mjs` 1783, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 1027, `.ps1` 12, `.py` 91, `.sh` 5, `.sql` 1, `.svg` 3, `.txt` 152, `.webp` 4, `.yml` 38, `(none)` 2.
+Tracked files: **6735**.
+Extensions: `.bat` 1, `.cjs` 1, `.cmd` 4, `.cs` 5, `.css` 68, `.csv` 52, `.gitattributes` 2, `.gitignore` 4, `.gz` 1, `.html` 47, `.jpg` 58, `.js` 1094, `.json` 2643, `.md` 553, `.mjs` 1769, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 203, `.ps1` 12, `.py` 40, `.sh` 5, `.sql` 1, `.txt` 130, `.yml` 38, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

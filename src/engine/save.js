@@ -30,6 +30,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
+import { retiredProfileReason } from '../model/retiredProfile.js';
 import { storedGameProfile, compactRun, expandStoredRun, withLeanCheckpoints } from '../model/runStorage.js';
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
@@ -946,7 +947,14 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (parsedForProfile) pinned = storedGameProfile(parsedForProfile, readSharedProfile);
         if (pinned) {
           validateResolvedGameProfile(pinned);
+          // Core 2 is the only supported game: a retired profile is refused like a mismatch, bytes kept.
+          if (retiredProfileReason(pinned)) throw new Error(`retired game mode: ${retiredProfileReason(pinned)}`);
           if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
+        } else if (parsedForProfile && registries.gameProfile) {
+          // A run with no pinned profile predates game profiles (legacy). Under the Core 2
+          // registries the game always loads with, it is refused and kept, never migrated,
+          // archived or imported (saveTransfer validates imports through this same load).
+          throw new Error(`retired game mode: ${retiredProfileReason(null)}`);
         }
       } catch (error) {
         runStatusRecord = { state: 'profile-mismatch', reason: error.message, ledger: null };

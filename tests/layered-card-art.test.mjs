@@ -13,7 +13,7 @@ import { withModalDom } from './helpers/modal-dom.mjs';
 import { runInNewContext } from 'node:vm';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const math = {};
-runInNewContext(readFileSync(new URL('../docs/design/new-card-art/layer-math.js', import.meta.url), 'utf8'), math);
+runInNewContext(readFileSync(new URL('../tools/card-art/layer-math.js', import.meta.url), 'utf8'), math);
 const art = (camp, maneuver, extra = {}) => simpleCardArt({id:'custom', type:'attack', cardTags:[`camp:${camp}`, `maneuver:${maneuver}`, ...(extra.tags || [])], ...extra});
 
 test('approved PNGs are packaged byte-for-byte and generated JSON agrees with runtime', () => {
@@ -42,7 +42,7 @@ test('one physical model per action, scythe for Sweep and independent sword/shie
   }
 });
 test('melee preserves all ten approved transforms, opacity, shared small sprite and shaft alignment', () => {
-  const source = JSON.parse(readFileSync(new URL('../docs/design/new-card-art/cutout-manifest.json', import.meta.url)));
+  const source = JSON.parse(readFileSync(new URL('../tools/card-art/cutout-manifest.json', import.meta.url)));
   for (let i=0;i<10;i++) {
     const code=`Y0${i}`, approved=source.compositions[code], runtime=catalog.compositions[code];
     for (const layer of runtime.layers) {
