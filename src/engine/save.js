@@ -950,6 +950,11 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           // Core 2 is the only supported game: a retired profile is refused like a mismatch, bytes kept.
           if (retiredProfileReason(pinned)) throw new Error(`retired game mode: ${retiredProfileReason(pinned)}`);
           if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
+        } else if (parsedForProfile && registries.gameProfile) {
+          // A run with no pinned profile predates game profiles (legacy). Under the Core 2
+          // registries the game always loads with, it is refused and kept, never migrated,
+          // archived or imported (saveTransfer validates imports through this same load).
+          throw new Error(`retired game mode: ${retiredProfileReason(null)}`);
         }
       } catch (error) {
         runStatusRecord = { state: 'profile-mismatch', reason: error.message, ledger: null };

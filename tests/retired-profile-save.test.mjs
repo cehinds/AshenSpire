@@ -49,3 +49,8 @@ test('a Core 2 save still loads', () => {
   const saves = createSaveManager(storage);
   assert.ok(saves.loadRun(registries, 1));
 });
+test('a profile-less save loaded under the Core 2 registries is refused and kept (also guards saveTransfer imports)', () => {
+  const { registries, json } = stored('core');
+  const bare = JSON.parse(json); delete bare.gameProfile; delete bare.gameProfileRef;
+  refuseCase(JSON.stringify(bare), registries);
+});
