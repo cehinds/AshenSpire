@@ -60,9 +60,11 @@ test('the dead inspectReady timer is gone and nothing reads it', () => {
   assert.match(tools, /\.combatant-info\[data-placed="true"\]/);
 });
 
-test('A: no card surface styles or builds an (i) badge any more', () => {
-  assert.doesNotMatch(kit, /card-info-button|hand-info-portal/);
-  assert.doesNotMatch(combatLayers, /card-info-button|hand-info-portal/);
+test('A: a hand card Inspect is shown once, as the portal, never in place on the card', () => {
+  assert.match(kit, /\.hand \.card-inspection-target > \.card-info-button \{ visibility:hidden; pointer-events:none; \}/);
+  // The portal (made only for the selected card) is the one visible (i); the in-card copy never paints.
+  assert.match(kit, /\.hand-overlay > \.hand-info-portal\s*\{[^}]*visibility: visible/);
+  assert.match(read('../src/ui/components/handInspectionOverlay.js'), /querySelector\('\.card\.inspection-selected'\)/);
 });
 
 test('C: the stance chip and statuses are not in the rest-state hide list', () => {
