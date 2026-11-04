@@ -71,7 +71,6 @@ test('allowlist: editable sources only; traversal, generated files, .git and oth
   assert.deepEqual(Object.keys(await ok.json()).sort(), ['hash', 'kind', 'path', 'text']);
   assert.equal(allowedKind('content/config/ui/tokens.json'), 'json');
   assert.equal(allowedKind('games/ashenspire/game.json'), 'json');
-  assert.equal(allowedKind('games/ashenspire/presets/current.json'), 'json');
   assert.equal(allowedKind('games/ashenspire/presets/core.json'), 'json');
   assert.equal(allowedKind('games/ashenspire/bundles/core/bundle.json'), 'json');
   assert.equal(allowedKind('games/ashenspire/packs/core/pack.json'), 'json', 'pack JSON is an authored input to the game-profile compiler');

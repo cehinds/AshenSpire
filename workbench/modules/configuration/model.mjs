@@ -10,7 +10,7 @@ export const GAME_DIR = 'games/ashenspire';
  * (game.lock.json and everything else is left out). `resolves` is true for the author profiles the game-profile
  * resolver validates (game.json and presets); a bundle gets JSON validation only.
  */
-export const COMPILED_PRESETS = ['core', 'current']; // tools/game-config.mjs compileGameProfiles() reads exactly these
+export const COMPILED_PRESETS = ['core']; // tools/game-config.mjs compileGameProfiles() reads exactly these
 
 export function profileFiles(paths = []) {
   const out = [];
