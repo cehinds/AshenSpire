@@ -10,7 +10,7 @@ const out = resolve(process.env.HUD_QA_OUT || 'outputs/player-hud');
 mkdirSync(out, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with deterministic remaining protection and Evasion stacks, plus a separate legacy Ward provenance case. Not a recorded playthrough.', views: [], failures: [] };
+const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with deterministic remaining protection and Evasion stacks. Not a recorded playthrough.', views: [], failures: [] };
 const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tablet',820,1180],['small',320,740]];
 // Expected values are independent fixture facts, not the UI protection model.
 // Pressure deliberately differs from remaining Poise so the old bar cannot pass.
@@ -18,9 +18,7 @@ const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
     // Owner 2026-11-01: order Block, Poise, Evade, Ward, Precision; three slots, so the first two show and `+3` lists the rest.
     expected:[['ac',null],['poise','4'],['overflow','+3'],['shield','12']], hidden:['Evade 2','Arcane Ward 5','Precision 3'], ac:true },
-  // SPEC 4.1a (2026-11-01): the numeric barrier pool is gone (Barrier is a stacked status), so the legacy Ward total is persistent 5 + wardBlock 3.
-  { profile:'current', fixCore:false, views:[['legacy-desktop',1440,900]], wardBlock:3, barrier:0,
-    expected:[['shield','9'],['poise','4'],['overflow','+3']], hidden:['Evade 2','Arcane Ward 8','Precision 3'], ac:false },
+  // The legacy (`current`) Ward case was dropped with the retired profile (owner, 2026-11-04: Core 2 only).
 ];
 try {
   for (const fixture of fixtures) for (const [name, width, height] of fixture.views) {

@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-04
 
+- **Retired game modes refuse to resume** ([#2527](https://github.com/cehinds/AshenSpire/pull/2527), `0.7.3.98`). a run saved in the old Current or Core 1 mode now shows a clear message instead of loading, and is kept untouched; new games and bad links always use Core 2.
 - **Old design and preview docs removed** ([#2526](https://github.com/cehinds/AshenSpire/pull/2526), `0.7.3.98`). about 1.1 GB of old screenshots and design notes are gone from the repo; the cleanup plan for a Core-only, Unity-ready codebase is written down.
 - **Hand (i) on the selected card** ([#2523](https://github.com/cehinds/AshenSpire/pull/2523), `0.7.3.96`). In combat the (i) shows only on the selected card and opens its details; a touch long-press no longer inspects by accident.
 - **One upgrade modal** ([#2524](https://github.com/cehinds/AshenSpire/pull/2524), `0.7.3.94`). Tapping an item or card opens one upgrade modal (before and after cards, updated stats under them) where you confirm; compact header and no extra Back button.

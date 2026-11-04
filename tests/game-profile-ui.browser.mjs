@@ -38,7 +38,7 @@ async function sourcePage(query, viewport = viewports[0]) {
 async function captureSourceScenes() {
   // Existing slots keep the same five title actions and Continue enters the
   // saved run for both presets. This guards the original profile paths too.
-  for (const profile of ['core', 'current']) {
+  for (const profile of ['core']) {
     const savedTitle = await sourcePage(`shot=title&gameProfile=${profile}`);
     await savedTitle.waitForSelector('.title-menu');
     assert.deepEqual(
@@ -120,13 +120,13 @@ async function captureSourceScenes() {
   await imported.locator('#settings').click();
   await imported.getByLabel('General section', { exact: true }).selectOption('Game rules');
   const importedSelector = imported.getByLabel('New game configuration');
-  const routeOverride = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 5, restFloors: [2, 4] } } };
+  const routeOverride = { formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes: { prebossNodes: 5, restFloors: [3, 5], restsPerAct: 2 } } };
   await imported.getByLabel('Import game configuration JSON').setInputFiles({
     name: 'custom.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(routeOverride)),
   });
   await imported.waitForTimeout(100);
   assert.equal(await importedSelector.inputValue(), 'imported');
-  await importedSelector.selectOption('current');
+  await importedSelector.selectOption('core');
   await importedSelector.selectOption('imported');
   await imported.getByRole('button', { name: 'Done and Save', exact: true }).click();
 if (await imported.getByRole('button', { name: 'Not now', exact: true }).isVisible()) await imported.getByRole('button', { name: 'Not now', exact: true }).click();
@@ -189,7 +189,7 @@ if (await imported.getByRole('button', { name: 'Not now', exact: true }).isVisib
   await combat.screenshot({ path: resolve(output, 'core-combat-desktop.png') });
   await combat.close();
 
-  const fallback = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { cards: false, art: false, routes: false } };
+  const fallback = { formatVersion: 1, core: 'ashen.core@2.0.0', modules: { cards: false, art: false, routes: false } };
   const fallbackPage = await sourcePage(`shot=combat&wb.gameProfile=${encodeURIComponent(JSON.stringify(fallback))}`);
   await fallbackPage.waitForSelector('.foundation-attack');
   assert.equal(await fallbackPage.locator('.foundation-attack').count(), 1);

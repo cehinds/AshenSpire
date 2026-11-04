@@ -828,6 +828,7 @@ save.newer.message,,Slot {slot} was saved by a newer build of Ashen Spire. It ha
 save.newer.close,,Keep it and close,,
 save.refused.title,,This save could not be loaded,,
 save.refused.message,,"Slot {slot} could not be opened, so your current climb is still in hand and nothing in it changed.",,
+save.retired.message,,This run was made in a game mode that has been retired and can't be continued.,,
 save.refused.close,,Keep playing,,
 # W2b / W2c / W2d: the save reviews name the save and say exactly what happens to it.
 save.review.delete,,Delete slot {slot}?,,
