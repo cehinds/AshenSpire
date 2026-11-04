@@ -11,7 +11,7 @@ if (out) mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 const errors = [];
 try {
-  for (const [profile, width, height] of [['core', 390, 844], ['core', 1280, 800], ['current', 390, 844], ['current', 1280, 800]]) {
+  for (const [profile, width, height] of [['core', 390, 844], ['core', 1280, 800]]) {
     const page = await browser.newPage({ viewport: { width, height }, hasTouch: width < 600 });
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}index.html?shot=combat&gameProfile=${profile}`, { waitUntil: 'networkidle' });

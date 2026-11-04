@@ -315,7 +315,6 @@ test('a content/config change runs the config compiler before the reload; a fail
   assert.deepEqual(buildsFor(['content/source/a.csv'], root), ['tools/content-build.mjs']);
   await fs.writeFile(path.join(root, 'tools/game-config.mjs'), '');
   assert.deepEqual(buildsFor(['games/ashenspire/game.json'], root), ['tools/game-config.mjs build']);
-  assert.deepEqual(buildsFor(['games/ashenspire/presets/current.json'], root), ['tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['games/ashenspire/presets/core.json'], root), ['tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['games/ashenspire/bundles/core/bundle.json'], root), ['tools/game-config.mjs build']);
   assert.deepEqual(buildsFor(['games/ashenspire/packs/core/pack.json'], root), ['tools/game-config.mjs build']);

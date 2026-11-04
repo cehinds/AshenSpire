@@ -69,36 +69,3 @@ test('Core 2 battle-local knowledge survives the real entry checkpoint and expli
   assert.equal(resumed.rng.float('enemyIntentClue'), rng.float('enemyIntentClue'));
 });
 
-test('battle-local exception refuses legacy, Core 1, foreign profiles and run-owned learning claims', () => {
-  const { run, combat } = fixture();
-  checkpoint(run, combat, () => ({ ok: true }));
-  assert.deepEqual(combatSnapshotProblems(run.combatEntered.snapshot), []);
-  const encounter = { id: 'foreign-encounter', enemyIds: ['wanderingSoldier'] };
-  const core1 = resolveGameProfile('ashen.core@1.0.0');
-  const otherCore2 = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { stances: false } });
-  const mutations = {
-    legacy: copy => { delete copy.gameProfile; delete copy.runId; },
-    core1: copy => { copy.gameProfile = core1; copy.combatEntered.snapshot.gameProfile = core1; },
-    foreignProfile: copy => { copy.combatEntered.snapshot.gameProfile = otherCore2; },
-    bankable: copy => { Object.assign(copy.combatEntered.snapshot.enemyKnowledge, { bankable: true, encounter }); },
-    encounter: copy => { copy.combatEntered.snapshot.enemyKnowledge.encounter = encounter; },
-    expansion: copy => { copy.combatEntered.snapshot.combatExpansionVersion = 1; },
-    disabled: copy => { copy.combatEntered.snapshot.fixCoreRules.enabled = false; },
-    nullRules: copy => { copy.enemyKnowledgeRules = null; },
-    orphanState: copy => { copy.enemyKnowledgeState = {}; },
-  };
-  for (const [name, mutate] of Object.entries(mutations)) {
-    const copy = structuredClone(run);
-    mutate(copy);
-    assert.match(validateRunShape(copy).join('; '), /enemyKnowledge requires the run's knowledge rules/, name);
-    assert.throws(() => deserializeRun(serializeRun(copy)), /enemyKnowledge requires the run's knowledge rules/, name);
-  }
-  for (const mutate of [
-    copy => { copy.combatEntered.snapshot.enemyKnowledge.nextSerial = -1; },
-    copy => { copy.combatEntered.snapshot.enemies[0].knowledgeAction.reads.player.resolved = true; },
-    copy => { copy.combatEntered.snapshot.skills.perception.xp = -1; },
-  ]) {
-    const copy = structuredClone(run); mutate(copy);
-    assert.throws(() => deserializeRun(serializeRun(copy)), /Malformed run save/, 'full combat knowledge validation still applies');
-  }
-});

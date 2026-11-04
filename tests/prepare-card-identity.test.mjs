@@ -17,7 +17,7 @@ const world = id => {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   return { profile, registries };
 };
-for (const profileId of ['core', 'current']) {
+for (const profileId of ['core']) {
   test(`${profileId}: Draw remains a one-SP zero-MP Skill with its existing Draw Two effect and Prepare stance`, () => {
     const { registries } = world(profileId), card = resolveCard(registries, { cardId: 'base.draw' });
     assert.equal(card.type, 'skill');
@@ -46,17 +46,6 @@ for (const profileId of ['core', 'current']) {
     }
   });
 }
-test('spell Counter and defensive payloads remain authored while their public stance is Prepare', () => {
-  const { registries } = world('current');
-  for (const id of ['barrageCounter', 'frostCounter', 'crystalBarrier']) {
-    const card = resolveCard(registries, { cardId: id }), before = structuredClone(card);
-    assert.equal(cardClassification(card).cardCategory, 'spell');
-    assert.equal(stanceOf(card).maneuver, 'casting');
-    assert.equal(stanceForCard(card), 'casting');
-    assert.equal(cardActionFor(card, 'starseer'), 'spell');
-    assert.deepEqual(card, before, 'presentation/stance resolution does not rewrite counter or guard effects');
-  }
-});
 test('each core character starts with its owner-ruled ten-card deck (2026-10-19)', () => {
   const { registries, profile } = world('core');
   const expected = {

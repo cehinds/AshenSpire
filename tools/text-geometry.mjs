@@ -221,10 +221,9 @@ async function main() {
     };
 
     const pageUrl = (params) => {
-      // This artwork geometry contract exercises Current's real class sprites;
-      // configured Core intentionally renders foundation stand-ins instead.
+      // This artwork geometry contract runs against Core 2, the only game; Core 1's real class sprites are retired.
       const url = new URL(base);
-      url.searchParams.set('gameProfile', 'current');
+      url.searchParams.set('gameProfile', 'core');
       for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
       return url.href;
     };

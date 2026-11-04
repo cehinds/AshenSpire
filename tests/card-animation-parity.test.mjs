@@ -63,7 +63,7 @@ test('Counter preparation is held in combat; preview demonstrates its conditiona
 });
 
 test('core and current keep class-default sprites when the mechanical loadout changes', () => {
-  for (const profileId of ['core', 'current']) {
+  for (const profileId of ['core']) {
     const profile = resolveGameProfile(profileId);
     const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
     for (const classId of classes) {

