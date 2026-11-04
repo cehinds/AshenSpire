@@ -1,5 +1,7 @@
 # tools/
 
+Authoring tools (Pose Studio, Workbench, editor, UI Studio) live on the `tools-archive` branch.
+
 Index of the tools, written 2026-10-17 by hand from each tool's own header comment (no generator yet; update the row when a tool is added) and from
 `git grep -l -F "<name>.mjs" -- ":!tools/<name>.mjs" ":!tools/README.md"` over tracked files (this index names every tool, so it is excluded) (substring match, so a short name can
 pick up a longer one). Nothing is deleted; tools nothing references live in `tools/attic/` (owner, 2026-10-17; the Attic section below). Common ones run as `npm run <script>` (package.json, DEVELOPER.md).
@@ -18,7 +20,7 @@ prefix; its callers are the union.
 | `card-solid-bb/` (2 files) | Implementation notes for 'feature/card-solid-bb'. The screenshots and 'report.json' | tools card-layers/index.html; other workbench/tools.json |
 | `combat-audit/` (16 files) | This audit found and fixed the primary Quit menu action and two measured initialization costs: the Settings card… | wf combat-audit-hosted-preview; tests combat-audit-card-condition-contracts, combat-audit-card-effect-contracts, combat-audit-cards +6; docs docs/handoffs/full-combat-audit.md, docs/preview/full-combat-audit/README.md, docs/preview/full-combat-audit/accepted-stance-followup.md +2 |
 | `hud-component-studio/` (1295 files) | From this directory, run 'python -m http.server 8360 --bind 127.0.0.1' and open http://localhost:8360/. On Windows,… | docs CREDITS.md, docs/ai/CHARACTER-CREATION-HANDOFF.md, docs/design/character-creation/README.md +1; other docs/component-catalog.html, workbench/tools.json |
-| `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | wf workbench; tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; docs docs/workbench/CONSOLIDATION.md; other .gitignore, editor/server.mjs +12 |
+| `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; docs docs/workbench/CONSOLIDATION.md; other .gitignore, editor/server.mjs +12 |
 | `results/` (82 files) | (no header comment) | tools buildstamp-shot, e11-reward-correction, hud-quick-compact +3; other src/content/statuses.js |
 | `score/` (4 files) | tools/score/alt — the "alt" cut of a score (owner, 2026-09-26: "alt | tests music-score; docs CREDITS.md, DEVELOPER.md, SPEC.md +5; other music/score/_motifs.mjs, music/score/boss.mjs +13 |
 | `about-changelog.mjs` | Focused contract for #189. CHANGELOG.md is authored; the generated browser | wf alternative-sync, build-stamp, ci +2; tests build-stamp, check-order-pending; tools build-stamp, plantsites-baseline.json, pr-restamp +1; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, docs/FINISH.md +11; other src/content/changelog.generated.js, src/content/changelog.js +1 |
@@ -28,7 +30,7 @@ prefix; its callers are the union.
 | `ai-disclosure.mjs` | ai-disclosure — the store surface of the AI-use acknowledgement and | docs SPEC.md, docs/SPEC-RECONCILE.md, docs/spec-audit/SPEC-AUDIT.md; other src/content/aiDisclosure.js |
 | `alternative-art-qa.mjs` | Production combat, including actual input; output belongs outside tracked source. | docs DEVELOPER.md |
 | `alternative-branches.mjs` | Shared naming rules for optional alternative development/test pairs. | wf dev-preview, receipts; tests alternative-branches, settings-revamp; tools pages-site, sync-alternatives |
-| `alternative-selected-stances-export.mjs`, `alternative-selected-stances-qa.mjs`, `alternative-stances-inventory.mjs`, `alternative-stances-serve.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, docs/workbench/CONSOLIDATION.md, pose-studio/stances/README.md +1 |
+| `alternative-selected-stances-export.mjs`, `alternative-selected-stances-qa.mjs`, `alternative-stances-inventory.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, docs/workbench/CONSOLIDATION.md, pose-studio/stances/README.md +1 |
 | `armament-smithing-ui.mjs` | Issue #211 — real-Chromium Shrine Smith UI proof at the two acceptance | other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/smithUpgradeModal.js +1 |
 | `armoury-arrival-figure.mjs` | Armoury tab reachability and visible character/card geometry in a real browser. | wf ci; tools gatelist, watched-probes.json, watched; other docs/architecture-handoff/wireframe-gallery.html, src/ui/screens/equipment.js |
 | `armoury-picked-up.mjs` | armoury-picked-up — the Armoury tells the truth about what you are | tools plantsites-baseline.json |
@@ -67,7 +69,6 @@ prefix; its callers are the union.
 | `card-drag-targeting.mjs` | card-drag-targeting — browser acceptance for #150 + #198 + #311 | tools hybrid-input-parity, plantsites-baseline.json |
 | `card-effect-art-build.mjs` | Normalize the authored six-frame refresh; preserve one scale and anchor per sheet. | tools combat-effects-ship; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/combatEffectArt.js |
 | `card-feedback.mjs` | Real browser card feedback gate. Debug fixtures control only initial hand, | docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
-| `card-inspection-qa.mjs` | Production UI interaction regression checks through Playwright. | docs docs/preview/shared-card-inspection/README.md |
 | `card-layer-editor-qa.mjs` | Compatibility entry point. The save QA uses an isolated copy of the game JSON. | tools card-layers/README.md |
 | `card-one-shape.mjs` | card-one-shape — THE PLAYING CARD HAS ONE SHAPE, MEASURED ON REAL | tests card-size-tuning; docs docs/COMPONENT-CATALOG.md, docs/COMPONENT-MODEL-ARCHITECTURE.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv |
 | `card-value-index-oracle.mjs` | Record the independent pre-index implementation against today's content. | tests card-value-tag-index |
@@ -76,7 +77,7 @@ prefix; its callers are the union.
 | `characters-convert.mjs` | Players and enemies in one shape (owner 2026-10-17): games/ashenspire/packs/core/characters.json. | tools enemy-decks-convert; docs engine/modules/characters/guide.md |
 | `check-feature-pages.mjs` | Verify public delivery only. Never download or execute a feature game's HTML. | wf pages-builds; tests art-migrate-trigger, check-feature-pages |
 | `class-loadouts.mjs` | Observed-red contract: equipment-bound core roles plus one class signature. | tests engine.test.js; tools cross-class-equipment, plantsites-baseline.json |
-| `class-smash-aura-qa.mjs`, `class-smash-gameplay-qa.mjs` | (no header comment) | docs pose-studio/stances/class-smash/qa/README.md |
+| `class-smash-gameplay-qa.mjs` | (no header comment) | docs pose-studio/stances/class-smash/qa/README.md |
 | `click-impact-card.mjs` | (no header comment) | tests click-impact-card; tools click-impact-probe, combat-action-row, motion-probe +1 |
 | `click-impact-probe.mjs` | click-impact-probe — how long from the click that plays a card | wf quick-start; tests beat-order, click-impact; tools map-tap-latency; docs DEVELOPER.md, docs/FINISH.md, docs/preview/combat-targeting-1115/README.md +2; other docs/preview/combat-targeting-1127/results.json, src/ui/fx.js |
 | `click-impact-rounds.mjs` | tools/click-impact-rounds.mjs — the click-impact probe's judgement, apart from the drive | tests click-impact-rounds; tools click-impact-probe |
@@ -117,7 +118,7 @@ prefix; its callers are the union.
 | `e11-reward-correction.mjs` | E11/#256 exact-head browser gate: the real reward renderer, shared hold | other docs/architecture-handoff/pre-existing-changes.txt |
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |
 | `enemy-level-content.mjs` | Focused inert-content gate for issue #238. | tests content-validators; docs docs/FINISH.md |
-| `engine-export.mjs` | engine-export — the game's data as engine-ready JSON. | wf workbench; tests build-lock, engine-export; docs docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/IMPLEMENTATION.md, docs/ai/json-game-modules/PSEUDOCODE.md +3; other .gitignore, docs/engine-export/unity/AshenSpireExportImporter.cs +4 |
+| `engine-export.mjs` | engine-export — the game's data as engine-ready JSON. | tests build-lock, engine-export; docs docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/IMPLEMENTATION.md, docs/ai/json-game-modules/PSEUDOCODE.md +3; other .gitignore, docs/engine-export/unity/AshenSpireExportImporter.cs +4 |
 | `environment-art-build.mjs` | Encode approved original boards and complete maps. Runtime SVG viewBoxes | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md |
 | `equipment-animation-browser.mjs` | (no header comment) | docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
 | `equipment-surface-receipts.mjs` | Observed-red contract for the one presentation receipt shared by character | tools plantsites-baseline.json, swap-cost-relic-surface; other src/model/equipmentPresentation.js, src/ui/screens/customize.js |
@@ -215,7 +216,6 @@ prefix; its callers are the union.
 | `pose-cutout.mjs` | pose-cutout — cut generated full-body combat poses out of their | tools concept-cutout; docs CREDITS.md, docs/ART-REPO-PLAN.md, docs/art-evidence/2026-09-03/poses/README.md +3; other asset-data/sprites/class-sprites.manifest.json |
 | `pose-ship.mjs` | pose-ship — publish a subset of the pose sprites into assets/. | tests run-node; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other asset-data/poses/pose-sprites.manifest.json, src/content/poseSprites.js |
 | `pose-sprites.mjs` | pose-sprites — turn a folder of pose renders into shipped-shape sprites. | tools painted-poses, pose-ship; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md |
-| `pose-studio-capture.mjs` | (no header comment) | wf dev-preview; other pose-studio/tests/server-source-roots.test.mjs |
 | `pr-restamp.mjs` | pr-restamp — KEEPS AN OPEN PULL REQUEST MERGEABLE AFTER EACH dev BUILD STAMP. | wf pr-restamp; tests pr-restamp; docs CONTRIBUTING.md, DEVELOPER.md |
 | `profile-durability-probe.mjs` | profile-loss-e444d77 — Sten, 2026-08-06. | tests engine.test.js, run-node; tools buildversion, plantsites-baseline.json, saveroundtrip; docs docs/FINISH.md; other src/engine/save.js |
 | `profile-first-run.mjs` | profile-first-run — Viki, 2026-08-08 (M7). | tests engine.test.js; tools browser |
@@ -249,11 +249,7 @@ prefix; its callers are the union.
 | `screenshot.mjs` | screenshot — capture real screenshots of the game into docs/preview/. | wf ci; tests shot-match, shot-ready, write-atomic; tools armoury-picked-up, browser, lib/shot-match +4; docs DEVELOPER.md, SPEC.md, docs/ART-REPO-PLAN.md +4; other src/main.js, workbench/core/jobs.mjs +5 |
 | `scroll-cue-bleed.mjs` | scroll-cue-bleed — issue #29: painted bleed and visible scroll cues. | tools combat-action-row, plantsites-baseline.json |
 | `seedrefuses.mjs` | seedrefuses — the seed field keeps the promise printed on it. | tests engine.test.js; other src/ui/components/mapboard.js |
-| `selected-combat-sequence-export.mjs` | Production export from approved review rasters. No image generation or body refitting. | other pose-studio/stances/update-stances/sequence-production-provenance.json |
-| `selected-smash-registration.mjs` | Register the selected SM03 production exports; generation remains on the art side. | tests selected-smash-registration; tools selected-combat-sequence-export, selected-sweep-registration |
-| `selected-sweep-registration.mjs` | Register the selected SW09 production exports; generation remains on the art side. | tests selected-sweep-registration; tools selected-combat-sequence-export |
 | `selected-weapon-profile-export.mjs` | (no header comment) | docs CREDITS.md, docs/design/update-stances/delivery-status.md; other docs/design/update-stances/production-matrix.json |
-| `serve-preview.mjs` | Copied to the preview archive root; serves only that folder on loopback. | wf dev-preview; docs docs/preview/starting-equipment/README.md; other src/ui/buildChannel.js |
 | `serve.mjs` | serve — a zero-dependency static file server for local play. | wf ci, dev-preview +4; tests art-source, battlefield-layout.browser, final-wave-ui.browser +9; tools about-changelog, actends, actionreach +162; docs DEVELOPER.md, SPEC.md, dist/README.md +13; other docs/architecture-handoff/pre-existing-changes.txt, docs/preview/display-appearance-0.7.1.1163/capture.mjs +8 |
 | `settings-defaults.mjs` | settings-defaults — promote a settings profile to the build's defaults. | docs docs/SETTINGS-REVAMP.md; other src/content/settingsDefaults.js, src/main.js +1 |
 | `settingsreach.mjs` | settingsreach — can a tired human find the settings section they | tools artifact-provenance; other src/ui/screens/settings.js |
@@ -309,12 +305,10 @@ prefix; its callers are the union.
 | `watched-selftest.mjs` | watched-selftest — the known-bad corpus for watched. | tools watched |
 | `watched.mjs` | watched — did anyone OPEN THE BUILD and SEE the control? | tests run-node; tools watched-probes.json, watched-selftest |
 | `weapon-card-packages.mjs` | (no header comment) | tests closedsets, run-node; tools closedsets; other src/engine/combatSnapshot.js, src/engine/save.js |
-| `weapon-card-preview.mjs` | Real Chromium coverage of every canonical armament through the production renderer. | tests card-door-stack; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md, docs/FINISH.md +1 |
 | `webaudio-stub.mjs` | webaudio-stub — the ONE minimal WebAudio stub the headless audio | tests music-folder-race, music-region, music-tiles-index; tools music-bed-gain-probe, music-silence-probe, music-toggle-parity +2; other src/ui/components/card.js |
 | `weightclass-census.mjs` | weightclass-census — the Weight Class A/B evidence instrument. | docs docs/framework-migration-checklist.md; other content/framework/mechanics.json, src/framework/data/mechanics.js |
-| `workbench-static.mjs` | workbench-static — builds the Workbench as a static site for GitHub Pages. | wf pages-builds; tests workbench-static; tools linkcheck; docs workbench/README.md |
 | `workflow-lint.mjs` | workflow-lint — THE DOOR CANNOT SEE THE WIRING ABOVE ITSELF. | wf ci; tests fetch-art; tools gatelist, verdict; docs DEVELOPER.md, docs/RELEASE-CHECKLIST.md |
-| `world-atlas-data.mjs`, `world-atlas-qa.mjs` | (no header comment) | tests world-atlas; tools content-build; docs docs/WORLD-ATLAS.md, docs/workbench/CONSOLIDATION.md, docs/COMPONENT-CATALOG.md +1 |
+| `world-atlas-data.mjs` | (no header comment) | tests world-atlas; tools content-build; docs docs/WORLD-ATLAS.md, docs/workbench/CONSOLIDATION.md, docs/COMPONENT-CATALOG.md +1 |
 | `zip.mjs` | zip — a deterministic zip writer and a small reader, no dependencies. | tests fetch-art, offline-zip; tools art-manifest, buildversion, fetch-art +1; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/offline-play.md; other src/model/offlineDownload.js, src/model/zipStream.js |
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
@@ -329,14 +323,12 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `arcane-exposure-ui.mjs` | Observed-red UI contract. Both combat surfaces consume host-owned snapshots; |
 | `arcane-exposure-visual.mjs` | Arcane Exposure visual truth: source/dist x solo x 320/390. |
 | `armament-equip-flow-qa.mjs` | Real Chromium pointer/touch checks of the production Armoury. |
-| `armament-kits-qa.mjs` | (no header comment) |
 | `armoury-inventory-disclosure.mjs` | Focused door for Constantine's 2026-08-23 Armoury disclosure correction. |
 | `art-runtime-check.mjs` | Capture real event, speaker, and combat-card screens after their art loads. |
 | `attribute-phase1-boundary.mjs` | Attribute integration boundary after the approved derived/equipment slices. |
 | `bjclauses.mjs` | bjclauses — re-derive Constantine's eight D17 map clauses against |
 | `bow-animation-config.mjs` | Rebuild the bow presentation bindings from the authored unarmed outfit sets. |
 | `card-effect-layers-check.mjs` | (no header comment) |
-| `card-effect-art-check.mjs` | Real browser evidence for the refreshed registry, gallery and card activations. |
 | `card-flick-pointer-qa.mjs` | Native browser pointer streams: no supplied timestamps or DOM-dispatched events. |
 | `card-hold-targeting-qa.mjs` | Rendered regression for issue #1171: hold a targeted card, then choose the |
 | `card-removal-flick-qa.mjs` | Browser plugin unavailable: production screens exercised with Playwright. |
@@ -366,7 +358,6 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `mobile-card-check.mjs` | Touch regression checks for selection, confirmation, cancellation and detail text. |
 | `mobile-readability-qa.mjs` | (no header comment) |
 | `modal-keyboard-check.mjs` | Real keyboard regression checks for shared modal tabs and nested focus. |
-| `painted-items-check.mjs` | Run against serve; Playwright must be available to Node. |
 | `painted-items-ship.mjs` | Rebuild inventory-size WebP assets from the preserved painted PNG masters. |
 | `painted-outfits-check.mjs` | Browser integration check. Start serve on port 4277 first. |
 | `pairsweep.mjs` | pairsweep — the settings door, walked: named high-risk pairs of |

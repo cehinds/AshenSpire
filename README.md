@@ -55,7 +55,7 @@ The chooser identifies the selected game build; its installer can be newer than 
 
 **Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev`, named with ASCII letters, digits, `.`, `_`, `-` and `/` only, has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
 
-[All builds](https://cehinds.github.io/AshenSpire/) · [Workbench](https://cehinds.github.io/AshenSpire/workbench/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
+[All builds](https://cehinds.github.io/AshenSpire/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 **How fresh:** the site is rebuilt from git history and republished after each `dev` build stamp
 (about every 10 to 40 minutes while work lands) and after each push to `release`. A push to `test` or
 `main` does not publish by itself; its newest build appears at the next publication, and the
