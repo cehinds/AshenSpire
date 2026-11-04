@@ -51,6 +51,7 @@ function boot(options = {}) {
       if (!profile?.id) throw new Error('unknown fixture profile');
       return Object.freeze(profile);
     },
+    retiredProfileReason: () => null, // the real predicate has its own test (retired-profile.test.mjs)
     isConfiguredRun: subject => subject?.foundation?.mode === 'configured',
     applyGameProfileToContent(bundle, profile) {
       assert.equal(bundle, raw);
