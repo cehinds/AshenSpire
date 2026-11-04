@@ -33,10 +33,7 @@ export function isEvidenceJson(path) {
 
 // Exact paths only, each with the reader that needs it in the tree. An entry
 // whose file is no longer tracked fails, so the list cannot rot.
-export const ALLOWED = new Map([
-  ['docs/preview/hybrid-input-parity-manifest.json', 'read by tools/hybrid-input-parity.mjs (--verify-manifests)'],
-  ['docs/preview/hybrid-input-parity-root-manifest.json', 'read by tools/hybrid-input-parity.mjs (--verify-manifests)'],
-]);
+export const ALLOWED = new Map([]);
 
 export function oversized(entries, limit = LIMIT_BYTES, allowed = ALLOWED) {
   return entries.filter(({ path, size }) => isEvidenceJson(path) && size > limit && !allowed.has(path));
