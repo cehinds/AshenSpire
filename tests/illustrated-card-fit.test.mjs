@@ -57,7 +57,7 @@ test('unfit inspection rules keep full text, reserve no cue and report incomplet
 
 test('a later fit of shorter copy clears its previous cap and geometric overflow', () => withKitDom(() => {
   invalidateLayoutMetrics();
-  const f = fixture({ chars: 80 });
+  const f = fixture({ chars: 400 });
   f.fit();
   assert.equal(f.text.dataset.rulesComplete, 'false');
   f.state.width = 180;
@@ -87,16 +87,16 @@ test('long rules shrink inside a fixed bay, preserving parchment and artwork geo
   const geometry = { ...f.layer.style };
   f.fit();
   assert.ok(parseFloat(f.text.style.fontSize) < 15, 'preferred font does not fit');
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'readable floor');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6, 'configured minimum');
   assert.deepEqual({ top: f.layer.style.top, height: f.layer.style.height }, geometry);
   assert.equal(f.face.dataset.rulesExpanded, 'false');
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
-  f.state.chars = 300;
+  f.state.chars = 900;
   f.fit();
   assert.equal(f.face.dataset.rulesOverflow, 'true', 'unfit copy offers inspection without growing');
   assert.equal(f.layer.clientHeight, 45);
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6);
   f.state.chars = 3;
   f.fit();
   assert.equal(parseFloat(f.text.style.fontSize), 15, 'short copy restores preferred font');
@@ -109,7 +109,7 @@ test('two live Counter rows shrink below design minimum within the native hand b
   const f = fixture({ chars: 20, width: 180, top: 80, height: 28, full: false, printedRows: 2 });
   f.fit();
   assert.ok(parseFloat(f.text.style.fontSize) < 15);
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6);
   assert.ok(Math.abs(f.layer.clientHeight - 28) < .001);
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.equal(f.face.dataset.rulesOverflow, 'false');
@@ -125,13 +125,26 @@ test('a one-liner that needs shrinking to fit shows its rules with no Inspect cu
   assert.equal(f.text.dataset.rulesComplete, 'true');
 }));
 
-test('rules that still wrap to three rendered lines at the 11px floor keep their words and report overflow', () => withKitDom(() => {
+test('rules that need three lines at 11px shrink until they fit the glance, with every word kept', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 60, width: 180, top: 80, height: 45, full: false });
   f.fit();
-  assert.equal(parseFloat(f.text.style.fontSize), 11, 'shrunk to the floor first');
-  assert.ok(f.text.scrollHeight <= f.layer.clientHeight, 'the three lines would fit the bay');
+  const font = parseFloat(f.text.style.fontSize);
+  assert.ok(font < 11 && font >= 6, 'shrunk past 11px, above the configured minimum');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1, 'the words sit inside the parchment');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+}));
+
+test('rules that cannot fit even at the minimum tighten the line height, then clip with an ellipsis', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 5000, width: 180, top: 80, height: 45, full: false });
+  f.fit();
+  assert.equal(parseFloat(f.text.style.fontSize) >= 6, true);
+  assert.equal(parseFloat(f.text.style.lineHeight) < 1.05, true, 'line height was tightened');
+  assert.equal(f.text.style.textOverflow, 'ellipsis');
+  assert.equal(f.text.style.overflow, 'hidden');
   assert.equal(f.face.dataset.rulesOverflow, 'true');
+  assert.equal(f.text.dataset.rulesComplete, 'false');
 }));
 
 test('two face lines that each render on one line show no cue', () => withKitDom(() => {
