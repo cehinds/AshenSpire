@@ -158,3 +158,32 @@ test('upgradeFacesNode draws the before face then the after face; upgradeConfirm
   assert.deepEqual(nodes.map(node => node.className.split(' ')[0]), ['cost', 'recovery', 'card-upgrade-faces', 'confirmation-change-list']);
   assert.deepEqual(upgradeConfirmNodes({ cost: mark('cost') }).map(node => node.className), ['cost'], 'absent parts draw nothing');
 }));
+
+test('a host\'s cinder charge shows in the modal for the item selected NOW, after cancel and another pick', () => withKitDom(dom => {
+  const run = fresh();
+  const host = dom.document.createElement('main'); dom.document.body.append(host);
+  const prices = {};
+  const build = ref => {
+    const base = smithSelectionModel(reg, smithingPlan(reg, run), ref, { autoSelect: false });
+    if (!base.properties.selected) return base;
+    const cost = prices[ref] ?? 10;
+    return { ...base, properties: { ...base.properties, cinderCost: cost, cinderHave: 25, canConfirm: base.properties.canConfirm && cost <= 25 } };
+  };
+  const refs = smithSelectionModel(reg, smithingPlan(reg, run), null, { autoSelect: false }).properties.candidates.map(c => c.itemRef);
+  assert.ok(refs.length >= 2);
+  prices[refs[0]] = 10; prices[refs[1]] = 40;
+  let door;
+  door = mountSmithUpgradeModal(host, build(null), { registries: reg, meta: {}, onSelect: ref => door.update(build(ref)), onBack() {}, onConfirm() {} });
+  const rows = () => [...host.querySelectorAll('.smith-candidate-card')];
+  const cinders = () => dom.document.querySelector('.confirmation-modal .confirmation-cinders');
+  const byRef = ref => rows().find(r => r.dataset.itemRef === ref);
+  byRef(refs[0]).click();
+  assert.ok(cinders(), 'the cinder charge is in the cost area');
+  assert.equal(cinders().classList.contains('affordable'), true);
+  assert.match(dom.document.querySelector('.confirmation-modal .confirmation-confirm').textContent, /10 cinders/, 'the Upgrade label carries both costs');
+  dom.document.querySelector('.confirmation-modal .confirmation-cancel').click();
+  byRef(refs[1]).click();
+  assert.ok(cinders().classList.contains('unaffordable'), 'the second item\'s 40 exceeds the 25 held: red');
+  closeConfirmationModal();
+  door.close();
+}));

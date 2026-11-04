@@ -96,10 +96,17 @@ export function mountSmithUpgradeModal(host, initialModel, {
     return null;
   };
 
+  /** The Blacksmith's cinder charge for the selected item (the host's quote), beside the Stone cost; red when the purse is short. */
+  const cinderNode = (p) => (p.cinderCost > 0
+    ? el('div', { class: `confirmation-cost confirmation-cinders as-statrow flat ${p.cinderHave >= p.cinderCost ? 'affordable' : 'unaffordable'}` },
+      `${t('blacksmith.modal.price', { cinders: p.cinderCost })} (${t('blacksmith.modal.cinders', { cinders: p.cinderHave })})`)
+    : null);
+
   /** The decision door's details (the shared body, upgradeConfirm.js): cost, recovery, the faces, then the rows under them. */
   const confirmationDetails = (selected) => html([
     el('div', { class: 'smith-confirm-details' }, upgradeConfirmNodes({
       cost: el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
+      cinders: cinderNode(currentModel.properties),
       recovery: currentModel.properties.servicePreviewHtml ? el('div', { class: 'smith-confirm-recovery', html: currentModel.properties.servicePreviewHtml }) : null,
       faces: facesFor(selected),
       // Name left, change right: each row is a two-column grid (CSS), the change on one line.
@@ -205,7 +212,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${model.properties.staysAtShrine ? '; ' : ' '}${model.properties.decisionConsequence}.`,
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
-        confirmLabel: t('smith.upgrade.confirm', { cost: selected.cost }),
+        confirmLabel: t('smith.upgrade.confirm', { cost: selected.cost }) + (p.cinderCost > 0 ? ` · ${t('blacksmith.modal.cinders', { cinders: p.cinderCost })}` : ''),
         // W2: the way out is Back (bottom-left), the same word every review wears.
         cancelLabel: t('common.back'),
         onCommit: commitSelected,

@@ -271,7 +271,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       const blocked = base.properties.selected && !displayedQuote.ok;
       return { ...base, properties: { ...base.properties,
         ...(coreCardUpgrades(run) ? { purseLabel: `${base.properties.purseLabel} · ${t('blacksmith.modal.cinders', { cinders: run.cinders })}` } : {}),
-        ...(base.properties.selected && displayedQuote.cost ? { consequence: `${t('blacksmith.modal.price', { cinders: displayedQuote.cost })} ${base.properties.consequence}` } : {}),
+        // The quote's cinder charge for the item selected NOW; the shared modal shows it beside the Stone cost.
+        ...(base.properties.selected && displayedQuote.cost ? { cinderCost: displayedQuote.cost, cinderHave: run.cinders } : {}),
         canConfirm: base.properties.canConfirm && !blocked,
         blockedReasons: blocked && base.properties.canConfirm ? [displayedQuote.reason] : base.properties.blockedReasons,
       } };

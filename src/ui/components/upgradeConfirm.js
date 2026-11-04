@@ -14,9 +14,10 @@ export function upgradeFacesNode({ before, after }) {
 }
 
 /** The body's nodes, top to bottom. `rows` are the host's stat rows (already built). Absent parts draw nothing. */
-export function upgradeConfirmNodes({ cost = null, recovery = null, faces = null, rows = [] } = {}) {
+export function upgradeConfirmNodes({ cost = null, cinders = null, recovery = null, faces = null, rows = [] } = {}) {
   return [
     cost,
+    cinders,
     recovery,
     faces,
     rows.length ? el('div', { class: 'confirmation-change-list' }, rows) : null,
