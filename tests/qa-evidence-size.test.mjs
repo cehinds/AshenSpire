@@ -62,9 +62,9 @@ test('the gate flags a large evidence JSON and spares allowlisted, small and non
   const found = oversized([
     { path: 'docs/qa/run/default-native-results.json', size: big },
     { path: 'docs/qa/run/summary.json', size: LIMIT_BYTES },
-    { path: 'docs/preview/hybrid-input-parity-manifest.json', size: big },
+    { path: 'docs/qa/run/allowed-manifest.json', size: big },
     { path: 'art-manifest.json', size: big },
-  ]);
+  ], LIMIT_BYTES, new Map([['docs/qa/run/allowed-manifest.json', 'fixture']]));
   assert.deepEqual(found.map((f) => f.path), ['docs/qa/run/default-native-results.json']);
 });
 
