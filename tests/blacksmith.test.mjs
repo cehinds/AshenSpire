@@ -560,7 +560,10 @@ test('Stack Copy refuses capped Rogue Powers, respects a raised limit and leaves
 });
 
 test('the blacksmith upgrade modal commits its displayed quote and reports a stale refusal', () => {
-  withKitDom((dom) => {
+  // The confirmation door arms an input-shield timer on commit; it must not fire after the fixture is torn down.
+  const priorTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = () => 0;
+  try { withKitDom((dom) => {
     globalThis.HTMLElement = dom.document.body.constructor;
     const { run } = smithRun(OUT);
     const app = dom.document.createElement('main');
@@ -569,15 +572,15 @@ test('the blacksmith upgrade modal commits its displayed quote and reports a sta
     mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged: () => { changed++; }, onLeave: () => {} });
     app.querySelector('#shop-cat-upgrade').click();
     app.querySelector('#blacksmith-upgrade button').click();
-    const confirm = app.querySelector('.smith-confirm');
-    assert.ok(confirm, 'the upgrade quote is displayed');
+    const confirm = document.querySelector('.confirmation-confirm');
+    assert.ok(confirm, 'the upgrade quote is displayed in the item\'s own modal');
     commitRefine(OUT, run, refinePlan(OUT, run));
     const before = JSON.stringify(run);
     confirm.click();
     assert.equal(JSON.stringify(run), before, 'confirm cannot silently requote');
     assert.equal(changed, 0);
     assert.ok(app.querySelector('.bs-refusal').textContent.includes(shopSentence('shop.refuse.stale')));
-  });
+  }); } finally { globalThis.setTimeout = priorTimeout; }
 });
 
 for (const service of ['extract', 'install']) {
