@@ -12,6 +12,7 @@ import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
+import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
@@ -113,35 +114,23 @@ test('Smith item summaries expose actual tier deltas for weapons, shields and ar
   assert.ok(model.properties.candidates.find(row => row.itemRef === 'armor/reaver/vigil').intrinsicChanges.some(row => row.label === 'DR'));
 });
 
-test('Smith renders calculated item and card deltas outside the closed details', () => withKitDom(dom => {
-  const run = fresh(); visit(run);
-  const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
-  const host = dom.document.createElement('main'); dom.document.body.append(host);
-  const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
-  const stone = host.querySelector('.smith-head-cost .smith-stone-icon');
-  assert.equal(stone.querySelector('[data-engraved-icon]')?.dataset.engravedIcon, 'weight');
-  assert.equal(stone.getAttribute('aria-hidden'), 'true', 'cost text names the decorative stone');
-  assert.doesNotMatch(stone.textContent, /weight/);
-  assert.match(host.querySelector('.smith-head-cost').getAttribute('aria-label'), /Smithing Stone Cost/);
-  const stats = host.querySelector('.smith-intrinsic-stats');
-  const deltas = node => node.querySelectorAll('.as-statpair').map(pair => [
-    pair.querySelector('em')?.textContent, pair.querySelector('b')?.textContent, pair.querySelector('strong')?.textContent,
-  ]);
-  for (const change of model.properties.selected.intrinsicChanges) {
-    assert.ok(deltas(stats).some(row => JSON.stringify(row) === JSON.stringify([change.label, String(change.before), String(change.after)])));
-  }
-  const folds = host.querySelectorAll('.smith-upgrade-fold');
-  assert.equal(folds.length, model.properties.selected.affectedRows.length);
-  folds.forEach((fold, index) => {
-    assert.equal(fold.hasAttribute('open'), false, 'the preview starts folded');
-    const summary = fold.querySelector('summary');
-    for (const change of model.properties.selected.affectedRows[index].values) {
-      assert.ok(deltas(summary).some(row => JSON.stringify(row) === JSON.stringify([change.label, String(change.before), String(change.after)])));
-    }
-  });
-  door.close();
+test('the item\'s upgrade modal lists the calculated item and card deltas, as before and after', () => withKitDom(dom => {
+  const priorTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = () => 0;
+  try {
+    const run = fresh(); visit(run);
+    const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const details = dom.document.querySelector('.confirmation-modal .confirmation-details');
+    // The kit fixture's HTML parser drops text, so this pins the structure: one before/after row per affected row, then Requirements.
+    const rows = details.querySelectorAll('.confirmation-change-list .sr-name');
+    assert.equal(rows.length, model.properties.selected.affectedRows.length + 1);
+    assert.equal(details.querySelectorAll('.confirmation-change-list .as-statpair').length >= model.properties.selected.intrinsicChanges.length, true, 'every change is a before to after pair');
+    closeConfirmationModal();
+    door.close();
+  } finally { globalThis.setTimeout = priorTimeout; }
 }));
-
 test('Core shield tier adds a stat point; receipts never carry legacy +3 card rows', () => {
   const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil';
   const plan = smithingPlan(reg, run);

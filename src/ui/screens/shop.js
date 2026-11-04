@@ -644,7 +644,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
         plan.candidates.length > 0, function openUpgrade() {
           let selectedItemRef = null;
-          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true, repeatUpgrades: true });
+          const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse: true, repeatUpgrades: true, autoSelect: false });
           const modal = mountSmithUpgradeModal(app, model(), {
             registries, meta, returnFocusElement: el,
             onSelect: (itemRef) => { selectedItemRef = itemRef; modal.update(model()); },

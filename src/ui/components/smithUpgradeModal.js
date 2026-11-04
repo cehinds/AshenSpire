@@ -5,33 +5,24 @@ import { renderCollectibleCard } from './collectibleCard.js';
 // Dedicated Smith selection/review overlay. The component owns dialog
 // semantics, focus containment and rendering; the screen owns run mutation.
 //
-// W1i SMITH UPGRADE (2026-09-14). The door is a W1 workspace with no
-// categories: the item list is its left column (the kit's rail, built by the
-// shared category navigation, so a compact host folds it into one
-// `[Selection ▾]` selector above the pane), and the pane is the selected item —
-// what it is, its current → proposed stats and requirements, every affected
-// card, then the Stone cost pinned under them. The header carries the title
-// and its exit, with a full-width Back footer. Upgrade and its consequence sit
-// under the cost, next to the action it explains. Which slots the pane draws
-// is SmithWorkspaceModel.js's; every fact still comes from SmithSelectionModel.
-// `.smith-*` stay on these elements because tools/armament-smithing-ui.mjs
-// reads them.
+// ONE SCREEN, ONE MODAL (owner, 2026-11-04). The overlay is the item list (the upgrade desk, upgradeDesk.js):
+// a compact head, the rows, and a footer whose one button leaves. Tapping an item opens its upgrade modal at
+// once, the shared confirmation modal ("Upgrade Greatsword?": cost, recovery, every affected card's before
+// and after, requirements; Back and Upgrade). There is no detail view in the list and no Back button for one.
+// `.smith-*` stay on these elements because tools/armament-smithing-ui.mjs reads them.
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
-import {
-  el, html, pill, eyebrow, prose, flavour, artWell, detailCard,
-  statRow, blocker, glyph, statusText,
-} from '../kit/index.js';
+import { el, html, pill, prose, artWell, statRow, glyph, statusText } from '../kit/index.js';
 import { mountUpgradeDesk, deskRow, deskArt } from './upgradeDesk.js';
 import { renderCard } from './card.js';
+import { resolveCard } from '../../model/registries.js';
+import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
 // The interaction router goes through the framework's adopted door.
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
-import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { FOLD_GLYPH } from './foldGlyph.js';
-import { pairSpaced, deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
-import { smithCandidateRows, smithPaneSlots } from '../models/SmithWorkspaceModel.js';
+import { deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
+import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -60,18 +51,17 @@ export function mountSmithUpgradeModal(host, initialModel, {
     ? returnFocusElement
     : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const desk = mountUpgradeDesk(host, {
-    title: initialModel.properties.title, titleId: 'smith-modal-title', listLabel: t('smith.items.upgrade'), describedBy: 'smith-modal-consequence',
-    paneId: 'smith-preview-region', paneLabel: 'Selected upgrade preview', backLabel: initialModel.properties.backLabel, backToListLabel: t('common.back'),
-    kind: 'item', hasSelection: Boolean(initialModel.properties.selected),
+    title: initialModel.properties.title, titleId: 'smith-modal-title', listLabel: t('smith.items.upgrade'),
+    backLabel: initialModel.properties.backLabel, kind: 'item',
   });
-  const { veil, panel: modal, purse, reading: previewHost, reason: consequence, backBtn, confirmBtn } = desk;
+  const { veil, panel: modal, purse, backBtn, confirmBtn } = desk;
   modal.classList.add('smith-upgrade-modal');
   markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
 
   let currentModel = initialModel;
-  let shownFor = null;
   let closed = false;
   let disarmDecision = null;
+  let review = null;
 
   /** The requirement: "STR 10 → 9", with what the player has under it. */
   const requirementNodes = (selected) => (selected.requirements.length
@@ -81,52 +71,43 @@ export function mountSmithUpgradeModal(host, initialModel, {
     ]))
     : [el('span', { class: 'smith-requirement smith-requirement-none met' }, el('b', { class: 'sp-v', text: 'None' }))]);
 
-  const intrinsicStatsNode = (selected) => {
-    const stats = selected.intrinsicStats || {};
-    const changes = selected.intrinsicChanges || [];
-    const hasStats = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
-      .every((key) => stats[key] !== null && stats[key] !== undefined);
-    if (!hasStats && !changes.length) return null;
-    const rowNode = statRow({
-      flat: true,
-      nameNode: el('b', { class: 'sr-name', text: 'Equipment Stats' }),
-      values: [
-        changes.length ? changeSummary({ values: changes }) : null,
-        ...(hasStats ? [
-        el('span', { class: 'smith-fold-values smith-primary-stats' }, [
-          pairSpaced('AR', el('b', { class: 'sp-v', text: String(stats.attackRating) })),
-          pairSpaced('DEF', el('b', { class: 'sp-v', text: String(stats.defenseRating) })),
-          pairSpaced('WEIGHT', el('b', { class: 'sp-v', text: String(stats.weight) })),
-        ]),
-        el('span', { class: 'smith-stat-costs as-flavor' }, [
-          el('span', {}, ['Weapon Art ', el('strong', { text: `Mana ${stats.weaponArtManaCost}` })]), el('i', { text: ' · ' }),
-          el('span', {}, ['Unique Skill ', el('strong', { text: `${t('combat.actions')} ${stats.uniqueSkillStaminaCost}` })]),
-        ]),
-        ] : []),
-      ],
-      className: 'smith-data-row smith-intrinsic-stats',
-    });
-    return rowNode;
+  /**
+   * The first affected card as its before and after faces. A live card instance steps its own smithing tier; a Core
+   * row carries only the card's id and its live value before and after (`damage` or `block`), so its faces are the
+   * card's definition with that effect's amount set to each value. No such card: no faces, the rows say it all.
+   */
+  const facesFor = (selected) => {
+    const face = (reference, definition) => renderCard(registries, reference, { small: true, tooltip: false, inspectReadOnly: true, ...(definition ? { definition } : {}) });
+    const live = selected.affectedRows.find((entry) => entry.reference);
+    if (live) {
+      const level = Number(live.reference.smithingLevel) || 0;
+      return upgradeFacesNode({ before: face(live.reference), after: face({ ...live.reference, smithingLevel: level + 1 }) });
+    }
+    for (const row of selected.affectedRows) {
+      const change = row.cardId && row.values.find((value) => value.kind === 'card');
+      if (!change) continue;
+      try {
+        const base = resolveCard(registries, { cardId: row.cardId });
+        const at = (amount) => ({ ...base, effects: base.effects.map((effect) => (effect.op === change.op ? { ...effect, amount } : effect)) });
+        if (!base.effects.some((effect) => effect.op === change.op)) continue;
+        return upgradeFacesNode({ before: face({ cardId: row.cardId }, at(change.before)), after: face({ cardId: row.cardId }, at(change.after)) });
+      } catch { /* a card the registry cannot resolve draws no face */ }
+    }
+    return null;
   };
 
-  const requirementsRow = (selected) => statRow({
-    flat: true,
-    nameNode: el('b', { class: 'sr-name', text: 'Requirements' }),
-    values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)),
-    className: 'smith-data-row smith-requirements',
-  });
-
-  /** The decision door's details: the same cost and deltas, as kit rows. */
+  /** The decision door's details (the shared body, upgradeConfirm.js): cost, recovery, the faces, then the rows under them. */
   const confirmationDetails = (selected) => html([
-    el('div', { class: 'smith-confirm-details' }, [
-      el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
-      ...(currentModel.properties.servicePreviewHtml ? [el('div', { class: 'smith-confirm-recovery', html: currentModel.properties.servicePreviewHtml })] : []),
+    el('div', { class: 'smith-confirm-details' }, upgradeConfirmNodes({
+      cost: el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
+      recovery: currentModel.properties.servicePreviewHtml ? el('div', { class: 'smith-confirm-recovery', html: currentModel.properties.servicePreviewHtml }) : null,
+      faces: facesFor(selected),
       // Name left, change right: each row is a two-column grid (CSS), the change on one line.
-      el('div', { class: 'confirmation-change-list' }, [
+      rows: [
         ...selected.affectedRows.map((row) => statRow({ flat: true, className: 'smith-confirm-row', nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
         statRow({ flat: true, className: 'smith-confirm-row smith-confirm-requirements', nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
-      ]),
-    ]),
+      ],
+    })),
   ]);
 
   function commitSelected() {
@@ -144,7 +125,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   function candidateCard(item, row) {
     const { item: wrapper, main: card } = deskRow({
       className: `smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected' : ''}`,
-      attrs: { role: 'option', tabindex: '0', 'aria-selected': String(Boolean(item.selected)), 'aria-controls': 'smith-preview-region', dataset: item.armamentId ? { armamentId: item.armamentId } : {} },
+      attrs: { role: 'option', tabindex: '0', 'aria-selected': String(Boolean(item.selected)), dataset: item.armamentId ? { armamentId: item.armamentId } : {} },
       disabled: row.disabled,
       art: deskArt(itemArt(item, { small: true })),
       name: item.name,
@@ -160,7 +141,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
       card.classList.add('is-needs-blacksmith');
       card.setAttribute('aria-disabled', 'true');
     }
-    card.addEventListener('click', () => onSelect(item.itemRef));
+    // A tap chooses the item and opens its upgrade modal at once: the host's update arms the decision, then it opens.
+    card.addEventListener('click', () => { onSelect(item.itemRef); review?.(); });
     const itemTypeText = item.itemTypes.map((type) => type.label).join(', ') || item.kindLabel;
     card.setAttribute('aria-label', `${item.name}, ${itemTypeText}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone.${row.disabled ? ' Needs a Blacksmith.' : ''} Select to review its exact changes and requirements.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · Tier ${item.currentLevel} → ${item.nextLevel}</div>`
@@ -192,89 +174,18 @@ export function mountSmithUpgradeModal(host, initialModel, {
     return card;
   }
 
-  // ---- the body: the item column beside (or, compact, under a selector
-  // above) the selected item's pane -------------------------------------------
+  // ---- the body: the item list; a tap opens the item's upgrade modal ----------
   const rows = smithCandidateRows(initialModel);
   const cards = initialModel.properties.candidates.map((item, index) => candidateCard(item, rows[index]));
   desk.setRows(cards.map((card) => card.wrapper));
   const back = backBtn;
   const confirm = confirmBtn;
-  // A chosen item the purse cannot pay for says why under the foot (FINISH
-  // §6); with nothing chosen the button's own label says "Select an item".
-  let confirmBlocked = '';
-  const confirmReason = reasonWhenDisabled(confirm, () => confirmBlocked || null);
-
-  /**
-   * The pane, in W1i's order: the selected item (art, name, tier, kind and
-   * tags), its current → proposed stats and requirements, every affected card,
-   * then the Stone cost — pinned under the facts so it stands beside the
-   * action — and the shortfall when there is one.
-   */
-  function previewCard(selected, slots) {
-    const types = selected.itemTypes.length
-      ? selected.itemTypes.map((type) => el('em', { class: 'as-tag', dataset: { itemType: type.tag }, text: type.label }))
-      : [el('em', { class: 'as-tag', text: selected.kindLabel })];
-    const head = el('div', { class: 'smith-summary-grid' }, [
-      el('div', { class: 'smith-summary-cell smith-selected-head' }, [
-        itemArt(selected),
-        el('span', { class: 'smith-title-row' }, [
-          el('b', { class: 'sr-name', text: selected.name }),
-          el('span', { class: 'dc-meta' }, ['Tier ', deltaNode(String(selected.currentLevel), String(selected.nextLevel)), ` · ×${selected.inventoryCount} owned`]),
-          // The Stone cost rides the item row's right end: a stone and "needed/available".
-          el('span', {
-            class: `smith-head-cost smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}`,
-            role: 'group', 'aria-label': t('smith.cost.aria', { cost: selected.cost, stones: selected.stones }), title: t('smith.cost.tip'),
-          }, [
-            glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
-            el('span', { class: 'smith-cost-pair' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
-          ]),
-        ]),
-        // One row for the item type and every tag; the spans stay for the tools that read them.
-        el('span', { class: 'smith-tag-row' }, [
-          el('span', { class: 'smith-item-type-row' }, types),
-          selected.tags.length ? el('span', { class: 'smith-weapon-tags' }, selected.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))) : null,
-        ]),
-      ]),
-    ]);
-    const folds = el('div', { class: 'smith-upgrade-folds' }, selected.affectedRows.map((row, index) => {
-      const fold = el('details', { class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
-      const summary = el('summary', {}, statRow({
-        tag: 'span',
-        nameNode: el('b', { class: 'sr-name', text: row.name }),
-        values: [changeSummary(row), glyph(FOLD_GLYPH.collapsed, { class: 'caret smith-fold-caret' })],
-      }));
-      const facts = el('div', { class: 'smith-card-facts' }, [
-        eyebrow(t('smith.upgrade.fold')),
-        ...row.changes.map((change) => prose(change)),
-        row.rating
-          ? flavour(`Uses the source item’s ${row.rating.label}.`, { class: 'smith-scaling' })
-          : row.reference ? flavour('No source rating.', { class: 'smith-scaling' }) : null,
-        flavour(`Source: ${selected.name}`),
-      ]);
-      const detail = el('div', { class: `smith-fold-detail${row.reference ? '' : ' no-card'}` }, [
-        row.reference ? el('div', { class: 'smith-card-sprite', dataset: { smithCardRow: String(index) } }) : null,
-        facts,
-      ]);
-      fold.append(summary, detail);
-      return fold;
-    }));
-    const cost = selected.affordable ? null : el('div', { class: 'smith-cost-strip' }, [
-      blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
-    ]);
-    // No recovery rows here: every change this upgrade makes already stands in the rows above (Equipment Stats, Requirements, the affected cards), each as "old → new" with the new value green.
-    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [cost].filter(Boolean) };
-    return detailCard({
-      attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
-      children: slots.flatMap((name) => slot[name] || []),
-    });
-  }
 
   function draw(model) {
     currentModel = model;
     const p = model.properties;
     markUiComponent(modal, UI.smithUpgradeModal, model.variant);
     const selected = p.selected;
-    if ((selected ? selected.itemRef : null) !== shownFor) { shownFor = selected ? selected.itemRef : null; desk.follow(selected); }
     for (const card of cards) {
       const on = Boolean(selected) && card.dataset.itemRef === selected.itemRef;
       card.classList.toggle('selected', on);
@@ -282,37 +193,11 @@ export function mountSmithUpgradeModal(host, initialModel, {
       markUiComponent(card, UI.smithCandidateCard, on ? 'selected' : 'available');
     }
     purse.textContent = `${p.purseLabel} available`;
-    consequence.textContent = p.consequence;
-
-    previewHost.replaceChildren(selected
-      ? previewCard(selected, smithPaneSlots(model))
-      : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [
-        artWell({ glyph: 'smith', cool: true }),
-        prose(p.instruction),
-      ]));
-    if (selected) {
-      selected.affectedRows.forEach((row, index) => {
-        const slot = previewHost.querySelector(`[data-smith-card-row="${index}"]`);
-        if (slot && row.reference) slot.appendChild(renderCard(registries, row.reference, { small: true, tooltip: false, inspectReadOnly: true }));
-      });
-      previewHost.querySelectorAll('.smith-requirement').forEach((element) => attachTooltip(element, () => {
-        const row = selected.requirements.find((entry) => element.textContent.includes(entry.label));
-        if (!row) return '<div class="tt-title">No requirement</div>This item has no attribute minimum.';
-        return `<div class="tt-title">${esc(row.label)} requirement</div>Current minimum ${row.currentRequired}; after upgrade ${row.nextRequired}. You have ${row.actual == null ? '?' : row.actual}.`;
-      }));
-    }
     disarmDecision?.();
     disarmDecision = null;
-    confirm.disabled = !selected;
-    confirm.hidden = !selected;
-    confirm.textContent = model.properties.confirmLabel;
-    confirm.setAttribute('aria-disabled', String(!model.properties.canConfirm));
-    confirmBlocked = selected ? model.properties.blockedReasons.join(' ') : '';
-    confirmReason();
-    confirm.dataset.smithActionState = !selected ? 'unselected' : (selected.affordable ? 'actionable' : 'blocked');
+    review = null;
     if (selected) {
-      confirm.setAttribute('aria-label', t(selected.cost === 1 ? 'smith.upgrade.aria.one' : 'smith.upgrade.aria.many', { name: selected.name, cost: selected.cost }));
-      disarmDecision = armOptionDecision(confirm, {
+      const armed = armOptionDecision(confirm, {
         meta,
         registries,
         id: 'smithUpgrade',
@@ -328,8 +213,10 @@ export function mountSmithUpgradeModal(host, initialModel, {
         blockedTitle: `Cannot upgrade ${selected.name}`,
         blockedMessage: model.properties.blockedReasons.join(' ') || 'This upgrade is not currently available.',
         blockedDetailsHtml: confirmationDetails(selected),
-        returnFocusElement: confirm,
+        returnFocusElement: cards.find((card) => card.dataset.itemRef === selected.itemRef) || null,
       });
+      disarmDecision = armed;
+      review = armed.review;
     }
   }
 
@@ -383,6 +270,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
+  // Mounted with an item already chosen (the Blacksmith's per-item Upgrade): its modal opens at once.
+  if (initialModel.properties.selected) review?.();
 
   return {
     update(model) { draw(model); },
