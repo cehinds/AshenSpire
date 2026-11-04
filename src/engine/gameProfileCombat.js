@@ -118,7 +118,13 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
   for (const row of weaknesses) if (row.effect === 'damage') raw = transition(`weakness:${row.to}`,weaknessLabel(row.to),raw,raw*(1+row.amount/100),'offense',1+row.amount/100);
   if (!modern) raw=Math.max(0,Math.floor(raw));
-  if(proposal && target && !flatReturn) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
+  // An ally's Guard interception lowers `raw` here; kept so the displayed raw hit can add it back (Guard is a defense, owner 2026-11-04).
+  let guardIntercepted = 0;
+  if(proposal && target && !flatReturn) {
+    const statusPlan = proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern});
+    guardIntercepted = Math.max(0, Number(statusPlan.redirect?.amount) || 0);
+    raw=transition('status-rules','Other status modifiers',raw,statusPlan.amount);
+  }
   const defense = stanceMitigation(ctx, attacking, defending);
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
@@ -129,8 +135,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   // Owner, 2026-11-03: the number shown ahead of a hit is the raw hit, changed only by stances and statuses (attacker Strength/Weak, defender
   // Vulnerable, stance matchups) and damage-type weakness/resistance, never by what the defender does about it (defensive stance, Reflect, Block,
-  // Poise, Ward, Barrier, Counter, Evade, AC). Display only: `amount`/`hpLoss` below still drive resolution unchanged.
-  const rawHit = Math.max(0, Math.floor(amount));
+  // Poise, Ward, Barrier, Counter, Evade, AC, an ally's Guard interception, owner 2026-11-04). Display only: `amount`/`hpLoss` below still drive resolution unchanged.
+  const rawHit = Math.max(0, Math.floor(amount + guardIntercepted * advantageMultiplier));
   amount=transition('stance-defense','Defensive stance advantage',amount,amount*(flatReturn?1:defense.multiplier),'stance',flatReturn?1:defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
