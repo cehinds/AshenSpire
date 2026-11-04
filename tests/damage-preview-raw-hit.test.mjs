@@ -89,3 +89,19 @@ test('rawHit on the receipt carries damage-type weakness but not Block or Poise'
   assert.equal(hit(blunt, target).hpLoss < weak.rawHit, true, 'while real HP loss is reduced');
   void enemy;
 });
+
+test('an ally\'s Guard is a defense: rawHit ignores the interception while the resolved amount is still reduced', async () => {
+  const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
+  const { combat } = fixture();
+  // Guard's status rule requires the multiplayer capability; grant it to this combat's profile view only.
+  combat.gameProfile = { ...combat.gameProfile, modules: { ...combat.gameProfile.modules, multiplayer: true } };
+  const target = combat.enemies[0];
+  const guard = { ...structuredClone(target), id: 'guardian', hp: 40, statuses: { 'base.guard-allies': { stacks: 2 } } };
+  const strike = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
+  const hit = () => profileDamageReceipt(combat, combat.player, target, 10, { ...strike, skipRatingBonus: true }, { roll: 0 });
+  const plain = hit();
+  combat.enemies.push(guard);
+  const guarded = hit();
+  assert.equal(guarded.rawHit, plain.rawHit, 'Guard leaves the shown raw hit alone');
+  assert.ok(guarded.amount < plain.amount, 'while the resolved amount is reduced by the interception');
+});
