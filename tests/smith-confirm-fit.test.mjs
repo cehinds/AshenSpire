@@ -62,12 +62,6 @@ test('Smith data rows carry no grey sub-label under their titles', () => {
   assert.doesNotMatch(modal, /Selected item/);
 });
 
-test('Smith item header: tier beside the name, type and tags in one row', () => {
-  assert.match(modal, /smith-title-row[\s\S]*sr-name[\s\S]*dc-meta/);
-  assert.match(modal, /smith-tag-row[\s\S]*smith-item-type-row[\s\S]*smith-weapon-tags/);
-  assert.match(css, /\.smith-tag-row \{ display: flex; flex-wrap: wrap/);
-});
-
 test('the shrine recovery panel has no heading and keeps every pool row', () => {
   const rest = read('src/ui/screens/rest.js');
   assert.doesNotMatch(rest, /recovery\.append\(el\('h3'/);
@@ -75,16 +69,8 @@ test('the shrine recovery panel has no heading and keeps every pool row', () => 
   assert.match(rest, /\['mana', 'Mana'/);
 });
 
-test('the Stone cost sits on the item row, compact, with no footer strip when affordable', () => {
-  assert.match(modal, /smith-head-cost smith-preview-economy/);
-  assert.doesNotMatch(modal, /economyNode\(selected\)\),\n\s*selected\.affordable/);
-  assert.match(modal, /selected\.affordable \? null : el\('div', \{ class: 'smith-cost-strip'/);
-  assert.match(css, /\.smith-head-cost \{[^}]*margin-left: auto/);
-});
-
-test('the Smith item pane draws no recovery rows; the confirmation keeps its ledger', () => {
-  const pane = modal.slice(modal.indexOf('function previewCard'), modal.indexOf('function draw'));
-  assert.doesNotMatch(pane, /servicePreviewHtml|rest-recovery/);
+test('the Smith list has no pane; the confirmation keeps its ledger', () => {
+  assert.doesNotMatch(modal, /function previewCard/, 'the list has no in-picker pane any more');
   assert.match(modal, /class: 'smith-confirm-recovery'/);
 });
 

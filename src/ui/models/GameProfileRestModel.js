@@ -41,7 +41,7 @@ export function gameProfileRestModel(registries, run, visit) {
 }
 
 export function gameProfileSmithModel(registries, plan, previews, selectedItemRef, recoveryHtml, { all = false, levelUpOffered = true } = {}) {
-  const model = smithSelectionModel(registries, plan, selectedItemRef);
+  const model = smithSelectionModel(registries, plan, selectedItemRef, { autoSelect: false });
   const selected = model.properties.selected;
   const preview = selected ? previews.get(selected.itemRef) : null;
   return { ...model, properties: { ...model.properties,

@@ -4,7 +4,7 @@ import { t } from '../strings.js';
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { modalHead, modalFooter, el, prose, stampModalSize } from '../kit/index.js';
-import { registerModal } from '../modalState.js';
+import { registerModal, topModal } from '../modalState.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -57,6 +57,7 @@ export function openConfirmationModal({
   consequence = '',
   target = '',
   detailsHtml = '',
+  detailsNode = null,
   tone = 'normal',
   onConfirm,
   onCancel = () => {},
@@ -111,11 +112,13 @@ export function openConfirmationModal({
 
   const details = document.createElement('div');
   details.className = 'confirmation-details as-detailcard muted';
-  details.hidden = !detailsHtml;
+  details.hidden = !detailsHtml && !detailsNode;
   // Callers build this only from escaped, model-owned presentation values.
   // Keeping the detail region in the shared modal is what makes costs and
   // consequences uniform rather than a collection of screen-owned dialogs.
   if (detailsHtml) details.innerHTML = detailsHtml;
+  // A live node, for a decision that is made inside the modal (the card upgrade's choice among options).
+  if (detailsNode) details.append(detailsNode);
 
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
@@ -165,6 +168,9 @@ export function openConfirmationModal({
   };
 
   function onKeydown(event) {
+    // A modal opened above this one (the card inspector over a face) owns Escape and Tab; this review waits beneath it.
+    const top = topModal();
+    if (top && top.element !== dialog) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -177,7 +183,11 @@ export function openConfirmationModal({
     // the confirm button is hidden, and `controls` is Back alone — so Shift+Tab
     // from Back must land on the last entry of `controls`, never on a hidden
     // button that would leave the dialog with no visible focus.
-    const controls = [cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
+    // A live `detailsNode` (the card upgrade's option radios) re-renders on a pick, so its tab stops are read now, in DOM
+    // order, ahead of the footer's Back and Confirm. Roving-tabindex members (tabindex -1) are not tab stops.
+    const inDetails = detailsNode ? [...details.querySelectorAll('button, [tabindex], input, select')]
+      .filter((node) => node.getAttribute('tabindex') !== '-1' && !node.disabled && !node.hidden) : [];
+    const controls = [...inDetails, cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
     const at = controls.indexOf(document.activeElement);
     if (event.shiftKey && at <= 0) {
       event.preventDefault();
@@ -260,7 +270,10 @@ export function openConfirmationModal({
   // and that close restores focus to the launcher. Run after that microtask so
   // the standing confirmation, not the covered screen, owns final focus.
   setTimeout(() => {
-    if (!closed) cancelButton.focus({ preventScroll: true });
+    if (closed) return;
+    // With options to choose from, focus starts on the picked one; otherwise on Back.
+    const picked = detailsNode ? details.querySelector('[aria-checked="true"]') : null;
+    (picked || cancelButton).focus({ preventScroll: true });
   }, 0);
 
   return Object.freeze({ veil, dialog, cancelButton, confirmButton, close, cancel });

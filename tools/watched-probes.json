@@ -519,13 +519,13 @@
   {
    "id": "S1",
    "by": "Bjorn",
-   "read": "src/ui/components/smithUpgradeModal.js (smith-preview-region: explicit choose/review dialog) · src/ui/models/SmithSelectionModel.js (smithSelectionModel: selection state and instance-preserving upgrade pair)",
+   "read": "src/ui/components/smithUpgradeModal.js (smith-confirm-details: the item's upgrade confirmation body, opened by tapping a row) · src/ui/models/SmithSelectionModel.js (smithSelectionModel: selection state and instance-preserving upgrade pair)",
    "anchors": [
-    "smith-preview-region",
+    "smith-confirm-details",
     "smithSelectionModel"
    ],
    "screen": "the Shrine › Smith, a card previewed",
-   "why-drive": "The Smith preview is now explicit modal state. Selecting one candidate must paint its current and upgraded forms without committing the upgrade.",
+   "why-drive": "Tapping a Smith candidate opens its upgrade confirmation modal at once. It must paint the before to after change without committing the upgrade.",
    "reach": [
     {
      "op": "goto",
@@ -542,19 +542,19 @@
      "sel": ".smith-candidate-card"
     }
    ],
-   "focus": ".smith-preview-region",
+   "focus": ".confirmation-modal",
    "expect": {
     "present": {
-     "the upgrade preview": ".smith-preview-region .smith-upgrade-preview",
+     "the upgrade preview": ".confirmation-modal .smith-confirm-details",
      "the smith candidates": ".smith-candidate-card"
     },
     "measure": {
-     "preview": "(document.querySelector('.smith-preview-region')||{}).innerText.replace(/\\s+/g,' ').slice(0,180)"
+     "preview": "(document.querySelector('.confirmation-modal')||{}).innerText.replace(/\\s+/g,' ').slice(0,180)"
     },
     "wrong": [
      {
-      "js": "!/→|becomes|upgrade/i.test((document.querySelector('.smith-preview-region')||{}).innerText||'')",
-      "why": "the modal preview says nothing about what the permanent upgrade changes"
+      "js": "!/→|becomes|upgrade/i.test((document.querySelector('.confirmation-modal')||{}).innerText||'')",
+      "why": "the confirmation modal says nothing about what the permanent upgrade changes"
      }
     ]
    }

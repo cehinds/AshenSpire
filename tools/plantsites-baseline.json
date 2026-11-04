@@ -124,7 +124,7 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "7c3d7fd5dd5a92fb"
+      "digest": "ef5c29683b8c33a0"
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
@@ -140,7 +140,7 @@
     },
     "tools/confirmation-modal.mjs": {
       "count": 10,
-      "digest": "1f5c08d068934c04"
+      "digest": "a983e412b7d5bd49"
     },
     "tools/derived-runtime-authority.mjs": {
       "count": 3,

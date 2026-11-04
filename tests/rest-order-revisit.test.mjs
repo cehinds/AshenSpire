@@ -59,19 +59,13 @@ function mount(options = {}) {
 
 const smithModal = () => document.querySelector('.smith-upgrade-modal');
 
-// A synthetic activation (detail 0), the way input.js presses a control.
-const tap = (node) => node.dispatchEvent(new FixtureEvent('click', { bubbles: true, cancelable: true, detail: 0, target: node }));
-
 function upgradeFirst(app) {
   app.querySelector('#smith-opt').click();
   const card = smithModal().querySelector('.smith-candidate-card');
   assert.ok(card, 'the Smith offers a candidate');
   card.click();
-  const smithConfirm = smithModal().querySelector('.smith-confirm');
-  assert.equal(smithConfirm.hidden, false, 'selecting a candidate shows Confirm');
-  tap(smithConfirm);
   const confirm = document.querySelector('.confirmation-confirm');
-  assert.ok(confirm, 'Confirm opens the decision door');
+  assert.ok(confirm, 'tapping an item opens its upgrade modal at once');
   confirm.click();
 }
 

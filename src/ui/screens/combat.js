@@ -3144,7 +3144,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
 
     el.addEventListener('pointerdown', (ev) => {
-      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || veilIsOpen()) return;
+      if (inputBusy() || !affordable || ev.button !== 0 || ev.isPrimary === false || ev.target.closest('.card-info-button') || veilIsOpen()) return;
       // Mouse, trackpad, pen and touch share the practice area's recognizer.
       flickStart = touchPoint(ev);
       flickPoints = [flickStart];
@@ -3178,6 +3178,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           hideTooltip();
           dragGhost = el.cloneNode(true);
           dragGhost.classList.add('card-drag-ghost');
+          dragGhost.querySelector('.card-info-button')?.remove();
           dragGhost.setAttribute('aria-hidden', 'true');
           const verdict = document.createElement('span');
           verdict.className = 'drop-verdict';

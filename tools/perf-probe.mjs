@@ -444,10 +444,17 @@ const SCENARIOS = {
         await input.drag(a, { x: a.x + 30, y: a.y - 230 }, { steps: 16, dwell: 300, back: true });
         await wait(500);
         if (!await page.evaluate(`!!document.querySelector(${JSON.stringify(dragSel)})`)) throw new Error('the dragged card was played');
-        // Inspect: right-click the card (the (i) badge and its portal are gone). A click that lands while the fan is re-laying out can miss, so retry.
+        // Inspect: the first tap selects the card and shows its (i); tapping the (i) opens the modal.
+        // A tap that lands while the fan is re-laying out can miss, so each step is retried a few times.
         let opened = false;
         for (let attempt = 0; attempt < 2 && !opened; attempt++) {
-          await page.click(sel, { button: 'right' }).catch((e) => log('inspect', e.message)); await wait(900);
+          // A card that is still selected from before is not tapped again (that would play or toggle it).
+          const state = await page.evaluate(`(() => { const c = document.querySelector(${JSON.stringify(sel)}); return c ? [c.classList.contains('selected'), c.classList.contains('inspection-selected')].join() : 'gone'; })()`);
+          if (state === 'true,false') { await page.keyboard.press('Escape'); await wait(500); }
+          if (state !== 'true,true') await input.tap(sel).catch((e) => log('select', e.message));
+          // Once the card is selected, the hand lifts its info button out as `.hand-info-portal`.
+          await until(page, `(() => { const b = document.querySelector('.hand-info-portal'); return !!b && getComputedStyle(b).visibility !== 'hidden' && b.getBoundingClientRect().width > 0 && !!document.querySelector('.hand .card.inspection-selected'); })()`, 'the info button', 4000).catch((e) => log(e.message));
+          await input.tap('.hand-info-portal').catch((e) => log('info', e.message)); await wait(900);
           opened = await page.evaluate(`!!document.querySelector('.card-inspection-modal')`);
           if (!opened) { await page.keyboard.press('Escape'); await wait(500); }
         }

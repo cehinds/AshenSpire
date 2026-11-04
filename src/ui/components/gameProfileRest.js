@@ -89,7 +89,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     const modal = mountCardUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
       backLabel: t('smith.back.shrine'),
-      consequence: t('gameProfile.rest.upgradeCardConsequence'), decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
+      decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
       onConfirm: (instanceId, quote) => { screen.inert = false; commit('upgradeCard', { instanceId, quote }); },

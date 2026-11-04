@@ -124,7 +124,7 @@ try {
       const modal=mountSmithUpgradeModal(document.body,smithSelectionModel(r,plan),{registries:r,meta:{settings:{}},
         onSelect:id=>modal.update(smithSelectionModel(r,plan,id)),onBack(){},onConfirm(){window.inspectionSmithCommits++;}});
     });
-    check(await page.locator('.smith-confirm').isDisabled(), 'Smith empty selection cannot upgrade');
+    check(await page.locator('.smith-confirm').count() === 0 && await page.locator('.confirmation-modal').count() === 0, 'Smith empty selection offers no upgrade and opens no modal');
     const smithCard=page.locator('.smith-candidate-card').first();
     if (phone) { await smithCard.tap({position:{x:50,y:70}}); await smithCard.tap({position:{x:50,y:70}}); }
     await smithCard.focus();
@@ -150,7 +150,8 @@ try {
       await playing.tap({position:{x:35,y:70}});
       await playing.tap({position:{x:35,y:70}});
       check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'two inspection taps never play');
-      await playing.click({button:'right',position:{x:35,y:70}});
+      // On touch the combat hand opens its reading through the (i) the selected card shows (a long press only selects).
+      await page.locator('.hand-info-portal').tap();
     } else { await playing.focus(); await page.keyboard.press('i'); }
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'information never plays a card');

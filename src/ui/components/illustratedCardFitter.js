@@ -1,5 +1,11 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
 import {layoutMetrics} from '../layoutMetrics.js';
+import {uiConfig} from '../../config/generated/ui.js';
+// Tunables live in content/config/ui/components/card.json (components.rulesFace.rulesText).
+const FACE_TEXT=uiConfig.components.card.components?.rulesFace?.rulesText||{};
+const RULES_MIN_PX=Number(FACE_TEXT.minPx)||6;
+const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
+const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
 const ruleGeometry = new WeakMap();
 const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
@@ -32,9 +38,56 @@ function fitSignature(face, width) {
 
 // Search fonts inside the authored bays. Text must never resize the parchment
 // or consume artwork; names and costs retain their line budgets.
+// One shared ResizeObserver refits a face whose own box changes (window resize, zoom, a selected card
+// growing, a modal opening) and every watched face once the fonts are ready; batched in one frame, and
+// faces that are off the page or hidden (width 0) are skipped by the fit itself. The observer measures the
+// face's layout box, which the hand's rotate/scale transforms do not change.
+// face -> its CURRENT card (a reused face moves to a new card element); liveFaces is the strong set the fonts
+// pass walks, pruned whenever a face is found detached, so removed faces are released.
+const faceCards = new WeakMap(), liveFaces = new Set(), pendingRefit = new Set();
+let refitFrame = 0, sizeObserver = null, fontsAwaited = false;
+function scheduleRefit(card) {
+  pendingRefit.add(card);
+  if (refitFrame || typeof requestAnimationFrame !== 'function') return;
+  refitFrame = requestAnimationFrame(() => {
+    refitFrame = 0;
+    const batch = [...pendingRefit].filter(c => c.isConnected); pendingRefit.clear();
+    if (batch.length) fitIllustratedCards(batch);
+  });
+}
+function releaseFace(face) {
+  liveFaces.delete(face); faceCards.delete(face); sizeObserver?.unobserve(face);
+}
+function watchFaces(pairs) {
+  for (const face of [...liveFaces]) if (!face.isConnected) releaseFace(face);   // removed while hidden: no resize callback ever comes
+  if (typeof ResizeObserver === 'function' && !sizeObserver) {
+    sizeObserver = new ResizeObserver(list => {
+      for (const e of list) {
+        const face = e.target;
+        if (!face.isConnected) { releaseFace(face); continue; }
+        const card = faceCards.get(face);
+        if (card && e.contentRect.width > 0) scheduleRefit(card);
+      }
+    });
+  }
+  for (const [card, face] of pairs) {
+    if (typeof face.nodeType !== 'number') continue;
+    faceCards.set(face, card);                       // every call: a reused face now belongs to this card
+    if (!liveFaces.has(face)) { liveFaces.add(face); sizeObserver?.observe(face); }
+  }
+  if (!fontsAwaited && typeof document !== 'undefined' && document.fonts?.ready) {
+    fontsAwaited = true;
+    document.fonts.ready.then(() => {
+      fontEpoch++;
+      for (const face of [...liveFaces]) { if (!face.isConnected) { releaseFace(face); continue; } const card = faceCards.get(face); if (card?.isConnected) scheduleRefit(card); }
+    }).catch(() => {});
+  }
+}
+
 export function fitIllustratedCards(cards) {
-  const faces=[];
-  for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
+  const faces=[],pairs=[];
+  for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face){faces.push(face);pairs.push([card,face]);}}
+  watchFaces(pairs);
   watchFonts();
   const widths=faces.map(face=>face.clientWidth);
   const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
@@ -67,6 +120,8 @@ export function fitIllustratedCards(cards) {
       if(rules){
         // A previous clipped fit must not constrain this fit's measurements.
         text.style.maxHeight='none';layer.style.justifyContent='';
+        // A previous fit's ellipsis clamp must not outlive the need for it.
+        text.style.overflow='';text.style.textOverflow='';text.style.webkitBoxOrient='';text.style.webkitLineClamp='unset';
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');
@@ -85,9 +140,10 @@ export function fitIllustratedCards(cards) {
         // Two short benefit rows remain readable in the narrow native hand bay.
         text.style.lineHeight=String(row.lineHeight);
       }
-      // Rules may shrink below the design font minimum, but never below
-      // eleven on-screen pixels after the page's native zoom.
-      row.low=rules?11/zoom:Number(text.dataset.minFont)*scale;
+      // Rules shrink until they fit their box, down to the configured on-screen
+      // floor (rulesText.minPx). They used to stop at eleven on-screen pixels
+      // and then overflow the parchment on a phone-sized card (owner 2026-11-04).
+      row.low=rules?RULES_MIN_PX/zoom:Number(text.dataset.minFont)*scale;
       row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
       texts.push(row);
     }
@@ -138,12 +194,15 @@ export function fitIllustratedCards(cards) {
     row.text.dataset.fittedFont=String(row.result/row.scale);
     if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
   }
+  // Last resorts for rules that still overflow at the smallest size: tighten the
+  // line height, then clamp with an ellipsis. Text never leaves the parchment.
+  fitRulesToBox(texts.filter(row=>row.rules));
   // Every clause stays on the face at the readable floor; nothing is swapped for an Inspect prompt.
   // `rulesOverflow` still reports a bay too short for the words, for the Information door.
   const bounded=texts.filter(row=>row.bounded);
   const overBudget=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
   for(const row of bounded){
-    row.omitSecondary=overBudget(row);
+    row.omitSecondary=overBudget(row)||Boolean(row.clipped);
     if(row.omitSecondary||row.hasHiddenRules)row.face.dataset.faceOmitted='true';
     row.face.dataset.rulesExpanded='false';
     row.face.dataset.rulesDense='false';
@@ -161,7 +220,7 @@ export function fitIllustratedCards(cards) {
     // Lines actually rendered at the settled size (guarding a zero line box).
     const lineBox=(parseFloat(row.text.style.fontSize)||0)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
     row.renderedLines=lineBox>0?Math.round(row.text.scrollHeight/lineBox):0;
-    row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow
+    row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow||row.clipped
       ||(row.compact&&!row.bounded&&row.renderedLines>GLANCE_LINES)
       ||row.text.scrollHeight>Math.min(row.finalHeight,row.text.clientHeight)+1
       ||row.text.scrollWidth>row.text.clientWidth+1);
@@ -174,4 +233,29 @@ export function fitIllustratedCards(cards) {
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
   faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
+}
+
+const overflowing=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
+/**
+ * Rows (`{text,boxHeight,lineHeight}`) that still overflow their box at the smallest font: tighten the line
+ * height step by step to the floor, then clamp the lines with an ellipsis. Returns the rows it had to clip.
+ */
+export function fitRulesToBox(rows){
+  let failing=rows.filter(overflowing);
+  while(failing.length){
+    let moved=false;
+    for(const row of failing){
+      const now=parseFloat(row.text.style.lineHeight)||row.lineHeight,next=Math.max(LINE_HEIGHT_FLOOR,now-LINE_HEIGHT_STEP);
+      if(next<now-1e-6){row.text.style.lineHeight=String(next);moved=true;}
+    }
+    if(!moved)break;
+    failing=failing.filter(overflowing);
+  }
+  for(const row of failing){
+    const lineBox=(parseFloat(row.text.style.fontSize)||1)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
+    const lines=Math.max(1,Math.floor(row.boxHeight/lineBox));
+    Object.assign(row.text.style,{display:'-webkit-box',webkitBoxOrient:'vertical',webkitLineClamp:String(lines),overflow:'hidden',textOverflow:'ellipsis'});
+    row.clipped=true;
+  }
+  return failing;
 }
