@@ -313,10 +313,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const { pseudo } = metricsFor(frame, zoom), box = boxes[index];
       if (pseudo) obstacles.push({ left: box.left + pseudo.left * zoom, top: box.top + pseudo.top * zoom, width: pseudo.width * zoom, height: pseudo.height * zoom });
     });
-    // Enemy overhead meters (the HP bar) are kept clear so a panel never lands on them.
+    // Enemy overhead meters (the HP bar) are kept clear of the player's panel only (enemy placement is unchanged).
     frames.forEach(frame => {
       if (frame.classList.contains('player')) return;
-      for (const meters of frame.querySelectorAll(':scope > .target-hud-overhead-meters > .meters, :scope > .meters')) obstacles.push(rect(meters));
+      for (const meters of frame.querySelectorAll(':scope > .target-hud-overhead-meters > .meters, :scope > .meters')) obstacles.push({ ...rect(meters), playerOnly: true });
     });
     const sizing = [...panels].flatMap(([id, panel]) => {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) return [];
