@@ -57,6 +57,7 @@ export function openConfirmationModal({
   consequence = '',
   target = '',
   detailsHtml = '',
+  detailsNode = null,
   tone = 'normal',
   onConfirm,
   onCancel = () => {},
@@ -111,11 +112,13 @@ export function openConfirmationModal({
 
   const details = document.createElement('div');
   details.className = 'confirmation-details as-detailcard muted';
-  details.hidden = !detailsHtml;
+  details.hidden = !detailsHtml && !detailsNode;
   // Callers build this only from escaped, model-owned presentation values.
   // Keeping the detail region in the shared modal is what makes costs and
   // consequences uniform rather than a collection of screen-owned dialogs.
   if (detailsHtml) details.innerHTML = detailsHtml;
+  // A live node, for a decision that is made inside the modal (the card upgrade's choice among options).
+  if (detailsNode) details.append(detailsNode);
 
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
