@@ -15,6 +15,14 @@ export function targetHudSide(role, lane, config = targetHudConfig(), enemyCount
   const index = typeof lane === 'string' && ['left', 'middle', 'right'].includes(lane) ? ['left', 'middle', 'right'].indexOf(lane) : Number(lane) || 0;
   return sides[Math.min(2, Math.max(0, index))];
 }
+// Owner 2026-11-04: the player's panel sits immediately right of the player's visible body. When the room to the
+// right is narrower than the panel (a phone), the panel narrows to fit (never below `pinnedMinWidthPx`) so the
+// clamp cannot slide it back over the player. `width` includes the 25px info-button lead the caller adds.
+export function targetHudPinnedWidth({ bounds, anchor, width, config = targetHudConfig(), tightTop = false }) {
+  const { gapPx, edgeInsetPx, pinnedMinWidthPx = 0 } = config.positioning;
+  const room = bounds.left + bounds.width - edgeInsetPx - (anchor.left + anchor.width + gapPx);
+  return Math.max(Math.min(width, pinnedMinWidthPx), Math.min(width, room));
+}
 const clamp = (value, low, high) => Math.min(Math.max(low, high), Math.max(low, value));
 export const targetHudOverlaps = (a, b, gap = 0) => a.width > 0 && a.height > 0 && b.width > 0 && b.height > 0 && a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
   && a.top < b.top + b.height + gap && a.top + a.height + gap > b.top;
@@ -37,8 +45,9 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     const pinned = panel.role === 'player';
     const width = Math.min(panel.width, area.width), height = Math.min(panel.height, area.height), a = panel.anchor;
     const side = targetHudSide(panel.role, panel.lane, config, enemyCount);
+    // A pinned (player) panel's top is the anchor's top, the player's overhead meters; it shifts vertically, never across.
     const point = direction => direction === 'below' ? { left: a.left + (a.width - width) / 2, top: a.top + a.height + gap }
-      : { left: direction === 'left' ? a.left - width - gap : a.left + a.width + gap, top: a.top - height / 3 };
+      : { left: direction === 'left' ? a.left - width - gap : a.left + a.width + gap, top: pinned ? a.top : a.top - height / 3 };
     const choices = [], seen = new Set();
     function add(left, top, penalty, chosen = side) {
       const rect = { left: clamp(left, area.left, area.left + area.width - width), top: clamp(top, area.top, area.top + area.height - height), width, height };
@@ -57,7 +66,9 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
       for (const top of [obstacle.top + obstacle.height + gap, obstacle.top - height - gap])
         for (const left of [area.left, area.left + area.width - width])
           add(left, top, 1200 + Math.abs(left - a.left) + Math.abs(top - a.top), 'obstacle');
-    const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other)).length;
+    // The panel's own sprite box (mostly transparent canvas) is not an obstacle: the panel is anchored to the body beside it.
+    const mine = obstacles.filter(other => other.id !== panel.id);
+    const obstacleCount = rect => mine.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
     const free = choices.filter(choice => obstacleCount(choice) === 0);
     // A pinned panel overlaps a decoration before it leaves the player's side.
@@ -84,7 +95,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
   const placed = [];
   for (const request of requests) {
     const score = rect => rect.penalty + placed.filter(other => targetHudOverlaps(rect, other, gap)).length * 1e7
-      + obstacles.filter(other => targetHudOverlaps(rect, other)).length * 1e5;
+      + obstacles.filter(other => other.id !== request.id && targetHudOverlaps(rect, other)).length * 1e5;
     const choices = [...request.choices].sort((a, b) => score(a) - score(b));
     placed.push({ id: request.id, ...choices[0] });
   }

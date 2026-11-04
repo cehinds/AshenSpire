@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
@@ -288,7 +288,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
       const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
-      return { frame, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
+      const overhead = frame.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect();
+      return { frame, body, overheadTop: overhead?.height ? overhead.top : null, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
     });
     // Phase 2: reads that follow. The intent placement itself is written last:
     // it moves only the intent inside its own frame, and none of the boxes read
@@ -312,9 +313,20 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const { pseudo } = metricsFor(frame, zoom), box = boxes[index];
       if (pseudo) obstacles.push({ left: box.left + pseudo.left * zoom, top: box.top + pseudo.top * zoom, width: pseudo.width * zoom, height: pseudo.height * zoom });
     });
+    // Enemy overhead meters (the HP bar) are kept clear so a panel never lands on them.
+    frames.forEach(frame => {
+      if (frame.classList.contains('player')) return;
+      for (const meters of frame.querySelectorAll(':scope > .target-hud-overhead-meters > .meters, :scope > .meters')) obstacles.push(rect(meters));
+    });
     const sizing = [...panels].flatMap(([id, panel]) => {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) return [];
-      return [{ id, panel, entry, frame, anchor: rect(frame.querySelector('.sprite')), lane: frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
+      // Owner 2026-11-04: the player's panel anchors to the visible body (not the wider transparent sprite box), its
+      // top at the overhead meters, so it sits immediately right of the player.
+      const mine = intents.find(row => row.frame === frame), body = mine?.body;
+      const anchor = entry.role === 'player' && body && Number.isFinite(body.left) && Number.isFinite(body.right)
+        ? { left: body.left, width: body.right - body.left, top: mine.overheadTop ?? body.headY ?? body.top, height: Math.max(0, (body.feetY ?? body.bottom) - (mine.overheadTop ?? body.headY ?? body.top)) }
+        : rect(frame.querySelector('.sprite'));
+      return [{ id, panel, entry, frame, anchor, lane: frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
         : Math.max(0, Math.min(2, 'ABCDEF'.indexOf(frame.dataset.formationCell?.[0]))),
         ...targetHudPanelSizing({ viewportWidth: rootBox.width, count: panels.size }, config) }];
     });
@@ -328,6 +340,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (tile && path) tiles.set(id, { path, box: tile.getBoundingClientRect() });
     }
     // Phase 3: panel sizing writes, then every panel's height.
+    for (const row of sizing) {
+      // A player panel narrows to the room right of the body rather than sliding back over it.
+      if (row.entry.role === 'player') row.width = targetHudPinnedWidth({ bounds, anchor: row.anchor, width: row.width + 25, config }) - 25;
+    }
     for (const { panel, crowded, width, font, statusSize } of sizing) {
       setData(panel.node, 'crowded', String(crowded));
       setVar(panel.node, '--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);

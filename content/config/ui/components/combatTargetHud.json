@@ -33,7 +33,8 @@
       "right",
       "right",
       "right"
-    ]
+    ],
+    "pinnedMinWidthPx": 150
   },
   "motion": {
     "dwellMs": 500,
