@@ -59,6 +59,7 @@ function releaseFace(face) {
   liveFaces.delete(face); faceCards.delete(face); sizeObserver?.unobserve(face);
 }
 function watchFaces(pairs) {
+  for (const face of [...liveFaces]) if (!face.isConnected) releaseFace(face);   // removed while hidden: no resize callback ever comes
   if (typeof ResizeObserver === 'function' && !sizeObserver) {
     sizeObserver = new ResizeObserver(list => {
       for (const e of list) {
@@ -119,6 +120,8 @@ export function fitIllustratedCards(cards) {
       if(rules){
         // A previous clipped fit must not constrain this fit's measurements.
         text.style.maxHeight='none';layer.style.justifyContent='';
+        // A previous fit's ellipsis clamp must not outlive the need for it.
+        text.style.overflow='';text.style.textOverflow='';text.style.webkitBoxOrient='';text.style.webkitLineClamp='unset';
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');

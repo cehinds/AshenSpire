@@ -39,6 +39,9 @@ export const CARD_LAYERS=Object.freeze({background:1,art:2,backdrops:3,footerTri
 // Complementary clips split the existing painted components without replacing
 // their texture. Both pieces retain exactly the same authored image geometry.
 const interiors={base:'6% 10%,12% 5%,88% 5%,94% 10%,94% 90%,88% 96%,12% 96%,6% 90%',panel:'5% 12%,95% 12%,95% 88%,5% 88%',flag:'12% 5%,88% 5%,88% 84%,50% 77%,12% 84%'};
+// The panel interior clip: 12% top and bottom insets of the ORIGINAL height. After growth by 1/k the same
+// design-px band is 12*k percent of the new height, so the frame keeps its thickness (sides stay 5%).
+export function panelInterior(k=1){const t=(12*k).toFixed(2),b=(100-12*k).toFixed(2);return `5% ${t}%,95% ${t}%,95% ${b}%,5% ${b}%`;}
 function componentPlane(l,position,body,clip,layer,id=l.id,cut=null){
   const mask=cut?`clip-path:polygon(${cut});`:'';
   return `<div class="ic-plane" data-card-layer="${layer}" style="z-index:${layer};${l.clip?`clip-path:${clip};`:''}"><div class="ic-layer" data-component="${esc(id)}" style="${position}${mask}">${body}</div></div>`;
@@ -98,9 +101,9 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;
     if(interiors[l.id]){
-      // The parchment's border keeps its thickness when the box grows: the vertical insets shrink by the old/new height.
+      // The parchment's border keeps its thickness when the box grows (see panelInterior).
       let inside=interiors[l.id];
-      if(l.id==='panel'&&l.h>source.h){const k=source.h/l.h;inside=`5% ${(50-38*k).toFixed(2)}%,95% ${(50-38*k).toFixed(2)}%,95% ${(50+38*k).toFixed(2)}%,5% ${(50+38*k).toFixed(2)}%`;}
+      if(l.id==='panel'&&l.h>source.h)inside=panelInterior(source.h/l.h);
       const outside=`evenodd,0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,${inside},${inside.split(',')[0]}`;
       return componentPlane(l,position,body,clip,l.id==='base'?CARD_LAYERS.background:CARD_LAYERS.fills,l.id,inside)
         +componentPlane(l,position,body,clip,CARD_LAYERS.trim,l.id==='base'?'card-trim':`${l.id}-trim`,outside);
