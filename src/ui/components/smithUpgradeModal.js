@@ -74,7 +74,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   /**
    * The first affected card as its before and after faces. A live card instance steps its own smithing tier; a Core
    * row carries only the card's id and its live value before and after (`damage` or `block`), so its faces are the
-   * card's definition with that effect's amount set to each value. No such card: no faces, the rows say it all.
+   * copy's own resolved definition (its `cardReference`: upgrades, rank), else the card's base definition, with that effect's amount set to each value. No such card: no faces, the rows say it all.
    */
   const facesFor = (selected) => {
     const face = (reference, definition) => renderCard(registries, reference, { small: true, tooltip: false, inspectReadOnly: true, ...(definition ? { definition } : {}) });
@@ -87,10 +87,11 @@ export function mountSmithUpgradeModal(host, initialModel, {
       const change = row.cardId && row.values.find((value) => value.kind === 'card');
       if (!change) continue;
       try {
-        const base = resolveCard(registries, { cardId: row.cardId });
+        const ref = row.cardReference || { cardId: row.cardId };
+        const base = resolveCard(registries, ref);
         const at = (amount) => ({ ...base, effects: base.effects.map((effect) => (effect.op === change.op ? { ...effect, amount } : effect)) });
         if (!base.effects.some((effect) => effect.op === change.op)) continue;
-        return upgradeFacesNode({ before: face({ cardId: row.cardId }, at(change.before)), after: face({ cardId: row.cardId }, at(change.after)) });
+        return upgradeFacesNode({ before: face(ref, at(change.before)), after: face(ref, at(change.after)) });
       } catch { /* a card the registry cannot resolve draws no face */ }
     }
     return null;

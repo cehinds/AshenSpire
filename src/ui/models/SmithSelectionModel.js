@@ -36,6 +36,7 @@ function groupedAffected(cards) {
       name: card.name.replace(/\+$/, ''),
       role: card.role,
       reference: card.reference,
+      cardReference: card.cardReference,
       rating: card.rating,
       changes,
       values: rawChanges,

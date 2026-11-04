@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, createCardInstance } from '../src/model/state.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
@@ -169,6 +169,21 @@ test('copies of one card with different faces are previewed separately; co-op re
   assert.equal(rows.reduce((sum, row) => sum + row.copies, 0), run.deck.filter((card) => card.cardId === 'core.smash').length);
   commitGameProfileRest(reg, run, 'smith', { itemRef: 'armament/greatsword' });
   assert.ok(run.lastSmithingReceipt.affectedCards.length >= rows.length);
+});
+
+test('a Core card row carries its own copy (upgrades, rank), so the modal faces keep them', () => {
+  const run = fresh(); visit(run);
+  const smash = run.deck.find((card) => card.cardId === 'core.smash');
+  run.deck.push({ ...smash, instanceId: 'smash-up', upgraded: true, upgradeSteps: [{ k: 'dmg', n: 2 }] });
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
+  const rows = candidate.coreCardRows.filter((row) => row.cardId === 'core.smash' && row.op === 'damage');
+  const upgraded = rows.find((row) => row.cardReference?.upgraded === true), plain = rows.find((row) => !row.cardReference?.upgraded);
+  assert.ok(upgraded && plain, 'each distinct copy carries its own reference');
+  assert.equal('instanceId' in upgraded.cardReference, false);
+  const damage = (row) => resolveCard(reg, row.cardReference).effects.find((effect) => effect.op === 'damage').amount;
+  assert.notEqual(damage(upgraded), damage(plain), 'the upgraded copy resolves to its own upgraded definition');
+  const shown = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword').properties.selected.affectedRows;
+  assert.ok(shown.some((row) => row.cardReference?.upgraded === true), 'the modal row keeps the copy');
 });
 
 test('a rank-2 Core shield may spend the tier point in its authored points (validator matches the resolver)', async () => {
