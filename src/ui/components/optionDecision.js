@@ -17,6 +17,7 @@ export function armOptionDecision(control, {
   consequence = '',
   detailsHtml = '',
   detailsNode = null,
+  blockedDetailsNode = null,
   confirmLabel = 'Confirm',
   cancelLabel = t('common.back'),
   tone = 'normal',
@@ -52,7 +53,8 @@ export function armOptionDecision(control, {
     message: allowed() ? message : blockedMessage,
     consequence,
     detailsHtml: allowed() ? detailsHtml : blockedDetailsHtml,
-    detailsNode: allowed() ? detailsNode : null,
+    // A function is called at each opening, so a re-opened review gets fresh live nodes (inspection handlers intact).
+    detailsNode: (() => { const make = allowed() ? detailsNode : blockedDetailsNode; return typeof make === 'function' ? make() : make; })(),
     confirmLabel,
     cancelLabel,
     tone,

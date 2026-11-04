@@ -12,7 +12,7 @@ import { renderCollectibleCard } from './collectibleCard.js';
 // `.smith-*` stay on these elements because tools/armament-smithing-ui.mjs reads them.
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
-import { el, html, pill, prose, artWell, statRow, glyph, statusText } from '../kit/index.js';
+import { el, pill, prose, artWell, statRow, glyph, statusText } from '../kit/index.js';
 import { mountUpgradeDesk, deskRow, deskArt } from './upgradeDesk.js';
 import { renderCard } from './card.js';
 import { resolveCard } from '../../model/registries.js';
@@ -103,7 +103,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     : null);
 
   /** The decision door's details (the shared body, upgradeConfirm.js): cost, recovery, the faces, then the rows under them. */
-  const confirmationDetails = (selected) => html([
+  const confirmationNode = (selected) => (
     el('div', { class: 'smith-confirm-details' }, upgradeConfirmNodes({
       cost: el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
       cinders: cinderNode(currentModel.properties),
@@ -114,8 +114,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
         ...selected.affectedRows.map((row) => statRow({ flat: true, className: 'smith-confirm-row', nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
         statRow({ flat: true, className: 'smith-confirm-row smith-confirm-requirements', nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
       ],
-    })),
-  ]);
+    }))
+  );
 
   function commitSelected() {
     if (!currentModel.properties.canConfirm) return;
@@ -211,7 +211,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         title: t('smith.upgrade.title', { name: selected.name }),
         message: `Tier ${selected.currentLevel} becomes tier ${selected.nextLevel}. This spends the shown Stone cost${model.properties.staysAtShrine ? '; ' : ' '}${model.properties.decisionConsequence}.`,
         consequence: 'PERMANENT FOR THIS RUN',
-        detailsHtml: confirmationDetails(selected),
+        detailsNode: () => confirmationNode(selected),
         confirmLabel: t('smith.upgrade.confirm', { cost: selected.cost }) + (p.cinderCost > 0 ? ` · ${t('blacksmith.modal.cinders', { cinders: p.cinderCost })}` : ''),
         // W2: the way out is Back (bottom-left), the same word every review wears.
         cancelLabel: t('common.back'),
@@ -219,7 +219,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         canCommit: () => Boolean(currentModel.properties.canConfirm),
         blockedTitle: `Cannot upgrade ${selected.name}`,
         blockedMessage: model.properties.blockedReasons.join(' ') || 'This upgrade is not currently available.',
-        blockedDetailsHtml: confirmationDetails(selected),
+        blockedDetailsNode: () => confirmationNode(selected),
         returnFocusElement: cards.find((card) => card.dataset.itemRef === selected.itemRef) || null,
       });
       disarmDecision = armed;

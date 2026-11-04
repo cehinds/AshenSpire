@@ -351,7 +351,7 @@ test('the card\'s modal is the shared body: cost, then the before and after face
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, card.instanceId), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const body = modalOf(dom).querySelector('.confirmation-details');
-    const kids = [...body.children].map(n => n.className.split(' ')[0]);
+    const kids = [...body.firstElementChild.children].map(n => n.className.split(' ')[0]);
     assert.deepEqual([kids[0], kids[1], kids.at(-1)].filter(Boolean).slice(0, 2), ['confirmation-cost', 'card-upgrade-faces'], 'cost first, then the faces');
     assert.ok(kids.indexOf('card-upgrade-faces') < kids.indexOf('confirmation-change-list'), 'the stat rows are under the faces');
     closeConfirmationModal();

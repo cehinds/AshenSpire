@@ -2,7 +2,7 @@
 // frame, rail, pane and decision beat (smithUpgradeModal.js) with deck-card rows. The component renders and
 // routes; the host owns the run mutation. Every fact is from CardUpgradeModel.js, whose plan is the one
 // commitCardUpgrade applies, so the before/after preview is exactly what the commit does.
-import { el, html, pill, eyebrow, artWell, statRow, statusText, landControl } from '../kit/index.js';
+import { el, pill, eyebrow, artWell, statRow, statusText, landControl } from '../kit/index.js';
 import { mountUpgradeDesk, deskRow, deskArt } from './upgradeDesk.js';
 import { renderCard } from './card.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
@@ -156,7 +156,7 @@ export function mountCardUpgradeModal(host, initialModel, {
     faces: model.faces ? facesNode(model) : null,
     rows: model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) })),
   }); };
-  const confirmationDetails = (raw) => html(detailNodes(raw));
+  const confirmationNode = (raw) => el('div', { class: 'card-upgrade-modal-details' }, detailNodes(raw));
   // With a choice among options, the modal holds the choice itself: a live node the options redraw in place.
   let modalDetails = null;
   function fillDetails() {
@@ -207,15 +207,14 @@ export function mountCardUpgradeModal(host, initialModel, {
         title: t('smith.upgrade.title', { name: selected.name }),
         message: t('cardUpgrade.decision.message', { from: selected.levelFrom, to: selected.levelTo, then: decisionConsequence }),
         consequence: t('cardUpgrade.permanent'),
-        detailsHtml: choice ? '' : confirmationDetails(model),
-        detailsNode: choice ? modalDetails : null,
+        detailsNode: choice ? modalDetails : () => confirmationNode(model),
         confirmLabel: confirmText(selected),
         cancelLabel: t('common.back'),
         onCommit: commitSelected,
         canCommit: () => Boolean(currentModel.canConfirm) && (!(selected.options?.length > 1) || Boolean(selected.options[chosen])),
         blockedTitle: t('cardUpgrade.blocked', { name: selected.name }),
         blockedMessage: model.blockedReasons.join(' ') || t('cardUpgrade.unavailable'),
-        blockedDetailsHtml: confirmationDetails(model),
+        blockedDetailsNode: () => confirmationNode(model),
         returnFocusElement: cards.find((card) => card.dataset.instanceId === selected.instanceId) || null,
       });
       disarmDecision = armed;

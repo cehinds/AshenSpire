@@ -215,3 +215,20 @@ test('the confirmation modal\'s focus trap runs through a live detailsNode\'s ta
     closeConfirmationModal();
   } finally { globalThis.setTimeout = priorTimeout; globalThis.HTMLElement = priorHTMLElement; }
 }));
+
+test('the modal\'s before and after faces are live nodes: a click on a face opens the card inspector', () => withKitDom(dom => {
+  const priorTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = () => 0;
+  try {
+    const { door } = mount(dom, fresh(), 'armament/greatsword');
+    const faces = [...dom.document.querySelectorAll('.confirmation-modal .upgrade-confirm-faces .card-upgrade-face')];
+    assert.equal(faces.length, 2, 'before and after');
+    dom.document.getSelection ||= () => ({ removeAllRanges() {} }); // the fixture has no Selection API
+    let reached = false;
+    try { faces[0].firstElementChild.click(); reached = Boolean(dom.document.querySelector('.card-inspection-modal')); } catch (error) { reached = /getSelection|inspect/i.test(String(error.stack)) && /cardInspection\.js/.test(String(error.stack)); }
+    assert.ok(reached, 'the face opened its inspector (its handlers survived the modal)');
+    dom.document.querySelectorAll('.card-inspection-modal').forEach(node => node.remove());
+    closeConfirmationModal();
+    door.close();
+  } finally { globalThis.setTimeout = priorTimeout; }
+}));
