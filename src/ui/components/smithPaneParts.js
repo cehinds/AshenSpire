@@ -1,6 +1,5 @@
 // Pane parts shared by the Smith item dialog (smithUpgradeModal.js) and the Core card-upgrade dialog
-// (cardUpgradeModal.js), so both read the same. `.smith-*` classes and the b/i/strong delta tags stay:
-// tools/armament-smithing-ui.mjs reads them.
+// (cardUpgradeModal.js), so both read the same. `.smith-*` classes and the b/i/strong delta tags stay.
 import { el, glyph } from '../kit/index.js';
 import { t } from '../strings.js';
 

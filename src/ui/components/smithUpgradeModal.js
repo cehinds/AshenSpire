@@ -9,7 +9,7 @@ import { renderCollectibleCard } from './collectibleCard.js';
 // a compact head, the rows, and a footer whose one button leaves. Tapping an item opens its upgrade modal at
 // once, the shared confirmation modal ("Upgrade Greatsword?": cost, recovery, every affected card's before
 // and after, requirements; Back and Upgrade). There is no detail view in the list and no Back button for one.
-// `.smith-*` stay on these elements because tools/armament-smithing-ui.mjs reads them.
+// `.smith-*` stay on these elements.
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { el, pill, prose, artWell, statRow, glyph, statusText } from '../kit/index.js';
