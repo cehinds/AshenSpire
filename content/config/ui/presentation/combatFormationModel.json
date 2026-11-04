@@ -35,7 +35,7 @@
         "landscape": 0.26
       },
       "statureCap": 1.15,
-      "combatantScale": 0.8,
+      "combatantScale": 0.72,
       "overlapAllowance": 0.4,
       "edgeMarginPx": 6,
       "minCommonFactor": 0.35
