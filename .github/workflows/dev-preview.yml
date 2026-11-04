@@ -50,8 +50,7 @@ env:
   WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'test' || endsWith((github.base_ref || github.ref_name), '/test') || (github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
   # The art packs this workflow fetches (docs/EXTERNAL-ASSETS-PLAN.md §2,
   # tools/fetch-art.mjs --pack): all three on every branch since step 13. The
-  # build carries only its tier's (light and common on dev), but the
-  # workbench copies the high pack's folders the light one lacks.
+  # build carries only its tier's (light and common on dev).
   ART_PACKS: all
 
   # STEPS 12 AND 13 (docs/EXTERNAL-ASSETS-PLAN.md): the art trees (assets/,
@@ -260,9 +259,6 @@ jobs:
       - name: Combat effect tags, outcomes, and character outlines
         run: node --test tests/combatEffects.test.mjs tests/combatEffectIntegration.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs tests/combatPose.test.mjs
 
-      - name: Pose studio project schema and event bindings
-        run: node --test pose-studio/tests/model.test.mjs pose-studio/tests/renewal.test.mjs pose-studio/tests/base-actions.test.mjs
-
       - name: Collect the playable build
         id: collect
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -293,45 +289,6 @@ jobs:
           # file) stays out: it is the standalone artifact.
           cp -r build/AshenSpire.html build/asset-base.json build/packs build/objects preview/
           cp preview/AshenSpire.html preview/index.html
-          # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
-          # The source-module preview pages (world-atlas-, equipment-selection-,
-          # armament-kits-preview.html), the pose studio and docs/preview read
-          # `assets/…` BY PATH (assetUrl() in source mode). They get this tier's
-          # art in preview/workbench/assets/, copied from the FETCHED RELEASE
-          # (the art trees left this repository at step 13): the light pack's
-          # assets-mobile/ on dev, the high pack's assets/ on release/main,
-          # with the common pack's fonts beside either. tools/art-source.mjs
-          # names each cache directory, and fails (naming the fetch) for a pack
-          # that is not fetched. preview/AshenSpire.html must not get a tree: an
-          # id its pack index misses has to 404 visibly, not load quietly from a
-          # tree left beside it.
-          W=preview/workbench
-          mkdir -p "$W/assets"
-          # Assigned first: errexit ignores a failed substitution inside an
-          # argument, which would turn the source into "/.".
-          HIGH_DIR=$(node tools/art-source.mjs --dir assets)
-          if [ "$(echo $WEB_TIER)" = "--light" ]; then
-            LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
-            cp -r "$LIGHT_DIR"/. "$W/assets/"
-          else
-            cp -r "$HIGH_DIR"/. "$W/assets/"
-          fi
-          mkdir -p "$W/assets/fonts"
-          FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
-          cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
-          # The standalone is collected and uploaded by its own steps, right
-          # after the build, so nothing here can cost a commit its download.
-          cp -r src "$W/src"
-          cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
-          cp tools/serve-preview.mjs "$W/serve-preview.mjs"
-          cp -r styles "$W/styles"
-          # --update=none: the copy above already placed this tier's art under
-          # workbench/assets/ (the light twins on dev); these copies only
-          # add the files it does not ship, and never overwrite its art.
-          cp -r --update=none "$HIGH_DIR/environments" "$W/assets/"
-          cp -r pose-studio "$W/pose-studio"
-          cp -r --update=none "$HIGH_DIR/pose-effects" "$W/assets/"
-          cp -r --update=none "$HIGH_DIR/combat-effects" "$HIGH_DIR/painted-outfits" "$W/assets/"
           # The game's own folder carries no art tree; verify-external reads
           # the pack, and this keeps that honest.
           test ! -e preview/assets
@@ -342,12 +299,6 @@ jobs:
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
             echo "Open AshenSpire.html locally to play this exact commit."
-            echo "The review pages live in workbench/. For the equipment review, run"
-            echo "node serve-preview.mjs in workbench/ (paths below are relative to it)."
-            echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
-            echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
-            echo "Use its class and screen-size controls to test hand choices and Continue."
-            echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
             echo "The art inspection pages (combat-effect catalog, readiness gallery) are"
             echo "published by cehinds/AshenSpire-art since the art left this repository."
             echo
@@ -409,15 +360,6 @@ jobs:
         with:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
-          retention-days: 14
-
-      - name: Upload the committed combat stance gallery
-        if: ${{ !cancelled() && hashFiles('pose-studio/stances/combat-stances-gallery/index.html') != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: combat-stances-gallery-${{ github.sha }}
-          path: pose-studio/stances/combat-stances-gallery/
-          if-no-files-found: error
           retention-days: 14
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
@@ -635,12 +577,3 @@ jobs:
       # reachable when a usable region of it is hittable, rather than only its
       # centre pixel — at which point it belongs here, because the #720 card
       # overlap it found is real and the fan is not the whole of it.
-
-      - name: Capture the pose studio on desktop and phone
-        run: node tools/pose-studio-capture.mjs --out "${{ runner.temp }}/pose-studio-evidence"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pose-studio-screenshots
-          path: ${{ runner.temp }}/pose-studio-evidence/
-          retention-days: 14

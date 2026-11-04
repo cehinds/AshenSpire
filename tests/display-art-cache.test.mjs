@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { artPath, addDisplayRecord, copyDisplayArt, copySourceArt, DISPLAY_METADATA } from '../tools/art-source.mjs';
+import { artPath, addDisplayRecord, copyDisplayArt, copySourceArt } from '../tools/art-source.mjs';
 import { markerFor, readPin } from '../tools/fetch-art.mjs';
 import { withAlternativeArt, planPacks, objectPath } from '../tools/asset-pack.mjs';
 import { readLayeredArt, withLayeredArt } from '../tools/layered-art.mjs';
@@ -124,24 +124,6 @@ test('source sandbox helper also materializes current display images and game-ow
   assert.equal(readFileSync(join(out,'assets/fonts/a.woff2'),'utf8'),'tiny font');
   assert.deepEqual(readFileSync(join(out,'assets-display/layered/scene.webp')),f.entries['assets-display/layered/scene.webp']);
   assert.ok(existsSync(join(out,'assets-display/layered/manifest.json')));
- }finally{f.close();}
-});
-
-test('actual portable Pose package overlays all local metadata after verified images',()=>{
- const f=fixture();try {
-  for(const tool of ['art-source.mjs','fetch-art.mjs','zip.mjs','art-authoring.mjs'])f.put('tools/'+tool,readFileSync(new URL('../tools/'+tool,import.meta.url)));
-  f.put('pose-studio/package.mjs',readFileSync(new URL('../pose-studio/package.mjs',import.meta.url)));
-  f.put('pose-studio/index.html','tiny editor');f.put('src/entry.js','tiny game');f.put('engine/entry.js','tiny engine');f.put('AshenSpire.html','tiny artifact fixture');
-  const high='.art-cache/ashenspire-hd-assets-v24/high/';
-  for(const name of ['combat-effects','pose-effects','painted-outfits','readiness-poses'])f.put(high+'assets/'+name+'/tiny.png','tiny image');
-  f.put(high+'.verified',markerFor(readPin(f.root),f.manifest,'high')+'\n');
-  for(const name of ['art/pose-studio','art/combat-effects-2026-09-07','art/card-effect-refresh-2026-09-09','pose-studio/renewal','pose-studio/stances'])f.put('authoring/'+name+'/project.json','{}');
-  for(const id of DISPLAY_METADATA)f.put(id,'retained game metadata '+id);
-  const result=spawnSync(process.execPath,[join(f.root,'pose-studio/package.mjs'),'--asset-root',join(f.root,'authoring')],{cwd:f.root,encoding:'utf8',env:{...process.env,ASHEN_ART_SOURCE:'cache',ASHEN_ART_CHECKOUT:''}});
-  assert.equal(result.status,0,result.stdout+result.stderr);
-  const out=join(f.root,'build/pose-studio-app');
-  for(const id of DISPLAY_METADATA)assert.equal(readFileSync(join(out,id),'utf8'),'retained game metadata '+id);
-  for(const [id,bytes] of Object.entries(f.entries))assert.deepEqual(readFileSync(join(out,id)),bytes);
  }finally{f.close();}
 });
 
