@@ -14,7 +14,7 @@ import { smithingPlan } from '../src/model/smithing.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from '../src/ui/components/upgradeConfirm.js';
-import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { openConfirmationModal, closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
@@ -186,4 +186,32 @@ test('a host\'s cinder charge shows in the modal for the item selected NOW, afte
   assert.ok(cinders().classList.contains('unaffordable'), 'the second item\'s 40 exceeds the 25 held: red');
   closeConfirmationModal();
   door.close();
+}));
+
+test('the confirmation modal\'s focus trap runs through a live detailsNode\'s tab stops, then Back, then Confirm', () => withKitDom(dom => {
+  const priorTimeout = globalThis.setTimeout;
+  const timers = [];
+  globalThis.setTimeout = fn => { timers.push(fn); return timers.length; };
+  const priorHTMLElement = globalThis.HTMLElement;
+  globalThis.HTMLElement = dom.document.body.constructor;
+  try {
+    const group = dom.document.createElement('div');
+    const radio = (on) => { const b = dom.document.createElement('button'); b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(on)); b.setAttribute('tabindex', on ? '0' : '-1'); b.className = 'opt'; return b; };
+    const a = radio(true), b = radio(false);
+    group.append(a, b);
+    openConfirmationModal({ title: 'Upgrade?', message: 'm', detailsNode: group, confirmLabel: 'Go', returnFocusElement: null });
+    timers.splice(0).forEach(fn => fn());
+    assert.equal(dom.document.activeElement, a, 'initial focus is the picked option');
+    const cancel = dom.document.querySelector('.confirmation-cancel');
+    const confirm = dom.document.querySelector('.confirmation-confirm');
+    const press = (shiftKey) => { const e = new dom.Event('keydown', { cancelable: true }); e.key = 'Tab'; e.shiftKey = shiftKey; window.dispatchEvent(e); return e.defaultPrevented; };
+    // From the last stop, Tab wraps to the first; Shift+Tab from the first wraps to the last.
+    confirm.focus(); assert.equal(press(false), true); assert.equal(dom.document.activeElement, a, 'Confirm wraps to the option');
+    assert.equal(press(true), true); assert.equal(dom.document.activeElement, confirm, 'Shift+Tab from the option wraps to Confirm');
+    cancel.focus(); assert.equal(press(true), false, 'Shift+Tab from Back is the browser\'s: it lands on the option');
+    // A re-render moves the tab stop; the trap reads it live.
+    a.setAttribute('tabindex', '-1'); b.setAttribute('tabindex', '0'); a.setAttribute('aria-checked', 'false'); b.setAttribute('aria-checked', 'true');
+    confirm.focus(); press(false); assert.equal(dom.document.activeElement, b, 'the re-picked option is the live first stop');
+    closeConfirmationModal();
+  } finally { globalThis.setTimeout = priorTimeout; globalThis.HTMLElement = priorHTMLElement; }
 }));

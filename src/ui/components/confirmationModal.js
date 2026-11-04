@@ -180,7 +180,11 @@ export function openConfirmationModal({
     // the confirm button is hidden, and `controls` is Back alone — so Shift+Tab
     // from Back must land on the last entry of `controls`, never on a hidden
     // button that would leave the dialog with no visible focus.
-    const controls = [cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
+    // A live `detailsNode` (the card upgrade's option radios) re-renders on a pick, so its tab stops are read now, in DOM
+    // order, ahead of the footer's Back and Confirm. Roving-tabindex members (tabindex -1) are not tab stops.
+    const inDetails = detailsNode ? [...details.querySelectorAll('button, [tabindex], input, select')]
+      .filter((node) => node.getAttribute('tabindex') !== '-1' && !node.disabled && !node.hidden) : [];
+    const controls = [...inDetails, cancelButton, ...(confirmEnabled ? [confirmButton] : [])];
     const at = controls.indexOf(document.activeElement);
     if (event.shiftKey && at <= 0) {
       event.preventDefault();
@@ -263,7 +267,10 @@ export function openConfirmationModal({
   // and that close restores focus to the launcher. Run after that microtask so
   // the standing confirmation, not the covered screen, owns final focus.
   setTimeout(() => {
-    if (!closed) cancelButton.focus({ preventScroll: true });
+    if (closed) return;
+    // With options to choose from, focus starts on the picked one; otherwise on Back.
+    const picked = detailsNode ? details.querySelector('[aria-checked="true"]') : null;
+    (picked || cancelButton).focus({ preventScroll: true });
   }, 0);
 
   return Object.freeze({ veil, dialog, cancelButton, confirmButton, close, cancel });
