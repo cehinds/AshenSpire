@@ -347,7 +347,7 @@ test('the browser manager collects shared copies and reclaims on a full store', 
 });
 
 test('a run resumed from its shared copy after a content update re-saves as a reference', () => {
-  const old = resolveGameProfile('ashen.core@1.0.0');
+  const old = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { cards: { handBase: 3 } } });
   const oldRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, old)), old);
   const run = createRunState({ registries: oldRegistries, seed: 53, classId: 'reaver' });
   const stored = JSON.parse(JSON.stringify(run));
