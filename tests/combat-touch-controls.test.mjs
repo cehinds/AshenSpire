@@ -96,7 +96,7 @@ test('the hand info portal keeps its centring transform in combat', () => {
 });
 
 test('the combat hand asks for the (i) badge and no other card surface does', () => {
-  assert.match(hand, /infoBadge: true/);
+  assert.equal(hand.match(/actionOwnsTouch: true, infoBadge: true/g)?.length, 2);
   assert.doesNotMatch(read('../src/ui/components/equipmentCard.js'), /infoBadge/);
   assert.doesNotMatch(read('../src/ui/screens/deckEditor.js'), /infoBadge/);
 });

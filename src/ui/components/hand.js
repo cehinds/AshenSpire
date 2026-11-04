@@ -438,7 +438,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       rebuilt++;
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3,
           reuseFace: donor });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
