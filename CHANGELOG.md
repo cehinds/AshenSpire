@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-04
 
+- **One upgrade modal** ([#2524](https://github.com/cehinds/AshenSpire/pull/2524), `0.7.3.86`). Tapping an item or card opens one upgrade modal (before and after cards, updated stats under them) where you confirm; compact header and no extra Back button.
 - **Smaller enemies** ([#2519](https://github.com/cehinds/AshenSpire/pull/2519), `0.7.3.86`). Enemies are drawn at 0.8× and large ones are capped at 1.15×, so they no longer reach into the top bar on phones.
 - **Ally Guard counts as a defense in damage previews** ([#2517](https://github.com/cehinds/AshenSpire/pull/2517), `0.7.3.84`). An ally's Guard interception no longer lowers the raw hit shown in damage previews and enemy intents.
 
