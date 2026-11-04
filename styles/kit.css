@@ -2247,6 +2247,12 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .card-upgrade-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem 1.2rem; min-width: 0; }
 .card-upgrade-face { min-width: 0; padding: 1rem 0.4rem 0 0.4rem; }
 .card-upgrade-face .card { transform: none !important; }
+/* The shared upgrade confirmation (upgradeConfirm.js): the two faces share one row; each card is scaled to its half (never cropped) by a holder sized in JS. */
+.upgrade-confirm-faces { flex-wrap: nowrap; gap: 0.4rem 0.8rem; }
+.upgrade-confirm-faces .card-upgrade-face { flex: 1 1 0; min-width: 0; padding: 0.6rem 0.4rem 0; display: flex; justify-content: center; }
+.upgrade-confirm-face-holder { position: relative; flex: none; }
+.upgrade-confirm-face-holder > .card { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: scale(var(--face-scale, 1)) !important; }
+.upgrade-confirm-face-holder:not([style]) > .card { position: relative; }
 /* The blacksmith's choice: two or three after-faces side by side, stacked on a phone; the picked one is lit. */
 .card-upgrade-options { display: grid; gap: 0.5rem; padding-bottom: 0.7rem; min-width: 0; }
 .card-upgrade-option-list { display: flex; flex-wrap: nowrap; gap: 0.6rem; min-width: 0; }

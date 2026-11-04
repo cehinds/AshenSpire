@@ -265,13 +265,14 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     let displayedQuote;
     const model = () => {
       displayedQuote = blacksmithUpgradePlan(registries, run, selection, { purse: 'stones', priceMult });
-      const base = smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true });
+      const base = smithSelectionModel(registries, smithingPlan(registries, run, undefined, { stoneDiscount }), selection, { multiUse: true, autoSelect: false });
       // The stone-priced model knows nothing of cinders: route the Blacksmith's own quote (its cinder price and whether the
       // purse can pay it) into the per-selection model, so confirm is blocked, with the reason, when cinders are short.
       const blocked = base.properties.selected && !displayedQuote.ok;
       return { ...base, properties: { ...base.properties,
         ...(coreCardUpgrades(run) ? { purseLabel: `${base.properties.purseLabel} · ${t('blacksmith.modal.cinders', { cinders: run.cinders })}` } : {}),
-        ...(base.properties.selected && displayedQuote.cost ? { consequence: `${t('blacksmith.modal.price', { cinders: displayedQuote.cost })} ${base.properties.consequence}` } : {}),
+        // The quote's cinder charge for the item selected NOW; the shared modal shows it beside the Stone cost.
+        ...(base.properties.selected && displayedQuote.cost ? { cinderCost: displayedQuote.cost, cinderHave: run.cinders } : {}),
         canConfirm: base.properties.canConfirm && !blocked,
         blockedReasons: blocked && base.properties.canConfirm ? [displayedQuote.reason] : base.properties.blockedReasons,
       } };
@@ -291,7 +292,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const model = () => cardUpgradeModel(registries, run, selection, { quote, blacksmith: true });
     const modal = mountCardUpgradeModal(app, model(), {
       registries, meta, returnFocusElement, backLabel: t('smith.back.shrine'),
-      consequence: t('blacksmith.cardUpgrade.consequence'), decisionConsequence: t('blacksmith.cardUpgrade.decision'),
+      decisionConsequence: t('blacksmith.cardUpgrade.decision'),
       onSelect: (instanceId) => { selection = instanceId; modal.update(model()); },
       onBack: () => {},
       // The quote is the plan the modal showed (rolled step included); a stale one is refused by name.

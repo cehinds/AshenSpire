@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 238,
-  "distinct": 203,
+  "sites": 236,
+  "distinct": 202,
   "files": {
     "src/ui/screens/customize.js": 43,
     "src/ui/components/offlinePlay.js": 20,
@@ -23,7 +23,6 @@
     "src/ui/screens/equipment.js": 6,
     "src/ui/models/MenuModels.js": 5,
     "src/ui/components/mapboard.js": 4,
-    "src/ui/components/smithUpgradeModal.js": 4,
     "src/ui/components/upright.js": 4,
     "src/ui/models/MountServiceModel.js": 4,
     "src/ui/screens/gameover.js": 4,
@@ -38,6 +37,7 @@
     "src/ui/components/holdconfirm.js": 2,
     "src/ui/components/mountServiceModal.js": 2,
     "src/ui/components/smithPaneParts.js": 2,
+    "src/ui/components/smithUpgradeModal.js": 2,
     "src/ui/models/QuickAccessPanelModel.js": 2,
     "src/ui/previews/tooltipReviewScene.js": 2,
     "src/ui/screens/title.js": 2,

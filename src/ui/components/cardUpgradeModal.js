@@ -2,20 +2,16 @@
 // frame, rail, pane and decision beat (smithUpgradeModal.js) with deck-card rows. The component renders and
 // routes; the host owns the run mutation. Every fact is from CardUpgradeModel.js, whose plan is the one
 // commitCardUpgrade applies, so the before/after preview is exactly what the commit does.
-import {
-  el, html, pill, eyebrow, prose, artWell, detailCard, statRow,
-  blocker, glyph, statusText, landControl,
-} from '../kit/index.js';
+import { el, pill, eyebrow, artWell, statRow, statusText, landControl } from '../kit/index.js';
 import { mountUpgradeDesk, deskRow, deskArt } from './upgradeDesk.js';
-import { upgradePreviewHtml, renderCard } from './card.js';
-import { FOLD_GLYPH } from './foldGlyph.js';
-import { deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
+import { renderCard } from './card.js';
+import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
+import { changeSummary, economyNode } from './smithPaneParts.js';
 import { assetUrl } from '../assetmap.js';
 import { hideOnError } from '../artFallback.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
-import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
@@ -32,19 +28,16 @@ const cardArt = (row, { small = false } = {}) => {
 };
 
 export function mountCardUpgradeModal(host, initialModel, {
-  registries, meta, title = t('cardUpgrade.title'), backLabel = t('common.back'), consequence = '', decisionConsequence = '',
-  servicePreviewHtml = () => '', onSelect, onBack, onConfirm, returnFocusElement,
+  registries, meta, title = t('cardUpgrade.title'), backLabel = t('common.back'), decisionConsequence = '',
+  onSelect, onBack, onConfirm, returnFocusElement,
 }) {
   const returnFocus = returnFocusElement instanceof HTMLElement ? returnFocusElement : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const desk = mountUpgradeDesk(host, {
-    title, titleId: 'card-upgrade-title', listLabel: t('cardUpgrade.items'), describedBy: 'card-upgrade-consequence',
-    paneId: 'card-upgrade-preview-region', paneLabel: t('cardUpgrade.preview.label'), backLabel, backToListLabel: t('deckEditor.back'),
-    kind: 'card', hasSelection: Boolean(initialModel.selected),
+    title, titleId: 'card-upgrade-title', listLabel: t('cardUpgrade.items'), backLabel, kind: 'card',
   });
-  const { veil, panel: modal, purse, reading: previewHost, reason: consequenceNode, backBtn, confirmBtn } = desk;
+  const { veil, panel: modal, purse, backBtn, confirmBtn } = desk;
   modal.classList.add('smith-upgrade-modal', 'card-upgrade-modal');
   markUiComponent(modal, UI.smithUpgradeModal, 'cards');
-  consequenceNode.textContent = consequence;
 
   let currentModel = initialModel;
   // The option picked among several (blacksmith choice): the index into the selected row's `options`; it resets with the card.
@@ -52,13 +45,14 @@ export function mountCardUpgradeModal(host, initialModel, {
   let chosenFor = null;
   let closed = false;
   let disarmDecision = null;
+  let review = null;
 
   // The model omits completed cards and orders available upgrades first.
   function cardRow(row) {
     const upgrade = t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel });
     const { item: wrapper, main: item } = deskRow({
       className: `smith-candidate-card smith-weapon-card card-upgrade-row rarity-${row.rarity}${row.disabled ? ' locked' : ''}`,
-      attrs: { role: 'option', tabindex: '0', 'aria-selected': 'false', 'aria-controls': 'card-upgrade-preview-region', 'aria-disabled': String(row.disabled) },
+      attrs: { role: 'option', tabindex: '0', 'aria-selected': 'false', 'aria-disabled': String(row.disabled) },
       disabled: row.disabled,
       art: deskArt(cardArt(row, { small: true })),
       name: row.name,
@@ -86,7 +80,7 @@ export function mountCardUpgradeModal(host, initialModel, {
     // A blocked row stays listed and dimmed; choosing it does nothing, as before.
     item.addEventListener('click', () => {
       const current = currentModel.rows.find((candidate) => candidate.instanceId === row.instanceId);
-      if (current && !current.disabled) onSelect(row.instanceId);
+      if (current && !current.disabled) { onSelect(row.instanceId); review?.(); }
     });
     item.wrapper = wrapper;
     return item;
@@ -94,13 +88,7 @@ export function mountCardUpgradeModal(host, initialModel, {
   const mountRows = (rows) => desk.setRows(rows.map((row) => row.wrapper));
   let cards = initialModel.rows.map(cardRow);
   mountRows(cards);
-  let confirmBlocked = '';
-  const confirmReason = reasonWhenDisabled(confirmBtn, () => confirmBlocked || null);
 
-  const shortfallOf = (model) => Math.max(0, model.selected.cost - model.stones);
-  const shortBlocker = (model) => blocker(
-    t(shortfallOf(model) === 1 ? 'cardUpgrade.short.one' : 'cardUpgrade.short.many', { n: shortfallOf(model) }),
-    { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } });
   // The price a row asks: Smithing Stones (the rest site's), plus cinders when a quote names them (the Blacksmith's).
   const priceNode = (model) => {
     const { selected } = model;
@@ -111,19 +99,9 @@ export function mountCardUpgradeModal(host, initialModel, {
     ].filter(Boolean));
   };
   const confirmText = (selected) => (selected.cinders > 0 ? t('cardUpgrade.confirmCinders', { n: selected.cinders }) : t('smith.upgrade.confirm', { cost: selected.cost }));
-  const costStrip = (model) => {
-    const { selected } = model;
-    const short = selected.shortStones ?? selected.plan.code === 'stones';
-    // A quote (the Blacksmith's) can block on something other than stones, so its reason is shown as it stands.
-    const unaffordable = short || !selected.ok;
-    return el('div', { class: 'smith-cost-strip' }, [
-      el('div', { class: `smith-summary-cell smith-preview-economy ${unaffordable ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
-      short && shortfallOf(model) > 0 ? shortBlocker(model) : !selected.ok && selected.blockedReason ? blocker(selected.blockedReason, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }) : null,
-    ]);
-  };
   /** The plan's own before and after faces as small cards, side by side. */
-  const facesNode = (model) => el('div', { class: 'card-upgrade-faces' }, ['before', 'after'].map((which) => el('div', { class: `card-upgrade-face ${which}`, dataset: { cardUpgradeFace: which } },
-    renderCard(registries, { cardId: model.selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: model.faces[which] }))));
+  const facesNode = (model) => upgradeFacesNode(Object.fromEntries(['before', 'after'].map((which) => [which,
+    renderCard(registries, { cardId: model.selected.cardId }, { small: true, tooltip: false, inspectReadOnly: true, definition: model.faces[which] })])));
 
   /** The row's chosen option (the first when there is no choice). */
   const optionOf = (model) => model.selected.options?.[chosen] || model.selected.options?.[0] || null;
@@ -168,55 +146,23 @@ export function mountCardUpgradeModal(host, initialModel, {
   };
   function pick(index) {
     chosen = index;
-    draw(currentModel);
-    modal.querySelector(`[data-card-upgrade-option="${index}"]`)?.focus({ preventScroll: true });
+    fillDetails();
+    modalDetails?.querySelector(`[data-card-upgrade-option="${index}"]`)?.focus({ preventScroll: true });
   }
 
-  function previewCard(model) {
-    const options = optionsNode(model);
-    model = viewOf(model);
-    const { selected } = model;
-    const head = el('div', { class: 'smith-summary-grid' }, el('div', { class: 'smith-summary-cell smith-selected-head' }, [
-      cardArt(selected),
-      eyebrow(t('cardUpgrade.selected'), { class: 'smith-preview-label' }),
-      el('b', { class: 'sr-name', text: selected.name }),
-      el('span', { class: 'dc-meta' }, [`${t('cardUpgrade.pane.level')} `, deltaNode(String(selected.levelFrom), String(selected.levelTo)), ` · ${t('cardUpgrade.pane.owned', { n: selected.copies })}`]),
-      selected.tags.length ? el('span', { class: 'smith-weapon-tags' }, selected.tags.map((tag) => el('em', { class: 'as-tag', text: tag }))) : null,
-    ]));
-    const stats = selected.changes.length ? statRow({
-      flat: true,
-      nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: t('cardUpgrade.stats.title') }), el('small', { class: 'sr-hint', text: selected.tags[0] || '' })]),
-      values: changeSummary({ values: selected.changes }),
-      className: 'smith-data-row smith-intrinsic-stats',
-    }) : null;
-    // The plan's own before and after faces: the rolled step is already applied to `after`.
-    const fold = model.faces ? el('div', { class: 'smith-upgrade-folds' }, el('details', { class: 'smith-upgrade-fold smith-upgrade-row', open: true }, [
-      el('summary', {}, statRow({
-        tag: 'span', nameNode: el('b', { class: 'sr-name', text: selected.name }),
-        values: [changeSummary({ values: selected.changes }), glyph(FOLD_GLYPH.collapsed, { class: 'caret smith-fold-caret' })],
-      })),
-      el('div', { class: 'smith-fold-detail' }, [
-        facesNode(model),
-        el('div', { class: 'smith-card-facts' }, [
-          eyebrow(t('smith.upgrade.fold')),
-          el('div', { class: 'card-upgrade-preview', dataset: { cardUpgradePreview: selected.instanceId },
-            html: upgradePreviewHtml(registries, { cardId: selected.cardId }, model.faces) }),
-        ]),
-      ]),
-    ])) : null;
-    const extra = servicePreviewHtml(model);
-    return detailCard({
-      attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
-      children: [head, options, stats, fold, extra ? el('div', { html: extra }) : null, costStrip(model)].filter(Boolean),
-    });
+  /** The decision door's details (the shared body, upgradeConfirm.js): cost, both faces, then the change rows under them. */
+  const detailNodes = (raw) => { const model = viewOf(raw); return upgradeConfirmNodes({
+    cost: el('div', { class: `confirmation-cost as-statrow flat ${(model.selected.shortStones ?? model.selected.plan.code === 'stones') || !model.selected.ok ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
+    faces: model.faces ? facesNode(model) : null,
+    rows: model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) })),
+  }); };
+  const confirmationNode = (raw) => el('div', { class: 'card-upgrade-modal-details' }, detailNodes(raw));
+  // With a choice among options, the modal holds the choice itself: a live node the options redraw in place.
+  let modalDetails = null;
+  function fillDetails() {
+    if (!modalDetails) return;
+    modalDetails.replaceChildren(...[optionsNode(currentModel), ...detailNodes(currentModel)].filter(Boolean));
   }
-
-  /** The decision door's details: cost, the same change rows, and both faces. */
-  const confirmationDetails = (raw) => { const model = viewOf(raw); return html([
-    el('div', { class: `confirmation-cost as-statrow flat ${(model.selected.shortStones ?? model.selected.plan.code === 'stones') || !model.selected.ok ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
-    el('div', { class: 'confirmation-change-list' }, model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) }))),
-    model.faces ? facesNode(model) : null,
-  ].filter(Boolean)); };
 
   function commitSelected() {
     if (!currentModel.canConfirm) return;
@@ -239,7 +185,7 @@ export function mountCardUpgradeModal(host, initialModel, {
     }
     currentModel = model;
     const { selected } = model;
-    if ((selected ? selected.instanceId : null) !== chosenFor) { chosenFor = selected ? selected.instanceId : null; chosen = 0; desk.follow(selected); }
+    if ((selected ? selected.instanceId : null) !== chosenFor) { chosenFor = selected ? selected.instanceId : null; chosen = 0; }
     // The option list can shrink under a redraw (a changed quote); never leave `chosen` past its end.
     if (selected?.options?.length) chosen = Math.min(Math.max(chosen, 0), selected.options.length - 1);
     for (const card of cards) {
@@ -249,35 +195,30 @@ export function mountCardUpgradeModal(host, initialModel, {
       markUiComponent(card, UI.smithCandidateCard, on ? 'selected' : 'available');
     }
     purse.textContent = t('cardUpgrade.stones', { n: model.stones });
-    previewHost.replaceChildren(selected ? previewCard(model)
-      : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [artWell({ glyph: 'smith', cool: true }), prose(t('cardUpgrade.instruction'))]));
     disarmDecision?.();
     disarmDecision = null;
-    confirmBtn.disabled = !model.canConfirm || (selected?.options?.length > 1 && !selected.options[chosen]);
-    confirmBtn.hidden = !selected;
-    confirmBtn.textContent = selected ? confirmText(selected) : '';
-    confirmBtn.setAttribute('aria-disabled', String(!model.canConfirm));
-    confirmBlocked = selected ? model.blockedReasons.join(' ') : '';
-    confirmReason();
-    confirmBtn.dataset.smithActionState = !selected ? 'unselected' : model.canConfirm ? 'actionable' : 'blocked';
+    review = null;
+    modalDetails = null;
     if (selected) {
-      const details = confirmationDetails(model);
-      confirmBtn.setAttribute('aria-label', t(selected.cost === 1 ? 'smith.upgrade.aria.one' : 'smith.upgrade.aria.many', { name: selected.name, cost: selected.cost }));
-      disarmDecision = armOptionDecision(confirmBtn, {
+      const choice = selected.options?.length > 1;
+      if (choice) { modalDetails = el('div', { class: 'card-upgrade-modal-details' }); fillDetails(); }
+      const armed = armOptionDecision(confirmBtn, {
         meta, registries, id: 'smithUpgrade',
         title: t('smith.upgrade.title', { name: selected.name }),
         message: t('cardUpgrade.decision.message', { from: selected.levelFrom, to: selected.levelTo, then: decisionConsequence }),
         consequence: t('cardUpgrade.permanent'),
-        detailsHtml: details,
+        detailsNode: choice ? modalDetails : () => confirmationNode(model),
         confirmLabel: confirmText(selected),
         cancelLabel: t('common.back'),
         onCommit: commitSelected,
         canCommit: () => Boolean(currentModel.canConfirm) && (!(selected.options?.length > 1) || Boolean(selected.options[chosen])),
         blockedTitle: t('cardUpgrade.blocked', { name: selected.name }),
         blockedMessage: model.blockedReasons.join(' ') || t('cardUpgrade.unavailable'),
-        blockedDetailsHtml: confirmationDetails(model),
-        returnFocusElement: confirmBtn,
+        blockedDetailsNode: () => confirmationNode(model),
+        returnFocusElement: cards.find((card) => card.dataset.instanceId === selected.instanceId) || null,
       });
+      disarmDecision = armed;
+      review = armed.review;
     }
     if (restoreFocus) landControl(restoreFocus);
   }
@@ -313,5 +254,7 @@ export function mountCardUpgradeModal(host, initialModel, {
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
   queueMicrotask(() => modal.focus({ preventScroll: true }));
+  // Mounted with a card already chosen: its modal opens at once.
+  if (initialModel.selected) review?.();
   return { update(model) { draw(model); }, close };
 }

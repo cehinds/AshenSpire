@@ -177,11 +177,11 @@ const SURFACES = [
   { name: 'rest', shot: 'rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt, #smith-opt, #level-opt')` },
   // ?shot=smith lands on the Shrine; its Smith option opens the candidate dialog
   // (the same press tools/screenreach.mjs makes).
-  { name: 'smith', shot: 'smith', ready: `!!document.querySelector('.smith-candidate-region, #smith-opt')`,
-    after: `(async () => { if (!document.querySelector('.smith-candidate-region')) document.querySelector('#smith-opt')?.click();
+  { name: 'smith', shot: 'smith', ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
+    after: `(async () => { if (!document.querySelector('.upgrade-desk')) document.querySelector('#smith-opt')?.click();
       await new Promise((r) => setTimeout(r, 200));
-      return document.querySelector('.smith-candidate-region') ? true : 'the Smith option opened no candidate dialog'; })()`,
-    open: `!!document.querySelector('.smith-candidate-region')` },
+      return document.querySelector('.upgrade-desk') ? true : 'the Smith option opened no candidate dialog'; })()`,
+    open: `!!document.querySelector('.upgrade-desk')` },
   { name: 'shop', shot: 'shop', ready: `!!document.querySelector('#leave-shop')` },
   { name: 'death', shot: 'death', ready: `!!document.querySelector('#app button')` },
 ];

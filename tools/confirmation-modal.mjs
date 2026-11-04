@@ -42,8 +42,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the destructive action receives initial focus',
         file: 'src/ui/components/confirmationModal.js',
-        find: '    if (!closed) cancelButton.focus({ preventScroll: true });',
-        replace: '    if (!closed) confirmButton.focus({ preventScroll: true }); // confirmation-modal selftest plant',
+        find: '    (picked || cancelButton).focus({ preventScroll: true });',
+        replace: '    confirmButton.focus({ preventScroll: true }); // confirmation-modal selftest plant',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE)-SAFE-FOCUS/,
       },
       {

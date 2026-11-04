@@ -29,8 +29,8 @@ export async function mountTooltipReview(scene) {
     const { smithingPlan } = await import('../../model/smithing.js');
     run.smithingStones=5;
     const plan=smithingPlan(r,run);
-    const modal=mountSmithUpgradeModal(document.body,smithSelectionModel(r,plan),{registries:r,meta,
-      onSelect:id=>modal.update(smithSelectionModel(r,plan,id)),onBack(){},onConfirm(){}});
+    const modal=mountSmithUpgradeModal(document.body,smithSelectionModel(r,plan,null,{autoSelect:false}),{registries:r,meta,
+      onSelect:id=>modal.update(smithSelectionModel(r,plan,id,{autoSelect:false})),onBack(){},onConfirm(){}});
   } else if (scene === 'compendium') {
     const { mountCompendium } = await import('../screens/compendium.js');
     mountCompendium(app,{registries:r,meta,onClose(){},onBack(){}});
