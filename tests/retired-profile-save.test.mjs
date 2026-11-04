@@ -6,6 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, serializeRun } from '../src/model/state.js';
+import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { createSaveManager, createMemoryStorage, runKey } from '../src/engine/save.js';
 
 function registriesFor(id) {
@@ -15,6 +16,14 @@ function registriesFor(id) {
 function stored(id) {
   const registries = registriesFor(id);
   return { registries, json: serializeRun(createRunState({ registries, seed: 7, classId: 'reaver' })) };
+}
+// The legacy and Core 1 profile data is deleted: a retired save is a Core 2 save whose pinned profile is edited.
+function retiredSave(edit) {
+  const { registries, json } = stored('core');
+  const save = JSON.parse(json), profile = structuredClone(resolveGameProfile('core'));
+  edit(profile); delete profile.hash; profile.hash = gameDigest(profile); // re-stamped, so only the retired-mode check can refuse it
+  delete save.gameProfileRef; save.gameProfile = profile;
+  return { registries, json: JSON.stringify(save) };
 }
 function refuseCase(json, registries) {
   const storage = createMemoryStorage();
@@ -28,11 +37,11 @@ function refuseCase(json, registries) {
 }
 
 test('a save pinned to the legacy current profile is refused and kept', () => {
-  const { registries, json } = stored('current');
+  const { registries, json } = retiredSave(p => { p.foundation.mode = 'legacy'; });
   refuseCase(json, registries);
 });
 test('a Core 1 save is refused and kept', () => {
-  const { registries, json } = stored('ashen.core@1.0.0');
+  const { registries, json } = retiredSave(p => { p.lock.core = 'ashen.core@1.0.0'; });
   refuseCase(json, registries);
 });
 test('peekRunGameProfile of a profile-less save is null, which main.js refuses as retired', () => {

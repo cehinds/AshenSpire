@@ -8,8 +8,10 @@ test('Core 2 profiles are supported', () => {
   assert.equal(retiredProfileReason(resolveGameProfile('core')), null);
 });
 test('the legacy and Core 1 profiles are retired', () => {
-  assert.equal(retiredProfileReason(resolveGameProfile('current')), 'legacy-foundation');
-  assert.equal(retiredProfileReason(resolveGameProfile('ashen.core@1.0.0')), 'retired-core');
+  // The legacy and Core 1 profile data is deleted; the guard is proved on minimal inline profiles.
+  const core = resolveGameProfile('core');
+  assert.equal(retiredProfileReason({ ...core, foundation: { ...core.foundation, mode: 'legacy' } }), 'legacy-foundation');
+  assert.equal(retiredProfileReason({ ...core, lock: { ...core.lock, core: 'ashen.core@1.0.0' } }), 'retired-core');
 });
 test('a missing profile is retired', () => {
   assert.equal(retiredProfileReason(null), 'missing-profile');

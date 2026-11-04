@@ -18,7 +18,7 @@ function fixture(profileId,cardId,{abilityRank,upgraded=false,expanded=false}={}
  const gameProfile=resolveGameProfile(profileId),registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,gameProfile)),gameProfile);
  const instance={instanceId:'sweep-test',cardId,upgraded,...(abilityRank===undefined ? {} : {abilityRank})};
  const player={classId:'reaver',hp:200,maxHp:200,mana:100,maxMana:100,stamina:100,maxStamina:100,energyMax:100,drawPerTurn:1,deck:[instance]};
- const args={registries,rng:createRng(17),gameProfile,enemyIds:Array(3).fill('wanderingSoldier'),...(profileId==='current' ? {ruleset:combatRules} : {}),...(expanded ? {combatExpansionVersion:2,reactionRulesVersion:1} : {})};
+ const args={registries,rng:createRng(17),gameProfile,enemyIds:Array(3).fill('wanderingSoldier'),...(expanded ? {combatExpansionVersion:2,reactionRulesVersion:1} : {})};
  const combat=createCombat({...args,player});
  for(const foe of combat.enemies){foe.hp=foe.maxHp=1000;foe.block=0;foe.statuses={};foe.combatStance={maneuver:'attack',camp:'physical',range:'melee'};}
  combat.enemies[2].hp=0;combat.enemies[2].alive=false;
@@ -52,8 +52,6 @@ function verifySweep(profileId,cardId,options={}) {
 }
 
 test('core Sweep hits every living foe without aiming and pays its single SP once',()=>verifySweep('core','core.sweep'));
-for(const expanded of [false,true])for(const cardId of ['hewingArc','whirlingGuard','cleavingBlow','sweepingBlow','progression-ashen-cleaver'])test(`current ${cardId} is automatic area damage (${expanded ? 'expanded' : 'foundation'})`,()=>verifySweep('current',cardId,{expanded}));
-for(const abilityRank of [0,1,2,3,4,5])test(`Crimson Cleave grade ${abilityRank} keeps Sweep area targeting`,()=>verifySweep('current','crimsonCleave',{abilityRank,expanded:true}));
 test('corrected Sweep definitions preserve their previous resolved prices and leave utility/single-target cards alone',()=>{
  const r=createRegistries(contentBundle);
  for(const [id,upgraded,cost] of [['hewingArc',false,2],['hewingArc',true,3],['whirlingGuard',false,2],['whirlingGuard',true,2]])assert.equal(resolveCard(r,{cardId:id,upgraded}).cost,cost);

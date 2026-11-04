@@ -31,13 +31,6 @@ function rewardNote(profileId, options, { editorWhere, servicesPerVisit, editorE
   }
 }
 
-test('a Core reward names the Armoury for deck edits and Current keeps Strategize', () => {
-  const core = rewardNote('core', ['core.strike', 'core.defend']);
-  assert.equal(core, 'Choose 1. Add the card to your deck or edit your deck now; the rest stays in your collection.');
-  assert.doesNotMatch(core, /Strategize/);
-  const current = rewardNote('current', ['frostNova', 'scholarsInsight']);
-  assert.equal(current, 'Choose 1. Add the card to your deck or keep it in your collection; edit your deck at Strategize.');
-});
 
 // The note follows cards.editorWhere, independent of the rest servicesPerVisit.
 test('the reward note follows editorWhere, not rest servicesPerVisit', () => {

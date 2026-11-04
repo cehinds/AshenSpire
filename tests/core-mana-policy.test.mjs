@@ -73,10 +73,3 @@ test('Star Spark pays one MP and actually applies two decaying Vulnerable stacks
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
 });
 
-test('configured MP-off variants keep the resource absent instead of reintroducing a Mana requirement', () => {
-  const noMp = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: { resources: { include: ['hp', 'sp'] } } });
-  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, noMp)), noMp);
-  for (const id of ['core.reaverSpecial', 'core.starseerSpecial']) {
-    const card = resolveCard(reg, { cardId: id }); assert.equal(card.manaCost, 0); assert.equal(card.resourceCosts?.mp || 0, 0);
-  }
-});

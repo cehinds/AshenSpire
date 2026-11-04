@@ -34,7 +34,7 @@
 //           rather than <body> (#1355). tests/slot-load-focus pins the order
 //           in source; this is the focus a player actually lands on.
 //
-// The boot is `?gameProfile=current&shot=combat` — newRun and the first monster node entered the
+// The boot is `?gameProfile=core&shot=combat` — newRun and the first monster node entered the
 // way the map enters it, so the entry receipt is written by enterCombat's own
 // persist. `?shotNewerSlot=2` puts slot 1's bytes into slot 2 with the schema
 // one ahead. Both run on the shot boot's memory storage.
@@ -214,7 +214,7 @@ try {
   // including its independent knowledge rules. The default Core profile owns
   // different combat rules; mixing its run with shotCombatVersion=1 creates
   // an invalid save rather than a witness of the legacy restart contract.
-  const sourceUrl = `http://127.0.0.1:${server.address().port}/?gameProfile=current&`;
+  const sourceUrl = `http://127.0.0.1:${server.address().port}/?gameProfile=core&`;
   const launched = await launchBrowser({ prefix: 'slot-load-door-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
   closeBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl);

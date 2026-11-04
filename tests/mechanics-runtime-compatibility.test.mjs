@@ -41,7 +41,7 @@ for(const [label,change] of changes)test(`${label} changes runtimeHash and rejec
   const root=fixture();
   try {
     const before=pin(root),oldCatalog={...baseline,...before};
-    const saved=resolveGameAuthor({formatVersion:1,core:'ashen.core@1.0.0',modules:{}},oldCatalog);
+    const saved=resolveGameAuthor({formatVersion:1,core:'ashen.core@2.0.0',modules:{}},oldCatalog);
     assert.equal(saved.lock.runtimeHash,before.runtimeHash);
     change(root);const after=pin(root);
     assert.notEqual(after.runtimeHash,before.runtimeHash);

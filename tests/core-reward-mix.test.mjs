@@ -97,13 +97,6 @@ test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards 
   assert.ok(late.high > lateFlat.high + .01, `highRank 1.5 late ${late.high} vs highRank 1 ${lateFlat.high}`);
 });
 
-test('Core 1 stays neutral: no depth, recent or ownership bias', () => {
-  const core1 = build({}, 'ashen.core@1.0.0'), rule = fresh(1, core1).gameProfile.content.rewards.eligibility.combatCards;
-  assert.equal(rule.ownedCopyWeight, 1);
-  assert.equal(rule.recentOfferWindow, 0);
-  assert.equal(rule.depthBias.early.basicOrCantrip, 1);
-  assert.equal(rule.depthBias.late.mana, 1);
-});
 
 test('treasure chests keep relics, armor and weapons; combat offers never roll armor (owner 2026-10-27)', () => {
   const kinds = source => {

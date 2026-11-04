@@ -70,10 +70,10 @@ rather than the portable VM (`"portability":"legacy"` in `engine/mechanics`).
 
 | # | Change | Status |
 |---|--------|--------|
-| 1a | Rescue `docs/design/new-card-art/layer-math.js` (+ cutout manifest) to `tools/`, repoint `tests/layered-card-art.test.mjs` and `tools/export-layered-card-art.mjs` | done (this PR) |
-| 1b | Move `docs/preview/releases/` (README screenshots) to `docs/qa/releases/`; empty the `qa-evidence-size` allow-list | done (this PR) |
-| 1c | Drop the `docs/preview` copies from `dev-preview.yml`, `BASE_TREE_KEPT_DIRS` in `tools/pages-site.mjs` | done (this PR) |
-| 1d | Delete both folders | done (this PR) |
+| 1a | Rescue `docs/design/new-card-art/layer-math.js` (+ cutout manifest) to `tools/`, repoint `tests/layered-card-art.test.mjs` and `tools/export-layered-card-art.mjs` | done (#2526) |
+| 1b | Move `docs/preview/releases/` (README screenshots) to `docs/qa/releases/`; empty the `qa-evidence-size` allow-list | done (#2526) |
+| 1c | Drop the `docs/preview` copies from `dev-preview.yml`, `BASE_TREE_KEPT_DIRS` in `tools/pages-site.mjs` | done (#2526) |
+| 1d | Delete both folders | done (#2526) |
 
 ### Step 2 — authoring tools off `dev` (kept on `tools-archive`)
 
@@ -90,7 +90,7 @@ legacy path today; each area PR moves its tests onto the Core 2 helper (3c) or d
 
 | # | Change | Status |
 |---|--------|--------|
-| 3a | Save guard: refuse a run whose profile is missing, legacy, Core 1 or not `fixCoreVersion` 1, with a "retired profile" message; never delete or overwrite it. `?gameProfile=current` falls back to the default. Drop `current` from the selector and `resolveGameProfile`'s default | todo |
+| 3a | Save guard: refuse a run whose profile is missing, legacy, Core 1 or not `fixCoreVersion` 1, with a "retired profile" message; never delete or overwrite it. `?gameProfile=current` falls back to the default. Drop `current` from the selector and `resolveGameProfile`'s default | done (#2527) |
 | 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | done (#2529) |
 | 3c | Core 2 test helper (registries and runs bound to the default profile) | todo |
 | 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | todo |

@@ -780,7 +780,7 @@ async function main() {
       const openCombat = async ({ artifact = standalone, textSize = 'M', hand = 5 } = {}) => {
         const settings = encodeURIComponent(JSON.stringify({ textSize, ...(flaskMenuOnly ? { useRestorativeFlasksOutsideCombat: true } : {}) }));
         const page = artifact ? 'AshenSpire.html' : 'index.html';
-        await cdp.send('Page.navigate', { url: `${base.replace(/index\.html$/, page)}?${flaskMenuOnly ? 'gameProfile=current&shot=map' : 'shot=combat'}&shotHand=${hand}&shotSettings=${settings}` }, sessionId);
+        await cdp.send('Page.navigate', { url: `${base.replace(/index\.html$/, page)}?${flaskMenuOnly ? 'gameProfile=core&shot=map' : 'shot=combat'}&shotHand=${hand}&shotSettings=${settings}` }, sessionId);
         await until(flaskMenuOnly
           ? `!!document.querySelector('.mapscreen') && !!window.__flasks && !!window.__parityPad`
           : `!!document.querySelector('.combat .hand .card') && !!window.__parityPad`,
