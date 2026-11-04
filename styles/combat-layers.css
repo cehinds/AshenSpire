@@ -273,9 +273,19 @@
 }
 
 :root .combat[data-layout='formation'] :is(.hand-overlay,.hand) { pointer-events: none !important; }
-:root .combat[data-layout='formation'] .hand .card { pointer-events: auto; }
-:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand :is(.card,.card-info-button) { pointer-events: auto; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next,.hand-info-portal) { pointer-events: auto; }
 
+:root .combat[data-layout="formation"] .hand[data-wireframe-hand="true"] .card > .card-info-button { pointer-events: auto; }
+
+:root .combat[data-layout='formation'] :is(.card > .card-info-button,.hand-info-portal) {
+  --inspect-box: calc(44px / var(--ui-zoom, 1));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
+  max-width: var(--inspect-box); max-height: var(--inspect-box);
+}
+/* The portal's left is the badge centre (handInfoPosition); kit.css centres it
+   with translateX(-50%), which this layout must not cancel. */
 
 
 /* Approved combat HUD: the actor owns every compact and expanded surface. */
