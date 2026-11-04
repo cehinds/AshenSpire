@@ -186,7 +186,7 @@ test('configured equipment requirements default none across six families and fou
  assert.deepEqual(applyGameProfileToContent(contentBundle,'current').equipment.equipmentRequirements,contentBundle.equipment.equipmentRequirements);
 });
 
-test('Smith tier bonuses share UI combat preview and real damage/block, survive load and disappear on swapping gear',async()=>{
+test('Smith tier bonuses share UI combat preview and real damage/block, a saved Core 1 run is refused, bonuses disappear on swapping gear',async()=>{
  // These exact upgrade coefficients are the archived Core 1 contract.
  const original=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{}});
  const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,original)),original);
@@ -208,7 +208,7 @@ test('Smith tier bonuses share UI combat preview and real damage/block, survive 
  const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').value,hp=after.enemies[0].hp;dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
  run.mapNodeId=restId(run,6);beginGameProfileRest(run);const armor=smithingPlan(reg,run).candidates.find(row=>row.itemKind==='armor');assert.ok(armor);const dr=gameProfileRatingReceipt(reg,run).totals.dr;commitGameProfileRest(reg,run,'smith',{itemRef:armor.itemRef});const blockFight=fight();assert.equal(blockFight.player.ratings.dr,dr+1);const defend=blockFight.piles.hand.find(card=>card.cardId==='core.defend');assert.ok(defend);const shown=previewCard(blockFight,defend.instanceId).values.find(e=>e.op==='block').value;assert.equal(shown,oldBlock+1);const blockBefore=blockFight.player.block;dispatch(blockFight,{type:'playCard',cardInstanceId:defend.instanceId});assert.equal(blockFight.player.block-blockBefore,shown);
  // Core 1 is retired (owner, 2026-11-04): its saved runs are refused, bytes kept, never restored.
- const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);assert.equal(save.loadRun(reg),null);assert.equal(save.runStatus().state,'profile-mismatch');assert.match(save.runStatus().reason,/retired-core/);
+ const storage=createMemoryStorage(),save=createSaveManager(storage);save.saveRun(run,null);const bytes=storage.getItem(runKey(1));assert.ok(bytes);assert.equal(save.loadRun(reg),null);assert.equal(save.runStatus().state,'profile-mismatch');assert.match(save.runStatus().reason,/retired-core/);assert.equal(storage.getItem(runKey(1)),bytes,'the refused bytes stay in the slot');
  run.loadout.sets.rightHand[0]='straightSword';run.loadout.sets.armor[0]='vigil';assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,beforeRatings.ar);assert.equal(gameProfileRatingReceipt(reg,run).totals.dr,beforeRatings.dr);
  const off=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,0);
 });

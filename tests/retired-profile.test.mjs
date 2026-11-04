@@ -15,8 +15,8 @@ test('a missing profile is retired', () => {
   assert.equal(retiredProfileReason(null), 'missing-profile');
   assert.equal(retiredProfileReason(undefined), 'missing-profile');
 });
-test('a Core 2 lock without the effects fix version is retired', () => {
+test('a Core 2 variant with a module setting changed is still supported', () => {
   const p = resolveGameProfile('core');
   const stripped = { ...p, modules: { ...p.modules, effects: { ...p.modules.effects, fixCoreVersion: undefined } } };
-  assert.equal(retiredProfileReason(stripped), 'retired-effects');
+  assert.equal(retiredProfileReason(stripped), null);
 });
