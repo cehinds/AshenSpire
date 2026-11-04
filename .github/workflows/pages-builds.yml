@@ -497,33 +497,6 @@ jobs:
         run: |
           targets=$(node tools/check-feature-pages.mjs --capture-primary _site)
           echo "targets=$targets" >> "$GITHUB_OUTPUT"
-      # THE WORKBENCH IS PUBLISHED AS A STATIC SITE, BUILT FROM THIS RUN'S CHECKOUT.
-      #
-      # It lives at /workbench/ beside the game builds. On the workflow_run publish
-      # path the checkout is dev (see the checkout step above), so the Workbench
-      # shown there is dev's. It answers its API from a snapshot
-      # (workbench/static/static-api.mjs) and keeps edits in the visitor's browser;
-      # nothing on the page writes to the repository.
-      #
-      # The gallery snapshot and static copy read this checkout's verified cache.
-      # Main's build and historical rebuilds fetch into their own worktrees, so
-      # hydrate this checkout's pinned LIGHT + COMMON before either reader runs.
-      - name: Fetch pinned light/common art for the publishing checkout
-        uses: ./.github/actions/fetch-art
-        with:
-          packs: light,common
-      # It builds into $RUNNER_TEMP and is moved into _site only after the tool exits
-      # 0. Both hydration and static assembly are required: a missing Workbench
-      # must stop publication. timeout-minutes bounds a stalled static build.
-      - name: "Build the published Workbench at /workbench/ (from this checkout)"
-        timeout-minutes: 10
-        env:
-          ASHEN_ART_SOURCE: cache
-        run: |
-          set -euo pipefail
-          node tools/workbench-static.mjs --out "$RUNNER_TEMP/workbench" --base /AshenSpire/workbench/
-          mv "$RUNNER_TEMP/workbench" _site/workbench
-          echo "Workbench published at https://cehinds.github.io/AshenSpire/workbench/ from $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       # Say where the bytes are: Pages refuses an oversized artifact with no detail
