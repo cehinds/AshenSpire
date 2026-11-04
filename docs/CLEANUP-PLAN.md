@@ -91,9 +91,9 @@ legacy path today; each area PR moves its tests onto the Core 2 helper (3c) or d
 | # | Change | Status |
 |---|--------|--------|
 | 3a | Save guard: refuse a run whose profile is missing, legacy, Core 1 or not `fixCoreVersion` 1, with a "retired profile" message; never delete or overwrite it. `?gameProfile=current` falls back to the default. Drop `current` from the selector and `resolveGameProfile`'s default | done (#2527) |
-| 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | done (this PR) |
-| 3c | Core 2 test helper (registries and runs bound to the default profile) | todo |
-| 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | todo |
+| 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | done (#2529) |
+| 3c | Core 2 test helper (registries and runs bound to the default profile) | done (this PR) |
+| 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | done (this PR) |
 | 3e | Settings: legacy Advanced rows, `advancedConfig` run overrides | todo |
 | 3f | Map: legacy `actmap` branch, `mapgen`, world atlas/journey, legacy dungeons, Custom Climb | todo |
 | 3g | Progression: class mastery, feats/class tree, keepsakes, manual level-up, legacy stat rows (prologue stays) | todo |
