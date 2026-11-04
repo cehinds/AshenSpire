@@ -150,7 +150,8 @@ try {
       await playing.tap({position:{x:35,y:70}});
       await playing.tap({position:{x:35,y:70}});
       check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'two inspection taps never play');
-      await playing.click({button:'right',position:{x:35,y:70}});
+      // On touch the combat hand opens its reading through the (i) the selected card shows (a long press only selects).
+      await page.locator('.hand-info-portal').tap();
     } else { await playing.focus(); await page.keyboard.press('i'); }
     await page.locator('.card-inspection-modal').waitFor();
     check(await page.evaluate(() => JSON.stringify(window.__combat)) === combatBefore, 'information never plays a card');
