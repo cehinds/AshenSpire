@@ -227,8 +227,28 @@ test('the modal\'s before and after faces are live nodes: a click on a face open
     let reached = false;
     try { faces[0].querySelector('.upgrade-confirm-face-holder').firstElementChild.click(); reached = Boolean(dom.document.querySelector('.card-inspection-modal')); } catch (error) { reached = /getSelection|inspect/i.test(String(error.stack)) && /cardInspection\.js/.test(String(error.stack)); }
     assert.ok(reached, 'the face opened its inspector (its handlers survived the modal)');
-    dom.document.querySelectorAll('.card-inspection-modal').forEach(node => node.remove());
     closeConfirmationModal();
+    door.close();
+  } finally { globalThis.setTimeout = priorTimeout; }
+}));
+
+test('Escape with the card inspector open closes only the inspector; a second Escape closes the review, committing nothing', () => withKitDom(dom => {
+  const priorTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = () => 0;
+  try {
+    const commits = [];
+    const { door } = mount(dom, fresh(), 'armament/greatsword', { onConfirm: ref => commits.push(ref) });
+    dom.document.getSelection ||= () => ({ removeAllRanges() {} });
+    const face = dom.document.querySelector('.confirmation-modal .upgrade-confirm-face-holder').firstElementChild;
+    try { face.click(); } catch { /* the fixture's inspector may throw after registering */ }
+    const esc = () => { const e = new dom.Event('keydown', { cancelable: true }); e.key = 'Escape'; window.dispatchEvent(e); };
+    if (dom.document.querySelector('.card-inspection-modal')) {
+      esc();
+      assert.ok(dom.document.querySelector('.confirmation-modal'), 'the review is still open beneath');
+    }
+    esc(); esc();
+    assert.equal(dom.document.querySelector('.confirmation-modal'), null, 'Escape closes the review');
+    assert.deepEqual(commits, [], 'nothing committed');
     door.close();
   } finally { globalThis.setTimeout = priorTimeout; }
 }));

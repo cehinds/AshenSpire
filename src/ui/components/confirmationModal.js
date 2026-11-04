@@ -4,7 +4,7 @@ import { t } from '../strings.js';
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { modalHead, modalFooter, el, prose, stampModalSize } from '../kit/index.js';
-import { registerModal } from '../modalState.js';
+import { registerModal, topModal } from '../modalState.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -168,6 +168,9 @@ export function openConfirmationModal({
   };
 
   function onKeydown(event) {
+    // A modal opened above this one (the card inspector over a face) owns Escape and Tab; this review waits beneath it.
+    const top = topModal();
+    if (top && top.element !== dialog) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       event.stopImmediatePropagation();
