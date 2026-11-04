@@ -220,8 +220,8 @@ async function main() {
       throw new Error(`timed out waiting for ${label}`);
     };
 
-      // This artwork geometry contract runs against Core 2, the only game (Core 1's real class sprites are retired).
-      // configured Core intentionally renders foundation stand-ins instead.
+    const pageUrl = (params) => {
+      // This artwork geometry contract runs against Core 2, the only game; Core 1's real class sprites are retired.
       const url = new URL(base);
       url.searchParams.set('gameProfile', 'core');
       for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
