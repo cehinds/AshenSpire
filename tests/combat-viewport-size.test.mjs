@@ -17,9 +17,19 @@ test('the tunable shares live in the formation config', () => {
 
 test('body height is the viewport share times a capped stature', () => {
   assert.equal(statureMultiplier(1), 1);
-  assert.equal(statureMultiplier(1.75), 1.3);
-  assert.equal(statureMultiplier(3), 1.3);
+  assert.equal(statureMultiplier(1.75), 1.15);
+  assert.equal(statureMultiplier(3), 1.15);
   assert.equal(targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1 }), 176);
+});
+
+test('an enemy is enemyScale x the player; a large one is enemyScale x the stature cap', () => {
+  const cfg = uiConfig.presentation.combatFormationModel.sizing.viewportScale;
+  assert.equal(cfg.enemyScale, .8);
+  const player = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1 });
+  const enemy = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1, enemy: true });
+  const large = targetBodyHeight({ viewportHeight: 800, portraitPhone: true, ratio: 1.75, enemy: true });
+  assert.ok(Math.abs(enemy / player - .8) < 1e-9);
+  assert.ok(Math.abs(large / player - .8 * 1.15) < 1e-9);
 });
 
 test('size ignores enemy count, the other side and ground depth', () => {
@@ -28,14 +38,14 @@ test('size ignores enemy count, the other side and ground depth', () => {
   const five = fit([player, ...[0, 1, 2, 3, 4].map(i => actor('e' + i, 'enemy', 700 + i * 110, i % 2))]);
   assert.equal(one.find(f => f.id === 'p').visibleHeight, 720 * .26);
   assert.equal(five.find(f => f.id === 'p').visibleHeight, 720 * .26);
-  for (const f of five) assert.equal(f.visibleHeight, 720 * .26);
+  for (const f of five) assert.ok(Math.abs(f.visibleHeight - 720 * .26 * (f.id === 'p' ? 1 : .8)) < 1e-9);
   assert.equal(five.lastResort, null);
 });
 
-test('the player and a normal enemy are the same height; a large one is x1.3', () => {
+test('a normal enemy is 0.8x the player; a large one is x1.15 of that', () => {
   const sizes = fit([actor('p', 'player', 200, 0), actor('e', 'enemy', 900, 0), actor('big', 'enemy', 1100, 1, 1.75)]);
-  assert.equal(sizes[0].visibleHeight, sizes[1].visibleHeight);
-  assert.ok(Math.abs(sizes[2].visibleHeight / sizes[1].visibleHeight - 1.3) < 1e-9);
+  assert.ok(Math.abs(sizes[1].visibleHeight / sizes[0].visibleHeight - .8) < 1e-9);
+  assert.ok(Math.abs(sizes[2].visibleHeight / sizes[1].visibleHeight - 1.15) < 1e-9);
 });
 
 test('neighbours in a row are spaced apart before anything is scaled', () => {
@@ -47,16 +57,16 @@ test('neighbours in a row are spaced apart before anything is scaled', () => {
 });
 
 test('a crowded phone row scales every combatant by one common factor', () => {
-  const actors = [actor('p', 'player', 60, 0), ...[0, 1, 2, 3, 4].map(i => actor('e' + i, 'enemy', 100 + i * 20, 0))];
+  const actors = [actor('p', 'player', 60, 0), ...[0, 1, 2, 3, 4, 5, 6].map(i => actor('e' + i, 'enemy', 100 + i * 20, 0))];
   const sizes = fitViewportSprites({ width: 360, actors, viewportHeight: 780, portraitPhone: true });
   assert.ok(sizes.lastResort > 0 && sizes.lastResort < 1);
-  for (const f of sizes) assert.ok(Math.abs(f.visibleHeight - 780 * .22 * sizes.lastResort) < 1e-6, 'one common factor, player included');
+  for (const f of sizes) assert.ok(Math.abs(f.visibleHeight - 780 * .22 * (f.id === 'p' ? 1 : .8) * sizes.lastResort) < 1e-6, 'one common factor, player included');
 });
 
 test('row, display and Settings scale multipliers never resize a figure', () => {
   const sizes = fit([actor('p', 'player', 200, 0, 1, { multiplier: 2, userScale: 1.5 }), actor('e', 'enemy', 900, 0, 1, { multiplier: .3, userScale: 2 })]);
   assert.equal(sizes[0].visibleHeight, 720 * .26);
-  assert.equal(sizes[1].visibleHeight, 720 * .26);
+  assert.ok(Math.abs(sizes[1].visibleHeight - 720 * .26 * .8) < 1e-9);
 });
 
 const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w / 2, b.x + b.w / 2) - Math.max(a.x - a.w / 2, b.x - b.w / 2)) / ((a.w + b.w) / 2);
@@ -83,7 +93,7 @@ test('the hand top is a floor: a lone player shrinks (common factor) rather than
   assert.ok(tight.lastResort > 0 && tight.lastResort < 1);
   const p = tight.find(f => f.id === 'p');
   assert.ok(p.visibleHeight + 40 + 6 <= 200 + 1e-6, 'feet (with headroom) end above the hand top');
-  assert.equal(tight.find(f => f.id === 'e').visibleHeight, p.visibleHeight, 'everyone shrinks together');
+  assert.ok(Math.abs(tight.find(f => f.id === 'e').visibleHeight - p.visibleHeight * .8) < 1e-9, 'everyone shrinks together');
 });
 
 test('a hidden or unmeasured hand (top 0 or below) never shrinks the figures', async () => {
