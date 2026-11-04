@@ -106,7 +106,7 @@ const STATES = [
   { name: 'event', q: 'event', ready: `!!document.querySelector('#choices button')` },
   { name: 'shop', q: 'shop', ready: `!!document.querySelector('#leave-shop')` },
   { name: 'rest', q: 'rest', ready: `!!document.querySelector('#rest-opt, #smith-opt')` },
-  { name: 'smith', q: 'smith', ready: `!!document.querySelector('.smith-candidate-region')` },
+  { name: 'smith', q: 'smith', ready: `!!document.querySelector('.upgrade-desk')` },
   { name: 'map', q: 'map', ready: `!!document.querySelector('.map-node') && document.querySelector('.map-scroll').dataset.framing` },
   { name: 'combat', q: 'combat', ready: `!!document.querySelector('.combat .hand .card')`, extraShapes: [{ w: 390, h: 650, tag: 'safari', mobile: true }] },
   { name: 'customize', q: 'customize', ready: `!!document.querySelector('.cz-portrait')` },
@@ -194,7 +194,7 @@ for (const state of wanted) {
       check(rail.mode === 'selector' && rail.items >= 3 && rail.selector && rail.above && rail.vertical && rail.inside && !rail.sideways, `R6 ${cell}: the Armoury categories are one [Category ▾] selector above the pane that opens them as a vertical list with no sideways scroll`, JSON.stringify(rail));
     }
     if (state.name === 'smith') {
-      const smith = await ev(`(()=>({modal:!!document.querySelector('.smith-candidate-region'),shrine:!!document.querySelector('#rest-opt')}))()`);
+      const smith = await ev(`(()=>({modal:!!document.querySelector('.upgrade-desk'),shrine:!!document.querySelector('#rest-opt')}))()`);
       check(smith.modal && smith.shrine, `R7 ${cell}: the Shrine stands behind the open Smith`, JSON.stringify(smith));
     }
   }

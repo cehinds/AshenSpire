@@ -477,10 +477,10 @@ const SCREENS = [
   // of its own — the review that photographed every room got the title screen
   // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
   // reachable-or-not as any room's.
-  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region, #smith-opt')`,
+  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
     setup: `(() => {
-      if (!document.querySelector('.smith-candidate-region')) document.querySelector('#smith-opt')?.click();
-      if (!document.querySelector('.smith-candidate-region')) throw new Error('screenreach: Smith option did not open its candidate dialog');
+      if (!document.querySelector('.upgrade-desk')) document.querySelector('#smith-opt')?.click();
+      if (!document.querySelector('.upgrade-desk')) throw new Error('screenreach: Smith option did not open its candidate dialog');
       return true;
     })()`,
     overlay: 'the Smith is a modal over the Shrine; the Shrine\'s band and cards under its veil are covered on purpose' },
