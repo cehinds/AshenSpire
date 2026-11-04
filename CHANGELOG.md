@@ -32,6 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-04
+
+- **Ally Guard counts as a defense in damage previews** ([#2517](https://github.com/cehinds/AshenSpire/pull/2517), `0.7.3.82`). An ally's Guard interception no longer lowers the raw hit shown in damage previews and enemy intents.
 ## 2026-11-03
 
 - **No more Inspect text on cards** ([#2515](https://github.com/cehinds/AshenSpire/pull/2515), `0.7.3.82`). Cards no longer show stray "Inspect" text or the (i) badge; right-click, long-press or the I key opens a card's full reading.
