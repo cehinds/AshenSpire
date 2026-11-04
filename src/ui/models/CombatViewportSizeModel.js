@@ -23,11 +23,11 @@ export function statureMultiplier(ratio, config = CONFIG) {
 // resize a figure: the enemy scale defaults to 1.5, which is exactly the kind of
 // hidden multiplier this rule replaces.
 //
-// Enemies alone take `enemyScale` on top (owner, 2026-11-04: enemies were too
-// large on a phone); the player and the player's allies are never scaled.
-export function targetBodyHeight({ viewportHeight, portraitPhone, ratio, enemy = false }, config = CONFIG) {
+// Every figure (the player, allies and enemies alike) takes `combatantScale` on
+// top (owner, 2026-11-04: every figure at 80%), so relative sizes are unchanged.
+export function targetBodyHeight({ viewportHeight, portraitPhone, ratio }, config = CONFIG) {
   return viewportHeight * bodyHeightFraction(portraitPhone, config) * statureMultiplier(ratio, config)
-    * (enemy ? config.enemyScale : 1);
+    * config.combatantScale;
 }
 
 // Spread one row (same side and depth band) left to right: clamp to the field
@@ -60,7 +60,7 @@ export function fitViewportSprites({ width, actors, viewportHeight, portraitPhon
   handTop = null, solo = false }) {
   const valid = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0);
   const margin = config.edgeMarginPx;
-  const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio, enemy: (a.side ?? a.slot.side) === 'enemy' }, config) }));
+  const targets = valid.map(a => ({ a, height: targetBodyHeight({ viewportHeight, portraitPhone, ratio: a.ratio }, config) }));
   // A row is one depth band on one side (visualBand); lanes within it share the floor.
   const floor = a => solo && Number.isFinite(handTop) && handTop > 0 && (a.side ?? a.slot.side) === 'player' ? handTop : Infinity;
   const rowOf = a => `${a.side ?? a.slot.side}:${a.slot.visualBand ?? a.slot.row ?? Math.round(a.slot.ground / 10)}`;
