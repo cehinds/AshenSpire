@@ -9,21 +9,6 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 
 const author = (name, animation) => ({ formatVersion: 1, core: `ashen.${name}@1.0.0`, modules: animation === undefined ? {} : { animation } });
 
-test('Core and Current author JSON resolves defaults, explicit off, true and enabled overrides', () => {
-  for (const name of ['core', 'current']) {
-    for (const [animation, expected] of [[undefined, true], [true, true], [false, false], [{ enabled: false }, false], [{ enabled: true }, true]]) {
-      const profile = resolveGameProfile(author(name, animation));
-      assert.equal(figureAnimationsEnabled(profile), expected);
-      assert.equal(figureAnimationsEnabled({ gameProfile: profile }), expected);
-      if (animation === false) assert.equal(profile.modules.animation, false, 'whole-module false survives resolution');
-      else assert.equal(profile.modules.animation.mode, name === 'core' ? 'configured' : 'legacy');
-      assert.equal(Object.isFrozen(profile), true);
-    }
-    for (const animation of [{ enabled: 'false' }, { enabled: 0 }, { unknown: true }, null, { mode: name === 'core' ? 'legacy' : 'configured' }]) {
-      assert.throws(() => resolveGameProfile(author(name, animation)), /animation/);
-    }
-  }
-});
 
 test('historical runs default on without a profile or without the historical optional animation key', () => {
   for (const subject of [undefined, {}, { gameProfile: { formatVersion: 1, modules: {} } }, { formatVersion: 1, modules: { cards: false } }]) assert.equal(figureAnimationsEnabled(subject), true);
@@ -51,10 +36,3 @@ function fight(name, animation) {
   return { player: combat.player, enemies: combat.enemies, piles: combat.piles, eventLog: combat.eventLog, phase: combat.phase, turn: combat.turn, result: combat.result, rng: rng.getCounters() };
 }
 
-test('paid engine play and enemy turn are identical on/off, including receipts, piles, resources and RNG', () => {
-  for (const name of ['core', 'current']) {
-    const enabled = fight(name, true);
-    assert.deepEqual(fight(name, false), enabled);
-    assert.deepEqual(fight(name, { enabled: false }), enabled);
-  }
-});

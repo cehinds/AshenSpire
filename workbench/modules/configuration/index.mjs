@@ -1,7 +1,6 @@
 // Game Configuration: edit the two supported Ashen author profiles and validate
 // each draft with the same resolver used by the game-config build.
 const CORE_PATH = 'games/ashenspire/game.json';
-const CURRENT_PATH = 'games/ashenspire/presets/current.json';
 import { profileFiles, moduleFiles, moduleEntry, authorState, schemaFields, parseFieldValue, setModuleEnabled, setModuleSetting, forgetSwitchedOff } from './model.mjs';
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -9,15 +8,15 @@ export default {
   mount(el, ctx) {
     el.innerHTML = `<link rel="stylesheet" href="/modules/configuration/configuration.css"><section class="gc">
       <header class="gc-head"><div><h2>Game Configuration</h2><p>Author JSON profiles, validate through the shared resolver, then preview either built-in selection.</p></div>
-        <div class="gc-profiles" role="group" aria-label="Built-in profiles"><button type="button" class="btn" data-profile="core">Product core</button><button type="button" class="btn" data-profile="current">Current game</button></div>
+        <div class="gc-profiles" role="group" aria-label="Built-in profiles"><button type="button" class="btn" data-profile="core">Product core</button></div>
       </header>
-      <div class="gc-bar"><label class="gc-source">Editing <select aria-label="Profile file"><option value="${CORE_PATH}">Product core — ${CORE_PATH}</option><option value="${CURRENT_PATH}">Current game — ${CURRENT_PATH}</option></select></label>
+      <div class="gc-bar"><label class="gc-source">Editing <select aria-label="Profile file"><option value="${CORE_PATH}">Product core — ${CORE_PATH}</option></select></label>
         <div class="gc-actions"><button type="button" class="btn" data-action="load">Reload file</button><button type="button" class="btn" data-action="import">Import JSON</button><button type="button" class="btn" data-action="format">Format</button><button type="button" class="btn" data-action="validate">Validate</button><button type="button" class="btn btn-primary" data-action="save">Save</button><button type="button" class="btn" data-action="export">Export JSON</button></div>
         <input type="file" accept="application/json,.json" hidden>
       </div>
       <label class="gc-editor-label" for="gc-json">Author entry</label><textarea id="gc-json" spellcheck="false" aria-label="Game profile JSON"></textarea>
       <details class="gc-modules" open><summary>Modules <span class="gc-mod-count"></span></summary><div class="gc-mod-body"><p class="gc-muted">Loading modules…</p></div></details>
-      <div class="gc-foot"><div class="gc-status" role="status" aria-live="polite">Loading profile…</div><div class="gc-preview"><button type="button" class="btn" data-preview="core">Preview product core</button><button type="button" class="btn" data-preview="current">Preview current game</button><button type="button" class="btn" data-preview="draft">Preview authored JSON</button></div></div>
+      <div class="gc-foot"><div class="gc-status" role="status" aria-live="polite">Loading profile…</div><div class="gc-preview"><button type="button" class="btn" data-preview="core">Preview product core</button><button type="button" class="btn" data-preview="draft">Preview authored JSON</button></div></div>
       <section class="gc-report" aria-live="polite" hidden></section>
     </section>`;
     const $ = (selector) => el.querySelector(selector);
@@ -30,7 +29,7 @@ export default {
     let loadedText = '';
     let validated = null;
     let busy = false;
-    let files = profileFiles([CORE_PATH, CURRENT_PATH]);
+    let files = profileFiles([CORE_PATH]);
 
     function fillPicker(selected) {
       const groups = [...new Set(files.map((f) => f.group))];
@@ -329,15 +328,14 @@ export default {
     function preview(value) {
       ctx.preview.setOverride('gameProfile', value);
       ctx.preview.reload();
-      ctx.toast({ kind: 'info', title: `Previewing ${value === 'core' ? 'product core' : value === 'current' ? 'current game' : 'authored JSON'}`, detail: 'A new run uses this profile; existing saves keep their locked profile.', record: false });
+      ctx.toast({ kind: 'info', title: `Previewing ${value === 'core' ? 'product core' : 'authored JSON'}`, detail: 'A new run uses this profile; existing saves keep their locked profile.', record: false });
     }
 
     el.addEventListener('click', async (event) => {
       const button = event.target.closest('button');
       if (!button || button.disabled) return;
       if (button.dataset.profile) {
-        const profile = button.dataset.profile;
-        await load(profile === 'core' ? CORE_PATH : CURRENT_PATH);
+        await load(CORE_PATH);
       } else if (button.dataset.preview) {
         const key = button.dataset.preview;
         if (key === 'draft') {

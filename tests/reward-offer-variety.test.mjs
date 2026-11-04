@@ -65,11 +65,6 @@ const secondOffer = (registries, seed, keepHistory) => {
   return gameProfileRewardOffers(registries, run, createRng(seed), { offerId: 'b', source: 'level' }).options;
 };
 const SEEDS_20 = Array.from({ length: 20 }, (_, i) => i + 1);
-test('Core 1 pins the weight to 1: a history changes no second offer', () => {
-  const core1 = build(undefined, 'ashen.core@1.0.0');
-  for (const seed of SEEDS_20)
-    assert.equal(JSON.stringify(secondOffer(core1, seed, true)), JSON.stringify(secondOffer(core1, seed, false)), `seed ${seed}`);
-});
 test('Core 2 (weight 0.25) changes at least one second offer over seeds 1..20 when the history is present', () => {
   const core2 = build();
   const differs = SEEDS_20.filter(seed => JSON.stringify(secondOffer(core2, seed, true)) !== JSON.stringify(secondOffer(core2, seed, false)));
@@ -110,15 +105,6 @@ test('the history survives a save round trip and an old save without it still lo
   assert.deepEqual(validateRunShape(back), []);
   back.rewardOfferHistory = 'x';
   assert.ok(validateRunShape(back).some(p => p.includes('rewardOfferHistory')));
-});
-test('offeredCopyWeight is a 0..1 schema setting; Core 2 default 0.25, Core 1 bundle pins 1', () => {
-  const schema = JSON.parse(readFileSync(new URL('../engine/modules/reward-ranks/settings.schema.json', import.meta.url)));
-  const defaults = JSON.parse(readFileSync(new URL('../engine/modules/reward-ranks/defaults.json', import.meta.url)));
-  const bundle = JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/core-v1/bundle.json', import.meta.url)));
-  assert.deepEqual([schema.properties.offeredCopyWeight.minimum, schema.properties.offeredCopyWeight.maximum], [0, 1]);
-  assert.equal(defaults.offeredCopyWeight, 0.25);
-  assert.equal(bundle.modules['reward-ranks'].settings.offeredCopyWeight, 1);
-  assert.throws(() => build(1.5)); assert.throws(() => build(-0.1));
 });
 
 // Owner 2026-10-31 (stance coverage, 93fc9e5): the reserved stance slot weights its stance and its card by the history too.

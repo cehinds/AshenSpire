@@ -160,7 +160,7 @@ try {
       await p.close();
     }
   }
-  for (const profile of ["core", "current"]) {
+  for (const profile of ["core"]) {
     for (const width of profile === "current" ? [1440, 390] : [1440]) {
       const p = await b.newPage({
         viewport: { width, height: width === 390 ? 844 : 900 },

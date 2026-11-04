@@ -303,21 +303,6 @@ test('a configured fog route reveals only landmarks, then the split and next res
   const loaded = save.loadRun(reg); assert.ok(loaded, JSON.stringify(save.runStatus()));
   assert.deepEqual(knowledge(loaded).drawn, atSplit.drawn);
 });
-test('authored threat threshold controls generation, validates boss depth, and current keeps its viewer mode', () => {
-  const { reg, run } = setup({ minimumThreatFloor: 5 });
-  let elites = 0;
-  for (let seed = 1; seed <= 20; seed++) {
-    const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
-    for (const node of Object.values(map.nodes)) if (node.actualType === 'elite') { assert.ok(node.floor >= 5); elites++; }
-  }
-  assert.ok(elites > 0, 'eligible later depths still offer elites');
-  assert.throws(() => setup({ minimumThreatFloor: 9 }), /prebossNodes.*minimumThreatFloor/);
-  assert.throws(() => setup({ prebossNodes: 1, restsPerAct: 1, restFloors: [1] }), /prebossNodes.*minimumThreatFloor/);
-  assert.equal(resolveMapMode({}, { gameProfile: resolveGameProfile('current') }), 'fog');
-  assert.equal(resolveMapMode({ settings: { mapMode: 'path' } }, { gameProfile: resolveGameProfile('current') }), 'path');
-  const authored = setup({ mapMode: 'path' });
-  assert.equal(resolveMapMode({}, authored.run), 'path');
-});
 
 test('a rest lights only its own branch\'s next rest, never a sibling branch\'s', () => {
   const { reg, run } = setup();

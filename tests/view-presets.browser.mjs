@@ -59,7 +59,7 @@ function liveSnapshot() {
 }
 try {
   if (!process.env.VIEW_PRESETS_CAPTURE_ONLY) {
-  for (const profile of ['core','current']) {
+  for (const profile of ['core']) {
     const page = await pageFor(profile, 'combat');
     await page.locator('.end-turn').waitFor();
     await page.evaluate(() => { window.__qaCombatIdentity = window.__combat; });

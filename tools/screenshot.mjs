@@ -117,13 +117,13 @@ const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const outDir = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/preview');
 
-// --game-profile core|current — capture the same reach states against either
+// --game-profile core — capture the reach states against the
 // authored runtime profile. The parameter is added to every shot URL, including
 // shots whose path already contains a query string.
 const gpi = args.indexOf('--game-profile');
 const GAME_PROFILE = gpi >= 0 ? args[gpi + 1] : null;
-if (GAME_PROFILE && !['core', 'current'].includes(GAME_PROFILE)) {
-  console.error(`screenshot: --game-profile expects core or current, got "${GAME_PROFILE}"`);
+if (GAME_PROFILE && !['core'].includes(GAME_PROFILE)) {
+  console.error(`screenshot: --game-profile expects core, got "${GAME_PROFILE}"`);
   process.exit(1);
 }
 function shotUrl(shot) {

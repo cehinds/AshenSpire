@@ -6,13 +6,13 @@ import { gameProfileCatalog, gameProfileAuthors } from '../src/content/generated
 import { resolveGameAuthor, validateResolvedGameProfile } from '../engine/kernel/gameConfig.js';
 import { resolveGameProfile, validateGameProfileSnapshot } from '../src/model/gameProfile.js';
 test('repeat catalog resolves equal a fresh full resolve and stay distinct objects', () => {
-  const fresh = resolveGameAuthor(gameProfileAuthors.current, gameProfileCatalog);
-  assert.deepEqual(resolveGameProfile('current'), fresh);
-  assert.notEqual(resolveGameProfile('current'), resolveGameProfile('current'));
-  assert.deepEqual(resolveGameProfile('current'), resolveGameProfile('current'));
+  const fresh = resolveGameAuthor(gameProfileAuthors.core, gameProfileCatalog);
+  assert.deepEqual(resolveGameProfile('core'), fresh);
+  assert.notEqual(resolveGameProfile('core'), resolveGameProfile('core'));
+  assert.deepEqual(resolveGameProfile('core'), resolveGameProfile('core'));
 });
 test('parsed snapshots still take the full digest check and pinned runtimeHash', () => {
-  const good = JSON.parse(JSON.stringify(resolveGameProfile('current')));
+  const good = JSON.parse(JSON.stringify(resolveGameProfile('core')));
   assert.doesNotThrow(() => validateGameProfileSnapshot(good));
   const bad = { ...good, id: 'tampered' };
   assert.throws(() => validateGameProfileSnapshot(bad), /digest mismatch/);
@@ -24,7 +24,7 @@ test('catalog runtimeHash matches the committed game.lock.json (cache never serv
   for (const [id, p] of Object.entries(lock.profiles)) if (p.runtimeHash) assert.equal(gameProfileCatalog.runtimeHash, p.runtimeHash, id);
 });
 test('re-validating the exact verified object returns it; an unverified copy takes the full check', () => {
-  const p = resolveGameProfile('current');
+  const p = resolveGameProfile('core');
   assert.equal(validateGameProfileSnapshot(p), p);
   const copy = JSON.parse(JSON.stringify(p));
   const out = validateGameProfileSnapshot(copy);

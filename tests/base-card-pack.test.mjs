@@ -22,8 +22,8 @@ import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 const pack = loadBaseCardPack();
 const rows = pack.rows.filter(row => row.provenance.sourceProposal);
 const source = path => JSON.parse(readFileSync(new URL(path, import.meta.url)));
-function profile(modules = {}) { return resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules}); }
-function registries(p = resolveGameProfile('current')) { return bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p); }
+function profile(modules = {}) { return resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules}); }
+function registries(p = resolveGameProfile('core')) { return bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p); }
 const legacy = registries();
 function fixture(cardId, reg = legacy) {
   const ref = (id, i) => ({instanceId:`base-test-${i}`,cardId:id,upgraded:false});
@@ -50,7 +50,7 @@ function play(combat) {
 }
 
 test('both profile pins include the JSON pack and the expanded raw registry validates',()=>{
-  for(const p of [profile(),resolveGameProfile('current')])assert.ok(p.lock.artifacts.some(row=>row.path.endsWith('base-cards/cards.json')));
+  for(const p of [profile()])assert.ok(p.lock.artifacts.some(row=>row.path.endsWith('base-cards/cards.json')));
   const result=validateContent(contentBundle);assert.equal(result.ok,true,JSON.stringify(result.errors));
   for(const row of rows)assert.ok(legacy.cards.has(row.definition.id));
   assert.equal(legacy.proposalStatusRules['base.greased'].behaviors.length>0,true);
@@ -66,7 +66,7 @@ test('all 67 authored combat cards preview and resolve through the actual curren
   }
 });
 test('every admitted core combat card resolves through the unified engine with no disabled-resource variants failing',()=>{
-  for(const core of ['ashen.core@1.0.0','ashen.core@2.0.0']) for(const include of [['sp','mp'],['sp'],['mp'],[]]) {
+  for(const core of ['ashen.core@2.0.0']) for(const include of [['sp','mp'],['sp'],['mp'],[]]) {
     const p=resolveGameProfile({formatVersion:1,core,modules:{resources:{include}}}),reg=registries(p);
     for(const card of p.content.cards.filter(row=>row.id.startsWith('base.') && row.rarity!=='special')) {
       const combat=fixture(card.id,reg);
@@ -75,7 +75,7 @@ test('every admitted core combat card resolves through the unified engine with n
   }
 });
 test('Hold Block keeps all remaining protection for exactly its displayed number of turns',()=>{
-  for(const p of [resolveGameProfile('current'),profile(),resolveGameProfile('core')]) {
+  for(const p of [profile()]) {
     const reg=registries(p);
     for(const initialBlock of [0,13]) for(const plays of [1,2]) {
       const combat=fixture('base.retain-block',reg);
@@ -113,14 +113,15 @@ test('all three burden cards are real unplayable definitions and never normal re
 });
 test('core keeps its ten-card starter and only admits compatible rewards with active dependencies',()=>{
   const p=profile(),reg=registries(p),run=createRunState({seed:73,classId:'reaver',registries:reg});
-  assert.equal(run.deck.length,10);assert.equal(run.deck.filter(card=>card.cardId==='core.reaverSpecial').length,1);
-  assert.deepEqual(run.deck.filter(card=>card.cardId.startsWith('base.')).map(card=>card.cardId),['base.draw']);
+  assert.equal(run.deck.length,10);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
+  assert.deepEqual(run.deck.filter(card=>card.cardId.startsWith('base.')).map(card=>card.cardId),[]);
   const admitted=new Set(p.content.cards.map(card=>card.id));
   assert.ok(admitted.has('base.draw'));assert.ok(admitted.has('base.foresight'));
   for(const id of ['base.greased','base.poison','base.blight','base.divine-strike','base.persistent-protection','base.retain','base.break-ward']) assert.equal(admitted.has(id),false,id);
   const offer=gameProfileRewardOffers(reg,run,createRng(17),{offerId:'base-core',source:'normal'});
   for(const option of offer.options)if(option.kind==='combatCards')assert.equal(reg.cards.get(option.id).type==='status',false);
-  for(const toggle of ['statuses','stances','defenses','equipment','stats','reactions','intent']) {
+  // Core 2 cannot switch Defenses off: its starter decks name base.ethereal, which requires the module (so it is not in this list).
+  for(const toggle of ['statuses','stances','equipment','stats','reactions','intent']) {
     const changed=profile({[toggle]:false});
     for(const card of changed.content.cards.filter(card=>card.id.startsWith('base.'))) {
       const row=pack.rows.find(row=>row.definition.id===card.id);

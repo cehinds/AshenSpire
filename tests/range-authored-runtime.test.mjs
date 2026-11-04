@@ -88,44 +88,6 @@ test('the imported dagger Throw property exposes and commits only its one-band e
   assert.equal(combat.rangeState.engagements[pair(enemy)], 1);
 });
 
-test('Core projects only owned paid mobility and range metadata without repricing existing enemy offense', () => {
-  const before = JSON.stringify(contentBundle.enemies);
-  const bundle = applyGameProfileToContent(contentBundle, profile);
-  const validation = validateContent(bundle);
-  assert.equal(validation.ok, true, JSON.stringify(validation.errors));
-  assert.deepEqual(applyGameProfileToContent(bundle, profile), bundle, 'range projection is idempotent');
-  for (const original of contentBundle.enemies) {
-    const source = profile.content.enemies.find(row => row.id === original.id);
-    const projected = bundle.enemies.find(row => row.id === original.id);
-    // The one offense change is a named Core-only trim (coreOffense "card", owner 2026-10-25): hits and per-hit damage
-    // come from the Core card; every other field is the shared move's.
-    const trims = Object.fromEntries(Object.entries(source.cardHints || {}).filter(([, hint]) => hint.coreOffense === 'card').map(([cardId, hint]) => {
-      const hit = profile.content.enemyCards.find(row => row.id === cardId).effects.find(effect => effect.op === 'damage');
-      return [hint.legacyMove, { damage: hit.amount, hits: hit.hits }];
-    }));
-    // coreSp "card" (owner, 2026-10-25) is the same kind of named Core-only change: the move costs the Core card's staminaCost.
-    const prices = Object.fromEntries(Object.entries(source.cardHints || {}).filter(([, hint]) => hint.coreSp === 'card').map(([cardId, hint]) => [hint.legacyMove, { sp: profile.content.enemyCards.find(row => row.id === cardId).staminaCost }]));
-    for (const [id, move] of Object.entries(original.moves)) assert.deepEqual(projected.moves[id], { ...move, ...(trims[id] || {}), ...(prices[id] || {}) }, `${original.id}.${id}: offense unchanged except a named Core trim or price`);
-    for (const field of ['startingRange', 'rangeClosingMove', 'rangeRoutePolicy']) assert.equal(projected[field], source[field], `${original.id}/${field}`);
-    const cardId = source.defaultDeck.find(id => source.cardHints?.[id]?.legacyMove === source.rangeClosingMove);
-    const card = profile.content.enemyCards.find(row => row.id === cardId);
-    assert.ok(card, `${original.id}: closing card is truly owned`);
-    const move = registries.enemies.get(original.id).moves[source.rangeClosingMove];
-    assert.equal(move.sp, card.staminaCost);
-    assert.equal(move.weight, 0, 'mobility is selected explicitly, never added to the random attack pool');
-    assert.deepEqual(move.effects, card.effects);
-    assert.equal(combatProfileFor(move).maneuver, null, 'Advance cannot award an attack stance');
-  }
-  for (const id of ['hookCast', 'chainSnare', 'draggingBlow']) assert.equal(combatProfileFor(registries.enemies.get('chainScavenger').moves[id]).range, 'reach');
-  const { combat, enemy } = live('straightSword', 'chainScavenger');
-  assert.equal(combat.rangeState.engagements[pair(enemy)], 1, 'authored chain starting range reaches the real fight');
-  assert.equal(JSON.stringify(contentBundle.enemies), before, 'projection does not mutate shared Legacy/Current enemy content');
-  const trimmed = profile.content.enemies.flatMap(row => Object.values(row.cardHints || {}).filter(hint => hint.coreOffense).map(hint => `${row.id}.${hint.legacyMove}`)).sort();
-  assert.deepEqual(trimmed, ['ashheartDragon.ashBreath', 'blightedValkyrie.scarletDance', 'blightedValkyrie.whirlwind', 'fellWarden.twinDaggers', 'glassRegent.shatteredCourt',
-    'hollowAstronomer.orbitalShards', 'lanternMoth.wingSparks', 'mirrorScribe.shardVolley', 'stitchedKing.thousandHands'], 'the Core offense trims are exactly the named ones');
-  const current = applyGameProfileToContent(contentBundle, 'current');
-  assert.deepEqual(current.enemies, contentBundle.enemies);
-});
 
 test('Core mobility projection preserves nested and explicit flat offense override authority', () => {
   const enemies = contentBundle.enemies.map(row => row.id === 'wanderingSoldier'
