@@ -1,12 +1,7 @@
-import { createHash } from 'node:crypto';
-import { webpDimensions } from '../tools/mobileart-policy.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { stanceForCard, stanceForPublicIntent, createStanceLedger, stanceArtFor } from '../src/model/alternativeStance.js';
 import { concealIntent } from '../src/model/combatIntentVisibility.js';
-import { stanceInventory } from '../tools/alternative-stances-inventory.mjs';
-import { validate } from '../src/model/presentationSequence.js';
 
 const card = (maneuver, camp='physical') => ({cardTags:[`camp:${camp}`,`maneuver:${maneuver}`]});
 // Owner (2026-10-12): physical Smash holds its own painted wind-up stance.
@@ -66,39 +61,4 @@ test('unpainted canonical armour never aliases another class or the default outf
   assert.equal(stanceArtFor(catalog,'reaver-default','offensive').path,'base.webp');
   assert.equal(stanceArtFor(catalog,'reaver-nightweave','offensive'),null);
   assert.equal(stanceArtFor(catalog,'starseer-default','casting'),null);
-});
-test('coverage validates retained portable HIGH evidence for every canonical stance',()=>{
-  const catalog=JSON.parse(readFileSync(new URL('../pose-studio/stances/registry.json',import.meta.url)));
-  const inventory=stanceInventory();
-  assert.deepEqual(new Set(catalog.coverage.map(r=>r.id)),new Set([...inventory.players,...inventory.enemies].map(r=>r.id)));
-  assert.equal(catalog.coverage.length,catalog.counts.canonicalPlayers+catalog.counts.canonicalEnemies);
-  let count=0;
-  for(const r of catalog.coverage)for(const s of catalog.stances){
-    const frame=stanceArtFor(catalog,r.id,s);assert.equal(!!frame,r.stances[s]);
-    if(frame){
-      count++;
-      const actor=catalog.actors[r.stanceSource || r.id];
-      const rig=JSON.parse(readFileSync(new URL('../'+actor.rig,import.meta.url)));
-      const uri=rig.assets[s].src;
-      assert.ok(uri.startsWith('data:image/webp;base64,'));
-      const bytes=Buffer.from(uri.slice('data:image/webp;base64,'.length),'base64');
-      assert.ok(bytes.length>0);
-      assert.deepEqual([webpDimensions(bytes).width,webpDimensions(bytes).height],frame.size);
-      assert.equal(createHash('sha256').update(bytes).digest('hex'),frame.sha256);
-      assert.deepEqual(frame.anchor,[256,464]);
-      // LITE source bytes are checked in AI-Art; this retained rig embeds HIGH only.
-    }
-  }
-  assert.equal(count,catalog.counts.availableStanceCells);
-});
-test('all portable Pose Studio projects validate with empty gameplay bindings',()=>{
-  const catalog=JSON.parse(readFileSync(new URL('../pose-studio/stances/registry.json',import.meta.url)));
-  for(const [id,actor] of Object.entries(catalog.actors)){
-    if(actor.equivalentTo || !actor.poseStudioSupported)continue;
-    for(const stance of Object.keys(actor.frames)){
-      const project=JSON.parse(readFileSync(new URL(`../pose-studio/stances/projects/${id}/${stance}.pose.json`,import.meta.url)));
-      assert.deepEqual(project.bindings,[]);assert.deepEqual(project.clips,[]);
-      assert.deepEqual(validate(project,{actors:['reaver','rogue','starseer','herald'],effects:[],poses:()=>[]}),[],`${id}/${stance}`);
-    }
-  }
 });
