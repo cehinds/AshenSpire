@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-04
 
+- **Authoring tools moved off dev** ([#2530](https://github.com/cehinds/AshenSpire/pull/2530), `0.7.3.100`). Pose Studio, the Workbench, the editor, UI Studio and the root preview pages leave dev with the workflows that ran them; they live on the `tools-archive` branch.
 - **Retired game modes refuse to resume** ([#2527](https://github.com/cehinds/AshenSpire/pull/2527), `0.7.3.100`). a run saved in the old Current or Core 1 mode now shows a clear message instead of loading, and is kept untouched; new games and bad links always use Core 2.
 - **Old design and preview docs removed** ([#2526](https://github.com/cehinds/AshenSpire/pull/2526), `0.7.3.98`). about 1.1 GB of old screenshots and design notes are gone from the repo; the cleanup plan for a Core-only, Unity-ready codebase is written down.
 - **Hand (i) on the selected card** ([#2523](https://github.com/cehinds/AshenSpire/pull/2523), `0.7.3.96`). In combat the (i) shows only on the selected card and opens its details; a touch long-press no longer inspects by accident.
