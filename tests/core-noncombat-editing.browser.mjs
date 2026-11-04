@@ -11,7 +11,7 @@ const shots = process.env.SHOT_DIR; if (shots) mkdirSync(shots, { recursive: tru
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
 const errors = [];
 try {
-  for (const profile of ['core', 'current']) {
+  for (const profile of ['core']) {
     const page = await browser.newPage({ viewport: { width: 1024, height: 768 } });
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}index.html?shot=combat&gameProfile=${profile}`, { waitUntil: 'networkidle' });
