@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-04
 
+- **One upgrade modal** ([#2524](https://github.com/cehinds/AshenSpire/pull/2524), `0.7.3.92`). Tapping an item or card opens one upgrade modal (before and after cards, updated stats under them) where you confirm; compact header and no extra Back button.
 - **Card text fits its box** ([#2525](https://github.com/cehinds/AshenSpire/pull/2525), `0.7.3.92`). Card rules text shrinks to fit its parchment box on every card face, which is now about 30% taller; cards refit on resize and when fonts load.
 - **Player info card beside the player** ([#2522](https://github.com/cehinds/AshenSpire/pull/2522), `0.7.3.90`). The selected player's info card sits right beside the player on phones instead of jumping up over the enemy.
 - **Every combatant at 72%** ([#2521](https://github.com/cehinds/AshenSpire/pull/2521), `0.7.3.88`). The player, allies and enemies are all drawn at 72% (80%, then another 10% smaller); a normal enemy matches the player again.

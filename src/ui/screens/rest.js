@@ -612,7 +612,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
     };
     const openSmith = (receipts = []) => {
       let selectedItemRef = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse, repeatUpgrades: true });
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse, repeatUpgrades: true, autoSelect: false });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,

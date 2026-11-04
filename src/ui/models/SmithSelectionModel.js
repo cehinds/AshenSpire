@@ -36,6 +36,7 @@ function groupedAffected(cards) {
       name: card.name.replace(/\+$/, ''),
       role: card.role,
       reference: card.reference,
+      cardReference: card.cardReference,
       rating: card.rating,
       changes,
       values: rawChanges,
@@ -75,11 +76,12 @@ function genericAffected(candidate) {
   })));
 }
 
-export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false, repeatUpgrades = false } = {}) {
+export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false, repeatUpgrades = false, autoSelect = true } = {}) {
   // Hidden items are dropped, Blacksmith-gated ones sink to the bottom, and an
-  // empty choice falls to the first upgradeable item.
+  // empty choice falls to the first upgradeable item. The upgrade list opens with
+  // nothing chosen (`autoSelect: false`): a tap on a row is the choice and opens its modal.
   const ordered = orderSmithCandidates(plan.candidates);
-  selectedItemRef = selectedItemRef ?? defaultSmithSelection(ordered);
+  selectedItemRef = selectedItemRef ?? (autoSelect ? defaultSmithSelection(ordered) : null);
   const items = ordered.map((candidate) => {
     const itemKind = candidate.itemKind || 'armament';
     const itemId = candidate.itemId || candidate.armamentId;
