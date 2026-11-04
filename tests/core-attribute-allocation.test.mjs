@@ -3,12 +3,11 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { core2Registries } from './helpers/core2.mjs';
 import { withModalDom } from './helpers/modal-dom.mjs';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const registries = core2Registries();
 
 test('Core Armory sheet spends an earned attribute point without a rest visit', () => {
   withModalDom(() => {
