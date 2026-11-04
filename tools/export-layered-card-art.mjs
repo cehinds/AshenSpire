@@ -12,7 +12,7 @@ const artFile=rel=>authoringPath(rel,{root,assetRoot:artRoot});
 // The proposal viewer owns the geometry. Load its standalone script as data;
 // tools must not add a static module dependency on an authoring HTML tree.
 const math = {};
-runInNewContext(readFileSync(resolve(root, 'docs/design/new-card-art/layer-math.js'), 'utf8'), math);
+runInNewContext(readFileSync(resolve(root, 'tools/card-art/layer-math.js'), 'utf8'), math);
 const read = p => JSON.parse(readFileSync(p.startsWith('asset-data/')?resolve(root,p):artFile(p), 'utf8'));
 const selection = read('asset-data/card-art/layered-selection.json');
 const source = read(selection.sourceManifest);

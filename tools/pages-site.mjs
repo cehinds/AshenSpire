@@ -20,7 +20,7 @@
 //
 // WHAT ELSE IS SERVED. `main`'s tree is copied first, so every page the site
 // serves from it (/index-game.html, /docs/component-catalog.html,
-// /docs/preview/…, /pose-studio/, /items-preview.html) keeps working — less the media and authoring roots and the committed build HTML
+// /pose-studio/, /items-preview.html) keeps working — less the media and authoring roots and the committed build HTML
 // (BASE_TREE_PATHSPECS, docs/EXTERNAL-ASSETS-PLAN.md step 6a). The stable Play
 // links and the score and tiles they read beside themselves are written back
 // explicitly as that build's payload. The one deliberate replacement is the
@@ -196,11 +196,11 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 // leave the site and, because discovery reads the assembled tree, the index
 // with them. Plain links into art/ now 404: docs/component-catalog.html,
 // pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
-// docs/preview stays (owner answer 7).
+// docs/preview was removed (owner decision 2026-11-04).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
 const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
 // Kept on purpose, and checked by the selftest so a later edit cannot drop it unseen.
-const BASE_TREE_KEPT_DIRS = Object.freeze(['assets', 'docs/preview']);
+const BASE_TREE_KEPT_DIRS = Object.freeze(['assets']);
 const BASE_TREE_EXCLUDED_HTML = Object.freeze(['AshenSpire*.html', 'build/**/*.html', 'dist/**/*.html']);
 const BASE_TREE_PATHSPECS = Object.freeze(['.',
   ...BASE_TREE_EXCLUDED_DIRS.map((d) => `:(exclude)${d}`),
