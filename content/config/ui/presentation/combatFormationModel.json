@@ -34,7 +34,8 @@
         "portraitPhone": 0.22,
         "landscape": 0.26
       },
-      "statureCap": 1.3,
+      "statureCap": 1.15,
+      "enemyScale": 0.8,
       "overlapAllowance": 0.4,
       "edgeMarginPx": 6,
       "minCommonFactor": 0.35
