@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-05
+
+- **Tool leftovers cleared** ([#2534](https://github.com/cehinds/AshenSpire/pull/2534), `0.7.3.106`). Dead banner scripts, orphaned preview files and stale notes from the removed authoring tools are gone, and the Reaver greatsword frame checks are back.
+
 ## 2026-11-04
 
 - **Core 2 test helper** ([#2532](https://github.com/cehinds/AshenSpire/pull/2532), `0.7.3.106`). Tests get one helper for a Core 2 run, and the scattered Core 2 checks go through one `isCoreProfile` function (no gameplay change).
