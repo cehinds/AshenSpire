@@ -133,7 +133,35 @@ test('playback: an attack from Reach that pays an implicit Advance moves both fi
   for (const event of events) {
     if (event.type === 'attackHit') early = false;
     if (early) assert.equal(rangeRanksFromSnapshot(snap).get('enemy:e1'), 'back', `before the attack lands (${event.type})`);
-    applyRangeRankEvent(snap, event);
+    applyRangeRankEvent(snap, event, combat.rangeState.engagements);
   }
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...live].sort(), 'the reduced receipts end where the live state is');
+});
+
+test('playback: a short-range-profile attack that commits no Advance leaves both fighters back', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  run.loadout.sets.rightHand[0] = 'shortbow'; run.loadout.sets.leftHand[0] = null;
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 10000;
+  combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')] = 1;
+  const snap = rangeRankSnapshot(combat);
+  const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
+  const hit = events.find(e => e.type === 'attackHit' || e.type === 'attackMissed');
+  assert.equal(combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')], 1, 'the engine commits no Advance');
+  assert.equal(hit.range, 'melee', 'the receipt reports the weapon profile, not the distance');
+  for (const event of events) {
+    applyRangeRankEvent(snap, event, combat.rangeState.engagements);
+    assert.equal(rangeRanksFromSnapshot(snap).get('player:player'), 'back', event.type);
+  }
+  assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
 });
