@@ -74,3 +74,16 @@ test('announcesNextContact looks only inside the actor\'s own turn', () => {
   assert.equal(announcesNextContact([{ ...next, reaction: true }], 'e1'), false, 'a reaction move does not hold');
   assert.equal(announcesNextContact([{ ...next, intentPreview: null }], 'e1'), false, 'no read to show: the clear stands');
 });
+
+test('a reaction move end still restores the pre-reaction intent even when the actor announces a later contact', () => {
+  const before = { kind: 'attack', moveId: 'plan', revealed: true, hidden: false };
+  const entities = { e1: { kind: 'enemy', intentPreview: { kind: 'attack', moveId: 'react', revealed: true, hidden: false },
+    intentInFlight: true, intentBeforeReaction: before } };
+  const later = [{ type: 'combatContactPrepared', sourceId: 'e1', intentPreview: { moveId: 'x' } }];
+  const deferred = new Map();
+  applyCombatIntentReceipt(entities, { type: 'enemyMoveEnded', sourceId: 'e1', reaction: true }, deferred, later);
+  flushDeferredIntentClears(entities, deferred);
+  assert.equal(entities.e1.intentPreview, before, 'restored to the pre-reaction intent');
+  assert.equal(entities.e1.intentInFlight, false);
+  assert.equal(entities.e1.intentBeforeReaction, undefined);
+});

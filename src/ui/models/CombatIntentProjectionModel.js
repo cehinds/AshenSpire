@@ -51,7 +51,7 @@ export function applyCombatIntentReceipt(entities, event, deferred = null, later
   const clears = event.type === 'enemyMoveEnded' || actor.intentInFlight
     && (event.type === 'damageDealt' || event.type === 'attackMissed' || event.type === 'attackEvaded'
       || event.type === 'combatAvoidanceResolved' && event.avoided);
-  if (deferred && !announces && clears && later && announcesNextContact(later, event.sourceId)) return;
+  if (deferred && !announces && clears && !event.reaction && later && announcesNextContact(later, event.sourceId)) return;
   if (deferred && !announces && clears) {
     deferred.set(event.sourceId, event);
     return;
