@@ -693,7 +693,7 @@ function inventoryReveal(registries, row, {
  *   onEquip   routes item replacement/move/unequip through the priced combat intent
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
+  registries, run, meta = {}, destination = '', equipItemId = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
   onEditDeck = null, onProgression = null, onCharacterSheet = null, onClassRespec = null,
   handRules = null,
@@ -2636,6 +2636,11 @@ export function mountEquipment(host, {
 
   draw();
   if (destinationPlan) queueMicrotask(focusArmouryDestination);
+  // A shop purchase's "Equip" (owner, 2026-11-05) enters the same inventory equip flow the row's Equip button does.
+  if (equipItemId) {
+    const row = inventoryRows(registries, run, meta).find(candidate => candidate.id === equipItemId);
+    if (row?.item) queueMicrotask(() => { if (wrap.isConnected) beginInventoryEquip(row, null); });
+  }
   return { close, redraw: draw };
 }
 import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

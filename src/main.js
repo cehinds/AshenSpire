@@ -2,7 +2,7 @@ import { persistRewardChange as transactReward } from './model/rewardTransaction
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
@@ -45,6 +45,7 @@ import { formFactorFor } from './ui/models/FormFactorModel.js';
 import { applyWireframeChoices } from './ui/wireframeChoices.js';
 import { restampModalWireframes } from './ui/components/modalShell.js';
 import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
+import { openShopCardChoice, openShopArmamentChoice } from './ui/components/shopBuyChoice.js';
 import { replanCategoryNavs } from './ui/kit/categoryNav.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
@@ -2124,6 +2125,7 @@ function showArmoury(request = '', returnTo = showMap) {
   if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
+  const equipItemId = request && typeof request === 'object' ? request.equipItemId || '' : '';
   const armouryMeta = saves.loadMeta();
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
@@ -2131,6 +2133,7 @@ function showArmoury(request = '', returnTo = showMap) {
     run,
     meta: armouryMeta,
     destination,
+    equipItemId,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -3793,6 +3796,24 @@ function showGameProfileReward() {
     } });
 }
 
+// Owner 2026-11-05: after a shop purchase a card may go to the deck (else it stays in the library, as before) and an
+// armament may be equipped through the Armoury's own equip flow (else it stays in the inventory, as before).
+function offerShopCardDestination(receipt) {
+  if (!['combatCards', 'weaponArts'].includes(receipt?.kind) || !receipt.instanceId) return;
+  const settings = saves.loadMeta().settings || {};
+  openShopCardChoice({
+    name: registries.cards.get(receipt.id)?.name || receipt.id,
+    refusal: (code => !code ? '' : code === 'full' ? t('reward.configured.deckFull', { max: deckEditBounds(settings).max }) : t('reward.configured.deckLimit'))(shopCardDeckRefusal(registries, run, receipt.instanceId, settings)),
+    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
+  });
+}
+function shopArmamentBought(id) {
+  recordCollectedArmament(id, 'shop');
+  if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
+  const def = (registries.equipment.armaments || []).find(row => row.id === id) || (registries.equipment.armour || []).find(row => row.id === id);
+  openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, showShop) });
+}
+
 function showShop() {
   if (isConfiguredRun(run)) {
     if (!gameModule(run, 'shops')) return showMap();
@@ -3804,13 +3825,16 @@ function showShop() {
       if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
       persist(); audio.music('shop');
       return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-        onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),
+        onChanged: () => persist(), onArmamentPurchased: shopArmamentBought,
         onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
     }
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
     audio.music('shop');
     return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onTake: (index, quote) => { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop(); },
+      onTake: (index, quote) => {
+        const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
+        offerShopCardDestination(receipt);
+      },
       onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
       onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
@@ -3825,7 +3849,7 @@ function showShop() {
       // the reward door's odds (equal under Chaos Rewards).
       rng,
       onChanged: () => persist(),
-      onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+      onArmamentPurchased: shopArmamentBought,
       onLeave: () => {
         run.shopStock = null;
         persist();
@@ -3837,7 +3861,7 @@ function showShop() {
     return mountBlacksmith(app, {
       registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(),
-      onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+      onArmamentPurchased: shopArmamentBought,
       onLeave: () => {
         run.shopStock = null;
         persist();
@@ -3851,7 +3875,7 @@ function showShop() {
     hud: roomHud(showShop),
     meta: saves.loadMeta(),
     onChanged: () => persist(),
-    onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+    onArmamentPurchased: shopArmamentBought,
     // A full rest bought at the market (SPEC §14.3): the inn's own visit on
     // the run's streams, with the same heal scale and refill counts the Rest
     // screen's visit is given (showRest).
