@@ -73,6 +73,11 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     // A player-side panel's own sprite box (mostly transparent canvas) is not an obstacle: the panel is anchored to the body beside it.
     // Player-only obstacles (enemy HP bars) never move an enemy's panel, so enemy placement is as before.
     const mine = obstacles.filter(other => pinned ? other.id !== panel.id : !other.playerOnly);
+    // Owner 2026-11-05: when an enemy's sprite stands right beside the player (a landscape phone), the pinned panel
+    // takes the nearest clear slot to the right of that obstacle, still right of the player and never on the figure.
+    if (pinned && !above && side === 'right') for (const obstacle of mine.filter(other => other.width > 0 && other.height > 0 && other.left + other.width > a.left + a.width))
+      for (const offset of [0, -step, step])
+        add(obstacle.left + obstacle.width + gap, a.top + offset, 300 + Math.abs(obstacle.left + obstacle.width - (a.left + a.width)) + Math.abs(offset), 'right');
     const obstacleCount = rect => mine.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
     const free = choices.filter(choice => obstacleCount(choice) === 0);
