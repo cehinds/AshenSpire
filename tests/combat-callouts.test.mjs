@@ -275,6 +275,7 @@ for (const mode of ['instant', 'reduced-motion']) {
       assert.equal(timeOf(trace, 'callout:critical@player') - timeOf(trace, 'callout:hit@player'), floaterStaggerMs());
       assert.ok(timeOf(trace, 'float:-4') <= 80, 'the number comes with the fast path\'s own step');
       assert.ok(trace.filter((e) => !e.what.startsWith('callout:')).every((e) => e.at <= 80), 'nothing but a queued word waits past the fast path\'s own step');
+      assert.ok(trace.every((e) => e.at <= 80 + 2 * floaterStaggerMs()), 'a queued word appears within the fast path\'s step plus two staggers');
     });
   });
 }
