@@ -252,3 +252,18 @@ test('Escape with the card inspector open closes only the inspector; a second Es
     door.close();
   } finally { globalThis.setTimeout = priorTimeout; }
 }));
+
+test('an armament upgrade\'s faces are the weapon\'s own equipment card at its current and next tier, never a Strike card face', () => withKitDom(dom => {
+  const { door, model } = mount(dom, fresh(), 'armament/greatsword');
+  const faces = [...dom.document.querySelectorAll('.confirmation-modal .upgrade-confirm-faces .card-upgrade-face')];
+  assert.equal(faces.length, 2, 'before and after');
+  const { currentLevel, nextLevel } = model.properties.selected;
+  for (const face of faces) {
+    assert.ok(face.querySelector('.equipment-poker-card'), 'an equipment card');
+    assert.equal(face.querySelector('.card[data-card-id], .card-face'), null, 'not a card face');
+    assert.match(face.querySelector('.equipment-poker-card').getAttribute('aria-label'), /^Greatsword\b/, 'titled with the weapon name');
+  }
+  assert.equal(nextLevel, currentLevel + 1);
+  closeConfirmationModal();
+  door.close();
+}));

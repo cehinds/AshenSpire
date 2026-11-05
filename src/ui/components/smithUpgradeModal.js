@@ -23,6 +23,7 @@ import { t } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
 import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
+import { resolveUpgradedItem } from '../../model/itemUpgrades.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -76,7 +77,25 @@ export function mountSmithUpgradeModal(host, initialModel, {
    * row carries only the card's id and its live value before and after (`damage` or `block`), so its faces are the
    * copy's own resolved definition (its `cardReference`: upgrades, rank), else the card's base definition, with that effect's amount set to each value. No such card: no faces, the rows say it all.
    */
+  /**
+   * An armament, armour or relic upgrade shows the ITEM's own card before and after (owner, 2026-11-05): the item
+   * resolved at its current and next smithing tier (`upgradeLevel` on the piece is what the face reads for its AR),
+   * never a card it supplies. If the item face cannot be built there is no face, never the Strike card.
+   */
+  const itemFacesFor = (selected) => {
+    try {
+      const at = (level) => {
+        const piece = resolveUpgradedItem(registries, selected.itemRef, level);
+        return selected.itemKind === 'relic'
+          ? renderCollectibleCard(registries, piece, 'Relic', { level: 'glance' }).card
+          : renderEquipmentCard(registries, piece, { level: 'glance' }).card;
+      };
+      return upgradeFacesNode({ before: at(selected.currentLevel), after: at(selected.nextLevel) });
+    } catch { return null; }
+  };
+
   const facesFor = (selected) => {
+    if (selected.itemKind !== 'card') return itemFacesFor(selected);
     const face = (reference, definition) => renderCard(registries, reference, { small: true, tooltip: false, inspectReadOnly: true, ...(definition ? { definition } : {}) });
     const live = selected.affectedRows.find((entry) => entry.reference);
     if (live) {
