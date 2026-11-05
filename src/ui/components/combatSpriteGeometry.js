@@ -128,7 +128,7 @@ function frozenBounds(sprite, kind, measureNow) {
   }
   const value = measureNow();
   const stage = stageFor(sprite);
-  if (value.settled && !stage?.busy && !/\bact-/.test(sprite.className)) frozen.set(slot, { key, left: box.left, top: box.top, value });
+  if (value.settled !== false && !stage?.busy && !/\bact-/.test(sprite.className)) frozen.set(slot, { key, left: box.left, top: box.top, value });
   else frozen.delete(slot);
   return value;
 }
@@ -180,7 +180,7 @@ function measureSpriteArtBounds(sprite, refresh) {
       bottom: rect.top + (rect.height - img.naturalHeight * scale) / 2 + (bounds.y1 + 1) * scale,
       left: rect.left + bounds.x0 * scale, right: rect.left + (bounds.x1 + 1) * scale });
   }
-  if (!boxes.length) return sprite.getBoundingClientRect();
+  if (!boxes.length) { const r = sprite.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height, settled: false }; }
   return { top: Math.min(...boxes.map(box => box.top)), bottom: Math.max(...boxes.map(box => box.bottom)),
     left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)), settled };
 }
@@ -196,7 +196,7 @@ function measureSpriteBodyBounds(sprite, refresh) {
   const stage = stageFor(sprite);
   // The getter reads a box: ask once, not twice.
   const authored = stage?.currentBody;
-  if (authored) return { ...authored, settled: true };
+  if (authored) return authored;
   const current = stage?.restArt || stage?.currentArt;
   if (current?.body) return { ...projectBodyBounds(current.body, cachedCanvasRect(current.canvas), current.canvas.width, current.canvas.height), settled: true };
   const bounds = measureSpriteArtBounds(sprite, refresh);
