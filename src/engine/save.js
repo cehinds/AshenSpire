@@ -47,7 +47,6 @@ import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
-import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
@@ -999,15 +998,8 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         const seatProblems = seatOrderProblems(run.seatOrder, registries);
         if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
         const mapAct = run.actNumber;
-        if (run.journey) {
-          // deserializeRun validated the pinned manifest. Its graph is a derived
-          // projection, and its dungeon may belong to a different classic act.
-          for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
-          run.mapGraph = journeyGraph(run.journey);
-        } else {
-          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
-          run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
-        }
+        assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
+        run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         // A hand slot carried three weapon sets until 2026-11-01 and carries one
         // now. A save that holds a piece in set 2 or 3 (or an active set past the
         // first) keeps the piece: it moves to storage, the extra cells are cut,
@@ -1103,6 +1095,22 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // the run's own frozen attuneMax and is what a fight in progress carries.
         const rarityProblems = sigilRarityProblems(registries, run);
         if (rarityProblems.length) throw new Error(`Malformed sigils: ${rarityProblems.join('; ')}`);
+        // Owner, 2026-11-05: a profile unlock no longer makes a set owned in a
+        // run. A save from before that wears such a set without recording it,
+        // so it would vanish once unequipped. Grant it to the run here, once,
+        // at load; ownership() stays pure.
+        if (run.loadout && run.loadout.sets) {
+          const worn = new Set(Object.values(run.loadout.sets).flat().filter(Boolean));
+          const grant = run.loadout.creationArmourGrant;
+          for (const piece of registries.equipment.armour || []) {
+            if (piece.classId !== run.class || !piece.unlock || !worn.has(piece.id)) continue;
+            if (grant && grant.classId === piece.classId && grant.id === piece.id) continue;
+            const bought = Array.isArray(run.loadout.boughtArmour) ? run.loadout.boughtArmour : (run.loadout.boughtArmour = []);
+            if (!bought.some((row) => row && row.classId === piece.classId && row.id === piece.id)) {
+              bought.push({ classId: piece.classId, id: piece.id });
+            }
+          }
+        }
         // So is a bought armour set (SPEC §14.3, `loadout.boughtArmour`): a set
         // this build has no row for, for that class, would vanish from the
         // run's wardrobe without a word (Codex, on #1374).
@@ -1131,7 +1139,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           // art or a rolled card this build no longer has is pruned.
           cardKnown: (id) => registries.cards.has(id),
         };
-        const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
+        const stocks = [['shopStock', run.shopStock]];
         for (const [field, stock] of stocks) {
           const removed = pruneUnknownAdditionOffers(stock, known);
           if (!removed.length) continue;

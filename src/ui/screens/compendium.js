@@ -226,7 +226,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
   // Reading `registries.balance` rather than the imported module is the same
   // narrowing — it is the object `ownership()` itself was handed.
   const drops = (((registries.balance || {}).equipment || {}).drops) || {};
-  const owned = ownership(registries, { meta, loadout: null });
+  const owned = ownership(registries, { meta, loadout: null, profileWardrobe: true });
   const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
 
   // The drawn set, and the denominator comes FROM IT rather than from the table.

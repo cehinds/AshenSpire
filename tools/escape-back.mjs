@@ -65,8 +65,6 @@ export const SCREENS = [
   // Review of #1463 (Codex): the Equipment stage paints its card-info button
   // in the top layer as popover="manual"; that is not a layer, so Back runs.
   { id: 'customize-info', shot: 'customize', open: ['#cz-tab-equipment', '#cz-equipment-fold summary', '#cz-armours .card-inspection-target'], needs: '.creation-info-popover:popover-open', expect: 'back', back: '#cz-back' },
-  { id: 'atlas', shot: 'atlas', expect: 'none', why: 'the world atlas is the run itself; its exits (Save & quit) end the session' },
-  { id: 'armoury', shot: 'atlas', open: '[data-atlas-armoury]', expect: 'peel' },
   { id: 'map', shot: 'map', expect: 'none', why: 'the act map is the run itself; its exits (Save & quit) end the session' },
   { id: 'map-tray', shot: 'map', open: '.map-node.reachable', expect: 'back', back: '#map-back' },
   { id: 'map-legend', shot: 'map', open: ['.map-node.reachable', '#map-legend'], mount: 'legend', expect: 'layer', back: '#map-back' },
@@ -99,7 +97,6 @@ export const READY = {
   history: '.history-screen',
   compendium: '.screen.compendium',
   customize: '.screen.customize',
-  atlas: '.world-atlas-screen',
   map: '.mapscreen.map-fog',
   combat: '.combat',
   smith: '.smith-modal-veil',

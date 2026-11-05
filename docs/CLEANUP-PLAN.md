@@ -96,7 +96,7 @@ legacy path today; each area PR moves its tests onto the Core 2 helper (3c) or d
 | 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | done (this PR) |
 | 3e | Settings: legacy Advanced rows, `advancedConfig` run overrides | PR A done (#2536); PR B done (Core 2 snapshot keeps version + prologue fields only; live-XP machinery deleted; configured registry cache keyed on profile hash + opening/presentation); configuredContentBundle part deferred to 3i/3k |
 | 3e-follow | Settings: Battlefield / formation group retired (owner, 2026-11-05): the Advanced Battlefield tab, `formationSettings.js` editor and `showFormationGrid` switch deleted; `gameConfig.presentation.*` (bar `settings{Width,Height}Percent`) joins the retired stored keys; owner's exported xp growth 1.5 baked into `balanceCore.json`. `presentationConfig` and the combat battlefield stage / formation movement still read the (default-only) config: retire with 3i | done (`chore/RetireNonCoreSettings`) |
-| 3f | Map: legacy `actmap` branch, `mapgen`, world atlas/journey, legacy dungeons, Custom Climb | in progress (PR A: Custom Climb + dungeons) |
+| 3f | Map: legacy `actmap` branch, `mapgen`, world atlas/journey, legacy dungeons, Custom Climb | in progress (PR A merged: Custom Climb + dungeons; PR B: World Journey) |
 | 3g | Progression: class mastery, feats/class tree, keepsakes, manual level-up, legacy stat rows (prologue stays) | todo |
 | 3h | Rewards and shops: legacy offer and merchant flows | todo |
 | 3i | Combat (2-3 PRs): combat rounds, normal preview, recovery rules; `ruleset`/ratings and the legacy expansion projection; make the configured path unconditional. Snapshot version fields stay | todo |

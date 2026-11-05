@@ -207,7 +207,7 @@ test('no stack renders the version 1 modal with a Back button', async () => {
     const body = shell.body;
     assert.equal(body.querySelector('[data-reaction-stack]'), null, 'no stack list without entries');
     assert.equal(body.querySelector('.reaction-stack-label'), null);
-    assert.equal(body.querySelector('p').textContent, 'Choose a card to play before this action resolves. Back skips this reaction.');
+    assert.equal(body.querySelector('p'), null, 'no help paragraph: the body holds only the damage line and the option rows');
     const exits = opened.document.querySelectorAll('button').filter((node) => node.textContent === 'Back');
     assert.ok(exits.length >= 1, 'a button reads Back');
     assert.equal(opened.document.querySelectorAll('button').filter((node) => node.textContent === 'Resolve').length, 0, 'no Resolve label without a stack');
@@ -236,8 +236,7 @@ test('a stack of two lists the top first and labels the exit Resolve', async () 
     const items = shell.body.querySelectorAll('[data-reaction-stack-entry]').map((node) => node.textContent);
     assert.deepEqual(items, ['Second Strike', 'Guard Counter'], 'top entry first');
     assert.equal(shell.body.querySelector('[data-reaction-stack]').getAttribute('data-reaction-stack'), '2');
-    assert.equal(shell.body.querySelector('p').textContent,
-      'Choose another card to add on top, or Resolve to play the stack, last card first.');
+    assert.deepEqual(shell.body.querySelectorAll('p').map((node) => node.textContent), ['On the stack'], 'only the stack label, no help paragraph');
     assert.equal(document.querySelectorAll('button').filter((node) => node.textContent === 'Resolve').length, 1, 'exit reads Resolve');
     assert.equal(document.querySelectorAll('button').filter((node) => node.textContent === 'Back').length, 0, 'Back is replaced on the exit');
     assert.equal(shell.body.querySelectorAll('[data-reaction-option]').length, 1, 'options are still offered');
