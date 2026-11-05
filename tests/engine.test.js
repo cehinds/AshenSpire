@@ -57,9 +57,7 @@ import {
   resolveUnknownNode,
   rollArmamentDrop,
 } from '../src/engine/encounters.js';
-import {
-  endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
-} from '../src/content/customMods.js';
+import { isCustomRun } from '../src/model/customRun.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints, creationMode } from '../src/model/attributes.js';
@@ -1970,38 +1968,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       else dispatch(f, { type: 'endTurn' });
     }
     assert(f.result === 'victory' || f.result === 'defeat', `final boss fight concluded (${f.result})`);
-  });
-
-  // ---- 22. Endless Spire (Custom Climb chaos rule) --------------------------
-  test('22. Endless Spire: act loop math, per-cycle scaling, mod wiring', () => {
-    // Acts 1-3 are the first pass (loop 0); 4-6 replay acts 1-3 as cycle 2; etc.
-    for (const [act, want] of [[1, [1, 0]], [3, [3, 0]], [4, [1, 1]], [6, [3, 1]], [7, [1, 2]], [12, [3, 3]]]) {
-      const { contentAct, loop } = endlessActInfo(act);
-      eq(contentAct, want[0], `act ${act} content act`);
-      eq(loop, want[1], `act ${act} loop count`);
-    }
-    // Every looped content act must resolve to real content (no unknown-act throw).
-    for (let act = 4; act <= 12; act++) {
-      const ca = endlessActInfo(act).contentAct;
-      assert(REG.mapConfig(ca), `mapConfig exists for looped act ${act} → ${ca}`);
-      assert(rollEncounter(REG, createRng(act), { pool: 'boss', seat: ['weald', 'marches', 'reach'][ca - 1] }), `boss encounter rolls for looped act ${act}`);
-    }
-    // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
-    const base = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
-      enemyIds: ['blightHound'],
-    });
-    const loop2 = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
-      enemyIds: ['blightHound'],
-      hpMult: 1 + ENDLESS_HP_PER_LOOP * 2,
-      enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * 2 }],
-    });
-    eq(getEntity(loop2, 'e1').maxHp, Math.round(getEntity(base, 'e1').maxHp * 1.7), 'loop-2 enemy HP = base ×1.7');
-    eq(S.getStacks(getEntity(loop2, 'e1'), 'strength'), 2, 'loop-2 enemy has +2 Strength');
-    // The chaos toggle flags the run as custom (kept out of win-rate telemetry).
-    assert(activeMods({ mods: { endless: true } }).endless, 'endless resolves as an active mod');
-    assert(isCustomRun({ mods: { endless: true } }), 'endless runs are flagged custom');
   });
 
   // ---- 23. 'ally' target (co-op cards, solo-valid) ---------------------------
@@ -6320,17 +6286,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     let threw = null;
     try { buildActMap(reg, createRng(1), 'weald', 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
-    assert(isCustomRun({ mapShape: { floors: 6 } }), 'a shaped run is kept out of win-rate stats');
-    assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and an unshaped one is not');
-
-    // IT SURVIVES A SAVE. The shape rides on `run.custom`, so a resumed short
-    // run stays short and act 2 is generated at the shape act 1 was — the claim
-    // buildActMap's header makes, asserted rather than assumed.
-    const saved = createRunState({ seed: 1, classId: 'reaver', registries: reg });
-    saved.custom = { ascension: 0, mods: {}, deckMode: 'standard', mapShape: { floors: 6, columns: 4 } };
-    const revived = JSON.parse(serializeRun(saved));
-    eq(JSON.stringify(revived.custom.mapShape), JSON.stringify({ floors: 6, columns: 4 }),
-      'the run shape round-trips through the save');
+    assert(isCustomRun({ deckMode: 'sealed' }), 'a dealt-deck run is kept out of win-rate stats');
+    assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and a standard one is not');
+    assert(isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard', mapShape: { floors: 7 } }), 'a save from the retired Custom Climb with a map shape still counts as custom');
+    assert(isCustomRun({ ascension: 2, mods: {}, deckMode: 'standard' }), '…as does one with ascension');
+    assert(isCustomRun({ ascension: 0, mods: { hoarder: true }, deckMode: 'standard' }), '…or a mod');
 
     // BOUNDARY. This is the generator and the resolver. It proves NOTHING about
     // the screen: that the panel opens, that the sliders reach 44 device px,

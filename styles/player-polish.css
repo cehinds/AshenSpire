@@ -100,7 +100,7 @@
 }
 
 /* World paintings never replace map coordinates, combat atlases or floors. */
-.title-screen, .customize, .customrun, .draft, .history-screen, .gameover {
+.title-screen, .customize, .draft, .history-screen, .gameover {
   background-image:linear-gradient(90deg, #0d0b0838, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-desktop.webp');
   background-size:cover; background-position:center; background-repeat:no-repeat;
 }
@@ -151,7 +151,7 @@
 :is(.blacksmith-workspace, .master-workspace) .class-pick h3 { white-space:normal; overflow:visible; }
 :is(.blacksmith-workspace, .master-workspace) .class-pick > .shop-offer-avail { flex:0 0 100%; }
 .class-pick > .glyph .engraved-icon { width:28px; height:28px; }
-:root[data-layout='narrow'] :is(.title-screen, .customize, .customrun, .draft, .history-screen, .gameover, .reward-backdrop) {
+:root[data-layout='narrow'] :is(.title-screen, .customize, .draft, .history-screen, .gameover, .reward-backdrop) {
   background-image:linear-gradient(#0d0b0838, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-mobile.webp');
 }
 :root[data-layout='narrow'] .shop-workspace {

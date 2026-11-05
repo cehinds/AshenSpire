@@ -23,11 +23,11 @@ export function serviceEventCombatEntry(nodeId, encounterId) {
  * dungeon) is exactly the receipt's `encounterId`.
  */
 export function combatEncounterFor(registries, run, { nodeId, encounterId, serviceEvent = false } = {}) {
-  if (run.journey && !run.legacyDungeon && serviceEvent !== true) return journeyEncounter(run.journey, nodeId, registries);
+  if (run.journey && serviceEvent !== true) return journeyEncounter(run.journey, nodeId, registries);
   return registries.encounters.get(encounterId);
 }
 
 /** Whether winning the fight now standing completes the journey node: never for a service event's fight. */
 export function victoryCompletesJourneyNode(run) {
-  return !!run.journey && !run.legacyDungeon && run.combatEntered?.serviceEvent !== true;
+  return !!run.journey && run.combatEntered?.serviceEvent !== true;
 }

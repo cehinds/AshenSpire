@@ -60,7 +60,6 @@ export const SCREENS = [
   { id: 'profile', shot: 'profile', expect: 'peel' },
   { id: 'history', shot: 'history', expect: 'back', back: '#hx-back' },
   { id: 'compendium', shot: 'compendium', expect: 'back', back: '#cp-back' },
-  { id: 'customrun', shot: 'customrun', expect: 'back', back: '#cr-back' },
   { id: 'customize', shot: 'customize', expect: 'back', back: '#cz-back' },
   { id: 'customize-menu', shot: 'customize', open: '.cz-menu-button', expect: 'popover', back: '#cz-back' },
   // Review of #1463 (Codex): the Equipment stage paints its card-info button
@@ -99,7 +98,6 @@ export const READY = {
   profile: '.profile-archive-modal',
   history: '.history-screen',
   compendium: '.screen.compendium',
-  customrun: '.screen.customrun',
   customize: '.screen.customize',
   atlas: '.world-atlas-screen',
   map: '.mapscreen.map-fog',

@@ -425,10 +425,10 @@ test('the reward menu: a sigil row follows the relic row, and taking it adds the
   assert.deepEqual(rewardPlan({}, {}).rows, []);
 });
 
-test('main.js rolls the drop at a won fight, a non-terminal boss and both treasure doors, and never before the last boss ends the run', () => {
+test('main.js rolls the drop at a won fight, a non-terminal boss and the treasure door, and never before the last boss ends the run', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /function sigilOffer\(pool\) \{\s*const sigilId = rollSigilDrop\(registries, rng, run, pool\);\s*return sigilId \? \{ sigilId \} : \{\};/, 'an offer carries sigilId only when one dropped');
-  assert.equal((main.match(/\.\.\.sigilOffer\('treasure'\)/g) || []).length, 2, 'both treasure doors roll');
+  assert.equal((main.match(/\.\.\.sigilOffer\('treasure'\)/g) || []).length, 1, 'the treasure door rolls');
   assert.match(main, /\.\.\.sigilOffer\(enc\.pool\)/);
   const finish = main.indexOf('return showFinishedRun(true);', main.indexOf("if (enc.pool === 'boss')"));
   const bossRoll = main.indexOf("...sigilOffer('boss')");

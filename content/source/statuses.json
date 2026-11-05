@@ -1262,18 +1262,6 @@
     "tooltip": "Your attacks apply 1 Venom per stack."
   },
   {
-    "id": "glassCannon",
-    "name": "Glass Cannon",
-    "icon": "attack",
-    "stackMode": "unique",
-    "decay": "none",
-    "modifiers": {
-      "damageDealtMult": 1.25,
-      "damageTakenMult": 1.25
-    },
-    "tooltip": "Deal 25% more attack damage, and take 25% more."
-  },
-  {
     "id": "magicVulnerable",
     "name": "Magic Vulnerable",
     "icon": "vulnerable",

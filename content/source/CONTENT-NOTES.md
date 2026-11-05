@@ -111,7 +111,6 @@ Starstone combo engine (SPEC §5.1 identity) · Herald: blood economy powers (SP
 - **harbingerOfBlight** — Harbinger of Blight power: every Blight you spread mends you a little — gated to the owner's own applications via `eventSourceIsOwner` (the target is the enemy, not the owner, so `eventTargetIsOwner` would never fire here).
 - **bloodUnction** — Blood Unction flask: this turn, attacks apply +2 Bleed per hit (same hook shape as Gorefire Stance; expires at turn end).
 - **ironVow** — Iron Vow power: pain hardens into guard — same `hpLost` + `eventTargetIsOwner` shape as Stigmata/Zealotry, but pays out Block instead of a heal/lash.
-- **glassCannon** — Custom Climb "Glass Cannon" modifier — applied to the player at combat start (both directions at once). Pure data over existing modifier keys.
 - **magicVulnerable** — registered break payload for Arcane Exposure. The engine applies this only to explicit magic-school HP packets, never tags or buildup.
 - **stanceShifted** — fight-long marker for the Oath rule (`oathKept`): set when its owner enters a stance, it never decays, so Oath stays broken for the fight.
 - **silenced** — Psychic family (design elements-and-tag-mechanics §2.1). Expanded combat (owner, 2026-10-13): +1 SP per stack on spell-camp cards, and immunity to Force, each Force hit or effect spending a stack. The `spellDamageDealtMult` modifier is read by legacy combat only. `decay.duration` 2 is PROVISIONAL.
@@ -564,17 +563,6 @@ The map-generation knobs of src/content/mapconfig.js (SPEC §6). `mapActShape.js
     The largest weight a knob may set. Weights are RELATIVE — the odds a type
     is rolled are its weight over the total — so this number is a slider end,
     not a percentage. The screen prints the derived share beside each one.
-
-## Custom Climb modifiers (content/source/customMods.json)
-
-File header (was the comment block at the top of src/content/customMods.js): a tailored take on Slay the Spire 2's custom mode. `customMods.json` holds four keys, which src/content/customMods.js re-exports as `DIFFICULTY_MODS`, `CHAOS_MODS`, `DECK_MODES` and `ASCENSION_ORDER`; each mod row is `{ id, label, desc }`. Tuning magnitudes live in `balanceCustomMods.json` and `balanceEndless.json`, not here.
-
-- **`difficultyMods`** — harder rules. The Ascension ladder just enables the first N of `ascensionOrder`, so "Ascension 4" is the four hardest-first rules, and every rule is also individually toggleable.
-- **`chaosMods`** — flavourful run-warping toggles, independent of difficulty.
-- **`deckModes`** — how your starting deck is built.
-- **`ascensionOrder`** — Ascension enables the first N difficulty rules (hardest impact first). `MAX_ASCENSION` is its length, computed in JS.
-- The orchestrator (main.js) reads `run.custom.mods[id]` at the relevant hook; nothing here is engine-specific.
-- **Deleted union.** `ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood in the module with no reader in src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted rather than documented: nothing re-typed it, so there is nothing to collapse into, and the day a screen needs both groups it can spell the spread itself.
 
 ## Seats (content/source/seats.json)
 
@@ -1638,15 +1626,6 @@ _No comments were written beside these numbers in the old balance.js._
   real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
   Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
   order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
-
-### balanceCustomMods.json — customMods
-
-- **`customMods.toughElitesHpMult`** — Tough Elites: elites & bosses ×HP
-- **`customMods.bigBossesHpMult`** — Dread Bosses: act bosses ×HP
-- **`customMods.hoarderCinders`** — Hoarder: bonus starting cinders
-- **`customMods.expensiveShopsMult`** — Greedy Merchants: ×shop price
-- **`customMods.hoarderShopMult`** — Hoarder: ×shop price
-- **`customMods.lessHealingMult`** — Scarce Embers: ×healing (shrine rest + between-act)
 
 ### balanceCosts.json — costs
 

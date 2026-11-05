@@ -410,7 +410,7 @@ function balanceGroup(path) {
   if (/^(level|xp\.|skill\.|classTree\.|progressionFeats\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
-  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|endless|customMods)/.test(path)) return 'World';
+  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|endless)/.test(path)) return 'World';
   return 'Combat';
 }
 

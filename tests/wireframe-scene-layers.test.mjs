@@ -6,7 +6,6 @@ import { targetLayer, targetOutline } from '../src/ui/models/TargetLayerModel.js
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
-import { LEGACY_SCENES } from '../src/model/legacyDungeon.js';
 
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 const scenes = ENVIRONMENTS.flatMap(region => region.scenes);
@@ -33,7 +32,7 @@ test('full-screen backdrop grounds the figures using the battlefield window', ()
     const config = battlefieldBackdropConfig({ height: sceneHeight, fieldTop, fieldHeight, formation });
     const expectedFloor = fieldTop + Math.max(0, Math.min(...formation.cells.map(cell => cell.ground)));
     assert.deepEqual(config, battlefieldBackdropConfig({ height: sceneHeight, fieldTop, fieldHeight, formation: { ...formation, slots: [] } }), 'deaths do not pan the painting');
-    for (const scene of [...scenes, ...LEGACY_SCENES]) {
+    for (const scene of scenes) {
       const layers = sceneWindowLayers({ width, height, windowTop: 0, windowHeight: sceneHeight, scene, config });
       const [x, y, w, h] = scene.box;
       const [, paintedFloor] = project(layers.frame.viewBox, width, height, x, y + scene.floorStart * h);

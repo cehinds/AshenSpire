@@ -142,20 +142,6 @@ const SCREENS = [
   { name: 'victory', query: '?shot=victory', landmark: '.stats-table', state: 'victory' },
   { name: 'history', query: '?shot=history', landmark: '.history .as-row', state: 'history' },
   { name: 'about', query: '?shot=about', landmark: '.settings-modal .about-ai', state: 'about' },
-  // The Custom Climb — a SCREENS entry and NOT an EXCLUDED_STATES line, for the
-  // reason written below about the Shrine and the event. `?shot=customrun` is
-  // the screen's ONLY door: title.js voids `onCustom` today, so nothing a player
-  // can click reaches it and a photograph is the only way anyone sees it. It
-  // rode into the release promotion (PR #795) with no line here and the
-  // preflight refused the entire tool — "1 app shot state neither photographed
-  // nor excluded: customrun", exit 1 before the browser ever launched. That
-  // refusal is the derivation working; the fix is to account for the state, not
-  // to quiet the check.
-  //
-  // `#cr-classes` and not `.customrun`: the landmark has to prove the screen's
-  // own controls rendered. The root div draws whether or not the registries
-  // resolved; the class picker is built from them.
-  { name: 'custom-climb', query: '?shot=customrun', landmark: '#cr-classes', state: 'customrun' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
   { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {

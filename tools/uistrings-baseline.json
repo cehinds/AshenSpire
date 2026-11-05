@@ -11,7 +11,6 @@
   "files": {
     "src/ui/screens/customize.js": 43,
     "src/ui/components/offlinePlay.js": 20,
-    "src/ui/screens/customRun.js": 16,
     "src/ui/screens/settings.js": 13,
     "src/ui/screens/profileNotice.js": 12,
     "src/ui/input.js": 10,

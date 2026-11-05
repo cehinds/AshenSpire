@@ -65,7 +65,6 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Who speaks an event line | `eventSpeakers.json`, `speakers.csv` | |
 | Event gates and quest chains | `eventHistoryRequirements.json`, `eventChoiceHistoryRequirements.json`, `questChains.json` | |
 | Map, towns, regions | `worldAtlas.json`, `locationPresentation.json` | Weather, music and scenes per place. |
-| Old-style dungeons | `legacyDungeons.json` | |
 
 #### Shops, items, companions
 
@@ -127,7 +126,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Feat and progression-relic numbers | `balanceProgressionFeats.json`, `balanceProgressionRelics.json` | |
 | Relic powers (Forsaken Medallion and the rest) | `balancePowers.json` | |
 | Sigils: strength, drop chance | `balanceSigils.json` | Sigil names, rarity, cost and text: `sigils.json`. |
-| Equipment: swapping, mounts, rarity bonuses | `balanceEquipment.json`, `balanceCustomMods.json` | Custom Climb options are in the second. |
+| Equipment: swapping, mounts, rarity bonuses | `balanceEquipment.json` | |
 | Smithing stones and services | `balanceSmithing.json` | |
 | Poise and stagger | `balancePoise.json`, `balanceStagger.json` | |
 | Spell exposure and breaks | `balanceExposure.json`, `balanceArcaneExposure.json` | |
@@ -141,7 +140,6 @@ Paths are inside `content/source/` unless they start with `src/`.
 | How much enemy intent you see | `combatIntent.json` | |
 | Counter and smash multipliers, damage and tag riders | `combatMatchups.json`, `combatExpansionMatchups.json` | |
 | Survey quest lore | `surveyQuestLore.json` | |
-| Custom Climb modifiers: names, text, ascension order | `customMods.json` | Their sizes ("+30% HP") are in `balanceCustomMods.json`; change both so the text stays true. What each one does is code. |
 | Seats (each region and its content) | `seats.json` | Changing a seat's `baseTier` changes enemy scaling. |
 | Screen shake and hit-stop on big hits | `combatFeel.json` | Some numbers are written twice; the notes say which must match. |
 | Music beds, scales and which region plays what | `music.json` | |

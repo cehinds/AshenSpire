@@ -129,9 +129,3 @@ test('the atlas (journey) never re-enters a rest site', () => {
   assert.equal(restRevisitNodeId(run), null);
 });
 
-test('the legacy dungeon never re-enters a rest site', () => {
-  const run = classicRun();
-  openRestRecord(run);
-  run.legacyDungeon = {};
-  assert.equal(restRevisitNodeId(run), null);
-});

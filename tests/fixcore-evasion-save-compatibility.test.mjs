@@ -10,6 +10,7 @@ import { createRunCombat, withoutWeaknesses } from './withoutWeaknesses.mjs'; //
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
+import { createSaveManager } from '../src/engine/save.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -102,7 +103,8 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
   // Re-pinned 2026-11-01: the Evade stance retirement edits the stances module defaults, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8');
+  // Re-pinned 2026-11-05: retiring the glassCannon status edits engine/mechanics/index.json (the mechanics-runtime artifact), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:2dcba5a61dd9744492242292686131de0ecf1c4ce2757f64c1abcf117297f954');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -127,4 +129,58 @@ test('a run saved before the 2026-10-26 pierce rule (runtime 2d76f2...) keeps it
   const saved = priorRuntimeEnvelope();
   saved.lock.runtimeHash = 'sha256:2d76f2baf4fae3e676b06003c74c1fb30843067f48dec7fe021457dca05ccae6';
   assert.equal(coreEvasionCompatibleRuntime(saved, profile.lock.runtimeHash), saved.lock.runtimeHash);
+});
+
+test('a run saved by the previous release (runtime 83a0c5..., before the glassCannon retirement) keeps its own runtime', () => {
+  const profile = resolveGameProfile('core');
+  const saved = priorRuntimeEnvelope();
+  saved.lock.runtimeHash = 'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8';
+  assert.equal(coreEvasionCompatibleRuntime(saved, profile.lock.runtimeHash), saved.lock.runtimeHash);
+});
+
+// Real save path: a stored fight carrying the retired glassCannon status loads (not archived), drops it and plays on.
+function storedFightWith(profile, statusId) {
+  const validated = validateGameProfileSnapshot(profile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
+  const run = createRunState({ registries, classId: 'herald', seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a','b','c'] } } } });
+  const rng = createRng(5);
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'] });
+  const entries = new Map();
+  const save = createSaveManager({ getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
+  run.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot: serializeCombatSnapshot(combat) };
+  save.saveRun(run, rng);
+  for (const [key, value] of entries) {
+    if (!value.includes('"combatEntered"')) continue;
+    entries.set(key, value.replace(/"statuses":\{\}/g, `"statuses":{"${statusId}":{"stacks":1}}`));
+  }
+  return { registries, run, save, entries };
+}
+
+test('a stored fight holding the retired glassCannon status loads, drops it, and the next turn runs', () => {
+  const { registries, save, entries } = storedFightWith(structuredClone(resolveGameProfile('core')), 'glassCannon');
+  assert.ok([...entries.values()].some(value => value.includes('glassCannon')), 'fixture really stores glassCannon');
+  const loaded = save.loadRun(registries);
+  assert.ok(loaded, `the save is loaded, not archived: ${[...entries].filter(([k])=>k.includes('archiv')).map(([,v])=>v.slice(0,300))}`);
+  const snapshot = loaded.combatEntered.snapshot;
+  assert.equal('glassCannon' in snapshot.player.statuses, false);
+  assert.equal('glassCannon' in snapshot.enemies[0].statuses, false);
+  const restored = restoreStripped({ registries, rng: createRng(5), snapshot, expectedGameProfile: loaded.gameProfile });
+  assert.doesNotThrow(() => dispatch(restored, { type: 'endTurn' }));
+});
+
+test('a run saved at runtime 83a0c5... with a glassCannon fight resumes through the real load path', () => {
+  const profile = priorRuntimeEnvelope();
+  profile.lock.runtimeHash = 'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8';
+  digest(profile);
+  const { registries, save } = storedFightWith(profile, 'glassCannon');
+  const loaded = save.loadRun(registries);
+  assert.ok(loaded);
+  assert.equal(loaded.gameProfile.lock.runtimeHash, 'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8');
+  const restored = restoreStripped({ registries, rng: createRng(5), snapshot: loaded.combatEntered.snapshot, expectedGameProfile: loaded.gameProfile });
+  assert.doesNotThrow(() => dispatch(restored, { type: 'endTurn' }));
+});
+
+test('a stored fight with a status id that was never retired is still refused', () => {
+  const { registries, save } = storedFightWith(structuredClone(resolveGameProfile('core')), 'notARealStatus');
+  assert.equal(save.loadRun(registries), null);
 });
