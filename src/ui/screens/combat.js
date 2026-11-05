@@ -1515,6 +1515,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'cardDrawn': {
           disp.pileCounts.draw = Math.max(0, disp.pileCounts.draw - 1);
+          // End Turn freezes the old hand's face through the enemy beats (heldTurnHand). The draw is where the new
+          // hand starts arriving, so the freeze ends here: before this, renderHand returned early on every draw beat
+          // and the whole new hand swapped in at once when playback ended. Cards still held keep their place; each
+          // drawn card is appended in draw order (disp.hand) and the discards have already left it.
+          heldTurnHand = null;
           const inst = findInst(e.cardInstanceId);
           if (inst && !disp.hand.some((c) => c.instanceId === inst.instanceId)) disp.hand.push(inst);
           break;
