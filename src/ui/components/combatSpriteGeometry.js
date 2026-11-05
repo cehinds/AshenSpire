@@ -112,7 +112,20 @@ function layoutKey(sprite, frame, frameBox) {
   const root = document.documentElement;
   const ids = [...(frame.closest('.field')?.querySelectorAll('.combatant:not(.dead)') || [])].map(node => node.dataset.eid);
   return [globalThis.innerWidth, globalThis.innerHeight, root.dataset.formFactor, root.dataset.displayAppearance, root.dataset.viewPreset,
-    sprite.offsetWidth, sprite.offsetHeight, Math.round(frameBox.width), Math.round(frameBox.height), frame.dataset.formationCell, ids.join(',')].join('|');
+    sprite.offsetWidth, sprite.offsetHeight, Math.round(frameBox.width), Math.round(frameBox.height), frame.dataset.formationCell, ids.join(','),
+    // In formation the frame fills its cell (dy is always 0), so the fit places the figure with the stack's top and the
+    // sprite's zoom; offsetWidth/Height ignore that zoom. A refit that changes either is a real layout change.
+    frame.querySelector?.('.combatant-stack')?.style?.top ?? '', sprite.style?.zoom ?? ''].join('|');
+}
+// A figure mid-action or mid-recoil: act-* lunges, the hitflash/hit-heavy/wobble recoil (up to 22px of translateX), a stage
+// reporting busy, or a stage with no busy getter whose element still has a finite animation running.
+const MOTION_CLASS = /\b(act-|hitflash|hit-heavy|wobble)/;
+function spriteInMotion(sprite, frame, stage) {
+  if (stage?.busy || MOTION_CLASS.test(sprite.className) || MOTION_CLASS.test(frame.className || '')) return true;
+  if (stage && !('busy' in stage)) {
+    return Boolean(frame.getAnimations?.({ subtree: true }).some(a => a.playState === 'running' && a.effect?.getTiming?.().iterations !== Infinity));
+  }
+  return false;
 }
 function frozenBounds(sprite, kind, measureNow) {
   const frame = sprite.closest?.('.combatant');
@@ -128,7 +141,7 @@ function frozenBounds(sprite, kind, measureNow) {
   }
   const value = measureNow();
   const stage = stageFor(sprite);
-  if (value.settled !== false && !stage?.busy && !/\bact-/.test(sprite.className)) frozen.set(slot, { key, left: box.left, top: box.top, value });
+  if (value.settled !== false && !spriteInMotion(sprite, frame, stage)) frozen.set(slot, { key, left: box.left, top: box.top, value });
   else frozen.delete(slot);
   return value;
 }
