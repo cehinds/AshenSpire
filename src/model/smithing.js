@@ -199,7 +199,7 @@ export function smithingCardReceipt(registries, run, instance, nextLevel = 0) {
   });
 }
 
-function requirementAtLevel(registries, itemRef, attributeId, authored, level) {
+export function requirementAtLevel(registries, itemRef, attributeId, authored, level) {
   const delta = cumulativeRequirementDelta(registries, itemRef, attributeId, level);
   return { required: Math.max(0, authored + delta), delta };
 }

@@ -1,6 +1,6 @@
 import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { openModal, button, el } from '../kit/index.js';
-import { t, tFull } from '../strings.js';
+import { t } from '../strings.js';
 import { optionRowList, markOptionRows } from './optionRowList.js';
 import { playingCardArt } from '../cardArtwork.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
@@ -80,7 +80,6 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
       bodyHost = host;
       const incoming = intentDamageRead(pending.intentPreview);
       if (incoming) host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
-      host.append(el('p', { text: tFull(stacked ? 'combat.reaction.helpStack' : 'combat.reaction.help') }));
       if (stacked) {
         host.append(el('p', { className: 'reaction-stack-label', text: t('combat.reaction.stack') }));
         const list = el('ol', { className: 'reaction-stack', 'data-reaction-stack': String(stack.length) });
