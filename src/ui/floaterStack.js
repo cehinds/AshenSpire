@@ -62,12 +62,17 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
     }
     return entry;
   }
-  function pump() {
+  // Called with no argument by a timer (the wait is over: spawn, so a mocked or stalled clock cannot starve the
+  // queue), and with `false` by push, which waits out the stagger first when the last spawn is too recent.
+  function pump(fromTimer = true) {
     timer = null;
     if (!pending.length) return null;
-    if (!alive(pending[0])) { pending = []; return null; }
-    const wait = lastSpawn + gap() - now();
-    if (wait > 0) { timer = setTimer(pump, wait); return null; }
+    // A floater that waited may find its combatant gone; one pushed this instant spawns whatever the host says.
+    if (fromTimer && !alive(pending[0])) { pending = []; return null; }
+    if (!fromTimer) {
+      const wait = lastSpawn + gap() - now();
+      if (wait > 0) { timer = setTimer(pump, wait); return null; }
+    }
     const entry = spawn();
     if (pending.length) timer = setTimer(pump, gap());
     return entry;
@@ -80,7 +85,7 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
       pending.push({ arrival: seq++, ...item });
       order();
       if (timer !== null) return null;
-      return pump();
+      return pump(false);
     },
     /** True when a waiting or visible floater matches. */
     has(pred) { return pending.some(pred) || visible.some((entry) => pred(entry.item)); },
