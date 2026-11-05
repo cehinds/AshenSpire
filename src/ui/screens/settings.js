@@ -56,7 +56,7 @@ import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefa
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen } from '../../model/settingOverrides.js';
-import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, liveAdvancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -118,10 +118,9 @@ let deferredCardSizeNotice = null;
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
 // Only the opening and presentation rows are still settings (cleanup row 3e):
-// Core 2 reads none of the retired legacy mechanics rows advancedConfig.js
-// still generates for the content-bundle path.
-const LIVE_CONFIG_KEY = /^gameConfig\.(prologue|presentation)\./;
-const authoredAdvancedRows = advancedConfigRows(contentBundle).filter((row) => row.advancedGroup === 'Opening' || LIVE_CONFIG_KEY.test(row.key));
+// Core 2 reads none of the legacy mechanics rows advancedConfig.js still generates
+// for the content-bundle path.
+const authoredAdvancedRows = liveAdvancedConfigRows(contentBundle);
 const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
   .map((row) => (row.uiTextId ? { ...row, label: t(row.uiTextId), note: tFull(row.uiTextId) } : row));
 

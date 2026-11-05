@@ -999,6 +999,16 @@ export function advancedConfigRows(bundle) {
 }
 
 /**
+ * The rows Core 2 still reads as settings: the opening and the presentation rows
+ * (cleanup row 3e). The Settings screen and the import door build THESE rather
+ * than the ~5,000 legacy mechanics rows `advancedConfigRows` also generates for
+ * the content-bundle path (`configuredContentBundle`), which is 3i/3k's to retire.
+ */
+export function liveAdvancedConfigRows(bundle) {
+  return withGates([...prologueRows(), ...presentationRows()], bundle);
+}
+
+/**
  * Every override switch's `own`, for the readers that must honour them.
  * Cached per bundle: `configuredContentBundle` asks on every call, and
  * rebuilding every row for it doubled that call's cost (review, #1260).
@@ -1488,7 +1498,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   }
   // Dropped FIRST, before any migration reads the keys it would otherwise convert.
   if (dropRetiredLegacy) file = { ...file, overrides: Object.fromEntries(withoutRetiredLegacyGroups(Object.entries(file.overrides), warnings)) };
-  const rows = new Map(advancedConfigRows(bundle).map(row => [row.key, row]));
+  const rows = new Map((dropRetiredLegacy ? liveAdvancedConfigRows(bundle) : advancedConfigRows(bundle)).map(row => [row.key, row]));
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
