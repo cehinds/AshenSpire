@@ -100,3 +100,10 @@ test('200 doors for a Reaver carrying a greatsword and a katana offer at least t
   for (let seed = 0; seed < 200; seed++) for (const row of gameProfileRewardOffers(reg, reaver(), createRng(seed), { offerId: 'fight' }).options) if (row.kind === 'weaponArts') only.add(row.id);
   assert.deepEqual([...only].sort(), ['executioner', 'poiseBreaker']);
 });
+
+test('the Blacksmith shelf skips an art on the open reward door but keeps its own earlier shelf', () => {
+  const run = reaver();
+  run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }], taken: [], claimed: null } };
+  run.shopStock = { kind: 'blacksmith', offerings: ['weaponArts'], weaponArts: [{ id: 'poiseBreaker', cost: 70 }] };
+  assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id), ['poiseBreaker']);
+});

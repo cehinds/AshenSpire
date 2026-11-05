@@ -83,7 +83,7 @@ export function artsOnOtherSide(run,source,offerId) {
     const door=doors.at(-1);
     if(door&&door.claimed==null)for(const id of artsOf(door))ids.add(id);
   }
-  if(source!=='shop'){
+  if(source!=='shop'&&source!=='blacksmith'){
     for(const id of artsOf(offers[`shop:${run.gameProfileOpenShop}`]))ids.add(id);
     for(const row of run.shopStock?.weaponArts||[])ids.add(row.id);
   }
