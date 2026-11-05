@@ -102,7 +102,8 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
   // Re-pinned 2026-11-01: the Evade stance retirement edits the stances module defaults, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8');
+  // Re-pinned 2026-11-05: retiring the glassCannon status edits engine/mechanics/index.json (the mechanics-runtime artifact), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:2dcba5a61dd9744492242292686131de0ecf1c4ce2757f64c1abcf117297f954');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -126,5 +127,12 @@ test('a run saved before the 2026-10-26 pierce rule (runtime 2d76f2...) keeps it
   const profile = resolveGameProfile('core');
   const saved = priorRuntimeEnvelope();
   saved.lock.runtimeHash = 'sha256:2d76f2baf4fae3e676b06003c74c1fb30843067f48dec7fe021457dca05ccae6';
+  assert.equal(coreEvasionCompatibleRuntime(saved, profile.lock.runtimeHash), saved.lock.runtimeHash);
+});
+
+test('a run saved by the previous release (runtime 83a0c5..., before the glassCannon retirement) keeps its own runtime', () => {
+  const profile = resolveGameProfile('core');
+  const saved = priorRuntimeEnvelope();
+  saved.lock.runtimeHash = 'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8';
   assert.equal(coreEvasionCompatibleRuntime(saved, profile.lock.runtimeHash), saved.lock.runtimeHash);
 });

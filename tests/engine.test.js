@@ -6288,6 +6288,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
     assert(isCustomRun({ deckMode: 'sealed' }), 'a dealt-deck run is kept out of win-rate stats');
     assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and a standard one is not');
+    assert(isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard', mapShape: { floors: 7 } }), 'a save from the retired Custom Climb with a map shape still counts as custom');
+    assert(isCustomRun({ ascension: 2, mods: {}, deckMode: 'standard' }), '…as does one with ascension');
+    assert(isCustomRun({ ascension: 0, mods: { hoarder: true }, deckMode: 'standard' }), '…or a mod');
 
     // BOUNDARY. This is the generator and the resolver. It proves NOTHING about
     // the screen: that the panel opens, that the sliders reach 44 device px,
