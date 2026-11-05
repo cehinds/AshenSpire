@@ -237,40 +237,7 @@ async function main() {
     }
     console.log('PASS combat-presentation — sprite scales and default rows and columns applied');
     await capture('combat-presentation');
-    // Exercise the real settings handlers while the battle remains mounted.
-    await evaluate("document.querySelector('#combat-menu').click()");
-    await evaluate(`(() => { const button = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Settings'); if (button) button.click(); })()`);
-    await until("!!document.querySelector('[data-member=Advanced]')", 'live settings');
-    await evaluate("document.querySelector('[data-member=Advanced]').click()");
-    await until("!!document.querySelector('[data-key=\"gameConfig.presentation.playerSpawnRow\"]')", 'formation controls');
-    const setChoice = (key, value) => evaluate(`document.querySelector('[data-key="gameConfig.presentation.${key}"][data-val="${value}"]').click()`);
-    const setInput = (key, value, event = 'change') => evaluate(`(() => { const input = document.querySelector('input[data-key="gameConfig.presentation.${key}"]'); input.value = ${JSON.stringify(String(value))}; input.dispatchEvent(new Event('${event}', { bubbles: true })); })()`);
-    await setChoice('playerSpawnRow', 'A');
-    await setChoice('playerSpawnColumn', '1');
-    await setChoice('enemySpawnRow', 'B');
-    await setChoice('enemySpawnColumn', '4');
-    await until("document.querySelector('.combatant.player').dataset.formationCell === 'A1' && document.querySelector('.combatant.enemy').dataset.formationCell === 'B4'", 'live preferred slots');
-    const beforeOffset = await evaluate(`(() => { const tile = document.querySelector('[data-cell="A1"]'); return Number(tile.dataset.anchorY); })()`);
-    await setInput('rowAScale', 1.5);
-    await setInput('frontOffsetX', 25);
-    await setInput('backOffsetY', -15);
-    await setInput('backLayer', 350);
-    await setInput('rowALayer', 20);
-    await setInput('playerGridColor', '#00ff88', 'input');
-    await setChoice('gridLayer', 'above');
-    for (const shape of ['square', 'rectangle', 'rhombus', 'wide-rhombus', 'circle', 'ellipse']) {
-      await setChoice('gridShape', shape);
-      await until(`document.querySelector('.formation-grid').dataset.shape === '${shape}'`, 'live shape ' + shape);
-    }
-    await until("Math.abs(Number(document.querySelector('.combatant.player').dataset.presentationScale) - 1.725) < .001", 'row multiplier');
-    const live = await evaluate(`(() => { const actor = document.querySelector('.combatant.player'); const grid = document.querySelector('.formation-grid'); return { cell: actor.dataset.formationCell, layer: actor.style.zIndex, color: grid.style.getPropertyValue('--player-grid-color'), gridLayer: grid.style.zIndex }; })()`);
-    if (live.layer !== '370' || live.color !== '#00ff88' || live.gridLayer !== '2000') throw new Error('live settings: ' + JSON.stringify(live));
-    const afterOffset = await evaluate("Number(document.querySelector('[data-cell=\"A1\"]').dataset.anchorY)");
-    if (Math.abs(afterOffset - beforeOffset + 15) > 1) throw new Error('Back column offset did not move actual anchor');
-    await evaluate(`(() => { const toggle = document.querySelector('[data-key="gameConfig.presentation.showFormationGrid"]'); if (toggle && (toggle.type === 'checkbox' ? !toggle.checked : toggle.getAttribute('aria-checked') !== 'true')) toggle.click(); document.querySelector('#ov-close').click(); })()`);
-    await until("!document.querySelector('#ov-close') && getComputedStyle(document.querySelector('.formation-grid')).display === 'grid'", 'customized battle');
-    await capture('customized-formation');
-    console.log('PASS live settings — actual slots, row scale, offsets, layers, colors, all six shapes');
+    // The live battlefield-settings exercise was removed with the Battlefield tab (owner, 2026-11-05).
     for (const [name, width, height] of [['desktop-grid', 1440, 900], ['phone-grid', 390, 844]]) {
       await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 500 }, sessionId);
       const settings = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.showFormationGrid': true }));
