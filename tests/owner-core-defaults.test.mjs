@@ -8,8 +8,8 @@ import { uiConfig } from '../src/config/generated/ui.js';
 import { settingsRows } from '../src/ui/screens/settings.js';
 
 test('Core content carries the owner\'s balance defaults', () => {
-  // level.xp.growth stays 1.303 (SPEC §13.4o, tests/run-node #50): the owner's exported 1.5 is NOT baked.
-  assert.equal(balance.level.xp.growth, 1.303);
+  // level.xp.growth is the owner's exported 1.5 (SPEC §13.4o, owner 2026-11-05).
+  assert.equal(balance.level.xp.growth, 1.5);
   assert.equal(balance.rewards.cardChoices, 3);
   const chance = balance.rewards.cardRewards.chancePct;
   assert.deepEqual([chance.normal, chance.elite, chance.boss], [10, 10, 10]);

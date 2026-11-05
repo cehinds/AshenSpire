@@ -12,11 +12,11 @@ import { xpToNext as skillXpToNext } from '../src/model/skills.js';
 
 const registries = createRegistries(contentBundle);
 
-test('the current build follows SPEC §13.4o: every track\'s top level costs about 100,000 XP', () => {
-  // Character base 200 ×1.303 to level 20; skill base 100 ×1.995 to 10; class base 400 ×1.224 to 20.
-  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [200, 260, 340, 440]);
-  assert.equal(characterXpToNext(registries, 19), 23440);
-  assert.equal([...Array(19)].reduce((sum, _, i) => sum + characterXpToNext(registries, i + 1), 0), 100160);
+test('the current build follows SPEC §13.4o: every track\'s top level costs about 100,000 XP (the character track, owner 2026-11-05, is 1.5: ~886,000)', () => {
+  // Character base 200 ×1.5 to level 20; skill base 100 ×1.995 to 10; class base 400 ×1.224 to 20.
+  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [200, 300, 450, 680]);
+  assert.equal(characterXpToNext(registries, 19), 295580);
+  assert.equal([...Array(19)].reduce((sum, _, i) => sum + characterXpToNext(registries, i + 1), 0), 886350);
   assert.equal(registries.balance.levelUp.maxLevels, 20);
   assert.deepEqual([0, 1, 2, 3].map((level) => skillXpToNext(registries, 'weapon', level)), [100, 200, 400, 795]);
   assert.equal(skillXpToNext(registries, 'weapon', 9), 50060);
