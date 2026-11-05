@@ -9,7 +9,8 @@ import { characterLevel } from '../../model/levelup.js';
 import { levelProgress, skillProgressRows, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
-import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
+import { renderEquipmentCard, renderEquipmentInspection, equipmentDetails } from '../components/equipmentCard.js';
+import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { mountEquipCompareModal } from '../components/equipCompareModal.js';
@@ -379,12 +380,8 @@ function buildArmoury(L, ui) {
     ),
   }));
   // The positions are OptionCards: one compact row each. Each row is a button
-  // that selects it for the Inspect panel beside the list (no header row, no
+  // that selects it and opens its card inspection modal (no header row, no
   // count badge, no grid view: owner wireframe 2026-11-01).
-  const displayRows = positionsBySlot.flatMap(({ slot, positions }) => positions
-    .filter((position) => position.state !== 'locked')
-    .map((position) => ({ slot, position })));
-  ui.resolveInspected(displayRows);
   const slots = options([], { class: 'equip-slots armoury-position-list' });
   for (const { slot, positions } of positionsBySlot) {
     slots.appendChild(ui.positionGroup(slot, positions, 'list'));
@@ -394,7 +391,7 @@ function buildArmoury(L, ui) {
   equipment.style.setProperty('--armament-thumb-width', compact.thumbnailWidthPx);
   equipment.style.setProperty('--armament-phone-thumb-width', compact.phoneThumbnailWidthPx);
   equipment.style.setProperty('--armament-inspection-width', compact.inspectionWidthPx);
-  equipment.append(el('div', { class: `armament-list-workspace${ui.armamentListInspectionOpen ? ' is-inspecting' : ''}` }, [slots, ui.armamentListDetail()]));
+  equipment.append(el('div', { class: 'armament-list-workspace' }, [slots]));
   if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
   if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
 }
@@ -801,10 +798,8 @@ export function mountEquipment(host, {
   // The Equipment view is one compact list (the grid view was retired 2026-11-01).
   const armamentView = 'list';
   let armamentGridSelection = null;
-  // The row the player selected, and the one the Inspect panel shows (the
-  // selection, else the first selectable row); resolved on each draw.
+  // The row the player selected (outlined); Inspect opens its card in a modal.
   let armamentListSelection = null;
-  let armamentInspected = null;
   let picking = null; // { slotId, setIndex }
   let selectedInventoryKey = null;
   let notice = ''; // a status or refusal, shown as a toast on the next draw
@@ -1212,20 +1207,26 @@ export function mountEquipment(host, {
     return actions;
   }
 
-  const isInspected = (slot, position) => !!armamentInspected
-    && armamentInspected.slotId === slot.id && armamentInspected.index === position.index;
-  function resolveInspected(rows) {
-    const chosen = armamentListSelection
-      && rows.find(({ slot, position }) => slot.id === armamentListSelection.slotId && position.index === armamentListSelection.index);
-    const row = chosen || rows[0] || null;
-    armamentInspected = row ? { slotId: row.slot.id, index: row.position.index } : null;
-    return row;
+  const isInspected = (slot, position) => !!armamentListSelection
+    && armamentListSelection.slotId === slot.id && armamentListSelection.index === position.index;
+  /**
+   * Inspect opens the item's card in the kit's inspection modal, as the Smith
+   * rail does. The face is an inspect card with no inspection door of its own.
+   */
+  function openItemInspection(item, category, { owned: count = null, opener = null } = {}) {
+    if (!item) return null;
+    const rendered = category === 'Relic'
+      ? renderCollectibleCard(registries, item, 'Relic', { inspection: false, interactive: false, owned: count, level: 'inspect' })
+      : renderEquipmentCard(registries, item, { inspection: false, interactive: false, owned: count, level: 'inspect', surface: 'armoury' });
+    return openCardInspection({ title: item.name, card: rendered.card, details: equipmentDetails(rendered.explanations), opener });
   }
-  /** Selects a row for the Inspect panel; the real buttons above it never reach here. */
+  /** Selects a row (outline) and opens its card; the real buttons above it never reach here. */
   function selectPosition(slot, position) {
     armamentListSelection = { slotId: slot.id, index: position.index };
     draw();
-    wrap.querySelector(`[data-slot-position="${CSS.escape(`${slot.id}:${position.index}`)}"] .armament-row-select`)?.focus({ preventScroll: true });
+    const opener = wrap.querySelector(`[data-slot-position="${CSS.escape(`${slot.id}:${position.index}`)}"] .armament-row-select`);
+    opener?.focus({ preventScroll: true });
+    if (position.state === 'occupied') openItemInspection(position.summary.item, position.summary.category, { opener });
   }
   /** The row's whole face is one stretched button; Replace and Unequip sit above it. */
   function rowSelectButton(slot, position, name) {
@@ -1283,35 +1284,6 @@ export function mountEquipment(host, {
     card.append(rowSelectButton(slot, position, position.summary.name), thumbnail, el('div', { class: 'armament-compact-body' }, [head, positionActions(slot, position)]));
     attachPositionDropTarget(card, slot, position);
     return card;
-  }
-
-  function armamentListDetail() {
-    const selection = armamentInspected;
-    let selected = null;
-    if (selection) {
-      const slot = eq.slots.find(candidate => candidate.id === selection.slotId);
-      const position = slot && slotPositions(slot).find(candidate => candidate.index === selection.index);
-      if (position) selected = { slot, position };
-    }
-    const detail = el('aside', { class: 'armament-list-inspection', dataset: { component: 'armoury.armamentListInspection' } });
-    const back = button({ label: t('common.back'), className: 'armament-inspection-back' });
-    back.addEventListener('click', () => {
-      const previous = armamentListSelection;
-      armamentListSelection = null;
-      draw();
-      if (previous) wrap.querySelector(`[data-slot-position="${CSS.escape(`${previous.slotId}:${previous.index}`)}"] .armament-row-select`)?.focus();
-    });
-    detail.append(el('div', { class: 'armament-inspection-heading' }, [
-      titleS(selected ? t('armoury.inspect.title', { slot: selected.position.code }) : t('armoury.action.inspect'), { tag: 'h3', tabindex: '-1' }), back,
-    ]));
-    if (selected && selected.position.state === 'occupied') {
-      detail.append(renderEquipmentInspection(registries, selected.position.summary.item, { interactive: false, surface: 'armoury' }));
-      // Smithing tier and the last smithing receipt live in the details card.
-      if (selected.slot.kinds && !selected.slot.kinds.includes('armor')) detail.append(armamentDetail(selected.slot, selected.position.summary));
-    } else if (selected) {
-      detail.append(flavour(`${selected.position.label} is empty. Choose an item to fill it.`, { class: 'ep-hint armament-inspection-empty' }));
-    }
-    return detail;
   }
 
   /** A grid tile is the same OptionCard stood on end: art over name, the code as its badge. */
@@ -1539,9 +1511,7 @@ export function mountEquipment(host, {
       el('th', { role: 'columnheader' }, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
     ])]);
     const tbody = el('tbody', { role: 'rowgroup' });
-    let openShown = false;
     for (const r of shown) {
-      const open = selectedInventoryKey === r.key;
       const parts = pickerParts.get(r.key);
       const first = r.elsewhere[0];
       const metaBits = [r.category];
@@ -1561,14 +1531,11 @@ export function mountEquipment(host, {
       ])])]);
       const statusCell = el('td', { role: 'cell', class: 'equip-picker-status' }, [statusPill()]);
       const inspect = button({
-        label: open ? t('armoury.picker.hide') : t('armoury.action.inspect'),
+        label: t('armoury.action.inspect'),
         className: 'equip-picker-inspect',
-        attrs: { 'aria-expanded': String(open) },
+        attrs: { 'aria-haspopup': 'dialog' },
       });
-      inspect.addEventListener('click', () => {
-        selectedInventoryKey = open ? null : r.key;
-        redrawFocus(`.equip-picker-row[data-row-key="${CSS.escape(r.key)}"] .equip-picker-inspect`);
-      });
+      inspect.addEventListener('click', () => openItemInspection(r.row.item, r.row.category, { owned: r.row.count, opener: inspect }));
       const actions = [inspect];
       if (r.fits && parts?.target) {
         const target = parts.target;
@@ -1590,26 +1557,15 @@ export function mountEquipment(host, {
       // Buttons are taps, not drag handles: keep the row's pointer capture off them.
       actionsCell.addEventListener('pointerdown', (event) => event.stopPropagation());
       const tr = el('tr', { role: 'row',
-        class: `equip-picker-row is-${r.status}${open ? ' is-open' : ''}`,
+        class: `equip-picker-row is-${r.status}`,
         dataset: { itemId: r.id, rowKey: r.key, status: r.status },
       }, [itemCell, statusCell, actionsCell]);
       // Mouse and pen users can still drag a row onto any named position.
       const draggableRow = draggableRows.get(r.key);
       if (draggableRow) attachInventoryDrag(tr, draggableRow);
       tbody.append(tr);
-      if (open) {
-        openShown = true;
-        const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
-        const body = r.fits
-          ? parts.revealed
-          : inventoryReveal(registries, r.row, { holdDuration, registerHold, classModel: layout.cardClasses.armamentItem });
-        const cell = el('td', { role: 'cell' }, [body]);
-        cell.colSpan = 3;
-        tbody.append(el('tr', { role: 'row', class: 'equip-picker-detail', dataset: { detailFor: r.key } }, [cell]));
-        setFooterPrimary(footerAction(footerPlans.get(r.key)) || null);
-      }
     }
-    if (!openShown) setFooterPrimary(null);
+    setFooterPrimary(null);
     root.append(el('table', { role: 'table', class: 'equip-picker-table' }, [
       el('caption', { class: 'sr-only' }, [t('armoury.picker.caption', { slot: `${selectedSlot.label} · ${picking.setIndex + 1}` })]),
       thead,
@@ -2614,9 +2570,6 @@ export function mountEquipment(host, {
         positionCard,
         positionGridCard,
         armamentGridDetail,
-        armamentListDetail,
-        resolveInspected,
-        armamentListInspectionOpen: !!armamentListSelection,
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
       });

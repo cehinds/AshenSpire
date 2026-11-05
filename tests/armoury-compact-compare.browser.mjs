@@ -64,19 +64,23 @@ try {
   const rows = await page.$$eval('.armoury-position-card:not(.is-locked)', (nodes) => nodes.map((n) => n.dataset.slotPosition));
   assert.ok(rows.length >= 2, `rows render: ${rows}`);
   const selected = () => page.$$eval('.armoury-position-card.is-inspected', (nodes) => nodes.map((n) => n.dataset.slotPosition));
-  assert.deepEqual(await selected(), [rows[0]], 'the first row is selected by default');
-  const title = () => page.locator('.armament-list-inspection h3').innerText();
-  assert.match(await title(), /Inspect/);
+  assert.deepEqual(await selected(), [], 'no row is selected until one is pressed');
+  assert.equal(await page.locator('.armament-list-inspection').count(), 0, 'no inline Inspect aside exists');
+  const inspectModal = page.locator('.card-inspection-modal');
+  const closeInspect = async () => { await page.keyboard.press('Escape'); await inspectModal.waitFor({ state: 'detached' }); };
 
-  // Clicking the body of a row selects it, outlines it green and updates the Inspect panel.
+  // Clicking the body of a row selects it, outlines it green and opens its card in the inspection modal.
   const second = rows[1];
   await page.locator(`${rowSel(second)} .armament-card-thumbnail, ${rowSel(second)} .armament-compact-heading`).first().click({ force: true });
+  await inspectModal.waitFor();
   assert.deepEqual(await selected(), [second], 'row body click selects that row');
   const outline = await page.$eval(`${rowSel(second)}`, (n) => getComputedStyle(n).outlineColor);
   const green = await page.evaluate(() => { const probe = document.createElement('i'); probe.style.color = 'var(--green)'; document.body.append(probe); const c = getComputedStyle(probe).color; probe.remove(); return c; });
   assert.equal(outline, green, 'the selected outline is the green token');
-  const code = await page.$eval(`${rowSel(second)} .armament-position-code`, (n) => n.textContent.replace(/[^A-Z0-9]/g, ''));
-  assert.ok((await title()).includes(code), `Inspect panel follows the selection (${code})`);
+  const nameOfSecond = await page.$eval(`${rowSel(second)} .armament-position-name`, (n) => n.textContent);
+  assert.ok((await inspectModal.innerText()).includes(nameOfSecond), `the modal shows the selected item (${nameOfSecond})`);
+  await closeInspect();
+  assert.equal(await page.evaluate((sel) => document.activeElement === document.querySelector(`${sel} .armament-row-select`), rowSel(second)), true, 'focus returns to the row after the modal closes');
 
   // Replace / Unequip do not move the selection.
   await page.click(`${rowSel(rows[0])} .armament-replace`);
@@ -92,13 +96,16 @@ try {
   for (let i = 0; i < 12 && !(await page.evaluate((sel) => document.activeElement?.closest(sel) && document.activeElement.classList.contains('armament-row-select'), rowSel(rows[1]))); i++) await page.keyboard.press('Tab');
   assert.ok(await page.evaluate((sel) => !!document.activeElement?.closest(sel), rowSel(rows[1])), 'rows are keyboard focusable');
   await page.keyboard.press('Space');
+  await inspectModal.waitFor();
   assert.deepEqual(await selected(), [rows[1]], 'Space selects');
+  await closeInspect();
   // Enter: each row's select control is a native <button type=button>, which the browser activates on Enter exactly as on
   // Space (the game's own input layer, ui/input.js, routes Enter to its cursor, so a driven Tab cannot stand in for it).
   assert.equal(await page.$eval(`${rowSel(rows[0])} .armament-row-select`, (n) => `${n.tagName}:${n.type}:${n.tabIndex}`), 'BUTTON:button:0');
 
   // Unequip does not select its row either.
   await page.click(`${rowSel(rows[1])} .armament-row-select`);
+  await closeInspect();
   const unequipRow = await page.$$eval('.armoury-position-card.is-occupied', (nodes) => nodes.filter((n) => n.querySelector('.armament-unequip:not([disabled])')).map((n) => n.dataset.slotPosition));
   const other = unequipRow.find((code) => code !== rows[1]);
   if (other) {
