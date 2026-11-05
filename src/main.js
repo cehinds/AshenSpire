@@ -2,7 +2,7 @@ import { persistRewardChange as transactReward } from './model/rewardTransaction
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal, movePurchasedCardToLibrary } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
@@ -3808,6 +3808,17 @@ function offerShopCardDestination(receipt) {
     onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
   });
 }
+// The Master's art is already in the deck; Add to deck keeps it there, Add to library (dismissing keeps the deck) moves
+// exactly that instance. Only reached when the masterArtChoice setting is on.
+function offerMasterArtDestination(receipt) {
+  const instanceId = receipt?.instance?.instanceId;
+  if (!instanceId) return;
+  openShopCardChoice({
+    name: registries.cards.get(receipt.id)?.name || receipt.id,
+    onDeck: () => {}, onDismiss: () => {},
+    onLibrary: () => { movePurchasedCardToLibrary(registries, run, instanceId); persist(); showShop(); },
+  });
+}
 function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
 function offerShopEquip(id) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
@@ -3851,6 +3862,7 @@ function showShop() {
       rng,
       onChanged: () => persist(),
       onArmamentPurchased: shopArmamentBought,
+      onArtPurchased: offerMasterArtDestination,
       onLeave: () => {
         run.shopStock = null;
         persist();

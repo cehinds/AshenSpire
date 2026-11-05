@@ -89,3 +89,14 @@ test('the Master art choice setting is off by default and names its row', async 
   assert.equal(settingOn({ masterArtChoice: true }, 'masterArtChoice'), true);
   assert.equal(settingsRow('masterArtChoice').label, 'Ask where Master weapon arts go');
 });
+
+test('the Master offers the destination choice only under the masterArtChoice setting, and dismissing keeps the deck', () => {
+  const master = readFileSync(new URL('../src/ui/screens/master.js', import.meta.url), 'utf8');
+  assert.match(master, /if \(settingOn\(\(meta \|\| \{\}\)\.settings, 'masterArtChoice'\) && receipt\.instance\) onArtPurchased\(receipt\)/);
+  assert.equal((master.match(/onArtPurchased\(/g) || []).length, 1, 'one call site, behind the setting');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.equal((main.match(/onArtPurchased: offerMasterArtDestination/g) || []).length, 1);
+  assert.match(main, /onDismiss: \(\) => \{\},\s*onLibrary: \(\) => \{ movePurchasedCardToLibrary\(registries, run, instanceId\)/);
+  const modal = readFileSync(new URL('../src/ui/components/shopBuyChoice.js', import.meta.url), 'utf8');
+  assert.match(modal, /\(onDismiss \|\| onSecondary\)\?\.\(\)/);
+});
