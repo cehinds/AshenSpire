@@ -1310,7 +1310,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
       pileCounts: { draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length },
-      arcaneEvents: [], logLength: combat.eventLog.length, rangeRanks: rangeRankSnapshot(combat) };
+      arcaneEvents: [], logLength: combat.eventLog.length, rangeRanks: typeof rangeRankSnapshot === 'function' ? rangeRankSnapshot(combat) : null };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -1363,7 +1363,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears and
     // flushDeferredIntentClears applies them from onResolution (playTimeline call below).
     reduceFollowRows(beat.events);
-    for (const e of beat.events) applyRangeRankEvent(disp.rangeRanks, e);
+    if (disp.rangeRanks && typeof applyRangeRankEvent === 'function') for (const e of beat.events) applyRangeRankEvent(disp.rangeRanks, e);
     for (const e of beat.events) {
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
