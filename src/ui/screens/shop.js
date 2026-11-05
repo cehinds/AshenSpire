@@ -97,6 +97,10 @@ const RAIL_LABEL = {
 // Configured stock uses the same merchant frame, category dock, offer rows,
 // inspections and purchase review as the full game. The host retains ownership
 // of saved stock and its atomic transaction; this adapter only presents it.
+// A shop card has no selection step, so it wears the shared (i) badge always (merchantOffer.js shows it); the
+// reading it opens carries no purchase or play verbs (`only: []`), and buying stays on the row's own button.
+const shopCardOptions = Object.freeze({ level: 'glance', infoBadge: true, surface: 'shop', only: [] });
+
 export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
   clearSelection();
@@ -147,7 +151,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
     const available = quote.ok;
     const tile = el('div', { class: 'class-pick shop-offer' });
-    const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, { level: 'glance' }) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+    const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
     const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
     const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: def?.textTemplate || '', visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
     if (available) arm(buy, 'shopBuy', { question: t('shop.configured.buy'), target: def?.name || option.id, message: t('shop.configured.buy.message', { cost: price, cinders: run.cinders, left: run.cinders - price }), confirmLabel: t('shop.buy.confirm'), policyAction: 'action.purchase', onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
@@ -159,7 +163,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       const { def, kind, price } = quote;
       const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
       const visual = ['combatCards', 'weaponArts'].includes(kind)
-        ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), { level: 'glance' })
+        ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), shopCardOptions)
         : ['weapons', 'armor'].includes(kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card
         : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
       const sell = arrangeMerchantOffer({ tile, name: def.name, desc: def.textTemplate || def.blurb || '', visual,
