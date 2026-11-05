@@ -231,6 +231,18 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     get busy(){return !!playing||flashAt!==null||!!bodyReaction||holdUntil>performance.now();},
     get pose(){return pose;},
     get currentArt(){return currentArt;},
+    // The neutral ready frame's placement, whatever pose is showing: the pose-independent box the battlefield
+    // anchors the player's HUD to (owner 2026-11-05: layout is fixed once combat starts, poses never move it).
+    get restArt(){
+      const image=images.get('ready'),frame=frames.ready;
+      if(!image||!frame)return null;
+      const offset=frame.drawOffset||[128,0],dimensions=frame.drawOffset?frame.size:[512,512];
+      const authored={left:leftPadding+offset[0],top:16+topPadding+offset[1],width:dimensions[0],height:dimensions[1],anchorX:leftPadding+384};
+      const landmarks=COMBAT_BODY_LANDMARKS[frame.path];
+      const placed=landmarks?bodyPlacement(authored,landmarks,bodyHeight,480+topPadding):authored;
+      const {left,top,width,height}=placed;
+      return {canvas,image,left,top,width,height,body:placed.body||(landmarks?{headY:top+landmarks.headY*height/landmarks.height,feetY:top+landmarks.feetY*height/landmarks.height,source:'authored'}:null)};
+    },
     get rest(){return rest;},
     get stance(){return stance;},
     // Capability belongs to the selected profile, not transient bitmap readiness.

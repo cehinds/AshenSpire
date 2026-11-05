@@ -3,7 +3,7 @@ import { setCombatantTargetHud } from './combatantFrame.js';
 import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
-import { currentSpriteBodyBounds, currentSpriteArtBounds } from './combatSpriteGeometry.js';
+import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -296,7 +296,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     // Phase 2: reads that follow. The intent placement itself is written last:
     // it moves only the intent inside its own frame, and none of the boxes read
     // here, so writing it first made every one of these reads a forced layout.
-    const sprites = frames.map(frame => ({ id: frame.dataset.eid, ...rect(frame.querySelector('.sprite')) }));
+    const sprites = frames.map(frame => ({ id: frame.dataset.eid, ...frozenSpriteBox(frame.querySelector('.sprite')) }));
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
     const boxes = frames.map(frame => rect(frame));
@@ -328,7 +328,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const ink = mine?.ink, edge = ink && Number.isFinite(ink.left) && Number.isFinite(ink.right) && ink.right > ink.left ? ink : body;
       const anchor = entry.role === 'player' && body && Number.isFinite(edge?.left) && Number.isFinite(edge?.right)
         ? { left: edge.left, width: edge.right - edge.left, top: mine.overheadTop ?? body.headY ?? body.top, height: Math.max(0, (body.feetY ?? body.bottom) - (mine.overheadTop ?? body.headY ?? body.top)) }
-        : rect(frame.querySelector('.sprite'));
+        : frozenSpriteBox(frame.querySelector('.sprite'));
       return [{ id, panel, entry, frame, anchor, lane: frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
         : Math.max(0, Math.min(2, 'ABCDEF'.indexOf(frame.dataset.formationCell?.[0]))),
         ...targetHudPanelSizing({ viewportWidth: rootBox.width, count: panels.size }, config) }];
