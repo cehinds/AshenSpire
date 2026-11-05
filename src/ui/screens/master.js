@@ -46,7 +46,7 @@ const GLYPH = Object.freeze({
 // An element id for a track id (`item:magic-focus` → `item-magic-focus`).
 const slug = (id) => String(id).replace(/[^a-z0-9]/gi, '-');
 
-export function mountMaster(app, { registries, run, meta, rng = null, flatRarity = false, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, priceMult = 1, hud = null }) {
+export function mountMaster(app, { registries, run, meta, rng = null, flatRarity = false, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onArtPurchased = () => {}, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
   let activeCategory = null;
   let layout = null;
@@ -106,7 +106,11 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
         const plan = armamentPurchasePlan(registries, run, item, 'weaponArt');
         if (!plan.def) continue;
         const host = tile(GLYPH.weaponArts, plan.def.name, t('master.offer.line', { text: t('shop.weaponArt.eyebrow'), cost: item.cost }));
-        actionButton(host, { label: t('master.action.buy'), plan, sound: 'buy', commit: () => commitArmamentPurchase(registries, run, plan) });
+        actionButton(host, { label: t('master.action.buy'), plan, sound: 'buy', commit: () => {
+          const receipt = commitArmamentPurchase(registries, run, plan);
+          // Owner 2026-11-05: with Settings > Ask where Master weapon arts go on, the host offers deck or library.
+          if (settingOn((meta || {}).settings, 'masterArtChoice') && receipt.instance) onArtPurchased(receipt);
+        } });
         shelf.append(host);
       }
     },

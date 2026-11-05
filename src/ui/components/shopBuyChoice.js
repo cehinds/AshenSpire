@@ -4,18 +4,23 @@
 import { openModal, button, el } from '../kit/index.js';
 import { t } from '../strings.js';
 
-function openChoice({ title, body, primaryLabel, secondaryLabel, onPrimary, onSecondary, refusal = '' }) {
+function openChoice({ title, body, primaryLabel, secondaryLabel, onPrimary, onSecondary, onDismiss, refusal = '' }) {
   const secondary = button({ label: secondaryLabel, role: 'exit', id: 'shop-buy-keep' });
   const primary = button({ label: primaryLabel, weight: 'primary', id: 'shop-buy-primary', disabled: !!refusal });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert', text: refusal });
   let settled = false;
   const shell = openModal({
-    title, size: 'sm', className: 'shop-buy-choice', bodyClassName: 'as-pane', closeLabel: secondaryLabel, secondary: [secondary], primary,
+    title, size: 'sm', className: 'shop-buy-choice', bodyClassName: 'as-pane', closeLabel: onDismiss ? primaryLabel : secondaryLabel, secondary: [secondary], primary,
     initialFocus: () => (primary.disabled ? secondary : primary),
-    onClose: () => { if (!settled) { settled = true; onSecondary?.(); } },
+    onClose: () => { if (!settled) { settled = true; (onDismiss || onSecondary)?.(); } },
     body(host) { host.append(el('p', { text: body }), status); },
   });
-  secondary.addEventListener('click', () => shell.close());
+  // With an onDismiss, Escape/close/veil take that answer and only the secondary button itself takes onSecondary.
+  secondary.addEventListener('click', () => {
+    if (!onDismiss) return shell.close();
+    try { onSecondary?.(); } catch (error) { status.textContent = error.message; return; }
+    settled = true; shell.close();
+  });
   primary.addEventListener('click', () => {
     try { onPrimary?.(); } catch (error) { status.textContent = error.message; return; }
     settled = true; shell.close();
@@ -23,9 +28,10 @@ function openChoice({ title, body, primaryLabel, secondaryLabel, onPrimary, onSe
   return shell;
 }
 
-/** openShopCardChoice({ name, refusal, onDeck, onLibrary }) — onDeck may throw (the message shows and the modal stays). */
-export function openShopCardChoice({ name, refusal = '', onDeck, onLibrary }) {
-  return openChoice({ title: t('shop.buyChoice.card.title'), body: t('shop.buyChoice.card.body', { name }), primaryLabel: t('reward.configured.addToDeck'), secondaryLabel: t('reward.configured.addToLibrary'), onPrimary: onDeck, onSecondary: onLibrary, refusal });
+/** openShopCardChoice({ name, refusal, onDeck, onLibrary, onDismiss }) — onDeck may throw (the message shows and the modal stays).
+ *  Dismissing runs onLibrary unless onDismiss is given (the Master's art is already in the deck, so dismissing keeps it there). */
+export function openShopCardChoice({ name, refusal = '', onDeck, onLibrary, onDismiss }) {
+  return openChoice({ title: t('shop.buyChoice.card.title'), body: t('shop.buyChoice.card.body', { name }), primaryLabel: t('reward.configured.addToDeck'), secondaryLabel: t('reward.configured.addToLibrary'), onPrimary: onDeck, onSecondary: onLibrary, onDismiss, refusal });
 }
 /** openShopArmamentChoice({ name, onEquip, onKeep }). */
 export function openShopArmamentChoice({ name, onEquip, onKeep }) {
