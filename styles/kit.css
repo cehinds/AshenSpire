@@ -4044,6 +4044,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    --card-info-size, which nothing does today — the hook stays for a host that
    must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
+.merchant-offer-media > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 /* A clue is a word; the formation column must not clip it to a number badge. */
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
@@ -4052,6 +4053,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    selected; the in-card copy stays hidden so it never paints at a temporary spot and then moves. */
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
+/* A shop card row has no selection step: its (i) is always shown, in the thumbnail's top-right corner, and only inspects. */
+.merchant-offer-media.has-card-info { position:relative; }
+.merchant-offer-media > .card-info-button { position:absolute; z-index:2; top:-6px; right:-6px; visibility:visible; pointer-events:auto; }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }

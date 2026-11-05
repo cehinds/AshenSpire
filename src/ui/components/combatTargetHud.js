@@ -1,9 +1,9 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
-import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
+import { currentSpriteBodyBounds, currentSpriteArtBounds } from './combatSpriteGeometry.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -286,10 +286,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const frames = [...field.querySelectorAll('.combatant:not(.dead)')];
     const intents = frames.map(frame => {
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
+      // The authored body's left/right are the whole pose canvas (mostly transparent, wider than the sprite on a phone); the ink is the visible figure.
+      const ink = frame.classList.contains('player') ? currentSpriteArtBounds(frame.querySelector('.sprite'), scheduleGeometry) : null;
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
       const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
       const overhead = frame.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect();
-      return { frame, body, overheadTop: overhead?.height ? overhead.top : null, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
+      return { frame, body, ink, overheadTop: overhead?.height ? overhead.top : null, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
     });
     // Phase 2: reads that follow. The intent placement itself is written last:
     // it moves only the intent inside its own frame, and none of the boxes read
@@ -323,8 +325,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       // Owner 2026-11-04: the player's panel anchors to the visible body (not the wider transparent sprite box), its
       // top at the overhead meters, so it sits immediately right of the player.
       const mine = intents.find(row => row.frame === frame), body = mine?.body;
-      const anchor = entry.role === 'player' && body && Number.isFinite(body.left) && Number.isFinite(body.right)
-        ? { left: body.left, width: body.right - body.left, top: mine.overheadTop ?? body.headY ?? body.top, height: Math.max(0, (body.feetY ?? body.bottom) - (mine.overheadTop ?? body.headY ?? body.top)) }
+      const ink = mine?.ink, edge = ink && Number.isFinite(ink.left) && Number.isFinite(ink.right) && ink.right > ink.left ? ink : body;
+      const anchor = entry.role === 'player' && body && Number.isFinite(edge?.left) && Number.isFinite(edge?.right)
+        ? { left: edge.left, width: edge.right - edge.left, top: mine.overheadTop ?? body.headY ?? body.top, height: Math.max(0, (body.feetY ?? body.bottom) - (mine.overheadTop ?? body.headY ?? body.top)) }
         : rect(frame.querySelector('.sprite'));
       return [{ id, panel, entry, frame, anchor, lane: frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
         : Math.max(0, Math.min(2, 'ABCDEF'.indexOf(frame.dataset.formationCell?.[0]))),
@@ -340,7 +343,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (tile && path) tiles.set(id, { path, box: tile.getBoundingClientRect() });
     }
     // Phase 3: panel sizing writes, then every panel's height.
+    const enemyRows = sizing.filter(row => row.entry.role === 'enemy');
     for (const row of sizing) {
+      // Several enemy panels narrow a little so they can share a row (owner 2026-11-05).
+      if (row.entry.role === 'enemy') row.width = targetHudEnemyRowWidth({ bounds, count: enemyRows.length, width: row.width + 25, config }) - 25;
       // A player panel narrows to the room right of the body rather than sliding back over it.
       if (row.entry.role === 'player') row.width = targetHudPinnedWidth({ bounds, anchor: row.anchor, width: row.width + 25, config }) - 25;
     }
