@@ -1488,6 +1488,7 @@ export function mountRewards(app, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
+        infoBadge: true,
         only: [],
       });
       face.dataset.cardId = cardId;
@@ -1513,7 +1514,11 @@ export function mountRewards(app, {
         badge.textContent = t('reward.card.new');
         face.appendChild(badge);
       }
-      face.addEventListener('click', () => selectCard(choiceId));
+      // First tap selects; a tap on the already-selected face opens the inspector (owner, 2026-11-05).
+      face.addEventListener('click', () => {
+        if (selectedCardId === choiceId && !confirming && !taken()) openBoundCardInspection(face, face);
+        else selectCard(choiceId);
+      });
       // A fixed-size choice button names the card. Full rules remain in the
       // shared inspection and in its accessible description, without clipping
       // a paragraph into the same box as the name.
