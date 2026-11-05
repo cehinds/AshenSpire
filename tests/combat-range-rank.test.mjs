@@ -90,3 +90,20 @@ test('playback: a strip changes on the beat of its own move, not when the engine
   assert.equal(rangeRanksFromSnapshot(snap).has('enemy:e1'), false);
   assert.equal(rangeRankSnapshot(fight({ e1: 0 }, { range: false })), null);
 });
+
+test('four enemies: movers take free lanes; only a full strip shares', () => {
+  const ids = ['e1', 'e2', 'e3', 'e4'];
+  const cells = ranks => alternativeFormation(plan(ids), 1000, 500, false, { rangeRanks: ranks }).slots.filter(s => s.side === 'enemy');
+  const mixed = cells({ e1: 'front', e2: 'front', e3: 'back', e4: 'back' });
+  const coords = mixed.map(s => `${s.x}:${s.ground}`);
+  assert.equal(new Set(coords).size, 4, 'room in both strips: four distinct cells');
+  const allFront = cells(Object.fromEntries(ids.map(id => [id, 'front']))).filter(s => s.formationRole === 'enemy-front');
+  assert.equal(new Set(allFront.map(s => s.lane)).size, 3, 'the front strip fills all three lanes before any sharing');
+});
+
+test('three enemies keep their own lane when only the strip changes', () => {
+  const ids = ['e1', 'e2', 'e3'];
+  const base = alternativeFormation(plan(ids), 1000, 500, false);
+  const f = alternativeFormation(plan(ids), 1000, 500, false, { rangeRanks: Object.fromEntries(ids.map(id => [id, 'front'])) });
+  for (const id of ids) assert.equal(f.slots.find(s => s.id === id).lane, base.slots.find(s => s.id === id).lane);
+});
