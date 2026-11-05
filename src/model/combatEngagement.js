@@ -6,10 +6,14 @@ const text = v => typeof v === 'string' && v.length > 0;
 const band = v => Number.isInteger(v) && v >= 0 && v <= 2;
 const count = v => Number.isSafeInteger(v) && v >= 0;
 const fields = (v, keys) => record(v) && Object.keys(v).every(k => keys.includes(k));
-export const RANGE_POLICY_DEFAULTS = Object.freeze({ version: 1, enabled: true, advanceSpPerBand: 1, reachPrecisionBonus: 1, throwPrecisionPenalty: 1 });
+export const RANGE_POLICY_DEFAULTS = Object.freeze({ version: 1, enabled: true, advanceSpPerBand: 1, reachPrecisionBonus: 1, throwPrecisionPenalty: 1, maxRange: 'ranged' });
 export const RANGE_SETTING_KEYS = Object.freeze({ enabled: 'rangeMechanics', advanceSpPerBand: 'rangeAdvanceSpPerBand', reachPrecisionBonus: 'rangeReachPrecisionBonus', throwPrecisionPenalty: 'rangeThrowPrecisionPenalty' });
+/** The farthest band a fight may reach (owner, 2026-11-05: Core caps it at Reach). A policy with no maxRange
+ * (a run or save from before the cap) keeps all three bands. */
+export const bandCap = policy => policy?.maxRange === undefined ? 2 : Math.max(0, RANGES.indexOf(policy.maxRange));
 export function rangePolicyProblems(policy) {
   return fields(policy, Object.keys(RANGE_POLICY_DEFAULTS)) && policy.version === 1 && typeof policy.enabled === 'boolean'
+    && (policy.maxRange === undefined || RANGES.includes(policy.maxRange))
     && ['advanceSpPerBand', 'reachPrecisionBonus', 'throwPrecisionPenalty'].every(k => count(policy[k])) ? [] : ['Invalid range policy'];
 }
 export function snapshotRangePolicy(authored = RANGE_POLICY_DEFAULTS, settings = {}) {
@@ -33,7 +37,7 @@ export function createRangeState(policy, actors) {
   for (const a of actors) for (const b of actors) if (opposingRangeKeys(a.key, b.key)) {
     const aa = rangeBand(a.startingRange ?? 'melee'), bb = rangeBand(b.startingRange ?? 'melee');
     if (!band(aa) || !band(bb)) throw Error('Invalid starting engagement band');
-    engagements[rangePairKey(a.key, b.key)] = Math.max(aa, bb);
+    engagements[rangePairKey(a.key, b.key)] = Math.min(bandCap(policy), Math.max(aa, bb));
   }
   const state = { version: 1, policy: structuredClone(policy), engagements };
   const problems = rangeStateProblems(state, actors.map(row => row.key));
@@ -49,6 +53,7 @@ export function rangeStateProblems(state, actorKeys = null) {
   for (const [key, value] of Object.entries(state.engagements)) {
     let pair; try { pair = JSON.parse(key); } catch {}
     if (!Array.isArray(pair) || pair.length !== 2 || !opposingRangeKeys(...pair) || rangePairKey(...pair) !== key || !band(value)
+      || value > bandCap(state.policy)
       || known && pair.some(id => !known.has(id))) problems.push('Invalid engagement pair');
   }
   if (known) for (const a of known) for (const b of known) if (opposingRangeKeys(a, b) && !Object.hasOwn(state.engagements, rangePairKey(a, b))) problems.push('Missing engagement pair');
@@ -62,7 +67,7 @@ export function engagementBand(state, sourceKey, targetKey) {
 export function movedEngagementState(state, sourceKey, targetKey, bands) {
   if (!state?.policy.enabled) return state;
   if (![1, -1].includes(bands)) throw Error('Engagement movement requires one band');
-  const next = Math.max(0, Math.min(2, engagementBand(state, sourceKey, targetKey) + bands));
+  const next = Math.max(0, Math.min(bandCap(state.policy), engagementBand(state, sourceKey, targetKey) + bands));
   return { ...state, engagements: { ...state.engagements, [rangePairKey(sourceKey, targetKey)]: next } };
 }
 /** A paid implicit Advance is committed: each opposing pair stays at the

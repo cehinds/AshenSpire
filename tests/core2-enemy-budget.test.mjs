@@ -96,7 +96,7 @@ test('charge preparation pays once and its saved receipt prevents payment again 
 test('a charged move prepays its full Advance quote without paying it again on resolution', () => {
   const combat = fight('bellKeeper'), enemy = combat.enemies[0];
   const pair = Object.keys(combat.rangeState.engagements)[0];
-  combat.rangeState.engagements[pair] = 2;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[pair] = 2;
   const def = registries.enemies.get(enemy.enemyId);
   const quote = enemyMoveQuote(def.moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat });
   assert.ok(quote.advanceSp > 0);
@@ -262,7 +262,7 @@ test('movement projection resolves authored repeat formulas without granting oth
     { op: 'moveEngagement', target: 'enemy', bands: -1, repeat: { f: 'add', args: [1, 1] } },
   ] } } };
   combat.registries = { ...registries, enemies: { ...registries.enemies, get: id => id === enemy.enemyId ? def : registries.enemies.get(id) } };
-  combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 2;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 2;
   enemy.maxStamina = 3;
   const before = { range: structuredClone(combat.rangeState), block: enemy.block, counters: combat.rng.getCounters() };
   let index = 0;
@@ -351,7 +351,7 @@ const chargedAdvance = version => {
   const combat = fight('bellKeeper'), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
   if (version === 1) combat.core2ActionRulesVersion = 1;
   const pair = Object.keys(combat.rangeState.engagements)[0];
-  combat.rangeState.engagements[pair] = 2;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[pair] = 2;
   const first = enemyMoveQuote(def.moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat });
   dispatch(combat, { type: 'endTurn' });
   const paid = { ...enemy.pendingMove.spPayment }, afterPrep = combat.rangeState.engagements[pair];

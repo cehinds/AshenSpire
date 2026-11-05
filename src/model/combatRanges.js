@@ -13,6 +13,13 @@ export function normalizeRange(value) {
   return Object.prototype.hasOwnProperty.call(LEGACY_RANGE, value) ? LEGACY_RANGE[value] : value;
 }
 
+/** The range a card shows under a fight's cap (owner, 2026-11-05): a range past the cap reads as the cap, so with
+ * maxRange Reach a Ranged card reads Reach. No cap (undefined) shows the range as authored. */
+export function displayRange(range, maxRange) {
+  const cap = RANGES.indexOf(maxRange);
+  return cap < 0 || RANGES.indexOf(range) <= cap ? range : RANGES[cap];
+}
+
 export function isRange(value) {
   return RANGES.includes(value);
 }

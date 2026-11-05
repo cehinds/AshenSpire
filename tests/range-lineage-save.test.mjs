@@ -13,6 +13,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
+import { uncappedRun } from './helpers/uncapped-range.mjs';
 const json = value => JSON.parse(JSON.stringify(value));
 
 const actors = ['player:player', 'enemy:e1', 'enemy:e2'];
@@ -82,6 +83,7 @@ test('independent weapon and spell contacts keep their own frozen source through
   delete profile.hash; profile.hash = gameDigest(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   combat.piles.hand = [
     { cardId: 'core.strike', instanceId: 'mixed-strike', upgraded: false },
@@ -135,6 +137,7 @@ function pausedLineage() {
   // A real owned status hook pauses before its already quoted random rider.
   const registries = lineageRegistries(resolveGameProfile('core'), [{ op: 'discard', target: 'self', choose: true, amount: 1 }, randomRider]);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
   combat.player.statuses.precision = { stacks: 1 };
   combat.piles.hand = [
@@ -222,6 +225,7 @@ test('a paid Counter saves its whole reserved trigger graph before the incoming 
       tags: [...(slash.tags || []).filter(tag => !tag.startsWith('range:')), 'range:melee'] } } };
   } } };
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
   combat.player.statuses.rallyingStandard = { stacks: 1 };
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
