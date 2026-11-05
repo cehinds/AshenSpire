@@ -2860,7 +2860,7 @@
             "amount": 1
           }
         ],
-        "textTemplate": "Gain {base.read-intent}. Reveal the selected enemy's intent and burden hand for 1 turn.",
+        "textTemplate": "Gain {base.read-intent} Read Intent. Reveal the selected enemy's intent and burden hand for 1 turn.",
         "icon": "skill",
         "flavor": "A watcher's discipline of the Citadel bridges.\n\nDoorwardens learned to read a visitor's hands before accepting any spoken purpose. The habit became more exact when the river froze and armed supplicants arrived together. A pause at the wrist could reveal more than a drawn blade.\n\nIntent leaves a mark before iron moves."
       },

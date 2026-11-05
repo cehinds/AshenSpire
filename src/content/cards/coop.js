@@ -32,7 +32,7 @@ export const coopCards = [
       { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 2 },
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
     ],
-    textTemplate: 'An ally gains {strength} Strength; you gain {strength.2}. Exhaust.',
+    textTemplate: 'An ally gains {strength} Strength; you gain {strength.2} Strength. Exhaust.',
     upgrade: {
       effects: [
         { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 3 },
