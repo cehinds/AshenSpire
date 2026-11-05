@@ -63,7 +63,7 @@ export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor
   const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx / zoom;
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const profile = grid.profiles?.[formFactor] || grid.wide;
-  const feet = profile.top + perspectiveBandRows(grid).rows * profile.rowHeight;
+  const feet = profile.top + perspectiveBandRows(grid, false, profile).rows * profile.rowHeight;
   return Math.min(cardTop + (config.handOverlapFraction || 0) * fan.cardHeight, header + (cardTop - 1 / zoom - header) / feet);
 }
 
@@ -80,7 +80,7 @@ export function mobileFieldOverlap({ natural, width, handHeight, rem = 16, zoom 
   const { restTop } = responsiveHandLayout(input, handLayout(input));
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const profile = grid.profiles.mobile;
-  const feet = profile.top + perspectiveBandRows(grid).rows * profile.rowHeight;
+  const feet = profile.top + perspectiveBandRows(grid, false, profile).rows * profile.rowHeight;
   const room = (natural + restTop - 1 / zoom) / feet - natural;
   const extension = Math.max(0, Math.min(sizing.mobileFieldHandOverlapPx / zoom, room));
   return (natural + extension) * zoom < grid.shortBelowPx ? 0 : extension;

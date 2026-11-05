@@ -155,7 +155,7 @@ test('the extra enemy strip is drawn only when core enables it; the player has a
 
 test('the phone field never extends so far that the player back strip passes the resting cards', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-  const rows = perspectiveBandRows(grid, false).rows, p = grid.profiles.mobile;
+  const p = grid.profiles.mobile, rows = perspectiveBandRows(grid, false, p).rows;
   for (const [width, natural, handHeight] of [[390, 480, 260], [375, 420, 240], [390, 560, 300], [360, 400, 230]]) {
     const extension = mobileFieldOverlap({ natural, width, handHeight, rem: 16, zoom: 1, compact: true });
     const input = { width, height: handHeight, count: 5, rem: 16, zoom: 1, compact: true, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'mobile' };
@@ -168,12 +168,13 @@ test('the phone field never extends so far that the player back strip passes the
 test('a team gap of open ground separates the enemy and player strips on every profile and size', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   assert.equal(grid.teamGapRows, 0.6);
-  const { rows } = perspectiveBandRows(grid, false);
-  assert.equal(rows, 4 + grid.teamGapRows);
+  assert.equal(perspectiveBandRows(grid, false).rows, 4 + grid.teamGapRows);
   assert.equal(perspectiveBandRows(grid, true).rows, 5 + grid.teamGapRows);
+  // Per-profile gaps (owner 2026-11-05): the phone's gap is wide enough to read as open ground.
+  assert.ok(grid.profiles.mobile.teamGapRows >= 1 && grid.shortLandscape.teamGapRows >= 1);
   for (const key of ['wide', 'narrow', 'short', 'shortLandscape', ...Object.keys(grid.profiles).map(k => `profiles.${k}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
-    assert.ok(p.top + p.rowHeight * rows <= 1 + 1e-9, `${key}: the strips and the gap fit the field`);
+    assert.ok(p.top + p.rowHeight * perspectiveBandRows(grid, false, p).rows <= 1 + 1e-9, `${key}: the strips and the gap fit the field`);
   }
   for (const [width, height, narrow, formFactor] of [[375, 667, true, 'mobile'], [390, 844, true, 'mobile'], [844, 390, false, 'tablet'], [1280, 800, false, 'desktop'], [1440, 900, false, 'desktop'], [844, 220, false, 'tablet'], [390, 240, true, 'mobile']]) {
     for (const extra of [false, true]) {
@@ -182,7 +183,8 @@ test('a team gap of open ground separates the enemy and player strips on every p
       const label = `${width}x${height} extra=${extra}`;
       const last = f.visualBands.filter(b => b.side === 'enemy').at(-1), first = f.visualBands.find(b => b.side === 'player');
       const h = f.visualBands[0].height;
-      assert.ok(first.top - (last.top + last.height) >= grid.teamGapRows * h - 1e-6, `${label}: gap is at least teamGapRows strips`);
+      const profileGap = (height < grid.shortBelowPx ? (width >= 600 ? grid.shortLandscape : grid.short) : grid.profiles[formFactor]).teamGapRows ?? grid.teamGapRows;
+      assert.ok(first.top - (last.top + last.height) >= profileGap * h - 1e-6, `${label}: gap is at least the profile's teamGapRows strips`);
       assert.ok(f.visualBands[0].top >= 0, `${label}: nothing above the field`);
       const end = f.visualBands.at(-1);
       assert.ok(end.top + end.height <= height + 1e-6, `${label}: no strip leaves the field`);
@@ -412,12 +414,12 @@ test('phone field extension keeps every ground at or above the resting cards', (
 
 test('desktop and phone profiles stand the back rank lower and keep the player strips above the hand', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.41, 0.125]);  // retuned 2026-11-05: the team gap and the second player strip need the room
-  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.53, 0.1]);  // retuned 2026-11-05: feet of the player front strip stay near 89%
+  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.41, 0.12]);  // retuned 2026-11-05: the team gap (0.8 rows) and the second player strip need the room
+  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.5, 0.095]);  // retuned 2026-11-05: the phone's 1.0-row gap; feet of the player front strip stay near 88%
   for (const key of ['desktop', 'mobile']) {
     const p = grid.profiles[key];
     assert.ok(p.top >= 0.4, `${key}: the back rank starts at or below 40% of the field`);
-    assert.ok(p.top + perspectiveBandRows(grid).rows * p.rowHeight <= 1, `${key}: the profile validates`);
+    assert.ok(p.top + perspectiveBandRows(grid, false, p).rows * p.rowHeight <= 1, `${key}: the profile validates`);
   }
   const footer = uiConfig.scenes.w4a.sizing.desktopFooter;
   const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx;
@@ -433,11 +435,11 @@ test('desktop and phone profiles stand the back rank lower and keep the player s
     // Short desktops shrink the overlap to keep rank D clear, they never drop it below the cards' top edge.
     assert.ok(overlap >= -1e-6, `${width}x${height}: the field reaches the cards`);
     const fieldHeight = fieldBottom - header;
-    assert.ok(header + fieldHeight * (desktop.top + perspectiveBandRows(grid).rows * desktop.rowHeight) <= cardTop, `${width}x${height}: the last player strip ends above the resting cards`);
+    assert.ok(header + fieldHeight * (desktop.top + perspectiveBandRows(grid, false, desktop).rows * desktop.rowHeight) <= cardTop, `${width}x${height}: the last player strip ends above the resting cards`);
   }
   // Phone: the cards' top sits in the DOM (not in a model), so tests/battlefield-layout.browser.mjs and the measured
   // 390x844 / 360x740 shots own that check; the player front strip ends at 89% of the field here, the back strip at 99%.
   const formation = alternativeFormation(plan(3), 1280, 516, false, { formFactor: 'desktop' });
   const [back] = formation.visualBands;
-  assert.ok(Math.abs(back.top - 516 * 0.41) < 1e-6 && Math.abs(back.height - 516 * 0.125) < 1e-6);
+  assert.ok(Math.abs(back.top - 516 * 0.41) < 1e-6 && Math.abs(back.height - 516 * 0.12) < 1e-6);
 });

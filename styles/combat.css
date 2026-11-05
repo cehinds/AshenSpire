@@ -1561,6 +1561,10 @@
   stroke-width: calc(1px / var(--ui-zoom, 1));
 }
 .formation-grid[data-perspective='true'] .formation-grid-outline > [data-perspective-outline] { display: block; }
+/* The team gap's two edges read firmer than the shared seams (owner 2026-11-05: the gap must read as open ground). */
+.formation-grid[data-perspective='true'] .formation-grid-outline > [data-team-edge-line] {
+  display: block; stroke: rgb(238 232 220 / 70%); stroke-width: calc(2px / var(--ui-zoom, 1));
+}
 .formation-grid[data-perspective='true'] .formation-grid-cell span { display: none; }
 /* Grid visibility is independent from movement and the foot-anchor marks. */
 .formation-grid[data-perspective='true'] .formation-grid-cell { border: 0; }

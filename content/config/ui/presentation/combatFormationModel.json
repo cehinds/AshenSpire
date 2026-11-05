@@ -109,9 +109,10 @@
         "playerRowHeight": 0.2,
         "hudWidthFraction": 0.55,
         "skew": 4.2,
-        "top": 0.62,
-        "rowHeight": 0.045,
-        "minArtLaneFraction": 0.4
+        "top": 0.63,
+        "rowHeight": 0.04,
+        "minArtLaneFraction": 0.4,
+        "teamGapRows": 1.2
       },
       "teamGapRows": 0.6,
       "bands": [
@@ -209,8 +210,9 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.53,
-          "rowHeight": 0.1
+          "top": 0.5,
+          "rowHeight": 0.095,
+          "teamGapRows": 1.0
         },
         "tablet": {
           "left": 0.06,
@@ -221,7 +223,8 @@
           "playerRowHeight": 0.26,
           "skew": 0.32,
           "top": 0.41,
-          "rowHeight": 0.125
+          "rowHeight": 0.12,
+          "teamGapRows": 0.8
         },
         "desktop": {
           "left": 0.1125,
@@ -232,9 +235,10 @@
           "playerRowHeight": 0.26,
           "skew": 0.6,
           "top": 0.41,
-          "rowHeight": 0.125,
+          "rowHeight": 0.12,
           "hudWidthFraction": 0.5,
-          "hudCenterOnBody": true
+          "hudCenterOnBody": true,
+          "teamGapRows": 0.8
         }
       },
       "miniHudInsetPx": 2,

@@ -9,17 +9,19 @@ const BAND_IDS = Object.keys(BAND_LETTERS);
 // The bands the grid draws, top to bottom, each with its `row`: its offset in strip heights from the profile's top.
 // The extra enemy rank is drawn only when the formation policy enables it (owner, 2026-11-05). The team gap
 // (`teamGapRows` strip heights of open ground) sits between the last enemy band and the first player band.
-export function perspectiveBandRows(grid = GRID, extraEnabled = false) {
+// A profile may set its own `teamGapRows` (a phone needs a wider gap to read than a desktop); `grid.teamGapRows` is the default.
+export function perspectiveBandRows(grid = GRID, extraEnabled = false, profile = null) {
+  const gap = profile?.teamGapRows ?? grid.teamGapRows;
   const active = grid.bands.filter(band => !band.optional || extraEnabled);
   const gapAt = active.findIndex(band => band.side === 'player');
   let row = 0;
   const bands = active.map((band, i) => {
-    if (i === gapAt) row += grid.teamGapRows;
+    if (i === gapAt) row += gap;
     const placed = { ...band, row };
     row += 1;
     return placed;
   });
-  return { bands, rows: row };
+  return { bands, rows: row, gap };
 }
 
 export function validatePerspectiveGrid(grid) {
@@ -34,12 +36,12 @@ export function validatePerspectiveGrid(grid) {
     || grid.bands.findIndex(band => band.side === 'player') <= grid.bands.findLastIndex(band => band.side === 'enemy')
     || !(Number.isFinite(grid.teamGapRows) && grid.teamGapRows > 0)) throw new Error('Invalid perspective visual bands');
   // The default drawing (extra rank off) must fit the field; with the rank on, the model shrinks the strips to fit.
-  const { rows } = perspectiveBandRows(grid, false);
   for (const key of ['wide','narrow','short', ...(grid.shortLandscape ? ['shortLandscape'] : []), ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
     if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
       || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
-      || p.top + p.rowHeight * rows > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
+      || !(p.teamGapRows === undefined || (Number.isFinite(p.teamGapRows) && p.teamGapRows > 0))
+      || p.top + p.rowHeight * perspectiveBandRows(grid, false, p).rows > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
   }
   if (!Number.isFinite(grid.footprintInsetPx) || grid.footprintInsetPx < 0) throw new Error('Invalid perspective footprint clearance');
   if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0) || !(grid.enemyMiniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
@@ -65,13 +67,15 @@ export function perspectiveLanePattern(count, lanes) {
 // Cell IDs stay gameplay addresses: column = depth (outer = back), row = lane.
 // The landscape strip's ranks are tuned for a ~146px field. On a taller or narrower one the same skew shears the grid
 // too far: a back-rank cell's artwork width is laneWidth - 2*skew*cellHeight, the lane itself narrows by the shear
-// (laneWidth = (A - 4*skew*rowHeight*H)/lanes, A the grid's width) and at 844x240 the width clamped to 1px. The skew is
+// (laneWidth = (A - d*skew*rowHeight*H, d = strip heights from the grid top to the party baseline)/lanes, A the grid's width) and at 844x240 the width clamped to 1px. The skew is
 // capped so the artwork keeps at least `minArtLaneFraction` (m) of the UNSHEARED lane width A/lanes:
-//   (A - 4srH)/L - 2srH >= m*A/L   =>   s <= A*(1 - m) / (rowHeight*H*(4 + 2L)).
+//   (A - d*s*rH)/L - 2srH >= m*A/L   =>   s <= A*(1 - m) / (rowHeight*H*(d + 2L)), d the strip heights from the top of the grid to the party's baseline.
 export function shortLandscapeProfile(width, height, lanes = 3) {
   const near = GRID.shortLandscape;
   const area = width * (near.right - near.left);
-  const cap = area * (1 - near.minArtLaneFraction) / (near.rowHeight * height * (4 + 2 * lanes));
+  // `drop` is the shear's span in strip heights: the top of the enemy back strip down to the party's baseline (two enemy strips, the gap, one player strip).
+  const drop = 3 + (near.teamGapRows ?? GRID.teamGapRows);
+  const cap = area * (1 - near.minArtLaneFraction) / (near.rowHeight * height * (drop + 2 * lanes));
   return near.skew <= cap ? near : { ...near, skew: cap };
 }
 
@@ -92,7 +96,7 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   // overlaps another.
   // The extra enemy rank is drawn only when Core enables it (its cells then come with the plan).
   const extraEnabled = plan.cells.some(c => c.formationRole === 'extra');
-  const { bands: activeBands, rows: bandRows } = perspectiveBandRows(GRID, extraEnabled);
+  const { bands: activeBands, rows: bandRows, gap: gapRows } = perspectiveBandRows(GRID, extraEnabled, profile);
   // The profile's strip height holds for the default drawing; with the extra rank on, the strips shrink to stay in the field.
   const stripFraction = Math.min(profile.rowHeight, (1 - profile.top) / bandRows);
   const rowHeight = height * stripFraction;
@@ -118,7 +122,8 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
     const bodyX = laneLeft + band.anchor.x * laneWidth + shear(ground);
-    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: BAND_LETTERS[band.id], closeBottom: band === activeBands.findLast(b => b.side === band.side), formationRole: role,
+    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: BAND_LETTERS[band.id], closeBottom: band === activeBands.findLast(b => b.side === band.side),
+      teamEdge: band === activeBands.findLast(b => b.side === 'enemy') ? 'enemy-end' : band === activeBands.find(b => b.side === 'player') ? 'player-start' : '', formationRole: role,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
       x: bodyX, ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
@@ -156,7 +161,7 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     });
   }
   plan.visualBands = activeBands.map(band => ({ ...band, top: bandTop(band), height: rowHeight }));
-  plan.teamGap = { top: bandTop(bandOf('player-front')) - GRID.teamGapRows * rowHeight, height: GRID.teamGapRows * rowHeight };
+  plan.teamGap = { top: bandTop(bandOf('player-front')) - gapRows * rowHeight, height: gapRows * rowHeight };
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
   return plan;
 }

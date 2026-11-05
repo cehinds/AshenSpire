@@ -997,6 +997,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         if (outline) {
           const path = perspectiveCellOutlinePath(cell, plan.rows);
           if (outline.getAttribute('d') !== path) outline.setAttribute('d', path);
+          // The open ground between the teams gets a firmer edge: the enemy's last strip's bottom and the party's first strip's top.
+          const edge = tile.querySelector('[data-team-edge-line]');
+          const edgePath = cell.teamEdge === 'enemy-end' ? 'M0,100H100' : cell.teamEdge === 'player-start' ? 'M0,0H100' : '';
+          if (edge && edge.getAttribute('d') !== edgePath) edge.setAttribute('d', edgePath);
         }
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
