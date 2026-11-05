@@ -9,15 +9,39 @@ const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
 const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
 const ruleGeometry = new WeakMap();
 // A rules row may carry two readings as inert <template>s (illustratedCard.js): the compact one it shows by default and a
-// fuller "roomy" one. showReading swaps the visible clauses for one of them; the templates stay put.
+// fuller "roomy" one. showReading swaps the visible clauses between them. The compact nodes are the painted ones (card.js
+// binds the damage receipt to their numbers), so they are never cloned: they are set aside while the roomy reading shows
+// and put back as they were. The roomy nodes are fresh clones, so the row announces `facereadingchange` for card.js to bind them.
+const readings = new WeakMap();
 export function showReading(text,reading){
-  const source=text.querySelector?.(`:scope > template[data-face-${reading}]`);
+  if(!text.childNodes||!text.querySelector)return false;
+  let state=readings.get(text);
+  const roomyShown=Boolean(state?.roomy?.length&&state.roomy[0].parentNode===text);
+  if(reading==='compact'){
+    if(roomyShown){
+      for(const node of state.roomy)node.remove();
+      state.roomy=null;
+      const first=text.firstChild;
+      for(const node of state.compact)text.insertBefore(node,first);
+    }else{
+      // Compact is on show (or the row was rewritten in place): what is there now is the painted reading.
+      readings.set(text,{compact:[...text.childNodes].filter(node=>node.nodeName!=='TEMPLATE'),roomy:null});
+    }
+    text.dataset.faceReading='compact';
+    return Boolean(text.querySelector?.(':scope > template[data-face-roomy]'));
+  }
+  const source=text.querySelector?.(':scope > template[data-face-roomy]');
   if(!source)return false;
-  for(const node of [...text.childNodes])if(node.nodeName!=='TEMPLATE')node.remove();
+  if(!state||roomyShown||state.compact.some(node=>node.parentNode!==text)){
+    // Reached without a compact pass first: record what shows now.
+    showReading(text,'compact');state=readings.get(text);
+  }
+  for(const node of state.compact)node.remove();
   const clone=source.content.cloneNode(true);
   for(const line of clone.querySelectorAll('[data-reading-line]')){line.classList.add('face-line');line.removeAttribute('data-reading-line');}
+  state.roomy=[...clone.childNodes];
   text.insertBefore(clone,text.firstChild);
-  text.dataset.faceReading=reading;
+  text.dataset.faceReading='roomy';
   return true;
 }
 // The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
@@ -199,6 +223,7 @@ export function fitIllustratedCards(cards) {
     else row.low=Math.max(row.low,row.floor);
     row.clauses=[...row.text.querySelectorAll('[data-face-clause]')];
     row.face.dataset.rulesRoomy=String(row.roomy);
+    if(row.roomy)row.text.dispatchEvent(new CustomEvent('facereadingchange',{bubbles:true}));
   }
   for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset,row.roomy?1:0].join('\u0002');
   // A face is taken from the cache only whole: its rows then all keep their old answer.

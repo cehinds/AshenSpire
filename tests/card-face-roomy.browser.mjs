@@ -22,6 +22,13 @@ for (const card of reg.cards.all()) for (const upgraded of [false, true]) {
   el.style.width = w + 'px'; document.getElementById('row').appendChild(el); cards.push(el); ids.push(card.id + (upgraded ? '+' : ''));
 }
 await document.fonts?.ready; fitIllustratedCards(cards); await new Promise(r => setTimeout(r, 300)); fitIllustratedCards(cards);
+const receipt = { version: 1, targetId: 'foe', hits: [{ incoming: 13, hpLoss: 9, sources: [{ id: 'base', label: 'Base', amount: 13, stage: 'base' }] }], totalDamage: 9 };
+window.__receiptCards = [];
+for (const [cardId, id] of [['serratedBlade', 'roomy'], ['guardCounter', 'compact']]) {
+  const el = renderCard(reg, { cardId }, { level: 'glance', rules: { combatExpansionVersion: 2 }, only: [], preview: { values: [{ op: 'damage', value: 13, hits: 1, damageReceipt: receipt }] } });
+  el.style.width = w + 'px'; document.getElementById('row').appendChild(el); window.__receiptCards.push([id, el]);
+}
+await new Promise(r => setTimeout(r, 100)); fitIllustratedCards(window.__receiptCards.map(([, el]) => el)); await new Promise(r => setTimeout(r, 100)); fitIllustratedCards(window.__receiptCards.map(([, el]) => el));
 window.__ids = ids; window.__cards = cards; window.__done = true;
 </script>`);
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
@@ -53,6 +60,22 @@ try {
     }
     const one = rows.find(r => r.id === 'guardCounter');
     assert.notEqual(one.roomy, 'true', `${label}: a one-liner has no roomy reading`); assert.ok(Math.abs(one.font - one.max) < 0.05, `${label}: a one-liner keeps its full size`);
+    // A damage receipt stays inspectable after the fit, whichever reading won (nodes kept, or clones rebound).
+    const probes = await page.evaluate(async () => {
+      const out = [];
+      for (const [, el] of window.__receiptCards) {
+        const face = el.querySelector('.illustrated-card-face'), nums = [...el.querySelectorAll('[data-face-kind="damage"] .val')];
+        nums[0]?.click(); await new Promise(r => setTimeout(r, 400));
+        out.push({ reading: el.querySelector('.ic-text[data-card-binding="rules"]').dataset.faceReading, roomy: face.dataset.rulesRoomy, count: nums.length,
+          bound: nums.every(n => n.dataset.damageReceipt === 'true' && n.tabIndex === 0 && n.getAttribute('role') === 'button'),
+          opened: document.body.textContent.includes('Damage calculation') });
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); document.body.click(); await new Promise(r => setTimeout(r, 300));
+      }
+      return out;
+    });
+    for (const probe of probes) assert.ok(probe.count > 0 && probe.bound && probe.opened, `${label}: receipt lost after the fit ${JSON.stringify(probe)}`);
+    if (width >= 150) assert.equal(probes[0].reading, 'roomy', `${label}: the receipt card took the roomy reading`);
+    assert.equal(probes[1].reading, 'compact', `${label}: a one-liner keeps its painted nodes`);
     await page.close();
   }
   console.log('card-face-roomy browser: ok');

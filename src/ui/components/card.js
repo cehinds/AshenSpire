@@ -173,6 +173,7 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
 // innerHTML (before the appearance pass and the fitter touched the nodes),
 // `at` the level it was drawn at, `receipt` what its damage numbers explain.
 const paintedFaces = new WeakMap();
+const receiptRebound = new WeakSet();
 // A card element's in-place refresher (renderCard fills it): the opts it was built with, replaced.
 const refreshers = new WeakMap();
 // The art <img>'s error handler is bound once, to the image, and reads this: a
@@ -448,6 +449,8 @@ export function renderCard(registries, ref, opts = {}) {
       bindDamageReceipt(el, opts.preview);
     }
     paintedFaces.set(el, { html: faceHtml, at, receipt: receiptKey });
+    // The fitter swaps in the roomy reading as fresh nodes: their damage numbers take the receipt binding too.
+    if (!receiptRebound.has(el)) { receiptRebound.add(el); el.addEventListener?.('facereadingchange', () => bindDamageReceipt(el, opts.preview)); }
     for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
