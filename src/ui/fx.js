@@ -410,9 +410,9 @@ export function floatNum(layer, anchor, text, cls, tint) {
 // A floater rises about 30 px before it fades (num-life, styles/combat.css), so the top one keeps that much
 // clear of the battlefield top besides the 4 px gap above the HUD and the 6 px margin.
 const FLOAT_EDGE_PX = 40;
-export function floaterLanesFit(room, line, gap = line * 0.35) {
-  if (room - FLOAT_EDGE_PX - line < 0) return 0;
-  return Math.floor((room - FLOAT_EDGE_PX - line) / (line + gap)) + 1;
+export function floaterLanesFit(room, line, gap = line * 0.35, edge = FLOAT_EDGE_PX) {
+  if (room - edge - line < 0) return 0;
+  return Math.floor((room - edge - line) / (line + gap)) + 1;
 }
 // The top of the room the column may use: the battlefield top, or the bottom of the combat top bar
 // (cinders, icon buttons, turn banner) when that sits lower. Layer px.
@@ -496,19 +496,29 @@ function enqueueFloater(item) {
 function floaterStepPx(rec) {
   return (rec.line || FALLBACK_LINE_PX) + FLOATER_STACK.floaterLineGapPx;
 }
-// The cap: floaterMaxVisible, fewer when the room above the HUD cannot hold that many.
-function maxVisibleFor(rec, item) {
+// Where the column starts and how many floaters it can hold. The slot-0 floater sits just above the combatant's
+// overhead HUD, as the owner asked on 2026-11-02 (never over the HUD), when at least two lines fit between the HUD
+// and the top of the battlefield; otherwise it starts on the figure (a quarter of the way down, where damage
+// numbers always showed) and the column rises over the HUD. With no HUD it starts just above the head. The cap is
+// floaterMaxVisible, fewer when the room above the start cannot hold that many (never below one, or two on the figure).
+const FLOAT_RISE_RESERVE_PX = 6; // the page margin; a floater's last 30 px of rise is a fade, so it may drift over the top bar
+function columnStart(rec, layer, anchor, b, zoom, view) {
   const cap = Math.max(1, Math.floor(FLOATER_STACK.floaterMaxVisible));
-  const { layer, anchor } = item;
+  const line = rec.line || FALLBACK_LINE_PX, gap = FLOATER_STACK.floaterLineGapPx;
+  const ceiling = overheadCeiling(layer, anchor, b, zoom);
+  const roomTop = floaterRoomTop(layer, view, zoom, anchor, b, ceiling);
+  const edge = ceiling ?? b.top + 8; // no HUD: the column starts just above the head
+  const above = floaterLanesFit(edge - 4 - roomTop, line, gap, FLOAT_RISE_RESERVE_PX);
+  if (ceiling == null || above >= 2) return { bottom: edge - 4, cap: Math.max(1, Math.min(cap, above)) };
+  const top = b.top + b.height * 0.25;
+  return { top, cap: Math.max(2, Math.min(cap, floaterLanesFit(top + line - roomTop, line, gap, FLOAT_RISE_RESERVE_PX))) };
+}
+function maxVisibleFor(rec, item) {
   try {
+    const { layer, anchor } = item;
     const zoom = uiZoom();
-    const b = anchorLocalBoxCached(layer, anchor, zoom);
-    const ceiling = overheadCeiling(layer, anchor, b, zoom);
-    if (ceiling == null) return cap;
-    const view = anchorLocalBoxCached(layer, layer, zoom);
-    const room = ceiling - floaterRoomTop(layer, view, zoom, anchor, b, ceiling);
-    return Math.max(1, Math.min(cap, floaterLanesFit(room, rec.line || FALLBACK_LINE_PX, FLOATER_STACK.floaterLineGapPx)));
-  } catch { return cap; }
+    return columnStart(rec, layer, anchor, anchorLocalBoxCached(layer, anchor, zoom), zoom, anchorLocalBoxCached(layer, layer, zoom)).cap;
+  } catch { return Math.max(1, Math.floor(FLOATER_STACK.floaterMaxVisible)); }
 }
 // Lift every visible floater by its slot (how many newer floaters are showing). Under Reduced motion the CSS drops
 // the transition, so the column still stacks but nothing glides.
@@ -548,9 +558,8 @@ function showFloater(rec, item, entry) {
   measureThenMutate(el, () => {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
-    const ceiling = overheadCeiling(layer, anchor, b, zoom);
-    // The bottom of the slot-0 floater sits just above the overhead HUD, or just above the head with none.
-    const placed = (ceiling == null ? b.top + 4 : ceiling - 4) - height;
+    const start = columnStart(rec, layer, anchor, b, zoom, view);
+    const placed = start.top ?? start.bottom - height;
     const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: 6 });
     return () => {
       el.style.left = `${at.left + half}px`;

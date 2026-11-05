@@ -187,14 +187,29 @@ test('the slot-0 floater sits just above the overhead HUD, at the same x, with n
   assert.equal(second.style.left, '140px', 'every floater keeps the same x');
 }));
 
-test('room above the HUD caps the column: fewer floaters show, none is dropped', (t) => setup(t, ({ fx, a, spawns }, document) => {
+test('with no room above the HUD the column starts on the figure and rises over the HUD', (t) => setup(t, ({ fx, a, spawns }, document) => {
   const hud = document.createElement('div'); hud.box = { left: 100, top: 60, width: 80, height: 20 };
   a.closest = () => ({ querySelectorAll: () => [hud] });
   a.contains = () => false;
-  const nodes = [1, 2, 3].map((n) => floatNum(fx, a, `+${n}`, 'blk'));
-  advance(t, floaterStaggerMs() * 2);
-  assert.equal(spawns.length, 3, 'all spawn');
-  assert.ok(nodes[0].className.includes('float-early') && nodes[1].className.includes('float-early'), 'one line of room: each new one replaces the last');
+  const nodes = [1, 2, 3, 4].map((n) => floatNum(fx, a, `+${n}`, 'blk'));
+  advance(t, floaterStaggerMs() * 3);
+  flushMeasureJobs();
+  assert.equal(nodes[0].style.top, '230px', 'a quarter of the way down the figure (200 + 120 x 0.25), the old damage spot');
+  assert.equal(spawns.length, 4);
+  assert.ok(nodes.every((n) => !n.className.includes('float-early')), 'there is room for the whole cap above the figure');
+  assert.deepEqual(nodes.map(lift), [3 * 26, 2 * 26, 26, 0]);
+}));
+
+test('little room above the figure caps the column, never below two on the figure, and drops none', (t) => setup(t, ({ fx, a, spawns }, document) => {
+  a.box = { left: 100, top: 20, width: 80, height: 120 };
+  const hud = document.createElement('div'); hud.box = { left: 100, top: 20, width: 80, height: 10 };
+  a.closest = () => ({ querySelectorAll: () => [hud] });
+  a.contains = () => false;
+  const nodes = [1, 2, 3, 4].map((n) => floatNum(fx, a, `+${n}`, 'blk'));
+  advance(t, floaterStaggerMs() * 3);
+  assert.equal(spawns.length, 4, 'every queued floater still spawns');
+  assert.ok(nodes[0].className.includes('float-early') && nodes[1].className.includes('float-early'), 'only two show at once');
+  assert.ok(!nodes[2].className.includes('float-early') && !nodes[3].className.includes('float-early'));
 }));
 
 test('lane fit: one line, then a line plus the gap per extra floater, minus the 40 px edge reserve', () => {
@@ -203,6 +218,7 @@ test('lane fit: one line, then a line plus the gap per extra floater, minus the 
   assert.equal(floaterLanesFit(40 + 20 + 27, 20), 2);
   assert.equal(floaterLanesFit(40 + 20 + 54, 20), 3);
   assert.equal(floaterLanesFit(40 + 20 + 26, 20, 6), 2, 'an explicit gap replaces the 35% default');
+  assert.equal(floaterLanesFit(6 + 20 + 26, 20, 6, 6), 2, 'an explicit edge reserve replaces the 40 px default');
 });
 
 test('one font size for every floater: damage, heal, Block, words and crits differ by colour and weight only', () => {

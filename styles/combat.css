@@ -503,12 +503,14 @@
     animation: none !important; opacity: 1; transform: none; filter: none;
   }
 }
+/* The same rise as a number (num-life: 3 px by 12%, 30 px by two thirds, 52 px at the end), so a word and a number
+   in one fighter's column never pass each other: the older floater is always the higher one (2026-11-05). */
 @keyframes callout-rise {
   0% { opacity: 0; transform: translateY(8px) scale(0.85); }
-  14% { opacity: 1; transform: translateY(0) scale(1.06); }
-  26% { transform: translateY(-2px) scale(1); }
-  75% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-26px) scale(1); }
+  12% { opacity: 1; transform: translateY(-3px) scale(1.06); }
+  26% { transform: translateY(-8px) scale(1); }
+  66.6% { opacity: 1; transform: translateY(-30px) scale(1); }
+  100% { opacity: 0; transform: translateY(-52px) scale(1); }
 }
 @keyframes callout-fade { 0% { opacity: 0; } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes callout-glow { 0%, 100% { filter: none; } 18% { filter: drop-shadow(0 0 10px currentColor); } 45% { filter: none; } }
