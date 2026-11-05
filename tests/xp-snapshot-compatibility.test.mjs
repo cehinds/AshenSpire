@@ -35,9 +35,9 @@ test('new snapshots use the authored curve while legacy XP edits preserve their 
   const old = { schemaVersion: 1, overrides: { [xpKey]: 100, 'gameConfig.balance.level.xp.growth': 1.2 } };
   const currentBundle = configuredContentBundle(contentBundle, current);
   assert.equal(current.xpCurveVersion, 1);
-  // The authored character curve is exponential ×1.303 from 200 (SPEC §13.4o, 2026-10-04).
+  // The authored character curve is exponential ×1.5 from 200 (SPEC §13.4o, owner 2026-11-05).
   assert.equal(currentBundle.balance.level.xp.linear, false);
-  assert.equal(currentBundle.balance.level.xp.growth, 1.303);
+  assert.equal(currentBundle.balance.level.xp.growth, 1.5);
   const edited = { ...old, overrides: { ...old.overrides, [xpKey]: 200 } };
   assert.equal(Object.hasOwn(edited, 'xpCurveVersion'), false);
   const legacy = configuredContentBundle(contentBundle, edited);
