@@ -5,16 +5,12 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { advancedConfigRows } from '../src/model/advancedConfig.js';
 import { COMBAT_ROUNDS_KEY, combatRoundsFor, combatRoundsRows } from '../src/model/combatRounds.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch } from '../src/engine/combat.js';
-import { categoryHandler } from '../src/ui/screens/settings.js';
-import { advancedSection } from '../src/ui/models/AdvancedSettingsGroups.js';
-import { visibleAdvancedGroups } from '../src/ui/screens/settings.js';
 
 const registries = createRegistries(contentBundle);
 const ENEMY = 'wanderingSoldier';
@@ -39,16 +35,6 @@ test('on: frozen rules with the speed merge and the parsed tables', () => {
   assert.equal(rules.tables.evasionCards.Backstep, 5);
   assert.equal(rules.tables.evadeBonus.evade, 20);
   assert.equal(JSON.parse(JSON.stringify(rules)).merge, 'speed', 'the rules survive a JSON save');
-});
-
-test('the row sits in Advanced → Combat, and that group is debug-only', () => {
-  const row = categoryHandler('Advanced').rows.find((r) => r.key === COMBAT_ROUNDS_KEY);
-  assert.ok(row, 'the row is on the Advanced screen');
-  assert.equal(advancedSection(row), 'Combat');
-  assert.equal(row.label, 'Combat rounds preview');
-  assert.ok(advancedConfigRows(contentBundle).some((r) => r.key === COMBAT_ROUNDS_KEY));
-  assert.ok(visibleAdvancedGroups(true).some((g) => g.id === 'Combat'), 'dev and test builds show the group');
-  assert.ok(!visibleAdvancedGroups(false).some((g) => g.id === 'Combat'), 'a release build hides it');
 });
 
 test('rules are frozen at New Run: a later live change does not reach the fight', () => {

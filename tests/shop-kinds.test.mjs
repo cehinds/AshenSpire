@@ -511,14 +511,10 @@ test('the atlas shop inspection promises Remove only when the visit offered it (
   assert.match(unrolled.benefit, /may also offer to remove a card/);
 });
 
-test('an atlas point\'s saved stock is shape-checked like run.shopStock, and Shops rows wear their uiStrings names', async () => {
+test('an atlas point\'s saved stock is shape-checked like run.shopStock, (the Shops rows retired in 3e)', async () => {
   assert.deepEqual(shopStockProblems({ kind: 'market', offerings: ['cards'] }, 'journey.serviceStates.p.stock'), []);
   assert.ok(shopStockProblems({ kind: 'market', offerings: ['bogus'] }, 'journey.serviceStates.p.stock')
     .some((problem) => problem.startsWith("journey.serviceStates.p.stock.offerings names 'bogus'")));
-  const { settingsRows } = await import('../src/ui/screens/settings.js');
-  const rows = new Map(settingsRows().filter((row) => row.advancedGroup === 'Shops').map((row) => [row.key, row]));
-  assert.equal(rows.get(`${PREFIX}market.weaponArts.chance`).label, 'Market · Weapon arts: chance');
-  assert.equal(rows.get(`${PREFIX}master.training.training.xp`).label, 'Wise master · Training: Training xp');
 });
 
 test('a schema-14 stock must name its kind and offerings; only an older save gets the market fallback (Codex, on #1371)', () => {

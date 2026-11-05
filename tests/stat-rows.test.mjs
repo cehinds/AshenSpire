@@ -469,15 +469,6 @@ test('legacy rating rows convert whole when tuned; bounds are said; saved levels
   const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
   assert.equal(advancedConfigRows(contentBundle).find((row) => row.key === 'gameConfig.derivedStatRules.rules.mana.max').min, 1);
 
-  const { statsTopicPreview } = await import('../src/ui/models/StatsPreviewModel.js');
-  const hp = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.hp.max': 10 }, 'HP', { constitution: 5 });
-  assert.match(hp.examples[0].lines[0].expression, /held to its maximum 10$/);
-  assert.equal(hp.examples[0].lines[0].total, 10);
-  const ar = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.ar.max': 1 }, 'Attack rating (AR)', { strength: 5, dexterity: 5 });
-  const arLine = ar.examples.find((entry) => entry.kind === 'rating').lines[0];
-  assert.match(arLine.expression, /held to its maximum 1/);
-  assert.equal(arLine.total, 1);
-
   const { attributeCardModels } = await import('../src/model/creationBrief.js');
   const { statProjection } = await import('../src/model/statProjection.js');
   const capped = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 40 }));

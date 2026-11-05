@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { withModalDom } from './helpers/modal-dom.mjs';
-import { settingsRowHtml, categoryHandler, refreshGates, refreshHandRuleControls, setSettingsControlDisabled } from '../src/ui/screens/settings.js';
-import { resolveHandRules, HAND_RULES_PREFIX } from '../src/model/handRules.js';
+import { settingsRowHtml, setSettingsControlDisabled } from '../src/ui/screens/settings.js';
 
 function stepper(dom, container, key) {
   const row = dom.document.createElement('div'); row.className = 'set-row';
@@ -35,41 +34,6 @@ test('only the canonical number input changes the parent marker', () => {
     assert.equal(wrap.dataset.numberDisabled, 'true', 'slider and bound-button availability cannot unlock a disabled number');
     setSettingsControlDisabled(field, false);
     assert.equal(field.getAttribute('aria-disabled'), 'false'); assert.equal(wrap.dataset.numberDisabled, 'false');
-  });
-});
-
-test('gate close, inherited display, reopen and a rebuilt row keep the marker current', () => {
-  withModalDom(dom => {
-    const key = 'gameConfig.equipmentRequirements.greatsword.strength', own = 'gameConfig.own.equipmentRequirements.greatsword.strength';
-    const host = dom.document.createElement('section'); dom.document.body.append(host);
-    let controls = stepper(dom, host, key); controls.field.value = '1';
-    const settings = { 'gameConfig.equipmentRequirements.scale': .5, [key]: 1, [own]: false };
-    refreshGates(host, settings);
-    assert.equal(controls.field.disabled, true); assert.equal(controls.wrap.dataset.numberDisabled, 'true'); assert.equal(controls.field.value, '2');
-    settings[own] = true; refreshGates(host, settings);
-    assert.equal(controls.field.disabled, false); assert.equal(controls.wrap.dataset.numberDisabled, 'false'); assert.equal(controls.field.value, '1');
-    controls.row.remove(); controls = stepper(dom, host, key);
-    settings[own] = false; refreshGates(host, settings);
-    assert.equal(controls.field.disabled, true); assert.equal(controls.wrap.dataset.numberDisabled, 'true', 'search/reopen replacement rows receive the current gate state');
-  });
-});
-
-test('hand retention dependencies and fixed-draw visibility update number markers in both directions', () => {
-  withModalDom(dom => {
-    const host = dom.document.createElement('section'); dom.document.body.append(host);
-    const discard = stepper(dom, host, HAND_RULES_PREFIX + 'discardLimit');
-    const fixedRow = categoryHandler('Advanced').rows.find(row => row.fixedOnly && row.type === 'number');
-    assert.ok(fixedRow); const fixed = stepper(dom, host, fixedRow.key);
-    const rules = { ...resolveHandRules({}), retain: false, promptDiscard: true, drawMode: 'fixed' };
-    refreshHandRuleControls(host, rules);
-    assert.equal(discard.field.disabled, true); assert.equal(discard.wrap.dataset.numberDisabled, 'true');
-    assert.equal(fixed.field.disabled, false); assert.equal(fixed.wrap.dataset.numberDisabled, 'false'); assert.equal(fixed.row.hidden, false);
-    rules.retain = true; refreshHandRuleControls(host, rules);
-    assert.equal(discard.field.disabled, false); assert.equal(discard.wrap.dataset.numberDisabled, 'false');
-    rules.drawMode = 'fill'; rules.promptDiscard = false; refreshHandRuleControls(host, rules);
-    assert.equal(discard.wrap.dataset.numberDisabled, 'true'); assert.equal(fixed.wrap.dataset.numberDisabled, 'true'); assert.equal(fixed.row.hidden, true);
-    rules.drawMode = 'fixed'; rules.promptDiscard = true; refreshHandRuleControls(host, rules);
-    assert.equal(discard.wrap.dataset.numberDisabled, 'false'); assert.equal(fixed.wrap.dataset.numberDisabled, 'false'); assert.equal(fixed.row.hidden, false);
   });
 });
 

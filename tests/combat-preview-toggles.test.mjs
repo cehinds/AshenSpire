@@ -13,7 +13,6 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { categoryHandler } from '../src/ui/screens/settings.js';
-import { advancedSection } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { visibleAdvancedGroups } from '../src/ui/screens/settings.js';
 
 const registries = createRegistries(contentBundle);
@@ -21,7 +20,7 @@ const ENEMY = 'wanderingSoldier';
 const fight = (run, settings = {}) => createRunCombat({ registries, rng: createRng(4242), run, enemyIds: [ENEMY], settings });
 const runWith = (settings, seed = 5) => createRunState({ seed, classId: 'reaver', registries, profileMeta: { settings } });
 
-test('three toggles sit in Advanced → Combat, all off by default, and the group is debug-only', () => {
+test('three toggles are Advanced → Combat rows, all off by default, and the Settings screen no longer offers them', () => {
   const rows = combatRoundsRows();
   assert.deepEqual(rows.map((r) => r.key), [COMBAT_ROUNDS_KEY, MOMENTUM_KEY, MULTI_ACTION_KEY]);
   assert.deepEqual(rows.map((r) => r.def), [false, false, false]);
@@ -29,12 +28,10 @@ test('three toggles sit in Advanced → Combat, all off by default, and the grou
   for (const row of rows) {
     assert.equal(row.cat, 'Advanced');
     assert.equal(row.advancedGroup, 'Combat');
-    assert.ok(categoryHandler('Advanced').rows.some((r) => r.key === row.key), `${row.key} is on the Advanced screen`);
-    assert.equal(advancedSection({ key: row.key, advancedGroup: 'Combat' }), 'Combat');
+    assert.ok(!categoryHandler('Advanced').rows.some((r) => r.key === row.key), `${row.key} is retired from the Advanced screen (cleanup row 3e)`);
     assert.ok(advancedConfigRows(contentBundle).some((r) => r.key === row.key), `${row.key} is a frozen Advanced row`);
   }
-  assert.ok(visibleAdvancedGroups(true).some((g) => g.id === 'Combat'), 'dev and test builds show the group');
-  assert.ok(!visibleAdvancedGroups(false).some((g) => g.id === 'Combat'), 'a release build hides it, as before');
+  assert.ok(!visibleAdvancedGroups(true).some((g) => g.id === 'Combat'), 'no build shows the group');
 });
 
 test('the rules read each toggle on its own: nothing on, or only one of them, turns on another', () => {
