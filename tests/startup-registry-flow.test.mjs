@@ -87,6 +87,7 @@ function boot(options = {}) {
     promotionDebug: () => false, promotionFor: value => value,
     settingsRows: () => record('settings-rows', []),
     needsSettingsChoice: () => !!f.settingsChoicePending,
+    retiredStoredSettingKeys: () => [], // main.js boot cleanup of retired battlefield keys; not under test here
     seedSettingsDefaults: () => record('seed-defaults', f.promoted),
     showSettingsNotice: (...args) => record('notice', args),
     initAudio(settings) { return record('audio', plain(settings)); },

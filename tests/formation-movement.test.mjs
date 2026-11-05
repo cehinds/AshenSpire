@@ -13,16 +13,6 @@ function fixture() {
   const run = createRunState({ seed: 896, classId: 'reaver', registries });
   return createCombat({ registries, rng: createRng(896), enemyIds: [contentBundle.enemies[0].id], player: { ...structuredClone(run), classId: run.class, relicIds: run.relics } });
 }
-test('movement spends one action, emits a receipt and survives combat save/restore', () => {
-  const combat = fixture();
-  const energy = combat.player.energy;
-  const out = dispatch(combat, { type: 'moveCharacter', cell: 'A1', settings });
-  assert.equal(combat.player.formationCell, 'A1');
-  assert.equal(combat.player.energy, energy - 1);
-  assert(out.events.some(e => e.type === 'characterMoved' && e.to === 'A1'));
-  const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(896), snapshot: serializeCombatSnapshot(combat) });
-  assert.equal(restored.player.formationCell, 'A1');
-});
 // The player's own cell, read from the plan rather than hard-coded: the default
 // perspective grid has three lanes, so the preferred last row F clamps to C.
 const spawn = formationMovePlan(fixture(), 'A1', settings).current;
@@ -31,16 +21,14 @@ test('the player spawns on the shipped grid\'s last row', () => {
   // A saved classicAppearance setting is ignored: the grid is the only layout.
   assert.equal(formationMovePlan(fixture(), 'A1', { ...settings, classicAppearance: true }).current, 'C1');
 });
-test('disabled, unaffordable, invalid, occupied and out-of-turn moves do not mutate state', () => {
-  assert.throws(() => dispatch(fixture(), { type: 'moveCharacter', cell: spawn, settings }), /Already at that position/);
-  for (const [cell, opts, phase, energy] of [['A1', {}, 'player', 3], [spawn, settings, 'player', 3], ['C3', settings, 'player', 3], ['Z1', settings, 'player', 3], ['A1', settings, 'enemy', 3], ['A1', settings, 'player', 0]]) {
-    const combat = fixture(); combat.phase = phase; combat.player.energy = energy;
-    assert.throws(() => dispatch(combat, { type: 'moveCharacter', cell, settings: opts }));
+// Owner, 2026-11-05: formation movement is retired (movementEnabled and its siblings are retired
+// stored keys), so a stored true no longer enables it: every move is refused and nothing mutates.
+test('movement stays disabled whatever is stored: moves are refused and nothing mutates', () => {
+  assert.equal(formationMovePlan(fixture(), 'A1', settings).ok, false);
+  assert.match(formationMovePlan(fixture(), 'A1', settings).reason, /disabled/);
+  for (const cell of ['A1', spawn, 'C3', 'Z1']) {
+    const combat = fixture(); const energy = combat.player.energy;
+    assert.throws(() => dispatch(combat, { type: 'moveCharacter', cell, settings }));
     assert.equal(combat.player.energy, energy); assert.equal(combat.player.formationCell, undefined);
   }
-});
-test('free movement works with zero actions', () => {
-  const combat = fixture(); combat.player.energy = 0;
-  dispatch(combat, { type: 'moveCharacter', cell: 'A1', settings: { ...settings, 'gameConfig.presentation.movementCostsAction': false } });
-  assert.equal(combat.player.energy, 0); assert.equal(combat.player.formationCell, 'A1');
 });

@@ -7,7 +7,9 @@ import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { formationTileGeometry } from '../src/ui/models/FormationGridModel.js';
 import { formationMovePlan } from '../src/model/formationMovement.js';
 const ids = n => Array.from({ length: n }, (_, i) => `actor-${i}`);
-const config = values => presentationConfig(Object.fromEntries(Object.entries(values).map(([key, value]) => [`gameConfig.presentation.${key}`, value])));
+// Pure geometry inputs: the presentation values are built directly, not through settings (the
+// formation keys are retired, and presentationConfig() ignores any stored one; owner, 2026-11-05).
+const config = values => ({ ...presentationConfig({}), ...values });
 
 test('both teams fill outside-in across each row, then upward, matching 56/34/12 and 65/43/21', () => {
   for (const width of [390, 1440]) for (const count of [1, 2, 3, 4, 5, 6]) {
@@ -55,7 +57,7 @@ test('all selectable dimensions and presets give unique uniform cells and matchi
 
 test('slants remain parallel across teams, straight ranks stay straight, and only V converges', () => {
   for (const { value: formationPreset } of FORMATION_PRESETS) {
-    const plan = combatFormation({ width: 1000, height: 500, friends: [], enemies: [], presentation: config({ formationPreset, formationColumns: 3, formationRows: 6 }) });
+    const plan = combatFormation({ width: 1000, height: 500, friends: [], enemies: [], presentation: config({ formationPreset, formationColumns: 3, formationRows: 6, formationGroups: '[]' }) });
     const x = (row, side) => plan.cells.find(c => c.row === row && c.column === 0 && c.side === side).x;
     const left = x(5, 'player') - x(0, 'player'), right = x(5, 'enemy') - x(0, 'enemy');
     if (formationPreset === 'straight') assert.equal(left + right, 0), assert.equal(left, 0);
@@ -85,15 +87,15 @@ test('small saved grids expand uniformly when needed, without stacking or losing
   }
 });
 
-test('layout configuration clamps whole grid dimensions and round trips through export', () => {
-  const invalid = config({ formationColumns: 9, formationRows: 4.8, formationPreset: 'invalid', groundSkew: -100 });
-  assert.equal(invalid.formationColumns, 3); assert.equal(invalid.formationRows, 5);
-  // An unknown preset falls back to the authored default ('straight' since the owner's exported config, 2026-09-24).
-  assert.equal(invalid.formationPreset, FORMATION_DEFAULTS.formationPreset); assert.equal(invalid.groundSkew, -35);
+test('stored formation keys are retired: refused strictly, dropped with one warning, never read', () => {
   const settings = { 'gameConfig.presentation.formationColumns': 3, 'gameConfig.presentation.formationRows': 6,
     'gameConfig.presentation.formationPreset': 'back-slant', 'gameConfig.presentation.groundTilt': 50, 'gameConfig.presentation.rowFScale': 1.7 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
-  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.presentation.formationRows': 7 }), contentBundle));
+  assert.deepEqual(formationDimensions(presentationConfig(settings)), formationDimensions(presentationConfig({})));
+  assert.equal(presentationConfig(settings).formationPreset, FORMATION_DEFAULTS.formationPreset);
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), /Unknown setting/);
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle, {}, [], warnings, { dropRetiredLegacy: true }), {});
+  assert.equal(warnings.length, 1);
 });
 
 test('ground projection leaves position anchors and character geometry upright', () => {
@@ -107,11 +109,11 @@ test('ground projection leaves position anchors and character geometry upright',
   assert.equal(formationSpawn(config({ formationColumns: 1, formationRows: 1 }), 'enemy'), 'A2');
 });
 
-test('the perspective grid is three lanes of one player rank; its front column is not a destination', () => {
+test('movement stays off whatever is stored; the perspective grid is three lanes of one player rank', () => {
   const settings = { 'gameConfig.presentation.movementEnabled': true };
   const combat = { player: { energy: 3, formationCell: 'C1' }, phase: 'player', enemies: [] };
-  for (const cell of ['A1', 'B1']) assert.equal(formationMovePlan(combat, cell, settings).ok, true);
-  for (const cell of ['A2', 'C2', 'A3', 'D1']) assert.equal(formationMovePlan(combat, cell, settings).ok, false);
+  // movementEnabled is a retired key (owner, 2026-11-05): a stored true no longer enables movement.
+  for (const cell of ['A1', 'B1', 'A2', 'C2', 'A3', 'D1']) assert.equal(formationMovePlan(combat, cell, settings).ok, false, cell);
   assert.deepEqual(formationDimensions({ perspectiveGrid: true }, 3), { columns: 2, rows: 3, perspective: true });
   assert.deepEqual(formationDimensions({ perspectiveGrid: true }, 8), { columns: 2, rows: 4, perspective: true });
 });
