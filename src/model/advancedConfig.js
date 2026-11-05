@@ -1477,10 +1477,10 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // (bar `playInDeckOrder`) Deck rows, and the Settings screen no longer draws
 // them, so a file or sync profile exported while they existed still carries
 // their keys. They are dropped with one named warning, never refused as
-// unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
-// still settings. The plain-key settings game code still reads by key
+// unknown: only `gameConfig.prologue.*`, the panel-size pair and the
+// `showFormationGrid` debug key are still settings. The plain-key settings game code still reads by key
 // (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
-const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.settings(?:Width|Height)Percent$)|recovery\.(hp|stamina|mana)\.)/;
+const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.(?:settings(?:Width|Height)Percent|showFormationGrid)$)|recovery\.(hp|stamina|mana)\.)/;
 // A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
 // mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
 // the only one.

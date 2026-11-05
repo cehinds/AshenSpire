@@ -81,3 +81,9 @@ test('loading a profile clears a stored retired recovery key, which has no row t
   const result = profileChanges(profileText({}, keys), contentBundle, stored, rows, keys);
   assert.ok(result.cleared.includes('recovery.hp.afterCombat'));
 });
+
+test('the combat-tools grid key stays a live setting, not a retired one; formationGroups is retired', () => {
+  assert.equal(isRetiredLegacySettingKey('gameConfig.presentation.showFormationGrid'), false);
+  assert.equal(isRetiredLegacySettingKey('settings.gameConfig.presentation.showFormationGrid'), false);
+  assert.equal(isRetiredLegacySettingKey('gameConfig.presentation.formationGroups'), true);
+});
