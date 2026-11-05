@@ -825,7 +825,7 @@ function presentationModelRows() {
 
 // The one presentation row still a setting: how much of the viewport the Settings panel uses.
 const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
-// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default off).
+// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default on).
 const LIVE_PRESENTATION_KEYS = [...SETTINGS_PANEL_KEYS, 'showFormationGrid'];
 function presentationRows() {
   return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));

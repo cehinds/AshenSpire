@@ -12,7 +12,7 @@ import { xpToNext as skillXpToNext } from '../src/model/skills.js';
 
 const registries = createRegistries(contentBundle);
 
-test('the current build follows SPEC §13.4o: every track\'s top level costs about 100,000 XP (the character track, owner 2026-11-05, is 1.5: ~886,000)', () => {
+test('the current build follows SPEC §13.4o: the skill and class tracks cost about 100,000 XP to their top level; the character track (owner, 2026-11-05) costs 886,350', () => {
   // Character base 200 ×1.5 to level 20; skill base 100 ×1.995 to 10; class base 400 ×1.224 to 20.
   assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [200, 300, 450, 680]);
   assert.equal(characterXpToNext(registries, 19), 295580);

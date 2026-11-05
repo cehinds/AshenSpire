@@ -2640,7 +2640,7 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). E
 - **Critical hits** (new). Example feat, Blade level 2: Blade-tagged attacks crit with chance 0.05 + (0.1·DEX + 0.2·WIS + 0.1·INT) / 100, unrounded (the owner's first draft floored the sum to whole percents), capped at 0.5, and rolled as a d20: crit on d20 ≥ 21 − round(chance% / 5) (owner, 2026-11-01); a crit deals 1.5× damage. Proposed with the engine (B): chances from several sources add before the cap.
 - **Percentage rolls are d20s** (owner, 2026-11-01). Every percentage-based combat roll (crit, status application, avoidance, weakness stagger) is a d20 at 5% steps: success on d20 ≥ 21 − clamp(round(chance% / 5), 0, 20), so a 32% chance rolls as 30% and shows 30%; advantage keeps the higher die, disadvantage the lower (`src/engine/d20Chance.js`).
 - **The character bar keeps its own rewards** (§13.4i: attribute points, the feat or class choice); only skill and class bars use the table above.
-- **Curves** (owner, 2026-10-04): base XP per track as set, growth chosen so each track's **maximum level costs about 100,000 XP in total** ("100k required, for all"). Max levels: character **20**, class **20**, skill **10** (the rank cap).
+- **Curves** (owner, 2026-10-04): base XP per track as set, growth chosen so the class and skill tracks' **maximum level costs about 100,000 XP in total** ("100k required, for all"); the character track is the exception: base 200 ×1.5 costs **886,350 XP** to level 20 (owner, 2026-11-05). Max levels: character **20**, class **20**, skill **10** (the rank cap).
 
   | Track | Table | Base | Growth | roundTo | Max level | Total to max |
   |---|---|---|---|---|---|---|
