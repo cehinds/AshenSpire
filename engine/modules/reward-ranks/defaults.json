@@ -25,17 +25,22 @@
   "offeredCopyWeight": 0.25,
   "tagWeights": {
     "maneuver:casting": 1,
-    "maneuver:smash": 2,
-    "maneuver:counter": 2,
-    "maneuver:sweep": 2,
+    "maneuver:smash": 1.5,
+    "maneuver:counter": 1.5,
+    "maneuver:sweep": 1.5,
     "default": 1.5
+  },
+  "typeWeights": {
+    "attack": 1,
+    "skill": 2,
+    "power": 2
   },
   "recentOfferWindow": 3,
   "recentOfferWeight": 0.1,
   "depthBias": {
     "earlyMaxDepth": 3,
     "early": {
-      "basicOrCantrip": 2.5,
+      "basicOrCantrip": 1.8,
       "mana": 0.4
     },
     "late": {
