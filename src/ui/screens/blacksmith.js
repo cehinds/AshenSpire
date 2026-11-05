@@ -57,7 +57,7 @@ const GLYPH = Object.freeze({
   rankUp: 'skill', weaponArts: 'attack',
 });
 
-export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, priceMult = 1, hud = null }) {
+export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onCardPurchased = () => {}, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
   const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
@@ -129,7 +129,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const plan = coreWeaponArtPlan(registries, run, item.id);
         if (!plan.name) continue;
         const host = tile(GLYPH.weaponArts, plan.name, t('blacksmith.weaponArt.line', { cost: plan.cost }));
-        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => commitCoreWeaponArt(registries, run, plan) });
+        actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => {
+          const receipt = commitCoreWeaponArt(registries, run, plan);
+          onCardPurchased({ kind: 'weaponArts', id: receipt.id, instanceId: receipt.instanceId });
+        } });
         shelf.append(host);
       }
     },

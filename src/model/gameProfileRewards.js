@@ -271,6 +271,28 @@ export function claimGameProfileRewardToDeck(registries, run, offerId, index, se
   const { option } = addRewardToDeckDraft(registries, draft, offerId, index, settings);
   Object.assign(run, draft); return option;
 }
+// Owner 2026-11-05: a card bought at the shop may go straight into the deck. The purchase already put it in the library
+// (sideboard); this is the same deck move the reward door's "Add to deck" makes, with the same refusals ('full' | 'limit').
+function addPurchasedCardToDeckDraft(registries, draft, instanceId, settings) {
+  if (draft.deck.some(card => card?.instanceId === instanceId)) return false;
+  if (!draft.sideboard.some(card => card?.instanceId === instanceId)) throw deckAddProblem('notCard', 'That card is not in your library');
+  const { max } = deckEditBounds(settings);
+  if (draft.deck.length + 1 > max) throw deckAddProblem('full', `Your deck is full (${max} cards)`, { max });
+  if (!moveFromSideboard(registries, draft, instanceId, settings)) throw deckAddProblem('limit', 'This card cannot join the deck right now');
+  syncZones(draft);
+  return true;
+}
+/** shopCardDeckRefusal(...) → '' when the purchased card can join the deck, else 'notCard' | 'full' | 'limit'. */
+export function shopCardDeckRefusal(registries, run, instanceId, settings = {}) {
+  try { addPurchasedCardToDeckDraft(registries, structuredClone(run), instanceId, settings); return ''; }
+  catch (error) { if (error.code) return error.code; throw error; }
+}
+/** addPurchasedCardToDeck(...) → true when moved. Library to deck; a refusal throws (error.code) and leaves the run untouched. */
+export function addPurchasedCardToDeck(registries, run, instanceId, settings = {}) {
+  const draft = structuredClone(run);
+  const moved = addPurchasedCardToDeckDraft(registries, draft, instanceId, settings);
+  Object.assign(run, draft); return moved;
+}
 export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const module=gameModule(run,'shops');
   if(module?.mode!=='configured')throw new Error('Configured shop unavailable');
@@ -317,6 +339,7 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
   if(quote&&(quote.revision!==plan.revision||quote.signature!==plan.signature||quote.price!==plan.price||quote.shopId!==shopId||quote.index!==index))throw new Error('This offer changed. Inspect it again.');
   if(!plan.ok)throw new Error(plan.reason);
   const offerId=`shop:${shopId}`,price=plan.price;
+  const instanceId=`reward:${offerId}:${index}:${run.gameProfileRewardOffers?.[offerId]?.tradeRevision||0}`;
   const draft=structuredClone(run);draft.cinders-=price;
   const receipt=claimGameProfileReward(registries,draft,offerId,index);
   // Old saves can offer a much lower flat price. Retain that paid-price
@@ -341,6 +364,6 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
       stock.taken=stock.taken.filter(taken=>taken!==index);stock.claimed=null;
     }
     stock.tradeRevision=plan.revision+1;
-    Object.assign(run,draft);return {...receipt,price,replacement:replacement||null};
+    Object.assign(run,draft);return {...receipt,price,instanceId,replacement:replacement||null};
   } catch(error) {if(counters&&random.restoreCounters)random.restoreCounters(counters);throw error;}
 }
