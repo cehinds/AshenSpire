@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Enemy HUDs** ([#2542](https://github.com/cehinds/AshenSpire/pull/2542), `0.7.3.122`). Enemy HUD panels now line up side by side in a row instead of a column when they fit.
 - **Player HUD** ([#2541](https://github.com/cehinds/AshenSpire/pull/2541), `0.7.3.122`). The player's selected HUD now sits right of the player on phones as well as desktop.
 - **Shop text** ([#2546](https://github.com/cehinds/AshenSpire/pull/2546), `0.7.3.120`). The merchant shows real numbers in card and flask text instead of raw templates like {damage}.
 - **Shop cards** ([#2545](https://github.com/cehinds/AshenSpire/pull/2545), `0.7.3.118`). Shop card offers show an (i) that opens the card inspector and never buys; chest card picks show it on the selected card.
