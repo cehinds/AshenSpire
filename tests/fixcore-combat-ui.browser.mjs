@@ -59,7 +59,8 @@ try {
     await page.mouse.move((body.left + body.right) / 2, (body.headY ?? body.top) + 8);
     await page.waitForTimeout(650);
     assert.ok(await card.locator('[data-damage-receipt]').count());
-    assert.match(await card.locator('.card-hit-chances').textContent(), /\d+(?:\.\d+)?%/);
+    assert.equal(await card.locator('.card-hit-chances').count(), 0, 'no odds box on the card face');
+    assert.match(await page.locator('.combat-hit-chance').first().textContent(), /\d+(?:\.\d+)?%/);
     const panel = page.locator(`.target-hud-detail[data-eid="${fixture.targetId}"]`);
     const pips = await panel.locator('.combat-health-badge').evaluateAll(nodes => nodes.map(node => ({
       kind: node.dataset.defenseKind, value: node.querySelector('.combat-health-badge-value').textContent,
@@ -95,7 +96,7 @@ try {
       for (const enemy of window.__combat.enemies) enemy.knowledgeAction.reads.player.visibility = 'unknown';
       window.__renderCombatForShot();
     });
-    assert.match(await card.locator('.card-hit-chances').textContent(), /\d+(?:\.\d+)?%/, 'a failed Perception read no longer hides selected-card odds (D8)');
+    assert.match(await page.locator('.combat-hit-chance').first().textContent(), /\d+(?:\.\d+)?%/, 'a failed Perception read no longer hides the enemy odds (D8)');
     const mana = await page.locator('.energy-orb svg image').evaluateAll(nodes => nodes.filter(node => ['diamond','spent'].includes(node.dataset.orbPart)).map(node => ({ kind:node.dataset.orbPart, x:Number(node.getAttribute('x')), y:Number(node.getAttribute('y')), w:Number(node.getAttribute('width')), h:Number(node.getAttribute('height')) })));
     assert.equal(mana.filter(gem => gem.kind === 'diamond').length,6);
     assert.equal(mana.filter(gem => gem.kind === 'spent').length,18);
