@@ -186,7 +186,6 @@ async function main() {
     // ---- screen 1 · character creation (the field carrying the promise) ----
     for (const [label, url, drive, input, button] of [
       ['customize', `${base}?shot=customize`, null, '#seed-input', '#cz-start'],
-      ['custom climb', base, `#custom-climb`, '#cr-seed', '#cr-start'],
     ]) {
       await cdp.send('Page.navigate', { url }, S);
       if (drive) { await until(`!!document.querySelector('${drive}')`, `title (${label})`); await click(drive); }

@@ -81,7 +81,6 @@ try {
     }
     await press(page.locator('.title-more summary'));
     for (const [name, selector, opened, back] of [
-      ['Custom climb', '#custom-run', '#cr-back', '#cr-back'],
       ['Profile', '#profile', '.profile-archive-modal', '.profile-archive-modal .prof-back'],
       ['Download & saves', '#download-game', '.offline-play-modal', '.offline-play-modal .modal-close'],
     ]) {

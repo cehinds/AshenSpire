@@ -385,17 +385,6 @@ test('mapconfig: the three tables deep-equal their authored JSON and keep their 
 });
 
 // Plan row 9b, batch B: the next five modules.
-import { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION } from '../src/content/customMods.js';
-test('customMods: the four tables deep-equal their authored JSON; MAX_ASCENSION stays computed', () => {
-  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/customMods.json'), 'utf8'));
-  assert.deepStrictEqual(DIFFICULTY_MODS, authored.difficultyMods);
-  assert.deepStrictEqual(CHAOS_MODS, authored.chaosMods);
-  assert.deepStrictEqual(DECK_MODES, authored.deckModes);
-  assert.deepStrictEqual(ASCENSION_ORDER, authored.ascensionOrder);
-  assert.equal(MAX_ASCENSION, authored.ascensionOrder.length);
-  assert.ok([DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER].every((t) => !Object.isFrozen(t)), 'these tables were never frozen');
-});
-
 import { SEATS, CAUSEWAY_REGION_ID } from '../src/content/seats.js';
 test('seats: SEATS and CAUSEWAY_REGION_ID deep-equal the authored JSON; the array is frozen, its rows are not', () => {
   const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/seats.json'), 'utf8'));

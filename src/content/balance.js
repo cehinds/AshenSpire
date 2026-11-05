@@ -30,7 +30,6 @@ import { balanceSigils } from './generated/balanceSigils.js';
 import { balancePowers } from './generated/balancePowers.js';
 import { balanceClassTree } from './generated/balanceClassTree.js';
 import { balanceCosts } from './generated/balanceCosts.js';
-import { balanceCustomMods } from './generated/balanceCustomMods.js';
 import { balanceBossTiers } from './generated/balanceBossTiers.js';
 import { balanceSeatTiers } from './generated/balanceSeatTiers.js';
 import { balanceEndless } from './generated/balanceEndless.js';
@@ -274,7 +273,6 @@ export const balance = {
   endless: balanceEndless,
   seatTiers: balanceSeatTiers,
   bossTiers: balanceBossTiers,
-  customMods: balanceCustomMods,
   // ui is JSON except the one number derived from the tooltip settings table
   // (the key sits first in tooltipPlacement, as it always did).
   ui: {

@@ -448,7 +448,6 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   const marked = {
     'src/ui/screens/history.js': '#hx-back',
     'src/ui/screens/compendium.js': '#cp-back',
-    'src/ui/screens/customRun.js': '#cr-back',
     'src/ui/screens/customize.js': '#cz-back',
     'src/ui/screens/dialogue.js': '#dialogue-back',
     'src/ui/screens/reward.js': '#reward-back',

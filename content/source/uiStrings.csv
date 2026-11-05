@@ -479,8 +479,6 @@ shop.refuse.sigilLegendary,,"{name} is legendary: it is never sold, only found."
 shop.refuse.innBought,,You have already rested here this visit.,,
 shop.refuse.innDenied,,The {relic} will not let you rest here.,,
 # ---- the custom climb -----------------------------------------------------
-customRun.seat.group,,First seat,Which seat the climb opens in.,
-customRun.seat.seeded,,Seeded,The seed decides which seat the climb opens in.,
 # ---- settings (W1a) -------------------------------------------------------
 settings.title,,Settings,,
 settings.close,,Close Settings,,

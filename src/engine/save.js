@@ -48,7 +48,6 @@ import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
-import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
@@ -984,7 +983,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
         const seatProblems = seatOrderProblems(run.seatOrder, registries);
         if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
-        const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+        const mapAct = run.actNumber;
         if (run.journey) {
           // deserializeRun validated the pinned manifest. Its graph is a derived
           // projection, and its dungeon may belong to a different classic act.
