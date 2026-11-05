@@ -64,6 +64,12 @@ function pools(registries, run, { claim = false } = {}) {
 // Owner 2026-11-05: the weapon-art pool is the default and learnable arts of the weapons the run carries (storage and sets),
 // plus any extra authored ids (empty for Core), minus arts already owned: in the deck or sideboard, which also holds the
 // arts a worn weapon grants. A claim (`claim: true`) accepts every authored art plus `legacyClaimIds`, so an offer made earlier (or in an older save) stays claimable.
+/** Every id the run may hold as a weapon art (all weapons' default and learnable arts, extras, legacy claim ids): the claim pool and the shop's resale classifier share it. */
+export function gameProfileWeaponArtIds(registries, run) {
+  const rules = gameContent(run, 'rewards');
+  if (!rules || !gameModule(run, 'cards') || !gameModule(run, 'equipment')) return new Set();
+  return new Set(weaponArtPool(registries, run, rules, rules.eligibility?.weaponArts?.cardIds || [], new Set(), true));
+}
 function weaponArtPool(registries,run,rules,extras,carried,claim) {
   const armaments=registries.equipment.armaments||[];
   const ids=[...extras];
