@@ -10,7 +10,7 @@ import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
-import { advancedConfigSnapshot } from './advancedConfig.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot } from './advancedConfig.js';
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
 import { snapshotRangePolicy, rangePolicyProblems, RANGE_POLICY_DEFAULTS } from './combatEngagement.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -228,7 +228,7 @@ export function createRunState({
       ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),
     ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
-    advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
+    advancedConfigSnapshot: { ...(configured ? coreAdvancedConfigSnapshot : advancedConfigSnapshot)(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
