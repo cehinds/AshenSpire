@@ -353,6 +353,9 @@ test('a wide word over a figure at the right edge stays fully inside the layer, 
   const left = parseFloat(word.style.left) - 100;
   assert.ok(left >= margin, `left edge ${left} >= ${margin}`);
   assert.ok(left + 200 <= 360 - margin, `right edge ${left + 200} <= ${360 - margin}`);
+  const peak = FLOATER_STACK.floaterCalloutPeak; // the rise pops to this scale about the centre, after the width was measured
+  assert.ok(left + 100 + 100 * peak <= 360 - margin + 1e-6, 'the right edge at the pop peak stays inside the margin');
+  assert.ok(left + 100 - 100 * peak >= margin - 1e-6, 'the left edge at the pop peak stays inside the margin');
   // The left edge too: a figure at x = 0 pins the word to the margin, not off the screen.
   const near = anchor(-40);
   const w2 = callout(fx, near, 2, 'action:Poise absorbed 2');

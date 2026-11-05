@@ -370,6 +370,9 @@ export function combatReadoutLayer(layer, create = true) {
   // One text size for every floater (owner, 2026-11-05; content/config floaterStack.json). The config is in design px
   // at the 10 px root, so rem keeps the player's display scale; the vw term (divided by --ui-zoom, which scales every length under body, so it is a true share of the screen) shrinks it on a phone down to the minimum.
   host.style.setProperty('--floater-font', `clamp(${FLOATER_STACK.floaterFontMinPx / 10}rem, calc(${FLOATER_STACK.floaterFontVw}vw / var(--ui-zoom, 1)), ${FLOATER_STACK.floaterFontPx / 10}rem)`);
+  // The pop peaks are config, written here so the keyframes (num-pop, callout-rise) and the edge clamp read one number.
+  host.style.setProperty('--pop', String(FLOATER_STACK.floaterPopPeak));
+  host.style.setProperty('--callout-pop', String(FLOATER_STACK.floaterCalloutPeak));
   host.style.setProperty('--floater-shift-ms', `${FLOATER_STACK.floaterShiftMs}ms`);
   combat.appendChild(host);
   combatReadoutLayers.set(combat, host);
@@ -606,7 +609,11 @@ function showFloater(rec, item, entry) {
     if (!others || !rec.start) rec.start = columnStart(rec, layer, anchor, b, zoom, view);
     const start = rec.start;
     const placed = start.top ?? start.bottom - height;
-    const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: FLOATER_STACK.floaterEdgeMarginPx });
+    // The box is measured at scale 1 but pops to its peak scale about its centre, so the margin is kept at the PEAK:
+    // pad by the overhang half * (peak - 1) on each side (measured 18 px past the edge on a 360 px phone without it).
+    const peak = el.classList.contains('float-num') ? FLOATER_STACK.floaterPopPeak : FLOATER_STACK.floaterCalloutPeak;
+    const box = { left: centre - half, top: placed, width, height }, margin = FLOATER_STACK.floaterEdgeMarginPx;
+    const at = { left: clampBox(box, view, { pad: margin + half * (peak - 1) }).left, top: clampBox(box, view, { pad: margin }).top };
     return () => {
       el.style.left = `${at.left + half}px`;
       el.style.top = `${at.top}px`;
