@@ -1,5 +1,5 @@
 import { desktopHandLayout } from '../models/DesktopCombatFooter.js';
-import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance, holdPlaySlots, HAND_PLAY_SETTLE } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer.
 //
@@ -113,6 +113,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   const upcastMeasurements = new WeakMap();
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
   let publishedGeometry = null;
+  let appliedHand = null; // { ids, key, plan, held }: the plan last written, for holdPlaySlots
+  let settleTimer = 0;
   const publishGeometry = key => {
     if (publishedGeometry === key) return;
     publishedGeometry = key;
@@ -176,7 +178,20 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
       const input = { width: clientWidth, height: clientHeight - toolsHeight,
         count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, formFactor };
-      const plan = responsiveHandLayout(input, layoutHand(input));
+      const fresh = responsiveHandLayout(input, layoutHand(input));
+      // A play leaves the other cards where they are (holdPlaySlots); the gap closes once, after holdMs.
+      const ids = cards.map(el => el.dataset.instanceId);
+      const key = JSON.stringify([clientWidth, clientHeight, zoom, rem, compact, formFactor, controlsHeight]);
+      const keep = appliedHand?.held && appliedHand.key === key && appliedHand.ids.join('|') === ids.join('|');
+      const held = keep ? appliedHand.plan : holdPlaySlots(appliedHand, ids, fresh, key);
+      const plan = held || fresh;
+      appliedHand = { ids, key, plan, held: !!held };
+      clearTimeout(settleTimer); settleTimer = 0;
+      if (held) settleTimer = setTimeout(() => {
+        settleTimer = 0;
+        if (appliedHand) appliedHand.held = false;
+        applyHandLayout();
+      }, HAND_PLAY_SETTLE.holdMs);
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
       setVar(handEl, '--hand-card-zoom', '1');
       setVar(handEl, '--hand-span', plan.span + 'px');
@@ -542,6 +557,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    clearTimeout(settleTimer);
+    settleTimer = 0;
     releaseInspectionOverlay?.();
     for (const record of renderedCards.values()) record.release?.();
     renderedCards.clear();

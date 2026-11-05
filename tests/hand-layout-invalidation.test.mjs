@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { handLayout, responsiveHandLayout, handGeometryKey } from '../src/ui/models/HandLayout.js';
+import { handLayout, responsiveHandLayout, handGeometryKey, holdPlaySlots, HAND_PLAY_SETTLE } from '../src/ui/models/HandLayout.js';
 import { desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
 
 const source = readFileSync(new URL('../src/ui/components/hand.js', import.meta.url), 'utf8');
@@ -15,7 +15,7 @@ function fixture() {
     closest: () => combat, getBoundingClientRect: () => ({ ...box }), dispatchEvent: e => { assert.equal(e.type, 'handlayoutchange'); events++; } };
   const card = id => ({ dataset: { instanceId: id }, parentNode: handEl, style: style(), controls: null, lane: null,
     querySelector(selector) { return selector === '.card-upcast-controls' ? this.controls : this.lane; }, appendChild(node) { this.lane = node; } });
-  const scope = { handEl, handEls: [card('a'), card('b')], fitFan: true, handLayout, responsiveHandLayout, handGeometryKey, desktopHandLayout,
+  const scope = { handEl, handEls: [card('a'), card('b')], fitFan: true, handLayout, responsiveHandLayout, handGeometryKey, desktopHandLayout, holdPlaySlots, HAND_PLAY_SETTLE, setTimeout, clearTimeout,
     layoutMetrics: () => metrics, upcastMeasurements: new WeakMap(), measureHandUpcastHeight: controls => controls.height,
     document: { documentElement: root, createElement: () => ({ setAttribute() {} }) }, Event: class { constructor(type) { this.type = type; } } };
   const start = source.indexOf('  let publishedGeometry ='), end = source.indexOf('\n  // Re-derive when the measured facts move:', start);
