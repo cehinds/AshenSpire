@@ -12,7 +12,7 @@ function hash(text) {
 
 // SPEC §13.2: a run that carries a seat order fights in its SEAT's region —
 // no seed hash, no rotation. A run without one (a legacy fixture, a preview
-// snapshot, World Journey before it sets environmentRegionId) keeps the old
+// snapshot) keeps the old
 // seeded rotation so nothing that never had seats changes its sky.
 function seatRegion(run) {
   if (!Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
@@ -54,10 +54,10 @@ function combatSetting(run, nodeId, node) {
 }
 
 export function combatEnvironment(run = {}) {
-  const nodeId = run.journey?.currentNodeId || run.mapNodeId;
+  const nodeId = run.mapNodeId;
   const node = run.mapGraph?.nodes?.[nodeId];
   const region = (run.environmentRegionId && ENVIRONMENTS.find(r => r.id === run.environmentRegionId))
-    || (!run.journey && causewayRegion(run, node))
+    || causewayRegion(run, node)
     || regionForRun(run);
   const setting = combatSetting(run, nodeId, node);
   const selection = resolveLocationPresentation({ nodeId, seedString:run.seedString,

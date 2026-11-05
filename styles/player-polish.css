@@ -29,7 +29,7 @@
 
 /* Nine-sliced corners remain engraved at any folio aspect ratio. The skin
    changes no border widths or layout shares. Small copy has a calm veil. */
-:is(.modal, .as-pagedoor, .shop-frame, .as-detailcard, .as-option, .as-face, .title-save-preview, .as-decide, .atlas-detail, .dungeon-detail, .dialogue-context, .as-tip) {
+:is(.modal, .as-pagedoor, .shop-frame, .as-detailcard, .as-option, .as-face, .title-save-preview, .as-decide, .dungeon-detail, .dialogue-context, .as-tip) {
   background-image:linear-gradient(color-mix(in srgb, var(--bg) 91%, transparent), color-mix(in srgb, var(--bg) 91%, transparent)), url('../assets/player-polish/materials/soot-leather-material.webp');
   background-size:cover; background-repeat:no-repeat;
   border-image-source:var(--polish-frame); border-image-slice:24;
@@ -138,7 +138,7 @@
 }
 .reward-backdrop { background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-desktop.webp'); background-size:cover; background-position:center; }
 .modal.armoury { background-image:linear-gradient(#0d0b08ed, #0d0b08ed), url('../assets/player-polish/scenes/armoury-still-life-master.webp'); }
-.atlas-header, .atlas-detail, .map-header, .legacy-dungeon-header { background-color:color-mix(in srgb, var(--bg) 94%, transparent); }
+.map-header, .legacy-dungeon-header { background-color:color-mix(in srgb, var(--bg) 94%, transparent); }
 
 /* Service panoramas keep a visible landmark beside simultaneous stock/detail.
    Compact layouts continue to use the existing model's selected detail tray. */
@@ -170,7 +170,7 @@
 :root[data-layout='narrow'] .shop-frame { width:100%; }
 :root[data-layout='narrow'] :is(.blacksmith-workspace, .master-workspace) .shop-shelf > .class-pick { flex-direction:row; }
 :root[data-layout='narrow'] :is(.blacksmith-workspace, .master-workspace) .class-pick > .as-btn { flex-basis:100%; width:100%; }
-:root[data-layout='narrow'] :is(.shop-detail, .armoury-item-detail, .atlas-detail, .card-inspection-modal) {
+:root[data-layout='narrow'] :is(.shop-detail, .armoury-item-detail, .card-inspection-modal) {
   background-color:var(--bg); border-top-color:var(--gold);
 }
 :root[data-layout='narrow'] .polish-scene-painting { height:auto; max-height:28%; aspect-ratio:4 / 3; }
@@ -604,7 +604,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shared-hud .resbars-host { zoom:1.22; }
 
 /* Thin black edges keep floating header items legible over bright artwork. */
-:root :is(.shared-hud, .atlas-header) {
+:root :is(.shared-hud) {
  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
 }
 :root .shared-hud :is(.hud-info-row, .resbars) { text-shadow:inherit; }
@@ -618,7 +618,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  text-shadow:var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000);
 }
 
-:root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
+:root :is(.shared-hud .hud-actions) > button { border:1px solid #000; }
 
 
 /* Merchant composition: five compact offers, category dock, footer.

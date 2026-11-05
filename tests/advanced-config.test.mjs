@@ -200,7 +200,6 @@ test('percent rows are bounded to 100 and the town cap to at least 1, as validat
     const row = rows.get(`gameConfig.balance.${path}`);
     assert.deepEqual([row.min, row.max, row.integer], [0, 100, true], `${path} is a whole percent`);
   }
-  assert.equal(rows.get('gameConfig.balance.atlas.townsPerActMax').min, 1, 'a route must hold its hub');
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.balance.rest.hpPartialPct': 135 }), contentBundle),
     'a percent past 100 is refused at import');
 });

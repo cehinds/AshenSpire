@@ -3,15 +3,13 @@ import assert from 'node:assert/strict';
 import { locationPresentation as data } from '../src/content/generated/locationPresentation.js';
 import { resolveLocationPresentation, presentationProblems } from '../src/model/locationPresentation.js';
 import { combatEnvironment } from '../src/model/environmentArt.js';
-import { locationScene } from '../src/content/locationScenes.js';
 
-test('every node has a valid compatible scene and inspection agrees with combat', () => {
+test('every node has a valid compatible scene and combat is stable across floors', () => {
   assert.deepEqual(presentationProblems(), []);
   for (const {nodeId,profileId} of data.nodeProfiles) {
     const run = {mapNodeId:nodeId,seedString:'presentation-qa',floor:1};
     const selection = resolveLocationPresentation({...run,nodeId});
     assert.equal(selection.profileId,profileId);
-    assert.equal(locationScene(nodeId,run).id,combatEnvironment(run).scene.id);
     assert.equal(combatEnvironment(run).scene.id,combatEnvironment({...run,floor:100,turn:8}).scene.id);
     assert.deepEqual(run,{mapNodeId:nodeId,seedString:'presentation-qa',floor:1});
   }

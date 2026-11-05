@@ -147,10 +147,7 @@ jobs:
         run: node --test tests/mobile-performance.test.mjs
 
       - name: Combat formations and painted ground
-        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs tests/local-map.test.mjs
-
-      - name: World Journey normalized data and seeded routes
-        run: node tests/world-atlas.test.mjs
+        run: node --test tests/combat-formation.test.mjs tests/environment-art.test.mjs tests/map-detail.test.mjs tests/map-presentation.test.mjs
 
       # The harness that decides, for every corpus above and in the dispatch-only
       # lane, whether a known-bad was armed at all. It read plants as exact bytes,

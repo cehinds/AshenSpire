@@ -3,8 +3,7 @@
 //
 // Acceptance (plan, PR 10a): committing a completing chain choice writes one
 // questCompleted row and emits one event; a reload or replay of the same commit
-// writes none; claiming an atlas quest does the same with source 'atlas';
-// Back, Continue and speech ending issue no command. And the two phase-10 risk
+// writes none; Back, Continue and speech ending issue no command. And the two phase-10 risk
 // rows: a quest completes once across a reload and a second commit, and
 // dialogue grants no effect outside a response.
 import test from 'node:test';
@@ -16,7 +15,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { commitEventChoice, completeQuest, atlasQuestAction } from '../src/engine/quests.js';
+import { commitEventChoice } from '../src/engine/quests.js';
 import {
   recordEventChoice, recordQuestCompletion, hasQuestCompletion, questCompletionHistoryProblems,
   eventChoiceHistoryProblems, hasEventChoice, questChainForEvent, questsCompletedBy,
@@ -24,8 +23,6 @@ import {
 import { EVENTS, TRIGGER_EVENTS } from '../src/model/schemas.js';
 import { validateContent } from '../src/model/validate.js';
 import { questChains, eventSpeakers, eventChoicesWithHistory } from '../src/content/events.js';
-import { worldAtlas } from '../src/content/generated/worldAtlas.js';
-import { ATLAS, generateJourney, completeJourneyNode } from '../src/model/worldAtlas.js';
 import {
   createDialogueState, dialogueBeats, dialogueModel, dialogueStep, dialogueFrameVars, DIALOGUE_ACTIONS,
 } from '../src/ui/models/DialogueModel.js';
@@ -111,38 +108,6 @@ test('the door refuses a choice the event lacks, one history has not opened, and
   assert.equal(completionRows(run).length + completionRows(poor).length, 0);
 });
 
-test('claiming an atlas quest completes it through the same door with source atlas, once', () => {
-  let journey = null;
-  let quest = null;
-  for (let i = 0; i < 30 && !quest; i++) {
-    journey = generateJourney(`QUEST${i}`);
-    quest = Object.values(ATLAS.quests).find((q) => journey.activeNodeIds.includes(q.objectiveNodeId));
-  }
-  assert.ok(quest, 'a journey in the fixture sweep offers a quest');
-  const run = newRun();
-  run.journey = journey;
-  const sink = [];
-  const ctx = ctxFor(run, sink);
-  const accepted = atlasQuestAction(ctx, quest.questId);
-  assert.equal(accepted.plan.next, 'accepted');
-  assert.equal(accepted.completion, null, 'accepting is not completing');
-  completeJourneyNode(journey, quest.objectiveNodeId);
-  const cindersBefore = run.cinders;
-  const claimed = atlasQuestAction(ctx, quest.questId);
-  assert.equal(claimed.plan.next, 'claimed');
-  assert.equal(run.cinders, cindersBefore + quest.rewardCinders);
-  assert.deepEqual(claimed.completion, { kind: 'questCompleted', questId: quest.questId, source: 'atlas' });
-  assert.deepEqual(sink, [{ type: 'questCompleted', questId: quest.questId, source: 'atlas' }]);
-
-  const again = atlasQuestAction(ctx, quest.questId);
-  assert.equal(again.plan.allowed, false, 'a claimed quest cannot be claimed again');
-  assert.equal(completeQuest(ctx, { questId: quest.questId, source: 'atlas' }), null, 'the door itself is idempotent');
-  const reloaded = deserializeRun(serializeRun(run));
-  assert.equal(completeQuest(ctxFor(reloaded, sink), { questId: quest.questId, source: 'atlas' }), null);
-  assert.equal(completionRows(reloaded).length, 1);
-  assert.equal(sink.length, 1, 'still one questCompleted event');
-});
-
 test('questCompleted is a bus event, and only the door emits it', () => {
   assert.ok(EVENTS.includes('questCompleted'));
   assert.ok(TRIGGER_EVENTS.includes('questCompleted'));
@@ -204,8 +169,6 @@ test('shipped quest chains and speakers validate; each broken ref is refused by 
     "chain event 'goldboughAvatar' names no speaker"), 'a chain event without a speaker is refused');
   assert.ok(refusedWith({ eventSpeakers: { ...eventSpeakers, namelessRest: 'nobodyAtAll' } },
     "unknown speaker 'nobodyAtAll'"), 'an event naming no speaker row is refused');
-  assert.ok(refusedWith({ atlasQuests: [{ ...contentBundle.atlasQuests[0], speakerId: 'nobodyAtAll' }] },
-    "unknown speaker 'nobodyAtAll'"), 'an atlas quest naming no speaker row is refused');
   assert.ok(refusedWith({ speakers: [...contentBundle.speakers, { id: 'planted', name: 'Planted', portraitKey: 'noSuchArt' }] },
     "unknown portrait key 'noSuchArt'"), 'a portrait key no art answers to is refused');
 });
@@ -225,13 +188,6 @@ test('every Nameless step routes to dialogue with a speaker; one-off events do n
   }
   for (const eventId of ['goldboughAvatar', 'abandonedCart', 'sleepingSmith']) {
     assert.equal(questChainForEvent(registries.questChains, eventId), null, `${eventId} keeps the Event screen`);
-  }
-});
-
-test('every atlas quest row names a speaker that exists', () => {
-  assert.ok(worldAtlas.quests.length > 0);
-  for (const quest of worldAtlas.quests) {
-    assert.ok(registries.speakers.has(quest.speakerId), `${quest.questId} → ${quest.speakerId}`);
   }
 });
 

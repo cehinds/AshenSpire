@@ -11,8 +11,3 @@
 .layered-environment[data-skyline='off'] > [data-role='backdrop'],.layered-environment[data-skyline='off'] > [data-role='prop']:not([data-placement='floor-surface']){display:none}
 .layered-environment[data-floor='off'] > [data-role='ground'],.layered-environment[data-floor='off'] > [data-placement='floor-surface']{display:none}
 
-.atlas-layered-preview{position:relative;isolation:isolate;width:100%;height:clamp(150px,22vh,240px);overflow:hidden;border-radius:8px;margin-bottom:12px;background:var(--environment-backdrop);pointer-events:none}
-.atlas-layered-preview > .layered-environment{inset:0;height:100%}
-.atlas-layered-preview > .layered-environment-effects{z-index:1}
-.atlas-location-illustration:has(.atlas-layered-preview){padding:0}
-.atlas-location-illustration > .atlas-layered-preview{height:100%;min-height:200px;margin:0}

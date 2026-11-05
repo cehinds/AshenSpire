@@ -38,7 +38,6 @@ import { balanceLevelUp } from './generated/balanceLevelUp.js';
 import { balanceXp } from './generated/balanceXp.js';
 import { balanceLevels } from './generated/balanceLevels.js';
 import { balanceSmithing } from './generated/balanceSmithing.js';
-import { balanceAtlas } from './generated/balanceAtlas.js';
 import { balanceRest } from './generated/balanceRest.js';
 import { balanceShop } from './generated/balanceShop.js';
 import { balanceRewards } from './generated/balanceRewards.js';
@@ -260,7 +259,6 @@ export const balance = {
   rewards: balanceRewards,
   shop: balanceShop,
   rest: balanceRest,
-  atlas: balanceAtlas,
   smithing: balanceSmithing,
   levels: balanceLevels,
   level: balanceCore.level,

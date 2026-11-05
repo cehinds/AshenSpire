@@ -9,7 +9,7 @@ import { createRng } from './rng.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from './locations.js';
 import { SHOP_KINDS, SHOP_KIND_SCREENS, MARKET_SHELVES } from '../model/shopKinds.js';
 import { ownership } from '../model/loadout.js';
-import { INN_LOCATION, innInTown } from '../model/locations.js';
+import { INN_LOCATION } from '../model/locations.js';
 import { applyShopPriceMult } from '../model/marketStock.js';
 import { innRestPlan, stale } from '../model/marketAdditions.js';
 import { ownedSigilIds } from '../model/sigils.js';
@@ -87,7 +87,7 @@ export function rollShopOfferings(kindDef, rng) {
  * THEN the offerings are rolled on `shopOffers`, and a shelf that did not come
  * up is emptied. Rolling first keeps each shelf's values independent of which
  * others are out, so a shelf switched off moves nothing on the shelves beside
- * it. The atlas `shop` service is a market (§14.2).
+ * it.
  *
  * THE ADDITIONS (SPEC §14.3). A market in a town with an inn (`innInTown`)
  * always offers the inn rest while that offering is enabled. Then each
@@ -149,17 +149,14 @@ export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = 
 }
 
 /**
- * marketVisitStock(registries, rng, run, { meta, door, ownerId, priceMult }) →
+ * marketVisitStock(registries, rng, run, { meta, priceMult }) →
  * the stock a market visit opens with, through either door main.js has: a
- * classic `merchant` node (its kind rolled first) or an `atlas` shop point
- * (a market, always offering the rest when its town keeps an inn). Either way
- * a custom run's price multiplier (Greedy Merchants, Hoarder) is applied to
+ * classic `merchant` node (its kind rolled first). A
+ * custom run's price multiplier (Greedy Merchants, Hoarder) is applied to
  * every price the visit laid out, the additions included.
  */
-export function marketVisitStock(registries, rng, run, { meta = {}, door = 'merchant', ownerId = null, priceMult = 1, flatRarity = false } = {}) {
-  const stock = door === 'atlas'
-    ? buildMarketStock(registries, rng, run, { meta, innInTown: innInTown(registries, ownerId) })
-    : buildMerchantStock(registries, rng, run, { meta, flatRarity });
+export function marketVisitStock(registries, rng, run, { meta = {}, priceMult = 1, flatRarity = false } = {}) {
+  const stock = buildMerchantStock(registries, rng, run, { meta, flatRarity });
   return applyShopPriceMult(stock, priceMult);
 }
 
@@ -387,8 +384,7 @@ export function buildBlacksmithStock(registries, rng, run) {
 
 /**
  * blacksmithVisitStock(registries, rng, run, { priceMult }) → the stock an
- * atlas smith point opens with (SPEC §14.2, §14.4), rolled on first entry and
- * kept on the point; a custom run's price multiplier scales its stone price,
+ * smith visit opens with (SPEC §14.2, §14.4); a custom run's price multiplier scales its stone price,
  * rounding up, as it scales the market's.
  */
 export function blacksmithVisitStock(registries, rng, run, { priceMult = 1 } = {}) {
@@ -462,9 +458,8 @@ export function buildMasterStock(registries, rng, run, { flatRarity = false } = 
 }
 
 /**
- * masterVisitStock(registries, rng, run, { priceMult }) → the stock an atlas
- * master point opens with (SPEC §14.5), rolled on first entry and kept on the
- * point. A custom run's price multiplier scales every stocked cost once,
+ * masterVisitStock(registries, rng, run, { priceMult }) → the stock a wise
+ * master's visit opens with (SPEC §14.5). A custom run's price multiplier scales every stocked cost once,
  * rounding up, through applyShopPriceMult, as it scales the market's.
  * `flatRarity` is Chaos Rewards, read by the live lesson check.
  */

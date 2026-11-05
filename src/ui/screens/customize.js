@@ -46,7 +46,6 @@ import {
   selectStartingHand, quickStartRunConfig,
 } from '../../model/characterCreation.js';
 import { pieceChip, setPieceChipChosen } from './equipment.js';
-import { ATLAS } from '../../model/worldAtlas.js';
 import { relicText, renderCard as renderCardFace, scheduleCardFits } from '../components/card.js';
 import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
@@ -232,11 +231,6 @@ export function mountCustomize(app, {
   ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
   const seedRow = row({ tag: 'div', setting: true, className: 'seed-line', labelNode: labelStack({ label: 'Seed', hint: 'The same seed produces the same climb.' }), trail: seedInput });
-  const journeySelect = el('select', { id: 'cz-journey', 'aria-label': 'Journey mode' }, [
-    el('option', { value: '' }, 'Classic Climb'),
-    ...Object.values(ATLAS.profiles).map(p => el('option', { value: p.profileId }, `World Journey · ${p.displayName} (${p.activeTarget} places)`)),
-  ]);
-  const journeyRow = row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Journey', hint: 'Explore a fixed world with a new route each run, or climb the classic acts.' }), trail: journeySelect });
 
   const split = el('div', { class: 'as-split cc-class-split' }, [
     el('div', { id: 'cz-class-preview-host', class: 'as-split-pane cc-class-preview-host' }),
@@ -268,10 +262,10 @@ export function mountCustomize(app, {
       el('div', { id: 'cz-equipment-receipts', class: 'cc-equip-group', 'aria-live': 'polite' }),
       flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
     ]),
-    // W1c Review: the seed and journey, the destination slot, and a concise
+    // W1c Review: the seed, the destination slot, and a concise
     // summary of identity, loadout and derived values (filled on arrival).
     review: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage', dataset: { stage: 'review' } }, [
-      fixedCreation ? null : journeyRow, seedRow,
+      seedRow,
       slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
       el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
       el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
@@ -2026,7 +2020,6 @@ export function mountCustomize(app, {
     try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile } : {
       classId: state.classId,
       seedString: seedInput.value.trim(),
-      journeyProfile: journeySelect.value || null,
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,

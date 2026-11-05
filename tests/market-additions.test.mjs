@@ -24,7 +24,6 @@ import { validateContent } from '../src/model/validate.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { ownership, equipPiece } from '../src/model/loadout.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
-import { innInTown } from '../src/model/locations.js';
 import { MARKET_SHELVES, SHOP_KIND_SCREENS, shopStockProblems, shopSettingsProblems } from '../src/model/shopKinds.js';
 import { MARKET_ADDITIONS, applyShopPriceMult } from '../src/model/marketStock.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -286,8 +285,6 @@ test('FINISH: inn rest runs the inn\'s own visit (arrive, rest, leave), is bough
 });
 
 test('inn rest is always offered where the town keeps an inn, even at chance 0, and never when disabled', () => {
-  assert.equal(innInTown(REG, 'crownfall'), true);
-  assert.equal(innInTown(REG, 'no-such-town'), false);
   const zero = registriesWith({ [`${PREFIX}market.innRest.chance`]: 0 });
   const here = marketRun(zero, { innHere: true }).run;
   assert.ok(here.shopStock.offerings.includes('innRest'));
@@ -597,21 +594,20 @@ test('a bought armour set this build does not know archives the save by name, li
 // Review of #1374 (should-fix and nits), and Codex's third round
 // ---------------------------------------------------------------------------
 
-test('an atlas market and a classic merchant both scale every price by priceMult, and main.js opens both through the one door (review, #1374)', () => {
+test('a classic merchant scales every price by priceMult, and main.js opens it through the one door (review, #1374)', () => {
   const run = createRunState({ seed: 8, classId: 'reaver', registries: OUT });
-  const plain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 1 });
-  const dear = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 2 });
+  const plain = applyShopPriceMult(buildMarketStock(OUT, createRng(8), run, { meta: {}, innInTown: true }), 1);
+  const dear = applyShopPriceMult(buildMarketStock(OUT, createRng(8), run, { meta: {}, innInTown: true }), 2);
   assert.ok(plain.offerings.includes('innRest'), 'a town with an inn always offers the rest');
   assert.equal(dear.innRest.price, plain.innRest.price * 2);
   assert.equal(dear.smithStones.price, plain.smithStones.price * 2);
-  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) dear[kind].forEach((item, i) => assert.equal(item.cost, plain[kind][i].cost * 2, `atlas ${kind}[${i}]`));
+  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) dear[kind].forEach((item, i) => assert.equal(item.cost, plain[kind][i].cost * 2, `${kind}[${i}]`));
   assert.equal(dear.removeCost, plain.removeCost * 2);
   const merchant = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 2 });
   const merchantPlain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 1 });
   assert.equal(merchant.smithStones.price, merchantPlain.smithStones.price * 2);
   // main.js opens both doors through it. Custom Climb's shop price mod is gone (cleanup 3f), so no run multiplier is passed.
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'atlas'/);
   assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'merchant'/);
   assert.doesNotMatch(main, /shopPriceMult/);
   assert.doesNotMatch(main, /buildMarketStock\(registries, rng, run, \{ meta: saves\.loadMeta\(\), innInTown/);
