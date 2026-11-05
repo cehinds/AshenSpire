@@ -1481,11 +1481,15 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // still settings. The plain-key settings game code still reads by key
 // (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
 const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.)|recovery\.(hp|stamina|mana)\.)/;
+// A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
+// mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
+// the only one.
+const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
 export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
 /** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
-export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key);
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
 export function withoutRetiredLegacyGroups(entries, warnings) {
-  const kept = entries.filter(([key]) => !RETIRED_LEGACY_GROUP_KEYS.test(key));
+  const kept = entries.filter(([key]) => !isRetiredLegacySettingKey(key));
   if (kept.length !== entries.length) warnings.push(RETIRED_LEGACY_GROUPS_WARNING);
   return kept;
 }
