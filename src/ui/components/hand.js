@@ -185,9 +185,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const keep = appliedHand?.held && appliedHand.key === key && appliedHand.ids.join('|') === ids.join('|');
       const held = keep ? appliedHand.plan : holdPlaySlots(appliedHand, ids, fresh, key);
       const plan = held || fresh;
+      // Only a play (the hand shrank) restarts the hold; a ResizeObserver re-apply keeps the running deadline.
+      const shrank = !!appliedHand && ids.length < appliedHand.ids.length;
       appliedHand = { ids, key, plan, held: !!held };
-      clearTimeout(settleTimer); settleTimer = 0;
-      if (held) settleTimer = setTimeout(() => {
+      if (!(keep && settleTimer && !shrank)) { clearTimeout(settleTimer); settleTimer = 0; }
+      if (held && !settleTimer) settleTimer = setTimeout(() => {
         settleTimer = 0;
         if (appliedHand) appliedHand.held = false;
         applyHandLayout();
