@@ -4,7 +4,7 @@
   "modelSha256": "0ff1b72895151ead0a62edd338da3c80a1c84daaab306fb760ddc3f85c416dc1",
   "correction": "fixed-upgrade-base-resource-budget-v1",
   "correctedModelSha256": "b77bc7280fac1a1e6f547ff400681cd62b379bc814bd36842c3b8fd4d41425f8",
-  "contentSha256": "58f4a1d9a1840093d3865fe5c4c2547a8e4851219400f8a82dd9d154835008be",
+  "contentSha256": "9e3f322e3fa76f6edb371e53c7ecbdfd9cf92f2ae83974904de88a9392b39563",
   "scope": "damage configuration, projected card definitions, validation problem rows",
   "cases": {
     "real-content": {
@@ -12,7 +12,7 @@
         "sha256": "7da2901f072c921af134f0cc13143bbe1e17d02583f4477134af5cc11fcaeebf"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "e27a9c046c7ae68c548a978de0d26b2d4f0d5bc58be9a71844b6d7d078ae790b"
+        "sha256": "ffbe05859889ed9cec72c26af6dec85a42777447e4c6da80ee4888a63a33042f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
@@ -23,7 +23,7 @@
         "sha256": "7da2901f072c921af134f0cc13143bbe1e17d02583f4477134af5cc11fcaeebf"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "e27a9c046c7ae68c548a978de0d26b2d4f0d5bc58be9a71844b6d7d078ae790b"
+        "sha256": "ffbe05859889ed9cec72c26af6dec85a42777447e4c6da80ee4888a63a33042f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
@@ -34,7 +34,7 @@
         "sha256": "7da2901f072c921af134f0cc13143bbe1e17d02583f4477134af5cc11fcaeebf"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "e27a9c046c7ae68c548a978de0d26b2d4f0d5bc58be9a71844b6d7d078ae790b"
+        "sha256": "ffbe05859889ed9cec72c26af6dec85a42777447e4c6da80ee4888a63a33042f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
@@ -45,7 +45,7 @@
         "sha256": "37cbb907749913f04190549b945e9e8d3414857bdc5c6d6b80adb92b90186287"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "e27a9c046c7ae68c548a978de0d26b2d4f0d5bc58be9a71844b6d7d078ae790b"
+        "sha256": "ffbe05859889ed9cec72c26af6dec85a42777447e4c6da80ee4888a63a33042f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
@@ -56,7 +56,7 @@
         "sha256": "37cbb907749913f04190549b945e9e8d3414857bdc5c6d6b80adb92b90186287"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "e27a9c046c7ae68c548a978de0d26b2d4f0d5bc58be9a71844b6d7d078ae790b"
+        "sha256": "ffbe05859889ed9cec72c26af6dec85a42777447e4c6da80ee4888a63a33042f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
@@ -67,7 +67,7 @@
         "sha256": "37cbb907749913f04190549b945e9e8d3414857bdc5c6d6b80adb92b90186287"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "e27a9c046c7ae68c548a978de0d26b2d4f0d5bc58be9a71844b6d7d078ae790b"
+        "sha256": "ffbe05859889ed9cec72c26af6dec85a42777447e4c6da80ee4888a63a33042f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
@@ -78,7 +78,7 @@
         "sha256": "481ff0b00f76ac3d4ff112377ec815d1d11c651b3c971101c3d6511a569fde88"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "b92326e35682301ca6a584892cc17d08f173d14a04ac34e2802de9b6ebaab0ca"
+        "sha256": "d1088bef0d01fb7fb1082cfdd01045f165698b60f76bd55e719e84293698db6f"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
@@ -89,7 +89,7 @@
         "sha256": "b5dee430a70634413dc3362db503423e239bfe790e8ef8266b8b7e5b990900b4"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "8e86bd8789f717e54cbaad02034b7535ab2f6618559b4b80e95b24c522ea914e"
+        "sha256": "981aa71083ae24ffd22d50ece02f67a44d772208565226b6b5b6e288cb693c1d"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
@@ -100,7 +100,7 @@
         "sha256": "8324e1f21236f12204b1c412f10b79f55ecaa7706a490a46b49721ddb21bf5ef"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "8e86bd8789f717e54cbaad02034b7535ab2f6618559b4b80e95b24c522ea914e"
+        "sha256": "981aa71083ae24ffd22d50ece02f67a44d772208565226b6b5b6e288cb693c1d"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
@@ -111,7 +111,7 @@
         "sha256": "8324e1f21236f12204b1c412f10b79f55ecaa7706a490a46b49721ddb21bf5ef"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "8e86bd8789f717e54cbaad02034b7535ab2f6618559b4b80e95b24c522ea914e"
+        "sha256": "981aa71083ae24ffd22d50ece02f67a44d772208565226b6b5b6e288cb693c1d"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
@@ -122,7 +122,7 @@
         "sha256": "8324e1f21236f12204b1c412f10b79f55ecaa7706a490a46b49721ddb21bf5ef"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "8e86bd8789f717e54cbaad02034b7535ab2f6618559b4b80e95b24c522ea914e"
+        "sha256": "981aa71083ae24ffd22d50ece02f67a44d772208565226b6b5b6e288cb693c1d"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
@@ -133,7 +133,7 @@
         "sha256": "71115dae4b3fd4253d10dbc283a9450e88fe991534874faa14e9a0ee64d88e5f"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "8e86bd8789f717e54cbaad02034b7535ab2f6618559b4b80e95b24c522ea914e"
+        "sha256": "981aa71083ae24ffd22d50ece02f67a44d772208565226b6b5b6e288cb693c1d"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
@@ -144,7 +144,7 @@
         "sha256": "f3ffaf47efedd86920a8168047eb5c9a025d29898f8f38da472b1da0da494c68"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "8e86bd8789f717e54cbaad02034b7535ab2f6618559b4b80e95b24c522ea914e"
+        "sha256": "981aa71083ae24ffd22d50ece02f67a44d772208565226b6b5b6e288cb693c1d"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
@@ -169,7 +169,7 @@
         "sha256": "d5bb0ad0ebde95f615194b2332f3641ce2bc70f6634f8fefbde256c2abca6bda"
       },
       "projectAttackCardDamageBundle": {
-        "sha256": "ff12b86217970231c2fa13bbc83afc2a485ae75f80e9c672330e9f81ccf80bd9"
+        "sha256": "2857b9ce56970c86c7ab41bf34412983b237eff7226cd3c37ff7ca25d847f5c3"
       },
       "attackCardDamageConfigProblems": {
         "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
