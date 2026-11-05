@@ -1478,8 +1478,9 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // them, so a file or sync profile exported while they existed still carries
 // their keys. They are dropped with one named warning, never refused as
 // unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
-// still settings.
-const RETIRED_LEGACY_GROUP_KEYS = new RegExp('^(settings\\.)?(gameConfig\\.(?!prologue\\.|presentation\\.)|recovery\\.(hp|stamina|mana)\\.|(shrineMultiUse|creationAutoAdvance|useRestorativeFlasksOutsideCombat|victorySummaryMode|victoryReceiptSeconds|victoryReceiptPauseMs|victoryReceiptReadySeconds|victoryReceiptFormulaTerms|victoryReceiptVisibleRows|victoryXpSeconds|levelUpRefillSeconds|levelUpRefillPauseMs|levelUpAllocateStats|reward(Level|Battle|Treasure)[A-Za-z]+|shopSell|swapCostRule|levelUpValue|statTierSize|deckEditing|deckEditingWhere|deckMinUnlimited|deckMinSize|deckMaxUnlimited|deckMaxSize|classSpellPowerCopies)$)');
+// still settings. The plain-key settings game code still reads by key
+// (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
+const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.)|recovery\.(hp|stamina|mana)\.)/;
 export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
 export function withoutRetiredLegacyGroups(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_LEGACY_GROUP_KEYS.test(key));

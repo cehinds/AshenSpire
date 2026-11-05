@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { parseAdvancedConfigFile, ADVANCED_CONFIG_SCHEMA_VERSION, RETIRED_LEGACY_GROUPS_WARNING } from '../src/model/advancedConfig.js';
 import { settingsRows } from '../src/ui/screens/settings.js';
-import { profileChanges } from '../src/model/settingsSync.js';
+import { profileChanges, profileText } from '../src/model/settingsSync.js';
 
 const OLD_EXPORT = {
   game: 'Ashen Spire',
@@ -31,7 +31,8 @@ test('an old export with retired legacy keys imports with one warning and still 
   assert.deepEqual(warnings.filter((w) => w === RETIRED_LEGACY_GROUPS_WARNING), [RETIRED_LEGACY_GROUPS_WARNING]);
   assert.equal(changes.playInDeckOrder, true);
   assert.equal(changes['gameConfig.presentation.movementEnabled'], true);
-  for (const key of Object.keys(changes)) assert.doesNotMatch(key, /^(settings\.)?gameConfig\.(?!prologue\.|presentation\.)|^recovery\.|^levelUpValue$|^deckEditing$/);
+  for (const key of Object.keys(changes)) assert.doesNotMatch(key, /^(settings\.)?gameConfig\.(?!prologue\.|presentation\.)|^recovery\./);
+  assert.equal(changes.deckEditing, true, 'live plain-key settings still apply');
 });
 
 test('without the retirement option an unknown legacy key is still refused', () => {
@@ -42,4 +43,19 @@ test('a sync profile carrying retired legacy keys loads with the warning', () =>
   const result = profileChanges(JSON.stringify(OLD_EXPORT), contentBundle, {}, settingsRows(), settingsRows().map((row) => row.key));
   assert.ok(result.warnings.includes(RETIRED_LEGACY_GROUPS_WARNING));
   assert.equal(result.changes.playInDeckOrder, true);
+});
+
+test('live non-gameConfig settings round-trip through a sync profile with no retired warning', () => {
+  const rows = settingsRows();
+  const keys = rows.map((row) => row.key);
+  const settings = { victoryReceiptSeconds: 5, rewardBattleCards: false, deckEditing: true };
+  const text = profileText(settings, keys);
+  const result = profileChanges(text, contentBundle, settings, rows, keys);
+  for (const [key, value] of Object.entries(settings)) assert.equal(result.changes[key], value, `${key} is kept`);
+  assert.deepEqual(result.cleared, []);
+  assert.ok(!result.warnings.includes(RETIRED_LEGACY_GROUPS_WARNING), 'a current-build file carries no retired warning');
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(text, contentBundle, {}, rows, warnings, { dropRetiredLegacy: true });
+  assert.equal(changes.deckEditing, true);
+  assert.deepEqual(warnings.filter((w) => w === RETIRED_LEGACY_GROUPS_WARNING), []);
 });
