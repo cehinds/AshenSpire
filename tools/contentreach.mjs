@@ -354,6 +354,7 @@ export function contentReach(bundle, opts = {}) {
     }
     if (pkg) {
       for (const id of pkg.weaponArtDefaults) note('cards', id, `${at} weapon art`);
+      for (const id of pkg.learnableArts || []) note('cards', id, `${at} learnable art`);
       for (const g of pkg.grantedCards) note('cards', g.cardId, `${at} granted`);
       for (const p of pkg.priorityAttackRefs) note('cards', p.cardId, `${at} priority attack`);
       profileCard(pkg.fillerAttackProfileId, `${at} filler attack`);
