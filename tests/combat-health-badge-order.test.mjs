@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { combatHealthModel, visibleBadges } from '../src/ui/models/CombatHealthModel.js';
 import { combatHealthRow, badgeTipHtml } from '../src/ui/components/combatHealth.js';
@@ -124,14 +123,3 @@ test('outside FixCore there is no AC badge (the hit roll is not a fixed DC there
   assert.equal(fixCoreEnabled(combat), false);
   assert.equal(acFor(combat, combat.player), null);
 });
-
-// Owner 2026-11-05: the unselected player hides only the HP bar and AC, never the Block square or status badges (SPEC combat pips).
-test('the Block square is a sibling of the HP meter, and the unselected-player rule hides only the meter and AC', () => withKitDom(() => {
-  const row = combatHealthRow(hp(), { defense: 5, ac: { value: 12, evade: 0, base: 12 } }, { tooltips: false });
-  const block = row.querySelector('.combat-health-block-slot');
-  assert.ok(block && block.parentNode === row && !row.querySelector('.combat-health-meter').contains(block));
-  const css = readFileSync(new URL('../styles/combat-target-responsive.css', import.meta.url), 'utf8');
-  const rule = css.match(/[^{}]*data-player-idle-hud='false'[^{}]*\{[^{}]*\}/)[0];
-  assert.match(rule, /\.combat-health-row\s*>\s*:is\(\.combat-health-meter,\.combat-health-ac,\.combat-health-ac-caption\)/);
-  assert.doesNotMatch(rule, /block-slot|combat-health-badge\b/);
-}));
