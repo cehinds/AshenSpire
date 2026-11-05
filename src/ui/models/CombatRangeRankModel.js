@@ -26,6 +26,10 @@ export function applyRangeRankEvent(snap, event) {
     const row = snap.enemies.find(a => a.id === (event.targetId ?? event.id));
     if (row) row.alive = false;
   } else if (event.type === 'combatEngagementMoved') {
+    // One receipt moves the snapshot once, whichever playback hook reaches it first.
+    const seen = snap.seen ||= new WeakSet();
+    if (seen.has(event)) return snap;
+    seen.add(event);
     const keyOf = id => [...snap.players, ...snap.enemies].find(a => a.id === id)?.key;
     const a = keyOf(event.sourceId), b = keyOf(event.targetId);
     const key = a && b ? rangePairKey(a, b) : null;

@@ -3742,6 +3742,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           applyVisualEvents(beat.events.filter(event => event.type === 'cardPlayed'));
           stageFor($('.combatant.player .sprite'))?.setStance?.(playerStance(null));
         },
+        // A committed engagement step changes the strips on its own beat, inside the group's timeline (see fx.js onEngagement).
+        onEngagementMoved: (events) => {
+          if (!disp?.rangeRanks) return;
+          for (const e of events) applyRangeRankEvent(disp.rangeRanks, e);
+          renderCombatantStage({ fit: true, refreshTargets: false });
+        },
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);

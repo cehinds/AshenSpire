@@ -70,6 +70,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
         const spriteExcess = Math.max(0, total - reservedSpriteMs);
         creditWatchdog(spriteExcess);
         schedule(() => {
+          stage('engagement', beat, () => hooks.onEngagement?.(beat));
           const contactHold = stage('contact', beat, () => { actor?.contact?.(); return hooks.onContact?.(beat, actor); });
           // Some sprite services extend their recovery after contact (hit-stop).
           const reportedRemaining = Number(safe(() => actor?.remainingMs?.()));
