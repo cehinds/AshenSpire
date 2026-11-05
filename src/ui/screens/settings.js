@@ -689,6 +689,8 @@ const ROWS = [
   // E2 claim (#247) so the touch is on the record, not smuggled.
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: t('settings.row.shopSell'),
     note: tFull('settings.row.shopSell') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'masterArtChoice', def: false, label: t('settings.row.masterArtChoice'),
+    note: tFull('settings.row.masterArtChoice') },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.

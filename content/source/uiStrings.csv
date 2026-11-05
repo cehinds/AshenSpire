@@ -1085,6 +1085,7 @@ settings.row.readableHeadings,,Readable headings,Use the plain UI font for title
 settings.row.commandLog,,Command log,The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.,
 settings.row.debugMode,,Debug mode,"Shows a Console button during combat and in the combat log, with errors and every ignored tap, so a stuck turn can be copied or exported.",
 settings.row.shopSell,,Merchant buys back,"The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.",
+settings.row.masterArtChoice,,Ask where Master weapon arts go,Weapon arts bought from the Master offer Add to deck or Add to library. Off puts them straight into your deck.,
 settings.row.holdConfirm,,Hold to confirm,"Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.",
 settings.row.rewardCollect,,Reward collection,"Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.",
 settings.row.swapCostRule,,Weapon swap cost,"What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.",
