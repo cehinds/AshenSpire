@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Player HUD** ([#2547](https://github.com/cehinds/AshenSpire/pull/2547), `0.7.3.114`). The player's HUD over the figure now shows only while the player is selected; HP stays in the top bar.
 - **Player HUD** ([#2541](https://github.com/cehinds/AshenSpire/pull/2541), `0.7.3.114`). The player's selected HUD now sits right of the player on phones as well as desktop.
 - **Reward cards** ([#2539](https://github.com/cehinds/AshenSpire/pull/2539), `0.7.3.114`). The selected reward card shows an (i) button, and tapping an already-selected card also opens the card inspector.
 - **Saves** ([#2538](https://github.com/cehinds/AshenSpire/pull/2538), `0.7.3.112`). Core 2 runs no longer freeze legacy settings overrides into their saved configuration, only the opening settings and version fields; old saves still load.
