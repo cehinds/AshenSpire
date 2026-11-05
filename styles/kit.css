@@ -1777,6 +1777,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
      Text wraps in the shared button row rather than shrinking the hit area. */
   .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
   .reward-door .reward-choice-option { gap: .4rem; }
+  /* An odd last choice (3 or 5 offered) centres under the pair above it instead of hugging the left column. */
+  .reward-door .reward-row.reward-choice-grid > .reward-choice-option:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; width: calc(50% - 4px); justify-self: center; }
   .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
   .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
   .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
@@ -6251,8 +6253,7 @@ button[data-button-size] {
   grid-template-areas: 'name level' 'bar next' 'gain gain';
 }
 /* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
-.armoury[data-view="grid"] .armoury-views { display: none; }
-.armoury[data-view="grid"] .armoury-railed { grid-template-columns: minmax(0, 1fr); }
+.armoury .armoury-railed { grid-template-columns: minmax(0, 1fr); }
 .armoury[data-view="grid"] .armoury-character { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr); gap: .8rem 1.2rem; }
 .armoury[data-view="grid"] .armoury-character-stats { overflow: visible; gap: .6rem; }
 .armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, calc(28 * var(--view-vh, 1vh)), 28rem); }
@@ -6310,7 +6311,6 @@ button.progression-summary, .progression-attributes-toggle { display: flex; flex
 .progression-inspection > .modal-body { padding: var(--modal-inset, 1.4rem); }
 .progression-points, .progression-skill-button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
 
-.armoury[data-view="grid"] #armoury-view-select { display: none; }
 :is(.progression-attributes-detail, .progression-stat-card) .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
 :is(.progression-attributes-detail, .progression-stat-card) .ls { min-width: 0; }
 
@@ -6783,3 +6783,23 @@ body.reduced-motion .as-toast { transition: none; }
 :root[data-card-door='stacked'] .card-inspection-modal .card-inspection-layout { gap: 8px; padding: 8px 12px; }
 :root[data-card-door='stacked'] .card-inspection-modal .card-inspection-details { font-size: 13px; line-height: 1.3; }
 :root[data-card-door='stacked'] .card-inspection-modal .playing-card-details .ctext { font-size: 14px; }
+
+/* THE ARMORY PAGE (owner, 2026-11-05): the view dropdown is gone, so the
+   Armory tab is ONE scrolling body — the equipment slots on top, the
+   Inventory's sections below, nothing with a scroll of its own. The pane
+   scrolls; the item collection and the selected item's detail take their
+   natural height (the detail stays in view beside the list on wide hosts). */
+.armoury[data-view='rack'] .armoury-railed > .armoury-pane { overflow-y: auto; overflow-x: hidden; }
+.armoury[data-view='rack'] .armoury-content,
+.armoury[data-view='rack'][data-pane='inventory'] .armoury-content { display: flex; flex-direction: column; flex: 0 0 auto; gap: 1.6rem; min-height: auto; overflow: visible; }
+.armoury[data-view='rack'] .armoury-subject { flex: 0 0 auto; min-height: auto; overflow: visible; }
+.armoury[data-view='rack'] .armoury-body { flex: none; width: 100%; overflow: visible; }
+.armoury[data-view='rack'] .armoury-inventory { display: block; flex: none; width: 100%; min-height: auto; overflow: visible; border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.armoury[data-view='rack'] .armoury-inventory > .ep-list.armoury-split { display: grid; grid-template-rows: auto auto; align-items: start; flex: none; }
+.armoury[data-view='rack'] .ep-list.armoury-split > .armoury-selection-context { grid-row: 1; }
+.armoury[data-view='rack'] .ep-list.armoury-split > :is(.armoury-item-collection, .armoury-item-detail) { overflow: visible; }
+.armoury[data-view='rack'] .ep-list.armoury-split > .armoury-item-collection { grid-row: 2; }
+.armoury[data-view='rack'] .ep-list.armoury-split > .armoury-item-detail { grid-row: 2; position: sticky; top: 0; align-self: start; max-height: calc(100 * var(--view-vh, 1vh) - 14rem); overflow-y: auto; }
+.armoury[data-view='rack'][data-split='rows'] .armoury-inventory > .ep-list.armoury-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; }
+.armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-collection { grid-row: 2; }
+.armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-row: 3; position: static; max-height: none; overflow: visible; }

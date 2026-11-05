@@ -828,8 +828,6 @@ export function findings(r) {
       || /\btrayModel\s*\(/.test(r.armouryModels)
       || !/const regionModels = regions\.map\([\s\S]*return item;/.test(r.armouryModels)
       || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
-      || !/view === 'cards'/.test(r.equipment)
-      || !/gallery\.appendChild\(card\)/.test(r.equipment)
       // THE EDGE TABLE MOVED, AND THE ASSERTION FOLLOWED IT RATHER THAN BEING
       // DROPPED. What C15 has always guarded is that a tray's mark is EDGE-AWARE
       // and frozen — four edges, each with a closed and an open answer — not
@@ -1049,7 +1047,6 @@ function selftest() {
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
-    ['remove Armoury card gallery', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('gallery.appendChild(card)', 'gallery.remove()') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
     ['remove Smith Back control', 'C19 ', (r) => ({ ...r, upgradeDesk: r.upgradeDesk.replace('smith-back', 'smith-return') })],

@@ -87,6 +87,9 @@ function depthWeight(rule,card,rank,isBasic,depth) {
   if(!early&&rank>=(band.highRankMin??2))weight*=band.highRank??1;
   return weight;
 }
+// Owner 2026-11-05: skills and powers are offered more often than attacks. rule.typeWeights = { attack, skill, power };
+// a type with no entry is neutral (1). Multiplies the pick weight, so the owned-copy weight still dominates.
+function typeWeight(rule,card){const w=rule?.typeWeights?.[card?.type];return Number.isFinite(w)?w:1;}
 function recentOfferedIds(run,rule) {
   const recentWindow=rule?.recentOfferWindow??0;
   if(!(recentWindow>0))return new Set();
@@ -102,7 +105,7 @@ function weightedCardPick(registries,run,rule,rng,stream,ids) {
   // Owner 2026-10-31: a card already shown (taken or not) is drawn at rule.offeredCopyWeight per earlier showing; absent/1 is neutral.
   const offered=run.rewardOfferHistory?.cards||{},offeredWeight=Number.isFinite(rule?.offeredCopyWeight)?rule.offeredCopyWeight:1;
   const weights=ids.map(id=>{const card=defs.get(id);
-    return cardPickWeight(rule,card,owned.get(id)||0)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
+    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
@@ -199,7 +202,11 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
-  return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+  // Owner 2026-11-05: a combat door lays out a random 3..5 choices (rules.combatOfferCount {min,max}), rolled once on the
+  // reward stream when the offer is first made. Chests, level cards and shops keep offerCount; a settings offerCount that differs from combatOfferCount.appliesAtOfferCount (the shipped 3) wins over the range.
+  const range=rules.combatOfferCount,cached=!!run.gameProfileRewardOffers?.[offerId];
+  const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
+  return makeOffer(registries,run,rng,{offerId,source,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 export function claimGameProfileReward(registries,run,offerId,index) {
