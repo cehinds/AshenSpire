@@ -32,7 +32,7 @@ const statusText = (registries, stacks) => (stacks.size
 const cap = (word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : '');
 
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
-export function cardUpgradeChanges(registries, before, after, playsEver = 0) {
+export function cardUpgradeChanges(registries, before, after, playsEver = 0, maxRange = undefined) {
   if (!before || !after) return [];
   const out = [];
   const a = staticTokens(before, registries), b = staticTokens(after, registries);
@@ -52,7 +52,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0) {
   push('MANA', num(before.manaCost), num(after.manaCost));
   const poise = (def) => (def?.effects || []).filter((e) => e.op === 'poiseDamage' && Number.isFinite(e.amount)).reduce((sum, e) => sum + e.amount, 0);
   push(t('cardUpgrade.change.poise'), poise(before), poise(after));
-  push(t('cardUpgrade.change.range'), cap(combatCardRange(before) || 'none'), cap(combatCardRange(after) || 'none'));
+  push(t('cardUpgrade.change.range'), cap(combatCardRange(before, maxRange) || 'none'), cap(combatCardRange(after, maxRange) || 'none'));
   const targeting = (def) => t((def?.effects || []).find((e) => e.op === 'damage' && e.target === 'allEnemies') ? 'cardUpgrade.value.area' : 'cardUpgrade.value.single');
   if ((before.effects || []).some((e) => e.op === 'damage')) push(t('cardUpgrade.change.target'), targeting(before), targeting(after));
   push(t('cardUpgrade.change.stance'), cap(combatProfileFor(before).maneuver || 'none'), cap(combatProfileFor(after).maneuver || 'none'));
@@ -114,9 +114,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
-      changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance)),
+      changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance), run.rangePolicy?.maxRange),
       options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
-        index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after, playsEverOf(instance)),
+        index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after, playsEverOf(instance), run.rangePolicy?.maxRange),
       }))),
       tags: cardTags(registries, plan.before || base, rarity),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',

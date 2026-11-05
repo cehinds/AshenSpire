@@ -10,6 +10,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
+import { uncappedRun } from './helpers/uncapped-range.mjs';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -17,6 +18,7 @@ const PAIR = rangePairKey('player:player', 'enemy:e1');
 function setup(cardId, stamina, band = 1, regs = registries) {
   const registries = regs;
   const run = createRunState({ registries, seed: 777, classId: 'reaver', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(777), enemyIds: ['wanderingSoldier'] });
   combat.player.stamina = stamina; combat.player.energy = stamina;
   combat.rangeState = { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [PAIR]: band } };
