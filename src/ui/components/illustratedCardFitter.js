@@ -295,7 +295,8 @@ export function fitIllustratedCards(cards) {
     row.face.dataset.rulesOverflow=String(row.overflow);
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
-  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
+  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,fitSignature(face,widths[i]));});
+  // The signature is taken after the reading was chosen (the roomy swap changes the face's text), so a settled face is one pass, not two.
 }
 
 const overflowing=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
