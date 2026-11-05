@@ -50,8 +50,14 @@ function withInspectionDom(fn) {
   } catch (error) { cleanup(); throw error; }
 }
 // The (i) badge is gone (owner, 2026-11-03): a right-click on the face opens the same shared reading.
+// A touch long-press never inspects a card that has the (i) badge (owner, 2026-11-04), so the right-click is a mouse one.
 const rightClick = node => (node.matches?.('.card-inspection-target') ? node : node.querySelector('.card-inspection-target'))
   .dispatchEvent(new Event('contextmenu', { cancelable: true }));
+const mouseRightClick = node => {
+  const target = node.matches?.('.card-inspection-target') ? node : node.querySelector('.card-inspection-target');
+  target.dispatchEvent(new Event('pointerdown', { pointerType: 'mouse', bubbles: true }));
+  rightClick(node);
+};
 const reading = node => [node.textContent, node.inspectionMarkup, ...node.children.map(reading)].filter(Boolean).join(' ');
 
 function mount(kind, id, extra = {}) {
@@ -101,7 +107,7 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
       dialog.querySelector('.modal-close').click();
       assert.equal(document.querySelector('.card-inspection-modal'), null);
       assert.equal(document.activeElement, inspect, 'closing restores focus to Inspect');
-      rightClick(chosen);
+      mouseRightClick(chosen);
       const information = document.querySelector('.card-inspection-modal');
       assert.ok(information, `${stage} also keeps the face's shared Information door usable`);
       assert.equal(information.querySelector('.card-inspection-act'), null);
