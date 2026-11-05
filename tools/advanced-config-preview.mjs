@@ -158,11 +158,11 @@ async function main() {
         await evaluate(`(() => {
           const input = document.querySelector('[data-config-import]');
           const transfer = new DataTransfer();
-          transfer.items.add(new File([JSON.stringify({game:'Ashen Spire',schemaVersion:1,overrides:{'gameConfig.presentation.rowAScale':1.4}})], 'settings.json', {type:'application/json'}));
+          transfer.items.add(new File([JSON.stringify({game:'Ashen Spire',schemaVersion:1,overrides:{'gameConfig.presentation.settingsWidthPercent':90}})], 'settings.json', {type:'application/json'}));
           input.files = transfer.files;
           input.dispatchEvent(new Event('change', { bubbles: true }));
         })()`);
-        await until("JSON.parse(document.documentElement.dataset.formationSettings).rowAScale === 1.4", 'settings file applied');
+        await until("JSON.parse(document.documentElement.dataset.formationSettings).settingsWidthPercent === 90", 'settings file applied');
         await evaluate(`(() => {
           const input = document.querySelector('[data-config-import]');
           const transfer = new DataTransfer();
@@ -171,7 +171,7 @@ async function main() {
           input.dispatchEvent(new Event('change', { bubbles: true }));
         })()`);
         await until("document.body.textContent.includes('Import failed:')", 'invalid file notice');
-        if (await evaluate("JSON.parse(document.documentElement.dataset.formationSettings).rowAScale") !== 1.4) throw new Error('Invalid import changed settings');
+        if (await evaluate("JSON.parse(document.documentElement.dataset.formationSettings).settingsWidthPercent") !== 90) throw new Error('Invalid import changed settings');
       }
       const state = await evaluate(`(() => {
         const modal = document.querySelector('.settings-modal');

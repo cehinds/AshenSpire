@@ -2008,7 +2008,7 @@ resolver consume that same descriptor; UI code must not retype a default, range,
 Adding an eligible descriptor therefore adds its control without another hand-authored settings
 row.
 
-The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
+The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, ~~Battlefield~~ (removed, owner 2026-11-05), Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
 What the tabs hold, by area:
 
@@ -2021,10 +2021,11 @@ What the tabs hold, by area:
   registry-derived, so adding a class cannot create an invisible default. Per-class values must
   still satisfy the selected creation mode's bounds and total-allocation rules; invalid
   combinations are explained and cannot be applied silently.
-- **Combat and actors:** up to six rows and three columns per side,
+- **Combat and actors:** ~~up to six rows and three columns per side,
   with front/back meaning identified per side; formation spacing, player and
   enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
-  data-owned combat presentation values that do not alter asset identity.
+  data-owned combat presentation values that do not alter asset identity.~~
+  (Settings rows for these removed, owner 2026-11-05: the Battlefield tab, its formation editor and the stored keys are gone; Core draws its formation from the viewport model.)
   Default spawns start on the lowest row in the outermost column of each team,
   placing player and enemy starts farthest apart. Fill each row from outside toward
   the centre, then move upward. For two columns and three rows, player rows read
