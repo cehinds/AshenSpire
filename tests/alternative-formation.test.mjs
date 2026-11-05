@@ -153,6 +153,18 @@ test('the extra enemy strip is drawn only when core enables it; the player has a
   assert.ok(plans[1].visualBands.at(-1).top + plans[1].visualBands.at(-1).height <= 441 + 1e-6);
 });
 
+test('the phone field never extends so far that the player back strip passes the resting cards', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  const rows = perspectiveBandRows(grid, false).rows, p = grid.profiles.mobile;
+  for (const [width, natural, handHeight] of [[390, 480, 260], [375, 420, 240], [390, 560, 300], [360, 400, 230]]) {
+    const extension = mobileFieldOverlap({ natural, width, handHeight, rem: 16, zoom: 1, compact: true });
+    const input = { width, height: handHeight, count: 5, rem: 16, zoom: 1, compact: true, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'mobile' };
+    const { restTop } = responsiveHandLayout(input, handLayout(input));
+    // The last player strip ends at top + rows * rowHeight of the extended field; the cards rest at natural + restTop.
+    assert.ok((natural + extension) * (p.top + rows * p.rowHeight) <= natural + restTop + 1e-6, `${width}x${natural}: player back strip clears the cards`);
+  }
+});
+
 test('a team gap of open ground separates the enemy and player strips on every profile and size', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   assert.equal(grid.teamGapRows, 0.6);
@@ -284,7 +296,8 @@ test('a short landscape field stands its enemy ranks low and fits bodies about 1
     const back = formation.cells.filter(c => c.side === 'enemy' && c.rank === 0);
     const player = formation.cells.filter(c => c.side === 'player');
     const ground = Math.max(...back.map(c => c.ground));
-    if (label === 'landscape') assert.ok(ground >= height * 0.7, `back-rank feet at ${ground}`);
+    // 2026-11-05: 0.65, was 0.7. The gap and the player's second strip must also end above the cards (shortLandscape top .62, rowHeight .045).
+    if (label === 'landscape') assert.ok(ground >= height * 0.65, `back-rank feet at ${ground}`);
     // The party's baseline stays at the bottom of the field either way: feet on the cell bottom.
     assert.ok(Math.max(...player.map(c => c.ground)) <= height * 0.95 + 1e-6);
     const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
@@ -331,11 +344,12 @@ test('a taller short-landscape field keeps its sprite width: the shear is capped
 
 test('narrow phone strips keep sprite width and stay above the parent short profile (667, 740, 780 wide)', () => {
   // The cap also bites at the tuned 146px height on narrower strips; floors are the parent `short` profile's fitted
-  // heights for the same 60x150 envelope, 3 enemies (measured with the parent profile forced).
+  // heights for the same 60x150 envelope, 3 enemies (measured with the parent profile forced). 2026-11-05: the 116px floors drop to 5.2 (was 13.3):
+  // the retuned strips (gap + two player strips above the cards) stand the back rank higher up the field, which a field that short cannot spare.
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortLandscape;
   const makePlan = (width, height) => combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
     friends: ['p0'], enemies: ['e0', 'e1', 'e2'] });
-  for (const [width, height, floor] of [[667, 131, 15.1], [740, 116, 13.3], [780, 116, 13.3], [667, 187, 39.3]]) {
+  for (const [width, height, floor] of [[667, 131, 15.1], [740, 116, 5.2], [780, 116, 5.2], [667, 187, 39.3]]) {
     const formation = alternativeFormation(makePlan(width, height), width, height, false);
     const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
     for (const fit of fitAlternativeSprites({ width, height, actors, narrow: false })) assert.ok(fit.visibleHeight >= floor - 0.05, `${width}x${height}: ${fit.visibleHeight} < parent ${floor}`);

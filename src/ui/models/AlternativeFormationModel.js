@@ -129,7 +129,7 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   plan.cells = plan.cells.map(place).filter(Boolean);
   // The player's back strip (reach) is drawn as visual-only cells; the extra enemy strip exists only when enabled.
   // The gap between the teams has no cells: it is open ground. Visual-only cells never enter the gameplay/targeting cell map.
-  const backVisualCells = Array.from({ length: lanes }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}0`, row, column: 0, side: 'player', backRank: true, visualOnly: true })).map(place);
+  const backVisualCells = Array.from({ length: lanes }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}2`, row, column: 0, side: 'player', backRank: true, visualOnly: true })).map(place);
   plan.visualCells = [...plan.cells, ...backVisualCells];
   const cellAt = (side, rank, lane) => plan.cells.find(c => c.side === side && c.rank === rank && c.lane === lane);
   const enemies = plan.slots.filter(slot => slot.side === 'enemy');

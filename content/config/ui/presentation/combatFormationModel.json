@@ -109,8 +109,8 @@
         "playerRowHeight": 0.2,
         "hudWidthFraction": 0.55,
         "skew": 4.2,
-        "top": 0.75,
-        "rowHeight": 0.05,
+        "top": 0.62,
+        "rowHeight": 0.045,
         "minArtLaneFraction": 0.4
       },
       "teamGapRows": 0.6,
