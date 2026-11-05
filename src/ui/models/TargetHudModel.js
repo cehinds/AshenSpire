@@ -96,7 +96,14 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     return null;
   }
   const solved = solve(requests, []);
-  if (solved) return solved;
+  const finish = result => {
+    const enemies = panels.filter(panel => panel.role === 'enemy');
+    const pinned = result.filter(row => panels.find(panel => panel.id === row.id)?.role === 'player');
+    // Player-only obstacles (enemy HP bars) stay out, as for every enemy panel: a selected enemy's panel replaces its bar.
+    const rowed = placeEnemyPanelRows({ area, panels: enemies, gap, avoid: pinned, obstacles: obstacles.filter(other => !other.playerOnly) });
+    return rowed ? [...pinned, ...rowed] : result;
+  };
+  if (solved) return finish(solved);
   const placed = [];
   for (const request of requests) {
     const score = rect => rect.penalty + placed.filter(other => targetHudOverlaps(rect, other, gap)).length * 1e7
@@ -104,7 +111,67 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     const choices = [...request.choices].sort((a, b) => score(a) - score(b));
     placed.push({ id: request.id, ...choices[0] });
   }
-  return placed;
+  return finish(placed);
+}
+
+// Owner 2026-11-05: with two or more enemy panels, narrow each (never below `enemyRowMinWidthPx`, visible width) so as
+// many as possible share a row; `width` includes the 25px info-button lead the caller adds.
+export function targetHudEnemyRowWidth({ bounds, count, width, config = targetHudConfig() }) {
+  const { gapPx, edgeInsetPx, enemyRowMinWidthPx = 0 } = config.positioning;
+  if (count < 2 || !enemyRowMinWidthPx) return width;
+  const room = bounds.width - edgeInsetPx * 2, floor = enemyRowMinWidthPx + 25;
+  const perRow = Math.max(1, Math.min(count, Math.floor((room + gapPx) / (floor + gapPx))));
+  return Math.max(Math.min(width, floor), Math.min(width, (room - (perRow - 1) * gapPx) / perRow));
+}
+// Owner 2026-11-05: several enemy panels try to sit side by side, each under its own enemy, instead of in a column.
+// They split into rows only when one row is wider than the field (rows stack, left to right inside each), and the
+// block takes the free slot nearest the enemies. With no clear slot the caller keeps its per-panel placement.
+export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], gap }) {
+  if (panels.length < 2) return null;
+  const sorted = [...panels].sort((p, q) => p.anchor.left + p.anchor.width / 2 - (q.anchor.left + q.anchor.width / 2));
+  const rows = [[]]; let used = 0;
+  for (const panel of sorted) {
+    const width = Math.min(panel.width, area.width);
+    if (rows.at(-1).length && used + gap + width > area.width + 1e-6) { rows.push([]); used = 0; }
+    used += (rows.at(-1).length ? gap : 0) + width; rows.at(-1).push(panel);
+  }
+  const clear = rect => !obstacles.some(other => targetHudOverlaps(rect, other)) && !avoid.some(other => targetHudOverlaps(rect, other, gap));
+  const placedRows = [];
+  for (const row of rows) {
+    const height = Math.max(...row.map(panel => Math.min(panel.height, area.height)));
+    // Desired lefts centre each panel under its enemy; push apart, then pull back from the right edge.
+    const layoutAt = (top, minLeft) => {
+      const items = row.map(panel => ({ panel, width: Math.min(panel.width, area.width), left: panel.anchor.left + panel.anchor.width / 2 - Math.min(panel.width, area.width) / 2 }));
+      items.forEach((item, i) => { item.left = Math.max(item.left, i ? items[i - 1].left + items[i - 1].width + gap : minLeft); });
+      for (let i = items.length - 1; i >= 0; i--) {
+        const limit = i === items.length - 1 ? area.left + area.width : items[i + 1].left - gap;
+        items[i].left = Math.min(items[i].left, limit - items[i].width);
+      }
+      return items.map(item => ({ id: item.panel.id, left: item.left, top, width: item.width, height: Math.min(item.panel.height, area.height), penalty: 0, side: 'below' }));
+    };
+    const anchorBottom = Math.max(...row.map(panel => panel.anchor.top + panel.anchor.height)), anchorTop = Math.min(...row.map(panel => panel.anchor.top));
+    const distance = top => Math.min(Math.abs(top - (anchorBottom + gap)), Math.abs(top + height + gap - anchorTop));
+    const tops = [];
+    for (let top = area.top; top + height <= area.top + area.height + 1e-6; top += 4) tops.push(top);
+    tops.push(area.top + area.height - height);
+    let found = null;
+    for (const top of tops.sort((a, b) => distance(a) - distance(b))) {
+      if (top < area.top - 1e-6) continue;
+      // Start at the field edge, or just right of an obstacle in this band (a row can sit beside the player, not over it).
+      const band = { left: area.left, width: area.width, top, height };
+      const starts = [area.left, ...obstacles.filter(other => targetHudOverlaps(band, other)).map(other => other.left + other.width + gap)].sort((a, b) => a - b);
+      for (const minLeft of starts) {
+        if (minLeft > area.left + area.width) continue;
+        const placed = layoutAt(top, minLeft);
+        if (placed.every(rect => rect.left >= area.left - 1e-6 && rect.left + rect.width <= area.left + area.width + 1e-6) && placed.every(clear)
+          && !placedRows.flat().some(other => placed.some(rect => targetHudOverlaps(rect, other, gap)))) { found = placed; break; }
+      }
+      if (found) break;
+    }
+    if (!found) return null;
+    placedRows.push(found);
+  }
+  return placedRows.flat();
 }
 
 // One stable-target clock, including leave grace. Updating content for the
