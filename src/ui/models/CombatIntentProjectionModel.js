@@ -27,16 +27,32 @@ export function projectCombatIntent(combat, enemyInstanceId) {
 // in the map under the actor's id instead of applied, and any receipt that announces another
 // contact for that actor drops the parked clear. flushDeferredIntentClears applies what is
 // parked once the beat's resolution is reached.
-export function applyCombatIntentReceipt(entities, event, deferred = null) {
+//
+// `later` (an array, optional): the receipts after this one. A clear is skipped when the same actor
+// announces its next contact with its own intent inside this enemy turn (see announcesNextContact), so
+// a plan of several moves never flashes "?" between them (owner, 2026-11-05: enemy intent changed
+// during the enemy's turn).
+const ANNOUNCING = ['combatContactPrepared', 'combatHitStarted', 'enemyMoveStarted'];
+export function announcesNextContact(later, actorId) {
+  for (const next of later || []) {
+    if (next.type === 'enemyTurnEnd' || next.type === 'playerTurnStart') return false;
+    if (next.sourceId === actorId && !next.reaction && next.intentPreview && ANNOUNCING.includes(next.type)) return true;
+  }
+  return false;
+}
+
+export function applyCombatIntentReceipt(entities, event, deferred = null, later = null) {
   const actor = entities[event.sourceId];
   if (!actor || actor.kind !== 'enemy') return;
   const announces = event.type === 'enemyActorTurnStarted'
     || ['combatContactPrepared', 'combatHitStarted', 'enemyMoveStarted'].includes(event.type)
     || event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy';
   if (deferred && announces) deferred.delete(event.sourceId);
-  if (deferred && !announces && (event.type === 'enemyMoveEnded' || actor.intentInFlight
+  const clears = event.type === 'enemyMoveEnded' || actor.intentInFlight
     && (event.type === 'damageDealt' || event.type === 'attackMissed' || event.type === 'attackEvaded'
-      || event.type === 'combatAvoidanceResolved' && event.avoided))) {
+      || event.type === 'combatAvoidanceResolved' && event.avoided);
+  if (deferred && !announces && clears && later && announcesNextContact(later, event.sourceId)) return;
+  if (deferred && !announces && clears) {
     deferred.set(event.sourceId, event);
     return;
   }
