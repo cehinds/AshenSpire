@@ -62,17 +62,16 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     node.className = `combat-health-badge combat-health-${badge.kind}${badge.ward ? ' combat-health-poise-ward' : ''}`;
     if (badge.ward) node.dataset.ward = String(badge.wardStacks);
     node.dataset.defenseKind = badge.kind;
-    node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : badge.kind === 'stance' ? badge.help : `${badge.label} ${badge.value}`);
+    node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : `${badge.label} ${badge.value}`);
     if (badge.help) node.title = badge.help; // native hover help for the stack badges, same text as the tooltip
     const value = document.createElement('span');
     value.className = 'combat-health-badge-value';
     value.textContent = String(badge.value);
-    if (['evade', 'precision', 'counter', 'reflect', 'stance'].includes(badge.kind)) {
+    if (['evade', 'precision', 'counter', 'reflect'].includes(badge.kind)) {
       const icon = document.createElement('span');
       icon.className = `combat-health-${badge.kind}-icon`;
       icon.setAttribute('aria-hidden', 'true');
       const mark = tagSymbolSvg(`effect:${badge.glyph || badge.kind}`);
-      if (badge.tone) node.dataset.stance = badge.tone;
       if (mark) icon.append(mark);
       node.append(icon);
     }
