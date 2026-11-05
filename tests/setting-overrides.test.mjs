@@ -8,10 +8,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
+import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile, isRetiredLegacySettingKey } from '../src/model/advancedConfig.js';
 import { resolveEquipmentRequirements } from '../src/model/startingStatConfig.js';
 import { validateContent } from '../src/model/validate.js';
-import { categoryHandler, closedGate, gateSentence, settingsRow } from '../src/ui/screens/settings.js';
+import { categoryHandler, closedGate, gateSentence, settingsRow, settingsRows } from '../src/ui/screens/settings.js';
 
 const OWN_REQUIREMENT = 'gameConfig.own.equipmentRequirements.greatsword.strength';
 const rows = categoryHandler('Advanced').rows;
@@ -44,17 +44,14 @@ test('invalid rating values are not judged while ratings are off', async () => {
     'with ratings off, the dormant pair refuses nothing');
 });
 
-// Owner, 2026-09-23 (after the Battlefield check in a browser): movement's
-// own settings are disabled while formation movement is off.
-test('formation movement settings are disabled while movement is off', () => {
-  const off = {};
-  const on = { 'gameConfig.presentation.movementEnabled': true };
-  for (const leaf of ['movementNeedsSelection', 'movementCostsAction', 'tileActivation', 'moveActivation']) {
-    const key = `gameConfig.presentation.${leaf}`;
-    assert.match(gateSentence(closedGate(off, row(key)), off), /Enable formation movement” is on/, leaf);
-    assert.equal(closedGate(on, row(key)), null, leaf);
+// Owner, 2026-11-05: the Battlefield settings are retired, so there are no formation movement rows
+// left to gate; movementEnabled and its siblings are retired stored keys.
+test('no formation movement rows remain, and movementEnabled is a retired key', () => {
+  const keys = settingsRows().map((r) => r.key);
+  assert.deepEqual(keys.filter((k) => /presentation\.(movement|tileActivation|moveActivation|selectionColor)/.test(k)), []);
+  for (const leaf of ['movementEnabled', 'movementNeedsSelection', 'movementCostsAction', 'tileActivation', 'moveActivation']) {
+    assert.equal(isRetiredLegacySettingKey(`gameConfig.presentation.${leaf}`), true, leaf);
   }
-  assert.equal(closedGate(off, row('gameConfig.presentation.selectionColor')), null, 'the shared selection colour stays live');
 });
 
 // Codex, on #1260: the mirror of the dormant-ratings case. With ratings on,
