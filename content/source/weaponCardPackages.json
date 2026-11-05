@@ -7,6 +7,10 @@
       "weaponArtDefaults": [
         "guardCounter"
       ],
+      "learnableArts": [
+        "rend",
+        "impale"
+      ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
@@ -21,6 +25,10 @@
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
         "greatswordSunderingHew"
+      ],
+      "learnableArts": [
+        "executioner",
+        "poiseBreaker"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
@@ -37,6 +45,10 @@
       "weaponArtDefaults": [
         "twinFang"
       ],
+      "learnableArts": [
+        "serratedShiv",
+        "cheapShot"
+      ],
       "combatKit": {
         "attackProfileId": "daggerPierceAttack",
         "guardProfileId": "weaponGuard",
@@ -51,6 +63,10 @@
       "fillerAttackProfileId": "bowPierceAttack",
       "weaponArtDefaults": [
         "quickstep"
+      ],
+      "learnableArts": [
+        "pinningShot",
+        "arrowVolley"
       ],
       "combatKit": {
         "attackProfileId": "bowPierceAttack",
@@ -67,6 +83,10 @@
       "weaponArtDefaults": [
         "katanaDrawCut"
       ],
+      "learnableArts": [
+        "quickCut",
+        "hamstringRogue"
+      ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
@@ -81,6 +101,10 @@
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
         "sweepingBlow"
+      ],
+      "learnableArts": [
+        "hewingArc",
+        "crimsonCleave"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
@@ -97,6 +121,10 @@
       "weaponArtDefaults": [
         "bashingBlow"
       ],
+      "learnableArts": [
+        "colossusSmash",
+        "sunderplate"
+      ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
@@ -111,6 +139,10 @@
       "fillerAttackProfileId": "twinbladeAttack",
       "weaponArtDefaults": [
         "twinbladeFlurry"
+      ],
+      "learnableArts": [
+        "twinPrick",
+        "serratedBlade"
       ],
       "combatKit": {
         "attackProfileId": "twinbladeAttack",
@@ -127,6 +159,10 @@
       "weaponArtDefaults": [
         "cleavingBlow"
       ],
+      "learnableArts": [
+        "sunderingChop",
+        "bloodTithe"
+      ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
@@ -141,6 +177,10 @@
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
         "riposte"
+      ],
+      "learnableArts": [
+        "bindingParry",
+        "rondelParry"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
@@ -157,6 +197,10 @@
       "weaponArtDefaults": [
         "shieldGuardian"
       ],
+      "learnableArts": [
+        "bracingStance",
+        "quickGuard"
+      ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
@@ -171,6 +215,10 @@
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
         "shieldBastion"
+      ],
+      "learnableArts": [
+        "ironSkin",
+        "stoneskin"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
@@ -187,6 +235,10 @@
       "weaponArtDefaults": [
         "shieldBash"
       ],
+      "learnableArts": [
+        "shieldCrash",
+        "bracingStance"
+      ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
@@ -201,6 +253,10 @@
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
         "spikedReprisal"
+      ],
+      "learnableArts": [
+        "shieldCrash",
+        "whirlingGuard"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
@@ -217,6 +273,10 @@
       "weaponArtDefaults": [
         "scholarsInsight"
       ],
+      "learnableArts": [
+        "lucidity",
+        "kindledOmen"
+      ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
@@ -231,6 +291,10 @@
       "fillerAttackProfileId": "shieldAttack",
       "weaponArtDefaults": [
         "flameToBlade"
+      ],
+      "learnableArts": [
+        "cinderSigil",
+        "ashenMote"
       ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
@@ -247,6 +311,10 @@
       "weaponArtDefaults": [
         "riposte"
       ],
+      "learnableArts": [
+        "lowGuardRiposte",
+        "rondelParry"
+      ],
       "combatKit": {
         "attackProfileId": "shieldAttack",
         "guardProfileId": "shieldGuard",
@@ -261,6 +329,10 @@
       "fillerAttackProfileId": "staffMagicAttack",
       "weaponArtDefaults": [
         "starSpark"
+      ],
+      "learnableArts": [
+        "cometFragment",
+        "starSlicer"
       ],
       "combatKit": {
         "attackProfileId": "staffMagicAttack",
@@ -277,6 +349,10 @@
       "weaponArtDefaults": [
         "frostNova"
       ],
+      "learnableArts": [
+        "frostVeil",
+        "starstoneArc"
+      ],
       "combatKit": {
         "attackProfileId": "staffMagicAttack",
         "guardProfileId": "staffGuard",
@@ -291,6 +367,10 @@
       "fillerAttackProfileId": "sceptreArcaneAttack",
       "weaponArtDefaults": [
         "blightTouch"
+      ],
+      "learnableArts": [
+        "flagellation",
+        "witheringTouch"
       ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
@@ -307,6 +387,10 @@
       "weaponArtDefaults": [
         "penance"
       ],
+      "learnableArts": [
+        "litany",
+        "blightward"
+      ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
         "guardProfileId": "sceptreGuard",
@@ -321,6 +405,10 @@
       "fillerAttackProfileId": "sceptreArcaneAttack",
       "weaponArtDefaults": [
         "urgentHeal"
+      ],
+      "learnableArts": [
+        "transfusion",
+        "reclamation"
       ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
@@ -337,6 +425,10 @@
       "weaponArtDefaults": [
         "contagion"
       ],
+      "learnableArts": [
+        "plagueBearer",
+        "blightBloom"
+      ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
         "guardProfileId": "sceptreGuard",
@@ -351,6 +443,10 @@
       "fillerAttackProfileId": "sceptreArcaneAttack",
       "weaponArtDefaults": [
         "gorefireSlash"
+      ],
+      "learnableArts": [
+        "goreslash",
+        "rend"
       ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
@@ -367,6 +463,10 @@
       "weaponArtDefaults": [
         "moonrendCut"
       ],
+      "learnableArts": [
+        "astralCleave",
+        "starShower"
+      ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",
         "guardProfileId": "staffGuard",
@@ -381,6 +481,10 @@
       "fillerAttackProfileId": "bladeAttack",
       "weaponArtDefaults": [
         "rimeThrust"
+      ],
+      "learnableArts": [
+        "impale",
+        "coupDeGrace"
       ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
@@ -397,6 +501,10 @@
       "weaponArtDefaults": [
         "kilnCleave"
       ],
+      "learnableArts": [
+        "sunderingChop",
+        "crimsonCleave"
+      ],
       "combatKit": {
         "attackProfileId": "bladeAttack",
         "guardProfileId": "weaponGuard",
@@ -411,6 +519,10 @@
       "fillerAttackProfileId": "sceptreArcaneAttack",
       "weaponArtDefaults": [
         "vesperWard"
+      ],
+      "learnableArts": [
+        "crystalBarrier",
+        "starstoneWard"
       ],
       "combatKit": {
         "attackProfileId": "sceptreArcaneAttack",

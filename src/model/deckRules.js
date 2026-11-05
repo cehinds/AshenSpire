@@ -138,6 +138,8 @@ export function deckCardEquipmentEligible(registries, run, card) {
   // while that mount is absent would make the next restamp discard it.
   if (card.grantedBy || isItemOwned(card)) return isCurrentEquipmentGrant(registries, run, card);
   if (!hasCollectedCardPolicy(run) && (isUnlimitedBasic(card, run) || unlimitedCardIds(run).includes(card.cardId))) return true;
+  // Owner 2026-11-05: a worn weapon's default and learnable arts are always deck-eligible, whatever their school tags.
+  if (pieces.some((piece) => piece.weaponCardPackage && [...(piece.weaponCardPackage.weaponArtDefaults || []), ...(piece.weaponCardPackage.learnableArts || [])].includes(card.cardId))) return true;
   const tags = definition.tags || [];
   const rules = deckRules.equipmentEligibility;
   if (tags.some((tag) => rules.universalTags.includes(tag))) return true;

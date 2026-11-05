@@ -144,7 +144,7 @@ function projectWeaponArtResources(bundle,profile) {
   if(gameModule(profile,'equipment')?.weaponArts !== true || gameModule(profile,'cards')?.mode !== 'configured') return;
   const pools=gameModule(profile,'resources')?.include||[],sp=pools.includes('sp'),mp=pools.includes('mp');
   if(sp&&mp) return;
-  const ids=new Set((bundle.equipment?.armaments||[]).flatMap(piece=>piece.weaponCardPackage?.weaponArtDefaults||[]));
+  const ids=new Set((bundle.equipment?.armaments||[]).flatMap(piece=>[...(piece.weaponCardPackage?.weaponArtDefaults||[]),...(piece.weaponCardPackage?.learnableArts||[])]));
   const zero=def=>{
     const out={...def};
     if(!sp&&out.cost!==undefined) out.cost=0;
