@@ -107,3 +107,33 @@ test('the Blacksmith shelf skips an art on the open reward door but keeps its ow
   run.shopStock = { kind: 'blacksmith', offerings: ['weaponArts'], weaponArts: [{ id: 'poiseBreaker', cost: 70 }] };
   assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id), ['poiseBreaker']);
 });
+
+// ---- Deck eligibility: a worn weapon's arts can always join the deck ----
+import { equipPiece } from '../src/model/loadout.js';
+import { deckCardEquipmentEligible, moveFromSideboard } from '../src/model/deckRules.js';
+
+test('with only its weapon worn, every default and learnable art is deck-eligible and moves from the sideboard', () => {
+  const owns = { has: () => true };
+  for (const pkg of packages()) {
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: reg });
+    for (const slot of ['rightHand', 'leftHand']) equipPiece(reg, run.loadout, slot, 0, null, owns, { inCombat: false, classId: 'reaver', attributes: run.attributes });
+    const worn = ['rightHand', 'leftHand'].some(hand => equipPiece(reg, run.loadout, hand, 0, pkg.weaponId, owns, { inCombat: false, classId: 'reaver', attributes: run.attributes }));
+    assert.ok(worn, `${pkg.weaponId} could be worn`);
+    run.deck = run.deck.filter(card => !card.grantedBy);
+    for (const id of [...pkg.weaponArtDefaults, ...pkg.learnableArts]) {
+      const card = { instanceId: `t:${id}`, cardId: id, upgraded: false };
+      assert.ok(deckCardEquipmentEligible(reg, run, card), `${pkg.weaponId}: ${id} eligible`);
+      run.sideboard = [card];
+      assert.ok(moveFromSideboard(reg, run, card.instanceId, {}), `${pkg.weaponId}: ${id} moves to the deck`);
+      run.deck = run.deck.filter(c => c.instanceId !== card.instanceId);
+    }
+  }
+});
+
+test('a learnable art of a carried but unworn weapon stays refused by the tag rule', () => {
+  const run = reaver(['lantern']);
+  const card = { instanceId: 't:lucidity', cardId: 'lucidity', upgraded: false };
+  assert.equal(deckCardEquipmentEligible(reg, run, card), false);
+  run.sideboard = [card];
+  assert.equal(moveFromSideboard(reg, run, card.instanceId, {}), false);
+});
