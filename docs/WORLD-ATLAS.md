@@ -1,5 +1,7 @@
 # World Journey content
 
+> The tool described here (the content preview page) lives on the `tools-archive` branch.
+
 Choose **World Journey** in character creation's Journey selector. Wanderer selects
 20 world places; Long Expedition selects 26. Both use the same 200 authored places.
 Crownfall is the starting city. One of five major cities and one of five legacy
