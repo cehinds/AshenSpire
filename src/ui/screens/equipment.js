@@ -386,7 +386,7 @@ function buildArmoury(L, ui) {
   // count badge, no grid view: owner wireframe 2026-11-01).
   const slots = options([], { class: 'equip-slots armoury-position-list' });
   for (const { slot, positions } of positionsBySlot) {
-    slots.appendChild(ui.positionGroup(slot, positions, 'list'));
+    slots.appendChild(ui.positionGroup(slot, positions));
   }
   const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: 'armoury.armamentsCard', armamentView: 'list' } });
   const compact = ui.layout.equipment.compactList;
@@ -802,7 +802,6 @@ export function mountEquipment(host, {
   if (destinationPlan?.region) folded.set(destinationPlan.region, false);
   // The Equipment view is one compact list (the grid view was retired 2026-11-01).
   const armamentView = 'list';
-  let armamentGridSelection = null;
   // The row the player selected (outlined); Inspect opens its card in a modal.
   let armamentListSelection = null;
   let picking = null; // { slotId, setIndex }
@@ -1260,12 +1259,15 @@ export function mountEquipment(host, {
    * Inspect opens the item's card in the kit's inspection modal, as the Smith
    * rail does. The face is an inspect card with no inspection door of its own.
    */
-  function openItemInspection(item, category, { owned: count = null, opener = null } = {}) {
+  function openItemInspection(item, category, { owned: count = null, opener = null, extra = null } = {}) {
     if (!item) return null;
     const rendered = category === 'Relic'
       ? renderCollectibleCard(registries, item, 'Relic', { inspection: false, interactive: false, owned: count, level: 'inspect' })
       : renderEquipmentCard(registries, item, { inspection: false, interactive: false, owned: count, level: 'inspect', surface: 'armoury' });
-    return openCardInspection({ title: item.name, card: rendered.card, details: equipmentDetails(rendered.explanations), opener });
+    const details = equipmentDetails(rendered.explanations);
+    // Smithing tier, the last smithing receipt and the Weapon Art / Unique Skill costs.
+    if (extra) details.append(extra);
+    return openCardInspection({ title: item.name, card: rendered.card, details, opener });
   }
   /** Selects a row (outline) and opens its card; the real buttons above it never reach here. */
   function selectPosition(slot, position) {
@@ -1273,7 +1275,10 @@ export function mountEquipment(host, {
     draw();
     const opener = wrap.querySelector(`[data-slot-position="${CSS.escape(`${slot.id}:${position.index}`)}"] .armament-row-select`);
     opener?.focus({ preventScroll: true });
-    if (position.state === 'occupied') openItemInspection(position.summary.item, position.summary.category, { opener });
+    if (position.state === 'occupied') {
+      const extra = slot.kinds.includes('armor') ? null : armamentDetailPane(slot, position.summary);
+      openItemInspection(position.summary.item, position.summary.category, { opener, extra });
+    }
   }
   /** The row's whole face is one stretched button; Replace and Unequip sit above it. */
   function rowSelectButton(slot, position, name) {
@@ -1331,55 +1336,6 @@ export function mountEquipment(host, {
     card.append(rowSelectButton(slot, position, position.summary.name), thumbnail, el('div', { class: 'armament-compact-body' }, [head, positionActions(slot, position)]));
     attachPositionDropTarget(card, slot, position);
     return card;
-  }
-
-  /** A grid tile is the same OptionCard stood on end: art over name, the code as its badge. */
-  function positionGridCard(slot, position) {
-    if (!armamentGridSelection && position.active && position.state === 'occupied') {
-      armamentGridSelection = { slotId: slot.id, index: position.index };
-    }
-    const selected = armamentGridSelection
-      && armamentGridSelection.slotId === slot.id
-      && armamentGridSelection.index === position.index;
-    const art = position.state === 'locked' ? artWell({ glyph: 'lock', small: true })
-      : position.summary.item ? pieceArt(position.summary.item, position.summary.item.icon || 'skill')
-        : artWell({ glyph: '＋', small: true });
-    const card = optionCard({
-      art, name: position.state === 'locked' ? 'Locked' : position.summary.name, badge: positionBadge(position),
-      arrow: false, selected: !!selected,
-      className: `armoury-position-grid-card is-${position.state}${selected ? ' is-selected' : ''}`,
-      attrs: { dataset: { component: `armoury.${position.state}PositionGridCard`, slotPosition: `${slot.id}:${position.index}` } },
-    });
-    if (position.state === 'locked') {
-      refuses(card, () => position.rung?.hint || 'This equipment position is locked.');
-    } else {
-      card.addEventListener('click', () => {
-        armamentGridSelection = { slotId: slot.id, index: position.index };
-        draw();
-        wrap.querySelector(`[data-slot-position="${CSS.escape(`${slot.id}:${position.index}`)}"]`)?.focus();
-      });
-      attachPositionDropTarget(card, slot, position);
-    }
-    attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}</div><p>${esc(position.state === 'locked' ? 'This position is locked.' : `${position.summary.name}. Select to show its details below.`)}</p>`);
-    return card;
-  }
-
-  function armamentGridDetail(orderedSlots) {
-    const positions = orderedSlots.flatMap((slot) => slotPositions(slot)
-      .filter((position) => position.modelState !== 'hidden')
-      .map((position) => ({ slot, position })));
-    let selected = armamentGridSelection
-      ? positions.find(({ slot, position }) => slot.id === armamentGridSelection.slotId && position.index === armamentGridSelection.index)
-      : null;
-    if (!selected) selected = positions.find(({ position }) => position.active && position.state === 'occupied')
-      || positions.find(({ position }) => position.state !== 'locked') || positions[0] || null;
-    if (selected) armamentGridSelection = { slotId: selected.slot.id, index: selected.position.index };
-    const detail = el('section', { class: 'armoury-position-grid-detail', dataset: { component: 'armoury.armamentGridDetails' } }, eyebrow('Details'));
-    if (!selected) detail.appendChild(flavour('No equipment positions are available.', { class: 'ep-hint' }));
-    else if (selected.position.state === 'occupied') detail.appendChild(armamentDetail(selected.slot, selected.position.summary));
-    else detail.appendChild(flavour(`${selected.position.label} is ${selected.position.state}.`, { class: 'ep-hint' }));
-    if (selected && selected.position.state !== 'locked') detail.append(positionActions(selected.slot, selected.position));
-    return detail;
   }
 
   const pieceById = (slot, id) => (slot.kinds.includes('armor')
@@ -2326,7 +2282,7 @@ export function mountEquipment(host, {
     });
   }
 
-  function positionGroup(slot, positions, presentation = 'list') {
+  function positionGroup(slot, positions) {
     const cells = positions.map((position) => equipmentSetCellModel({
       slotId: slot.id,
       index: position.index,
@@ -2349,7 +2305,7 @@ export function mountEquipment(host, {
       showHeader: false,
       renderCell: (cellModel) => {
         const position = positions.find((candidate) => candidate.index === cellModel.properties.index);
-        return presentation === 'grid' ? positionGridCard(slot, position) : positionCard(slot, position);
+        return positionCard(slot, position);
       },
     }).element;
   }
@@ -2358,10 +2314,10 @@ export function mountEquipment(host, {
   // as Flavour, then every fact as a StatRow (`Smithing tier` is the row the
   // Smith tool reads), the last smithing as a StatRow, the tags as a KitLine
   // whose items carry their meaning in the tooltip.
-  function armamentDetail(slot, summaryItem) {
+  function armamentDetailPane(slot, summaryItem) {
     const item = summaryItem.item;
     if (!item) {
-      return detailCard({ muted: true, attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } }, children: flavour('No item is assigned to this equipment position.', { class: 'armoury-armament-empty' }) });
+      return null;
     }
 
     const tags = Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : []);
@@ -2408,13 +2364,7 @@ export function mountEquipment(host, {
       ]) : null,
       tagLine,
     ]);
-    const card = detailCard({
-      eyebrow: slot.label, name: `${item.name} details`,
-      attrs: { class: 'armoury-position-detail', dataset: { component: 'armoury.armamentItemCard' } },
-      children: [renderEquipmentInspection(registries, item), detail],
-    });
-    attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
-    return card;
+    return detail;
   }
 
   /** One fact as a flat StatRow: the name left, its value right. */
@@ -2595,8 +2545,6 @@ export function mountEquipment(host, {
         positions: slotPositions,
         positionGroup,
         positionCard,
-        positionGridCard,
-        armamentGridDetail,
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
       });
@@ -2676,6 +2624,9 @@ export function mountEquipment(host, {
   // names that page; a region (or the equipment slots) is scrolled into view.
   const focusArmouryDestination = () => {
     if (!destinationPlan || !wrap.isConnected) return;
+    // The Deck door (key D, pad button 3) names `cards`. The deck gallery is not
+    // on this screen any more; the Deck tab owns it (the editor, or its refusal).
+    if (destinationPlan.view === 'cards') { wrap.querySelector('.armoury-head [data-modal-tab="deck"]')?.click(); return; }
     const tab = wrap.querySelector(`.armoury-head [data-modal-tab="${view === 'grid' ? 'character' : 'armory'}"]`);
     const region = destinationPlan.region ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`) : null;
     const scrollTo = region || (destinationPlan.view === 'rack' ? wrap.querySelector('.armoury-body') : null);

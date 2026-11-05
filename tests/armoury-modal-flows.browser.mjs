@@ -17,10 +17,10 @@ const base = process.env.BASE_URL || server.url;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const errors = [];
 
-async function mount(page, emptyOffHand = true, combat = false) {
+async function mount(page, emptyOffHand = true, combat = false, extra = {}) {
   await page.goto(`${base}index.html?shot=map&shotSeed=ART1`, { waitUntil: 'load', timeout: 90000 });
   await page.waitForTimeout(2500);
-  await page.evaluate(async ({ emptyOffHand, combat }) => {
+  await page.evaluate(async ({ emptyOffHand, combat, extra }) => {
     const { contentBundle } = await import('/src/content/index.js');
     const { createRegistries } = await import('/src/model/registries.js');
     const { createRunState } = await import('/src/model/state.js');
@@ -41,12 +41,15 @@ async function mount(page, emptyOffHand = true, combat = false) {
     window.__armouryEquipped = [];
     mountEquipment(document.body, {
       registries, run, meta, inCombat: combat, onClose() {},
+      destination: extra.destination || '',
+      onEditDeck: extra.deck ? () => { window.__deckOpened = true; } : null,
       // In combat an equip is priced by the host: a refusal string is the notice (here: always refused).
       onEquip: combat ? () => 'Not enough Poise to change gear.' : undefined,
       onChange: (loadout) => { run.loadout = loadout; },
       onEquipmentChanged: (event) => window.__armouryEquipped.push(event),
     });
-  }, { emptyOffHand, combat });
+  }, { emptyOffHand, combat, extra });
+  if (extra.deck) return; // the Deck door closes the Armoury onto the editor
   await page.waitForSelector('.armoury .armoury-position-card');
   // The Armory page is one body: the slots on top, the Inventory below.
   await page.waitForSelector('.armoury .armoury-position-card');
@@ -128,6 +131,14 @@ try {
   await confirm.waitFor({ state: 'detached' });
   assert.equal((await sets()).leftHand[0], 'roundShield', 'Equip from the confirm modal changed run.loadout');
 
+  // The Deck door (key D) names the `cards` destination: it opens the Deck tab's editor.
+  await mount(page, true, false, { destination: 'cards', deck: true });
+  await page.waitForFunction(() => window.__deckOpened === true);
+  // Without a deck editor the destination lands on the Armory page with the tab's refusal toast.
+  await mount(page, true, false, { destination: 'cards', deck: false });
+  await page.locator('.as-toast').waitFor();
+  assert.match(await page.locator('.as-toast').innerText(), /Deck editing is unavailable/);
+
   // In combat the equip is still priced by the host: its refusal is the notice and nothing changes.
   await mount(page, true, true);
   await open('Round Shield');
@@ -142,9 +153,11 @@ try {
 
   // Inspect from the Equipment view is a modal, never an aside.
   await mount(page);
-  await page.locator('.armoury-position-card.is-occupied .armament-row-select').first().click();
+  await page.locator('.armoury-position-card[data-slot-position="rightHand:0"] .armament-row-select').click();
   await page.locator('.card-inspection-modal').waitFor();
   assert.equal(await page.locator('.armament-list-inspection').count(), 0, 'no inline Inspect aside');
+  const inspectText = await page.locator('.card-inspection-modal').innerText();
+  assert.ok(/Smithing tier/.test(inspectText), 'the Inspect modal keeps the smithing tier row');
   await page.keyboard.press('Escape');
 
   // Phone width: the slot modal fits the screen.
