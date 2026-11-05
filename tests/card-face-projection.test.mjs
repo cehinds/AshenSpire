@@ -235,3 +235,81 @@ test('an unfamiliar rule of many long sentences still fills at most the face cla
   assert.ok(face.clauses.length >= 1 && face.clauses.length <= FACE_EFFECT_CLAUSES, `clauses: ${face.clauses.length}`);
   assert.ok(face.clauses.every(clause => !/Inspect/.test(clause.html)));
 });
+
+import { FACE_BUDGET } from '../src/model/cardFaceBudget.js';
+const projectRoomy = (def) => {
+  const tokens = staticCardTokens(def);
+  const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
+  return cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), authoredHtml, registries: reg, effects: def.effects, roomy: FACE_BUDGET });
+};
+
+test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 10 px', () => {
+  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 10]);
+  assert.equal(FACE_BUDGET.clauses, 5);
+});
+
+test('a long-rules card carries a roomy projection with its conditional rider; a one-liner is unchanged', () => {
+  const long = projectRoomy(defOf('serratedBlade')), plainText = projection => projection.clauses.map(line => plain(line.html)).join('; ');
+  assert.ok(long.roomy, 'serratedBlade has a roomy reading');
+  assert.match(plainText(long.roomy), /If the target has Bleed/);
+  assert.doesNotMatch(plainText(long), /If the target has Bleed/, 'the compact face is untouched');
+  assert.ok(long.roomy.clauses.length <= FACE_BUDGET.lines);
+  const one = projectRoomy(defOf('guardCounter'));
+  assert.equal(one.roomy, undefined, 'a card that already says everything has no roomy reading');
+});
+
+test('every roomy reading stays inside the budget, never names an Inspect cue, and keeps every compact downside', () => {
+  let roomy = 0;
+  for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }]) {
+    const def = defOf(card.id, extra), projection = projectRoomy(def);
+    if (!projection.roomy) continue;
+    roomy++;
+    const text = projection.roomy.clauses.map(line => plain(line.html)).join('; ');
+    assert.ok(projection.roomy.clauses.length <= FACE_BUDGET.clauses, card.id);
+    assert.ok(text.length <= FACE_BUDGET.characters + 4 * FACE_BUDGET.clauses || projection.roomy.clauses.some(c => c.kind === 'detail'), `${card.id}: ${text}`);
+    assert.doesNotMatch(text, /Inspect|\{/, card.id);
+  }
+  assert.ok(roomy > 100, `expected many roomy faces, got ${roomy}`);
+});
+
+import { roomyBudgetFor } from '../src/model/cardFaceBudget.js';
+test('a profile that cuts the face below the module defaults also caps the roomy reading', () => {
+  assert.equal(roomyBudgetFor({ faceMaxEffects: 2, faceMaxLines: 3 }), FACE_BUDGET, 'the module defaults are lifted by the roomy budget');
+  assert.equal(roomyBudgetFor(null), FACE_BUDGET);
+  assert.equal(roomyBudgetFor({ faceMaxEffects: 1, faceMaxLines: 3 }).clauses, 1);
+  assert.equal(roomyBudgetFor({ faceMaxEffects: 4, faceMaxLines: 2 }).clauses, 2);
+  const capped = roomyBudgetFor({ faceMaxEffects: 1 });
+  let roomy = 0;
+  for (const card of reg.cards.all()) {
+    const def = defOf(card.id), tokens = staticCardTokens(def);
+    const projection = cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), registries: reg, effects: def.effects, roomy: capped,
+      authoredHtml: def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match) });
+    if (projection.roomy) { roomy++; assert.ok(projection.roomy.clauses.length <= 1, card.id); }
+  }
+  assert.ok(roomy > 0, 'a one-clause roomy reading still exists for cards whose single clause was trimmed');
+});
+
+test('every downside the compact face prints survives on the roomy reading, powers with Exhaust included', () => {
+  const COST = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/gi;
+  let both = 0;
+  for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }]) {
+    const def = defOf(card.id, extra), projection = projectRoomy(def);
+    if (!projection.roomy) continue;
+    both++;
+    const wide = projection.roomy.clauses.map(line => plain(line.html)).join('; ').toLowerCase();
+    for (const clause of projection.clauses.filter(line => line.downside || line.kind === 'cost')) {
+      for (const part of plain(clause.html).toLowerCase().match(COST) || []) assert.ok(wide.includes(part), `${card.id}: "${part}" lost from the roomy reading: ${wide}`);
+    }
+    for (const keyword of ['exhaust', 'ethereal']) if ((def.keywords || []).includes(keyword) && projection.clauses.some(line => /exhaust|ethereal/i.test(plain(line.html))))
+      assert.ok(wide.includes(keyword), `${card.id}: ${keyword} keyword lost from the roomy reading`);
+  }
+  assert.ok(both > 100);
+  for (const id of ['goreblood', 'unbreakable', 'sanguinePactCard']) {
+    const card = reg.cards.all().find(c => c.id === id || c.id.endsWith('.' + id));
+    if (!card) continue;
+    const def = defOf(card.id), projection = projectRoomy(def), compact = projection.clauses.map(l => plain(l.html)).join(' ');
+    assert.ok(projection.roomy, `${id} has a roomy reading`);
+    assert.ok(compact.length > 0);
+    assert.match(projection.roomy.clauses.map(l => plain(l.html)).join(' '), /exhaust/i, id);
+  }
+});

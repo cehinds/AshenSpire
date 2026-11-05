@@ -1,12 +1,54 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
 import {layoutMetrics} from '../layoutMetrics.js';
 import {uiConfig} from '../../config/generated/ui.js';
+import {FACE_BUDGET} from '../../model/cardFaceBudget.js';
 // Tunables live in content/config/ui/components/card.json (components.rulesFace.rulesText).
 const FACE_TEXT=uiConfig.components.card.components?.rulesFace?.rulesText||{};
 const RULES_MIN_PX=Number(FACE_TEXT.minPx)||6;
 const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
 const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
 const ruleGeometry = new WeakMap();
+// A rules row may carry two readings as inert <template>s (illustratedCard.js): the compact one it shows by default and a
+// fuller "roomy" one. showReading swaps the visible clauses between them. The compact nodes are the painted ones (card.js
+// binds the damage receipt to their numbers), so they are never cloned: they are set aside while the roomy reading shows
+// and put back as they were. The roomy nodes are fresh clones, so the row announces `facereadingchange` for card.js to bind them.
+const readings = new WeakMap();
+export function showReading(text,reading){
+  if(!text.childNodes||!text.querySelector)return false;
+  let state=readings.get(text);
+  const roomyShown=Boolean(state?.roomy?.length&&state.roomy[0].parentNode===text);
+  if(reading==='compact'){
+    if(roomyShown){
+      for(const node of state.roomy)node.remove();
+      state.roomy=null;
+      const first=text.firstChild;
+      for(const node of state.compact)text.insertBefore(node,first);
+    }else{
+      // Compact is on show (or the row was rewritten in place): what is there now is the painted reading.
+      readings.set(text,{compact:[...text.childNodes].filter(node=>node.nodeName!=='TEMPLATE'),roomy:null});
+    }
+    text.dataset.faceReading='compact';
+    return Boolean(text.querySelector?.(':scope > template[data-face-roomy]'));
+  }
+  const source=text.querySelector?.(':scope > template[data-face-roomy]');
+  if(!source)return false;
+  if(!state||roomyShown||state.compact.some(node=>node.parentNode!==text)){
+    // Reached without a compact pass first: record what shows now.
+    showReading(text,'compact');state=readings.get(text);
+  }
+  for(const node of state.compact)node.remove();
+  const clone=source.content.cloneNode(true);
+  for(const line of clone.querySelectorAll('[data-reading-line]')){line.classList.add('face-line');line.removeAttribute('data-reading-line');}
+  state.roomy=[...clone.childNodes];
+  text.insertBefore(clone,text.firstChild);
+  text.dataset.faceReading='roomy';
+  return true;
+}
+// The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
+// FACE_BUDGET.minPx on screen; a face whose full size is already below that keeps its full size as the floor.
+export function roomyFloor(high,low,zoom){
+  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(FACE_BUDGET.minPx/zoom,high)));
+}
 const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
 // page scale and the loaded fonts, and a full fit is a search of many forced
@@ -102,6 +144,7 @@ export function fitIllustratedCards(cards) {
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
+      const hasRoomy=rules&&showReading(text,'compact')&&Boolean(text.querySelector(':scope > template[data-face-roomy]'));
       const clauses=[...(text.querySelectorAll?.('[data-face-clause]')||[])];
       const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
       const fullRules=face.dataset.fullRules==='true';
@@ -109,7 +152,7 @@ export function fitIllustratedCards(cards) {
       const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
         lines:bounded?Infinity:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
-        hasHiddenRules:face.dataset.rulesHidden==='true'};
+        hasHiddenRules:face.dataset.rulesHidden==='true',hasRoomy};
       // A glance face shows its rules in one or two rendered lines; the font
       // shrinks (to the readable floor) to get there. Rules that still need more
       // keep their real words (owner 2026-11-02: no Inspect replacement text).
@@ -162,7 +205,27 @@ export function fitIllustratedCards(cards) {
     row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
   }
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
-  for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset].join('\u0002');
+  // THE ROOMY READING, IF IT FITS. Each roomy-capable row tries its fuller text at the floor font in three phases (write
+  // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
+  const roomyRows=texts.filter(row=>row.hasRoomy);
+  for(const row of roomyRows){
+    row.floor=roomyFloor(row.high,row.low,zoom);
+    showReading(row.text,'roomy');
+    Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
+  }
+  for(const row of roomyRows){
+    const lineBox=row.floor*row.lineHeight;
+    row.roomy=row.text.scrollHeight<=row.boxHeight+1&&row.text.scrollWidth<=row.text.clientWidth+1
+      &&row.text.scrollHeight<=lineBox*FACE_BUDGET.lines+1;
+  }
+  for(const row of roomyRows){
+    if(!row.roomy)showReading(row.text,'compact');
+    else row.low=Math.max(row.low,row.floor);
+    row.clauses=[...row.text.querySelectorAll('[data-face-clause]')];
+    row.face.dataset.rulesRoomy=String(row.roomy);
+    if(row.roomy)row.text.dispatchEvent(new CustomEvent('facereadingchange',{bubbles:true}));
+  }
+  for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset,row.roomy?1:0].join('\u0002');
   // A face is taken from the cache only whole: its rows then all keep their old answer.
   const unknownFaces=new Set(texts.filter(row=>!fitResults.has(row.fitKey)).map(row=>row.face));
   for(const row of texts)if(!unknownFaces.has(row.face))row.result=fitResults.get(row.fitKey);
@@ -232,7 +295,8 @@ export function fitIllustratedCards(cards) {
     row.face.dataset.rulesOverflow=String(row.overflow);
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
-  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
+  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,fitSignature(face,widths[i]));});
+  // The signature is taken after the reading was chosen (the roomy swap changes the face's text), so a settled face is one pass, not two.
 }
 
 const overflowing=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
