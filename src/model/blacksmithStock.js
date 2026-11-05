@@ -134,7 +134,7 @@ export function commitCoreWeaponArt(registries, run, quote) {
   const shelf = run.shopStock.weaponArts;
   shelf.splice(shelf.findIndex((row) => row.id === plan.id), 1);
   run.shopStock.tradeRevision = plan.revision + 1;
-  return { id: plan.id, spent: plan.cost, instance };
+  return { id: plan.id, spent: plan.cost, instance, instanceId: instance.instanceId };
 }
 
 /**

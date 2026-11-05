@@ -12,6 +12,7 @@ import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock, blacksmithVisitStock } from '../src/engine/shopKinds.js';
 import { blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../src/model/blacksmith.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt, rollTier } from '../src/model/blacksmithStock.js';
+import { addPurchasedCardToDeck, shopCardDeckRefusal } from '../src/model/gameProfileRewards.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { buildActMap } from '../src/engine/actmap.js';
@@ -318,4 +319,26 @@ test('picker: under a cinder quote the selected row, confirm and blockers read c
   // Rest path unchanged: no quote, the stone code decides, no cinders.
   const rest = cardUpgradeModel(coreOut, run, card.instanceId);
   assert.deepEqual([rest.selected.cinders, rest.selected.shortStones], [0, true]);
+});
+
+test('weapon-art receipt names the sideboard instance, and Add to deck moves exactly that card', () => {
+  const run = smithRun(coreOut);
+  const receipt = commitCoreWeaponArt(coreOut, run, coreWeaponArtPlan(coreOut, run, run.shopStock.weaponArts[0].id));
+  assert.equal(receipt.instanceId, receipt.instance.instanceId);
+  assert.ok(run.sideboard.some((card) => card.instanceId === receipt.instanceId));
+  const deck = run.deck.length;
+  assert.equal(addPurchasedCardToDeck(coreOut, run, receipt.instanceId), true);
+  assert.equal(run.deck.length, deck + 1);
+  assert.equal(run.deck.at(-1).instanceId, receipt.instanceId);
+  assert.ok(!run.sideboard.some((card) => card.instanceId === receipt.instanceId));
+});
+
+test('a full deck refuses Add to deck for a bought weapon art and leaves the run untouched', () => {
+  const run = smithRun(coreOut);
+  const receipt = commitCoreWeaponArt(coreOut, run, coreWeaponArtPlan(coreOut, run, run.shopStock.weaponArts[0].id));
+  const settings = { deckMaxSize: run.deck.length, deckMaxUnlimited: false };
+  const before = JSON.stringify(run);
+  assert.equal(shopCardDeckRefusal(coreOut, run, receipt.instanceId, settings), 'full');
+  assert.throws(() => addPurchasedCardToDeck(coreOut, run, receipt.instanceId, settings), (error) => error.code === 'full');
+  assert.equal(JSON.stringify(run), before);
 });
