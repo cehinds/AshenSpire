@@ -2251,8 +2251,10 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .upgrade-confirm-faces { flex-wrap: nowrap; gap: 0.4rem 0.8rem; }
 .upgrade-confirm-faces .card-upgrade-face { flex: 1 1 0; min-width: 0; padding: 0.6rem 0.4rem 0; display: flex; justify-content: center; }
 .upgrade-confirm-face-holder { position: relative; flex: none; }
-.upgrade-confirm-face-holder > .card { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: scale(var(--face-scale, 1)) !important; }
-.upgrade-confirm-face-holder:not([style]) > .card { position: relative; }
+.upgrade-confirm-face-holder > :is(.card, .equipment-poker-card, .collectible-poker-card) { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform: scale(var(--face-scale, 1)) !important; }
+.upgrade-confirm-face-holder:not([style]) > :is(.card, .equipment-poker-card, .collectible-poker-card) { position: relative; }
+/* An item face (the armament's own card) has no intrinsic width: it is drawn at the glance width, then scaled to fit like a card. */
+.upgrade-confirm-face-holder > :is(.equipment-poker-card, .collectible-poker-card) { width: var(--card-w-glance, 182.4px); max-width: none; margin-inline: 0; }
 /* The blacksmith's choice: two or three after-faces side by side, stacked on a phone; the picked one is lit. */
 .card-upgrade-options { display: grid; gap: 0.5rem; padding-bottom: 0.7rem; min-width: 0; }
 .card-upgrade-option-list { display: flex; flex-wrap: nowrap; gap: 0.6rem; min-width: 0; }
