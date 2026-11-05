@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Rows show melee and reach** ([#2584](https://github.com/cehinds/AshenSpire/pull/2584), `0.7.3.180`). In combat, fighters at melee stand in the front row and fighters at Reach stand in the back row, on both sides, and they move between rows as the distance changes.
+- **Rows show melee and reach** ([#2584](https://github.com/cehinds/AshenSpire/pull/2584), `0.7.3.182`). In combat, fighters at melee stand in the front row and fighters at Reach stand in the back row, on both sides, and they move between rows as the distance changes.
 - **Smaller, quicker floaters** ([#2579](https://github.com/cehinds/AshenSpire/pull/2579), `0.7.3.180`). Combat floaters are about 25 percent smaller and follow each other about 35 percent faster, with the same lifetime.
 - **Gap between party and enemy rows** ([#2583](https://github.com/cehinds/AshenSpire/pull/2583), `0.7.3.178`). Combat grid shows a strip of open ground with firmer edges between the party and the enemies, and the party gets a front and a back row, both clear of the hand.
 - **Steadier hand and enemy intent** ([#2582](https://github.com/cehinds/AshenSpire/pull/2582), `0.7.3.176`). The new hand arrives on the draw beat instead of swapping at the end, enemy intent no longer flickers to ? between an enemy's moves, and other cards hold their place when you play one, then close up.
