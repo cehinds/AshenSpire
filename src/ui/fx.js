@@ -1087,6 +1087,14 @@ const traceBeat = (step, detail) => {
   if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
 };
 
+// The receipt that says a beat's actor changes stance: Core 2 card plays emit combatStanceChanged (prepareTacticalCard /
+// setCombatStance); the legacy enterStance effect emits stanceEntered. Both are drawn before the action (owner 2026-11-05).
+const STANCE_LEAD_TYPES = new Set(['stanceEntered', 'combatStanceChanged']);
+function stanceLeadEvent(beat) {
+  return beat.events.find(e => STANCE_LEAD_TYPES.has(e.type)
+    && (e.type === 'stanceEntered' || !beat.actorId || (e.sourceId || e.targetId) === beat.actorId));
+}
+
 // Is this figure in its stance? 'out' — mid-action or in a pose other than its
 // rest; 'in'; or 'unknown' for a figure that cannot tell. The stage contracts
 // differ, so each is read through the fields it actually exposes:
@@ -1164,8 +1172,8 @@ export function playTimeline(events, ctx, done) {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
       // Owner 2026-11-05: a stance this beat enters is drawn here, before the action word and the action animation.
-      const entered = beat.events.find(e => e.type === 'stanceEntered');
-      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance); }
+      const entered = stanceLeadEvent(beat);
+      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
       ctx.onIntent?.(beat);
     },
     onAction: beat => {
@@ -1477,8 +1485,8 @@ function playLegacyTimeline(events, ctx, done) {
     // stance when the swing, cast or guard starts, never switched after it. No time is added; the intent and word
     // waits that already precede the action still run.
     if (actorEl && ctx.onStanceLead) {
-      const stanceEvent = beat.events.find((e) => e.type === 'stanceEntered');
-      if (stanceEvent) { safe(() => ctx.onStanceLead(beat, stanceEvent)); traceBeat('stance-change', stanceEvent.stance); }
+      const stanceEvent = stanceLeadEvent(beat);
+      if (stanceEvent) { safe(() => ctx.onStanceLead(beat, stanceEvent)); traceBeat('stance-change', stanceEvent.stance || stanceEvent.maneuver); }
     }
     const playBeat = () => {
     if (finished) return;

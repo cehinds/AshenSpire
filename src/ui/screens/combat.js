@@ -3718,7 +3718,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears)) renderCombatantStage({ fit: false });
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
-        // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts.
+        // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts. Core 2 plays
+        // report it as combatStanceChanged, the legacy enterStance effect as stanceEntered. appliedVisualEvents makes
+        // onBeatApplied's applyVisualEvents skip what this already led, and setStance repeats the same pose, so no flicker.
         onStanceLead: beat => {
           if (beat.actorId !== 'player') return;
           applyVisualEvents(beat.events.filter(event => event.type === 'cardPlayed'));

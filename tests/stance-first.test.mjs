@@ -8,6 +8,10 @@ import { playTimeline, setAnimSpeed, setBeatOrder, stanceState } from '../src/ui
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
 
 test('stanceState reads each stage contract', () => {
   assert.equal(stanceState(null), 'in');
@@ -92,4 +96,43 @@ test('a stance-changing attack plays stance change, then the action animation, t
   });
   assert.equal(completed, 1);
   assert.deepEqual(order.filter((step, i) => step !== 'hit' || i === order.lastIndexOf('hit')).slice(0, 3), ['stance', 'action', 'hit']);
+});
+
+// Core 2 card plays change stance through prepareTacticalCard / setCombatStance, which emit combatStanceChanged
+// (stanceEntered belongs to the legacy enterStance effect). The receipts here come from the engine, not by hand.
+test('a Core 2 card play emits combatStanceChanged and leads with the stance before the action and the hit', (t) => {
+  const registries = createRegistries(contentBundle);
+  const combat = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20, stamina: 20, maxStamina: 20, energyMax: 20,
+      drawPerTurn: 1, deck: [{ cardId: 'strike', instanceId: 'x' }] } });
+  const enemyId = combat.enemies[0].id;
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemyId });
+  assert.ok(events.some(e => e.type === 'combatStanceChanged'), 'Core 2 emits combatStanceChanged');
+  assert.ok(!events.some(e => e.type === 'stanceEntered'), 'and not the legacy stanceEntered');
+
+  setCombatPacing();
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
+  const order = [];
+  let completed = 0, applied = 0;
+  withKitDom((dom) => {
+    const anchor = dom.document.createElement('div'), e1 = dom.document.createElement('div');
+    registerStage(anchor, { play: () => true, hold() {}, settle() {} });
+    registerStage(e1, { play: () => { order.push('hit'); return true; }, hold() {}, settle() {} });
+    try {
+      playTimeline(events, {
+        layer: dom.document.createElement('div'), combatEl: dom.document.createElement('div'),
+        anchorFor: (id) => (id === 'player' ? anchor : e1),
+        onStanceLead: (beat, event) => order.push(`stance:${event.type}`),
+        animateActor: () => { order.push('action'); return { impactMs: 100, totalMs: 300, hold() {}, cancel() {} }; },
+        onBeatApplied: () => { applied++; }, onFlush() {},
+      }, () => completed++);
+      for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
+    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  });
+  assert.equal(completed, 1);
+  assert.ok(applied > 0);
+  assert.deepEqual(order.filter((step, i) => step !== 'hit' || i === order.lastIndexOf('hit')).slice(0, 3),
+    ['stance:combatStanceChanged', 'action', 'hit']);
+  assert.equal(order.filter(step => step.startsWith('stance')).length, 1, 'the stance leads exactly once');
 });
