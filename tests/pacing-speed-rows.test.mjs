@@ -77,5 +77,6 @@ test('the CSS fade starts at two thirds of the life the script sets', () => {
   assert.match(css, /@keyframes num-life \{[\s\S]*?66\.6% \{ opacity: 1/);
   assert.match(css, /num-life var\(--float-ms/);
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
-  assert.match(fx, /setTimeout\(\(\) => el\.remove\(\), life \+ 60\)/);
+  assert.match(fx, /lifeMs: life \+ 60/);
+  assert.match(fx, /setTimeout\(\(\) => el\.remove\(\), item\.lifeMs\)/);
 });

@@ -75,6 +75,7 @@ export function getBeatOrder() {
 // One presentation-only multiplier for the entire ordered action. The classic
 // pace remains a compatibility choice, with ×1 preserving its relative scale.
 import { ACTION_PACING, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
+import { FLOATER_STACK } from './floaterStack.js';
 // The speed multiplier in force: the manual one, or the auto-combat one while
 // auto-combat is on (owner, D11, 2026-10-18). The gap between stages is the
 // player's "Pause between steps" row (combatStepPause, ms).
@@ -89,6 +90,12 @@ export function setCombatPacing(settings = {}) { combatPacing = resolvePacing(se
 export function floaterLifeMs() {
   if (getAnimSpeed() === 'instant') return COMBAT_TIMING.floaterInstantMs;
   return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / combatPacing.speed));
+}
+// The wait between two floaters spawning over one combatant, in ms (owner, 2026-11-05; content/config floaterStack.json).
+// It follows the floater life, so it scales with the Combat speed multiplier and shortens on Instant exactly as
+// the life does, never below 1 ms.
+export function floaterStaggerMs() {
+  return Math.max(1, Math.round(FLOATER_STACK.floaterStaggerMs * floaterLifeMs() / COMBAT_TIMING.floaterLifeMs));
 }
 // How long a callout word stays on screen, in ms. Presentation only: no beat waits on it.
 export function calloutLifeMs() {

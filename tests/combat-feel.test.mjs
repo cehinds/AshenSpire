@@ -385,8 +385,9 @@ test('a damage float sizes by its share of the target max HP; no max HP keeps th
   assert.doesNotMatch(fullBlock.fullHit.cls, /\bdmg\b/);
   assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct35', 'the tier keys off the full hit the number shows (owner, 2026-11-02)');
   const css = src('styles/combat.css');
-  assert.match(css, /\.float-num\.pct20 \{ --pop: 1\.6; font-size: 3\.6rem; \}/);
-  assert.match(css, /\.float-num\.pct35 \{ --pop: 1\.9; font-size: 4\.6rem; \}/);
+  // One text size for every floater (owner, 2026-11-05): the big-hit tiers differ by weight and colour only.
+  assert.match(css, /\.float-num\.heavy, \.float-num\.pct20 \{ font-weight: 900; \}/);
+  assert.match(css, /\.float-num\.crit, \.float-num\.pct35 \{ font-weight: 900; color: #ff4a4a; \}/);
 });
 
 
