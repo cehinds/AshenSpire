@@ -66,3 +66,30 @@ test('an expansion stage with only settle/play settles before the ordered waits'
   assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs, 'no additional lead for an unknown stage');
 });
 
+
+test('a stance-changing attack plays stance change, then the action animation, then the hit', (t) => {
+  setCombatPacing();
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  t.mock.method(globalThis.performance, 'now', () => Date.now());
+  const order = [];
+  let completed = 0;
+  withKitDom((dom) => {
+    const anchor = dom.document.createElement('div'), e1 = dom.document.createElement('div');
+    registerStage(anchor, { play: () => true, hold() {}, settle() {} });
+    registerStage(e1, { play: () => { order.push('hit'); return true; }, hold() {}, settle() {} });
+    try {
+      playTimeline([{ type: 'cardPlayed', cardType: 'attack', cardId: 's', cardInstanceId: 'c', targetId: 'e1' },
+        { type: 'stanceEntered', stance: 'smash', playerId: 'player' },
+        { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 3, blocked: 0 }], {
+        layer: dom.document.createElement('div'), combatEl: dom.document.createElement('div'),
+        anchorFor: (id) => (id === 'player' ? anchor : e1),
+        onStanceLead: () => order.push('stance'),
+        animateActor: () => { order.push('action'); return { impactMs: 100, totalMs: 300, hold() {}, cancel() {} }; },
+        onBeatApplied() {}, onFlush() {},
+      }, () => completed++);
+      for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
+    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  });
+  assert.equal(completed, 1);
+  assert.deepEqual(order.filter((step, i) => step !== 'hit' || i === order.lastIndexOf('hit')).slice(0, 3), ['stance', 'action', 'hit']);
+});

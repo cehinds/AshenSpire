@@ -1068,6 +1068,7 @@ export function groupBeats(events) {
 /**
  * playTimeline(events, ctx, done)
  *   ctx = animateEvents ctx + {
+ *     onStanceLead(beat, event) — draw a stance this beat enters, before its action animation starts
  *     onBeatApplied(beat)  — apply this beat's events to the display state
  *                            (HP/block bars, hand, statuses) AFTER its visuals,
  *     onFlush()            — skip: jump display to true final state,
@@ -1162,6 +1163,9 @@ export function playTimeline(events, ctx, done) {
     onIntent: beat => {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
+      // Owner 2026-11-05: a stance this beat enters is drawn here, before the action word and the action animation.
+      const entered = beat.events.find(e => e.type === 'stanceEntered');
+      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance); }
       ctx.onIntent?.(beat);
     },
     onAction: beat => {
@@ -1468,6 +1472,13 @@ function playLegacyTimeline(events, ctx, done) {
         // A stage that cannot report its pose still settles, but nothing waits for it.
         safe(() => stage.settle());
       }
+    }
+    // A card that enters a stance draws the stance before its action plays (owner 2026-11-05): the figure is in its new
+    // stance when the swing, cast or guard starts, never switched after it. No time is added; the intent and word
+    // waits that already precede the action still run.
+    if (actorEl && ctx.onStanceLead) {
+      const stanceEvent = beat.events.find((e) => e.type === 'stanceEntered');
+      if (stanceEvent) { safe(() => ctx.onStanceLead(beat, stanceEvent)); traceBeat('stance-change', stanceEvent.stance); }
     }
     const playBeat = () => {
     if (finished) return;

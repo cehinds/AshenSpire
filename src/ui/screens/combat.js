@@ -3718,6 +3718,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears)) renderCombatantStage({ fit: false });
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
+        // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts.
+        onStanceLead: beat => {
+          if (beat.actorId !== 'player') return;
+          applyVisualEvents(beat.events.filter(event => event.type === 'cardPlayed'));
+          stageFor($('.combatant.player .sprite'))?.setStance?.(playerStance(null));
+        },
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
