@@ -4,7 +4,9 @@ import { combatEnvironment, mapTerrainSetting } from './environmentArt.js';
 import { hasProfile } from './locationPresentation.js';
 
 const nodeProfiles = new Map(locationPresentation.nodeProfiles.map(row => [row.nodeId, row.profileId]));
-const REGION_SETTINGS = {
+// One table names the layered scene (its backdrop and ground travel together)
+// per region and setting, so the two cannot be picked apart.
+export const REGION_SETTINGS = {
   'ashen-crown': { road: 'open-road', city: 'city-street', town: 'city-street', castle: 'castle-grounds', dungeon: 'dungeon-corridor' },
   'hollow-weald': { road: 'forest-path', forest: 'forest-path', city: 'village-lane', town: 'village-lane' },
   'pale-marches': { city: 'snowy-street', town: 'snowy-street', street: 'snowy-street' },

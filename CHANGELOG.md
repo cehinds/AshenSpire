@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Gap between party and enemy rows** ([#2583](https://github.com/cehinds/AshenSpire/pull/2583), `0.7.3.172`). Combat grid shows a strip of open ground with firmer edges between the party and the enemies, and the party gets a front and a back row, both clear of the hand.
+- **Gap between party and enemy rows** ([#2583](https://github.com/cehinds/AshenSpire/pull/2583), `0.7.3.174`). Combat grid shows a strip of open ground with firmer edges between the party and the enemies, and the party gets a front and a back row, both clear of the hand.
+- **City combat backdrop matches its floor** ([#2581](https://github.com/cehinds/AshenSpire/pull/2581), `0.7.3.174`). Drowned-coast city fights no longer draw a starwatch night sky over coast ground; scenes with mismatched background and floor art are skipped when a matched one exists.
 - **Range capped at Reach** ([#2578](https://github.com/cehinds/AshenSpire/pull/2578), `0.7.3.172`). Core fights now cap range at Reach: Ranged cards and the shortbow read and play as Reach, Retreat stops at Reach, and upgrades no longer offer Reach to Ranged (older saves keep three bands).
 - **Reward selection without reload** ([#2580](https://github.com/cehinds/AshenSpire/pull/2580), `0.7.3.170`). Selecting a card on the card reward screen no longer reloads the window; only the action buttons update, so focus and scroll stay put.
 - **Player HUD panel always shown** ([#2577](https://github.com/cehinds/AshenSpire/pull/2577), `0.7.3.168`). The player's selected health panel is shown at all times beside the player, with no small overhead bar and no permanent glow on the character.

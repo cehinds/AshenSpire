@@ -1,5 +1,6 @@
 import { locationPresentation as data } from '../content/generated/locationPresentation.js';
 import { ENVIRONMENTS } from '../content/environments.js';
+import { MISMATCHED_ATLAS_SCENES } from '../content/sceneThemes.js';
 
 function hash(text) {
   let h = 2166136261;
@@ -52,7 +53,10 @@ export function resolveLocationPresentation({ nodeId, seedString = '', profileId
   const pool = data.sceneProfiles.filter(row => row.profileId === profileId);
   const weather = weatherId === 'any' ? pool : pool.filter(row => ['any', weatherId].includes(sceneMeta.get(row.sceneId).weatherId));
   const timed = (weather.length ? weather : pool).filter(row => sceneMeta.get(row.sceneId).timeId === timeId);
-  const candidates = timed.length ? timed : weather.length ? weather : pool;
+  const fitting = timed.length ? timed : weather.length ? weather : pool;
+  // A scene whose background and floor come from different art sets loses to a matched one.
+  const matched = fitting.filter(row => !MISMATCHED_ATLAS_SCENES[row.sceneId]);
+  const candidates = matched.length ? matched : fitting;
   if (!candidates.length) throw Error(`No compatible scene for ${profileId}`);
   let chosen = candidates.find(row => row.sceneId === savedSceneId);
   if (!chosen) {
