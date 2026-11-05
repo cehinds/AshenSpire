@@ -327,7 +327,7 @@ test('confirm succeeds only inside the bounds', () => {
 test('the doors: free opens the Armoury, restOnly only a deckEdit place\'s Rest, off none', () => {
   const shrine = locationServices(REG, locationTags(REG, 'shrine'));
   const camp = locationServices(REG, locationTags(REG, 'camp'));
-  for (const id of ['shrine', 'inn', 'chapel']) assert.ok(locationTags(REG, id).includes('deckEdit'), `${id} carries deckEdit`);
+  for (const id of ['shrine', 'inn']) assert.ok(locationTags(REG, id).includes('deckEdit'), `${id} carries deckEdit`);
   assert.equal(locationTags(REG, 'camp').includes('deckEdit'), false, 'the camp does not');
   assert.deepEqual({ ...deckEditorDoors({ settings: {}, services: shrine }) }, { armoury: true, rest: false });
   assert.deepEqual({ ...deckEditorDoors({ settings: { deckEditingWhere: 'restOnly' }, services: shrine }) }, { armoury: false, rest: true });
@@ -836,13 +836,13 @@ test('DOM: a finger drag moves cards between panes and reorders rows (pointer ev
 test('DOM: the editor is a real modal — Tab wraps inside it, and the page under it is inert', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom((dom, win) => {
-    // The page the editor opens over: the atlas header's Save & quit and a Deck door.
+    // The page the editor opens over: the map header's Save & quit and a Deck door.
     const app = document.createElement('div');
     app.id = 'app';
     const saveQuit = document.createElement('button');
-    saveQuit.setAttribute('data-atlas-quit', '');
+    saveQuit.setAttribute('data-map-quit', '');
     const door = document.createElement('button');
-    door.setAttribute('data-atlas-deck', '');
+    door.setAttribute('data-map-deck', '');
     app.append(saveQuit, door);
     document.body.append(app);
     const run = freshRun();

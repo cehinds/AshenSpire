@@ -8,14 +8,14 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssetCatalog, readMissing } from '../tools/asset-catalog.mjs';
-import { validateMaps,loadMapFiles, strings, assetIds, resolveAtlasPath } from '../tools/maps-validate.mjs';
+import { validateMaps,loadMapFiles, strings, assetIds } from '../tools/maps-validate.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const files = loadMapFiles();
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'maps-json-'));
-  for (const rel of ['engine/contracts', 'engine/maps', 'games/ashenspire/maps', 'src/content/mapconfig.js', 'src/content/generated/mapActShape.js', 'src/content/generated/mapShapeLimits.js', 'src/content/generated/legacyActBosses.js', 'src/engine/mapgen.js', 'content/source/worldAtlas.json', 'content/source/mapActShape.json']) {
+  for (const rel of ['engine/contracts', 'engine/maps', 'games/ashenspire/maps', 'src/content/mapconfig.js', 'src/content/generated/mapActShape.js', 'src/content/generated/mapShapeLimits.js', 'src/content/generated/legacyActBosses.js', 'src/engine/mapgen.js', 'content/source/mapActShape.json']) {
     mkdirSync(dirname(join(dir, rel)), { recursive: true });
     cpSync(join(ROOT, rel), join(dir, rel), { recursive: true });
   }
@@ -33,7 +33,7 @@ test('every node type the generator uses has a node component', () => {
   const nodes = Object.values(files.components).filter(c => c.kind === 'node').map(c => c.id).sort();
   for (const type of ['monster', 'event', 'elite', 'shrine', 'merchant', 'treasure', 'boss']) assert.ok(nodes.includes(type), type);
   const kinds = new Set(Object.values(files.components).map(c => c.kind));
-  for (const kind of ['route', 'landmark', 'region']) assert.ok(kinds.has(kind), kind);
+  for (const kind of ['route']) assert.ok(kinds.has(kind), kind);
 });
 
 test('the proposed 0.8.0 rulings sit beside the current generator', () => {
@@ -45,12 +45,6 @@ test('the proposed 0.8.0 rulings sit beside the current generator', () => {
     assert.ok(p.constraints.some(c => c.rule === 'minEliteChances' && c.value === 2));
     assert.deepEqual(m.generator.weights, { monster: 45, event: 22, shrine: 12, elite: 8, merchant: 5 });
   }
-});
-
-test('the atlas path resolves to the world map', () => {
-  const atlas = JSON.parse(readFileSync(join(ROOT, 'content/source/worldAtlas.json'), 'utf8'));
-  assert.equal(resolveAtlasPath(atlas, 'world_maps[mapId=fractured-realm]').authoringTargetNodes, 200);
-  assert.equal(resolveAtlasPath(atlas, 'world_maps[mapId=nowhere]'), undefined);
 });
 
 test('no glyphs: every string is ASCII', () => {
@@ -67,16 +61,16 @@ test('drift in the map shape (generated/mapActShape.js) fails the check', async 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('a weight naming a missing component, or a broken atlas path, fails the check', async () => {
+test('a weight naming a missing component, or a dangling atlas ref, fails the check', async () => {
   const dir = sandbox();
   try {
     const file = join(dir, 'games/ashenspire/maps/act1.json');
     const m = JSON.parse(readFileSync(file, 'utf8'));
-    m.generator.weights.ghost = 1; m.atlas.path = 'maps[mapId=missing]';
+    m.generator.weights.ghost = 1; m.atlas = { ref: 'content/source/noSuchAtlas.json' };
     writeFileSync(file, JSON.stringify(m));
     const { problems } = await validateMaps({ root: dir });
     assert.ok(problems.some(p => /ghost/.test(p)));
-    assert.ok(problems.some(p => /atlas path/.test(p)));
+    assert.ok(problems.some(p => /atlas ref/.test(p)));
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

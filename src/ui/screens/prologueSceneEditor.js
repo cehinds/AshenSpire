@@ -212,8 +212,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     viewport.classList.toggle('pse-phone', layout === 'mobile');
     const config = prologueConfig(settings);
     const index = config.scenes.findIndex(scene => scene.id === selected);
-    const run = { class: classInput.value, seatOrder: path === 'crownfall' ? [] : [path],
-      journey: path === 'crownfall' ? { anchors: { start: 'crownfall' } } : undefined };
+    const run = { class: classInput.value, seatOrder: path === 'crownfall' ? [] : [path] };
     cleanup = mountPrologue(viewport, { settings, run, startScene: index, preview: true, editorPreview: true, forceLayout: layout });
     viewport.append(transformBox);
     alignTransformBox();

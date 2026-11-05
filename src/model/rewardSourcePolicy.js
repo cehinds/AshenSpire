@@ -44,14 +44,3 @@ export function pendingRewardCheckpoint(rewards, { source, after }) {
     chosenDraftNodeIds: {},
   };
 }
-
-/**
- * settleTreasureNode(run, completeJourneyNode) — a map treasure's node is done
- * the moment its chest opens. On a World Journey its atlas point is completed
- * HERE, before the door checkpoints its offer (SPEC §15.4): the checkpoint's
- * Continue only persists and returns to the map, so a node left open now
- * would stay open after a reload. A classic map has no journey node.
- */
-export function settleTreasureNode(run, completeJourneyNode) {
-  if (run.journey) completeJourneyNode(run.journey);
-}

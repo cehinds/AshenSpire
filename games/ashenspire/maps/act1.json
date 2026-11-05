@@ -166,10 +166,6 @@
     "boss"
   ],
   "environment": "bg.bg_act1",
-  "atlas": {
-    "ref": "content/source/worldAtlas.json",
-    "path": "world_maps[mapId=fractured-realm]"
-  },
   "assets": [
     "map.parchment_act1"
   ]

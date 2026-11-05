@@ -24,7 +24,6 @@ import { validateContent } from '../src/model/validate.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { ownership, equipPiece } from '../src/model/loadout.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
-import { innInTown } from '../src/model/locations.js';
 import { MARKET_SHELVES, SHOP_KIND_SCREENS, shopStockProblems, shopSettingsProblems } from '../src/model/shopKinds.js';
 import { MARKET_ADDITIONS, applyShopPriceMult } from '../src/model/marketStock.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -286,8 +285,6 @@ test('FINISH: inn rest runs the inn\'s own visit (arrive, rest, leave), is bough
 });
 
 test('inn rest is always offered where the town keeps an inn, even at chance 0, and never when disabled', () => {
-  assert.equal(innInTown(REG, 'crownfall'), true);
-  assert.equal(innInTown(REG, 'no-such-town'), false);
   const zero = registriesWith({ [`${PREFIX}market.innRest.chance`]: 0 });
   const here = marketRun(zero, { innHere: true }).run;
   assert.ok(here.shopStock.offerings.includes('innRest'));
@@ -597,21 +594,20 @@ test('a bought armour set this build does not know archives the save by name, li
 // Review of #1374 (should-fix and nits), and Codex's third round
 // ---------------------------------------------------------------------------
 
-test('an atlas market and a classic merchant both scale every price by priceMult, and main.js opens both through the one door (review, #1374)', () => {
+test('a classic merchant scales every price by priceMult, and main.js opens it through the one door (review, #1374)', () => {
   const run = createRunState({ seed: 8, classId: 'reaver', registries: OUT });
-  const plain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 1 });
-  const dear = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 2 });
+  const plain = applyShopPriceMult(buildMarketStock(OUT, createRng(8), run, { meta: {}, innInTown: true }), 1);
+  const dear = applyShopPriceMult(buildMarketStock(OUT, createRng(8), run, { meta: {}, innInTown: true }), 2);
   assert.ok(plain.offerings.includes('innRest'), 'a town with an inn always offers the rest');
   assert.equal(dear.innRest.price, plain.innRest.price * 2);
   assert.equal(dear.smithStones.price, plain.smithStones.price * 2);
-  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) dear[kind].forEach((item, i) => assert.equal(item.cost, plain[kind][i].cost * 2, `atlas ${kind}[${i}]`));
+  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) dear[kind].forEach((item, i) => assert.equal(item.cost, plain[kind][i].cost * 2, `${kind}[${i}]`));
   assert.equal(dear.removeCost, plain.removeCost * 2);
   const merchant = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 2 });
   const merchantPlain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 1 });
   assert.equal(merchant.smithStones.price, merchantPlain.smithStones.price * 2);
   // main.js opens both doors through it. Custom Climb's shop price mod is gone (cleanup 3f), so no run multiplier is passed.
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'atlas'/);
   assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'merchant'/);
   assert.doesNotMatch(main, /shopPriceMult/);
   assert.doesNotMatch(main, /buildMarketStock\(registries, rng, run, \{ meta: saves\.loadMeta\(\), innInTown/);
@@ -1180,4 +1176,48 @@ test('an unsold offer this build no longer knows is pruned at the load door, nev
   const storage = createMemoryStorage();
   createSaveManager(storage).saveRun(bad, rng);
   assert.equal(createSaveManager(storage).loadRun(OUT), null);
+});
+
+test('owner 2026-11-05: a fresh run owns only its starting armour, not the profile wardrobe', () => {
+  const unlockedIds = [...new Set(OUT.equipment.armour.map((p) => p.unlock).filter(Boolean))];
+  const meta = { unlocked: unlockedIds };
+  const { run } = marketRun(OUT, { meta });
+  const sets = OUT.equipment.armour.filter((p) => p.classId === run.class);
+  const locked = sets.filter((p) => p.unlock);
+  assert.ok(locked.length > 0, 'the class has profile-gated sets');
+  const mine = ownership(OUT, { meta, loadout: run.loadout });
+  for (const p of locked) {
+    if (p.id === run.loadout.creationArmourGrant?.id) continue;
+    assert.equal(mine.has(p), false, `${p.id} is not owned by a fresh run`);
+    assert.equal(ownership(OUT, { meta, loadout: null, profileWardrobe: true }).has(p), true, `${p.id} is in the profile wardrobe`);
+  }
+  const rows = inventoryRows(OUT, run, meta).filter((row) => row.category === 'Armour').map((row) => row.id);
+  const granted = run.loadout.creationArmourGrant;
+  assert.ok(!granted || rows.includes(granted.id), 'the starting set is listed');
+  for (const p of locked) if (p.id !== granted?.id) assert.ok(!rows.includes(p.id), `${p.id} is not listed`);
+});
+
+test('owner 2026-11-05: a profile-unlocked set an older save already wears stays owned', () => {
+  const sets = (OUT.equipment.armour || []);
+  const { run } = marketRun(OUT, { meta: { unlocked: [] } });
+  const piece = sets.find((p) => p.classId === run.class && p.unlock && p.id !== run.loadout.creationArmourGrant?.id);
+  const loadout = structuredClone(run.loadout);
+  loadout.sets.armor[0] = piece.id;
+  assert.equal(ownership(OUT, { meta: { unlocked: [piece.unlock] }, loadout }).has(piece), true);
+});
+
+test('owner 2026-11-05: loading an older save grants a worn profile-unlocked set to the run', () => {
+  const { run, rng } = marketRun(OUT, { meta: { unlocked: [] } });
+  const piece = OUT.equipment.armour.find((p) => p.classId === run.class && p.unlock && p.id !== run.loadout.creationArmourGrant?.id);
+  run.loadout.sets.armor[0] = piece.id;
+  run.loadout.boughtArmour = [];
+  const back = reload(run, rng, OUT);
+  const meta = { unlocked: [piece.unlock] };
+  assert.ok(back.loadout.boughtArmour.some((r) => r.classId === piece.classId && r.id === piece.id), 'recorded at load');
+  const owned0 = ownership(OUT, { meta, loadout: back.loadout });
+  assert.equal(equipPiece(OUT, back.loadout, 'armor', 0, null, owned0, { inCombat: false, classId: back.class }), true);
+  const owned = ownership(OUT, { meta, loadout: back.loadout });
+  assert.ok(owned.has(piece), 'still owned once unequipped');
+  assert.ok(inventoryRows(OUT, back, meta).some((r) => r.category === 'Armour' && r.id === piece.id), 'still listed');
+  assert.equal(equipPiece(OUT, back.loadout, 'armor', 0, piece.id, owned, { inCombat: false, classId: back.class }), true);
 });
