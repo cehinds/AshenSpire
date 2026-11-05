@@ -84,12 +84,18 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     const column = el('div', { class: `reward-choice-option${unavailable ? ' is-owned' : ''}`, dataset: { pickId: String(index) } });
     const face = card ? renderCard(registries, { cardId: option.id, instanceId: `offer:${index}`, upgraded: false, ...(option.rank > 1 ? { rank: option.rank } : {}) }, {
       rules: run, surface: 'reward', level: 'glance', actionOwnsTouch: true,
+      // The selected card shows the same (i) badge as the combat hand; it is the way in to the inspector.
+      infoBadge: true,
       // Reading a reward never chooses it; the chooser owns that action.
       only: [],
     }) : equipment ? renderEquipmentCard(registries, definition, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
       : renderCollectibleCard(registries, definition, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance' }).card;
     face.classList.add('reward-choice-face'); face.dataset.pickId = String(index);
-    if (!unavailable) face.addEventListener('click', () => select(index));
+    // First tap selects; a tap on the already-selected card face opens the inspector (owner, 2026-11-05).
+    if (!unavailable) face.addEventListener('click', () => {
+      if (card && selected === index && !pending && !reviewing && !completed) openBoundCardInspection(face, face);
+      else select(index);
+    });
     const control = button({ label: definition.name, disabled: unavailable, className: 'class-pick reward-node reward-pick reward-choice-button', attrs: { type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { pickId: String(index) } } });
     control.addEventListener('click', () => select(index));
     column.append(face, control); strip.append(column); choices.push({ face, control });
