@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Tool leftovers cleared** ([#2534](https://github.com/cehinds/AshenSpire/pull/2534), `0.7.3.106`). Dead banner scripts, orphaned preview files and stale notes from the removed authoring tools are gone, and the Reaver greatsword frame checks are back.
+- **Tool leftovers cleared** ([#2534](https://github.com/cehinds/AshenSpire/pull/2534), `0.7.3.108`). Dead banner scripts, orphaned preview files and stale notes from the removed authoring tools are gone, and the Reaver greatsword frame checks are back.
 
 ## 2026-11-04
 
