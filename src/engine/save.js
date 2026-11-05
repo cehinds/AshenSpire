@@ -47,7 +47,6 @@ import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
-import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
@@ -999,15 +998,8 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         const seatProblems = seatOrderProblems(run.seatOrder, registries);
         if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
         const mapAct = run.actNumber;
-        if (run.journey) {
-          // deserializeRun validated the pinned manifest. Its graph is a derived
-          // projection, and its dungeon may belong to a different classic act.
-          for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
-          run.mapGraph = journeyGraph(run.journey);
-        } else {
-          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
-          run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
-        }
+        assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
+        run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
         // A hand slot carried three weapon sets until 2026-11-01 and carries one
         // now. A save that holds a piece in set 2 or 3 (or an active set past the
         // first) keeps the piece: it moves to storage, the extra cells are cut,
@@ -1131,7 +1123,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           // art or a rolled card this build no longer has is pruned.
           cardKnown: (id) => registries.cards.has(id),
         };
-        const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
+        const stocks = [['shopStock', run.shopStock]];
         for (const [field, stock] of stocks) {
           const removed = pruneUnknownAdditionOffers(stock, known);
           if (!removed.length) continue;
