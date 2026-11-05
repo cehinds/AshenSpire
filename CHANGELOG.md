@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Equip or add to deck after buying** ([#2572](https://github.com/cehinds/AshenSpire/pull/2572), `0.7.3.152`). Shop purchases now offer to add a bought card to your deck or library, and to equip a bought weapon or armour or keep it in inventory.
 - **More rules text on card faces** ([#2567](https://github.com/cehinds/AshenSpire/pull/2567), `0.7.3.152`). Cards now print more of their rules on the face, up to five lines at a smaller font when it fits, and fall back to the short face with Inspect when it does not.
 - **Battlefield settings retired.** ([#2561](https://github.com/cehinds/AshenSpire/pull/2561), `0.7.3.150`). The Battlefield and formation settings are gone from Advanced and Display; saved formation keys are cleared on reset or sync, and the map header seed defaults off.
 - **Combat rewards 3–5, more varied** ([#2566](https://github.com/cehinds/AshenSpire/pull/2566), `0.7.3.148`). Post-combat card rewards now offer a random 3 to 5 choices, lean toward skills and powers, and vary far more from run to run.
