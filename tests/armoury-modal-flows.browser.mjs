@@ -14,10 +14,10 @@ const SHOT_DIR = process.env.SHOT_DIR || '';
 if (SHOT_DIR) mkdirSync(SHOT_DIR, { recursive: true });
 const server = process.env.BASE_URL ? null : await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const base = process.env.BASE_URL || server.url;
-const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const errors = [];
 
-async function mount(page, view = 'rack', emptyOffHand = true, combat = false) {
+async function mount(page, emptyOffHand = true, combat = false) {
   await page.goto(`${base}index.html?shot=map&shotSeed=ART1`, { waitUntil: 'load', timeout: 90000 });
   await page.waitForTimeout(2500);
   await page.evaluate(async ({ emptyOffHand, combat }) => {
@@ -48,9 +48,9 @@ async function mount(page, view = 'rack', emptyOffHand = true, combat = false) {
     });
   }, { emptyOffHand, combat });
   await page.waitForSelector('.armoury .armoury-position-card');
-  // The phone shows the views as a dropdown; a DOM click reaches the member whether or not the list is open.
-  await page.evaluate((v) => document.querySelector(`[data-surface="armouryView"] [data-member="${v}"]`)?.click(), view);
-  await page.waitForSelector(view === 'rack' ? '.armoury .armoury-position-card' : '.armoury .disc-face');
+  // The Armory page is one body: the slots on top, the Inventory below.
+  await page.waitForSelector('.armoury .armoury-position-card');
+  await page.waitForSelector('.armoury .disc-face');
 }
 
 const wait = (page, ms) => page.waitForTimeout(ms);
@@ -60,7 +60,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, reducedMotion: 'no-preference' });
   page.setDefaultTimeout(15000);
   page.on('pageerror', (e) => errors.push(e.message));
-  await mount(page, 'hybrid');
+  await mount(page);
   const equipBtn = () => page.locator('.armoury-item-detail .ep-equip[data-act="equip"]:visible').first();
   const sets = () => page.evaluate(() => structuredClone(window.__armouryRun.loadout.sets));
   const open = async (name) => { await face(page, name).click(); await equipBtn().waitFor(); };
@@ -107,7 +107,7 @@ try {
   assert.equal((await sets()).rightHand[0], 'ashStaff', 'compare Equip changed run.loadout');
 
   // Empty destination: the confirm modal with the item's card; Back changes nothing, Equip changes run.loadout.
-  await mount(page, 'hybrid');
+  await mount(page);
   await open('Round Shield');
   await equipBtn().click();
   await slotModal.waitFor();
@@ -129,7 +129,7 @@ try {
   assert.equal((await sets()).leftHand[0], 'roundShield', 'Equip from the confirm modal changed run.loadout');
 
   // In combat the equip is still priced by the host: its refusal is the notice and nothing changes.
-  await mount(page, 'hybrid', true, true);
+  await mount(page, true, true);
   await open('Round Shield');
   await equipBtn().click();
   await slotModal.waitFor();
@@ -141,7 +141,7 @@ try {
   assert.equal((await sets()).leftHand[0], null, 'a refused combat equip changed nothing');
 
   // Inspect from the Equipment view is a modal, never an aside.
-  await mount(page, 'rack');
+  await mount(page);
   await page.locator('.armoury-position-card.is-occupied .armament-row-select').first().click();
   await page.locator('.card-inspection-modal').waitFor();
   assert.equal(await page.locator('.armament-list-inspection').count(), 0, 'no inline Inspect aside');
@@ -150,7 +150,7 @@ try {
   // Phone width: the slot modal fits the screen.
   const phone = await browser.newPage({ viewport: { width: 360, height: 800 }, hasTouch: true, isMobile: true });
   phone.on('pageerror', (e) => errors.push(e.message));
-  await mount(phone, 'hybrid');
+  await mount(phone);
   await phone.locator('.armoury .disc-face', { hasText: 'Ash Staff' }).first().click();
   await phone.locator('.armoury-item-detail .ep-equip[data-act="equip"]:visible').first().click();
   await phone.locator('.equip-slot-choice').waitFor();

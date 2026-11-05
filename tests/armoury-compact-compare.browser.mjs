@@ -12,7 +12,7 @@ const SHOT_DIR = process.env.SHOT_DIR || '';
 if (SHOT_DIR) mkdirSync(SHOT_DIR, { recursive: true });
 const server = process.env.BASE_URL ? null : await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const base = process.env.BASE_URL || server.url;
-const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 const errors = [];
 
 // Mounts the real Armoury over the booted game with a Reaver who owns every armament and one more outfit.
@@ -43,7 +43,7 @@ async function mount(page) {
     });
   });
   await page.waitForSelector('.armoury .armoury-position-card');
-  await page.click('[data-surface="armouryView"] [data-member="rack"]').catch(() => {});
+  assert.equal(await page.locator('[data-surface="armouryView"], #armoury-view-select').count(), 0, 'the view dropdown is gone');
   await page.waitForSelector('.armoury .armoury-position-card');
 }
 const rowSel = (code) => `.armoury-position-card[data-slot-position="${code}"]`;
@@ -85,7 +85,6 @@ try {
   // Replace / Unequip do not move the selection.
   await page.click(`${rowSel(rows[0])} .armament-replace`);
   await page.waitForSelector('.equip-picker-table');
-  await page.click('[data-surface="armouryView"] [data-member="rack"]');
   await page.waitForSelector('.armoury-position-card.is-inspected');
   assert.deepEqual(await selected(), [second], 'Replace leaves the selection alone');
 

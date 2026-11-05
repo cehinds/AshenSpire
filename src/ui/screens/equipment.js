@@ -14,6 +14,7 @@ import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { mountEquipCompareModal } from '../components/equipCompareModal.js';
+import { armouryPageOf } from '../../model/armouryPages.js';
 import { openSlotChoiceModal, openEquipConfirmModal } from '../components/armouryEquipModals.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
@@ -42,7 +43,7 @@ import {
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
 import { equippedTagColor } from '../../model/equipmentUi.js';
-import { renderCard, relicText } from '../components/card.js';
+import { relicText } from '../components/card.js';
 import {
   renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
@@ -95,7 +96,7 @@ import {
 // and styles/ui.css draws nothing for this screen any more.
 import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl, meter, meters,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker, meter, meters,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -777,7 +778,11 @@ export function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : (Object.keys(layout.viewModes).find((id) => IDS.includes(id) && layout.viewModes[id].pane === 'inventory') || shapeDefault));
+  // The view dropdown is gone (owner, 2026-11-05): the Armoury has two pages,
+  // the Character tab's and the Armory tab's combined equipment + inventory
+  // page. A saved view or a destination that names a retired view lands on the
+  // page that now holds it (model/armouryPages.js).
+  let view = armouryPageOf(destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : shapeDefault));
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -795,7 +800,6 @@ export function mountEquipment(host, {
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
   if (!storedFolds) folded.set('inventory', false);
   if (destinationPlan?.region) folded.set(destinationPlan.region, false);
-  let cardView = layout.cards.defaultView;
   // The Equipment view is one compact list (the grid view was retired 2026-11-01).
   const armamentView = 'list';
   let armamentGridSelection = null;
@@ -823,9 +827,6 @@ export function mountEquipment(host, {
   // The footer's primary slot (W1e "Equip if available"). draw() binds it to
   // the panel it just rendered; the Inventory's selection fills it.
   let setFooterPrimary = () => {};
-  // The views' kit categoryNav from the latest draw: its start() is the rail
-  // item on wide hosts and the [Category ▾] selector on compact ones.
-  let armouryNav = null;
   const shellCopy = () => ({
     title: t('armoury.title'), closeLabel: t('armoury.close'), railLabel: t('armoury.categories'),
   });
@@ -959,7 +960,7 @@ export function mountEquipment(host, {
   };
   const openInventoryForSelection = (slotId, setIndex) => {
     picking = { slotId, setIndex };
-    view = 'hybrid';
+    view = 'rack';
     folded.set('inventory', false);
   };
   const clearInventorySelection = () => {
@@ -1929,17 +1930,6 @@ export function mountEquipment(host, {
     return box;
   }
 
-  /** The complete deck, using the same card faces as combat and piles. */
-  function cardStrip() {
-    const gallery = el('div', { class: 'armoury-card-gallery', 'aria-label': 'Your deck' });
-    for (const inst of run.deck || []) {
-      const card = renderCard(registries, inst, { inspectReadOnly: true });
-      gallery.appendChild(card);
-    }
-    if (!gallery.children.length) gallery.appendChild(prose('Your deck is empty.'));
-    return gallery;
-  }
-
   function equipmentReceiptPanel(surface) {
     const panel = el('section', { class: 'armoury-equipment-receipts' });
     panel.innerHTML = `<section class="equip-role-receipts"><span class="as-eyebrow">Equipment card packages</span>${renderRoleCopies(surface)}</section>`
@@ -2529,7 +2519,6 @@ export function mountEquipment(host, {
     deckTab?.setAttribute('aria-disabled', String(!onEditDeck));
     if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : 'Deck editing is disabled by the current settings');
     setFooterPrimary = rendered.setPrimary;
-    armouryNav = rendered.nav;
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;
     panel.dataset.pane = viewMode().pane;
@@ -2572,7 +2561,7 @@ export function mountEquipment(host, {
     // ONE of them — which is how a legal combination of the other reached a
     // branch that ignored it (Vira, gate of 5c49fed).
     const build = L && LAYOUTS[L.cell];
-    if (build && view !== 'hybrid' && view !== 'cards') {
+    if (build) {
       build(L, {
         left, right, blocks,
         layout,
@@ -2595,41 +2584,24 @@ export function mountEquipment(host, {
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
       });
-    } else if (!build) {
+    } else {
       console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
         + ` — its row must ask for a combination the screen has: ${viewCellsSay()}`
         + ' in src/content/balance.js. This line is the defect, not a fallback.');
       right.appendChild(blocker(`The "${view}" view is declared but has no layout. Pick another view above.`, { attrs: { class: 'armoury-notice' } }));
     }
     const inventory = wrap.querySelector('.armoury-inventory');
-    const cards = wrap.querySelector('.armoury-strip');
     wrap.querySelector('.armoury-stats-tray').remove();
-    if (view === 'hybrid') {
-      wrap.querySelector('.armoury-body').remove();
-      // The rail already names this view; the W1n body carries no second title,
-      // and its instruction lives in the empty detail column.
+    // The Armory page is ONE scrolling body: the equipment slots on top, the
+    // Inventory's sections below them. The Character page carries neither.
+    if (view !== 'grid') {
       inventory.append(inventoryBlock());
       if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
       // SPEC §15.4: the Sigils panel sits below the item collection.
       const sigils = sigilsPanel();
       if (sigils) inventory.append(sigils);
     } else inventory.remove();
-    if (view === 'cards') {
-      wrap.querySelector('.armoury-content').remove();
-      // The deck editor's Armoury door (SPEC §14.1): the host hands it in only
-      // under `free` and out of combat; the Armoury closes onto the editor. It
-      // shares the title's row, so the first card fits the pane on a short phone.
-      const cardsHead = el('div', { class: 'armoury-section-head armoury-cards-head' }, [titleS(`Cards · ${(run.deck || []).length}`)]);
-      cards.append(cardsHead, prose('Your complete deck, including class and equipment cards.'));
-      if (onEditDeck && !inCombat) {
-        const edit = button({ label: t('deckEditor.armoury'), weight: 'primary', id: 'armoury-edit-deck', className: 'armoury-edit-deck', attrs: { title: t('deckEditor.armoury') } });
-        // Through `leave`, so the Armoury's own deck floor still gates the way
-        // out; a refused leave keeps the Armoury open and opens no editor.
-        edit.addEventListener('click', () => { leave(); if (!wrap.isConnected) onEditDeck(); });
-        cardsHead.append(edit);
-      }
-      cards.append(cardStrip());
-    } else cards.parentElement.remove();
+    wrap.querySelector('.armoury-strip').parentElement.remove();
 
     let lastPaneWidths = null;
     const applyPaneDensity = () => {
@@ -2670,31 +2642,6 @@ export function mountEquipment(host, {
     if (notice) toast.show(notice, panel); else toast.attach(panel);
     notice = '';
     wrap.querySelector('.armoury-close').addEventListener('click', leave);
-    for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
-      b.addEventListener('click', () => {
-        picking = null;
-        view = b.dataset.member;
-        wrap.querySelector('.armoury-pane').scrollTop = 0;
-        const list = wrap.querySelector('.armoury-item-collection');
-        if (list) list.scrollTop = 0;
-        // A view is a presentation preset, not a second saved preference.
-        // Explicit per-region choices still win; untouched regions adopt the
-        // newly selected Character/Inventory/Hybrid defaults.
-        for (const region of contextRegions()) {
-          if (!(storedFolds && typeof storedFolds[region.id] === 'boolean')) {
-            folded.set(region.id, opensCollapsed(region.id, null, viewMode()));
-          }
-        }
-        if (!(storedFolds && typeof storedFolds.armaments === 'boolean')) {
-          folded.set('armaments', opensCollapsed('armaments', null, viewMode()));
-        }
-        if (onChange) onChange(run.loadout, { equipView: view });
-        draw();
-        // The selected view on a rail; the selector (which now names it) when
-        // the views are the compact [Category ▾] list.
-        landControl(armouryNav?.start());
-      });
-    }
   }
 
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
@@ -2709,17 +2656,15 @@ export function mountEquipment(host, {
   };
   document.addEventListener('keydown', onKey);
 
+  // A destination lands on the page that holds it, with focus on the tab that
+  // names that page; a region (or the equipment slots) is scrolled into view.
   const focusArmouryDestination = () => {
     if (!destinationPlan || !wrap.isConnected) return;
-    let target = destinationPlan.region
-      ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`)
-      : wrap.querySelector(`[data-surface="armouryView"] [data-member="${destinationPlan.view}"]`);
-    // A compact host keeps the views in the closed [Category ▾] list: the
-    // selector, which names the destination view, is where focus lands.
-    if (target && !destinationPlan.region && !target.getClientRects().length) target = armouryNav?.start() || null;
-    if (!target) return;
-    target.focus({ preventScroll: true });
-    target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    const tab = wrap.querySelector(`.armoury-head [data-modal-tab="${view === 'grid' ? 'character' : 'armory'}"]`);
+    const region = destinationPlan.region ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`) : null;
+    const scrollTo = region || (destinationPlan.view === 'rack' ? wrap.querySelector('.armoury-body') : null);
+    (region || tab)?.focus({ preventScroll: true });
+    scrollTo?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   };
 
   draw();
