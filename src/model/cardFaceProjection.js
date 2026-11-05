@@ -9,6 +9,7 @@ export const FACE_EFFECT_LINES = 3;
 export const FACE_EFFECT_CLAUSES = 3;
 export const FACE_EFFECT_CHARACTERS = 90;
 export const FACE_CLAUSE_WORDS = 5;
+const COMPACT_BUDGET = { clauses: FACE_EFFECT_CLAUSES, characters: FACE_EFFECT_CHARACTERS, words: FACE_CLAUSE_WORDS };
 
 const plain = html => html.replace(/<[^>]*>/g, '').replace(/&(?:amp|lt|gt|quot|#39);/g, 'x');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -84,16 +85,16 @@ const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/
 // clause each; a longer conditional or sentence returns null and stays whole in
 // Information rather than being cut mid-condition.
 const CONDITIONAL_START = /^(?:When|If|Unless|While|After|Before|At|Once|Turn)\b/;
-function clausesOf(line, { split = true } = {}) {
-  if (wordCount(line.html) <= FACE_CLAUSE_WORDS) return [line];
+function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
+  if (wordCount(line.html) <= words) return [line];
   // A longer clause drops its leading verb ("Deal 5 Slashing damage to all" reads "5 Slashing damage to all").
   const bare = line.html.replace(/^(?:Deal|Apply|Inflict) /, '');
-  if (bare !== line.html && wordCount(bare) <= FACE_CLAUSE_WORDS) return [{ ...line, html: bare }];
+  if (bare !== line.html && wordCount(bare) <= words) return [{ ...line, html: bare }];
   // A turn trigger carrying a downside splits into two triggers, so the cost is never lost ("Turn start: take 1 damage").
   const trigger = /^(Turn (?:start|end)): (.+?)(?:,| and) ((?:take|lose) .+)$/.exec(line.html);
   if (trigger) {
     const both = [`${trigger[1]}: ${trigger[2].replace(/^gain (\d+) /, '+$1 ')}`, `${trigger[1]}: ${trigger[3]}`];
-    if (both.every(part => wordCount(part) <= FACE_CLAUSE_WORDS)) return both.map(html => ({ ...line, html }));
+    if (both.every(part => wordCount(part) <= words)) return both.map(html => ({ ...line, html }));
     return null;
   }
   const text = plain(line.html);
@@ -104,14 +105,14 @@ function clausesOf(line, { split = true } = {}) {
     if (parts.length && (parts[parts.length - 1].split('(').length !== parts[parts.length - 1].split(')').length)) parts[parts.length - 1] += ', ' + piece;
     else parts.push(piece);
   }
-  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > FACE_CLAUSE_WORDS) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
+  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
   // A piece is a complete effect only when it names what the amount is of (damage, Poise, Block ...) or ends in its
   // amount ("Weak 2"); a bare damage type ("Deal 2 Blunt") shares its noun and qualifiers with the next piece.
   const whole = part => (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)))) || COST_RE.test(plain(part));
   // A trailing qualifier (hit count, area) belongs to every piece or to none: a split would otherwise lose it.
   const qualifier = part => /( ×\d+| to all| to random enemy)$/.exec(plain(part).trim())?.[1] ?? '';
   if (parts.length > 1 && parts.some(part => qualifier(part) !== qualifier(parts[parts.length - 1]))) return null;
-  if (parts.length < 2 || parts.some(part => wordCount(part) > FACE_CLAUSE_WORDS || CONDITIONAL_START.test(plain(part)) || !whole(part))) return null;
+  if (parts.length < 2 || parts.some(part => wordCount(part) > words || CONDITIONAL_START.test(plain(part)) || !whole(part))) return null;
   return parts.map(html => ({ ...line, html }));
 }
 
@@ -149,8 +150,38 @@ function withChance(html, effects, registries) {
   return html;
 }
 
-/** At most two whole qualified clauses; omitted facts remain in Information. */
-export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceHtml = null, registries = null, effects = def.effects || [] } = {}) {
+/**
+ * The compact projection (at most three short whole clauses; omitted facts remain in Information) and, when `roomy`
+ * is passed (a faceBudget()), `projection.roomy`: the same card read at the roomy budget (up to `budget.clauses`
+ * clauses of up to `budget.clauseWords` words). The fitter shows the roomy clauses when they fit its box at the
+ * configured floor font and falls back to the compact ones otherwise. `roomy` is absent when it would say nothing
+ * more than the compact face, or would lose a downside the compact one kept. `roomyLines` is the face line list
+ * before the face-line slice that bounds the compact face.
+ */
+export function cardFaceProjection(def, opts = {}) {
+  const compact = compactFaceProjection(def, opts);
+  const { roomy: budget, roomyLines = opts.lines ?? null, authoredHtml = '', registries = null, effects = def.effects || [] } = opts;
+  if (!budget) return compact;
+  const wide = computedFaceProjection(def, { lines: roomyLines, authoredHtml, registries, effects,
+    budget: { clauses: budget.clauses, characters: budget.characters, words: budget.clauseWords } });
+  // The compact summary appends a card's Exhaust / Ethereal keyword as a cost; the authored-prose path does not, so the
+  // roomy reading carries them the same way (powers such as Goreblood print "Exhaust" in the compact face).
+  const sayings = projection => projection.clauses.map(clause => plain(clause.html)).join('; ');
+  for (const [keyword, word] of [['exhaust', 'Exhaust'], ['ethereal', 'Ethereal']]) {
+    if ((def.keywords || []).includes(keyword) && !new RegExp(`\\b${word}\\b`, 'i').test(sayings(wide))) wide.clauses.push({ kind: 'cost', html: word });
+  }
+  const said = projection => projection.clauses.map(clause => plain(clause.html)).join('; ');
+  const words = projection => said(projection).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
+  // Roomy only when it says more: a different split of the same words is not worth a smaller font.
+  // Never drop a downside the compact face prints; a roomy reading that cannot hold them all in its clause budget is not offered.
+  const downsides = compact.clauses.filter(clause => clause.downside || clause.kind === 'cost').map(clause => plain(clause.html).toLowerCase());
+  const wideText = sayings(wide).toLowerCase();
+  if (wide.clauses.length > budget.clauses || downsides.some(text => !(text.match(new RegExp(COST_RE.source, 'gi')) || [text]).every(part => wideText.includes(part)))) return compact;
+  if (!wide.clauses.length || words(wide) <= words(compact) || wide.hiddenDownsides.length > (compact.hiddenDownsides || []).length) return compact;
+  return { ...compact, roomy: { clauses: wide.clauses, maxLines: budget.lines } };
+}
+
+function compactFaceProjection(def, { lines = null, authoredHtml = '', faceHtml = null, registries = null, effects = def.effects || [] } = {}) {
   const projection = computedFaceProjection(def, { lines, authoredHtml, registries, effects });
   // The Inspect cue is a last resort: a card that authors a `faceTemplate` says its main effect in place of it
   // (owner, 2026-11-01). Downsides the computed face reserved (Exhaust, a payment) stay ahead of the summary.
@@ -188,7 +219,8 @@ export function cardFaceProjection(def, { lines = null, authoredHtml = '', faceH
   return projection;
 }
 
-function computedFaceProjection(def, { lines, authoredHtml, registries, effects }) {
+function computedFaceProjection(def, { lines, authoredHtml, registries, effects, budget = COMPACT_BUDGET }) {
+  const { clauses: CLAUSES, characters: CHARACTERS, words: WORDS } = budget;
   let candidates = lines ? lines.map(line => ({ ...line, ...('faceHtml' in line ? { faceHtml: undefined } : {}),
     // Entry bonuses and the Defend restore are stance explanations, outside
     // the ordinary effect budget. Their complete reading stays in Information.
@@ -217,7 +249,7 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
     if (!payments.some(payment => payment.html === line.html)) payments.push({ ...line, kind: 'cost' });
   }
   candidates = [...payments, ...candidates.filter(line => !payments.some(payment => payment.html === line.html))];
-  const fitted = candidates.map(line => ({ line, parts: clausesOf(line, { split: !!lines || /^(?:One play|Exhaust|Ethereal)/.test(plain(line.html)) }) }));
+  const fitted = candidates.map(line => ({ line, parts: clausesOf(line, { words: WORDS, split: !!lines || /^(?:One play|Exhaust|Ethereal)/.test(plain(line.html)) }) }));
   // Every downside (a payment, "take N damage", Exhaust, Ethereal, "cannot", ...) is reserved a place first and is never
   // dropped for another line. If the downsides alone cannot be said in three short clauses the face is the Inspect cue,
   // never a free-looking payoff.
@@ -227,24 +259,24 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects 
   let count = 0, used = 0;
   const take = entry => {
     const size = plain(entry.line.html).length;
-    if (!entry.parts || !size || used + size > FACE_EFFECT_CHARACTERS || count + entry.parts.length > FACE_EFFECT_CLAUSES) return;
+    if (!entry.parts || !size || used + size > CHARACTERS || count + entry.parts.length > CLAUSES) return;
     chosen.add(entry); count += entry.parts.length; used += size + 2;
   };
-  if (reservedCount <= FACE_EFFECT_CLAUSES) { reserved.forEach(take); fitted.forEach(entry => { if (count < FACE_EFFECT_CLAUSES && !chosen.has(entry)) take(entry); }); }
+  if (reservedCount <= CLAUSES) { reserved.forEach(take); fitted.forEach(entry => { if (count < CLAUSES && !chosen.has(entry)) take(entry); }); }
   // `downside` marks what the face reserved as a payment or requirement; a summary that replaces the cue keeps it.
   const clauses = fitted.filter(entry => chosen.has(entry)).flatMap(entry => reserved.includes(entry) ? entry.parts.map(part => payments.includes(entry.line) || COST_RE.test(plain(part.html)) ? { ...part, downside: true } : part) : entry.parts);
   const shown = chosen.size;
   // Owner 2026-11-02: a line too long for the clause budget shows its real words (the fitter shrinks them), never an Inspect cue.
   const addReal = entry => { if (!clauses.some(clause => clause.html === entry.line.html)) clauses.push({ kind: 'detail', html: entry.line.html }); };
   const primary = fitted.find(entry => !reserved.includes(entry));
-  if (primary && !primary.parts && clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail')) addReal(primary);
+  if (primary && !primary.parts && clauses.length && clauses.length < CLAUSES && !clauses.some(clause => clause.kind === 'detail')) addReal(primary);
   // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
-  if (clauses.length && clauses.length < FACE_EFFECT_CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) addReal(fitted.find(entry => !reserved.includes(entry)));
+  if (clauses.length && clauses.length < CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) addReal(fitted.find(entry => !reserved.includes(entry)));
   // An unfamiliar long rule is named, never shortened mid-condition. Current
   // authored cards are covered by whole clauses; this explicit door is a safe
   // forward-compatible reading for future mechanics rather than false prose.
   // Still within the face's clause budget: the first lines show, the rest wait for Information.
-  if (!clauses.length) fitted.slice(0, FACE_EFFECT_CLAUSES).forEach(addReal);
+  if (!clauses.length) fitted.slice(0, CLAUSES).forEach(addReal);
   // A required downside the face could not carry (a long payment, a mandatory discard): a summary may replace the cue
   // only when it names that downside itself.
   const hiddenDownsides = reserved.filter(entry => !chosen.has(entry)).map(entry => plain(entry.line.html));

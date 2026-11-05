@@ -136,6 +136,8 @@ export function bindDamageReceipt(card, preview) {
   const html = () => damageReceiptHtml(receipt, { targetName: preview.targetName });
   const numbers = card.querySelectorAll('[data-face-kind="damage"] .val');
   for (const node of numbers) {
+    // A number the fitter keeps on the face is bound once; only new nodes (the roomy reading's clones) take a binding.
+    if (node.dataset.damageReceipt === 'true') continue;
     node.tabIndex = 0;
     node.dataset.damageReceipt = 'true';
     node.setAttribute('role', 'button');
