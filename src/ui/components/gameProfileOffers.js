@@ -1,7 +1,7 @@
 import { renderCard } from './card.js';
 import { renderEquipmentCard } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
-import { mountRewardDoor } from './rewardDoor.js';
+import { mountRewardDoor, replaceRewardFoot } from './rewardDoor.js';
 import { clearSelection } from './cardSelection.js';
 import { openBoundCardInspection } from './cardInspection.js';
 import { el, button, modalFooter } from '../kit/index.js';
@@ -70,7 +70,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     const refusal = cardMode && addRefusal ? addRefusal(selected) : '';
     confirm.disabled = !!refusal;
     if (refusal) status.textContent = refusalText(refusal);
-    if (changed) mountDoor();
+    if (changed) mountFoot(); // selecting a card must not rebuild the door: only the footer's buttons change
   }
   for (const [index, option] of offer.options.entries()) {
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
@@ -169,8 +169,11 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   equip.addEventListener('click', () => commit(claimOnly, () => onEditEquipment(selected, proceed)));
   editDeck.addEventListener('click', () => commit(claimOnly, () => onEditDeck(selected, proceed)));
   // The footer drops hidden buttons when built, so the door is rebuilt (same owner: in place) whenever the review changes them.
+  const buildFoot = () => modalFooter({ secondary: [next, inspect, equip, editDeck, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' });
   function mountDoor() {
-    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next, inspect, equip, editDeck, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
+    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: buildFoot() });
   }
+  // Swap only the footer in the open door; falls back to a full mount when no door of this owner is open.
+  function mountFoot() { if (!replaceRewardFoot(app, presentation.owner, buildFoot())) mountDoor(); }
   mountDoor();
 }
