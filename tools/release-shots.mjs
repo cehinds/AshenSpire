@@ -93,6 +93,7 @@ import { menuTabs } from '../src/ui/uiContent.js';
 // denominator. This tool wants what the screen draws.
 import { settingsCategories } from '../src/ui/screens/settings.js';
 import { balance } from '../src/content/balance.js';
+import { ARMOURY_PAGES, armouryPageOf } from '../src/model/armouryPages.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
@@ -507,6 +508,11 @@ const SUB_SURFACE_GROUPS = [
     // STOPS THE RUN BY NAME — never `.filter(Boolean)`, which would drop the
     // unreadable row and quietly shrink the denominator. That is Law 0 clause 5
     // and it is the failure this whole file exists to make loud.
+    // The view dropdown is gone (2026-11-05): the Armoury draws two pages, the
+    // Character tab's (`grid`) and the Armory tab's combined page (`rack`).
+    // `hybrid` and `cards` are still declared (data is untouched) but have no
+    // screen of their own, so they are NOT shot: ids() lists only declared
+    // views that are a page (src/model/armouryPages.js).
     ids: () => (balance.equipment.views || []).map((v, i) => {
       if (typeof v === 'string' && v) return v;
       if (v && typeof v === 'object' && typeof v.id === 'string' && v.id) return v.id;
@@ -515,7 +521,7 @@ const SUB_SURFACE_GROUPS = [
       console.error('Neither fits, so the armoury denominator cannot be derived and no number');
       console.error('printed below it would mean anything. Fix the row, or teach this reader.');
       return process.exit(1);
-    }),
+    }).filter((id) => ARMOURY_PAGES.includes(id) && armouryPageOf(id) === id),
     // NO `authoredIn` ANY MORE, and its absence is the point. It asked the
     // stylesheet whether anyone had authored a `.view-<id>` rule, because the
     // stylesheet was a SECOND, SILENT DECIDER of the layout — `kanban` rendered
@@ -533,8 +539,8 @@ const SUB_SURFACE_GROUPS = [
         const a = document.querySelector('#combat-armoury');
         if (!a) return 'no #combat-armoury on the combat screen';
         a.click();
-        const b = document.querySelector('[data-surface="armouryView"] [data-member=${q(id)}]');
-        if (!b) return 'no view button for ' + ${q(id)};
+        const b = document.querySelector('.armoury-head [data-modal-tab=' + ${q(id === 'grid' ? 'character' : 'armory')} + ']');
+        if (!b) return 'no head tab for ' + ${q(id)};
         b.click();
         return true;
       })()`,
@@ -546,8 +552,8 @@ const SUB_SURFACE_GROUPS = [
       // first attempt put it inside, where `//` is text and a `<` is a syntax
       // error. The tool told me immediately, which is the arrangement working.)
       assert: `(() => {
-        const on = document.querySelector('[data-surface="armouryView"] [data-member=${q(id)}].on');
-        if (!on) return 'view ' + ${q(id)} + ' is not the selected view';
+        const on = document.querySelector('.armoury-head [data-modal-tab=' + ${q(id === 'grid' ? 'character' : 'armory')} + '][aria-selected="true"], .armoury-head [data-modal-tab=' + ${q(id === 'grid' ? 'character' : 'armory')} + '].on');
+        if (!on) return 'page ' + ${q(id)} + ' is not the selected tab';
         const body = document.querySelector('.armoury-body');
         if (!body || !body.innerText.trim().length) return 'view ' + ${q(id)} + ' renders an EMPTY armoury body';
         return true;
