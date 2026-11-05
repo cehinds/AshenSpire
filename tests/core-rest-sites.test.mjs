@@ -1,14 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, gameContent } from '../src/model/gameProfile.js';
+import { gameContent } from '../src/model/gameProfile.js';
+import { core2Registries } from './helpers/core2.mjs';
 import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const registries = core2Registries();
 
 test('Core has three rest sites per act and the floor before the boss is always one (D10)', () => {
   const rules = gameContent(registries, 'routes');

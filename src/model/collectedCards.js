@@ -1,4 +1,4 @@
-import { gameContent } from './gameProfile.js';
+import { gameContent, isCoreProfile } from './gameProfile.js';
 import { isItemOwned } from './loadout.js';
 
 const definitionsByProfile = new WeakMap();
@@ -12,7 +12,7 @@ function definitionIds(run) {
 
 // Knowledge belongs to this Core 2 run, independently of the active class.
 export function hasCollectedCardPolicy(run) {
-  return run?.gameProfile?.author?.core === 'ashen.core@2.0.0';
+  return isCoreProfile(run);
 }
 
 export function looseCollectedCard(card) {
