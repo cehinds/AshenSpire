@@ -1,5 +1,6 @@
 {
   "offerCount": 3,
+  "combatOfferCount": { "min": 3, "max": 5, "appliesAtOfferCount": 3 },
   "takeCount": 1,
   "categories": [
     "weapons",
