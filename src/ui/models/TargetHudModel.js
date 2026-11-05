@@ -209,6 +209,9 @@ export function targetHudDesiredIds({ entries: all, eligible = [], focused = nul
   const entries = [...all], known = new Set(entries.map(entry => entry.id));
   return [...new Set([...targetHudPinnedIds(entries), ...eligible, focused, hover, focusWithin].filter(id => known.has(id)))];
 }
+// True while a player frame shows its panel only because it is pinned: its sprite glow and floor tint stay off.
+export const targetHudPinnedOnly = ({ entries, id, eligible = [], focused = null, hover = null, focusWithin = null }) =>
+  targetHudPinnedIds([...entries]).includes(id) && ![...eligible, focused, hover, focusWithin].includes(id);
 // The floor tint marks a target being acted on or read, so the pinned panel alone adds none.
 export function targetHudTintIds({ entries: all, shown = [], eligible = [], focused = null, hover = null, focusWithin = null }) {
   const pinned = targetHudPinnedIds([...all]), asked = [...eligible, focused, hover, focusWithin];

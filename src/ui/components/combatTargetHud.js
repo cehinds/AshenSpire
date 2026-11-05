@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
@@ -231,6 +231,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (frame.dataset.matchupActive !== active) frame.dataset.matchupActive = active;
       if (frame.style.getPropertyValue('--combat-matchup-color') !== color) frame.style.setProperty('--combat-matchup-color', color);
       frame.classList.toggle('target-hud-selected', next.has(id));
+      const pinnedOnly = String(targetHudPinnedOnly({ entries: entries.values(), id, eligible, focused, hover, focusWithin }));
+      if (frame.dataset.hudPinned !== pinnedOnly) frame.dataset.hudPinned = pinnedOnly;
       frame.classList.toggle('target-hud-focused', id === focused || id === hover);
       frame.classList.toggle('target-hud-candidate', eligible.includes(id));
     }

@@ -20,9 +20,11 @@ try {
       return { panel: !!document.querySelector('.target-hud-detail[data-eid="player"].visible'),
         playerBar: shown(document.querySelector('.combatant.player .target-hud-overhead-meters > .meters .combat-health-meter')),
         enemyBars: [...document.querySelectorAll('.combatant:not(.player) .target-hud-overhead-meters > .meters .combat-health-meter')].map(shown),
+        glow: getComputedStyle(document.querySelector('.combatant.player .sprite')).filter, pinned: document.querySelector('.combatant.player').dataset.hudPinned,
         enemyPanels: document.querySelectorAll('.target-hud-detail:not([data-eid="player"]).visible').length };
     });
     assert.deepEqual([s.panel, s.playerBar, s.enemyPanels], [true, false, 0], `${name}: player panel on with no selection, no mini bar, no enemy panel`);
+    assert.deepEqual([s.pinned, s.glow], ['true', 'none'], `${name}: the pinned player has no selected glow`);
     assert.ok(s.enemyBars.length && s.enemyBars.every(Boolean), `${name}: enemies keep their mini bar`);
     assert.deepEqual(errors, []);
     await context.close();

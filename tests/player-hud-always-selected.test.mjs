@@ -29,3 +29,11 @@ test('the rules accept a one-shot iterator (Map.values) as the mount passes it',
   assert.deepEqual(targetHudDesiredIds({ entries: map.values(), eligible: ['e1'] }), ['player', 'e1']);
   assert.deepEqual(targetHudTintIds({ entries: map.values(), shown: ['player', 'e2'], focused: 'e2' }), ['e2']);
 });
+
+test('the pinned player carries no glow or tint unless eligible, focused or hovered; enemies are never pinned-only', async () => {
+  const { targetHudPinnedOnly } = await import('../src/ui/models/TargetHudModel.js');
+  assert.equal(targetHudPinnedOnly({ entries, id: 'player' }), true);
+  assert.equal(targetHudPinnedOnly({ entries, id: 'player', hover: 'player' }), false);
+  assert.equal(targetHudPinnedOnly({ entries, id: 'player', eligible: ['player'] }), false);
+  assert.equal(targetHudPinnedOnly({ entries, id: 'e1' }), false);
+});
