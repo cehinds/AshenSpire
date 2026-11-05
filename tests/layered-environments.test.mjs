@@ -8,7 +8,7 @@ test('every authored Crownfall site resolves exactly across save/load', () => {
   for (const [nodeId, mapped] of Object.entries(INTRO_LAYERED_SCENES)) {
     const expected = LAYERED_SCENES[typeof mapped === 'string' ? mapped : mapped.sceneId];
     assert.ok(expected, nodeId);
-    const run = Object.freeze({ seedString: 'LAYERED', journey: Object.freeze({ currentNodeId: nodeId }) });
+    const run = Object.freeze({ seedString: 'LAYERED', mapNodeId: nodeId });
     const original = JSON.stringify(run);
     const selected = layeredCombatScene(run);
     assert.equal(selected.id, expected.id, nodeId);
@@ -78,7 +78,7 @@ test('indoor local ambient lighting survives default time selection', () => {
   assert.ok(layeredCombatScene({ ...run, presentationTimeId: 'night' }).layers.some(layer => layer.filterId === 'night'));
 });
 
-test('explicit solo and journey cursors choose their layered scene', async () => {
+test('explicit solo cursors choose their layered scene', async () => {
   const { combatEnvironment } = await import('../src/model/environmentArt.js');
   const snapshot = { seedString: 'SOLO-SCENE', actNumber: 3, seatOrder: ['weald', 'marches', 'reach'],
     cursorId: 'boss', map: { nodes: [{ id: 'boss', type: 'boss' }] } };
@@ -87,6 +87,6 @@ test('explicit solo and journey cursors choose their layered scene', async () =>
   const solo = { ...snapshot, mapNodeId: 'solo', environmentRegionId: 'ashen-crown',
     mapGraph: { nodes: { solo: { type: 'fight', layeredSceneId: 'castle-grounds' } } } };
   assert.equal(layeredCombatScene(solo).id, 'castle-grounds');
-  assert.equal(layeredCombatScene({ ...solo, journey: { currentNodeId: 'crownfall/forge' } }).id, 'intro-forge');
+  assert.equal(layeredCombatScene({ ...solo, mapNodeId: 'crownfall/forge' }).id, 'intro-forge');
   assert.equal(JSON.stringify(snapshot), original);
 });

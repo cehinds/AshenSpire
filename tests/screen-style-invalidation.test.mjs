@@ -24,14 +24,3 @@ test('settings retain small segmented choices and use selects before a fifth but
   assert.equal((source.match(/class="as-seg choice-group"/g)||[]).length,1,'the production segmented-control creator remains singular');
   assert.doesNotMatch(read('../styles/ui.css'),/choice-group[^{}]*:has\([^{}]*button:nth-child\(5\)/,'unreachable large-segment rules must not invalidate every combat button');
 });
-
-test('local-map footer visibility uses the renderer state from the same conditional that mounts its port', () => {
-  const source = read('../src/ui/screens/worldAtlas.js');
-  assert.match(source,/dialog\.dataset\.localMap = String\(!!local\)/);
-  assert.match(source,/\$\{local \? localMapHtml\(local\)/);
-  assert.match(read('../styles/map.css'),/\.atlas-dialog\[data-local-map='true'\] \.atlas-dialog-foot > span \{ display:none; \}/);
-  for (const suffix of ['.atlas-dialog-foot > span', '.atlas-dialog-foot .as-btn', '.atlas-detail-actions .as-btn']) {
-    assert.ok(read('../styles/map.css').includes(".atlas-dialog[data-local-map='true'] " + suffix));
-    assert.ok(!read('../styles/map.css').includes('.atlas-dialog:has(.atlas-local-port) ' + suffix), 'combat spans/buttons must not participate in unrelated Atlas relational selectors');
-  }
-});

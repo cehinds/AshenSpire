@@ -43,8 +43,7 @@ import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
-import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
-import { generateJourney } from '../src/model/worldAtlas.js';
+import { locationTags, resolveLocationId, restDeniedBy } from '../src/model/locations.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -9490,7 +9489,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     leaveLocation(restored);
 
     // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
-    // stream seeded from the run instead of throwing (the atlas inspection).
+    // stream seeded from the run instead of throwing.
     // The runtime reads a tag's rule off `propertyRules` (content-build's
     // balance-resolved row), so a test that changes a rule changes that row.
     const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
@@ -9541,11 +9540,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
 
     // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the
-    // shrine and the chapel — and leaves the town's bed and the camp open.
+    // shrine — and leaves the town's bed and the camp open.
     const wyrmRun = fresh();
     wyrmRun.relics.push('wyrmHeart');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'shrine')), 'wyrmHeart', 'the shrine\'s rest is denied');
-    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'chapel')), 'wyrmHeart', 'the chapel\'s too');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'inn')), null, 'the inn\'s is not');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'camp')), null, 'nor the camp\'s');
     const wyrmShrine = visitTo(wyrmRun, 'shrine');
@@ -9578,10 +9576,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
     leaveLocation(composing);
 
-    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
-    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
-    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
-    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
     const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
     eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
 
@@ -9595,25 +9589,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     restAt(late);
     eq(lateRun.hp, lateRun.maxHp, 'the rest heals to the maximum the run holds now');
 
-    // THE ATLAS TOWN BUDGET: the default leaves every seeded route as it was,
-    // a cap the map cannot meet is refused by name.
-    eq(JSON.stringify(generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: contentBundle.balance.atlas.townsPerActMax })), JSON.stringify(generateJourney('ATLAS7')), 'the shipped cap changes no seeded route');
-    refuses(() => generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: 0 }), /more than 0 town/, 'a zero cap is refused by name');
-
     // THE REFUSALS: an unknown location id, a restoreMana with neither or
     // both selectors, a bad rest mode, a restDenied naming no carried tag.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg ?? e.message}`);
     const tagged = (rows) => validateContent({ ...contentBundle, tagging: [...contentBundle.tagging, ...rows] });
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'tavern', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.tavern/.test(e)), 'an id the map lacks is refused by name');
-    const innRow = tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }]);
-    assert(innRow.ok, `an atlas node id is a location (${said(innRow).join(' | ')})`);
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/inn/.test(e)), 'an atlas node id is no longer a location');
     const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
     assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
     assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
-    assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
-    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
-    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
-    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
     const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
     assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');

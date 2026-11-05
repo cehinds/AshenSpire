@@ -27,7 +27,6 @@ import { rollShopKind, rollShopOfferings, buildMarketStock, buildMerchantStock }
 import { MARKET_ADDITIONS } from '../src/model/marketStock.js';
 import { t } from '../src/ui/strings.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
-import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';
 import { shopStockProblems } from '../src/model/shopKinds.js';
 
 const REG = createRegistries(contentBundle);
@@ -241,11 +240,6 @@ test('FINISH: a pre-§14 run.shopStock loads as market unchanged', () => {
   assert.equal(shopStockKind(oldStock), 'market');
   assert.deepEqual(shopStockOfferings(oldStock), [...LEGACY_MARKET_OFFERINGS]);
   assert.deepEqual(shopStockKind(null), 'market');
-  // An atlas shop point's persisted stock comes forward the same way.
-  const journeyRun = { journey: { serviceStates: { a: { stock: structuredClone(oldStock) }, b: { used: true } } } };
-  bringShopStockForward(journeyRun);
-  assert.equal(journeyRun.journey.serviceStates.a.stock.kind, 'market');
-  assert.deepEqual(journeyRun.journey.serviceStates.b, { used: true });
 });
 
 // Step 6 (SPEC §14.4) registered the blacksmith and step 7 (§14.5) the
@@ -486,34 +480,10 @@ test('one bad shop kind costs that kind, not every Advanced setting (review, #13
   assert.equal(minimum.shops.market.offerings.find((row) => row.id === 'relics').chance, 30);
 });
 
-test('the atlas shop inspection promises Remove only when the visit offered it (review, #1371)', () => {
-  const run = createRunState({ seed: 6, classId: 'reaver', registries: REG });
-  const withRemove = buildMarketStock(REG, createRng(6), run);
-  const offered = localServiceModel({ handlerId: 'shop', registries: REG, run, state: { stock: withRemove } });
-  assert.match(offered.benefit, /remove a card/);
-  assert.ok(offered.facts.some((fact) => /^Remove a card: \d+ cinders/.test(fact)));
-  const noRemove = registriesWith({ [`${PREFIX}market.remove.enabled`]: false });
-  const without = buildMarketStock(noRemove, createRng(6), run);
-  assert.ok(!without.offerings.includes('remove'));
-  const hidden = localServiceModel({ handlerId: 'shop', registries: noRemove, run, state: { stock: without } });
-  assert.doesNotMatch(hidden.benefit, /remove/i);
-  // Once rolled, the benefit names only the shelves the visit laid out (Codex, on #1371).
-  assert.match(offered.benefit, /^Spend cinders on this visit’s cards, relics, flasks, armaments, weapon arts\./);
-  // (Cards and flasks are the offerings the minimum counts, so two others go.)
-  const noCards = registriesWith({ [`${PREFIX}market.relics.enabled`]: false, [`${PREFIX}market.weaponArts.enabled`]: false });
-  const fewer = localServiceModel({ handlerId: 'shop', registries: noCards, run, state: { stock: buildMarketStock(noCards, createRng(6), run) } });
-  assert.doesNotMatch(fewer.benefit, /relics|weapon arts/);
-  assert.match(fewer.benefit, /cards, flasks, armaments\./);
-  assert.ok(!hidden.facts.some((fact) => /Remove a card/.test(fact)));
-  // Before the first entry nothing is rolled: removal is only a possibility.
-  const unrolled = localServiceModel({ handlerId: 'shop', registries: REG, run, state: {} });
-  assert.match(unrolled.benefit, /may also offer to remove a card/);
-});
-
-test('an atlas point\'s saved stock is shape-checked like run.shopStock, (the Shops rows retired in 3e)', async () => {
-  assert.deepEqual(shopStockProblems({ kind: 'market', offerings: ['cards'] }, 'journey.serviceStates.p.stock'), []);
-  assert.ok(shopStockProblems({ kind: 'market', offerings: ['bogus'] }, 'journey.serviceStates.p.stock')
-    .some((problem) => problem.startsWith("journey.serviceStates.p.stock.offerings names 'bogus'")));
+test('a saved stock is shape-checked (the Shops rows retired in 3e)', async () => {
+  assert.deepEqual(shopStockProblems({ kind: 'market', offerings: ['cards'] }, 'shopStock'), []);
+  assert.ok(shopStockProblems({ kind: 'market', offerings: ['bogus'] }, 'shopStock')
+    .some((problem) => problem.startsWith("shopStock.offerings names 'bogus'")));
 });
 
 test('a schema-14 stock must name its kind and offerings; only an older save gets the market fallback (Codex, on #1371)', () => {
@@ -524,8 +494,8 @@ test('a schema-14 stock must name its kind and offerings; only an older save get
   const { kind: _kindGone, ...noKind } = run.shopStock;
   assert.ok(validateRunShape({ ...run, shopStock: noOfferings }).some((problem) => /shopStock\.offerings is missing/.test(problem)));
   assert.ok(validateRunShape({ ...run, shopStock: noKind }).some((problem) => /shopStock\.kind is missing/.test(problem)));
-  assert.ok(shopStockProblems(noOfferings, 'journey.serviceStates.p.stock', { required: true })
-    .some((problem) => problem.startsWith('journey.serviceStates.p.stock.offerings is missing')));
+  assert.ok(shopStockProblems(noOfferings, 'shopStock', { required: true })
+    .some((problem) => problem.startsWith('shopStock.offerings is missing')));
   // Through the load door a current save missing the field is refused, so a
   // Remove the visit never offered cannot come back on reload.
   const storage = createMemoryStorage();
@@ -550,11 +520,11 @@ test('a saved stock of a kind this build does not have is refused by name and ar
 
 test('a saved stock that is not an object is refused by name, wherever it is kept (Codex, on #1371)', () => {
   for (const bad of [['cards'], 'market']) {
-    const problems = shopStockProblems(bad, 'journey.serviceStates.p.stock', { required: true });
-    assert.ok(problems.some((problem) => problem.startsWith('journey.serviceStates.p.stock must be an object')), `${JSON.stringify(bad)}: ${problems.join(' | ')}`);
+    const problems = shopStockProblems(bad, 'shopStock', { required: true });
+    assert.ok(problems.some((problem) => problem.startsWith('shopStock must be an object')), `${JSON.stringify(bad)}: ${problems.join(' | ')}`);
   }
   // Absent or null is simply no stock, as before.
-  assert.deepEqual(shopStockProblems(undefined, 'journey.serviceStates.p.stock', { required: true }), []);
+  assert.deepEqual(shopStockProblems(undefined, 'shopStock', { required: true }), []);
   assert.deepEqual(shopStockProblems(null, 'shopStock', { required: true }), []);
   const run = createRunState({ seed: 12, classId: 'reaver', registries: REG });
   assert.ok(validateRunShape({ ...run, shopStock: ['cards'] }).some((problem) => /shopStock must be an object/.test(problem)));

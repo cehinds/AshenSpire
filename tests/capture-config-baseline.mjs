@@ -19,7 +19,6 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const MIGRATED = [
   'src/ui/uiContent.js',
   'src/content/mapPresentation.js',
-  'src/content/localMapPresentation.js',
   'src/content/combatEffectPresentation.js',
   'src/content/combatPoseStates.js',
   'src/content/actionAnimations.js',
@@ -121,7 +120,6 @@ export const PROBES = {
     ['orderArmouryPositions', [[{ slot: 'leftHand' }, { slot: 'armor' }, { slot: 'rightHand' }]]],
   ],
   // ---- phase 1 -------------------------------------------------------------
-  'src/content/localMapPresentation.js': [['localMapPolicy', []], ['localMapPolicy', ['ashen-crown']]],
   'src/content/combatEffectPresentation.js': [
     ['combatEffectPresentation', ['slash']], ['combatEffectPresentation', ['steelGlint']],
     ['combatEffectPresentation', ['bloodAura']], ['combatEffectPresentation', ['unknownKind']],

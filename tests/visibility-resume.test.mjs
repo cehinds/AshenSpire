@@ -466,7 +466,6 @@ const KNOWN = {
   'src/ui/components/iconTray.js': ["'pointerdown'"],
   'src/ui/components/intro.js': ["'keydown'"],
   'src/ui/components/layeredEnvironment.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), sent by an art-source change: rewrites only mounted decorative layer backgroundImage URLs through layeredArtUrl(); reads no run or combat state, dispatches no gameplay action, and disposal removes the listener; covered by the mounted-overlay test above"]],
-  'src/ui/components/localMapCamera.js': ["'pointerup'"],
   'src/ui/components/mapDetail.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired when the built-in art source changes (an Art quality switch), not the page cycle: forgets the map layer's failed detail tiles and requests the visible set again through assetUrl() only"]],
   'src/ui/components/modalShell.js': ["'keydown'"],
   'src/ui/components/overlay.js': ["'ashenspire:quicknav-mode-change'", "'keydown'"],
