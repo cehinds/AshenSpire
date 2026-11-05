@@ -64,7 +64,7 @@ export function visibleBadges(badges, slots = BADGE_SLOTS) {
 }
 
 /**
- * A fighter's stance summary (the badge is gone, owner 2026-11-05; kept as data for the inspector), or null (no stance, or not Core 2): { maneuver, label, help } with
+ * A fighter's stance summary (the badge is gone, owner 2026-11-05; this data builder has no caller in the UI now and is covered by tests only), or null (no stance, or not Core 2): { maneuver, label, help } with
  * help "Stance: Counter · +1 AR, +3 DR" built from the same rating bonuses the card inspector words.
  * `ctx` carries { registries, combatExpansionVersion: 2, stanceRules } as the card inspector builds it.
  */
