@@ -55,3 +55,21 @@ for (const { name, input } of VIEWPORTS) {
     assert.equal(holdPlaySlots(previous, [], planFor(input, 0), 'k'), null, 'an empty hand');
   });
 }
+
+for (const { name, input } of VIEWPORTS) {
+  test(`${name}: a held hand's hit lanes run to the next survivor, never overlap; fresh layouts keep step`, () => {
+    const key = 'k', ids5 = idsOf(5), previous = { ids: ids5, key, plan: planFor(input, 5) };
+    const ids = ids5.filter((_, i) => i !== 2), held = holdPlaySlots(previous, ids, planFor(input, 4), key);
+    assert.ok(held && held.hitWidths, 'held plan carries hit widths');
+    const w = held.cardWidth;
+    held.cards.forEach((card, i) => {
+      const expected = i === ids.length - 1 ? w : Math.min(w, held.cards[i + 1].x - card.x);
+      assert.ok(Math.abs(held.hitWidths[i] - expected) < 1e-9, `card ${i} hit ${held.hitWidths[i]} vs ${expected}`);
+      if (i < ids.length - 1) assert.ok(card.x + held.hitWidths[i] <= held.cards[i + 1].x + 1e-9, `lane ${i} overlaps`);
+    });
+    const left = held.hitWidths[1], gap = held.cards[2].x - held.cards[1].x;
+    assert.equal(left, Math.min(w, gap));
+    assert.ok(left > previous.plan.step, 'card left of the gap is clickable past one step');
+    assert.equal(planFor(input, 4).hitWidths, undefined, 'fresh layouts carry no hit widths (hand.js uses step)');
+  });
+}

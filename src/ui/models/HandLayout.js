@@ -189,7 +189,12 @@ export function holdPlaySlots(previous, ids, plan, key, { maxShiftPx = HAND_PLAY
     last = i;
   }
   if (Math.abs(plan.cardWidth - previous.plan.cardWidth) > maxShiftPx || Math.abs(plan.top - previous.plan.top) > maxShiftPx) return null;
-  return { ...previous.plan, cards: ids.map(id => previous.plan.cards[at.get(id)]) };
+  const cards = ids.map(id => previous.plan.cards[at.get(id)]);
+  // Survivors keep their old x, so each one's clickable lane runs to its next survivor (capped at the card width):
+  // the part of a card the played gap exposed stays tappable. The last card keeps its full width.
+  const hitWidths = cards.map((card, i) => i === cards.length - 1 ? plan.cardWidth
+    : Math.min(plan.cardWidth, Math.max(0, cards[i + 1].x - card.x)));
+  return { ...previous.plan, cards, hitWidths };
 }
 
 export function handGeometryKey({ width, height, zoom, fontSize, left }) {

@@ -209,7 +209,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         setVar(el, '--hand-card-y', (toolsHeight + plan.top + slot.y) + 'px');
         setVar(el, '--hand-card-angle', slot.angle + 'deg');
         setVar(el, '--hand-card-arc', slot.y + 'px');
-        setVar(el, '--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');
+        setVar(el, '--hand-hit-width', (plan.hitWidths?.[i] ?? (i === cards.length - 1 ? plan.cardWidth : plan.step)) + 'px');
         let lane = el.querySelector('.hand-hit-lane');
         if (!lane) {
           lane = document.createElement('span');
