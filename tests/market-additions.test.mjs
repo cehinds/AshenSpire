@@ -1209,3 +1209,19 @@ test('owner 2026-11-05: a profile-unlocked set an older save already wears stays
   loadout.sets.armor[0] = piece.id;
   assert.equal(ownership(OUT, { meta: { unlocked: [piece.unlock] }, loadout }).has(piece), true);
 });
+
+test('owner 2026-11-05: loading an older save grants a worn profile-unlocked set to the run', () => {
+  const { run, rng } = marketRun(OUT, { meta: { unlocked: [] } });
+  const piece = OUT.equipment.armour.find((p) => p.classId === run.class && p.unlock && p.id !== run.loadout.creationArmourGrant?.id);
+  run.loadout.sets.armor[0] = piece.id;
+  run.loadout.boughtArmour = [];
+  const back = reload(run, rng, OUT);
+  const meta = { unlocked: [piece.unlock] };
+  assert.ok(back.loadout.boughtArmour.some((r) => r.classId === piece.classId && r.id === piece.id), 'recorded at load');
+  const owned0 = ownership(OUT, { meta, loadout: back.loadout });
+  assert.equal(equipPiece(OUT, back.loadout, 'armor', 0, null, owned0, { inCombat: false, classId: back.class }), true);
+  const owned = ownership(OUT, { meta, loadout: back.loadout });
+  assert.ok(owned.has(piece), 'still owned once unequipped');
+  assert.ok(inventoryRows(OUT, back, meta).some((r) => r.category === 'Armour' && r.id === piece.id), 'still listed');
+  assert.equal(equipPiece(OUT, back.loadout, 'armor', 0, piece.id, owned, { inCombat: false, classId: back.class }), true);
+});
