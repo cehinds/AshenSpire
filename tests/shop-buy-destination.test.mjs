@@ -49,6 +49,7 @@ test('a full deck refuses Add to deck and leaves the run untouched', () => {
 
 test('the host offers equip through the Armoury and keeps inventory as the dismissal', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /\['weapons', 'armor'\]\.includes\(receipt\?\.kind\)\) return offerShopEquip/);
   assert.match(main, /showArmoury\(\{ equipItemId: id \}, showShop\)/);
   assert.equal((main.match(/onArmamentPurchased: shopArmamentBought/g) || []).length, 4);
   const modal = readFileSync(new URL('../src/ui/components/shopBuyChoice.js', import.meta.url), 'utf8');

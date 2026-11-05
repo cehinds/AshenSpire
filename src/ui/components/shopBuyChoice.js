@@ -10,7 +10,7 @@ function openChoice({ title, body, primaryLabel, secondaryLabel, onPrimary, onSe
   const status = el('p', { class: 'reward-confirm-status', role: 'alert', text: refusal });
   let settled = false;
   const shell = openModal({
-    title, size: 'sm', className: 'shop-buy-choice', closeLabel: secondaryLabel, secondary: [secondary], primary,
+    title, size: 'sm', className: 'shop-buy-choice', bodyClassName: 'as-pane', closeLabel: secondaryLabel, secondary: [secondary], primary,
     initialFocus: () => (primary.disabled ? secondary : primary),
     onClose: () => { if (!settled) { settled = true; onSecondary?.(); } },
     body(host) { host.append(el('p', { text: body }), status); },

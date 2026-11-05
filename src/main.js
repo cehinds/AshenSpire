@@ -3799,6 +3799,7 @@ function showGameProfileReward() {
 // Owner 2026-11-05: after a shop purchase a card may go to the deck (else it stays in the library, as before) and an
 // armament may be equipped through the Armoury's own equip flow (else it stays in the inventory, as before).
 function offerShopCardDestination(receipt) {
+  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id);
   if (!['combatCards', 'weaponArts'].includes(receipt?.kind) || !receipt.instanceId) return;
   const settings = saves.loadMeta().settings || {};
   openShopCardChoice({
@@ -3807,8 +3808,8 @@ function offerShopCardDestination(receipt) {
     onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
   });
 }
-function shopArmamentBought(id) {
-  recordCollectedArmament(id, 'shop');
+function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
+function offerShopEquip(id) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
   const def = (registries.equipment.armaments || []).find(row => row.id === id) || (registries.equipment.armour || []).find(row => row.id === id);
   openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, showShop) });
