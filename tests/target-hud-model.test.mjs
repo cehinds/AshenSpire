@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, targetHudPinnedWidth, placeTargetHudPanels, targetHudIntentObstacle, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, targetHudPinnedWidth, targetHudEnemyRowWidth, placeTargetHudPanels, targetHudIntentObstacle, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
 
 test('target details support every alternative formation form factor', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
@@ -185,4 +185,51 @@ test('an unselected frame keeps its rendered intent rect clear; a selected frame
   const obstacle = targetHudIntentObstacle({ selected: false, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37 });
   const placed = placeTargetHudPanels({ bounds, obstacles: [obstacle], panels: [{ id: 'e', role: 'enemy', lane: 0, anchor: { left: 120, top: 80, width: 60, height: 80 }, width: 140, height: 60 }] })[0];
   assert.equal(targetHudOverlaps(placed, obstacle), false);
+});
+
+test('several enemy panels share a row, each near its own enemy, and wrap only when one row cannot hold them', () => {
+  const config = targetHudConfig();
+  const mk = (id, left, w = 223) => ({ id, role: 'enemy', lane: 0, anchor: { left, top: 91, width: 120, height: 190 }, width: w, height: 70 });
+  // Desktop: three panels, free band below the enemies.
+  const bounds = { left: 0, top: 0, width: 1366, height: 500 };
+  const panels = [mk('a', 360), mk('b', 590), mk('c', 840)];
+  const placed = placeTargetHudPanels({ bounds, panels, obstacles: panels.map(p => ({ id: p.id, ...p.anchor })), config });
+  assert.equal(new Set(placed.map(p => p.top)).size, 1, 'one shared top');
+  placed.forEach((p, i) => { assert.ok(p.left >= 0 && p.left + p.width <= bounds.width, 'on screen'); placed.slice(i + 1).forEach(q => assert.ok(!targetHudOverlaps(p, q), 'panels do not overlap')); });
+  assert.ok(placed.every(p => !panels.some(e => targetHudOverlaps(p, e.anchor))), 'no panel over an enemy sprite');
+  // Phone: two narrowed panels share a row; a third wraps to its own row instead of a column of three.
+  const phone = { left: 0, top: 0, width: 360, height: 480 };
+  const w = targetHudEnemyRowWidth({ bounds: phone, count: 3, width: 170, config });
+  assert.ok(w >= config.positioning.enemyRowMinWidthPx + 25 && w < 170, `narrowed to ${w}`);
+  const small = [mk('a', 230, w), mk('b', 45, w), mk('c', 126, w)].map(p => ({ ...p, anchor: { ...p.anchor, top: 151, height: 169 } }));
+  const rows = placeTargetHudPanels({ bounds: phone, panels: small, obstacles: small.map(p => ({ id: p.id, ...p.anchor })), config, tightTop: true });
+  const tops = [...new Set(rows.map(p => p.top))];
+  assert.ok(tops.length <= 2 && rows.length === 3, `rows ${tops}`);
+  assert.ok(rows.filter(p => p.top === tops[0]).length >= 2, 'at least two share a row');
+  assert.ok(rows.every(p => p.left >= 0 && p.left + p.width <= phone.width), 'on screen');
+});
+
+test('enemy panels in a row stay under their own enemy, never drifting beneath a neighbour', () => {
+  const bounds = { left: 0, top: 0, width: 1000, height: 600 };
+  const panel = (id, left) => ({ id, role: 'enemy', lane: 0, width: 200, height: 70, anchor: { left, width: 120, top: 170, height: 115 } });
+  const a = panel('a', 300), b = panel('b', 560);
+  const obstacles = [{ id: 'a', ...a.anchor }, { id: 'b', ...b.anchor },
+    { left: 0, top: 0, width: 1000, height: 95 }, { left: 480, top: 480, width: 120, height: 120 }, { left: 150, top: 290, width: 280, height: 190 }];
+  const placed = placeTargetHudPanels({ bounds, panels: [a, b], obstacles, config: targetHudConfig() });
+  for (const [own, enemy] of [[a, a], [b, b]]) {
+    const rect = placed.find(row => row.id === own.id), centre = rect.left + rect.width / 2;
+    assert.ok(centre >= enemy.anchor.left - rect.width / 2 && centre <= enemy.anchor.left + enemy.anchor.width + rect.width / 2, `${own.id} centre ${centre} is within its enemy's span +/- half a panel`);
+  }
+});
+
+test('three adjacent enemies still get one row: a crowded group is centred on its enemies, not pushed only right', () => {
+  const bounds = { left: 0, top: 0, width: 1400, height: 600 };
+  const panel = (id, left) => ({ id, role: 'enemy', lane: 0, width: 200, height: 70, anchor: { left, width: 100, top: 100, height: 115 } });
+  const panels = [panel('a', 400), panel('b', 520), panel('c', 640)];
+  const placed = placeTargetHudPanels({ bounds, panels, obstacles: panels.map(p => ({ id: p.id, ...p.anchor })), config: targetHudConfig() });
+  assert.equal(new Set(placed.map(p => p.top)).size, 1, 'one shared row');
+  for (const p of panels) {
+    const rect = placed.find(row => row.id === p.id), centre = rect.left + rect.width / 2;
+    assert.ok(centre >= p.anchor.left - rect.width / 2 && centre <= p.anchor.left + p.anchor.width + rect.width / 2, `${p.id} centre ${centre} within its enemy span +/- half a panel`);
+  }
 });

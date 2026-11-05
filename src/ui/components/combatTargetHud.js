@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds } from './combatSpriteGeometry.js';
@@ -343,7 +343,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (tile && path) tiles.set(id, { path, box: tile.getBoundingClientRect() });
     }
     // Phase 3: panel sizing writes, then every panel's height.
+    const enemyRows = sizing.filter(row => row.entry.role === 'enemy');
     for (const row of sizing) {
+      // Several enemy panels narrow a little so they can share a row (owner 2026-11-05).
+      if (row.entry.role === 'enemy') row.width = targetHudEnemyRowWidth({ bounds, count: enemyRows.length, width: row.width + 25, config }) - 25;
       // A player panel narrows to the room right of the body rather than sliding back over it.
       if (row.entry.role === 'player') row.width = targetHudPinnedWidth({ bounds, anchor: row.anchor, width: row.width + 25, config }) - 25;
     }
