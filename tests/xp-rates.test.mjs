@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { advancedConfigSnapshot, configuredContentBundle, updatedXpSnapshot, xpSnapshotFromProfile } from '../src/model/advancedConfig.js';
+import { advancedConfigSnapshot, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRunCombat, enemyLevelsForFight } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createEnemyCombatEntity, createRunState } from '../src/model/state.js';
@@ -37,7 +37,7 @@ test('the current build follows SPEC §13.4o: every track\'s top level costs abo
   ] }), 50);
 });
 
-test('kill XP uses each defeated enemy level; a live settings snapshot changes its rate', () => {
+test('kill XP uses each defeated enemy level; a configured snapshot changes its rate', () => {
   const run = { seed: 42, actNumber: 3, floor: 2 };
   const enemyIds = ['ashRevenant', 'ashRevenant'];
   const levels = enemyLevelsForFight(registries, run, enemyIds);
@@ -57,18 +57,14 @@ test('kill XP uses each defeated enemy level; a live settings snapshot changes i
   assert.equal(combatLevelXp(registries, { enemies: dead }), 2 * levels[0]);
 
   const snapshot = advancedConfigSnapshot({ 'gameConfig.balance.level.xp.base': 175, 'gameConfig.balance.xp.kill.normal': 12 });
-  const changed = updatedXpSnapshot(snapshot, { 'gameConfig.balance.xp.kill.normal': 20 });
+  const changed = advancedConfigSnapshot({ 'gameConfig.balance.level.xp.base': 175, 'gameConfig.balance.xp.kill.normal': 20 });
   const updated = createRegistries(configuredContentBundle(contentBundle, changed));
   assert.equal(characterXpToNext(updated, 1), 180, 'the configured base follows the authored round-to-10 rule');
   assert.equal(combatLevelXp(updated, { enemies: dead }), 4 * levels[0]);
   assert.equal(snapshot.overrides['gameConfig.balance.xp.kill.normal'], 12);
-  const changedFactor = updatedXpSnapshot(snapshot, { 'gameConfig.balance.xp.killLevelMultiplier': 0.4 });
+  const changedFactor = advancedConfigSnapshot({ 'gameConfig.balance.level.xp.base': 175, 'gameConfig.balance.xp.kill.normal': 12, 'gameConfig.balance.xp.killLevelMultiplier': 0.4 });
   const factorRegistries = createRegistries(configuredContentBundle(contentBundle, changedFactor));
   assert.equal(combatLevelXp(factorRegistries, { enemies: dead }), Math.floor(12 * 0.4 * levels[0]));
-
-  const resumed = xpSnapshotFromProfile(snapshot, { 'gameConfig.balance.xp.kill.normal': 25 });
-  assert.equal(resumed.overrides['gameConfig.balance.xp.kill.normal'], 25);
-  assert.equal(resumed.overrides['gameConfig.balance.level.xp.base'], undefined, 'a profile reset clears an old run XP override');
 });
 
 test('the saved combat receipt names defeated enemies and its terms equal the actual award', () => {

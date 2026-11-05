@@ -105,3 +105,18 @@ test('actual invalid configured profiles still throw loudly and are revalidated'
   }
   assert.equal(calls.validate, 2); assert.equal(calls.warnings.length, 2);
 });
+
+test('a configured profile keys its cache on the profile hash and opening/presentation settings, not the whole settings object', () => {
+  const { rebuild, calls } = fixture(), profile = { id: 'core', mode: 'configured', hash: 'sha256:core' };
+  const first = rebuild({ 'gameConfig.balance.xp.kill.normal': 1, volume: 3, 'gameConfig.prologue.sceneCount': 2 }, null, profile);
+  assert.equal(calls.validate, 1);
+  const unrelated = rebuild({ 'gameConfig.balance.xp.kill.normal': 99, volume: 9, 'gameConfig.prologue.sceneCount': 2 }, null, structuredClone(profile));
+  assert.equal(unrelated.mutable, first.mutable, 'a legacy key or an unrelated setting does not rebuild a configured profile');
+  assert.equal(calls.validate, 1);
+  const snapshot = rebuild({ schemaVersion: 1, overrides: { 'gameConfig.prologue.sceneCount': 2 } }, null, profile);
+  assert.equal(snapshot.mutable, first.mutable, 'a run snapshot with the same opening settings hits the same build');
+  assert.notEqual(rebuild({ 'gameConfig.prologue.sceneCount': 3 }, null, profile).mutable, first.mutable, 'an opening setting rebuilds');
+  assert.equal(calls.validate, 2);
+  assert.notEqual(rebuild({ 'gameConfig.presentation.showFormationGrid': true }, null, profile).mutable, first.mutable, 'a presentation setting rebuilds');
+  assert.notEqual(rebuild({ 'gameConfig.presentation.showFormationGrid': true }, null, { ...profile, hash: 'sha256:other' }).mutable, first.mutable, 'a different profile hash rebuilds');
+});

@@ -164,10 +164,12 @@ export function createRunCombat({
     recoveryRules: recoveryRulesFor(settings),
     // Combat Rounds Preview (SPEC §4.11): read from the run's FROZEN overrides,
     // never the live settings, so a run keeps the preview it was born with.
-    // null (off) leaves the fight without a combatRounds field.
-    combatRounds: combatRoundsFor(run.advancedConfigSnapshot?.overrides),
+    // null (off) leaves the fight without a combatRounds field. A Core 2 run
+    // reads none: createCombat drops both for a configured profile, and its
+    // snapshot no longer carries the keys (cleanup 3e).
+    combatRounds: configuredCombat(run) ? null : combatRoundsFor(run.advancedConfigSnapshot?.overrides),
     // SPEC §4.11: the normal fight's momentum and multi-action toggles (null when both are off or rounds mode is on).
-    normalPreview: normalPreviewFor(run.advancedConfigSnapshot?.overrides),
+    normalPreview: configuredCombat(run) ? null : normalPreviewFor(run.advancedConfigSnapshot?.overrides),
     registries,
     rng,
     player: { ...runCombatPlayer(run),
