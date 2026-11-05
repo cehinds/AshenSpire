@@ -40,10 +40,11 @@ test('Add to deck moves exactly that bought card from the library to the deck', 
 
 test('a full deck refuses Add to deck and leaves the run untouched', () => {
   const { run, receipt } = buyCard();
-  const settings = { deckMax: run.deck.length };
+  const settings = { deckMaxSize: run.deck.length, deckMaxUnlimited: false };
   const before = JSON.stringify(run);
   const code = shopCardDeckRefusal(registries, run, receipt.instanceId, settings);
-  if (code) { assert.throws(() => addPurchasedCardToDeck(registries, run, receipt.instanceId, settings)); assert.equal(JSON.stringify(run), before); }
+  assert.equal(code, 'full');
+  assert.throws(() => addPurchasedCardToDeck(registries, run, receipt.instanceId, settings)); assert.equal(JSON.stringify(run), before);
   assert.equal(shopCardDeckRefusal(registries, run, 'reward:none'), 'notCard');
 });
 
