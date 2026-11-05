@@ -40,7 +40,8 @@ function make({ stagger = 320, max = 4, life = 1650, maxQueued, staggerMin = 90,
 }
 
 test('the defaults come from content/config floaterStack.json', () => {
-  assert.equal(FLOATER_STACK.floaterStaggerMs, 320);
+  assert.equal(FLOATER_STACK.floaterStaggerMs, 208);
+  assert.equal(FLOATER_STACK.floaterStaggerMinMs, 59);
   assert.equal(FLOATER_STACK.floaterMaxVisible, 4);
   assert.equal(FLOATER_STACK.floaterFontPx, 21);
   assert.equal(FLOATER_STACK.floaterFontMinPx, 13.5);

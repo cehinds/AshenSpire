@@ -11,8 +11,8 @@
     "floaterMaxQueued": 3
   },
   "motion": {
-    "floaterStaggerMs": 320,
+    "floaterStaggerMs": 208,
     "floaterShiftMs": 220,
-    "floaterStaggerMinMs": 90
+    "floaterStaggerMinMs": 59
   }
 }
