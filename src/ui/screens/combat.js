@@ -17,7 +17,7 @@ import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../models/C
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
-import { combatRangeRanks } from '../models/CombatRangeRankModel.js';
+import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
@@ -1310,7 +1310,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
       pileCounts: { draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length },
-      arcaneEvents: [], logLength: combat.eventLog.length };
+      arcaneEvents: [], logLength: combat.eventLog.length, rangeRanks: rangeRankSnapshot(combat) };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -1363,6 +1363,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears and
     // flushDeferredIntentClears applies them from onResolution (playTimeline call below).
     reduceFollowRows(beat.events);
+    for (const e of beat.events) applyRangeRankEvent(disp.rangeRanks, e);
     for (const e of beat.events) {
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
@@ -1726,7 +1727,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
     $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
     // Melee stands in the front strip, reach in the back (display only); keyed by frame id, empty without range state.
-    const rangeRanks = combatRangeRanks(combat);
+    const rangeRanks = disp?.rangeRanks ? rangeRanksFromSnapshot(disp.rangeRanks) : combatRangeRanks(combat);
     $('.field').dataset.rangeRanks = rangeRanks ? JSON.stringify(Object.fromEntries([...rangeRanks].map(([key, rank]) => [key.slice(key.indexOf(':') + 1), rank]))) : '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;

@@ -1,7 +1,7 @@
 // Owner, 2026-11-05: "use the front and back rows to indicate melee and reach". Display only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { combatRangeRanks } from '../src/ui/models/CombatRangeRankModel.js';
+import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../src/ui/models/CombatRangeRankModel.js';
 import { alternativeFormation } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { createRangeState, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
@@ -72,4 +72,21 @@ test('null ranks leave the layout identical to today', () => {
   const a = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false);
   const b = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false, { rangeRanks: null });
   assert.deepEqual(b, a);
+});
+
+test('playback: a strip changes on the beat of its own move, not when the engine finished', () => {
+  // e1 is at melee, e2 at reach; in the enemy turn e1 acts, then e2 advances. `combat` is already post-dispatch.
+  const before = fight({ e1: 0, e2: 1 });
+  const snap = rangeRankSnapshot(before);
+  const after = fight({ e1: 0, e2: 0 });
+  assert.equal(combatRangeRanks(after).get('enemy:e2'), 'front', 'the finished state has e2 in front');
+  const rank = () => rangeRanksFromSnapshot(snap).get('enemy:e2');
+  assert.equal(rank(), 'back');
+  applyRangeRankEvent(snap, { type: 'damageDealt', sourceId: 'e1', targetId: 'player' });
+  assert.equal(rank(), 'back', 'e1 beats leave e2 behind');
+  applyRangeRankEvent(snap, { type: 'combatEngagementMoved', sourceId: 'e2', targetId: 'player', bands: -1 });
+  assert.equal(rank(), 'front', 'e2 steps up on its own move beat');
+  applyRangeRankEvent(snap, { type: 'enemyDied', targetId: 'e1', enemyId: 'hound' });
+  assert.equal(rangeRanksFromSnapshot(snap).has('enemy:e1'), false);
+  assert.equal(rangeRankSnapshot(fight({ e1: 0 }, { range: false })), null);
 });
