@@ -21,7 +21,7 @@ test('mixed reward is stable across reload, choose one once, card acquisition do
 test('the owner 70/20/10 mix: cards, potions and weapons occur; retired relics/armor and the owned weapon art do not (2026-10-27); weapon arts are the learnable arts of carried weapons (2026-11-05)',()=>{
  const categories=new Set();for(let seed=0;seed<300;seed++){
   // The Reaver's greatsword art is granted (in the deck), so it is never offered; the class special is not a weapon art at all.
-  const run=fresh();const o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:'fight'});assert.equal(o.options.length,3);o.options.forEach(row=>{if(row.kind==='relics'){assert.equal(row.id,'brimmingGourd');categories.add('potions');}else categories.add(row.kind);
+  const run=fresh();const o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:'fight'});assert.ok(o.options.length>=3&&o.options.length<=5,`combat door size ${o.options.length}`);o.options.forEach(row=>{if(row.kind==='relics'){assert.equal(row.id,'brimmingGourd');categories.add('potions');}else categories.add(row.kind);
    if(row.kind==='weaponArts')assert.ok(!['greatswordSunderingHew','core.reaverSpecial'].includes(row.id),row.id);});
  }
  assert.deepEqual([...categories].sort(),['combatCards','potions','weaponArts','weapons'].sort());

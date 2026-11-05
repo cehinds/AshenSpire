@@ -30,3 +30,10 @@ test('armament disclosure cannot acquire an equip hold or hide comparison in a h
   assert.throws(() => normalizeArmouryLayout({ cardClasses: { armamentItem: { holdAction: true } } }), /read-only disclosure/);
   assert.throws(() => normalizeArmouryLayout({ cardClasses: { armamentItem: { comparisonPresentation: 'tooltip' } } }), /inline comparison/);
 });
+
+test('Armoury draws Potion and Relic as collectibles and gear as equipment', async () => {
+  const { isCollectibleCategory } = await import('../src/ui/screens/equipment.js');
+  assert.equal(isCollectibleCategory('Potion'), true);
+  assert.equal(isCollectibleCategory('Relic'), true);
+  for (const category of ['Weapon', 'Armor', 'Shield', 'Staff', '', undefined]) assert.equal(isCollectibleCategory(category), false);
+});

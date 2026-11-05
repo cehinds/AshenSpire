@@ -260,8 +260,8 @@ async function checkArmoury(shape) {
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}${APP_PATH}?shot=combat` }, page.sessionId);
   await page.until("!!document.querySelector('.combat .hand .card')", 'Combat');
   await page.evaluate("document.querySelector('#combat-armoury').click()");
-  await page.until("!!document.querySelector('.armoury-overlay [data-surface=\"armouryView\"]')", 'Armoury');
-  await page.evaluate("document.querySelector('.armoury-overlay [data-surface=\"armouryView\"] [data-member=\"grid\"]').click()");
+  await page.until("!!document.querySelector('.armoury-overlay .armoury-head [data-modal-tab]')", 'Armoury');
+  await page.evaluate("document.querySelector('.armoury-overlay .armoury-head [data-modal-tab=\"character\"]').click()");
   await page.until(`document.querySelector('.armoury')?.dataset.pane==='character' && document.querySelectorAll('.character-info-card').length===${ARMOURY_INFO_CARDS.length}`, 'Armoury Character view');
 
   const arrival = await page.evaluate(`(() => ({

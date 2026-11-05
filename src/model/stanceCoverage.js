@@ -51,7 +51,7 @@ export function reserveStanceCards(registries, run, rng, stream, eligibleIds, li
     const ids = eligibleIds.filter(id => inTier(id) && stanceOfId(registries, id) === stance);
     if (ids.length) byStance.set(stance, ids);
   }
-  // Owner 2026-10-31: a card shown in an earlier offer is drawn at offeredCopyWeight^timesOffered (a stance by the mean of its cards);
+  // Owner 2026-10-31: a card shown in an earlier offer is drawn at offeredCopyWeight^timesOffered (a stance by the SUM of its cards' weights, owner 2026-11-05, so every eligible card is equally likely and a stance with few basics is not over-picked);
   // with no history or the weight at 1 every weight is equal and the draw is the old uniform rng.pick, so existing seeds hold.
   const base = gameContent(run, 'rewards')?.eligibility?.combatCards?.offeredCopyWeight, history = run.rewardOfferHistory?.cards || {};
   const weightOf = id => (Number.isFinite(base) && base !== 1 ? Math.pow(base, history[id] || 0) : 1);
@@ -64,7 +64,7 @@ export function reserveStanceCards(registries, run, rng, stream, eligibleIds, li
   };
   const picked = [];
   while (picked.length < slots && byStance.size) {
-    const stance = pickWeighted([...byStance.keys()], key => byStance.get(key).reduce((sum, id) => sum + weightOf(id), 0) / byStance.get(key).length);
+    const stance = pickWeighted([...byStance.keys()], key => byStance.get(key).reduce((sum, id) => sum + weightOf(id), 0));
     picked.push(pickWeighted(byStance.get(stance), weightOf));
     byStance.delete(stance);
   }

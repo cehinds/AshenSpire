@@ -24,7 +24,7 @@ function facesOf(dom, registries, ref, rules) {
   try {
     const el = renderCard(registries, ref, { inspection: false, rules });
     return (markup.get(el) || '').split('<span class="face-line"').slice(1)
-      .map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim());
+      .map(part => part.slice(part.indexOf('>') + 1).split(/<template|<\/div>/)[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim());
   } finally { delete proto.innerHTML; Object.defineProperty(proto, 'innerHTML', descriptor); }
 }
 
@@ -116,7 +116,7 @@ test('a summary reads uneven hit damage from the preview, not the base number', 
   try {
     const preview = { combatExpansionVersion: 2, tokens: {}, values: [], damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 5], totalDamage: 6 }] };
     const el = renderCard(reg, { cardId: 'arrowVolley' }, { inspection: false, rules, preview });
-    const text = (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
+    const text = (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split(/<template|<\/div>/)[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
     assert.doesNotMatch(text, /Inspect full effect/);
     assert.match(text, /1 \+ 5/, text);
     assert.doesNotMatch(text, /\b2\b.*times|×/, text);
@@ -130,7 +130,7 @@ test('qualifier table: chance, payment, discard, hits and plain cards', () => wi
   Object.defineProperty(proto, 'innerHTML', { configurable: true, set(value) { markup.set(this, value); descriptor.set.call(this, value); } });
   const face = (ref, preview) => {
     const el = renderCard(reg, ref, { inspection: false, rules, ...(preview ? { preview } : {}) });
-    return (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
+    return (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split(/<template|<\/div>/)[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
   };
   try {
     const live = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
@@ -166,7 +166,7 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
         for (const extra of variants) {
           const ref = { cardId: card.id, ...extra }, label = `${name}: ${card.id} ${JSON.stringify(extra)}`;
           const el = renderCard(registries, ref, { inspection: false, rules });
-          const face = (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split('</div>')[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
+          const face = (markup.get(el) || '').split('<span class="face-line"').slice(1).map(part => part.slice(part.indexOf('>') + 1).split(/<template|<\/div>/)[0].replace(/<span data-face-fallback[\s\S]*/, '').replace(/<[^>]+>/g, '').trim()).join(' | ');
           assert.doesNotMatch(face, /\b1 cards\b/i, label);
           if (el.dataset.faceSummary !== 'true') continue;
           summarized++;

@@ -1318,19 +1318,19 @@ async function main() {
         // it dies at window capture and the control does nothing.
         const view0 = await ev("document.querySelector('.armoury').dataset.view");
         const target = await ev(`(() => {
-          const tabs = [...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
-          const other = tabs.find((t) => t.dataset.member !== document.querySelector('.armoury').dataset.view);
+          const tabs = [...document.querySelectorAll('.armoury-head [data-modal-tab]:not([data-modal-tab="deck"])')];
+          const other = tabs.find((t) => t.dataset.modalTab !== (document.querySelector('.armoury').dataset.view === 'grid' ? 'character' : 'armory'));
           if (!other) return null;
           document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
           other.classList.add('gp-focus');
-          return other.dataset.member; })()`);
+          return other.dataset.modalTab; })()`);
         if (!target) {
           console.log(`    ${red('A7.swallow', 'no second view tab to activate — nothing to watch the eater against, NOT a pass')}`);
           fails++; checks++;
         } else {
           const view1 = await enterAndSettle(target);
           console.log(`      then one ordinary Enter on the "${target}" view tab: data-view "${view0}" → "${view1}"`);
-          ok(view1 === target, view1 === target
+          ok(view1 === (target === 'character' ? 'grid' : 'rack'), view1 === (target === 'character' ? 'grid' : 'rack')
             ? `A7 the next keyboard activation was NOT swallowed (data-view "${view0}" → "${view1}")`
             : red('A7.swallow', `the next keyboard activation did nothing — data-view stayed "${view1}" after Enter on "${target}"; a lift-eater armed by a keyboard commit ate it`));
         }
@@ -1445,19 +1445,19 @@ async function main() {
             : red('A7.mousehold', `a completed mouse hold left the slot at "${m0}" — the mouse road did not reach the hold, so nothing below is measured`));
           const mv0 = await ev("document.querySelector('.armoury').dataset.view");
           const mtarget = await ev(`(() => {
-            const tabs = [...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
-            const other = tabs.find((t) => t.dataset.member !== document.querySelector('.armoury').dataset.view);
+            const tabs = [...document.querySelectorAll('.armoury-head [data-modal-tab]:not([data-modal-tab="deck"])')];
+            const other = tabs.find((t) => t.dataset.modalTab !== (document.querySelector('.armoury').dataset.view === 'grid' ? 'character' : 'armory'));
             if (!other) return null;
             document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
             other.classList.add('gp-focus');
-            return other.dataset.member; })()`);
+            return other.dataset.modalTab; })()`);
           if (!mtarget) {
             console.log(`    ${red('A7.mouseswallow', 'no second view tab to activate — nothing to watch the eater against, NOT a pass')}`);
             fails++; checks++;
           } else {
             const mv1 = await enterAndSettle(mtarget);
             console.log(`      then one ordinary KEYBOARD Enter on the "${mtarget}" view tab: data-view "${mv0}" → "${mv1}"`);
-            ok(mv1 === mtarget, mv1 === mtarget
+            ok(mv1 === (mtarget === 'character' ? 'grid' : 'rack'), mv1 === (mtarget === 'character' ? 'grid' : 'rack')
               ? `A7 the next keyboard activation after a MOUSE hold was NOT swallowed (data-view "${mv0}" → "${mv1}")`
               : red('A7.mouseswallow', `the next keyboard activation after a MOUSE hold did nothing — data-view stayed "${mv1}" after Enter on "${mtarget}";`
                 + ' a lift-eater armed by a mouse commit, which has no lift to eat, ate it instead'));
@@ -1565,19 +1565,19 @@ async function main() {
           // window capture and the control does nothing.
           const cv0 = await ev("document.querySelector('.armoury').dataset.view");
           const ctarget = await ev(`(() => {
-            const tabs = [...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
-            const other = tabs.find((t) => t.dataset.member !== document.querySelector('.armoury').dataset.view);
+            const tabs = [...document.querySelectorAll('.armoury-head [data-modal-tab]:not([data-modal-tab="deck"])')];
+            const other = tabs.find((t) => t.dataset.modalTab !== (document.querySelector('.armoury').dataset.view === 'grid' ? 'character' : 'armory'));
             if (!other) return null;
             document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
             other.classList.add('gp-focus');
-            return other.dataset.member; })()`);
+            return other.dataset.modalTab; })()`);
           if (!ctarget) {
             console.log(`    ${red('A7.cancelswallow', `${edge.say}: no second view tab to activate — nothing to watch the eater against, NOT a pass`)}`);
             fails++; checks++;
           } else {
             const cv1 = await enterAndSettle(ctarget);
             console.log(`      then one ordinary KEYBOARD Enter on the "${ctarget}" view tab: data-view "${cv0}" → "${cv1}"`);
-            ok(cv1 === ctarget, cv1 === ctarget
+            ok(cv1 === (ctarget === 'character' ? 'grid' : 'rack'), cv1 === (ctarget === 'character' ? 'grid' : 'rack')
               ? `A7 ${edge.say}: the next keyboard activation after a CANCELLED hold was NOT swallowed (data-view "${cv0}" → "${cv1}")`
               : red('A7.cancelswallow', `${edge.say}: the next keyboard activation after a CANCELLED hold did nothing — data-view stayed "${cv1}" after Enter on "${ctarget}";`
                 + ' the pointer never lifted, so no click was ever coming, and the eater armed at full ate an unrelated one'));
