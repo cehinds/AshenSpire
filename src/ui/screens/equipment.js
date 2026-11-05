@@ -14,6 +14,7 @@ import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { mountEquipCompareModal } from '../components/equipCompareModal.js';
+import { openSlotChoiceModal, openEquipConfirmModal } from '../components/armouryEquipModals.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
@@ -1038,10 +1039,10 @@ export function mountEquipment(host, {
    * An empty position, a drag/drop and the Inventory tab's own buttons are not a
    * replacement and equip at once.
    */
-  function requestEquip(slotId, setIndex, pieceId, actionLabel) {
+  function requestEquip(slotId, setIndex, pieceId, actionLabel, { confirm = false, opener = null } = {}) {
     const slot = eq.slots.find(candidate => candidate.id === slotId);
     const currentId = run.loadout.sets[slotId]?.[setIndex];
-    if (!picking || !slot || !pieceId || !currentId || currentId === pieceId) {
+    if (!(picking || confirm) || !slot || !pieceId || currentId === pieceId || (!currentId && !confirm)) {
       return applyEquipmentChange(slotId, setIndex, pieceId, actionLabel);
     }
     const resolved = (id) => {
@@ -1050,8 +1051,16 @@ export function mountEquipment(host, {
       const ref = slot.kinds.includes('armor') ? `armor/${run.class}/${authored.id}` : `armament/${authored.id}`;
       return resolveUpgradedEquipment(registries, ref, (run.itemUpgradeLevels || {})[ref] || 0);
     };
-    const current = resolved(currentId), next = resolved(pieceId);
-    if (!current || !next) return applyEquipmentChange(slotId, setIndex, pieceId, actionLabel);
+    const current = currentId ? resolved(currentId) : null, next = resolved(pieceId);
+    if (!next || (currentId && !current)) return applyEquipmentChange(slotId, setIndex, pieceId, actionLabel);
+    if (!current) {
+      // An EMPTY position: confirm with the item's card (Inventory equip flow, owner 2026-11-05).
+      openEquipConfirmModal({
+        registries, item: next, name: next.name, slotLabel: `${slot.label} · ${setIndex + 1}`, opener,
+        onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); },
+      });
+      return true;
+    }
     mountEquipCompareModal(wrap, {
       registries,
       title: t('armoury.compare.replaceTitle', { slot: slot.label }),
@@ -1061,8 +1070,45 @@ export function mountEquipment(host, {
         attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels,
       }),
       onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); },
+      returnFocusElement: opener || undefined,
     });
     return true;
+  }
+
+  /**
+   * Equip on an Inventory item (owner, 2026-11-05): every position open to it
+   * is a destination. More than one asks first in a "Choose a slot" modal; one
+   * goes straight to the compare modal (occupied) or the confirm modal (empty).
+   * Equip itself is the same applyEquipmentChange as ever, so combat pricing
+   * (onEquip) and refusals are unchanged.
+   */
+  function beginInventoryEquip(row, opener) {
+    const choices = [];
+    for (const slot of eq.slots.filter(candidate => fitsSlot(candidate, row.item))) {
+      for (const position of slotPositions(slot).filter(candidate => candidate.modelState !== 'hidden')) {
+        choices.push({ slot, position, id: `${slot.id}:${position.index}` });
+      }
+    }
+    const open = choices.filter(choice => choice.position.state !== 'locked');
+    const proceed = ({ slot, position }) => {
+      const label = `${slot.label} · ${position.index + 1}`;
+      const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
+      const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
+      const refusal = !seal.ok ? seal.reason : !transition.ok ? transition.reason : '';
+      if (refusal) { notice = refusal; draw(); return; }
+      requestEquip(slot.id, position.index, row.id, `Equip ${row.name} to ${label}`, { confirm: true, opener });
+    };
+    if (open.length === 1) { proceed(open[0]); return; }
+    openSlotChoiceModal({
+      opener,
+      options: choices.map(({ slot, position, id }) => ({
+        id, label: `${slot.label} · ${position.index + 1}`,
+        disabled: position.state === 'locked',
+        hint: position.rung?.hint || position.rung?.name || t('armoury.slot.locked'),
+        sub: `${t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${position.state === 'empty' ? t('armoury.slot.empty') : position.summary.name}`,
+      })),
+      onChoose: (id) => { const choice = choices.find(candidate => candidate.id === id); if (choice) proceed(choice); },
+    });
   }
 
   function comparisonFor(slotId, setIndex, pieceId) {
@@ -1402,35 +1448,6 @@ export function mountEquipment(host, {
     if (plan.explicit) node.addEventListener('click', plan.act);
     else registerHold(armHold(node, { ms: plan.holdMs, id: 'equipInventory', onConfirm: plan.act }));
     return node;
-  }
-
-  function destinationChoices(row) {
-    const section = el('section', { class: 'armament-destinations', 'aria-label': t('armoury.destination.for', { name: row.name }) }, [
-      titleS(t('armoury.destination.title')), prose(t('armoury.destination.hint')),
-    ]);
-    const choices = el('div', { class: 'armament-destination-options' });
-    for (const slot of eq.slots.filter(candidate => fitsSlot(candidate, row.item))) {
-      for (const position of slotPositions(slot).filter(candidate => candidate.modelState !== 'hidden')) {
-        const chosen = picking?.slotId === slot.id && picking?.setIndex === position.index;
-        const label = `${slot.label} · ${position.index + 1}`;
-        const choice = button({ label, className: `armament-destination${chosen ? ' selected' : ''}`,
-          disabled: position.state === 'locked', attrs: {
-            'aria-pressed': String(chosen), 'aria-label': `${label}, ${position.active ? 'active' : 'reserve'}, ${position.summary.name}`,
-            dataset: { destinationSlot: slot.id, destinationIndex: String(position.index) },
-          } });
-        choice.append(el('span', { class: 'armament-destination-occupant', text: position.state === 'locked'
-          ? position.rung?.hint || 'Locked position' : `${position.active ? 'Active' : 'Reserve'} · ${position.summary.name}` }));
-        choice.addEventListener('click', () => {
-          openInventoryForSelection(slot.id, position.index);
-          selectedInventoryKey = row.key;
-          draw();
-          wrap.querySelector('.armoury-foot-action')?.focus({ preventScroll: true });
-        });
-        choices.append(choice);
-      }
-    }
-    section.append(choices);
-    return section;
   }
 
   // SPEC §15.4: the Armoury's Sigils panel. One row per owned legendary, in
@@ -1779,6 +1796,12 @@ export function mountEquipment(host, {
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
         if (plan) footerPlans.set(row.key, { ...plan, act, explicit: !!armament, holdMs: cardClass.holdAction ? holdDuration : 0 });
+      } else if (armament && (eq.slots || []).some((slot) => fitsSlot(slot, row.item))) {
+        // Equip asks for a slot only when there is a choice (beginInventoryEquip).
+        actionButton = button({ label: t('armoury.picker.act.equip'), weight: 'primary', className: 'ep-equip' });
+        actionButton.dataset.act = 'equip';
+        actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
+        actionButton.addEventListener('click', (event) => { event.stopPropagation(); beginInventoryEquip(row, actionButton); });
       } else if (row.classCard && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
         const equipped = !run.classUnequipped && run.class === row.id;
         const label = equipped ? 'Unequip class' : 'Equip class';
@@ -1804,12 +1827,11 @@ export function mountEquipment(host, {
         comparison,
         facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
         action: actionButton,
-        instruction: armament ? t(target ? 'armoury.destination.review' : 'armoury.destination.choose') : '',
+        instruction: '',
         holdDuration, registerHold, classModel: cardClass,
         comparisonConfig: armament ? { ...layout.comparison, presentation: cardClass.comparisonPresentation } : layout.comparison,
         onClassAction: armament ? null : (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
       });
-      if (armament) revealed.prepend(destinationChoices(row));
       pickerParts.set(row.key, { revealed, target, actionLabel, seal: target ? lastSeal : null, transition: target ? lastTransition : null });
       return {
         key: row.key,
