@@ -70,7 +70,8 @@ export function runActionTimeline(beats, hooks, timingIn, {
         const spriteExcess = Math.max(0, total - reservedSpriteMs);
         creditWatchdog(spriteExcess);
         schedule(() => {
-          if (hooks.onEngagement) stage('engagement', beat, () => hooks.onEngagement(beat));
+          // Not a reported stage: the stage order is a contract (tools/click-impact-probe.mjs). The hook runs just before contact.
+          safe(() => hooks.onEngagement?.(beat));
           const contactHold = stage('contact', beat, () => { actor?.contact?.(); return hooks.onContact?.(beat, actor); });
           // Some sprite services extend their recovery after contact (hit-stop).
           const reportedRemaining = Number(safe(() => actor?.remainingMs?.()));
