@@ -46,6 +46,7 @@ import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
+import { FACE_BUDGET } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
@@ -401,15 +402,18 @@ export function renderCard(registries, ref, opts = {}) {
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
         model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, '')) : null;
+    // `roomy` asks for the second, fuller reading (cardFaceBudget.js); the fitter shows it only where it fits at its floor font.
     const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: appliedRules, faceHtml: summaryHtml, registries,
-      effects: opts.preview?.chargedEffects || def.effects || [] });
-    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
+      effects: opts.preview?.chargedEffects || def.effects || [], roomy: FACE_BUDGET, roomyLines: allFaceLines });
+    const clauseHtml = clauses => compactCardRules(clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
+    const rulesHtml = clauseHtml(projection.clauses);
     el.dataset.faceLines = String(projection.clauses.length);
     el.dataset.faceOmitted = String(projection.omitted);
     if (projection.summarized) el.dataset.faceSummary = 'true'; else delete el.dataset.faceSummary;
     const faceHtml = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
+      roomyRules: projection.roomy ? clauseHtml(projection.roomy.clauses) : null,
       painting:artwork===null?null:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
