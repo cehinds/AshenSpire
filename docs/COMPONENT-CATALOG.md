@@ -141,6 +141,8 @@ Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
 
+> The tool described here lives on the `tools-archive` branch.
+
 The [Pose & Effects Studio](../art/pose-studio/index.html) provides a reusable
 animation-authoring workspace: effect library, anchored stage, five-to-seven
 pose strip, layered cue timeline, selection inspector, binding rule builder,

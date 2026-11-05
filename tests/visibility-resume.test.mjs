@@ -501,7 +501,6 @@ const KNOWN = {
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
   'src/ui/screens/title.js': ["'keydown'"],
   'src/ui/screens/combatTest.js': ['.title'],
-  'src/ui/previews/itemCards.js': ['.title'],
   'src/ui/previews/tooltipReviewScene.js': ['.__tooltipReviewRun'],
 };
 

@@ -549,13 +549,7 @@ build/combat-effects-preview.zip
 # Local combat workshop and game test-build screenshots/logs.
 artifacts/combat-foundations/
 artifacts/combat-test/
-build/pose-studio-app/
-build/pose-studio-app.zip
 
-
-# UI Studio (ui-studio/) keeps its config backups here
-ui-studio/.state/
-ui-studio/workspace/settings.json
 
 # High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)
 /.art-cache/
@@ -600,9 +594,6 @@ build/windows-installer/
 /docs/qa/**/*-results.json
 /docs/qa/**/*-geometry.json
 /docs/qa/**/browser-health.json
-
-# AshenSpire Workbench: per-machine job history and settings
-workbench/.state/
 
 # Cross-process lock on the generated trees (tools/lib/build-lock.mjs)
 /.build-lock
