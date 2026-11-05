@@ -286,12 +286,21 @@ const cachedContentValidation = createContentValidationCache((gameProfile, confi
 
 // The last VALID build (before any per-run mastery overlay). The same profile and
 // the same settings build the same registries, so a repeat rebuild (the title
-// screen rebuilds on every arrival) returns it. The key is the WHOLE settings
-// object, not just the keys known to shape content, so no setting that matters
-// can be missed; an unserialisable one simply never hits.
+// screen rebuilds on every arrival) returns it. A legacy build keys on the WHOLE
+// settings object, so no setting that shapes content can be missed. A configured
+// (Core 2) build is made from its profile alone, so it keys on the profile hash
+// and the opening and presentation settings only: an unrelated setting (a stored
+// legacy key, a volume) no longer rebuilds it. An unserialisable key never hits.
 let lastRegistryBuild = null;
-function registryBuildKey(configuration) {
-  try { return JSON.stringify(configuration ?? {}); } catch { return null; }
+const CONFIGURED_KEY_PREFIXES = ['gameConfig.prologue.', 'gameConfig.presentation.'];
+function registryBuildKey(configuration, gameProfile) {
+  try {
+    if (!isConfiguredRun(gameProfile)) return JSON.stringify(configuration ?? {});
+    const entries = [...Object.entries(configuration ?? {}), ...Object.entries(configuration?.overrides ?? {})]
+      .filter(([key]) => CONFIGURED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)))
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return JSON.stringify([gameProfile?.hash ?? gameProfile?.id ?? null, entries]);
+  } catch { return null; }
 }
 function sameRegistryProfile(a, b) {
   return a === b || (typeof a?.hash === 'string' && a.hash === b?.hash);
@@ -299,7 +308,7 @@ function sameRegistryProfile(a, b) {
 
 function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
-  const buildKey = registryBuildKey(configuration);
+  const buildKey = registryBuildKey(configuration, gameProfile);
   if (buildKey !== null && lastRegistryBuild && lastRegistryBuild.key === buildKey && sameRegistryProfile(lastRegistryBuild.profile, gameProfile)) {
     registries = isConfiguredRun(gameProfile) ? lastRegistryBuild.registries : registriesForClassMastery(lastRegistryBuild.registries, masteryRun);
     configureTooltipGlossary(registries);
