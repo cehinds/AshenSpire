@@ -1105,8 +1105,8 @@ export function mountEquipment(host, {
       options: choices.map(({ slot, position, id }) => ({
         id, label: `${slot.label} · ${position.index + 1}`,
         disabled: position.state === 'locked',
-        hint: position.rung?.hint || position.rung?.name || t('armoury.slot.locked'),
-        sub: `${t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${position.state === 'empty' ? t('armoury.slot.empty') : position.summary.name}`,
+        hint: position.rung?.hint || position.rung?.name || '',
+        sub: `${t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${position.state === 'empty' ? tTip('piles.empty') : position.summary.name}`,
       })),
       onChoose: (id) => { const choice = choices.find(candidate => candidate.id === id); if (choice) proceed(choice); },
     });
@@ -1310,7 +1310,7 @@ export function mountEquipment(host, {
         el('div', { class: 'armament-compact-heading' }, [
           el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
           el('strong', { text: tTip('piles.empty') }),
-          pill({ label: position.active ? 'Active' : 'Reserve', attrs: { class: 'armament-equipped-badge' } }),
+          pill({ label: t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
         ]), positionActions(slot, position), rowSelectButton(slot, position, tTip('piles.empty')),
       ]);
       attachPositionDropTarget(card, slot, position);
@@ -1326,7 +1326,7 @@ export function mountEquipment(host, {
     const head = el('div', { class: 'armament-compact-heading armoury-position-values' }, [
       el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
       el('strong', { class: 'armament-position-name', text: position.summary.name }),
-      pill({ label: position.active ? 'Equipped' : 'Reserve', attrs: { class: 'armament-equipped-badge' } }),
+      pill({ label: position.active ? 'Equipped' : t('armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
     ]);
     card.append(rowSelectButton(slot, position, position.summary.name), thumbnail, el('div', { class: 'armament-compact-body' }, [head, positionActions(slot, position)]));
     attachPositionDropTarget(card, slot, position);
@@ -1862,7 +1862,23 @@ export function mountEquipment(host, {
         layout: 'column',
         revealHost: detail,
         onReveal: (key) => {
+          const changed = key && key !== selectedInventoryKey;
           selectedInventoryKey = key;
+          // On a stacked (phone) layout the detail sits below the whole list, so
+          // a newly selected item scrolls its detail into view and lands focus
+          // there; desktop keeps its sticky detail beside the list.
+          if (changed && responsiveMode() === 'phone') {
+            requestAnimationFrame(() => {
+              if (!detail.isConnected) return;
+              // The action sits at the foot of a tall card: bring IT into view
+              // (and focus it), falling back to the detail column itself.
+              const act = [...detail.querySelectorAll('.ep-equip')].find((node) => node.getClientRects().length);
+              if (!act && !detail.hasAttribute('tabindex')) detail.tabIndex = -1;
+              const target = act || detail;
+              target.focus({ preventScroll: true });
+              target.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            });
+          }
           prompt.hidden = !!key;
           // Phone rows collapse the detail track until an item is chosen (kit.css).
           box.dataset.detailOpen = key ? 'true' : 'false';
@@ -1917,7 +1933,7 @@ export function mountEquipment(host, {
       const index = picking.setIndex;
       const current = slotSummary(selectedSlot, index);
       box.prepend(el('div', { class: 'armoury-selection-context', role: 'status' }, [
-        prose(`${selectedSlot.label} · ${index + 1} — ${index === run.loadout.active[selectedSlot.id] ? 'Active' : 'Reserve'} · ${current.name}`), clear]));
+        prose(`${selectedSlot.label} · ${index + 1} — ${t(index === run.loadout.active[selectedSlot.id] ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${current.name}`), clear]));
     }
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
     // While picking, the table owns its own empty state.

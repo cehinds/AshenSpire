@@ -45,7 +45,7 @@ export function openEquipConfirmModal({ registries, item, name, slotLabel, onEqu
   const back = button({ label: t('common.back'), role: 'exit' });
   const equip = button({ label: t('armoury.picker.act.equip'), weight: 'primary', className: 'equip-confirm-equip' });
   const shell = openModal({
-    title: t('armoury.confirm.title', { name, slot: slotLabel }), size: 'md', className: 'equip-confirm-modal',
+    title: t('armoury.confirm.title', { verb: t('armoury.picker.act.equip'), name, slot: slotLabel }), size: 'md', className: 'equip-confirm-modal',
     deferFocus: true, opener, closeLabel: t('common.back'), secondary: [back], primary: equip,
     initialFocus: () => equip,
     body(host) {

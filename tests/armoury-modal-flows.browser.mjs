@@ -89,7 +89,7 @@ try {
   const rows = await slotModal.locator('.option-row').evaluateAll((nodes) => nodes.map((n) => [n.querySelector('.option-row-name').textContent, n.querySelector('.option-row-status').textContent.trim(), n.disabled]));
   assert.deepEqual(rows.map(([label]) => label), ['Main Hand · 1', 'Off Hand · 1']);
   assert.match(rows[0][1], /^Active · Straight Sword$/);
-  assert.match(rows[1][1], /^Active · empty$/);
+  assert.match(rows[1][1], /^Active · Empty$/);
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-slot-desktop.png` });
   await slotModal.locator('button', { hasText: 'Back' }).click();
   await slotModal.waitFor({ state: 'detached' });
@@ -155,6 +155,21 @@ try {
   await phone.locator('.armoury-item-detail .ep-equip[data-act="equip"]:visible').first().click();
   await phone.locator('.equip-slot-choice').waitFor();
   assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal overflow at 360');
+  await phone.keyboard.press('Escape');
+  await phone.locator('.equip-slot-choice').waitFor({ state: 'detached' });
+  // A long inventory on a phone: selecting the FIRST item brings its detail and Equip into the viewport.
+  const firstFace = phone.locator('.armoury .disc-face').first();
+  await firstFace.scrollIntoViewIfNeeded();
+  const firstRow = phone.locator('.armoury .disc-face', { hasText: 'Wayfarer Plate' }).first();
+  await firstRow.click();
+  await phone.waitForTimeout(500);
+  const equipInView = await phone.evaluate(() => {
+    const b = [...document.querySelectorAll('.armoury-item-detail .ep-equip')].find((n) => n.getBoundingClientRect().width > 0);
+    if (!b) return null;
+    const r = b.getBoundingClientRect();
+    return r.top >= 0 && r.bottom <= innerHeight;
+  });
+  assert.equal(equipInView, true, 'the selected item\'s Equip/Unequip button is in the viewport on a phone');
   if (SHOT_DIR) await phone.screenshot({ path: `${SHOT_DIR}/armoury-slot-phone.png` });
   assert.deepEqual(errors, [], 'no page errors');
   console.log('Inventory Inspect and Equip are modal flows.');
