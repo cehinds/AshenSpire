@@ -4,6 +4,7 @@
     "floaterFontMinPx": 18,
     "floaterFontVw": 7,
     "floaterLineGapPx": 6,
+    "floaterEdgeMarginPx": 8,
     "floaterMaxVisible": 4,
     "floaterMaxQueued": 3
   },
