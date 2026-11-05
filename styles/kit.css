@@ -6806,3 +6806,8 @@ body.reduced-motion .as-toast { transition: none; }
 .armoury[data-view='rack'][data-split='rows'] .armoury-inventory > .ep-list.armoury-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; }
 .armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-collection { grid-row: 2; }
 .armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-row: 3; position: static; max-height: none; overflow: visible; }
+
+/* A play leaves the hand's other cards in place; when the gap closes (hand.js, behavior.hand.playSettle) they ease over. */
+@media (prefers-reduced-motion: no-preference) {
+  :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { transition: left .22s ease-out; }
+}
