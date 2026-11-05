@@ -40,9 +40,9 @@ test('every reward card carries a badge, and only the selected one is shown', ()
   for (const face of faces) assert.ok(face.querySelector('.card-info-button'), 'built with an (i)');
   assert.deepEqual(faces.map(f => f.classList.contains('inspection-selected')), [false, false, false]);
   tap(faces[1]);
-  assert.deepEqual(faces.map(f => f.classList.contains('inspection-selected')), [false, true, false], 'badge shows on the selected card only');
+  assert.deepEqual(faces.map(f => f.classList.contains('is-chosen')), [false, true, false], 'badge shows on the chosen card only');
   const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
-  assert.match(css, /\.reward-door \.reward-choice-face\.inspection-selected > \.card-info-button \{ visibility:visible; pointer-events:auto; \}/);
+  assert.match(css, /\.reward-door \.reward-choice-face\.is-chosen > \.card-info-button \{ visibility:visible; pointer-events:auto; \}/);
 }));
 
 test('the first face tap only selects; the second opens the inspector', () => withGlobalDom(() => {
@@ -70,4 +70,37 @@ test('the (i) badge opens the inspector for that card and closing restores focus
   assert.equal(modal(), null);
   assert.equal(document.activeElement, info, 'focus returns to the opener');
   assert.ok(faces[1].classList.contains('reward-selected'), 'inspecting keeps the selection');
+}));
+
+const names = app => [...app.querySelectorAll('.reward-choice-button')];
+const chosen = faces => faces.map(f => f.classList.contains('is-chosen'));
+
+test('selecting by name button chooses that card, so its (i) is the one shown', () => withGlobalDom(() => {
+  const { app, faces } = mount();
+  names(app)[2].click();
+  assert.deepEqual(chosen(faces), [false, false, true], 'the badge is keyed to the chooser state, not the face-tap light');
+  assert.equal(modal(), null, 'selecting never inspects');
+}));
+
+test('face A then name B moves the (i) to B', () => withGlobalDom(() => {
+  const { app, faces } = mount();
+  tap(faces[0]);
+  assert.deepEqual(chosen(faces), [true, false, false]);
+  names(app)[1].click();
+  assert.deepEqual(chosen(faces), [false, true, false], 'A loses the (i), B has it');
+  faces[1].querySelector('.card-info-button').click();
+  assert.equal(modal().querySelector('.card[data-level="inspect"]')?.dataset.cardId, 'scholarsInsight', 'the inspector shows B');
+  modal().querySelector('.modal-close').click();
+}));
+
+test('tapping B face after its name select opens the inspector; A face then only selects', () => withGlobalDom(() => {
+  const { app, faces } = mount();
+  names(app)[1].click();
+  assert.equal(modal(), null);
+  tap(faces[1]);
+  assert.ok(modal(), 'the chosen card inspects on a face tap');
+  modal().querySelector('.modal-close').click();
+  tap(faces[0]);
+  assert.equal(modal(), null, 'an unchosen face only selects');
+  assert.deepEqual(chosen(faces), [true, false, false]);
 }));
