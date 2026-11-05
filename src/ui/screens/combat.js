@@ -1366,8 +1366,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
-      const at = playbackEvents ? playbackEvents.indexOf(e) : -1;
-      applyCombatIntentReceipt(disp.ents, e, (disp.intentClears ||= new Map()), at >= 0 ? playbackEvents.slice(at + 1) : null);
+      // Read defensively: display-only callers (and the tests that slice this function) run outside the playback closure.
+      const queued = typeof playbackEvents !== 'undefined' ? playbackEvents : null;
+      const at = queued ? queued.indexOf(e) : -1;
+      applyCombatIntentReceipt(disp.ents, e, (disp.intentClears ||= new Map()), at >= 0 ? queued.slice(at + 1) : null);
       if (applyCombatDisplayReceipt(disp.ents, e)) continue;
       switch (e.type) {
         case 'enemyMoveStarted': {
