@@ -1512,6 +1512,8 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // Dropped FIRST, before any migration reads the keys it would otherwise convert.
   if (dropRetiredLegacy) file = { ...file, overrides: Object.fromEntries(withoutRetiredLegacyGroups(Object.entries(file.overrides), warnings)) };
   const rows = new Map((dropRetiredLegacy ? liveAdvancedConfigRows(bundle) : advancedConfigRows(bundle)).map(row => [row.key, row]));
+  // The combat-tools grid key has no Settings control but is still a live, importable key.
+  for (const row of presentationModelRows().filter((r) => r.presentationKey === 'showFormationGrid')) if (!rows.has(row.key)) { rows.set(row.key, row); rows.set(`settings.${row.key}`, row); }
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
