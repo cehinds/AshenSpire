@@ -1040,7 +1040,7 @@ function applyDisplaySettings(settings) {
   const density = densityRow.choices.includes(settings.mapHeaderDensity) ? settings.mapHeaderDensity : densityRow.def;
   document.body.classList.toggle('map-compact', density === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
-  document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
+  document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed !== true);
   // The quick-menu experiment. Handed to the component the same way input.js is
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default

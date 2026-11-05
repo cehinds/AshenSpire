@@ -571,7 +571,7 @@ const ROWS = [
   // `.mh-seed` has no rule under the `hide-header-seed` class main.js sets, so
   // this switch moved nothing anywhere. The key stays so a settings file that
   // names it still imports.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: t('settings.row.mapHeaderSeed'), selfEvident: true, retired: true,
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: false, label: t('settings.row.mapHeaderSeed'), selfEvident: true, retired: true,
     note: tFull('settings.row.mapHeaderSeed') },
   // Short-screen warning is optional on narrow landscape screens.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: false, label: t('settings.row.uprightGate'),
