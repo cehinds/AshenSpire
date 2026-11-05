@@ -150,8 +150,8 @@ for (const state of wanted) {
     if (!ready) { check(false, `${state.name} rendered`, 'landmark never appeared'); continue; }
     if (state.then === 'armoury') {
       await click('#open-armoury');
-      // W1e: the views are the category rail now, not head tabs.
-      const up = await until(`!!document.querySelector('.armoury [data-surface="armouryView"] [data-member]')`);
+      // The head tabs (Character / Armory / Edit Deck) are the only navigation; the view rail is gone.
+      const up = await until(`!!document.querySelector('.armoury .armoury-head [data-modal-tab]')`);
       await wait(500);
       if (!up) { check(false, 'armoury opened from the map band'); continue; }
     }
@@ -185,14 +185,8 @@ for (const state of wanted) {
         check(order.classes < order.preview, `R5 ${cell}: the class list stands above the preview pane`, JSON.stringify(order));
       }
     }
-    if (state.name === 'armoury' && shape.mobile) {
-      // W1e (FRONTEND-WIREFRAMES rule 11): a compact host draws the kit's one
-      // [Category ▾] selector above the pane (kit/categoryNav.js), and it
-      // opens the same rail as a vertical list — never a strip, never a grid
-      // of cells. R6 opens it, reads the list, and closes it again.
-      const rail = await ev(`(()=>{const host=document.querySelector('.armoury .as-railed[data-cat-nav]');const toggle=host&&host.querySelector(':scope > .as-catnav-toggle');const r=document.querySelector('.armoury [data-surface="armouryView"]');const pane=document.querySelector('.armoury-pane');if(!host||!toggle||!r)return {host:!!host,toggle:!!toggle};const tr=toggle.getBoundingClientRect();const above=Math.round(tr.bottom)<=Math.round(pane.getBoundingClientRect().top)+1;toggle.click();const rr=r.getBoundingClientRect();const items=[...r.querySelectorAll('[data-member]')].map(t=>t.getBoundingClientRect());const out={mode:host.dataset.catNav,items:items.length,selector:Math.round(tr.height)>=44,above,vertical:items.every((b,i)=>i===0||b.top>=items[i-1].bottom-1),inside:items.every(b=>b.left>=rr.left-1&&b.right<=rr.right+1),sideways:r.scrollWidth>r.clientWidth+1};toggle.click();return out;})()`);
-      check(rail.mode === 'selector' && rail.items >= 3 && rail.selector && rail.above && rail.vertical && rail.inside && !rail.sideways, `R6 ${cell}: the Armoury categories are one [Category ▾] selector above the pane that opens them as a vertical list with no sideways scroll`, JSON.stringify(rail));
-    }
+    // R6 (the Armoury's [Category ▾] selector) is retired with the view dropdown (2026-11-05):
+    // the head tabs are the only navigation.
     if (state.name === 'smith') {
       const smith = await ev(`(()=>({modal:!!document.querySelector('.upgrade-desk'),shrine:!!document.querySelector('#rest-opt')}))()`);
       check(smith.modal && smith.shrine, `R7 ${cell}: the Shrine stands behind the open Smith`, JSON.stringify(smith));
