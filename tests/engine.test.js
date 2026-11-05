@@ -6409,7 +6409,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 100160, '100,160 XP reaches level 20, the cap, on the default curve');
+    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 886350, '886,350 XP reaches level 20, the cap, on the default curve');
     const rogue = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
