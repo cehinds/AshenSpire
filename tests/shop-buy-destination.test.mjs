@@ -53,6 +53,9 @@ test('the host offers equip through the Armoury and keeps inventory as the dismi
   assert.match(main, /\['weapons', 'armor'\]\.includes\(receipt\?\.kind\)\) return offerShopEquip/);
   assert.match(main, /showArmoury\(\{ equipItemId: id \}, showShop\)/);
   assert.equal((main.match(/onArmamentPurchased: shopArmamentBought/g) || []).length, 4);
+  assert.equal((main.match(/onCardPurchased: offerShopCardDestination/g) || []).length, 2);
+  const smith = readFileSync(new URL('../src/ui/screens/blacksmith.js', import.meta.url), 'utf8');
+  assert.match(smith, /onCardPurchased\?*\.?\(\{[^}]*instanceId: receipt\.instanceId/);
   const modal = readFileSync(new URL('../src/ui/components/shopBuyChoice.js', import.meta.url), 'utf8');
   assert.match(modal, /onClose: \(\) => \{ if \(!settled\)/);
   const equipment = readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
