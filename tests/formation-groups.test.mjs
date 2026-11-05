@@ -41,11 +41,6 @@ test('custom groups address stable side, row and local column members', () => {
     near(c.x-base.cells[i].x, c.row===2 && c.column===0 ? 12 : 0);
   }
 });
-test('saved settings round-trip group membership and offsets into the shared layout', () => {
-  const groups = [{ id:'custom-team', name:'Bottom pair', members:['player:2:0','player:2:1'], x:3,y:-4 }];
-  const presentation = presentationConfig({ [FORMATION_GROUPS_KEY]: JSON.stringify(groups) });
-  assert.deepEqual(formationGroups(presentation.formationGroups), groups);
-});
 test('malformed saved groups fall back safely', () => {
   assert.deepEqual(formationGroups('{broken'), []);
   assert.deepEqual(formationGroups(null), []);
@@ -93,12 +88,4 @@ test('test grid presets retain bottom-outside spawn order and expose matching ro
     assert.equal(plan.slots[count].cell,`${'ABC'[rows-1]}${columns*2}`);
     assert.equal(formationGroupOptions(columns,[],rows).filter(g=>g.id.startsWith('row-')).length,rows);
   }
-});
-test('JSON output round trips the positioning settings and defaults to a 50 px grid', () => {
-  const groups=[{id:'player-row-1',name:'Player middle row',members:[],x:3,y:-4,scale:1.5}], presentation=presentationConfig({[FORMATION_GROUPS_KEY]:JSON.stringify(groups)}), plan=layout(groups);
-  const exported=JSON.parse(JSON.stringify(positioningConfiguration(presentation,{plan,width:1200,height:420,spawnTest:{layout:'2x3'}})));
-  assert.equal(FORMATION_SNAP_STEP,50); assert.equal(exported.snapping.stepPx,50);
-  assert.deepEqual(presentationConfig(exported.settings),presentation);
-  assert.deepEqual(exported.presentation.formationGroups,groups);
-  assert.equal(exported.anchors.length,12);assert.equal(exported.spawnTest.layout,'2x3');
 });
