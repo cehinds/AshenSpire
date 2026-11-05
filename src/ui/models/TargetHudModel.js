@@ -202,6 +202,19 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
 
 // One stable-target clock, including leave grace. Updating content for the
 // same IDs does not restart dwell; a switch is one delay, never exit+enter.
+// Owner 2026-11-05: the player's selected HUD is on at all times and the mini overhead bar never shows for the player.
+// Presentation only: a pinned player is not an eligible or focused target, and enemies keep mini-until-selected.
+export const targetHudPinnedIds = entries => [...entries].filter(entry => entry.role === 'player').map(entry => entry.id);
+export function targetHudDesiredIds({ entries: all, eligible = [], focused = null, hover = null, focusWithin = null }) {
+  const entries = [...all], known = new Set(entries.map(entry => entry.id));
+  return [...new Set([...targetHudPinnedIds(entries), ...eligible, focused, hover, focusWithin].filter(id => known.has(id)))];
+}
+// The floor tint marks a target being acted on or read, so the pinned panel alone adds none.
+export function targetHudTintIds({ entries: all, shown = [], eligible = [], focused = null, hover = null, focusWithin = null }) {
+  const pinned = targetHudPinnedIds([...all]), asked = [...eligible, focused, hover, focusWithin];
+  return [...new Set([...shown, ...eligible, focused].filter(Boolean))].filter(id => !pinned.includes(id) || asked.includes(id));
+}
+
 export function createTargetHudDwell({ onChange, delay = targetHudConfig().motion.dwellMs, schedule = setTimeout, cancel = clearTimeout }) {
   let current = [], pending = [], timer = null, disposed = false;
   const key = ids => [...ids].sort().join('\u0000');

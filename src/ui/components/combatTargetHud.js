@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
@@ -156,10 +156,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   listen(document, 'pointercancel', () => { cancelHold(); lastTap = null; inspectionPointer = null; readGesture = null; clickSeriesActivated = false; });
   listen(window, 'blur', () => { cancelHold(); lastTap = null; inspectionPointer = null; readGesture = null; clickSeriesActivated = false; });
   const dwell = createTargetHudDwell({ delay: config.motion.dwellMs, onChange: ids => { shown = ids; paint(); } });
-  // Owner 2026-11-05: the player's selected HUD (the panel right of the player) is on at all times; the mini overhead
-  // bar never shows for the player. Presentation only: the player is not an eligible or focused target because of it.
-  const pinnedIds = () => [...entries.values()].filter(entry => entry.role === 'player').map(entry => entry.id);
-  const desired = () => [...new Set([...pinnedIds(), ...eligible, focused, hover, focusWithin].filter(id => entries.has(id)))];
+  const desired = () => targetHudDesiredIds({ entries: entries.values(), eligible, focused, hover, focusWithin });
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
   function gate() {
     const next = targetHudEnabled({ formFactor: document.documentElement.dataset.formFactor,
@@ -239,8 +236,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     scheduleGeometry();
   }
-  // The floor tint marks a target the player is acting on or reading, so the always-on player panel alone adds none.
-  const tintIds = () => [...new Set([...shown, ...eligible, focused].filter(Boolean))].filter(id => !pinnedIds().includes(id) || [...eligible, focused, hover, focusWithin].includes(id));
+  const tintIds = () => targetHudTintIds({ entries: entries.values(), shown, eligible, focused, hover, focusWithin });
   function scheduleGeometry() { if (!disposed && raf === null) raf = requestAnimationFrame(geometry); }
   // The two computed-style reads a frame's geometry needs (the core marker's
   // custom properties and the active target's ::after box) change only when the
