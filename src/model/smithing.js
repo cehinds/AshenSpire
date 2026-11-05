@@ -597,8 +597,7 @@ export function smithingRewardPays(registries, pool) {
  * depend on it byte for byte); a treasure node's is its own `treasure:` door.
  */
 export function smithingRewardId(run, pool) {
-  const dungeon = run.legacyDungeon ? `:${run.legacyDungeon.current}` : '';
-  const place = `${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}${dungeon}`;
+  const place = `${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}`;
   return pool === 'treasure' ? `treasure:${place}` : `combat:${place}:${pool}`;
 }
 

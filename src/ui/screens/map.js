@@ -162,7 +162,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   });
 
   app.innerHTML = `
-    <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${mapAdapter ? ' legacy-dungeon' : ''}${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+    <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
       ${runHudHtml({
         registries, run, meta, place: 'map', headerClass: 'map-header',

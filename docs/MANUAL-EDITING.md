@@ -65,7 +65,6 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Who speaks an event line | `eventSpeakers.json`, `speakers.csv` | |
 | Event gates and quest chains | `eventHistoryRequirements.json`, `eventChoiceHistoryRequirements.json`, `questChains.json` | |
 | Map, towns, regions | `worldAtlas.json`, `locationPresentation.json` | Weather, music and scenes per place. |
-| Old-style dungeons | `legacyDungeons.json` | |
 
 #### Shops, items, companions
 

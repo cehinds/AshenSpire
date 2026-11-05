@@ -39,8 +39,6 @@ import { whenNoOverlay } from './ui/whenNoOverlay.js';
 import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
-import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
-import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
 import { formFactorFor } from './ui/models/FormFactorModel.js';
@@ -2665,12 +2663,11 @@ function showMap(opts) {
   if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
-  const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
+  const suggested = run.quickStart && !run.mapNodeId && !run.journey
     ? run.mapGraph.startIds.find(id => run.mapGraph.nodes[id].type === 'monster') : null;
   const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : suggested;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
@@ -2993,75 +2990,6 @@ function combatMods(pool, encounter = null) {
   return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
-function showLegacyDungeon(opts) {
-  // A flask-only redraw hands back the selected node, as on the act map.
-  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
-  if (run.pendingReward) return mountPendingReward();
-  if (run.legacyDungeon.activeRest) return showRest();
-  if (run.legacyDungeon.pending) return showDungeonDialogue();
-  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow, selectedId,
-    onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
-    onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
-}
-
-function enterDungeonLocation() {
-  switch (dungeonNodeAction(run)) {
-    case 'rest':
-      run.legacyDungeon.activeRest ||= { nodeId: run.legacyDungeon.current, refilled: false };
-      persist(); return showRest();
-    case 'treasure': {
-      const relicId = rollRelicReward(registries, rng, run.relics);
-      const armamentId = rollDrop('treasure');
-      const smithingStoneReceipt = treasureSmithingReward();
-      resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
-    }
-    case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
-    case 'dialogue': return showDungeonDialogue();
-    default: return showLegacyDungeon();
-  }
-}
-
-function showDungeonDialogue() {
-  const node = dungeonNode(run), pending = run.legacyDungeon.pending;
-  mountDialogue(app, { registries, run, meta: activeMeta, rng, eventId: node.id,
-    definition: { id: node.id, name: node.name, text: node.lore, choices: dungeonChoices(run) },
-    speaker: { id: node.id, name: node.speaker, portraitKey: node.kind === 'boss' ? registries.encounters.get(node.encounter).enemies[0] : null },
-    dialogueState: pending ? { beat: 0, generation: 0, resolved: true, choiceId: pending.choiceId, resultText: pending.text } : null,
-    hud: roomHud(showDungeonDialogue),
-    commitChoice: command => {
-      const receipt = chooseDungeon(run, command.choiceId, rng);
-      persist();
-      return { choice: { id: receipt.choiceId, resultText: receipt.text } };
-    },
-    onDone: () => {
-      const encounterId = dungeonNode(run).encounter;
-      const action = continueDungeon(run);
-      if (action === 'rest') { persist(); return showRest(); }
-      if (action === 'combat') return enterCombat(run.legacyDungeon.parentNodeId, encounterId);
-      persist(); showMap();
-    },
-  });
-}
-
-function leaveLegacyDungeon() {
-  if (!run.legacyDungeon?.cleared) return;
-  if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
-  delete run.legacyDungeon;
-  if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
-    audio.music('victory');
-    return showFinishedRun(true);
-  }
-  if (run.journey) { persist(); showMap(); } else advanceAct();
-}
-
-function openLegacyEntrance(encounterId, nodeId) {
-  if (isConfiguredRun(run) && !gameModule(run, 'dungeons')) return false;
-  const def = dungeonForEncounter(encounterId);
-  if (!def) return false;
-  beginDungeon(run, def, nodeId); persist(); showMap(); return true;
-}
-
 // The Enter tap paints before the fight is built: building and mounting the
 // battlefield is one long synchronous task, so the tap yields a frame first
 // (aria-busy marks the wait) and a second tap in that gap is ignored. Capture
@@ -3084,7 +3012,6 @@ function startFight(pool, nodeId) {
 function startFightNow(pool, nodeId) {
   if (run.journey) {
     const enc = journeyEncounter(run.journey, nodeId, registries);
-    if (openLegacyEntrance(enc.id, nodeId)) return;
     return enterCombat(nodeId, enc.id);
   }
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
@@ -3092,7 +3019,6 @@ function startFightNow(pool, nodeId) {
   const encounterId = pool === 'boss'
     ? bossEncounterForNode(registries, run.mapGraph, nodeId, { seat: currentSeat(), tier: contentAct() })
     : rollEncounter(registries, rng, { pool, seat: currentSeat(), exclude: run.lastEncounters });
-  if (pool === 'boss' && openLegacyEntrance(encounterId, nodeId)) return;
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -3494,8 +3420,7 @@ async function onCombatEnd(result, combat, enc) {
   // the combat screen is still mounted here, so the beat stands over it and
   // the door opens when it lifts. Reduced motion resolves at once.
   run.stats.fightsWon += 1;
-  if (run.legacyDungeon) resolveDungeonNode(run);
-  else if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
+  if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
@@ -3524,7 +3449,7 @@ async function onCombatEnd(result, combat, enc) {
     const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
     for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
     // Endless Spire: no summit — the climb loops until death.
-    if (!run.legacyDungeon && ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn()))) {
+    if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn())) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       return showFinishedRun(true);
@@ -3558,7 +3483,7 @@ async function onCombatEnd(result, combat, enc) {
       levelChoices,
       characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
     };
-    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
+    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
   }
 
   // Skill and class level rewards are independent of the combat card roll.
@@ -3941,7 +3866,7 @@ let openVisit = null;
 function showRest(openPanel = null, locationId = null) {
   if (isConfiguredRun(run) && gameModule(run, 'rest')) {
     audio.music('rest');
-    const record = !run.journey && !run.legacyDungeon ? openRestRecord(run, { multiUse: false }) : null;
+    const record = !run.journey ? openRestRecord(run, { multiUse: false }) : null;
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
@@ -3988,13 +3913,13 @@ function showRest(openPanel = null, locationId = null) {
   const worldRest = run.journey?.activeService;
   // The classic map's rest site keeps its own record (restRevisit.js), which
   // stands in for the service state so a re-entry does not refill again.
-  const classicRest = !run.journey && !run.legacyDungeon;
+  const classicRest = !run.journey;
   const priorRevisit = run.restRevisit;
   // The Multi-use setting is read once; a record opened now keeps it for the visit.
   const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
   const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
   if (record !== priorRevisit) persist();
-  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
+  const restState = (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
@@ -4062,8 +3987,7 @@ function showRest(openPanel = null, locationId = null) {
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
-      if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
-      else finishWorldService();
+      finishWorldService();
       if (classicRest) markRestLeft(run);
       persist();
       showMap();
@@ -4460,8 +4384,6 @@ if (shotState) {
     savedSmithingStones: saved?.smithingStones ?? null,
     pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
     savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
-    legacyDungeon: run?.legacyDungeon ? structuredClone(run.legacyDungeon) : null,
-    savedLegacyDungeon: saved?.legacyDungeon ? structuredClone(saved.legacyDungeon) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
@@ -4698,16 +4620,6 @@ if (shotState === 'combat-test') {
     run.floor = g.nodes[id].floor;
     run.path = walked;
     showMap();
-  }
-  // Memory-storage preview of a real dungeon: the same entry, dialogue,
-  // combat, rewards and saves as play, without touching the player's slots.
-  if (shotState === 'map' && shotParams.has('shotDungeon')) {
-    const def = LEGACY_DUNGEONS.find(d => d.id === shotParams.get('shotDungeon'));
-    if (!def) throw Error('shotDungeon must be BS, HM or FC');
-    const parent = Object.values(run.mapGraph.nodes).find(n => n.type === 'boss');
-    if (!parent) throw Error('Dungeon preview needs a boss entrance');
-    run.mapNodeId = parent.id; run.floor = parent.floor; run.path = [parent.id];
-    openLegacyEntrance(def.bossEncounter, parent.id);
   }
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
