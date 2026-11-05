@@ -184,16 +184,13 @@ function stockForward(stock) {
 
 /**
  * bringShopStockForward(run) — the migration door's fill for a pre-schema-14
- * save (SPEC §14.2): `run.shopStock` and every atlas shop point's persisted
- * stock without a kind become `market`, offering today's shelves. The shelves,
+ * save (SPEC §14.2): `run.shopStock` without a kind becomes `market`, offering today's shelves. The shelves,
  * prices and smith roll are left exactly as saved, so nothing is rerolled and
  * nothing sold comes back.
  */
 export function bringShopStockForward(run) {
   if (!object(run)) return run;
   stockForward(run.shopStock);
-  const states = run.journey?.serviceStates;
-  if (object(states)) for (const state of Object.values(states)) if (object(state)) stockForward(state.stock);
   return run;
 }
 
