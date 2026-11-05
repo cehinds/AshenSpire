@@ -337,3 +337,15 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   assert.equal(configured.classes.find(classDef => classDef.id === 'reaver').maxHp,
     contentBundle.classes.find(classDef => classDef.id === 'reaver').maxHp);
 });
+
+test('a typed out-of-range number explains itself on its row, and the message matches the clamp', async () => {
+  const { settingsRow, typedNumberRefusal, resolveNumberRow } = await import('../src/ui/screens/settings.js');
+  const row = settingsRow('gameConfig.presentation.formationGap');
+  assert.equal(typedNumberRefusal(row, String(row.def)), null, 'a legal value leaves no message');
+  assert.equal(typedNumberRefusal(row, ''), null, 'an empty field is not a zero');
+  const message = typedNumberRefusal(row, '99');
+  assert.ok(message.includes(`${row.min}–${row.max}`) && message.includes('was refused'));
+  const used = resolveNumberRow({ [row.key]: '99' }, row);
+  assert.equal(used, row.max, 'the clamp is what the message says is in use');
+  assert.ok(message.includes(`The value in use is ${used}`));
+});
