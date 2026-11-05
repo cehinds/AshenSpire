@@ -318,6 +318,19 @@ test('a queued word is dropped when its combatant is gone for good', (t) => setu
   assert.equal(spawns.length, 1, 'only the floater that had already spawned');
 }));
 
+test('a figure that moved while the column was empty gets a fresh base for the next sequence', (t) => setup(t, ({ fx, a, spawns }) => {
+  floatNum(fx, a, '+1', 'blk');
+  advance(t, floaterLifeMs() + 100);
+  flushMeasureJobs();
+  a.box = { ...a.box, top: 400 }; // resize or layout moved the figure
+  spawns.length = 0;
+  const word = floatNum(fx, a, '+2', 'blk');
+  const dmg = floatNum(fx, a, '-9', 'dmg'); // an immediate number spawns beside the first floater of the sequence
+  flushMeasureJobs();
+  assert.equal(spawns.length, 2);
+  for (const node of [word, dmg]) assert.ok(parseFloat(node.style.top) > 380, `base follows the moved figure (${node.style.top})`);
+}));
+
 test('the column forgets its measured line when it empties', (t) => setup(t, ({ fx, a, spawns }) => {
   floatNum(fx, a, '+1', 'blk');
   advance(t, floaterLifeMs() + 100);

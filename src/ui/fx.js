@@ -561,7 +561,8 @@ function maxVisibleFor(rec, item) {
 // the transition, so the column still stacks but nothing glides.
 function liftFloaters(rec, entries) {
   // An empty column forgets its measured line, so a smaller font (a rotated phone) is not held to an old height.
-  if (!entries.length && !rec.stack.visible.length) rec.line = 0;
+  // The same moment drops the column's base, so a figure that moved meanwhile gets a fresh one for the next sequence.
+  if (!entries.length && !rec.stack.visible.length) { rec.line = 0; rec.start = null; }
   const step = floaterStepPx(rec);
   for (const entry of entries) {
     const el = entry.item.el;
