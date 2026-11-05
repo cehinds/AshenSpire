@@ -134,6 +134,6 @@
   },
   "behavior": {
     "shortHostRails": true,
-    "hand": { "dragThresholdPx": 12 }
+    "hand": { "dragThresholdPx": 12, "playSettle": { "holdMs": 700, "maxShiftPx": 2 } }
   }
 }

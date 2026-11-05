@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Smaller, quicker floaters** ([#2579](https://github.com/cehinds/AshenSpire/pull/2579), `0.7.3.174`). Combat floaters are about 25 percent smaller and follow each other about 35 percent faster, with the same lifetime.
+- **Smaller, quicker floaters** ([#2579](https://github.com/cehinds/AshenSpire/pull/2579), `0.7.3.176`). Combat floaters are about 25 percent smaller and follow each other about 35 percent faster, with the same lifetime.
+- **Steadier hand and enemy intent** ([#2582](https://github.com/cehinds/AshenSpire/pull/2582), `0.7.3.176`). The new hand arrives on the draw beat instead of swapping at the end, enemy intent no longer flickers to ? between an enemy's moves, and other cards hold their place when you play one, then close up.
 - **City combat backdrop matches its floor** ([#2581](https://github.com/cehinds/AshenSpire/pull/2581), `0.7.3.174`). Drowned-coast city fights no longer draw a starwatch night sky over coast ground; scenes with mismatched background and floor art are skipped when a matched one exists.
 - **Range capped at Reach** ([#2578](https://github.com/cehinds/AshenSpire/pull/2578), `0.7.3.172`). Core fights now cap range at Reach: Ranged cards and the shortbow read and play as Reach, Retreat stops at Reach, and upgrades no longer offer Reach to Ranged (older saves keep three bands).
 - **Reward selection without reload** ([#2580](https://github.com/cehinds/AshenSpire/pull/2580), `0.7.3.170`). Selecting a card on the card reward screen no longer reloads the window; only the action buttons update, so focus and scroll stay put.

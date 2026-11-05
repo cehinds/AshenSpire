@@ -166,6 +166,37 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
     restLeft: start - edge, restTop, clearanceTop: Math.min(restTop, top - sizePlan.lift) };
 }
 
+// Owner 2026-11-05: "When playing cards, try not to move hand position too much so players can easily play multiple
+// cards." The fan is centred on its count, so taking one card out slid every other card by half a step (and more
+// where the step itself grows). `holdPlaySlots` keeps each survivor on the slot it already had, leaving the played
+// card's gap open, for `holdMs` after the last play; the hand then closes up once (hand.js settles it with a short
+// ease). Authored in content/config/ui/scenes/w4a-combat.json (behavior.hand.playSettle); `maxShiftPx` is the most a
+// held card may differ from where it was: sub-pixel rounding, far below the exposed touch target.
+export const HAND_PLAY_SETTLE = Object.freeze({ ...uiConfig.scenes.w4a.behavior.hand.playSettle });
+
+/**
+ * previous: { ids, key, plan } as last applied; ids: the hand now, in order; plan: the fresh plan for `ids`; key: the
+ * geometry the plan was made from (anything but the count). Returns the previous plan restricted to the surviving
+ * cards, or null when the hand did not only lose cards (a draw, a reorder, a resize) and must lay out fresh.
+ */
+export function holdPlaySlots(previous, ids, plan, key, { maxShiftPx = HAND_PLAY_SETTLE.maxShiftPx } = {}) {
+  if (!previous || previous.key !== key || !(ids.length && ids.length < previous.ids.length)) return null;
+  const at = new Map(previous.ids.map((id, i) => [id, i]));
+  let last = -1;
+  for (const id of ids) {
+    const i = at.get(id);
+    if (i === undefined || i <= last) return null;
+    last = i;
+  }
+  if (Math.abs(plan.cardWidth - previous.plan.cardWidth) > maxShiftPx || Math.abs(plan.top - previous.plan.top) > maxShiftPx) return null;
+  const cards = ids.map(id => previous.plan.cards[at.get(id)]);
+  // Survivors keep their old x, so each one's clickable lane runs to its next survivor (capped at the card width):
+  // the part of a card the played gap exposed stays tappable. The last card keeps its full width.
+  const hitWidths = cards.map((card, i) => i === cards.length - 1 ? plan.cardWidth
+    : Math.min(plan.cardWidth, Math.max(0, cards[i + 1].x - card.x)));
+  return { ...previous.plan, cards, hitWidths };
+}
+
 export function handGeometryKey({ width, height, zoom, fontSize, left }) {
   return [width, height, zoom, fontSize, left].join(':');
 }
