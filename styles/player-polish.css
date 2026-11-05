@@ -249,6 +249,9 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .title-screen .build-stamp { position:absolute; bottom:1rem; left:0; width:100%; pointer-events:none; }
 .title-screen .tower-preview-replay { bottom:1rem; }
 
+/* The workspace is the portrait's containing block: left unpositioned, the
+   figure anchored to <main> and its head slid under the top HUD bar. */
+.shop-workspace { position:relative; }
 .service-portrait { margin:0; position:absolute; left:0; bottom:0; width:43%; height:92%; pointer-events:none; }
 .service-portrait img { width:100%; height:100%; object-fit:contain; object-position:left bottom; }
 :root[data-layout='wide']:not([data-composition='short-wide']) .shop-workspace:not(.master-workspace) .shop-frame { width:61%; margin-inline:auto 0; }
@@ -434,7 +437,7 @@ main > .shared-hud.workspace-hud .hud-vitals-panel { max-width:28rem; padding:.5
 :root[data-layout='narrow'] .shop-category-select { display:block; width:100%; min-height:44px; background:#17130f; color:var(--parchment); padding:.5rem; border:1px solid var(--gold); }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-pane { min-height:0; flex:1 1 auto; max-height:none; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-offers { min-height:10rem; }
-:root[data-layout='narrow'] .service-portrait { width:58%; height:31%; top:0; }
+:root[data-layout='narrow'] .service-portrait { width:58%; height:28%; top:0; }
 @media (prefers-reduced-motion:reduce) { .shop-workspace .shop-pane { animation:none; } }
 body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-run-meta { display:none; }
