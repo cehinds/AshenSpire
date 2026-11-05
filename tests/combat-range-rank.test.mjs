@@ -108,7 +108,7 @@ test('three enemies keep their own lane when only the strip changes', () => {
   for (const id of ids) assert.equal(f.slots.find(s => s.id === id).lane, base.slots.find(s => s.id === id).lane);
 });
 
-test('playback: an attack from Reach that pays an implicit Advance moves both fighters front on its own beat', async () => {
+test('playback: an attack from Reach that pays an implicit Advance moves both fighters front on the Advance receipt', async () => {
   const { contentBundle } = await import('../src/content/index.js');
   const { createRegistries } = await import('../src/model/registries.js');
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
@@ -126,14 +126,15 @@ test('playback: an attack from Reach that pays an implicit Advance moves both fi
   assert.equal(rangeRanksFromSnapshot(snap).get('player:player'), 'back');
   const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
   const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
-  assert.equal(events.some(e => e.type === 'combatEngagementMoved'), false, 'the engine records no movement receipt for a paid Advance');
+  const step = events.find(e => e.type === 'combatEngagementMoved');
+  assert.deepEqual([step.sourceId, step.targetId, step.bands, step.reason], ['player', 'e1', -1, 'advance'], 'the engine announces the committed Advance');
   const live = combatRangeRanks(combat);
   assert.equal(live.get('player:player'), 'front');
   let early = true;
   for (const event of events) {
-    if (event.type === 'attackHit') early = false;
+    if (event === step) early = false;
     if (early) assert.equal(rangeRanksFromSnapshot(snap).get('enemy:e1'), 'back', `before the attack lands (${event.type})`);
-    applyRangeRankEvent(snap, event, combat.rangeState.engagements);
+    applyRangeRankEvent(snap, event);
   }
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...live].sort(), 'the reduced receipts end where the live state is');
 });
@@ -156,12 +157,42 @@ test('playback: a short-range-profile attack that commits no Advance leaves both
   const snap = rangeRankSnapshot(combat);
   const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
   const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
-  const hit = events.find(e => e.type === 'attackHit' || e.type === 'attackMissed');
   assert.equal(combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')], 1, 'the engine commits no Advance');
-  assert.equal(hit.range, 'melee', 'the receipt reports the weapon profile, not the distance');
+  assert.equal(events.some(e => e.type === 'combatEngagementMoved'), false, 'no Advance committed, no movement receipt');
   for (const event of events) {
-    applyRangeRankEvent(snap, event, combat.rangeState.engagements);
+    applyRangeRankEvent(snap, event);
     assert.equal(rangeRanksFromSnapshot(snap).get('player:player'), 'back', event.type);
   }
+  assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
+});
+
+test('playback: Hit and Run from Reach steps in on its Advance beat and back out on its retreat beat', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 10000; combat.player.energy = 9;
+  const pair = rangePairKey('player:player', 'enemy:e1');
+  combat.rangeState.engagements[pair] = 1;
+  combat.piles.hand.find(card => card.cardId === 'core.strike').cardId = 'core.hitAndRun';
+  const card = combat.piles.hand.find(c => c.cardId === 'core.hitAndRun');
+  const snap = rangeRankSnapshot(combat);
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  assert.equal(combat.rangeState.engagements[pair], 1, 'the retreat restores Reach');
+  const moves = events.filter(e => e.type === 'combatEngagementMoved');
+  assert.deepEqual(moves.map(e => e.bands), [-1, 1], 'a step in, then a step back out');
+  const seen = [];
+  for (const event of events) {
+    applyRangeRankEvent(snap, event);
+    if (event.type === 'combatEngagementMoved') seen.push(rangeRanksFromSnapshot(snap).get('player:player'));
+  }
+  assert.deepEqual(seen, ['front', 'back']);
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
 });

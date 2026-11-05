@@ -18,22 +18,19 @@ export function rangeRankSnapshot(combat) {
     enemies: (combat.enemies || []).map(actor).filter(a => a.key) };
 }
 
-// Moves a snapshot by one playback receipt (combatEngagementMoved, enemyDied). Returns the same snapshot.
-// `finalBands` is the engagement map of the post-dispatch (live) combat: playback beats only ever replay it.
-export function applyRangeRankEvent(snap, event, finalBands = null) {
+// Moves a snapshot by one playback receipt (combatEngagementMoved, which explicit moves and a committed implicit Advance both
+// emit, and enemyDied). Returns the same snapshot.
+export function applyRangeRankEvent(snap, event) {
   if (!snap || !event) return snap;
   if (event.type === 'enemyDied') {
     const row = snap.enemies.find(a => a.id === (event.targetId ?? event.id));
     if (row) row.alive = false;
-  } else if (event.type === 'combatEngagementMoved' || /^attack(Hit|Missed|Evaded)$/.test(event.type)) {
+  } else if (event.type === 'combatEngagementMoved') {
     const keyOf = id => [...snap.players, ...snap.enemies].find(a => a.id === id)?.key;
     const a = keyOf(event.sourceId), b = keyOf(event.targetId);
     const key = a && b ? rangePairKey(a, b) : null;
     if (!key || !Object.hasOwn(snap.engagements, key)) return snap;
-    // An attack beat closes the pair to what the engine committed. A paid implicit Advance (acceptRangeActions) persists the
-    // closer distance without a movement receipt; the attack's own `range` is the weapon's profile, not the distance.
-    if (event.type === 'combatEngagementMoved') snap.engagements[key] = Math.max(0, Math.min(snap.cap, snap.engagements[key] + event.bands));
-    else if (Number.isInteger(finalBands?.[key])) snap.engagements[key] = Math.min(snap.engagements[key], finalBands[key]);
+    snap.engagements[key] = Math.max(0, Math.min(snap.cap, snap.engagements[key] + event.bands));
   }
   return snap;
 }

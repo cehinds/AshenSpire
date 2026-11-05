@@ -179,8 +179,7 @@ const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'c
 // A beat that can change who stands where or how big a figure is: only these
 // ask the battlefield for its expensive geometry refit. A hit, a heal, a
 // status or a resource change moves no one.
-// attack beats can close a paid implicit Advance (see applyRangeRankEvent).
-const GEOMETRY_BEAT_EVENT = /Spawn|Summon|Died|Defeated|Moved|Formation|Transform|Phase|Fled|Revive|Resurrect|Swap|combatEnded|^attack(Hit|Missed|Evaded)/i;
+const GEOMETRY_BEAT_EVENT = /Spawn|Summon|Died|Defeated|Moved|Formation|Transform|Phase|Fled|Revive|Resurrect|Swap|combatEnded/i;
 
 // THE POSITIONAL CARD KEYS (SPEC §7.3, §9 M4), as a pure mapping so it can be
 // tested without a DOM. `1`–`9` name hand slots 1–9 and `q`/`Q` names slot 10
@@ -1364,7 +1363,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears and
     // flushDeferredIntentClears applies them from onResolution (playTimeline call below).
     reduceFollowRows(beat.events);
-    if (disp.rangeRanks && typeof applyRangeRankEvent === 'function') for (const e of beat.events) applyRangeRankEvent(disp.rangeRanks, e, combat.rangeState?.engagements);
+    if (disp.rangeRanks && typeof applyRangeRankEvent === 'function') for (const e of beat.events) applyRangeRankEvent(disp.rangeRanks, e);
     for (const e of beat.events) {
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
