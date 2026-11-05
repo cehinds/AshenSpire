@@ -340,3 +340,25 @@ test('the column forgets its measured line when it empties', (t) => setup(t, ({ 
   assert.equal(again.dataset.floatSlot, '0');
   assert.equal(spawns.length, 2);
 }));
+
+test('a wide word over a figure at the right edge stays fully inside the layer, edge margin kept', (t) => setup(t, ({ fx, a, anchor, spawns }) => {
+  const margin = FLOATER_STACK.floaterEdgeMarginPx;
+  assert.equal(margin, 8, 'the default edge margin');
+  fx.box = { left: 0, top: 0, width: 360, height: 700 };
+  const edge = anchor(280); // centre 320; a 200 px word would reach 420 unclamped
+  const word = callout(fx, edge, 1, 'action:Poise absorbed 2');
+  Object.defineProperty(word, 'offsetWidth', { value: 200 });
+  advance(t, 5);
+  flushMeasureJobs();
+  const left = parseFloat(word.style.left) - 100;
+  assert.ok(left >= margin, `left edge ${left} >= ${margin}`);
+  assert.ok(left + 200 <= 360 - margin, `right edge ${left + 200} <= ${360 - margin}`);
+  // The left edge too: a figure at x = 0 pins the word to the margin, not off the screen.
+  const near = anchor(-40);
+  const w2 = callout(fx, near, 2, 'action:Poise absorbed 2');
+  Object.defineProperty(w2, 'offsetWidth', { value: 200 });
+  advance(t, 5);
+  flushMeasureJobs();
+  assert.ok(parseFloat(w2.style.left) - 100 >= margin, 'left edge keeps the margin');
+  assert.equal(spawns.length >= 2, true);
+}));

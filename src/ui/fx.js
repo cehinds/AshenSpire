@@ -606,7 +606,7 @@ function showFloater(rec, item, entry) {
     if (!others || !rec.start) rec.start = columnStart(rec, layer, anchor, b, zoom, view);
     const start = rec.start;
     const placed = start.top ?? start.bottom - height;
-    const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: 6 });
+    const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: FLOATER_STACK.floaterEdgeMarginPx });
     return () => {
       el.style.left = `${at.left + half}px`;
       el.style.top = `${at.top}px`;
