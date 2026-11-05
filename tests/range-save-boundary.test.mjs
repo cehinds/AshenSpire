@@ -12,6 +12,7 @@ import { createRangeState, rangeActionPlan, rangePairKey, RANGE_POLICY_DEFAULTS 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { live, registries } from './helpers/fixcore-combat-rules.mjs';
+import { uncappedRun } from './helpers/uncapped-range.mjs';
 const json = value => JSON.parse(JSON.stringify(value));
 function stamp(combat, startingRange = 'ranged') {
   const actors = [[combat.player, 'player:player'], ...combat.enemies.map(enemy => [enemy, `enemy:${enemy.id}`])];
@@ -39,7 +40,7 @@ const restore = (combat, snapshot) => { const restored = restoreCombatSnapshot({
 
 test('new Core runs pin explicit settings while historical profiles keep their shape', () => {
   const run = createRunState({ registries, classId: 'reaver', seed: 1, profileMeta: { settings: { rangeMechanics: false, rangeAdvanceSpPerBand: 3, rangeReachPrecisionBonus: 2, rangeThrowPrecisionPenalty: 4 } } });
-  assert.deepEqual(run.rangePolicy, { version: 1, enabled: false, advanceSpPerBand: 3, reachPrecisionBonus: 2, throwPrecisionPenalty: 4 });
+  assert.deepEqual(run.rangePolicy, { version: 1, enabled: false, advanceSpPerBand: 3, reachPrecisionBonus: 2, throwPrecisionPenalty: 4, maxRange: 'reach' });
   assert.deepEqual(deserializeRun(serializeRun(run)).rangePolicy, run.rangePolicy);
   const legacy = createRunState({ registries: createRegistries(contentBundle), classId: 'reaver', seed: 1 });
   assert.equal(Object.hasOwn(legacy, 'rangePolicy'), false);
@@ -191,6 +192,7 @@ test('queued source snapshots retain committed weapon coverage and reject source
 
 test('a real paid three-hit approach resumes through SaveManager without repeat charge or RNG draws', () => {
   const run = createRunState({ registries, seed: 511, classId: 'reaver' });
+  uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   combat.player.block = 100;
   combat.piles.hand.push({ instanceId: 'resume-counter', cardId: 'core.counter', upgraded: false });

@@ -61,7 +61,7 @@ test('bundled policy1 enemy reaction pays base at commit (after the player Advan
 
 test('bundled policy1 authored charge prepays its full range quote and resolves exactly once', () => {
   const combat = fight('bellKeeper'), enemy = combat.enemies[0];
-  combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 2;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 2;
   const quote = enemyMoveQuote(registries.enemies.get(enemy.enemyId).moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat });
   assert.ok(quote.advanceSp > 0);
   dispatch(combat, { type: 'endTurn' });

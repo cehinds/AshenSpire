@@ -1,7 +1,7 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
 import { withCoreSmashBlurb } from './smashBlurb.js';
-import { RANGES, normalizeRange } from './combatRanges.js';
+import { RANGES, normalizeRange, displayRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
 const CAMP = new Set(['physical', 'spell']);
@@ -104,13 +104,14 @@ const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'd
   || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0)
   || (def.defenseRulesVersion === 2 && def.counterPayload?.poise > 0);
 
-/** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. */
-export function combatCardRange(def = {}) {
+/** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. `maxRange` is the
+ * fight's cap (owner, 2026-11-05): a range past it reads as the cap. */
+export function combatCardRange(def = {}, maxRange = undefined) {
   const profile = combatProfileFor(def);
   const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
   if (!attacking || !dealsDamage(def)) return null;
   const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
-  return RANGES.includes(range) ? range : null;
+  return RANGES.includes(range) ? displayRange(range, maxRange) : null;
 }
 
 /** Reaction rules v2: the Impact and Flux chips read "Impact 2" and "Flux 1". */
