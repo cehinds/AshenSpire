@@ -82,3 +82,10 @@ test('movePurchasedCardToLibrary moves exactly a bought weapon art from the deck
   assert.throws(() => movePurchasedCardToLibrary(reg, run, id), { code: 'notCard' });
   assert.equal(JSON.stringify(run), before);
 });
+
+test('the Master art choice setting is off by default and names its row', async () => {
+  const { settingOn, settingsRow } = await import('../src/ui/screens/settings.js');
+  assert.equal(settingOn({}, 'masterArtChoice'), false);
+  assert.equal(settingOn({ masterArtChoice: true }, 'masterArtChoice'), true);
+  assert.equal(settingsRow('masterArtChoice').label, 'Ask where Master weapon arts go');
+});
