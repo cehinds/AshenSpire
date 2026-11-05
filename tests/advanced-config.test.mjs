@@ -30,15 +30,16 @@ test('expanded defense snapshots preserve custom settings through the content va
 });
 
 test('settings files round trip and leave unrelated settings untouched', () => {
-  const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };
-  const current = { 'gameConfig.presentation.rowBScale': 2 };
+  const source = { 'gameConfig.presentation.settingsWidthPercent': 90, 'gameConfig.presentation.settingsHeightPercent': 80 };
+  const current = { 'gameConfig.presentation.settingsWidthPercent': 70 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(source), contentBundle, current), source);
-  assert.deepEqual(current, { 'gameConfig.presentation.rowBScale': 2 });
+  assert.deepEqual(current, { 'gameConfig.presentation.settingsWidthPercent': 70 });
 });
 
 test('settings import refuses malformed, oversized, unknown and invalid values atomically', () => {
   for (const text of ['{', '{}', ' '.repeat(1024 * 1024 + 1),
-    advancedConfigExport({ 'gameConfig.presentation.rowAScale': 90 }),
+    advancedConfigExport({ 'gameConfig.presentation.settingsWidthPercent': 900 }),
+    // The battlefield rows were retired (owner, 2026-11-05): their keys are unknown to the strict door.
     advancedConfigExport({ 'gameConfig.presentation.gridShape': 'triangle' }),
     advancedConfigExport({ 'gameConfig.presentation.playerGridColor': 'red' }),
     advancedConfigExport({ 'gameConfig.unknown': true }),
@@ -63,9 +64,8 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
     }
   }
   assert(rows.some((row) => row.key === 'gameConfig.progression.xpMultiplier'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpriteScale'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpawnColumn'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.enemySpawnColumn'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.settingsWidthPercent'));
+  assert(!rows.some((row) => /presentation\.(playerSpriteScale|playerSpawnColumn|enemySpawnColumn|formation)/.test(row.key)), 'no battlefield row is inventoried');
 });
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
@@ -128,57 +128,26 @@ test('snapshot and export contain only versioned game-config overrides in determ
   assert.deepEqual(runtimeOverrides, snapshot.overrides);
 });
 
-test('presentation config clamps numbers and refuses unknown rows', () => {
-  const config = presentationConfig({
-    'gameConfig.presentation.playerSpriteScale': 8,
-    'gameConfig.presentation.enemySpawnRow': 'A',
-    'gameConfig.presentation.playerSpawnRow': 'sideways',
-    'gameConfig.presentation.playerSpawnColumn': '2',
-    'gameConfig.presentation.enemySpawnColumn': '9',
-  });
-  assert.equal(config.playerSpriteScale, 2);
-  assert.equal(config.enemySpawnRow, 'A');
-  assert.equal(config.playerSpawnRow, 'F');
-  assert.equal(config.playerSpawnColumn, '2');
-  assert.equal(config.enemySpawnColumn, '6');
+// Owner, 2026-11-05: the battlefield keys are retired, so a stored value is ignored; only the panel
+// size and the grid key are live and clamp as before.
+test('presentation config ignores retired battlefield keys and clamps the live ones', () => {
+  const stored = {
+    'gameConfig.presentation.playerSpriteScale': 1.5, 'gameConfig.presentation.enemySpawnRow': 'A',
+    'gameConfig.presentation.playerSpawnColumn': '2', 'gameConfig.presentation.rowAScale': 2,
+    'gameConfig.presentation.gridShape': 'square', 'gameConfig.presentation.playerGridColor': '#00ff88',
+    'gameConfig.presentation.settingsWidthPercent': 500, 'gameConfig.presentation.showFormationGrid': true,
+  };
+  const config = presentationConfig(stored);
+  const base = presentationConfig({});
+  for (const key of ['playerSpriteScale', 'enemySpawnRow', 'playerSpawnColumn', 'rowAScale', 'gridShape', 'playerGridColor']) assert.equal(config[key], base[key], key);
+  assert.ok(config.settingsWidthPercent <= 100 && config.settingsWidthPercent >= 1);
+  assert.equal(config.showFormationGrid, true);
 });
 
 test('formation defaults clamp to the bottom row and opposite outer columns', () => {
   const config = presentationConfig({});
   assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'F1');
   assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'F6');
-});
-
-test('formation appearance validates scales, colors, shapes and offsets', () => {
-  const config = presentationConfig({
-    'gameConfig.presentation.rowAScale': 50,
-    'gameConfig.presentation.rowBScale': -1,
-    'gameConfig.presentation.frontOffsetX': 500,
-    'gameConfig.presentation.gridShape': 'triangle',
-    'gameConfig.presentation.playerGridColor': '#00ff88',
-    'gameConfig.presentation.enemyGridColor': 'url(invalid)',
-  });
-  assert.equal(config.rowAScale, 3);
-  assert.equal(config.rowBScale, .25);
-  assert.equal(config.frontOffsetX, 150);
-  assert.equal(config.gridShape, 'wide-rhombus');
-  assert.equal(config.playerGridColor, '#00ff88');
-  // An invalid color falls back to the stock default, never passes through.
-  assert.equal(config.enemyGridColor, presentationConfig({}).enemyGridColor);
-  assert.match(config.enemyGridColor, /^#[0-9a-f]{6}$/i);
-});
-
-test('legacy row and column names migrate to the six-cell formation grid', () => {
-  const config = presentationConfig({
-    'gameConfig.presentation.playerSpawnRow': 'front',
-    'gameConfig.presentation.enemySpawnRow': 'front',
-    'gameConfig.presentation.playerSpawnColumn': 'right',
-    'gameConfig.presentation.enemySpawnColumn': 'left',
-  });
-  assert.deepEqual({
-    player: `${config.playerSpawnRow}${config.playerSpawnColumn}`,
-    enemy: `${config.enemySpawnRow}${config.enemySpawnColumn}`,
-  }, { player: 'A2', enemy: 'C3' });
 });
 
 test('a renamed balance path keeps its stored override, and the new key wins when both are stored', () => {
@@ -200,7 +169,6 @@ test('percent rows are bounded to 100 and the town cap to at least 1, as validat
     const row = rows.get(`gameConfig.balance.${path}`);
     assert.deepEqual([row.min, row.max, row.integer], [0, 100, true], `${path} is a whole percent`);
   }
-  assert.equal(rows.get('gameConfig.balance.atlas.townsPerActMax').min, 1, 'a route must hold its hub');
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.balance.rest.hpPartialPct': 135 }), contentBundle),
     'a percent past 100 is refused at import');
 });

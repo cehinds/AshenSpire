@@ -15,7 +15,6 @@ try {
   assert.equal(await page.locator('.shop-book-offer').count(), 10);
   assert.equal(await page.locator('[data-book-id="reaverClassBook"] .shop-book-buy').isDisabled(), false);
   await page.locator('#open-armoury').click();
-  await page.locator('[data-surface="armouryView"] [data-member="hybrid"]').click();
   await page.locator('.inventory-face[data-inventory-item="consumable:spellbook"]').click();
   await page.locator('.armoury-read-book:visible').click();
   await page.locator('[data-lesson-id="cometFragment"]').click();

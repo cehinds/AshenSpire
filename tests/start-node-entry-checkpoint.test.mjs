@@ -41,7 +41,7 @@ function fixture({ full = false, refillEnabled = true } = {}) {
     recordEntered: () => entered.push(run.combatEntered.encounterId),
   });
   const entry = declaration(main, 'enterCombat');
-  const checkpointEnd = entry.indexOf('  const enc = combatEncounterFor');
+  const checkpointEnd = entry.indexOf('  const enc = registries.encounters.get(');
   assert.ok(checkpointEnd > 0, 'real encounter receipt and guarded checkpoint boundary');
   vm.runInContext([
     declaration(grace, 'refillFlaskCharges'),

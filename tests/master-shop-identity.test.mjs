@@ -41,7 +41,6 @@ function take(registries, key, build) {
 
 const CASES = {
   merchant: [REG.defaults, (r, rng, run) => marketVisitStock(r, rng, run, { meta: {}, door: 'merchant' })],
-  atlasMarket: [REG.defaults, (r, rng, run) => marketVisitStock(r, rng, run, { meta: {}, door: 'atlas', ownerId: null })],
   marketAllOut: [REG.marketAllOut, (r, rng, run) => marketVisitStock(r, rng, run, { meta: {}, door: 'merchant' })],
   blacksmith: [REG.defaults, (r, rng, run) => buildBlacksmithStock(r, rng, run)],
   blacksmithAllOut: [REG.blacksmithAllOut, (r, rng, run) => buildBlacksmithStock(r, rng, run)],

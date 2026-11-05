@@ -43,8 +43,7 @@ import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
-import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
-import { generateJourney } from '../src/model/worldAtlas.js';
+import { locationTags, resolveLocationId, restDeniedBy } from '../src/model/locations.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -6406,13 +6405,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '53/3/4', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,260,340,440,580,750,980,1280,1660,2170', 'default XP steps start at 200 and grow ×1.303 (SPEC §13.4o)');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,300,450,680,1010,1520,2280,3420,5130,7690', 'default XP steps start at 200 and grow ×1.5 (SPEC §13.4o)');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 100160, '100,160 XP reaches level 20, the cap, on the default curve');
+    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 886350, '886,350 XP reaches level 20, the cap, on the default curve');
     const rogue = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
@@ -9493,7 +9492,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     leaveLocation(restored);
 
     // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
-    // stream seeded from the run instead of throwing (the atlas inspection).
+    // stream seeded from the run instead of throwing.
     // The runtime reads a tag's rule off `propertyRules` (content-build's
     // balance-resolved row), so a test that changes a rule changes that row.
     const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
@@ -9544,11 +9543,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
 
     // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the
-    // shrine and the chapel — and leaves the town's bed and the camp open.
+    // shrine — and leaves the town's bed and the camp open.
     const wyrmRun = fresh();
     wyrmRun.relics.push('wyrmHeart');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'shrine')), 'wyrmHeart', 'the shrine\'s rest is denied');
-    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'chapel')), 'wyrmHeart', 'the chapel\'s too');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'inn')), null, 'the inn\'s is not');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'camp')), null, 'nor the camp\'s');
     const wyrmShrine = visitTo(wyrmRun, 'shrine');
@@ -9581,10 +9579,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
     leaveLocation(composing);
 
-    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
-    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
-    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
-    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
     const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
     eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
 
@@ -9598,25 +9592,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     restAt(late);
     eq(lateRun.hp, lateRun.maxHp, 'the rest heals to the maximum the run holds now');
 
-    // THE ATLAS TOWN BUDGET: the default leaves every seeded route as it was,
-    // a cap the map cannot meet is refused by name.
-    eq(JSON.stringify(generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: contentBundle.balance.atlas.townsPerActMax })), JSON.stringify(generateJourney('ATLAS7')), 'the shipped cap changes no seeded route');
-    refuses(() => generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: 0 }), /more than 0 town/, 'a zero cap is refused by name');
-
     // THE REFUSALS: an unknown location id, a restoreMana with neither or
     // both selectors, a bad rest mode, a restDenied naming no carried tag.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg ?? e.message}`);
     const tagged = (rows) => validateContent({ ...contentBundle, tagging: [...contentBundle.tagging, ...rows] });
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'tavern', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.tavern/.test(e)), 'an id the map lacks is refused by name');
-    const innRow = tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }]);
-    assert(innRow.ok, `an atlas node id is a location (${said(innRow).join(' | ')})`);
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/inn/.test(e)), 'an atlas node id is no longer a location');
     const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
     assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
     assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
-    assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
-    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
-    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
-    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
     const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
     assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');

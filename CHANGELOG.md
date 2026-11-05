@@ -34,6 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Armoury potion inspection** ([#2569](https://github.com/cehinds/AshenSpire/pull/2569), `0.7.3.154`). Armoury item inspection draws potions with their effect text, using the same collectible-card rule as the inventory list.
+- **More rules text on card faces** ([#2567](https://github.com/cehinds/AshenSpire/pull/2567), `0.7.3.152`). Cards now print more of their rules on the face, up to five lines at a smaller font when it fits, and fall back to the short face with Inspect when it does not.
+- **Battlefield settings retired.** ([#2561](https://github.com/cehinds/AshenSpire/pull/2561), `0.7.3.150`). The Battlefield and formation settings are gone from Advanced and Display; saved formation keys are cleared on reset or sync, and the map header seed defaults off.
+- **Combat rewards 3–5, more varied** ([#2566](https://github.com/cehinds/AshenSpire/pull/2566), `0.7.3.148`). Post-combat card rewards now offer a random 3 to 5 choices, lean toward skills and powers, and vary far more from run to run.
+- **Armoury modal flows** ([#2565](https://github.com/cehinds/AshenSpire/pull/2565), `0.7.3.146`). Inspect opens the card in a modal; Equip on an Inventory item walks through Choose a slot, compare or confirm modals; the Armory tab is one page with the view dropdown removed.
+- **World Journey removed.** ([#2562](https://github.com/cehinds/AshenSpire/pull/2562), `0.7.3.144`). The World Journey mode (world atlas, quest board, journey profile) is removed; the game ships only the Core climb, and a saved World Journey run is refused on load.
 - **Run inventory holds only its own armour.** ([#2559](https://github.com/cehinds/AshenSpire/pull/2559), `0.7.3.142`). Starting a run no longer puts every profile-unlocked armour set in the inventory; a run owns its starting armour and the sets it buys or is granted.
 - **Reaction modal trimmed and inset.** ([#2558](https://github.com/cehinds/AshenSpire/pull/2558), `0.7.3.140`). The Defensive reaction modal no longer shows the instruction paragraph; its damage line and reaction options are inset to match the title.
 - **Upgrade modal shows the armament.** ([#2557](https://github.com/cehinds/AshenSpire/pull/2557), `0.7.3.138`). The Blacksmith and rest upgrade modal shows the armament's own card, current tier against next, instead of one of its cards' damage.

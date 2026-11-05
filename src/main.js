@@ -61,18 +61,13 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
-import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, retiredStoredSettingKeys } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
 import { grantSmithingReward, smithingRewardId, smithingRewardPays } from './model/smithing.js';
 import { applyNodeRefill, refillFlasksAtActChange } from './model/nodeRefill.js';
-import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
-import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
-import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
-import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
-import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { isCustomRun } from './model/customRun.js';
@@ -89,7 +84,7 @@ import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
 import { applyLevelUp, allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
-import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
+import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint } from './model/rewardSourcePolicy.js';
 import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
@@ -121,9 +116,8 @@ import { mountMaster } from './ui/screens/master.js';
 import { shopStockKind } from './model/shopKinds.js';
 import { commitQuestEvent } from './model/marketAdditions.js';
 import { MAX_ENEMIES_PER_COMBAT } from './model/combatLimits.js';
-import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
-import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
+import { CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -428,7 +422,6 @@ const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveMana
 // and setting `body.hi-contrast` itself, which would have been three lines and
 // would have measured my own mock.
 if (shotState) {
-  window.__worldJourney = () => run?.journey ? structuredClone(run.journey) : null;
   const raw = shotParams.get('shotSettings');
   if (raw) {
     try {
@@ -488,6 +481,16 @@ function seedPromotedDefaults(meta, settings) {
   meta.settings = settings;
   saves.saveMeta(meta);
 }
+// One-shot cleanup: a stored retired key (battlefield, formation, movement...) has no row to reset it,
+// so it is deleted at boot, before the choice check, whether or not the device has preferences.
+function dropRetiredStoredSettings(meta, settings) {
+  const stale = retiredStoredSettingKeys(settings);
+  if (!stale.length) return;
+  for (const key of stale) delete settings[key];
+  meta.settings = settings;
+  saves.saveMeta(meta);
+}
+dropRetiredStoredSettings(activeMeta, activeSettings);
 let settingsChoicePending = !shotState && saves.profileStatus().ok
   && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
 // A device with preferences gets its choice before a new promotion moves them.
@@ -1040,7 +1043,7 @@ function applyDisplaySettings(settings) {
   const density = densityRow.choices.includes(settings.mapHeaderDensity) ? settings.mapHeaderDensity : densityRow.def;
   document.body.classList.toggle('map-compact', density === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
-  document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
+  document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed !== true);
   // The quick-menu experiment. Handed to the component the same way input.js is
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
@@ -1307,7 +1310,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile }) {
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1386,8 +1389,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // game-over screen can offer Run again with the same choices after any
   // reload. The STARTING attributes, not the levelled ones; the game profile
   // is already run.gameProfile. A run saved before this field has no Run again.
-  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile });
-  if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
+  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes });
   run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
@@ -1442,8 +1444,7 @@ function startClimb({ skipOpening = false } = {}) {
   // do, so the first fight plays the same cards a reload would. A pool deck is
   // dealt no lent card by it (model/cardRemoval.js isPoolDeckMode).
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
-  run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), run.actNumber, null, { history: run.history });
-  if (run.journey) syncWorldPosition();
+  run.mapGraph = buildActMap(registries, rng, currentSeat(), run.actNumber, null, { history: run.history });
   if (runSupportsPrologue(run) && !skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
@@ -1588,7 +1589,6 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   run = loaded;
   if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
   if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
-  if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
   // already left it out, so this only says so — on the channel boot uses for
@@ -1609,7 +1609,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (run.combatPendingOutcome) {
     const pending = run.combatPendingOutcome;
     const ended = restoreCombatSnapshot({ registries, rng, expectedGameProfile: run.gameProfile, snapshot: pending.snapshot });
-    const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
+    const encounter = registries.encounters.get(pending.encounterId);
     return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
@@ -1622,13 +1622,9 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
-    enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true, serviceEvent: run.combatEntered.serviceEvent === true });
+    enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
   } else if (run.shopStock) {
     showShop();
-  } else if (run.journey?.activeService?.handlerId === 'rest') {
-    // A save written before the visit carried its place resolves it from the
-    // point it stood at, exactly as entering the service does.
-    showRest(null, restLocationAt(run.journey.activeService.pointId));
   } else {
     showMap();
   }
@@ -2576,9 +2572,7 @@ function showDraft() {
  * (tools/flask-menu-probe.mjs, persistence).
  */
 const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
-// Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
-// has no Potions control, and a remount drops its selected destination
-// (#1474 review).
+// Only where a flask surface reads it.
 const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
 // A remount that lands while a modal is open (Settings over the map) waits for
 // the modal to close. One deferred remount is kept; later changes merge into it.
@@ -2623,26 +2617,11 @@ function showMap(opts) {
   if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
-  const suggested = run.quickStart && !run.mapNodeId && !run.journey
+  const suggested = run.quickStart && !run.mapNodeId
     ? run.mapGraph.startIds.find(id => run.mapGraph.nodes[id].type === 'monster') : null;
   const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : suggested;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.journey) return mountWorldAtlas(app, {
-    run, registries,
-    serviceContext: {
-      healMult: 1,
-      refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
-      restBonus: restRecoveryBonus(saves.loadMeta().settings || {}),
-      // The run's live streams: the rest preview copies their position, so a
-      // rolling rule shows the roll the visit will make and advances nothing.
-      rng,
-    },
-    onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
-    onMenu: showOverlay, onArmoury: showArmoury,
-    onQuit: () => { persist(); showCollapsedTitle(); },
-    inspectNodeId: run.journey.inspectNodeId || null,
-  });
   mountMap(app, {
     registries,
     run,
@@ -2664,171 +2643,6 @@ function showMap(opts) {
       showCollapsedTitle();
     },
   });
-}
-
-function syncWorldPosition() {
-  const j = run.journey;
-  run.mapNodeId = j.currentNodeId;
-  run.path = j.visitedNodeIds.slice();
-  run.floor = run.mapGraph.nodes[j.currentNodeId].floor;
-  run.actNumber = ATLAS.world[j.currentNodeId].difficultyAct;
-  run.environmentRegionId = ATLAS.regionOf(j.currentNodeId);
-  run.locationPresentation = resolveLocationPresentation({ nodeId:j.currentNodeId, seedString:run.seedString,
-    timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
-    savedSceneId:run.locationPresentation?.nodeId === j.currentNodeId ? run.locationPresentation?.sceneId : undefined });
-}
-
-function enterWorldNode(nodeId) {
-  // A fight is being entered (startFight's one-frame yield): no second travel.
-  if (fightEntryPending) return;
-  travelJourney(run.journey, nodeId);
-  delete run.journey.inspectNodeId;
-  syncWorldPosition();
-  persist();
-  if (ATLAS.localByOwner[nodeId]) {
-    run.journey.inspectNodeId = nodeId;
-    return showMap();
-  }
-  if (run.journey.completedNodeIds.includes(nodeId)) return showMap();
-  return enterNode(nodeId);
-}
-
-function worldLocationAction(action) {
-  const j = run.journey;
-  if (!j || action.ownerId !== j.currentNodeId) throw Error('Travel to this location before using it');
-  if (action.pointId) {
-    const local = ATLAS.localByOwner[action.ownerId];
-    if (!(ATLAS.localPoints[local?.mapId] || []).some(p => p.nodeId === action.pointId)) throw Error('Local point does not belong to this location');
-  }
-  delete j.inspectNodeId;
-  if (action.kind === 'quest') {
-    if (!(ATLAS.nodeQuests[action.pointId] || []).some(q => q.questId === action.questId)) throw Error('Quest not offered here');
-    // Accepting or collecting goes through the quest door: a collect moves the
-    // quest to `claimed`, pays its cinders and completes it with
-    // `source: 'atlas'` (engine/quests.js), once per run.
-    const { plan } = atlasQuestAction({ run, registries, rng }, action.questId);
-    if (!plan.allowed) return;
-    persist();
-    return;
-  }
-  if (action.kind === 'board') {
-    // The atlas's quest list opens the board where the town keeps one (plan
-    // phase 10b); leaving it returns to the town's map.
-    if (!questBoardPointAt(registries, action.ownerId)) throw Error('No quest board here');
-    // Stay in the town across a reload while the board or an exchange is open.
-    j.inspectNodeId = j.currentNodeId;
-    persist();
-    return showQuestBoard(action.ownerId, () => { j.inspectNodeId = j.currentNodeId; persist(); showMap(); });
-  }
-  if (action.kind === 'local') {
-    if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
-    persist(); return;
-  }
-  if (action.kind === 'boss' || action.kind === 'explore') {
-    if (j.completedNodeIds.includes(j.currentNodeId)) return;
-    if (action.kind === 'boss' && ATLAS.nodes[action.pointId]?.nodeTypeId !== 'boss') throw Error('Not a boss chamber');
-    return enterNode(j.currentNodeId);
-  }
-  if (action.kind !== 'service' || !(ATLAS.nodeServices[action.pointId] || []).some(s => s.serviceId === action.serviceId)) throw Error('Service not offered here');
-  const service = ATLAS.services[action.serviceId];
-  const handlerId = ATLAS.serviceTypes[service.serviceTypeId].handlerId;
-  const state = j.serviceStates[action.pointId] ||= {};
-  if (state.used) return;
-  if (handlerId === 'lore') {
-    state.used = true;
-    if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
-    persist(); j.inspectNodeId = j.currentNodeId; return showMap();
-  }
-  j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
-  if (handlerId === 'smith') {
-    // The atlas `smith` service is a BLACKSMITH (SPEC §14.2, §14.4): its stock
-    // is rolled on `shopOffers` on first entry and kept on the point, so a
-    // revisit reopens it as saved; a custom run's price multiplier reaches it
-    // as it reaches the market.
-    state.stock ||= blacksmithVisitStock(registries, rng, run, { });
-    run.shopStock = state.stock;
-    persist(); return showShop();
-  }
-  if (handlerId === 'master') {
-    // The atlas `master` service is a WISE MASTER visit (SPEC §14.5): its
-    // master picked on `shop` and its stock rolled on `shopOffers` on first
-    // entry, kept on the point, so a revisit reopens it as saved. No shipped
-    // point carries the service yet; content places it.
-    state.stock ||= masterVisitStock(registries, rng, run);
-    run.shopStock = state.stock;
-    persist(); return showShop();
-  }
-  if (handlerId === 'shop') {
-    // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
-    // `shop`, and which of them are out on `shopOffers`. A custom run's price
-    // multiplier reaches it as it reaches a classic merchant (review, #1374;
-    // before that no atlas shelf was scaled).
-    state.stock ||= marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'atlas', ownerId: action.ownerId, });
-    run.shopStock = state.stock;
-    persist(); return showShop();
-  }
-  if (handlerId === 'rest') {
-    // WHICH PLACE THIS IS (plan phase 7): the point's own tagging row, else
-    // its service type's (inn, chapel), else the classic Shrine — resolved
-    // from the point here and again at resume, never stored, so a tagging
-    // row removed between save and load cannot refuse the save.
-    persist();
-    return showRest(null, restLocationAt(action.pointId));
-  }
-  throw Error(`Unsupported atlas service ${handlerId}`);
-}
-
-/** The location an atlas rest point is: its own row, else its service type's, else the Shrine. */
-function restLocationAt(pointId) {
-  return restLocationAtPoint(registries, pointId) || 'shrine';
-}
-
-// ---- the quest board (plan phase 10b) -------------------------------------------
-// The board lists the town's quests and the run's journal; a quest that can be
-// accepted or collected is spoken in the dialogue screen with the quest row's
-// speaker, and the response commits through boardQuestResponse — questAction
-// and the 10a completion door. Neither screen is saved: a reload reopens the
-// place the board was read from, as the run stands.
-function showQuestBoard(ownerId, back) {
-  mountQuestBoard(app, {
-    registries, run, meta: activeMeta, ownerNodeId: ownerId,
-    hud: roomHud(() => showQuestBoard(ownerId, back)),
-    onOpen: (questId) => showQuestExchange(ownerId, questId, back),
-    onDone: back,
-  });
-}
-
-function showQuestExchange(ownerId, questId, back) {
-  const offer = questBoardModel({ registries, run, ownerNodeId: ownerId }).offers.find((row) => row.questId === questId);
-  if (!offer) throw Error(`Quest '${questId}' is not on this board`);
-  // Answered already (a HUD door returning after the response): the board.
-  if (!offer.actionable) return showQuestBoard(ownerId, back);
-  const exchange = questExchange(offer, QUEST_EXCHANGE_COPY);
-  mountDialogue(app, {
-    registries, run, meta: activeMeta, rng, eventId: exchange.definition.id,
-    definition: exchange.definition, speaker: exchange.speaker,
-    hud: roomHud(() => showQuestExchange(ownerId, questId, back)),
-    commitChoice: (command) => {
-      boardQuestResponse({ run, registries, rng }, { questId, choiceId: command.choiceId });
-      persist();
-      const choice = exchange.definition.choices.find((row) => row.id === command.choiceId);
-      return { choice: { id: choice.id, resultText: choice.resultText } };
-    },
-    onDone: () => showQuestBoard(ownerId, back),
-  });
-}
-
-function finishWorldService() {
-  const j = run.journey;
-  if (!j) return;
-  const service = j.activeService;
-  if (service) {
-    const state = j.serviceStates[service.pointId];
-    if (service.handlerId === 'rest') state.used = true;
-    if (!j.localCompletedIds.includes(service.pointId)) j.localCompletedIds.push(service.pointId);
-    delete j.activeService;
-    j.inspectNodeId = j.currentNodeId;
-  } else completeJourneyNode(j);
 }
 
 function enterNode(nodeId) {
@@ -2903,10 +2717,7 @@ function enterNode(nodeId) {
       const smithingStoneReceipt = treasureSmithingReward();
       // SPEC §15.4: the treasure CHECKPOINTS its offer (beginPendingReward),
       // as the legacy dungeon's treasure door does, so a reload remounts an
-      // unclaimed sigil row instead of losing it. A World Journey's atlas
-      // point is completed first: the checkpoint's Continue only persists and
-      // returns to the map.
-      settleTreasureNode(run, completeJourneyNode);
+      // unclaimed sigil row instead of losing it.
       return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     default:
@@ -2922,13 +2733,12 @@ function combatMods(pool, encounter = null) {
   const playerStatuses = [];
   // SPEC §13.3: a seat climbed off its authored baseline scales by the tier
   // ratio — exactly 1 at the baseline, so every existing seed's fights roll
-  // the HP they always did. World Journey binds difficulty to its own act and
-  // has no seat, so it is untouched (§13.6 claim 4).
+  // the HP they always did.
   // A BOSS is scaled by the tier it is MET at (balance.bossTiers): its own
   // seat's tier ratio on HP and move damage, × that tier's boss row — the seat
   // order is drawn per run, so a boss's difficulty cannot be authored.
   let damageMult = 1;
-  if (!run.journey && Array.isArray(run.seatOrder)) {
+  if (Array.isArray(run.seatOrder)) {
     const boss = bossTierScale(registries, { encounter, tier: run.actNumber });
     hpMult *= boss ? boss.hp : seatTierHpMult(registries, currentSeat(), run.actNumber);
     if (boss) damageMult = boss.damage;
@@ -2956,10 +2766,6 @@ function startFight(pool, nodeId) {
 }
 
 function startFightNow(pool, nodeId) {
-  if (run.journey) {
-    const enc = journeyEncounter(run.journey, nodeId, registries);
-    return enterCombat(nodeId, enc.id);
-  }
   const encounterId = pool === 'boss'
     ? bossEncounterForNode(registries, run.mapGraph, nodeId, { seat: currentSeat(), tier: run.actNumber })
     : rollEncounter(registries, rng, { pool, seat: currentSeat(), exclude: run.lastEncounters });
@@ -2970,7 +2776,7 @@ function startFightNow(pool, nodeId) {
   enterCombat(nodeId, encounterId);
 }
 
-function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = false } = {}) {
+function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   const storedSnapshot = resuming ? run.combatEntered?.snapshot : null;
   // SAVES IN THE WILD ALREADY CARRY THE POISONED SHAPE. Saving during the
   // victory hand-off wrote a checkpoint whose `result` was 'victory', and
@@ -2981,13 +2787,11 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   // encounter receipt alone has always supported. A refought encounter is a
   // far smaller loss than an unplayable slot.
   const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;
-  // A service event's fight (the market's quest event, SPEC §14.3) says so on
-  // its receipt, so a resumed save still fights the event's own encounter.
-  run.combatEntered = { ...(serviceEvent ? serviceEventCombatEntry(nodeId, encounterId) : { nodeId, encounterId }), ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
+  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
   if (!resuming) persistOrWarn(); // a full store must not block the next fight
-  const enc = combatEncounterFor(registries, run, run.combatEntered);
+  const enc = registries.encounters.get(run.combatEntered.encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
   const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
@@ -3364,7 +3168,6 @@ async function onCombatEnd(result, combat, enc) {
   // the combat screen is still mounted here, so the beat stands over it and
   // the door opens when it lifts. Reduced motion resolves at once.
   run.stats.fightsWon += 1;
-  if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
@@ -3392,7 +3195,7 @@ async function onCombatEnd(result, combat, enc) {
     run.bossGroups = run.bossGroups || {};
     const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
     for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
-    if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || run.actNumber >= 3) {
+    if (run.actNumber >= 3) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       return showFinishedRun(true);
@@ -3426,7 +3229,7 @@ async function onCombatEnd(result, combat, enc) {
       levelChoices,
       characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
     };
-    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
+    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: 'advanceAct' });
   }
 
   // Skill and class level rewards are independent of the combat card roll.
@@ -3797,7 +3600,7 @@ let openVisit = null;
 function showRest(openPanel = null, locationId = null) {
   if (isConfiguredRun(run) && gameModule(run, 'rest')) {
     audio.music('rest');
-    const record = !run.journey ? openRestRecord(run, { multiUse: false }) : null;
+    const record = openRestRecord(run, { multiUse: false });
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
@@ -3841,20 +3644,18 @@ function showRest(openPanel = null, locationId = null) {
   for (const b of bad) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
-  const worldRest = run.journey?.activeService;
   // The classic map's rest site keeps its own record (restRevisit.js), which
   // stands in for the service state so a re-entry does not refill again.
-  const classicRest = !run.journey;
+  const classicRest = true;
   const priorRevisit = run.restRevisit;
   // The Multi-use setting is read once; a record opened now keeps it for the visit.
-  const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
+  const multiUseSetting = settingOn(saves.loadMeta().settings, 'shrineMultiUse');
   const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
   if (record !== priorRevisit) persist();
-  const restState = (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
+  const restState = record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
-    // A resumed atlas visit arrived once already (the service state says so);
-    // a resumed classic shrine arrives again, and the refill is a top-up so
+    // A resumed classic shrine arrives again, and the refill is a top-up so
     // that pours nothing twice. The arrival's effects — the refill, or any
     // rule a later row authors on `arrived` — are written the moment they
     // land, so a reload before the next action does not lose them.
@@ -3892,13 +3693,6 @@ function showRest(openPanel = null, locationId = null) {
     // here so the screen reads one answer (a chance of 100 consumes no roll),
     // and only where the place carries the `smith` tag.
     services: smithServices,
-    // The board is the atlas town's (plan phase 10b): offered where the place
-    // carries `questBoard` and the run stands in a town, returning here.
-    questBoard: visit.services.questBoard && worldRest ? (() => {
-      const { counts } = questBoardModel({ registries, run, ownerNodeId: worldRest.ownerId });
-      // A place whose town posts no quest (a dungeon's rescue inn) offers no board.
-      return counts.offered ? { ready: counts.ready, open: counts.open, onOpen: () => showQuestBoard(worldRest.ownerId, () => showRest()) } : null;
-    })() : null,
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
     deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
@@ -3918,7 +3712,6 @@ function showRest(openPanel = null, locationId = null) {
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
-      finishWorldService();
       if (classicRest) markRestLeft(run);
       persist();
       showMap();
@@ -4021,12 +3814,6 @@ function showShop() {
       onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
       onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
-  if (run.journey?.activeService) {
-    const state = run.journey.serviceStates[run.journey.activeService.pointId];
-    // After a JSON reload these are distinct objects; reconnect the canonical stock.
-    state.stock = run.shopStock || state.stock;
-    run.shopStock = state.stock;
-  }
   audio.music('shop');
   // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
   // resumes it after a reload, since the kind rides the stock.
@@ -4040,7 +3827,6 @@ function showShop() {
       onChanged: () => persist(),
       onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
       onLeave: () => {
-        finishWorldService();
         run.shopStock = null;
         persist();
         showMap();
@@ -4053,7 +3839,6 @@ function showShop() {
       onChanged: () => persist(),
       onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
       onLeave: () => {
-        finishWorldService();
         run.shopStock = null;
         persist();
         showMap();
@@ -4079,15 +3864,11 @@ function showShop() {
     // visit closes exactly as Leave closes it, and the event door opens once.
     enterQuestEvent: (quote) => {
       const { eventId } = commitQuestEvent(registries, run, quote);
-      finishWorldService();
       run.shopStock = null;
       persist();
-      // A service event: a fight its choice starts is the event's own, and
-      // winning it completes no journey node (Codex P1 on #1377).
-      return showEvent(eventId, { serviceEvent: true });
+      return showEvent(eventId);
     },
     onLeave: () => {
-      finishWorldService();
       run.shopStock = null;
       persist();
       showMap();
@@ -4095,14 +3876,11 @@ function showShop() {
   });
 }
 
-// `serviceEvent`: the event was opened by a service (the market's quest event,
-// SPEC §14.3), so a fight it starts is its own encounter and completes no
-// journey node.
-function showEvent(eventId, { serviceEvent = false } = {}) {
+function showEvent(eventId) {
   mountEvent(app, {
     registries,
     run,
-    hud: roomHud(() => showEvent(eventId, { serviceEvent })),
+    hud: roomHud(() => showEvent(eventId)),
     // The hold-to-confirm dial lives in meta.settings; the screen reads it the
     // same way every other screen reads a display setting.
     meta: saves.loadMeta(),
@@ -4113,10 +3891,7 @@ function showEvent(eventId, { serviceEvent = false } = {}) {
         // A startCombat effect stored the encounter id (string form).
         const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
         run.combatEntered = null;
-        // An atlas run may stand on no classic map node; the fight is labelled
-        // with the journey node it happens at.
-        const nodeId = run.mapNodeId || run.journey?.currentNodeId;
-        return enterCombat(nodeId, encounterId, { serviceEvent });
+        return enterCombat(run.mapNodeId, encounterId);
       }
       persist();
       showMap();
@@ -4343,7 +4118,7 @@ if (shotState) {
 function showFirstScreen() {
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
+} else if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -4362,7 +4137,7 @@ if (shotState === 'combat-test') {
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
-  newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   // In-memory QA fixture: earned attribute points. Feats come from actual claims.
   if (shotParams.get('shotProgression') === '1') {
     awardLevelXp(registries, run, levelXpToNext(registries, 1), { pointsPerLevel: 2 });
@@ -4700,7 +4475,7 @@ if (shotState === 'combat-test') {
     }
     showShop();
   } else if (shotState === 'blacksmith') {
-    // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas
+    // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the
     // smith's visit, posed so each service has something to act on — a purse
     // of stones and cinders, a carried katana (an art to lift out and an
     // armament to cut a slot into) and a sigil to set. Which offerings are

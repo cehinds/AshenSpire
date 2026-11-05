@@ -61,9 +61,9 @@ export function syncArmouryNew(button, run) {
  * is the hook a screen's own stylesheet reads (`map-header` on the map).
  */
 /** The seat's display name for the run's current act (SPEC §13.2), or null
- * for a run that has no seat (World Journey, a snapshot without an order). */
+ * for a run that has no seat (a snapshot without an order). */
 export function seatNameOf(registries, run) {
-  if (run.journey || !Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
+  if (!Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
   const id = seatAtTier(run.seatOrder, run.actNumber);
   return registries.seats.has(id) ? registries.seats.get(id).name : null;
 }

@@ -42,7 +42,6 @@ import { reachEncounters } from './encounters/reach.js';
 import { SEATS } from './seats.js';
 import { events, eventHistoryRequirements, eventChoiceIds, questChains, eventSpeakers } from './events.js';
 import { speakers } from './generated/speakers.js';
-import { worldAtlas } from './generated/worldAtlas.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
@@ -125,13 +124,11 @@ export const coreContentBundle = {
   events,
   eventHistoryRequirements,
   // Plan phase 10a: quest chains complete through one door, and every chain
-  // step is spoken by a speaker row (content/source/speakers.csv). Atlas quest
-  // rows ride along so validation can resolve their speakers too.
+  // step is spoken by a speaker row (content/source/speakers.csv).
   eventChoiceIds,
   questChains,
   eventSpeakers,
   speakers,
-  atlasQuests: worldAtlas.quests,
   flasks,
   classes: classes.map(row => ({ ...row, cardPool: [...row.cardPool, ...baseCardRewardIds] })),
   mapConfigs,
