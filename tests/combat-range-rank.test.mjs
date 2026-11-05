@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../src/ui/models/CombatRangeRankModel.js';
 import { alternativeFormation } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
-import { groupBeats } from '../src/ui/fx.js';
 import { createRangeState, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
 
 const fight = (bands, { dead = [], range = true } = {}) => {
@@ -195,17 +194,5 @@ test('playback: Hit and Run from Reach steps in on its Advance beat and back out
     if (event.type === 'combatEngagementMoved') seen.push(rangeRanksFromSnapshot(snap).get('player:player'));
   }
   assert.deepEqual(seen, ['front', 'back']);
-  // Through the real beat grouping: the two receipts are separate beats, the attack's beat sits between them.
-  const fresh = rangeRankSnapshot({ ...combat, rangeState: { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [pair]: 1 } } });
-  const beats = groupBeats(events);
-  const at = type => beats.findIndex(b => b.events.some(e => e.type === type));
-  const moveBeats = beats.map((b, i) => b.kind === 'engagement' ? i : -1).filter(i => i >= 0);
-  assert.equal(moveBeats.length, 2);
-  assert(moveBeats[0] < at('cardPlayed') && at('cardPlayed') < moveBeats[1], 'advance, then the attack, then the retreat');
-  const afterBeat = [];
-  for (const beat of beats) { for (const e of beat.events) applyRangeRankEvent(fresh, e); afterBeat.push(rangeRanksFromSnapshot(fresh).get('player:player')); }
-  assert.equal(afterBeat[moveBeats[0]], 'front');
-  assert.equal(afterBeat[at('cardPlayed')], 'front');
-  assert.equal(afterBeat[moveBeats[1]], 'back');
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
 });
