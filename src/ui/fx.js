@@ -1040,6 +1040,14 @@ export function groupBeats(events) {
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
         cur.prepared = e.contactPrepared === true;
         break;
+      case 'combatEngagementMoved':
+        // A step in or out of range is its own beat, so the formation strips change on its beat: an Advance lands before the
+        // attack it paid for, a retreat after it. Hit and Run's two receipts must not share one beat (the snapshot would
+        // end back at Reach before the stage refit). Events after it continue in a fresh loose run.
+        push();
+        beats.push({ actorId: null, banner: null, kind: 'engagement', events: [e] });
+        cur = { actorId: null, banner: null, kind: null, events: [] };
+        break;
       case 'enemyTurnStart':
         push();
         cur = { actorId: null, banner: 'ENEMY TURN', kind: 'banner', events: [e] };
