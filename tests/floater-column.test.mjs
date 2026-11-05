@@ -295,6 +295,29 @@ test('a queued callout word survives a figure rebuild and spawns at the new spri
   assert.equal(word.style.left, '340px', 'centred on the rebuilt sprite (300 + 80 / 2), not the detached one');
 }));
 
+test('after a rebuild the new sprite shares the old column: one sequence, not two', (t) => setup(t, ({ fx, a, spawns }) => {
+  const figure = () => ({ getBoundingClientRect: () => ({ ...a.box, right: 180, bottom: 320 }), isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const first = figure(), second = figure();
+  Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: () => second } });
+  floatNum(fx, first, '+1', 'blk');
+  floatNum(fx, first, '+2', 'blk');
+  first.isConnected = false;
+  floatNum(fx, second, '+3', 'blk'); // queued over the rebuilt figure while +2 still waits
+  assert.equal(spawns.length, 1, 'the new sprite does not start a second, unsequenced column');
+  advance(t, floaterStaggerMs() * 2);
+  assert.deepEqual(spawns.map((s) => s.at), [0, floaterStaggerMs(), 2 * floaterStaggerMs()]);
+}));
+
+test('a queued word is dropped when its combatant is gone for good', (t) => setup(t, ({ fx, a, spawns }) => {
+  const figure = { getBoundingClientRect: () => ({ ...a.box, right: 180, bottom: 320 }), isConnected: true, closest: () => ({ dataset: { eid: 'e1' } }) };
+  Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: () => null } });
+  floatNum(fx, figure, '+1', 'blk');
+  callout(fx, figure, 'e1', 'staggered');
+  figure.isConnected = false;
+  advance(t, floaterStaggerMs() * 3);
+  assert.equal(spawns.length, 1, 'only the floater that had already spawned');
+}));
+
 test('the column forgets its measured line when it empties', (t) => setup(t, ({ fx, a, spawns }) => {
   floatNum(fx, a, '+1', 'blk');
   advance(t, floaterLifeMs() + 100);

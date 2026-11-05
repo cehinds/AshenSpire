@@ -469,8 +469,16 @@ const floaterStacks = new WeakMap();
 const floaterStacksByLayer = new WeakMap();
 const FALLBACK_LINE_PX = Math.round(FLOATER_STACK.floaterFontPx * 1.2);
 const FLOATER_EARLY_MS = 180;
+// A rebuilt figure is a new element with the same data-eid: it shares the old element's column, so there are never
+// two unsequenced columns over one figure. Keyed by layer, then by eid.
+const floaterRecsByEid = new WeakMap();
 function stackFor(layer, anchor) {
   let rec = floaterStacks.get(anchor);
+  const eid = anchor.closest?.('[data-eid]')?.dataset?.eid ?? null;
+  if (!rec && eid != null) {
+    rec = floaterRecsByEid.get(layer)?.get(eid);
+    if (rec) floaterStacks.set(anchor, rec);
+  }
   if (!rec) {
     // A combatant that was in the document when its first floater queued and has left it since is gone: its waiting
     // floaters are dropped. (An anchor that was never attached, as in a headless harness, is never gone.)
@@ -490,6 +498,11 @@ function stackFor(layer, anchor) {
       layout: (entries) => liftFloaters(rec, entries),
     });
     floaterStacks.set(anchor, rec);
+    if (eid != null) {
+      let byEid = floaterRecsByEid.get(layer);
+      if (!byEid) floaterRecsByEid.set(layer, byEid = new Map());
+      byEid.set(eid, rec);
+    }
   }
   let set = floaterStacksByLayer.get(layer);
   if (!set) floaterStacksByLayer.set(layer, set = new Set());
