@@ -160,6 +160,19 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       return cell ? { ...cell, id: slot.id } : slot;
     });
   }
+  // Display only: a range rank (melee = front, reach = back) moves a slot to the other strip of its side, keeping its lane.
+  // Strips are chosen by band id, never by cell id or the `formationRow` label (A2-C2 are labelled front-row but draw as the back strip).
+  const ranks = presentation.rangeRanks;
+  if (ranks) {
+    plan.slots = plan.slots.map(slot => {
+      const rank = ranks[slot.id];
+      if (!rank || !slot.formationRole) return slot;
+      const bandId = slot.side === 'enemy' ? (rank === 'front' ? 'enemy-front' : 'enemy-back') : (rank === 'front' ? 'player-front' : 'player-back');
+      if (bandOf(bandId)?.id === bandOf(slot.formationRole === 'extra' ? 'extra-combatants' : slot.formationRole)?.id) return slot;
+      const target = plan.visualCells.find(c => c.side === slot.side && c.lane === slot.lane && c.formationRole === bandId);
+      return target ? { ...target, id: slot.id } : slot;
+    });
+  }
   plan.visualBands = activeBands.map(band => ({ ...band, top: bandTop(band), height: rowHeight }));
   plan.teamGap = { top: bandTop(bandOf('player-front')) - gapRows * rowHeight, height: gapRows * rowHeight };
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
