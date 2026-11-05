@@ -221,3 +221,15 @@ test('enemy panels in a row stay under their own enemy, never drifting beneath a
     assert.ok(centre >= enemy.anchor.left - rect.width / 2 && centre <= enemy.anchor.left + enemy.anchor.width + rect.width / 2, `${own.id} centre ${centre} is within its enemy's span +/- half a panel`);
   }
 });
+
+test('three adjacent enemies still get one row: a crowded group is centred on its enemies, not pushed only right', () => {
+  const bounds = { left: 0, top: 0, width: 1400, height: 600 };
+  const panel = (id, left) => ({ id, role: 'enemy', lane: 0, width: 200, height: 70, anchor: { left, width: 100, top: 100, height: 115 } });
+  const panels = [panel('a', 400), panel('b', 520), panel('c', 640)];
+  const placed = placeTargetHudPanels({ bounds, panels, obstacles: panels.map(p => ({ id: p.id, ...p.anchor })), config: targetHudConfig() });
+  assert.equal(new Set(placed.map(p => p.top)).size, 1, 'one shared row');
+  for (const p of panels) {
+    const rect = placed.find(row => row.id === p.id), centre = rect.left + rect.width / 2;
+    assert.ok(centre >= p.anchor.left - rect.width / 2 && centre <= p.anchor.left + p.anchor.width + rect.width / 2, `${p.id} centre ${centre} within its enemy span +/- half a panel`);
+  }
+});
