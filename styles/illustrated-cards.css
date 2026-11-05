@@ -67,7 +67,10 @@
 }
 :root .card-tag-rail .card-tag-symbol {display:flex;width:8cqw;height:8cqw;flex:none;filter:drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000);}
 :root .card-tag-symbol svg {display:block;width:100%;height:100%;}
-:root .card-tag-symbol {pointer-events:auto;cursor:pointer;}
+:root .card-tag-symbol {pointer-events:none;cursor:inherit;}
+/* Card tooltips open only in the card inspector (owner, 2026-11-05): everywhere else a tag symbol is
+   decoration, takes no pointer, and a tap on it is a tap on the card. */
+:root :is(.card-inspection-modal, .card-inspection-layout) .card-tag-symbol {pointer-events:auto;cursor:pointer;}
 :root .card-tag-rail .card-tag-symbol {position:relative;z-index:21;}
 :root .card-tag-count {position:absolute;right:-1.6cqw;bottom:-1.6cqw;min-width:6cqw;height:6cqw;box-sizing:border-box;padding:0 .9cqw;border-radius:3cqw;border:.35cqw solid #e8bd78;background:#16110e;color:#fff0cc;font:700 5.2cqw/5.3cqw Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}

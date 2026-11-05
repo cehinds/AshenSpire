@@ -2177,7 +2177,12 @@ together.
   focus explains after 500 ms regardless of the hover delay, and Enter or
   Space on a selectable detail explains at once. Cards carry no hover or tap
   tooltip: selecting a card reveals its Information button, and that opens the
-  card inspection (with nested keyword tooltips). Card inspections show
+  card inspection (with nested keyword tooltips). Card tooltips open only inside
+  the card inspection (owner, 2026-11-05: "Restrict card tooltips to just the
+  inspect modal"); on every other surface (combat hand, selected or not, reward,
+  shop, deck and upgrade card faces) a tag symbol, keyword or underlined number
+  is plain decoration: no tooltip, no pointer or focus, and a tap anywhere on the
+  card is the card's own action. Card inspections show
   complete effect text and decision-relevant values or requirements. General classifications appear as explained tags beneath the
   card; keywords disclose definitions. Do not repeat artwork descriptions,
   generic instructions, flavor explanations, or identical effect text.
