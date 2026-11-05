@@ -4,9 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync,symlinkSync,realpathSync} fro
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import http from 'node:http';
 import {authoringRoot,authoringPath,compositeSourcePath} from '../tools/art-authoring.mjs';
-import {createHandler} from '../pose-studio/server.mjs';
 import {serve} from '../tools/serve.mjs';
 import {assertSourceDisplayArt} from '../tools/source-display-art.mjs';
 
@@ -57,23 +55,6 @@ test('Python and Node exporters agree on the separate art checkout layout',()=>{
   assert.equal(result.status,0,result.stderr);
   assert.deepEqual(JSON.parse(result.stdout),ids.map(id=>authoringPath(id,{root:f.root,assetRoot:f.assetRoot})));
  }finally{f.close();}
-});
-
-test('Pose Studio serves a composite root without allowing art checkout code to shadow game modules',async()=>{
- const f=fixture();let server;try{
-  f.put(f.root,'pose-studio/stances/index.html','game editor');f.put(f.assetRoot,'pose-studio/stances/index.html','stale copied editor');
-  f.put(f.root,'src/shared.js','game import');f.put(f.assetRoot,'src/shared.js','untrusted override');
-  f.put(f.root,'assets-display/alternative/index.json','game metadata');f.put(f.assetRoot,'common/assets-display/alternative/index.json','old provenance');
-  f.put(f.root,'assets-display/alternative/pose.webp','stale original');f.put(f.assetRoot,'common/assets-display/alternative/pose.webp','new export');
-  f.put(f.assetRoot,'pose-studio/stances/source/pose.png','editable source');
-  server=http.createServer(createHandler({root:f.root,assetRoot:f.assetRoot,env:{}}));
-  await new Promise(done=>server.listen(0,'127.0.0.1',done));const url=`http://127.0.0.1:${server.address().port}`;
-  for(const [id,expected]of Object.entries({'pose-studio/stances/index.html':'game editor','src/shared.js':'game import','assets-display/alternative/index.json':'game metadata','assets-display/alternative/pose.webp':'new export','pose-studio/stances/source/pose.png':'editable source'})){
-   const response=await fetch(url+'/'+id);assert.equal(response.status,200,id);assert.equal(await response.text(),expected,id);
-  }
-  assert.equal((await fetch(url+'/tools/art-authoring.mjs')).status,404);
-  assert.equal((await fetch(url+'/pose-studio/.private')).status,403);
- }finally{if(server){server.closeAllConnections();await new Promise(done=>server.close(done));}f.close();}
 });
 
 test('game source server overlays explicit authoring images and keeps display catalogs local',async()=>{

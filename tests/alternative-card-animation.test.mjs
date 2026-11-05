@@ -10,7 +10,6 @@ import { CARD_ACTION_CLASSES, CARD_ACTIONS, cardActionFor, durationFor, sampleSe
 import { alternativeCardAnimations as catalog } from '../src/content/alternativeCardAnimations.js';
 import { playerHurtFrames } from '../src/content/playerHurtFrames.js';
 import { ANIM_SPEEDS } from '../src/ui/fx.js';
-import { validate } from '../pose-studio/model.mjs';
 import { webpDimensions } from '../tools/mobileart-policy.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -41,24 +40,15 @@ test('resolved cardTags override original tags and magic damage does not imply a
  assert.throws(()=>cardActionFor({cardTags:['maneuver:smash','maneuver:sweep']},'reaver'),/conflicting/);
 });
 
-test('all classes cover every requested action with self-contained portable projects',()=>{
- const registry=json('pose-studio/renewal/cards/registry.json');
- assert.deepEqual(registry.classes,CARD_ACTION_CLASSES);
- assert.deepEqual(registry.actions,CARD_ACTIONS);
+test('all classes cover every requested action with a five-pose sequence',()=>{
  for(const classId of CARD_ACTION_CLASSES){
   const family=catalog.classes[classId];
   assert.equal(family.armour,'default');assert.equal(family.equipmentIndependent,true);
   assert.deepEqual(Object.keys(family.sequences),CARD_ACTIONS);
-  const rig=json(`pose-studio/renewal/cards/${classId}/${classId}-cards.rig.json`);
   for(const action of CARD_ACTIONS){
    const seq=family.sequences[action];
    assert.equal(seq.poses.length,5);assert.equal(seq.durations.reduce((a,b)=>a+b,0),260);
    assert.ok(seq.poses.every(p=>family.frames[p]));
-   assert.ok(rig.animations[action]);
-   const project=json(`pose-studio/renewal/cards/${classId}/${action}.pose.json`);
-   assert.deepEqual(validate(project),[]);
-   assert.deepEqual(project.bindings,[]);
-   assert.ok(project.poses.every(p=>project.assets['pose:'+p]?.startsWith('data:image/webp;base64,')));
   }
  }
 });

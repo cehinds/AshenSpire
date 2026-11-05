@@ -79,9 +79,9 @@ rather than the portable VM (`"portability":"legacy"` in `engine/mechanics`).
 
 | # | Change | Status |
 |---|--------|--------|
-| 2a | Cross-repo checks: `tools/linkcheck.mjs` roots, `tests/build-lock.test.mjs` lock paths, `tests/art-migrate-trigger.test.mjs`, pose-studio cases in `alternative-*` and `display-art-cache` tests, `tasks.vs.json`, `tests/README.md` | todo |
-| 2b | Workflows: delete `workbench.yml` and the six `enemy-back-*`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | todo |
-| 2c | Delete the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`) | todo |
+| 2a | Cross-repo checks: `tools/linkcheck.mjs` roots, `tests/build-lock.test.mjs` lock paths, `tests/art-migrate-trigger.test.mjs`, pose-studio cases in `alternative-*` and `display-art-cache` tests, `tasks.vs.json`, `tests/README.md` | done (this PR) |
+| 2b | Workflows: delete `workbench.yml` and the six `enemy-back-*`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | done (this PR) |
+| 2c | Delete the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`) | done (this PR) |
 
 ### Step 3 — Core 2 only (about 700 checks in about 120 files)
 
