@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Read Intent names its status** ([#2570](https://github.com/cehinds/AshenSpire/pull/2570), `0.7.3.156`). Read Intent's card face and rules text now say "Gain 1 Read Intent" instead of "Gain 1.", and Oath of Ash names Strength for the grant it gives you.
 - **Three arts per weapon** ([#2571](https://github.com/cehinds/AshenSpire/pull/2571), `0.7.3.154`). Every Core weapon now teaches two extra arts; reward doors, shops and the Blacksmith offer arts for the weapons you carry that you do not already own, and the same art is no longer in both the shop and the reward door.
 - **Armoury potion inspection** ([#2569](https://github.com/cehinds/AshenSpire/pull/2569), `0.7.3.154`). Armoury item inspection draws potions with their effect text, using the same collectible-card rule as the inventory list.
 - **More rules text on card faces** ([#2567](https://github.com/cehinds/AshenSpire/pull/2567), `0.7.3.152`). Cards now print more of their rules on the face, up to five lines at a smaller font when it fits, and fall back to the short face with Inspect when it does not.
