@@ -518,6 +518,11 @@ export function setPieceChipChosen(chip, chosen) {
   if (on && choose && document.activeElement === choose) face?.focus({ preventScroll: true });
 }
 
+/** Potions and relics are collectibles: the Armoury draws them with the collectible card, never the equipment one. */
+export function isCollectibleCategory(category) {
+  return category === 'Potion' || category === 'Relic';
+}
+
 function inventoryFace(registries, row, {
   selected = false, draggable = false, actionLabel = '', classModel = null,
 } = {}) {
@@ -525,14 +530,14 @@ function inventoryFace(registries, row, {
     selected, draggable, classModel,
   }));
   if (row.read) el.querySelector('.inventory-item-art')?.replaceChildren(renderBookArt(row.item));
-  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
+  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || isCollectibleCategory(row.category)) {
     const trail = el.querySelector('.r-trail');
     // WC2: the metadata band ends with how many of this item the run holds.
     // The Armoury names itself so the manifest can patch what a glance says
     // here: the question on this screen is what goes in which slot, so the
     // type band earns its row before anything else does
     // (content/config/ui/components/card.json, behavior.fields.surfaces).
-    el.replaceChildren((['Potion', 'Relic'].includes(row.category)
+    el.replaceChildren((isCollectibleCategory(row.category)
       ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
       // The surrounding disclosure already owns read-only inspection. A nested
       // card inspector consumes the first touch before that disclosure opens.
@@ -575,13 +580,13 @@ function inventoryReveal(registries, row, {
     action,
   });
   if (row.read) el.querySelector('.inventory-model')?.replaceChildren(renderBookArt(item));
-  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || ['Potion', 'Relic'].includes(row.category)) {
+  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || isCollectibleCategory(row.category)) {
     el.classList.add('poker-inventory-detail');
     el.querySelector('.inventory-model')?.remove();
     const info = el.querySelector('.inventory-information');
     // Keep the comparison, equip action and instruction in their original container.
     for (const child of [...info.children]) if (!child.matches('.inventory-instruction, [data-ui-component], .ep-equip, .inventory-card-action-label') && child !== action) child.remove();
-    el.prepend(['Potion', 'Relic'].includes(row.category)
+    el.prepend(isCollectibleCategory(row.category)
       ? renderCollectibleInspection(registries, item, row.category, { interactive: false })
       : renderEquipmentInspection(registries, item, { interactive: false }));
   }
@@ -1261,8 +1266,8 @@ export function mountEquipment(host, {
    */
   function openItemInspection(item, category, { owned: count = null, opener = null, extra = null } = {}) {
     if (!item) return null;
-    const rendered = category === 'Relic'
-      ? renderCollectibleCard(registries, item, 'Relic', { inspection: false, interactive: false, owned: count, level: 'inspect' })
+    const rendered = isCollectibleCategory(category)
+      ? renderCollectibleCard(registries, item, category, { inspection: false, interactive: false, owned: count, level: 'inspect' })
       : renderEquipmentCard(registries, item, { inspection: false, interactive: false, owned: count, level: 'inspect', surface: 'armoury' });
     const details = equipmentDetails(rendered.explanations);
     // Smithing tier, the last smithing receipt and the Weapon Art / Unique Skill costs.
