@@ -1273,6 +1273,19 @@ export const WeaponCardPackageModel = Object.freeze({
       artSeen.add(artId);
       return artId;
     });
+    // Learnable arts (owner 2026-11-05): cards the weapon's family can teach. Never granted by wearing the
+    // weapon; rewards, shops and the Blacksmith offer them while the weapon is carried. Distinct from the defaults.
+    const learnableRaw = source.learnableArts == null ? [] : source.learnableArts;
+    if (!Array.isArray(learnableRaw)) throw new Error(`${piece.id}: learnableArts must be an array`);
+    const learnableSeen = new Set();
+    const learnableArts = learnableRaw.map((artId, index) => {
+      if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: learnableArts[${index}] must name a card id`);
+      if (!registries.cards.has(artId)) throw new Error(`${piece.id}: learnable art '${artId}' is unknown`);
+      if (learnableSeen.has(artId)) throw new Error(`${piece.id}: duplicate learnable art '${artId}'`);
+      if (artSeen.has(artId)) throw new Error(`${piece.id}: learnable art '${artId}' is already a default art`);
+      learnableSeen.add(artId);
+      return artId;
+    });
     let combatKit = null;
     if (source.combatKit != null) {
       const kit = source.combatKit;
@@ -1304,6 +1317,7 @@ export const WeaponCardPackageModel = Object.freeze({
       priorityAttackRefs: Object.freeze(priorities),
       grantedCards: Object.freeze(grantedCards),
       weaponArtDefaults: Object.freeze(weaponArtDefaults),
+      learnableArts: Object.freeze(learnableArts),
       combatKit,
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,

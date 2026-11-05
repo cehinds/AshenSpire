@@ -9,6 +9,7 @@ import { ownerItemRef } from './cardMounts.js';
 import { pieceItemRef } from './loadout.js';
 import { mountRows } from './cardExtraction.js';
 import { syncZones } from './state.js';
+import { gameProfileWeaponArtIds } from './gameProfileRewards.js';
 
 const revision = stock => stock?.tradeRevision || 0;
 const tableKinds = { weapons: 'armament', armor: 'armour', relics: 'relic', potions: 'flask', combatCards: 'card', weaponArts: 'weaponArt' };
@@ -66,7 +67,7 @@ export function gameProfileShopSalePlan(registries, run, shopId, kind, identity)
     ...(['weapons', 'armor'].includes(kind) && detail ? { itemRef: detail.itemRef, tier: detail.tier, mounts: detail.mounts } : {}) };
 }
 export function gameProfileShopSalePlans(registries, run, shopId) {
-  const arts = new Set(gameContent(run, 'rewards')?.eligibility?.weaponArts?.cardIds || []);
+  const arts = gameProfileWeaponArtIds(registries, run);
   const entries = [
     ...(run.loadout?.storage || []).map(id => ['weapons', id]),
     ...(run.loadout?.boughtArmour || []).map(row => ['armor', `${row.classId}:${row.id}`]),

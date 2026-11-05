@@ -176,7 +176,8 @@
     },
     "weaponArts": {
       "skipOwned": true,
-      "cardIds": [
+      "cardIds": [],
+      "legacyClaimIds": [
         "core.reaverSpecial"
       ]
     },
