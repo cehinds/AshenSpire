@@ -14,7 +14,7 @@
       "base": 200,
       "linear": false,
       "multScaler": 1.3,
-      "growth": 1.5,
+      "growth": 1.303,
       "roundTo": 10,
       "$note": {
         "base": "Character XP for the first step and the base used for later increases.",
