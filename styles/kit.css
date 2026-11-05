@@ -4056,6 +4056,13 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* A shop card row has no selection step: its (i) is always shown, in the thumbnail's top-right corner, and only inspects. */
 .merchant-offer-media.has-card-info { position:relative; }
 .merchant-offer-media > .card-info-button { position:absolute; z-index:2; top:-6px; right:-6px; visibility:visible; pointer-events:auto; }
+/* The thumbnail is narrower than the (i) circle, so a corner badge covers the art. Seat the badge centred in a lane under
+   the art (the reward door reserves one above its row), and let a shelf holding such rows size them to fit the lane. */
+.merchant-offer-media.has-card-info { --shop-inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); padding-bottom:calc(var(--shop-inspect-box) + 4px); }
+.merchant-offer-media.has-card-info > .card-info-button { top:auto; right:auto; bottom:0; left:50%; transform:translateX(-50%); }
+:root .shop-workspace.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services):has(.merchant-offer-media.has-card-info) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
+:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer:has(> .merchant-offer-media.has-card-info) { height:auto; min-height:var(--merchant-row-height,110px); }
+:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer-media.has-card-info { height:auto; min-height:calc(var(--shop-inspect-box) + 4px + 48px / var(--ui-zoom, 1)); }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
