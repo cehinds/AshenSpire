@@ -368,8 +368,8 @@ export function combatReadoutLayer(layer, create = true) {
   host.setAttribute('aria-hidden', 'true');
   Object.assign(host.style, { position: 'absolute', inset: '0', pointerEvents: 'none', overflow: 'visible', zIndex: '800' });
   // One text size for every floater (owner, 2026-11-05; content/config floaterStack.json). The config is in design px
-  // at the 10 px root, so rem keeps the player's display scale; the vw term shrinks it on a phone down to the minimum.
-  host.style.setProperty('--floater-font', `clamp(${FLOATER_STACK.floaterFontMinPx / 10}rem, ${FLOATER_STACK.floaterFontVw}vw, ${FLOATER_STACK.floaterFontPx / 10}rem)`);
+  // at the 10 px root, so rem keeps the player's display scale; the vw term (divided by --ui-zoom, which scales every length under body, so it is a true share of the screen) shrinks it on a phone down to the minimum.
+  host.style.setProperty('--floater-font', `clamp(${FLOATER_STACK.floaterFontMinPx / 10}rem, calc(${FLOATER_STACK.floaterFontVw}vw / var(--ui-zoom, 1)), ${FLOATER_STACK.floaterFontPx / 10}rem)`);
   host.style.setProperty('--floater-shift-ms', `${FLOATER_STACK.floaterShiftMs}ms`);
   combat.appendChild(host);
   combatReadoutLayers.set(combat, host);
