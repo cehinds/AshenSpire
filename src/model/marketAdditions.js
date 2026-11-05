@@ -80,7 +80,10 @@ export function armourPurchasePlan(registries, run, item, { meta = {} } = {}) {
   // since): refused by name, never sold as the run's own set.
   else if (item.classId !== run.class) reason = say('shop.refuse.armourClass', { name: piece.name });
   else if (!run.loadout) reason = say('shop.refuse.noLoadout');
-  else if (ownership(registries, { meta, loadout: run.loadout }).has(piece)) reason = say('shop.refuse.armourOwned', { name: piece.name });
+  // A set the profile has already unlocked is not for sale either: the market
+  // sells only sets the profile has not unlocked (SPEC §14.3).
+  else if (ownership(registries, { meta, loadout: run.loadout }).has(piece)
+    || (piece.unlock && ((meta && meta.unlocked) || []).includes(piece.unlock))) reason = say('shop.refuse.armourOwned', { name: piece.name });
   else if (!affordable(run, item.cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, item, piece, cost: item?.cost, revision: revision(run) };
 }
