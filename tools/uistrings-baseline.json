@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 216,
-  "distinct": 186,
+  "sites": 215,
+  "distinct": 185,
   "files": {
     "src/ui/screens/customize.js": 40,
     "src/ui/components/offlinePlay.js": 20,
@@ -19,8 +19,8 @@
     "src/ui/components/saveSlotSelector.js": 6,
     "src/ui/components/tutorial.js": 6,
     "src/ui/screens/controls.js": 6,
-    "src/ui/screens/equipment.js": 6,
     "src/ui/models/MenuModels.js": 5,
+    "src/ui/screens/equipment.js": 5,
     "src/ui/components/mapboard.js": 4,
     "src/ui/components/upright.js": 4,
     "src/ui/models/MountServiceModel.js": 4,

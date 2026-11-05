@@ -44,8 +44,9 @@ test('the Reaver deck missing sweep: every combat and level offer holds a sweep-
   for (const seed of SEEDS) for (const source of ['combat', 'level']) {
     const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== 'core.sweep');
     const o = offer(reg, run, seed, source), ids = o.options.map(row => row.id);
-    assert.equal(o.options.length, 3);
-    assert.equal(new Set(ids).size, 3, `seed ${seed}: duplicate ids`);
+    // Combat doors roll 3..5 choices (owner 2026-11-05); the level door keeps 3.
+    if (source === 'combat') assert.ok(o.options.length >= 3 && o.options.length <= 5); else assert.equal(o.options.length, 3);
+    assert.equal(new Set(ids).size, ids.length, `seed ${seed}: duplicate ids`);
     assert.equal(stanceOfId(ids[0]), 'sweep', `seed ${seed} ${source}: ${ids}`);
   }
 });

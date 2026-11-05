@@ -19,7 +19,7 @@ import { markUiComponent } from './uiComponents.js';
 import { modalHead, stampModalSize } from './modalShell.js';
 import {
   el, blocker, face, pill, tagChip, artWell, titleS, eyebrow, prose, flavour, kitLine, kitItem, optionCard, options, statusText,
-  railItem, categoryNav, modalFooter,
+  modalFooter,
 } from '../kit/index.js';
 
 export function renderArmouryOverlay(model) {
@@ -32,14 +32,13 @@ export function renderArmouryOverlay(model) {
 
 export function renderArmouryPanel(model, wrap, { back = null, primary = null, tabs = null, onTab = null } = {}) {
   const header = childModel(model, UI.armouryHeader);
-  const switcher = childModel(header, UI.armouryViewSwitcher);
   const body = descendantModel(model, UI.armouryBody);
   const inventory = descendantModel(model, UI.armouryInventory);
   const cards = descendantModel(model, UI.armouryCardStrip);
   const stats = descendantModel(model, UI.armouryStatsPanel);
-  // The shared header holds Character / Armory / Edit Deck. Within Armory,
-  // the existing category rail still selects equipment, inventory and cards.
-  // Existing data hooks and leave restrictions are preserved.
+  // The shared header holds Character / Armory / Edit Deck; there is no second
+  // view switcher under it (the dropdown was retired 2026-11-05). The Armory
+  // page is one scrolling body: equipment on top, the Inventory below.
   wrap.innerHTML = `
     <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-wireframe="W1" data-wireframe-child="W1e" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-labelledby="armoury-title">
       <div class="modal-body armoury-shell-body">
@@ -64,19 +63,6 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   if (model.properties.notice) {
     pane.prepend(blocker(model.properties.notice, { attrs: { class: 'armoury-notice', role: 'status' } }));
   }
-  const nav = categoryNav({
-    items: switcher.properties.views.map((view) => railItem({
-      label: view.label, current: !!view.active, member: view.id, id: `armoury-view-${view.id}`, className: 'armoury-view',
-      attrs: { dataset: { modalTab: view.id, focusable: 'true' }, 'aria-controls': 'armoury-pane' },
-    })),
-    ariaLabel: switcher.accessibility.label, toggleId: 'armoury-view-select',
-    railAttrs: { class: 'armoury-views', dataset: { surface: 'armouryView' } },
-  });
-  const railNode = nav.rail;
-  pane.before(railNode);
-  nav.attach(wrap.querySelector('.armoury-railed'));
-  const selectedView = railNode.querySelector('[aria-selected="true"]');
-  if (selectedView) pane.setAttribute('aria-labelledby', selectedView.id);
   const head = modalHead({
     title: header.properties.title, tabs, onTab,
     titleId: 'armoury-title',
@@ -106,7 +92,6 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   setPrimary(primary);
   markUiComponent(panel, model.component, model.variant);
   markUiComponent(wrap.querySelector('.armoury-head'), header.component, header.variant);
-  markUiComponent(wrap.querySelector('.armoury-views'), switcher.component, switcher.variant);
   markUiComponent(wrap.querySelector('.armoury-body'), body.component, body.variant);
   markUiComponent(wrap.querySelector('.armoury-inventory'), inventory.component, inventory.variant);
   markUiComponent(wrap.querySelector('.armoury-strip'), cards.component, cards.variant);
@@ -121,9 +106,6 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
     statsTray: wrap.querySelector('.armoury-stats-tray'),
     trays: wrap.querySelector('.armoury-trays'),
     close: wrap.querySelector('.armoury-close'),
-    viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
-    rail: railNode,
-    nav,
     pane,
     setPrimary,
   };
