@@ -46,7 +46,7 @@ import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
-import { FACE_BUDGET } from '../../model/cardFaceBudget.js';
+import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
@@ -405,7 +405,7 @@ export function renderCard(registries, ref, opts = {}) {
         model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, '')) : null;
     // `roomy` asks for the second, fuller reading (cardFaceBudget.js); the fitter shows it only where it fits at its floor font.
     const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: appliedRules, faceHtml: summaryHtml, registries,
-      effects: opts.preview?.chargedEffects || def.effects || [], roomy: FACE_BUDGET, roomyLines: allFaceLines });
+      effects: opts.preview?.chargedEffects || def.effects || [], roomy: registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect' ? roomyBudgetFor(faceRules) : roomyBudgetFor(null), roomyLines: allFaceLines });
     const clauseHtml = clauses => compactCardRules(clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
     const rulesHtml = clauseHtml(projection.clauses);
     el.dataset.faceLines = String(projection.clauses.length);

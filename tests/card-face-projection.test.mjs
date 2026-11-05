@@ -271,3 +271,20 @@ test('every roomy reading stays inside the budget, never names an Inspect cue, a
   }
   assert.ok(roomy > 100, `expected many roomy faces, got ${roomy}`);
 });
+
+import { roomyBudgetFor } from '../src/model/cardFaceBudget.js';
+test('a profile that cuts the face below the module defaults also caps the roomy reading', () => {
+  assert.equal(roomyBudgetFor({ faceMaxEffects: 2, faceMaxLines: 3 }), FACE_BUDGET, 'the module defaults are lifted by the roomy budget');
+  assert.equal(roomyBudgetFor(null), FACE_BUDGET);
+  assert.equal(roomyBudgetFor({ faceMaxEffects: 1, faceMaxLines: 3 }).clauses, 1);
+  assert.equal(roomyBudgetFor({ faceMaxEffects: 4, faceMaxLines: 2 }).clauses, 2);
+  const capped = roomyBudgetFor({ faceMaxEffects: 1 });
+  let roomy = 0;
+  for (const card of reg.cards.all()) {
+    const def = defOf(card.id), tokens = staticCardTokens(def);
+    const projection = cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), registries: reg, effects: def.effects, roomy: capped,
+      authoredHtml: def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match) });
+    if (projection.roomy) { roomy++; assert.ok(projection.roomy.clauses.length <= 1, card.id); }
+  }
+  assert.ok(roomy > 0, 'a one-clause roomy reading still exists for cards whose single clause was trimmed');
+});

@@ -22,3 +22,16 @@ export function faceBudget(config = uiConfig.components?.card?.components?.rules
   });
 }
 export const FACE_BUDGET = faceBudget();
+
+// The cards module's own defaults for the face cut (engine/modules/cards/defaults.json). A profile that sets
+// faceMaxEffects / faceMaxLines BELOW these has asked for a shorter face, and the roomy reading honours it; at or
+// above the defaults the roomy budget above governs.
+export const MODULE_FACE_DEFAULTS = Object.freeze({ faceMaxEffects: 2, faceMaxLines: 3 });
+export function roomyBudgetFor(cardsModule, budget = FACE_BUDGET) {
+  let clauses = budget.clauses;
+  for (const key of ['faceMaxEffects', 'faceMaxLines']) {
+    const value = cardsModule?.[key];
+    if (Number.isFinite(value) && value < MODULE_FACE_DEFAULTS[key]) clauses = Math.min(clauses, Math.max(0, value));
+  }
+  return clauses === budget.clauses ? budget : Object.freeze({ ...budget, clauses });
+}
