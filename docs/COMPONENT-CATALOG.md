@@ -840,12 +840,6 @@ Max) and related constants under subsection headings
 (`models/AdvancedSettingsGroups.js` `statsSection`). Draw & hand keeps the
 Opening hand, Draw / turn and Hand size rows beside Retention & discards; Poise
 ends with the legacy meter rows used only while ratings are off.
-`src/ui/models/StatsPreviewModel.js` computes the worked example above each
-topic from the same configured bundle, derived-stat engine, hand rules and
-rating receipt the game uses (a new character through `createRunState`, so
-starting relics are included); `settings.js` renders it and redraws it after
-every edit. In-run previews use the character's current attributes and level;
-outside a run the example is a chosen class's starting attributes.
 
 `src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
 read-only card faces and footer buttons into the turn-end discard selector.
