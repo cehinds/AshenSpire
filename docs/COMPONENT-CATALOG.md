@@ -443,8 +443,6 @@ The interactive reference catalog's detail drawer links to the same specimens.
 | `primary-stat-card` | `creationBrief.attributeCardModels` entry | `creationCards.primaryStatCard` + `disclosure.mountDisclosure` | Character Creation + Shrine allocation + Armoury + catalog |
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
-| `settings-stat-example` | `StatsPreviewModel.statsTopicPreview` | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
-| `settings-level-pace` | `LevelPacePreviewModel.levelPacePreview` → `levelup.levelPace` | `settings.levelPacePreviewHtml` | Settings / Advanced / Progression / Experience and Level-up |
 | `victory-progress` | `rewardProgress`, `rewardXpPresentation` and saved XP receipts | `reward.mountRewards` | The Victory progression door show only paid tracks in Class → Character → current skill level order. Bars fill sequentially at one normalized velocity; full bars turn blue immediately, but all Level up controls appear together only when every fill ends and Continue becomes green and enabled. A manual claim opens its funded chooser before residual and newly paid class-to-skill XP refill on return; other settled bars remain stable. Pending choices survive reload. Capped tracks stay noninteractive; deferred banked levels remain claimable without a new XP receipt. |
 | `victory-xp-receipt` | `combatXpReceipt` + `victoryXpPresentation` over the saved fight reward | `reward.mountRewards` compact Victory | Combat-power and enemy XP count in order; the total grows alongside a compact calculation, with `+…` revealing the full formula. A fixed-height list scrolls as rows arrive, then Continue turns green after its configured pause. |
 | `configured-level-summary` | `gameProfileProgression.skillLevelNotices` over existing XP awards | `gameProfileLevelUp.mountGameProfileLevelUp` + `rewardDoor.mountRewardDoor` | Configured victory shows actual automatic class and used weapon-group level crossings before existing rewards, naming the committed weapon beside its group level. The saved receipt resumes until Continue acknowledges it. Animated old-to-new level bars accompany persisted actual card-value changes and newly available mastery unlocks; a level without a bonus says so. Next-benefit previews use the current authored curves, cap and owned-card scaling. Reduced motion shows final values. This is informational: no additional drops or unsupported legacy reward queues. Equipment procedural rank remains driven by Smithing tiers. |
@@ -842,12 +840,6 @@ Max) and related constants under subsection headings
 (`models/AdvancedSettingsGroups.js` `statsSection`). Draw & hand keeps the
 Opening hand, Draw / turn and Hand size rows beside Retention & discards; Poise
 ends with the legacy meter rows used only while ratings are off.
-`src/ui/models/StatsPreviewModel.js` computes the worked example above each
-topic from the same configured bundle, derived-stat engine, hand rules and
-rating receipt the game uses (a new character through `createRunState`, so
-starting relics are included); `settings.js` renders it and redraws it after
-every edit. In-run previews use the character's current attributes and level;
-outside a run the example is a chosen class's starting attributes.
 
 `src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
 read-only card faces and footer buttons into the turn-end discard selector.

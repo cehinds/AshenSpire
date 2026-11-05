@@ -11,6 +11,7 @@ import {
   configuredContentBundle,
   presentationConfig,
   parseAdvancedConfigFile,
+  RETIRED_LEGACY_GROUPS_WARNING,
   normalizeAdvancedSettings,
   bringProfileForward,
   bringRunSnapshotForward,
@@ -393,19 +394,11 @@ test('the Advanced panel keeps a generated row\'s own description', async () => 
   const { compactAdvancedRow } = await import('../src/ui/screens/settings.js');
   const rows = advancedConfigRows(contentBundle).filter((row) => row.generatedBalance);
   for (const row of rows.slice(0, 40)) {
-    const drawn = compactAdvancedRow(row, 'Rewards', 'Combat rewards');
+    const drawn = compactAdvancedRow(row, 'Interface', 'Appearance');
     assert.equal(drawn.note, row.note, `${row.searchPath} lost its description on the way to the panel`);
     assert.match(drawn.label, / · |^[a-z]/i, `${row.searchPath} should be labelled by its path`);
     assert.ok(!drawn.label.includes('gameConfig.balance.'), 'the key prefix is not part of the label');
   }
-
-  // The class-table branch beside it still compacts, so this test cannot pass
-  // by the rewrite having been removed altogether.
-  const classRow = advancedConfigRows(contentBundle)
-    .find((row) => row.classTopic && row.floorNote);
-  const compacted = compactAdvancedRow(classRow, 'Progression', classRow.classTopic);
-  assert.equal(compacted.note, classRow.floorNote);
-  assert.ok(!compacted.label.includes(' — '), 'the class topic already names the class');
 });
 
 // A SENTENCE STAYS WITH ITS NUMBER. The notes moved into content/balance.js so
@@ -797,47 +790,19 @@ test('a file written on the old, higher defaults still imports', () => {
   assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);
 });
 
-// ---- THE OWNER'S OWN EXPORT MUST COME BACK (review of #1294) ----------------
+// ---- THE OWNER'S OWN EXPORT MUST COME BACK (review of #1294; cleanup row 3e) --
 // tests/fixtures/owner-config-0.7.1.json is the file the owner exported from
-// 0.7.1. Retiring the shared opening base/stat rows took them out of the
-// screen's ROWS, and with them the `settings.`-prefixed mirror each export
-// writes, so this exact file refused: "Unknown setting:
-// settings.gameConfig.handRules.starting.base. Nothing was imported." It is
-// imported here through the REAL rows the screen hands the import door.
+// 0.7.1. It is mostly keys of the legacy Advanced groups, which Core 2 no longer
+// has rows for; imported through the screen's own rows it must still land, with
+// those keys skipped under one named warning, and what Core 2 still reads kept.
 test("the owner's exported 0.7.1 configuration imports through the screen's own rows", async () => {
   const { settingsImportRows } = await import('../src/ui/screens/settings.js');
-  const { scaledCards } = await import('../src/model/handRules.js');
-  const { statRow } = await import('../src/model/statRows.js');
-  const { createRegistries } = await import('../src/model/registries.js');
   const text = readFileSync(new URL('./fixtures/owner-config-0.7.1.json', import.meta.url), 'utf8');
   const warnings = [];
-  const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings);
-  assert.ok(Object.keys(changes).length > 70, 'everything else in the file lands');
-  // Its rating keys are all at their old shipped numbers, so they pin nothing:
-  // Poise reads the ruleset-7 row (review, #1296).
-  assert.ok(Object.keys(changes).every((key) => !key.startsWith('gameConfig.derivedStatRules.rules.poise.')), 'the retired Poise weights are not pinned');
-  assert.equal(changes['gameConfig.handRules.drawMode'], 'fixed');
-  // Ruleset 7: the hand groups, the fallback hand size and the rating formula
-  // are stat rows; their keys (and their `settings.` mirrors) convert or drop.
-  assert.ok(Object.keys(changes).every((key) => !/handRules\.(starting|turn|capacity)|balance\.handMax|combatRatings\.ratings/.test(key)), 'no retired key is brought back');
-  assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.')), 'mirrors land on their own keys');
-  // One opening-hand warning: the retired 3–15 limits. Its shared base is the
-  // stock 4, never a customisation, so it is dropped without a word.
-  const opening = warnings.filter((line) => /^Opening hand/.test(line));
-  assert.equal(opening.length, 1);
-  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current opening-hand limits apply/);
-  assert.doesNotMatch(opening[0], /shared base/);
-  // "start with 4-6 cards": the imported configuration opens every class there.
-  const registries = createRegistries(configuredContentBundle(contentBundle, changes));
-  const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
-  for (const classId of Object.keys(contentBundle.attributeRules.presets.lean)) {
-    const row = statRow(registries, { class: classId }, 'openingHand');
-    const [primary] = Object.entries(row).find(([key, value]) => key in allOnes && value);
-    for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [primary]: 40 }]) {
-      const cards = scaledCards(row, attributes);
-      assert.ok(cards >= row.min && cards <= row.max, `${classId} opens on ${cards}`);
-    }
-  }
+  const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings, { dropRetiredLegacy: true });
+  assert.ok(warnings.includes(RETIRED_LEGACY_GROUPS_WARNING), 'the skipped groups are named');
+  assert.ok(Object.keys(changes).every((key) => !/^(settings\.)?gameConfig\.(?!prologue\.|presentation\.)/.test(key)), 'no retired key is brought back');
+  assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.gameConfig.')), 'mirrors of retired keys are skipped too');
 });
 
 test('a retired row keeps both spellings importable: inert skipped, live mirror read as its row', () => {

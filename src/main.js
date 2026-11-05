@@ -2004,7 +2004,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
           const result = persistSettingsChange(changes);
           writes.push(Promise.resolve(result));
           return result;
-        }, allResettableKeys());
+        }, allResettableKeys(activeSettings));
         return { ok: (await Promise.all(writes)).every(result => result?.ok !== false) };
       }),
     });

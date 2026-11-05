@@ -196,7 +196,7 @@ prefix; its callers are the union.
 | `offline-play-qa.mjs` | offline-play-qa — the Download & saves screen and the game it saves, | docs docs/EXTERNAL-ASSETS-PLAN.md, docs/FINISH.md, docs/offline-play.md |
 | `og-image.mjs` | og-image — the share image every build's og:image names. | tests web-meta; tools pages-site; docs docs/EXTERNAL-ASSETS-PLAN.md |
 | `onefold.mjs` | onefold — HOW MANY PLACES IN THIS TREE BUILD A FOLD? | tools plantsites-baseline.json; other src/ui/components/disclosure.js, src/ui/components/trayComponents.js |
-| `onevocab.mjs` | onevocab — Sten, 2026-08-15. | tests run-node; tools conhp, equipment-surface-receipts, plantsites-baseline.json +2; other src/ui/models/StatsPreviewModel.js |
+| `onevocab.mjs` | onevocab — Sten, 2026-08-15. | tests run-node; tools conhp, equipment-surface-receipts, plantsites-baseline.json +2 |
 | `overlapreader.mjs` | overlapreader — the two-knob refusal, observed at the boot door: | other src/model/validate.js |
 | `pages-offline.mjs` | pages-offline — the Pages service worker in a real Chromium | wf dev-preview; tests pages-offline-entry, pages-sw; tools pages-store; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `pages-site.mjs` | pages-site — assemble the GitHub Pages site that lists EVERY branch's | wf pages-builds; tests alternative-branches, check-feature-pages, collect-feature-previews +4; tools art-source, collect-feature-previews, offline-play-qa +4; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/offline-play.md +1; other .gitignore, src/model/offlineDownload.js +2 |

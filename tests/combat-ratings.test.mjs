@@ -775,50 +775,6 @@ test('a stored number reads the same in the panel and on the item', async () => 
   }
 });
 
-// AR, DR and PR are acronyms. Poise and Ward are words, and every surface in
-// the game spells them that way — including this file's own tab name, which
-// has always read "Poise formula". The ROWS under it read "POISE — Base",
-// "Strength — WARD per stack", "Straight Sword — additional WARD": one id,
-// two spellings, roughly seven hundred rows apart from their own heading.
-//
-// The general Advanced-label test cannot catch this — "POISE" opens with a
-// capital and carries no camelCase, so it passes either way. This is the
-// assertion that has to be specific.
-test('a rating is spelled the same on its rows as on its tab', async () => {
-  const { combatRatingRows } = await import('../src/model/combatRatings.js');
-  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
-  const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
-  // Since ruleset 7 the formula is the rating's stat row (derivedStatRules.
-  // rules.<id>.*), edited with every other stat; the rest stays here.
-  const formulaRows = advancedConfigRows(contentBundle).filter(row => /^gameConfig\.derivedStatRules\.rules\.(ar|dr|pr|poise|ward)\./.test(row.key));
-  const rows = [...combatRatingRows(contentBundle), ...formulaRows];
-  const stats = advancedSubgroups(formulaRows, 'Stats');
-
-  for (const [id, expected] of [['ar', 'AR'], ['dr', 'DR'], ['pr', 'PR'], ['poise', 'Poise'], ['ward', 'Ward']]) {
-    // Each formula is its own block under Advanced → Stats, filed under the
-    // trait it rates (models/AdvancedSettingsGroups.js).
-    const formula = formulaRows.filter(row => row.key.includes(`.rules.${id}.`));
-    assert.ok(formula.length >= 3, `${expected} has a formula block of its own`);
-    const tab = stats.find(group => formula.every(row => group.rows.includes(row)));
-    assert.ok(formula.every(row => row.advancedGroup === 'Stats') && tab, `${expected} sits under Stats, in one tab`);
-    assert.ok(new RegExp(`\\b${expected}\\b`).test(tab.label), `${expected}'s tab (${tab.label}) spells it the same way`);
-    assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
-    // The per-item rows are the item's own ratings now (#1242), so they read
-    // "Straight Sword — AR" rather than "— additional AR"; the spelling rule
-    // is the same.
-    assert.ok(rows.some(row => row.key.includes('.itemRatings.') && row.key.endsWith(`.${id}`)
-      && row.label.endsWith(` — ${expected}`)), `an equipment rating row spells ${id} as "${expected}"`);
-  }
-
-  // The falsifier, stated as its own line: the two that are NOT acronyms are
-  // never shouted, anywhere in the group — labels or topics.
-  const shouted = rows.filter(row => /\b(POISE|WARD)\b/.test(`${row.label} ${row.statTopic || ''}`));
-  assert.deepEqual(shouted.map(row => row.label), [],
-    'no row shouts a rating whose name is an ordinary word');
-  // And the three that ARE acronyms are never softened into words.
-  assert.ok(!rows.some(row => /\b(Ar|Dr|Pr)\b/.test(row.label)), 'AR, DR and PR stay acronyms');
-});
-
 // A NAME IS A HEADING; A PHRASE IS A SENTENCE. `words()` capitalises every
 // word, which is right for "Wandering Soldier" and wrong for "Poise Action
 // Loss" — and Breaks carried both at once, the hand-written "Break threshold
