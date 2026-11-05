@@ -30,6 +30,9 @@
   left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
 }
 :root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
+/* Owner 2026-11-05: an unselected player shows no overhead HP bar (the top bar keeps the number); selecting shows the panel.
+   The action glyph stays. Block and damage feedback live on the sprite, not here. */
+:root .combat[data-target-hud='true'][data-player-idle-hud='false'] .combatant.player:not(.target-hud-selected) > .target-hud-overhead-meters > .meters { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
   position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
   /* Only the centered action row owns intent input. The full-width host

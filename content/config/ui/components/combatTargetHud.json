@@ -50,6 +50,7 @@
     "enemyTint": "#bf3535",
     "playerTint": "#3e9be8",
     "candidateTintOpacity": 0.14,
-    "focusedTintOpacity": 0.27
+    "focusedTintOpacity": 0.27,
+    "playerIdleHud": false
   }
 }

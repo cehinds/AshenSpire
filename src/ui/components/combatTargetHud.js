@@ -163,6 +163,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       layout: combat.dataset.layout || 'formation' }, config);
     enabled = next;
     if (combat.dataset.targetHud !== String(next)) combat.dataset.targetHud = String(next);
+    // Owner 2026-11-05: the player's overhead HP bar shows only while the player is selected (config behavior.playerIdleHud).
+    const idleHud = String(config.behavior.playerIdleHud !== false);
+    if (combat.dataset.playerIdleHud !== idleHud) combat.dataset.playerIdleHud = idleHud;
     if (layer.hidden === next) layer.hidden = !next;
     if (cells.hidden === next) cells.hidden = !next;
     for (const frame of field.querySelectorAll('.combatant')) setCombatantTargetHud(frame, next);
@@ -474,7 +477,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       field.removeEventListener('focusin', focus); field.removeEventListener('focusout', focusOut);
       field.removeEventListener('battlefieldgeometrychange', scheduleGeometry);
       field.removeEventListener('formationlayoutchange', scheduleGeometry); window.removeEventListener('resize', resized);
-      observer.disconnect(); resize.disconnect(); clearPanels(); layer.remove(); cells.remove(); delete combat.dataset.targetHud;
+      observer.disconnect(); resize.disconnect(); clearPanels(); layer.remove(); cells.remove(); delete combat.dataset.targetHud; delete combat.dataset.playerIdleHud;
     },
   };
 }
