@@ -22,15 +22,21 @@ export const FLOATER_STACK = Object.freeze({ ...uiConfig.presentation.floaterSta
  * @param {(item: object) => boolean} [o.alive]            false when the combatant is gone: every waiting floater is dropped
  * @param {(entry: object) => void} [o.fadeEarly]         the cap is exceeded: start this entry's early exit
  * @param {(entries: object[]) => void} [o.layout]        a floater spawned: re-lift the visible ones by `entry.slot`
+ * @param {number} [o.maxQueued]      more than this many waiting shrinks the stagger to `staggerMinMs` so the backlog drains
+ * @param {() => number} [o.staggerMinMs]  the shrunk stagger (read on every spawn)
+ *
+ * A pushed item with `immediate: true` (a damage number) never waits: it spawns at once at the bottom of the
+ * column, takes the next slot, and restarts the stagger clock for whatever is still waiting.
  */
-export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVisible, show, fadeEarly = () => {}, layout = () => {}, alive = () => true }) {
+export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVisible, show, fadeEarly = () => {}, layout = () => {}, alive = () => true, maxQueued = Infinity, staggerMinMs = () => 1 }) {
   let seq = 0;
   let visible = [];
   let pending = [];
   let lastSpawn = -Infinity;
   let timer = null;
 
-  const gap = () => Math.max(1, Number(staggerMs()) || 1);
+  const baseGap = () => Math.max(1, Number(staggerMs()) || 1);
+  const gap = () => (pending.length > maxQueued ? Math.min(baseGap(), Math.max(1, Number(staggerMinMs()) || 1)) : baseGap());
   // Words carry a `rank`; among the waiting words the higher rank goes first (ties keep arrival order). Items
   // without a rank (numbers) never move, and the ranked items only trade places with each other.
   function order() {
@@ -43,16 +49,21 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
     visible.forEach((entry, i) => { entry.slot = visible.length - 1 - i; });
     layout(visible);
   }
-  function spawn() {
-    const item = pending.shift();
+  function spawn(item = pending.shift()) {
     const t = now();
     lastSpawn = t;
     const limit = Math.max(1, Math.floor(maxVisible(item)) || 1);
     // Make room: the oldest leaves early (it is already the highest in the column). The new one is the extra.
-    while (visible.length >= limit) { const old = visible.shift(); old.leaving = true; fadeEarly(old); }
+    const evicted = [];
+    while (visible.length >= limit) { const old = visible.shift(); old.leaving = true; evicted.push(old); fadeEarly(old); }
     const entry = { item, spawnedAt: t, expiresAt: t + Math.max(0, Number(item.lifeMs) || 0), slot: 0, leaving: false, handle: null };
     visible.push(entry);
     relayout();
+    // An evicted floater is still on screen for its fade: it stays the highest in the column, lifted with the rest.
+    if (evicted.length) {
+      evicted.forEach((old, i) => { old.slot = visible.length + evicted.length - 1 - i; });
+      layout(evicted);
+    }
     entry.handle = show(item, entry);
     if (entry.expiresAt > t) {
       entry.timer = setTimer(() => {
@@ -68,7 +79,7 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
     timer = null;
     if (!pending.length) return null;
     // A floater that waited may find its combatant gone; one pushed this instant spawns whatever the host says.
-    if (fromTimer && !alive(pending[0])) { pending = []; return null; }
+    if (fromTimer) { pending = pending.filter((item) => alive(item)); if (!pending.length) return null; }
     if (!fromTimer) {
       const wait = lastSpawn + gap() - now();
       if (wait > 0) { timer = setTimer(pump, wait); return null; }
@@ -82,9 +93,20 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
     get waiting() { return pending.slice(); },
     /** Queue a floater. Returns its entry when it spawned at once, else null (it waits its turn). */
     push(item) {
+      if (item.immediate) {
+        const entry = spawn({ arrival: seq++, ...item });
+        // The stagger restarts from this spawn for the floaters still waiting.
+        if (timer !== null) { clearTimer(timer); timer = null; }
+        if (pending.length) timer = setTimer(pump, gap());
+        return entry;
+      }
       pending.push({ arrival: seq++, ...item });
       order();
-      if (timer !== null) return null;
+      if (timer !== null) {
+        // The backlog just passed the cap: the wait already armed shortens to the shrunk stagger.
+        if (pending.length === maxQueued + 1) { clearTimer(timer); timer = setTimer(pump, Math.max(0, lastSpawn + gap() - now())); }
+        return null;
+      }
       return pump(false);
     },
     /** True when a waiting or visible floater matches. */

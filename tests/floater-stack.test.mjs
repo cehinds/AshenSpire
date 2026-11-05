@@ -23,7 +23,7 @@ function clock() {
     },
   };
 }
-function make({ stagger = 320, max = 4, life = 1650 } = {}) {
+function make({ stagger = 320, max = 4, life = 1650, maxQueued, staggerMin = 90, alive } = {}) {
   const c = clock();
   const spawned = [], faded = [], layouts = [];
   const opts = { stagger, max, life };
@@ -32,6 +32,8 @@ function make({ stagger = 320, max = 4, life = 1650 } = {}) {
     show: (item, entry) => { spawned.push({ id: item.id, at: c.now(), slot: entry.slot }); return item.id; },
     fadeEarly: (entry) => faded.push({ id: entry.item.id, at: c.now() }),
     layout: (entries) => layouts.push(entries.map((e) => [e.item.id, e.slot])),
+    ...(maxQueued != null ? { maxQueued, staggerMinMs: () => staggerMin } : {}),
+    ...(alive ? { alive } : {}),
   });
   const push = (id, extra = {}) => stack.push({ id, lifeMs: opts.life, ...extra });
   return { c, stack, spawned, faded, layouts, opts, push };
@@ -183,4 +185,57 @@ test('clear empties the stack and cancels its timers', () => {
   f.c.advance(5000);
   assert.deepEqual(f.spawned.map((s) => s.id), ['a']);
   assert.deepEqual(f.stack.visible, []);
+});
+
+test('an immediate floater (a damage number) spawns at once behind waiting words, and restarts the stagger', () => {
+  const { c, push, spawned } = make();
+  push('a'); push('b'); push('c');          // a spawns now; b and c wait
+  c.advance(100);
+  push('dmg', { immediate: true });          // does not wait for b
+  assert.deepEqual(spawned.map((s) => [s.id, s.at]), [['a', 0], ['dmg', 100]]);
+  assert.equal(spawned[1].slot, 0, 'it is the bottom of the column');
+  c.advance(319);
+  assert.deepEqual(spawned.map((s) => s.id), ['a', 'dmg'], 'b waits a full stagger after the number');
+  c.advance(1);
+  assert.deepEqual(spawned.map((s) => [s.id, s.at]).pop(), ['b', 420]);
+});
+
+test('an immediate floater with nothing waiting leaves no timer and the next word still waits one stagger', () => {
+  const { c, push, spawned } = make();
+  push('dmg', { immediate: true });
+  push('w');
+  assert.deepEqual(spawned.map((s) => s.id), ['dmg']);
+  c.advance(320);
+  assert.deepEqual(spawned.map((s) => [s.id, s.at]), [['dmg', 0], ['w', 320]]);
+});
+
+test('more than maxQueued waiting shrinks the stagger so the backlog drains', () => {
+  const { c, push, spawned } = make({ maxQueued: 3, staggerMin: 90, life: 100000 });
+  for (let i = 0; i < 8; i++) push(`w${i}`);   // w0 now, 7 wait (> 3)
+  c.advance(90);
+  assert.equal(spawned.length, 2, 'the shrunk stagger is used while the backlog is over the cap');
+  c.advance(90 * 3);
+  assert.deepEqual(spawned.map((s) => s.at).slice(0, 5), [0, 90, 180, 270, 360]);
+  c.advance(10000);
+  assert.equal(spawned.length, 8);
+  // once the backlog is 3 or fewer the normal stagger applies again
+  const gaps = spawned.map((s, i) => i ? s.at - spawned[i - 1].at : 0).slice(1);
+  assert.ok(gaps.slice(0, 4).every((g) => g === 90), 'shrunk while over');
+  assert.ok(gaps.slice(5).every((g) => g === 320), 'normal once the backlog is within the cap');
+});
+
+test('a floater the cap evicts is lifted above the rest during its fade', () => {
+  const { c, push, layouts, faded } = make({ max: 2 });
+  push('a'); c.advance(320); push('b'); c.advance(320); push('c');
+  assert.deepEqual(faded.map((f) => f.id), ['a']);
+  const last = layouts.at(-1);
+  assert.deepEqual(last, [['a', 2]], 'the evicted one is lifted past the two that stay');
+});
+
+test('a waiting floater whose host reports it gone is dropped; the others still spawn', () => {
+  const dead = new Set(['b']);
+  const { c, push, spawned } = make({ alive: (item) => !dead.has(item.id) });
+  push('a'); push('b'); push('c');
+  c.advance(2000);
+  assert.deepEqual(spawned.map((s) => s.id), ['a', 'c']);
 });

@@ -4,10 +4,12 @@
     "floaterFontMinPx": 18,
     "floaterFontVw": 7,
     "floaterLineGapPx": 6,
-    "floaterMaxVisible": 4
+    "floaterMaxVisible": 4,
+    "floaterMaxQueued": 3
   },
   "motion": {
     "floaterStaggerMs": 320,
-    "floaterShiftMs": 220
+    "floaterShiftMs": 220,
+    "floaterStaggerMinMs": 90
   }
 }

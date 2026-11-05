@@ -97,6 +97,11 @@ export function floaterLifeMs() {
 export function floaterStaggerMs() {
   return Math.max(1, Math.round(FLOATER_STACK.floaterStaggerMs * floaterLifeMs() / COMBAT_TIMING.floaterLifeMs));
 }
+// The shrunk wait used while more than floaterMaxQueued floaters are waiting over one combatant, so the backlog
+// drains and never falls behind the next action. It scales with the floater life like the full stagger.
+export function floaterStaggerMinMs() {
+  return Math.max(1, Math.min(floaterStaggerMs(), Math.round(FLOATER_STACK.floaterStaggerMinMs * floaterLifeMs() / COMBAT_TIMING.floaterLifeMs)));
+}
 // How long a callout word stays on screen, in ms. Presentation only: no beat waits on it.
 export function calloutLifeMs() {
   if (getAnimSpeed() === 'instant') return COMBAT_TIMING.calloutInstantMs;
