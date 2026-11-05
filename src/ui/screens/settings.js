@@ -56,7 +56,7 @@ import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefa
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen } from '../../model/settingOverrides.js';
-import { advancedConfigProblemRows, liveAdvancedConfigRows, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, liveAdvancedConfigRows, parseAdvancedConfigFile, isRetiredLegacySettingKey } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -1556,10 +1556,15 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
   return result?.then ? result.then(settle, () => settle({ ok: false })) : settle(result);
 }
 
-/** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
-export function allResettableKeys() {
+/**
+ * allResettableKeys(stored) → every stored key Reset all puts back, inert retired ones included.
+ * With the stored settings it also takes every key of the retired legacy groups (the import door's
+ * own predicate): they have no row to reset them, yet some are still read (recovery.<pool>.*).
+ */
+export function allResettableKeys(stored = {}) {
   return ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
-    .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat());
+    .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat())
+    .concat(Object.keys(stored || {}).filter(isRetiredLegacySettingKey));
 }
 
 /** confirmResetAll(onConfirm, returnFocusElement) — the danger confirmation both Reset-all doors open. */
@@ -3326,7 +3331,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
-      await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
+      await resetKeys(settings, onChange, allResettableKeys(settings), 'All settings reset');
       renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));

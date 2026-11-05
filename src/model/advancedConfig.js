@@ -1482,6 +1482,8 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
 const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.)|recovery\.(hp|stamina|mana)\.)/;
 export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key);
 export function withoutRetiredLegacyGroups(entries, warnings) {
   const kept = entries.filter(([key]) => !RETIRED_LEGACY_GROUP_KEYS.test(key));
   if (kept.length !== entries.length) warnings.push(RETIRED_LEGACY_GROUPS_WARNING);
