@@ -597,7 +597,7 @@ test('a bought armour set this build does not know archives the save by name, li
 // Review of #1374 (should-fix and nits), and Codex's third round
 // ---------------------------------------------------------------------------
 
-test('an atlas market and a classic merchant both scale every price on a custom run, through the one door main.js opens them by (review, #1374)', () => {
+test('an atlas market and a classic merchant both scale every price by priceMult, and main.js opens both through the one door (review, #1374)', () => {
   const run = createRunState({ seed: 8, classId: 'reaver', registries: OUT });
   const plain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 1 });
   const dear = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 2 });
@@ -609,10 +609,11 @@ test('an atlas market and a classic merchant both scale every price on a custom 
   const merchant = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 2 });
   const merchantPlain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 1 });
   assert.equal(merchant.smithStones.price, merchantPlain.smithStones.price * 2);
-  // main.js opens both doors through it, with the run's own multiplier.
+  // main.js opens both doors through it. Custom Climb's shop price mod is gone (cleanup 3f), so no run multiplier is passed.
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'atlas'[^}]*priceMult: shopPriceMult\(\)/);
-  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'merchant'[^}]*priceMult: shopPriceMult\(\)/);
+  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'atlas'/);
+  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'merchant'/);
+  assert.doesNotMatch(main, /shopPriceMult/);
   assert.doesNotMatch(main, /buildMarketStock\(registries, rng, run, \{ meta: saves\.loadMeta\(\), innInTown/);
 });
 
