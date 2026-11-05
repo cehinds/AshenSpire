@@ -1,8 +1,8 @@
 // src/model/locations.js — where a run stops, read as a property carrier
 // (docs/proposal-progression-and-property-system.md §7.4, plan phase 7)
 //
-// A location — the classic map's shrine, the Unknown node's field camp, an
-// atlas rest service (an inn, a chapel), or one atlas node by id — is a
+// A location — the classic map's shrine, the Unknown node's field camp, or the
+// market's inn — is a
 // CARRIER: content/source/tagging.csv hands it property tags under the
 // `location` family, and what the place restores is the sum of those tags'
 // rules on the two events the visit emits (`arrived`, `rested`). The mount,
@@ -15,11 +15,7 @@
 //     node opens no visit, so tagging one is refused),
 //   - `camp`, the Unknown node's rest outcome (the classic map has no node
 //     type for it — an event resolves to it),
-//   - an atlas service TYPE id whose handler is `rest` (`inn`, `chapel`):
-//     every point of that type shares the tag set, so eleven inns are one
-//     row each, not eleven,
-//   - an atlas node id that offers such a service, for the one place that
-//     wants its own set.
+//   - `inn`, the place a full rest bought at the market is taken at.
 // A shop, a smith, a fight node opens no visit, so tagging one is refused
 // rather than becoming inert content.
 // resolveLocationId picks the most specific of a point's candidates that
@@ -28,7 +24,6 @@
 // Headless: no document/window/localStorage/timers.
 
 import { NODE_TYPES } from './floorplan.js';
-import { ATLAS } from './worldAtlas.js';
 
 export const LOCATION_FAMILY = 'location';
 
@@ -58,11 +53,10 @@ export const SERVICE_TAGS = Object.freeze({
   smith: 'smith',
   levelUp: 'levelUp',
   flasks: 'restFlasks',
-  // Plan phase 10b: the place keeps a quest board — the atlas quests offered
-  // in its town and a journal of the run's quests (ui/screens/questBoard.js).
+  // Plan phase 10b: the place keeps a quest board (no screen draws one now).
   questBoard: 'questBoard',
   // SPEC §14.1: under Rest sites only, the deck editor opens from the Rest
-  // screen of a place carrying this marker (shrine, inn, chapel; not camp).
+  // screen of a place carrying this marker (shrine, inn; not camp).
   deckEdit: 'deckEdit',
 });
 
@@ -70,34 +64,8 @@ export const SERVICE_TAGS = Object.freeze({
 export const VISITED_NODE_TYPES = Object.freeze(NODE_TYPES.filter((type) => type === 'shrine'));
 
 /** Every id a `location` tagging row may name (see the file comment). */
-export function locationIds(atlas = ATLAS) {
-  const ids = new Set([...VISITED_NODE_TYPES, CAMP_LOCATION]);
-  const serviceTypes = (atlas && atlas.serviceTypes) || {};
-  const restTypes = new Set(Object.keys(serviceTypes).filter((id) => serviceTypes[id] && serviceTypes[id].handlerId === 'rest'));
-  for (const id of restTypes) ids.add(id);
-  const services = (atlas && atlas.services) || {};
-  for (const [nodeId, rows] of Object.entries((atlas && atlas.nodeServices) || {})) {
-    if (rows.some((row) => services[row.serviceId] && restTypes.has(services[row.serviceId].serviceTypeId))) ids.add(nodeId);
-  }
-  return ids;
-}
-
-/**
- * locationServiceTypeId(locationId, atlas) → the id that NAMES the place for
- * a player: an atlas point's own row resolves the visit to the point's id
- * (`crownfall/inn`), but the point is still an inn — its rest service's type
- * carries the title. A service type, a node type or the camp names itself.
- */
-export function locationServiceTypeId(locationId, atlas = ATLAS) {
-  const services = (atlas && atlas.services) || {};
-  const serviceTypes = (atlas && atlas.serviceTypes) || {};
-  const rows = ((atlas && atlas.nodeServices) || {})[locationId] || [];
-  for (const row of rows) {
-    const service = services[row.serviceId];
-    const type = service && serviceTypes[service.serviceTypeId];
-    if (type && type.handlerId === 'rest') return service.serviceTypeId;
-  }
-  return locationId;
+export function locationIds() {
+  return new Set([...VISITED_NODE_TYPES, CAMP_LOCATION, INN_LOCATION]);
 }
 
 /** The tags tagging.csv hands a location, in file order; [] for an untagged id. */
@@ -161,51 +129,6 @@ export function locationServices(registries, tags) {
 }
 
 /**
- * restLocationAtPoint(registries, pointId, atlas) → the location an atlas
- * point's rest service opens: the point's own tagging row, else its rest
- * service type's, or null when the point offers no rest or neither is tagged
- * (the door falls back to the Shrine). Resolved from the point every time,
- * never stored, so a tagging row removed between save and load cannot refuse
- * the save.
- */
-export function restLocationAtPoint(registries, pointId, atlas = ATLAS) {
-  const services = (atlas && atlas.services) || {};
-  const serviceTypes = (atlas && atlas.serviceTypes) || {};
-  const offered = (((atlas && atlas.nodeServices) || {})[pointId] || [])
-    .map((row) => services[row.serviceId])
-    .find((service) => service && serviceTypes[service.serviceTypeId]?.handlerId === 'rest');
-  if (!offered) return null;
-  return resolveLocationId(registries, { nodeId: pointId, serviceTypeId: offered.serviceTypeId });
-}
-
-/**
- * questBoardPointAt(registries, ownerNodeId, atlas) → the id of the first
- * point in the owner's local map whose place carries `questBoard` (plan
- * phase 10b), or null. The atlas's own quest list opens the board where the
- * town has one, and keeps its inline buttons where it has none.
- */
-export function questBoardPointAt(registries, ownerNodeId, atlas = ATLAS) {
-  const local = atlas && atlas.localByOwner ? atlas.localByOwner[ownerNodeId] : null;
-  const points = (local && atlas.localPoints[local.mapId]) || [];
-  for (const point of points) {
-    const locationId = restLocationAtPoint(registries, point.nodeId, atlas);
-    if (locationId && locationTags(registries, locationId).includes(SERVICE_TAGS.questBoard)) return point.nodeId;
-  }
-  return null;
-}
-
-/**
- * innInTown(registries, ownerNodeId, atlas) → whether the town an atlas point
- * belongs to keeps an inn: some point of its local map rests as the inn
- * location. A market there always offers the inn rest (SPEC §14.3).
- */
-export function innInTown(registries, ownerNodeId, atlas = ATLAS) {
-  const local = atlas && atlas.localByOwner ? atlas.localByOwner[ownerNodeId] : null;
-  const points = (local && atlas.localPoints[local.mapId]) || [];
-  return points.some((point) => restLocationAtPoint(registries, point.nodeId, atlas) === INN_LOCATION);
-}
-
-/**
  * restDeniedBy(registries, run, tags) → the id of the relic whose `restDenied`
  * passive forbids resting at a place carrying `tags`, or null. `true` denies
  * every rest; a list denies a place whose set holds one of its tags.
@@ -229,13 +152,13 @@ export function restDeniedBy(registries, run, tags) {
  * mode's tag, since that is the set restDeniedBy reads (a filter naming
  * `restMana` itself would match nothing and is refused).
  */
-/** The location ids the classic map opens without asking the atlas. */
+/** The location ids the classic map opens. */
 export const REQUIRED_LOCATIONS = Object.freeze([...VISITED_NODE_TYPES, CAMP_LOCATION]);
 
-export function locationTaggingProblems(bundle, atlas = ATLAS) {
+export function locationTaggingProblems(bundle) {
   const problems = [];
   const b = bundle || {};
-  const ids = locationIds(atlas);
+  const ids = locationIds();
   const authored = new Map();
   for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
     if (!row || row.family !== LOCATION_FAMILY) continue;
@@ -244,7 +167,7 @@ export function locationTaggingProblems(bundle, atlas = ATLAS) {
     if (!ids.has(row.objectId)) {
       problems.push({
         path: `tagging.${LOCATION_FAMILY}.${row.objectId}`,
-        message: `'${row.objectId}' is not a location — a classic node type the door visits (${VISITED_NODE_TYPES.join(', ')}), '${CAMP_LOCATION}', an atlas rest service's type or an atlas point offering one`,
+        message: `'${row.objectId}' is not a location — a classic node type the door visits (${VISITED_NODE_TYPES.join(', ')}), '${CAMP_LOCATION}' or '${INN_LOCATION}'`,
       });
     }
   }
