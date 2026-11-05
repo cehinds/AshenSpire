@@ -149,6 +149,22 @@ export function assertRangeCardEnabled(ctx, def) {
   if (ctx.rangeState && !ctx.rangeState.policy.enabled && pureEngagementMovement(def)) throw Foundation.playRefusal('Range mechanics are disabled', 'range-disabled');
 }
 
+// A paid implicit Advance persists a closer band without an explicit movement action. Playback and the formation
+// strips follow `combatEngagementMoved`, so the committed step-in is announced on the same receipt (reason 'advance'),
+// before the attack that paid for it resolves. One receipt per pair whose band actually decreased.
+function emitCommittedAdvance(ctx, source, before, after) {
+  if (!ctx.emit || !before || !after) return;
+  const sourceKey = actorRangeKey(ctx, source);
+  for (const [pair, band] of Object.entries(after.engagements)) {
+    const was = before.engagements[pair];
+    if (!(band < was)) continue;
+    const other = JSON.parse(pair).find(key => key !== sourceKey);
+    if (!other || !JSON.parse(pair).includes(sourceKey)) continue;
+    const entity = [...(ctx.enemies || []), ...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : []), ctx.player].find(row => row && actorRangeKey(ctx, row) === other);
+    if (entity) ctx.emit('combatEngagementMoved', { sourceId: source.id, targetId: entity.id, bands: band - was, reason: 'advance' });
+  }
+}
+
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if (!ctx.rangeState) return null;
   const authorization = carrier.rangeReturnAuthorization;
@@ -177,7 +193,11 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   // Committing the movement is separate from charging it: a plan prepaid at preparation (a charged enemy attack) has no
   // root yet and commits here, once, at resolution; an accepted plan carries its rootId and is never committed again.
   const unpaidPlan = !carrier.rangePlan, prepaidPlanPending = !!carrier.rangePlan && !carrier.rangePlan.rootId;
-  if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) ctx.rangeState = advancedEngagementState(ctx.rangeState, plan);
+  if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) {
+    const before = ctx.rangeState;
+    ctx.rangeState = advancedEngagementState(before, plan);
+    emitCommittedAdvance(ctx, source, before, ctx.rangeState);
+  }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
   if (lineage) carrier.rangeLineagePlan={...lineage,rootId};
