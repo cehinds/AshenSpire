@@ -150,7 +150,8 @@ export function viewportLocalBox() {
  *   a number           — at least that many px. For anything that TRACKS THE
  *                        POINTER, which must be free to hang off the edge the
  *                        pointer is against but must never vanish entirely.
- * A box too big to fit pins to the low edge rather than sliding off the far one.
+ * A box too big to fit between the pads but within the span is centred; one wider than the span pins to the low
+ * edge rather than sliding off the far one.
  *
  * Pure arithmetic, no DOM: unit-testable without a browser — which is the only
  * part of Rule 2 that can be. The rest needs layout, and that is zoomplace.mjs.
@@ -160,6 +161,9 @@ export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
     const k = Math.min(keep, size);
     const lo = pad + k - size;
     const hi = span - pad - k;
+    // Too wide for the pads but not for the span: centre it, so it overhangs neither edge (pinning to `lo` pushed the
+    // far edge past the span). Wider than the span itself still pins low, as below.
+    if (k === size && size > span - 2 * pad && size <= span) return (span - size) / 2;
     return Math.min(Math.max(v, lo), Math.max(lo, hi));
   };
   return {

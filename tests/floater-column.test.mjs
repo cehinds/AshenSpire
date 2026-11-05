@@ -365,3 +365,13 @@ test('a wide word over a figure at the right edge stays fully inside the layer, 
   assert.ok(parseFloat(w2.style.left) - 100 >= margin, 'left edge keeps the margin');
   assert.equal(spawns.length >= 2, true);
 }));
+
+test('a word nearly as wide as the layer is centred, not pinned so its far edge leaves the layer', (t) => setup(t, ({ fx, a, spawns }) => {
+  fx.box = { left: 0, top: 0, width: 360, height: 700 };
+  const word = callout(fx, a, 1, 'action:Poise absorbed 2');
+  Object.defineProperty(word, 'offsetWidth', { value: 348 });
+  advance(t, 5);
+  flushMeasureJobs();
+  const left = parseFloat(word.style.left) - 174;
+  assert.ok(left >= 0 && left + 348 <= 360, `box ${left}..${left + 348} lies inside 0..360`);
+}));
