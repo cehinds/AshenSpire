@@ -4779,8 +4779,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
     eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
       'a fresh profile owns its starting set and four attribute-gated shared sets');
-    const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set');
+    const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh, profileWardrobe: true });
+    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set (profile wardrobe)');
+    // Owner, 2026-11-05: in a run the profile wardrobe is not the inventory.
+    const inRun = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
+    eq(armourPool.filter((p) => inRun.has(p)).length, 5, 'a profile unlock does not make a set owned inside a run');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 

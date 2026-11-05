@@ -183,9 +183,13 @@ const ADDITION_POOLS = Object.freeze({
   armour(registries, run, row, meta) {
     if (row.includeLocked !== true) return [];
     const mine = ownership(registries, { meta, loadout: run.loadout });
+    // The profile's unlocks no longer make a set owned in a run, so "not yet
+    // unlocked" is asked of the profile directly.
+    const unlocked = new Set((meta && meta.unlocked) || []);
     return (registries.equipment.armour || [])
       .filter((piece) => piece.classId === run.class)
       .filter((piece) => piece.unlock !== '' && piece.unlock != null)
+      .filter((piece) => !unlocked.has(piece.unlock))
       .filter((piece) => !mine.has(piece));
   },
   // Sigils the run does not hold, carried or slotted, never a legendary (§15.4).
