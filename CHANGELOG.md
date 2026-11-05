@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Floaters** ([#2549](https://github.com/cehinds/AshenSpire/pull/2549), `0.7.3.128`). Combat floaters now appear one at a time per character, stack in a rising column, and share one text size.
 - **Hit chance** ([#2548](https://github.com/cehinds/AshenSpire/pull/2548), `0.7.3.128`). Arming an attack no longer draws a box of hit chances over the card; each enemy still shows its hit %.
 - **Player HUD** ([#2547](https://github.com/cehinds/AshenSpire/pull/2547), `0.7.3.126`). The player's HP bar over the figure now shows only while the player is selected; Block and status badges stay visible.
 - **Enemy HUDs** ([#2542](https://github.com/cehinds/AshenSpire/pull/2542), `0.7.3.124`). Enemy HUD panels now line up side by side in a row instead of a column when they fit.

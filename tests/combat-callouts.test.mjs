@@ -1,7 +1,7 @@
 // ON-CHARACTER CALLOUTS (owner, 2026-10-11; ui/fx.js callout). A short word —
 // STAGGERED, COUNTERED, EVADED, CRITICAL, GUARD BREAK — rises from above the
-// fighter it happened to. Two on one fighter stack, at most two show at once,
-// and a click-skip ends them.
+// fighter it happened to. Since 2026-11-05 a word joins that fighter's one floater column: it spawns
+// floaterStaggerMs after the floater before it, at most floaterMaxVisible show at once, and a click-skip ends them.
 
 import test from 'node:test';
 import { selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT } from '../src/model/selectedWeaponStances.js';
@@ -12,7 +12,7 @@ import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { t } from '../src/ui/strings.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
-import { setCombatPacing as pinCombatPacing, calloutLifeMs } from '../src/ui/animationPace.js';
+import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const callouts = (layer) => layer.children.filter((node) => node.dataset?.calloutFor !== undefined);
@@ -27,66 +27,78 @@ test('every callout kind has a localized word', () => {
   assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
 });
 
-test('a callout names its fighter, shows three in lanes, queues the rest, and skips a repeat', (t2) => {
-  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+// A live anchor: a waiting floater for a detached anchor is dropped (fx.js), as it is for a combatant that left.
+function liveNode(dom, tag = 'div') {
+  const node = dom.document.createElement(tag);
+  node.box = { left: 100, top: 300, width: 80, height: 120 }; // room above the head for the whole column
+  dom.document.body.append(node);
+  return node;
+}
+// The mocked clock jumps to the end of a tick before its timers run, so a wait is taken one ms at a time.
+const drain = (t2, ms) => { for (let left = ms; left > 0; left -= 1) t2.mock.timers.tick(1); };
+
+test('a callout names its fighter, joins the fighter\'s column one stagger behind the floater before it, and skips a repeat', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   withKitDom((dom) => {
-    const layer = dom.document.createElement('div');
-    const anchor = dom.document.createElement('div');
+    const layer = liveNode(dom); layer.box = { left: 0, top: 0, width: 600, height: 700 };
+    const anchor = liveNode(dom);
     const first = callout(layer, anchor, 'e1', 'staggered');
     assert.equal(first.textContent, 'STAGGERED');
     assert.equal(first.dataset.calloutFor, 'e1');
-    flushMeasureJobs(); // placement is measured at the end of the task
-    assert.equal(first.dataset.calloutSlot, '2', 'lane 0 is the top slot');
     assert.match(first.className, /\bfx-callout\b.*\bgold\b/);
     assert.equal(callout(layer, anchor, 'e1', 'staggered'), null, 'the same word is not repeated on one fighter');
     const second = callout(layer, anchor, 'e1', 'critical');
-    flushMeasureJobs(); // placement is measured at the end of the task
-    assert.equal(second.dataset.calloutSlot, '1', 'lane 1 sits under lane 0');
     assert.match(second.className, /\bred\b/);
-    const other = callout(layer, anchor, 'player', 'evaded');
-    flushMeasureJobs(); // placement is measured at the end of the task
-    assert.equal(other.dataset.calloutSlot, '2', 'another fighter has its own stack');
+    const other = callout(layer, liveNode(dom), 'player', 'evaded');
     const third = callout(layer, anchor, 'e1', 'guardBreak');
-    flushMeasureJobs(); // placement is measured at the end of the task
-    assert.equal(third.dataset.calloutSlot, '0', 'lane 2 is the bottom slot');
     const fourth = callout(layer, anchor, 'e1', 'countered');
-    const starts = [first, second, third].map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
-    assert.deepEqual(starts, [0, 150, 300], 'each word starts one step after the one before');
-    const delayMs = Number.parseInt(fourth.style.animationDelay, 10);
-    assert.ok(delayMs >= 1390 && delayMs <= 1400, 'the fourth waits for the earliest visible word to finish');
-    assert.equal(callouts(layer).length, 5, 'nothing is dropped: the fourth is queued');
+    assert.deepEqual(callouts(layer), [first, other], 'one word per fighter shows at once; another fighter has its own column');
+    flushMeasureJobs();
+    assert.equal(first.dataset.floatSlot, '0');
+    drain(t2, floaterStaggerMs() * 3);
+    flushMeasureJobs();
+    assert.deepEqual(callouts(layer).filter((n) => n.dataset.calloutFor === 'e1'), [first, second, third, fourth],
+      'nothing is dropped: each queued word joins the column in turn');
+    assert.deepEqual([first, second, third, fourth].map((n) => n.dataset.floatSlot), ['3', '2', '1', '0'], 'the earlier words are already above the newest');
     clearCallouts(layer);
     assert.equal(callouts(layer).length, 0, 'a skip ends the visible words and the queue');
   });
 });
 
-test('instant speed: the lanes and removal use the 500ms lifetime callout() actually picked', (t2) => {
-  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+test('instant speed: the words keep the 500ms lifetime callout() picked and a short stagger', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   try {
     withKitDom((dom) => {
       setAnimSpeed('instant');
-      const layer = dom.document.createElement('div');
-      const anchor = dom.document.createElement('div');
-      const kinds = ['staggered', 'disrupted', 'countered', 'critical', 'guardBreak', 'wardBreak'];
+      const layer = liveNode(dom); layer.box = { left: 0, top: 0, width: 600, height: 700 };
+      const anchor = liveNode(dom);
+      const stagger = floaterStaggerMs();
+      assert.ok(stagger > 0 && stagger < 320, 'Instant shortens the stagger with the life');
+      const kinds = ['staggered', 'disrupted', 'countered'];
       const nodes = kinds.map((kind) => callout(layer, anchor, 'e1', kind));
-      const starts = nodes.map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
-      assert.deepEqual(starts, [0, 150, 300, 500, 650, 800], 'the fourth word waits for the first 500ms word, not a 900ms one');
-      t2.mock.timers.tick(499);
-      assert.ok(layer.children.includes(nodes[0]), 'the first word is still up at 499ms');
-      t2.mock.timers.tick(1);
-      assert.ok(!layer.children.includes(nodes[0]), 'the first word is removed at its 500ms lifetime');
+      const spawned = [];
+      const append = layer.appendChild.bind(layer);
+      layer.appendChild = (node) => { spawned.push(Date.now()); return append(node); };
+      drain(t2, stagger * 2);
+      assert.deepEqual(spawned, [stagger, stagger * 2], 'the later words follow one stagger apart');
+      assert.ok(layer.children.includes(nodes[0]), 'the first word is still up before its 500ms life ends');
+      drain(t2, 500 - stagger * 2 - 1);
+      assert.ok(layer.children.includes(nodes[0]), 'still up at 499ms');
+      drain(t2, 1);
+      assert.ok(!layer.children.includes(nodes[0]), 'removed at its 500ms lifetime');
+      assert.ok(layer.children.includes(nodes[1]), 'the second spawned later, so it outlives the first');
     });
   } finally {
     setAnimSpeed('normal');
   }
 });
 
-test('callout CSS: larger than a float, HUD text shadow, reduced motion and Reduce flashes', () => {
+test('callout CSS: the one floater size, HUD text shadow, reduced motion and Reduce flashes', () => {
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, /\.fx-callout \{[^}]*text-shadow: var\(--hud-text-shadow/s);
-  const rem = (sel) => Number(css.match(new RegExp(`(?:^|\\n)${sel} \\{[^}]*?font-size: ([0-9.]+)rem`))?.[1]);
-  const callout = rem('\\.fx-callout'), float = rem('\\.float-num');
-  assert.ok(callout > float, `callout ${callout}rem must be larger than a damage float ${float}rem`);
+  const size = (sel) => css.match(new RegExp(`(?:^|\\n)${sel} \\{[^}]*?font-size: ([^;]+);`))?.[1];
+  assert.equal(size('\\.fx-callout'), size('\\.float-num'), 'a word is the same size as a number (owner, 2026-11-05)');
+  assert.equal(size('\\.fx-callout'), 'var(--floater-font, 2.8rem)');
   assert.match(css, /\.reduced-motion \.fx-callout \{ animation: callout-fade/, 'reduced motion: in place, no rise');
   assert.match(css, /\.reduce-flashes \.fx-callout \{ animation: callout-rise var\(--fx-callout-ms, 900ms\) ease-out forwards; \}/, 'reduce flashes: no glow pulse');
 });
@@ -108,7 +120,9 @@ function drive(t2, fn) {
     for (const [id, anchor] of Object.entries(anchors)) {
       registerStage(anchor, { play: (pose) => { if (pose !== 'defeated') at(`reaction:${id}`); return true; }, hold() { return true; }, settle() {} });
     }
+    for (const anchor of Object.values(anchors)) dom.document.body.append(anchor);
     const layer = dom.document.createElement('div');
+    dom.document.body.append(layer);
     const append = layer.appendChild.bind(layer);
     layer.appendChild = (node) => {
       if (node.dataset?.calloutFor !== undefined) at(`callout:${node.dataset.calloutKind}@${node.dataset.calloutFor}`);
@@ -124,7 +138,12 @@ function drive(t2, fn) {
     };
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
-    const finish = () => { for (let i = 0; i < 20000 && !completed; i++) t2.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
+    // After the timeline, let the floaters still waiting in a column spawn (they outlive the beat).
+    const finish = () => {
+      for (let i = 0; i < 20000 && !completed; i++) t2.mock.timers.tick(1);
+      assert.equal(completed, 1, 'the timeline completes');
+      for (let i = 0; i < 4000; i++) t2.mock.timers.tick(1); // one ms at a time: the mocked Date jumps to the end of a tick
+    };
     try { fn({ dom, layer, anchors, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
@@ -199,7 +218,7 @@ test('sequential: Hit precedes the hurt pose, then CRITICAL accompanies the dama
     assert.equal(timeOf(trace, 'callout:hit@player'), LEAD + TOTAL + AFTER);
     assert.equal(timeOf(trace, 'reaction:player'), LEAD + TOTAL + AFTER + REACTION, 'the sprite reaction follows the accuracy word by a gap');
     assert.equal(timeOf(trace, 'callout:critical@player'), LEAD + TOTAL + AFTER + 2 * REACTION, 'critical is the final outcome, after the hurt pose');
-    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the number waits a gap after the reaction');
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the number waits a gap after the reaction; a damage number never waits behind the column');
   });
 });
 
@@ -252,8 +271,11 @@ for (const mode of ['instant', 'reduced-motion']) {
       run(CASES[0][1]);
       finish();
       assert.ok(trace.some((e) => e.what === 'callout:critical@player'));
-      assert.equal(timeOf(trace, 'callout:critical@player'), timeOf(trace, 'float:-4'), 'the callout shares its hit\'s tick');
-      assert.ok(trace.every((e) => e.at <= 80), 'nothing waits past the fast path\'s own step');
+      // The accuracy word spawns first; CRITICAL is the next word, one stagger later. The damage number never waits.
+      assert.equal(timeOf(trace, 'callout:critical@player') - timeOf(trace, 'callout:hit@player'), floaterStaggerMs());
+      assert.ok(timeOf(trace, 'float:-4') <= 80, 'the number comes with the fast path\'s own step');
+      assert.ok(trace.filter((e) => !e.what.startsWith('callout:')).every((e) => e.at <= 80), 'nothing but a queued word waits past the fast path\'s own step');
+      assert.ok(trace.every((e) => e.at <= 80 + 2 * floaterStaggerMs()), 'a queued word appears within the fast path\'s step plus two staggers');
     });
   });
 }
@@ -293,7 +315,7 @@ for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accurac
       assert.equal(timeOf(trace, 'reaction:player') - outcome, REACTION, 'accuracy precedes the target reaction');
       assert.equal(damage - outcome, 2 * REACTION, 'accuracy leads damage by two gaps (accuracy → reaction → result)');
       assert.equal(timeOf(trace, 'callout:evadeFailed@player'), damage, 'failed defense is the final outcome with damage');
-    } else assert.equal(damage, outcome, 'instant and reduced motion preserve order without adding waits');
+    } else assert.ok(outcome - damage >= 0 && outcome - damage <= floaterStaggerMs(), 'instant and reduced motion add no waits for the number; the word may queue one stagger behind the accuracy word');
   });
 });
 
