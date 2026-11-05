@@ -720,6 +720,13 @@ function explicitRows(bundle) {
   return rows;
 }
 
+// THE PRESENTATION MODEL. Every key presentationConfig() understands: the formation, grid, spawn,
+// layer, offset and movement values the combat battlefield stage and formation movement read.
+// None of them is a setting any more (owner, 2026-11-05): Core draws its formation from the viewport
+// model, the Settings screen and the exported file carry none of these rows, and a stored key is
+// dropped as retired (RETIRED_LEGACY_GROUP_KEYS), so in play they are always PRESENTATION_DEFAULTS.
+// The reader stays because Core combat still consumes the config (see docs/CLEANUP-PLAN.md, 3e
+// follow-up); only the player-facing rows went.
 const PRESENTATION_ROWS = Object.freeze([
   ...FORMATION_FIELDS.map(field => ({ ...field, note: 'Preview and apply in Formation layout. Grid dimensions are shared by both sides.' })),
   ...[...FORMATION_ROWS].flatMap(row => [
@@ -737,7 +744,7 @@ const PRESENTATION_ROWS = Object.freeze([
   { key: 'settingsHeightPercent', label: 'Settings panel height', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings panel may use.' },
 ]);
 
-function presentationRows() {
+function presentationModelRows() {
   return [
     { cat: 'Advanced', advancedGroup: 'Interface', type: 'text', presentationKey: 'formationGroups',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.formationGroups`, def: '[]', maxLength: 20000, label: 'Formation groups', note: 'Saved group offsets and member positions.' },
@@ -814,6 +821,13 @@ function presentationRows() {
       note: 'Numbered left to right across the battlefield. A column outside this team’s grid uses the nearest valid column. Front is nearer the center.',
     })),
   ];
+}
+
+
+// The one presentation row still a setting: how much of the viewport the Settings panel uses.
+const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
+function presentationRows() {
+  return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));
 }
 
 /**
@@ -1385,7 +1399,7 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
 
 export function presentationConfig(settings = {}) {
   const values = { ...PRESENTATION_DEFAULTS };
-  for (const row of presentationRows()) {
+  for (const row of presentationModelRows()) {
     if (!(row.key in settings)) continue;
     const raw = settings[row.key];
     if (row.presentationKey === 'formationGroups') {
@@ -1466,12 +1480,12 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
 // still settings. The plain-key settings game code still reads by key
 // (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
-const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.)|recovery\.(hp|stamina|mana)\.)/;
+const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.settings(?:Width|Height)Percent$)|recovery\.(hp|stamina|mana)\.)/;
 // A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
 // mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
 // the only one.
 const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
-export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
 /** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
 export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
 export function withoutRetiredLegacyGroups(entries, warnings) {

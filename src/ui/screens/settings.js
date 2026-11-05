@@ -17,7 +17,6 @@ import { COMBAT_LOG_PALETTE_DEFAULTS } from '../models/CombatLogPaletteModel.js'
 import { rangeSettingsRows } from '../models/RangeSettingsModel.js';
 import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
 import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
-import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from '../components/settingsPreview.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
@@ -920,7 +919,6 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'World', label: t('settings.group.World'), tip: tFull('settings.group.World') },
   { id: 'Interface', label: t('settings.group.Interface'), tip: tFull('settings.group.Interface') },
   { id: 'Text', label: t('settings.group.Text'), tip: tFull('settings.group.Text') },
-  { id: 'Battlefield', label: t('settings.group.Battlefield'), tip: tFull('settings.group.Battlefield') },
   // The wireframe decisions the drawings leave open, one topic per family of
   // surfaces, now beside the other size controls (cards, the settings window):
   // every "how big and where" answer in one place.
@@ -992,18 +990,6 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
  * last-open tab was that one met it on first launch of the new build.
  */
 export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
-
-/**
- * formationLayoutRows() → the rows the formation editor edits, found by TOPIC
- * in whichever tab files them. The mount named its tab ('Interface') and the
- * topic moved to Battlefield under it, handing the editor no rows: every
- * number threw on `row.max` and Apply saved nothing (Codex, on #1256). Asking
- * every tab means the next move cannot do that again.
- */
-export function formationLayoutRows() {
-  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(categoryHandler('Advanced').rows, id))
-    .find((group) => group.id === 'Formation layout')?.rows || [];
-}
 
 export function activeAdvancedGroup(settings, profile = null) {
   const stored = settings?.[ADVANCED_CAT_KEY];
@@ -2623,8 +2609,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
-          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
-            : sub.rows.map((row) => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join(''))
+          + sub.rows.map((row) => settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id))).join('')
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
@@ -2834,9 +2819,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // an Advanced section or topic, a search, a row reset. Only the pane is
   // rebuilt; the rail, the header tools and the page-level listeners stay.
   function repaintPanel({ keepScroll = false } = {}) {
-    // The formation editor holds an unapplied draft in its DOM; apply it before
-    // the pane it lives in is rebuilt, or stay put when it cannot be applied.
-    if (!applyPendingFormationSettings(container)) return;
     const panel = container.querySelector('.set-panel');
     if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
@@ -2899,7 +2881,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const wire = () => {
   const profileHost = container.querySelector('[data-game-profile-settings]');
   if (profileHost && !profileHost.childElementCount) mountGameProfileSettings(profileHost, { settings, onChange, gameProfile });
-  mountFormationSettings(container, settings, onChange, formationLayoutRows());
   mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
@@ -3923,7 +3904,6 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
   done.addEventListener('click', () => {
-    if (!applyPendingFormationSettings(door.body)) return;
     if (!pageDebug() || settings.promptSettingsExport === false) { door.close(); return; }
     const exportButton = button({ label: 'Export configuration', weight: 'primary' });
     const skip = button({ label: 'Not now' });

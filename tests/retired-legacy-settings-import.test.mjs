@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { parseAdvancedConfigFile, ADVANCED_CONFIG_SCHEMA_VERSION, RETIRED_LEGACY_GROUPS_WARNING } from '../src/model/advancedConfig.js';
+import { parseAdvancedConfigFile, ADVANCED_CONFIG_SCHEMA_VERSION, RETIRED_LEGACY_GROUPS_WARNING, isRetiredLegacySettingKey } from '../src/model/advancedConfig.js';
 import { settingsRows } from '../src/ui/screens/settings.js';
 import { profileChanges, profileText } from '../src/model/settingsSync.js';
 
@@ -22,6 +22,8 @@ const OLD_EXPORT = {
     'settings.deckEditing': true,
     'settings.playInDeckOrder': true,
     'gameConfig.presentation.movementEnabled': true,
+    'settings.gameConfig.presentation.rowBScale': 2,
+    'gameConfig.presentation.settingsWidthPercent': 90,
   },
 };
 
@@ -30,9 +32,21 @@ test('an old export with retired legacy keys imports with one warning and still 
   const changes = parseAdvancedConfigFile(JSON.stringify(OLD_EXPORT), contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
   assert.deepEqual(warnings.filter((w) => w === RETIRED_LEGACY_GROUPS_WARNING), [RETIRED_LEGACY_GROUPS_WARNING]);
   assert.equal(changes.playInDeckOrder, true);
-  assert.equal(changes['gameConfig.presentation.movementEnabled'], true);
-  for (const key of Object.keys(changes)) assert.doesNotMatch(key, /^(settings\.)?gameConfig\.(?!prologue\.|presentation\.)|^recovery\./);
+  assert.equal(changes['gameConfig.presentation.settingsWidthPercent'], 90, 'the Settings panel size is still a setting');
+  assert.ok(!('gameConfig.presentation.movementEnabled' in changes), 'a battlefield key loads without it');
+  assert.ok(!Object.keys(changes).some((key) => /presentation\.(rowBScale|movementEnabled)/.test(key)));
+  for (const key of Object.keys(changes)) assert.doesNotMatch(key, /^(settings\.)?gameConfig\.(?!prologue\.|presentation\.settings(Width|Height)Percent$)|^recovery\./);
   assert.equal(changes.deckEditing, true, 'live plain-key settings still apply');
+});
+
+test('a stored battlefield key is cleared by a profile load and counts as retired', () => {
+  const rows = settingsRows();
+  const keys = rows.map((row) => row.key);
+  const stored = { 'gameConfig.presentation.formationRows': 3, 'settings.gameConfig.presentation.enemySpriteScale': 1.5, 'gameConfig.presentation.settingsWidthPercent': 90 };
+  const result = profileChanges(profileText({}, keys), contentBundle, stored, rows, keys);
+  assert.ok(result.cleared.includes('gameConfig.presentation.formationRows'));
+  assert.ok(result.cleared.includes('settings.gameConfig.presentation.enemySpriteScale'));
+  for (const key of Object.keys(stored)) assert.equal(isRetiredLegacySettingKey(key), key !== 'gameConfig.presentation.settingsWidthPercent', key);
 });
 
 test('without the retirement option an unknown legacy key is still refused', () => {

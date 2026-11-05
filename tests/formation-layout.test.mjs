@@ -92,8 +92,12 @@ test('layout configuration clamps whole grid dimensions and round trips through 
   assert.equal(invalid.formationPreset, FORMATION_DEFAULTS.formationPreset); assert.equal(invalid.groundSkew, -35);
   const settings = { 'gameConfig.presentation.formationColumns': 3, 'gameConfig.presentation.formationRows': 6,
     'gameConfig.presentation.formationPreset': 'back-slant', 'gameConfig.presentation.groundTilt': 50, 'gameConfig.presentation.rowFScale': 1.7 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), settings);
-  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.presentation.formationRows': 7 }), contentBundle));
+  // The formation keys are retired settings (owner, 2026-11-05): the strict door refuses them, the
+  // retirement door drops them with the one named warning, and presentationConfig still reads them.
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle), /Unknown setting/);
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle, {}, [], warnings, { dropRetiredLegacy: true }), {});
+  assert.equal(warnings.length, 1);
 });
 
 test('ground projection leaves position anchors and character geometry upright', () => {

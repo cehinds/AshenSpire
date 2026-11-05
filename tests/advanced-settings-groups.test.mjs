@@ -289,14 +289,9 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
   };
   assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
 
-  // The formation editor is mounted with the rows of its topic, wherever that
-  // topic is filed. It looked under Interface after the topic moved to
-  // Battlefield and got none (Codex, on #1256).
-  const { formationLayoutRows } = await import('../src/ui/screens/settings.js');
-  const formation = advancedSubgroups(rows, 'Battlefield').find(group => group.id === 'Formation layout');
-  assert.ok(formation && formation.rows.length > 0, 'Battlefield opens on the formation layout');
-  assert.deepEqual(formationLayoutRows().map(row => row.key), formation.rows.map(row => row.key),
-    'the editor is handed exactly the rows its topic shows');
+  // The battlefield / formation section was retired (owner, 2026-11-05): no tab, no rows.
+  assert.ok(!ADVANCED_GROUP_IDS.includes('Battlefield'), 'there is no Battlefield tab');
+  assert.ok(!rows.some(row => /^gameConfig\.presentation\.(?!settings(Width|Height)Percent$)/.test(row.key)), 'no formation row is on the screen');
 });
 
 test('a row that moved nothing is retired: off the screen, still importable', async () => {
@@ -340,12 +335,12 @@ test('a row that moved nothing is retired: off the screen, still importable', as
 
 test('a typed out-of-range number explains itself on its row, and the message matches the clamp', async () => {
   const { settingsRow, typedNumberRefusal, resolveNumberRow } = await import('../src/ui/screens/settings.js');
-  const row = settingsRow('gameConfig.presentation.formationGap');
+  const row = settingsRow('gameConfig.presentation.settingsWidthPercent');
   assert.equal(typedNumberRefusal(row, String(row.def)), null, 'a legal value leaves no message');
   assert.equal(typedNumberRefusal(row, ''), null, 'an empty field is not a zero');
-  const message = typedNumberRefusal(row, '99');
+  const message = typedNumberRefusal(row, '999');
   assert.ok(message.includes(`${row.min}–${row.max}`) && message.includes('was refused'));
-  const used = resolveNumberRow({ [row.key]: '99' }, row);
+  const used = resolveNumberRow({ [row.key]: '999' }, row);
   assert.equal(used, row.max, 'the clamp is what the message says is in use');
   assert.ok(message.includes(`The value in use is ${used}`));
 });

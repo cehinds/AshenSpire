@@ -30,15 +30,16 @@ test('expanded defense snapshots preserve custom settings through the content va
 });
 
 test('settings files round trip and leave unrelated settings untouched', () => {
-  const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };
-  const current = { 'gameConfig.presentation.rowBScale': 2 };
+  const source = { 'gameConfig.presentation.settingsWidthPercent': 90, 'gameConfig.presentation.settingsHeightPercent': 80 };
+  const current = { 'gameConfig.presentation.settingsWidthPercent': 70 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(source), contentBundle, current), source);
-  assert.deepEqual(current, { 'gameConfig.presentation.rowBScale': 2 });
+  assert.deepEqual(current, { 'gameConfig.presentation.settingsWidthPercent': 70 });
 });
 
 test('settings import refuses malformed, oversized, unknown and invalid values atomically', () => {
   for (const text of ['{', '{}', ' '.repeat(1024 * 1024 + 1),
-    advancedConfigExport({ 'gameConfig.presentation.rowAScale': 90 }),
+    advancedConfigExport({ 'gameConfig.presentation.settingsWidthPercent': 900 }),
+    // The battlefield rows were retired (owner, 2026-11-05): their keys are unknown to the strict door.
     advancedConfigExport({ 'gameConfig.presentation.gridShape': 'triangle' }),
     advancedConfigExport({ 'gameConfig.presentation.playerGridColor': 'red' }),
     advancedConfigExport({ 'gameConfig.unknown': true }),
@@ -63,9 +64,8 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
     }
   }
   assert(rows.some((row) => row.key === 'gameConfig.progression.xpMultiplier'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpriteScale'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpawnColumn'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.enemySpawnColumn'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.settingsWidthPercent'));
+  assert(!rows.some((row) => /presentation\.(playerSpriteScale|playerSpawnColumn|enemySpawnColumn|formation)/.test(row.key)), 'no battlefield row is inventoried');
 });
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
