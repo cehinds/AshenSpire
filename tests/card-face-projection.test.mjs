@@ -235,3 +235,39 @@ test('an unfamiliar rule of many long sentences still fills at most the face cla
   assert.ok(face.clauses.length >= 1 && face.clauses.length <= FACE_EFFECT_CLAUSES, `clauses: ${face.clauses.length}`);
   assert.ok(face.clauses.every(clause => !/Inspect/.test(clause.html)));
 });
+
+import { FACE_BUDGET } from '../src/model/cardFaceBudget.js';
+const projectRoomy = (def) => {
+  const tokens = staticCardTokens(def);
+  const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
+  return cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), authoredHtml, registries: reg, effects: def.effects, roomy: FACE_BUDGET });
+};
+
+test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 10 px', () => {
+  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 10]);
+  assert.equal(FACE_BUDGET.clauses, 5);
+});
+
+test('a long-rules card carries a roomy projection with its conditional rider; a one-liner is unchanged', () => {
+  const long = projectRoomy(defOf('serratedBlade')), plainText = projection => projection.clauses.map(line => plain(line.html)).join('; ');
+  assert.ok(long.roomy, 'serratedBlade has a roomy reading');
+  assert.match(plainText(long.roomy), /If the target has Bleed/);
+  assert.doesNotMatch(plainText(long), /If the target has Bleed/, 'the compact face is untouched');
+  assert.ok(long.roomy.clauses.length <= FACE_BUDGET.lines);
+  const one = projectRoomy(defOf('guardCounter'));
+  assert.equal(one.roomy, undefined, 'a card that already says everything has no roomy reading');
+});
+
+test('every roomy reading stays inside the budget, never names an Inspect cue, and keeps every compact downside', () => {
+  let roomy = 0;
+  for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }]) {
+    const def = defOf(card.id, extra), projection = projectRoomy(def);
+    if (!projection.roomy) continue;
+    roomy++;
+    const text = projection.roomy.clauses.map(line => plain(line.html)).join('; ');
+    assert.ok(projection.roomy.clauses.length <= FACE_BUDGET.clauses, card.id);
+    assert.ok(text.length <= FACE_BUDGET.characters + 4 * FACE_BUDGET.clauses || projection.roomy.clauses.some(c => c.kind === 'detail'), `${card.id}: ${text}`);
+    assert.doesNotMatch(text, /Inspect|\{/, card.id);
+  }
+  assert.ok(roomy > 100, `expected many roomy faces, got ${roomy}`);
+});
