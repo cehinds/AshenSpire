@@ -61,7 +61,7 @@ test('settings produce a new policy snapshot without altering a policy already i
   settings.rangeAdvanceSpPerBand = 3;
   const next = snapshotRangePolicy(authored, settings);
   assert.deepEqual(first, saved);
-  assert.deepEqual(first, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0 });
+  assert.deepEqual(first, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0, maxRange: 'ranged' });
   assert.equal(next.enabled, false);
   assert.equal(next.advanceSpPerBand, 3);
   assert.equal(snapshotRangePolicy(authored).enabled, false);
@@ -81,14 +81,14 @@ test('an imported Core author supplies unset controls and the next real run snap
   const selected = readNewGameProfile(settings);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, selected)), selected);
   const run = createRunState({ seed: 1, classId: 'reaver', registries, profileMeta: { settings } });
-  assert.deepEqual(run.rangePolicy, authored);
+  assert.deepEqual(run.rangePolicy, { ...authored, maxRange: 'ranged' }, 'an authored policy with no maxRange snapshots the code default');
   settings.rangeMechanics = true;
   settings.rangeAdvanceSpPerBand = 0;
   settings.rangeReachPrecisionBonus = 0;
   settings.rangeThrowPrecisionPenalty = 0;
   const next = createRunState({ seed: 2, classId: 'reaver', registries, profileMeta: { settings } });
-  assert.deepEqual(next.rangePolicy, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0 });
-  assert.deepEqual(run.rangePolicy, authored, 'an active run keeps its snapshot');
+  assert.deepEqual(next.rangePolicy, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0, maxRange: 'ranged' });
+  assert.deepEqual(run.rangePolicy, { ...authored, maxRange: 'ranged' }, 'an active run keeps its snapshot');
   delete settings.newGameProfile;
   assert.deepEqual(rows.slice(1).map(row => row.defaultFor(settings)), [1, 1, 1], 'changing author invalidates the panel default cache');
 });

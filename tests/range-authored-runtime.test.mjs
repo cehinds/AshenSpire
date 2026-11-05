@@ -15,6 +15,7 @@ import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { validateContent } from '../src/model/validate.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
+import { uncappedRun } from './helpers/uncapped-range.mjs';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -23,6 +24,7 @@ const importedWeapon = id => imported.entities.find(row => row.kind === 'EQUIPME
 const bandOf = range => ['melee', 'reach', 'ranged'].indexOf(range);
 function live(weaponId, enemyId = 'wanderingSoldier', seed = 511) {
   const run = createRunState({ registries, classId: 'reaver', seed });
+  uncappedRun(run);
   run.loadout.sets.rightHand[0] = weaponId;
   run.loadout.sets.leftHand[0] = null;
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] });
