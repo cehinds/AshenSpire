@@ -1,7 +1,7 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
-import { actorRangeKey, engagementBand, rangeBand } from '../model/combatEngagement.js';
+import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
@@ -1149,7 +1149,7 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   // A retreat (a move with its own retreatWeight) is offered only while the fight is closer than the enemy
   // prefers; maxConsecutive keeps it from repeating back to back, so the player is not chased out of reach forever.
   const wantsDistance = policy && combat.rangeState?.policy.enabled && def.startingRange !== undefined
-    && engagementBand(combat.rangeState, actorRangeKey(combat, enemy), actorRangeKey(combat, combat.player)) < rangeBand(def.startingRange);
+    && engagementBand(combat.rangeState, actorRangeKey(combat, enemy), actorRangeKey(combat, combat.player)) < Math.min(rangeBand(def.startingRange), bandCap(combat.rangeState.policy));
   const entries = Object.entries(def.moves).filter(
     ([id, mv]) => {
       if (mv.retreatWeight != null && !wantsDistance) return false;

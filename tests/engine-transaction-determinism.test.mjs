@@ -74,9 +74,11 @@ export function digest(combat) {
 // Re-pinned 2026-11-03 for raw-hit damage previews (owner: intents and quotes show the hit before Block/Poise/Ward/Counter/Reflect/defensive
 // stance): the stored enemy intent previews (hitDamages/totalDamage) carry the raw hit. Verified by running the fight on the previous engine:
 // player and enemy HP, turn and every RNG counter are identical (PERF1: player 60, enemy 4903, turn 6); only the preview figures differ.
+// Re-pinned 2026-11-05 for the Reach cap (maxRange): the run's range policy snapshot gains "maxRange":"reach", so the state hashes move.
+// Event logs, counts, turns and RNG are identical; removing that one field from the state text reproduces the previous hashes exactly.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'ad150271be11b3fc', state: '292a2497c42ba3fa', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: 'd53eccb44b7816e0', state: 'fb524bba89d1c5e8', events: 232, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'ad150271be11b3fc', state: 'a1faffd12f40ea90', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: 'd53eccb44b7816e0', state: '1da69c6ca96d651b', events: 232, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

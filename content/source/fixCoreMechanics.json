@@ -98,6 +98,7 @@
     "enabled": true,
     "advanceSpPerBand": 1,
     "reachPrecisionBonus": 1,
-    "throwPrecisionPenalty": 1
+    "throwPrecisionPenalty": 1,
+    "maxRange": "reach"
   }
 }
