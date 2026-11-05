@@ -3826,7 +3826,7 @@ function showShop() {
       if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
       persist(); audio.music('shop');
       return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-        onChanged: () => persist(), onArmamentPurchased: shopArmamentBought,
+        onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
         onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
     }
     const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
@@ -3863,6 +3863,7 @@ function showShop() {
       registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(),
       onArmamentPurchased: shopArmamentBought,
+      onCardPurchased: offerShopCardDestination,
       onLeave: () => {
         run.shopStock = null;
         persist();
