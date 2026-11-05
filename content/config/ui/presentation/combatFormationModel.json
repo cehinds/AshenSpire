@@ -57,8 +57,8 @@
         "playerTop": 0.68,
         "playerRowHeight": 0.26,
         "skew": 0.6,
-        "top": 0.3,
-        "rowHeight": 0.16,
+        "top": 0.41,
+        "rowHeight": 0.125,
         "hudWidthFraction": 0.5,
         "hudCenterOnBody": true
       },
@@ -70,8 +70,8 @@
         "playerTop": 0.68,
         "playerRowHeight": 0.28,
         "skew": 0.15,
-        "top": 0.32,
-        "rowHeight": 0.16
+        "top": 0.41,
+        "rowHeight": 0.125
       },
       "footFraction": {
         "enemy": 0.62,
@@ -97,8 +97,8 @@
         "playerRowHeight": 0.2,
         "hudWidthFraction": 0.55,
         "skew": 1.6,
-        "top": 0.48,
-        "rowHeight": 0.115
+        "top": 0.5,
+        "rowHeight": 0.105
       },
       "shortLandscape": {
         "left": 0.12,
@@ -109,14 +109,16 @@
         "playerRowHeight": 0.2,
         "hudWidthFraction": 0.55,
         "skew": 4.2,
-        "top": 0.7,
-        "rowHeight": 0.06,
+        "top": 0.75,
+        "rowHeight": 0.05,
         "minArtLaneFraction": 0.4
       },
+      "teamGapRows": 0.6,
       "bands": [
         {
           "id": "enemy-back",
           "index": 0,
+          "side": "enemy",
           "anchor": {
             "x": 0.5,
             "y": 1
@@ -127,6 +129,7 @@
         {
           "id": "enemy-front",
           "index": 1,
+          "side": "enemy",
           "anchor": {
             "x": 0.5,
             "y": 1
@@ -137,22 +140,36 @@
         {
           "id": "extra-combatants",
           "index": 2,
+          "side": "enemy",
           "anchor": {
             "x": 0.5,
             "y": 1
           },
           "depth": 0.96,
-          "layer": 2
+          "layer": 2,
+          "optional": true
         },
         {
-          "id": "player",
+          "id": "player-front",
           "index": 3,
+          "side": "player",
           "anchor": {
             "x": 0.5,
             "y": 1
           },
           "depth": 1,
           "layer": 3
+        },
+        {
+          "id": "player-back",
+          "index": 4,
+          "side": "player",
+          "anchor": {
+            "x": 0.5,
+            "y": 1
+          },
+          "depth": 1.04,
+          "layer": 4
         }
       ],
       "playerArtworkScale": 1.5,
@@ -192,8 +209,8 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.43,
-          "rowHeight": 0.115
+          "top": 0.53,
+          "rowHeight": 0.1
         },
         "tablet": {
           "left": 0.06,
@@ -203,8 +220,8 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.32,
-          "top": 0.38,
-          "rowHeight": 0.145
+          "top": 0.41,
+          "rowHeight": 0.125
         },
         "desktop": {
           "left": 0.1125,
@@ -214,8 +231,8 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.6,
-          "top": 0.4,
-          "rowHeight": 0.14,
+          "top": 0.41,
+          "rowHeight": 0.125,
           "hudWidthFraction": 0.5,
           "hudCenterOnBody": true
         }

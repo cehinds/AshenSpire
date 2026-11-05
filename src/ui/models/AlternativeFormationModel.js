@@ -3,19 +3,43 @@ import { uiConfig } from '../../config/generated/ui.js';
 
 const GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
 
+const BAND_LETTERS = { 'enemy-back': 'A', 'enemy-front': 'B', 'extra-combatants': 'C', 'player-front': 'D', 'player-back': 'E' };
+const BAND_IDS = Object.keys(BAND_LETTERS);
+
+// The bands the grid draws, top to bottom, each with its `row`: its offset in strip heights from the profile's top.
+// The extra enemy rank is drawn only when the formation policy enables it (owner, 2026-11-05). The team gap
+// (`teamGapRows` strip heights of open ground) sits between the last enemy band and the first player band.
+export function perspectiveBandRows(grid = GRID, extraEnabled = false) {
+  const active = grid.bands.filter(band => !band.optional || extraEnabled);
+  const gapAt = active.findIndex(band => band.side === 'player');
+  let row = 0;
+  const bands = active.map((band, i) => {
+    if (i === gapAt) row += grid.teamGapRows;
+    const placed = { ...band, row };
+    row += 1;
+    return placed;
+  });
+  return { bands, rows: row };
+}
+
 export function validatePerspectiveGrid(grid) {
-  const ids = ['enemy-back','enemy-front','extra-combatants','player'];
-  if (!Array.isArray(grid.bands) || grid.bands.length !== ids.length
-    || grid.bands.some((band, i) => band.id !== ids[i] || band.index !== i
+  const bad = !Array.isArray(grid.bands) || grid.bands.length !== BAND_IDS.length
+    || grid.bands.some((band, i) => band.id !== BAND_IDS[i] || band.index !== i
+      || !['enemy', 'player'].includes(band.side)
       || !(Number.isFinite(band.anchor?.x) && band.anchor.x > 0 && band.anchor.x < 1)
       // Feet may stand on the cell's bottom edge (y = 1): that is where the owner wants them.
       || !(Number.isFinite(band.anchor?.y) && band.anchor.y > 0 && band.anchor.y <= 1)
-      || !(band.depth > 0) || !Number.isFinite(band.layer))) throw new Error('Invalid perspective visual bands');
+      || !(band.depth > 0) || !Number.isFinite(band.layer));
+  if (bad || grid.bands.filter(band => band.side === 'player').length < 2
+    || grid.bands.findIndex(band => band.side === 'player') <= grid.bands.findLastIndex(band => band.side === 'enemy')
+    || !(Number.isFinite(grid.teamGapRows) && grid.teamGapRows > 0)) throw new Error('Invalid perspective visual bands');
+  // The default drawing (extra rank off) must fit the field; with the rank on, the model shrinks the strips to fit.
+  const { rows } = perspectiveBandRows(grid, false);
   for (const key of ['wide','narrow','short', ...(grid.shortLandscape ? ['shortLandscape'] : []), ...Object.keys(grid.profiles || {}).map(key => `profiles.${key}`)]) {
     const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
     if (![p?.left,p?.right,p?.top,p?.rowHeight,p?.skew].every(Number.isFinite)
       || p.left < 0 || p.right > 1 || p.left >= p.right || p.top < 0 || p.rowHeight <= 0
-      || p.top + p.rowHeight * ids.length > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
+      || p.top + p.rowHeight * rows > 1 || p.skew < 0) throw new Error(`Invalid perspective ${key} profile`);
   }
   if (!Number.isFinite(grid.footprintInsetPx) || grid.footprintInsetPx < 0) throw new Error('Invalid perspective footprint clearance');
   if (!(grid.playerArtworkScale > 0) || !(grid.miniHudScale > 0) || !(grid.enemyMiniHudScale > 0)) throw new Error('Invalid perspective figure/HUD scale');
@@ -66,8 +90,16 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   // The party's name and meters sit below its feet; on a short field the
   // whole grid rises together so they stay inside the field and no rank
   // overlaps another.
-  const rowHeight = height * profile.rowHeight;
-  const baseline = height * (profile.top + 4 * profile.rowHeight);
+  // The extra enemy rank is drawn only when Core enables it (its cells then come with the plan).
+  const extraEnabled = plan.cells.some(c => c.formationRole === 'extra');
+  const { bands: activeBands, rows: bandRows } = perspectiveBandRows(GRID, extraEnabled);
+  // The profile's strip height holds for the default drawing; with the extra rank on, the strips shrink to stay in the field.
+  const stripFraction = Math.min(profile.rowHeight, (1 - profile.top) / bandRows);
+  const rowHeight = height * stripFraction;
+  const bandTop = band => height * profile.top + band.row * rowHeight;
+  const bandOf = id => activeBands.find(b => b.id === id);
+  // The party's baseline (zero shear) is the bottom of its front strip, where the lead player's feet stand.
+  const baseline = bandTop(bandOf('player-front')) + rowHeight;
   const shear = y => profile.skew * (baseline - y);
   const laneWidth = Math.max(1, (width * (profile.right - profile.left)
     - shear(height * profile.top)) / lanes);
@@ -75,10 +107,10 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const enemy = cell.side ? cell.side === 'enemy' : Number(cell.cell.slice(1)) > plan.columns;
     if (!enemy && cell.column > 0) return null;
     const rank = enemy ? Math.min(2, cell.column) : 0;
-    const role = enemy ? ['enemy-back','enemy-front','extra'][rank] : 'player';
-    const band = GRID.bands.find(b => b.id === (role === 'extra' ? 'extra-combatants' : role));
+    const role = enemy ? ['enemy-back','enemy-front','extra'][rank] : cell.backRank ? 'player-back' : 'player-front';
+    const band = bandOf(role === 'extra' ? 'extra-combatants' : role);
     const lane = enemy ? cell.row : lanes - 1 - cell.row;
-    const top = height * profile.top + band.index * rowHeight;
+    const top = bandTop(band);
     const ground = top + band.anchor.y * rowHeight;
     // A short strip has no room for a lane-wide bar: it would lie across the neighbouring
     // lane's body. The profile may narrow the HUD to a fraction of the lane, kept centred.
@@ -86,7 +118,7 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
     const laneLeft = width * profile.left + lane * laneWidth;
     const left = laneLeft + shear(top + rowHeight / 2);
     const bodyX = laneLeft + band.anchor.x * laneWidth + shear(ground);
-    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: 'ABCD'[band.index], formationRole: role,
+    return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank, visualBand: BAND_LETTERS[band.id], closeBottom: band === activeBands.findLast(b => b.side === band.side), formationRole: role,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
       x: bodyX, ground, fitGround: ground,
       box: { left, top, width: laneWidth, height: rowHeight, skew: profile.skew },
@@ -95,11 +127,10 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       miniHudWidth: hudWidth - 2 * GRID.miniHudInsetPx, miniHudTop: top, depth: band.depth, layer: band.layer };
   };
   plan.cells = plan.cells.map(place).filter(Boolean);
-  // Display the full four-band lattice even when Core forbids extra-row
-  // occupancy. Visual-only cells never enter the gameplay/targeting cell map.
-  const extraVisualCells = Array.from({ length: lanes }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}5`, row, column: 2, side: 'enemy', visualOnly: true }))
-    .filter(cell => !plan.cells.some(existing => existing.cell === cell.cell)).map(place);
-  plan.visualCells = [...plan.cells, ...extraVisualCells];
+  // The player's back strip (reach) is drawn as visual-only cells; the extra enemy strip exists only when enabled.
+  // The gap between the teams has no cells: it is open ground. Visual-only cells never enter the gameplay/targeting cell map.
+  const backVisualCells = Array.from({ length: lanes }, (_, row) => ({ cell: `${FORMATION_ROWS[row]}0`, row, column: 0, side: 'player', backRank: true, visualOnly: true })).map(place);
+  plan.visualCells = [...plan.cells, ...backVisualCells];
   const cellAt = (side, rank, lane) => plan.cells.find(c => c.side === side && c.rank === rank && c.lane === lane);
   const enemies = plan.slots.filter(slot => slot.side === 'enemy');
   const friends = plan.slots.filter(slot => slot.side !== 'enemy');
@@ -124,8 +155,8 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       return cell ? { ...cell, id: slot.id } : slot;
     });
   }
-  // All four bands occupy the same space whether extra occupancy is enabled or not.
-  plan.visualBands = GRID.bands.map(band => ({ ...band, top: height * profile.top + band.index * rowHeight, height: rowHeight }));
+  plan.visualBands = activeBands.map(band => ({ ...band, top: bandTop(band), height: rowHeight }));
+  plan.teamGap = { top: bandTop(bandOf('player-front')) - GRID.teamGapRows * rowHeight, height: GRID.teamGapRows * rowHeight };
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
   return plan;
 }

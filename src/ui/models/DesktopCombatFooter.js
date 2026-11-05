@@ -1,4 +1,5 @@
 import { uiConfig } from '../../config/generated/ui.js';
+import { perspectiveBandRows } from './AlternativeFormationModel.js';
 import { responsiveHandLayout, handLayout } from './HandLayout.js';
 
 // Physical desktop geometry; UI zoom changes the ruler, never the art's shape.
@@ -56,18 +57,18 @@ export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor
   const input = { width, height: plan.handHeight, count: 5, rem, zoom, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor };
   const fan = responsiveHandLayout(input, desktopHandLayout(input, config));
   // Owner (2026-11-01): the cards overlap the battlefield's lower edge by handOverlapFraction of their height,
-  // but never so far that the player rank's feet (the profile's top + 4 * rowHeight of the field) pass the resting
+  // but never so far that the player rank's feet (the profile's top + the band rows * rowHeight of the field) pass the resting
   // top card edge: on a short desktop the overlap shrinks until the feet stand one px above that edge.
   const cardTop = plan.handTop + fan.restTop;
   const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx / zoom;
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const profile = grid.profiles?.[formFactor] || grid.wide;
-  const feet = profile.top + 4 * profile.rowHeight;
+  const feet = profile.top + perspectiveBandRows(grid).rows * profile.rowHeight;
   return Math.min(cardTop + (config.handOverlapFraction || 0) * fan.cardHeight, header + (cardTop - 1 / zoom - header) / feet);
 }
 
 // Phone (owner, 2026-11-01): the field runs up to mobileFieldHandOverlapPx under the cards, but never so far that the
-// player rank's feet (the phone profile's top + 4 * rowHeight of the extended field) pass the resting top card edge,
+// player rank's feet (the phone profile's top + the band rows * rowHeight of the extended field) pass the resting top card edge,
 // which is where the real fan puts it: the hand band's top (the field's natural bottom) plus the fan's restTop. The
 // extension is whatever that allows, between 0 and the authored cap; a field that would fall under shortBelowPx once
 // extended keeps its natural height (it then draws the short profile, whose rank D ends at 94% of that height).
@@ -79,7 +80,7 @@ export function mobileFieldOverlap({ natural, width, handHeight, rem = 16, zoom 
   const { restTop } = responsiveHandLayout(input, handLayout(input));
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const profile = grid.profiles.mobile;
-  const feet = profile.top + 4 * profile.rowHeight;
+  const feet = profile.top + perspectiveBandRows(grid).rows * profile.rowHeight;
   const room = (natural + restTop - 1 / zoom) / feet - natural;
   const extension = Math.max(0, Math.min(sizing.mobileFieldHandOverlapPx / zoom, room));
   return (natural + extension) * zoom < grid.shortBelowPx ? 0 : extension;
