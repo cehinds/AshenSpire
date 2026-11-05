@@ -63,7 +63,7 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
-import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -1612,17 +1612,6 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   // already left it out, so this only says so — on the channel boot uses for
   // a profile — and saves the cleaned run once, after `rng` (see below).
   for (const line of bringRunSnapshotForward(run, () => persist())) console.warn('[advanced-config]', line);
-  const currentXpSnapshot = xpSnapshotFromProfile(run.advancedConfigSnapshot, activeSettings);
-  if (JSON.stringify(currentXpSnapshot.overrides) !== JSON.stringify(run.advancedConfigSnapshot?.overrides || {})) {
-    const configured = configuredContentBundle(contentBundle, currentXpSnapshot);
-    if (validateContent(configured).ok && advancedConfigStructuralProblems(contentBundle, currentXpSnapshot.overrides).length === 0) {
-      run.advancedConfigSnapshot = currentXpSnapshot;
-      rebuildRegistries(currentXpSnapshot, run);
-      persist();
-    } else {
-      showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
-    }
-  }
   // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
   // `scene` indexes the six-scene order; `onScene` below writes the NEW order
   // back into the same field, so a state left marked version 1 would be read
@@ -2033,24 +2022,9 @@ async function persistSettingsChange(changed) {
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }
   const settingsBefore = structuredClone(activeSettings);
-  const runRulesBefore = run?.advancedConfigSnapshot ? structuredClone(run.advancedConfigSnapshot) : null;
   // A value the player moves off a promoted one is theirs from now on.
   const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
-  if (run && Object.keys(changed || {}).some(isLiveXpSetting)) {
-    const snapshot = updatedXpSnapshot(run.advancedConfigSnapshot, changed);
-    const configured = configuredContentBundle(contentBundle, snapshot);
-    const validation = validateContent(configured);
-    const problems = advancedConfigStructuralProblems(contentBundle, snapshot.overrides);
-    if (validation.ok && problems.length === 0) {
-      run.advancedConfigSnapshot = snapshot;
-      rebuildRegistries(snapshot, run);
-      if (xpCombat) xpCombat.registries = registries;
-      persist();
-    } else {
-      showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
-    }
-  }
   // A `draw` or `poise` stat row written by this build means what it means
   // now (ruleset 7); the marker keeps a later boot from reading it as the
   // pre-ruleset-7 co-op draw or ratings-off pool (model/statRows.js).
@@ -2063,19 +2037,10 @@ async function persistSettingsChange(changed) {
   if (res?.ok === false) {
     activeSettings = settingsBefore;
     activeMeta.settings = settingsBefore;
-    try {
-      if (run && runRulesBefore) {
-        run.advancedConfigSnapshot = runRulesBefore;
-        rebuildRegistries(runRulesBefore, run);
-        if (xpCombat) xpCombat.registries = registries;
-        persist();
-      }
-    } finally {
-      applyDisplaySettings(activeSettings);
-      refreshHudQuickSettings(app, activeSettings);
-      showSettingsNotice(QUARANTINE_NOTICE);
-      announceSettingsSettled();
-    }
+    applyDisplaySettings(activeSettings);
+    refreshHudQuickSettings(app, activeSettings);
+    showSettingsNotice(QUARANTINE_NOTICE);
+    announceSettingsSettled();
     return res;
   }
   if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveAskedGameProfile());

@@ -24,35 +24,6 @@ import { consumableConfigRows, cloneItems } from './consumables.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
-export function isLiveXpSetting(key) {
-  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)|classMastery\.(?:xp\.|pay\.)))/.test(key);
-}
-
-export function updatedXpSnapshot(snapshot, changed) {
-  const overrides = { ...(snapshot?.overrides || {}) };
-  for (const [key, value] of Object.entries(changed || {})) {
-    if (!isLiveXpSetting(key)) continue;
-    if (value === undefined) delete overrides[key];
-    else overrides[key] = value;
-  }
-  return xpSnapshotWithOverrides(snapshot, overrides);
-}
-
-export function xpSnapshotFromProfile(snapshot, profileSettings = {}) {
-  const overrides = Object.fromEntries(Object.entries(snapshot?.overrides || {}).filter(([key]) => !isLiveXpSetting(key)));
-  for (const [key, value] of Object.entries(profileSettings)) {
-    if (isLiveXpSetting(key) && value !== undefined) overrides[key] = value;
-  }
-  return xpSnapshotWithOverrides(snapshot, overrides);
-}
-
-// XP changes preserve the run's non-XP compatibility contract. In particular,
-// an absent ratingsVersion must stay absent for pre-ratings saves.
-function xpSnapshotWithOverrides(snapshot, overrides) {
-  return Object.freeze({ ...snapshot, schemaVersion: snapshot?.schemaVersion ?? ADVANCED_CONFIG_SCHEMA_VERSION,
-    overrides: advancedConfigSnapshot(overrides).overrides });
-}
-
 const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
   playerSpriteScale: 1,
@@ -639,9 +610,7 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       // must not end by promising it applies to a new run, so the note beside
       // the number decides that rather than this line appending it to
       // everything.
-      note: isLiveXpSetting(`${ADVANCED_CONFIG_PREFIX}balance.${joined}`)
-        ? (described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`).replace(NEW_RUN_CLAUSE, 'Applies immediately to future XP gains and level costs in the current run.')
-        : described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
+      note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
       // `inert` as well as `retired`: nothing reads it, so a stored value is
