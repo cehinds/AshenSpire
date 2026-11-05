@@ -17,6 +17,7 @@ import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../models/C
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
+import { combatRangeRanks } from '../models/CombatRangeRankModel.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
@@ -1724,6 +1725,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     globalThis.__perfCount?.('stage');
     $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
     $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
+    // Melee stands in the front strip, reach in the back (display only); keyed by frame id, empty without range state.
+    const rangeRanks = combatRangeRanks(combat);
+    $('.field').dataset.rangeRanks = rangeRanks ? JSON.stringify(Object.fromEntries([...rangeRanks].map(([key, rank]) => [key.slice(key.indexOf(':') + 1), rank]))) : '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
