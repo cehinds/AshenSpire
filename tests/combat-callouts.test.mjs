@@ -218,7 +218,7 @@ test('sequential: Hit precedes the hurt pose, then CRITICAL accompanies the dama
     assert.equal(timeOf(trace, 'callout:hit@player'), LEAD + TOTAL + AFTER);
     assert.equal(timeOf(trace, 'reaction:player'), LEAD + TOTAL + AFTER + REACTION, 'the sprite reaction follows the accuracy word by a gap');
     assert.equal(timeOf(trace, 'callout:critical@player'), LEAD + TOTAL + AFTER + 2 * REACTION, 'critical is the final outcome, after the hurt pose');
-    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION + floaterStaggerMs(), 'the number follows the CRITICAL word by one stagger, in the same column');
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the number waits a gap after the reaction; a damage number never waits behind the column');
   });
 });
 
@@ -251,7 +251,7 @@ test('COUNTERED shows on the attacker who got countered, after the counter\'s sp
     assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER, 'the counter hit is announced before target reaction');
     assert.equal(timeOf(trace, 'reaction:e1'), LEAD + TOTAL + AFTER + REACTION);
     assert.equal(timeOf(trace, 'callout:countered@e1'), LEAD + TOTAL + AFTER + 2 * REACTION, 'counter outcome follows the target reaction');
-    assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + 2 * REACTION + floaterStaggerMs(), 'the counter damage follows the COUNTERED word by one stagger');
+    assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the counter damage follows its reaction by a gap');
   });
 });
 
@@ -271,12 +271,10 @@ for (const mode of ['instant', 'reduced-motion']) {
       run(CASES[0][1]);
       finish();
       assert.ok(trace.some((e) => e.what === 'callout:critical@player'));
-      const stagger = floaterStaggerMs();
-      // The fighter's column: the accuracy word, then CRITICAL, then the number, each one stagger behind the last.
-      const column = [timeOf(trace, 'callout:hit@player'), timeOf(trace, 'callout:critical@player'), timeOf(trace, 'float:-4')];
-      assert.equal(column[1] - column[0], stagger);
-      assert.equal(column[2] - column[1], stagger, 'the number is the next floater in the callout\'s column');
-      assert.ok(trace.every((e) => e.at <= 80 + 2 * stagger), 'nothing waits past the fast path\'s own step and the column\'s staggers');
+      // The accuracy word spawns first; CRITICAL is the next word, one stagger later. The damage number never waits.
+      assert.equal(timeOf(trace, 'callout:critical@player') - timeOf(trace, 'callout:hit@player'), floaterStaggerMs());
+      assert.ok(timeOf(trace, 'float:-4') <= 80, 'the number comes with the fast path\'s own step');
+      assert.ok(trace.filter((e) => !e.what.startsWith('callout:')).every((e) => e.at <= 80), 'nothing but a queued word waits past the fast path\'s own step');
     });
   });
 }
@@ -314,9 +312,9 @@ for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accurac
       assert.ok(damage - outcome >= 300, 'legacy impact retains its readable accuracy lead');
     } else if (mode === 'sequential') {
       assert.equal(timeOf(trace, 'reaction:player') - outcome, REACTION, 'accuracy precedes the target reaction');
-      assert.equal(damage - outcome, 2 * REACTION + floaterStaggerMs(), 'accuracy leads damage by two gaps (accuracy → reaction → result), plus the column\'s stagger');
-      assert.equal(damage - timeOf(trace, 'callout:evadeFailed@player'), floaterStaggerMs(), 'failed defense is the final outcome; the damage is the next floater in its column');
-    } else assert.equal(damage - outcome, floaterStaggerMs(), 'instant and reduced motion add no waits beyond the column\'s stagger');
+      assert.equal(damage - outcome, 2 * REACTION, 'accuracy leads damage by two gaps (accuracy → reaction → result)');
+      assert.equal(timeOf(trace, 'callout:evadeFailed@player'), damage, 'failed defense is the final outcome with damage');
+    } else assert.ok(outcome - damage >= 0 && outcome - damage <= floaterStaggerMs(), 'instant and reduced motion add no waits for the number; the word may queue one stagger behind the accuracy word');
   });
 });
 

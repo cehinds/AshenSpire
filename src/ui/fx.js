@@ -35,7 +35,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs } from './animationPace.js';
+import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
@@ -386,9 +386,10 @@ export function combatReadoutLayer(layer, create = true) {
  * Every floater over one combatant (damage, heal, Block, status words, callouts) shares one stack
  * (ui/floaterStack.js): it spawns `floaterStaggerMs` after the previous one, at the same x above the head, and the
  * earlier ones are lifted a line each. The element is made now and returned; it joins the layer when its turn
- * comes. There are no side lanes and no jitter, so a caller passes no placement.
+ * comes (a damage number's turn is at once). `onSpawn` runs when it joins the layer, so its sound plays with it.
+ * There are no side lanes and no jitter, so a caller passes no placement.
  */
-export function floatNum(layer, anchor, text, cls, tint) {
+export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null } = {}) {
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
   const el = document.createElement('div');
@@ -403,7 +404,10 @@ export function floatNum(layer, anchor, text, cls, tint) {
   const life = floaterLifeMs();
   el.style.setProperty('--float-ms', `${life}ms`);
   // The number outlives its animation by a beat, as it always has.
-  enqueueFloater({ layer, anchor, el, kind: 'number', lifeMs: life + 60 });
+  // A damage number never waits behind the column (its bars follow in the same beat, so it must paint first); it
+  // spawns at once at the bottom and the other floaters stagger after it. `onSpawn` is the floater's own sound.
+  const immediate = /\b(dmg|burst)\b/.test(cls);
+  enqueueFloater({ layer, anchor, el, kind: 'number', lifeMs: life + 60, immediate, onSpawn });
   return el;
 }
 // How many floaters of `line` px (plus `gap` px between them) fit in `room` px above the HUD (see FLOAT_EDGE_PX).
@@ -470,14 +474,16 @@ function stackFor(layer, anchor) {
   if (!rec) {
     // A combatant that was in the document when its first floater queued and has left it since is gone: its waiting
     // floaters are dropped. (An anchor that was never attached, as in a headless harness, is never gone.)
-    rec = { line: 0, attached: anchor.isConnected !== false && layer.isConnected !== false };
+    rec = { line: 0 };
     rec.stack = createFloaterStack({
       now: () => Date.now(),
       setTimer: (fn, ms) => setTimeout(fn, ms),
       clearTimer: (handle) => clearTimeout(handle),
       staggerMs: () => floaterStaggerMs(),
       maxVisible: (item) => maxVisibleFor(rec, item),
-      alive: (item) => !rec.attached || (item.anchor.isConnected !== false && item.layer.isConnected !== false),
+      alive: (item) => floaterHostAlive(item),
+      maxQueued: FLOATER_STACK.floaterMaxQueued,
+      staggerMinMs: () => floaterStaggerMinMs(),
       show: (item, entry) => showFloater(rec, item, entry),
       fadeEarly: (entry) => fadeFloaterEarly(entry),
       layout: (entries) => liftFloaters(rec, entries),
@@ -490,7 +496,24 @@ function stackFor(layer, anchor) {
   return rec;
 }
 function enqueueFloater(item) {
+  // Whether the combatant was in the document when this floater queued: one that was and has left is gone. (An
+  // anchor that was never attached, as in a headless harness, is never gone.)
+  item.wasAttached = item.anchor.isConnected !== false && item.layer.isConnected !== false;
+  item.eid = item.anchor.closest?.('[data-eid]')?.dataset?.eid ?? null;
   return stackFor(item.layer, item.anchor).stack.push(item);
+}
+// Is the combatant this waiting floater belongs to still on screen? A rebuilt figure (the player's art key
+// re-arms, a re-render) is a new element with the same data-eid: the floater is retargeted to it, not dropped.
+function floaterHostAlive(item) {
+  if (!item.wasAttached) return true;
+  if (item.layer.isConnected === false) return false;
+  if (item.anchor.isConnected !== false) return true;
+  if (item.eid == null) return false;
+  const root = item.layer.closest?.('.combat') || item.layer.ownerDocument;
+  const next = root?.querySelector?.(`[data-eid="${item.eid}"] .sprite`) || root?.querySelector?.(`[data-eid="${item.eid}"]`);
+  if (!next) return false;
+  item.anchor = next;
+  return true;
 }
 // One floater's step up the column: its own line plus the gap (floaterLineGapPx).
 function floaterStepPx(rec) {
@@ -523,6 +546,8 @@ function maxVisibleFor(rec, item) {
 // Lift every visible floater by its slot (how many newer floaters are showing). Under Reduced motion the CSS drops
 // the transition, so the column still stacks but nothing glides.
 function liftFloaters(rec, entries) {
+  // An empty column forgets its measured line, so a smaller font (a rotated phone) is not held to an old height.
+  if (!entries.length && !rec.stack.visible.length) rec.line = 0;
   const step = floaterStepPx(rec);
   for (const entry of entries) {
     const el = entry.item.el;
@@ -540,6 +565,7 @@ function fadeFloaterEarly(entry) {
 
 function showFloater(rec, item, entry) {
   const { layer, anchor, el } = item;
+  if (typeof item.onSpawn === 'function') { try { item.onSpawn(); } catch { /* a sound must not stop its number */ } }
   const zoom = uiZoom();
   const b = anchorLocalBoxCached(layer, anchor, zoom);
   const view = anchorLocalBoxCached(layer, layer, zoom);
@@ -558,13 +584,18 @@ function showFloater(rec, item, entry) {
   measureThenMutate(el, () => {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
-    const start = columnStart(rec, layer, anchor, b, zoom, view);
+    // The line is measured BEFORE the column's start is chosen, and the start is kept while the column has an older
+    // floater, so one sequence is one strictly ordered stack even when the measured line differs from the fallback.
+    if (height > rec.line) rec.line = height;
+    const others = rec.stack.visible.some((e) => e.item !== item);
+    if (!others || !rec.start) rec.start = columnStart(rec, layer, anchor, b, zoom, view);
+    const start = rec.start;
     const placed = start.top ?? start.bottom - height;
     const at = clampBox({ left: centre - half, top: placed, width, height }, view, { pad: 6 });
     return () => {
       el.style.left = `${at.left + half}px`;
       el.style.top = `${at.top}px`;
-      if (height > rec.line) { rec.line = height; liftFloaters(rec, rec.stack.visible); }
+      liftFloaters(rec, rec.stack.visible);
     };
   });
   // The element leaves at the end of its life; a skip removes it sooner.
@@ -668,8 +699,11 @@ const liveCallouts = (layer, forId) => [...(layer.children || [])]
 export function clearCallouts(layer) {
   layer = combatReadoutLayer(layer, false);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
-  // Numbers keep their lifetime through a skip (combat-readout-layer test). Every floater still waiting for its
-  // turn goes with the words, and a word that was showing leaves the column so it stops counting toward the cap.
+  dropWaitingFloaters(layer);
+}
+// Every floater still waiting for its turn goes (damage numbers never wait); a word that was showing leaves its column.
+function dropWaitingFloaters(layer) {
+  // Numbers keep their lifetime through a skip (combat-readout-layer test).
   for (const stack of (layer && floaterStacksByLayer.get(layer)) || []) {
     stack.drop((item) => item.word === true, { visible: true });
     stack.dropWaiting();
@@ -1088,8 +1122,8 @@ export function playTimeline(events, ctx, done) {
     clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
   };
   const release = () => { if (skippedPointer) handle?.skip(); };
-  const blur = () => handle?.skip();
-  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') handle?.skip(); };
+  const blur = () => { clearCallouts(ctx.layer); handle?.skip(); };
+  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') { clearCallouts(ctx.layer); handle?.skip(); } };
   addEventListener('pointerdown', skip, { capture: true });
   addEventListener('pointerup', release, { capture: true });
   addEventListener('pointercancel', release, { capture: true });
@@ -2013,8 +2047,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
             // Sequential order: the sound arrives with its number (SPEC §7.4).
             reaction: () => { if (!sequential) sfx.play('block'); },
             numbers: (ctx) => {
-              if (sequential) sfx.play('block');
-              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+              // The sound plays when this number spawns in its column, not when it queued.
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk', undefined, sequential ? { onSpawn: () => sfx.play('block') } : undefined);
             },
           }
         : null;
@@ -2048,8 +2082,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
               if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
             },
             numbers: (ctx) => {
-              if (sequential) sfx.play('heal');
-              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal', undefined, sequential ? { onSpawn: () => sfx.play('heal') } : undefined);
             },
           }
         : null;

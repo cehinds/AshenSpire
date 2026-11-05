@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
-import { setCombatPacing as pinCombatPacing, floaterStaggerMs } from '../src/ui/animationPace.js';
+import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 // D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
@@ -55,12 +55,7 @@ function drive(t, fn) {
     };
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
-    const finish = () => {
-      for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
-      assert.equal(completed, 1, 'the timeline completes');
-      // A floater still waiting in its combatant's column spawns after the beat has handed control back.
-      for (let i = 0; i < 4000; i++) t.mock.timers.tick(1);
-    };
+    const finish = () => { for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
     try { fn({ dom, anchors, layer, trace, words, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
@@ -214,11 +209,8 @@ for (const mode of ['instant', 'reduced-motion']) {
       run(playerHit(4));
       finish();
       // The fast path passes no beat kind, so it draws no slash (as before).
-      // The Hit word is the first floater over the target, so the number is the next in its column: one stagger
-      // behind the word, which lands after the beat's own bars (owner, 2026-11-05: floaters spawn one at a time).
-      assert.deepEqual(order(trace), ['contact', 'reaction:e1', 'bars', 'float:-4']);
-      assert.ok(trace.filter((e) => e.what !== 'float:-4').every((e) => e.at <= 80), 'the beat itself waits for nothing past the fast path\'s own step');
-      assert.ok(timeOf(trace, 'float:-4') <= 80 + floaterStaggerMs(), 'the number follows within one stagger');
+      assert.deepEqual(order(trace), ['contact', 'reaction:e1', 'float:-4', 'bars']);
+      assert.ok(trace.every((e) => e.at <= 80), 'nothing waits past the fast path\'s own step');
     });
   });
 }
@@ -261,8 +253,7 @@ test('a counter beat uses ordered reaction, damage and HUD stages', (t) => {
     run([{ type: 'combatCounterTriggered', sourceId: 'e1', sourceKind: 'enemy', targetId: 'player' },
       { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 3, blocked: 0 }]);
     finish();
-    // The COUNTERED word spawns first; the number is the next floater over the player, one stagger later.
-    assert.deepEqual(order(trace), ['settle', 'reaction:player', 'bars', 'float:-3']);
+    assert.deepEqual(order(trace), ['settle', 'reaction:player', 'float:-3', 'bars']);
   });
 });
 
@@ -397,7 +388,7 @@ test('impact order retains its existing terminal visual delay',t=>{
  drive(t,({trace,run,finish})=>{
   run(accuracyHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54,beatOrder:'impact'});finish();
   assert.equal(timeOf(trace,'contact'),300);
-  assert.equal(timeOf(trace,'float:-7'),Math.max(300,floaterStaggerMs()),'the number is due at impact but waits one stagger behind the word spawned at the start of the beat');
+  assert.equal(timeOf(trace,'float:-7'),300);
   assert.equal(timeOf(trace,'settle'),300+ANIM_SPEEDS.normal.stepMs+60);
  });
 });

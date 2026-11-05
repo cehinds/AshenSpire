@@ -5,7 +5,7 @@ import { BUFF_STATUS_IDS, buffGainFor, buffPopupFor } from '../src/ui/buffFeedba
 import { playTimeline, setAnimSpeed, setBeatOrder, clearCallouts, statusPopupFor } from '../src/ui/fx.js';
 import { statuses } from '../src/content/statuses.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
-import { floaterStaggerMs } from '../src/ui/animationPace.js';
+import { floaterStaggerMs, floaterStaggerMinMs } from '../src/ui/animationPace.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const definitions = new Map(statuses.map(row => [row.id, row]));
@@ -134,7 +134,10 @@ test('reduced-motion buff gains stay readable, join the column one stagger apart
     const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind?.startsWith('buff:'));
     assert.equal(buffs.length, 7, 'equal repeated gains are separate committed outcomes');
     const stagger = floaterStaggerMs();
-    assert.deepEqual(buffs.slice(1).map((row, i) => row.at - buffs[i].at), Array(6).fill(stagger), 'one at a time, one stagger apart');
+    // While more than floaterMaxQueued words wait the stagger shrinks to the minimum so the backlog drains (7 queued: 6 wait,
+    // then 5, 4, then at 3 or fewer the full stagger again).
+    const gaps = buffs.slice(1).map((row, i) => row.at - buffs[i].at);
+    assert.deepEqual(gaps, [...Array(3).fill(floaterStaggerMinMs()), ...Array(3).fill(stagger)], 'one at a time, the backlog drained faster');
     assert.ok(buffs.every(({ node }) => node.style.visibility !== 'hidden'), 'no word is ever added hidden: it joins the layer when it shows');
     // The 500 ms Instant life: only the words spawned within the last life are still in the layer.
     const last = buffs.at(-1).at;
