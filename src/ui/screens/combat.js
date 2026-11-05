@@ -1727,7 +1727,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
     $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
     // Melee stands in the front strip, reach in the back (display only); keyed by frame id, empty without range state.
-    const rangeRanks = disp?.rangeRanks ? rangeRanksFromSnapshot(disp.rangeRanks) : combatRangeRanks(combat);
+    // The displayed snapshot during playback, the live state otherwise. (The typeof guards keep the vm-sliced stage tests,
+    // which inject only the names they exercise, rendering.)
+    const shown = typeof disp !== 'undefined' ? disp?.rangeRanks : null;
+    const rangeRanks = shown ? rangeRanksFromSnapshot(shown) : typeof combatRangeRanks === 'function' ? combatRangeRanks(combat) : null;
     $('.field').dataset.rangeRanks = rangeRanks ? JSON.stringify(Object.fromEntries([...rangeRanks].map(([key, rank]) => [key.slice(key.indexOf(':') + 1), rank]))) : '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
