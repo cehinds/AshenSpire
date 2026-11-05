@@ -17,7 +17,7 @@ import { equipmentCardArt } from '../assets.js';
 import { renderCard } from '../components/card.js';
 import { servicePortrait } from '../components/servicePortrait.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
-import { relicText } from '../components/card.js';
+import { relicText, cardPlainText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -97,6 +97,18 @@ const RAIL_LABEL = {
 // Configured stock uses the same merchant frame, category dock, offer rows,
 // inspections and purchase review as the full game. The host retains ownership
 // of saved stock and its atomic transaction; this adapter only presents it.
+// A shop card has no selection step, so it wears the shared (i) badge always (merchantOffer.js shows it); the
+// reading it opens carries no purchase or play verbs (`only: []`), and buying stays on the row's own button.
+const shopCardOptions = Object.freeze({ level: 'glance', infoBadge: true, surface: 'shop', only: [] });
+
+// A configured-shop row's description: the resolved text the card face / relic tooltip shows (cardPlainText and
+// relicText fill the {tokens}), never the raw textTemplate. Equipment and other kinds have no template to fill.
+function configuredOfferText(registries, run, kind, def, ref) {
+  if (['combatCards', 'weaponArts'].includes(kind)) return ref ? cardPlainText(registries, ref, { rules: run }) : '';
+  if (['relics', 'potions'].includes(kind)) return relicText(def, registries);
+  return '';
+}
+
 export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
   clearSelection();
@@ -147,9 +159,9 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
     const available = quote.ok;
     const tile = el('div', { class: 'class-pick shop-offer' });
-    const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, { level: 'glance' }) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+    const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
     const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
-    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: def?.textTemplate || '', visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
+    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }), visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
     if (available) arm(buy, 'shopBuy', { question: t('shop.configured.buy'), target: def?.name || option.id, message: t('shop.configured.buy.message', { cost: price, cinders: run.cinders, left: run.cinders - price }), confirmLabel: t('shop.buy.confirm'), policyAction: 'action.purchase', onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
     shelves.get(option.kind).append(tile);
   }
@@ -159,10 +171,11 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       const { def, kind, price } = quote;
       const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
       const visual = ['combatCards', 'weaponArts'].includes(kind)
-        ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), { level: 'glance' })
+        ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), shopCardOptions)
         : ['weapons', 'armor'].includes(kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card
         : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
-      const sell = arrangeMerchantOffer({ tile, name: def.name, desc: def.textTemplate || def.blurb || '', visual,
+      const saleRef = ['combatCards', 'weaponArts'].includes(kind) ? run.sideboard.find(card => card.instanceId === quote.identity) : null;
+      const sell = arrangeMerchantOffer({ tile, name: def.name, desc: configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', visual,
         price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
         action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
       const reviewKind = { relics: 'relic', potions: 'flask', consumables: 'consumable' }[kind];
@@ -207,7 +220,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     run.flasks.forEach((f, at) => {
       const def = registries.flasks.get(f.flaskId);
       const price = sellPriceFor(registries.balance, 'flask', def);
-      if (price > 0) out.push({ kind: 'flask', at, def, price, title: flaskIdentityHtml(def), titleHtml: true, desc: def.textTemplate || '' });
+      if (price > 0) out.push({ kind: 'flask', at, def, price, title: flaskIdentityHtml(def), titleHtml: true, desc: relicText(def, registries) });
     });
     return out;
   }
@@ -363,9 +376,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !flaskAcquisitionPlan(registries, run, item.id).ok });
-      const tile = shopItem(flaskIdentityHtml(def), def.textTemplate, item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
+      const tile = shopItem(flaskIdentityHtml(def), relicText(def, registries), item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
       addOffer('flasks', {
-        ref: flaskRefs[i], tile, name: def.name, desc: def.textTemplate || '',
+        ref: flaskRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem('flask', def.name, item.cost, () => {
           if (run.cinders < item.cost || !stock.flasks.includes(item)) return;

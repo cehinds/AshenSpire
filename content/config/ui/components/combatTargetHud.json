@@ -34,7 +34,8 @@
       "right",
       "right"
     ],
-    "pinnedMinWidthPx": 150
+    "pinnedMinWidthPx": 150,
+    "enemyRowMinWidthPx": 120
   },
   "motion": {
     "dwellMs": 500,
@@ -50,6 +51,7 @@
     "enemyTint": "#bf3535",
     "playerTint": "#3e9be8",
     "candidateTintOpacity": 0.14,
-    "focusedTintOpacity": 0.27
+    "focusedTintOpacity": 0.27,
+    "playerIdleHud": false
   }
 }

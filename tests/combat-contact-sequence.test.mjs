@@ -142,6 +142,7 @@ test('three live 5-damage contacts lose 15 HP and paint three -5 readouts', t =>
       playTimeline(events, { layer, anchorFor: id => anchors.get(id), onBeatApplied() {} }, () => { done = true; });
       for (let i = 0; i < 1000 && !done; i++) t.mock.timers.tick(1);
       assert.equal(done, true);
+      for (let i = 0; i < 4000; i++) t.mock.timers.tick(1); // the three numbers share one column: one spawns per stagger
       assert.deepEqual(floats, ['-5', '-5', '-5']);
     } finally { setAnimSpeed('normal'); }
   });
