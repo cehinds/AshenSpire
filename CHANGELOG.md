@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **City combat backdrop matches its floor** ([#2581](https://github.com/cehinds/AshenSpire/pull/2581), `0.7.3.164`). Drowned-coast city fights no longer draw a starwatch night sky over coast ground; scenes with mismatched background and floor art are skipped when a matched one exists.
 - **Card tooltips only in inspect** ([#2576](https://github.com/cehinds/AshenSpire/pull/2576), `0.7.3.164`). Card tooltips now open only in the card inspect window; tag symbols and keywords on hand, reward and shop cards no longer take taps, so tapping a card always selects it.
 - **Master weapon art choice setting** ([#2574](https://github.com/cehinds/AshenSpire/pull/2574), `0.7.3.164`). A new Advanced setting, off by default, offers Add to deck or Add to library after buying a weapon art from the Master.
 - **Three arts per weapon** ([#2571](https://github.com/cehinds/AshenSpire/pull/2571), `0.7.3.162`). Every Core weapon now teaches two extra arts; reward doors, shops and the Blacksmith offer arts for the weapons you carry that you do not already own, and the same art is no longer in both the shop and the reward door.
