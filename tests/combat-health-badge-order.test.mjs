@@ -5,14 +5,13 @@ import { combatHealthRow, badgeTipHtml } from '../src/ui/components/combatHealth
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-// Owner 2026-11-01: badge order is Block > Poise > Evade > Ward, Precision, Counter, Reflect > stance, at most 3 slots, a 3rd-slot "+N" overflow.
-const stance = { maneuver: 'counter', label: 'Counter', help: 'Stance: Counter' };
-const all = { defense: 5, poise: 3, poiseMax: 8, evasion: 2, ward: 4, precision: 3, counterStacks: 2, reflectStacks: 1, stance };
+// Owner 2026-11-01: badge order is Block > Poise > Evade > Ward, Precision, Counter, Reflect (no stance badge, owner 2026-11-05), at most 3 slots, a 3rd-slot "+N" overflow.
+const all = { defense: 5, poise: 3, poiseMax: 8, evasion: 2, ward: 4, precision: 3, counterStacks: 2, reflectStacks: 1 };
 const hp = () => meter({ id: 'hp', value: '18/20', cur: 18, max: 20 });
 const kinds = row => [...row.querySelectorAll('.combat-health-badge')].map(n => n.dataset.defenseKind);
 
-test('the model orders badges Block, Poise, Evade, Ward, Precision, Counter, Reflect, stance', () => {
-  assert.deepEqual(combatHealthModel(all).badges.map(b => b.kind), ['shield', 'poise', 'evade', 'ward', 'precision', 'counter', 'reflect', 'stance']);
+test('the model orders badges Block, Poise, Evade, Ward, Precision, Counter, Reflect', () => {
+  assert.deepEqual(combatHealthModel(all).badges.map(b => b.kind), ['shield', 'poise', 'evade', 'ward', 'precision', 'counter', 'reflect']);
 });
 
 test('three badges all show, with no overflow badge', () => withKitDom(() => {

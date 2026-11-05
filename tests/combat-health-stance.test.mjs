@@ -5,31 +5,26 @@ import { combatHealthModel, stanceBadgeFor } from '../src/ui/models/CombatHealth
 const ctx = { combatExpansionVersion: 2 };
 const entity = maneuver => ({ combatStance: maneuver ? { maneuver, camp: 'physical', range: 'melee' } : undefined });
 
-test('the stance badge ends the row with the stance glyph and a help line', () => {
+// Owner 2026-11-05: no stance badge in the HUD row; the stance summary stays available as data.
+test('the stance summary is still built, but the health row never carries a stance badge', () => {
   for (const [maneuver, label] of [['attack', 'Attack'], ['counter', 'Counter'], ['evade', 'Evade']]) {
     const stance = stanceBadgeFor(entity(maneuver), ctx);
     assert.ok(stance, maneuver);
-    const model = combatHealthModel({ defense: 5, precision: 2, stance });
-    const last = model.badges[model.badges.length - 1];
-    assert.equal(last.kind, 'stance');
-    assert.equal(last.glyph, maneuver);
-    assert.match(last.help, new RegExp(`^Stance: ${label}`));
+    assert.match(stance.help, new RegExp(`^Stance: ${label}`));
+    assert.equal(combatHealthModel({ defense: 5, precision: 2, stance }).badges.some(b => b.kind === 'stance'), false);
   }
   assert.match(stanceBadgeFor(entity('counter'), ctx).help, /\+\d+ AR/);
   assert.match(stanceBadgeFor(entity('counter'), ctx).help, /\+\d+ DR/);
 });
 
-test('no stance, or a rules version without stances, shows no stance badge', () => {
+test('no stance, or a rules version without stances, gives no stance summary', () => {
   assert.equal(stanceBadgeFor(entity(null), ctx), null);
   assert.equal(stanceBadgeFor(entity('counter'), { combatExpansionVersion: 1 }), null);
-  assert.equal(combatHealthModel({ defense: 5, stance: null }).badges.some(b => b.kind === 'stance'), false);
 });
 
-test('the Counter badge has its own glyph, distinct from every stance sigil', () => {
-  const model = combatHealthModel({ counterStacks: 9, reflectStacks: 2, stance: stanceBadgeFor(entity('counter'), ctx) });
-  const glyphs = Object.fromEntries(model.badges.map(b => [b.kind, b.glyph || b.kind]));
-  assert.equal(glyphs.counter, 'riposte');
-  assert.notEqual(glyphs.counter, glyphs.stance);
+test('the Counter badge keeps its riposte glyph and its count', () => {
+  const model = combatHealthModel({ counterStacks: 9, reflectStacks: 2 });
+  assert.equal(model.badges.find(b => b.kind === 'counter').glyph, 'riposte');
   assert.equal(model.badges.find(b => b.kind === 'counter').value, 9);
   assert.equal(model.badges.find(b => b.kind === 'reflect').value, 2);
 });
