@@ -29,5 +29,5 @@ export function openShopCardChoice({ name, refusal = '', onDeck, onLibrary }) {
 }
 /** openShopArmamentChoice({ name, onEquip, onKeep }). */
 export function openShopArmamentChoice({ name, onEquip, onKeep }) {
-  return openChoice({ title: t('shop.buyChoice.armament.title'), body: t('shop.buyChoice.armament.body', { name }), primaryLabel: t('shop.buyChoice.equip'), secondaryLabel: t('shop.buyChoice.keepInventory'), onPrimary: onEquip, onSecondary: onKeep });
+  return openChoice({ title: t('shop.buyChoice.armament.title'), body: t('shop.buyChoice.armament.body', { name }), primaryLabel: t('armoury.picker.act.equip'), secondaryLabel: t('shop.buyChoice.keepInventory'), onPrimary: onEquip, onSecondary: onKeep });
 }
