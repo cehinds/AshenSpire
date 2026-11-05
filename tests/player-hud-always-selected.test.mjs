@@ -37,3 +37,11 @@ test('the pinned player carries no glow or tint unless eligible, focused or hove
   assert.equal(targetHudPinnedOnly({ entries, id: 'player', eligible: ['player'] }), false);
   assert.equal(targetHudPinnedOnly({ entries, id: 'e1' }), false);
 });
+
+test('the pinned-only glow suppression never hides the armed-skill gold glow', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  const rule = css.split('\n').find((line) => line.includes("[data-hud-pinned='true']") && line.includes('filter: none'));
+  assert.ok(rule, 'pinned-only glow rule exists');
+  assert.match(rule, /:not\(\.skill-selected\)/, 'an armed skill keeps its gold glow on the pinned player');
+});
