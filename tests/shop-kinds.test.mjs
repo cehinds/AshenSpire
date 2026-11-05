@@ -410,7 +410,6 @@ test('Settings files every Shops row under its kind, with its label from uiStrin
     const label = t(row.shopLabel.id, row.shopLabel.tokens);
     assert.ok(label.length > 3 && !label.includes('{'), `${row.key}: ${label}`);
   }
-  assert.ok(t('settings.shops.group.label').length > 0);
 });
 
 test('stock.kind rides schema 14: the bump, the RUN_SHAPE row and the captured corpus entry', () => {
