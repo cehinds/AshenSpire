@@ -287,7 +287,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const intents = frames.map(frame => {
       const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
       // The authored body's left/right are the whole pose canvas (mostly transparent, wider than the sprite on a phone); the ink is the visible figure.
-      const ink = currentSpriteArtBounds(frame.querySelector('.sprite'), scheduleGeometry);
+      const ink = frame.classList.contains('player') ? currentSpriteArtBounds(frame.querySelector('.sprite'), scheduleGeometry) : null;
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
       const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
       const overhead = frame.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect();
