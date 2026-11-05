@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Three arts per weapon** ([#2571](https://github.com/cehinds/AshenSpire/pull/2571), `0.7.3.158`). Every Core weapon now teaches two extra arts; reward doors, shops and the Blacksmith offer arts for the weapons you carry that you do not already own, and the same art is no longer in both the shop and the reward door.
-- **Equip or add to deck after buying** ([#2572](https://github.com/cehinds/AshenSpire/pull/2572), `0.7.3.158`). Shop purchases now offer to add a bought card to your deck or library, and to equip a bought weapon or armour or keep it in inventory.
+- **Three arts per weapon** ([#2571](https://github.com/cehinds/AshenSpire/pull/2571), `0.7.3.160`). Every Core weapon now teaches two extra arts; reward doors, shops and the Blacksmith offer arts for the weapons you carry that you do not already own, and the same art is no longer in both the shop and the reward door.
+- **Equip or add to deck after buying** ([#2572](https://github.com/cehinds/AshenSpire/pull/2572), `0.7.3.160`). Shop purchases now offer to add a bought card to your deck or library, and to equip a bought weapon or armour or keep it in inventory.
 - **Combat layout fixed after start** ([#2564](https://github.com/cehinds/AshenSpire/pull/2564), `0.7.3.158`). HUDs, intents and shadows stay put through stances and swings; a stance card shows its stance before the action animation; the stance badge is gone; the player's overhead HUD is always shown.
 - **Read Intent names its status** ([#2570](https://github.com/cehinds/AshenSpire/pull/2570), `0.7.3.156`). Read Intent's card face and rules text now say "Gain 1 Read Intent" instead of "Gain 1.", and Oath of Ash names Strength for the grant it gives you.
 - **Armoury potion inspection** ([#2569](https://github.com/cehinds/AshenSpire/pull/2569), `0.7.3.154`). Armoury item inspection draws potions with their effect text, using the same collectible-card rule as the inventory list.
