@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Combat rewards 3–5, more varied** ([#2566](https://github.com/cehinds/AshenSpire/pull/2566), `0.7.3.138`). Post-combat card rewards now offer a random 3 to 5 choices, lean toward skills and powers, and vary far more from run to run.
 - **Upgrade modal shows the armament.** ([#2557](https://github.com/cehinds/AshenSpire/pull/2557), `0.7.3.138`). The Blacksmith and rest upgrade modal shows the armament's own card, current tier against next, instead of one of its cards' damage.
 - **Legacy dungeons and Custom Climb removed.** ([#2553](https://github.com/cehinds/AshenSpire/pull/2553), `0.7.3.136`). The unreachable legacy dungeons and Custom Climb screens, mods and endless mode are gone; the Core climb is unchanged.
 - **Shop (i) clear of the art.** ([#2554](https://github.com/cehinds/AshenSpire/pull/2554), `0.7.3.134`). Shop card (i) buttons no longer cover the card's thumbnail art; they sit in their own spot under it.
