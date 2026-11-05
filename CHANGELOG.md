@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Three arts per weapon** ([#2571](https://github.com/cehinds/AshenSpire/pull/2571), `0.7.3.154`). Every Core weapon now teaches two extra arts; reward doors, shops and the Blacksmith offer arts for the weapons you carry that you do not already own, and the same art is no longer in both the shop and the reward door.
 - **Armoury potion inspection** ([#2569](https://github.com/cehinds/AshenSpire/pull/2569), `0.7.3.154`). Armoury item inspection draws potions with their effect text, using the same collectible-card rule as the inventory list.
 - **More rules text on card faces** ([#2567](https://github.com/cehinds/AshenSpire/pull/2567), `0.7.3.152`). Cards now print more of their rules on the face, up to five lines at a smaller font when it fits, and fall back to the short face with Inspect when it does not.
 - **Battlefield settings retired.** ([#2561](https://github.com/cehinds/AshenSpire/pull/2561), `0.7.3.150`). The Battlefield and formation settings are gone from Advanced and Display; saved formation keys are cleared on reset or sync, and the map header seed defaults off.
