@@ -99,10 +99,68 @@ export function combatSpriteGeometry(sprite, refresh) {
 export function invalidateSpriteRects() { invalidateMeasures(); }
 export const cachedCanvasRect = (canvas) => measure(canvas);
 
-// Current pose ink, in physical screen pixels. Formation fitting continues to
-// use the stable idle envelope; only the overhead widget follows pose/lunge.
+// Layout freeze (owner 2026-11-05: "their position and size should be fixed after combat starts"). The ink and body
+// boxes below follow whatever pose is showing, so every HUD placed from them moved with each stance, swing and lunge.
+// They are now measured once per layout and returned from then on, carried by their combatant's own frame so a
+// pure move of the frame (nothing else) still moves them. A new key (viewport or form factor, the combatants alive, a
+// sprite or frame size) is a real layout change and measures again. A measure taken while the art is still loading,
+// or while the figure is mid-action, is returned but not kept, so the freeze never captures a transient.
+const frozen = new Map();
+const KINDS = { y: ['top', 'bottom', 'headY', 'feetY'], x: ['left', 'right'] };
+export function clearFrozenSpriteGeometry() { frozen.clear(); }
+function layoutKey(sprite, frame, frameBox) {
+  const root = document.documentElement;
+  const ids = [...(frame.closest('.field')?.querySelectorAll('.combatant:not(.dead)') || [])].map(node => node.dataset.eid);
+  return [globalThis.innerWidth, globalThis.innerHeight, root.dataset.formFactor, root.dataset.displayAppearance, root.dataset.viewPreset,
+    sprite.offsetWidth, sprite.offsetHeight, Math.round(frameBox.width), Math.round(frameBox.height), frame.dataset.formationCell, ids.join(','),
+    // In formation the frame fills its cell (dy is always 0), so the fit places the figure with the stack's top and the
+    // sprite's zoom; offsetWidth/Height ignore that zoom. A refit that changes either is a real layout change.
+    frame.querySelector?.('.combatant-stack')?.style?.top ?? '', sprite.style?.zoom ?? ''].join('|');
+}
+// A figure mid-action or mid-recoil: act-* lunges, the hitflash/hit-heavy/wobble recoil (up to 22px of translateX), a stage
+// reporting busy, or a stage with no busy getter whose element still has a finite animation running.
+const MOTION_CLASS = /\b(act-|hitflash|hit-heavy|wobble)/;
+function spriteInMotion(sprite, frame, stage) {
+  if (stage?.busy || MOTION_CLASS.test(sprite.className) || MOTION_CLASS.test(frame.className || '')) return true;
+  if (stage && !('busy' in stage)) {
+    return Boolean(frame.getAnimations?.({ subtree: true }).some(a => a.playState === 'running' && a.effect?.getTiming?.().iterations !== Infinity));
+  }
+  return false;
+}
+function frozenBounds(sprite, kind, measureNow) {
+  const frame = sprite.closest?.('.combatant');
+  const eid = frame?.dataset.eid;
+  if (!frame || !eid || !frame.isConnected) return measureNow();
+  const box = cachedCanvasRect(frame), key = layoutKey(sprite, frame, box), slot = `${eid}:${kind}`;
+  const known = frozen.get(slot);
+  if (known && known.key === key) {
+    const dx = box.left - known.left, dy = box.top - known.top, value = { ...known.value };
+    for (const name of KINDS.x) if (Number.isFinite(value[name])) value[name] += dx;
+    for (const name of KINDS.y) if (Number.isFinite(value[name])) value[name] += dy;
+    return value;
+  }
+  const value = measureNow();
+  const stage = stageFor(sprite);
+  if (value.settled !== false && !spriteInMotion(sprite, frame, stage)) frozen.set(slot, { key, left: box.left, top: box.top, value });
+  else frozen.delete(slot);
+  return value;
+}
+
+/** The sprite box (physical px), frozen per layout: an action lunge or hit recoil never moves it. */
+export function frozenSpriteBox(sprite) {
+  return frozenBounds(sprite, 'box', () => { const r = sprite.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height, settled: true }; });
+}
+
+// Current-pose ink, in physical screen pixels, frozen per layout. Formation fitting continues to
+// use the stable idle envelope.
 export function currentSpriteArtBounds(sprite, refresh = () => {}) {
-  const painted = stageFor(sprite)?.currentArt;
+  return frozenBounds(sprite, 'art', () => measureSpriteArtBounds(sprite, refresh));
+}
+
+function measureSpriteArtBounds(sprite, refresh) {
+  const stage = stageFor(sprite);
+  // A stage that publishes its neutral frame is measured by that frame in every pose.
+  const painted = stage?.restArt || stage?.currentArt;
   if (painted) {
     const bounds = imageBounds(painted.image, refresh);
     if (bounds) {
@@ -111,11 +169,12 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
       return { top: rect.top + (painted.top + bounds.y0 * painted.height / painted.image.naturalHeight) * sy,
         bottom: rect.top + (painted.top + (bounds.y1 + 1) * painted.height / painted.image.naturalHeight) * sy,
         left: rect.left + (painted.left + bounds.x0 * painted.width / painted.image.naturalWidth) * sx,
-        right: rect.left + (painted.left + (bounds.x1 + 1) * painted.width / painted.image.naturalWidth) * sx };
+        right: rect.left + (painted.left + (bounds.x1 + 1) * painted.width / painted.image.naturalWidth) * sx, settled: true };
     }
   }
   const images = [...sprite.querySelectorAll('.pose-frame, .pose-previous, .painted-presentation, .defeated-frame, .facing > img')];
   const boxes = [];
+  let settled = true;
   for (const img of images) {
     const style = getComputedStyle(img);
     const rect = img.getBoundingClientRect();
@@ -128,28 +187,32 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
     if (hidden) continue;
     if (img.closest('.defeated') && img.closest('.pose-stage')?.dataset.pose !== 'defeated') continue;
     const bounds = imageBounds(img, refresh);
-    if (!bounds) { boxes.push(rect); continue; }
+    if (!bounds) { settled = false; boxes.push(rect); continue; }
     const scale = Math.min(rect.width / img.naturalWidth, rect.height / img.naturalHeight);
     boxes.push({ top: rect.top + (rect.height - img.naturalHeight * scale) / 2 + bounds.y0 * scale,
       bottom: rect.top + (rect.height - img.naturalHeight * scale) / 2 + (bounds.y1 + 1) * scale,
       left: rect.left + bounds.x0 * scale, right: rect.left + (bounds.x1 + 1) * scale });
   }
-  if (!boxes.length) return sprite.getBoundingClientRect();
+  if (!boxes.length) { const r = sprite.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height, settled: false }; }
   return { top: Math.min(...boxes.map(box => box.top)), bottom: Math.max(...boxes.map(box => box.bottom)),
-    left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)) };
+    left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)), settled };
 }
 
 
 // Semantic body geometry follows the displayed frame and its physical motion.
 // Callers can distinguish assets awaiting landmarks from authored head/feet.
 export function currentSpriteBodyBounds(sprite, refresh = () => {}) {
+  return frozenBounds(sprite, 'body', () => measureSpriteBodyBounds(sprite, refresh));
+}
+
+function measureSpriteBodyBounds(sprite, refresh) {
   const stage = stageFor(sprite);
   // The getter reads a box: ask once, not twice.
   const authored = stage?.currentBody;
   if (authored) return authored;
-  const current = stage?.currentArt;
-  if (current?.body) return projectBodyBounds(current.body, cachedCanvasRect(current.canvas), current.canvas.width, current.canvas.height);
-  const bounds = currentSpriteArtBounds(sprite, refresh);
+  const current = stage?.restArt || stage?.currentArt;
+  if (current?.body) return { ...projectBodyBounds(current.body, cachedCanvasRect(current.canvas), current.canvas.width, current.canvas.height), settled: true };
+  const bounds = measureSpriteArtBounds(sprite, refresh);
   return { ...bounds, headY: bounds.top, feetY: bounds.bottom,
     bodyHeight: bounds.bottom - bounds.top, source: 'unregistered' };
 }

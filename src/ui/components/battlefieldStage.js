@@ -12,7 +12,7 @@ import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio } from '../models/CombatSpriteScaleModel.js';
 import { stageFor } from '../services/PoseAnimator.js';
-import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects } from './combatSpriteGeometry.js';
+import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects, clearFrozenSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
@@ -231,6 +231,7 @@ export function combatInspectTapBox({ left, top, width, height = width }) {
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
+  clearFrozenSpriteGeometry(); // a new combat measures its layout afresh
   if (!field) throw new Error('battlefieldStage requires a field host');
   if (!model || model.component !== UI.battlefieldStage) throw new Error('battlefieldStage requires its Component Model');
 
