@@ -30,10 +30,6 @@
   left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
 }
 :root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
-/* Owner 2026-11-05: an unselected player shows no overhead HP bar or AC (the top bar keeps the number); selecting shows the panel.
-   Only the bar and the AC badge hide: the Block square, the stance/evade/precision/counter/reflect badges stay (SPEC combat pips).
-   The poise/ward overlay lives inside the bar's track, so it folds with it; the Poise and Ward badges remain. */
-:root .combat[data-target-hud='true'][data-player-idle-hud='false'] .combatant.player:not(.target-hud-selected) > .target-hud-overhead-meters > .meters .combat-health-row > :is(.combat-health-meter,.combat-health-ac,.combat-health-ac-caption) { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
   position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
   /* Only the centered action row owns intent input. The full-width host
@@ -186,7 +182,7 @@
   }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .m-value { font-size: calc(16px / var(--ui-zoom,1)); }
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-badge { zoom: 1.28; }
-  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect, .combat-health-stance) .combat-health-badge-value {
+  :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) .combat-health-badge-value {
     width: calc(7.2px / var(--ui-zoom,1)); height: calc(7.2px / var(--ui-zoom,1)); font-size: calc(7.2px / var(--ui-zoom,1));
   }
 }
@@ -216,19 +212,11 @@
 /* Counter / Reflect stack badges (owner 2026-10-31): with up to five badges (shield, precision, counter, reflect, poise) the row
    wraps instead of overlapping. The HP bar keeps its own full-width line and the badges stay BELOW it, the row growing downward
    (owner 2026-11-01: order:0/1 overrides here had put the badges above the bar). Badge sizes are untouched. */
-:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect) {
   flex-wrap: wrap; row-gap: calc(2px / var(--ui-zoom, 1)); column-gap: calc(3px / var(--ui-zoom, 1));
 }
 
-/* Stance badge: same plate as the others, tinted by maneuver. */
-:root .combat .combat-health-stance { color: var(--parchment); }
-:root .combat .combat-health-stance[data-stance='attack'], :root .combat .combat-health-stance[data-stance='smash'], :root .combat .combat-health-stance[data-stance='sweep'] { color: salmon; }
-:root .combat .combat-health-stance[data-stance='counter'] { color: var(--gold, goldenrod); }
-:root .combat .combat-health-stance[data-stance='defend'] { color: var(--block-silver, silver); }
-:root .combat .combat-health-stance[data-stance='evade'] { color: mediumseagreen; }
-:root .combat .combat-health-stance[data-stance='casting'], :root .combat .combat-health-stance[data-stance='prepared'] { color: mediumpurple; }
-
 /* A wrapped badge row sizes to its children so nothing below overlaps it (the fixed desktop row heights above are minimums here). */
-:root .combat.combat.combat[data-layout='formation'] .combatant :is(.target-hud-overhead-meters, .combatant-mini-hud, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect, .combat-health-stance) {
+:root .combat.combat.combat[data-layout='formation'] .combatant :is(.target-hud-overhead-meters, .combatant-mini-hud, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect) {
   height: auto !important;
 }
