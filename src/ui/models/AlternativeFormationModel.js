@@ -160,6 +160,31 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
       return cell ? { ...cell, id: slot.id } : slot;
     });
   }
+  // Display only: a range rank (melee = front, reach = back) moves a slot to the other strip of its side, keeping its lane.
+  // Strips are chosen by band id, never by cell id or the `formationRow` label (A2-C2 are labelled front-row but draw as the back strip).
+  const ranks = presentation.rangeRanks;
+  if (ranks) {
+    const wanted = slot => {
+      const rank = ranks[slot.id];
+      if (!rank || !slot.formationRole) return null;
+      const id = slot.side === 'enemy' ? (rank === 'front' ? 'enemy-front' : 'enemy-back') : (rank === 'front' ? 'player-front' : 'player-back');
+      return id === slot.formationRole ? null : id;
+    };
+    // A slot that keeps its strip holds its lane; a mover takes its own lane in the new strip, or the nearest free one
+    // (the strip's lowest-lane side on a tie); only a full strip shares a lane.
+    const taken = new Set(plan.slots.filter(slot => !wanted(slot)).map(slot => `${slot.side}:${slot.formationRole}:${slot.lane}`));
+    plan.slots = plan.slots.map(slot => {
+      const bandId = wanted(slot);
+      if (!bandId) return slot;
+      const strip = plan.visualCells.filter(c => c.side === slot.side && c.formationRole === bandId);
+      const free = strip.filter(c => !taken.has(`${c.side}:${bandId}:${c.lane}`));
+      const pool = free.length ? free : strip;
+      const target = pool.reduce((best, c) => !best || Math.abs(c.lane - slot.lane) < Math.abs(best.lane - slot.lane) ? c : best, null);
+      if (!target) return slot;
+      taken.add(`${target.side}:${bandId}:${target.lane}`);
+      return { ...target, id: slot.id };
+    });
+  }
   plan.visualBands = activeBands.map(band => ({ ...band, top: bandTop(band), height: rowHeight }));
   plan.teamGap = { top: bandTop(bandOf('player-front')) - gapRows * rowHeight, height: gapRows * rowHeight };
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
