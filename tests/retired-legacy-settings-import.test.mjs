@@ -59,3 +59,11 @@ test('live non-gameConfig settings round-trip through a sync profile with no ret
   assert.equal(changes.deckEditing, true);
   assert.deepEqual(warnings.filter((w) => w === RETIRED_LEGACY_GROUPS_WARNING), []);
 });
+
+test('loading a profile clears a stored retired recovery key, which has no row to own it', () => {
+  const rows = settingsRows();
+  const keys = rows.map((row) => row.key);
+  const stored = { 'recovery.hp.afterCombat': 50, reduceFlashes: true };
+  const result = profileChanges(profileText({}, keys), contentBundle, stored, rows, keys);
+  assert.ok(result.cleared.includes('recovery.hp.afterCombat'));
+});

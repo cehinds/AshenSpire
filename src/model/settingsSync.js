@@ -23,7 +23,7 @@
 // owns the buttons; tests own a fake fetch.
 
 import { SEED_KEY, sameSetting } from './settingsDefaults.js';
-import { advancedConfigExport, advancedConfigProblems, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
+import { advancedConfigExport, advancedConfigProblems, parseAdvancedConfigFile, isRetiredLegacySettingKey, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
 
 export const SYNC_DEFAULTS = Object.freeze({
   owner: 'cehinds',
@@ -242,7 +242,7 @@ export function profileChanges(text, bundle, settings, rows, keys) {
   for (const key of DEVICE_KEYS) if (!owned.has(key)) delete changes[key];
   for (const key of LOCAL_ONLY_KEYS) delete changes[key];
   const cleared = Object.keys(settings || {}).filter((key) => settings[key] !== undefined
-    && !(key in changes) && (key.startsWith(ADVANCED_CONFIG_PREFIX) || owned.has(key)));
+    && !(key in changes) && (key.startsWith(ADVANCED_CONFIG_PREFIX) || owned.has(key) || isRetiredLegacySettingKey(key)));
   // Absent in a profile saved before this field existed: then ownership is
   // left as it is (null), rather than guessed.
   let promotionOwned = null;
