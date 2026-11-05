@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Combatant size** ([#2543](https://github.com/cehinds/AshenSpire/pull/2543), `0.7.3.114`). Player and enemy figures are now 65% scale (were 72%).
 - **Reward cards** ([#2539](https://github.com/cehinds/AshenSpire/pull/2539), `0.7.3.114`). The selected reward card shows an (i) button, and tapping an already-selected card also opens the card inspector.
 - **Saves** ([#2538](https://github.com/cehinds/AshenSpire/pull/2538), `0.7.3.112`). Core 2 runs no longer freeze legacy settings overrides into their saved configuration, only the opening settings and version fields; old saves still load.
 - **Settings** ([#2536](https://github.com/cehinds/AshenSpire/pull/2536), `0.7.3.110`). Retired the Progression, Combat, Stats, Recovery and Shops tabs and the Stats and Levelling previews, which Core 2 never showed. Old exported settings files and sync profiles now import with a warning instead of being refused.
