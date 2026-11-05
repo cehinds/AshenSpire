@@ -1,8 +1,8 @@
 {
   "sizing": {
-    "floaterFontPx": 28,
-    "floaterFontMinPx": 18,
-    "floaterFontVw": 7,
+    "floaterFontPx": 21,
+    "floaterFontMinPx": 13.5,
+    "floaterFontVw": 5.25,
     "floaterLineGapPx": 6,
     "floaterEdgeMarginPx": 8,
     "floaterPopPeak": 1.3,

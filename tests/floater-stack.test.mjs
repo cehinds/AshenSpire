@@ -42,7 +42,9 @@ function make({ stagger = 320, max = 4, life = 1650, maxQueued, staggerMin = 90,
 test('the defaults come from content/config floaterStack.json', () => {
   assert.equal(FLOATER_STACK.floaterStaggerMs, 320);
   assert.equal(FLOATER_STACK.floaterMaxVisible, 4);
-  assert.equal(FLOATER_STACK.floaterFontPx, 28);
+  assert.equal(FLOATER_STACK.floaterFontPx, 21);
+  assert.equal(FLOATER_STACK.floaterFontMinPx, 13.5);
+  assert.equal(FLOATER_STACK.floaterFontVw, 5.25);
   assert.ok(FLOATER_STACK.floaterLineGapPx > 0);
 });
 
@@ -89,7 +91,7 @@ test('column: a newer floater is slot 0 and every earlier visible one is a slot 
   f.c.advance(640);
   assert.deepEqual(f.layouts.at(-1), [['a', 2], ['b', 1], ['c', 0]]);
   // Strictly decreasing y, oldest highest: every floater is the same size, so the step is one line plus the gap.
-  const step = 28 + FLOATER_STACK.floaterLineGapPx, base = 300;
+  const step = FLOATER_STACK.floaterFontPx + FLOATER_STACK.floaterLineGapPx, base = 300;
   const ys = f.layouts.at(-1).map(([, slot]) => columnTop(base, slot, step));
   assert.deepEqual(ys, [base - 2 * step, base - step, base]);
   assert.ok(ys.every((y, i) => i === 0 || y > ys[i - 1]), 'y grows from the oldest to the newest');
