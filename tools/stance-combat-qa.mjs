@@ -261,42 +261,16 @@ async function assertChanceSurfaces(expectedMode) {
   await hud.waitFor({ state: 'visible', timeout: 10000 });
   const targetId = await page.evaluate(() => window.__combat.enemies.find(enemy => enemy.alive)?.id);
   assert.ok(targetId, 'a live target exists for the selected attack');
-  const card = page.locator('.card-hit-chance[data-target-id="' + targetId + '"]:visible').first();
-  await card.waitFor({ state: 'visible', timeout: 10000 });
-  const [hudInfo, cardInfo] = await Promise.all([
-    hud.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode })),
-    card.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode })),
-  ]);
-  const cardOddsGeometry = await card.evaluate(node => {
-    const odds = node.closest('.card-hit-chances');
-    const selectedCard = odds?.closest('.card');
-    if (!odds || !selectedCard) return { ok: false, reason: 'odds panel is not inside the selected card' };
-    const rect = element => {
-      const box = element.getBoundingClientRect();
-      return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
-    };
-    return { ok: true, odds: rect(odds), selectedCard: rect(selectedCard), viewport: { width: innerWidth, height: innerHeight } };
-  });
-  assert.ok(cardOddsGeometry.ok, cardOddsGeometry.reason);
-  assert.ok(cardOddsGeometry.odds.width > 0 && cardOddsGeometry.odds.height > 0, 'selected-card odds panel has visible geometry');
-  assert.ok(cardOddsGeometry.odds.left >= 0 && cardOddsGeometry.odds.top >= 0
-    && cardOddsGeometry.odds.right <= cardOddsGeometry.viewport.width
-    && cardOddsGeometry.odds.bottom <= cardOddsGeometry.viewport.height,
-  'selected-card odds panel remains fully inside the viewport');
-  assert.ok(cardOddsGeometry.odds.left >= cardOddsGeometry.selectedCard.left
-    && cardOddsGeometry.odds.top >= cardOddsGeometry.selectedCard.top
-    && cardOddsGeometry.odds.right <= cardOddsGeometry.selectedCard.right
-    && cardOddsGeometry.odds.bottom <= cardOddsGeometry.selectedCard.bottom,
-  'selected-card odds panel remains fully inside the selected card');
+  const hudInfo = await hud.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode }));
+  assert.equal(await page.locator('.card-hit-chances, .card-hit-chance').count(), 0, 'no hit-chance box on the selected card face');
   const percent = text => {
     const match = text.match(/([\d.]+)%/);
     assert.ok(match, 'percentage is visible: ' + text);
     return Number(match[1]);
   };
   assert.equal(hudInfo.mode, expectedMode, 'fighter HUD roll mode');
-  assert.equal(cardInfo.mode, expectedMode, 'selected card roll mode');
-  assert.equal(percent(hudInfo.text), percent(cardInfo.text), 'card and fighter HUD show the same exact hit chance');
-  return { hud: hudInfo, card: cardInfo };
+  percent(hudInfo.text);
+  return { hud: hudInfo };
 }
 
 async function inspectCard(cardId, label) {
@@ -372,9 +346,7 @@ try {
   await remount(['strike'], { unknown: true });
   await page.locator('.hand .card[data-card-id="strike"]').first().click();
   await page.waitForTimeout(150);
-  assert.equal(await page.locator('.combat-hit-chance:visible, .card-hit-chance:visible').count(), 0,
-    'unknown enemy hides both fighter HUD and selected-card hit percentages');
-  assert.equal(await page.locator('.card-hit-chances:visible').count(), 0, 'unknown enemy has no selected-card odds panel');
+  assert.equal(await page.locator('.combat-hit-chance:visible').count(), 0, 'unknown enemy hides the fighter HUD hit percentage');
   await capture('selected-damage-unknown-enemy', { width: 1440, height: 1000 });
 
   await closePage(page);
