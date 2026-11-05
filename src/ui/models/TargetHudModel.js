@@ -144,14 +144,24 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
   const placedRows = [];
   for (const row of rows) {
     const height = Math.max(...row.map(panel => Math.min(panel.height, area.height)));
-    // Desired lefts centre each panel under its enemy; push apart, then pull back from the right edge.
+    // Desired lefts centre each panel under its enemy. Overlaps are resolved by pushing apart both ways (pool adjacent
+    // violators on the left edges minus their packed offsets), then the whole group shifts to fit the field.
     const layoutAt = (top, minLeft) => {
       const items = row.map(panel => ({ panel, width: Math.min(panel.width, area.width), left: panel.anchor.left + panel.anchor.width / 2 - Math.min(panel.width, area.width) / 2 }));
-      items.forEach((item, i) => { item.left = Math.max(item.left, i ? items[i - 1].left + items[i - 1].width + gap : minLeft); });
-      for (let i = items.length - 1; i >= 0; i--) {
-        const limit = i === items.length - 1 ? area.left + area.width : items[i + 1].left - gap;
-        items[i].left = Math.min(items[i].left, limit - items[i].width);
-      }
+      let offset = 0;
+      const blocks = [];
+      items.forEach((item, i) => {
+        item.offset = offset; offset += item.width + gap;
+        blocks.push({ sum: item.left - item.offset, count: 1, from: i });
+        while (blocks.length > 1 && blocks.at(-2).sum / blocks.at(-2).count > blocks.at(-1).sum / blocks.at(-1).count) {
+          const last = blocks.pop(), prev = blocks.at(-1); prev.sum += last.sum; prev.count += last.count;
+        }
+      });
+      for (const block of blocks) for (let i = block.from; i < block.from + block.count; i++) items[i].left = block.sum / block.count + items[i].offset;
+      const last = items.at(-1), end = area.left + area.width;
+      let shift = Math.min(0, end - (last.left + last.width));
+      shift = Math.max(shift, minLeft - items[0].left);
+      items.forEach(item => { item.left += shift; });
       return items.map(item => ({ id: item.panel.id, left: item.left, top, width: item.width, height: Math.min(item.panel.height, area.height), penalty: 0, side: 'below' }));
     };
     const anchorBottom = Math.max(...row.map(panel => panel.anchor.top + panel.anchor.height)), anchorTop = Math.min(...row.map(panel => panel.anchor.top));
@@ -168,7 +178,7 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
     // Each band's obstacles are found once per top, then reused by every start in it.
     let found = null, best = Infinity;
     for (const top of tops) {
-      if (top < area.top - 1e-6) continue;
+      if (top < area.top - 1e-6 || distance(top) >= best) continue;
       // Start at the field edge, or just right of an obstacle in this band (a row can sit beside the player, not over it).
       const band = { left: area.left, width: area.width, top, height };
       const near = obstacles.filter(other => targetHudOverlaps(band, other));
@@ -181,6 +191,7 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
         // Total sideways drift plus the vertical distance from the enemies: the nearest, least-shifted layout wins.
         const score = sideways(placed) + distance(top);
         if (score < best) { best = score; found = placed; }
+        if (sideways(placed) < 1e-6) break;
       }
     }
     if (!found) return null;
