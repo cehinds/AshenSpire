@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Battlefield settings retired.** ([#2561](https://github.com/cehinds/AshenSpire/pull/2561), `0.7.3.138`). The Battlefield and formation settings are gone from Advanced and Display; saved formation keys are cleared on reset or sync, and the map header seed defaults off.
 - **World Journey removed.** ([#2562](https://github.com/cehinds/AshenSpire/pull/2562), `0.7.3.144`). The World Journey mode (world atlas, quest board, journey profile) is removed; the game ships only the Core climb, and a saved World Journey run is refused on load.
 - **Run inventory holds only its own armour.** ([#2559](https://github.com/cehinds/AshenSpire/pull/2559), `0.7.3.142`). Starting a run no longer puts every profile-unlocked armour set in the inventory; a run owns its starting armour and the sets it buys or is granted.
 - **Reaction modal trimmed and inset.** ([#2558](https://github.com/cehinds/AshenSpire/pull/2558), `0.7.3.140`). The Defensive reaction modal no longer shows the instruction paragraph; its damage line and reaction options are inset to match the title.
