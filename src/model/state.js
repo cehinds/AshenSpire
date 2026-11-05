@@ -28,7 +28,6 @@ import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import { bindTurnStamina } from './turnStamina.js';
 import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, reconcileGrantedCards, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
-import { journeyProblems } from './worldAtlas.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -1099,11 +1098,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     }
   }
   if (run.legacyDungeon !== undefined) problems.push('legacyDungeon: legacy dungeons are no longer supported');
-  if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
+  if (run.journey !== undefined) problems.push('journey: World Journey runs are no longer supported');
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
-  for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
-    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`, { required: !preShopKinds }));
-  }
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;

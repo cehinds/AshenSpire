@@ -603,7 +603,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const persistOrWarn = () => { persist(); return true; }, persistContinuing = () => { persistOrWarn(); };
     const audio = {}, sfx = { play() {} }, sendLanStatus = () => {};
     const rollLevelChoices = () => [], victoryTitle = () => 'VICTORY', victoryBeat = async () => {};
-    const applyAfterCombatRecovery = () => {}, featStacks = () => 0, victoryCompletesJourneyNode = () => false;
+    const applyAfterCombatRecovery = () => {}, featStacks = () => 0;
     const rollRuneReward = () => 0;
     const showFinishedRun = () => { throw Error('ordinary victory must not finish the run'); };
     const showMap = () => {}, advanceAct = () => {};

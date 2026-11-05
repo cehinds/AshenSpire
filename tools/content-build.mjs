@@ -1232,8 +1232,6 @@ if (SELFTEST) {
 } else {
   // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
   if (!CHECK) await holdForCli(ROOT, 'content-build');
-  const { checkAtlasBuild } = await import('./world-atlas-data.mjs');
-  await checkAtlasBuild();
   const { compileBaseCards, BASE_CARD_OUTPUT } = await import('./base-cards.mjs');
   const baseCards = compileBaseCards();
   const basePath = join(ROOT, BASE_CARD_OUTPUT);
