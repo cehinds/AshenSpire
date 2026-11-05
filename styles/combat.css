@@ -1905,6 +1905,8 @@
 .combat[data-target-hud='true'] .combatant.target-hud-candidate .sprite { filter: drop-shadow(0 0 2px #d99b64); }
 .combat[data-target-hud='true'] .combatant:is(.target-hud-selected, .target-hud-focused) .sprite { filter: drop-shadow(0 0 2px #ffe0a4) drop-shadow(0 0 2px #ffe0a4); }
 .combat[data-target-hud='true'] .combatant.player:is(.target-hud-selected, .target-hud-focused) .sprite { filter: drop-shadow(0 0 2px #87caff) drop-shadow(0 0 2px #87caff); }
+/* Owner 2026-11-05: the always-on player panel adds no glow; the glow marks an actually eligible, focused or hovered player. */
+.combat[data-target-hud='true'] .combatant.player[data-hud-pinned='true']:not(.skill-selected) .sprite { filter: none; }
 @media (prefers-reduced-motion: reduce) { .target-hud-detail { transition: none; } }
 body.reduce-motion .target-hud-detail { transition: none; }
 .combat[data-target-hud='true'] .target-hud-overhead-meters { width: 100%; }
