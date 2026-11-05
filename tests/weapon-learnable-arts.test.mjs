@@ -75,6 +75,7 @@ test('shops and the Blacksmith never stock an owned or granted art', () => {
 test('an art on the open door is not stocked by the shop, and a shop art is not offered on a door', () => {
   const run = reaver();
   run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }], taken: [], claimed: null } };
+  run.gameProfilePendingReward = { offerId: 'door', source: 'combat' };
   const stock = gameProfileShopStock(reg, run, createRng(3), { shopId: 'x' });
   assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id), ['poiseBreaker']);
   const run2 = reaver();
@@ -104,6 +105,7 @@ test('200 doors for a Reaver carrying a greatsword and a katana offer at least t
 test('the Blacksmith shelf skips an art on the open reward door but keeps its own earlier shelf', () => {
   const run = reaver();
   run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }], taken: [], claimed: null } };
+  run.gameProfilePendingReward = { offerId: 'door', source: 'combat' };
   run.shopStock = { kind: 'blacksmith', offerings: ['weaponArts'], weaponArts: [{ id: 'poiseBreaker', cost: 70 }] };
   assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id), ['poiseBreaker']);
 });
@@ -136,4 +138,12 @@ test('a learnable art of a carried but unworn weapon stays refused by the tag ru
   assert.equal(deckCardEquipmentEligible(reg, run, card), false);
   run.sideboard = [card];
   assert.equal(moveFromSideboard(reg, run, card.instanceId, {}), false);
+});
+
+test('a skipped door (no pending reward) does not hide its arts from the next shop or Blacksmith', () => {
+  const run = reaver();
+  run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }, { kind: 'weaponArts', id: 'poiseBreaker' }], taken: [], claimed: null } };
+  const stock = gameProfileShopStock(reg, run, createRng(3), { shopId: 'y' });
+  assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id).sort(), ['executioner', 'poiseBreaker']);
+  assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id).sort(), ['executioner', 'poiseBreaker']);
 });

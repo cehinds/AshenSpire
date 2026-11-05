@@ -79,9 +79,9 @@ export function artsOnOtherSide(run,source,offerId) {
   const offers=run.gameProfileRewardOffers||{},ids=new Set();
   const artsOf=offer=>(offer?.options||[]).filter(option=>option.kind==='weaponArts').map(option=>option.id);
   if(source==='shop'||source==='blacksmith'){
-    const doors=Object.values(offers).filter(offer=>offer&&offer.source!=='shop'&&offer.id!==offerId);
-    const door=doors.at(-1);
-    if(door&&door.claimed==null)for(const id of artsOf(door))ids.add(id);
+    // The open door is the pending reward; a skipped door leaves no pending reward, so it excludes nothing.
+    const pendingId=run.gameProfilePendingReward?.offerId,door=pendingId&&pendingId!==offerId?offers[pendingId]:null;
+    if(door&&door.source!=='shop'&&door.claimed==null)for(const id of artsOf(door))ids.add(id);
   }
   if(source!=='shop'&&source!=='blacksmith'){
     for(const id of artsOf(offers[`shop:${run.gameProfileOpenShop}`]))ids.add(id);
