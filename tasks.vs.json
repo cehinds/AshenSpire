@@ -50,22 +50,6 @@
       "workingDirectory": "${workspaceRoot}"
     },
     {
-      "taskLabel": "AshenSpire: Start Workbench",
-      "appliesTo": "/package.json",
-      "type": "launch",
-      "command": "${env.COMSPEC}",
-      "args": ["/d", "/c", "node workbench/server.mjs"],
-      "workingDirectory": "${workspaceRoot}"
-    },
-    {
-      "taskLabel": "AshenSpire: Editor tests",
-      "appliesTo": "/package.json",
-      "type": "launch",
-      "command": "${env.COMSPEC}",
-      "args": ["/d", "/c", "npm --prefix editor test"],
-      "workingDirectory": "${workspaceRoot}"
-    },
-    {
       "taskLabel": "AshenSpire: Check authored content",
       "appliesTo": "/package.json",
       "type": "launch",

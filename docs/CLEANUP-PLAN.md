@@ -79,9 +79,9 @@ rather than the portable VM (`"portability":"legacy"` in `engine/mechanics`).
 
 | # | Change | Status |
 |---|--------|--------|
-| 2a | Cross-repo checks: `tools/linkcheck.mjs` roots, `tests/build-lock.test.mjs` lock paths, `tests/art-migrate-trigger.test.mjs`, pose-studio cases in `alternative-*` and `display-art-cache` tests, `tasks.vs.json`, `tests/README.md` | todo |
-| 2b | Workflows: delete `workbench.yml` and the six `enemy-back-*`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | todo |
-| 2c | Delete the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`) | todo |
+| 2a | Cross-repo checks: `tools/linkcheck.mjs` roots, `tests/build-lock.test.mjs` lock paths, `tests/art-migrate-trigger.test.mjs`, pose-studio cases in `alternative-*` and `display-art-cache` tests, `tasks.vs.json`, `tests/README.md` | done (this PR) |
+| 2b | Workflows: delete `workbench.yml` and the six `enemy-back-*`; edit `dev-preview.yml`, `pages-builds.yml` (stops publishing `/workbench/`), `feature-preview.yml`, `sync-alternatives.yml` | done (this PR) |
+| 2c | Delete the folders, root preview pages and their tools/tests (`pose-studio-capture`, `workbench-static`, `serve-preview`, `art-authoring`, `art-gallery-cache`, `workbench-static*`, `sequence-review-authoring-paths`, `selected-*-registration`) | done (this PR) |
 
 ### Step 3 — Core 2 only (about 700 checks in about 120 files)
 
@@ -91,7 +91,7 @@ legacy path today; each area PR moves its tests onto the Core 2 helper (3c) or d
 | # | Change | Status |
 |---|--------|--------|
 | 3a | Save guard: refuse a run whose profile is missing, legacy, Core 1 or not `fixCoreVersion` 1, with a "retired profile" message; never delete or overwrite it. `?gameProfile=current` falls back to the default. Drop `current` from the selector and `resolveGameProfile`'s default | done (#2527) |
-| 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | done (this PR) |
+| 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | done (#2529) |
 | 3c | Core 2 test helper (registries and runs bound to the default profile) | todo |
 | 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | todo |
 | 3e | Settings: legacy Advanced rows, `advancedConfig` run overrides | todo |

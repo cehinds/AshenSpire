@@ -20,7 +20,7 @@
 //
 // WHAT ELSE IS SERVED. `main`'s tree is copied first, so every page the site
 // serves from it (/index-game.html, /docs/component-catalog.html,
-// /pose-studio/, /items-preview.html) keeps working — less the media and authoring roots and the committed build HTML
+// /docs/low-poly-fighters/) keeps working — less the media and authoring roots and the committed build HTML
 // (BASE_TREE_PATHSPECS, docs/EXTERNAL-ASSETS-PLAN.md step 6a). The stable Play
 // links and the score and tiles they read beside themselves are written back
 // explicitly as that build's payload. The one deliberate replacement is the
@@ -188,14 +188,14 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 //     two are written back from main's tree as that build's payload
 //     (STABLE_PAYLOAD_DIRS), so the stable links serve what they served before.
 // assets/ STAYS (owner, 2026-10-02): /index-game.html (main's source page),
-// docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
-// pose-studio/ load their images from it. It is served from main's tree while
+// docs/component-catalog.html and docs/low-poly-fighters/ load their images
+// from it. It is served from main's tree while
 // main still tracks it; a main from after docs/EXTERNAL-ASSETS-PLAN.md step 13
 // tracks none, and /assets/ is then written from the object store instead
 // (writeSourceAssets: the light tier of main's manifest, about 15 MB). art/ GOES: its seven review sections
 // leave the site and, because discovery reads the assembled tree, the index
-// with them. Plain links into art/ now 404: docs/component-catalog.html,
-// pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
+// with them. Plain links into art/ now 404: docs/component-catalog.html
+// and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
 // docs/preview was removed (owner decision 2026-11-04).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
 const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
@@ -1026,8 +1026,8 @@ function writeOgImage(outDir, mainRef) {
 }
 /**
  * /assets/ FOR THE SOURCE PAGES, FROM THE STORE (docs/EXTERNAL-ASSETS-PLAN.md
- * step 13). /index-game.html, docs/component-catalog.html, items-preview.html,
- * docs/low-poly-fighters/ and pose-studio/ name images by their `assets/…` id.
+ * step 13). /index-game.html, docs/component-catalog.html and
+ * docs/low-poly-fighters/ name images by their `assets/…` id.
  * While main's tree carries assets/ the base tree serves it; once it does not,
  * every id main's art-manifest.json lists is written at /<id> from the store
  * this run published: the light object for an art id (the tier dev and test
