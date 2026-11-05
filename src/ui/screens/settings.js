@@ -1547,9 +1547,13 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
  * With the stored settings it also takes every key of the retired legacy groups (the import door's
  * own predicate): they have no row to reset them, yet some are still read (recovery.<pool>.*).
  */
+// Live keys with no Settings row (written elsewhere, e.g. the combat-tools grid toggle): Reset all
+// still puts them back to their default.
+const LIVE_HIDDEN_KEYS = ['gameConfig.presentation.showFormationGrid'];
 export function allResettableKeys(stored = {}) {
   return ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
     .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat())
+    .concat(LIVE_HIDDEN_KEYS)
     .concat(Object.keys(stored || {}).filter(isRetiredLegacySettingKey));
 }
 
