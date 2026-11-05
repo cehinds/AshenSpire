@@ -17,17 +17,25 @@ try {
     await page.waitForTimeout(500);
     const state = () => page.evaluate(() => {
       const shown = node => !!node && getComputedStyle(node).display !== 'none' && node.getBoundingClientRect().width > 0;
-      const bar = document.querySelector('.combatant.player .target-hud-overhead-meters > .meters');
+      const bar = document.querySelector('.combatant.player .target-hud-overhead-meters > .meters .combat-health-row > .combat-health-meter');
+      const block = document.querySelector('.combatant.player .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot');
       const enemyBar = document.querySelector('.combatant:not(.player) .target-hud-overhead-meters > .meters');
       return { bar: shown(bar), enemyBar: shown(enemyBar), panel: !!document.querySelector('.target-hud-detail[data-eid="player"].visible'),
-        block: !!document.querySelector('.combatant.player .sprite'), topHp: document.body.textContent.includes('71/71') };
+        block: shown(block), topHp: document.body.textContent.includes('71/71') };
     });
     const tapPlayer = async () => {
       const box = await page.locator('.combatant.player .sprite').boundingBox();
       if (mobile) await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2); else await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
       await page.waitForTimeout(900);
     };
+    // No hook makes Block from the URL, so add a Block square to the player's row (the same node shape combatHealthRow builds).
+    await page.evaluate(() => {
+      const row = document.querySelector('.combatant.player .target-hud-overhead-meters .combat-health-row');
+      const sq = document.createElement('span'); sq.className = 'combat-health-badge combat-health-shield combat-health-block-slot';
+      sq.dataset.defenseKind = 'shield'; sq.textContent = '5'; row.append(sq);
+    });
     let s = await state();
+    assert.equal(s.block, true, `${name}: the Block square stays visible on the unselected player`);
     assert.deepEqual([s.bar, s.panel, s.enemyBar, s.topHp], [false, false, true, true], `${name}: unselected player shows no HUD, enemies keep theirs, the top bar keeps HP`);
     await tapPlayer();
     s = await state();
