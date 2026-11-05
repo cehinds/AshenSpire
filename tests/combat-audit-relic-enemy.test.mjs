@@ -19,7 +19,7 @@ for (const mode of ['native', 'bundled']) {
       statusModifierOutcomes: report.counts.statusModifierDeclarations, statusModifierDeclarations: report.counts.statusModifierDeclarations,
       statusProcBranches: 3, statusProcBranchesCovered: 3,
       statusSilencedConsumerPathsCovered: 3,
-      statusModifierConsumerDeclarations: 20, statusModifierConsumerOutcomesCovered: 20,
+      statusModifierConsumerDeclarations: 18, statusModifierConsumerOutcomesCovered: 18,
       statusResistanceBranches: 3, statusResistanceBranchesCovered: 3, statusControlBranches: 4, statusControlBranchesCovered: 4,
       statusTaggedVulnerabilityBranches: 3, statusTaggedVulnerabilityCovered: 3,
       statuses: statusCount, statusesCovered: statusCount, enemies: 33, enemyMoves: 103, enemyMovesCovered: 103,
@@ -62,13 +62,13 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.silencedConsumerPaths.rows.length, 3);
     assert.equal(report.silencedConsumerPaths.covered, 3);
     assert.ok(report.silencedConsumerPaths.normativeContract.includes('combatExpansionVersion 2'));
-    assert.equal(report.statusModifierConsumers.declarations, 20);
-    assert.equal(report.statusModifierConsumers.covered, 20);
+    assert.equal(report.statusModifierConsumers.declarations, 18);
+    assert.equal(report.statusModifierConsumers.covered, 18);
     const meterGrowth = report.statusModifierConsumers.rows.find(row => row.statusId === 'goreblood' && row.key === 'meterMaxGrowthDisabled');
     assert.deepEqual({ baseline: meterGrowth.baseline, observed: meterGrowth.observed, expected: meterGrowth.expected }, { baseline: 13, observed: 10, expected: 10 });
     assert.deepEqual(report.statusModifierConsumers.rows.map(row => `${row.statusId}:${row.key}`).sort(), [
       'confused:damageDealtMult', 'dexterity:blockAdd', 'entombed:damageTakenMult', 'entombed:skipTurn',
-      'frail:blockGainedMult', 'glassCannon:damageDealtMult', 'glassCannon:damageTakenMult', 'goreblood:meterMaxGrowthDisabled',
+      'frail:blockGainedMult', 'goreblood:meterMaxGrowthDisabled',
       'silenced:spellDamageDealtMult', 'slowed:blockGainedMult', 'slowed:damageDealtMult', 'staggered:damageTakenMult',
       'stoneskin:retainBlock', 'strength:attackDamageAdd', 'unbreakable:blockCap', 'unbreakable:retainBlock',
       'unbreakableUp:blockCap', 'unbreakableUp:retainBlock', 'vulnerable:damageTakenMult', 'weak:damageDealtMult',

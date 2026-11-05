@@ -177,7 +177,6 @@ const cardValueStatusMultipliers = {
   deadlyTempo: 1,
   opportunist: 1,
   envenom: 1,
-  glassCannon: 1,
   magicVulnerable: 1,
   silenced: 1,
   stanceShifted: 1,
