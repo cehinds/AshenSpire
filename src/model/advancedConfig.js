@@ -1041,6 +1041,23 @@ export function advancedConfigSnapshot(settings = {}) {
   });
 }
 
+/**
+ * A Core 2 run's snapshot (cleanup 3e): the version fields plus the
+ * `gameConfig.prologue.*` overrides, the only frozen settings a Core 2 run
+ * reads back (the opening scenes). Legacy mechanics keys stored in the profile
+ * (`gameConfig.balance.*`, `recovery.*`, ...) no longer reach the run: Core 2
+ * builds its registries from the profile, not from overrides. An older save
+ * that still carries extra keys loads unchanged; nothing reads them.
+ */
+export function coreAdvancedConfigSnapshot(settings = {}) {
+  const snapshot = advancedConfigSnapshot(settings);
+  const prefix = `${ADVANCED_CONFIG_PREFIX}prologue.`;
+  return Object.freeze({
+    ...snapshot,
+    overrides: Object.fromEntries(Object.entries(snapshot.overrides).filter(([key]) => key.startsWith(prefix))),
+  });
+}
+
 function cloneConfigurableBundle(bundle) {
   bundle = materializeCardValueBonuses(bundle);
   return {

@@ -63,7 +63,7 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -1363,7 +1363,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   const reactionRulesVersion = shotReactionVersion === null
     ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 2
     : shotReactionVersion === '0' ? null : Number(shotReactionVersion);
-  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
+  const configSnapshot = { ...(isConfiguredRun(gameProfile) ? coreAdvancedConfigSnapshot : advancedConfigSnapshot)(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
