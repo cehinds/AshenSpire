@@ -288,3 +288,28 @@ test('a profile that cuts the face below the module defaults also caps the roomy
   }
   assert.ok(roomy > 0, 'a one-clause roomy reading still exists for cards whose single clause was trimmed');
 });
+
+test('every downside the compact face prints survives on the roomy reading, powers with Exhaust included', () => {
+  const COST = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/gi;
+  let both = 0;
+  for (const card of reg.cards.all()) for (const extra of [{}, { upgraded: true }]) {
+    const def = defOf(card.id, extra), projection = projectRoomy(def);
+    if (!projection.roomy) continue;
+    both++;
+    const wide = projection.roomy.clauses.map(line => plain(line.html)).join('; ').toLowerCase();
+    for (const clause of projection.clauses.filter(line => line.downside || line.kind === 'cost')) {
+      for (const part of plain(clause.html).toLowerCase().match(COST) || []) assert.ok(wide.includes(part), `${card.id}: "${part}" lost from the roomy reading: ${wide}`);
+    }
+    for (const keyword of ['exhaust', 'ethereal']) if ((def.keywords || []).includes(keyword) && projection.clauses.some(line => /exhaust|ethereal/i.test(plain(line.html))))
+      assert.ok(wide.includes(keyword), `${card.id}: ${keyword} keyword lost from the roomy reading`);
+  }
+  assert.ok(both > 100);
+  for (const id of ['goreblood', 'unbreakable', 'sanguinePactCard']) {
+    const card = reg.cards.all().find(c => c.id === id || c.id.endsWith('.' + id));
+    if (!card) continue;
+    const def = defOf(card.id), projection = projectRoomy(def), compact = projection.clauses.map(l => plain(l.html)).join(' ');
+    assert.ok(projection.roomy, `${id} has a roomy reading`);
+    assert.ok(compact.length > 0);
+    assert.match(projection.roomy.clauses.map(l => plain(l.html)).join(' '), /exhaust/i, id);
+  }
+});

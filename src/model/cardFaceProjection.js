@@ -164,9 +164,19 @@ export function cardFaceProjection(def, opts = {}) {
   if (!budget) return compact;
   const wide = computedFaceProjection(def, { lines: roomyLines, authoredHtml, registries, effects,
     budget: { clauses: budget.clauses, characters: budget.characters, words: budget.clauseWords } });
+  // The compact summary appends a card's Exhaust / Ethereal keyword as a cost; the authored-prose path does not, so the
+  // roomy reading carries them the same way (powers such as Goreblood print "Exhaust" in the compact face).
+  const sayings = projection => projection.clauses.map(clause => plain(clause.html)).join('; ');
+  for (const [keyword, word] of [['exhaust', 'Exhaust'], ['ethereal', 'Ethereal']]) {
+    if ((def.keywords || []).includes(keyword) && !new RegExp(`\\b${word}\\b`, 'i').test(sayings(wide))) wide.clauses.push({ kind: 'cost', html: word });
+  }
   const said = projection => projection.clauses.map(clause => plain(clause.html)).join('; ');
   const words = projection => said(projection).split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
   // Roomy only when it says more: a different split of the same words is not worth a smaller font.
+  // Never drop a downside the compact face prints; a roomy reading that cannot hold them all in its clause budget is not offered.
+  const downsides = compact.clauses.filter(clause => clause.downside || clause.kind === 'cost').map(clause => plain(clause.html).toLowerCase());
+  const wideText = sayings(wide).toLowerCase();
+  if (wide.clauses.length > budget.clauses || downsides.some(text => !(text.match(new RegExp(COST_RE.source, 'gi')) || [text]).every(part => wideText.includes(part)))) return compact;
   if (!wide.clauses.length || words(wide) <= words(compact) || wide.hiddenDownsides.length > (compact.hiddenDownsides || []).length) return compact;
   return { ...compact, roomy: { clauses: wide.clauses, maxLines: budget.lines } };
 }
