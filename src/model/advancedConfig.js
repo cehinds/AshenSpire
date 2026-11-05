@@ -836,7 +836,7 @@ function progressionRows(bundle) {
       min: 0.05, max: 20, def: 1,
       key: `${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`,
       label: 'Experience gain multiplier',
-      note: 'Multiply character and skill XP from combat and quests. 1 keeps authored awards. Applies immediately to future XP awards in the current run.',
+      note: 'Multiply character and skill XP from combat and quests. 1 keeps authored awards.',
       specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
