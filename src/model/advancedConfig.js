@@ -112,7 +112,6 @@ const BALANCE_DOMAINS = Object.freeze({
   'rewards.cardRewards.chancePct.normal': PERCENT,
   'rewards.cardRewards.chancePct.elite': PERCENT,
   'rewards.cardRewards.chancePct.boss': PERCENT,
-  'atlas.townsPerActMax': Object.freeze({ min: 1 }),
   // SPEC §15.3's drop chances are percents: a normal fight's armament chance
   // ships at 0, which a range read off the value would cap at 20.
   'equipment.drops.chance.normal': PERCENT,

@@ -810,11 +810,20 @@ export const OWNERSHIP_GATES = Object.freeze(['unearned', 'unfound']);
 /**
  * ownership(registries, { meta, loadout }) → { has(piece), why(piece) }
  *
+ * IN A RUN, AN ARMOUR SET IS OWNED BY THE RUN, NOT BY THE PROFILE (owner,
+ * 2026-11-05; SPEC §14.2/§14.3). A set with an `unlock` is owned when it is the
+ * creation grant, in `loadout.boughtArmour`, or already worn in `loadout.sets`
+ * (saves from before this rule keep what they wear). `meta.unlocked` does NOT
+ * make it owned there: the profile wardrobe must not fill a fresh run's
+ * inventory. `profileWardrobe: true` is the one explicit way to ask the
+ * wardrobe question instead ("is this set unlocked on the profile?"), for the
+ * Compendium, which has no run. Hand armaments and relics are unchanged.
+ *
  * The one predicate. A PIECE, not an id: armour ids repeat across classes
  * ("`id` is unique per class, not globally"), so an id set would say the Reaver
  * owns the Starseer's habit.
  */
-export function ownership(registries, { meta = {}, loadout = null } = {}) {
+export function ownership(registries, { meta = {}, loadout = null, profileWardrobe = false } = {}) {
   const cfg = ((registries || {}).balance || {}).equipment || {};
   const drops = cfg.drops || {};
   const unlocked = new Set(meta.unlocked || []);
@@ -848,6 +857,7 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
   // so this order is not a tiebreak, it is the absence of a tie.
   const basicTag = cfg.basicTag;
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
+  const wornIds = new Set(carriedIds(loadout));
   const why = (piece) => {
     if (!piece) return 'unearned';
     if (creationArmourGrant
@@ -855,6 +865,9 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
       && creationArmourGrant.id === piece.id) return null;
     if (boughtArmour.some((row) => row && row.classId === piece.classId && row.id === piece.id)) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
+      if (piece.kind === 'armor' && !profileWardrobe) {
+        return loadout && wornIds.has(piece.id) ? null : 'unearned';
+      }
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
     if (fromDropPool(piece) && drops.requireFound) {

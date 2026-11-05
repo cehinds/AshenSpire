@@ -174,7 +174,6 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'questChains', // { [questId]: { steps, completes } }
   'eventSpeakers', // { [eventId]: speakerId }
   'speakers', // content/source/speakers.csv
-  'atlasQuests', // worldAtlas.json quests rows, for their speakerId
 ]);
 
 /**
@@ -436,7 +435,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   //   'is not a step of this chain'      a completes ref outside the chain
   //   'a Leave choice may not complete a quest'
   //   'names no speaker'                 a chain step without eventSpeakers
-  //   'unknown speaker'                  an event or atlas quest naming no row
+  //   'unknown speaker'                  an event naming no row
   //   'unknown portrait key'             a speaker whose art does not ship
   {
     const eventList = Array.isArray(b.events) ? b.events : [];
@@ -462,10 +461,6 @@ function collectContentProblems(bundle, errors = [], options = {}) {
       if (!eventsDoorOpen && !eventById.has(eventId)) err(`eventSpeakers.${eventId}`, 'unknown event');
       if (!speakerIds.has(speakerId)) err(`eventSpeakers.${eventId}`, `unknown speaker '${speakerId}'`);
     }
-    (Array.isArray(b.atlasQuests) ? b.atlasQuests : []).forEach((quest, index) => {
-      if (!quest) return;
-      if (!speakerIds.has(quest.speakerId)) err(`atlasQuests.${quest.questId || index}.speakerId`, `unknown speaker '${quest.speakerId}'`);
-    });
     const chains = b.questChains;
     if (chains !== undefined) {
       if (!chains || typeof chains !== 'object' || Array.isArray(chains)) {
@@ -626,9 +621,8 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   // What a rest restores (plan phase 7): the location rules read these rows
   // through their variable bindings, the door reads the mode. A retune that
   // names an unknown mode or a percent off the scale is refused by name.
-  // Both blocks are REQUIRED: the location rules bind to balance.rest and the
-  // journey door reads balance.atlas at run start, so a bundle without them
-  // would pass here and throw there.
+  // The block is REQUIRED: the location rules bind to balance.rest, so a bundle
+  // without it would pass here and throw there.
   if (b.balance) {
     const rest = b.balance.rest;
     if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
@@ -645,16 +639,6 @@ function collectContentProblems(bundle, errors = [], options = {}) {
         if (!(Number.isInteger(mana.flat) && mana.flat >= 0)) err('balance.rest.mana.flat', `must be a non-negative integer, got ${JSON.stringify(mana.flat)}`);
         if (!(Number.isInteger(mana.floorPct) && mana.floorPct >= 0 && mana.floorPct <= 100)) err('balance.rest.mana.floorPct', `must be an integer percent 0–100, got ${JSON.stringify(mana.floorPct)}`);
       }
-    }
-  }
-  if (b.balance) {
-    const atlas = b.balance.atlas;
-    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax } — the journey door reads it at run start (plan phase 7)');
-    else {
-      for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
-      // Positive: every seeded route stops at its hub city, so a cap of 0
-      // would refuse every journey at run start rather than here.
-      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 1)) err('balance.atlas.townsPerActMax', `must be a positive integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
     }
   }
   // Plan phase 8: the Mana cost floor, the player stagger's payload and the

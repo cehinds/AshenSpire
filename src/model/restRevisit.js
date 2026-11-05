@@ -16,8 +16,7 @@
 // re-entry does not refill again. `multiUse` is the Multi-use setting as the
 // visit opened, frozen per visit.
 //
-// SCOPE. Classic map only (`run.mapGraph`). The atlas (`run.journey`) keeps its
-// own rest state, so every function here answers null or does nothing for it.
+// SCOPE. Classic map only (`run.mapGraph`).
 //
 // Headless: no DOM, no imports. The caller persists the run.
 
@@ -48,7 +47,6 @@ export function markRestLeft(run) {
 
 // The node the map keeps enterable for re-entry, or null. Classic map only.
 export function restRevisitNodeId(run) {
-  if (run.journey) return null;
   return matchesPlace(run, run.restRevisit) ? run.mapNodeId : null;
 }
 

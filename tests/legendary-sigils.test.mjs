@@ -33,8 +33,7 @@ import {
   attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf, sigilRarityProblems,
 } from '../src/model/sigils.js';
 import { sigilPurchasePlan } from '../src/model/marketAdditions.js';
-import { pendingRewardCheckpoint, settleTreasureNode } from '../src/model/rewardSourcePolicy.js';
-import { generateJourney, journeyGraph, completeJourneyNode } from '../src/model/worldAtlas.js';
+import { pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountEquipment } from '../src/ui/screens/equipment.js';
 
@@ -437,23 +436,18 @@ test('main.js rolls the drop at a won fight, a non-terminal boss and the treasur
   assert.match(reward, /sigil\(row\)/, 'the reward screen collects a sigil row');
 });
 
-test('the map treasure checkpoints its offer, completing a journey point first: claimed straight through or after a reload, the point stays complete', () => {
+test('the map treasure checkpoints its offer: claimed straight through or after a reload, the unclaimed sigil row survives', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const door = main.slice(main.indexOf("case 'treasure': {"), main.indexOf("default:\n      throw new Error(`Unknown node kind"));
-  assert.ok(door.includes('settleTreasureNode(run, completeJourneyNode);'), 'the map treasure settles its node');
-  assert.ok(door.indexOf('settleTreasureNode') < door.indexOf('beginPendingReward('), 'before it checkpoints');
+  assert.ok(door.includes('beginPendingReward('), 'the map treasure checkpoints its offer');
   assert.ok(!door.includes('mountRewards('), 'and never mounts an unsaved offer');
   const boss = registriesWith({ [DROP_KEY('treasure')]: 100 });
   for (const reloadFirst of [false, true]) {
     const run = freshRun(boss, 13);
-    run.journey = generateJourney('VIGILTREASURE');
-    run.mapGraph = journeyGraph(run.journey);
-    const point = run.journey.currentNodeId;
     const rng = createRng(13);
     const sigilId = rollSigilDrop(boss, rng, run, 'treasure');
     assert.ok(LEGENDARIES.includes(sigilId));
-    // The door: settle the node, then checkpoint (main.js case 'treasure').
-    settleTreasureNode(run, completeJourneyNode);
+    // The door checkpoints (main.js case 'treasure').
     run.pendingReward = pendingRewardCheckpoint({ sigilId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     let live = run;
     if (reloadFirst) {
@@ -465,10 +459,7 @@ test('the map treasure checkpoints its offer, completing a journey point first: 
     // Take the sigil and Continue (mountPendingReward's onDone).
     live.sigils = [...live.sigils, live.pendingReward.rewards.sigilId];
     delete live.pendingReward;
-    assert.ok(live.journey.completedNodeIds.includes(point), `${reloadFirst ? 'after a reload' : 'straight through'}: the atlas point is complete`);
     assert.ok(live.sigils.includes(sigilId));
-    const after = reload(live, boss);
-    assert.ok(after.run.journey.completedNodeIds.includes(point), 'and stays complete across another reload');
   }
 });
 
@@ -567,16 +558,13 @@ test('rarity at every door: no never-legendary position may hold a legendary, at
     assert.equal(back.run, null, `${path}: refused`);
     assert.ok(back.status.reason.includes(path) && back.status.reason.includes(L), back.status.reason);
   }
-  // A fight in progress's slots, and an atlas point's saved shelf.
+  // A fight in progress's slots.
   const run = freshRun();
   const fight = fightFor(run);
   const snapshot = serializeCombatSnapshot(fight);
   const withSlot = structuredClone(run);
   withSlot.combatEntered = { nodeId: run.mapNodeId || 'n0', snapshot: { ...snapshot, sigilSlots: { 'armament/straightSword': [L] } } };
   assert.ok(sigilRarityProblems(REG, withSlot).some((p) => p.includes('combatEntered.snapshot.sigilSlots') && p.includes(L)));
-  const atlas = structuredClone(run);
-  atlas.journey = { serviceStates: { p1: { stock: { kind: 'market', offerings: ['sigils'], sigils: [{ id: L, cost: 10 }] } } } };
-  assert.ok(sigilRarityProblems(REG, atlas).some((p) => p.includes('journey.serviceStates.p1.stock.sigils') && p.includes(L)));
   // run.sigils, the inventory, holds either kind.
   const either = freshRun();
   either.sigils = [L, COMMON];

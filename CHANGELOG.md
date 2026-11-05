@@ -34,7 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Combat rewards 3–5, more varied** ([#2566](https://github.com/cehinds/AshenSpire/pull/2566), `0.7.3.138`). Post-combat card rewards now offer a random 3 to 5 choices, lean toward skills and powers, and vary far more from run to run.
+- **Combat rewards 3–5, more varied** ([#2566](https://github.com/cehinds/AshenSpire/pull/2566), `0.7.3.144`). Post-combat card rewards now offer a random 3 to 5 choices, lean toward skills and powers, and vary far more from run to run.
+- **World Journey removed.** ([#2562](https://github.com/cehinds/AshenSpire/pull/2562), `0.7.3.144`). The World Journey mode (world atlas, quest board, journey profile) is removed; the game ships only the Core climb, and a saved World Journey run is refused on load.
+- **Run inventory holds only its own armour.** ([#2559](https://github.com/cehinds/AshenSpire/pull/2559), `0.7.3.142`). Starting a run no longer puts every profile-unlocked armour set in the inventory; a run owns its starting armour and the sets it buys or is granted.
+- **Reaction modal trimmed and inset.** ([#2558](https://github.com/cehinds/AshenSpire/pull/2558), `0.7.3.140`). The Defensive reaction modal no longer shows the instruction paragraph; its damage line and reaction options are inset to match the title.
 - **Upgrade modal shows the armament.** ([#2557](https://github.com/cehinds/AshenSpire/pull/2557), `0.7.3.138`). The Blacksmith and rest upgrade modal shows the armament's own card, current tier against next, instead of one of its cards' damage.
 - **Legacy dungeons and Custom Climb removed.** ([#2553](https://github.com/cehinds/AshenSpire/pull/2553), `0.7.3.136`). The unreachable legacy dungeons and Custom Climb screens, mods and endless mode are gone; the Core climb is unchanged.
 - **Shop (i) clear of the art.** ([#2554](https://github.com/cehinds/AshenSpire/pull/2554), `0.7.3.134`). Shop card (i) buttons no longer cover the card's thumbnail art; they sit in their own spot under it.

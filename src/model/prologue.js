@@ -1,6 +1,5 @@
 import { uiConfig } from '../config/generated/ui.js';
 import { SEATS } from '../content/seats.js';
-import { ATLAS } from './worldAtlas.js';
 import { isCoreProfile } from './gameProfile.js';
 
 export const PROLOGUE_DEFAULTS = uiConfig.screens.prologue.components.sequence;
@@ -680,14 +679,8 @@ export function prologueTint(config, settings = {}, customization = {}) {
 }
 
 // The last painting follows the actual starting region, independently of class.
-// World Journey currently starts at Crownfall; resolve the atlas region so a
-// later profile can use the same selection without consuming any gameplay RNG.
+// Selection consumes no gameplay RNG.
 export function prologueDestination(run = {}) {
-  const start = run.journey?.anchors?.start;
-  if (start) {
-    const art = { 'hollow-weald': 'weald', 'pale-marches': 'marches', 'cinder-reach': 'reach' }[ATLAS.regionOf(start)] || 'crownfall';
-    return {name: ATLAS.nodes[start]?.displayName || start, art};
-  }
   const seat = SEATS.find(s=>s.id===run.seatOrder?.[0]);
   return {name: seat?.name || 'Crownfall', art: seat?.id || 'crownfall'};
 }
