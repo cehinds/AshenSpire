@@ -61,7 +61,7 @@ import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
-import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, retiredStoredSettingKeys } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -488,6 +488,16 @@ function seedPromotedDefaults(meta, settings) {
   meta.settings = settings;
   saves.saveMeta(meta);
 }
+// One-shot cleanup: a stored retired key (battlefield, formation, movement...) has no row to reset it,
+// so it is deleted at boot, before the choice check, whether or not the device has preferences.
+function dropRetiredStoredSettings(meta, settings) {
+  const stale = retiredStoredSettingKeys(settings);
+  if (!stale.length) return;
+  for (const key of stale) delete settings[key];
+  meta.settings = settings;
+  saves.saveMeta(meta);
+}
+dropRetiredStoredSettings(activeMeta, activeSettings);
 let settingsChoicePending = !shotState && saves.profileStatus().ok
   && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
 // A device with preferences gets its choice before a new promotion moves them.

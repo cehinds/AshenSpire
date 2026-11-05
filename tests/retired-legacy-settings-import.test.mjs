@@ -87,3 +87,19 @@ test('the combat-tools grid key stays a live setting, not a retired one; formati
   assert.equal(isRetiredLegacySettingKey('settings.gameConfig.presentation.showFormationGrid'), false);
   assert.equal(isRetiredLegacySettingKey('gameConfig.presentation.formationGroups'), true);
 });
+
+test('a stored battlefield key never drives combat, and the boot cleanup list names it', async () => {
+  const { presentationConfig, retiredStoredSettingKeys } = await import('../src/model/advancedConfig.js');
+  const base = presentationConfig({});
+  const stored = {
+    'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.enemySpriteScale': 1.5, 'gameConfig.presentation.rowBScale': 2,
+    'gameConfig.presentation.movementEnabled': true, 'gameConfig.presentation.formationGroups': '[]',
+    'gameConfig.presentation.settingsWidthPercent': 90, 'gameConfig.presentation.showFormationGrid': true, 'muted': true,
+  };
+  const config = presentationConfig(stored);
+  for (const key of ['rowAScale', 'enemySpriteScale', 'rowBScale', 'movementEnabled', 'formationGroups']) assert.deepEqual(config[key], base[key], key);
+  assert.equal(config.settingsWidthPercent, 90);
+  assert.equal(config.showFormationGrid, true);
+  const gone = retiredStoredSettingKeys(stored);
+  assert.deepEqual(gone.sort(), ['gameConfig.presentation.enemySpriteScale', 'gameConfig.presentation.formationGroups', 'gameConfig.presentation.movementEnabled', 'gameConfig.presentation.rowAScale', 'gameConfig.presentation.rowBScale']);
+});
