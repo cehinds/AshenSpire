@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Run inventory holds only its own armour.** ([#2559](https://github.com/cehinds/AshenSpire/pull/2559), `0.7.3.138`). Starting a run no longer puts every profile-unlocked armour set in the inventory; a run owns its starting armour and the sets it buys or is granted.
 - **Upgrade modal shows the armament.** ([#2557](https://github.com/cehinds/AshenSpire/pull/2557), `0.7.3.138`). The Blacksmith and rest upgrade modal shows the armament's own card, current tier against next, instead of one of its cards' damage.
 - **Legacy dungeons and Custom Climb removed.** ([#2553](https://github.com/cehinds/AshenSpire/pull/2553), `0.7.3.136`). The unreachable legacy dungeons and Custom Climb screens, mods and endless mode are gone; the Core climb is unchanged.
 - **Shop (i) clear of the art.** ([#2554](https://github.com/cehinds/AshenSpire/pull/2554), `0.7.3.134`). Shop card (i) buttons no longer cover the card's thumbnail art; they sit in their own spot under it.
