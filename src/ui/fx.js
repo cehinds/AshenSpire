@@ -689,7 +689,8 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   if (def.colour) el.style.color = def.colour;
   const ms = calloutLifeMs();
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
-  rec.stack.push({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true });
+  // Through enqueueFloater, so a word gets the same host tracking as a number (a rebuilt figure retargets it).
+  enqueueFloater({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true });
   return el;
 }
 const liveCallouts = (layer, forId) => [...(layer.children || [])]

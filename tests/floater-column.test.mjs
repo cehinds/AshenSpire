@@ -282,6 +282,19 @@ test('a rebuilt figure (new element, same data-eid) receives the floaters that w
   assert.equal(spawns.length, 2, 'the waiting floater was retargeted to the rebuilt figure, not dropped');
 }));
 
+test('a queued callout word survives a figure rebuild and spawns at the new sprite', (t) => setup(t, ({ fx, a, spawns }) => {
+  const figure = (left) => ({ getBoundingClientRect: () => ({ ...a.box, left, right: left + a.box.width, bottom: a.box.top + a.box.height }), isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const first = figure(100), second = figure(300);
+  Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: (sel) => (sel.includes('data-eid="player"') ? second : null) } });
+  floatNum(fx, first, '+1', 'blk');
+  const word = callout(fx, first, 'player', 'staggered');
+  first.isConnected = false;
+  advance(t, floaterStaggerMs());
+  flushMeasureJobs();
+  assert.deepEqual(spawns.map((s) => s.node).pop(), word, 'the word spawned');
+  assert.equal(word.style.left, '340px', 'centred on the rebuilt sprite (300 + 80 / 2), not the detached one');
+}));
+
 test('the column forgets its measured line when it empties', (t) => setup(t, ({ fx, a, spawns }) => {
   floatNum(fx, a, '+1', 'blk');
   advance(t, floaterLifeMs() + 100);
