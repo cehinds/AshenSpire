@@ -12,7 +12,8 @@ import { createRunState } from '../src/model/state.js';
 import { beginGameProfileRest } from '../src/model/gameProfileRest.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
-import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
+import { equipmentCardModel } from '../src/model/equipmentCard.js';
+import { mountSmithUpgradeModal, itemAtTier } from '../src/ui/components/smithUpgradeModal.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from '../src/ui/components/upgradeConfirm.js';
 import { openConfirmationModal, closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -267,3 +268,17 @@ test('an armament upgrade\'s faces are the weapon\'s own equipment card at its c
   closeConfirmationModal();
   door.close();
 }));
+
+test('an armament whose upgrade lowers a requirement states the lower requirement on its after face, matching the row', () => {
+  // The base bundle authors Straight Sword at STR 2 and its tier-1 upgrade at -1 (itemUpgradeChanges.csv).
+  const base = createRegistries(contentBundle);
+  const run = createRunState({ seed: 211, classId: 'reaver', registries: base });
+  run.smithingStones = 3;
+  const cand = smithingPlan(base, run).candidates.find(c => c.itemRef === 'armament/straightSword');
+  assert.ok(cand, 'the Straight Sword is a candidate');
+  const row = cand.requirements.find(r => r.nextRequired < r.currentRequired);
+  assert.ok(row, 'its upgrade lowers a requirement');
+  const requirementAt = (level) => equipmentCardModel(base, itemAtTier(base, cand, level)).requirement;
+  assert.match(requirementAt(cand.currentLevel), new RegExp(`${row.label} ${row.currentRequired}\\b`), 'before states the current requirement');
+  assert.match(requirementAt(cand.nextLevel), new RegExp(`${row.label} ${row.nextRequired}\\b`), 'after states the lowered requirement');
+});
